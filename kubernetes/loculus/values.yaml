@@ -83,6 +83,7 @@ defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     submissionDataTypes: &defaultSubmissionDataTypes
       consensusSequences: true
+      alignedNucleotideSequences: true
       maxSequencesPerEntry: 1
     loadSequencesAutomatically: true
     earliestReleaseDate:
@@ -1623,6 +1624,7 @@ defaultOrganisms:
               - name: L
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/L.fasta]]"
   west-nile:
+    enabled: true
     <<: *defaultOrganismConfig
     schema:
       <<: *schema
@@ -1893,6 +1895,7 @@ defaultOrganisms:
               - name: S
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/S.fasta]]"
   dummy-organism-with-files:
+    enabled: true
     schema:
       image: "/images/organisms/hmpv.jpg"
       organismName: "Test organism (with files)"
@@ -1924,7 +1927,9 @@ defaultOrganisms:
   not-aligned-organism:
     enabled: true
     schema:
-      submissionDataTypes: *defaultSubmissionDataTypes
+      submissionDataTypes:
+        <<: *defaultSubmissionDataTypes
+        alignedNucleotideSequences: false
       image: "/images/organisms/rsv.jpg"
       organismName: "Test organism (without alignment)"
       metadata:
@@ -2124,6 +2129,7 @@ defaultOrganisms:
               - name: NP
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
   cchf-multi-ref:
+    enabled: true
     <<: *defaultOrganismConfig
     schema:
       <<: *schema

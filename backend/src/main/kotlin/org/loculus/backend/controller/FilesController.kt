@@ -140,7 +140,10 @@ class FilesController(
         }
         repeat(numberFiles) {
             val fileId = generateFileId()
-            val presignedUploadUrl = s3Service.createUrlToUploadPrivateFile(fileId)
+            val presignedUploadUrl = s3Service.createUrlToUploadPrivateFile(
+                fileId,
+                useInternalEndpoint = authenticatedUser.isPreprocessingPipeline,
+            )
             filesDatabaseService.createFileEntry(fileId, authenticatedUser.username, groupId)
             response.add(FileIdAndWriteUrl(fileId, presignedUploadUrl))
         }

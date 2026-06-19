@@ -39,8 +39,9 @@ class S3Service(private val s3Config: S3Config) {
 
     private val s3Client: S3Client by lazy { createClient(getS3BucketConfig()) }
     private val presigner: S3Presigner by lazy { createPresigner(getS3BucketConfig()) }
+    private val internalPresigner: S3Presigner by lazy { createInternalPresigner(getS3BucketConfig()) }
 
-    fun createUrlToUploadPrivateFile(fileId: FileId): String = s3ErrorMapping {
+    fun createUrlToUploadPrivateFile(fileId: FileId, useInternalEndpoint: Boolean = false): String = s3ErrorMapping {
         val config = getS3BucketConfig()
         val putObjectRequest = PutObjectRequest.builder()
             .bucket(config.bucket)
@@ -51,7 +52,8 @@ class S3Service(private val s3Config: S3Config) {
             .putObjectRequest(putObjectRequest)
             .signatureDuration(Duration.ofSeconds(PRESIGNED_URL_EXPIRY_SECONDS.toLong()))
             .build()
-        presigner.presignPutObject(presignRequest).url().toString()
+        val selectedPresigner = if (useInternalEndpoint) internalPresigner else presigner
+        selectedPresigner.presignPutObject(presignRequest).url().toString()
     }
 
     fun initiateMultipartUploadAndCreateUrlsToUpload(fileId: FileId, numberParts: Int): MultipartUploadHandler =
@@ -198,8 +200,14 @@ class S3Service(private val s3Config: S3Config) {
         .serviceConfiguration(createServiceConfiguration())
         .build()
 
-    private fun createPresigner(bucketConfig: S3BucketConfig): S3Presigner = S3Presigner.builder()
-        .endpointOverride(URI.create(bucketConfig.endpoint))
+    private fun createPresigner(bucketConfig: S3BucketConfig): S3Presigner =
+        createPresigner(bucketConfig, bucketConfig.endpoint)
+
+    private fun createInternalPresigner(bucketConfig: S3BucketConfig): S3Presigner =
+        createPresigner(bucketConfig, bucketConfig.internalEndpoint ?: bucketConfig.endpoint)
+
+    private fun createPresigner(bucketConfig: S3BucketConfig, endpoint: String): S3Presigner = S3Presigner.builder()
+        .endpointOverride(URI.create(endpoint))
         .region(Region.of(bucketConfig.region))
         .credentialsProvider(createCredentialProvider(bucketConfig))
         .serviceConfiguration(createServiceConfiguration())

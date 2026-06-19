@@ -3,11 +3,11 @@ import type { Readable } from 'stream';
 import type { Narrow } from '@zodios/core/lib/utils.types';
 import axios, { type AxiosError, type Method } from 'axios';
 import { err, ok, Result } from 'neverthrow';
-import { ZodSchema } from 'zod';
+import { z, ZodSchema } from 'zod';
 
 import { lapisApi } from './lapisApi.ts';
 import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
-import { getLapisUrl, getRuntimeConfig, getSchema } from '../config.ts';
+import { getLapisUrl, getQueryUrl, getRuntimeConfig, getSchema } from '../config.ts';
 import { getInstanceLogger, type InstanceLogger } from '../logger.ts';
 import {
     ACCESSION_FIELD,
@@ -20,22 +20,28 @@ import {
 import { accessionVersion, type AccessionVersion, type ProblemDetail } from '../types/backend.ts';
 import type { Schema } from '../types/config.ts';
 import {
+    aggregatedResponse,
     detailsResponse,
     type DetailsResponse,
+    insertionsResponse,
     type LapisBaseRequest,
+    mutationsResponse,
     sequenceEntryHistory,
     type SequenceEntryHistory,
-    versionStatuses,
 } from '../types/lapis.ts';
+import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 import { fastaEntryToString, parseFasta } from '../utils/parseFasta.ts';
 import type { BaseType } from '../utils/sequenceTypeHelpers.ts';
 
 export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
     constructor(
         private readonly url: string,
+        private readonly currentUrl: string,
+        private readonly allVersionsUrl: string,
         api: Narrow<typeof lapisApi>,
         logger: InstanceLogger,
         private readonly schema: Schema,
+        private readonly accessToken?: string,
     ) {
         super(
             url,
@@ -47,25 +53,61 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         );
     }
 
-    public static createForOrganism(organism: string) {
-        return this.create(getLapisUrl(getRuntimeConfig().serverSide, organism), getSchema(organism));
+    public static createForOrganism(organism: string, accessToken?: string) {
+        const serverSide = getRuntimeConfig().serverSide;
+        return this.create(
+            getLapisUrl(serverSide, organism),
+            getQueryUrl(serverSide, organism, 'current'),
+            getQueryUrl(serverSide, organism, 'allVersions'),
+            getSchema(organism),
+            accessToken,
+        );
     }
 
-    public static create(lapisUrl: string, schema: Schema, logger: InstanceLogger = getInstanceLogger('lapisClient')) {
-        return new LapisClient(lapisUrl, lapisApi, logger, schema);
+    public static create(
+        lapisUrl: string,
+        currentUrl: string,
+        allVersionsUrl: string,
+        schema: Schema,
+        accessToken?: string,
+        logger: InstanceLogger = getInstanceLogger('lapisClient'),
+    ) {
+        return new LapisClient(lapisUrl, currentUrl, allVersionsUrl, lapisApi, logger, schema, accessToken);
     }
 
     public getSequenceEntryVersionDetails(accessionVersion: string) {
-        return this.call('details', {
-            [this.schema.primaryKey]: accessionVersion,
-        });
+        return this.requestFull(
+            this.allVersionsUrl + '/metadata',
+            'post',
+            {
+                [this.schema.primaryKey]: accessionVersion,
+            },
+            detailsResponse,
+        );
+    }
+
+    public getCurrentAggregated(request: LapisBaseRequest) {
+        return this.requestFull(this.currentUrl + '/aggregated', 'post', request, aggregatedResponse);
+    }
+
+    public getCurrentDetails(request: LapisBaseRequest) {
+        return this.requestFull(this.currentUrl + '/metadata', 'post', request, detailsResponse);
+    }
+
+    public getAllVersionsAggregated(request: LapisBaseRequest) {
+        return this.requestFull(this.allVersionsUrl + '/aggregated', 'post', request, aggregatedResponse);
     }
 
     public async getSequenceEntryVersionDetailsTsv(accessionVersion: string): Promise<Result<string, ProblemDetail>> {
-        const result = await this.call('details', {
-            [this.schema.primaryKey]: accessionVersion,
-            dataFormat: 'TSV',
-        });
+        const result = await this.requestFull(
+            this.allVersionsUrl + '/metadata',
+            'post',
+            {
+                [this.schema.primaryKey]: accessionVersion,
+                dataFormat: 'TSV',
+            },
+            detailsResponse,
+        );
         // This type cast isn't pretty, but if the API would be typed correctly, the union type
         // of the actual details response and the potential 'string' would pollute the whole API,
         // so I (@fhennig) decided to just do this cast here. We know that the return value is a TSV string.
@@ -73,11 +115,15 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
     }
 
     public async getLatestAccessionVersion(accession: string): Promise<Result<AccessionVersion, ProblemDetail>> {
-        const result = await this.call('details', {
-            accession,
-            versionStatus: versionStatuses.latestVersion,
-            fields: [ACCESSION_FIELD, VERSION_FIELD],
-        });
+        const result = await this.requestFull(
+            this.currentUrl + '/metadata',
+            'post',
+            {
+                accession,
+                fields: [ACCESSION_FIELD, VERSION_FIELD],
+            },
+            detailsResponse,
+        );
 
         return result.andThen(({ data }) => {
             if (data.length !== 1) {
@@ -119,7 +165,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
             ],
             orderBy: [{ field: VERSION_FIELD, type: 'ascending' }],
         };
-        const result = await this.call('details', request);
+        const result = await this.requestFull(this.allVersionsUrl + '/metadata', 'post', request, detailsResponse);
         const createSequenceHistoryProblemDetail = (detail: string): ProblemDetail => ({
             type: 'about:blank',
             title: 'Could not get sequence entry history',
@@ -141,14 +187,28 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
     }
 
     public getSequenceMutations(accessionVersion: string, type: BaseType) {
-        const endpoint = type === 'nucleotide' ? 'nucleotideMutations' : 'aminoAcidMutations';
-        return this.call(endpoint, {
-            [this.schema.primaryKey]: accessionVersion,
-        });
+        if (type === 'nucleotide') {
+            return this.requestFull(
+                this.allVersionsUrl + '/sequencesAligned/mutations',
+                'post',
+                {
+                    [this.schema.primaryKey]: accessionVersion,
+                },
+                mutationsResponse,
+            );
+        }
+        return this.requestFull(
+            this.allVersionsUrl + '/translations/mutations',
+            'post',
+            {
+                [this.schema.primaryKey]: accessionVersion,
+            },
+            mutationsResponse,
+        );
     }
 
     public getSequenceInsertions(accessionVersion: string, type: BaseType) {
-        const endpoint = type === 'nucleotide' ? 'nucleotideInsertions' : 'aminoAcidInsertions';
+        const endpoint = type === 'nucleotide' ? '/sequencesAligned/insertions' : '/translations/insertions';
         const request = {
             [this.schema.primaryKey]: accessionVersion,
             orderBy: [
@@ -156,27 +216,38 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
                 { field: 'position', type: 'ascending' },
             ],
         };
-        return this.call(endpoint, request as LapisBaseRequest);
+        return this.requestFull(
+            this.allVersionsUrl + endpoint,
+            'post',
+            request as LapisBaseRequest,
+            insertionsResponse,
+        );
     }
 
     public getUnalignedSequences(accessionVersion: string, options: { fastaHeaderTemplate?: string } = {}) {
-        return this.call('unalignedNucleotideSequences', {
-            [this.schema.primaryKey]: accessionVersion,
-            dataFormat: 'FASTA',
-            ...options,
-        });
+        return this.requestFull(
+            this.allVersionsUrl + '/sequences',
+            'post',
+            {
+                [this.schema.primaryKey]: accessionVersion,
+                dataFormat: 'FASTA',
+                ...options,
+            },
+            z.string(),
+        );
     }
 
     public async getUnalignedSequencesMultiSegment(accessionVersion: string, segmentNames: string[]) {
         const results = await Promise.all(
             segmentNames.map((segment) =>
-                this.call(
-                    'unalignedNucleotideSequencesMultiSegment',
+                this.requestFull(
+                    this.allVersionsUrl + `/sequences/${segment}`,
+                    'post',
                     {
                         [this.schema.primaryKey]: accessionVersion,
                         dataFormat: 'FASTA',
                     },
-                    { params: { segment } },
+                    z.string(),
                 ),
             ),
         );
@@ -232,17 +303,18 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         return this.request('/sample/details', 'post', { ...request, dataFormat: 'json' }, detailsResponse);
     }
 
-    private async request<T>(
-        endpoint: string,
+    private async requestFull<T>(
+        fullUrl: string,
         method: Method,
         request: unknown,
         responseSchema: ZodSchema<T>,
     ): Promise<Result<T, ProblemDetail>> {
         try {
             const response = await axios.request({
-                url: `${this.url}${endpoint}`,
+                url: fullUrl,
                 method,
                 data: request,
+                headers: createAuthorizationHeader(this.accessToken),
             });
 
             const responseDataResult = responseSchema.safeParse(response.data);
@@ -254,12 +326,20 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
                 title: 'bad response',
                 status: 0,
                 detail: `Failed to parse LAPIS response: ${responseDataResult.error.toString()}`,
-                instance: '/sample/details',
+                instance: fullUrl,
             });
         } catch (e) {
             const axiosError = e as AxiosError;
-
-            return err(this.createProblemDetail(axiosError, endpoint));
+            return err(this.createProblemDetail(axiosError, fullUrl));
         }
+    }
+
+    private async request<T>(
+        endpoint: string,
+        method: Method,
+        request: unknown,
+        responseSchema: ZodSchema<T>,
+    ): Promise<Result<T, ProblemDetail>> {
+        return this.requestFull(`${this.url}${endpoint}`, method, request, responseSchema);
     }
 }

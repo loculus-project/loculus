@@ -1,22 +1,12 @@
 ---
 import { authenticationApiDocsUrl } from './authenticationApiDocsUrl';
-import { dataUseTermsAreEnabled, getRuntimeConfig, getWebsiteConfig } from '../../config';
+import { dataUseTermsAreEnabled, getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes/routes.ts';
 import { getAuthBaseUrl } from '../../utils/getAuthUrl';
 
 const clientConfig = getRuntimeConfig().public;
 const keycloakUrl = getAuthBaseUrl();
-
-const websiteConfig = getWebsiteConfig();
-
-const organismKeys = Object.keys(websiteConfig.organisms);
-
-const organismToDisplayName = Object.fromEntries(
-    organismKeys.map((organism) => {
-        return [organism, websiteConfig.organisms[organism].schema.organismName];
-    }),
-);
 
 const BUTTON_CLASS =
     'inline-block px-6 py-3 bg-primary-400 text-white font-semibold rounded-lg shadow-md hover:bg-primary-500 hover:no-underline';
@@ -69,37 +59,17 @@ const BUTTON_CLASS =
             <div class='mb-4'>
                 Please note that Loculus is under continuous development and the endpoints are subject to change.
             </div>
-            <a class={BUTTON_CLASS} href={clientConfig.backendUrl + '/swagger-ui/index.html'}>
-                View backend API documentation
-            </a>
+            <div class='flex flex-wrap gap-3'>
+                <a class={BUTTON_CLASS} href={clientConfig.backendUrl + '/swagger-ui/index.html'}>
+                    View backend API documentation (Swagger)
+                </a>
+                <a class={BUTTON_CLASS} href={clientConfig.backendUrl + '/scalar-api-reference'}>
+                    View backend API documentation (Scalar)
+                </a>
+            </div>
             <div class='mt-8'>
                 <span class='font-medium'>URL of backend server:</span>
                 <code>{clientConfig.backendUrl}</code>
-            </div>
-        </div>
-
-        <div class='mb-10'>
-            <h2 class='text-xl font-semibold text-primary-400 mb-4'>LAPIS query engines</h2>
-            <div class='flex flex-wrap gap-x-2 gap-y-4'>
-                {
-                    Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
-                        <a class={BUTTON_CLASS} href={url + '/swagger-ui/index.html'}>
-                            {organismToDisplayName[organism]} LAPIS API documentation
-                        </a>
-                    ))
-                }
-            </div>
-            <div class='mt-8'>
-                <span class='font-medium'>URLs of LAPIS query engines:</span>
-                <ul class='list-disc ml-6'>
-                    {
-                        Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
-                            <li>
-                                {organismToDisplayName[organism]}: <code>{url}</code>
-                            </li>
-                        ))
-                    }
-                </ul>
             </div>
         </div>
 

@@ -5,13 +5,22 @@ import { SequenceDetailsTableResultType } from './getSequenceDetailsTableData';
 import { getRuntimeConfig, getSchema } from '../../../config';
 import { getInstanceLogger } from '../../../logger.ts';
 import type { DetailsJson } from '../../../types/detailsJson';
+import { getAccessToken } from '../../../utils/getAccessToken';
 
 const logger = getInstanceLogger('details.json');
 
 export const GET: APIRoute = async (req) => {
     const params = req.params as { accessionVersion: string; accessToken?: string };
     const { accessionVersion } = params;
-    const sequenceDetailsTableData = await findOrganismAndData(accessionVersion);
+    const accessToken = getAccessToken(req.locals.session);
+
+    if (accessToken === undefined) {
+        return new Response(`Authentication required`, {
+            status: 401,
+        });
+    }
+
+    const sequenceDetailsTableData = await findOrganismAndData(accessionVersion, accessToken);
 
     if (sequenceDetailsTableData.isErr()) {
         logger.warn(

@@ -27,13 +27,13 @@ export class DownloadUrlGenerator {
     /**
      * Create new DownloadUrlGenerator with the given properties.
      * @param organism The organism, will be part of the filename.
-     * @param lapisUrl The lapis API URL for downloading.
+     * @param downloadBaseUrl The query endpoint base URL for downloading (e.g. /query/{organism}/current).
      * @param dataUseTermsEnabled If false, the downloaded URLs won't include any data use terms related settings.
      * @param richFastaHeaderFields Set the fastaHeaderTemplate parameter to include rich fasta headers.
      */
     constructor(
         private readonly organism: string,
-        private readonly lapisUrl: string,
+        private readonly downloadBaseUrl: string,
         private readonly dataUseTermsEnabled: boolean,
         private readonly richFastaHeaderFields?: string[],
     ) {}
@@ -158,16 +158,13 @@ export class DownloadUrlGenerator {
 
         switch (dataType.type) {
             case 'metadata':
-                return this.lapisUrl + '/sample/details';
+                return this.downloadBaseUrl + '/metadata';
             case 'unalignedNucleotideSequences':
-                if (dataType.segment !== undefined) {
-                    return this.lapisUrl + '/sample/unalignedNucleotideSequences/' + dataType.segment;
-                }
-                return this.lapisUrl + '/sample/unalignedNucleotideSequences';
+                return this.downloadBaseUrl + '/sequences' + segmentPath(dataType.segment);
             case 'alignedNucleotideSequences':
-                return this.lapisUrl + '/sample/alignedNucleotideSequences' + segmentPath(dataType.segment);
+                return this.downloadBaseUrl + '/sequencesAligned' + segmentPath(dataType.segment);
             case 'alignedAminoAcidSequences':
-                return this.lapisUrl + '/sample/alignedAminoAcidSequences/' + dataType.gene;
+                return this.downloadBaseUrl + '/translations/' + dataType.gene;
         }
     }
 }

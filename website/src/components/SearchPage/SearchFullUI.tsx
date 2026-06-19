@@ -18,7 +18,7 @@ import { Table, type TableSequenceData } from './Table';
 import { TableColumnSelectorModal } from './TableColumnSelectorModal.tsx';
 import { useSearchPageState } from './useSearchPageState.ts';
 import { type QueryState } from './useStateSyncedWithUrlQueryParams.ts';
-import { getLapisUrl } from '../../config.ts';
+import { getLapisUrl, getQueryUrl } from '../../config.ts';
 import { fetchDetailsFromLapis } from '../../services/lapisClientSideApi.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
@@ -157,16 +157,18 @@ export const InnerSearchFullUI = ({
     }, []);
 
     const lapisUrl = getLapisUrl(clientConfig, organism);
+    const queryCurrentUrl = getQueryUrl(clientConfig, organism, 'current');
     const downloadUrlGenerator = new DownloadUrlGenerator(
         organism,
-        lapisUrl,
+        queryCurrentUrl,
         dataUseTermsEnabled,
         schema.richFastaHeaderFields,
     );
 
-    const hooks = lapisClientHooks(lapisUrl);
+    const hooks = lapisClientHooks(lapisUrl, queryCurrentUrl, accessToken);
     const aggregatedHook = hooks.useAggregated();
     const detailsHook = hooks.useDetails();
+    const isAuthenticated = accessToken !== undefined;
 
     const [selectedSeqs, setSelectedSeqs] = useState(new Set<string>());
     const sequencesSelected = selectedSeqs.size > 0;
@@ -192,6 +194,9 @@ export const InnerSearchFullUI = ({
     const downloadFilter: SequenceFilter = sequencesSelected ? new SequenceEntrySelection(selectedSeqs) : tableFilter;
 
     useEffect(() => {
+        if (!isAuthenticated) {
+            return;
+        }
         aggregatedHook.mutate({
             ...lapisSearchParameters,
             fields: [],
@@ -210,7 +215,16 @@ export const InnerSearchFullUI = ({
             offset: (page - 1) * pageSize,
             orderBy: OrderByList,
         });
-    }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection]);
+    }, [
+        isAuthenticated,
+        lapisSearchParameters,
+        schema.tableColumns,
+        schema.primaryKey,
+        pageSize,
+        page,
+        orderByField,
+        orderDirection,
+    ]);
 
     const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
     const linkOutSequenceCount = downloadFilter.sequenceCount() ?? totalSequences;
@@ -226,8 +240,8 @@ export const InnerSearchFullUI = ({
 
     const [oldData, setOldData] = useState<TableSequenceData[] | null>(null);
     const [oldCount, setOldCount] = useState<number | null>(null);
-    const [firstClientSideLoadOfDataCompleted, setFirstClientSideLoadOfDataCompleted] = useState(false);
-    const [firstClientSideLoadOfCountCompleted, setFirstClientSideLoadOfCountCompleted] = useState(false);
+    const [firstClientSideLoadOfDataCompleted, setFirstClientSideLoadOfDataCompleted] = useState(!isAuthenticated);
+    const [firstClientSideLoadOfCountCompleted, setFirstClientSideLoadOfCountCompleted] = useState(!isAuthenticated);
 
     useEffect(() => {
         if (detailsHook.data?.data && oldData !== detailsHook.data.data) {
@@ -258,9 +272,9 @@ export const InnerSearchFullUI = ({
             />
             <SeqPreviewModal
                 key={previewedSeqId ?? 'seq-modal'}
-                seqId={previewedSeqId ?? ''}
+                seqId={isAuthenticated ? (previewedSeqId ?? '') : ''}
                 accessToken={accessToken}
-                isOpen={Boolean(previewedSeqId)}
+                isOpen={isAuthenticated && Boolean(previewedSeqId)}
                 onClose={() => setPreviewedSeqId(null)}
                 referenceGenomesInfo={referenceGenomesInfo}
                 myGroups={myGroups}
@@ -278,6 +292,8 @@ export const InnerSearchFullUI = ({
                     setSomeFieldValues={setSomeFieldValues}
                     filterSchema={filterSchema}
                     lapisUrl={lapisUrl}
+                    queryCurrentUrl={queryCurrentUrl}
+                    accessToken={accessToken}
                     searchVisibilities={searchVisibilities}
                     setASearchVisibility={setASearchVisibility}
                     lapisSearchParameters={lapisSearchParameters}

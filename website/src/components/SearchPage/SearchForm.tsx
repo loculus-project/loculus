@@ -87,6 +87,8 @@ interface SearchFormProps {
     fieldValues: FieldValues;
     setSomeFieldValues: SetSomeFieldValues;
     lapisUrl: string;
+    queryCurrentUrl?: string;
+    accessToken?: string;
     searchVisibilities: Map<string, MetadataVisibility>;
     setASearchVisibility: (fieldName: string, value: boolean) => void;
     referenceGenomesInfo: ReferenceGenomesInfo;
@@ -112,6 +114,8 @@ export const SearchForm = ({
     fieldValues,
     setSomeFieldValues,
     lapisUrl,
+    queryCurrentUrl,
+    accessToken,
     searchVisibilities,
     setASearchVisibility,
     referenceGenomesInfo,
@@ -258,6 +262,8 @@ export const SearchForm = ({
                     fieldValues={fieldValues}
                     setSomeFieldValues={setSomeFieldValues}
                     lapisUrl={lapisUrl}
+                    queryCurrentUrl={queryCurrentUrl}
+                    accessToken={accessToken}
                     lapisSearchParameters={lapisSearchParameters}
                     segmentName={segmentName}
                 />
@@ -280,6 +286,8 @@ export const SearchForm = ({
                     key={filter.name}
                     field={filter}
                     lapisUrl={lapisUrl}
+                    queryCurrentUrl={queryCurrentUrl}
+                    accessToken={accessToken}
                     fieldValues={fieldValues}
                     setSomeFieldValues={setSomeFieldValues}
                     lapisSearchParameters={lapisSearchParameters}
@@ -343,6 +351,8 @@ export const SearchForm = ({
                         fieldValues={fieldValues}
                         setSomeFieldValues={setSomeFieldValues}
                         lapisUrl={lapisUrl}
+                        queryCurrentUrl={queryCurrentUrl}
+                        accessToken={accessToken}
                         lapisSearchParameters={lapisSearchParameters}
                     />
                     <div className='flex flex-col'>
@@ -361,6 +371,8 @@ export const SearchForm = ({
                                             key={item.field.name}
                                             field={item.field}
                                             lapisUrl={lapisUrl}
+                                            queryCurrentUrl={queryCurrentUrl}
+                                            accessToken={accessToken}
                                             fieldValues={fieldValues}
                                             setSomeFieldValues={setSomeFieldValues}
                                             lapisSearchParameters={lapisSearchParameters}
@@ -422,12 +434,22 @@ export const SearchForm = ({
 interface SearchFieldProps {
     field: GroupedMetadataFilter | MetadataFilter;
     lapisUrl: string;
+    queryCurrentUrl?: string;
+    accessToken?: string;
     fieldValues: FieldValues;
     setSomeFieldValues: SetSomeFieldValues;
     lapisSearchParameters: LapisSearchParameters;
 }
 
-const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSearchParameters }: SearchFieldProps) => {
+const SearchField = ({
+    field,
+    lapisUrl,
+    queryCurrentUrl,
+    accessToken,
+    fieldValues,
+    setSomeFieldValues,
+    lapisSearchParameters,
+}: SearchFieldProps) => {
     if (field.grouped === true) {
         if (field.groupedFields[0].rangeOverlapSearch) {
             return <DateRangeField field={field} fieldValues={fieldValues} setSomeFieldValues={setSomeFieldValues} />;
@@ -444,6 +466,8 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                             key={f.name}
                             lapisSearchParameters={lapisSearchParameters}
                             lapisUrl={lapisUrl}
+                            queryCurrentUrl={queryCurrentUrl}
+                            accessToken={accessToken}
                         />
                     ))}
                 </div>
@@ -476,6 +500,8 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                         fieldValue={(fieldValues[field.name] ?? '') as string}
                         setSomeFieldValues={setSomeFieldValues}
                         lapisUrl={lapisUrl}
+                        queryCurrentUrl={queryCurrentUrl}
+                        accessToken={accessToken}
                         lapisSearchParameters={lapisSearchParameters}
                         mode={field.lineageSearch ? 'lineage' : 'default'}
                     />
@@ -491,6 +517,8 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                             optionsProvider={{
                                 type: 'generic',
                                 lapisUrl,
+                                queryCurrentUrl,
+                                accessToken,
                                 lapisSearchParameters,
                                 fieldName: field.name,
                             }}
@@ -508,6 +536,8 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                         optionsProvider={{
                             type: 'generic',
                             lapisUrl,
+                            queryCurrentUrl,
+                            accessToken,
                             lapisSearchParameters,
                             fieldName: field.name,
                         }}
@@ -532,6 +562,8 @@ interface AdvancedOptionsModalProps {
     fieldValues: FieldValues;
     setSomeFieldValues: SetSomeFieldValues;
     lapisUrl: string;
+    queryCurrentUrl?: string;
+    accessToken?: string;
     lapisSearchParameters: LapisSearchParameters;
 }
 
@@ -542,6 +574,8 @@ const AdvancedOptionsModal = ({
     fieldValues,
     setSomeFieldValues,
     lapisUrl,
+    queryCurrentUrl,
+    accessToken,
     lapisSearchParameters,
 }: AdvancedOptionsModalProps) => {
     if (fields.length === 0) {
@@ -558,6 +592,8 @@ const AdvancedOptionsModal = ({
                             fieldValues={fieldValues}
                             setSomeFieldValues={setSomeFieldValues}
                             lapisUrl={lapisUrl}
+                            queryCurrentUrl={queryCurrentUrl}
+                            accessToken={accessToken}
                             lapisSearchParameters={lapisSearchParameters}
                         />
                     </div>

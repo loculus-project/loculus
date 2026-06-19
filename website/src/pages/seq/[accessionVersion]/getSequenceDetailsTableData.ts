@@ -35,10 +35,11 @@ export type SequenceDetailsTableDataResult = Promise<Result<TableData | Redirect
 export const getSequenceDetailsTableData = async (
     accessionVersion: string,
     organism: string,
+    accessToken: string,
 ): SequenceDetailsTableDataResult => {
     const { accession, version } = parseAccessionVersionFromString(accessionVersion);
 
-    const lapisClient = LapisClient.createForOrganism(organism);
+    const lapisClient = LapisClient.createForOrganism(organism, accessToken);
     const backendClient = createBackendClient();
 
     if (version === undefined) {

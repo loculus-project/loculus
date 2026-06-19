@@ -88,6 +88,7 @@ class SecurityConfig {
                 "/api-docs**",
                 "/api-docs/**",
                 "/swagger-ui/**",
+                "/scalar-api-reference",
             ).permitAll()
             auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
             auth.requestMatchers(HttpMethod.HEAD, *headEndpointsThatArePublic).permitAll()
@@ -99,6 +100,9 @@ class SecurityConfig {
             auth.requestMatchers(*adminEndpoints).hasAuthority(SUPER_USER)
             auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
             auth.anyRequest().authenticated()
+        }
+        .csrf { csrf ->
+            csrf.ignoringRequestMatchers("/*/lapis/**", "/query/**")
         }
         .oauth2ResourceServer { oauth2 ->
             oauth2.jwt { jwt ->

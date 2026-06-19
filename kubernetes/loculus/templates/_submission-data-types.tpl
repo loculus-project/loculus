@@ -3,6 +3,7 @@ submissionDataTypes:
   {{- if (hasKey . "submissionDataTypes") }}
   {{- with .submissionDataTypes }}
   consensusSequences: {{ (hasKey . "consensusSequences") | ternary .consensusSequences "true" }}
+  alignedNucleotideSequences: {{ (hasKey . "alignedNucleotideSequences") | ternary .alignedNucleotideSequences "true" }}
   {{- if (hasKey . "maxSequencesPerEntry") }}
   maxSequencesPerEntry: {{ .maxSequencesPerEntry }}
   {{- end }}
@@ -12,5 +13,6 @@ submissionDataTypes:
   {{- end }}
   {{- else }}
   consensusSequences: true
+  alignedNucleotideSequences: true
   {{- end }}
 {{- end }}

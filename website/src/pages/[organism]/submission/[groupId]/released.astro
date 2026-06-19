@@ -51,6 +51,7 @@ const { data, totalCount } = await performLapisSearchQueries(
     referenceGenomesInfo,
     hiddenFieldValues,
     cleanedOrganism.key,
+    accessToken!,
 );
 
 const websiteConfig = getWebsiteConfig();
