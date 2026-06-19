@@ -26,11 +26,20 @@ function FieldRow({ field }: { field: FieldComparison }) {
 }
 
 function FieldGroup({ header, fields }: { header: string; fields: FieldComparison[] }) {
+    // Mutation sections show only the mutations that differ between the versions, so make
+    // that explicit (the full list is available on each version's sequence page).
+    const isMutationSection = headerSectionRank(header) === 2;
+
     return (
         <>
             <tr>
                 <td colSpan={3} className='bg-gray-100 px-4 py-2 font-semibold'>
                     {header}
+                    {isMutationSection && (
+                        <span className='ml-2 text-xs font-normal italic text-gray-500'>
+                            showing only mutations that differ between the two versions
+                        </span>
+                    )}
                 </td>
             </tr>
             {fields.map((field) => (

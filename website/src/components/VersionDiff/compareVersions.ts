@@ -1,3 +1,4 @@
+import { diffMutationEntries } from './mutationDiff';
 import type { ComparisonResult, FieldComparison } from './types';
 import type { DetailsJson } from '../../types/detailsJson';
 import type { TableDataEntry } from '../SequenceDetailsPage/types';
@@ -111,12 +112,18 @@ export function compareVersionData(v1: DetailsJson, v2: DetailsJson): Comparison
             const hasChanged = comparisonKey(v1Entry) !== comparisonKey(v2Entry);
             const isNoisy = isNoisyField(v1Entry.name);
 
+            // For mutation fields, only keep the mutations that actually differ between the
+            // two versions, so each column shows just its removals/additions rather than the
+            // full (often long) list. The full list stays available on each version's page.
+            const [entry1, entry2] =
+                v1Entry.type.kind === 'mutation' ? diffMutationEntries(v1Entry, v2Entry) : [v1Entry, v2Entry];
+
             const comparison: FieldComparison = {
                 name: v1Entry.name,
                 label: v1Entry.label,
                 header: v1Entry.header,
-                entry1: v1Entry,
-                entry2: v2Entry,
+                entry1,
+                entry2,
                 orderOnDetailsPage: v1Entry.orderOnDetailsPage ?? v2Entry.orderOnDetailsPage,
                 hasChanged,
                 isNoisy,
