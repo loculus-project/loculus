@@ -37,14 +37,17 @@ function readComparePairFromUrl(): [number, number] | null {
  * versions' `details.json` and produces the comparison result.
  */
 export function useVersionComparison(accession: string, versions: SequenceEntryHistoryEntry[]) {
-    const autoCompare = versions.length === 2;
-
     const [selectedVersions, setSelectedVersions] = useState<Set<number>>(() => {
         const fromUrl = readComparePairFromUrl();
         if (fromUrl !== null) {
             return new Set(fromUrl);
         }
-        return autoCompare ? new Set(versions.map((v) => v.version)) : new Set();
+        // Default to comparing the two most recent versions (e.g. 2 & 3 of 3).
+        const twoMostRecent = versions
+            .map((v) => v.version)
+            .sort((a, b) => b - a)
+            .slice(0, 2);
+        return new Set(twoMostRecent);
     });
 
     const selectedPair = useMemo<[number, number] | null>(() => {
@@ -104,7 +107,6 @@ export function useVersionComparison(accession: string, versions: SequenceEntryH
         selectedVersions,
         selectedPair,
         toggleVersion,
-        autoCompare,
         comparison,
         isLoading,
         isFetching,
