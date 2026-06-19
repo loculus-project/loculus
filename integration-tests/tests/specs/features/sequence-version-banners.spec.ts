@@ -208,15 +208,27 @@ test.describe('Sequence version banners', () => {
         await detailPage.goto(revisedAccessionVersion);
 
         // Navigate to versions page
-        await detailPage.gotoAllVersions();
+        const versionsPage = await detailPage.gotoAllVersions();
 
         // Verify versions page content
-        await detailPage.expectVersionsPageFor(accession);
-        await detailPage.expectLatestVersionLabel();
-        await detailPage.expectPreviousVersionLabel();
+        await versionsPage.expectVersionsPageFor(accession);
+        await versionsPage.expectLatestVersionLabel();
+        await versionsPage.expectPreviousVersionLabel();
+
+        // Verify the version diff view: with exactly two versions it auto-compares,
+        // and the revised Collection date should show up as a changed field.
+        await versionsPage.expectComparingVersions(1, 2);
+        await versionsPage.expectFieldDiff('Collection date', '2023-03-01', '2023-09-20');
+        await expect.poll(() => versionsPage.getCompareParam()).toBe('1,2');
+
+        // "Show all fields" toggle: an unchanged field (Collection country = Spain) is
+        // hidden by default and revealed once the toggle is enabled.
+        await versionsPage.expectFieldRowAbsent('Collection country');
+        await versionsPage.toggleShowAllFields();
+        await versionsPage.expectFieldRowVisible('Collection country', 'Spain');
 
         // Click on the deprecated version link
-        await detailPage.clickVersionLink(deprecatedAccessionVersion);
+        await versionsPage.clickVersionLink(deprecatedAccessionVersion);
 
         // Verify we navigated to the deprecated version page
         await page.waitForURL(`**/seq/${deprecatedAccessionVersion}`);

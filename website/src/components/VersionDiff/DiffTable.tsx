@@ -25,8 +25,8 @@ function FieldRow({ field }: { field: FieldComparison }) {
     return (
         <tr className={rowClass}>
             <td className='border px-4 py-2 font-medium'>{field.label}</td>
-            <td className='border px-4 py-2'>{String(field.value1)}</td>
-            <td className='border px-4 py-2'>{String(field.value2)}</td>
+            <td className='border px-4 py-2 break-words'>{String(field.value1)}</td>
+            <td className='border px-4 py-2 break-words'>{String(field.value2)}</td>
         </tr>
     );
 }
@@ -75,10 +75,10 @@ export function DiffTable({ comparison, version1, version2, showAllFields }: Dif
 
     return (
         <div className='overflow-x-auto'>
-            <table className='table-auto w-full border-collapse border'>
+            <table className='table-fixed w-full border-collapse border'>
                 <thead>
                     <tr className='bg-gray-200'>
-                        <th className='border px-4 py-2 text-left'>Field</th>
+                        <th className='border px-4 py-2 text-left w-[20ch]'>Field</th>
                         <th className='border px-4 py-2 text-left'>Version {version1}</th>
                         <th className='border px-4 py-2 text-left'>Version {version2}</th>
                     </tr>
