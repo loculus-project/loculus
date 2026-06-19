@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
+import { EditPage } from '../../pages/edit.page';
 import { ReviewPage } from '../../pages/review.page';
 import { SearchPage } from '../../pages/search.page';
 import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
@@ -20,6 +21,19 @@ const TEST_SEQUENCE =
     'TACCCAAACTTGTCGTTGGGGAGAAAGCGTGTCTGGAAAAAGTACAAAGGCAGATTCAGGTCCATGCAGAACAAGGGCTCATT' +
     'CAATATCCAACTTCCTGGCAATCAGTTGGACACATGATGGTGATCTTCCGTTTGATGAGAACAAACTTTTTAATCAAGTTCCT' +
     'ACTAATACATCAGGGGATGCACATGG';
+
+// TEST_SEQUENCE with one point mutation (SNP) and one in-frame (3-nt) deletion, used to
+// give a third revision a slightly different sequence so the diff shows sequence-derived
+// changes (length, mutations) between versions. The 3-nt deletion avoids a frameshift so
+// the revision still releases cleanly.
+const SNP_INDEX = 60;
+const DELETION_START = 120;
+const THIRD_REVISION_SEQUENCE = (() => {
+    const swapped = TEST_SEQUENCE[SNP_INDEX] === 'A' ? 'G' : 'A';
+    const withSnp =
+        TEST_SEQUENCE.slice(0, SNP_INDEX) + swapped + TEST_SEQUENCE.slice(SNP_INDEX + 1);
+    return withSnp.slice(0, DELETION_START) + withSnp.slice(DELETION_START + 3);
+})();
 
 test.describe('Sequence version banners', () => {
     test('shows correct banners for revoked, revocation, deprecated, and revised entries', async ({
@@ -144,7 +158,7 @@ test.describe('Sequence version banners', () => {
         page,
         groupId,
     }) => {
-        test.setTimeout(200_000);
+        test.setTimeout(300_000);
         void groupId;
 
         const uuid = randomUUID();
@@ -232,5 +246,45 @@ test.describe('Sequence version banners', () => {
 
         // Verify we navigated to the deprecated version page
         await page.waitForURL(`**/seq/${deprecatedAccessionVersion}`);
+
+        // Third revision: change the sequence (one SNP + one deletion) to produce a third
+        // version that differs from version 2 in sequence-derived fields rather than metadata.
+        const editPage = new EditPage(page);
+        await editPage.goto('ebola-sudan', accession, 2);
+        // Discard the existing segment; for a single-segment organism this removes the row and
+        // reveals the "Add a segment" upload, which we use for the modified sequence.
+        await page
+            .getByTestId(/^discard_.+_segment_file$/)
+            .first()
+            .click();
+        await page.getByTestId('Add a segment_segment_file').setInputFiles({
+            name: 'revised.fasta',
+            mimeType: 'text/plain',
+            buffer: Buffer.from(`>revised\n${THIRD_REVISION_SEQUENCE}`),
+        });
+        const reviewPage3 = await editPage.submitChanges();
+        await reviewPage3.waitForZeroProcessing();
+        await reviewPage3.releaseAndGoToReleasedSequences();
+        await search.waitForAccessionVersionInSearch(accession, 3);
+
+        // Back to the versions page, now with three versions.
+        await versionsPage.goto(accession);
+
+        // With three versions, checkboxes appear and the diff defaults to the two most
+        // recent versions (2 vs 3). These differ only in sequence, so a sequence-derived
+        // field (Length) is shown as changed while the unchanged Collection date is hidden.
+        await versionsPage.expectVersionSelectionAvailable();
+        await versionsPage.expectComparingVersions(2, 3);
+        await expect.poll(() => versionsPage.getCompareParam()).toBe('2,3');
+        await versionsPage.expectFieldRowPresent('Length');
+        await versionsPage.expectFieldRowAbsent('Collection date');
+
+        // Flip the selection to compare versions 1 and 2 (uncheck 3, check 1 - deterministic
+        // regardless of which version the toggle drops). These differ in Collection date.
+        await versionsPage.toggleVersionSelection(`${accession}.3`);
+        await versionsPage.toggleVersionSelection(`${accession}.1`);
+        await versionsPage.expectComparingVersions(1, 2);
+        await versionsPage.expectFieldDiff('Collection date', '2023-03-01', '2023-09-20');
+        await expect.poll(() => versionsPage.getCompareParam()).toBe('1,2');
     });
 });

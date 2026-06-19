@@ -31,11 +31,7 @@ function VersionsWithDiffInner({ versions, accession }: VersionsWithDiffProps) {
         <div>
             <div className='mb-6'>
                 <h2 className='text-xl font-semibold mb-4'>Version History</h2>
-                {showCheckboxes && (
-                    <p className='text-sm text-gray-600 mb-3'>
-                        Select two versions to compare (selected: {selectedVersions.size}/2)
-                    </p>
-                )}
+                {showCheckboxes && <p className='text-sm text-gray-600 mb-3'>Select two versions to compare</p>}
                 <ul className='p-3'>
                     {versions.map((version) => (
                         <li key={version.version} className='mb-4'>

@@ -31,6 +31,22 @@ export class VersionsPage {
     }
 
     /**
+     * Assert that the version-selection checkboxes are shown (only the case when there
+     * are three or more versions; with two versions the diff auto-compares).
+     */
+    async expectVersionSelectionAvailable() {
+        await expect(this.page.getByText(/Select two versions to compare/)).toBeVisible();
+    }
+
+    /**
+     * Toggle the selection checkbox for the given accession version (e.g. 'LOC_X.2').
+     */
+    async toggleVersionSelection(accessionVersion: string) {
+        const row = this.page.getByRole('listitem').filter({ hasText: accessionVersion });
+        await row.getByRole('checkbox').click();
+    }
+
+    /**
      * Assert the version diff view is comparing the given two versions.
      * With exactly two versions the page auto-compares, so no selection is needed.
      */
@@ -82,6 +98,14 @@ export class VersionsPage {
         const row = this.diffRow(fieldLabel);
         await expect(row).toBeVisible();
         await expect(row).toContainText(value);
+    }
+
+    /**
+     * Assert that a field row is present in the diff table (without checking its value,
+     * e.g. a changed sequence-derived field whose exact value is not known up front).
+     */
+    async expectFieldRowPresent(fieldLabel: string) {
+        await expect(this.diffRow(fieldLabel)).toBeVisible();
     }
 
     /**
