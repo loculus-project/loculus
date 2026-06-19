@@ -20,15 +20,20 @@ function FieldRow({ field, mutationsDiffOnly }: { field: FieldComparison; mutati
     // the two versions. Only possible when the field exists in both versions.
     let { entry1, entry2 } = field;
     const isMutation = (entry1 ?? entry2)?.type.kind === 'mutation';
-    if (mutationsDiffOnly && isMutation && entry1 !== null && entry2 !== null) {
-        [entry1, entry2] = diffMutationEntries(entry1, entry2);
+    const diffApplied = mutationsDiffOnly && isMutation && entry1 !== null && entry2 !== null;
+    if (diffApplied) {
+        [entry1, entry2] = diffMutationEntries(entry1!, entry2!);
     }
 
     return (
         <tr className={rowClass}>
             <td className='border px-4 py-2 font-medium'>{field.label}</td>
-            <td className='border px-4 py-2 break-words'>{entry1 !== null && <DiffFieldValue entry={entry1} />}</td>
-            <td className='border px-4 py-2 break-words'>{entry2 !== null && <DiffFieldValue entry={entry2} />}</td>
+            <td className='border px-4 py-2 break-words'>
+                {entry1 !== null && <DiffFieldValue entry={entry1} blankWhenEmpty={diffApplied} />}
+            </td>
+            <td className='border px-4 py-2 break-words'>
+                {entry2 !== null && <DiffFieldValue entry={entry2} blankWhenEmpty={diffApplied} />}
+            </td>
         </tr>
     );
 }

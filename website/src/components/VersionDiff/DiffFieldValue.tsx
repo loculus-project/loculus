@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import type { SegmentedMutations, SegmentedMutationStrings } from '../../types/config';
 import { FileListComponent, parseMutations } from '../SequenceDetailsPage/DataTableEntryValue';
 import { LinkWithMenuComponent } from '../SequenceDetailsPage/LinkWithMenuComponent';
@@ -5,7 +7,7 @@ import { SubstitutionsContainer } from '../SequenceDetailsPage/MutationBadge';
 import { PlainValueDisplay } from '../SequenceDetailsPage/PlainValueDisplay';
 import type { TableDataEntry } from '../SequenceDetailsPage/types';
 
-const empty = <span className='italic'>None</span>;
+const none = <span className='italic'>None</span>;
 
 /**
  * Renders segmented mutation badges. Unlike the sequence details page's
@@ -13,7 +15,7 @@ const empty = <span className='italic'>None</span>;
  * as a bare line for the common single, unnamed segment and looks out of place in the
  * diff table); a light segment label is only shown when there is an actual segment name.
  */
-function SegmentedBadges({ segments }: { segments: SegmentedMutations[] }) {
+function SegmentedBadges({ segments, empty }: { segments: SegmentedMutations[]; empty: ReactNode }) {
     const nonEmpty = segments.filter(({ mutations }) => mutations.length > 0);
     if (nonEmpty.length === 0) {
         return empty;
@@ -31,7 +33,7 @@ function SegmentedBadges({ segments }: { segments: SegmentedMutations[] }) {
 }
 
 /** Renders segmented mutation strings (deletions/insertions) without the heading separator. */
-function SegmentedStrings({ segments }: { segments: SegmentedMutationStrings[] }) {
+function SegmentedStrings({ segments, empty }: { segments: SegmentedMutationStrings[]; empty: ReactNode }) {
     const nonEmpty = segments.filter(({ mutations }) => mutations.length > 0);
     if (nonEmpty.length === 0) {
         return empty;
@@ -57,16 +59,22 @@ function SegmentedStrings({ segments }: { segments: SegmentedMutationStrings[] }
  * are constant between versions (submitting group), need extra context not carried in
  * `details.json` (variant reference, data use terms), or are composite/grouped — falls
  * back to a plain text representation of the field's `value`.
+ *
+ * `blankWhenEmpty` is set when a mutation field has been reduced to only its differences
+ * (diff-only mode): an empty result then means "nothing changed here", so we render
+ * nothing rather than "None" (which would wrongly suggest the version has no mutations).
  */
-export function DiffFieldValue({ entry }: { entry: TableDataEntry }) {
+export function DiffFieldValue({ entry, blankWhenEmpty = false }: { entry: TableDataEntry; blankWhenEmpty?: boolean }) {
     const { customDisplay, value } = entry;
+
+    const empty = blankWhenEmpty ? null : none;
 
     switch (customDisplay?.type) {
         // Sequence-derived mutations / deletions / insertions: the core of a version diff.
         case 'badge':
-            return <SegmentedBadges segments={customDisplay.badge ?? []} />;
+            return <SegmentedBadges segments={customDisplay.badge ?? []} empty={empty} />;
         case 'list':
-            return <SegmentedStrings segments={customDisplay.list ?? []} />;
+            return <SegmentedStrings segments={customDisplay.list ?? []} empty={empty} />;
         case 'generatedBadge': {
             if (typeof value !== 'string') {
                 return <PlainValueDisplay value={value} />;
