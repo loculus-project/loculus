@@ -539,7 +539,7 @@ class SeqSetCitationsDatabaseService(
     }
 
     fun getSequenceCitations(accession: String, version: Long?): List<SequenceCitation> {
-        log.info { "Get sequence citations for accession $accession, version $version" }
+        log.info { "Get sequence citations for accession ${accession}${version?.let { ", version $it" } ?: ""}" }
 
         // If a version is provided, return citations pinned to that exact accession and version
         // Otherwise, return all citations for the accession, regardless of version, including unversioned
