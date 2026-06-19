@@ -25,7 +25,7 @@ function grouping(listTableDataEntries: TableDataEntry[]): TableDataEntry[] {
 
     for (const entry of listTableDataEntries) {
         if (entry.customDisplay?.displayGroup !== undefined) {
-            if (groupedEntries.has(entry.customDisplay.displayGroup)) {
+            if (!groupedEntries.has(entry.customDisplay.displayGroup)) {
                 groupedEntries.set(entry.customDisplay.displayGroup, []);
                 // Add a placeholder for the grouped entry
                 result.push({
