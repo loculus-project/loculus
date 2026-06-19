@@ -11,6 +11,9 @@ localHost: localhost
 robotsNoindexHeader: false
 seqSets:
   enabled: true
+  crossRef: 
+    DOIPrefix: "placeholder"
+    endpoint: "https://test.crossref.org"
   fieldsToDisplay:
     - field: "geoLocCountry"
       displayName: "Country"
@@ -2651,6 +2654,11 @@ secrets:
       username: "postgres"
       password: "unsecure"
       port: "5432"
+  crossref:
+    type: raw
+    data:
+      username: "dummy"
+      password: "dummy"
   service-accounts:
     type: autogen
     data:
