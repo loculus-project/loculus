@@ -17,9 +17,12 @@ class CleanUpStaleSequencesInProcessingTask(
     @Scheduled(fixedRateString = "\${${BackendSpringProperty.CLEAN_UP_RUN_EVERY_SECONDS}}", timeUnit = TimeUnit.SECONDS)
     @SchedulerLock(
         name = "cleanUpStaleSequencesInProcessing",
-        // `lockAtLeastFor` enforces the effective run interval across replicas (default matches the
-        // standard run-every interval); the lock is held this long even though the scheduler polls.
-        lockAtLeastFor = "\${loculus.locks.cleanUpStaleSequencesInProcessing.atLeast:PT1M}",
+        // `lockAtLeastFor` enforces the effective run interval across replicas; it defaults to the
+        // configured run-every interval so that value is honored rather than silently overridden.
+        // `lockAtMostFor` (PT5M) is the crash-recovery ceiling. Overridable via `loculus.locks.*`
+        // (tests set `atLeast` to PT0S).
+        lockAtLeastFor = "\${loculus.locks.cleanUpStaleSequencesInProcessing.atLeast:" +
+            "PT\${${BackendSpringProperty.CLEAN_UP_RUN_EVERY_SECONDS}}S}",
         lockAtMostFor = "PT5M",
     )
     fun task() {
