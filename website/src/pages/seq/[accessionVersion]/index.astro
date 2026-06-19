@@ -17,6 +17,7 @@ import { getSegmentNames } from '../../../utils/sequenceTypeHelpers';
 
 const accessionVersion = Astro.params.accessionVersion!;
 const { accession } = parseAccessionVersionFromString(accessionVersion);
+
 const sequenceCitationsPromise = seqSetsAreEnabled()
     ? SeqSetCitationClient.create().call('getSequenceCitations', {
           params: { accession }, // Display citations across all accession versions
@@ -24,7 +25,6 @@ const sequenceCitationsPromise = seqSetsAreEnabled()
     : undefined;
 
 const sequenceDetailsTableData = await findOrganismAndData(accessionVersion);
-const sequenceCitations = (await sequenceCitationsPromise)?.unwrapOr(undefined);
 
 if (
     sequenceDetailsTableData.isOk() &&
@@ -32,6 +32,8 @@ if (
 ) {
     return Astro.redirect(sequenceDetailsTableData.value.result.redirectUrl);
 }
+
+const sequenceCitations = (await sequenceCitationsPromise)?.unwrapOr(undefined);
 
 const session = Astro.locals.session;
 const accessToken = getAccessToken(session);
