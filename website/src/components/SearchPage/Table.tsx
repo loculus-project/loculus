@@ -79,7 +79,7 @@ const CellContent: FC<CellContentProps> = ({ value, type, columnWidth, fieldName
     return (
         <span
             ref={textRef}
-            className='truncate block'
+            className='truncate block min-h-5'
             style={{ maxWidth: getColumnWidthStyle(columnWidth) }}
             data-tooltip-id={isTruncated ? 'table-tip' : undefined}
             data-tooltip-content={isTruncated ? tooltipText : undefined}
