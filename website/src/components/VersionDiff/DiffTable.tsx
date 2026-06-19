@@ -1,3 +1,4 @@
+import { DiffFieldValue } from './DiffFieldValue';
 import type { ComparisonResult, FieldComparison } from './types';
 import { groupTableDataByHeader, headerSectionRank } from '../SequenceDetailsPage/groupTableDataByHeader';
 
@@ -14,8 +15,12 @@ function FieldRow({ field }: { field: FieldComparison }) {
     return (
         <tr className={rowClass}>
             <td className='border px-4 py-2 font-medium'>{field.label}</td>
-            <td className='border px-4 py-2 break-words'>{String(field.value1)}</td>
-            <td className='border px-4 py-2 break-words'>{String(field.value2)}</td>
+            <td className='border px-4 py-2 break-words'>
+                {field.entry1 !== null && <DiffFieldValue entry={field.entry1} />}
+            </td>
+            <td className='border px-4 py-2 break-words'>
+                {field.entry2 !== null && <DiffFieldValue entry={field.entry2} />}
+            </td>
         </tr>
     );
 }

@@ -34,8 +34,36 @@ function isHiddenField(fieldName: string): boolean {
     return HIDDEN_FIELD_PATTERNS.some((pattern) => pattern.test(fieldName));
 }
 
-function compareValues(value1: string | number | boolean, value2: string | number | boolean): boolean {
-    return value1 !== value2;
+/**
+ * A stable, comparable representation of a field's content, used only to decide whether
+ * the field changed between two versions (not for display — rendering reuses the
+ * `DataTableEntryValue` component).
+ *
+ * For most fields the plain `value` is the source of truth (even for JSON-encoded custom
+ * displays such as `submittingGroup` or `geoLocation`, whose rendered output is
+ * deterministic from `value`). Mutation / insertion / deletion fields are the exception:
+ * they carry an empty `value` and store their real content in `customDisplay`, so we
+ * flatten that structure into a string instead.
+ */
+function comparisonKey(entry: TableDataEntry): string {
+    if (entry.type.kind === 'mutation') {
+        const customDisplay = entry.customDisplay;
+        if (customDisplay?.type === 'badge' && customDisplay.badge !== undefined) {
+            return customDisplay.badge
+                .flatMap((segment) =>
+                    segment.mutations.map(
+                        ({ sequenceName, mutationFrom, position, mutationTo }) =>
+                            `${sequenceName !== null ? `${sequenceName}:` : ''}${mutationFrom}${position}${mutationTo}`,
+                    ),
+                )
+                .join(', ');
+        }
+        if (customDisplay?.type === 'list' && customDisplay.list !== undefined) {
+            return customDisplay.list.flatMap((segment) => segment.mutations).join(', ');
+        }
+        return '';
+    }
+    return String(entry.value);
 }
 
 export function compareVersionData(v1: DetailsJson, v2: DetailsJson): ComparisonResult {
@@ -66,9 +94,8 @@ export function compareVersionData(v1: DetailsJson, v2: DetailsJson): Comparison
                 name: v1Entry.name,
                 label: v1Entry.label,
                 header: v1Entry.header,
-                value1: v1Entry.value,
-                value2: '', // Field doesn't exist in v2
-                type: v1Entry.type,
+                entry1: v1Entry,
+                entry2: null, // Field doesn't exist in v2
                 orderOnDetailsPage: v1Entry.orderOnDetailsPage,
                 hasChanged: true,
                 isNoisy: isNoisyField(v1Entry.name),
@@ -81,16 +108,15 @@ export function compareVersionData(v1: DetailsJson, v2: DetailsJson): Comparison
             }
         } else {
             // Field exists in both versions
-            const hasChanged = compareValues(v1Entry.value, v2Entry.value);
+            const hasChanged = comparisonKey(v1Entry) !== comparisonKey(v2Entry);
             const isNoisy = isNoisyField(v1Entry.name);
 
             const comparison: FieldComparison = {
                 name: v1Entry.name,
                 label: v1Entry.label,
                 header: v1Entry.header,
-                value1: v1Entry.value,
-                value2: v2Entry.value,
-                type: v1Entry.type,
+                entry1: v1Entry,
+                entry2: v2Entry,
                 orderOnDetailsPage: v1Entry.orderOnDetailsPage ?? v2Entry.orderOnDetailsPage,
                 hasChanged,
                 isNoisy,
@@ -115,9 +141,8 @@ export function compareVersionData(v1: DetailsJson, v2: DetailsJson): Comparison
                 name: v2Entry.name,
                 label: v2Entry.label,
                 header: v2Entry.header,
-                value1: '', // Field doesn't exist in v1
-                value2: v2Entry.value,
-                type: v2Entry.type,
+                entry1: null, // Field doesn't exist in v1
+                entry2: v2Entry,
                 orderOnDetailsPage: v2Entry.orderOnDetailsPage,
                 hasChanged: true,
                 isNoisy: isNoisyField(v2Entry.name),
