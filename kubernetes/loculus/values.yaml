@@ -2279,6 +2279,188 @@ defaultOrganisms:
             S: 2to5
           category: "S"
       organismSpecificMetadata:
+        - name: ncbiUpdateDate
+          type: date
+          displayName: NCBI update date
+          definition: Date the viral nucleotide accession was last updated on the INSDC.
+          header: "INSDC"
+          orderOnDetailsPage: 1020
+          preprocessing:
+            function: parse_timestamp
+            inputs:
+              timestamp: ncbiUpdateDate
+          noInput: true
+          perSegment: true
+          oneHeader: true
+          columnWidth: 100
+        - name: insdcAccessionBase
+          displayName: INSDC accession base
+          definition: The base accession assigned by the INSDC (GenBank/ENA/DDBJ) for this sequence, without the version number.
+          header: "INSDC"
+          hideOnSequenceDetailsPage: true
+          noInput: true
+          perSegment: true
+          oneHeader: true
+        - name: insdcVersion
+          displayName: INSDC version
+          definition: The version number of the INSDC record, incremented each time the sequence record is updated.
+          type: int
+          header: "INSDC"
+          hideOnSequenceDetailsPage: true
+          noInput: true
+          perSegment: true
+          oneHeader: true
+        - name: insdcAccessionFull
+          displayName: INSDC accession
+          definition: The full versioned INSDC accession (base accession plus version number), searchable across GenBank, ENA, and DDBJ.
+          customDisplay:
+            type: linkWithMenu
+            linkMenuItems:
+              - name: View in NCBI
+                url: "https://www.ncbi.nlm.nih.gov/nuccore/__value__"
+              - name: View in ENA
+                url: "https://www.ebi.ac.uk/ena/browser/view/__value__"
+              - name: View in DDBJ
+                url: "https://getentry.ddbj.nig.ac.jp/getentry/na/__value__"
+          header: "INSDC"
+          orderOnDetailsPage: 1040
+          ingest: genbankAccession
+          noInput: true
+          perSegment: true
+          oneHeader: true
+        - name: length
+          type: int
+          header: "Alignment and QC metrics"
+          isSequenceFilter: true
+          noInput: true
+          rangeSearch: true
+          initiallyVisible: true
+          perSegment: true
+          displayName: Length
+          definition: The length of the sequence.
+          orderOnDetailsPage: 2700
+          customDisplay:
+            type: lengthCompleteness
+            displayGroup: lengthCompleteness
+            label: Length
+        - name: totalSnps
+          type: int
+          isSequenceFilter: true
+          header: "Alignment and QC metrics"
+          noInput: true
+          rangeSearch: true
+          perSegment: true
+          displayName: Total SNPs
+          definition: "Total count of nucleotide substitutions."
+          orderOnDetailsPage: 2720
+          preprocessing:
+            inputs: {input: nextclade.totalSubstitutions}
+        - name: totalInsertedNucs
+          type: int
+          isSequenceFilter: true
+          header: "Alignment and QC metrics"
+          noInput: true
+          rangeSearch: true
+          perSegment: true
+          displayName: Total inserted nucs
+          definition: "Total count of inserted nucleotide positions."
+          orderOnDetailsPage: 2740
+          preprocessing:
+            inputs: {input: nextclade.totalInsertions}
+        - name: totalDeletedNucs
+          type: int
+          isSequenceFilter: true
+          header: "Alignment and QC metrics"
+          noInput: true
+          rangeSearch: true
+          perSegment: true
+          orderOnDetailsPage: 2760
+          preprocessing:
+            inputs: {input: nextclade.totalDeletions}
+          displayName: Total deleted nucs
+          definition: "Total count of deleted nucleotide positions."
+        - name: totalAmbiguousNucs
+          type: int
+          isSequenceFilter: true
+          header: "Alignment and QC metrics"
+          noInput: true
+          rangeSearch: true
+          perSegment: true
+          displayName: Total ambiguous nucs
+          definition: "Total count of ambiguous nucleotides (not A, C, G, T, or N)."
+          orderOnDetailsPage: 2780
+          preprocessing:
+            inputs: {input: "nextclade.totalNonACGTNs"}
+        - name: totalUnknownNucs
+          orderOnDetailsPage: 2800
+          type: int
+          isSequenceFilter: true
+          header: "Alignment and QC metrics"
+          noInput: true
+          rangeSearch: true
+          perSegment: true
+          displayName: Total unknown nucs
+          definition: "Total count of missing (N) nucleotides."
+          preprocessing:
+            inputs: {input: nextclade.totalMissing}
+        - name: totalFrameShifts
+          isSequenceFilter: true
+          type: int
+          rangeSearch: true
+          header: "Alignment and QC metrics"
+          noInput: true
+          perSegment: true
+          displayName: Total frame shifts
+          definition: "Total count of detected frame shifts."
+          orderOnDetailsPage: 2820
+          preprocessing:
+            inputs: {input: nextclade.totalFrameShifts}
+        - name: frameShifts
+          isSequenceFilter: true
+          header: "Alignment and QC metrics"
+          noInput: true
+          perSegment: true
+          displayName: Frame shifts
+          definition: "Frame-shifting insertions or deletions detected in CDS regions."
+          orderOnDetailsPage: 2840
+          preprocessing:
+            inputs: {input: nextclade.frameShifts}
+        - name: totalStopCodons
+          isSequenceFilter: true
+          perSegment: true
+          displayName: Total stop codons
+          definition: "Number of penalized premature stop codons."
+          type: int
+          header: "Alignment and QC metrics"
+          noInput: true
+          preprocessing:
+            inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
+        - name: stopCodons
+          isSequenceFilter: true
+          perSegment: true
+          displayName: Stop codons
+          definition: "Premature stop codons not in the ignored list (penalized)."
+          header: "Alignment and QC metrics"
+          noInput: true
+          preprocessing:
+            inputs: {input: nextclade.qc.stopCodons.stopCodons}
+        - name: completeness
+          isSequenceFilter: true
+          type: float
+          header: "Alignment and QC metrics"
+          noInput: true
+          perSegment: true
+          displayName: Completeness
+          definition: "Fraction of reference positions covered by the sequence (0.0 to 1.0)."
+          rangeSearch: true
+          percentage: true
+          orderOnDetailsPage: 2860
+          customDisplay:
+            type: lengthCompleteness
+            displayGroup: lengthCompleteness
+            label: Length
+          preprocessing:
+            inputs: {input: nextclade.coverage}
         - name: variant_L
           isSequenceFilter: true
           header: "Clade & Lineage"
@@ -2491,6 +2673,188 @@ defaultOrganisms:
           onlyForReferences:
             main: EV-D68
       organismSpecificMetadata:
+        - name: ncbiUpdateDate
+          type: date
+          displayName: NCBI update date
+          definition: Date the viral nucleotide accession was last updated on the INSDC.
+          header: "INSDC"
+          orderOnDetailsPage: 1020
+          preprocessing:
+            function: parse_timestamp
+            inputs:
+              timestamp: ncbiUpdateDate
+          noInput: true
+          perSegment: true
+          oneHeader: true
+          columnWidth: 100
+        - name: insdcAccessionBase
+          displayName: INSDC accession base
+          definition: The base accession assigned by the INSDC (GenBank/ENA/DDBJ) for this sequence, without the version number.
+          header: "INSDC"
+          hideOnSequenceDetailsPage: true
+          noInput: true
+          perSegment: true
+          oneHeader: true
+        - name: insdcVersion
+          displayName: INSDC version
+          definition: The version number of the INSDC record, incremented each time the sequence record is updated.
+          type: int
+          header: "INSDC"
+          hideOnSequenceDetailsPage: true
+          noInput: true
+          perSegment: true
+          oneHeader: true
+        - name: insdcAccessionFull
+          displayName: INSDC accession
+          definition: The full versioned INSDC accession (base accession plus version number), searchable across GenBank, ENA, and DDBJ.
+          customDisplay:
+            type: linkWithMenu
+            linkMenuItems:
+              - name: View in NCBI
+                url: "https://www.ncbi.nlm.nih.gov/nuccore/__value__"
+              - name: View in ENA
+                url: "https://www.ebi.ac.uk/ena/browser/view/__value__"
+              - name: View in DDBJ
+                url: "https://getentry.ddbj.nig.ac.jp/getentry/na/__value__"
+          header: "INSDC"
+          orderOnDetailsPage: 1040
+          ingest: genbankAccession
+          noInput: true
+          perSegment: true
+          oneHeader: true
+        - name: length
+          type: int
+          header: "Alignment and QC metrics"
+          isSequenceFilter: true
+          noInput: true
+          rangeSearch: true
+          initiallyVisible: true
+          perSegment: true
+          displayName: Length
+          definition: The length of the sequence.
+          orderOnDetailsPage: 2700
+          customDisplay:
+            type: lengthCompleteness
+            displayGroup: lengthCompleteness
+            label: Length
+        - name: totalSnps
+          type: int
+          isSequenceFilter: true
+          header: "Alignment and QC metrics"
+          noInput: true
+          rangeSearch: true
+          perSegment: true
+          displayName: Total SNPs
+          definition: "Total count of nucleotide substitutions."
+          orderOnDetailsPage: 2720
+          preprocessing:
+            inputs: {input: nextclade.totalSubstitutions}
+        - name: totalInsertedNucs
+          type: int
+          isSequenceFilter: true
+          header: "Alignment and QC metrics"
+          noInput: true
+          rangeSearch: true
+          perSegment: true
+          displayName: Total inserted nucs
+          definition: "Total count of inserted nucleotide positions."
+          orderOnDetailsPage: 2740
+          preprocessing:
+            inputs: {input: nextclade.totalInsertions}
+        - name: totalDeletedNucs
+          type: int
+          isSequenceFilter: true
+          header: "Alignment and QC metrics"
+          noInput: true
+          rangeSearch: true
+          perSegment: true
+          orderOnDetailsPage: 2760
+          preprocessing:
+            inputs: {input: nextclade.totalDeletions}
+          displayName: Total deleted nucs
+          definition: "Total count of deleted nucleotide positions."
+        - name: totalAmbiguousNucs
+          type: int
+          isSequenceFilter: true
+          header: "Alignment and QC metrics"
+          noInput: true
+          rangeSearch: true
+          perSegment: true
+          displayName: Total ambiguous nucs
+          definition: "Total count of ambiguous nucleotides (not A, C, G, T, or N)."
+          orderOnDetailsPage: 2780
+          preprocessing:
+            inputs: {input: "nextclade.totalNonACGTNs"}
+        - name: totalUnknownNucs
+          orderOnDetailsPage: 2800
+          type: int
+          isSequenceFilter: true
+          header: "Alignment and QC metrics"
+          noInput: true
+          rangeSearch: true
+          perSegment: true
+          displayName: Total unknown nucs
+          definition: "Total count of missing (N) nucleotides."
+          preprocessing:
+            inputs: {input: nextclade.totalMissing}
+        - name: totalFrameShifts
+          isSequenceFilter: true
+          type: int
+          rangeSearch: true
+          header: "Alignment and QC metrics"
+          noInput: true
+          perSegment: true
+          displayName: Total frame shifts
+          definition: "Total count of detected frame shifts."
+          orderOnDetailsPage: 2820
+          preprocessing:
+            inputs: {input: nextclade.totalFrameShifts}
+        - name: frameShifts
+          isSequenceFilter: true
+          header: "Alignment and QC metrics"
+          noInput: true
+          perSegment: true
+          displayName: Frame shifts
+          definition: "Frame-shifting insertions or deletions detected in CDS regions."
+          orderOnDetailsPage: 2840
+          preprocessing:
+            inputs: {input: nextclade.frameShifts}
+        - name: totalStopCodons
+          isSequenceFilter: true
+          perSegment: true
+          displayName: Total stop codons
+          definition: "Number of penalized premature stop codons."
+          type: int
+          header: "Alignment and QC metrics"
+          noInput: true
+          preprocessing:
+            inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
+        - name: stopCodons
+          isSequenceFilter: true
+          perSegment: true
+          displayName: Stop codons
+          definition: "Premature stop codons not in the ignored list (penalized)."
+          header: "Alignment and QC metrics"
+          noInput: true
+          preprocessing:
+            inputs: {input: nextclade.qc.stopCodons.stopCodons}
+        - name: completeness
+          isSequenceFilter: true
+          type: float
+          header: "Alignment and QC metrics"
+          noInput: true
+          perSegment: true
+          displayName: Completeness
+          definition: "Fraction of reference positions covered by the sequence (0.0 to 1.0)."
+          rangeSearch: true
+          percentage: true
+          orderOnDetailsPage: 2860
+          customDisplay:
+            type: lengthCompleteness
+            displayGroup: lengthCompleteness
+            label: Length
+          preprocessing:
+            inputs: {input: nextclade.coverage}
         - &evMetadataAdd
           name: clade_cv_a16
           isSequenceFilter: true
