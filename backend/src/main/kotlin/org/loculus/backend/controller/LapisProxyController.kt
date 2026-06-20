@@ -21,7 +21,6 @@ private val log = KotlinLogging.logger { }
 private val FORWARDED_RESPONSE_HEADERS = setOf(
     "content-type",
     "content-encoding",
-    "transfer-encoding",
 )
 
 /**
@@ -56,9 +55,12 @@ class LapisProxyController(
             proxyPost("sample/$endpoint", body, response)
         } catch (e: Exception) {
             log.error(e) { "LAPIS proxy error for POST /query/$endpoint" }
-            response.status = HttpServletResponse.SC_BAD_GATEWAY
-            response.contentType = "application/json"
-            response.writer.write("""{"error":"LAPIS proxy error","message":${objectMapper.writeValueAsString(e.message)}}""")
+            if (!response.isCommitted) {
+                response.status = HttpServletResponse.SC_BAD_GATEWAY
+                response.contentType = "application/json"
+                val errorBody = """{"error":"LAPIS proxy error","message":${objectMapper.writeValueAsString(e.message)}}"""
+                response.outputStream.write(errorBody.toByteArray(Charsets.UTF_8))
+            }
         }
     }
 
@@ -141,6 +143,7 @@ class LapisProxyController(
             responseHeaders = { name, value ->
                 if (name.lowercase() in FORWARDED_RESPONSE_HEADERS) response.addHeader(name, value)
             },
+            responseStatus = { response.status = it },
             writeResponse = { it.copyTo(response.outputStream) },
         )
     }

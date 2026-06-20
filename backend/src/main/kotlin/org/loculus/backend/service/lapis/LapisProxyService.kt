@@ -21,6 +21,7 @@ class LapisProxyService(private val backendConfig: BackendConfig, private val ob
         lapisPath: String,
         body: Map<String, Any?>,
         responseHeaders: (String, String) -> Unit,
+        responseStatus: (Int) -> Unit = {},
         writeResponse: (InputStream) -> Unit,
     ) {
         val url = "${backendConfig.lapisUrl}/$lapisPath"
@@ -34,11 +35,12 @@ class LapisProxyService(private val backendConfig: BackendConfig, private val ob
             .POST(HttpRequest.BodyPublishers.ofString(requestBody))
             .build()
 
-        val response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream())
-        response.headers().map().forEach { (name, values) ->
+        val lapisResponse = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream())
+        responseStatus(lapisResponse.statusCode())
+        lapisResponse.headers().map().forEach { (name, values) ->
             values.forEach { value -> responseHeaders(name, value) }
         }
-        response.body().use { writeResponse(it) }
+        lapisResponse.body().use { writeResponse(it) }
     }
 
     fun proxyGet(
