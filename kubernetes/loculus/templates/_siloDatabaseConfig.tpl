@@ -9,6 +9,21 @@
 {{- $commonMetadata := .commonMetadata }}
 {{- $sharedMetadata := .sharedMetadata }}
 {{- $organisms := .organisms }}
+{{/* Pre-compute raw segment names for each multi-segment organism */}}
+{{- $orgSegments := dict }}
+{{- range $_, $item := $organisms }}
+  {{- $merged := include "loculus.mergeReferenceGenomes" $item.contents.referenceGenomes | fromYaml }}
+  {{- if gt (len $merged.nucleotideSequences) 1 }}
+    {{- $segs := list }}
+    {{- range $merged.nucleotideSequences }}{{- $segs = append $segs .name }}{{- end }}
+    {{- $_ := set $orgSegments $item.key $segs }}
+  {{- end }}
+{{- end }}
+{{/* Collect all unique raw segment names across all multi-segment organisms */}}
+{{- $allMultiSegments := dict }}
+{{- range $_, $segs := $orgSegments }}
+  {{- range $segs }}{{- $_ := set $allMultiSegments . true }}{{- end }}
+{{- end }}
 schema:
   instanceName: unified
   opennessLevel: OPEN
@@ -17,20 +32,57 @@ schema:
       generateIndex: true
       name: organism
   {{- range $commonMetadata }}
+  {{- $field := . }}
+  {{- if .perSegment }}
+    {{/* Base name for single-segment organisms */}}
+    {{- include "loculus.siloDatabaseShared" . | nindent 4 }}
+      name: {{ .name }}
+    {{/* Per-segment expansions for multi-segment organisms */}}
+    {{- range $seg, $_ := $allMultiSegments }}
+    {{- include "loculus.siloDatabaseShared" $field | nindent 4 }}
+      name: {{ printf "%s_%s" $field.name $seg }}
+    {{- end }}
+  {{- else }}
     {{- include "loculus.siloDatabaseShared" . | nindent 4 }}
       name: {{ .name }}
   {{- end }}
+  {{- end }}
   {{- range $sharedMetadata }}
+  {{- $field := . }}
+  {{- if .perSegment }}
     {{- include "loculus.siloDatabaseShared" . | nindent 4 }}
       name: {{ .name }}
+    {{- range $seg, $_ := $allMultiSegments }}
+    {{- include "loculus.siloDatabaseShared" $field | nindent 4 }}
+      name: {{ printf "%s_%s" $field.name $seg }}
+    {{- end }}
+  {{- else }}
+    {{- include "loculus.siloDatabaseShared" . | nindent 4 }}
+      name: {{ .name }}
+  {{- end }}
   {{- end }}
   {{- $seenFields := dict }}
   {{- range $_, $item := $organisms }}
+  {{- $orgKey := $item.key }}
+  {{- $orgSegs := index $orgSegments $orgKey | default list }}
+  {{- $isMultiSeg := gt (len $orgSegs) 0 }}
   {{- range ($item.contents.schema.organismSpecificMetadata | default list) }}
-  {{- if not (hasKey $seenFields .name) }}
-  {{- $_ := set $seenFields .name true }}
+  {{- $field := . }}
+  {{- if and .perSegment $isMultiSeg }}
+    {{- range $orgSegs }}
+    {{- $fieldName := printf "%s_%s" $field.name . }}
+    {{- if not (hasKey $seenFields $fieldName) }}
+    {{- $_ := set $seenFields $fieldName true }}
+    {{- include "loculus.siloDatabaseShared" $field | nindent 4 }}
+      name: {{ $fieldName }}
+    {{- end }}
+    {{- end }}
+  {{- else }}
+    {{- if not (hasKey $seenFields .name) }}
+    {{- $_ := set $seenFields .name true }}
     {{- include "loculus.siloDatabaseShared" . | nindent 4 }}
       name: {{ .name }}
+    {{- end }}
   {{- end }}
   {{- end }}
   {{- end }}
