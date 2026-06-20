@@ -12,7 +12,6 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -47,12 +46,13 @@ class LapisProxyController(
     @PostMapping("/{endpoint}")
     fun proxyPost(
         @PathVariable endpoint: String,
-        @RequestBody(required = false) rawBody: String?,
+        request: HttpServletRequest,
         response: HttpServletResponse,
     ) {
         log.debug { "Proxying POST /query/$endpoint" }
         try {
-            val body = lapisProxyService.parseBody(rawBody ?: "")
+            val rawBody = request.inputStream.bufferedReader().readText()
+            val body = lapisProxyService.parseBody(rawBody)
             proxyPost("sample/$endpoint", body, response)
         } catch (e: Exception) {
             log.error(e) { "LAPIS proxy error for POST /query/$endpoint" }

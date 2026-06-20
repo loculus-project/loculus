@@ -79,9 +79,10 @@ class SecurityConfig {
     fun securityFilterChain(
         httpSecurity: HttpSecurity,
         keycloakAuthoritiesConverter: KeycloakAuthenticationConverter,
+        corsConfigurationSource: org.springframework.web.cors.CorsConfigurationSource,
     ): SecurityFilterChain = httpSecurity
         .csrf { it.disable() }
-        .cors { }
+        .cors { it.configurationSource(corsConfigurationSource) }
         .authorizeHttpRequests { auth ->
             auth.requestMatchers(
                 "/",
