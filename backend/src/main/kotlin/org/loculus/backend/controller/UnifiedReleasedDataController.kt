@@ -6,6 +6,7 @@ import mu.KotlinLogging
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.loculus.backend.api.CompressionFormat
+import org.loculus.backend.api.Organism
 import org.loculus.backend.controller.LoculusCustomHeaders.X_TOTAL_RECORDS
 import org.loculus.backend.log.REQUEST_ID_MDC_KEY
 import org.loculus.backend.log.RequestIdContext
@@ -39,12 +40,15 @@ class UnifiedReleasedDataController(
     @GetMapping("/get-released-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun getAllReleasedData(
         @RequestParam compression: CompressionFormat?,
+        @RequestParam(required = false) organism: String?,
         @Parameter(
             description = "(Optional) Only retrieve all released data if Etag has changed.",
         ) @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
+        val organismFilter = organism?.let { Organism(it) }
         val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
             tableNames = RELEASED_DATA_RELATED_TABLES,
+            organism = organismFilter,
         )
         if (ifNoneMatch == lastDatabaseWriteETag) {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
@@ -55,7 +59,11 @@ class UnifiedReleasedDataController(
         headers.contentType = MediaType.APPLICATION_NDJSON
         compression?.let { headers.add(HttpHeaders.CONTENT_ENCODING, it.compressionName) }
 
-        val totalRecords = submissionDatabaseService.countAllReleasedSubmissions()
+        val totalRecords = if (organismFilter != null) {
+            submissionDatabaseService.countReleasedSubmissions(organismFilter)
+        } else {
+            submissionDatabaseService.countAllReleasedSubmissions()
+        }
         headers.add(X_TOTAL_RECORDS, totalRecords.toString())
 
         val streamBody = StreamingResponseBody { responseBodyStream ->
@@ -67,7 +75,12 @@ class UnifiedReleasedDataController(
             outputStream.use { stream ->
                 transaction {
                     try {
-                        iteratorStreamer.streamAsNdjson(releasedDataModel.getAllReleasedData(), stream)
+                        val data = if (organismFilter != null) {
+                            releasedDataModel.getReleasedData(organismFilter)
+                        } else {
+                            releasedDataModel.getAllReleasedData()
+                        }
+                        iteratorStreamer.streamAsNdjson(data, stream)
                     } catch (e: Exception) {
                         log.error(e) { "[get-released-data] Unexpected error while streaming: $e" }
                         stream.write(

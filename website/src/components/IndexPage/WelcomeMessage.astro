@@ -12,7 +12,15 @@ const { websiteName, welcomeMessageHTML } = Astro.props;
         <Fragment set:html={welcomeMessageHTML} />
     ) : (
         <>
-            <p class='my-4'>Welcome to {websiteName}, a system for sharing pathogen genome data.</p>
+            <div class='my-4 flex flex-wrap items-center gap-4'>
+                <p>Welcome to {websiteName}, a system for sharing pathogen genome data.</p>
+                <a
+                    href='/search'
+                    class='inline-block px-4 py-2 loculusColor text-white rounded-sm text-sm font-medium hover:opacity-90 whitespace-nowrap'
+                >
+                    Browse all organisms
+                </a>
+            </div>
 
             <h2 class='font-semibold my-3 text-lg'>Explore {websiteName} data!</h2>
         </>

@@ -46,6 +46,7 @@ import org.loculus.backend.model.ACCESSION_HEADER
 import org.loculus.backend.model.FASTA_IDS_HEADER
 import org.loculus.backend.model.FASTA_IDS_SEPARATOR
 import org.loculus.backend.model.METADATA_ID_HEADER
+import org.loculus.backend.model.RELEASED_DATA_RELATED_TABLES
 import org.loculus.backend.model.ReleasedDataModel
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.SubmitModel
