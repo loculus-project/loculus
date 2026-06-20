@@ -96,29 +96,27 @@ function selectSequenceHook(
     organism?: string,
 ) {
     const orgQuery = organism !== undefined ? { organism } : {};
+    // For multi-segment organisms, segment name is never 'main'; single-segment organisms always have name='main'
+    const isActuallyMultiSegmented = isMultiSegmented && sequenceType.name.name !== 'main';
+    const segmentQuery = isActuallyMultiSegmented ? { segment: sequenceType.name.name } : {};
+    const referenceQuery = sequenceType.name.referenceName ? { reference: sequenceType.name.referenceName } : {};
 
     if (isUnalignedSequence(sequenceType)) {
         return hooks.useUnalignedNucleotideSequences(request, {
-            queries: {
-                ...orgQuery,
-                ...(isMultiSegmented ? { segment: sequenceType.name.lapisName } : {}),
-            },
+            queries: { ...orgQuery, ...segmentQuery, ...referenceQuery },
             ...LAPIS_RETRY_OPTIONS,
         });
     }
 
     if (isAlignedSequence(sequenceType)) {
         return hooks.useAlignedNucleotideSequences(request, {
-            queries: {
-                ...orgQuery,
-                ...(isMultiSegmented ? { segment: sequenceType.name.lapisName } : {}),
-            },
+            queries: { ...orgQuery, ...segmentQuery, ...referenceQuery },
             ...LAPIS_RETRY_OPTIONS,
         });
     }
 
     return hooks.useAlignedAminoAcidSequences(request, {
-        queries: { gene: sequenceType.name.lapisName, ...orgQuery },
+        queries: { gene: sequenceType.name.name, ...orgQuery, ...referenceQuery },
         ...LAPIS_RETRY_OPTIONS,
     });
 }

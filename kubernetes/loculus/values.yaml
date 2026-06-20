@@ -35,7 +35,7 @@ disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
 disableIngest: false
-disableEnaSubmission: true
+disableEnaSubmission: false
 disableTaxonomyService: false
 readOnlyMode: false
 website:

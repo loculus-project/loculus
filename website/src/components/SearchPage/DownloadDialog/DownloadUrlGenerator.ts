@@ -177,14 +177,20 @@ export class DownloadUrlGenerator {
                 return {
                     organism: this.organism,
                     ...(dataType.segment !== undefined ? { segment: dataType.segment } : {}),
+                    ...(dataType.reference !== undefined ? { reference: dataType.reference } : {}),
                 };
             case 'alignedNucleotideSequences':
                 return {
                     organism: this.organism,
                     ...(dataType.segment !== undefined ? { segment: dataType.segment } : {}),
+                    ...(dataType.reference !== undefined ? { reference: dataType.reference } : {}),
                 };
             case 'alignedAminoAcidSequences':
-                return { organism: this.organism, gene: dataType.gene };
+                return {
+                    organism: this.organism,
+                    gene: dataType.gene,
+                    ...(dataType.reference !== undefined ? { reference: dataType.reference } : {}),
+                };
         }
     }
 }

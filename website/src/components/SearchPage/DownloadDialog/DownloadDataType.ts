@@ -6,10 +6,16 @@ export type DownloadDataType =
           type: 'unalignedNucleotideSequences';
           segmentLapisNames?: SegmentLapisNames;
           segment?: string;
+          reference?: string;
           richFastaHeaders: IncludeRichFastaHeaders;
       }
-    | { type: 'alignedNucleotideSequences'; segment?: string; richFastaHeaders: IncludeRichFastaHeaders }
-    | { type: 'alignedAminoAcidSequences'; gene: string; richFastaHeaders: IncludeRichFastaHeaders };
+    | {
+          type: 'alignedNucleotideSequences';
+          segment?: string;
+          reference?: string;
+          richFastaHeaders: IncludeRichFastaHeaders;
+      }
+    | { type: 'alignedAminoAcidSequences'; gene: string; reference?: string; richFastaHeaders: IncludeRichFastaHeaders };
 
 type IncludeRichFastaHeaders =
     | {

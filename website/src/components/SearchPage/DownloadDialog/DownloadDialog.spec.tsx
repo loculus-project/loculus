@@ -493,7 +493,7 @@ describe('DownloadDialog', () => {
 
             const { path, query } = parseDownloadHref();
             expectRouteInPathMatches(path, `/alignedNucleotideSequences`);
-            expect(query).toContain('segment=ref1');
+            expect(query).toContain('reference=ref1');
         });
 
         test('should download only the selected aligned reference amino acid sequences when reference is selected', async () => {
@@ -509,7 +509,8 @@ describe('DownloadDialog', () => {
 
             const { path: aaPath, query: aaQuery } = parseDownloadHref();
             expectRouteInPathMatches(aaPath, `/alignedAminoAcidSequences`);
-            expect(aaQuery).toContain('gene=gene2-ref1');
+            expect(aaQuery).toContain('gene=gene2');
+            expect(aaQuery).toContain('reference=ref1');
         });
 
         const metadataWithOnlyForReferenceName: Metadata[] = [

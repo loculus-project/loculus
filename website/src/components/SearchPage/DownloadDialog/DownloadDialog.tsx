@@ -175,8 +175,8 @@ function getDefaultDownloadFormState(
         dataType: 'metadata',
         compression: undefined,
         unalignedNucleotideSequence: segmentLapisNames[0] ?? { name: '', lapisNames: [] },
-        alignedNucleotideSequence: nucleotideSegmentInfos[0]?.lapisName ?? '',
-        alignedAminoAcidSequence: geneInfos[0]?.lapisName ?? '',
+        alignedNucleotideSequence: nucleotideSegmentInfos[0] ?? { name: '', lapisName: '' },
+        alignedAminoAcidSequence: geneInfos[0] ?? { name: '', lapisName: '' },
         includeRichFastaHeaders: false,
     };
 }
@@ -215,18 +215,25 @@ function getDownloadOption({
                           ? { include: true, fastaHeaderOverride: defaultFastaHeaderTemplate }
                           : { include: false },
                 };
-            case 'alignedNucleotideSequences':
+            case 'alignedNucleotideSequences': {
+                const segInfo = downloadFormState.alignedNucleotideSequence;
+                const isActuallyMultiSegmented = useMultiSegmentEndpoint && segInfo.name !== 'main';
                 return {
                     type: downloadFormState.dataType,
-                    segment: useMultiSegmentEndpoint ? downloadFormState.alignedNucleotideSequence : undefined,
+                    segment: isActuallyMultiSegmented ? segInfo.name : undefined,
+                    reference: segInfo.referenceName,
                     richFastaHeaders: { include: false },
                 };
-            case 'alignedAminoAcidSequences':
+            }
+            case 'alignedAminoAcidSequences': {
+                const geneInfo = downloadFormState.alignedAminoAcidSequence;
                 return {
                     type: downloadFormState.dataType,
-                    gene: downloadFormState.alignedAminoAcidSequence,
+                    gene: geneInfo.name,
+                    reference: geneInfo.referenceName,
                     richFastaHeaders: { include: false },
                 };
+            }
         }
     };
 

@@ -23,6 +23,7 @@ export type ReferenceSequenceData = {
 
 export type ReferenceGenomeInfo = {
     lapisName: string;
+    referenceName?: string;
     genes: GeneInfo[];
     insdcAccessionFull: string | null;
     displayName?: string;

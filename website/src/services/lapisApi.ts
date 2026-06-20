@@ -117,6 +117,11 @@ const alignedNucleotideSequencesEndpoint = makeEndpoint({
             schema: z.string().optional(),
         },
         {
+            name: 'reference',
+            type: 'Query',
+            schema: z.string().optional(),
+        },
+        {
             name: 'request',
             type: 'Body',
             schema: sequenceRequest,
@@ -138,6 +143,11 @@ const unalignedNucleotideSequencesEndpoint = makeEndpoint({
         },
         {
             name: 'segment',
+            type: 'Query',
+            schema: z.string().optional(),
+        },
+        {
+            name: 'reference',
             type: 'Query',
             schema: z.string().optional(),
         },
@@ -165,6 +175,11 @@ const alignedAminoAcidSequencesEndpoint = makeEndpoint({
             name: 'gene',
             type: 'Query',
             schema: z.string(),
+        },
+        {
+            name: 'reference',
+            type: 'Query',
+            schema: z.string().optional(),
         },
         {
             name: 'request',
