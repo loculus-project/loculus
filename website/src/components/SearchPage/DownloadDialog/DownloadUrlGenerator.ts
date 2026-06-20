@@ -90,6 +90,9 @@ export class DownloadUrlGenerator {
             }
         }
 
+        const routingParams = this.getRoutingParams(option.dataType);
+        Object.entries(routingParams).forEach(([key, value]) => params.set(key, value));
+
         const modifiedParams = this.modifyParamsForLapisGetRequest(
             downloadParameters.toUrlSearchParams().filter(([name]) => !excludedParams.has(name)),
         );
@@ -154,20 +157,34 @@ export class DownloadUrlGenerator {
     }
 
     private downloadEndpoint(dataType: DownloadDataType) {
-        const segmentPath = (segment?: string) => (segment !== undefined ? '/' + segment : '');
-
         switch (dataType.type) {
             case 'metadata':
                 return this.lapisUrl + '/details';
             case 'unalignedNucleotideSequences':
-                if (dataType.segment !== undefined) {
-                    return this.lapisUrl + '/unalignedNucleotideSequences/' + dataType.segment;
-                }
                 return this.lapisUrl + '/unalignedNucleotideSequences';
             case 'alignedNucleotideSequences':
-                return this.lapisUrl + '/alignedNucleotideSequences' + segmentPath(dataType.segment);
+                return this.lapisUrl + '/alignedNucleotideSequences';
             case 'alignedAminoAcidSequences':
-                return this.lapisUrl + '/alignedAminoAcidSequences/' + dataType.gene;
+                return this.lapisUrl + '/alignedAminoAcidSequences';
+        }
+    }
+
+    private getRoutingParams(dataType: DownloadDataType): Record<string, string> {
+        switch (dataType.type) {
+            case 'metadata':
+                return {};
+            case 'unalignedNucleotideSequences':
+                return {
+                    organism: this.organism,
+                    ...(dataType.segment !== undefined ? { segment: dataType.segment } : {}),
+                };
+            case 'alignedNucleotideSequences':
+                return {
+                    organism: this.organism,
+                    ...(dataType.segment !== undefined ? { segment: dataType.segment } : {}),
+                };
+            case 'alignedAminoAcidSequences':
+                return { organism: this.organism, gene: dataType.gene };
         }
     }
 }

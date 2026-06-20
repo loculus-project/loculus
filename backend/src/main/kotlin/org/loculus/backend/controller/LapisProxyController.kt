@@ -65,62 +65,42 @@ class LapisProxyController(
     }
 
     // ── GET sequence-download endpoints ─────────────────────────────────────
-    // `organism` is required so that unified segment names (e.g. `rsv_a_L`) can
-    // be derived from the organism-local name (e.g. `L`).
+    // `organism` is required (query param) so unified segment/gene names can be
+    // constructed. `segment` and `gene` are also query params (not path variables).
 
     @GetMapping("/unalignedNucleotideSequences")
-    fun proxyUnalignedNucleotideSequences(
+    fun getUnalignedNucleotideSequences(
         @RequestParam @Valid organism: String,
+        @RequestParam(required = false) segment: String?,
         request: HttpServletRequest,
         response: HttpServletResponse,
     ) {
         val org = Organism(organism)
-        val segmentName = resolveDefaultSegment(org)
-        proxyGet("sample/unalignedNucleotideSequences/$segmentName", organism, request, response)
-    }
-
-    @GetMapping("/unalignedNucleotideSequences/{segment}")
-    fun proxyUnalignedNucleotideSequenceSegment(
-        @PathVariable segment: String,
-        @RequestParam @Valid organism: String,
-        request: HttpServletRequest,
-        response: HttpServletResponse,
-    ) {
-        val org = Organism(organism)
-        proxyGet("sample/unalignedNucleotideSequences/${org.name}_$segment", organism, request, response)
+        val lapisSegment = if (segment != null) "${org.name}_$segment" else resolveDefaultSegment(org)
+        proxyGet("sample/unalignedNucleotideSequences/$lapisSegment", organism, request, response, setOf("segment"))
     }
 
     @GetMapping("/alignedNucleotideSequences")
-    fun proxyAlignedNucleotideSequences(
+    fun getAlignedNucleotideSequences(
         @RequestParam @Valid organism: String,
+        @RequestParam(required = false) segment: String?,
         request: HttpServletRequest,
         response: HttpServletResponse,
     ) {
         val org = Organism(organism)
-        val segmentName = resolveDefaultSegment(org)
-        proxyGet("sample/alignedNucleotideSequences/$segmentName", organism, request, response)
-    }
-
-    @GetMapping("/alignedNucleotideSequences/{segment}")
-    fun proxyAlignedNucleotideSequenceSegment(
-        @PathVariable segment: String,
-        @RequestParam @Valid organism: String,
-        request: HttpServletRequest,
-        response: HttpServletResponse,
-    ) {
-        val org = Organism(organism)
-        proxyGet("sample/alignedNucleotideSequences/${org.name}_$segment", organism, request, response)
+        val lapisSegment = if (segment != null) "${org.name}_$segment" else resolveDefaultSegment(org)
+        proxyGet("sample/alignedNucleotideSequences/$lapisSegment", organism, request, response, setOf("segment"))
     }
 
     @GetMapping("/alignedAminoAcidSequences")
-    fun proxyAlignedAminoAcidSequences(
+    fun getAlignedAminoAcidSequences(
         @RequestParam @Valid organism: String,
         @RequestParam @Valid gene: String,
         request: HttpServletRequest,
         response: HttpServletResponse,
     ) {
         val org = Organism(organism)
-        proxyGet("sample/alignedAminoAcidSequences/${org.name}_$gene", organism, request, response)
+        proxyGet("sample/alignedAminoAcidSequences/${org.name}_$gene", organism, request, response, setOf("gene"))
     }
 
     @GetMapping("/aminoAcidSequences/{gene}")
@@ -131,10 +111,84 @@ class LapisProxyController(
         response: HttpServletResponse,
     ) {
         val org = Organism(organism)
-        proxyGet("sample/aminoAcidSequences/${org.name}_$gene", organism, request, response)
+        proxyGet("sample/aminoAcidSequences/${org.name}_$gene", organism, request, response, setOf("gene"))
+    }
+
+    // ── POST sequence endpoints ──────────────────────────────────────────────
+    // `organism` is extracted from the POST body; `segment` and `gene` come from
+    // query params. The full body (including organism) is forwarded to LAPIS for
+    // filtering.
+
+    @PostMapping("/unalignedNucleotideSequences")
+    fun postUnalignedNucleotideSequences(
+        @RequestParam(required = false) segment: String?,
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+    ) {
+        postSequenceEndpoint("unalignedNucleotideSequences", segment, request, response)
+    }
+
+    @PostMapping("/alignedNucleotideSequences")
+    fun postAlignedNucleotideSequences(
+        @RequestParam(required = false) segment: String?,
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+    ) {
+        postSequenceEndpoint("alignedNucleotideSequences", segment, request, response)
+    }
+
+    @PostMapping("/alignedAminoAcidSequences")
+    fun postAlignedAminoAcidSequences(
+        @RequestParam @Valid gene: String,
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+    ) {
+        log.debug { "Proxying POST /query/alignedAminoAcidSequences?gene=$gene" }
+        try {
+            val rawBody = request.inputStream.bufferedReader().readText()
+            val body = lapisProxyService.parseBody(rawBody)
+            val organism = body["organism"]?.toString()
+                ?: throw IllegalArgumentException("organism required in body")
+            val org = Organism(organism)
+            proxyPost("sample/alignedAminoAcidSequences/${org.name}_$gene", body, response)
+        } catch (e: Exception) {
+            log.error(e) { "LAPIS proxy error for POST /query/alignedAminoAcidSequences" }
+            if (!response.isCommitted) {
+                response.status = HttpServletResponse.SC_BAD_GATEWAY
+                response.contentType = "application/json"
+                val errorBody = """{"error":"LAPIS proxy error","message":${objectMapper.writeValueAsString(e.message)}}"""
+                response.outputStream.write(errorBody.toByteArray(Charsets.UTF_8))
+            }
+        }
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────
+
+    private fun postSequenceEndpoint(
+        lapisEndpoint: String,
+        segment: String?,
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+    ) {
+        log.debug { "Proxying POST /query/$lapisEndpoint?segment=$segment" }
+        try {
+            val rawBody = request.inputStream.bufferedReader().readText()
+            val body = lapisProxyService.parseBody(rawBody)
+            val organism = body["organism"]?.toString()
+                ?: throw IllegalArgumentException("organism required in body")
+            val org = Organism(organism)
+            val lapisSegment = if (segment != null) "${org.name}_$segment" else resolveDefaultSegment(org)
+            proxyPost("sample/$lapisEndpoint/$lapisSegment", body, response)
+        } catch (e: Exception) {
+            log.error(e) { "LAPIS proxy error for POST /query/$lapisEndpoint" }
+            if (!response.isCommitted) {
+                response.status = HttpServletResponse.SC_BAD_GATEWAY
+                response.contentType = "application/json"
+                val errorBody = """{"error":"LAPIS proxy error","message":${objectMapper.writeValueAsString(e.message)}}"""
+                response.outputStream.write(errorBody.toByteArray(Charsets.UTF_8))
+            }
+        }
+    }
 
     private fun resolveDefaultSegment(organism: Organism): String {
         val refGenome = backendConfig.getInstanceConfig(organism).referenceGenome
@@ -142,7 +196,7 @@ class LapisProxyController(
             organism.name
         } else {
             throw IllegalArgumentException(
-                "Organism ${organism.name} has multiple segments; use the segment-specific endpoint.",
+                "Organism ${organism.name} has multiple segments; use the segment query param.",
             )
         }
     }
@@ -164,10 +218,12 @@ class LapisProxyController(
         organism: String,
         request: HttpServletRequest,
         response: HttpServletResponse,
+        extraExcludeParams: Set<String> = emptySet(),
     ) {
+        val excludeKeys = setOf("organism") + extraExcludeParams
         val queryParams = mutableMapOf("organism" to organism)
         request.parameterMap.forEach { (key, values) ->
-            if (key != "organism" && values.isNotEmpty()) queryParams[key] = values[0]
+            if (key !in excludeKeys && values.isNotEmpty()) queryParams[key] = values[0]
         }
         lapisProxyService.proxyGet(
             lapisPath = lapisPath,

@@ -107,35 +107,10 @@ const alignedNucleotideSequencesEndpoint = makeEndpoint({
     immutable: true,
     parameters: [
         {
-            name: 'request',
-            type: 'Body',
-            schema: sequenceRequest,
+            name: 'segment',
+            type: 'Query',
+            schema: z.string().optional(),
         },
-    ],
-    response: z.string(),
-});
-
-const alignedNucleotideSequencesMultiSegmentEndpoint = makeEndpoint({
-    method: 'post',
-    path: withSample('/alignedNucleotideSequences/:segment'),
-    alias: 'alignedNucleotideSequencesMultiSegment',
-    immutable: true,
-    parameters: [
-        {
-            name: 'request',
-            type: 'Body',
-            schema: sequenceRequest,
-        },
-    ],
-    response: z.string(),
-});
-
-const unalignedNucleotideSequencesMultiSegmentEndpoint = makeEndpoint({
-    method: 'post',
-    path: withSample('/unalignedNucleotideSequences/:segment'),
-    alias: 'unalignedNucleotideSequencesMultiSegment',
-    immutable: true,
-    parameters: [
         {
             name: 'request',
             type: 'Body',
@@ -152,6 +127,11 @@ const unalignedNucleotideSequencesEndpoint = makeEndpoint({
     immutable: true,
     parameters: [
         {
+            name: 'segment',
+            type: 'Query',
+            schema: z.string().optional(),
+        },
+        {
             name: 'request',
             type: 'Body',
             schema: sequenceRequest,
@@ -162,10 +142,15 @@ const unalignedNucleotideSequencesEndpoint = makeEndpoint({
 
 const alignedAminoAcidSequencesEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/alignedAminoAcidSequences/:gene'),
+    path: withSample('/alignedAminoAcidSequences'),
     alias: 'alignedAminoAcidSequences',
     immutable: true,
     parameters: [
+        {
+            name: 'gene',
+            type: 'Query',
+            schema: z.string(),
+        },
         {
             name: 'request',
             type: 'Body',
@@ -191,9 +176,7 @@ export const lapisApi = makeApi([
     nucleotideInsertionsEndpoint,
     aminoAcidInsertionsEndpoint,
     alignedNucleotideSequencesEndpoint,
-    alignedNucleotideSequencesMultiSegmentEndpoint,
     unalignedNucleotideSequencesEndpoint,
-    unalignedNucleotideSequencesMultiSegmentEndpoint,
     alignedAminoAcidSequencesEndpoint,
     lineageDefinitionEndpoint,
 ]);

@@ -183,12 +183,12 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         const results = await Promise.all(
             segmentNames.map((segment) =>
                 this.call(
-                    'unalignedNucleotideSequencesMultiSegment',
+                    'unalignedNucleotideSequences',
                     {
                         [this.schema.primaryKey]: accessionVersion,
                         dataFormat: 'FASTA',
                     },
-                    { params: { segment } },
+                    { queries: { segment } },
                 ),
             ),
         );
