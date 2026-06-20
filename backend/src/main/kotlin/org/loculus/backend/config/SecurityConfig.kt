@@ -80,6 +80,7 @@ class SecurityConfig {
         httpSecurity: HttpSecurity,
         keycloakAuthoritiesConverter: KeycloakAuthenticationConverter,
     ): SecurityFilterChain = httpSecurity
+        .csrf { it.disable() }
         .authorizeHttpRequests { auth ->
             auth.requestMatchers(
                 "/",
