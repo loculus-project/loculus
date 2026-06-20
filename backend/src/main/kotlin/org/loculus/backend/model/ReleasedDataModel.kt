@@ -104,7 +104,8 @@ open class ReleasedDataModel(
                 val prefixedAminoAcidInsertions = record.aminoAcidInsertions.mapKeys { (gene, _) ->
                     "${organismName}_$gene"
                 }
-                val paddedMetadata = allMetadataKeys.associateWith { record.metadata[it] ?: NullNode.instance } +
+                val paddedMetadata = record.metadata +
+                    allMetadataKeys.filter { it !in record.metadata }.associateWith { NullNode.instance as JsonNode } +
                     mapOf("organism" to TextNode(organismName))
                 record.copy(
                     metadata = paddedMetadata,
