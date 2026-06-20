@@ -43,11 +43,7 @@ class LapisProxyController(
     // scoping to a single organism. All-organism queries omit it.
 
     @PostMapping("/{endpoint}")
-    fun proxyPost(
-        @PathVariable endpoint: String,
-        request: HttpServletRequest,
-        response: HttpServletResponse,
-    ) {
+    fun proxyPost(@PathVariable endpoint: String, request: HttpServletRequest, response: HttpServletResponse) {
         log.debug { "Proxying POST /query/$endpoint" }
         try {
             val rawBody = request.inputStream.bufferedReader().readText()
@@ -58,7 +54,9 @@ class LapisProxyController(
             if (!response.isCommitted) {
                 response.status = HttpServletResponse.SC_BAD_GATEWAY
                 response.contentType = "application/json"
-                val errorBody = """{"error":"LAPIS proxy error","message":${objectMapper.writeValueAsString(e.message)}}"""
+                val errorBody = """{"error":"LAPIS proxy error","message":${objectMapper.writeValueAsString(
+                    e.message,
+                )}}"""
                 response.outputStream.write(errorBody.toByteArray(Charsets.UTF_8))
             }
         }
@@ -121,24 +119,27 @@ class LapisProxyController(
 
     @PostMapping("/unalignedNucleotideSequences")
     fun postUnalignedNucleotideSequences(
+        @RequestParam(required = false) organism: String?,
         @RequestParam(required = false) segment: String?,
         request: HttpServletRequest,
         response: HttpServletResponse,
     ) {
-        postSequenceEndpoint("unalignedNucleotideSequences", segment, request, response)
+        postSequenceEndpoint("unalignedNucleotideSequences", organism, segment, request, response)
     }
 
     @PostMapping("/alignedNucleotideSequences")
     fun postAlignedNucleotideSequences(
+        @RequestParam(required = false) organism: String?,
         @RequestParam(required = false) segment: String?,
         request: HttpServletRequest,
         response: HttpServletResponse,
     ) {
-        postSequenceEndpoint("alignedNucleotideSequences", segment, request, response)
+        postSequenceEndpoint("alignedNucleotideSequences", organism, segment, request, response)
     }
 
     @PostMapping("/alignedAminoAcidSequences")
     fun postAlignedAminoAcidSequences(
+        @RequestParam(required = false) organism: String?,
         @RequestParam @Valid gene: String,
         request: HttpServletRequest,
         response: HttpServletResponse,
@@ -147,16 +148,19 @@ class LapisProxyController(
         try {
             val rawBody = request.inputStream.bufferedReader().readText()
             val body = lapisProxyService.parseBody(rawBody)
-            val organism = body["organism"]?.toString()
-                ?: throw IllegalArgumentException("organism required in body")
-            val org = Organism(organism)
+            val resolvedOrganism = organism
+                ?: body["organism"]?.toString()
+                ?: throw IllegalArgumentException("organism required as query param or in body")
+            val org = Organism(resolvedOrganism)
             proxyPost("sample/alignedAminoAcidSequences/${org.name}_$gene", body, response)
         } catch (e: Exception) {
             log.error(e) { "LAPIS proxy error for POST /query/alignedAminoAcidSequences" }
             if (!response.isCommitted) {
                 response.status = HttpServletResponse.SC_BAD_GATEWAY
                 response.contentType = "application/json"
-                val errorBody = """{"error":"LAPIS proxy error","message":${objectMapper.writeValueAsString(e.message)}}"""
+                val errorBody = """{"error":"LAPIS proxy error","message":${objectMapper.writeValueAsString(
+                    e.message,
+                )}}"""
                 response.outputStream.write(errorBody.toByteArray(Charsets.UTF_8))
             }
         }
@@ -166,6 +170,7 @@ class LapisProxyController(
 
     private fun postSequenceEndpoint(
         lapisEndpoint: String,
+        organismParam: String?,
         segment: String?,
         request: HttpServletRequest,
         response: HttpServletResponse,
@@ -174,9 +179,10 @@ class LapisProxyController(
         try {
             val rawBody = request.inputStream.bufferedReader().readText()
             val body = lapisProxyService.parseBody(rawBody)
-            val organism = body["organism"]?.toString()
-                ?: throw IllegalArgumentException("organism required in body")
-            val org = Organism(organism)
+            val resolvedOrganism = organismParam
+                ?: body["organism"]?.toString()
+                ?: throw IllegalArgumentException("organism required as query param or in body")
+            val org = Organism(resolvedOrganism)
             val lapisSegment = if (segment != null) "${org.name}_$segment" else resolveDefaultSegment(org)
             proxyPost("sample/$lapisEndpoint/$lapisSegment", body, response)
         } catch (e: Exception) {
@@ -184,7 +190,9 @@ class LapisProxyController(
             if (!response.isCommitted) {
                 response.status = HttpServletResponse.SC_BAD_GATEWAY
                 response.contentType = "application/json"
-                val errorBody = """{"error":"LAPIS proxy error","message":${objectMapper.writeValueAsString(e.message)}}"""
+                val errorBody = """{"error":"LAPIS proxy error","message":${objectMapper.writeValueAsString(
+                    e.message,
+                )}}"""
                 response.outputStream.write(errorBody.toByteArray(Charsets.UTF_8))
             }
         }

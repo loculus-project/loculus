@@ -26,7 +26,7 @@ export function backendClientHooks(clientConfig: ClientConfig) {
     return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, backendApi));
 }
 
-export function lapisClientHooks(lapisUrl: string) {
+export function lapisClientHooks(lapisUrl: string, organism?: string) {
     const zodiosHooks = new ZodiosHooks('lapis', new Zodios(lapisUrl, lapisApi, { transform: false }));
     return {
         // All POST hooks must include retry options manually to enable retries
@@ -42,6 +42,7 @@ export function lapisClientHooks(lapisUrl: string) {
                 },
                 sequenceType,
                 useLapisMultiSegmentedEndpoint,
+                organism,
             );
         },
     };
@@ -52,8 +53,9 @@ function getSequenceHook(
     request: SequenceRequest, // these are request PARAMETERS, not requests
     sequenceType: SequenceType,
     isMultiSegmented: boolean,
+    organism?: string,
 ) {
-    const rawResult = selectSequenceHook(hooks, request, sequenceType, isMultiSegmented);
+    const rawResult = selectSequenceHook(hooks, request, sequenceType, isMultiSegmented, organism);
     const { data, error, isLoading } = rawResult;
 
     if (data === undefined) {
@@ -91,23 +93,32 @@ function selectSequenceHook(
     request: SequenceRequest,
     sequenceType: SequenceType,
     isMultiSegmented: boolean,
+    organism?: string,
 ) {
+    const orgQuery = organism !== undefined ? { organism } : {};
+
     if (isUnalignedSequence(sequenceType)) {
         return hooks.useUnalignedNucleotideSequences(request, {
-            ...(isMultiSegmented ? { queries: { segment: sequenceType.name.lapisName } } : {}),
+            queries: {
+                ...orgQuery,
+                ...(isMultiSegmented ? { segment: sequenceType.name.lapisName } : {}),
+            },
             ...LAPIS_RETRY_OPTIONS,
         });
     }
 
     if (isAlignedSequence(sequenceType)) {
         return hooks.useAlignedNucleotideSequences(request, {
-            ...(isMultiSegmented ? { queries: { segment: sequenceType.name.lapisName } } : {}),
+            queries: {
+                ...orgQuery,
+                ...(isMultiSegmented ? { segment: sequenceType.name.lapisName } : {}),
+            },
             ...LAPIS_RETRY_OPTIONS,
         });
     }
 
     return hooks.useAlignedAminoAcidSequences(request, {
-        queries: { gene: sequenceType.name.lapisName },
+        queries: { gene: sequenceType.name.lapisName, ...orgQuery },
         ...LAPIS_RETRY_OPTIONS,
     });
 }
