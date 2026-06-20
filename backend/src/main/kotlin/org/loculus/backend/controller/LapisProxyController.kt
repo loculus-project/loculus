@@ -1,5 +1,6 @@
 package org.loculus.backend.controller
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
@@ -37,20 +38,28 @@ private val FORWARDED_RESPONSE_HEADERS = setOf(
 class LapisProxyController(
     private val lapisProxyService: LapisProxyService,
     private val backendConfig: BackendConfig,
+    private val objectMapper: ObjectMapper,
 ) {
     // ── POST pass-through ────────────────────────────────────────────────────
     // Caller places `organism` in the request body (as a SILO filter) when
     // scoping to a single organism. All-organism queries omit it.
 
-    @PostMapping("/{endpoint}", consumes = ["application/json"])
+    @PostMapping("/{endpoint}")
     fun proxyPost(
         @PathVariable endpoint: String,
         @RequestBody(required = false) rawBody: String?,
         response: HttpServletResponse,
     ) {
         log.debug { "Proxying POST /query/$endpoint" }
-        val body = lapisProxyService.parseBody(rawBody ?: "")
-        proxyPost("sample/$endpoint", body, response)
+        try {
+            val body = lapisProxyService.parseBody(rawBody ?: "")
+            proxyPost("sample/$endpoint", body, response)
+        } catch (e: Exception) {
+            log.error(e) { "LAPIS proxy error for POST /query/$endpoint" }
+            response.status = HttpServletResponse.SC_BAD_GATEWAY
+            response.contentType = "application/json"
+            response.writer.write("""{"error":"LAPIS proxy error","message":${objectMapper.writeValueAsString(e.message)}}""")
+        }
     }
 
     // ── GET sequence-download endpoints ─────────────────────────────────────

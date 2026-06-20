@@ -81,6 +81,7 @@ class SecurityConfig {
         keycloakAuthoritiesConverter: KeycloakAuthenticationConverter,
     ): SecurityFilterChain = httpSecurity
         .csrf { it.disable() }
+        .cors { }
         .authorizeHttpRequests { auth ->
             auth.requestMatchers(
                 "/",
