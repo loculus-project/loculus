@@ -9,11 +9,14 @@
 {{- $commonMetadata := .commonMetadata }}
 {{- $sharedMetadata := .sharedMetadata }}
 {{- $organisms := .organisms }}
-{{/* Pre-compute raw segment names for each multi-segment organism */}}
+{{/* Pre-compute raw segment names for each ACTUALLY multi-segment organism.
+     Use len(referenceGenomes) to count top-level segments, not the merged sequences,
+     so that single-segment multi-reference organisms (e.g. enteroviruses) are not
+     mistakenly treated as multi-segment. */}}
 {{- $orgSegments := dict }}
 {{- range $_, $item := $organisms }}
-  {{- $merged := include "loculus.mergeReferenceGenomes" $item.contents.referenceGenomes | fromYaml }}
-  {{- if gt (len $merged.nucleotideSequences) 1 }}
+  {{- if gt (len $item.contents.referenceGenomes) 1 }}
+    {{- $merged := include "loculus.mergeReferenceGenomes" $item.contents.referenceGenomes | fromYaml }}
     {{- $segs := list }}
     {{- range $merged.nucleotideSequences }}{{- $segs = append $segs .name }}{{- end }}
     {{- $_ := set $orgSegments $item.key $segs }}
