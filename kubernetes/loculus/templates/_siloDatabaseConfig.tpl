@@ -9,17 +9,19 @@
 {{- $commonMetadata := .commonMetadata }}
 {{- $sharedMetadata := .sharedMetadata }}
 {{- $organisms := .organisms }}
-{{/* Pre-compute raw segment names for each ACTUALLY multi-segment organism.
+{{/* Pre-compute top-level segment names for each ACTUALLY multi-segment organism.
      Use len(referenceGenomes) to count top-level segments, not the merged sequences,
      so that single-segment multi-reference organisms (e.g. enteroviruses) are not
-     mistakenly treated as multi-segment. */}}
+     mistakenly treated as multi-segment.
+     Use getNucleotideSegmentNames (top-level segment names) not mergeReferenceGenomes
+     so that multi-segment multi-reference organisms (e.g. cchf-multi-ref) yield
+     segment names like [L, M, S] — matching what preprocessing generates — rather
+     than per-reference names like [L, M-MH396653, M-OR047158, …]. */}}
 {{- $orgSegments := dict }}
 {{- range $_, $item := $organisms }}
   {{- if gt (len $item.contents.referenceGenomes) 1 }}
-    {{- $merged := include "loculus.mergeReferenceGenomes" $item.contents.referenceGenomes | fromYaml }}
-    {{- $segs := list }}
-    {{- range $merged.nucleotideSequences }}{{- $segs = append $segs .name }}{{- end }}
-    {{- $_ := set $orgSegments $item.key $segs }}
+    {{- $segInfo := include "loculus.getNucleotideSegmentNames" $item.contents.referenceGenomes | fromYaml }}
+    {{- $_ := set $orgSegments $item.key $segInfo.segments }}
   {{- end }}
 {{- end }}
 {{/* Collect all unique raw segment names across all multi-segment organisms */}}
