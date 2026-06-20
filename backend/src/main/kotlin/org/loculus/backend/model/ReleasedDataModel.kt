@@ -66,6 +66,24 @@ open class ReleasedDataModel(
     @Transactional(readOnly = true)
     open fun getAllReleasedData(): Sequence<ReleasedData> {
         log.info { "Fetching released submissions from database for all organisms" }
+
+        // Pre-compute all column keys across every organism so each row can be padded with nulls
+        // for columns belonging to other organisms. SILO requires every defined column to be
+        // present (even as null) in every row.
+        val allMetadataKeys = mutableSetOf<String>()
+        val allNucleotideKeys = mutableSetOf<String>()
+        val allAminoAcidKeys = mutableSetOf<String>()
+        backendConfig.organisms.keys.forEach { name ->
+            val config = backendConfig.getInstanceConfig(Organism(name))
+            config.schema.metadata.forEach { field -> allMetadataKeys.add(field.name) }
+            val refGenome = config.referenceGenome
+            val single = refGenome.nucleotideSequences.size == 1
+            refGenome.nucleotideSequences.forEach { seq ->
+                allNucleotideKeys.add(if (single) name else "${name}_${seq.name}")
+            }
+            refGenome.genes.forEach { gene -> allAminoAcidKeys.add("${name}_${gene.name}") }
+        }
+
         return backendConfig.organisms.keys.asSequence().flatMap { organismName ->
             val organism = Organism(organismName)
             val referenceGenome = backendConfig.getInstanceConfig(organism).referenceGenome
@@ -86,13 +104,18 @@ open class ReleasedDataModel(
                 val prefixedAminoAcidInsertions = record.aminoAcidInsertions.mapKeys { (gene, _) ->
                     "${organismName}_$gene"
                 }
+                val paddedMetadata = allMetadataKeys.associateWith { record.metadata[it] ?: NullNode.instance } +
+                    mapOf("organism" to TextNode(organismName))
                 record.copy(
-                    metadata = record.metadata + mapOf("organism" to TextNode(organismName)),
-                    unalignedNucleotideSequences = prefixedNucleotide,
-                    alignedNucleotideSequences = prefixedAlignedNucleotide,
-                    nucleotideInsertions = prefixedInsertions,
-                    alignedAminoAcidSequences = prefixedAminoAcid,
-                    aminoAcidInsertions = prefixedAminoAcidInsertions,
+                    metadata = paddedMetadata,
+                    unalignedNucleotideSequences = allNucleotideKeys.associateWith { prefixedNucleotide[it] },
+                    alignedNucleotideSequences = allNucleotideKeys.associateWith { prefixedAlignedNucleotide[it] },
+                    nucleotideInsertions = allNucleotideKeys.associateWith { prefixedInsertions[it] ?: emptyList() },
+                    alignedAminoAcidSequences = allAminoAcidKeys.associateWith { prefixedAminoAcid[it] },
+                    aminoAcidInsertions = allAminoAcidKeys.associateWith {
+                        prefixedAminoAcidInsertions[it]
+                            ?: emptyList()
+                    },
                 )
             }
         }
