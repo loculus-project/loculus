@@ -14,12 +14,8 @@ const { websiteName, welcomeMessageHTML } = Astro.props;
         <>
             <div class='my-4 flex items-center justify-between gap-4'>
                 <div>
-                    <h2 class='font-semibold my-3 text-lg'>
-                        Welcome to {websiteName}!
-                    </h2>
-                    <p class='text-gray-600'>
-                        {websiteName} is a system for sharing pathogen genome data.
-                    </p>
+                    <h2 class='font-semibold my-3 text-lg'>Welcome to {websiteName}!</h2>
+                    <p class='text-gray-600'>{websiteName} is a system for sharing pathogen genome data.</p>
                 </div>
 
                 <a
@@ -30,9 +26,7 @@ const { websiteName, welcomeMessageHTML } = Astro.props;
                 </a>
             </div>
 
-            <h2 class='font-semibold my-3 text-lg'>
-                Browse highlighted organisms in {websiteName}!
-            </h2>
+            <h2 class='font-semibold my-3 text-lg'>Browse highlighted organisms in {websiteName}!</h2>
         </>
     )
 }

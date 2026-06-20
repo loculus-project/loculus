@@ -2,7 +2,7 @@ import { type APIRoute } from 'astro';
 
 import { findOrganismAndData } from './findOrganismAndData';
 import { SequenceDetailsTableResultType } from './getSequenceDetailsTableData';
-import { getRuntimeConfig, getSchema, seqSetsAreEnabled } from '../../../config';
+import { getReferenceGenomes, getRuntimeConfig, getSchema, seqSetsAreEnabled } from '../../../config';
 import { getInstanceLogger } from '../../../logger.ts';
 import { SeqSetCitationClient } from '../../../services/seqSetCitationClient.ts';
 import type { DetailsJson } from '../../../types/detailsJson';
@@ -57,6 +57,7 @@ export const GET: APIRoute = async (req) => {
         isRevocation: result.isRevocation,
         sequenceEntryHistory: result.sequenceEntryHistory,
         sequenceCitations,
+        referenceGenomesInfo: getReferenceGenomes(organism),
     };
 
     return new Response(JSON.stringify(detailsDataUIProps), {
