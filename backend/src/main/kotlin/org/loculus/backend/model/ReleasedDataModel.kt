@@ -64,6 +64,41 @@ open class ReleasedDataModel(
     private val objectMapper: ObjectMapper,
 ) {
     @Transactional(readOnly = true)
+    open fun getAllReleasedData(): Sequence<ReleasedData> {
+        log.info { "Fetching released submissions from database for all organisms" }
+        return backendConfig.organisms.keys.asSequence().flatMap { organismName ->
+            val organism = Organism(organismName)
+            val referenceGenome = backendConfig.getInstanceConfig(organism).referenceGenome
+            val isSingleSegment = referenceGenome.nucleotideSequences.size == 1
+            getReleasedData(organism).map { record ->
+                val prefixedNucleotide = record.unalignedNucleotideSequences.mapKeys { (segment, _) ->
+                    if (isSingleSegment) organismName else "${organismName}_$segment"
+                }
+                val prefixedAlignedNucleotide = record.alignedNucleotideSequences.mapKeys { (segment, _) ->
+                    if (isSingleSegment) organismName else "${organismName}_$segment"
+                }
+                val prefixedInsertions = record.nucleotideInsertions.mapKeys { (segment, _) ->
+                    if (isSingleSegment) organismName else "${organismName}_$segment"
+                }
+                val prefixedAminoAcid = record.alignedAminoAcidSequences.mapKeys { (gene, _) ->
+                    "${organismName}_$gene"
+                }
+                val prefixedAminoAcidInsertions = record.aminoAcidInsertions.mapKeys { (gene, _) ->
+                    "${organismName}_$gene"
+                }
+                record.copy(
+                    metadata = record.metadata + mapOf("organism" to TextNode(organismName)),
+                    unalignedNucleotideSequences = prefixedNucleotide,
+                    alignedNucleotideSequences = prefixedAlignedNucleotide,
+                    nucleotideInsertions = prefixedInsertions,
+                    alignedAminoAcidSequences = prefixedAminoAcid,
+                    aminoAcidInsertions = prefixedAminoAcidInsertions,
+                )
+            }
+        }
+    }
+
+    @Transactional(readOnly = true)
     open fun getReleasedData(organism: Organism): Sequence<ReleasedData> {
         log.info { "Fetching released submissions from database for organism $organism" }
 

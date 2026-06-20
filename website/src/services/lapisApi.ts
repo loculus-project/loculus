@@ -13,7 +13,7 @@ import {
 } from '../types/lapis.ts';
 
 function withSample<Path extends `/${string}`>(path: Path) {
-    return `/sample${path}` as const;
+    return path;
 }
 
 const detailsEndpoint = makeEndpoint({

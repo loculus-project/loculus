@@ -158,16 +158,16 @@ export class DownloadUrlGenerator {
 
         switch (dataType.type) {
             case 'metadata':
-                return this.lapisUrl + '/sample/details';
+                return this.lapisUrl + '/details';
             case 'unalignedNucleotideSequences':
                 if (dataType.segment !== undefined) {
-                    return this.lapisUrl + '/sample/unalignedNucleotideSequences/' + dataType.segment;
+                    return this.lapisUrl + '/unalignedNucleotideSequences/' + dataType.segment;
                 }
-                return this.lapisUrl + '/sample/unalignedNucleotideSequences';
+                return this.lapisUrl + '/unalignedNucleotideSequences';
             case 'alignedNucleotideSequences':
-                return this.lapisUrl + '/sample/alignedNucleotideSequences' + segmentPath(dataType.segment);
+                return this.lapisUrl + '/alignedNucleotideSequences' + segmentPath(dataType.segment);
             case 'alignedAminoAcidSequences':
-                return this.lapisUrl + '/sample/alignedAminoAcidSequences/' + dataType.gene;
+                return this.lapisUrl + '/alignedAminoAcidSequences/' + dataType.gene;
         }
     }
 }

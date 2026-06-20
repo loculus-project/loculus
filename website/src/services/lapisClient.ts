@@ -48,7 +48,19 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
     }
 
     public static createForOrganism(organism: string) {
-        return this.create(getLapisUrl(getRuntimeConfig().serverSide, organism), getSchema(organism));
+        const client = this.create(getLapisUrl(getRuntimeConfig().serverSide), getSchema(organism));
+        // Inject organism into every POST body so SILO can filter by organism.
+        client.zodios.axios.interceptors.request.use((config) => {
+            if (config.method === 'post' && config.data !== undefined) {
+                const body =
+                    typeof config.data === 'string'
+                        ? (JSON.parse(config.data) as Record<string, unknown>)
+                        : (config.data as Record<string, unknown>);
+                config.data = JSON.stringify({ ...body, organism });
+            }
+            return config;
+        });
+        return client;
     }
 
     public static create(lapisUrl: string, schema: Schema, logger: InstanceLogger = getInstanceLogger('lapisClient')) {

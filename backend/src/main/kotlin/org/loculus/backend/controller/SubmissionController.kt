@@ -46,7 +46,6 @@ import org.loculus.backend.model.ACCESSION_HEADER
 import org.loculus.backend.model.FASTA_IDS_HEADER
 import org.loculus.backend.model.FASTA_IDS_SEPARATOR
 import org.loculus.backend.model.METADATA_ID_HEADER
-import org.loculus.backend.model.RELEASED_DATA_RELATED_TABLES
 import org.loculus.backend.model.ReleasedDataModel
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.SubmitModel
@@ -290,70 +289,6 @@ open class SubmissionController(
             organism,
             externalMetadataUpdater,
         )
-    }
-
-    @Operation(description = GET_RELEASED_DATA_DESCRIPTION)
-    @ResponseStatus(HttpStatus.OK)
-    @ApiResponse(
-        responseCode = "200",
-        description = GET_RELEASED_DATA_RESPONSE_DESCRIPTION,
-        content = [
-            Content(
-                schema = Schema(implementation = ProcessedData::class),
-            ),
-        ],
-        headers = [
-            Header(
-                name = X_TOTAL_RECORDS,
-                description = "The total number of records sent in responseBody",
-                schema = Schema(type = "integer"),
-            ),
-            Header(
-                name = "eTag",
-                description = "Last database write Etag",
-                schema = Schema(type = "integer"),
-            ),
-        ],
-    )
-    @ApiResponse(
-        responseCode = "304",
-        description =
-        "No database changes since last request " +
-            "(Etag in HttpHeaders.IF_NONE_MATCH matches lastDatabaseWriteETag)",
-    )
-    @GetMapping("/get-released-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
-    fun getReleasedData(
-        @PathVariable @Valid organism: Organism,
-        @RequestParam compression: CompressionFormat?,
-        @Parameter(
-            description = "(Optional) Only retrieve all released data if Etag has changed.",
-        ) @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
-    ): ResponseEntity<StreamingResponseBody> {
-        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
-            tableNames = RELEASED_DATA_RELATED_TABLES,
-            organism = organism,
-        )
-        if (ifNoneMatch == lastDatabaseWriteETag) {
-            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
-        }
-
-        val headers = HttpHeaders()
-        headers.eTag = lastDatabaseWriteETag
-        headers.contentType = MediaType.APPLICATION_NDJSON
-        compression?.let { headers.add(HttpHeaders.CONTENT_ENCODING, it.compressionName) }
-
-        val totalRecords = submissionDatabaseService.countReleasedSubmissions(organism)
-        headers.add(X_TOTAL_RECORDS, totalRecords.toString())
-        // TODO(https://github.com/loculus-project/loculus/issues/2778)
-        // There's a possibility that the totalRecords change between the count and the actual query
-        // this is not too bad, if the client ends up with a few more records than expected
-        // We just need to make sure the etag used is from before the count
-        // Alternatively, we could read once to file while counting and then stream the file
-
-        val streamBody = streamTransactioned(compression, endpoint = "get-released-data", organism = organism) {
-            releasedDataModel.getReleasedData(organism)
-        }
-        return ResponseEntity.ok().headers(headers).body(streamBody)
     }
 
     @Operation(description = GET_DATA_TO_EDIT_SEQUENCE_VERSION_DESCRIPTION)

@@ -497,6 +497,7 @@ fileSharing:
 {{- end }}
 websiteUrl: {{ include "loculus.websiteUrl" . }}
 backendUrl: {{ include "loculus.backendUrl" . }}
+lapisUrl: {{ include "loculus.lapisUrl" . }}
 organisms:
   {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
@@ -615,18 +616,7 @@ fields:
 {{- end}}
 
 {{- define "loculus.publicRuntimeConfig" }}
-{{- $publicRuntimeConfig := $.Values.public }}
-{{- $lapisUrlTemplate := "" }}
-{{- if $publicRuntimeConfig.lapisUrlTemplate }}
-  {{- $lapisUrlTemplate = $publicRuntimeConfig.lapisUrlTemplate }}
-{{- else if eq $.Values.environment "server" }}
-  {{- $lapisUrlTemplate = printf "https://lapis%s%s/%s" $.Values.subdomainSeparator $.Values.host "%organism%" }}
-{{- else }}
-  {{- $lapisUrlTemplate = printf "http://%s:8080/%%organism%%" $.Values.localHost }}
-{{- end }}
-{{- $externalLapisUrlConfig := dict "lapisUrlTemplate" $lapisUrlTemplate "config" $.Values }}
             "backendUrl": "{{ include "loculus.backendUrl" . }}",
-            "lapisUrls": {{- include "loculus.generateExternalLapisUrls" $externalLapisUrlConfig | fromYaml | toJson }},
             "keycloakUrl":  "{{ include "loculus.keycloakUrl" . }}"
 {{- end }}
 

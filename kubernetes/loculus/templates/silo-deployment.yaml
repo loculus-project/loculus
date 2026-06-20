@@ -1,33 +1,26 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
-{{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/token" }}
-
-{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
-{{- $key := $item.key }}
-{{- $organismContent := $item.contents }}
-{{- $lineageSystem := $organismContent | include "loculus.lineageSystemForOrganism" | fromYamlArray }}
-{{- $hierarchicalFilters := $organismContent | include "loculus.hierarchicalFiltersForOrganism" | fromYaml }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: loculus-silo-{{ $key }}
+  name: loculus-silo
   annotations:
     # Force replace when run a) with dev db and b) without persistence to ensure silo prepro fails loudly
     argocd.argoproj.io/sync-options: Replace=true{{ if (and (not $.Values.developmentDatabasePersistence) $.Values.runDevelopmentMainDatabase) }},Force=true{{ end }}
 spec:
-  progressDeadlineSeconds: 1200  # 20 minute timeout to allow for long silo imports e.g. mpox
+  progressDeadlineSeconds: 1200
   replicas: 1
   selector:
     matchLabels:
       app: loculus
-      component: silo-{{ $key }}
+      component: silo
   template:
     metadata:
       annotations:
         valuesHash: {{ $.Values | toJson | sha256sum | quote }}
       labels:
         app: loculus
-        component: silo-{{ $key }}
+        component: silo
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       {{- include "loculus.podScheduling" $ | nindent 6 }}
@@ -38,7 +31,7 @@ spec:
           image: "{{ $.Values.images.loculusSilo.repository }}:{{ $.Values.images.loculusSilo.tag | default $dockerTag }}"
           command: ["/usr/local/bin/silo"]
           imagePullPolicy: {{ $.Values.imagePullPolicy }}
-          {{- include "loculus.resources" (list "silo" $.Values $key) | nindent 10 }}
+          {{- include "loculus.resources" (list "silo" $.Values) | nindent 10 }}
           env:
             - name: SPDLOG_LEVEL
               value: "debug"
@@ -80,26 +73,10 @@ spec:
           env:
             - name: BACKEND_BASE_URL
               {{- if $.Values.disableBackend }}
-              value: "http://host.k3d.internal:8079/{{ $key }}"
+              value: "http://host.k3d.internal:8079"
               {{- else }}
-              value: "http://loculus-backend-service:8079/{{ $key }}"
+              value: "http://loculus-backend-service:8079"
               {{- end }}
-            {{- if $lineageSystem }}
-              {{- $defsBySystem := dict -}}
-              {{- range $ls := $lineageSystem }}
-                {{- $def := index $.Values.lineageSystemDefinitions $ls -}}
-                {{- if not $def -}}
-                  {{- fail (printf "lineageSystemDefinitions missing entry for lineage system '%s'" $ls) -}}
-                {{- end -}}
-                {{- $defsBySystem = set $defsBySystem $ls $def -}}
-              {{- end }}
-            - name: LINEAGE_DEFINITIONS
-              value: {{ $defsBySystem | toJson | quote }}
-            {{- end }}
-            {{- if $hierarchicalFilters }}
-            - name: HIERARCHICAL_FILTERS
-              value: {{ $hierarchicalFilters | toJson | quote }}
-            {{- end }}
             - name: SILO_RUN_TIMEOUT_SECONDS
               value: {{ $.Values.siloImport.siloTimeoutSeconds | quote }}
             - name: HARD_REFRESH_INTERVAL
@@ -125,9 +102,8 @@ spec:
             - name: lapis-silo-input-data-cache
               mountPath: /preprocessing/input
       volumes:
-        {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 8 }}
+        {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" "lapis-silo-database-config") | nindent 8 }}
         - name: lapis-silo-shared-data
           emptyDir: {}
         - name: lapis-silo-input-data-cache
           emptyDir: {}
-{{- end }}

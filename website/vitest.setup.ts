@@ -29,22 +29,18 @@ export const testConfig = {
     public: {
         discriminator: 'client',
         backendUrl: 'http://backend.dummy',
-        lapisUrls: {
-            [testOrganism]: 'http://lapis.dummy',
-        },
         keycloakUrl: 'http://authentication.dummy',
     },
     serverSide: {
         discriminator: 'server',
         backendUrl: 'http://backend.dummy',
-        lapisUrls: {
-            [testOrganism]: 'http://lapis.dummy',
-        },
         keycloakUrl: 'http://authentication.dummy',
     },
     insecureCookies: true,
     backendKeycloakClientSecret: 'dummy',
 } as RuntimeConfig;
+
+const testLapisUrl = `${testConfig.serverSide.backendUrl}/query`;
 
 // Stubbing necessary since headlessui v2
 // See https://github.com/tailwindlabs/headlessui/issues/3268
@@ -205,7 +201,7 @@ const backendRequestMocks = {
 const lapisRequestMocks = {
     details: (statusCode: number = 200, response: DetailsResponse | LapisError) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/details`, () => {
+            http.post(`${testLapisUrl}/details`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -214,7 +210,7 @@ const lapisRequestMocks = {
     },
     alignedNucleotideSequences: (statusCode: number = 200, response: string | LapisError) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/alignedNucleotideSequences`, () => {
+            http.post(`${testLapisUrl}/alignedNucleotideSequences`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -227,19 +223,16 @@ const lapisRequestMocks = {
         segmentName: string,
     ) => {
         testServer.use(
-            http.post(
-                `${testConfig.serverSide.lapisUrls[testOrganism]}/sample/alignedNucleotideSequences/${segmentName}`,
-                () => {
-                    return new Response(JSON.stringify(response), {
-                        status: statusCode,
-                    });
-                },
-            ),
+            http.post(`${testLapisUrl}/alignedNucleotideSequences/${segmentName}`, () => {
+                return new Response(JSON.stringify(response), {
+                    status: statusCode,
+                });
+            }),
         );
     },
     unalignedNucleotideSequences: (statusCode: number = 200, response: string | LapisError, dataVersion?: string) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/unalignedNucleotideSequences`, () => {
+            http.post(`${testLapisUrl}/unalignedNucleotideSequences`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                     headers:
@@ -260,26 +253,23 @@ const lapisRequestMocks = {
         dataVersion?: string,
     ) => {
         testServer.use(
-            http.post(
-                `${testConfig.serverSide.lapisUrls[testOrganism]}/sample/unalignedNucleotideSequences/${segmentName}`,
-                () => {
-                    return new Response(JSON.stringify(response), {
-                        status: statusCode,
-                        headers:
-                            dataVersion !== undefined
-                                ? {
-                                      // eslint-disable-next-line @typescript-eslint/naming-convention
-                                      'lapis-data-version': dataVersion,
-                                  }
-                                : {},
-                    });
-                },
-            ),
+            http.post(`${testLapisUrl}/unalignedNucleotideSequences/${segmentName}`, () => {
+                return new Response(JSON.stringify(response), {
+                    status: statusCode,
+                    headers:
+                        dataVersion !== undefined
+                            ? {
+                                  // eslint-disable-next-line @typescript-eslint/naming-convention
+                                  'lapis-data-version': dataVersion,
+                              }
+                            : {},
+                });
+            }),
         );
     },
     nucleotideMutations: (statusCode: number = 200, response: MutationsResponse | LapisError) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/nucleotideMutations`, () => {
+            http.post(`${testLapisUrl}/nucleotideMutations`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -288,7 +278,7 @@ const lapisRequestMocks = {
     },
     aminoAcidMutations: (statusCode: number = 200, response: MutationsResponse | LapisError) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/aminoAcidMutations`, () => {
+            http.post(`${testLapisUrl}/aminoAcidMutations`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -297,7 +287,7 @@ const lapisRequestMocks = {
     },
     nucleotideInsertions: (statusCode: number = 200, response: InsertionsResponse | LapisError) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/nucleotideInsertions`, () => {
+            http.post(`${testLapisUrl}/nucleotideInsertions`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -306,7 +296,7 @@ const lapisRequestMocks = {
     },
     aminoAcidInsertions: (statusCode: number = 200, response: InsertionsResponse | LapisError) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/aminoAcidInsertions`, () => {
+            http.post(`${testLapisUrl}/aminoAcidInsertions`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });

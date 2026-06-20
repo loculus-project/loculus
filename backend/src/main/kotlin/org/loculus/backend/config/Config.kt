@@ -7,6 +7,7 @@ import org.loculus.backend.api.Organism
 data class BackendConfig(
     val websiteUrl: String,
     val backendUrl: String,
+    val lapisUrl: String,
     val organisms: Map<String, InstanceConfig>,
     val accessionPrefix: String,
     val dataUseTerms: DataUseTerms,

@@ -1,0 +1,35 @@
+---
+import { CrossOrganismSearch } from '../../components/SearchPage/CrossOrganismSearch';
+import { getRuntimeConfig, getWebsiteConfig } from '../../config';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings';
+import type { Metadata } from '../../types/config';
+import { versionStatuses } from '../../types/lapis';
+
+const clientConfig = getRuntimeConfig().public;
+const websiteConfig = getWebsiteConfig();
+
+// Shared metadata = fields present in every organism's schema (by name)
+const organismSchemas = Object.values(websiteConfig.organisms).map((o) => o.schema.metadata);
+const fieldNameSets = organismSchemas.map((fields) => new Set(fields.map((f: Metadata) => f.name)));
+const sharedFieldNames = fieldNameSets.reduce(
+    (acc, set) => new Set([...acc].filter((name) => set.has(name))),
+    fieldNameSets[0] ?? new Set<string>(),
+);
+const sharedMetadata: Metadata[] = (organismSchemas[0] ?? []).filter((f: Metadata) => sharedFieldNames.has(f.name));
+
+const hiddenFieldValues = {
+    [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
+    [IS_REVOCATION_FIELD]: 'false',
+};
+---
+
+<BaseLayout title='Browse all organisms' fullWidth withoutMargin>
+    <CrossOrganismSearch
+        client:load
+        clientConfig={clientConfig}
+        sharedMetadata={sharedMetadata}
+        hiddenFieldValues={hiddenFieldValues}
+        organisms={Object.keys(websiteConfig.organisms)}
+    />
+</BaseLayout>
