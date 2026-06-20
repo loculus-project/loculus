@@ -242,13 +242,15 @@ dataUseTermsAgreementHTML: {{ quote $.Values.dataUseTerms.agreementHTML }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
 dateFieldForGroupGraph: {{ if $.Values.dateFieldForGroupGraph }}{{ quote $.Values.dateFieldForGroupGraph }}{{ else }}null{{ end }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
+{{- $sharedMetadata := $.Values.sharedMetadata | default list }}
 organisms:
   {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
 {{- $instance := $item.contents }}
+{{- $allMetadata := concat $commonMetadata $sharedMetadata ($instance.schema.organismSpecificMetadata | default list) }}
   {{ $key }}:
     schema:
-      {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
+      {{- with $instance.schema }}
       organismName: {{ quote .organismName }}
       {{ if .linkOuts }}
       linkOuts:
@@ -289,9 +291,9 @@ organisms:
       files: {{ .files | toYaml | nindent 8 }}
       {{ end }}
       metadata:
-        {{- $args := dict "metadata" (concat $commonMetadata .metadata) "referenceGenomes" $instance.referenceGenomes}}
-        {{ $metadata := include "loculus.generateWebsiteMetadata" $args | fromYaml }}
-        {{ $metadata.fields | toYaml | nindent 8 }}
+        {{- $args := dict "metadata" $allMetadata "referenceGenomes" $instance.referenceGenomes}}
+        {{ $websiteMetadata := include "loculus.generateWebsiteMetadata" $args | fromYaml }}
+        {{ $websiteMetadata.fields | toYaml | nindent 8 }}
         {{ if .files }}
         {{- range .files }}
         - name: {{ .name }}
@@ -312,7 +314,7 @@ organisms:
       {{ omit .website "multiFieldSearches" | toYaml | nindent 6 }}
       {{- if .website.multiFieldSearches }}
       {{- $perSegmentFields := dict }}
-      {{- range (concat $commonMetadata .metadata) }}
+      {{- range $allMetadata }}
       {{- if .perSegment }}{{- $_ := set $perSegmentFields .name true }}{{- end }}
       {{- end }}
       {{- $segments := (include "loculus.getNucleotideSegmentNames" $instance.referenceGenomes | fromYaml).segments }}
@@ -498,10 +500,12 @@ fileSharing:
 websiteUrl: {{ include "loculus.websiteUrl" . }}
 backendUrl: {{ include "loculus.backendUrl" . }}
 lapisUrl: {{ include "loculus.lapisUrl" . }}
+{{- $sharedMetadata := $.Values.sharedMetadata | default list }}
 organisms:
   {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
 {{- $instance := $item.contents }}
+{{- $allMetadata := concat $sharedMetadata ($instance.schema.organismSpecificMetadata | default list) }}
   {{ $key }}:
     schema:
       {{- with $instance.schema }}
@@ -512,11 +516,11 @@ organisms:
         {{ .files | toYaml | nindent 8 }}
       {{- end }}
       metadata:
-        {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "referenceGenomes" $instance.referenceGenomes }}
+        {{- $args := dict "metadata" $allMetadata "referenceGenomes" $instance.referenceGenomes }}
         {{- $metadata := include "loculus.generateBackendMetadata" $args | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
       externalMetadata:
-        {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "referenceGenomes" $instance.referenceGenomes }}
+        {{- $args := dict "metadata" $allMetadata "referenceGenomes" $instance.referenceGenomes }}
         {{- $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
         {{ $metadata.fields | default list | toYaml | nindent 8 }}
       earliestReleaseDate:

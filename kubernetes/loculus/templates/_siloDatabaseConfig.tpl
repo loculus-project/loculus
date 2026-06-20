@@ -7,6 +7,7 @@
 */}}
 {{- define "loculus.unifiedSiloDatabaseConfig" }}
 {{- $commonMetadata := .commonMetadata }}
+{{- $sharedMetadata := .sharedMetadata }}
 {{- $organisms := .organisms }}
 schema:
   instanceName: unified
@@ -19,9 +20,13 @@ schema:
     {{- include "loculus.siloDatabaseShared" . | nindent 4 }}
       name: {{ .name }}
   {{- end }}
+  {{- range $sharedMetadata }}
+    {{- include "loculus.siloDatabaseShared" . | nindent 4 }}
+      name: {{ .name }}
+  {{- end }}
   {{- $seenFields := dict }}
   {{- range $_, $item := $organisms }}
-  {{- range $item.contents.schema.metadata }}
+  {{- range ($item.contents.schema.organismSpecificMetadata | default list) }}
   {{- if not (hasKey $seenFields .name) }}
   {{- $_ := set $seenFields .name true }}
     {{- include "loculus.siloDatabaseShared" . | nindent 4 }}

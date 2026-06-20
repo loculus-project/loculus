@@ -15,6 +15,7 @@ class GenerateAccessionFromNumberServiceTest {
         BackendConfig(
             websiteUrl = "https://example.com",
             backendUrl = "http://foo.com",
+            lapisUrl = "http://lapis.dummy",
             accessionPrefix = PREFIX,
             organisms = emptyMap(),
             dataUseTerms = DataUseTerms(true, null),

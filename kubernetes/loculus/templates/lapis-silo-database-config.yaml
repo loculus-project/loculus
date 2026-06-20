@@ -2,6 +2,7 @@
 {{- $organisms := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $args := dict
     "commonMetadata" $commonMetadata
+    "sharedMetadata" $.Values.sharedMetadata
     "organisms" $organisms
 }}
 ---
