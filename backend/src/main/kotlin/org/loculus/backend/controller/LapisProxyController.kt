@@ -76,7 +76,13 @@ class LapisProxyController(
     ) {
         val org = Organism(organism)
         val lapisSegment = buildLapisSegmentName(org, segment, reference)
-        proxyGet("sample/unalignedNucleotideSequences/$lapisSegment", organism, request, response, setOf("segment", "reference"))
+        proxyGet(
+            "sample/unalignedNucleotideSequences/$lapisSegment",
+            organism,
+            request,
+            response,
+            setOf("segment", "reference"),
+        )
     }
 
     @GetMapping("/alignedNucleotideSequences")
@@ -89,7 +95,13 @@ class LapisProxyController(
     ) {
         val org = Organism(organism)
         val lapisSegment = buildLapisSegmentName(org, segment, reference)
-        proxyGet("sample/alignedNucleotideSequences/$lapisSegment", organism, request, response, setOf("segment", "reference"))
+        proxyGet(
+            "sample/alignedNucleotideSequences/$lapisSegment",
+            organism,
+            request,
+            response,
+            setOf("segment", "reference"),
+        )
     }
 
     @GetMapping("/alignedAminoAcidSequences")
@@ -209,14 +221,14 @@ class LapisProxyController(
     }
 
     private fun buildLapisSegmentName(org: Organism, segment: String?, reference: String?): String = when {
-        segment != null && reference != null -> "${org.name}_${segment}-${reference}"
+        segment != null && reference != null -> "${org.name}_$segment-$reference"
         segment != null -> "${org.name}_$segment"
         reference != null -> "${org.name}_$reference"
         else -> resolveDefaultSegment(org)
     }
 
     private fun buildLapisGeneName(org: Organism, gene: String, reference: String?): String =
-        if (reference != null) "${org.name}_${gene}-${reference}" else "${org.name}_$gene"
+        if (reference != null) "${org.name}_$gene-$reference" else "${org.name}_$gene"
 
     private fun resolveDefaultSegment(organism: Organism): String {
         val refGenome = backendConfig.getInstanceConfig(organism).referenceGenome

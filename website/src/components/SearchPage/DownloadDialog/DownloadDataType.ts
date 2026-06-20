@@ -15,7 +15,12 @@ export type DownloadDataType =
           reference?: string;
           richFastaHeaders: IncludeRichFastaHeaders;
       }
-    | { type: 'alignedAminoAcidSequences'; gene: string; reference?: string; richFastaHeaders: IncludeRichFastaHeaders };
+    | {
+          type: 'alignedAminoAcidSequences';
+          gene: string;
+          reference?: string;
+          richFastaHeaders: IncludeRichFastaHeaders;
+      };
 
 type IncludeRichFastaHeaders =
     | {

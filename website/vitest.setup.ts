@@ -225,7 +225,9 @@ const lapisRequestMocks = {
         testServer.use(
             http.post(`${testLapisUrl}/alignedNucleotideSequences`, ({ request }) => {
                 const url = new URL(request.url);
-                if (url.searchParams.get('segment') !== segmentName) return;
+                const matchesSegment = url.searchParams.get('segment') === segmentName;
+                const matchesReference = url.searchParams.get('reference') === segmentName;
+                if (!matchesSegment && !matchesReference) return;
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -257,7 +259,9 @@ const lapisRequestMocks = {
         testServer.use(
             http.post(`${testLapisUrl}/unalignedNucleotideSequences`, ({ request }) => {
                 const url = new URL(request.url);
-                if (url.searchParams.get('segment') !== segmentName) return;
+                const matchesSegment = url.searchParams.get('segment') === segmentName;
+                const matchesReference = url.searchParams.get('reference') === segmentName;
+                if (!matchesSegment && !matchesReference) return;
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                     headers:
