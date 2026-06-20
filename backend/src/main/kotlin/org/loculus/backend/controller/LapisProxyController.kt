@@ -112,6 +112,17 @@ class LapisProxyController(
         proxyGet("sample/alignedNucleotideSequences/${org.name}_$segment", organism, request, response)
     }
 
+    @GetMapping("/alignedAminoAcidSequences")
+    fun proxyAlignedAminoAcidSequences(
+        @RequestParam @Valid organism: String,
+        @RequestParam @Valid gene: String,
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+    ) {
+        val org = Organism(organism)
+        proxyGet("sample/alignedAminoAcidSequences/${org.name}_$gene", organism, request, response)
+    }
+
     @GetMapping("/aminoAcidSequences/{gene}")
     fun proxyAminoAcidSequences(
         @PathVariable gene: String,
