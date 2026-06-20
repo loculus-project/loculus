@@ -107,6 +107,11 @@ const alignedNucleotideSequencesEndpoint = makeEndpoint({
     immutable: true,
     parameters: [
         {
+            name: 'organism',
+            type: 'Query',
+            schema: z.string().optional(),
+        },
+        {
             name: 'segment',
             type: 'Query',
             schema: z.string().optional(),
@@ -127,6 +132,11 @@ const unalignedNucleotideSequencesEndpoint = makeEndpoint({
     immutable: true,
     parameters: [
         {
+            name: 'organism',
+            type: 'Query',
+            schema: z.string().optional(),
+        },
+        {
             name: 'segment',
             type: 'Query',
             schema: z.string().optional(),
@@ -146,6 +156,11 @@ const alignedAminoAcidSequencesEndpoint = makeEndpoint({
     alias: 'alignedAminoAcidSequences',
     immutable: true,
     parameters: [
+        {
+            name: 'organism',
+            type: 'Query',
+            schema: z.string().optional(),
+        },
         {
             name: 'gene',
             type: 'Query',
