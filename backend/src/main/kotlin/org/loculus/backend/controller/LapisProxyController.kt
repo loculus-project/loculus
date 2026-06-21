@@ -43,8 +43,14 @@ class LapisProxyController(
     // scoping to a single organism. All-organism queries omit it.
 
     // The backend exposes /query/metadata but LAPIS calls it /sample/details.
+    @GetMapping("/metadata")
+    fun getMetadata(request: HttpServletRequest, response: HttpServletResponse) {
+        log.debug { "Proxying GET /query/metadata -> sample/details" }
+        proxyGet("sample/details", null, request, response)
+    }
+
     @PostMapping("/metadata")
-    fun proxyMetadata(request: HttpServletRequest, response: HttpServletResponse) {
+    fun postMetadata(request: HttpServletRequest, response: HttpServletResponse) {
         log.debug { "Proxying POST /query/metadata -> sample/details" }
         try {
             val rawBody = request.inputStream.bufferedReader().readText()
@@ -269,7 +275,7 @@ class LapisProxyController(
         response: HttpServletResponse,
         extraExcludeParams: Set<String> = emptySet(),
     ) {
-        val excludeKeys = setOf("organism") + extraExcludeParams
+        val excludeKeys = (if (organism != null) setOf("organism") else emptySet()) + extraExcludeParams
         val queryParams = mutableMapOf<String, String>()
         if (organism != null) queryParams["organism"] = organism
         request.parameterMap.forEach { (key, values) ->
