@@ -117,19 +117,6 @@ class LapisProxyController(
         proxyGet("sample/alignedAminoAcidSequences/$lapisGene", organism, request, response, setOf("gene", "reference"))
     }
 
-    @GetMapping("/aminoAcidSequences/{gene}")
-    fun proxyAminoAcidSequences(
-        @PathVariable gene: String,
-        @RequestParam @Valid organism: String,
-        @RequestParam(required = false) reference: String?,
-        request: HttpServletRequest,
-        response: HttpServletResponse,
-    ) {
-        val org = Organism(organism)
-        val lapisGene = buildLapisGeneName(org, gene, reference)
-        proxyGet("sample/aminoAcidSequences/$lapisGene", organism, request, response, setOf("gene", "reference"))
-    }
-
     // ── POST sequence endpoints ──────────────────────────────────────────────
     // `organism` is extracted from the POST body; `segment` and `gene` come from
     // query params. The full body (including organism) is forwarded to LAPIS for

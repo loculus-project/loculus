@@ -16,13 +16,23 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 class WebConfig(private val backendConfig: BackendConfig) : WebMvcConfigurer {
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
-        val config = CorsConfiguration()
-        config.allowedOrigins = listOf(backendConfig.websiteUrl)
-        config.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD")
-        config.allowedHeaders = listOf("*")
-        config.maxAge = 3600L
+        val websiteConfig = CorsConfiguration()
+        websiteConfig.allowedOrigins = listOf(backendConfig.websiteUrl)
+        websiteConfig.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD")
+        websiteConfig.allowedHeaders = listOf("*")
+        websiteConfig.maxAge = 3600L
+
+        // /query/** is public (no auth); allow any origin so the dev server and
+        // external clients can call the LAPIS proxy directly from the browser.
+        val queryConfig = CorsConfiguration()
+        queryConfig.allowedOriginPatterns = listOf("*")
+        queryConfig.allowedMethods = listOf("GET", "POST", "OPTIONS")
+        queryConfig.allowedHeaders = listOf("*")
+        queryConfig.maxAge = 3600L
+
         val source = UrlBasedCorsConfigurationSource()
-        source.registerCorsConfiguration("/**", config)
+        source.registerCorsConfiguration("/**", websiteConfig)
+        source.registerCorsConfiguration("/query/**", queryConfig)
         return source
     }
 
