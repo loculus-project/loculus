@@ -210,7 +210,7 @@ const lapisRequestMocks = {
     },
     alignedNucleotideSequences: (statusCode: number = 200, response: string | LapisError) => {
         testServer.use(
-            http.post(`${testLapisUrl}/alignedNucleotideSequences`, () => {
+            http.post(`${testLapisUrl}/aligned-nucleotide-sequences`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -223,7 +223,7 @@ const lapisRequestMocks = {
         segmentName: string,
     ) => {
         testServer.use(
-            http.post(`${testLapisUrl}/alignedNucleotideSequences`, ({ request }) => {
+            http.post(`${testLapisUrl}/aligned-nucleotide-sequences`, ({ request }) => {
                 const url = new URL(request.url);
                 const matchesSegment = url.searchParams.get('segment') === segmentName;
                 const matchesReference = url.searchParams.get('reference') === segmentName;
@@ -236,7 +236,7 @@ const lapisRequestMocks = {
     },
     unalignedNucleotideSequences: (statusCode: number = 200, response: string | LapisError, dataVersion?: string) => {
         testServer.use(
-            http.post(`${testLapisUrl}/unalignedNucleotideSequences`, () => {
+            http.post(`${testLapisUrl}/unaligned-nucleotide-sequences`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                     headers:
@@ -257,7 +257,7 @@ const lapisRequestMocks = {
         dataVersion?: string,
     ) => {
         testServer.use(
-            http.post(`${testLapisUrl}/unalignedNucleotideSequences`, ({ request }) => {
+            http.post(`${testLapisUrl}/unaligned-nucleotide-sequences`, ({ request }) => {
                 const url = new URL(request.url);
                 const matchesSegment = url.searchParams.get('segment') === segmentName;
                 const matchesReference = url.searchParams.get('reference') === segmentName;
@@ -277,7 +277,7 @@ const lapisRequestMocks = {
     },
     nucleotideMutations: (statusCode: number = 200, response: MutationsResponse | LapisError) => {
         testServer.use(
-            http.post(`${testLapisUrl}/nucleotideMutations`, () => {
+            http.post(`${testLapisUrl}/nucleotide-mutations`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -286,7 +286,7 @@ const lapisRequestMocks = {
     },
     aminoAcidMutations: (statusCode: number = 200, response: MutationsResponse | LapisError) => {
         testServer.use(
-            http.post(`${testLapisUrl}/aminoAcidMutations`, () => {
+            http.post(`${testLapisUrl}/amino-acid-mutations`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -295,7 +295,7 @@ const lapisRequestMocks = {
     },
     nucleotideInsertions: (statusCode: number = 200, response: InsertionsResponse | LapisError) => {
         testServer.use(
-            http.post(`${testLapisUrl}/nucleotideInsertions`, () => {
+            http.post(`${testLapisUrl}/nucleotide-insertions`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -304,7 +304,7 @@ const lapisRequestMocks = {
     },
     aminoAcidInsertions: (statusCode: number = 200, response: InsertionsResponse | LapisError) => {
         testServer.use(
-            http.post(`${testLapisUrl}/aminoAcidInsertions`, () => {
+            http.post(`${testLapisUrl}/amino-acid-insertions`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });

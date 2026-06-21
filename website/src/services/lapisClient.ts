@@ -232,7 +232,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
             dataFormat?: 'fasta' | 'json' | 'ndjson';
         },
     ) {
-        const baseUrl = `${this.url}/sample/unalignedNucleotideSequences`;
+        const baseUrl = `${this.url}/unaligned-nucleotide-sequences`;
         const url = segment === undefined ? baseUrl : `${baseUrl}/${segment}`;
         return axios.post<Readable>(url, request, { responseType: 'stream' });
     }

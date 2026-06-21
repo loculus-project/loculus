@@ -46,7 +46,7 @@ const aggregatedEndpoint = makeEndpoint({
 
 const nucleotideMutationsEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/nucleotideMutations'),
+    path: withSample('/nucleotide-mutations'),
     alias: 'nucleotideMutations',
     parameters: [
         {
@@ -60,7 +60,7 @@ const nucleotideMutationsEndpoint = makeEndpoint({
 
 const aminoAcidMutationsEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/aminoAcidMutations'),
+    path: withSample('/amino-acid-mutations'),
     alias: 'aminoAcidMutations',
     parameters: [
         {
@@ -74,7 +74,7 @@ const aminoAcidMutationsEndpoint = makeEndpoint({
 
 const nucleotideInsertionsEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/nucleotideInsertions'),
+    path: withSample('/nucleotide-insertions'),
     alias: 'nucleotideInsertions',
     parameters: [
         {
@@ -88,7 +88,7 @@ const nucleotideInsertionsEndpoint = makeEndpoint({
 
 const aminoAcidInsertionsEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/aminoAcidInsertions'),
+    path: withSample('/amino-acid-insertions'),
     alias: 'aminoAcidInsertions',
     parameters: [
         {
@@ -102,7 +102,7 @@ const aminoAcidInsertionsEndpoint = makeEndpoint({
 
 const alignedNucleotideSequencesEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/alignedNucleotideSequences'),
+    path: withSample('/aligned-nucleotide-sequences'),
     alias: 'alignedNucleotideSequences',
     immutable: true,
     parameters: [
@@ -132,7 +132,7 @@ const alignedNucleotideSequencesEndpoint = makeEndpoint({
 
 const unalignedNucleotideSequencesEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/unalignedNucleotideSequences'),
+    path: withSample('/unaligned-nucleotide-sequences'),
     alias: 'unalignedNucleotideSequences',
     immutable: true,
     parameters: [
@@ -162,7 +162,7 @@ const unalignedNucleotideSequencesEndpoint = makeEndpoint({
 
 const alignedAminoAcidSequencesEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/alignedAminoAcidSequences'),
+    path: withSample('/aligned-amino-acid-sequences'),
     alias: 'alignedAminoAcidSequences',
     immutable: true,
     parameters: [
@@ -192,7 +192,7 @@ const alignedAminoAcidSequencesEndpoint = makeEndpoint({
 
 const lineageDefinitionEndpoint = makeEndpoint({
     method: 'get',
-    path: withSample('/lineageDefinition/:column'),
+    path: withSample('/lineage-definition/:column'),
     alias: 'lineageDefinition',
     immutable: true,
     response: lineageDefinition,

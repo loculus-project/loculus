@@ -75,7 +75,7 @@ class LapisProxyController(
         try {
             val rawBody = request.inputStream.bufferedReader().readText()
             val body = lapisProxyService.parseBody(rawBody)
-            proxyPost("sample/$endpoint", body, response)
+            proxyPost("sample/${kebabToCamel(endpoint)}", body, response)
         } catch (e: Exception) {
             log.error(e) { "LAPIS proxy error for POST /query/$endpoint" }
             if (!response.isCommitted) {
@@ -93,7 +93,7 @@ class LapisProxyController(
     // `organism` is required (query param) so unified segment/gene names can be
     // constructed. `segment` and `gene` are also query params (not path variables).
 
-    @GetMapping("/unalignedNucleotideSequences")
+    @GetMapping("/unaligned-nucleotide-sequences")
     fun getUnalignedNucleotideSequences(
         @RequestParam(required = false) @Valid organism: Organism?,
         @RequestParam(required = false) segment: String?,
@@ -115,7 +115,7 @@ class LapisProxyController(
         )
     }
 
-    @GetMapping("/alignedNucleotideSequences")
+    @GetMapping("/aligned-nucleotide-sequences")
     fun getAlignedNucleotideSequences(
         @RequestParam @Valid organism: Organism,
         @RequestParam(required = false) segment: String?,
@@ -133,7 +133,7 @@ class LapisProxyController(
         )
     }
 
-    @GetMapping("/alignedAminoAcidSequences")
+    @GetMapping("/aligned-amino-acid-sequences")
     fun getAlignedAminoAcidSequences(
         @RequestParam @Valid organism: Organism,
         @RequestParam @Valid gene: String,
@@ -150,7 +150,7 @@ class LapisProxyController(
     // query params. The full body (including organism) is forwarded to LAPIS for
     // filtering.
 
-    @PostMapping("/unalignedNucleotideSequences")
+    @PostMapping("/unaligned-nucleotide-sequences")
     fun postUnalignedNucleotideSequences(
         @RequestParam(required = false) organism: String?,
         @RequestParam(required = false) segment: String?,
@@ -161,7 +161,7 @@ class LapisProxyController(
         postSequenceEndpoint("unalignedNucleotideSequences", organism, segment, reference, request, response)
     }
 
-    @PostMapping("/alignedNucleotideSequences")
+    @PostMapping("/aligned-nucleotide-sequences")
     fun postAlignedNucleotideSequences(
         @RequestParam(required = false) organism: String?,
         @RequestParam(required = false) segment: String?,
@@ -172,7 +172,7 @@ class LapisProxyController(
         postSequenceEndpoint("alignedNucleotideSequences", organism, segment, reference, request, response)
     }
 
-    @PostMapping("/alignedAminoAcidSequences")
+    @PostMapping("/aligned-amino-acid-sequences")
     fun postAlignedAminoAcidSequences(
         @RequestParam(required = false) organism: String?,
         @RequestParam @Valid gene: String,
@@ -234,6 +234,10 @@ class LapisProxyController(
             }
         }
     }
+
+    private fun kebabToCamel(s: String) = s.split('-').mapIndexed { i, part ->
+        if (i == 0) part else part.replaceFirstChar { it.uppercase() }
+    }.joinToString("")
 
     private fun buildLapisSegmentName(org: Organism, segment: String?, reference: String?): String = when {
         segment != null && reference != null -> "${org.name}_$segment-$reference"
