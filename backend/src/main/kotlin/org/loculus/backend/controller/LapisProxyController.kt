@@ -50,44 +50,28 @@ class LapisProxyController(
     }
 
     @PostMapping("/metadata")
-    fun postMetadata(request: HttpServletRequest, response: HttpServletResponse) {
-        log.debug { "Proxying POST /query/metadata -> sample/details" }
-        try {
-            val rawBody = request.inputStream.bufferedReader().readText()
-            val body = lapisProxyService.parseBody(rawBody)
-            proxyPost("sample/details", body, response)
-        } catch (e: Exception) {
-            log.error(e) { "LAPIS proxy error for POST /query/metadata" }
-            if (!response.isCommitted) {
-                response.status = HttpServletResponse.SC_BAD_GATEWAY
-                response.contentType = "application/json"
-                val errorBody = """{"error":"LAPIS proxy error","message":${objectMapper.writeValueAsString(
-                    e.message,
-                )}}"""
-                response.outputStream.write(errorBody.toByteArray(Charsets.UTF_8))
-            }
-        }
-    }
+    fun postMetadata(request: HttpServletRequest, response: HttpServletResponse) =
+        simplePost("details", request, response)
 
-    @PostMapping("/{endpoint}")
-    fun proxyPost(@PathVariable endpoint: String, request: HttpServletRequest, response: HttpServletResponse) {
-        log.debug { "Proxying POST /query/$endpoint" }
-        try {
-            val rawBody = request.inputStream.bufferedReader().readText()
-            val body = lapisProxyService.parseBody(rawBody)
-            proxyPost("sample/${kebabToCamel(endpoint)}", body, response)
-        } catch (e: Exception) {
-            log.error(e) { "LAPIS proxy error for POST /query/$endpoint" }
-            if (!response.isCommitted) {
-                response.status = HttpServletResponse.SC_BAD_GATEWAY
-                response.contentType = "application/json"
-                val errorBody = """{"error":"LAPIS proxy error","message":${objectMapper.writeValueAsString(
-                    e.message,
-                )}}"""
-                response.outputStream.write(errorBody.toByteArray(Charsets.UTF_8))
-            }
-        }
-    }
+    @PostMapping("/aggregated")
+    fun postAggregated(request: HttpServletRequest, response: HttpServletResponse) =
+        simplePost("aggregated", request, response)
+
+    @PostMapping("/nucleotide-mutations")
+    fun postNucleotideMutations(request: HttpServletRequest, response: HttpServletResponse) =
+        simplePost("nucleotideMutations", request, response)
+
+    @PostMapping("/amino-acid-mutations")
+    fun postAminoAcidMutations(request: HttpServletRequest, response: HttpServletResponse) =
+        simplePost("aminoAcidMutations", request, response)
+
+    @PostMapping("/nucleotide-insertions")
+    fun postNucleotideInsertions(request: HttpServletRequest, response: HttpServletResponse) =
+        simplePost("nucleotideInsertions", request, response)
+
+    @PostMapping("/amino-acid-insertions")
+    fun postAminoAcidInsertions(request: HttpServletRequest, response: HttpServletResponse) =
+        simplePost("aminoAcidInsertions", request, response)
 
     // ── GET sequence-download endpoints ─────────────────────────────────────
     // `organism` is required (query param) so unified segment/gene names can be
@@ -204,6 +188,24 @@ class LapisProxyController(
 
     // ── Helpers ─────────────────────────────────────────────────────────────
 
+    private fun simplePost(lapisEndpoint: String, request: HttpServletRequest, response: HttpServletResponse) {
+        log.debug { "Proxying POST /query/... -> sample/$lapisEndpoint" }
+        try {
+            val body = lapisProxyService.parseBody(request.inputStream.bufferedReader().readText())
+            proxyPost("sample/$lapisEndpoint", body, response)
+        } catch (e: Exception) {
+            log.error(e) { "LAPIS proxy error for sample/$lapisEndpoint" }
+            if (!response.isCommitted) {
+                response.status = HttpServletResponse.SC_BAD_GATEWAY
+                response.contentType = "application/json"
+                val errorBody = """{"error":"LAPIS proxy error","message":${objectMapper.writeValueAsString(
+                    e.message,
+                )}}"""
+                response.outputStream.write(errorBody.toByteArray(Charsets.UTF_8))
+            }
+        }
+    }
+
     private fun postSequenceEndpoint(
         lapisEndpoint: String,
         organismParam: String?,
@@ -234,10 +236,6 @@ class LapisProxyController(
             }
         }
     }
-
-    private fun kebabToCamel(s: String) = s.split('-').mapIndexed { i, part ->
-        if (i == 0) part else part.replaceFirstChar { it.uppercase() }
-    }.joinToString("")
 
     private fun buildLapisSegmentName(org: Organism, segment: String?, reference: String?): String = when {
         segment != null && reference != null -> "${org.name}_$segment-$reference"
