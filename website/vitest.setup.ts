@@ -201,7 +201,7 @@ const backendRequestMocks = {
 const lapisRequestMocks = {
     details: (statusCode: number = 200, response: DetailsResponse | LapisError) => {
         testServer.use(
-            http.post(`${testLapisUrl}/details`, () => {
+            http.post(`${testLapisUrl}/metadata`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
