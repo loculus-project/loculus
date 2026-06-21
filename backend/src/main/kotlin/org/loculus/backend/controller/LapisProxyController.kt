@@ -89,17 +89,20 @@ class LapisProxyController(
 
     @GetMapping("/unalignedNucleotideSequences")
     fun getUnalignedNucleotideSequences(
-        @RequestParam @Valid organism: String,
+        @RequestParam(required = false) @Valid organism: Organism?,
         @RequestParam(required = false) segment: String?,
         @RequestParam(required = false) reference: String?,
         request: HttpServletRequest,
         response: HttpServletResponse,
     ) {
-        val org = Organism(organism)
-        val lapisSegment = buildLapisSegmentName(org, segment, reference)
+        val lapisSegment = if (organism != null) {
+            buildLapisSegmentName(organism, segment, reference)
+        } else {
+            segment ?: throw IllegalArgumentException("segment is required when organism is not specified")
+        }
         proxyGet(
             "sample/unalignedNucleotideSequences/$lapisSegment",
-            organism,
+            organism?.name,
             request,
             response,
             setOf("segment", "reference"),
@@ -108,17 +111,16 @@ class LapisProxyController(
 
     @GetMapping("/alignedNucleotideSequences")
     fun getAlignedNucleotideSequences(
-        @RequestParam @Valid organism: String,
+        @RequestParam @Valid organism: Organism,
         @RequestParam(required = false) segment: String?,
         @RequestParam(required = false) reference: String?,
         request: HttpServletRequest,
         response: HttpServletResponse,
     ) {
-        val org = Organism(organism)
-        val lapisSegment = buildLapisSegmentName(org, segment, reference)
+        val lapisSegment = buildLapisSegmentName(organism, segment, reference)
         proxyGet(
             "sample/alignedNucleotideSequences/$lapisSegment",
-            organism,
+            organism.name,
             request,
             response,
             setOf("segment", "reference"),
@@ -127,15 +129,14 @@ class LapisProxyController(
 
     @GetMapping("/alignedAminoAcidSequences")
     fun getAlignedAminoAcidSequences(
-        @RequestParam @Valid organism: String,
+        @RequestParam @Valid organism: Organism,
         @RequestParam @Valid gene: String,
         @RequestParam(required = false) reference: String?,
         request: HttpServletRequest,
         response: HttpServletResponse,
     ) {
-        val org = Organism(organism)
-        val lapisGene = buildLapisGeneName(org, gene, reference)
-        proxyGet("sample/alignedAminoAcidSequences/$lapisGene", organism, request, response, setOf("gene", "reference"))
+        val lapisGene = buildLapisGeneName(organism, gene, reference)
+        proxyGet("sample/alignedAminoAcidSequences/$lapisGene", organism.name, request, response, setOf("gene", "reference"))
     }
 
     // ── POST sequence endpoints ──────────────────────────────────────────────
@@ -263,13 +264,14 @@ class LapisProxyController(
 
     private fun proxyGet(
         lapisPath: String,
-        organism: String,
+        organism: String?,
         request: HttpServletRequest,
         response: HttpServletResponse,
         extraExcludeParams: Set<String> = emptySet(),
     ) {
         val excludeKeys = setOf("organism") + extraExcludeParams
-        val queryParams = mutableMapOf("organism" to organism)
+        val queryParams = mutableMapOf<String, String>()
+        if (organism != null) queryParams["organism"] = organism
         request.parameterMap.forEach { (key, values) ->
             if (key !in excludeKeys && values.isNotEmpty()) queryParams[key] = values[0]
         }
