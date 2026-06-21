@@ -42,6 +42,27 @@ class LapisProxyController(
     // Caller places `organism` in the request body (as a SILO filter) when
     // scoping to a single organism. All-organism queries omit it.
 
+    // The backend exposes /query/metadata but LAPIS calls it /sample/details.
+    @PostMapping("/metadata")
+    fun proxyMetadata(request: HttpServletRequest, response: HttpServletResponse) {
+        log.debug { "Proxying POST /query/metadata -> sample/details" }
+        try {
+            val rawBody = request.inputStream.bufferedReader().readText()
+            val body = lapisProxyService.parseBody(rawBody)
+            proxyPost("sample/details", body, response)
+        } catch (e: Exception) {
+            log.error(e) { "LAPIS proxy error for POST /query/metadata" }
+            if (!response.isCommitted) {
+                response.status = HttpServletResponse.SC_BAD_GATEWAY
+                response.contentType = "application/json"
+                val errorBody = """{"error":"LAPIS proxy error","message":${objectMapper.writeValueAsString(
+                    e.message,
+                )}}"""
+                response.outputStream.write(errorBody.toByteArray(Charsets.UTF_8))
+            }
+        }
+    }
+
     @PostMapping("/{endpoint}")
     fun proxyPost(@PathVariable endpoint: String, request: HttpServletRequest, response: HttpServletResponse) {
         log.debug { "Proxying POST /query/$endpoint" }

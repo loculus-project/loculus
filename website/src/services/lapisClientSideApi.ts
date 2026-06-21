@@ -6,7 +6,7 @@ export async function fetchDetailsFromLapis(
     lapisUrl: string,
     request: Record<string, unknown>,
 ): Promise<DetailsResponse> {
-    const response = await axios.post<DetailsResponse>(`${lapisUrl}/sample/details`, {
+    const response = await axios.post<DetailsResponse>(`${lapisUrl}/metadata`, {
         ...request,
         dataFormat: 'json',
     });

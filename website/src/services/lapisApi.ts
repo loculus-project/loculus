@@ -18,7 +18,7 @@ function withSample<Path extends `/${string}`>(path: Path) {
 
 const detailsEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/details'),
+    path: withSample('/metadata'),
     alias: 'details',
     parameters: [
         {
