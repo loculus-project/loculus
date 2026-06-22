@@ -32,7 +32,7 @@ class TaskLockServiceTest(@Autowired private val taskLockService: TaskLockServic
     fun `WHEN lock interval has elapsed THEN lock can be re-acquired`() {
         transaction {
             exec(
-                "INSERT INTO task_lock (task_name, started_at) VALUES ('test-task-expired', NOW() - INTERVAL '10 seconds')",
+                "INSERT INTO task_lock (task_name, started_at, locked_until) VALUES ('test-task-expired', NOW() - INTERVAL '10 seconds', NOW() - INTERVAL '5 seconds')",
             )
         }
         val acquired = taskLockService.acquireLock("test-task-expired", frequencyIntervalSeconds = 5)

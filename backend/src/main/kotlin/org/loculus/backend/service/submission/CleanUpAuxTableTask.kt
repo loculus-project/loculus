@@ -15,6 +15,8 @@ import java.util.concurrent.TimeUnit
 
 private val log = mu.KotlinLogging.logger {}
 
+const val CLEAN_UP_AUX_TABLE_TASK_NAME = "clean-up-aux-table"
+
 @Component
 class CleanUpAuxTableTask(
     private val uploadDatabaseService: UploadDatabaseService,
@@ -32,7 +34,7 @@ class CleanUpAuxTableTask(
     @Scheduled(fixedDelay = 1, timeUnit = java.util.concurrent.TimeUnit.HOURS)
     fun task() {
         if (!taskLockService.acquireLock(
-                "clean-up-aux-table",
+                CLEAN_UP_AUX_TABLE_TASK_NAME,
                 frequencyIntervalSeconds = TimeUnit.HOURS.toSeconds(runEveryHours),
             )
         ) {
@@ -54,7 +56,7 @@ class CleanUpAuxTableTask(
             }
         } finally {
             taskLockService.releaseLock(
-                "clean-up-aux-table",
+                CLEAN_UP_AUX_TABLE_TASK_NAME,
                 frequencyIntervalSeconds = TimeUnit.HOURS.toSeconds(runEveryHours),
             )
         }
