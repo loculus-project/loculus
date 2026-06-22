@@ -40,6 +40,7 @@ function VersionsWithDiffInner({ versions, accession }: VersionsWithDiffProps) {
                                 {showCheckboxes && (
                                     <Checkbox
                                         size='sm'
+                                        aria-label={`Select ${getAccessionVersionString(extractAccessionVersion(version))} for comparison`}
                                         checked={selectedVersions.has(version.version)}
                                         onChange={() => toggleVersion(version.version)}
                                         className='mt-1'
