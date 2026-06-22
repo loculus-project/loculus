@@ -75,23 +75,22 @@ class TaskLockServiceTest(@Autowired private val taskLockService: TaskLockServic
     }
 
     @Test
-    fun `WHEN lock is released after minDuration THEN lock row is deleted and re-acquire succeeds`() {
-        // started_at 15s ago — beyond minDuration (9s) — so releaseLock takes the DELETE path
+    fun `WHEN lock is released after minDuration THEN locked_until is not changed`() {
+        // started_at 15s ago — beyond minDuration (9s) — releaseLock is a no-op (UPDATE WHERE clause is false)
         transaction {
             exec(
                 "INSERT INTO task_lock (task_name, started_at, locked_until) " +
                     "VALUES ('test-release-late', NOW() - INTERVAL '15 seconds', NOW() + INTERVAL '35 seconds')",
             )
         }
+        val deltaBeforeRelease = lockDeltaSeconds("test-release-late")
+
         taskLockService.releaseLock("test-release-late", frequencyIntervalSeconds = 10)
 
-        val lockExists = transaction {
-            exec("SELECT COUNT(*) FROM task_lock WHERE task_name = 'test-release-late'") { rs ->
-                rs.next() && rs.getLong(1) > 0L
-            } ?: false
-        }
-        assertThat(lockExists, `is`(false))
-        assertThat(taskLockService.acquireLock("test-release-late", frequencyIntervalSeconds = 10), `is`(true))
+        val deltaAfterRelease = lockDeltaSeconds("test-release-late")
+        assertThat(deltaBeforeRelease, notNullValue())
+        assertThat(deltaAfterRelease, notNullValue())
+        assertThat(deltaAfterRelease, `is`(deltaBeforeRelease))
     }
 
     @Test
