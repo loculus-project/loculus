@@ -5,7 +5,6 @@ import org.loculus.backend.service.scheduler.TaskLockService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import sun.util.resources.cldr.ext.CurrencyNames_se_SE
 import java.util.concurrent.TimeUnit
 
 private val log = mu.KotlinLogging.logger {}
