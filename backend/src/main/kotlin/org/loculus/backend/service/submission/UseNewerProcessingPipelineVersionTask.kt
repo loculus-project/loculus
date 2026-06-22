@@ -5,9 +5,12 @@ import org.loculus.backend.service.scheduler.TaskLockService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import sun.util.resources.cldr.ext.CurrencyNames_se_SE
 import java.util.concurrent.TimeUnit
 
 private val log = mu.KotlinLogging.logger {}
+
+const val USE_NEWER_PROCESSING_PIPELINE_VERSION_TASK_NAME = "use-newer-processing-pipeline-version"
 
 @Component
 class UseNewerProcessingPipelineVersionTask(
@@ -28,7 +31,7 @@ class UseNewerProcessingPipelineVersionTask(
     )
     fun task() {
         if (!taskLockService.acquireLock(
-                "use-newer-processing-pipeline-version",
+                USE_NEWER_PROCESSING_PIPELINE_VERSION_TASK_NAME,
                 frequencyIntervalSeconds = lockIntervalSeconds,
             )
         ) {
@@ -52,7 +55,7 @@ class UseNewerProcessingPipelineVersionTask(
             }
         } finally {
             taskLockService.releaseLock(
-                "use-newer-processing-pipeline-version",
+                USE_NEWER_PROCESSING_PIPELINE_VERSION_TASK_NAME,
                 frequencyIntervalSeconds = lockIntervalSeconds,
             )
         }

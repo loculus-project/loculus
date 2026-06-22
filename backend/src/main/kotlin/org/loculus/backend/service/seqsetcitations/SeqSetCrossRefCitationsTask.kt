@@ -13,6 +13,8 @@ import java.util.concurrent.TimeUnit
 
 private val log = mu.KotlinLogging.logger {}
 
+const val SEQ_SET_CITATIONS_TASK_NAME = "seq-set-cross-ref-citations"
+
 internal fun mergeCitationSources(citationSources: List<SeqSetCitationSource>): Set<SeqSetCitationSource> {
     val mergedSources = mutableMapOf<String, SeqSetCitationSource>()
 
@@ -56,7 +58,7 @@ class SeqSetCrossRefCitationsTask(
     )
     fun task() {
         if (!taskLockService.acquireLock(
-                "seq-set-cross-ref-citations",
+                SEQ_SET_CITATIONS_TASK_NAME,
                 frequencyIntervalSeconds = TimeUnit.MINUTES.toSeconds(runEveryMinutes),
             )
         ) {
@@ -104,7 +106,7 @@ class SeqSetCrossRefCitationsTask(
             }
         } finally {
             taskLockService.releaseLock(
-                "seq-set-cross-ref-citations",
+                SEQ_SET_CITATIONS_TASK_NAME,
                 frequencyIntervalSeconds = TimeUnit.MINUTES.toSeconds(runEveryMinutes),
             )
         }
