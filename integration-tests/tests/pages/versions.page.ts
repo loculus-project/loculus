@@ -76,16 +76,16 @@ export class VersionsPage {
     }
 
     /**
-     * Toggle the "Show all fields" checkbox, which controls whether unchanged
-     * fields are shown in the diff table.
+     * Toggle the "Hide unchanged fields" checkbox, which controls whether unchanged
+     * fields are hidden in the diff table.
      */
-    async toggleShowAllFields() {
-        await this.page.getByRole('checkbox', { name: 'Show all fields' }).click();
+    async toggleHideUnchangedFields() {
+        await this.page.getByRole('checkbox', { name: 'Hide unchanged fields' }).click();
     }
 
     /**
      * Assert that a field row is not present in the diff table (e.g. an unchanged
-     * field while "Show all fields" is off).
+     * field while "Hide unchanged fields" is on).
      */
     async expectFieldRowAbsent(fieldLabel: string) {
         await expect(this.diffRow(fieldLabel)).toHaveCount(0);

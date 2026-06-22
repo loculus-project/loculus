@@ -21,7 +21,7 @@ function VersionsWithDiffInner({ versions, accession }: VersionsWithDiffProps) {
         useVersionComparison(accession, versions);
 
     const showCheckboxes = versions.length > 2;
-    const [showAllFields, setShowAllFields] = useState(false);
+    const [hideUnchangedFields, setHideUnchangedFields] = useState(true);
     const [mutationsDiffOnly, setMutationsDiffOnly] = useState(false);
 
     // Prefer the pair the loaded comparison is for (kept stable while a new pair loads), falling
@@ -76,11 +76,11 @@ function VersionsWithDiffInner({ versions, accession }: VersionsWithDiffProps) {
                             Comparing Version {comparedVersions?.[0]} vs Version {comparedVersions?.[1]}
                         </h2>
                         <label className='flex items-center gap-2 cursor-pointer'>
-                            <span className='text-sm'>Show all fields</span>
+                            <span className='text-sm'>Hide unchanged fields</span>
                             <Checkbox
                                 size='sm'
-                                checked={showAllFields}
-                                onChange={(e) => setShowAllFields(e.target.checked)}
+                                checked={hideUnchangedFields}
+                                onChange={(e) => setHideUnchangedFields(e.target.checked)}
                             />
                         </label>
                     </div>
@@ -100,7 +100,7 @@ function VersionsWithDiffInner({ versions, accession }: VersionsWithDiffProps) {
                                     comparison={comparison.result}
                                     version1={comparison.versions[0]}
                                     version2={comparison.versions[1]}
-                                    showAllFields={showAllFields}
+                                    hideUnchangedFields={hideUnchangedFields}
                                     mutationsDiffOnly={mutationsDiffOnly}
                                     setMutationsDiffOnly={setMutationsDiffOnly}
                                 />

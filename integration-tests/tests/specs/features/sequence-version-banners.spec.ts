@@ -235,10 +235,10 @@ test.describe('Sequence version banners', () => {
         await versionsPage.expectFieldDiff('Collection date', '2023-03-01', '2023-09-20');
         await expect.poll(() => versionsPage.getCompareParam()).toBe('1,2');
 
-        // "Show all fields" toggle: an unchanged field (Collection country = Spain) is
-        // hidden by default and revealed once the toggle is enabled.
+        // "Hide unchanged fields" toggle: an unchanged field (Collection country = Spain) is
+        // hidden by default and revealed once the toggle is disabled.
         await versionsPage.expectFieldRowAbsent('Collection country');
-        await versionsPage.toggleShowAllFields();
+        await versionsPage.toggleHideUnchangedFields();
         await versionsPage.expectFieldRowVisible('Collection country', 'Spain');
 
         // Click on the deprecated version link

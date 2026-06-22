@@ -8,7 +8,7 @@ type DiffTableProps = {
     comparison: ComparisonResult;
     version1: number;
     version2: number;
-    showAllFields: boolean;
+    hideUnchangedFields: boolean;
     mutationsDiffOnly: boolean;
     setMutationsDiffOnly: (value: boolean) => void;
 };
@@ -83,7 +83,7 @@ export function DiffTable({
     comparison,
     version1,
     version2,
-    showAllFields,
+    hideUnchangedFields,
     mutationsDiffOnly,
     setMutationsDiffOnly,
 }: DiffTableProps) {
@@ -93,8 +93,8 @@ export function DiffTable({
     // Always show changed fields (non-noisy)
     fieldsToDisplay.push(...comparison.changedFields);
 
-    // Show unchanged fields if toggle is on
-    if (showAllFields) {
+    // Show unchanged fields if they are not hidden
+    if (!hideUnchangedFields) {
         fieldsToDisplay.push(...comparison.unchangedFields);
     }
 
