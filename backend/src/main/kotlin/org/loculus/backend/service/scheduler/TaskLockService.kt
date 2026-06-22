@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component
 
 private val log = KotlinLogging.logger {}
 
+const val TASK_LOCK_TABLE_NAME = "task_lock"
+
 @Component
 class TaskLockServiceFactory {
     fun create(
@@ -63,6 +65,8 @@ class TaskLockService(
                 LongColumnType() to maxDuration,
                 LongColumnType() to maxDuration,
             ),
+            // The CTE starts with INSERT, so Exposed would default to StatementType.INSERT and
+            // not return a ResultSet. Overriding to SELECT lets us read the outer COUNT(*).
             explicitStatementType = StatementType.SELECT,
         ) { rs ->
             rs.next() && rs.getLong(1) > 0L
@@ -103,6 +107,8 @@ class TaskLockService(
                 LongColumnType() to minDuration,
                 TextColumnType() to taskName,
             ),
+            // The CTE starts with DELETE, so Exposed would default to StatementType.DELETE.
+            // Overriding to UPDATE ensures the DML executes via the correct JDBC path.
             explicitStatementType = StatementType.UPDATE,
         )
     }
