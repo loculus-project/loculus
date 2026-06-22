@@ -463,7 +463,7 @@ const FileListItem: FC<FileListeItemProps> = ({ file }) => {
             <div className='flex-1 min-w-0 flex items-center'>
                 <span className='text-xs text-gray-700 truncate max-w-[140px]'>{file.name}</span>
                 {file.type === 'previousUpload' ? (
-                    <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>(previous upload)</span>
+                    <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>(uploaded)</span>
                 ) : (
                     <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>({formatFileSize(file.size)})</span>
                 )}

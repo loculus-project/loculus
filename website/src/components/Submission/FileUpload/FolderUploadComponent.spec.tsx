@@ -203,7 +203,7 @@ describe('FolderUploadComponent', () => {
 
             expect(screen.getByText('previous-a.txt')).toBeInTheDocument();
             expect(screen.getByText('previous-b.txt')).toBeInTheDocument();
-            expect(screen.getAllByText('(previous upload)')).toHaveLength(2);
+            expect(screen.getAllByText('(uploaded)')).toHaveLength(2);
         });
 
         it('discards an individual previous upload while keeping the others', async () => {
