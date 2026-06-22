@@ -31,21 +31,24 @@ class UseNewerProcessingPipelineVersionTask(
             frequencyIntervalSeconds = lockIntervalSeconds,
         )
         if (!taskLockService.acquireLock("use-newer-processing-pipeline-version")) return
-        log.info { "Checking for newer preprocessing pipeline versions" }
-        val newVersions = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+        try {
+            log.info { "Checking for newer preprocessing pipeline versions" }
+            val newVersions = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
 
-        newVersions.forEach { (organism, latestVersion) ->
-            if (latestVersion != null) {
-                submissionDatabaseService.cleanUpOutdatedPreprocessingData(organism, latestVersion - 1)
+            newVersions.forEach { (organism, latestVersion) ->
+                if (latestVersion != null) {
+                    submissionDatabaseService.cleanUpOutdatedPreprocessingData(organism, latestVersion - 1)
+                }
             }
-        }
 
-        val upgradedOrganisms = newVersions.filterValues { it != null }
-        if (upgradedOrganisms.isNotEmpty()) {
-            log.info { "Completed pipeline version upgrade check: upgraded ${upgradedOrganisms.size} organism(s)" }
-        } else {
-            log.debug { "Completed pipeline version upgrade check: no upgrades needed" }
+            val upgradedOrganisms = newVersions.filterValues { it != null }
+            if (upgradedOrganisms.isNotEmpty()) {
+                log.info { "Completed pipeline version upgrade check: upgraded ${upgradedOrganisms.size} organism(s)" }
+            } else {
+                log.debug { "Completed pipeline version upgrade check: no upgrades needed" }
+            }
+        } finally {
+            taskLockService.releaseLock("use-newer-processing-pipeline-version")
         }
-        taskLockService.releaseLock("use-newer-processing-pipeline-version")
     }
 }

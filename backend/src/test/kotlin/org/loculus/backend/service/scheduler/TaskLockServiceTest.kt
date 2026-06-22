@@ -3,6 +3,7 @@ package org.loculus.backend.service.scheduler
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.notNullValue
+import org.jetbrains.exposed.sql.TextColumnType
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Test
 import org.loculus.backend.controller.EndpointTest
@@ -108,7 +109,8 @@ class TaskLockServiceTest(@Autowired private val taskLockServiceFactory: TaskLoc
 
     private fun lockDeltaSeconds(taskName: String): Double? = transaction {
         exec(
-            "SELECT EXTRACT(EPOCH FROM (locked_until - started_at)) FROM task_lock WHERE task_name = '$taskName'",
+            "SELECT EXTRACT(EPOCH FROM (locked_until - started_at)) FROM task_lock WHERE task_name = ?",
+            args = listOf(TextColumnType() to taskName),
         ) { rs ->
             if (rs.next()) rs.getDouble(1) else null
         }

@@ -22,8 +22,11 @@ class CleanUpStaleSequencesInProcessingTask(
             frequencyIntervalSeconds = runEverySeconds,
         )
         if (!taskLockService.acquireLock("clean-up-stale-sequences-in-processing")) return
-        log.info { "Cleaning up stale sequences in processing, timeToStaleInSeconds: $timeToStaleInSeconds" }
-        submissionDatabaseService.cleanUpStaleSequencesInProcessing(timeToStaleInSeconds)
-        taskLockService.releaseLock("clean-up-stale-sequences-in-processing")
+        try {
+            log.info { "Cleaning up stale sequences in processing, timeToStaleInSeconds: $timeToStaleInSeconds" }
+            submissionDatabaseService.cleanUpStaleSequencesInProcessing(timeToStaleInSeconds)
+        } finally {
+            taskLockService.releaseLock("clean-up-stale-sequences-in-processing")
+        }
     }
 }
