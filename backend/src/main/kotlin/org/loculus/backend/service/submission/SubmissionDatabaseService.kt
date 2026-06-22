@@ -276,29 +276,24 @@ class SubmissionDatabaseService(
         val processedAccessionVersions = mutableListOf<String>()
         val processedFiles = mutableMapOf<AccessionVersion, Set<FileId>>()
         val processingResultCounts = mutableMapOf<ProcessingResult, Int>()
-        reader.lineSequence().forEach { line ->
-            val submittedProcessedData = try {
-                objectMapper.readValue<SubmittedProcessedData>(line)
-            } catch (e: JacksonException) {
-                throw BadRequestException("Failed to deserialize NDJSON line: ${e.message}", e)
-            }
-            submittedProcessedData.data.files?.let { fileMapping ->
-                fileMappingPreconditionValidator
-                    .validateFilenameCharacters(fileMapping)
-                    .validateFilenamesAreUnique(fileMapping)
-                    .validateCategoriesMatchOutputSchema(fileMapping, organism)
-                    .validateMultipartUploads(fileMapping.fileIds)
-                    .validateFilesExist(fileMapping.fileIds)
-                val accessionVersion =
-                    AccessionVersion(submittedProcessedData.accession, submittedProcessedData.version)
-                processedFiles[accessionVersion] = fileMapping.fileIds
-            }
+        // Process the NDJSON stream in chunks so DB lookups are batched without buffering the whole request.
+        reader.lineSequence().chunked(streamBatchSize).forEach { lines ->
+            val submittedProcessedDataBatch = lines.map { parseSubmittedProcessedDataLine(it) }
 
-            val processingResult = submittedProcessedData.processingResult()
+            val filesToValidate = validateFileMappingsAndCollectFileIds(
+                submittedProcessedDataBatch,
+                organism,
+                processedFiles,
+            )
+            validateFilesBelongToSubmittingGroups(filesToValidate)
 
-            insertProcessedData(submittedProcessedData, organism, pipelineVersion)
-            processedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
-            processingResultCounts.merge(processingResult, 1, Int::plus)
+            submittedProcessedDataBatch.forEach { submittedProcessedData ->
+                val processingResult = submittedProcessedData.processingResult()
+
+                insertProcessedData(submittedProcessedData, organism, pipelineVersion)
+                processedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
+                processingResultCounts.merge(processingResult, 1, Int::plus)
+            }
         }
 
         if (processedFiles.isNotEmpty()) {
@@ -327,6 +322,42 @@ class SubmissionDatabaseService(
                 "Processing result counts: " +
                 processingResultCounts.entries.joinToString { "${it.key}=${it.value}" },
         )
+    }
+
+    private fun parseSubmittedProcessedDataLine(line: String) = try {
+        objectMapper.readValue<SubmittedProcessedData>(line)
+    } catch (e: JacksonException) {
+        throw BadRequestException("Failed to deserialize NDJSON line: ${e.message}", e)
+    }
+
+    private fun validateFileMappingsAndCollectFileIds(
+        submittedProcessedDataBatch: List<SubmittedProcessedData>,
+        organism: Organism,
+        processedFiles: MutableMap<AccessionVersion, Set<FileId>>,
+    ): Map<AccessionVersion, Set<FileId>> {
+        val filesToValidate = mutableMapOf<AccessionVersion, Set<FileId>>()
+        submittedProcessedDataBatch.forEach { submittedProcessedData ->
+            submittedProcessedData.data.files?.let { fileMapping ->
+                // Validate file names, categories, upload completion, and existence before ownership checks.
+                fileMappingPreconditionValidator
+                    .validateFilenameCharacters(fileMapping)
+                    .validateFilenamesAreUnique(fileMapping)
+                    .validateCategoriesMatchOutputSchema(fileMapping, organism)
+                    .validateMultipartUploads(fileMapping.fileIds)
+                    .validateFilesExist(fileMapping.fileIds)
+
+                val accessionVersion =
+                    AccessionVersion(submittedProcessedData.accession, submittedProcessedData.version)
+                processedFiles[accessionVersion] = fileMapping.fileIds
+
+                // Entries with errors are stored for review and cannot be released.
+                // Only releasable processed entries need file ownership checks.
+                if (submittedProcessedData.errors.orEmpty().isEmpty()) {
+                    filesToValidate[accessionVersion] = fileMapping.fileIds
+                }
+            }
+        }
+        return filesToValidate
     }
 
     fun updateExternalMetadata(inputStream: InputStream, organism: Organism, externalMetadataUpdater: String) {
@@ -477,7 +508,6 @@ class SubmissionDatabaseService(
         organism: Organism,
     ) = try {
         throwIfIsSubmissionForWrongOrganism(submittedProcessedData, organism)
-        validateFilesBelongToSubmittingGroup(submittedProcessedData)
         val processedData = makeSequencesUpperCase(submittedProcessedData.data)
         processedSequenceEntryValidatorFactory.create(organism).validate(processedData)
     } catch (validationException: ProcessingValidationException) {
@@ -560,27 +590,32 @@ class SubmissionDatabaseService(
         )
     }
 
-    private fun validateFilesBelongToSubmittingGroup(submittedProcessedData: SubmittedProcessedData) {
-        // TODO(#3951): This implementation is very inefficient as it makes two requests to the database for
-        //  each sequence entry.
-        if (submittedProcessedData.data.files == null) {
+    private fun validateFilesBelongToSubmittingGroups(filesByAccessionVersion: Map<AccessionVersion, Set<FileId>>) {
+        if (filesByAccessionVersion.isEmpty()) {
             return
         }
-        val sequenceEntryGroup = SequenceEntriesTable
-            .select(groupIdColumn)
-            .where {
-                (accessionColumn eq submittedProcessedData.accession) and
-                    (versionColumn eq submittedProcessedData.version)
+
+        // Files referenced by processed data may become public after release, so they must belong to the sequence group.
+        // Load ownership for the whole chunk to avoid one sequence query and one file query per entry.
+        val sequenceEntryGroups = SequenceEntriesTable
+            .select(accessionColumn, versionColumn, groupIdColumn)
+            .where { SequenceEntriesTable.accessionVersionIsIn(filesByAccessionVersion.keys.toList()) }
+            .associate {
+                AccessionVersion(it[accessionColumn], it[versionColumn]) to it[groupIdColumn]
             }
-            .single()[groupIdColumn]
-        val fileIds = submittedProcessedData.data.files.flatMap { it.value.map { it.fileId } }.toSet()
-        val fileGroups = filesDatabaseService.getGroupIds(fileIds)
-        fileGroups.forEach { (fileId, fileGroup) ->
-            if (fileGroup != sequenceEntryGroup) {
-                throw UnprocessableEntityException(
-                    "Accession version ${submittedProcessedData.displayAccessionVersion()} belongs to " +
-                        "group $sequenceEntryGroup but the attached file $fileId belongs to the group $fileGroup.",
-                )
+        val fileGroups = filesDatabaseService.getGroupIds(filesByAccessionVersion.values.flatten().toSet())
+
+        filesByAccessionVersion.forEach { (accessionVersion, fileIds) ->
+            // Missing accession/version errors are handled later by insertProcessedData.
+            val sequenceEntryGroup = sequenceEntryGroups[accessionVersion] ?: return@forEach
+            fileIds.forEach { fileId ->
+                val fileGroup = fileGroups[fileId]
+                if (fileGroup != sequenceEntryGroup) {
+                    throw UnprocessableEntityException(
+                        "Accession version ${accessionVersion.displayAccessionVersion()} belongs to " +
+                            "group $sequenceEntryGroup but the attached file $fileId belongs to the group $fileGroup.",
+                    )
+                }
             }
         }
     }

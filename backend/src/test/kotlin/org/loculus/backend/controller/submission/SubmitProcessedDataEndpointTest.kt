@@ -42,6 +42,7 @@ import org.loculus.backend.controller.files.andGetFileIdsAndUrls
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
+import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.submission.AminoAcidSymbols
 import org.loculus.backend.service.submission.NucleotideSymbols
 import org.loculus.backend.service.submission.SubmissionDatabaseService
@@ -67,6 +68,7 @@ class SubmitProcessedDataEndpointTest(
     @Autowired val groupManagementClient: GroupManagementControllerClient,
     @Autowired val useNewerProcessingPipelineVersionTask: UseNewerProcessingPipelineVersionTask,
     @Autowired val submissionDatabaseService: SubmissionDatabaseService,
+    @Autowired val filesDatabaseService: FilesDatabaseService,
     @Autowired val objectMapper: ObjectMapper,
 ) {
 
@@ -423,6 +425,58 @@ class SubmitProcessedDataEndpointTest(
             ),
         )
             .andExpect(status().isNoContent)
+    }
+
+    @Test
+    fun `WHEN one entry in a processed data batch references a file of another group THEN fails`() {
+        val groupId = groupManagementClient
+            .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andGetGroupId()
+        val otherGroupId = groupManagementClient
+            .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andGetGroupId()
+        val firstFileIdAndUrl = filesClient.requestUploads(
+            groupId = groupId,
+            jwt = jwtForDefaultUser,
+        ).andGetFileIdsAndUrls()[0]
+        val secondFileIdAndUrl = filesClient.requestUploads(
+            groupId = otherGroupId,
+            jwt = jwtForDefaultUser,
+        ).andGetFileIdsAndUrls()[0]
+        filesDatabaseService.setFileSize(firstFileIdAndUrl.fileId, DEFAULT_SIMPLE_FILE_CONTENT.length.toLong())
+        filesDatabaseService.setFileSize(secondFileIdAndUrl.fileId, DEFAULT_SIMPLE_FILE_CONTENT.length.toLong())
+        val accessions = prepareExtractedSequencesInDatabase(
+            numberOfSequenceEntries = 2,
+            groupId = groupId,
+        ).map { it.accession }
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.withFiles(
+                accessions[0],
+                mapOf(
+                    "myFileCategory" to listOf(
+                        FileIdAndName(firstFileIdAndUrl.fileId, "foo-1.txt"),
+                    ),
+                ),
+            ),
+            PreparedProcessedData.withFiles(
+                accessions[1],
+                mapOf(
+                    "myFileCategory" to listOf(
+                        FileIdAndName(secondFileIdAndUrl.fileId, "foo-2.txt"),
+                    ),
+                ),
+            ),
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(
+                jsonPath(
+                    "$.detail",
+                    containsString(
+                        "the attached file ${secondFileIdAndUrl.fileId} belongs to the group $otherGroupId",
+                    ),
+                ),
+            )
     }
 
     @Test
