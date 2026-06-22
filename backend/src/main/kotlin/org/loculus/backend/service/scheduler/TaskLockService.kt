@@ -71,30 +71,41 @@ class TaskLockService(
     /**
      * Attempts to "release" a lock for the given task, this is only possible if the
      * lock is considered expired based on the [minLockFactor].
-     * If the lock_until is still in the future update the lock_until till the minimum duration, otherwise do nothing.
+     * If locked_until is still in the future update locked_until to the minimum duration, otherwise do nothing.
      *
      * @param taskName unique name identifying the task.
-     * @return true if the lock was released, false if the lock was not found or is still held.
      */
     fun releaseLock(taskName: String, frequencyIntervalSeconds: Long) = transaction {
         // The effective lock duration is shortened by [minLockFactor] to prevent tasks
         // from being blocked after their scheduled interval due to minor clock skew,
         // execution delays, or lock acquisition latency.
-        val minDuration: Long =
-            (frequencyIntervalSeconds * minLockFactor).toLong()
-        exec(
+        val minDuration = (frequencyIntervalSeconds * minLockFactor).toLong()
+
+        val updated = exec(
             """
         UPDATE task_lock
         SET locked_until = started_at + (? * interval '1 second')
         WHERE task_name = ?
-          AND (started_at + (? * interval '1 second')) > NOW()
+          AND locked_until > NOW()
+        RETURNING task_name
             """.trimIndent(),
             args = listOf(
                 LongColumnType() to minDuration,
                 TextColumnType() to taskName,
-                LongColumnType() to minDuration,
             ),
-            explicitStatementType = StatementType.UPDATE,
-        )
+            explicitStatementType = StatementType.SELECT,
+        ) { rs ->
+            rs.next()
+        } ?: false
+
+        if (updated) {
+            log.debug {
+                "Task '$taskName' lock: 'locked_until' shortened to minimum duration (${minDuration}s)"
+            }
+        } else {
+            log.debug {
+                "Task '$taskName' lock: not shortened because 'locked_until' has already elapsed"
+            }
+        }
     }
 }

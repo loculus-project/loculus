@@ -75,7 +75,7 @@ class TaskLockServiceTest(@Autowired private val taskLockService: TaskLockServic
     }
 
     @Test
-    fun `WHEN lock is released after minDuration THEN locked_until is not changed`() {
+    fun `WHEN lock is released after minDuration but before maxDuration THEN locked_until is changed`() {
         // started_at 15s ago — beyond minDuration (9s) — releaseLock is a no-op (UPDATE WHERE clause is false)
         transaction {
             exec(
@@ -90,7 +90,7 @@ class TaskLockServiceTest(@Autowired private val taskLockService: TaskLockServic
         val deltaAfterRelease = lockDeltaSeconds("test-release-late")
         assertThat(deltaBeforeRelease, notNullValue())
         assertThat(deltaAfterRelease, notNullValue())
-        assertThat(deltaAfterRelease, `is`(deltaBeforeRelease))
+        assertThat(deltaAfterRelease!! < deltaBeforeRelease!!, `is`(true))
     }
 
     @Test
