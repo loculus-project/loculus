@@ -18,12 +18,21 @@ class CleanUpStaleSequencesInProcessingTask(
 ) {
     @Scheduled(fixedRateString = "\${${BackendSpringProperty.CLEAN_UP_RUN_EVERY_SECONDS}}", timeUnit = TimeUnit.SECONDS)
     fun task() {
-        if (!taskLockService.acquireLock("clean-up-stale-sequences-in-processing", frequencyIntervalSeconds = runEverySeconds)) return
+        if (!taskLockService.acquireLock(
+                "clean-up-stale-sequences-in-processing",
+                frequencyIntervalSeconds = runEverySeconds,
+            )
+        ) {
+            return
+        }
         try {
             log.info { "Cleaning up stale sequences in processing, timeToStaleInSeconds: $timeToStaleInSeconds" }
             submissionDatabaseService.cleanUpStaleSequencesInProcessing(timeToStaleInSeconds)
         } finally {
-            taskLockService.releaseLock("clean-up-stale-sequences-in-processing", frequencyIntervalSeconds = runEverySeconds)
+            taskLockService.releaseLock(
+                "clean-up-stale-sequences-in-processing",
+                frequencyIntervalSeconds = runEverySeconds,
+            )
         }
     }
 }
