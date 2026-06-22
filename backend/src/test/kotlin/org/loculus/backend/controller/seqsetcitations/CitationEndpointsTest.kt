@@ -4,8 +4,8 @@ import com.jayway.jsonpath.JsonPath
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import org.hamcrest.CoreMatchers.containsString
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.hamcrest.Matchers.containsInAnyOrder
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest

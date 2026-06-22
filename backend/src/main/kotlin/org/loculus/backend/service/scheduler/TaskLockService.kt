@@ -12,17 +12,17 @@ private val log = KotlinLogging.logger {}
 @Service
 class TaskLockService {
     /**
-    * Attempts to acquire a lock for the given task.
-    *
-    * The effective lock duration is shortened by [lockFraction] to prevent tasks
-    * from being blocked after their scheduled interval due to minor clock skew,
-    * execution delays, or lock acquisition latency.
-    *
-    * @param taskName unique name identifying the task.
-    * @param intervalSeconds scheduled task interval in seconds.
-    * @param lockFraction fraction of the interval to hold the lock for. Defaults to 0.9 (90%).
-    * @return true if the lock was acquired, false if another instance holds it.
-    */
+     * Attempts to acquire a lock for the given task.
+     *
+     * The effective lock duration is shortened by [lockFraction] to prevent tasks
+     * from being blocked after their scheduled interval due to minor clock skew,
+     * execution delays, or lock acquisition latency.
+     *
+     * @param taskName unique name identifying the task.
+     * @param intervalSeconds scheduled task interval in seconds.
+     * @param lockFraction fraction of the interval to hold the lock for. Defaults to 0.9 (90%).
+     * @return true if the lock was acquired, false if another instance holds it.
+     */
     fun acquireLock(taskName: String, intervalSeconds: Long, lockFraction: Double = 0.9): Boolean = transaction {
         val acquired = exec(
             """
