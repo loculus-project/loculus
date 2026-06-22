@@ -18,7 +18,7 @@ export enum SequenceDetailsTableResultType {
     REDIRECT = 'redirect',
 }
 
-type LapisData = {
+type LapisSequenceDetails = {
     organism: string;
     tableData: TableDataEntry[];
     sequenceEntryHistory: SequenceEntryHistory;
@@ -26,7 +26,7 @@ type LapisData = {
     isRevocation: boolean;
 };
 
-type BackendData = {
+type BackendSequenceDetails = {
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     sequenceCitations?: SequenceCitation[];
 };
@@ -48,11 +48,14 @@ export type Redirect = {
     redirectUrl: string;
 };
 
-type LapisDataResult = Result<LapisData, ProblemDetail>;
-type BackendDataResult = Result<BackendData, ProblemDetail>;
+type LapisSequenceDetailsResult = Result<LapisSequenceDetails, ProblemDetail>;
+type BackendSequenceDetailsResult = Result<BackendSequenceDetails, ProblemDetail>;
 type SequenceDetailsTableDataResult = Result<TableData | Redirect, ProblemDetail>;
 
-const getLapisData = async (accessionVersion: string, organism: string): Promise<LapisDataResult> => {
+const getLapisSequenceDetails = async (
+    accessionVersion: string,
+    organism: string,
+): Promise<LapisSequenceDetailsResult> => {
     const { accession } = parseAccessionVersionFromString(accessionVersion);
     const lapisClient = LapisClient.createForOrganism(organism);
     const schema = getSchema(organism);
@@ -72,7 +75,7 @@ const getLapisData = async (accessionVersion: string, organism: string): Promise
     }));
 };
 
-const getBackendData = async (accessionVersion: string): Promise<BackendDataResult> => {
+const getBackendSequenceDetails = async (accessionVersion: string): Promise<BackendSequenceDetailsResult> => {
     const { accession } = parseAccessionVersionFromString(accessionVersion);
     const backendClient = createBackendClient();
     const seqSetCitationClient = SeqSetCitationClient.create();
@@ -119,21 +122,16 @@ export const getSequenceDetailsTableData = async (
         }));
     }
 
-    // getLapisData resolves to a Result and never rejects, so wrap it to reject on error.
-    // This lets Promise.any return the first organism that *succeeds*, rather than the first to settle.
-    const backendDataPromise = getBackendData(accessionVersion);
-    const lapisDataPromises = organisms.map((organism) =>
-        getLapisData(accessionVersion, organism.key).then((result) =>
+    const backendPromise = getBackendSequenceDetails(accessionVersion);
+    const lapisPromises = organisms.map((organism) =>
+        getLapisSequenceDetails(accessionVersion, organism.key).then((result) =>
             result.isOk() ? result : Promise.reject(new Error(`${organism.key}: '${result.error.detail}'`)),
         ),
     );
 
-    const [backendDataResult, lapisDataResult] = await Promise.all([
-        backendDataPromise,
-        Promise.any(lapisDataPromises),
-    ]);
+    const [backendResult, lapisResult] = await Promise.all([backendPromise, Promise.any(lapisPromises)]);
 
-    return Result.combine([backendDataResult, lapisDataResult]).map(([backendData, lapisData]) => ({
+    return Result.combine([backendResult, lapisResult]).map(([backendData, lapisData]) => ({
         organism: lapisData.organism,
         type: SequenceDetailsTableResultType.TABLE_DATA as const,
         tableData: lapisData.tableData,
