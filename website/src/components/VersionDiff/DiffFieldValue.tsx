@@ -1,54 +1,14 @@
-import type { ReactNode } from 'react';
-
-import type { SegmentedMutations, SegmentedMutationStrings } from '../../types/config';
 import { FileListComponent, parseMutations } from '../SequenceDetailsPage/DataTableEntryValue';
 import { LinkWithMenuComponent } from '../SequenceDetailsPage/LinkWithMenuComponent';
-import { SubstitutionsContainer } from '../SequenceDetailsPage/MutationBadge';
+import {
+    MutationStringContainers,
+    SubstitutionsContainer,
+    SubstitutionsContainers,
+} from '../SequenceDetailsPage/MutationBadge';
 import { PlainValueDisplay } from '../SequenceDetailsPage/PlainValueDisplay';
 import type { TableDataEntry } from '../SequenceDetailsPage/types';
 
 const none = <span className='italic'>None</span>;
-
-/**
- * Renders segmented mutation badges. Unlike the sequence details page's
- * `SubstitutionsContainers`, this omits the per-segment heading separator (which renders
- * as a bare line for the common single, unnamed segment and looks out of place in the
- * diff table); a light segment label is only shown when there is an actual segment name.
- */
-function SegmentedBadges({ segments, empty }: { segments: SegmentedMutations[]; empty: ReactNode }) {
-    const nonEmpty = segments.filter(({ mutations }) => mutations.length > 0);
-    if (nonEmpty.length === 0) {
-        return empty;
-    }
-    return (
-        <>
-            {nonEmpty.map(({ segment, mutations }) => (
-                <div key={segment}>
-                    {segment !== '' && <span className='text-xs font-semibold text-gray-500'>{segment}</span>}
-                    <SubstitutionsContainer values={mutations} />
-                </div>
-            ))}
-        </>
-    );
-}
-
-/** Renders segmented mutation strings (deletions/insertions) without the heading separator. */
-function SegmentedStrings({ segments, empty }: { segments: SegmentedMutationStrings[]; empty: ReactNode }) {
-    const nonEmpty = segments.filter(({ mutations }) => mutations.length > 0);
-    if (nonEmpty.length === 0) {
-        return empty;
-    }
-    return (
-        <>
-            {nonEmpty.map(({ segment, mutations }) => (
-                <div key={segment}>
-                    {segment !== '' && <span className='text-xs font-semibold text-gray-500 mr-1'>{segment}</span>}
-                    <PlainValueDisplay value={mutations.join(', ')} />
-                </div>
-            ))}
-        </>
-    );
-}
 
 /**
  * Renders a single field value in the version diff.
@@ -72,9 +32,17 @@ export function DiffFieldValue({ entry, blankWhenEmpty = false }: { entry: Table
     switch (customDisplay?.type) {
         // Sequence-derived mutations / deletions / insertions: the core of a version diff.
         case 'badge':
-            return <SegmentedBadges segments={customDisplay.badge ?? []} empty={empty} />;
+            return customDisplay.badge !== undefined && customDisplay.badge.length > 0 ? (
+                <SubstitutionsContainers values={customDisplay.badge} />
+            ) : (
+                empty
+            );
         case 'list':
-            return <SegmentedStrings segments={customDisplay.list ?? []} empty={empty} />;
+            return customDisplay.list !== undefined && customDisplay.list.length > 0 ? (
+                <MutationStringContainers values={customDisplay.list} />
+            ) : (
+                empty
+            );
         case 'generatedBadge': {
             if (typeof value !== 'string') {
                 return <PlainValueDisplay value={value} />;
