@@ -5,6 +5,7 @@ import org.jetbrains.exposed.sql.LongColumnType
 import org.jetbrains.exposed.sql.TextColumnType
 import org.jetbrains.exposed.sql.statements.StatementType
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 private val log = KotlinLogging.logger {}
@@ -13,8 +14,8 @@ const val TASK_LOCK_TABLE_NAME = "task_lock"
 
 @Service
 class TaskLockService(
-    private val minLockFactor: Double,
-    private val maxLockFactor: Double,
+    @Value("\${loculus.task-lock.min-lock-factor:0.9}") private val minLockFactor: Double,
+    @Value("\${loculus.task-lock.max-lock-factor:5.0}") private val maxLockFactor: Double,
 ) {
 
     /**
@@ -82,10 +83,9 @@ class TaskLockService(
           AND (started_at + (? * interval '1 second')) > NOW()
             """.trimIndent(),
             args = listOf(
-                TextColumnType() to taskName,
-                LongColumnType() to minDuration,
                 LongColumnType() to minDuration,
                 TextColumnType() to taskName,
+                LongColumnType() to minDuration,
             ),
             explicitStatementType = StatementType.UPDATE,
         )
