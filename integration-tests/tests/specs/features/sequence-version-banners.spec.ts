@@ -277,6 +277,7 @@ test.describe('Sequence version banners', () => {
         await versionsPage.expectComparingVersions(2, 3);
         await expect.poll(() => versionsPage.getCompareParam()).toBe('2,3');
         await versionsPage.expectFieldRowPresent('Length');
+        await versionsPage.expectSharedMutationsHiddenByDefault();
         await versionsPage.expectFieldRowAbsent('Collection date');
 
         // Flip the selection to compare versions 1 and 2 (uncheck 3, check 1 - deterministic

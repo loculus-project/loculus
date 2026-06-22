@@ -25,7 +25,7 @@ export class VersionsPage {
     }
 
     async clickVersionLink(accessionVersion: string) {
-        const link = this.page.getByRole('link', { name: accessionVersion });
+        const link = this.page.getByRole('link', { name: accessionVersion, exact: true });
         await expect(link).toBeVisible();
         await link.click();
     }
@@ -81,6 +81,15 @@ export class VersionsPage {
      */
     async toggleHideUnchangedFields() {
         await this.page.getByRole('checkbox', { name: 'Hide unchanged fields' }).click();
+    }
+
+    /**
+     * Assert that the mutation diff table hides mutations shared by both versions by default.
+     */
+    async expectSharedMutationsHiddenByDefault() {
+        await expect(
+            this.page.getByRole('checkbox', { name: 'Hide shared substitutions/indels' }),
+        ).toBeChecked();
     }
 
     /**

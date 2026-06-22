@@ -22,7 +22,7 @@ function VersionsWithDiffInner({ versions, accession }: VersionsWithDiffProps) {
 
     const showCheckboxes = versions.length > 2;
     const [hideUnchangedFields, setHideUnchangedFields] = useState(true);
-    const [mutationsDiffOnly, setMutationsDiffOnly] = useState(false);
+    const [mutationsDiffOnly, setMutationsDiffOnly] = useState(true);
 
     // Prefer the pair the loaded comparison is for (kept stable while a new pair loads), falling
     // back to the current selection during the very first load.
