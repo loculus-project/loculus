@@ -5,7 +5,7 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.log.AuditLogger
-import org.loculus.backend.service.scheduler.TaskLockServiceFactory
+import org.loculus.backend.service.scheduler.TaskLockService
 import org.loculus.backend.service.submission.UploadDatabaseService
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Value
@@ -18,7 +18,7 @@ private val log = mu.KotlinLogging.logger {}
 @Component
 class CleanUpAuxTableTask(
     private val uploadDatabaseService: UploadDatabaseService,
-    private val taskLockServiceFactory: TaskLockServiceFactory,
+    private val taskLockService: TaskLockService,
     private val dateProvider: DateProvider,
     private val auditLogger: AuditLogger,
     @Value("\${${BackendSpringProperty.CLEAN_UP_AUX_TABLE_RUN_EVERY_HOURS}}")
@@ -31,10 +31,13 @@ class CleanUpAuxTableTask(
      */
     @Scheduled(fixedDelay = 1, timeUnit = java.util.concurrent.TimeUnit.HOURS)
     fun task() {
-        val taskLockService = taskLockServiceFactory.create(
-            frequencyIntervalSeconds = TimeUnit.HOURS.toSeconds(runEveryHours),
-        )
-        if (!taskLockService.acquireLock("clean-up-aux-table")) return
+        if (!taskLockService.acquireLock(
+                "clean-up-aux-table",
+                frequencyIntervalSeconds = TimeUnit.HOURS.toSeconds(runEveryHours),
+            )
+        ) {
+            return
+        }
         try {
             val hourCutoff = 24L
             val now = dateProvider.getCurrentInstant()
@@ -50,7 +53,10 @@ class CleanUpAuxTableTask(
                 auditLogger.log("CLEANUP", "Deleted $deletedCount auxTable entries older than $hourCutoff hours.")
             }
         } finally {
-            taskLockService.releaseLock("clean-up-aux-table")
+            taskLockService.releaseLock(
+                "clean-up-aux-table",
+                frequencyIntervalSeconds = TimeUnit.HOURS.toSeconds(runEveryHours),
+            )
         }
     }
 }

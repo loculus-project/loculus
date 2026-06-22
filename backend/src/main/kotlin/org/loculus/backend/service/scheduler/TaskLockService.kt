@@ -5,38 +5,17 @@ import org.jetbrains.exposed.sql.LongColumnType
 import org.jetbrains.exposed.sql.TextColumnType
 import org.jetbrains.exposed.sql.statements.StatementType
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
 
 private val log = KotlinLogging.logger {}
 
 const val TASK_LOCK_TABLE_NAME = "task_lock"
 
-@Component
-class TaskLockServiceFactory {
-    fun create(
-        minLockFactor: Double = 0.9,
-        maxLockFactor: Double = 5.0,
-        frequencyIntervalSeconds: Long,
-    ): TaskLockService = TaskLockService(
-        minLockFactor = minLockFactor,
-        maxLockFactor = maxLockFactor,
-        frequencyIntervalSeconds = frequencyIntervalSeconds,
-    )
-}
-
+@Service
 class TaskLockService(
-    private val frequencyIntervalSeconds: Long,
     private val minLockFactor: Double,
     private val maxLockFactor: Double,
 ) {
-    // The effective lock duration is shortened by [minLockFactor] to prevent tasks
-    // from being blocked after their scheduled interval due to minor clock skew,
-    // execution delays, or lock acquisition latency.
-    private val minDuration: Long =
-        (frequencyIntervalSeconds * minLockFactor).toLong()
-
-    private val maxDuration: Long =
-        (frequencyIntervalSeconds * maxLockFactor).toLong()
 
     /**
      * Attempts to acquire a lock for the given task.
@@ -47,7 +26,8 @@ class TaskLockService(
      * @param maxDuration maximum duration for which to hold the lock in seconds.
      * @return true if the lock was acquired, false if another instance holds it.
      */
-    fun acquireLock(taskName: String): Boolean = transaction {
+    fun acquireLock(taskName: String, frequencyIntervalSeconds: Long): Boolean = transaction {
+        val maxDuration = (frequencyIntervalSeconds * maxLockFactor).toLong()
         val acquired = exec(
             """
             WITH lock_attempt AS (
@@ -81,25 +61,25 @@ class TaskLockService(
     }
 
     /**
-     * Attempts to release a lock for the given task, this is only possible if the
+     * Attempts to "release" a lock for the given task, this is only possible if the
      * lock is considered expired based on the [minLockFactor].
+     * If the lock_until is still in the future update the lock_until till the minimum duration, otherwise do nothing.
      *
      * @param taskName unique name identifying the task.
      * @return true if the lock was released, false if the lock was not found or is still held.
      */
-    fun releaseLock(taskName: String) = transaction {
+    fun releaseLock(taskName: String, frequencyIntervalSeconds: Long) = transaction {
+        // The effective lock duration is shortened by [minLockFactor] to prevent tasks
+        // from being blocked after their scheduled interval due to minor clock skew,
+        // execution delays, or lock acquisition latency.
+        val minDuration: Long =
+            (frequencyIntervalSeconds * minLockFactor).toLong()
         exec(
             """
-        WITH deleted AS (
-            DELETE FROM task_lock
-            WHERE task_name = ?
-              AND (started_at + (? * interval '1 second')) <= NOW()
-            RETURNING task_name
-        )
         UPDATE task_lock
         SET locked_until = started_at + (? * interval '1 second')
         WHERE task_name = ?
-          AND NOT EXISTS (SELECT 1 FROM deleted)
+          AND (started_at + (? * interval '1 second')) > NOW()
             """.trimIndent(),
             args = listOf(
                 TextColumnType() to taskName,
@@ -107,8 +87,6 @@ class TaskLockService(
                 LongColumnType() to minDuration,
                 TextColumnType() to taskName,
             ),
-            // The CTE starts with DELETE, so Exposed would default to StatementType.DELETE.
-            // Overriding to UPDATE ensures the DML executes via the correct JDBC path.
             explicitStatementType = StatementType.UPDATE,
         )
     }

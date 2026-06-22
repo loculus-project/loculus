@@ -1,7 +1,7 @@
 package org.loculus.backend.service.submission
 
 import org.loculus.backend.config.BackendSpringProperty
-import org.loculus.backend.service.scheduler.TaskLockServiceFactory
+import org.loculus.backend.service.scheduler.TaskLockService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -12,7 +12,7 @@ private val log = mu.KotlinLogging.logger {}
 @Component
 class UseNewerProcessingPipelineVersionTask(
     private val submissionDatabaseService: SubmissionDatabaseService,
-    private val taskLockServiceFactory: TaskLockServiceFactory,
+    private val taskLockService: TaskLockService,
     @Value(
         "\${${BackendSpringProperty.PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS}}",
     ) private val lockIntervalSeconds: Long,
@@ -27,10 +27,13 @@ class UseNewerProcessingPipelineVersionTask(
         timeUnit = TimeUnit.SECONDS,
     )
     fun task() {
-        val taskLockService = taskLockServiceFactory.create(
-            frequencyIntervalSeconds = lockIntervalSeconds,
-        )
-        if (!taskLockService.acquireLock("use-newer-processing-pipeline-version")) return
+        if (!taskLockService.acquireLock(
+                "use-newer-processing-pipeline-version",
+                frequencyIntervalSeconds = lockIntervalSeconds,
+            )
+        ) {
+            return
+        }
         try {
             log.info { "Checking for newer preprocessing pipeline versions" }
             val newVersions = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
@@ -48,7 +51,10 @@ class UseNewerProcessingPipelineVersionTask(
                 log.debug { "Completed pipeline version upgrade check: no upgrades needed" }
             }
         } finally {
-            taskLockService.releaseLock("use-newer-processing-pipeline-version")
+            taskLockService.releaseLock(
+                "use-newer-processing-pipeline-version",
+                frequencyIntervalSeconds = lockIntervalSeconds,
+            )
         }
     }
 }

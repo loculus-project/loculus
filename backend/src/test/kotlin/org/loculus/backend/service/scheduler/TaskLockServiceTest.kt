@@ -10,21 +10,19 @@ import org.loculus.backend.controller.EndpointTest
 import org.springframework.beans.factory.annotation.Autowired
 
 @EndpointTest
-class TaskLockServiceTest(@Autowired private val taskLockServiceFactory: TaskLockServiceFactory) {
+class TaskLockServiceTest(@Autowired private val taskLockService: TaskLockService) {
 
     @Test
     fun `WHEN lock is acquired for the first time THEN returns true`() {
-        val taskLockService = taskLockServiceFactory.create(frequencyIntervalSeconds = 3600)
-        val acquired = taskLockService.acquireLock("test-task-new")
+        val acquired = taskLockService.acquireLock("test-task-new", frequencyIntervalSeconds = 3600)
 
         assertThat(acquired, `is`(true))
     }
 
     @Test
     fun `WHEN lock is already held within the interval THEN second call returns false`() {
-        val taskLockService = taskLockServiceFactory.create(frequencyIntervalSeconds = 3600)
-        val firstAcquired = taskLockService.acquireLock("test-task-held")
-        val secondAcquired = taskLockService.acquireLock("test-task-held")
+        val firstAcquired = taskLockService.acquireLock("test-task-held", frequencyIntervalSeconds = 3600)
+        val secondAcquired = taskLockService.acquireLock("test-task-held", frequencyIntervalSeconds = 3600)
 
         assertThat(firstAcquired, `is`(true))
         assertThat(secondAcquired, `is`(false))
@@ -37,19 +35,17 @@ class TaskLockServiceTest(@Autowired private val taskLockServiceFactory: TaskLoc
                 "INSERT INTO task_lock (task_name, started_at) VALUES ('test-task-expired', NOW() - INTERVAL '10 seconds')",
             )
         }
-        val taskLockService = taskLockServiceFactory.create(frequencyIntervalSeconds = 5)
-        val acquired = taskLockService.acquireLock("test-task-expired")
+        val acquired = taskLockService.acquireLock("test-task-expired", frequencyIntervalSeconds = 5)
 
         assertThat(acquired, `is`(true))
     }
 
     @Test
     fun `WHEN two different tasks use the same service THEN they have independent locks`() {
-        val taskLockService = taskLockServiceFactory.create(frequencyIntervalSeconds = 3600)
-        val taskA1 = taskLockService.acquireLock("test-task-a")
-        val taskB1 = taskLockService.acquireLock("test-task-b")
-        val taskA2 = taskLockService.acquireLock("test-task-a")
-        val taskB2 = taskLockService.acquireLock("test-task-b")
+        val taskA1 = taskLockService.acquireLock("test-task-a", frequencyIntervalSeconds = 3600)
+        val taskB1 = taskLockService.acquireLock("test-task-b", frequencyIntervalSeconds = 3600)
+        val taskA2 = taskLockService.acquireLock("test-task-a", frequencyIntervalSeconds = 3600)
+        val taskB2 = taskLockService.acquireLock("test-task-b", frequencyIntervalSeconds = 3600)
 
         assertThat(taskA1, `is`(true))
         assertThat(taskB1, `is`(true))
@@ -59,11 +55,10 @@ class TaskLockServiceTest(@Autowired private val taskLockServiceFactory: TaskLoc
 
     @Test
     fun `WHEN lock is released before minDuration THEN locked_until is shortened`() {
-        val service = taskLockServiceFactory.create(frequencyIntervalSeconds = 10)
-        service.acquireLock("test-release-early")
+        taskLockService.acquireLock("test-release-early", frequencyIntervalSeconds = 10)
         val deltaBeforeRelease = lockDeltaSeconds("test-release-early")
 
-        service.releaseLock("test-release-early")
+        taskLockService.releaseLock("test-release-early", frequencyIntervalSeconds = 10)
         val deltaAfterRelease = lockDeltaSeconds("test-release-early")
 
         assertThat(deltaBeforeRelease, notNullValue())
@@ -73,11 +68,10 @@ class TaskLockServiceTest(@Autowired private val taskLockServiceFactory: TaskLoc
 
     @Test
     fun `WHEN lock is released before minDuration THEN re-acquire still fails`() {
-        val service = taskLockServiceFactory.create(frequencyIntervalSeconds = 10)
-        service.acquireLock("test-release-early-held")
-        service.releaseLock("test-release-early-held")
+        taskLockService.acquireLock("test-release-early-held", frequencyIntervalSeconds = 10)
+        taskLockService.releaseLock("test-release-early-held", frequencyIntervalSeconds = 10)
 
-        assertThat(service.acquireLock("test-release-early-held"), `is`(false))
+        assertThat(taskLockService.acquireLock("test-release-early-held", frequencyIntervalSeconds = 10), `is`(false))
     }
 
     @Test
@@ -89,8 +83,7 @@ class TaskLockServiceTest(@Autowired private val taskLockServiceFactory: TaskLoc
                     "VALUES ('test-release-late', NOW() - INTERVAL '15 seconds', NOW() + INTERVAL '35 seconds')",
             )
         }
-        val service = taskLockServiceFactory.create(frequencyIntervalSeconds = 10)
-        service.releaseLock("test-release-late")
+        taskLockService.releaseLock("test-release-late", frequencyIntervalSeconds = 10)
 
         val lockExists = transaction {
             exec("SELECT COUNT(*) FROM task_lock WHERE task_name = 'test-release-late'") { rs ->
@@ -98,13 +91,12 @@ class TaskLockServiceTest(@Autowired private val taskLockServiceFactory: TaskLoc
             } ?: false
         }
         assertThat(lockExists, `is`(false))
-        assertThat(service.acquireLock("test-release-late"), `is`(true))
+        assertThat(taskLockService.acquireLock("test-release-late", frequencyIntervalSeconds = 10), `is`(true))
     }
 
     @Test
     fun `WHEN releasing a lock that does not exist THEN no exception is thrown`() {
-        val service = taskLockServiceFactory.create(frequencyIntervalSeconds = 10)
-        service.releaseLock("test-release-nonexistent")
+        taskLockService.releaseLock("test-release-nonexistent", frequencyIntervalSeconds = 10)
     }
 
     private fun lockDeltaSeconds(taskName: String): Double? = transaction {
