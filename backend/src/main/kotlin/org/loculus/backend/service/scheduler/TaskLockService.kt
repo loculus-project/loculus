@@ -13,7 +13,7 @@ private val log = KotlinLogging.logger {}
 class TaskLockServiceFactory {
     fun create(
         minLockFactor: Double = 0.9,
-        maxLockFactor: Double = 1.1,
+        maxLockFactor: Double = 5.0,
         frequencyIntervalSeconds: Long,
     ): TaskLockService = TaskLockService(
         minLockFactor = minLockFactor,
@@ -24,8 +24,8 @@ class TaskLockServiceFactory {
 
 class TaskLockService(
     private val frequencyIntervalSeconds: Long,
-    private val minLockFactor: Double = 0.9,
-    private val maxLockFactor: Double = 5.0,
+    private val minLockFactor: Double,
+    private val maxLockFactor: Double,
 ) {
     // The effective lock duration is shortened by [minLockFactor] to prevent tasks
     // from being blocked after their scheduled interval due to minor clock skew,

@@ -2,6 +2,7 @@ package org.loculus.backend.service.scheduler
 
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
+import org.hamcrest.Matchers.notNullValue
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Test
 import org.loculus.backend.controller.EndpointTest
@@ -53,5 +54,63 @@ class TaskLockServiceTest(@Autowired private val taskLockServiceFactory: TaskLoc
         assertThat(taskB1, `is`(true))
         assertThat(taskA2, `is`(false))
         assertThat(taskB2, `is`(false))
+    }
+
+    @Test
+    fun `WHEN lock is released before minDuration THEN locked_until is shortened`() {
+        val service = taskLockServiceFactory.create(frequencyIntervalSeconds = 10)
+        service.acquireLock("test-release-early")
+        val deltaBeforeRelease = lockDeltaSeconds("test-release-early")
+
+        service.releaseLock("test-release-early")
+        val deltaAfterRelease = lockDeltaSeconds("test-release-early")
+
+        assertThat(deltaBeforeRelease, notNullValue())
+        assertThat(deltaAfterRelease, notNullValue())
+        assertThat(deltaAfterRelease!! < deltaBeforeRelease!!, `is`(true))
+    }
+
+    @Test
+    fun `WHEN lock is released before minDuration THEN re-acquire still fails`() {
+        val service = taskLockServiceFactory.create(frequencyIntervalSeconds = 10)
+        service.acquireLock("test-release-early-held")
+        service.releaseLock("test-release-early-held")
+
+        assertThat(service.acquireLock("test-release-early-held"), `is`(false))
+    }
+
+    @Test
+    fun `WHEN lock is released after minDuration THEN lock row is deleted and re-acquire succeeds`() {
+        // started_at 15s ago — beyond minDuration (9s) — so releaseLock takes the DELETE path
+        transaction {
+            exec(
+                "INSERT INTO task_lock (task_name, started_at, locked_until) " +
+                    "VALUES ('test-release-late', NOW() - INTERVAL '15 seconds', NOW() + INTERVAL '35 seconds')",
+            )
+        }
+        val service = taskLockServiceFactory.create(frequencyIntervalSeconds = 10)
+        service.releaseLock("test-release-late")
+
+        val lockExists = transaction {
+            exec("SELECT COUNT(*) FROM task_lock WHERE task_name = 'test-release-late'") { rs ->
+                rs.next() && rs.getLong(1) > 0L
+            } ?: false
+        }
+        assertThat(lockExists, `is`(false))
+        assertThat(service.acquireLock("test-release-late"), `is`(true))
+    }
+
+    @Test
+    fun `WHEN releasing a lock that does not exist THEN no exception is thrown`() {
+        val service = taskLockServiceFactory.create(frequencyIntervalSeconds = 10)
+        service.releaseLock("test-release-nonexistent")
+    }
+
+    private fun lockDeltaSeconds(taskName: String): Double? = transaction {
+        exec(
+            "SELECT EXTRACT(EPOCH FROM (locked_until - started_at)) FROM task_lock WHERE task_name = '$taskName'",
+        ) { rs ->
+            if (rs.next()) rs.getDouble(1) else null
+        }
     }
 }

@@ -55,56 +55,52 @@ class SeqSetCrossRefCitationsTask(
         timeUnit = java.util.concurrent.TimeUnit.MINUTES,
     )
     fun task() {
-        val taskLockService = taskLockServiceFactory.create(frequencyIntervalSeconds = runEveryMinutes)
-        if (!taskLockService.acquireLock(
-                "seq-set-cross-ref-citations",
-            )
-        ) {
-            return
-        }
+        val taskLockService = taskLockServiceFactory.create(
+            frequencyIntervalSeconds = TimeUnit.MINUTES.toSeconds(runEveryMinutes),
+        )
+        if (!taskLockService.acquireLock("seq-set-cross-ref-citations")) return
         log.info { "Updating SeqSet CrossRef citations..." }
-
-        if (!crossRefService.isActive) {
-            log.info { "CrossRef service is not active, skipping SeqSet citation update." }
-            return
-        }
-
-        val doiPrefix = crossRefService.doiPrefix
-        if (doiPrefix.isNullOrBlank()) {
-            log.info { "CrossRef service has no DOI prefix, skipping SeqSet citation update." }
-            return
-        }
-
-        log.info { "Fetching CrossRef citations for DOI prefix: $doiPrefix" }
-        val citedByResult = crossRefService.getCrossRefCitedBy(doiPrefix)
-        if (citedByResult.validationErrors.isNotEmpty()) {
-            log.warn {
-                "Skipped ${citedByResult.validationErrors.size} CrossRef citation(s) due to validation errors."
+        try {
+            if (!crossRefService.isActive) {
+                log.info { "CrossRef service is not active, skipping SeqSet citation update." }
+                return
             }
-            citedByResult.validationErrors.forEach { error ->
+
+            val doiPrefix = crossRefService.doiPrefix
+            if (doiPrefix.isNullOrBlank()) {
+                log.info { "CrossRef service has no DOI prefix, skipping SeqSet citation update." }
+                return
+            }
+
+            log.info { "Fetching CrossRef citations for DOI prefix: $doiPrefix" }
+            val citedByResult = crossRefService.getCrossRefCitedBy(doiPrefix)
+            if (citedByResult.validationErrors.isNotEmpty()) {
                 log.warn {
-                    "Validation error: ${error.reason}"
+                    "Skipped ${citedByResult.validationErrors.size} CrossRef citation(s) due to validation errors."
+                }
+                citedByResult.validationErrors.forEach { error ->
+                    log.warn {
+                        "Validation error: ${error.reason}"
+                    }
                 }
             }
-        }
-        val citationSources = mergeCitationSources(citedByResult.sources)
-        val seqSetDOIs = citationSources.flatMap { it.seqSetDOIs }.toSet()
-        log.info {
-            "Fetched ${citationSources.size} citation source(s) from CrossRef covering ${seqSetDOIs.size} SeqSet DOI(s)."
-        }
-        if (citationSources.isEmpty()) return
+            val citationSources = mergeCitationSources(citedByResult.sources)
+            val seqSetDOIs = citationSources.flatMap { it.seqSetDOIs }.toSet()
+            log.info {
+                "Fetched ${citationSources.size} citation source(s) from CrossRef covering ${seqSetDOIs.size} SeqSet DOI(s)."
+            }
+            if (citationSources.isEmpty()) return
 
-        val updateResult = seqSetCitationsDatabaseService.updateCitationSourcesFromCrossRef(citationSources)
-        if (updateResult.updatedCitationSourceDOIs.isNotEmpty()) {
-            log.info { "Updated ${updateResult.updatedCitationSourceDOIs.size} citation source(s)." }
+            val updateResult = seqSetCitationsDatabaseService.updateCitationSourcesFromCrossRef(citationSources)
+            if (updateResult.updatedCitationSourceDOIs.isNotEmpty()) {
+                log.info { "Updated ${updateResult.updatedCitationSourceDOIs.size} citation source(s)." }
+            }
+            val skippedCitationSources = citationSources.size - updateResult.updatedCitationSourceDOIs.size
+            if (skippedCitationSources > 0) {
+                log.warn { "Skipped $skippedCitationSources citation source(s) with no matching SeqSet." }
+            }
+        } finally {
+            taskLockService.releaseLock("seq-set-cross-ref-citations")
         }
-        val skippedCitationSources = citationSources.size - updateResult.updatedCitationSourceDOIs.size
-        if (skippedCitationSources > 0) {
-            log.warn { "Skipped $skippedCitationSources citation source(s) with no matching SeqSet." }
-        }
-
-        taskLockService.releaseLock(
-            "seq-set-cross-ref-citations",
-        )
     }
 }
