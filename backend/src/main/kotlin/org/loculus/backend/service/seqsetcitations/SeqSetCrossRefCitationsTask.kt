@@ -4,7 +4,7 @@ import org.loculus.backend.api.SeqSetCitationSource
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.config.ENABLE_SEQSETS_TRUE_VALUE
 import org.loculus.backend.service.crossref.CrossRefService
-import org.loculus.backend.service.scheduler.TaskLockServiceFactory
+import org.loculus.backend.service.scheduler.TaskLockService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
@@ -37,7 +37,7 @@ internal fun mergeCitationSources(citationSources: List<SeqSetCitationSource>): 
 class SeqSetCrossRefCitationsTask(
     private val crossRefService: CrossRefService,
     private val seqSetCitationsDatabaseService: SeqSetCitationsDatabaseService,
-    private val taskLockServiceFactory: TaskLockServiceFactory,
+    private val taskLockService: TaskLockService,
     @Value("\${${BackendSpringProperty.SEQSET_CITATIONS_RUN_EVERY_MINUTES}}")
     private val runEveryMinutes: Long,
 ) {
@@ -55,10 +55,13 @@ class SeqSetCrossRefCitationsTask(
         timeUnit = java.util.concurrent.TimeUnit.MINUTES,
     )
     fun task() {
-        val taskLockService = taskLockServiceFactory.create(
-            frequencyIntervalSeconds = TimeUnit.MINUTES.toSeconds(runEveryMinutes),
-        )
-        if (!taskLockService.acquireLock("seq-set-cross-ref-citations")) return
+        if (!taskLockService.acquireLock(
+                "seq-set-cross-ref-citations",
+                frequencyIntervalSeconds = TimeUnit.MINUTES.toSeconds(runEveryMinutes),
+            )
+        ) {
+            return
+        }
         log.info { "Updating SeqSet CrossRef citations..." }
         try {
             if (!crossRefService.isActive) {
@@ -100,7 +103,10 @@ class SeqSetCrossRefCitationsTask(
                 log.warn { "Skipped $skippedCitationSources citation source(s) with no matching SeqSet." }
             }
         } finally {
-            taskLockService.releaseLock("seq-set-cross-ref-citations")
+            taskLockService.releaseLock(
+                "seq-set-cross-ref-citations",
+                frequencyIntervalSeconds = TimeUnit.MINUTES.toSeconds(runEveryMinutes),
+            )
         }
     }
 }
