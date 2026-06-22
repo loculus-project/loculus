@@ -57,7 +57,7 @@ spec:
             - "--crossref.database-name=$(CROSSREF_DATABASE_NAME)"
             - "--crossref.email=$(CROSSREF_EMAIL)"
             - "--crossref.organization=$(CROSSREF_ORGANIZATION)"
-            - "--crossref.host-url=$(CROSSREF_HOST_URL)"
+            - "--crossref.write-enabled=$(CROSSREF_WRITE_ENABLED)"
             {{- end }}
             - "--keycloak.password=$(BACKEND_KEYCLOAK_PASSWORD)"
             - "--keycloak.realm=loculus"
@@ -106,8 +106,8 @@ spec:
               value: {{$.Values.seqSets.crossRef.email | quote }}
             - name: CROSSREF_ORGANIZATION
               value: {{$.Values.seqSets.crossRef.organization | quote }}
-            - name: CROSSREF_HOST_URL
-              value: {{$.Values.seqSets.crossRef.hostUrl | quote }}
+            - name: CROSSREF_WRITE_ENABLED
+              value: {{$.Values.seqSets.crossRef.writeEnabled | quote }}
            {{- end }}
             - name: BACKEND_KEYCLOAK_PASSWORD
               valueFrom:

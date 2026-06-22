@@ -30,7 +30,10 @@ class SeqSetValidationEndpointsTest(
     @BeforeEach
     fun setup() {
         every { crossRefService.doiPrefix } returns MOCK_DOI_PREFIX
-        every { crossRefService.isActive } returns false
+        every { crossRefService.isActive } returns true
+        every { crossRefService.isWriteEnabled } returns true
+        every { crossRefService.generateCrossRefXML(any()) } returns "<doi_batch/>"
+        every { crossRefService.postCrossRefXML(any()) } returns "Crossref API response"
     }
 
     @Test

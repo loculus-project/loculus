@@ -12,6 +12,7 @@ import { getSegmentLapisNames } from '../../../utils/sequenceTypeHelpers';
 import { processTemplate, matchPlaceholders } from '../../../utils/templateProcessor';
 import { BaseDialog } from '../../common/BaseDialog';
 import { Button } from '../../common/Button';
+import { buttonClasses } from '../../common/buttonStyles';
 import DashiconsExternal from '~icons/dashicons/external';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
@@ -204,7 +205,10 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
         <>
             <Menu as='div' className='ml-2 relative inline-block text-left'>
                 <MenuButton
-                    className='outlineButton flex items-center min-w-[100px] justify-between h-full'
+                    className={buttonClasses({
+                        variant: 'outline',
+                        className: 'flex items-center min-w-[100px] justify-between',
+                    })}
                     onClick={() => setIsOpen(!isOpen)}
                 >
                     <span>Tools</span>

@@ -97,6 +97,24 @@ data class SeqSetCitationSource(val source: CitationSource, val seqSetDOIs: Set<
 @Schema(description = "A citation of a SeqSet.")
 data class SeqSetCitation(val source: CitationSource)
 
+data class SeqSetCitingSequence(
+    @Schema(
+        description = "The accession and version of the SeqSet that was cited.",
+        type = "string",
+        example = "PP_SS_1.1",
+    )
+    val seqSetAccessionVersion: String,
+    @Schema(
+        description = "The accession of the sequence within the cited SeqSet. Can be either versioned or unversioned.",
+        type = "string",
+        example = "PP_123456.1",
+    )
+    val sequenceAccession: String,
+)
+
+@Schema(description = "A citation of a sequence.")
+data class SequenceCitation(val source: CitationSource, val seqSets: List<SeqSetCitingSequence>)
+
 data class ResponseSeqSet(val seqSetId: String, val seqSetVersion: Long)
 
 data class CitedBy(

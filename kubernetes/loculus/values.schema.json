@@ -903,6 +903,12 @@
                   },
                   "required": ["method"]
                 },
+                "muted_hashes_url": {
+                  "groups": ["ingest"],
+                  "docsIncludePrefix": false,
+                  "type": "string",
+                  "description": "URL to a TSV file mapping accessions to hashes that should not trigger a revision."
+                },
                 "grouping_override_url": {
                   "groups": ["ingest"],
                   "docsIncludePrefix": false,
@@ -1252,7 +1258,7 @@
         },
         "crossRef": {
           "groups": ["general"],
-          "type": "object",
+          "type": ["object", "null"],
           "additionalProperties": false,
           "description": "Configuration for CrossRef integration. Set to `null` to disable CrossRef integration (you can still use SeqSets without CrossRef DOIs).",
           "properties": {
@@ -1282,10 +1288,11 @@
               "type": "string",
               "description": "The organization name for CrossRef"
             },
-            "hostUrl": {
+            "writeEnabled": {
               "groups": ["general"],
-              "type": "string",
-              "description": "The host URL for CrossRef callbacks"
+              "type": "boolean",
+              "default": false,
+              "description": "Enable/disable Crossref write functionality, such as generating DOIs"
             }
           }
         },
