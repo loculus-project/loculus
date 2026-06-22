@@ -12,7 +12,6 @@ private val log = KotlinLogging.logger {}
 
 const val TASK_LOCK_TABLE_NAME = "task_lock"
 
-@Service
 /**
  * Lock can be acquired when current time > `locked_until` (or no row for this task exists)
  * When acquiring, `locked_until` is set to `currentTime + maxLockFactor * frequencyIntervalSeconds`
@@ -20,6 +19,7 @@ const val TASK_LOCK_TABLE_NAME = "task_lock"
  * maxLockFactor prevents concurrent execution even if tasks run longer than the interval
  * minLockFactor prevents multiple backends from starting new tasks before the interval is almost over
  */
+@Service
 class TaskLockService(
     @Value("\${loculus.task-lock.min-lock-factor:0.9}") private val minLockFactor: Double,
     @Value("\${loculus.task-lock.max-lock-factor:5.0}") private val maxLockFactor: Double,
