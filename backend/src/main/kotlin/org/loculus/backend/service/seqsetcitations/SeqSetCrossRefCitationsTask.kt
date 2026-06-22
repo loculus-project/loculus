@@ -4,8 +4,7 @@ import org.loculus.backend.api.SeqSetCitationSource
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.config.ENABLE_SEQSETS_TRUE_VALUE
 import org.loculus.backend.service.crossref.CrossRefService
-import org.loculus.backend.service.scheduler.TaskLockService
-import org.springframework.beans.factory.annotation.Value
+import org.loculus.backend.service.scheduler.TaskLock
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -39,9 +38,6 @@ internal fun mergeCitationSources(citationSources: List<SeqSetCitationSource>): 
 class SeqSetCrossRefCitationsTask(
     private val crossRefService: CrossRefService,
     private val seqSetCitationsDatabaseService: SeqSetCitationsDatabaseService,
-    private val taskLockService: TaskLockService,
-    @Value("\${${BackendSpringProperty.SEQSET_CITATIONS_RUN_EVERY_MINUTES}}")
-    private val runEveryMinutes: Long,
 ) {
     /**
      * Runs every six hours, with an initial delay of one minute.
@@ -56,59 +52,50 @@ class SeqSetCrossRefCitationsTask(
         fixedRateString = "\${${BackendSpringProperty.SEQSET_CITATIONS_RUN_EVERY_MINUTES}}",
         timeUnit = java.util.concurrent.TimeUnit.MINUTES,
     )
+    @TaskLock(
+        name = SEQ_SET_CITATIONS_TASK_NAME,
+        intervalString = "\${${BackendSpringProperty.SEQSET_CITATIONS_RUN_EVERY_MINUTES}}",
+        timeUnit = TimeUnit.MINUTES,
+    )
     fun task() {
-        if (!taskLockService.acquireLock(
-                SEQ_SET_CITATIONS_TASK_NAME,
-                frequencyIntervalSeconds = TimeUnit.MINUTES.toSeconds(runEveryMinutes),
-            )
-        ) {
+        log.info { "Updating SeqSet CrossRef citations..." }
+        if (!crossRefService.isActive) {
+            log.info { "CrossRef service is not active, skipping SeqSet citation update." }
             return
         }
-        log.info { "Updating SeqSet CrossRef citations..." }
-        try {
-            if (!crossRefService.isActive) {
-                log.info { "CrossRef service is not active, skipping SeqSet citation update." }
-                return
-            }
 
-            val doiPrefix = crossRefService.doiPrefix
-            if (doiPrefix.isNullOrBlank()) {
-                log.info { "CrossRef service has no DOI prefix, skipping SeqSet citation update." }
-                return
-            }
+        val doiPrefix = crossRefService.doiPrefix
+        if (doiPrefix.isNullOrBlank()) {
+            log.info { "CrossRef service has no DOI prefix, skipping SeqSet citation update." }
+            return
+        }
 
-            log.info { "Fetching CrossRef citations for DOI prefix: $doiPrefix" }
-            val citedByResult = crossRefService.getCrossRefCitedBy(doiPrefix)
-            if (citedByResult.validationErrors.isNotEmpty()) {
+        log.info { "Fetching CrossRef citations for DOI prefix: $doiPrefix" }
+        val citedByResult = crossRefService.getCrossRefCitedBy(doiPrefix)
+        if (citedByResult.validationErrors.isNotEmpty()) {
+            log.warn {
+                "Skipped ${citedByResult.validationErrors.size} CrossRef citation(s) due to validation errors."
+            }
+            citedByResult.validationErrors.forEach { error ->
                 log.warn {
-                    "Skipped ${citedByResult.validationErrors.size} CrossRef citation(s) due to validation errors."
-                }
-                citedByResult.validationErrors.forEach { error ->
-                    log.warn {
-                        "Validation error: ${error.reason}"
-                    }
+                    "Validation error: ${error.reason}"
                 }
             }
-            val citationSources = mergeCitationSources(citedByResult.sources)
-            val seqSetDOIs = citationSources.flatMap { it.seqSetDOIs }.toSet()
-            log.info {
-                "Fetched ${citationSources.size} citation source(s) from CrossRef covering ${seqSetDOIs.size} SeqSet DOI(s)."
-            }
-            if (citationSources.isEmpty()) return
+        }
+        val citationSources = mergeCitationSources(citedByResult.sources)
+        val seqSetDOIs = citationSources.flatMap { it.seqSetDOIs }.toSet()
+        log.info {
+            "Fetched ${citationSources.size} citation source(s) from CrossRef covering ${seqSetDOIs.size} SeqSet DOI(s)."
+        }
+        if (citationSources.isEmpty()) return
 
-            val updateResult = seqSetCitationsDatabaseService.updateCitationSourcesFromCrossRef(citationSources)
-            if (updateResult.updatedCitationSourceDOIs.isNotEmpty()) {
-                log.info { "Updated ${updateResult.updatedCitationSourceDOIs.size} citation source(s)." }
-            }
-            val skippedCitationSources = citationSources.size - updateResult.updatedCitationSourceDOIs.size
-            if (skippedCitationSources > 0) {
-                log.warn { "Skipped $skippedCitationSources citation source(s) with no matching SeqSet." }
-            }
-        } finally {
-            taskLockService.releaseLock(
-                SEQ_SET_CITATIONS_TASK_NAME,
-                frequencyIntervalSeconds = TimeUnit.MINUTES.toSeconds(runEveryMinutes),
-            )
+        val updateResult = seqSetCitationsDatabaseService.updateCitationSourcesFromCrossRef(citationSources)
+        if (updateResult.updatedCitationSourceDOIs.isNotEmpty()) {
+            log.info { "Updated ${updateResult.updatedCitationSourceDOIs.size} citation source(s)." }
+        }
+        val skippedCitationSources = citationSources.size - updateResult.updatedCitationSourceDOIs.size
+        if (skippedCitationSources > 0) {
+            log.warn { "Skipped $skippedCitationSources citation source(s) with no matching SeqSet." }
         }
     }
 }
