@@ -116,12 +116,17 @@ const InnerEditPage: FC<EditPageProps> = ({
                 fileMapping: fileMappingWithSubmissionId,
             });
         } else {
+            const files =
+                extraFilesEnabled && fileMapping !== undefined && Object.keys(fileMapping).length > 0
+                    ? Object.values(fileMapping)[0]
+                    : null;
             submitEdit({
                 accession: dataToEdit.accession,
                 version: dataToEdit.version,
                 data: {
                     metadata: editableMetadata.getMetadataRecord(),
                     unalignedNucleotideSequences: editableSequences.getSequenceRecord(),
+                    files,
                 },
             });
         }
@@ -158,7 +163,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                     />
                 </div>
             )}
-            {isCreatingRevision && extraFilesEnabled && (
+            {extraFilesEnabled && (
                 <div className='mt-4'>
                     <ExtraFilesUpload
                         accessToken={accessToken}
