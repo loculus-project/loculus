@@ -1,7 +1,7 @@
 package org.loculus.backend.service.submission
 
 import org.loculus.backend.config.BackendSpringProperty
-import org.loculus.backend.service.scheduler.TaskLockService
+import org.loculus.backend.service.scheduler.TaskLockServiceFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -12,7 +12,7 @@ private val log = mu.KotlinLogging.logger {}
 @Component
 class UseNewerProcessingPipelineVersionTask(
     private val submissionDatabaseService: SubmissionDatabaseService,
-    private val taskLockService: TaskLockService,
+    private val taskLockServiceFactory: TaskLockServiceFactory,
     @Value(
         "\${${BackendSpringProperty.PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS}}",
     ) private val lockIntervalSeconds: Long,
@@ -27,7 +27,10 @@ class UseNewerProcessingPipelineVersionTask(
         timeUnit = TimeUnit.SECONDS,
     )
     fun task() {
-        if (!taskLockService.acquireLock("use-newer-processing-pipeline-version", lockIntervalSeconds)) return
+        val taskLockService = taskLockServiceFactory.create(
+            frequencyIntervalSeconds = lockIntervalSeconds,
+        )
+        if (!taskLockService.acquireLock("use-newer-processing-pipeline-version")) return
         log.info { "Checking for newer preprocessing pipeline versions" }
         val newVersions = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
 
@@ -43,5 +46,6 @@ class UseNewerProcessingPipelineVersionTask(
         } else {
             log.debug { "Completed pipeline version upgrade check: no upgrades needed" }
         }
+        taskLockService.releaseLock("use-newer-processing-pipeline-version")
     }
 }
