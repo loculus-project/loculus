@@ -90,12 +90,14 @@ const getBackendSequenceDetails = async (accessionVersion: string): Promise<Back
             : ok(undefined),
     ]);
 
-    return Result.combine([dataUseHistoryResult, sequenceCitationsResult]).map(
-        ([dataUseTermsHistory, sequenceCitations]) => ({
-            dataUseTermsHistory,
-            sequenceCitations,
-        }),
-    );
+    return Result.combine([
+        dataUseHistoryResult,
+        // Return undefined if citations request fails
+        ok(sequenceCitationsResult.unwrapOr(undefined)),
+    ]).map(([dataUseTermsHistory, sequenceCitations]) => ({
+        dataUseTermsHistory,
+        sequenceCitations,
+    }));
 };
 
 export const getSequenceDetailsTableData = async (
