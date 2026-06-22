@@ -8,6 +8,7 @@ import type { FilesBySubmissionId } from '../../../types/backend';
 import { type FileCategory } from '../../../types/config';
 import type { ClientConfig } from '../../../types/runtimeConfig';
 import { calculatePartSizeAndCount, splitFileIntoParts, uploadPart } from '../../../utils/multipartUpload';
+import { displayConfirmationDialog } from '../../ConfirmationDialog';
 import { Button } from '../../common/Button';
 import type { InputMode } from '../FormOrUploadWrapper';
 import LucideFile from '~icons/lucide/file';
@@ -343,6 +344,8 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         });
     };
 
+    const handleDiscardAllFiles = () => setFileUploadState(undefined);
+
     return fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
         <div
             className={`flex flex-col items-center justify-center flex-1 py-2 px-4 border rounded-lg ${fileUploadState !== undefined ? 'border-hidden' : isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}
@@ -438,7 +441,13 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             </div>
 
             <Button
-                onClick={() => setFileUploadState(undefined)}
+                onClick={() =>
+                    displayConfirmationDialog({
+                        dialogText: 'Are you sure you want to discard all files?',
+                        confirmButtonText: 'Discard',
+                        onConfirmation: handleDiscardAllFiles,
+                    })
+                }
                 data-testid={`discard_${fileCategory.name}`}
                 className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
             >
