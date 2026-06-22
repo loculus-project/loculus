@@ -681,7 +681,8 @@ ALTER TABLE public.table_update_tracker OWNER TO postgres;
 
 CREATE TABLE public.task_lock (
     task_name text NOT NULL,
-    started_at timestamp with time zone DEFAULT now() NOT NULL
+    started_at timestamp with time zone DEFAULT now() NOT NULL,
+    locked_until timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
