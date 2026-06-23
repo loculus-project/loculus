@@ -83,14 +83,7 @@ const InnerEditPage: FC<EditPageProps> = ({
     );
 
     const submitEditedDataForAccessionVersion = () => {
-        let fileMappingWithSubmissionId: FilesBySubmissionId | undefined;
-        if (extraFilesEnabled && fileMapping !== undefined && Object.keys(fileMapping).length > 0) {
-            // When editing, if no file mapping exists, or the user discards all and uploads a new folder of files,
-            // they will be keyed with a dummy submission ID. So before submitting,
-            // we need to ensure they are re-keyed with the actual submission ID for this entry.
-            const files = Object.values(fileMapping)[0];
-            fileMappingWithSubmissionId = { [dataToEdit.submissionId]: files };
-        }
+        const fileMappingForSubmission = extraFilesEnabled ? fileMapping : undefined;
 
         if (isCreatingRevision) {
             const fastaIds = submissionDataTypes.consensusSequences ? editableSequences.getFastaIds() : undefined;
@@ -107,7 +100,7 @@ const InnerEditPage: FC<EditPageProps> = ({
             if (!submissionDataTypes.consensusSequences) {
                 submitRevision({
                     metadataFile,
-                    fileMapping: fileMappingWithSubmissionId,
+                    fileMapping: fileMappingForSubmission,
                 });
                 return;
             }
@@ -122,16 +115,17 @@ const InnerEditPage: FC<EditPageProps> = ({
             submitRevision({
                 metadataFile,
                 sequenceFile,
-                fileMapping: fileMappingWithSubmissionId,
+                fileMapping: fileMappingForSubmission,
             });
         } else {
+            const fileMappingForEdit = fileMappingForSubmission?.[dataToEdit.submissionId] ?? null;
             submitEdit({
                 accession: dataToEdit.accession,
                 version: dataToEdit.version,
                 data: {
                     metadata: editableMetadata.getMetadataRecord(),
                     unalignedNucleotideSequences: editableSequences.getSequenceRecord(),
-                    files: fileMappingWithSubmissionId ? Object.values(fileMappingWithSubmissionId)[0] : null,
+                    files: fileMappingForEdit,
                 },
             });
         }
@@ -178,6 +172,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                         fileCategories={submissionDataTypes.files?.categories ?? []}
                         fileMapping={fileMapping}
                         setFileMapping={setFileMapping}
+                        formSubmissionId={dataToEdit.submissionId}
                         onError={(msg) => toast.error(msg, { position: 'top-center', autoClose: false })}
                     />
                 </div>

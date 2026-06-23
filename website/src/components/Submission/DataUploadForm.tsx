@@ -287,6 +287,7 @@ export const ExtraFilesUpload = ({
     fileCategories,
     fileMapping,
     setFileMapping,
+    formSubmissionId,
     onError,
 }: {
     accessToken: string;
@@ -296,6 +297,7 @@ export const ExtraFilesUpload = ({
     fileCategories: FileCategory[];
     fileMapping: FilesBySubmissionId | undefined;
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
+    formSubmissionId?: string;
     onError: (message: string) => void;
 }) => {
     return (
@@ -320,6 +322,7 @@ export const ExtraFilesUpload = ({
                         onError={onError}
                         fileMapping={fileMapping}
                         setFileMapping={setFileMapping}
+                        formSubmissionId={formSubmissionId}
                     />
                 ))}
             </div>

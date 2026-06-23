@@ -17,6 +17,8 @@ import LucideLoader from '~icons/lucide/loader';
 
 type SubmissionId = string;
 
+const DUMMY_SUBMISSION_ID = 'dummySubmissionId';
+
 type FileAndName = {
     file: File;
     name: string;
@@ -89,6 +91,10 @@ type FolderUploadComponentProps = {
     groupId: number;
     fileMapping: FilesBySubmissionId | undefined;
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
+    // Passed when the submissionId is known (e.g. editing/revising an entry) in form mode,
+    // where it is used instead of the dummySubmissionId placeholder.
+    // Omitted for new submissions where it isn't known yet.
+    formSubmissionId?: string;
     onError: (message: string) => void;
 };
 
@@ -100,6 +106,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     groupId,
     fileMapping,
     setFileMapping,
+    formSubmissionId,
     onError,
 }) => {
     const isClient = useClientFlag();
@@ -232,7 +239,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     return produce(currentMapping ?? {}, (draft) => {
                         const submissionIds = Object.keys(draft);
                         if (submissionIds.length === 0) {
-                            draft.dummySubmissionId = {
+                            draft[formSubmissionId ?? DUMMY_SUBMISSION_ID] = {
                                 [fileCategory.name]: [],
                             };
                         } else {
@@ -305,7 +312,9 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             if (inputMode === 'form') {
                 setFileUploadState({
                     type: 'awaitingUrls',
-                    files: { dummySubmissionId: filesArray.map((f) => ({ file: f, name: f.name })) },
+                    files: {
+                        [formSubmissionId ?? DUMMY_SUBMISSION_ID]: filesArray.map((f) => ({ file: f, name: f.name })),
+                    },
                 });
             } else {
                 const files: Record<SubmissionId, FileAndName[]> = Object.fromEntries(
@@ -385,9 +394,9 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
         if (collisions.length > 0) {
             displayConfirmationDialog({
-                dialogText: `The following files already exist and will be replaced: ${collisions
-                    .map((file) => file.name)
-                    .join(', ')}.`,
+                dialogText:
+                    'The following file(s) already exist and will be replaced: ' +
+                    collisions.map((file) => file.name).join(', '),
                 confirmButtonText: 'Replace',
                 onConfirmation: proceed,
             });
