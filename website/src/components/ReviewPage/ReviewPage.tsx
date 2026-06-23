@@ -321,8 +321,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                     className='border rounded-md p-1 bg-primary-600 text-white px-2'
                     onClick={() =>
                         displayConfirmationDialog({
-                            dialogText:
-                                'Are you sure you want to approve all valid sequences for release?',
+                            dialogText: 'Are you sure you want to approve all valid sequences for release?',
                             confirmButtonText: 'Approve',
                             onConfirmation: () => {
                                 hooks.approveProcessedData({
