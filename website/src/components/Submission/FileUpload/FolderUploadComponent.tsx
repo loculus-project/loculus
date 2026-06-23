@@ -115,6 +115,10 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 name: file.name,
             }));
         });
+
+        const hasPreviousFiles = Object.values(previousUploadFiles).some((files) => files.length > 0);
+        if (!hasPreviousFiles) return undefined;
+
         return { type: 'uploadCompleted', files: previousUploadFiles };
     });
     const [isDragging, setIsDragging] = useState(false);
