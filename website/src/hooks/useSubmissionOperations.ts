@@ -68,7 +68,7 @@ export function useSubmissionOperations(
         { headers: createAuthorizationHeader(accessToken), params: { organism } },
         {
             onMutate: () => {
-                const toastId = toast.loading('Releasing sequences...');
+                const toastId = toast.loading('Approving sequences...');
                 return { toastId };
             },
             onSuccess: (data, _variables, context) => {
@@ -78,8 +78,8 @@ export function useSubmissionOperations(
                     const isBatchRelease = data.length > 1;
                     toast.update(ctx.toastId, {
                         render: isBatchRelease
-                            ? '🎉 All sequences have been released successfully!'
-                            : 'Sequence released successfully.',
+                            ? '🎉 All sequences have been approved. They will appear on the website shortly.'
+                            : 'Sequence approved. It will appear on the website shortly.',
                         type: 'success',
                         isLoading: false,
                         autoClose: isBatchRelease ? false : 4000,
