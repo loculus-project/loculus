@@ -1,7 +1,7 @@
 @import './extraStyles.css';
 @reference './base.css';
 
-.mdContainerItself {
+.mdContainerWrap {
     @apply max-w-2xl mx-auto break-normal w-full;
 }
 
@@ -32,19 +32,19 @@
 }
 
 /*
- * News pages (MdLayout) render through `.mdContainerItself` and use floated
+ * News pages (MdLayout) render through `.mdContainerWrap` and use floated
  * figures. Capping individual elements to a measure leaves a right-floated
  * image stranded beyond the text, so let the (already narrow) container width
  * set the measure there and have text wrap naturally around the float.
  */
-.mdContainerItself h1,
-.mdContainerItself h2,
-.mdContainerItself h3,
-.mdContainerItself h4,
-.mdContainerItself p,
-.mdContainerItself ul,
-.mdContainerItself ol,
-.mdContainerItself blockquote {
+.mdContainerWrap h1,
+.mdContainerWrap h2,
+.mdContainerWrap h3,
+.mdContainerWrap h4,
+.mdContainerWrap p,
+.mdContainerWrap ul,
+.mdContainerWrap ol,
+.mdContainerWrap blockquote {
     max-width: none;
 }
 
