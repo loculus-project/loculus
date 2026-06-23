@@ -47,6 +47,21 @@ const defaultProps = {
     onError: mockOnError,
 };
 
+// In the case of previous uploads, they are keyed by a real submission id, not the dummySubmissionId
+const submissionId = 'SUBMISSION_ID_123';
+const defaultPropsWithFiles = {
+    ...defaultProps,
+    inputMode: 'form' as const,
+    fileMapping: {
+        [submissionId]: {
+            extraFiles: [
+                { fileId: 'file-1', name: 'file-a.txt' },
+                { fileId: 'file-2', name: 'file-b.txt' },
+            ],
+        },
+    },
+};
+
 describe('FolderUploadComponent', () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -182,114 +197,134 @@ describe('FolderUploadComponent', () => {
         });
     });
 
-    describe('previous uploads', () => {
-        // Previous uploads are keyed by a real submission id and not the dummySubmissionId
-        const submissionId = 'SUBMISSION_ID_123';
-        const formPropsWithPreviousUploads = {
-            ...defaultProps,
-            inputMode: 'form' as const,
+    it('discards all files after confirming the dialog', async () => {
+        render(<FolderUploadComponent {...defaultPropsWithFiles} />);
+
+        await userEvent.click(screen.getByTestId('discard_extraFiles'));
+        await waitFor(() => expect(screen.getByText(/are you sure you want to discard/i)).toBeInTheDocument());
+
+        await userEvent.click(screen.getByRole('button', { name: /^Discard$/ }));
+        await waitFor(() =>
+            expect(screen.getByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).toBeInTheDocument(),
+        );
+    });
+
+    it('renders previous uploads with an "uploaded" label', () => {
+        render(<FolderUploadComponent {...defaultPropsWithFiles} />);
+
+        expect(screen.getByText('file-a.txt')).toBeInTheDocument();
+        expect(screen.getByText('file-b.txt')).toBeInTheDocument();
+        expect(screen.getAllByText('(uploaded)')).toHaveLength(2);
+    });
+
+    it('individual uploads can be discarded while keeping the others', async () => {
+        render(<FolderUploadComponent {...defaultPropsWithFiles} />);
+
+        await userEvent.click(screen.getByTestId('discard_extraFiles_file-a.txt'));
+        await waitFor(() => expect(screen.queryByText('file-a.txt')).not.toBeInTheDocument());
+        expect(screen.getByText('file-b.txt')).toBeInTheDocument();
+    });
+
+    it('reverts to the upload folder prompt after discarding the last upload', async () => {
+        const singleFileProps = {
+            ...defaultPropsWithFiles,
             fileMapping: {
                 [submissionId]: {
-                    extraFiles: [
-                        { fileId: 'file-1', name: 'previous-a.txt' },
-                        { fileId: 'file-2', name: 'previous-b.txt' },
-                    ],
+                    extraFiles: [{ fileId: 'file-1', name: 'file-a.txt' }],
                 },
             },
         };
+        render(<FolderUploadComponent {...singleFileProps} />);
 
-        it('renders previously uploaded files with an "uploaded" label', () => {
-            render(<FolderUploadComponent {...formPropsWithPreviousUploads} />);
+        await userEvent.click(screen.getByTestId('discard_extraFiles_file-a.txt'));
+        await waitFor(() =>
+            expect(screen.getByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).toBeInTheDocument(),
+        );
+        expect(screen.queryByText('file-a.txt')).not.toBeInTheDocument();
+    });
 
-            expect(screen.getByText('previous-a.txt')).toBeInTheDocument();
-            expect(screen.getByText('previous-b.txt')).toBeInTheDocument();
-            expect(screen.getAllByText('(uploaded)')).toHaveLength(2);
-        });
+    it('shows the upload prompt when the mapping has no files for the category', () => {
+        render(
+            <FolderUploadComponent
+                {...defaultProps}
+                inputMode='form'
+                fileMapping={{ [submissionId]: { extraFiles: [] } }}
+            />,
+        );
 
-        it('individual previous uploads can be discarded while keeping the others', async () => {
-            render(<FolderUploadComponent {...formPropsWithPreviousUploads} />);
+        // An empty (but defined) mapping must still offer the folder upload prompt, not an empty file list.
+        expect(screen.getByTestId('extraFiles')).toBeInTheDocument();
+        expect(screen.queryByTestId('discard_extraFiles')).not.toBeInTheDocument();
+    });
 
-            await userEvent.click(screen.getByTestId('discard_extraFiles_previous-a.txt'));
-            await waitFor(() => expect(screen.queryByText('previous-a.txt')).not.toBeInTheDocument());
-            expect(screen.getByText('previous-b.txt')).toBeInTheDocument();
-        });
+    it('keeps existing files when adding additional ones', async () => {
+        mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'added-id', urls: ['http://test.com/url1'] }]));
 
-        it('reverts to the upload folder prompt after discarding the last previous upload', async () => {
-            const singleFileProps = {
-                ...formPropsWithPreviousUploads,
-                fileMapping: {
-                    [submissionId]: {
-                        extraFiles: [{ fileId: 'file-1', name: 'previous-a.txt' }],
-                    },
-                },
-            };
-            render(<FolderUploadComponent {...singleFileProps} />);
+        render(<FolderUploadComponent {...defaultPropsWithFiles} />);
 
-            await userEvent.click(screen.getByTestId('discard_extraFiles_previous-a.txt'));
-            await waitFor(() =>
-                expect(screen.getByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).toBeInTheDocument(),
-            );
-            expect(screen.queryByText('previous-a.txt')).not.toBeInTheDocument();
-        });
+        const file = new File(['content'], 'added.txt', { type: 'text/plain' });
+        Object.defineProperty(file, 'webkitRelativePath', { value: '', writable: false });
+        await userEvent.upload(screen.getByTestId('add_extraFiles'), file);
 
-        it('shows the upload prompt when the mapping has no files for the category', () => {
-            render(
-                <FolderUploadComponent
-                    {...defaultProps}
-                    inputMode='form'
-                    fileMapping={{ [submissionId]: { extraFiles: [] } }}
-                />,
-            );
+        await waitFor(() => expect(screen.getByText('added.txt')).toBeInTheDocument());
+        expect(screen.getByText('file-a.txt')).toBeInTheDocument();
+        expect(screen.getByText('file-b.txt')).toBeInTheDocument();
+    });
 
-            // An empty (but defined) mapping must still offer the folder upload prompt, not an empty file list.
-            expect(screen.getByTestId('extraFiles')).toBeInTheDocument();
-            expect(screen.queryByTestId('discard_extraFiles')).not.toBeInTheDocument();
-        });
+    it('rejects an add selection containing duplicate file names', async () => {
+        render(<FolderUploadComponent {...defaultPropsWithFiles} />);
 
-        it('appends an added file while keeping the existing files', async () => {
-            mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'added-id', urls: ['http://test.com/url1'] }]));
+        const dup1 = new File(['a'], 'dup.txt', { type: 'text/plain' });
+        const dup2 = new File(['b'], 'dup.txt', { type: 'text/plain' });
+        Object.defineProperty(dup1, 'webkitRelativePath', { value: '', writable: false });
+        Object.defineProperty(dup2, 'webkitRelativePath', { value: '', writable: false });
+        await userEvent.upload(screen.getByTestId('add_extraFiles'), [dup1, dup2]);
 
-            render(<FolderUploadComponent {...formPropsWithPreviousUploads} />);
+        expect(mockOnError).toHaveBeenCalledWith(expect.stringContaining('dup.txt'));
+        expect(mockRequestMultipartUpload).not.toHaveBeenCalled();
+    });
 
-            const file = new File(['content'], 'added.txt', { type: 'text/plain' });
-            Object.defineProperty(file, 'webkitRelativePath', { value: '', writable: false });
-            await userEvent.upload(screen.getByTestId('add_extraFiles'), file);
+    it('confirms before overwriting an existing file with the same name', async () => {
+        mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'replacement-id', urls: ['http://test.com/url1'] }]));
 
-            await waitFor(() => expect(screen.getByText('added.txt')).toBeInTheDocument());
-            expect(screen.getByText('previous-a.txt')).toBeInTheDocument();
-            expect(screen.getByText('previous-b.txt')).toBeInTheDocument();
-        });
+        render(<FolderUploadComponent {...defaultPropsWithFiles} />);
 
-        it('rejects an add selection containing duplicate file names', async () => {
-            render(<FolderUploadComponent {...formPropsWithPreviousUploads} />);
+        const file = new File(['content'], 'file-a.txt', { type: 'text/plain' });
+        Object.defineProperty(file, 'webkitRelativePath', { value: '', writable: false });
+        await userEvent.upload(screen.getByTestId('add_extraFiles'), file);
 
-            const dup1 = new File(['a'], 'dup.txt', { type: 'text/plain' });
-            const dup2 = new File(['b'], 'dup.txt', { type: 'text/plain' });
-            Object.defineProperty(dup1, 'webkitRelativePath', { value: '', writable: false });
-            Object.defineProperty(dup2, 'webkitRelativePath', { value: '', writable: false });
-            await userEvent.upload(screen.getByTestId('add_extraFiles'), [dup1, dup2]);
+        await waitFor(() => expect(screen.getByText(/already exist and will be replaced/)).toBeInTheDocument());
+        // Nothing is uploaded until the user confirms the overwrite.
+        expect(mockRequestMultipartUpload).not.toHaveBeenCalled();
 
-            expect(mockOnError).toHaveBeenCalledWith(expect.stringContaining('dup.txt'));
-            expect(mockRequestMultipartUpload).not.toHaveBeenCalled();
-        });
+        await userEvent.click(screen.getByRole('button', { name: 'Replace' }));
+        await waitFor(() => expect(mockRequestMultipartUpload).toHaveBeenCalled());
+    });
 
-        it('confirms before overwriting an existing file with the same name', async () => {
-            mockRequestMultipartUpload.mockReturnValue(
-                ok([{ fileId: 'replacement-id', urls: ['http://test.com/url1'] }]),
-            );
+    it('does not show the add-files button in bulk mode', () => {
+        render(
+            <FolderUploadComponent
+                {...defaultProps}
+                inputMode='bulk'
+                fileMapping={{ [submissionId]: { extraFiles: [{ fileId: 'file-1', name: 'file-a.txt' }] } }}
+            />,
+        );
 
-            render(<FolderUploadComponent {...formPropsWithPreviousUploads} />);
+        expect(screen.getByText('file-a.txt')).toBeInTheDocument();
+        expect(screen.queryByTestId('add_button_extraFiles')).not.toBeInTheDocument();
+    });
 
-            const file = new File(['content'], 'previous-a.txt', { type: 'text/plain' });
-            Object.defineProperty(file, 'webkitRelativePath', { value: '', writable: false });
-            await userEvent.upload(screen.getByTestId('add_extraFiles'), file);
+    it('disables the add-files button while an upload is in progress', async () => {
+        mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'added-id', urls: ['http://test.com/url1'] }]));
+        // Keep the upload pending so the component stays in the uploadInProgress state.
+        vi.mocked(multipartUpload.uploadPart).mockReturnValue(new Promise(() => {}));
 
-            await waitFor(() => expect(screen.getByText(/already exist and will be replaced/)).toBeInTheDocument());
-            // Nothing is uploaded until the user confirms the overwrite.
-            expect(mockRequestMultipartUpload).not.toHaveBeenCalled();
+        render(<FolderUploadComponent {...defaultPropsWithFiles} />);
 
-            await userEvent.click(screen.getByRole('button', { name: 'Replace' }));
-            await waitFor(() => expect(mockRequestMultipartUpload).toHaveBeenCalled());
-        });
+        const file = new File(['content'], 'added.txt', { type: 'text/plain' });
+        Object.defineProperty(file, 'webkitRelativePath', { value: '', writable: false });
+        await userEvent.upload(screen.getByTestId('add_extraFiles'), file);
+
+        await waitFor(() => expect(screen.getByTestId('add_button_extraFiles')).toBeDisabled());
     });
 });
