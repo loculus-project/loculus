@@ -52,7 +52,7 @@ class SubmissionPage {
     // TODO #5357: improve this function by passing in whether we accepted open terms to simplify and also test modal appearance/absence
     async submitSequence(): Promise<ReviewPage> {
         await this.page
-            .getByRole('button', { name: 'Submit sequences' })
+            .getByRole('button', { name: 'Upload and proceed to Approval' })
             .click({ timeout: 10_000 });
 
         // 'Continue under Open terms' only shows if we are submitting under open terms - but we don't know in this function

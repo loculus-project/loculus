@@ -32,7 +32,7 @@ test.describe('Sequence view in review card', () => {
         await submissionPage.submitSequence();
 
         await expect(
-            page.getByRole('heading', { name: 'Review current submissions' }),
+            page.getByRole('heading', { name: 'Review pending submissions' }),
         ).toBeVisible();
 
         const reviewPage = new ReviewPage(page);
