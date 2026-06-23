@@ -183,7 +183,7 @@ describe('FolderUploadComponent', () => {
     });
 
     describe('previous uploads', () => {
-        // Previous uploads are keyed by the real submission id (not the 'dummySubmissionId')
+        // Previous uploads are keyed by a real submission id and not the dummySubmissionId
         const submissionId = 'SUBMISSION_ID_123';
         const formPropsWithPreviousUploads = {
             ...defaultProps,
@@ -198,7 +198,7 @@ describe('FolderUploadComponent', () => {
             },
         };
 
-        it('renders previously uploaded files with a "previous upload" label', () => {
+        it('renders previously uploaded files with an "uploaded" label', () => {
             render(<FolderUploadComponent {...formPropsWithPreviousUploads} />);
 
             expect(screen.getByText('previous-a.txt')).toBeInTheDocument();
@@ -206,16 +206,15 @@ describe('FolderUploadComponent', () => {
             expect(screen.getAllByText('(uploaded)')).toHaveLength(2);
         });
 
-        it('discards an individual previous upload while keeping the others', async () => {
+        it('individual previous uploads can be discarded while keeping the others', async () => {
             render(<FolderUploadComponent {...formPropsWithPreviousUploads} />);
 
             await userEvent.click(screen.getByTestId('discard_extraFiles_previous-a.txt'));
-
             await waitFor(() => expect(screen.queryByText('previous-a.txt')).not.toBeInTheDocument());
             expect(screen.getByText('previous-b.txt')).toBeInTheDocument();
         });
 
-        it('reverts to the upload prompt after discarding the last previous upload', async () => {
+        it('reverts to the upload folder prompt after discarding the last previous upload', async () => {
             const singleFileProps = {
                 ...formPropsWithPreviousUploads,
                 fileMapping: {
@@ -227,7 +226,6 @@ describe('FolderUploadComponent', () => {
             render(<FolderUploadComponent {...singleFileProps} />);
 
             await userEvent.click(screen.getByTestId('discard_extraFiles_previous-a.txt'));
-
             await waitFor(() =>
                 expect(screen.getByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).toBeInTheDocument(),
             );

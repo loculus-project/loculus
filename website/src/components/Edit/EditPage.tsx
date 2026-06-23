@@ -63,6 +63,7 @@ const InnerEditPage: FC<EditPageProps> = ({
             ? { [dataToEdit.submissionId]: dataToEdit.submittedData.files }
             : undefined,
     );
+
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
 
     const { mutate: submitRevision, isPending: isRevisionPending } = useSubmitRevision(
