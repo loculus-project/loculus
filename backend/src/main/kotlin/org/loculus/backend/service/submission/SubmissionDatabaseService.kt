@@ -271,28 +271,29 @@ class SubmissionDatabaseService(
 
     fun updateProcessedData(inputStream: InputStream, organism: Organism, pipelineVersion: Long) {
         log.info { "updating processed data" }
-        val reader = BufferedReader(InputStreamReader(inputStream))
 
         val processedAccessionVersions = mutableListOf<String>()
         val processedFiles = mutableMapOf<AccessionVersion, Set<FileId>>()
         val processingResultCounts = mutableMapOf<ProcessingResult, Int>()
-        // Process the NDJSON stream in chunks so DB lookups are batched without buffering the whole request.
-        reader.lineSequence().chunked(streamBatchSize).forEach { lines ->
-            val submittedProcessedDataBatch = lines.map { parseSubmittedProcessedDataLine(it) }
+        BufferedReader(InputStreamReader(inputStream)).use { reader ->
+            // Process the NDJSON stream in chunks so DB lookups are batched without buffering the whole request.
+            reader.lineSequence().chunked(streamBatchSize).forEach { lines ->
+                val submittedProcessedDataBatch = lines.map { parseSubmittedProcessedDataLine(it) }
 
-            val filesToValidate = validateFileMappingsAndCollectFileIds(
-                submittedProcessedDataBatch,
-                organism,
-                processedFiles,
-            )
-            validateFilesBelongToSubmittingGroups(filesToValidate)
+                val filesToValidate = validateFileMappingsAndCollectFileIds(
+                    submittedProcessedDataBatch,
+                    organism,
+                    processedFiles,
+                )
+                validateFilesBelongToSubmittingGroups(filesToValidate)
 
-            submittedProcessedDataBatch.forEach { submittedProcessedData ->
-                val processingResult = submittedProcessedData.processingResult()
+                submittedProcessedDataBatch.forEach { submittedProcessedData ->
+                    val processingResult = submittedProcessedData.processingResult()
 
-                insertProcessedData(submittedProcessedData, organism, pipelineVersion)
-                processedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
-                processingResultCounts.merge(processingResult, 1, Int::plus)
+                    insertProcessedData(submittedProcessedData, organism, pipelineVersion)
+                    processedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
+                    processingResultCounts.merge(processingResult, 1, Int::plus)
+                }
             }
         }
 
@@ -335,29 +336,29 @@ class SubmissionDatabaseService(
         organism: Organism,
         processedFiles: MutableMap<AccessionVersion, Set<FileId>>,
     ): Map<AccessionVersion, Set<FileId>> {
-        val filesToValidate = mutableMapOf<AccessionVersion, Set<FileId>>()
+        val filesByAccessionVersion = mutableMapOf<AccessionVersion, Set<FileId>>()
+        val allFileIds = mutableSetOf<FileId>()
+
         submittedProcessedDataBatch.forEach { submittedProcessedData ->
             submittedProcessedData.data.files?.let { fileMapping ->
-                // Validate file names, categories, upload completion, and existence before ownership checks.
                 fileMappingPreconditionValidator
                     .validateFilenameCharacters(fileMapping)
                     .validateFilenamesAreUnique(fileMapping)
                     .validateCategoriesMatchOutputSchema(fileMapping, organism)
-                    .validateMultipartUploads(fileMapping.fileIds)
-                    .validateFilesExist(fileMapping.fileIds)
 
                 val accessionVersion =
                     AccessionVersion(submittedProcessedData.accession, submittedProcessedData.version)
                 processedFiles[accessionVersion] = fileMapping.fileIds
-
-                // Entries with errors are stored for review and cannot be released.
-                // Only releasable processed entries need file ownership checks.
-                if (submittedProcessedData.errors.orEmpty().isEmpty()) {
-                    filesToValidate[accessionVersion] = fileMapping.fileIds
-                }
+                filesByAccessionVersion[accessionVersion] = fileMapping.fileIds
+                allFileIds.addAll(fileMapping.fileIds)
             }
         }
-        return filesToValidate
+
+        fileMappingPreconditionValidator
+            .validateMultipartUploads(allFileIds)
+            .validateFilesExist(allFileIds)
+
+        return filesByAccessionVersion
     }
 
     fun updateExternalMetadata(inputStream: InputStream, organism: Organism, externalMetadataUpdater: String) {

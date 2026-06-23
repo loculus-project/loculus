@@ -428,7 +428,7 @@ class SubmitProcessedDataEndpointTest(
     }
 
     @Test
-    fun `WHEN one entry in a processed data batch references a file of another group THEN fails`() {
+    fun `WHEN errored entry in a processed data batch references a file of another group THEN fails`() {
         val groupId = groupManagementClient
             .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
             .andGetGroupId()
@@ -466,7 +466,7 @@ class SubmitProcessedDataEndpointTest(
                         FileIdAndName(secondFileIdAndUrl.fileId, "foo-2.txt"),
                     ),
                 ),
-            ),
+            ).copy(errors = PreparedProcessedData.withErrors(accessions[1]).errors),
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
