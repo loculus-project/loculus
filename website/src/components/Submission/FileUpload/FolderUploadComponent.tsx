@@ -17,7 +17,7 @@ import LucideLoader from '~icons/lucide/loader';
 
 type SubmissionId = string;
 
-type SubmissionFile = {
+type FileAndName = {
     file: File;
     name: string;
 };
@@ -28,7 +28,7 @@ type SubmissionFile = {
  */
 type AwaitingUrlState = {
     type: 'awaitingUrls';
-    files: Record<SubmissionId, SubmissionFile[]>;
+    files: Record<SubmissionId, FileAndName[]>;
 };
 
 type SingleFileUpload = Pending | Uploaded | PreviousUpload | Error;
@@ -189,7 +189,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         }
     }
 
-    async function requestFileUploads(filesAwaitingUrls: SubmissionFile[]): Promise<Pending[]> {
+    async function requestFileUploads(filesAwaitingUrls: FileAndName[]): Promise<Pending[]> {
         const pendingFiles: Pending[] = [];
         for (const file of filesAwaitingUrls) {
             const { partCount, partSize } = calculatePartSizeAndCount(file.file.size);
@@ -308,7 +308,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     files: { dummySubmissionId: filesArray.map((f) => ({ file: f, name: f.name })) },
                 });
             } else {
-                const files: Record<SubmissionId, SubmissionFile[]> = Object.fromEntries(
+                const files: Record<SubmissionId, FileAndName[]> = Object.fromEntries(
                     filesArray
                         .map((file) => file.webkitRelativePath.split('/'))
                         .map((pathSegments) => [pathSegments[1], []]),
