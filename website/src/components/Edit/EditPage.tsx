@@ -56,9 +56,14 @@ const InnerEditPage: FC<EditPageProps> = ({
     const [editableSequences, setEditableSequences] = useState(
         EditableSequences.fromInitialData(dataToEdit, submissionDataTypes.maxSequencesPerEntry),
     );
-    const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(undefined);
-    const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
+
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
+    const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(() =>
+        extraFilesEnabled && dataToEdit.submittedData.files
+            ? { [dataToEdit.submissionId]: dataToEdit.submittedData.files }
+            : undefined,
+    );
+    const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
 
     const { mutate: submitRevision, isPending: isRevisionPending } = useSubmitRevision(
         organism,
@@ -77,6 +82,15 @@ const InnerEditPage: FC<EditPageProps> = ({
     );
 
     const submitEditedDataForAccessionVersion = () => {
+        let fileMappingWithSubmissionId: FilesBySubmissionId | undefined;
+        if (extraFilesEnabled && fileMapping !== undefined && Object.keys(fileMapping).length > 0) {
+            // When editing, if no file mapping exists, or the user discards all and uploads a new folder of files,
+            // they will be keyed with a dummy submission ID. So before submitting,
+            // we need to ensure they are re-keyed with the actual submission ID for this entry.
+            const files = Object.values(fileMapping)[0];
+            fileMappingWithSubmissionId = { [dataToEdit.submissionId]: files };
+        }
+
         if (isCreatingRevision) {
             const fastaIds = submissionDataTypes.consensusSequences ? editableSequences.getFastaIds() : undefined;
             const metadataFile = editableMetadata.getMetadataTsv(
@@ -87,12 +101,6 @@ const InnerEditPage: FC<EditPageProps> = ({
             if (metadataFile === undefined) {
                 toast.error('Please enter metadata.', { position: 'top-center', autoClose: false });
                 return;
-            }
-
-            let fileMappingWithSubmissionId: FilesBySubmissionId | undefined;
-            if (extraFilesEnabled && fileMapping !== undefined && Object.keys(fileMapping).length > 0) {
-                const files = Object.values(fileMapping)[0];
-                fileMappingWithSubmissionId = { [dataToEdit.submissionId]: files };
             }
 
             if (!submissionDataTypes.consensusSequences) {
@@ -116,17 +124,13 @@ const InnerEditPage: FC<EditPageProps> = ({
                 fileMapping: fileMappingWithSubmissionId,
             });
         } else {
-            const files =
-                extraFilesEnabled && fileMapping !== undefined && Object.keys(fileMapping).length > 0
-                    ? Object.values(fileMapping)[0]
-                    : null;
             submitEdit({
                 accession: dataToEdit.accession,
                 version: dataToEdit.version,
                 data: {
                     metadata: editableMetadata.getMetadataRecord(),
                     unalignedNucleotideSequences: editableSequences.getSequenceRecord(),
-                    files,
+                    files: fileMappingWithSubmissionId ? Object.values(fileMappingWithSubmissionId)[0] : null,
                 },
             });
         }
@@ -171,11 +175,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                         inputMode='form'
                         groupId={dataToEdit.groupId}
                         fileCategories={submissionDataTypes.files?.categories ?? []}
-                        defaultFileMapping={
-                            dataToEdit.submittedData.files
-                                ? { [dataToEdit.submissionId]: dataToEdit.submittedData.files }
-                                : undefined
-                        }
+                        fileMapping={fileMapping}
                         setFileMapping={setFileMapping}
                         onError={(msg) => toast.error(msg, { position: 'top-center', autoClose: false })}
                     />

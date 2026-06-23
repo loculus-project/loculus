@@ -185,6 +185,7 @@ const InnerDataUploadForm = ({
                             clientConfig={clientConfig}
                             groupId={group.groupId}
                             onError={onError}
+                            fileMapping={fileMapping}
                             setFileMapping={setFileMapping}
                         />
                         <hr />
@@ -284,7 +285,7 @@ export const ExtraFilesUpload = ({
     inputMode,
     groupId,
     fileCategories,
-    defaultFileMapping,
+    fileMapping,
     setFileMapping,
     onError,
 }: {
@@ -293,7 +294,7 @@ export const ExtraFilesUpload = ({
     inputMode: InputMode;
     groupId: number;
     fileCategories: FileCategory[];
-    defaultFileMapping?: FilesBySubmissionId;
+    fileMapping: FilesBySubmissionId | undefined;
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
     onError: (message: string) => void;
 }) => {
@@ -317,7 +318,7 @@ export const ExtraFilesUpload = ({
                         clientConfig={clientConfig}
                         groupId={groupId}
                         onError={onError}
-                        defaultFileMapping={defaultFileMapping}
+                        fileMapping={fileMapping}
                         setFileMapping={setFileMapping}
                     />
                 ))}

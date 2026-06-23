@@ -87,7 +87,7 @@ type FolderUploadComponentProps = {
     accessToken: string;
     clientConfig: ClientConfig;
     groupId: number;
-    defaultFileMapping?: FilesBySubmissionId;
+    fileMapping: FilesBySubmissionId | undefined;
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
     onError: (message: string) => void;
 };
@@ -98,16 +98,16 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     accessToken,
     clientConfig,
     groupId,
-    defaultFileMapping,
+    fileMapping,
     setFileMapping,
     onError,
 }) => {
     const isClient = useClientFlag();
     const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(() => {
-        if (defaultFileMapping === undefined) return undefined;
-        const previousUploadFiles: Record<SubmissionId, PreviousUpload[]> = {};
+        if (fileMapping === undefined) return undefined;
 
-        Object.entries(defaultFileMapping).forEach(([submissionId, categories]) => {
+        const previousUploadFiles: Record<SubmissionId, PreviousUpload[]> = {};
+        Object.entries(fileMapping).forEach(([submissionId, categories]) => {
             const fileCategoryFiles = categories[fileCategory.name] ?? [];
             previousUploadFiles[submissionId] = fileCategoryFiles.map((file) => ({
                 type: 'previousUpload',
