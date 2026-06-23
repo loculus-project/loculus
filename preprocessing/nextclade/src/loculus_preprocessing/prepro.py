@@ -3,7 +3,7 @@ import time
 from collections import defaultdict
 from collections.abc import Sequence
 from tempfile import TemporaryDirectory
-from typing import Any
+from typing import Any, Optional
 
 from .backend import (
     download_diamond_db,
@@ -302,6 +302,7 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
                 alignedAminoAcidSequences=aligned_aminoacid_sequences,
                 aminoAcidInsertions=amino_acid_insertions,
                 sequenceNameToFastaId=sequenceNameToFastaId,
+                files=unprocessed.files,
             ),
             errors=errors,
             warnings=warnings,
@@ -540,6 +541,7 @@ def process_single(
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
             sequenceNameToFastaId=unprocessed.sequenceNameToFastaId,
+            files=unprocessed.files,
         ),
         errors=list(
             set(
@@ -601,6 +603,7 @@ def processed_entry_with_errors(id) -> SubmissionData:
                 alignedAminoAcidSequences=defaultdict(dict[str, Any]),
                 aminoAcidInsertions=defaultdict(dict[str, Any]),
                 sequenceNameToFastaId=defaultdict(str),
+                files={},
             ),
             errors=[
                 ProcessingAnnotation.from_single(
