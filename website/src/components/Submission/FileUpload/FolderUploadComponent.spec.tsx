@@ -197,26 +197,6 @@ describe('FolderUploadComponent', () => {
         });
     });
 
-    it('discards all files after confirming the dialog', async () => {
-        render(<FolderUploadComponent {...defaultPropsWithFiles} />);
-
-        await userEvent.click(screen.getByTestId('discard_extraFiles'));
-        await waitFor(() => expect(screen.getByText(/are you sure you want to discard/i)).toBeInTheDocument());
-
-        await userEvent.click(screen.getByRole('button', { name: /^Discard$/ }));
-        await waitFor(() =>
-            expect(screen.getByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).toBeInTheDocument(),
-        );
-    });
-
-    it('renders previous uploads with an "uploaded" label', () => {
-        render(<FolderUploadComponent {...defaultPropsWithFiles} />);
-
-        expect(screen.getByText('file-a.txt')).toBeInTheDocument();
-        expect(screen.getByText('file-b.txt')).toBeInTheDocument();
-        expect(screen.getAllByText('(uploaded)')).toHaveLength(2);
-    });
-
     it('individual uploads can be discarded while keeping the others', async () => {
         render(<FolderUploadComponent {...defaultPropsWithFiles} />);
 
@@ -225,7 +205,7 @@ describe('FolderUploadComponent', () => {
         expect(screen.getByText('file-b.txt')).toBeInTheDocument();
     });
 
-    it('reverts to the upload folder prompt after discarding the last upload', async () => {
+    it('reverts to the upload folder prompt after discarding the last upload individually', async () => {
         const singleFileProps = {
             ...defaultPropsWithFiles,
             fileMapping: {
@@ -243,6 +223,18 @@ describe('FolderUploadComponent', () => {
         expect(screen.queryByText('file-a.txt')).not.toBeInTheDocument();
     });
 
+    it('shows a dialog before discarding all files and discards after confirmation', async () => {
+        render(<FolderUploadComponent {...defaultPropsWithFiles} />);
+
+        await userEvent.click(screen.getByTestId('discard_extraFiles'));
+        await waitFor(() => expect(screen.getByText(/are you sure you want to discard/i)).toBeInTheDocument());
+
+        await userEvent.click(screen.getByRole('button', { name: /^Discard$/ }));
+        await waitFor(() =>
+            expect(screen.getByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).toBeInTheDocument(),
+        );
+    });
+
     it('shows the upload prompt when the mapping has no files for the category', () => {
         render(
             <FolderUploadComponent
@@ -255,6 +247,14 @@ describe('FolderUploadComponent', () => {
         // An empty (but defined) mapping must still offer the folder upload prompt, not an empty file list.
         expect(screen.getByTestId('extraFiles')).toBeInTheDocument();
         expect(screen.queryByTestId('discard_extraFiles')).not.toBeInTheDocument();
+    });
+
+    it('renders previous uploads with an "uploaded" label', () => {
+        render(<FolderUploadComponent {...defaultPropsWithFiles} />);
+
+        expect(screen.getByText('file-a.txt')).toBeInTheDocument();
+        expect(screen.getByText('file-b.txt')).toBeInTheDocument();
+        expect(screen.getAllByText('(uploaded)')).toHaveLength(2);
     });
 
     it('keeps existing files when adding additional ones', async () => {
@@ -271,7 +271,7 @@ describe('FolderUploadComponent', () => {
         expect(screen.getByText('file-b.txt')).toBeInTheDocument();
     });
 
-    it('rejects an add selection containing duplicate file names', async () => {
+    it('rejects additional files containing duplicate file names', async () => {
         render(<FolderUploadComponent {...defaultPropsWithFiles} />);
 
         const dup1 = new File(['a'], 'dup.txt', { type: 'text/plain' });
@@ -301,7 +301,7 @@ describe('FolderUploadComponent', () => {
         await waitFor(() => expect(mockRequestMultipartUpload).toHaveBeenCalled());
     });
 
-    it('does not show the add-files button in bulk mode', () => {
+    it('does not show the additional files button in bulk mode', () => {
         render(
             <FolderUploadComponent
                 {...defaultProps}
@@ -314,7 +314,7 @@ describe('FolderUploadComponent', () => {
         expect(screen.queryByTestId('add_button_extraFiles')).not.toBeInTheDocument();
     });
 
-    it('disables the add-files button while an upload is in progress', async () => {
+    it('disables the additional files button while an upload is in progress', async () => {
         mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'added-id', urls: ['http://test.com/url1'] }]));
         // Keep the upload pending so the component stays in the uploadInProgress state.
         vi.mocked(multipartUpload.uploadPart).mockReturnValue(new Promise(() => {}));
@@ -324,7 +324,6 @@ describe('FolderUploadComponent', () => {
         const file = new File(['content'], 'added.txt', { type: 'text/plain' });
         Object.defineProperty(file, 'webkitRelativePath', { value: '', writable: false });
         await userEvent.upload(screen.getByTestId('add_extraFiles'), file);
-
         await waitFor(() => expect(screen.getByTestId('add_button_extraFiles')).toBeDisabled());
     });
 });
