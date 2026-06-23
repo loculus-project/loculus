@@ -42,6 +42,7 @@ const defaultProps = {
     accessToken: 'test-token',
     clientConfig: { backendUrl: 'http://test-backend', lapisUrls: {} },
     groupId: 1,
+    fileMapping: undefined,
     setFileMapping: mockSetFileMapping,
     onError: mockOnError,
 };
@@ -182,13 +183,12 @@ describe('FolderUploadComponent', () => {
     });
 
     describe('previous uploads', () => {
-        // Note: previous uploads are keyed by the real submission id (not the 'dummySubmissionId'
-        // used for freshly selected form files), so these tests also guard the discard key lookup.
+        // Previous uploads are keyed by the real submission id (not the 'dummySubmissionId')
         const submissionId = 'SUBMISSION_ID_123';
         const formPropsWithPreviousUploads = {
             ...defaultProps,
             inputMode: 'form' as const,
-            defaultFileMapping: {
+            fileMapping: {
                 [submissionId]: {
                     extraFiles: [
                         { fileId: 'file-1', name: 'previous-a.txt' },
@@ -218,7 +218,7 @@ describe('FolderUploadComponent', () => {
         it('reverts to the upload prompt after discarding the last previous upload', async () => {
             const singleFileProps = {
                 ...formPropsWithPreviousUploads,
-                defaultFileMapping: {
+                fileMapping: {
                     [submissionId]: {
                         extraFiles: [{ fileId: 'file-1', name: 'previous-a.txt' }],
                     },
