@@ -322,7 +322,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                     onClick={() =>
                         displayConfirmationDialog({
                             dialogText:
-                                'Are you sure you want to approve all valid sequences? This is the final step and will release them to the public.',
+                                'Are you sure you want to approve all valid sequences for release?',
                             confirmButtonText: 'Approve',
                             onConfirmation: () => {
                                 hooks.approveProcessedData({
