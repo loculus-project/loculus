@@ -36,6 +36,12 @@
  * figures. Capping individual elements to a measure leaves a right-floated
  * image stranded beyond the text, so let the (already narrow) container width
  * set the measure there and have text wrap naturally around the float.
+ *
+ * `.mdContainerWrap` is a modifier on top of `.mdContainer` and must always be
+ * applied together with it (e.g. `class="mdContainer mdContainerWrap"`). These
+ * rules override the `.mdContainer` ones above via equal specificity, so they
+ * rely on source order: keep `.mdContainerWrap` declared *after* `.mdContainer`
+ * in this file or the overrides will silently stop winning.
  */
 .mdContainerWrap h1,
 .mdContainerWrap h2,
