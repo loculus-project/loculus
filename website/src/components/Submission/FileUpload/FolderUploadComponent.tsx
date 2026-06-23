@@ -17,19 +17,18 @@ import LucideLoader from '~icons/lucide/loader';
 
 type SubmissionId = string;
 
+type SubmissionFile = {
+    file: File;
+    name: string;
+};
+
 /**
  * The state that the component is in, right after the user dropped the files.
  * We're awaiting the presigned upload URLs from the backend, to start uploading.
  */
 type AwaitingUrlState = {
     type: 'awaitingUrls';
-    files: Record<
-        SubmissionId,
-        {
-            file: File;
-            name: string;
-        }[]
-    >;
+    files: Record<SubmissionId, SubmissionFile[]>;
 };
 
 type SingleFileUpload = Pending | Uploaded | PreviousUpload | Error;
@@ -178,12 +177,38 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         );
     }
 
-    async function startUploading(submissionIdFileMap: Record<string, Pending[]>) {
+    async function startUploading(submissionIdFileMap: Record<SubmissionId, Pending[]>) {
         for (const [submissionId, files] of Object.entries(submissionIdFileMap)) {
             for (const pending of files) {
                 await uploadMultipartFile(submissionId, pending);
             }
         }
+    }
+
+    async function requestFileUploads(filesAwaitingUrls: SubmissionFile[]): Promise<Pending[]> {
+        const pendingFiles: Pending[] = [];
+        for (const file of filesAwaitingUrls) {
+            const { partCount, partSize } = calculatePartSizeAndCount(file.file.size);
+            const result = await backendClient.requestMultipartUpload(accessToken, groupId, 1, partCount);
+            result.match(
+                (data) => {
+                    pendingFiles.push({
+                        type: 'pending',
+                        file: file.file,
+                        name: file.name,
+                        size: file.file.size,
+                        fileId: data[0].fileId,
+                        urls: data[0].urls,
+                        uploadedParts: 0,
+                        totalParts: partCount,
+                        partSize,
+                        etags: [],
+                    });
+                },
+                (err) => onError(err.detail),
+            );
+        }
+        return pendingFiles;
     }
 
     useEffect(() => {
@@ -224,34 +249,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 void (async () => {
                     const pendingFiles: Record<SubmissionId, Pending[]> = {};
                     for (const [submissionId, files] of Object.entries(fileUploadState.files)) {
-                        const thisPendingFiles: Pending[] = [];
-                        pendingFiles[submissionId] = thisPendingFiles;
-                        for (const file of files) {
-                            const { partCount, partSize } = calculatePartSizeAndCount(file.file.size);
-                            const result = await backendClient.requestMultipartUpload(
-                                accessToken,
-                                groupId,
-                                1,
-                                partCount,
-                            );
-                            result.match(
-                                (data) => {
-                                    thisPendingFiles.push({
-                                        type: 'pending',
-                                        file: file.file,
-                                        name: file.name,
-                                        size: file.file.size,
-                                        fileId: data[0].fileId,
-                                        urls: data[0].urls,
-                                        uploadedParts: 0,
-                                        totalParts: partCount,
-                                        partSize,
-                                        etags: [],
-                                    });
-                                },
-                                (err) => onError(err.detail),
-                            );
-                        }
+                        pendingFiles[submissionId] = await requestFileUploads(files);
                     }
                     setFileUploadState({ type: 'uploadInProgress', files: pendingFiles });
                     void startUploading(pendingFiles);
@@ -262,11 +260,11 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 if (
                     Object.values(fileUploadState.files)
                         .flatMap((x) => x)
-                        .every(({ type }) => type === 'uploaded')
+                        .every(({ type }) => type === 'uploaded' || type === 'previousUpload')
                 ) {
                     setFileUploadState({
                         type: 'uploadCompleted',
-                        files: fileUploadState.files as Record<string, Uploaded[]>,
+                        files: fileUploadState.files as Record<SubmissionId, (Uploaded | PreviousUpload)[]>,
                     });
                 }
                 break;
@@ -306,13 +304,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     files: { dummySubmissionId: filesArray.map((f) => ({ file: f, name: f.name })) },
                 });
             } else {
-                const files: Record<
-                    string,
-                    {
-                        file: File;
-                        name: string;
-                    }[]
-                > = Object.fromEntries(
+                const files: Record<SubmissionId, SubmissionFile[]> = Object.fromEntries(
                     filesArray
                         .map((file) => file.webkitRelativePath.split('/'))
                         .map((pathSegments) => [pathSegments[1], []]),
@@ -345,6 +337,60 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     };
 
     const handleDiscardAllFiles = () => setFileUploadState(undefined);
+
+    // Currently only supported in form mode
+    const handleAddAdditionalFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || fileUploadState?.type !== 'uploadCompleted') return;
+
+        // exclude dot files, because files like .DS_Store cause problems otherwise
+        const filesArray = filterDotFiles(Array.from(e.target.files));
+
+        // Reset the input so selecting the same file again re-triggers onChange.
+        e.target.value = '';
+        if (filesArray.length === 0) return;
+
+        const selectedNamesList = filesArray.map((f) => f.name);
+        const duplicateName = selectedNamesList.find((name, index) => selectedNamesList.indexOf(name) !== index);
+        if (duplicateName !== undefined) {
+            onError(`Cannot add multiple files with the same name: ${duplicateName}`);
+            return;
+        }
+
+        const submissionId = Object.keys(fileUploadState.files)[0];
+        const existingFiles = fileUploadState.files[submissionId];
+        const selectedNames = new Set(selectedNamesList);
+        const collisions = existingFiles.filter((file) => selectedNames.has(file.name));
+
+        const addFiles = async (
+            submissionId: string,
+            existingFiles: (Uploaded | PreviousUpload)[],
+            filesArray: File[],
+            selectedNames: Set<string>,
+        ) => {
+            // Files whose names collide with the selection are replaced, so drop them before appending.
+            const survivingFiles = existingFiles.filter((file) => !selectedNames.has(file.name));
+            const newPendingFiles = await requestFileUploads(filesArray.map((f) => ({ file: f, name: f.name })));
+            setFileUploadState({
+                type: 'uploadInProgress',
+                files: { [submissionId]: [...survivingFiles, ...newPendingFiles] },
+            });
+            void startUploading({ [submissionId]: newPendingFiles });
+        };
+
+        const proceed = () => void addFiles(submissionId, existingFiles, filesArray, selectedNames);
+
+        if (collisions.length > 0) {
+            displayConfirmationDialog({
+                dialogText: `The following files already exist and will be replaced: ${collisions
+                    .map((file) => file.name)
+                    .join(', ')}.`,
+                confirmButtonText: 'Replace',
+                onConfirmation: proceed,
+            });
+        } else {
+            proceed();
+        }
+    };
 
     return fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
         <div
@@ -440,19 +486,44 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 </div>
             </div>
 
-            <Button
-                onClick={() =>
-                    displayConfirmationDialog({
-                        dialogText: 'Are you sure you want to discard all files?',
-                        confirmButtonText: 'Discard',
-                        onConfirmation: handleDiscardAllFiles,
-                    })
-                }
-                data-testid={`discard_${fileCategory.name}`}
-                className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
-            >
-                Discard all files
-            </Button>
+            <div className={`grid gap-2 w-full ${inputMode === 'form' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                {inputMode === 'form' && (
+                    <>
+                        {isClient && (
+                            <input
+                                id={`${fileCategory.name}_add`}
+                                type='file'
+                                className='sr-only'
+                                aria-label={`Add files to ${fileCategory.displayName ?? fileCategory.name}`}
+                                data-testid={`add_${fileCategory.name}`}
+                                onChange={handleAddAdditionalFiles}
+                                multiple
+                            />
+                        )}
+                        <Button
+                            onClick={() => document.getElementById(`${fileCategory.name}_add`)?.click()}
+                            disabled={fileUploadState.type !== 'uploadCompleted'}
+                            data-testid={`add_button_${fileCategory.name}`}
+                            className='w-full text-xs wrap-break-word text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
+                        >
+                            Add additional files
+                        </Button>
+                    </>
+                )}
+                <Button
+                    onClick={() =>
+                        displayConfirmationDialog({
+                            dialogText: 'Are you sure you want to discard all files?',
+                            confirmButtonText: 'Discard',
+                            onConfirmation: handleDiscardAllFiles,
+                        })
+                    }
+                    data-testid={`discard_${fileCategory.name}`}
+                    className='w-full text-xs wrap-break-word text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
+                >
+                    Discard all files
+                </Button>
+            </div>
         </div>
     );
 };
