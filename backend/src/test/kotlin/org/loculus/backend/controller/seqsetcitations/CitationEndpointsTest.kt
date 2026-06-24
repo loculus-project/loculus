@@ -5,6 +5,7 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.Matchers.containsInAnyOrder
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -18,6 +19,7 @@ import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.service.crossref.CrossRefCitedByResult
 import org.loculus.backend.service.crossref.CrossRefService
+import org.loculus.backend.service.scheduler.TASK_LOCK_TABLE_NAME
 import org.loculus.backend.service.seqsetcitations.SeqSetCrossRefCitationsTask
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
@@ -260,6 +262,10 @@ class CitationEndpointsTest(
             .andExpect(status().isOk)
             .andExpect(jsonPath("\$.length()").value(1))
             .andExpect(jsonPath("\$[0].source.sourceDOI").value(citationSource.source.sourceDOI))
+
+        // Reset lock to simulate a new scheduled run (the real scheduler fires every 6h; we reset the
+        // lock row so the second direct call within this test is not blocked by the interval check)
+        transaction { exec("TRUNCATE TABLE $TASK_LOCK_TABLE_NAME") }
 
         // Now, citation source also cites seqSet B
         every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns
