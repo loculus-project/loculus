@@ -174,7 +174,7 @@ const InnerEditPage: FC<EditPageProps> = ({
             )}
             <div className='flex items-center gap-4 mt-4'>
                 <Button
-                    variant='neutral'
+                    variant='primary'
                     onClick={() =>
                         displayConfirmationDialog({
                             dialogText: 'Do you really want to submit?',
