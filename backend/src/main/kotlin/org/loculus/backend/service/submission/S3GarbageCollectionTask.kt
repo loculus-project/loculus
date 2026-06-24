@@ -4,10 +4,10 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import org.loculus.backend.config.BackendSpringProperty
-import org.loculus.backend.service.scheduler.TaskLock
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
+import org.loculus.backend.service.scheduler.TaskLock
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
