@@ -4,6 +4,7 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.service.scheduler.TaskLock
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
@@ -17,6 +18,8 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
 private val log = mu.KotlinLogging.logger {}
+
+const val S3_GARBAGE_COLLECTION_TASK_NAME = "S3-garbage-collection"
 
 @Component
 @ConditionalOnProperty("loculus.s3.enabled", havingValue = "true")
@@ -42,6 +45,10 @@ class S3GarbageCollectionTask(
         initialDelayString = "\${${BackendSpringProperty.S3_GC_INITIAL_DELAY_MINUTES}:15}",
         fixedDelayString = "\${${BackendSpringProperty.S3_GC_FREQUENCY_MINUTES}:1440}",
         timeUnit = TimeUnit.MINUTES,
+    )
+    @TaskLock(
+        name = S3_GARBAGE_COLLECTION_TASK_NAME,
+        intervalString = "\${${BackendSpringProperty.S3_GC_FREQUENCY_MINUTES}}",
     )
     fun task() {
         // `orphanRetentionPeriod` should be long enough for files to not be garbage collected
