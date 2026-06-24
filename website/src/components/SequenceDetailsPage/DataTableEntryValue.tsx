@@ -124,7 +124,7 @@ type FileEntry = {
     url: string;
 };
 
-const FileListComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
+export const FileListComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
     const fileEntries = JSON.parse(jsonString) as FileEntry[];
 
     return (

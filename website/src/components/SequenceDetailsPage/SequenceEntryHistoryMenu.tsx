@@ -68,7 +68,7 @@ export const SequenceEntryHistoryMenu: React.FC<Props> = ({
                     href={routes.sequenceEntryVersionsPage(accessionVersion)}
                     className='border-t border-base-300 mt-1 pt-2 rounded-none'
                 >
-                    All versions
+                    Compare versions
                 </DropdownMenuItem>
             </DropdownMenu>
             <div className='sm:hidden inline-block mr-2'>
