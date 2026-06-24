@@ -324,6 +324,37 @@ class GetReleasedDataEndpointTest(
     }
 
     @Test
+    fun `GIVEN current pipeline changes for another organism THEN this organism's released-data etag is unchanged`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(organism = DEFAULT_ORGANISM)
+        val otherAccessionVersions =
+            convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(organism = OTHER_ORGANISM)
+
+        val initialEtag = submissionControllerClient.getReleasedData(organism = DEFAULT_ORGANISM)
+            .andReturn()
+            .response
+            .getHeader(ETAG)
+
+        convenienceClient.extractUnprocessedData(organism = OTHER_ORGANISM, pipelineVersion = 2)
+
+        convenienceClient.submitProcessedData(
+            otherAccessionVersions.map {
+                PreparedProcessedData.successfullyProcessedOtherOrganismData(
+                    accession = it.accession,
+                    version = it.version,
+                )
+            },
+            organism = OTHER_ORGANISM,
+            pipelineVersion = 2,
+        )
+
+        submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+
+        // The etag for the default organism should not have changed, since the current pipeline version for that organism has not changed.
+        submissionControllerClient.getReleasedData(organism = DEFAULT_ORGANISM, ifNoneMatch = initialEtag)
+            .andExpect(status().isNotModified)
+    }
+
+    @Test
     fun `GIVEN released data exists in multiple versions THEN the 'versionStatus' flag is set correctly`() {
         val (
             accession,
