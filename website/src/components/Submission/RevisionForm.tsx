@@ -20,6 +20,7 @@ type RevisionFormProps = {
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
     dataUseTermsEnabled: boolean;
+    accessionVersion?: string;
 };
 
 export const RevisionForm: FC<RevisionFormProps> = ({
@@ -32,6 +33,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
     metadataTemplateFields,
     submissionDataTypes,
     dataUseTermsEnabled,
+    accessionVersion,
 }) => {
     return (
         <div className='flex flex-col items-center'>
@@ -43,6 +45,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
                     group={group}
                     metadataTemplateFields={metadataTemplateFields}
                     submissionDataTypes={submissionDataTypes}
+                    accessionVersion={accessionVersion}
                 />
             ) : (
                 <DataUploadForm

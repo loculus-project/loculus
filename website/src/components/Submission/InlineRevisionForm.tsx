@@ -17,6 +17,7 @@ type InlineRevisionFormProps = {
     group: Group;
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
+    accessionVersion?: string;
 };
 
 const parseAccessionVersion = (raw: string): { accession: string; version: number } | undefined => {
@@ -33,20 +34,20 @@ const InnerInlineRevisionForm: FC<InlineRevisionFormProps> = ({
     group,
     metadataTemplateFields,
     submissionDataTypes,
+    accessionVersion,
 }) => {
     const [input, setInput] = useState('');
     const [searched, setSearched] = useState<{ accession: string; version: number } | undefined>(undefined);
     const [parseError, setParseError] = useState<string | undefined>(undefined);
 
     useEffect(() => {
-        const accessionVersionParam = new URLSearchParams(window.location.search).get('accessionVersion');
-        if (!accessionVersionParam) return;
-        const parsed = parseAccessionVersion(accessionVersionParam);
+        if (!accessionVersion) return;
+        const parsed = parseAccessionVersion(accessionVersion);
         if (parsed) {
-            setInput(accessionVersionParam);
+            setInput(accessionVersion);
             setSearched(parsed);
         }
-    }, []);
+    }, [accessionVersion]);
 
     const { data, error, isFetching } = backendClientHooks(clientConfig).useGetDataToEdit(
         {
