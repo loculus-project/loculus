@@ -29,7 +29,7 @@ import java.util.UUID
     properties = [
         "${BackendSpringProperty.S3_ENABLED}=true",
         "${BackendSpringProperty.S3_GC_ENABLED}=true",
-        "${BackendSpringProperty.S3_ORPHAN_RETENTION_PERIOD_MINUTES}=1",
+        "${BackendSpringProperty.S3_GC_ORPHAN_RETENTION_PERIOD_MINUTES}=1",
         "${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG",
     ],
 )

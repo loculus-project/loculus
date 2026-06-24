@@ -28,13 +28,13 @@ class S3GarbageCollectionTask(
     private val s3Service: S3Service,
     private val dateProvider: DateProvider,
     private val auditLogger: AuditLogger,
-    @Value("\${${BackendSpringProperty.S3_ORPHAN_RETENTION_PERIOD_MINUTES}}") private val orphanRetentionPeriod: Int,
-    @Value("\${${BackendSpringProperty.S3_GC_ENABLED}:false}") private val enabled: Boolean = false,
+    @Value("\${${BackendSpringProperty.S3_GC_ORPHAN_RETENTION_PERIOD_MINUTES}}") private val orphanRetentionPeriod: Int,
+    @Value("\${${BackendSpringProperty.S3_GC_ENABLED}}") private val enabled: Boolean
 ) {
 
     /**
      * Runs once daily by default (with an initial delay of 15 minutes) and deletes S3 objects older than
-     * `loculus.s3.orphan-retention-period-minutes` that are not referenced in submitted_data or processed_data.
+     * `loculus.s3.gc-gc-orphan-retention-period-minutes` that are not referenced in submitted_data or processed_data.
      *
      * Uses a two-phase deletion approach to avoid a race condition where a file could be deleted
      * while a submission referencing it is in-flight:
