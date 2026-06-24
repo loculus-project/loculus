@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import java.util.UUID
 
 /**
- * Testing of orphan file detection logic in [FilesDatabaseService.getOrphanedFileIds].
+ * Testing of orphan file detection logic in [FilesDatabaseService.getDeletionCandidateFiles].
  */
 @EndpointTest(
     properties = [
@@ -30,7 +30,7 @@ import java.util.UUID
         "${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG",
     ],
 )
-class GetOrphanedFileIdsTest(
+class GetDeletionCandidateFilesTest(
     @Autowired val filesDatabaseService: FilesDatabaseService,
     @Autowired val groupManagementClient: GroupManagementControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
@@ -52,9 +52,9 @@ class GetOrphanedFileIdsTest(
         insertFile(old, groupId, daysAgo(10))
         insertFile(recent, groupId, daysAgo(1))
 
-        val orphans = filesDatabaseService.getOrphanedFileIds(daysAgo(5))
+        val orphans = filesDatabaseService.getDeletionCandidateFiles(daysAgo(5))
 
-        assertThat(orphans.keys, `is`(setOf(old)))
+        assertThat(orphans.map { it.id }.toSet(), `is`(setOf(old)))
     }
 
     @Test
@@ -89,7 +89,12 @@ class GetOrphanedFileIdsTest(
         convenienceClient.extractUnprocessedData(pipelineVersion = 3)
         convenienceClient.submitProcessedData(processedDataAtPipeline(fileFromNewerPipeline), pipelineVersion = 3)
 
-        assertThat(filesDatabaseService.getOrphanedFileIds(daysAgo(5)).keys, `is`(emptySet()))
+        assertThat(
+            filesDatabaseService.getDeletionCandidateFiles(daysAgo(5)).map {
+                it.id
+            }.toSet(),
+            `is`(emptySet<UUID>()),
+        )
     }
 
     @Suppress("ktlint:standard:max-line-length")
@@ -123,11 +128,19 @@ class GetOrphanedFileIdsTest(
         convenienceClient.extractUnprocessedData(pipelineVersion = 3)
         convenienceClient.submitProcessedData(processedData(includeFile = false), pipelineVersion = 3)
 
-        assertThat(filesDatabaseService.getOrphanedFileIds(daysAgo(5)).keys, `is`(emptySet()))
+        assertThat(
+            filesDatabaseService.getDeletionCandidateFiles(daysAgo(5)).map {
+                it.id
+            }.toSet(),
+            `is`(emptySet<UUID>()),
+        )
 
         // Upgrades to v3, deletes v1 preprocessed data (keeps v2 as the one retained older version)
         useNewerProcessingPipelineVersionTask.task()
 
-        assertThat(filesDatabaseService.getOrphanedFileIds(daysAgo(5)).keys, `is`(setOf(fileInOldPipelineVersion)))
+        assertThat(
+            filesDatabaseService.getDeletionCandidateFiles(daysAgo(5)).map { it.id }.toSet(),
+            `is`(setOf(fileInOldPipelineVersion)),
+        )
     }
 }

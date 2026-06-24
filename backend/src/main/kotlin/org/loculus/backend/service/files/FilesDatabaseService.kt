@@ -69,7 +69,9 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         chunk.filterNot { it in existingIds }
     }, 1).toSet()
 
-    fun getOrphanedFileIds(threshold: LocalDateTime): Map<FileId, LocalDateTime?> {
+    data class DeletionCandidateFile(val id: FileId, val markedForDeletionAt: LocalDateTime?)
+
+    fun getDeletionCandidateFiles(threshold: LocalDateTime): List<DeletionCandidateFile> {
         val sql = """
             -- check for files not referenced by a submission. For this, check the submitted_data,
             -- archive_of_submitted_data and processed_data jsonb objects
@@ -108,7 +110,7 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
                 listOf<Pair<IColumnType<*>, Any?>>(Pair(KotlinLocalDateTimeColumnType(), threshold)),
                 explicitStatementType = StatementType.SELECT,
             ) { rs ->
-                buildMap<FileId, LocalDateTime?> {
+                buildList<DeletionCandidateFile> {
                     while (rs.next()) {
                         val id = rs.getObject("id", UUID::class.java)
                         val markedAt = rs.getTimestamp("marked_for_deletion_at")?.toLocalDateTime()?.let { ldt ->
@@ -122,10 +124,10 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
                                 ldt.nano,
                             )
                         }
-                        put(id, markedAt)
+                        add(DeletionCandidateFile(id, markedAt))
                     }
                 }
-            } ?: emptyMap()
+            } ?: emptyList()
         }
     }
 
