@@ -4,8 +4,8 @@
 
 \restrict dummy
 
--- Dumped from database version 15.17 (Debian 15.17-1.pgdg13+1)
--- Dumped by pg_dump version 16.13 (Debian 16.13-1.pgdg13+1)
+-- Dumped from database version 15.18 (Debian 15.18-1.pgdg13+1)
+-- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -51,6 +51,117 @@ CREATE FUNCTION public.jsonb_concat(a jsonb, b jsonb) RETURNS jsonb
 ALTER FUNCTION public.jsonb_concat(a jsonb, b jsonb) OWNER TO postgres;
 
 --
+-- Name: update_current_processing_pipeline_tracker(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.update_current_processing_pipeline_tracker() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
+    SELECT TG_TABLE_NAME, cr.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
+    FROM changed_rows cr
+    GROUP BY cr.organism
+    ON CONFLICT (table_name, organism, pipeline_version)
+    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+    RETURN NULL;
+END;
+$$;
+
+
+ALTER FUNCTION public.update_current_processing_pipeline_tracker() OWNER TO postgres;
+
+--
+-- Name: update_data_use_terms_table_tracker(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.update_data_use_terms_table_tracker() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
+    SELECT TG_TABLE_NAME, se.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
+    FROM changed_rows cr
+    JOIN sequence_entries se
+      ON se.accession = cr.accession
+    GROUP BY se.organism
+    ON CONFLICT (table_name, organism, pipeline_version)
+    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+    RETURN NULL;
+END;
+$$;
+
+
+ALTER FUNCTION public.update_data_use_terms_table_tracker() OWNER TO postgres;
+
+--
+-- Name: update_external_metadata_tracker(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.update_external_metadata_tracker() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
+    SELECT TG_TABLE_NAME, se.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
+    FROM changed_rows cr
+    JOIN sequence_entries se
+      ON se.accession = cr.accession AND se.version = cr.version
+    GROUP BY se.organism
+    ON CONFLICT (table_name, organism, pipeline_version)
+    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+    RETURN NULL;
+END;
+$$;
+
+
+ALTER FUNCTION public.update_external_metadata_tracker() OWNER TO postgres;
+
+--
+-- Name: update_preprocessed_data_tracker(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.update_preprocessed_data_tracker() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
+    SELECT TG_TABLE_NAME, se.organism, cr.pipeline_version, timezone('UTC', CURRENT_TIMESTAMP)
+    FROM changed_rows cr
+    JOIN sequence_entries se
+      ON se.accession = cr.accession AND se.version = cr.version
+    GROUP BY se.organism, cr.pipeline_version
+    ON CONFLICT (table_name, organism, pipeline_version)
+    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+    RETURN NULL;
+END;
+$$;
+
+
+ALTER FUNCTION public.update_preprocessed_data_tracker() OWNER TO postgres;
+
+--
+-- Name: update_sequence_entries_tracker(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.update_sequence_entries_tracker() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
+    SELECT TG_TABLE_NAME, cr.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
+    FROM changed_rows cr
+    GROUP BY cr.organism
+    ON CONFLICT (table_name, organism, pipeline_version)
+    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+    RETURN NULL;
+END;
+$$;
+
+
+ALTER FUNCTION public.update_sequence_entries_tracker() OWNER TO postgres;
+
+--
 -- Name: update_table_tracker(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -59,9 +170,9 @@ CREATE FUNCTION public.update_table_tracker() RETURNS trigger
     AS $$
 BEGIN
     IF TG_TABLE_NAME != 'table_update_tracker' THEN
-        INSERT INTO table_update_tracker (table_name, last_time_updated)
-        VALUES (TG_TABLE_NAME, timezone('UTC', CURRENT_TIMESTAMP))
-        ON CONFLICT (table_name)
+        INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
+        VALUES (TG_TABLE_NAME, NULL, NULL, timezone('UTC', CURRENT_TIMESTAMP))
+        ON CONFLICT (table_name, organism, pipeline_version)
         DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
     END IF;
     RETURN NULL;
@@ -312,6 +423,44 @@ CREATE TABLE public.metadata_upload_aux_table (
 ALTER TABLE public.metadata_upload_aux_table OWNER TO postgres;
 
 --
+-- Name: seqset_citation_source; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.seqset_citation_source (
+    citation_source_id bigint NOT NULL,
+    source_doi text NOT NULL,
+    origin text NOT NULL,
+    title text NOT NULL,
+    year integer NOT NULL,
+    contributors jsonb NOT NULL,
+    CONSTRAINT seqset_citation_source_origin_check CHECK ((origin = ANY (ARRAY['CROSSREF'::text, 'CURATED'::text])))
+);
+
+
+ALTER TABLE public.seqset_citation_source OWNER TO postgres;
+
+--
+-- Name: seqset_citation_source_citation_source_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.seqset_citation_source_citation_source_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.seqset_citation_source_citation_source_id_seq OWNER TO postgres;
+
+--
+-- Name: seqset_citation_source_citation_source_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.seqset_citation_source_citation_source_id_seq OWNED BY public.seqset_citation_source.citation_source_id;
+
+
+--
 -- Name: seqset_id_sequence; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -359,6 +508,19 @@ ALTER SEQUENCE public.seqset_records_seqset_record_id_seq OWNER TO postgres;
 
 ALTER SEQUENCE public.seqset_records_seqset_record_id_seq OWNED BY public.seqset_records.seqset_record_id;
 
+
+--
+-- Name: seqset_to_citation_source; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.seqset_to_citation_source (
+    citation_source_id bigint NOT NULL,
+    seqset_id text NOT NULL,
+    seqset_version bigint NOT NULL
+);
+
+
+ALTER TABLE public.seqset_to_citation_source OWNER TO postgres;
 
 --
 -- Name: seqset_to_records; Type: TABLE; Schema: public; Owner: postgres
@@ -426,8 +588,8 @@ CREATE TABLE public.sequence_entries (
     submitted_at timestamp without time zone NOT NULL,
     released_at timestamp without time zone,
     is_revocation boolean DEFAULT false NOT NULL,
-    original_data jsonb,
-    unprocessed_data jsonb
+    archive_of_submitted_data jsonb,
+    submitted_data jsonb
 );
 
 
@@ -467,12 +629,12 @@ CREATE VIEW public.sequence_entries_view AS
     se.submitted_at,
     se.released_at,
     se.is_revocation,
-    se.unprocessed_data,
+    se.submitted_data,
     sepd.started_processing_at,
     sepd.finished_processing_at,
     sepd.processed_data,
         CASE
-            WHEN se.is_revocation THEN jsonb_build_object('metadata', COALESCE((se.unprocessed_data -> 'metadata'::text), '{}'::jsonb), 'unalignedNucleotideSequences', '{}'::jsonb, 'alignedNucleotideSequences', '{}'::jsonb, 'nucleotideInsertions', '{}'::jsonb, 'alignedAminoAcidSequences', '{}'::jsonb, 'aminoAcidInsertions', '{}'::jsonb, 'files', 'null'::jsonb)
+            WHEN se.is_revocation THEN jsonb_build_object('metadata', COALESCE((se.submitted_data -> 'metadata'::text), '{}'::jsonb), 'unalignedNucleotideSequences', '{}'::jsonb, 'alignedNucleotideSequences', '{}'::jsonb, 'nucleotideInsertions', '{}'::jsonb, 'alignedAminoAcidSequences', '{}'::jsonb, 'aminoAcidInsertions', '{}'::jsonb, 'files', 'null'::jsonb)
             WHEN (aem.external_metadata IS NULL) THEN sepd.processed_data
             ELSE (sepd.processed_data || jsonb_build_object('metadata', ((sepd.processed_data -> 'metadata'::text) || aem.external_metadata)))
         END AS joint_metadata,
@@ -526,11 +688,26 @@ ALTER TABLE public.sequence_upload_aux_table OWNER TO postgres;
 
 CREATE TABLE public.table_update_tracker (
     table_name text NOT NULL,
-    last_time_updated timestamp without time zone DEFAULT timezone('UTC'::text, CURRENT_TIMESTAMP)
+    last_time_updated timestamp without time zone DEFAULT timezone('UTC'::text, CURRENT_TIMESTAMP),
+    organism text,
+    pipeline_version bigint
 );
 
 
 ALTER TABLE public.table_update_tracker OWNER TO postgres;
+
+--
+-- Name: task_lock; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.task_lock (
+    task_name text NOT NULL,
+    started_at timestamp with time zone DEFAULT now() NOT NULL,
+    locked_until timestamp with time zone NOT NULL
+);
+
+
+ALTER TABLE public.task_lock OWNER TO postgres;
 
 --
 -- Name: user_groups_table; Type: TABLE; Schema: public; Owner: postgres
@@ -579,6 +756,13 @@ ALTER TABLE ONLY public.audit_log ALTER COLUMN id SET DEFAULT nextval('public.au
 --
 
 ALTER TABLE ONLY public.groups_table ALTER COLUMN group_id SET DEFAULT nextval('public.groups_table_group_id_seq'::regclass);
+
+
+--
+-- Name: seqset_citation_source citation_source_id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seqset_citation_source ALTER COLUMN citation_source_id SET DEFAULT nextval('public.seqset_citation_source_citation_source_id_seq'::regclass);
 
 
 --
@@ -683,11 +867,35 @@ ALTER TABLE ONLY public.metadata_upload_aux_table
 
 
 --
+-- Name: seqset_citation_source seqset_citation_source_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seqset_citation_source
+    ADD CONSTRAINT seqset_citation_source_pkey PRIMARY KEY (citation_source_id);
+
+
+--
+-- Name: seqset_citation_source seqset_citation_source_source_doi_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seqset_citation_source
+    ADD CONSTRAINT seqset_citation_source_source_doi_key UNIQUE (source_doi);
+
+
+--
 -- Name: seqset_records seqset_records_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.seqset_records
     ADD CONSTRAINT seqset_records_pkey PRIMARY KEY (seqset_record_id);
+
+
+--
+-- Name: seqset_to_citation_source seqset_to_citation_source_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seqset_to_citation_source
+    ADD CONSTRAINT seqset_to_citation_source_pkey PRIMARY KEY (citation_source_id, seqset_id, seqset_version);
 
 
 --
@@ -731,11 +939,19 @@ ALTER TABLE ONLY public.sequence_upload_aux_table
 
 
 --
--- Name: table_update_tracker table_update_tracker_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: table_update_tracker table_update_tracker_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.table_update_tracker
-    ADD CONSTRAINT table_update_tracker_pkey PRIMARY KEY (table_name);
+    ADD CONSTRAINT table_update_tracker_unique UNIQUE NULLS NOT DISTINCT (table_name, organism, pipeline_version);
+
+
+--
+-- Name: task_lock task_lock_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.task_lock
+    ADD CONSTRAINT task_lock_pkey PRIMARY KEY (task_name);
 
 
 --
@@ -811,27 +1027,6 @@ CREATE INDEX user_groups_table_user_name_idx ON public.user_groups_table USING b
 
 
 --
--- Name: current_processing_pipeline update_tracker_trigger; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER update_tracker_trigger AFTER INSERT OR DELETE OR UPDATE OR TRUNCATE ON public.current_processing_pipeline FOR EACH STATEMENT EXECUTE FUNCTION public.update_table_tracker();
-
-
---
--- Name: data_use_terms_table update_tracker_trigger; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER update_tracker_trigger AFTER INSERT OR DELETE OR UPDATE OR TRUNCATE ON public.data_use_terms_table FOR EACH STATEMENT EXECUTE FUNCTION public.update_table_tracker();
-
-
---
--- Name: external_metadata update_tracker_trigger; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER update_tracker_trigger AFTER INSERT OR DELETE OR UPDATE OR TRUNCATE ON public.external_metadata FOR EACH STATEMENT EXECUTE FUNCTION public.update_table_tracker();
-
-
---
 -- Name: groups_table update_tracker_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -843,20 +1038,6 @@ CREATE TRIGGER update_tracker_trigger AFTER INSERT OR DELETE OR UPDATE OR TRUNCA
 --
 
 CREATE TRIGGER update_tracker_trigger AFTER INSERT OR DELETE OR UPDATE OR TRUNCATE ON public.metadata_upload_aux_table FOR EACH STATEMENT EXECUTE FUNCTION public.update_table_tracker();
-
-
---
--- Name: sequence_entries update_tracker_trigger; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER update_tracker_trigger AFTER INSERT OR DELETE OR UPDATE OR TRUNCATE ON public.sequence_entries FOR EACH STATEMENT EXECUTE FUNCTION public.update_table_tracker();
-
-
---
--- Name: sequence_entries_preprocessed_data update_tracker_trigger; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER update_tracker_trigger AFTER INSERT OR DELETE OR UPDATE OR TRUNCATE ON public.sequence_entries_preprocessed_data FOR EACH STATEMENT EXECUTE FUNCTION public.update_table_tracker();
 
 
 --
@@ -874,11 +1055,132 @@ CREATE TRIGGER update_tracker_trigger AFTER INSERT OR DELETE OR UPDATE OR TRUNCA
 
 
 --
+-- Name: current_processing_pipeline update_tracker_trigger_del; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_del AFTER DELETE ON public.current_processing_pipeline REFERENCING OLD TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_current_processing_pipeline_tracker();
+
+
+--
+-- Name: data_use_terms_table update_tracker_trigger_del; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_del AFTER DELETE ON public.data_use_terms_table REFERENCING OLD TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_data_use_terms_table_tracker();
+
+
+--
+-- Name: external_metadata update_tracker_trigger_del; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_del AFTER DELETE ON public.external_metadata REFERENCING OLD TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_external_metadata_tracker();
+
+
+--
+-- Name: sequence_entries update_tracker_trigger_del; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_del AFTER DELETE ON public.sequence_entries REFERENCING OLD TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_sequence_entries_tracker();
+
+
+--
+-- Name: sequence_entries_preprocessed_data update_tracker_trigger_del; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_del AFTER DELETE ON public.sequence_entries_preprocessed_data REFERENCING OLD TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_preprocessed_data_tracker();
+
+
+--
+-- Name: current_processing_pipeline update_tracker_trigger_ins; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_ins AFTER INSERT ON public.current_processing_pipeline REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_current_processing_pipeline_tracker();
+
+
+--
+-- Name: data_use_terms_table update_tracker_trigger_ins; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_ins AFTER INSERT ON public.data_use_terms_table REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_data_use_terms_table_tracker();
+
+
+--
+-- Name: external_metadata update_tracker_trigger_ins; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_ins AFTER INSERT ON public.external_metadata REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_external_metadata_tracker();
+
+
+--
+-- Name: sequence_entries update_tracker_trigger_ins; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_ins AFTER INSERT ON public.sequence_entries REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_sequence_entries_tracker();
+
+
+--
+-- Name: sequence_entries_preprocessed_data update_tracker_trigger_ins; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_ins AFTER INSERT ON public.sequence_entries_preprocessed_data REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_preprocessed_data_tracker();
+
+
+--
+-- Name: current_processing_pipeline update_tracker_trigger_upd; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.current_processing_pipeline REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_current_processing_pipeline_tracker();
+
+
+--
+-- Name: data_use_terms_table update_tracker_trigger_upd; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.data_use_terms_table REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_data_use_terms_table_tracker();
+
+
+--
+-- Name: external_metadata update_tracker_trigger_upd; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.external_metadata REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_external_metadata_tracker();
+
+
+--
+-- Name: sequence_entries update_tracker_trigger_upd; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.sequence_entries REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_sequence_entries_tracker();
+
+
+--
+-- Name: sequence_entries_preprocessed_data update_tracker_trigger_upd; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.sequence_entries_preprocessed_data REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_preprocessed_data_tracker();
+
+
+--
 -- Name: files files_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.files
     ADD CONSTRAINT files_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.groups_table(group_id);
+
+
+--
+-- Name: seqset_to_citation_source foreign_key_citation_source; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seqset_to_citation_source
+    ADD CONSTRAINT foreign_key_citation_source FOREIGN KEY (citation_source_id) REFERENCES public.seqset_citation_source(citation_source_id) ON DELETE CASCADE;
+
+
+--
+-- Name: seqset_to_citation_source foreign_key_seqset; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seqset_to_citation_source
+    ADD CONSTRAINT foreign_key_seqset FOREIGN KEY (seqset_id, seqset_version) REFERENCES public.seqsets(seqset_id, seqset_version) ON DELETE CASCADE;
 
 
 --

@@ -120,7 +120,7 @@ describe('SubmitForm', () => {
                 getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
             );
 
-            const submitButton = getByRole('button', { name: 'Submit sequences' });
+            const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
             await userEvent.click(submitButton);
             await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
 
@@ -144,7 +144,7 @@ describe('SubmitForm', () => {
             getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
         );
 
-        const submitButton = getByRole('button', { name: 'Submit sequences' });
+        const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
         await userEvent.click(submitButton);
 
         await waitFor(() => {
@@ -170,7 +170,7 @@ describe('SubmitForm', () => {
             getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
         );
 
-        const submitButton = getByRole('button', { name: 'Submit sequences' });
+        const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
         await userEvent.click(submitButton);
 
         await waitFor(() => {
@@ -196,7 +196,7 @@ describe('SubmitForm', () => {
             getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
         );
 
-        const submitButton = getByRole('button', { name: 'Submit sequences' });
+        const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
         await userEvent.click(submitButton);
 
         await waitFor(() => {
@@ -248,7 +248,7 @@ describe('SubmitForm', () => {
             getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
         );
 
-        const submitButton = getByRole('button', { name: 'Submit sequences' });
+        const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
         await userEvent.click(submitButton);
         await waitFor(() => {
             expect(toast.error).toHaveBeenCalledWith(
@@ -281,7 +281,7 @@ describe('SubmitForm', () => {
             getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
         );
 
-        const submitButton = getByRole('button', { name: 'Submit sequences' });
+        const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
         await userEvent.click(submitButton);
         await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
 
@@ -309,7 +309,7 @@ describe('SubmitForm', () => {
             getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
         );
 
-        const submitButton = getByRole('button', { name: 'Submit sequences' });
+        const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
         await userEvent.click(submitButton);
         await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
 
@@ -340,7 +340,7 @@ describe('SubmitForm', () => {
                 }
             }
 
-            const submitButton = getByRole('button', { name: 'Submit sequences' });
+            const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
             await userEvent.click(submitButton);
 
             await waitFor(() => {

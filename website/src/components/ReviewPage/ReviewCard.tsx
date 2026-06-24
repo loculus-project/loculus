@@ -23,17 +23,18 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { displayMetadataField } from '../../utils/displayMetadataField.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { Button } from '../common/Button';
+import { Spinner } from '../common/Spinner';
 import BiTrash from '~icons/bi/trash';
 import ClarityNoteEditLine from '~icons/clarity/note-edit-line';
 import Note from '~icons/fluent/note-24-filled';
 import QuestionMark from '~icons/fluent/tag-question-mark-24-filled';
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
+import FormkitSubmit from '~icons/formkit/submit';
 import EmptyCircle from '~icons/grommet-icons/empty-circle';
 import Files from '~icons/lucide/files';
 import RiDna from '~icons/mdi/dna';
 import TickOutline from '~icons/mdi/tick-outline';
-import WpfPaperPlane from '~icons/wpf/paper-plane';
 
 type ReviewCardProps = {
     sequenceEntryStatus: SequenceEntryStatus;
@@ -70,7 +71,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     return (
         <div className='px-3 py-2 relative transition-all duration-500'>
             <div className='flex'>
-                <div className='flex flex-grow flex-wrap '>
+                <div className='flex grow flex-wrap '>
                     <StatusIcon
                         status={sequenceEntryStatus.status}
                         dataUseTerms={sequenceEntryStatus.dataUseTerms}
@@ -160,7 +161,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
 
     return (
         <div className='flex mb-auto pt-3.5 items-center'>
-            <div className='flex space-x-4'>
+            <div className='flex gap-x-4'>
                 {filesEnabled && viewFiles && (
                     <>
                         <Button
@@ -204,15 +205,15 @@ const ButtonBar: FC<ButtonBarProps> = ({
                     key={'approve-button-' + sequenceEntryStatus.accession}
                     disabled={!approvable}
                 >
-                    <WpfPaperPlane />
+                    <FormkitSubmit />
                 </Button>
                 <CustomTooltip
                     id={'approve-tooltip' + sequenceEntryStatus.accession}
                     content={
                         approvable
-                            ? 'Release this sequence entry'
+                            ? 'Approve this sequence entry'
                             : sequenceEntryStatus.processingResult === errorsProcessingResult
-                              ? 'You need to fix the errors before releasing this sequence entry'
+                              ? 'You need to fix the errors before approving this sequence entry'
                               : 'Still awaiting preprocessing'
                     }
                 />
@@ -291,7 +292,7 @@ const Errors: FC<ErrorsProps> = ({ errors, accession, metadataDisplayNames }) =>
                         .map((field) => metadataDisplayNames.get(field.name) ?? field.name)
                         .join(', ');
                     return (
-                        <div key={uniqueKey} className='flex flex-shrink-0'>
+                        <div key={uniqueKey} className='flex shrink-0'>
                             <p
                                 className='text-red-600'
                                 data-tooltip-id={'error-tooltip-' + accession + '-' + uniqueKey}
@@ -300,7 +301,7 @@ const Errors: FC<ErrorsProps> = ({ errors, accession, metadataDisplayNames }) =>
                             </p>
                             <CustomTooltip
                                 id={'error-tooltip-' + accession + '-' + uniqueKey}
-                                content='You must fix this error before releasing this sequence entry'
+                                content='You must fix this error before approving this sequence entry'
                             />
                         </div>
                     );
@@ -393,7 +394,7 @@ const StatusIcon: FC<StatusIconProps> = ({ status, dataUseTerms, accession, hasW
         return (
             <div className='p-2 flex flex-col justify-between'>
                 <div data-tooltip-id={'inProcessing-tooltip-' + accession} key={'inProcessing-tooltip-' + accession}>
-                    <span className='loading loading-spinner loading-sm' />
+                    <Spinner size='sm' />
                 </div>
                 <CustomTooltip id={'inProcessing-tooltip-' + accession} content='In processing' />
                 <DataUseTermsIcon dataUseTerms={dataUseTerms} accession={accession} />
@@ -460,10 +461,10 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({
     return (
         <div className={`flex flex-col m-2 `}>
             <span className={keyStyle ?? 'text-gray-500 uppercase text-xs'}>{keyName}</span>
-            <span className={`text-base ${extraStyle}`}>
+            <span className={`text-base ${extraStyle ?? ''}`}>
                 <span
                     ref={textRef}
-                    className={`${textColor} ${disableTruncate ? '' : 'truncate max-w-xs inline-block'}`}
+                    className={`${textColor} ${disableTruncate ? '' : 'truncate max-w-xs inline-block align-middle'}`}
                     data-tooltip-id={showTooltip ? textTooltipId : undefined}
                 >
                     {value}
@@ -471,7 +472,9 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({
                 {showTooltip && <CustomTooltip id={textTooltipId} content={tooltipContent} />}
                 {secondaryMessages !== undefined && (
                     <>
-                        <Note className='text-yellow-500 inline-block' data-tooltip-id={noteTooltipId} />
+                        <span className='inline-block' data-tooltip-id={noteTooltipId}>
+                            <Note className='text-yellow-500' />
+                        </span>
                         <CustomTooltip
                             id={noteTooltipId}
                             content={secondaryMessages.map((annotation) => annotation.message).join(', ')}

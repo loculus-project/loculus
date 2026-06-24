@@ -1,3 +1,4 @@
+import dataclasses
 import json
 import logging
 from collections import defaultdict
@@ -7,8 +8,10 @@ from typing import Any
 
 import click
 import orjsonl
+import pandas as pd
 import requests
 import yaml
+from loculus_client import Config, get_submitted
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -17,14 +20,6 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
     datefmt="%H:%M:%S",
 )
-
-
-@dataclass
-class Config:
-    organism: str
-    segmented: str
-    nucleotide_sequences: list[str]
-    slack_hook: str = ""
 
 
 InsdcAccession = str  # one per segment
@@ -49,15 +44,16 @@ class SequenceUpdateManager:
     ]  # Map of current submissionId to map of previous state
     # i.e. loculus accessions (to be revoked) and their corresponding old joint insdc accessions
     sampled_out: list[JointInsdcAccession]
-    hashes: list[float]
+    hashes: list[str]
     config: Config
+    muted_hashes: dict[LoculusAccession, set[str]]
 
 
 @dataclass
 class LatestLoculusVersion:
     loculus_accession: LoculusAccession
     latest_version: int
-    hash: float | None
+    hash: str | None
     status: Status
     curated: bool
     jointAccession: JointInsdcAccession  # noqa: N815
@@ -86,16 +82,46 @@ def sample_out_hashed_records(
     return not keep
 
 
+def calculate_metadata_diff(
+    config: Config, new_metadata: dict[str, Any], previous_entry: LatestLoculusVersion
+) -> dict[str, Any]:
+    previous_metadata_list = get_submitted(
+        config,
+        None,
+        fields=None,
+        accessionVersionsFilter=[
+            f"{previous_entry.loculus_accession}.{previous_entry.latest_version}"
+        ],
+    )
+    if not previous_metadata_list or len(previous_metadata_list) != 1:
+        logger.warning(
+            f"Could not retrieve previous metadata for {previous_entry.loculus_accession} "
+            f"version {previous_entry.latest_version} to calculate metadata diff"
+        )
+        return {}
+    previous_metadata = previous_metadata_list[0].get("submittedMetadata", {})
+
+    return {
+        key: {
+            "old": previous_metadata.get(key),
+            "new": new_metadata.get(key),
+        }
+        for key in new_metadata.keys() | previous_metadata.keys()
+        if new_metadata.get(key) != previous_metadata.get(key)
+    }
+
+
 def process_hashes(
     ingested_insdc_accession: InsdcAccession,
     metadata_id: SubmissionId,
-    newly_ingested_hash: float | None,
+    new_metadata: dict[str, Any],
     submitted: dict[InsdcAccession, LatestLoculusVersion],
     update_manager: SequenceUpdateManager,
 ):
     """
     Decide if metadata_id should be submitted, revised, or noop
     """
+    newly_ingested_hash: str | None = new_metadata.get("hash")
 
     if ingested_insdc_accession not in submitted:
         update_manager.submit.append(metadata_id)
@@ -109,17 +135,29 @@ def process_hashes(
         update_manager.noop[metadata_id] = corresponding_loculus_accession
         return update_manager
 
+    if newly_ingested_hash in update_manager.muted_hashes.get(
+        corresponding_loculus_accession, set()
+    ):
+        logger.info(
+            f"Skipping muted hash {newly_ingested_hash} for accession {corresponding_loculus_accession}"
+        )
+        update_manager.noop[metadata_id] = corresponding_loculus_accession
+        return update_manager
+
     if status != "APPROVED_FOR_RELEASE":
         update_manager.blocked[status][metadata_id] = corresponding_loculus_accession
         return update_manager
 
     if previously_submitted_entry.curated:
+        metadata_diff = calculate_metadata_diff(
+            update_manager.config, new_metadata, previously_submitted_entry
+        )
         # Sequence has been curated before - special case
         notification = (
             f"Ingest: Sequence {corresponding_loculus_accession} with INSDC "
             f"accession {ingested_insdc_accession} has been curated before "
             f"- do not know how to proceed. New hash: {newly_ingested_hash}, "
-            f"old hash: {previously_submitted_entry.hash}."
+            f"old hash: {previously_submitted_entry.hash}. Metadata diff: {metadata_diff}"
         )
         logger.warning(notification)
         notify(update_manager.config, notification)
@@ -155,7 +193,7 @@ def get_loculus_accession_to_latest_version_map(
     "version":1,
     "submitter":"insdc_ingest_user",
     "isRevocation":false,
-    "unprocessedMetadata":
+    "submittedMetadata":
         {"hash":"6349c57c56efaca1fbfcabf4d377535b",
         "insdcAccessionBase_L":"",
         "insdcAccessionBase_M":"",
@@ -207,17 +245,17 @@ def construct_submitted_dict(
     # Create a map from INSDC accession to latest loculus accession
     insdc_to_loculus_accession_map: dict[InsdcAccession, LatestLoculusVersion] = {}
     for loculus_accession, entry in loculus_accession_to_latest_version_map.items():
-        unprocessed_metadata: dict[str, Any] = entry["unprocessedMetadata"]
-        hash_value = unprocessed_metadata.get("hash")
+        submitted_metadata: dict[str, Any] = entry["submittedMetadata"]
+        hash_value = submitted_metadata.get("hash")
 
         if config.segmented:
             insdc_accessions = [
-                unprocessed_metadata[key] for key in insdc_keys if unprocessed_metadata[key]
+                submitted_metadata[key] for key in insdc_keys if submitted_metadata[key]
             ]
-            joint_accession = get_joint_insdc_accession(unprocessed_metadata, insdc_keys, config)
+            joint_accession = get_joint_insdc_accession(submitted_metadata, insdc_keys, config)
         else:
-            insdc_accessions = [unprocessed_metadata.get("insdcAccessionBase", "")]
-            joint_accession = unprocessed_metadata.get("insdcAccessionBase", "")
+            insdc_accessions = [submitted_metadata.get("insdcAccessionBase", "")]
+            joint_accession = submitted_metadata.get("insdcAccessionBase", "")
 
         status = "REVOKED" if entry["isRevocation"] else entry["status"]
 
@@ -267,9 +305,19 @@ def get_approved_submitted_accessions(
     return approved
 
 
+def load_muted_hashes_dict(muted_hashes_path: str) -> dict[LoculusAccession, set[str]]:
+    expect_columns = {"accession", "hash_digest"}
+    df = pd.read_csv(muted_hashes_path, sep="\t")
+    if not expect_columns.issubset(df.columns):
+        msg = f"Malformatted muted-hash file {muted_hashes_path}: must contain columns '{expect_columns}'"
+        raise ValueError(msg)
+    return df.groupby("accession")["hash_digest"].agg(set).to_dict()
+
+
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--old-hashes", required=True, type=click.Path(exists=True))
+@click.option("--muted-hashes", required=False, type=click.Path(exists=True))
 @click.option("--metadata", required=True, type=click.Path(exists=True))
 @click.option("--to-submit", required=True, type=click.Path())
 @click.option("--to-revise", required=True, type=click.Path())
@@ -286,6 +334,7 @@ def get_approved_submitted_accessions(
 def main(
     config_file: str,
     old_hashes: str,
+    muted_hashes: str,
     metadata: str,
     to_submit: str,
     to_revise: str,
@@ -301,9 +350,7 @@ def main(
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     with open(config_file, encoding="utf-8") as file:
         full_config = yaml.safe_load(file)
-        relevant_config = {
-            key: full_config[key] for key in Config.__annotations__ if key in full_config
-        }
+        relevant_config = {f.name: full_config.get(f.name, []) for f in dataclasses.fields(Config)}
         config = Config(**relevant_config)
 
     insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
@@ -313,6 +360,9 @@ def main(
     )
     already_ingested_accessions = get_approved_submitted_accessions(submitted)
     current_ingested_accessions: set[InsdcAccession] = set()
+    muted_hashes_dict: dict[LoculusAccession, set[str]] = (
+        load_muted_hashes_dict(muted_hashes) if muted_hashes else {}
+    )
 
     update_manager = SequenceUpdateManager(
         submit=[],
@@ -323,12 +373,12 @@ def main(
         sampled_out=[],
         hashes=[],
         config=config,
+        muted_hashes=muted_hashes_dict,
     )
 
     for field in orjsonl.stream(metadata):
         metadata_id: SubmissionId = field["id"]
         record: dict[str, Any] = field["metadata"]
-        ingested_hash: float | None = record.get("hash")
         if not config.segmented:
             insdc_accession_base = record["insdcAccessionBase"]
             if not insdc_accession_base:
@@ -338,7 +388,11 @@ def main(
                 update_manager.sampled_out.append(insdc_accession_base)
                 continue
             process_hashes(
-                insdc_accession_base, metadata_id, ingested_hash, submitted, update_manager
+                insdc_accession_base,
+                metadata_id,
+                record,
+                submitted,
+                update_manager,
             )
             current_ingested_accessions.add(insdc_accession_base)
             continue
@@ -366,7 +420,7 @@ def main(
         ):
             # grouping is the same, can just look at first segment in group
             accession = insdc_accession_base_list[0]
-            process_hashes(accession, metadata_id, ingested_hash, submitted, update_manager)
+            process_hashes(accession, metadata_id, record, submitted, update_manager)
             continue
         # old group is subset of new group, new group has new segments
         old_submitted = [
@@ -381,7 +435,7 @@ def main(
         ):
             # has a new segment, must be revised
             accession = old_submitted[0]
-            process_hashes(accession, metadata_id, ingested_hash, submitted, update_manager)
+            process_hashes(accession, metadata_id, record, submitted, update_manager)
             continue
         old_accessions: dict[LoculusAccession, JointInsdcAccession] = {
             submitted[a].loculus_accession: submitted[a].jointAccession

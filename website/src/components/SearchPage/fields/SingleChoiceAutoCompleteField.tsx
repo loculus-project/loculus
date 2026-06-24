@@ -58,9 +58,11 @@ export const SingleChoiceAutoCompleteField = ({
 
     useEffect(() => {
         if (error) {
-            void logger.error(`Error while loading autocomplete options: ${error.message} - ${error.stack}`);
+            void logger.error(error);
         }
     }, [error]);
+
+    const valueToLabel = useMemo(() => new Map(options.map((o) => [o.value, o.option])), [options]);
 
     const filteredOptions = useMemo(() => {
         const allMatchedOptions =
@@ -81,8 +83,8 @@ export const SingleChoiceAutoCompleteField = ({
         return displayedOptions.slice(0, maxDisplayedOptions);
     }, [options, query, maxDisplayedOptions, fieldDisplayNameMap]);
 
-    const handleChange = (value: string | null) => {
-        const finalValue = value === NULL_QUERY_VALUE ? null : (value ?? '');
+    const handleChange = (value: string | number | null) => {
+        const finalValue = value === NULL_QUERY_VALUE ? null : (value?.toString() ?? '');
         setSomeFieldValues([field.name, finalValue]);
     };
 
@@ -101,7 +103,8 @@ export const SingleChoiceAutoCompleteField = ({
                                 if (value === null || value === NULL_QUERY_VALUE) {
                                     return '(blank)';
                                 }
-                                return String(value);
+                                const stringValue = String(value);
+                                return valueToLabel.get(stringValue) ?? stringValue;
                             }}
                             onChange={(event) => setQuery(event.target.value)}
                             onFocus={load}
@@ -110,7 +113,7 @@ export const SingleChoiceAutoCompleteField = ({
                         />
                         {((fieldValue !== '' && fieldValue !== undefined) || query !== '') && (
                             <Button
-                                className='absolute inset-y-0 right-8 flex items-center pr-2 h-5 top-4 bg-white rounded-sm'
+                                className='absolute inset-y-0 right-8 flex items-center pr-2 h-5 top-4 bg-white rounded-xs'
                                 onClick={handleClear}
                                 aria-label={`Clear ${field.displayName ?? field.name}`}
                                 type='button'
@@ -125,7 +128,7 @@ export const SingleChoiceAutoCompleteField = ({
 
                     <ComboboxOptions
                         modal={false}
-                        className='absolute z-20 w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm min-h-32'
+                        className='absolute z-20 w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black/5 focus:outline-hidden sm:text-sm min-h-32'
                     >
                         {isOptionListPending ? (
                             <div className='px-4 py-2 text-gray-500'>Loading...</div>

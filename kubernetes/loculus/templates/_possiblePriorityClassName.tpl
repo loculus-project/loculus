@@ -1,5 +1,5 @@
 {{- define "possiblePriorityClassName" -}}
-{{- if hasKey .Values "podPriorityValue" }}
+{{- if hasKey .Values.podScheduling "podPriorityValue" }}
 priorityClassName: {{ .Release.Namespace }}-priority
 {{- end -}}
 {{- end -}}

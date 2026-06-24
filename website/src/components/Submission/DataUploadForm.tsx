@@ -25,6 +25,8 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button';
+import { Checkbox } from '../common/Checkbox';
+import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 export type UploadAction = 'submit' | 'revise';
@@ -230,14 +232,14 @@ const InnerDataUploadForm = ({
                     <Button
                         name='submit'
                         type='submit'
-                        className='rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
+                        className='rounded-md py-2 text-sm font-semibold shadow-xs focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
                         onClick={(e) => void handleSubmit(e)}
                         alsoDisabledIf={isPending}
                     >
                         <div className={`absolute ml-1.5 inline-flex ${isPending ? 'visible' : 'invisible'}`}>
-                            <span className='loading loading-spinner loading-sm' />
+                            <Spinner size='sm' />
                         </div>
-                        <span className='flex-1 text-center mx-8'>Submit sequences</span>
+                        <span className='flex-1 text-center mx-8'>Upload and proceed to Approval</span>
                     </Button>
                 </div>
             </div>
@@ -421,10 +423,10 @@ const Acknowledgement = ({
                     </p>
                     <div className='mt-2 py-5'>
                         <label className='flex items-center'>
-                            <input
-                                type='checkbox'
+                            <Checkbox
+                                size='sm'
                                 name='confirmation-no-pii'
-                                className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-600'
+                                className='mr-3 ml-1'
                                 checked={confirmedNoPII}
                                 onChange={() => setConfirmedNoPII(!confirmedNoPII)}
                             />
@@ -437,10 +439,10 @@ const Acknowledgement = ({
                     </div>
                     <div className='mb-4 py-3'>
                         <label className='flex items-center'>
-                            <input
-                                type='checkbox'
+                            <Checkbox
+                                size='sm'
                                 name='confirmation-INSDC-upload-terms'
-                                className='mr-3 ml-1 h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-600'
+                                className='mr-3 ml-1'
                                 checked={agreedToINSDCUploadTerms}
                                 onChange={() => setAgreedToINSDCUploadTerms(!agreedToINSDCUploadTerms)}
                             />

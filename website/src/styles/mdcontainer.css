@@ -1,0 +1,211 @@
+@import './extraStyles.css';
+@reference './base.css';
+
+.mdContainerWrap {
+    @apply max-w-2xl mx-auto break-normal w-full;
+}
+
+/*
+ * Base reading typography for docs / about / news prose. Set here (rather than
+ * only on the layout wrappers) so news pages, which render through MdLayout
+ * without the `text-gray-700 leading-relaxed` classes, share the same colour,
+ * size and rhythm as the docs and about pages.
+ */
+.mdContainer {
+    @apply text-gray-800;
+    line-height: 1.6;
+}
+
+/*
+ * Constrain flowing text to a comfortable measure (~70 characters) while
+ * letting tables, images and code blocks use the full content width.
+ */
+.mdContainer h1,
+.mdContainer h2,
+.mdContainer h3,
+.mdContainer h4,
+.mdContainer p,
+.mdContainer ul,
+.mdContainer ol,
+.mdContainer blockquote {
+    max-width: 65ch;
+}
+
+/*
+ * News pages (MdLayout) render through `.mdContainerWrap` and use floated
+ * figures. Capping individual elements to a measure leaves a right-floated
+ * image stranded beyond the text, so let the (already narrow) container width
+ * set the measure there and have text wrap naturally around the float.
+ *
+ * `.mdContainerWrap` is a modifier on top of `.mdContainer` and must always be
+ * applied together with it (e.g. `class="mdContainer mdContainerWrap"`). These
+ * rules override the `.mdContainer` ones above via equal specificity, so they
+ * rely on source order: keep `.mdContainerWrap` declared *after* `.mdContainer`
+ * in this file or the overrides will silently stop winning.
+ */
+.mdContainerWrap h1,
+.mdContainerWrap h2,
+.mdContainerWrap h3,
+.mdContainerWrap h4,
+.mdContainerWrap p,
+.mdContainerWrap ul,
+.mdContainerWrap ol,
+.mdContainerWrap blockquote {
+    max-width: none;
+}
+
+.mdContainer h1 {
+    @apply text-3xl font-bold text-main mt-2 mb-4 tracking-tight leading-tight;
+}
+
+.mdContainer h2 {
+    @apply text-2xl font-semibold text-main mt-10 mb-3 tracking-tight leading-snug;
+}
+
+.mdContainer h3 {
+    @apply text-xl font-semibold text-main mt-8 mb-2 leading-snug;
+}
+
+.mdContainer h4 {
+    @apply text-lg font-semibold text-main mt-6 mb-2 leading-snug;
+}
+
+.mdContainer img {
+    @apply my-5 border border-gray-300 rounded-md;
+}
+
+.mdContainer p {
+    @apply my-4;
+    text-wrap: pretty;
+}
+
+.mdContainer a {
+    @apply text-primary-600 underline underline-offset-2 decoration-1 decoration-primary-600/40 hover:text-primary-700 hover:decoration-primary-700;
+}
+
+/* Inline code (not the highlighted `.astro-code` blocks) */
+.mdContainer :not(pre) > code {
+    @apply rounded bg-gray-100 text-gray-800 px-1.5 py-0.5 text-[0.875em] font-mono;
+}
+
+/* Inside info-box asides the gray pill clashes with the blue background, so tint it to match. */
+.mdContainer .info-box-link :not(pre) > code {
+    @apply bg-primary-100 text-primary-900;
+}
+
+.mdContainer ol {
+    @apply list-decimal list-inside my-4;
+}
+
+.mdContainer ol li {
+    @apply ml-4 my-1.5 marker:text-inherit;
+}
+
+.mdContainer .alternative-lists ol {
+    @apply list-decimal list-outside my-4;
+}
+
+.mdContainer .alternative-lists ol li {
+    @apply ml-0 my-2;
+}
+
+.mdContainer ul {
+    list-style-type: disc;
+    margin: 1rem 0;
+    padding-left: 0;
+}
+
+.mdContainer li {
+    @apply marker:text-gray-400;
+    text-wrap: pretty;
+}
+
+/* Level 1 - Direct children of .mdContainer */
+.mdContainer > ul {
+    list-style-type: disc;
+    margin: 1rem 0;
+    padding-left: 0;
+}
+
+.mdContainer > ul > li {
+    margin-left: 16px;
+    margin-top: 6px;
+    margin-bottom: 6px;
+}
+
+/* Level 2 - UL nested within LI of the first level UL */
+.mdContainer > ul > li > ul {
+    list-style-type: circle;
+    margin: 6px 0;
+}
+
+.mdContainer > ul > li > ul > li {
+    margin-left: 32px;
+    margin-top: 6px;
+    margin-bottom: 6px;
+}
+
+/* Level 3 - UL nested within LI of the second level UL */
+.mdContainer > ul > li > ul > li > ul {
+    list-style-type: square;
+    margin: 6px 0;
+}
+
+.mdContainer > ul > li > ul > li > ul > li {
+    margin-left: 48px;
+    margin-top: 6px;
+    margin-bottom: 6px;
+}
+
+.mdContainer li p {
+    display: inline;
+}
+
+.mdContainer .indent {
+    @apply ml-4;
+}
+
+.mdContainer .faq {
+    @apply font-semibold text-main my-0;
+}
+
+.mdContainer .lettered-list ol {
+    list-style-type: lower-latin;
+}
+
+.mdContainer .roman-list ol {
+    list-style-type: lower-roman;
+}
+
+.mdContainer table {
+    @apply w-full max-w-full table-auto border-collapse mt-6 mb-6 text-[0.9375rem];
+}
+
+.mdContainer th,
+.mdContainer td {
+    @apply border border-gray-300 px-4 py-2 text-left border-solid;
+}
+
+.mdContainer th {
+    @apply bg-gray-100 font-semibold;
+}
+
+.mdContainer tbody tr:nth-child(even) {
+    @apply bg-gray-50;
+}
+
+.mdContainer summary {
+    @apply cursor-pointer;
+}
+
+.mdContainer .faqWrapper h3 {
+    @apply text-lg font-semibold text-main my-3 border-t border-gray-300 mt-7 pt-5 mb-0;
+}
+
+.mdContainer blockquote {
+    @apply my-5 pl-4 border-l-4 border-primary-200 text-gray-600 italic;
+}
+
+.astro-code {
+    @apply p-3 rounded-md my-4 text-[0.9375rem];
+}

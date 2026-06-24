@@ -53,7 +53,7 @@ export const SegmentFilter: FC<SegmentFilterProps> = ({
                             <DisabledUntilHydrated>
                                 <input
                                     type='checkbox'
-                                    className='h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600 cursor-pointer'
+                                    className='h-4 w-4 rounded-sm border-gray-300 text-primary-600 focus:ring-primary-600 cursor-pointer'
                                     checked={isChecked}
                                     onChange={() => {
                                         setSomeFieldValues([lengthFromFieldName, isChecked ? null : '1']);

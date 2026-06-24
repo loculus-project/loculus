@@ -196,6 +196,9 @@ def add_nextclade_metadata(
         case "cladeFounderInfo.aaMutations.*.privateSubstitutions":
             result = None if raw is None else str(raw)
             return process_mutations_from_clade_founder(result, spec.args)
+        case "cladeNodeAttrFounderInfo.outbreak.aaMutations.*.privateSubstitutions":
+            result = None if raw is None else str(raw)
+            return process_mutations_from_clade_founder(result, spec.args)
         case "privateAaMutations.*.labeledSubstitutions.substitution":
             result = None if raw is None else str(raw)
             return process_labeled_mutations(result, spec.args)
@@ -655,8 +658,7 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             file_name = f"{accession}.{version}.embl"
             upload_info = request_upload(submission_data.group_id, 1, config)[0]
             file_id = upload_info.fileId
-            url = upload_info.url
-            upload_embl_file_to_presigned_url(file_content, url)
+            upload_embl_file_to_presigned_url(file_content, upload_info.url, upload_info.headers)
             submission_data.processed_entry.data.files = {
                 "annotations": [FileIdAndName(fileId=file_id, name=file_name)]
             }

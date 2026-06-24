@@ -1,5 +1,5 @@
 ---
-import '../../../styles/mdcontainer.scss';
+import '../../../styles/mdcontainer.css';
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { OrganismMetadataTable } from '../../../components/OrganismMetadataTable/OrganismMetadataTable';
 import type { OrganismMetadata } from '../../../components/OrganismMetadataTable/OrganismMetadataTableSelector';
@@ -17,7 +17,7 @@ const organismMetadata: OrganismMetadata = {
 
 <BaseLayout title='Metadata format for submissions' fullWidth>
     <h1 class='title'>Metadata format for submissions</h1>
-    <div class='mdContainer mdContainerItself'>
+    <div class='mdContainer mdContainerWrap'>
         <OrganismMetadataTable organism={organismMetadata} client:load />
     </div>
 </BaseLayout>

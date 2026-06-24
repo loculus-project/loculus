@@ -27,11 +27,12 @@ import { getAccessionVersionString } from '../../utils/extractAccessionVersion.t
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { getLastApprovalTimeKey } from '../SearchPage/RecentSequencesBanner.tsx';
 import { Button } from '../common/Button';
+import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import BiTrash from '~icons/bi/trash';
+import FormkitSubmit from '~icons/formkit/submit';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 import LucideFilter from '~icons/lucide/filter';
-import WpfPaperPlane from '~icons/wpf/paper-plane';
 
 const menuItemClassName = `group flex rounded-md items-center w-full px-2 py-2 text-sm
 hover:bg-primary-500 bg-primary-600 text-white text-left mb-1`;
@@ -189,9 +190,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
     const controlPanel = (
         <div className='flex flex-col' data-testid='review-page-control-panel'>
             <div className='text-gray-600 mr-3'>
-                {unprocessedCount > 0 && (
-                    <span className='loading loading-spinner loading-sm mr-2 relative top-1'> </span>
-                )}
+                {unprocessedCount > 0 && <Spinner size='sm' className='mr-2' />}
                 {processedCount} of {total} sequences processed
             </div>
             <div className='border border-slate-200 p-3 mt-3 flex items-start'>
@@ -322,8 +321,8 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                     className='border rounded-md p-1 bg-primary-600 text-white px-2'
                     onClick={() =>
                         displayConfirmationDialog({
-                            dialogText: 'Are you sure you want to release all valid sequences?',
-                            confirmButtonText: 'Release',
+                            dialogText: 'Are you sure you want to approve all valid sequences for release?',
+                            confirmButtonText: 'Approve',
                             onConfirmation: () => {
                                 hooks.approveProcessedData({
                                     groupIdsFilter: [group.groupId],
@@ -335,8 +334,8 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                         })
                     }
                 >
-                    <WpfPaperPlane className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
-                    Release {validCount} valid sequence
+                    <FormkitSubmit className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
+                    Approve {validCount} valid sequence
                     {validCount > 1 ? 's' : ''}
                 </Button>
             )}

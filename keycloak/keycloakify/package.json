@@ -19,26 +19,26 @@
     "license": "MIT",
     "keywords": [],
     "dependencies": {
-        "keycloakify": "^11.15.3",
+        "keycloakify": "^11.15.9",
         "react": "^18.2.0",
         "react-dom": "^18.2.0"
     },
     "devDependencies": {
         "@storybook/react": "^8.4.6",
-        "@storybook/react-vite": "^10.3.6",
+        "@storybook/react-vite": "^10.4.6",
         "@types/react": "^18.3.13",
         "@types/react-dom": "^18.3.1",
-        "@typescript-eslint/eslint-plugin": "^8.59.1",
-        "@typescript-eslint/parser": "^8.59.1",
-        "@vitejs/plugin-react": "^5.1.4",
-        "eslint": "^10.3.0",
+        "@typescript-eslint/eslint-plugin": "^8.61.1",
+        "@typescript-eslint/parser": "^8.61.1",
+        "@vitejs/plugin-react": "^6.0.2",
+        "eslint": "^10.5.0",
         "eslint-plugin-react-hooks": "^7.1.1",
-        "eslint-plugin-react-refresh": "^0.5.2",
-        "eslint-plugin-storybook": "^10.3.6",
-        "prettier": "3.8.3",
-        "storybook": "^10.3.6",
-        "typescript": "^5.2.2",
-        "vite": "^8.0.10"
+        "eslint-plugin-react-refresh": "^0.5.3",
+        "eslint-plugin-storybook": "^10.4.6",
+        "prettier": "3.8.4",
+        "storybook": "^10.4.6",
+        "typescript": "^6.0.3",
+        "vite": "^8.0.16"
     },
     "engines": {
         "node": "^18.0.0 || >=20.0.0"

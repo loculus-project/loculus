@@ -280,7 +280,7 @@ export const Table: FC<TableProps> = ({
                                     >
                                         <input
                                             type='checkbox'
-                                            className='text-primary-900 hover:text-primary-800 hover:no-underline pointer-events-none'
+                                            className='w-4 h-4 text-primary-900 hover:text-primary-800 hover:no-underline pointer-events-none'
                                             checked={selectedSeqs.has(row[primaryKey] as string)}
                                             onChange={() => {
                                                 const seqId = row[primaryKey] as string;
@@ -290,7 +290,7 @@ export const Table: FC<TableProps> = ({
                                     </td>
 
                                     <td
-                                        className='px-2 whitespace-nowrap text-primary-900 md:pl-6'
+                                        className='px-2 py-2 whitespace-nowrap text-primary-900 md:pl-6'
                                         aria-label='SearchResult'
                                     >
                                         <a

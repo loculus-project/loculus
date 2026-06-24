@@ -16,12 +16,13 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: {{ now | quote }}
+        valuesHash: {{ .Values | toJson | sha256sum | quote }}
       labels:
         app: loculus
         component: loculus-taxonomy-service
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
+      {{- include "loculus.podScheduling" $ | nindent 6 }}
       initContainers:
         - name: download-taxonomy-db
           image: alpine:3

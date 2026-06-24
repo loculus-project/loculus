@@ -2,6 +2,7 @@ import { type FC } from 'react';
 
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import type { Group } from '../../types/backend.ts';
+import { DropdownMenu, DropdownMenuItem } from '../common/DropdownMenu';
 import DashiconsGroups from '~icons/dashicons/groups';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
@@ -32,26 +33,27 @@ export const SubmissionGroupSelector: FC<GroupSelectorProps> = ({ groups, select
 
     return (
         <div className='mb-2'>
-            <div className='dropdown'>
-                <div tabIndex={0} role='button' className=''>
-                    {groupNameElement} <IwwaArrowDown className='inline-block -mt-1 h-5 w-5' />
-                </div>
-                <ul tabIndex={0} className='dropdown-content z-20 menu p-2 shadow bg-base-100 w-52 text-gray-700'>
-                    {groups.map((group) => (
-                        <li key={group.groupId}>
-                            <a
-                                href={(() => {
-                                    const currentRoute = SubmissionRouteUtils.parseToRoute(pathname, search)!;
-                                    const newRoute = { ...currentRoute, groupId: group.groupId };
-                                    return SubmissionRouteUtils.toUrl(newRoute);
-                                })()}
-                            >
-                                {group.groupName}
-                            </a>
-                        </li>
-                    ))}
-                </ul>
-            </div>
+            <DropdownMenu
+                panelClassName='top-full left-0 w-52 text-gray-700'
+                trigger={
+                    <div tabIndex={0} role='button' className='cursor-pointer'>
+                        {groupNameElement} <IwwaArrowDown className='inline-block -mt-1 h-5 w-5' />
+                    </div>
+                }
+            >
+                {groups.map((group) => (
+                    <DropdownMenuItem
+                        key={group.groupId}
+                        href={(() => {
+                            const currentRoute = SubmissionRouteUtils.parseToRoute(pathname, search)!;
+                            const newRoute = { ...currentRoute, groupId: group.groupId };
+                            return SubmissionRouteUtils.toUrl(newRoute);
+                        })()}
+                    >
+                        {group.groupName}
+                    </DropdownMenuItem>
+                ))}
+            </DropdownMenu>
         </div>
     );
 };

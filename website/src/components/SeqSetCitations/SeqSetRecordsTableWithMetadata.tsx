@@ -5,6 +5,7 @@ import { type FC, useMemo } from 'react';
 import { versionStatuses } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSetRecord, SeqSetRecordType } from '../../types/seqSetCitation';
+import { Spinner } from '../common/Spinner';
 
 type RecordMetadata = {
     accession: string;
@@ -194,7 +195,7 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
                                 }
                             >
                                 {isLoading ? (
-                                    <span className='loading loading-spinner loading-xs'></span>
+                                    <Spinner size='xs' />
                                 ) : metadata?.organism ? (
                                     (organismDisplayNames[metadata.organism] ?? metadata.organism)
                                 ) : (
@@ -213,7 +214,7 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
                                     }
                                 >
                                     {isLoading ? (
-                                        <span className='loading loading-spinner loading-xs'></span>
+                                        <Spinner size='xs' />
                                     ) : (
                                         // eslint-disable-next-line @typescript-eslint/no-base-to-string
                                         String(metadata?.[fieldConfig.field] ?? '')

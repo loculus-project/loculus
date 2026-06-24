@@ -174,7 +174,13 @@ def submit_processed_sequences(
     }
     params = {"pipelineVersion": config.pipeline_version}
     logger.info(f"[{request_id}] Submitting {len(processed)} processed sequences to {url}")
-    response = requests.post(url, data=ndjson_string, headers=headers, params=params, timeout=10)
+    response = requests.post(
+        url,
+        data=ndjson_string,
+        headers=headers,
+        params=params,
+        timeout=config.backend_request_timeout_seconds,
+    )
     if not response.ok:
         Path("failed_submission.json").write_text(ndjson_string, encoding="utf-8")
         msg = (
@@ -204,7 +210,9 @@ def request_upload(group_id: int, number_of_files: int, config: Config) -> Seque
     logger.info(
         f"[{request_id}] Requesting upload for {number_of_files} files, group_id: {group_id}"
     )
-    response = requests.post(url, headers=headers, params=params, timeout=10)
+    response = requests.post(
+        url, headers=headers, params=params, timeout=config.backend_request_timeout_seconds
+    )
     if not response.ok:
         msg = f"[{request_id}] Upload request failed: {response.status_code}, request id: {response.headers.get('x-request-id')}, {response.text}"
         raise RuntimeError(msg)
@@ -214,8 +222,12 @@ def request_upload(group_id: int, number_of_files: int, config: Config) -> Seque
     return [FileUploadInfo(**item) for item in response.json()]
 
 
-def upload_embl_file_to_presigned_url(content: str, url: str) -> None:
+def upload_embl_file_to_presigned_url(
+    content: str, url: str, extra_headers: dict | None = None
+) -> None:
     headers = {"Content-Type": "chemical/x-embl-dl-nucleotide"}
+    if extra_headers:
+        headers.update(extra_headers)
     r = requests.put(url, data=content.encode("utf-8"), headers=headers, timeout=60)
     if not r.ok:
         msg = f"Upload failed: {r.status_code}, {r.text}"

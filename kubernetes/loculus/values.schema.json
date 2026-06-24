@@ -232,6 +232,16 @@
           "groups": ["metadata"],
           "type": "string",
           "description": "Use this on string fields that contain lineages, if you want to enable searches that can include sublineages. The value needs to be a lineage system that is defined under the `lineageSystemDefinitions` key."
+        },
+        "hierarchicalFilter": {
+          "groups": ["metadata"],
+          "type": "string",
+          "description": "Use this on string fields whose values form a hierarchy resolved at SILO import time. The value should be an URL to the lineage file."
+        },
+        "hierarchicalSearchLabel": {
+          "groups": ["metadata"],
+          "type": "string",
+          "description": "CheckBox label for hierarchical search - only applies when using hierarchicalFilter."
         }
       },
       "required": ["name"],
@@ -288,6 +298,24 @@
               "type": { "enum": ["string", "authors"] }
             },
             "errorMessage": "When lineageSystem is set, type must be 'string' or 'authors'"
+          }
+        },
+        {
+          "if": {
+            "properties": { "hierarchicalFilter": { "type": "string" } },
+            "required": ["hierarchicalFilter"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["string", "authors"] }
+            },
+            "errorMessage": "When hierarchicalFilter is set, type must be 'string' or 'authors'"
+          }
+        },
+        {
+          "not": {
+            "description": "lineageSystem and hierarchicalFilter cannot both be set",
+            "required": ["lineageSystem", "hierarchicalFilter"]
           }
         },
         {
@@ -686,7 +714,7 @@
                     "docsIncludePrefix": false,
                     "type": "string",
                     "enum": ["ALL", "ANY"],
-                    "description": "If multi-segmented viruses should require ALL segments (that the user provides) align or ANY segment aligns"
+                    "description": "Applies only to multi-segmented organisms. Determines whether ALL or ANY segments that are submitted must align. In the case ANY it must still be possible to assign the segment."
                   },
                   "segment_classification_method": {
                     "groups": ["nextcladePipelineConfigFile"],
@@ -874,6 +902,12 @@
                     }
                   },
                   "required": ["method"]
+                },
+                "muted_hashes_url": {
+                  "groups": ["ingest"],
+                  "docsIncludePrefix": false,
+                  "type": "string",
+                  "description": "URL to a TSV file mapping accessions to hashes that should not trigger a revision."
                 },
                 "grouping_override_url": {
                   "groups": ["ingest"],
@@ -1123,6 +1157,40 @@
       "default": "Always",
       "description": "Global image pull policy applied to all deployments. Can be overridden per-image in the images section for some images. Always: always pull the image. IfNotPresent: pull if not present locally. Never: never pull, use local image only."
     },
+    "podScheduling": {
+      "groups": ["general"],
+      "type": "object",
+      "description": "Pod scheduling configuration for fine-grained control over pod placement on nodes",
+      "default": {},
+      "additionalProperties": false,
+      "properties": {
+        "nodeSelector": {
+          "type": "object",
+          "description": "Kubernetes nodeSelector for scheduling pods on specific nodes. Labels must match node labels. Example: { 'workload-type': 'loculuspool' }",
+          "default": {},
+          "additionalProperties": { "type": "string" }
+        },
+        "tolerations": {
+          "type": "array",
+          "description": "Kubernetes tolerations for pods to tolerate node taints. Allows pods to be scheduled on nodes with specific taints. Example: [{ key: 'workload-type', operator: 'Equal', value: 'loculuspool', effect: 'NoSchedule' }]",
+          "default": [],
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "affinity": {
+          "type": "object",
+          "description": "Kubernetes affinity rules for advanced pod scheduling (nodeAffinity, podAffinity, podAntiAffinity). Allows fine-grained control over pod placement.",
+          "default": {},
+          "additionalProperties": true
+        },
+        "podPriorityValue": {
+          "type": "integer",
+          "description": "If set, the chart creates a PriorityClass named after the release namespace with this value, and assigns it to all loculus pods. Higher values mean higher scheduling priority; can be negative for lower-than-default priority. If unset, no PriorityClass is created and pods run at the cluster default priority."
+        }
+      }
+    },
     "localHost": {
       "groups": ["general"],
       "type": "string",
@@ -1190,14 +1258,14 @@
         },
         "crossRef": {
           "groups": ["general"],
-          "type": "object",
+          "type": ["object", "null"],
           "additionalProperties": false,
           "description": "Configuration for CrossRef integration. Set to `null` to disable CrossRef integration (you can still use SeqSets without CrossRef DOIs).",
           "properties": {
             "DOIPrefix": {
               "groups": ["general"],
               "type": "string",
-              "description": "The DOI prefix for SeqSets"
+              "description": "The DOI prefix for SeqSets. More information on DOI prefixes and content registration can be found here: https://www.crossref.org/services/content-registration/"
             },
             "endpoint": {
               "groups": ["general"],
@@ -1220,10 +1288,11 @@
               "type": "string",
               "description": "The organization name for CrossRef"
             },
-            "hostUrl": {
+            "writeEnabled": {
               "groups": ["general"],
-              "type": "string",
-              "description": "The host URL for CrossRef callbacks"
+              "type": "boolean",
+              "default": false,
+              "description": "Enable/disable Crossref write functionality, such as generating DOIs"
             }
           }
         },
@@ -1968,10 +2037,6 @@
     "shortbranch": {
       "type": ["string", "integer"],
       "description": "TODO - this is required/set by ArgoCD"
-    },
-    "podPriorityValue": {
-      "type": "integer",
-      "description": "If set, the chart creates a PriorityClass named after the release namespace with this value, and assigns it to all loculus pods. Higher values mean higher scheduling priority; can be negative for lower-than-default priority. If unset, no PriorityClass is created and pods run at the cluster default priority."
     },
     "testconfig": {
       "description": "TODO"

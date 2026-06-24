@@ -52,10 +52,10 @@ export class RevisionPage {
     }
 
     /**
-     * Click the Submit button
+     * Click the Upload (submit) button
      */
     async clickSubmit() {
-        await this.page.getByRole('button', { name: 'Submit' }).click();
+        await this.page.getByRole('button', { name: 'Upload and proceed to Approval' }).click();
     }
 
     /**
@@ -72,7 +72,7 @@ export class RevisionPage {
      */
     async downloadTsvTemplate() {
         const downloadPromise = this.page.waitForEvent('download');
-        await this.page.getByText('TSV', { exact: true }).click();
+        await this.page.locator('a[href*="fileType=tsv"]').click();
         return downloadPromise;
     }
 
@@ -81,7 +81,7 @@ export class RevisionPage {
      */
     async downloadXlsxTemplate() {
         const downloadPromise = this.page.waitForEvent('download');
-        await this.page.getByText('XLSX', { exact: true }).click();
+        await this.page.locator('a[href*="fileType=xlsx"]').click();
         return downloadPromise;
     }
 

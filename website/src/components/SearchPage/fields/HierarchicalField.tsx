@@ -2,29 +2,66 @@ import { useEffect, useState, type FC } from 'react';
 
 import { SingleChoiceAutoCompleteField } from './SingleChoiceAutoCompleteField';
 import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config';
+import { Checkbox } from '../../common/Checkbox';
 import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters';
 
-interface LineageFieldProps {
+export type HierarchicalFieldMode = 'lineage' | 'default';
+
+interface ModeConfig {
+    defaultIncludeSublineages: boolean;
+    includeZeroCounts: boolean;
+    showAlias: boolean;
+    checkBoxLabel: string;
+}
+
+const MODE_CONFIGS: Record<HierarchicalFieldMode, ModeConfig> = {
+    lineage: {
+        defaultIncludeSublineages: false,
+        includeZeroCounts: true,
+        showAlias: false,
+        checkBoxLabel: 'include sublineages',
+    },
+    default: {
+        defaultIncludeSublineages: true,
+        includeZeroCounts: true,
+        showAlias: true,
+        checkBoxLabel: 'include subcategories',
+    },
+};
+
+interface HierarchicalFieldProps {
     lapisUrl: string;
     lapisSearchParameters: LapisSearchParameters;
     field: MetadataFilter;
     fieldValue: string;
     setSomeFieldValues: SetSomeFieldValues;
+    mode?: HierarchicalFieldMode;
 }
 
-export const LineageField: FC<LineageFieldProps> = ({
+export const HierarchicalField: FC<HierarchicalFieldProps> = ({
     field,
     fieldValue,
     setSomeFieldValues,
     lapisUrl,
     lapisSearchParameters,
+    mode = 'default',
 }) => {
-    const [includeSublineages, _setIncludeSubLineages] = useState(fieldValue.endsWith('*'));
+    const {
+        defaultIncludeSublineages,
+        includeZeroCounts,
+        showAlias,
+        checkBoxLabel: defaultCheckBoxLabel,
+    } = MODE_CONFIGS[mode];
+    const checkBoxLabel = field.hierarchicalSearchLabel ?? defaultCheckBoxLabel;
+
+    const [includeSublineages, _setIncludeSubLineages] = useState(
+        fieldValue.endsWith('*') || (fieldValue === '' && defaultIncludeSublineages),
+    );
     const [inputText, _setInputText] = useState(fieldValue.endsWith('*') ? fieldValue.slice(0, -1) : fieldValue);
 
     useEffect(() => {
         _setInputText(fieldValue.endsWith('*') ? fieldValue.slice(0, -1) : fieldValue);
-        _setIncludeSubLineages(fieldValue.endsWith('*'));
+        _setIncludeSubLineages(fieldValue.endsWith('*') || (fieldValue === '' && defaultIncludeSublineages));
     }, [fieldValue]);
 
     function queryText(includeSublineages: boolean, inputText: string) {
@@ -53,6 +90,8 @@ export const LineageField: FC<LineageFieldProps> = ({
                     lapisSearchParameters,
                     fieldName: field.name,
                     includeSublineages,
+                    showAlias,
+                    includeZeroCounts,
                 }}
                 setSomeFieldValues={([_, value]) => {
                     setInputText(value as string);
@@ -61,10 +100,11 @@ export const LineageField: FC<LineageFieldProps> = ({
             />
             <div className='flex flex-row justify-end'>
                 <label>
-                    <span className='text-gray-400 text-sm mr-2'>include sublineages</span>
-                    <input
-                        type='checkbox'
-                        className='checkbox checkbox-sm text-3xl [--chkbg:white] [--chkfg:theme(colors.gray.700)] checked:border-gray-300'
+                    <span className='text-gray-400 text-sm mr-2'>{checkBoxLabel}</span>
+                    <Checkbox
+                        size='sm'
+                        outline
+                        className='checked:border-gray-300'
                         checked={includeSublineages}
                         onChange={(event) => setIncludeSubLineages(event.target.checked)}
                     />

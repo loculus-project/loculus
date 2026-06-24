@@ -302,15 +302,16 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .withAuth(jwt),
     )
 
-    fun getUnprocessedMetadata(
+    fun getSubmittedMetadata(
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
         groupIdsFilter: List<Int>? = null,
         statusesFilter: List<Status>? = null,
+        accessionVersionsFilter: List<String>? = null,
         fields: List<String>? = null,
         compression: String? = null,
     ): ResultActions = mockMvc.perform(
-        get(addOrganismToPath("/get-unprocessed-metadata", organism = organism))
+        get(addOrganismToPath("/get-submitted-metadata", organism = organism))
             .withAuth(jwt)
             .also {
                 when (compression) {
@@ -320,7 +321,27 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             }
             .param("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
             .param("statusesFilter", statusesFilter?.joinToString(",") { it.name })
+            .param("accessionVersionsFilter", accessionVersionsFilter?.joinToString(","))
             .param("fields", fields?.joinToString(",")),
+    )
+
+    fun getSubmittedData(
+        organism: String = DEFAULT_ORGANISM,
+        jwt: String? = jwtForDefaultUser,
+        groupId: Int,
+        accessionsFilter: List<String>? = null,
+    ): ResultActions = mockMvc.perform(
+        post(addOrganismToPath("/get-submitted-data", organism = organism))
+            .withAuth(jwt)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(
+                objectMapper.writeValueAsString(
+                    mapOf(
+                        "groupId" to groupId,
+                        "accessionsFilter" to accessionsFilter,
+                    ),
+                ),
+            ),
     )
 
     private fun serialize(listOfSequencesToApprove: List<AccessionVersionInterface>? = null): String =

@@ -336,7 +336,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             />
             <div>
                 {fileUploadState === undefined ? (
-                    <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
+                    <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-hidden focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
                         <span
                             onClick={(e) => {
                                 e.preventDefault();

@@ -1,7 +1,8 @@
 ---
-import '../styles/mdcontainer.scss';
+import '../styles/mdcontainer.css';
 import BaseLayout from './BaseLayout.astro';
 import DocsMenu from '../components/Navigation/DocsMenu';
+import DocsSearch from '../components/Navigation/DocsSearch';
 import type { MdxPage } from '../types/mdxTypes';
 
 const { frontmatter } = Astro.props;
@@ -11,9 +12,12 @@ const currentPageUrl = Astro.url.pathname;
 ---
 
 <BaseLayout title={frontmatter.title} activeTopNavigationItem={activeTopNavigationItem}>
-    <div class='md:flex md:justify-between max-w-5xl mx-auto items-start gap-10'>
-        <DocsMenu docsPages={aboutPages} currentPageUrl={currentPageUrl} title='About' client:load />
-        <div class='mdContainer mdContainerItself text-gray-700 leading-relaxed'>
+    <div class='md:flex max-w-5xl mx-auto items-start gap-10 lg:gap-16'>
+        <div class='md:w-72 md:flex-none md:border-r md:border-gray-200 md:pr-12 md:-mt-3 md:pt-3'>
+            <DocsSearch client:load />
+            <DocsMenu docsPages={aboutPages} currentPageUrl={currentPageUrl} title='About' client:load />
+        </div>
+        <div class='mdContainer w-full min-w-0 max-w-2xl'>
             <h1>{frontmatter.title}</h1>
 
             <slot />

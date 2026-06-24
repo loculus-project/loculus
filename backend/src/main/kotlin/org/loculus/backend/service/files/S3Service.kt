@@ -45,6 +45,7 @@ class S3Service(private val s3Config: S3Config) {
         val putObjectRequest = PutObjectRequest.builder()
             .bucket(config.bucket)
             .key(getFileIdPath(fileId))
+            .ifNoneMatch("*") // prevent accidental overwrites of URL contents by blocking more than one write
             .build()
         val presignRequest = PutObjectPresignRequest.builder()
             .putObjectRequest(putObjectRequest)
