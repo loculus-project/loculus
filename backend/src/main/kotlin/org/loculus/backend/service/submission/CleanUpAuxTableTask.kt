@@ -8,7 +8,6 @@ import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.scheduler.TaskLock
 import org.loculus.backend.service.submission.UploadDatabaseService
 import org.loculus.backend.utils.DateProvider
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.util.concurrent.TimeUnit
@@ -22,15 +21,17 @@ class CleanUpAuxTableTask(
     private val uploadDatabaseService: UploadDatabaseService,
     private val dateProvider: DateProvider,
     private val auditLogger: AuditLogger,
-    @Value("\${${BackendSpringProperty.CLEAN_UP_AUX_TABLE_RUN_EVERY_HOURS}}")
-    private val runEveryHours: Long,
 ) {
 
     /**
-     * Scheduled to poll hourly; the task lock limits actual execution to at most once per [runEveryHours].
+     * Scheduled to poll every CLEAN_UP_AUX_TABLE_RUN_EVERY_HOURS hours.
      * Deletes auxTable entries older than 24 hours.
      */
-    @Scheduled(fixedDelay = 1, timeUnit = java.util.concurrent.TimeUnit.HOURS)
+    @Scheduled(
+        initialDelay = 1,
+        fixedRateString = "\${${BackendSpringProperty.CLEAN_UP_AUX_TABLE_RUN_EVERY_HOURS}}",
+        timeUnit = TimeUnit.HOURS,
+    )
     @TaskLock(
         name = CLEAN_UP_AUX_TABLE_TASK_NAME,
         intervalString = "\${${BackendSpringProperty.CLEAN_UP_AUX_TABLE_RUN_EVERY_HOURS}}",
