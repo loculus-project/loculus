@@ -566,9 +566,9 @@ const formatFileSize = (bytes: number): string => {
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    const foo = parseFloat((bytes / Math.pow(k, i)).toFixed(2));
-    const bar = sizes[i];
-    return `${foo} ${bar}`;
+    const value = parseFloat((bytes / Math.pow(k, i)).toFixed(2));
+    const size = sizes[i];
+    return `${value} ${size}`;
 };
 
 // Determine status icon for file upload
