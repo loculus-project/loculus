@@ -61,7 +61,7 @@ class TaskLockService(
         } ?: false
 
         if (!acquired) {
-            log.debug {
+            log.info {
                 "Task '$taskName' skipped: another replica acquired the lock within the last ${maxDuration}s"
             }
         }
@@ -99,11 +99,11 @@ class TaskLockService(
         } ?: false
 
         if (updated) {
-            log.debug {
+            log.info {
                 "Task '$taskName' lock: 'locked_until' shortened to minimum duration (${minDuration}s)"
             }
         } else {
-            log.debug {
+            log.info {
                 "Task '$taskName' lock: not shortened because 'locked_until' has already elapsed"
             }
         }
