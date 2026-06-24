@@ -93,7 +93,6 @@ type FolderUploadComponentProps = {
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
     // Passed when the submissionId is known (e.g. editing/revising an entry) in form mode,
     // where it is used instead of the dummySubmissionId placeholder.
-    // Omitted for new submissions where it isn't known yet.
     formSubmissionId?: string;
     onError: (message: string) => void;
 };
@@ -237,16 +236,9 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     }
                 } else {
                     return produce(currentMapping ?? {}, (draft) => {
-                        const submissionIds = Object.keys(draft);
-                        if (submissionIds.length === 0) {
-                            draft[formSubmissionId ?? DUMMY_SUBMISSION_ID] = {
-                                [fileCategory.name]: [],
-                            };
-                        } else {
-                            submissionIds.forEach((submissionId) => {
-                                draft[submissionId][fileCategory.name] = [];
-                            });
-                        }
+                        draft[formSubmissionId ?? DUMMY_SUBMISSION_ID] = {
+                            [fileCategory.name]: [],
+                        };
                     });
                 }
             });
