@@ -94,7 +94,7 @@ class FileMappingPreconditionValidator(
         val markedForDeletion = filesDatabaseService.filterMarkedForDeletionFileIds(fileIds)
         if (markedForDeletion.isNotEmpty()) {
             throw UnprocessableEntityException(
-                "The following file IDs are no longer valid: " + markedForDeletion.joinToString(),
+                "The following file IDs are no longer valid because they have expired: ${markedForDeletion.joinToString()}",
             )
         }
         return this
@@ -154,13 +154,13 @@ class FileMappingPreconditionValidator(
         if (filename.any { it in "<>:\"/\\|?*" }) {
             throw UnprocessableEntityException(
                 "Invalid filename '$filename' in category '$category': Filenames may not contain " +
-                    "forbidden characters (< > : \" / \\ | ? *).",
+                        "forbidden characters (< > : \" / \\ | ? *).",
             )
         }
         if (filename.any { it.code in 0..31 }) {
             throw UnprocessableEntityException(
                 "Invalid filename '$filename' in category '$category': Filenames may not contain " +
-                    "ASCII control characters 0-31.",
+                        "ASCII control characters 0-31.",
             )
         }
     }
@@ -177,7 +177,7 @@ class FileMappingPreconditionValidator(
             if (!allowedCategories.contains(category)) {
                 throw UnprocessableEntityException(
                     "The category $category is not part of the configured $categoriesType categories for " +
-                        "${organism.name}. Allowed categories are: ${allowedCategories.joinToString(", ")}.",
+                            "${organism.name}. Allowed categories are: ${allowedCategories.joinToString(", ")}.",
                 )
             }
         }
