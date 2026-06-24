@@ -19,7 +19,6 @@ const organism = Astro.params.organism!;
 const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
 
 const inputMode: InputMode = Astro.url.searchParams.get('inputMode') === 'form' ? 'form' : 'bulk';
-const title = inputMode === 'bulk' ? 'Revise sequences' : 'Revise sequence';
 
 if (!cleanedOrganism) {
     return {
@@ -35,7 +34,7 @@ const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.s
 const clientConfig = getRuntimeConfig().public;
 ---
 
-<SubmissionPageWrapper title={title} disablePageTitle={true} groupsResult={groupsResult}>
+<SubmissionPageWrapper title='Revise sequences' disablePageTitle={true} groupsResult={groupsResult}>
     {
         groupsResult.match(
             ({ currentGroup: group }) => (

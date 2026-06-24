@@ -78,7 +78,7 @@ const InnerInlineRevisionForm: FC<InlineRevisionFormProps> = ({
     return (
         <div className='text-left mt-3 max-w-4xl mb-3 w-full'>
             <div className='flex-col flex gap-8'>
-                <h1 className='title'>Revise sequence</h1>
+                <h1 className='title'>Revise sequences</h1>
                 <InputModeTabs action='revise' organism={organism} groupId={group.groupId} currentInputMode='form' />
                 <form className='flex flex-col gap-2' onSubmit={handleSubmit}>
                     <label htmlFor='revise-accession-input' className='text-sm font-medium text-gray-900'>
