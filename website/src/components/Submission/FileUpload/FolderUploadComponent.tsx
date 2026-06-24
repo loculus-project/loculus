@@ -367,6 +367,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         const uniqueSelectedNames = new Set(selectedFileNames);
         const existingFileCollisions = existingFiles.filter((file) => uniqueSelectedNames.has(file.name));
 
+        // Updates the state of file uploads and triggers the upload of the new files
         const addAdditionalFiles = async () => {
             const nonCollidingFiles = existingFiles.filter((file) => !uniqueSelectedNames.has(file.name));
             const newPendingFiles = await requestFileUploads(filesArray.map((f) => ({ file: f, name: f.name })));
@@ -377,6 +378,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             void startUploading({ [submissionId]: newPendingFiles });
         };
 
+        // If there are collisions, show a confirmation dialog before proceeding
         if (existingFileCollisions.length > 0) {
             displayConfirmationDialog({
                 dialogText:
