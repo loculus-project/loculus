@@ -676,6 +676,19 @@ CREATE TABLE public.table_update_tracker (
 ALTER TABLE public.table_update_tracker OWNER TO postgres;
 
 --
+-- Name: task_lock; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.task_lock (
+    task_name text NOT NULL,
+    started_at timestamp with time zone DEFAULT now() NOT NULL,
+    locked_until timestamp with time zone NOT NULL
+);
+
+
+ALTER TABLE public.task_lock OWNER TO postgres;
+
+--
 -- Name: user_groups_table; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -910,6 +923,14 @@ ALTER TABLE ONLY public.sequence_upload_aux_table
 
 ALTER TABLE ONLY public.table_update_tracker
     ADD CONSTRAINT table_update_tracker_unique UNIQUE NULLS NOT DISTINCT (table_name, organism, pipeline_version);
+
+
+--
+-- Name: task_lock task_lock_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.task_lock
+    ADD CONSTRAINT task_lock_pkey PRIMARY KEY (task_name);
 
 
 --
