@@ -236,9 +236,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     }
                 } else {
                     return produce(currentMapping ?? {}, (draft) => {
-                        draft[formSubmissionId ?? DUMMY_SUBMISSION_ID] = {
-                            [fileCategory.name]: [],
-                        };
+                        draft[formSubmissionId ?? DUMMY_SUBMISSION_ID][fileCategory.name] = [];
                     });
                 }
             });
