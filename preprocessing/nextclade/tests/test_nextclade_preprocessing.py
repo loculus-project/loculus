@@ -26,6 +26,7 @@ from loculus_preprocessing.config import (
 )
 from loculus_preprocessing.datatypes import (
     AnnotationSourceType,
+    FileIdAndName,
     SegmentClassificationMethod,
     SubmissionData,
     UnprocessedData,
@@ -279,6 +280,40 @@ single_segment_case_definitions = [
                 "VP35EbolaSudan": ebola_sudan_aa(
                     sequence_with_deletion("single", aligned=True), "VP35"
                 ),
+            },
+            aminoAcidInsertions={},
+            sequenceNameToFastaId={"main": "fastaHeader"},
+        ),
+    ),
+    Case(
+        name="with file",
+        input_metadata={},
+        input_sequence={"fastaHeader": sequence_with_mutation("single")},
+        accession_id="1",
+        files={
+            "raw_reads": [
+                FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
+                FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
+            ]
+        },
+        expected_metadata={
+            "completeness": 1.0,
+            "totalInsertedNucs": 0,
+            "totalSnps": 1,
+            "totalDeletedNucs": 0,
+            "length": len(consensus_sequence("single")),
+            "nonExistentField": "None",
+            "variant": True,
+        },
+        expected_errors=[],
+        expected_warnings=[],
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
+            alignedNucleotideSequences={"main": sequence_with_mutation("single")},
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={
+                "NPEbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "NP"),
+                "VP35EbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "VP35"),
             },
             aminoAcidInsertions={},
             sequenceNameToFastaId={"main": "fastaHeader"},

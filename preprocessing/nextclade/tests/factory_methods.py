@@ -9,6 +9,7 @@ import pytz
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
     AnnotationSourceType,
+    FileIdAndName,
     NucleotideSequence,
     ProcessedData,
     ProcessedEntry,
@@ -77,6 +78,7 @@ class UnprocessedEntryFactory:
         accession_id: str,
         sequences: dict[SegmentName, NucleotideSequence | None],
         group_id: int = 2,
+        files: dict[str, list[FileIdAndName]] | None = None,
     ) -> UnprocessedEntry:
         return UnprocessedEntry(
             accessionVersion=f"LOC_{accession_id}.1",
@@ -89,7 +91,7 @@ class UnprocessedEntryFactory:
                 group_id=group_id,
                 metadata=metadata_dict,
                 unalignedNucleotideSequences=sequences,
-                files=None,
+                files=files,
             ),
         )
 
@@ -131,6 +133,7 @@ class ProcessedEntryFactory:
         errors: list[ProcessingAnnotation] | None = None,
         warnings: list[ProcessingAnnotation] | None = None,
         processed_alignment: ProcessedAlignment | None = None,
+        files: dict[str, list[FileIdAndName]] | None = None,
     ) -> ProcessedEntry:
         if errors is None:
             errors = []
@@ -154,7 +157,7 @@ class ProcessedEntryFactory:
                 alignedAminoAcidSequences=processed_alignment.alignedAminoAcidSequences,
                 aminoAcidInsertions=processed_alignment.aminoAcidInsertions,
                 sequenceNameToFastaId=processed_alignment.sequenceNameToFastaId,
-                files=None,
+                files=files,
             ),
             errors=errors,
             warnings=warnings,
@@ -172,6 +175,7 @@ class Case:
     expected_warnings: list[ProcessingAnnotation] | None = None
     expected_processed_alignment: ProcessedAlignment | None = None
     group_id: int = 2
+    files: dict[str, list[FileIdAndName]] | None = None
 
     def create_test_case(self, factory_custom: ProcessedEntryFactory) -> ProcessingTestCase:
         if not self.expected_processed_alignment:
@@ -181,6 +185,7 @@ class Case:
             accession_id=self.accession_id,
             sequences=self.input_sequence,
             group_id=self.group_id,
+            files=self.files,
         )
         expected_output = factory_custom.create_processed_entry(
             metadata_dict=self.expected_metadata,
@@ -188,6 +193,7 @@ class Case:
             errors=self.expected_errors or [],
             warnings=self.expected_warnings or [],
             processed_alignment=self.expected_processed_alignment,
+            files=self.files,
         )
         return ProcessingTestCase(
             name=self.name, input=unprocessed_entry, expected_output=expected_output
@@ -266,4 +272,7 @@ def verify_processed_entry(
     assert actual.sequenceNameToFastaId == expected.sequenceNameToFastaId, (
         f"{test_name}: sequence name to fasta header map '{actual.sequenceNameToFastaId}' do not "
         f"match expectation '{expected.sequenceNameToFastaId}'."
+    )
+    assert actual.files == expected.files, (
+        f"{test_name}: files '{actual.files}' do not match expectation '{expected.files}'."
     )
