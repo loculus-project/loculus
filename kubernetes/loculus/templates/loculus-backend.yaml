@@ -143,7 +143,7 @@ spec:
             - name: S3_GC_FREQUENCY_MINUTES
               value: {{$.Values.s3.gcFrequencyMinutes | quote }}
             - name: S3_ORPHAN_RETENTION_PERIOD_MINUTES
-              value: {{$.Values.s3.orphanRetentionPeriodMinutes | quote }}
+              value: {{$.Values.s3.gcOrphanRetentionPeriodMinutes | quote }}
             - name: S3_BUCKET_ENDPOINT
               value: {{ include "loculus.s3Url" . | quote }}
             - name: S3_BUCKET_INTERNAL_ENDPOINT
