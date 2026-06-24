@@ -1,0 +1,269 @@
+{{- $seedPreviewData := .Values.seedPreviewData | default dict }}
+{{- $seedEnabled := $seedPreviewData.enabled | default false }}
+{{- if and $seedEnabled (not .Values.disableBackend) (not .Values.disablePreprocessing) (not .Values.readOnlyMode) .Values.createTestAccounts }}
+{{- $backendHost := .Values.disableBackend | ternary
+    "http://host.k3d.internal:8079"
+    "http://loculus-backend-service:8079"
+}}
+{{- $testconfig := .Values.testconfig | default false }}
+{{- $keycloakHost := $testconfig | ternary (printf "http://%s:8083" $.Values.localHost) "http://loculus-keycloak-service:8083" }}
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- $seedImage := printf "%s:%s" .Values.images.configLoader.repository (.Values.images.configLoader.tag | default $dockerTag) }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-preview-seed-data
+  annotations:
+    "argocd.argoproj.io/sync-wave": "0"
+data:
+  seed-preview-data.mjs: |-
+    import { readFile } from 'node:fs/promises';
+
+    const backendUrl = process.env.BACKEND_URL ?? 'http://loculus-backend-service:8079';
+    const keycloakUrl = process.env.KEYCLOAK_URL ?? 'http://loculus-keycloak-service:8083';
+    const username = process.env.SEED_USERNAME ?? 'testuser';
+    const password = process.env.SEED_PASSWORD ?? 'testuser';
+    const groupName = 'Co-infection preview data';
+    const expectedEntriesPerOrganism = 15;
+    const organisms = [
+      {
+        key: 'ebola-sudan',
+        metadata: '/seed-data/ebola-sudan-metadata.tsv',
+        sequences: '/seed-data/ebola-sudan-sequences.fasta',
+      },
+      {
+        key: 'west-nile',
+        metadata: '/seed-data/west-nile-metadata.tsv',
+        sequences: '/seed-data/west-nile-sequences.fasta',
+      },
+    ];
+
+    const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+    async function waitFor(label, predicate, attempts = 180, intervalMs = 5000) {
+      let lastError;
+      for (let attempt = 1; attempt <= attempts; attempt += 1) {
+        try {
+          if (await predicate()) {
+            console.log(`${label} is ready`);
+            return;
+          }
+        } catch (error) {
+          lastError = error;
+        }
+        console.log(`Waiting for ${label} (${attempt}/${attempts})`);
+        await sleep(intervalMs);
+      }
+      throw new Error(`${label} did not become ready. Last error: ${lastError?.message ?? 'none'}`);
+    }
+
+    async function jsonRequest(url, options = {}) {
+      const response = await fetch(url, options);
+      const text = await response.text();
+      if (!response.ok) {
+        throw new Error(`${options.method ?? 'GET'} ${url} failed with ${response.status}: ${text}`);
+      }
+      return text === '' ? null : JSON.parse(text);
+    }
+
+    async function getToken() {
+      const body = new URLSearchParams({
+        grant_type: 'password',
+        client_id: 'backend-client',
+        username,
+        password,
+      });
+      const response = await jsonRequest(
+        `${keycloakUrl}/realms/loculus/protocol/openid-connect/token`,
+        { method: 'POST', body },
+      );
+      return response.access_token;
+    }
+
+    function authHeaders(token, headers = {}) {
+      return { ...headers, Authorization: `Bearer ${token}` };
+    }
+
+    async function authJson(token, path, options = {}) {
+      return jsonRequest(`${backendUrl}${path}`, {
+        ...options,
+        headers: authHeaders(token, options.headers ?? {}),
+      });
+    }
+
+    async function getOrCreateGroup(token) {
+      const groups = await authJson(token, '/user/groups');
+      const existingGroup = groups.find((group) => group.groupName === groupName);
+      if (existingGroup !== undefined) {
+        console.log(`Using existing seed group ${existingGroup.groupId}`);
+        return existingGroup.groupId;
+      }
+
+      const created = await authJson(token, '/groups', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          groupName,
+          institution: 'Loculus Preview Laboratory',
+          address: {
+            line1: '1 Preview Way',
+            line2: '',
+            city: 'Kampala',
+            state: 'Central Region',
+            postalCode: '00000',
+            country: 'Uganda',
+          },
+          contactEmail: 'preview-data@loculus.org',
+        }),
+      });
+      console.log(`Created seed group ${created.groupId}`);
+      return created.groupId;
+    }
+
+    async function getEntries(token, organism, groupId) {
+      const response = await authJson(token, `/${organism}/get-sequences?groupIdsFilter=${groupId}`);
+      return response.sequenceEntries ?? [];
+    }
+
+    async function submitSeedFiles(token, organism, groupId, metadataPath, sequencePath) {
+      const form = new FormData();
+      form.set('groupId', String(groupId));
+      form.set('dataUseTermsType', 'OPEN');
+      form.set('metadataFile', new Blob([await readFile(metadataPath)], { type: 'text/tab-separated-values' }), `${organism}-metadata.tsv`);
+      form.set('sequenceFile', new Blob([await readFile(sequencePath)], { type: 'text/x-fasta' }), `${organism}-sequences.fasta`);
+
+      const response = await fetch(`${backendUrl}/${organism}/submit`, {
+        method: 'POST',
+        headers: authHeaders(token),
+        body: form,
+      });
+      const text = await response.text();
+      if (!response.ok) {
+        throw new Error(`Submitting ${organism} seed data failed with ${response.status}: ${text}`);
+      }
+      console.log(`Submitted ${organism} seed data: ${text}`);
+    }
+
+    async function waitForProcessed(token, organism, groupId) {
+      let entries = [];
+      await waitFor(`${organism} seed preprocessing`, async () => {
+        entries = await getEntries(token, organism, groupId);
+        const errored = entries.filter((entry) => entry.processingResult === 'HAS_ERRORS');
+        if (errored.length > 0) {
+          throw new Error(`${organism} seed preprocessing produced errors: ${JSON.stringify(errored)}`);
+        }
+        const waiting = entries.filter((entry) => ['RECEIVED', 'IN_PROCESSING'].includes(entry.status));
+        const ready = entries.filter((entry) => ['PROCESSED', 'APPROVED_FOR_RELEASE'].includes(entry.status));
+        console.log(`${organism}: total=${entries.length}, ready=${ready.length}, waiting=${waiting.length}`);
+        return entries.length === expectedEntriesPerOrganism && waiting.length === 0 && ready.length === expectedEntriesPerOrganism;
+      }, 240, 5000);
+      return entries;
+    }
+
+    async function approveProcessed(token, organism, groupId, entries) {
+      if (entries.every((entry) => entry.status === 'APPROVED_FOR_RELEASE')) {
+        console.log(`${organism} seed data is already approved`);
+        return;
+      }
+      await authJson(token, `/${organism}/approve-processed-data`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ groupIdsFilter: [groupId], scope: 'ALL' }),
+      });
+      await waitFor(`${organism} seed approval`, async () => {
+        const approved = (await getEntries(token, organism, groupId))
+          .filter((entry) => entry.status === 'APPROVED_FOR_RELEASE');
+        console.log(`${organism}: approved=${approved.length}`);
+        return approved.length === expectedEntriesPerOrganism;
+      }, 60, 5000);
+    }
+
+    async function seedOrganism(token, groupId, organism) {
+      const existingEntries = await getEntries(token, organism.key, groupId);
+      if (existingEntries.length === 0) {
+        await submitSeedFiles(token, organism.key, groupId, organism.metadata, organism.sequences);
+      } else if (existingEntries.length !== expectedEntriesPerOrganism) {
+        throw new Error(`${organism.key} seed group already has ${existingEntries.length} entries, expected ${expectedEntriesPerOrganism}`);
+      } else {
+        console.log(`${organism.key} seed data already exists`);
+      }
+      const processedEntries = await waitForProcessed(token, organism.key, groupId);
+      await approveProcessed(token, organism.key, groupId, processedEntries);
+    }
+
+    await waitFor('Keycloak', async () => {
+      const response = await fetch(`${keycloakUrl}/realms/loculus/.well-known/openid-configuration`);
+      return response.ok;
+    });
+    await waitFor('backend', async () => {
+      const response = await fetch(`${backendUrl}/actuator/health`);
+      return response.ok;
+    });
+    for (const organism of organisms) {
+      await waitFor(`${organism.key} config`, async () => {
+        const response = await fetch(`${backendUrl}/api/config/organisms/${organism.key}`);
+        return response.ok;
+      });
+    }
+
+    const token = await getToken();
+    const groupId = await getOrCreateGroup(token);
+    for (const organism of organisms) {
+      await seedOrganism(token, groupId, organism);
+    }
+    console.log('Preview co-infection seed data is ready');
+{{- range $path, $_ := .Files.Glob "test-data/*" }}
+  {{ base $path }}: |-
+{{ $.Files.Get $path | indent 4 }}
+{{- end }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: loculus-preview-seed-data
+  annotations:
+{{- if .Values.runConfigLoaderAsArgoJob }}
+    "argocd.argoproj.io/sync-options": "Force=true,Replace=true"
+    "argocd.argoproj.io/sync-wave": "1"
+{{- else }}
+    "helm.sh/hook": "post-install,post-upgrade"
+    "helm.sh/hook-weight": "20"
+    "helm.sh/hook-delete-policy": "before-hook-creation"
+{{- end }}
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: loculus-preview-seed-data
+    spec:
+      restartPolicy: Never
+      {{- include "possiblePriorityClassName" . | nindent 6 }}
+      containers:
+        - name: seed-preview-data
+          image: {{ $seedImage | quote }}
+          imagePullPolicy: {{ .Values.images.configLoader.pullPolicy | default .Values.imagePullPolicy }}
+          env:
+            - name: BACKEND_URL
+              value: {{ $backendHost | quote }}
+            - name: KEYCLOAK_URL
+              value: {{ $keycloakHost | quote }}
+            - name: SEED_USERNAME
+              value: "testuser"
+            - name: SEED_PASSWORD
+              value: "testuser"
+          command:
+            - node
+            - /seed-data/seed-preview-data.mjs
+          volumeMounts:
+            - name: seed-data
+              mountPath: /seed-data
+              readOnly: true
+      volumes:
+        - name: seed-data
+          configMap:
+            name: loculus-preview-seed-data
+{{- end }}

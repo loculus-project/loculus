@@ -1,4 +1,7 @@
 createTestAccounts: true
+seedPreviewData:
+  enabled: true
+runConfigLoaderAsArgoJob: true
 secrets:
   smtp-password:
     type: sealedsecret

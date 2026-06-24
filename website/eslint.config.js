@@ -154,7 +154,7 @@ const disableFromReact = {
 
 export default defineConfig(
     {
-        ignores: ['**/.astro/content.d.ts', '.flowbite-react/**'],
+        ignores: ['**/.astro/content.d.ts', '.flowbite-react/**', '**/node_modules/**'],
         files: ['**/*.ts', '**/*.tsx'],
         extends: [
             eslint.configs.recommended,

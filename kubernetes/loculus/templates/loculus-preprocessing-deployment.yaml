@@ -53,17 +53,8 @@ spec:
             - "--backend-host={{ $backendHost }}/{{ $organism }}"
             - "--keycloak-host={{ $keycloakHost }}"
             - "--pipeline-version={{ $processingConfig.version }}"
+            - "--organism={{ $organism }}"
             - "--keycloak-password=$(KEYCLOAK_PASSWORD)"
-      {{- if $processingConfig.configFile }}
-            - "--config=/etc/config/preprocessing-config.yaml"
-          volumeMounts:
-            - name: preprocessing-config-volume-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
-              mountPath: /etc/config
-      volumes:
-        - name: preprocessing-config-volume-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
-          configMap:
-            name: loculus-preprocessing-config-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
-      {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

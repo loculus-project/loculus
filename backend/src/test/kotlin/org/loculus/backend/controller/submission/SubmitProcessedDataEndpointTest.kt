@@ -11,6 +11,7 @@ import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasEntry
 import org.hamcrest.Matchers.`is`
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -22,7 +23,7 @@ import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.config.fixtures.ConfigFixtures
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_PARTS
 import org.loculus.backend.controller.DEFAULT_ORGANISM
@@ -30,7 +31,7 @@ import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
 import org.loculus.backend.controller.DUMMY_ORGANISM_MAIN_SEQUENCE
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
-import org.loculus.backend.controller.S3_CONFIG
+import org.loculus.backend.controller.S3_VARIANT
 import org.loculus.backend.controller.assertHasError
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectForbiddenResponse
@@ -58,9 +59,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.util.UUID
 
-@EndpointTest(
-    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
-)
+@EndpointTest
 class SubmitProcessedDataEndpointTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
@@ -68,7 +67,13 @@ class SubmitProcessedDataEndpointTest(
     @Autowired val useNewerProcessingPipelineVersionTask: UseNewerProcessingPipelineVersionTask,
     @Autowired val submissionDatabaseService: SubmissionDatabaseService,
     @Autowired val objectMapper: ObjectMapper,
+    @Autowired private val configFixtures: ConfigFixtures,
 ) {
+
+    @BeforeEach
+    fun loadS3Fixture() {
+        configFixtures.loadVariant(S3_VARIANT)
+    }
 
     @Autowired
     private lateinit var filesClient: FilesClient

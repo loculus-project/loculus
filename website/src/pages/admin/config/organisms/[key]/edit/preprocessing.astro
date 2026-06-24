@@ -1,0 +1,46 @@
+---
+import { PreprocessingConfigEditor } from '../../../../../../components/admin/PreprocessingConfigEditor';
+import { getRuntimeConfig } from '../../../../../../config';
+import AdminConfigLayout from '../../../../../../layouts/AdminConfigLayout.astro';
+import { AdminConfigError, getAdminConfigClient } from '../../../../../../services/adminConfigClient';
+
+const key = Astro.params.key!;
+const session = Astro.locals.session!;
+const client = await getAdminConfigClient(session);
+const runtime = getRuntimeConfig();
+const publicBackendUrl = runtime.public.backendUrl;
+
+let loadError: string | null = null;
+let initialConfigs: { pipelineVersion: number; content: string }[] = [];
+try {
+    const list = await client.listOrganisms();
+    const found = list.organisms.find((o) => o.key === key);
+    if (found === undefined) {
+        return Astro.redirect('/admin/config/organisms');
+    }
+    const versions = await client.listPreprocessingConfigs(key);
+    initialConfigs = await Promise.all(
+        versions.map(async (v) => ({
+            pipelineVersion: v.pipelineVersion,
+            content: (await client.getPreprocessingConfig(key, v.pipelineVersion)) ?? '',
+        })),
+    );
+} catch (e) {
+    loadError = AdminConfigError.isInstance(e) ? (e.body.message ?? e.body.error) : String(e);
+}
+---
+
+<AdminConfigLayout title={`Preprocessing · ${key}`}>
+    {loadError !== null && <p class='text-red-600 mb-4'>Failed to load: {loadError}</p>}
+    {
+        loadError === null && (
+            <PreprocessingConfigEditor
+                accessToken={session.token!.accessToken}
+                backendUrl={publicBackendUrl}
+                organismKey={key}
+                initialConfigs={initialConfigs}
+                client:load
+            />
+        )
+    }
+</AdminConfigLayout>

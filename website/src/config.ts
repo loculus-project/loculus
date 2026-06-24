@@ -1,31 +1,41 @@
 import fs from 'fs';
 import path from 'path';
 
-import type { z, ZodError } from 'zod';
+import { type z, type ZodError } from 'zod';
 
 import { ACCESSION_FIELD, FASTA_IDS_FIELD, SUBMISSION_ID_INPUT_FIELD } from './settings.ts';
 import {
     type InputField,
     type InstanceConfig,
     type MetadataType,
+    type OverviewConfig,
     type Schema,
     type SequenceFlaggingConfig,
+    type ViewConfig,
     type WebsiteConfig,
-    websiteConfig,
 } from './types/config.ts';
 import { type ReferenceGenomesInfo } from './types/referencesGenomes.ts';
 import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
 import { toReferenceGenomes } from './utils/sequenceTypeHelpers.ts';
 
-let _config: WebsiteConfig | null = null;
 let _runtimeConfig: RuntimeConfig | null = null;
 
-function getConfigDir(): string {
-    const configDir = import.meta.env.CONFIG_DIR;
-    if (typeof configDir !== 'string' || configDir === '') {
-        throw new Error(`CONFIG_DIR environment variable was not set during build time, is '${configDir}'`);
+// Read via `globalThis` so this file (which is also pulled into the client
+// bundle) does not import `serverWebsiteConfigStore.ts` and its `async_hooks`.
+function getCurrentWebsiteConfig(): WebsiteConfig {
+    const ctx = globalThis.__loculusWebsiteConfigStore?.getStore();
+    if (ctx === undefined) {
+        throw new Error(
+            'getWebsiteConfig() called outside of a request context. The website config ' +
+                'is loaded by configMiddleware and is only available inside the per-request ' +
+                'async context on the server.',
+        );
     }
-    return configDir;
+    return ctx.websiteConfig;
+}
+
+function getCurrentWebsiteConfigOrNull(): WebsiteConfig | null {
+    return globalThis.__loculusWebsiteConfigStore?.getStore()?.websiteConfig ?? null;
 }
 
 export function validateWebsiteConfig(config: WebsiteConfig): Error[] {
@@ -60,15 +70,7 @@ export function validateWebsiteConfig(config: WebsiteConfig): Error[] {
 }
 
 export function getWebsiteConfig(): WebsiteConfig {
-    if (_config === null) {
-        const config = readTypedConfigFile('website_config.json', websiteConfig);
-        const validationErrors = validateWebsiteConfig(config);
-        if (validationErrors.length > 0) {
-            throw new AggregateError(validationErrors, 'There were validation errors in the website_config.json');
-        }
-        _config = config;
-    }
-    return _config;
+    return getCurrentWebsiteConfig();
 }
 
 export function getContactConfig(websiteConfig: WebsiteConfig) {
@@ -100,11 +102,7 @@ export function getGitHubReportUrl(
 }
 
 export function safeGetWebsiteConfig(): WebsiteConfig | null {
-    try {
-        return getWebsiteConfig();
-    } catch (_) {
-        return null;
-    }
+    return getCurrentWebsiteConfigOrNull();
 }
 
 export function getMetadataDisplayNames(organism: string): Map<string, string> {
@@ -136,12 +134,28 @@ export function getConfiguredOrganisms() {
     return configuredOrganismsFromConfig(getWebsiteConfig());
 }
 
+export function configuredViewsFromConfig(config: WebsiteConfig): Organism[] {
+    return Object.entries(config.views).map(([key, view]) => ({
+        key,
+        displayName: view.displayName,
+        image: view.schema.image,
+    }));
+}
+
+export function getConfiguredViews() {
+    return configuredViewsFromConfig(getWebsiteConfig());
+}
+
 function getConfig(organism: string): InstanceConfig {
     const websiteConfig = getWebsiteConfig();
-    if (!(organism in websiteConfig.organisms)) {
-        throw new Error(`No configuration for organism ${organism}`);
+    if (organism in websiteConfig.organisms) {
+        return websiteConfig.organisms[organism];
     }
-    return websiteConfig.organisms[organism];
+    // SQL-backed metadata-only views behave like organisms (own key/schema/LAPIS).
+    if (organism in websiteConfig.views) {
+        return websiteConfig.views[organism];
+    }
+    throw new Error(`No configuration for organism ${organism}`);
 }
 
 export function outputFilesEnabled(organism: string): boolean {
@@ -294,14 +308,60 @@ export function getRuntimeConfig(): RuntimeConfig {
 }
 
 export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): string {
-    if (!(organism in serviceConfig.lapisUrls)) {
-        throw new Error(`No lapis url configured for organism ${organism}`);
-    }
-    return serviceConfig.lapisUrls[organism];
+    // LAPIS requests are proxied through the backend (LapisProxyController).
+    return `${serviceConfig.backendUrl}/${organism}/lapis`;
+}
+
+export function getQueryUrl(
+    serviceConfig: ServiceUrls,
+    organism: string,
+    versionGroup: 'current' | 'allVersions',
+): string {
+    return `${serviceConfig.backendUrl}/query/${organism}/${versionGroup}`;
 }
 
 export function getReferenceGenomes(organism: string): ReferenceGenomesInfo {
     return toReferenceGenomes(getConfig(organism).referenceGenomes);
+}
+
+export function overviewIsEnabled(): boolean {
+    return getViewConfigOrUndefined('overview') !== undefined;
+}
+
+export function viewsAreEnabled(): boolean {
+    return getConfiguredViews().length > 0;
+}
+
+export function getViewConfigOrUndefined(viewKey: string): ViewConfig | undefined {
+    return getWebsiteConfig().views[viewKey];
+}
+
+export function getViewConfig(viewKey: string): ViewConfig {
+    const view = getViewConfigOrUndefined(viewKey);
+    if (view === undefined) {
+        throw new Error(`No view configuration found for ${viewKey}`);
+    }
+    return view;
+}
+
+export function getOverviewConfig(): OverviewConfig {
+    const overview = getViewConfigOrUndefined('overview');
+    if (overview === undefined) {
+        throw new Error('No overview configuration found');
+    }
+    return overview;
+}
+
+export function getOverviewSchema(): Schema {
+    return getOverviewConfig().schema;
+}
+
+export function getOverviewReferenceGenomes(): ReferenceGenomesInfo {
+    return toReferenceGenomes(getOverviewConfig().referenceGenomes);
+}
+
+export function getViewReferenceGenomes(viewKey: string): ReferenceGenomesInfo {
+    return toReferenceGenomes(getViewConfig(viewKey).referenceGenomes);
 }
 
 export function seqSetsAreEnabled() {
@@ -314,6 +374,14 @@ export function dataUseTermsAreEnabled() {
 
 export function getDataUseTermsAgreementHTML() {
     return getWebsiteConfig().dataUseTermsAgreementHTML;
+}
+
+function getConfigDir(): string {
+    const configDir = import.meta.env.CONFIG_DIR;
+    if (typeof configDir !== 'string' || configDir === '') {
+        throw new Error(`CONFIG_DIR environment variable was not set during build time, is '${configDir}'`);
+    }
+    return configDir;
 }
 
 function readTypedConfigFile<Schema extends z.ZodTypeAny>(fileName: string, schema: Schema): z.infer<Schema> {

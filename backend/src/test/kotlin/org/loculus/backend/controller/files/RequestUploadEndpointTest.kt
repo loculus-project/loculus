@@ -9,10 +9,11 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.config.fixtures.ConfigFixtures
 import org.loculus.backend.controller.EndpointTest
-import org.loculus.backend.controller.S3_CONFIG
+import org.loculus.backend.controller.S3_VARIANT
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
@@ -25,14 +26,18 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@EndpointTest(
-    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
-)
+@EndpointTest
 class RequestUploadEndpointTest(
     @Autowired private val client: FilesClient,
     @Autowired private val groupManagementClient: GroupManagementControllerClient,
     @Autowired private val objectMapper: ObjectMapper,
+    @Autowired private val configFixtures: ConfigFixtures,
 ) {
+
+    @BeforeEach
+    fun loadS3Fixture() {
+        configFixtures.loadVariant(S3_VARIANT)
+    }
 
     @Test
     fun `GIVEN a request for three URLs THEN returns a response with three URLs`() {

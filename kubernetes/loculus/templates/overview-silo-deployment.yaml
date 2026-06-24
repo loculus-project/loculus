@@ -1,0 +1,164 @@
+{{- $views := dict }}
+{{- range $key, $view := (.Values.views | default dict) }}
+  {{- $views = set $views $key $view }}
+{{- end }}
+{{- if and .Values.overview .Values.overview.enabled }}
+  {{- $legacyKey := .Values.overview.key | default "overview" }}
+  {{- if not (hasKey $views $legacyKey) }}
+    {{- $views = set $views $legacyKey .Values.overview }}
+  {{- end }}
+{{- end }}
+{{- range $key, $view := $views }}
+{{- if or (not (hasKey $view "enabled")) $view.enabled }}
+{{- $dockerTag := include "loculus.dockerTag" $.Values }}
+{{- $backendHost := $.Values.disableBackend | ternary
+    "http://host.k3d.internal:8079"
+    "http://loculus-backend-service:8079"
+}}
+{{- /* The overview query + manual SILO config come from the DB instance config:
+       the config-adapter (overview mode) init container renders them to files.
+       Backend base URLs (deployment topology) are computed here from the
+       enabled organisms. */ -}}
+{{- $backendUrls := dict }}
+{{- range $_, $item := (include "loculus.enabledOrganisms" $ | fromJson).organisms }}
+  {{- $organismKey := $item.key }}
+  {{- $backendUrls = set $backendUrls $organismKey (printf "%s/%s" $backendHost $organismKey) }}
+{{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-silo-{{ $key }}
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true{{ if (and (not $.Values.developmentDatabasePersistence) $.Values.runDevelopmentMainDatabase) }},Force=true{{ end }}
+spec:
+  progressDeadlineSeconds: 1200
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: silo-{{ $key }}
+  template:
+    metadata:
+      annotations:
+        valuesHash: {{ $.Values | toJson | sha256sum | quote }}
+      labels:
+        app: loculus
+        component: silo-{{ $key }}
+    spec:
+      {{- include "possiblePriorityClassName" $ | nindent 6 }}
+      initContainers:
+        {{- include "loculus.overviewConfigAdapterInitContainer" (dict
+              "dockerTag" $dockerTag
+              "imagePullPolicy" $.Values.imagePullPolicy
+              "images" $.Values.images
+              "backendUrl" $backendHost
+              "viewKey" $key) | nindent 8 }}
+      containers:
+        - name: silo
+          image: "{{ $.Values.images.loculusSilo.repository }}:{{ $.Values.images.loculusSilo.tag | default $dockerTag }}"
+          command: ["/usr/local/bin/silo"]
+          imagePullPolicy: {{ $.Values.imagePullPolicy }}
+          {{- include "loculus.resources" (list "silo" $.Values $key) | nindent 10 }}
+          env:
+            - name: SPDLOG_LEVEL
+              value: "debug"
+            - name: SILO_DATA_DIRECTORY
+              value: "/data/"
+          ports:
+            - containerPort: 8081
+          args:
+            - "api"
+            - "--api-threads-for-http-connections"
+            - {{ default 16 (($.Values.silo).apiThreadsForHttpConnections) | quote }}
+            - "--api-max-queued-http-connections"
+            - "1000"
+            - "--query-materialization-cutoff"
+            - "3276"
+          volumeMounts:
+            - name: lapis-silo-shared-data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /info
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+        - name: silo-importer
+          image: "{{ $.Values.images.loculusSilo.repository }}:{{ $.Values.images.loculusSilo.tag | default $dockerTag }}"
+          imagePullPolicy: "{{ $.Values.images.loculusSilo.pullPolicy }}"
+          {{- include "loculus.resources" (list "silo-importer" $.Values) | nindent 10 }}
+          env:
+            - name: SILO_IMPORT_MODE
+              value: "overview"
+            - name: OVERVIEW_BACKEND_BASE_URLS
+              value: {{ $backendUrls | toJson | quote }}
+            - name: OVERVIEW_ORGANISM_DISPLAY_NAMES
+              value: {{ $view.organismDisplayNames | default dict | toJson | quote }}
+            - name: OVERVIEW_QUERY_FILE
+              value: "/app/overview_query.sql"
+            - name: OVERVIEW_SEQUENCE_CONFIG_FILE
+              value: "/app/view_sequence_config.json"
+            - name: SILO_RUN_TIMEOUT_SECONDS
+              value: {{ $.Values.siloImport.siloTimeoutSeconds | quote }}
+            - name: HARD_REFRESH_INTERVAL
+              value: {{ $.Values.siloImport.hardRefreshIntervalSeconds | quote }}
+            - name: SILO_IMPORT_POLL_INTERVAL_SECONDS
+              value: {{ $.Values.siloImport.pollIntervalSeconds | quote }}
+            - name: PATH_TO_SILO_BINARY
+              value: "/usr/local/bin/silo"
+            - name: PREPROCESSING_CONFIG
+              value: "/app/preprocessing_config.yaml"
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/reference_genomes.json
+              subPath: reference_genomes.json
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/preprocessing_config.yaml
+              subPath: preprocessing_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/overview_query.sql
+              subPath: overview_query.sql
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/view_sequence_config.json
+              subPath: view_sequence_config.json
+            - name: lapis-silo-shared-data
+              mountPath: /preprocessing/output
+            - name: lapis-silo-input-data-cache
+              mountPath: /preprocessing/input
+      volumes:
+        {{- include "loculus.adapterVolume" $ | nindent 8 }}
+        - name: lapis-silo-shared-data
+          emptyDir: {}
+        - name: lapis-silo-input-data-cache
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-silo-service-{{ $key }}
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: silo-{{ $key }}
+  ports:
+    - port: 8081
+      targetPort: 8081
+      protocol: TCP
+      name: http
+{{- end }}
+{{- end }}

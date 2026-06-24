@@ -7,12 +7,14 @@ import org.loculus.backend.api.Insertion
 import org.loculus.backend.api.MetadataMap
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BaseMetadata
 import org.loculus.backend.config.MetadataType
 import org.loculus.backend.config.ReferenceGenome
 import org.loculus.backend.config.ReferenceSequence
 import org.loculus.backend.config.Schema
+import org.loculus.backend.config.expandPerSegmentMetadata
+import org.loculus.backend.config.perSegmentExpansionSegments
+import org.loculus.backend.config.service.ConfigService
 import org.loculus.backend.controller.ProcessingValidationException
 import org.springframework.stereotype.Component
 import java.time.LocalDate
@@ -167,10 +169,10 @@ private fun isValidDate(dateStringCandidate: String): Boolean {
 }
 
 @Component
-class ExternalMetadataValidatorFactory(private val backendConfig: BackendConfig) {
+class ExternalMetadataValidatorFactory(private val configService: ConfigService) {
     fun create(organism: Organism): ExternalMetadataValidator {
-        val instanceConfig = backendConfig.organisms[organism.name]!!
-        return ExternalMetadataValidator(instanceConfig.schema)
+        val organismConfig = configService.getOrganismConfig(organism).config
+        return ExternalMetadataValidator(organismConfig.schema)
     }
 }
 
@@ -188,17 +190,22 @@ class ExternalMetadataValidator(private val schema: Schema) {
 }
 
 @Component
-class ProcessedSequenceEntryValidatorFactory(private val backendConfig: BackendConfig) {
+class ProcessedSequenceEntryValidatorFactory(private val configService: ConfigService) {
     fun create(organism: Organism): ProcessedSequenceEntryValidator {
-        val instanceConfig = backendConfig.organisms[organism.name]!!
+        val organismConfig = configService.getOrganismConfig(organism).config
         return ProcessedSequenceEntryValidator(
-            schema = instanceConfig.schema,
-            referenceGenome = instanceConfig.referenceGenome,
+            schema = organismConfig.schema,
+            referenceGenome = organismConfig.referenceGenome,
+            perSegmentNames = perSegmentExpansionSegments(organismConfig),
         )
     }
 }
 
-class ProcessedSequenceEntryValidator(private val schema: Schema, private val referenceGenome: ReferenceGenome) {
+class ProcessedSequenceEntryValidator(
+    private val schema: Schema,
+    private val referenceGenome: ReferenceGenome,
+    private val perSegmentNames: List<String>,
+) {
     fun validate(processedData: ProcessedData<GeneticSequence>): ProcessedData<GeneticSequence> {
         val processedDataWithAllMetadataFields = validateMetadata(processedData)
         validateNucleotideSequences(processedDataWithAllMetadataFields)
@@ -208,7 +215,9 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
     }
 
     private fun validateMetadata(processedData: ProcessedData<GeneticSequence>): ProcessedData<GeneticSequence> {
-        val metadataFields = schema.metadata
+        // Expand perSegment fields (e.g. completeness -> completeness_L/_M/_S) for
+        // multi-segment organisms so the field set matches what the pipeline emits.
+        val metadataFields = expandPerSegmentMetadata(schema.metadata, perSegmentNames)
         var processedMetadataMap = processedData.metadata
         validateNoUnknownInMetaData(processedMetadataMap, metadataFields.map { it.name })
 

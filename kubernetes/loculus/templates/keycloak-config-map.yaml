@@ -116,7 +116,59 @@ data:
               ]
             }
           },
+          {
+            "username": "loculus_administrator",
+            "enabled": true,
+            "email": "loculus_administrator@void.o",
+            "emailVerified" : true,
+            "firstName": "Loculus",
+            "lastName": "Administrator",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "loculus_administrator"
+              }
+            ],
+            "realmRoles": [
+              "loculus_administrator",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
         {{ end }}
+          {
+            "username": "config_loader_user",
+            "enabled": true,
+            "email": "config_loader_user@void.o",
+            "emailVerified" : true,
+            "firstName": "Config",
+            "lastName": "Loader",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "[[configLoaderUserPassword]]"
+              }
+            ],
+            "realmRoles": [
+              "loculus_administrator",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "Loculus Config Bootstrap"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
           {
             "username": "insdc_ingest_user",
             "enabled": true,
@@ -231,6 +283,10 @@ data:
           {
             "name": "admin",
             "description": "Administrator privileges"
+          },
+          {
+            "name": "loculus_administrator",
+            "description": "Privileges for editing Loculus instance and organism configuration"
           },
           {
             "name": "preprocessing_pipeline",

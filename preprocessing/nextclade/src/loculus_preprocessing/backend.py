@@ -202,7 +202,11 @@ def request_upload(group_id: int, number_of_files: int, config: Config) -> Seque
 
     base_url = f"{parsed.scheme}://{parsed.netloc}"
     url = base_url + "/files/request-upload"
-    params = {"groupId": group_id, "numberFiles": number_of_files}
+    params: dict[str, str | int] = {
+        "groupId": group_id,
+        "numberFiles": number_of_files,
+        "useInternalEndpoint": "true",
+    }
     headers = {
         "Authorization": "Bearer " + get_jwt(config),
         "x-request-id": request_id,

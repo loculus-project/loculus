@@ -2,20 +2,16 @@
 
 ## Overview
 
-The Loculus Config Processor is a utility container designed to dynamically process configuration files in Kubernetes deployments. It serves as an init container that transforms configuration files by:
+The Loculus Config Processor is a utility container designed to dynamically process configuration files in Kubernetes deployments. It serves as an init container that substitutes environment variables for sensitive information (passwords, secrets) into configuration files, so secrets are not stored directly in ConfigMaps.
 
-1. Fetching and inserting external content from URLs
-2. Substituting environment variables for sensitive information (passwords, secrets)
-
-This allows configuration files to reference large external assets (like reference genomes) and inject sensitive data without storing them directly in ConfigMaps.
+> Note: the processor previously also inlined external content via `[[URL:…]]` placeholders. That feature has been removed — reference genomes and other domain config now live in the backend database, not in Helm-rendered config. Only secret substitution remains.
 
 ## How It Works
 
-The Config Processor operates in three main steps:
+The Config Processor operates in two main steps:
 
 1. **Copy**: Duplicates the entire directory structure from input to output
-2. **Fetch URLs**: Finds and replaces `[[URL:https://example.com/file.txt]]` patterns with the actual content from those URLs (just as simple string replacement.)
-3. **Substitute Secrets**: Replaces `[[KEY]]` placeholders with values from environment variables prefixed with `LOCULUSSUB_`
+2. **Substitute Secrets**: Replaces `[[KEY]]` placeholders with values from environment variables prefixed with `LOCULUSSUB_`
 
 ## Usage in Kubernetes
 
@@ -64,7 +60,6 @@ metadata:
 data:
   config.json: |
     {
-      "referenceGenome": "[[URL:https://example.com/genome.fasta]]",
       "smtpPassword": "[[smtpPassword]]"
     }
 ```

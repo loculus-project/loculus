@@ -1,25 +1,38 @@
 package org.loculus.backend.service
 
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.datetime.LocalDateTime
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
-import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.DataUseTerms
+import org.loculus.backend.config.FileSharing
+import org.loculus.backend.config.InstanceConfig
+import org.loculus.backend.config.service.ConfigService
 import java.lang.Math.random
 import kotlin.math.pow
 
 const val PREFIX = "LOC_"
 
 class GenerateAccessionFromNumberServiceTest {
-    private val accessionFromNumberService = GenerateAccessionFromNumberService(
-        BackendConfig(
-            websiteUrl = "https://example.com",
-            backendUrl = "http://foo.com",
-            accessionPrefix = PREFIX,
-            organisms = emptyMap(),
-            dataUseTerms = DataUseTerms(true, null),
-        ),
-    )
+    private val configService: ConfigService = mockk()
+
+    init {
+        every { configService.getInstanceConfig() } returns ConfigService.VersionedInstance(
+            version = 1L,
+            publishedAt = LocalDateTime(2024, 1, 1, 0, 0),
+            publishedBy = "test",
+            config = InstanceConfig(
+                name = "Loculus",
+                accessionPrefix = PREFIX,
+                dataUseTerms = DataUseTerms(true, null),
+                fileSharing = FileSharing(),
+            ),
+        )
+    }
+
+    private val accessionFromNumberService = GenerateAccessionFromNumberService(configService)
 
     @Test
     fun `GIVEN sequence numbers and prefix THEN returns custom ids that are padded to 6 digits`() {

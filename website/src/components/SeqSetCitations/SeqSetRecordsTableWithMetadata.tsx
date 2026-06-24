@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { type FC, useMemo } from 'react';
 
+import { getLapisUrl } from '../../config';
 import { versionStatuses } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSetRecord, SeqSetRecordType } from '../../types/seqSetCitation';
@@ -21,6 +22,7 @@ type FieldToDisplay = {
 type SeqSetRecordsTableWithMetadataProps = {
     seqSetRecords: SeqSetRecord[];
     clientConfig: ClientConfig;
+    organisms: string[];
     fieldsToDisplay?: FieldToDisplay[];
     sortByKey?: keyof SeqSetRecord;
     organismDisplayNames?: Record<string, string>;
@@ -47,6 +49,7 @@ async function queryLapisDetails(
 const fetchRecordsMetadata = async (
     records: SeqSetRecord[],
     clientConfig: ClientConfig,
+    organisms: string[],
     fieldsToDisplay: FieldToDisplay[],
 ): Promise<Map<string, RecordMetadata>> => {
     const accessions = records.map((record) => record.accession);
@@ -62,17 +65,11 @@ const fetchRecordsMetadata = async (
     // Extract just the field names for the API request
     const fields = fieldsToDisplay.map((f) => f.field);
 
-    // filter out "organism" as substring in lapisUrls as a hack to remove the dummy organisms
-    // #TODO: do this better, in a less hacky way
-    // But if we do try to query something that doesn't have the field its no huge problem it will just lead to a console error
-    const lapisUrlsWithoutDummies = Object.fromEntries(
-        Object.entries(clientConfig.lapisUrls).filter(([organism]) => !organism.includes('organism')),
-    );
-
     const metadataMap = new Map<string, RecordMetadata>();
 
-    // Query all LAPIS instances in parallel
-    const lapisPromises = Object.entries(lapisUrlsWithoutDummies).map(async ([organism, lapisUrl]) => {
+    // Query all organisms (through the backend LAPIS proxy) in parallel
+    const lapisPromises = organisms.map(async (organism) => {
+        const lapisUrl = getLapisUrl(clientConfig, organism);
         const queries: Promise<{ data: Record<string, unknown>[]; keyField: string }>[] = [];
 
         // Query versioned accessions by accessionVersion
@@ -130,6 +127,7 @@ const SeqSetRecordsTableCell: FC<{ title: string; children: React.ReactNode }> =
 export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataProps> = ({
     seqSetRecords,
     clientConfig,
+    organisms,
     fieldsToDisplay = [
         { field: 'geoLocCountry', displayName: 'Country' },
         { field: 'sampleCollectionDate', displayName: 'Collection date' },
@@ -139,8 +137,8 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
     organismDisplayNames = {},
 }) => {
     const { data: metadataMap, isLoading } = useQuery({
-        queryKey: ['seqset-records-metadata', seqSetRecords, clientConfig, fieldsToDisplay],
-        queryFn: () => fetchRecordsMetadata(seqSetRecords, clientConfig, fieldsToDisplay),
+        queryKey: ['seqset-records-metadata', seqSetRecords, clientConfig, organisms, fieldsToDisplay],
+        queryFn: () => fetchRecordsMetadata(seqSetRecords, clientConfig, organisms, fieldsToDisplay),
         staleTime: 5 * 60 * 1000, // 5 minutes
     });
 

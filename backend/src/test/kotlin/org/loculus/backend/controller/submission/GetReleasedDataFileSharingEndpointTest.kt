@@ -7,13 +7,14 @@ import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasKey
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.`is`
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.ReleasedData
-import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.config.fixtures.ConfigFixtures
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.EndpointTest
-import org.loculus.backend.controller.S3_CONFIG
+import org.loculus.backend.controller.S3_VARIANT
 import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
 import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.files.FilesClient
@@ -24,9 +25,7 @@ import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.springframework.beans.factory.annotation.Autowired
 
-@EndpointTest(
-    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
-)
+@EndpointTest
 class GetReleasedDataFileSharingEndpointTest(
     @Autowired private val convenienceClient: SubmissionConvenienceClient,
     @Autowired private val submissionControllerClient: SubmissionControllerClient,
@@ -35,7 +34,13 @@ class GetReleasedDataFileSharingEndpointTest(
     @Autowired private val submissionDatabaseService: SubmissionDatabaseService,
     @Autowired private val groupManagementClient: GroupManagementControllerClient,
     @Autowired private val filesClient: FilesClient,
+    @Autowired private val configFixtures: ConfigFixtures,
 ) {
+
+    @BeforeEach
+    fun loadS3Fixture() {
+        configFixtures.loadVariant(S3_VARIANT)
+    }
     private val objectMapper = jacksonObjectMapper()
 
     @Test

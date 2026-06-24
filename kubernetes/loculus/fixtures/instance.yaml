@@ -1,0 +1,1972 @@
+gitHubMainUrl: https://github.com/loculus-project/loculus
+bannerMessage: This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly.
+logo:
+  url: /favicon.svg
+  width: 100
+  height: 100
+issuesEmail: noreply@loculus.org
+gitHubEditLink: https://github.com/loculus-project/loculus/edit/main/monorepo/website/
+additionalHeadHTML: ''
+accessionPrefix: LOC_
+gitHubIssuesUrl: https://github.com/loculus-project/loculus/issues
+name: Loculus
+dataUseTerms:
+  enabled: true
+  urls:
+    open: https://#TODO-MVP/open
+    restricted: https://#TODO-MVP/restricted
+fileSharing:
+  outputFileUrlType: backend
+enableSeqSets: true
+seqSetsFieldsToDisplay:
+  - field: geoLocCountry
+    displayName: Country
+  - field: sampleCollectionDate
+    displayName: Collection Date
+  - field: authors
+    displayName: Authors
+seqSetsGraphs:
+  - name: sampleCollectionDates
+    displayName: Sample collection dates
+    type: date
+    fields:
+      - sampleCollectionDate
+      - date
+  - name: sampleCollectionCountries
+    displayName: Sample collection countries
+    type: category
+    fields:
+      - geoLocCountry
+      - country
+  - name: dataUseTerms
+    displayName: Data use terms
+    type: category
+    fields:
+      - dataUseTerms
+enableLoginNavigationItem: true
+enableSubmissionNavigationItem: true
+enableSubmissionPages: true
+lineageSystemDefinitions:
+  pangoLineage:
+    '1': https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
+    '2': https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
+  alternativeLineage:
+    '4': https://raw.githubusercontent.com/loculus-project/loculus/fe3b2974071acc9a25856d650350f8a952040a7c/preprocessing/dummy/lineage-alternative.yaml
+  cchfS:
+    '1': https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-24--07-29-03Z/lineages.yaml
+
+# Cross-organism overview table / LAPIS instance (admin-configurable fields).
+overview:
+  displayName: Overview
+  lapisUrl: "http://loculus-lapis-service-overview:8080"
+  sequenceData:
+    unalignedNucleotideSequences:
+      enabled: true
+      segments:
+        - main
+        - L
+        - M
+        - S
+  query: |
+    select accessionVersion, accession, version, submissionId, isRevocation,
+           submitter, groupName, groupId, submittedAtTimestamp, submittedDate,
+           releasedAtTimestamp, releasedDate, versionStatus, versionComment,
+           pipelineVersion, dataUseTerms, dataUseTermsRestrictedUntil,
+           dataBecameOpenAt, dataUseTermsUrl, geoLocCountry as country,
+           sampleCollectionDate as date, 'CCHF (Multi-Ref)' as organism
+    from "cchf-multi-ref"
+    union all
+    select accessionVersion, accession, version, submissionId, isRevocation,
+           submitter, groupName, groupId, submittedAtTimestamp, submittedDate,
+           releasedAtTimestamp, releasedDate, versionStatus, versionComment,
+           pipelineVersion, dataUseTerms, dataUseTermsRestrictedUntil,
+           dataBecameOpenAt, dataUseTermsUrl, geoLocCountry as country,
+           sampleCollectionDate as date, 'Crimean-Congo Hemorrhagic Fever Virus' as organism
+    from "cchf"
+    union all
+    select accessionVersion, accession, version, submissionId, isRevocation,
+           submitter, groupName, groupId, submittedAtTimestamp, submittedDate,
+           releasedAtTimestamp, releasedDate, versionStatus, versionComment,
+           pipelineVersion, dataUseTerms, dataUseTermsRestrictedUntil,
+           dataBecameOpenAt, dataUseTermsUrl, country as country,
+           date as date, 'Test organism (with files)' as organism
+    from "dummy-organism-with-files"
+    union all
+    select accessionVersion, accession, version, submissionId, isRevocation,
+           submitter, groupName, groupId, submittedAtTimestamp, submittedDate,
+           releasedAtTimestamp, releasedDate, versionStatus, versionComment,
+           pipelineVersion, dataUseTerms, dataUseTermsRestrictedUntil,
+           dataBecameOpenAt, dataUseTermsUrl, country as country,
+           date as date, 'Test Dummy Organism' as organism
+    from "dummy-organism"
+    union all
+    select accessionVersion, accession, version, submissionId, isRevocation,
+           submitter, groupName, groupId, submittedAtTimestamp, submittedDate,
+           releasedAtTimestamp, releasedDate, versionStatus, versionComment,
+           pipelineVersion, dataUseTerms, dataUseTermsRestrictedUntil,
+           dataBecameOpenAt, dataUseTermsUrl, geoLocCountry as country,
+           sampleCollectionDate as date, 'Ebola Sudan' as organism
+    from "ebola-sudan"
+    union all
+    select accessionVersion, accession, version, submissionId, isRevocation,
+           submitter, groupName, groupId, submittedAtTimestamp, submittedDate,
+           releasedAtTimestamp, releasedDate, versionStatus, versionComment,
+           pipelineVersion, dataUseTerms, dataUseTermsRestrictedUntil,
+           dataBecameOpenAt, dataUseTermsUrl, geoLocCountry as country,
+           sampleCollectionDate as date, 'Enterovirus' as organism
+    from "enteroviruses"
+    union all
+    select accessionVersion, accession, version, submissionId, isRevocation,
+           submitter, groupName, groupId, submittedAtTimestamp, submittedDate,
+           releasedAtTimestamp, releasedDate, versionStatus, versionComment,
+           pipelineVersion, dataUseTerms, dataUseTermsRestrictedUntil,
+           dataBecameOpenAt, dataUseTermsUrl, country as country,
+           date as date, 'Test organism (without alignment)' as organism
+    from "not-aligned-organism"
+    union all
+    select accessionVersion, accession, version, submissionId, isRevocation,
+           submitter, groupName, groupId, submittedAtTimestamp, submittedDate,
+           releasedAtTimestamp, releasedDate, versionStatus, versionComment,
+           pipelineVersion, dataUseTerms, dataUseTermsRestrictedUntil,
+           dataBecameOpenAt, dataUseTermsUrl, geoLocCountry as country,
+           sampleCollectionDate as date, 'West Nile Virus' as organism
+    from "west-nile"
+  schema: |
+    schema:
+      instanceName: Overview
+      opennessLevel: OPEN
+      metadata:
+        - name: accessionVersion
+          displayName: Accession version
+          type: string
+          notSearchable: true
+          hideOnSequenceDetailsPage: true
+          includeInDownloadsByDefault: true
+        - name: accession
+          displayName: Accession
+          type: string
+          notSearchable: true
+          hideOnSequenceDetailsPage: true
+        - name: version
+          displayName: Version
+          type: int
+          hideOnSequenceDetailsPage: true
+        - name: submissionId
+          displayName: Submission ID
+          type: string
+          header: Submission details
+          substringSearch: true
+          includeInDownloadsByDefault: true
+        - name: isRevocation
+          displayName: Is revocation
+          type: boolean
+          autocomplete: true
+          hideOnSequenceDetailsPage: true
+        - name: submitter
+          displayName: Submitter
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: Submission details
+          hideOnSequenceDetailsPage: true
+        - name: groupName
+          displayName: Submitting group
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: Submission details
+          includeInDownloadsByDefault: true
+        - name: groupId
+          displayName: Submitting group (numeric ID)
+          type: int
+          autocomplete: true
+          header: Submission details
+        - name: submittedAtTimestamp
+          displayName: Date submitted
+          type: timestamp
+          header: Submission details
+        - name: submittedDate
+          displayName: Date submitted (exact)
+          type: string
+          generateIndex: true
+          autocomplete: true
+          hideOnSequenceDetailsPage: true
+        - name: releasedAtTimestamp
+          displayName: Date released
+          type: timestamp
+          header: Submission details
+          columnWidth: 100
+        - name: releasedDate
+          displayName: Date released (exact)
+          type: string
+          generateIndex: true
+          autocomplete: true
+          hideOnSequenceDetailsPage: true
+          columnWidth: 100
+        - name: versionStatus
+          displayName: Version status
+          type: string
+          generateIndex: true
+          autocomplete: true
+          hideOnSequenceDetailsPage: true
+        - name: versionComment
+          displayName: Version comment
+          type: string
+          header: Submission details
+        - name: pipelineVersion
+          displayName: Pipeline version
+          type: int
+          notSearchable: true
+          hideOnSequenceDetailsPage: true
+        - name: dataUseTerms
+          displayName: Data use terms
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: Data use terms
+          initiallyVisible: true
+          includeInDownloadsByDefault: true
+        - name: dataUseTermsRestrictedUntil
+          displayName: Data use terms restricted until
+          type: date
+          header: Data use terms
+          hideOnSequenceDetailsPage: true
+        - name: dataBecameOpenAt
+          displayName: Date data became open
+          type: date
+          header: Data use terms
+          hideOnSequenceDetailsPage: true
+        - name: dataUseTermsUrl
+          displayName: Data use terms URL
+          type: string
+          header: Data use terms
+          notSearchable: true
+          includeInDownloadsByDefault: true
+        - name: country
+          displayName: Country
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: Sample details
+          initiallyVisible: true
+          includeInDownloadsByDefault: true
+        - name: date
+          displayName: Collection date
+          type: string
+          header: Sample details
+          initiallyVisible: true
+          generateIndex: true
+          autocomplete: true
+          columnWidth: 100
+        - name: organism
+          displayName: Organism
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: Sample details
+          initiallyVisible: true
+          includeInDownloadsByDefault: true
+      primaryKey: accessionVersion
+      defaultOrderBy: date
+      defaultOrder: descending
+      features:
+        - name: generalizedAdvancedQuery
+  tableColumns:
+    - organism
+    - country
+    - date
+
+views:
+  overview:
+    displayName: Overview
+    lapisUrl: "http://loculus-lapis-service-overview:8080"
+    sequenceData:
+      unalignedNucleotideSequences:
+        enabled: true
+        segments:
+          - main
+          - L
+          - M
+          - S
+    query: |
+      select accessionVersion, accession, version, submissionId, isRevocation,
+             submitter, groupName, groupId, submittedAtTimestamp, submittedDate,
+             releasedAtTimestamp, releasedDate, versionStatus, versionComment,
+             pipelineVersion, dataUseTerms, dataUseTermsRestrictedUntil,
+             dataBecameOpenAt, dataUseTermsUrl, geoLocCountry as country,
+             sampleCollectionDate as date, 'CCHF (Multi-Ref)' as organism
+      from "cchf-multi-ref"
+      union all
+      select accessionVersion, accession, version, submissionId, isRevocation,
+             submitter, groupName, groupId, submittedAtTimestamp, submittedDate,
+             releasedAtTimestamp, releasedDate, versionStatus, versionComment,
+             pipelineVersion, dataUseTerms, dataUseTermsRestrictedUntil,
+             dataBecameOpenAt, dataUseTermsUrl, geoLocCountry as country,
+             sampleCollectionDate as date, 'Crimean-Congo Hemorrhagic Fever Virus' as organism
+      from "cchf"
+      union all
+      select accessionVersion, accession, version, submissionId, isRevocation,
+             submitter, groupName, groupId, submittedAtTimestamp, submittedDate,
+             releasedAtTimestamp, releasedDate, versionStatus, versionComment,
+             pipelineVersion, dataUseTerms, dataUseTermsRestrictedUntil,
+             dataBecameOpenAt, dataUseTermsUrl, country as country,
+             date as date, 'Test organism (with files)' as organism
+      from "dummy-organism-with-files"
+      union all
+      select accessionVersion, accession, version, submissionId, isRevocation,
+             submitter, groupName, groupId, submittedAtTimestamp, submittedDate,
+             releasedAtTimestamp, releasedDate, versionStatus, versionComment,
+             pipelineVersion, dataUseTerms, dataUseTermsRestrictedUntil,
+             dataBecameOpenAt, dataUseTermsUrl, country as country,
+             date as date, 'Test Dummy Organism' as organism
+      from "dummy-organism"
+      union all
+      select accessionVersion, accession, version, submissionId, isRevocation,
+             submitter, groupName, groupId, submittedAtTimestamp, submittedDate,
+             releasedAtTimestamp, releasedDate, versionStatus, versionComment,
+             pipelineVersion, dataUseTerms, dataUseTermsRestrictedUntil,
+             dataBecameOpenAt, dataUseTermsUrl, geoLocCountry as country,
+             sampleCollectionDate as date, 'Ebola Sudan' as organism
+      from "ebola-sudan"
+      union all
+      select accessionVersion, accession, version, submissionId, isRevocation,
+             submitter, groupName, groupId, submittedAtTimestamp, submittedDate,
+             releasedAtTimestamp, releasedDate, versionStatus, versionComment,
+             pipelineVersion, dataUseTerms, dataUseTermsRestrictedUntil,
+             dataBecameOpenAt, dataUseTermsUrl, geoLocCountry as country,
+             sampleCollectionDate as date, 'Enterovirus' as organism
+      from "enteroviruses"
+      union all
+      select accessionVersion, accession, version, submissionId, isRevocation,
+             submitter, groupName, groupId, submittedAtTimestamp, submittedDate,
+             releasedAtTimestamp, releasedDate, versionStatus, versionComment,
+             pipelineVersion, dataUseTerms, dataUseTermsRestrictedUntil,
+             dataBecameOpenAt, dataUseTermsUrl, country as country,
+             date as date, 'Test organism (without alignment)' as organism
+      from "not-aligned-organism"
+      union all
+      select accessionVersion, accession, version, submissionId, isRevocation,
+             submitter, groupName, groupId, submittedAtTimestamp, submittedDate,
+             releasedAtTimestamp, releasedDate, versionStatus, versionComment,
+             pipelineVersion, dataUseTerms, dataUseTermsRestrictedUntil,
+             dataBecameOpenAt, dataUseTermsUrl, geoLocCountry as country,
+             sampleCollectionDate as date, 'West Nile Virus' as organism
+      from "west-nile"
+    schema: |
+      schema:
+        instanceName: Overview
+        opennessLevel: OPEN
+        metadata:
+          - name: accessionVersion
+            displayName: Accession version
+            type: string
+            notSearchable: true
+            hideOnSequenceDetailsPage: true
+            includeInDownloadsByDefault: true
+          - name: accession
+            displayName: Accession
+            type: string
+            notSearchable: true
+            hideOnSequenceDetailsPage: true
+          - name: version
+            displayName: Version
+            type: int
+            hideOnSequenceDetailsPage: true
+          - name: submissionId
+            displayName: Submission ID
+            type: string
+            header: Submission details
+            substringSearch: true
+            includeInDownloadsByDefault: true
+          - name: isRevocation
+            displayName: Is revocation
+            type: boolean
+            autocomplete: true
+            hideOnSequenceDetailsPage: true
+          - name: submitter
+            displayName: Submitter
+            type: string
+            generateIndex: true
+            autocomplete: true
+            header: Submission details
+            hideOnSequenceDetailsPage: true
+          - name: groupName
+            displayName: Submitting group
+            type: string
+            generateIndex: true
+            autocomplete: true
+            header: Submission details
+            includeInDownloadsByDefault: true
+          - name: groupId
+            displayName: Submitting group (numeric ID)
+            type: int
+            autocomplete: true
+            header: Submission details
+          - name: submittedAtTimestamp
+            displayName: Date submitted
+            type: timestamp
+            header: Submission details
+          - name: submittedDate
+            displayName: Date submitted (exact)
+            type: string
+            generateIndex: true
+            autocomplete: true
+            hideOnSequenceDetailsPage: true
+          - name: releasedAtTimestamp
+            displayName: Date released
+            type: timestamp
+            header: Submission details
+            columnWidth: 100
+          - name: releasedDate
+            displayName: Date released (exact)
+            type: string
+            generateIndex: true
+            autocomplete: true
+            hideOnSequenceDetailsPage: true
+            columnWidth: 100
+          - name: versionStatus
+            displayName: Version status
+            type: string
+            generateIndex: true
+            autocomplete: true
+            hideOnSequenceDetailsPage: true
+          - name: versionComment
+            displayName: Version comment
+            type: string
+            header: Submission details
+          - name: pipelineVersion
+            displayName: Pipeline version
+            type: int
+            notSearchable: true
+            hideOnSequenceDetailsPage: true
+          - name: dataUseTerms
+            displayName: Data use terms
+            type: string
+            generateIndex: true
+            autocomplete: true
+            header: Data use terms
+            initiallyVisible: true
+            includeInDownloadsByDefault: true
+          - name: dataUseTermsRestrictedUntil
+            displayName: Data use terms restricted until
+            type: date
+            header: Data use terms
+            hideOnSequenceDetailsPage: true
+          - name: dataBecameOpenAt
+            displayName: Date data became open
+            type: date
+            header: Data use terms
+            hideOnSequenceDetailsPage: true
+          - name: dataUseTermsUrl
+            displayName: Data use terms URL
+            type: string
+            header: Data use terms
+            notSearchable: true
+            includeInDownloadsByDefault: true
+          - name: country
+            displayName: Country
+            type: string
+            generateIndex: true
+            autocomplete: true
+            header: Sample details
+            initiallyVisible: true
+            includeInDownloadsByDefault: true
+          - name: date
+            displayName: Collection date
+            type: string
+            header: Sample details
+            initiallyVisible: true
+            generateIndex: true
+            autocomplete: true
+            columnWidth: 100
+          - name: organism
+            displayName: Organism
+            type: string
+            generateIndex: true
+            autocomplete: true
+            header: Sample details
+            initiallyVisible: true
+            includeInDownloadsByDefault: true
+        primaryKey: accessionVersion
+        defaultOrderBy: date
+        defaultOrder: descending
+        features:
+          - name: generalizedAdvancedQuery
+    tableColumns:
+      - organism
+      - country
+      - date
+  real-organisms:
+    displayName: Real organisms
+    lapisUrl: "http://loculus-lapis-service-real-organisms:8080"
+    sequenceData:
+      unalignedNucleotideSequences:
+        enabled: true
+        segments:
+          - main
+          - L
+          - M
+          - S
+    query: |
+      select
+                 accessionVersion, accession, version,
+                 submissionId, isRevocation, submitter,
+                 groupName, groupId, submittedAtTimestamp,
+                 submittedDate, releasedAtTimestamp, releasedDate,
+                 versionStatus, pipelineVersion, dataUseTerms,
+                 dataUseTermsRestrictedUntil, dataBecameOpenAt, dataUseTermsUrl,
+                 sampleCollectionDate, sampleCollectionDateRangeLower, sampleCollectionDateRangeUpper,
+                 displayName, ncbiReleaseDate, earliestReleaseDate,
+                 geoLocLatitude, geoLocLongitude, geoLocCountry,
+                 geoLocAdmin1, geoLocAdmin2, geoLocCity,
+                 geoLocSite, specimenCollectorSampleId, authors,
+                 authorAffiliations, ncbiSubmitterCountry, bioprojectAccession,
+                 gcaAccession, biosampleAccession, cultureId,
+                 sampleReceivedDate, sampleType, purposeOfSampling,
+                 presamplingActivity, anatomicalMaterial, anatomicalPart,
+                 bodyProduct, environmentalMaterial, environmentalSite,
+                 collectionDevice, collectionMethod, foodProduct,
+                 foodProductProperties, specimenProcessing, specimenProcessingDetails,
+                 experimentalSpecimenRoleType, hostAge, hostAgeBin,
+                 hostGender, hostOriginCountry, hostDisease,
+                 signsAndSymptoms, hostHealthState, hostHealthOutcome,
+                 travelHistory, exposureEvent, hostRole,
+                 exposureSetting, exposureDetails, previousInfectionDisease,
+                 previousInfectionOrganism, hostVaccinationStatus, purposeOfSequencing,
+                 sequencingDate, ampliconPcrPrimerScheme, ampliconSize,
+                 sequencingInstrument, sequencingProtocol, sequencingAssayType,
+                 sequencedByOrganization, sequencedByContactName, sequencedByContactEmail,
+                 rawSequenceDataProcessingMethod, dehostingMethod, referenceGenomeAccession,
+                 consensusSequenceSoftwareName, consensusSequenceSoftwareVersion, depthOfCoverage,
+                 breadthOfCoverage, qualityControlMethodName, qualityControlMethodVersion,
+                 qualityControlDetermination, qualityControlIssues, qualityControlDetails,
+                 diagnosticMeasurementMethod, diagnosticTargetPresence, diagnosticTargetGeneName,
+                 diagnosticMeasurementValue, diagnosticMeasurementUnit, hostTaxonId,
+                 hostNameScientific, hostNameCommon, isLabHost,
+                 cellLine, passageNumber, passageMethod,
+                 ncbiSourceDb, ncbiVirusName, ncbiVirusTaxId,
+                 insdcRawReadsAccession, versionComment,
+                 'CCHF (Multi-Ref)' as organism
+      from "cchf-multi-ref"
+      union all
+      select
+                 accessionVersion, accession, version,
+                 submissionId, isRevocation, submitter,
+                 groupName, groupId, submittedAtTimestamp,
+                 submittedDate, releasedAtTimestamp, releasedDate,
+                 versionStatus, pipelineVersion, dataUseTerms,
+                 dataUseTermsRestrictedUntil, dataBecameOpenAt, dataUseTermsUrl,
+                 sampleCollectionDate, sampleCollectionDateRangeLower, sampleCollectionDateRangeUpper,
+                 displayName, ncbiReleaseDate, earliestReleaseDate,
+                 geoLocLatitude, geoLocLongitude, geoLocCountry,
+                 geoLocAdmin1, geoLocAdmin2, geoLocCity,
+                 geoLocSite, specimenCollectorSampleId, authors,
+                 authorAffiliations, ncbiSubmitterCountry, bioprojectAccession,
+                 gcaAccession, biosampleAccession, cultureId,
+                 sampleReceivedDate, sampleType, purposeOfSampling,
+                 presamplingActivity, anatomicalMaterial, anatomicalPart,
+                 bodyProduct, environmentalMaterial, environmentalSite,
+                 collectionDevice, collectionMethod, foodProduct,
+                 foodProductProperties, specimenProcessing, specimenProcessingDetails,
+                 experimentalSpecimenRoleType, hostAge, hostAgeBin,
+                 hostGender, hostOriginCountry, hostDisease,
+                 signsAndSymptoms, hostHealthState, hostHealthOutcome,
+                 travelHistory, exposureEvent, hostRole,
+                 exposureSetting, exposureDetails, previousInfectionDisease,
+                 previousInfectionOrganism, hostVaccinationStatus, purposeOfSequencing,
+                 sequencingDate, ampliconPcrPrimerScheme, ampliconSize,
+                 sequencingInstrument, sequencingProtocol, sequencingAssayType,
+                 sequencedByOrganization, sequencedByContactName, sequencedByContactEmail,
+                 rawSequenceDataProcessingMethod, dehostingMethod, referenceGenomeAccession,
+                 consensusSequenceSoftwareName, consensusSequenceSoftwareVersion, depthOfCoverage,
+                 breadthOfCoverage, qualityControlMethodName, qualityControlMethodVersion,
+                 qualityControlDetermination, qualityControlIssues, qualityControlDetails,
+                 diagnosticMeasurementMethod, diagnosticTargetPresence, diagnosticTargetGeneName,
+                 diagnosticMeasurementValue, diagnosticMeasurementUnit, hostTaxonId,
+                 hostNameScientific, hostNameCommon, isLabHost,
+                 cellLine, passageNumber, passageMethod,
+                 ncbiSourceDb, ncbiVirusName, ncbiVirusTaxId,
+                 insdcRawReadsAccession, versionComment,
+                 'Crimean-Congo Hemorrhagic Fever Virus' as organism
+      from "cchf"
+      union all
+      select
+                 accessionVersion, accession, version,
+                 submissionId, isRevocation, submitter,
+                 groupName, groupId, submittedAtTimestamp,
+                 submittedDate, releasedAtTimestamp, releasedDate,
+                 versionStatus, pipelineVersion, dataUseTerms,
+                 dataUseTermsRestrictedUntil, dataBecameOpenAt, dataUseTermsUrl,
+                 sampleCollectionDate, sampleCollectionDateRangeLower, sampleCollectionDateRangeUpper,
+                 displayName, ncbiReleaseDate, earliestReleaseDate,
+                 geoLocLatitude, geoLocLongitude, geoLocCountry,
+                 geoLocAdmin1, geoLocAdmin2, geoLocCity,
+                 geoLocSite, specimenCollectorSampleId, authors,
+                 authorAffiliations, ncbiSubmitterCountry, bioprojectAccession,
+                 gcaAccession, biosampleAccession, cultureId,
+                 sampleReceivedDate, sampleType, purposeOfSampling,
+                 presamplingActivity, anatomicalMaterial, anatomicalPart,
+                 bodyProduct, environmentalMaterial, environmentalSite,
+                 collectionDevice, collectionMethod, foodProduct,
+                 foodProductProperties, specimenProcessing, specimenProcessingDetails,
+                 experimentalSpecimenRoleType, hostAge, hostAgeBin,
+                 hostGender, hostOriginCountry, hostDisease,
+                 signsAndSymptoms, hostHealthState, hostHealthOutcome,
+                 travelHistory, exposureEvent, hostRole,
+                 exposureSetting, exposureDetails, previousInfectionDisease,
+                 previousInfectionOrganism, hostVaccinationStatus, purposeOfSequencing,
+                 sequencingDate, ampliconPcrPrimerScheme, ampliconSize,
+                 sequencingInstrument, sequencingProtocol, sequencingAssayType,
+                 sequencedByOrganization, sequencedByContactName, sequencedByContactEmail,
+                 rawSequenceDataProcessingMethod, dehostingMethod, referenceGenomeAccession,
+                 consensusSequenceSoftwareName, consensusSequenceSoftwareVersion, depthOfCoverage,
+                 breadthOfCoverage, qualityControlMethodName, qualityControlMethodVersion,
+                 qualityControlDetermination, qualityControlIssues, qualityControlDetails,
+                 diagnosticMeasurementMethod, diagnosticTargetPresence, diagnosticTargetGeneName,
+                 diagnosticMeasurementValue, diagnosticMeasurementUnit, hostTaxonId,
+                 hostNameScientific, hostNameCommon, isLabHost,
+                 cellLine, passageNumber, passageMethod,
+                 ncbiSourceDb, ncbiVirusName, ncbiVirusTaxId,
+                 insdcRawReadsAccession, versionComment,
+                 'Ebola Sudan' as organism
+      from "ebola-sudan"
+      union all
+      select
+                 accessionVersion, accession, version,
+                 submissionId, isRevocation, submitter,
+                 groupName, groupId, submittedAtTimestamp,
+                 submittedDate, releasedAtTimestamp, releasedDate,
+                 versionStatus, pipelineVersion, dataUseTerms,
+                 dataUseTermsRestrictedUntil, dataBecameOpenAt, dataUseTermsUrl,
+                 sampleCollectionDate, sampleCollectionDateRangeLower, sampleCollectionDateRangeUpper,
+                 displayName, ncbiReleaseDate, earliestReleaseDate,
+                 geoLocLatitude, geoLocLongitude, geoLocCountry,
+                 geoLocAdmin1, geoLocAdmin2, geoLocCity,
+                 geoLocSite, specimenCollectorSampleId, authors,
+                 authorAffiliations, ncbiSubmitterCountry, bioprojectAccession,
+                 gcaAccession, biosampleAccession, cultureId,
+                 sampleReceivedDate, sampleType, purposeOfSampling,
+                 presamplingActivity, anatomicalMaterial, anatomicalPart,
+                 bodyProduct, environmentalMaterial, environmentalSite,
+                 collectionDevice, collectionMethod, foodProduct,
+                 foodProductProperties, specimenProcessing, specimenProcessingDetails,
+                 experimentalSpecimenRoleType, hostAge, hostAgeBin,
+                 hostGender, hostOriginCountry, hostDisease,
+                 signsAndSymptoms, hostHealthState, hostHealthOutcome,
+                 travelHistory, exposureEvent, hostRole,
+                 exposureSetting, exposureDetails, previousInfectionDisease,
+                 previousInfectionOrganism, hostVaccinationStatus, purposeOfSequencing,
+                 sequencingDate, ampliconPcrPrimerScheme, ampliconSize,
+                 sequencingInstrument, sequencingProtocol, sequencingAssayType,
+                 sequencedByOrganization, sequencedByContactName, sequencedByContactEmail,
+                 rawSequenceDataProcessingMethod, dehostingMethod, referenceGenomeAccession,
+                 consensusSequenceSoftwareName, consensusSequenceSoftwareVersion, depthOfCoverage,
+                 breadthOfCoverage, qualityControlMethodName, qualityControlMethodVersion,
+                 qualityControlDetermination, qualityControlIssues, qualityControlDetails,
+                 diagnosticMeasurementMethod, diagnosticTargetPresence, diagnosticTargetGeneName,
+                 diagnosticMeasurementValue, diagnosticMeasurementUnit, hostTaxonId,
+                 hostNameScientific, hostNameCommon, isLabHost,
+                 cellLine, passageNumber, passageMethod,
+                 ncbiSourceDb, ncbiVirusName, ncbiVirusTaxId,
+                 insdcRawReadsAccession, versionComment,
+                 'Enterovirus' as organism
+      from "enteroviruses"
+      union all
+      select
+                 accessionVersion, accession, version,
+                 submissionId, isRevocation, submitter,
+                 groupName, groupId, submittedAtTimestamp,
+                 submittedDate, releasedAtTimestamp, releasedDate,
+                 versionStatus, pipelineVersion, dataUseTerms,
+                 dataUseTermsRestrictedUntil, dataBecameOpenAt, dataUseTermsUrl,
+                 sampleCollectionDate, sampleCollectionDateRangeLower, sampleCollectionDateRangeUpper,
+                 displayName, ncbiReleaseDate, earliestReleaseDate,
+                 geoLocLatitude, geoLocLongitude, geoLocCountry,
+                 geoLocAdmin1, geoLocAdmin2, geoLocCity,
+                 geoLocSite, specimenCollectorSampleId, authors,
+                 authorAffiliations, ncbiSubmitterCountry, bioprojectAccession,
+                 gcaAccession, biosampleAccession, cultureId,
+                 sampleReceivedDate, sampleType, purposeOfSampling,
+                 presamplingActivity, anatomicalMaterial, anatomicalPart,
+                 bodyProduct, environmentalMaterial, environmentalSite,
+                 collectionDevice, collectionMethod, foodProduct,
+                 foodProductProperties, specimenProcessing, specimenProcessingDetails,
+                 experimentalSpecimenRoleType, hostAge, hostAgeBin,
+                 hostGender, hostOriginCountry, hostDisease,
+                 signsAndSymptoms, hostHealthState, hostHealthOutcome,
+                 travelHistory, exposureEvent, hostRole,
+                 exposureSetting, exposureDetails, previousInfectionDisease,
+                 previousInfectionOrganism, hostVaccinationStatus, purposeOfSequencing,
+                 sequencingDate, ampliconPcrPrimerScheme, ampliconSize,
+                 sequencingInstrument, sequencingProtocol, sequencingAssayType,
+                 sequencedByOrganization, sequencedByContactName, sequencedByContactEmail,
+                 rawSequenceDataProcessingMethod, dehostingMethod, referenceGenomeAccession,
+                 consensusSequenceSoftwareName, consensusSequenceSoftwareVersion, depthOfCoverage,
+                 breadthOfCoverage, qualityControlMethodName, qualityControlMethodVersion,
+                 qualityControlDetermination, qualityControlIssues, qualityControlDetails,
+                 diagnosticMeasurementMethod, diagnosticTargetPresence, diagnosticTargetGeneName,
+                 diagnosticMeasurementValue, diagnosticMeasurementUnit, hostTaxonId,
+                 hostNameScientific, hostNameCommon, isLabHost,
+                 cellLine, passageNumber, passageMethod,
+                 ncbiSourceDb, ncbiVirusName, ncbiVirusTaxId,
+                 insdcRawReadsAccession, versionComment,
+                 'West Nile Virus' as organism
+      from "west-nile"
+    schema: |
+      schema:
+        instanceName: Real organisms
+        opennessLevel: OPEN
+        metadata:
+        - name: accessionVersion
+          displayName: Accession version
+          type: string
+          header: Loculus
+        - name: accession
+          displayName: Accession
+          type: string
+          header: Loculus
+        - name: version
+          displayName: Version
+          type: int
+          header: Loculus
+        - name: submissionId
+          displayName: Submission ID
+          type: string
+          header: Submission details
+          substringSearch: true
+        - name: isRevocation
+          displayName: Is revocation
+          type: boolean
+          header: Loculus
+          autocomplete: true
+        - name: submitter
+          displayName: Submitter
+          type: string
+          header: Submission details
+          generateIndex: true
+          autocomplete: true
+        - name: groupName
+          displayName: Submitting group
+          type: string
+          header: Submission details
+          generateIndex: true
+          autocomplete: true
+        - name: groupId
+          displayName: Submitting group (numeric ID)
+          type: int
+          header: Submission details
+        - name: submittedAtTimestamp
+          displayName: Date submitted
+          type: timestamp
+          header: Submission details
+        - name: submittedDate
+          displayName: Date submitted (exact)
+          type: string
+          header: Submission details
+          generateIndex: true
+          autocomplete: true
+        - name: releasedAtTimestamp
+          displayName: Date released
+          type: timestamp
+          header: Submission details
+        - name: releasedDate
+          displayName: Date released (exact)
+          type: string
+          header: Submission details
+          generateIndex: true
+          autocomplete: true
+        - name: versionStatus
+          displayName: Version status
+          type: string
+          header: Loculus
+          generateIndex: true
+          autocomplete: true
+        - name: pipelineVersion
+          displayName: Pipeline version
+          type: int
+          header: Loculus
+        - name: dataUseTerms
+          displayName: Data use terms
+          type: string
+          header: Data use terms
+          generateIndex: true
+          autocomplete: true
+        - name: dataUseTermsRestrictedUntil
+          displayName: Data use terms restricted until
+          type: date
+          header: Data use terms
+        - name: dataBecameOpenAt
+          displayName: Date data became open
+          type: date
+          header: Data use terms
+        - name: dataUseTermsUrl
+          displayName: Data use terms URL
+          type: string
+          header: Data use terms
+        - name: sampleCollectionDate
+          displayName: Collection date
+          type: string
+          header: Sample details
+          columnWidth: 100
+          order: 10
+          orderOnDetailsPage: 200
+          includeInDownloadsByDefault: true
+          initiallyVisible: true
+        - name: sampleCollectionDateRangeLower
+          displayName: Collection date (lower bound)
+          type: date
+          header: Sample details
+          rangeOverlapSearch:
+            rangeName: sampleCollectionDateRange
+            rangeDisplayName: Collection date
+            bound: lower
+        - name: sampleCollectionDateRangeUpper
+          displayName: Collection date (upper bound)
+          type: date
+          header: Sample details
+          rangeOverlapSearch:
+            rangeName: sampleCollectionDateRange
+            rangeDisplayName: Collection date
+            bound: upper
+        - name: displayName
+          displayName: Display name
+          type: string
+          header: Sample details
+          initiallyVisible: true
+        - name: ncbiReleaseDate
+          displayName: NCBI release date
+          type: date
+          header: INSDC
+          columnWidth: 100
+          orderOnDetailsPage: 1000
+          initiallyVisible: true
+        - name: earliestReleaseDate
+          displayName: Earliest release date
+          type: date
+          header: Sample details
+          rangeSearch: true
+          orderOnDetailsPage: 300
+          includeInDownloadsByDefault: true
+        - name: geoLocLatitude
+          displayName: Latitude
+          type: float
+          header: Sample details
+          orderOnDetailsPage: 420
+        - name: geoLocLongitude
+          displayName: Longitude
+          type: float
+          header: Sample details
+          orderOnDetailsPage: 440
+        - name: geoLocCountry
+          displayName: Collection country
+          type: string
+          header: Sample details
+          generateIndex: true
+          autocomplete: true
+          customDisplay:
+            type: geoLocation
+            displayGroup: geoLocation
+            label: Sampling location
+          order: 20
+          orderOnDetailsPage: 400
+          includeInDownloadsByDefault: true
+          initiallyVisible: true
+        - name: geoLocAdmin1
+          displayName: Collection subdivision level 1
+          type: string
+          header: Sample details
+          generateIndex: true
+          autocomplete: true
+          customDisplay:
+            type: geoLocation
+            displayGroup: geoLocation
+            label: Sampling location
+          order: 30
+          orderOnDetailsPage: 460
+        - name: geoLocAdmin2
+          displayName: Collection subdivision level 2
+          type: string
+          header: Sample details
+          generateIndex: true
+          autocomplete: true
+          customDisplay:
+            type: geoLocation
+            displayGroup: geoLocation
+            label: Sampling location
+          orderOnDetailsPage: 480
+        - name: geoLocCity
+          displayName: Collection city
+          type: string
+          header: Sample details
+          generateIndex: true
+          autocomplete: true
+          orderOnDetailsPage: 500
+        - name: geoLocSite
+          displayName: Collection site
+          type: string
+          header: Sample details
+          orderOnDetailsPage: 520
+        - name: specimenCollectorSampleId
+          displayName: Isolate name
+          type: string
+          header: Sample details
+          substringSearch: true
+          orderOnDetailsPage: 600
+        - name: authors
+          displayName: Authors
+          type: authors
+          header: Authors
+          substringSearch: true
+          columnWidth: 140
+          order: 40
+          orderOnDetailsPage: 800
+          includeInDownloadsByDefault: true
+          initiallyVisible: true
+        - name: authorAffiliations
+          displayName: Author affiliations
+          type: string
+          header: Authors
+          substringSearch: true
+          orderOnDetailsPage: 820
+          includeInDownloadsByDefault: true
+        - name: ncbiSubmitterCountry
+          displayName: NCBI submitter country
+          type: string
+          header: INSDC
+          generateIndex: true
+          autocomplete: true
+        - name: bioprojectAccession
+          displayName: BioProject accession
+          type: string
+          header: INSDC
+          customDisplay:
+            type: linkWithMenu
+            linkMenuItems:
+            - name: View in NCBI
+              url: https://www.ncbi.nlm.nih.gov/bioproject/__value__
+            - name: View in ENA
+              url: https://www.ebi.ac.uk/ena/browser/view/__value__
+            - name: View in DDBJ
+              url: https://ddbj.nig.ac.jp/search/entry/bioproject/__value__
+          orderOnDetailsPage: 1060
+        - name: gcaAccession
+          displayName: GCA accession
+          type: string
+          header: INSDC
+          customDisplay:
+            type: link
+            url: https://www.ebi.ac.uk/ena/browser/view/__value__
+          orderOnDetailsPage: 1100
+        - name: biosampleAccession
+          displayName: BioSample accession
+          type: string
+          header: INSDC
+          customDisplay:
+            type: linkWithMenu
+            linkMenuItems:
+            - name: View in NCBI
+              url: https://www.ncbi.nlm.nih.gov/biosample/__value__
+            - name: View in ENA
+              url: https://www.ebi.ac.uk/ena/browser/view/__value__
+            - name: View in DDBJ
+              url: https://ddbj.nig.ac.jp/search/entry/biosample/__value__
+          orderOnDetailsPage: 1080
+        - name: cultureId
+          displayName: Culture ID
+          type: string
+          header: Sample details
+          orderOnDetailsPage: 620
+        - name: sampleReceivedDate
+          displayName: Sample received date
+          type: date
+          header: Sample details
+          orderOnDetailsPage: 260
+        - name: sampleType
+          displayName: Sample type
+          type: string
+          header: Sampling
+          orderOnDetailsPage: 1200
+        - name: purposeOfSampling
+          displayName: Purpose of sampling
+          type: string
+          header: Sampling
+          orderOnDetailsPage: 1220
+        - name: presamplingActivity
+          displayName: Presampling activity
+          type: string
+          header: Sampling
+          orderOnDetailsPage: 1240
+        - name: anatomicalMaterial
+          displayName: Anatomical material
+          type: string
+          header: Sampling
+          orderOnDetailsPage: 1260
+        - name: anatomicalPart
+          displayName: Anatomical part
+          type: string
+          header: Sampling
+          orderOnDetailsPage: 1280
+        - name: bodyProduct
+          displayName: Body product
+          type: string
+          header: Sampling
+          orderOnDetailsPage: 1300
+        - name: environmentalMaterial
+          displayName: Environmental material
+          type: string
+          header: Sampling
+          orderOnDetailsPage: 1320
+        - name: environmentalSite
+          displayName: Environmental site
+          type: string
+          header: Sampling
+          orderOnDetailsPage: 1340
+        - name: collectionDevice
+          displayName: Collection device
+          type: string
+          header: Sampling
+          orderOnDetailsPage: 1360
+        - name: collectionMethod
+          displayName: Collection method
+          type: string
+          header: Sampling
+          orderOnDetailsPage: 1380
+        - name: foodProduct
+          displayName: Food product
+          type: string
+          header: Sampling
+          orderOnDetailsPage: 1400
+        - name: foodProductProperties
+          displayName: Food product properties
+          type: string
+          header: Sampling
+          orderOnDetailsPage: 1420
+        - name: specimenProcessing
+          displayName: Specimen processing
+          type: string
+          header: Specimen processing
+          orderOnDetailsPage: 1500
+        - name: specimenProcessingDetails
+          displayName: Specimen processing details
+          type: string
+          header: Specimen processing
+          orderOnDetailsPage: 1520
+        - name: experimentalSpecimenRoleType
+          displayName: Experimental specimen role type
+          type: string
+          header: Specimen processing
+        - name: hostAge
+          displayName: Host age
+          type: int
+          header: Host
+          rangeSearch: true
+        - name: hostAgeBin
+          displayName: Host age bin
+          type: string
+          header: Host
+        - name: hostGender
+          displayName: Host gender
+          type: string
+          header: Host
+          orderOnDetailsPage: 1640
+        - name: hostOriginCountry
+          displayName: Host origin country
+          type: string
+          header: Host
+        - name: hostDisease
+          displayName: Host disease
+          type: string
+          header: Host
+        - name: signsAndSymptoms
+          displayName: Signs and symptoms
+          type: string
+          header: Host
+        - name: hostHealthState
+          displayName: Host health state
+          type: string
+          header: Host
+        - name: hostHealthOutcome
+          displayName: Host health outcome
+          type: string
+          header: Host
+          orderOnDetailsPage: 1740
+        - name: travelHistory
+          displayName: Travel history
+          type: string
+          header: Host
+          orderOnDetailsPage: 1760
+        - name: exposureEvent
+          displayName: Exposure event
+          type: string
+          header: Host
+          orderOnDetailsPage: 1780
+        - name: hostRole
+          displayName: Host role
+          type: string
+          header: Host
+          orderOnDetailsPage: 1800
+        - name: exposureSetting
+          displayName: Exposure setting
+          type: string
+          header: Host
+          orderOnDetailsPage: 1820
+        - name: exposureDetails
+          displayName: Exposure details
+          type: string
+          header: Host
+          orderOnDetailsPage: 1840
+        - name: previousInfectionDisease
+          displayName: Previous infection (disease)
+          type: string
+          header: Host
+          orderOnDetailsPage: 1860
+        - name: previousInfectionOrganism
+          displayName: Previous infection (organism)
+          type: string
+          header: Host
+          orderOnDetailsPage: 1880
+        - name: hostVaccinationStatus
+          displayName: Host vaccination status
+          type: string
+          header: Host
+          orderOnDetailsPage: 1900
+        - name: purposeOfSequencing
+          displayName: Purpose of sequencing
+          type: string
+          header: Sequencing
+          orderOnDetailsPage: 2000
+        - name: sequencingDate
+          displayName: Sequencing date
+          type: date
+          header: Sequencing
+          orderOnDetailsPage: 2020
+        - name: ampliconPcrPrimerScheme
+          displayName: Amplicon PCR primer scheme
+          type: string
+          header: Sequencing
+          orderOnDetailsPage: 2040
+        - name: ampliconSize
+          displayName: Amplicon size
+          type: string
+          header: Sequencing
+          orderOnDetailsPage: 2060
+        - name: sequencingInstrument
+          displayName: Sequencing instrument
+          type: string
+          header: Sequencing
+          orderOnDetailsPage: 2080
+        - name: sequencingProtocol
+          displayName: Sequencing protocol
+          type: string
+          header: Sequencing
+          orderOnDetailsPage: 2100
+        - name: sequencingAssayType
+          displayName: Sequencing assay type
+          type: string
+          header: Sequencing
+          orderOnDetailsPage: 2120
+        - name: sequencedByOrganization
+          displayName: Sequenced by
+          type: string
+          header: Sequencing
+          orderOnDetailsPage: 2140
+        - name: sequencedByContactName
+          displayName: Sequenced by - contact name
+          type: string
+          header: Sequencing
+          orderOnDetailsPage: 2160
+        - name: sequencedByContactEmail
+          displayName: Sequenced by - contact email
+          type: string
+          header: Sequencing
+          orderOnDetailsPage: 2180
+        - name: rawSequenceDataProcessingMethod
+          displayName: Raw sequence data processing method
+          type: string
+          header: Sequencing
+          orderOnDetailsPage: 2200
+        - name: dehostingMethod
+          displayName: Dehosting method
+          type: string
+          header: Sequencing
+          orderOnDetailsPage: 2220
+        - name: referenceGenomeAccession
+          displayName: Reference genome accession
+          type: string
+          header: Sequencing
+          orderOnDetailsPage: 2240
+        - name: consensusSequenceSoftwareName
+          displayName: Consensus sequence software name
+          type: string
+          header: Sequencing
+          orderOnDetailsPage: 2260
+        - name: consensusSequenceSoftwareVersion
+          displayName: Consensus sequence software version
+          type: string
+          header: Sequencing
+          orderOnDetailsPage: 2280
+        - name: depthOfCoverage
+          displayName: Depth of coverage
+          type: int
+          header: Sequencing
+          orderOnDetailsPage: 2300
+        - name: breadthOfCoverage
+          displayName: Breadth of coverage
+          type: int
+          header: Sequencing
+          orderOnDetailsPage: 2320
+        - name: qualityControlMethodName
+          displayName: Quality control method name
+          type: string
+          header: Sequencing
+          orderOnDetailsPage: 2340
+        - name: qualityControlMethodVersion
+          displayName: Quality control method version
+          type: string
+          header: Sequencing
+          orderOnDetailsPage: 2360
+        - name: qualityControlDetermination
+          displayName: Quality control determination
+          type: string
+          header: Sequencing
+          orderOnDetailsPage: 2380
+        - name: qualityControlIssues
+          displayName: Quality control issues
+          type: string
+          header: Sequencing
+          orderOnDetailsPage: 2400
+        - name: qualityControlDetails
+          displayName: Quality control details
+          type: string
+          header: Diagnostics
+          orderOnDetailsPage: 2500
+        - name: diagnosticMeasurementMethod
+          displayName: Diagnostic measurement method
+          type: string
+          header: Diagnostics
+          orderOnDetailsPage: 2520
+        - name: diagnosticTargetPresence
+          displayName: Diagnostic target presence
+          type: string
+          header: Diagnostics
+          orderOnDetailsPage: 2540
+        - name: diagnosticTargetGeneName
+          displayName: Gene name
+          type: string
+          header: Diagnostics
+          orderOnDetailsPage: 2560
+        - name: diagnosticMeasurementValue
+          displayName: Diagnostic measurement value
+          type: string
+          header: Diagnostics
+          orderOnDetailsPage: 2580
+        - name: diagnosticMeasurementUnit
+          displayName: Diagnostic measurement unit
+          type: string
+          header: Diagnostics
+          orderOnDetailsPage: 2600
+        - name: hostTaxonId
+          displayName: Host species
+          type: string
+          header: Host
+          autocomplete: true
+          customDisplay:
+            type: hostSpecies
+            displayGroup: hostSpecies
+            label: Host
+          orderOnDetailsPage: 1540
+        - name: hostNameScientific
+          displayName: Host name - scientific
+          type: string
+          header: Host
+          generateIndex: true
+          autocomplete: true
+          customDisplay:
+            type: hostSpecies
+            displayGroup: hostSpecies
+            label: Host
+          orderOnDetailsPage: 1560
+        - name: hostNameCommon
+          displayName: Host name - common
+          type: string
+          header: Host
+          generateIndex: true
+          autocomplete: true
+          customDisplay:
+            type: hostSpecies
+            displayGroup: hostSpecies
+            label: Host
+          orderOnDetailsPage: 1580
+        - name: isLabHost
+          displayName: Is lab host
+          type: boolean
+          header: Host
+          autocomplete: true
+          orderOnDetailsPage: 1920
+        - name: cellLine
+          displayName: Cell line
+          type: string
+          header: Host
+          generateIndex: true
+          autocomplete: true
+          orderOnDetailsPage: 1940
+        - name: passageNumber
+          displayName: Passage number
+          type: int
+          header: Host
+          orderOnDetailsPage: 1960
+        - name: passageMethod
+          displayName: Passage method
+          type: string
+          header: Host
+          generateIndex: true
+          autocomplete: true
+          orderOnDetailsPage: 1980
+        - name: ncbiSourceDb
+          displayName: NCBI source DB
+          type: string
+          header: INSDC
+          generateIndex: true
+          autocomplete: true
+        - name: ncbiVirusName
+          displayName: NCBI Virus name
+          type: string
+          header: INSDC
+          generateIndex: true
+          autocomplete: true
+        - name: ncbiVirusTaxId
+          displayName: NCBI Virus tax ID
+          type: int
+          header: INSDC
+          autocomplete: true
+          customDisplay:
+            type: link
+            url: https://www.ncbi.nlm.nih.gov/labs/virus/vssi/#/virus?SeqType_s=Nucleotide&VirusLineage_ss=taxid:__value__
+        - name: insdcRawReadsAccession
+          displayName: Raw reads accession
+          type: string
+          header: INSDC
+          customDisplay:
+            type: link
+            url: https://www.ncbi.nlm.nih.gov/sra/?term=__value__
+          orderOnDetailsPage: 1120
+        - name: versionComment
+          displayName: versionComment
+          type: string
+          header: Sample details
+        - name: organism
+          displayName: Organism
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: Sample details
+          initiallyVisible: true
+          includeInDownloadsByDefault: true
+        primaryKey: accessionVersion
+        defaultOrderBy: sampleCollectionDate
+        defaultOrder: descending
+        features:
+        - name: generalizedAdvancedQuery
+    tableColumns:
+      - organism
+      - geoLocCountry
+      - sampleCollectionDate
+      - displayName
+      - authors
+      - ncbiReleaseDate
+  co-infections:
+    displayName: Co-infections
+    lapisUrl: "http://loculus-lapis-service-co-infections:8080"
+    sequenceData:
+      unalignedNucleotideSequences:
+        enabled: true
+        segments:
+          - main
+          - L
+          - M
+          - S
+    query: |
+      with real_organisms as (
+        select
+          accessionVersion, accession, version,
+          submissionId, isRevocation, submitter,
+          groupName, groupId, submittedAtTimestamp,
+          submittedDate, releasedAtTimestamp, releasedDate,
+          versionStatus, pipelineVersion, dataUseTerms,
+          dataUseTermsRestrictedUntil, dataBecameOpenAt, dataUseTermsUrl,
+          sampleCollectionDate, sampleCollectionDateRangeLower, sampleCollectionDateRangeUpper,
+          displayName, ncbiReleaseDate, earliestReleaseDate,
+          geoLocLatitude, geoLocLongitude, geoLocCountry,
+          geoLocAdmin1, geoLocAdmin2, geoLocCity,
+          geoLocSite, specimenCollectorSampleId,
+          authors, authorAffiliations,
+          sequencedByOrganization,
+          hostNameScientific, hostTaxonId,
+          ncbiSourceDb, ncbiVirusName, ncbiVirusTaxId,
+          versionComment,
+          'CCHF (Multi-Ref)' as organism
+        from "cchf-multi-ref"
+        union all
+        select
+          accessionVersion, accession, version,
+          submissionId, isRevocation, submitter,
+          groupName, groupId, submittedAtTimestamp,
+          submittedDate, releasedAtTimestamp, releasedDate,
+          versionStatus, pipelineVersion, dataUseTerms,
+          dataUseTermsRestrictedUntil, dataBecameOpenAt, dataUseTermsUrl,
+          sampleCollectionDate, sampleCollectionDateRangeLower, sampleCollectionDateRangeUpper,
+          displayName, ncbiReleaseDate, earliestReleaseDate,
+          geoLocLatitude, geoLocLongitude, geoLocCountry,
+          geoLocAdmin1, geoLocAdmin2, geoLocCity,
+          geoLocSite, specimenCollectorSampleId,
+          authors, authorAffiliations,
+          sequencedByOrganization,
+          hostNameScientific, hostTaxonId,
+          ncbiSourceDb, ncbiVirusName, ncbiVirusTaxId,
+          versionComment,
+          'Crimean-Congo Hemorrhagic Fever Virus' as organism
+        from "cchf"
+        union all
+        select
+          accessionVersion, accession, version,
+          submissionId, isRevocation, submitter,
+          groupName, groupId, submittedAtTimestamp,
+          submittedDate, releasedAtTimestamp, releasedDate,
+          versionStatus, pipelineVersion, dataUseTerms,
+          dataUseTermsRestrictedUntil, dataBecameOpenAt, dataUseTermsUrl,
+          sampleCollectionDate, sampleCollectionDateRangeLower, sampleCollectionDateRangeUpper,
+          displayName, ncbiReleaseDate, earliestReleaseDate,
+          geoLocLatitude, geoLocLongitude, geoLocCountry,
+          geoLocAdmin1, geoLocAdmin2, geoLocCity,
+          geoLocSite, specimenCollectorSampleId,
+          authors, authorAffiliations,
+          sequencedByOrganization,
+          hostNameScientific, hostTaxonId,
+          ncbiSourceDb, ncbiVirusName, ncbiVirusTaxId,
+          versionComment,
+          'Ebola Sudan' as organism
+        from "ebola-sudan"
+        union all
+        select
+          accessionVersion, accession, version,
+          submissionId, isRevocation, submitter,
+          groupName, groupId, submittedAtTimestamp,
+          submittedDate, releasedAtTimestamp, releasedDate,
+          versionStatus, pipelineVersion, dataUseTerms,
+          dataUseTermsRestrictedUntil, dataBecameOpenAt, dataUseTermsUrl,
+          sampleCollectionDate, sampleCollectionDateRangeLower, sampleCollectionDateRangeUpper,
+          displayName, ncbiReleaseDate, earliestReleaseDate,
+          geoLocLatitude, geoLocLongitude, geoLocCountry,
+          geoLocAdmin1, geoLocAdmin2, geoLocCity,
+          geoLocSite, specimenCollectorSampleId,
+          authors, authorAffiliations,
+          sequencedByOrganization,
+          hostNameScientific, hostTaxonId,
+          ncbiSourceDb, ncbiVirusName, ncbiVirusTaxId,
+          versionComment,
+          'Enterovirus' as organism
+        from "enteroviruses"
+        union all
+        select
+          accessionVersion, accession, version,
+          submissionId, isRevocation, submitter,
+          groupName, groupId, submittedAtTimestamp,
+          submittedDate, releasedAtTimestamp, releasedDate,
+          versionStatus, pipelineVersion, dataUseTerms,
+          dataUseTermsRestrictedUntil, dataBecameOpenAt, dataUseTermsUrl,
+          sampleCollectionDate, sampleCollectionDateRangeLower, sampleCollectionDateRangeUpper,
+          displayName, ncbiReleaseDate, earliestReleaseDate,
+          geoLocLatitude, geoLocLongitude, geoLocCountry,
+          geoLocAdmin1, geoLocAdmin2, geoLocCity,
+          geoLocSite, specimenCollectorSampleId,
+          authors, authorAffiliations,
+          sequencedByOrganization,
+          hostNameScientific, hostTaxonId,
+          ncbiSourceDb, ncbiVirusName, ncbiVirusTaxId,
+          versionComment,
+          'West Nile Virus' as organism
+        from "west-nile"
+      ),
+      co_infection_samples as (
+        select groupId, specimenCollectorSampleId
+        from real_organisms
+        where specimenCollectorSampleId is not null
+          and trim(specimenCollectorSampleId) <> ''
+        group by groupId, specimenCollectorSampleId
+        having count(distinct organism) >= 2
+      )
+      select real_organisms.*
+      from real_organisms
+      join co_infection_samples using (groupId, specimenCollectorSampleId)
+    schema: |
+      schema:
+        instanceName: Co-infections
+        opennessLevel: OPEN
+        metadata:
+        - name: accessionVersion
+          displayName: Accession version
+          type: string
+          header: Loculus
+        - name: accession
+          displayName: Accession
+          type: string
+          header: Loculus
+        - name: version
+          displayName: Version
+          type: int
+          header: Loculus
+        - name: submissionId
+          displayName: Submission ID
+          type: string
+          header: Submission details
+          substringSearch: true
+          includeInDownloadsByDefault: true
+        - name: isRevocation
+          displayName: Is revocation
+          type: boolean
+          autocomplete: true
+          header: Submission details
+        - name: submitter
+          displayName: Submitter
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: Submission details
+        - name: groupName
+          displayName: Submitting group
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: Submission details
+          includeInDownloadsByDefault: true
+        - name: groupId
+          displayName: Submitting group (numeric ID)
+          type: int
+          autocomplete: true
+          header: Submission details
+        - name: submittedAtTimestamp
+          displayName: Date submitted
+          type: timestamp
+          header: Submission details
+        - name: submittedDate
+          displayName: Date submitted (exact)
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: Submission details
+        - name: releasedAtTimestamp
+          displayName: Date released
+          type: timestamp
+          header: Submission details
+        - name: releasedDate
+          displayName: Date released (exact)
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: Submission details
+        - name: versionStatus
+          displayName: Version status
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: Submission details
+        - name: pipelineVersion
+          displayName: Pipeline version
+          type: int
+          header: Loculus
+        - name: dataUseTerms
+          displayName: Data use terms
+          type: string
+          header: Data use terms
+          generateIndex: true
+          autocomplete: true
+        - name: dataUseTermsRestrictedUntil
+          displayName: Restricted until
+          type: date
+          header: Data use terms
+        - name: dataBecameOpenAt
+          displayName: Data became open
+          type: date
+          header: Data use terms
+        - name: dataUseTermsUrl
+          displayName: Data use terms URL
+          type: string
+          header: Data use terms
+        - name: sampleCollectionDate
+          displayName: Collection date
+          type: string
+          header: Sample details
+          rangeSearch: true
+          includeInDownloadsByDefault: true
+          initiallyVisible: true
+        - name: sampleCollectionDateRangeLower
+          displayName: Collection date (lower bound)
+          type: date
+          header: Sample details
+          rangeOverlapSearch:
+            rangeName: sampleCollectionDateRange
+            rangeDisplayName: Collection date
+            bound: lower
+        - name: sampleCollectionDateRangeUpper
+          displayName: Collection date (upper bound)
+          type: date
+          header: Sample details
+          rangeOverlapSearch:
+            rangeName: sampleCollectionDateRange
+            rangeDisplayName: Collection date
+            bound: upper
+        - name: displayName
+          displayName: Display name
+          type: string
+          header: Sample details
+          initiallyVisible: true
+        - name: ncbiReleaseDate
+          displayName: NCBI release date
+          type: date
+          header: INSDC
+          initiallyVisible: true
+        - name: earliestReleaseDate
+          displayName: Earliest release date
+          type: date
+          header: Sample details
+          rangeSearch: true
+        - name: geoLocLatitude
+          displayName: Latitude
+          type: float
+          header: Sample details
+        - name: geoLocLongitude
+          displayName: Longitude
+          type: float
+          header: Sample details
+        - name: geoLocCountry
+          displayName: Collection country
+          type: string
+          header: Sample details
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+          customDisplay:
+            type: geoLocation
+            displayGroup: geoLocation
+            label: Sampling location
+        - name: geoLocAdmin1
+          displayName: Collection subdivision level 1
+          type: string
+          header: Sample details
+          generateIndex: true
+          autocomplete: true
+          customDisplay:
+            type: geoLocation
+            displayGroup: geoLocation
+            label: Sampling location
+        - name: geoLocAdmin2
+          displayName: Collection subdivision level 2
+          type: string
+          header: Sample details
+          generateIndex: true
+          autocomplete: true
+          customDisplay:
+            type: geoLocation
+            displayGroup: geoLocation
+            label: Sampling location
+        - name: geoLocCity
+          displayName: Collection city
+          type: string
+          header: Sample details
+          generateIndex: true
+          autocomplete: true
+        - name: geoLocSite
+          displayName: Collection site
+          type: string
+          header: Sample details
+        - name: specimenCollectorSampleId
+          displayName: Isolate name
+          type: string
+          header: Sample details
+          substringSearch: true
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+          includeInDownloadsByDefault: true
+        - name: authors
+          displayName: Authors
+          type: authors
+          header: Authors
+          substringSearch: true
+          initiallyVisible: true
+          includeInDownloadsByDefault: true
+        - name: authorAffiliations
+          displayName: Author affiliations
+          type: string
+          header: Authors
+          substringSearch: true
+        - name: sequencedByOrganization
+          displayName: Sequenced by
+          type: string
+          header: Sequencing
+          generateIndex: true
+          autocomplete: true
+        - name: hostNameScientific
+          displayName: Host name - scientific
+          type: string
+          header: Host
+          generateIndex: true
+          autocomplete: true
+          customDisplay:
+            type: hostSpecies
+            displayGroup: hostSpecies
+            label: Host
+        - name: hostTaxonId
+          displayName: Host species
+          type: string
+          header: Host
+          autocomplete: true
+          customDisplay:
+            type: hostSpecies
+            displayGroup: hostSpecies
+            label: Host
+        - name: ncbiSourceDb
+          displayName: NCBI source DB
+          type: string
+          header: INSDC
+          generateIndex: true
+          autocomplete: true
+        - name: ncbiVirusName
+          displayName: NCBI Virus name
+          type: string
+          header: INSDC
+          generateIndex: true
+          autocomplete: true
+        - name: ncbiVirusTaxId
+          displayName: NCBI Virus tax ID
+          type: int
+          header: INSDC
+          autocomplete: true
+          customDisplay:
+            type: link
+            url: https://www.ncbi.nlm.nih.gov/labs/virus/vssi/#/virus?SeqType_s=Nucleotide&VirusLineage_ss=taxid:__value__
+        - name: versionComment
+          displayName: versionComment
+          type: string
+          header: Sample details
+        - name: organism
+          displayName: Organism
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: Sample details
+          initiallyVisible: true
+          includeInDownloadsByDefault: true
+        primaryKey: accessionVersion
+        defaultOrderBy: sampleCollectionDate
+        defaultOrder: descending
+        features:
+        - name: generalizedAdvancedQuery
+    tableColumns:
+      - organism
+      - specimenCollectorSampleId
+      - geoLocCountry
+      - sampleCollectionDate
+      - displayName
+      - authors
+      - ncbiReleaseDate
+  test-organisms:
+    displayName: Test organisms
+    lapisUrl: "http://loculus-lapis-service-test-organisms:8080"
+    sequenceData:
+      unalignedNucleotideSequences:
+        enabled: true
+        segments:
+          - main
+    query: |
+      select
+                 accessionVersion, accession, version,
+                 submissionId, isRevocation, submitter,
+                 groupName, groupId, submittedAtTimestamp,
+                 submittedDate, releasedAtTimestamp, releasedDate,
+                 versionStatus, pipelineVersion, dataUseTerms,
+                 dataUseTermsRestrictedUntil, dataBecameOpenAt, dataUseTermsUrl,
+                 date, region, country,
+                 division, host, lineage,
+                 versionComment,
+                 'Test organism (with files)' as organism
+      from "dummy-organism-with-files"
+      union all
+      select
+                 accessionVersion, accession, version,
+                 submissionId, isRevocation, submitter,
+                 groupName, groupId, submittedAtTimestamp,
+                 submittedDate, releasedAtTimestamp, releasedDate,
+                 versionStatus, pipelineVersion, dataUseTerms,
+                 dataUseTermsRestrictedUntil, dataBecameOpenAt, dataUseTermsUrl,
+                 date, region, country,
+                 division, host, lineage,
+                 versionComment,
+                 'Test Dummy Organism' as organism
+      from "dummy-organism"
+      union all
+      select
+                 accessionVersion, accession, version,
+                 submissionId, isRevocation, submitter,
+                 groupName, groupId, submittedAtTimestamp,
+                 submittedDate, releasedAtTimestamp, releasedDate,
+                 versionStatus, pipelineVersion, dataUseTerms,
+                 dataUseTermsRestrictedUntil, dataBecameOpenAt, dataUseTermsUrl,
+                 date, region, country,
+                 division, host, lineage,
+                 versionComment,
+                 'Test organism (without alignment)' as organism
+      from "not-aligned-organism"
+    schema: |
+      schema:
+        instanceName: Test organisms
+        opennessLevel: OPEN
+        metadata:
+        - name: accessionVersion
+          displayName: Accession version
+          type: string
+          header: Loculus
+        - name: accession
+          displayName: Accession
+          type: string
+          header: Loculus
+        - name: version
+          displayName: Version
+          type: int
+          header: Loculus
+        - name: submissionId
+          displayName: Submission ID
+          type: string
+          header: Submission details
+          substringSearch: true
+        - name: isRevocation
+          displayName: Is revocation
+          type: boolean
+          header: Loculus
+          autocomplete: true
+        - name: submitter
+          displayName: Submitter
+          type: string
+          header: Submission details
+          generateIndex: true
+          autocomplete: true
+        - name: groupName
+          displayName: Submitting group
+          type: string
+          header: Submission details
+          generateIndex: true
+          autocomplete: true
+        - name: groupId
+          displayName: Submitting group (numeric ID)
+          type: int
+          header: Submission details
+        - name: submittedAtTimestamp
+          displayName: Date submitted
+          type: timestamp
+          header: Submission details
+        - name: submittedDate
+          displayName: Date submitted (exact)
+          type: string
+          header: Submission details
+          generateIndex: true
+          autocomplete: true
+        - name: releasedAtTimestamp
+          displayName: Date released
+          type: timestamp
+          header: Submission details
+        - name: releasedDate
+          displayName: Date released (exact)
+          type: string
+          header: Submission details
+          generateIndex: true
+          autocomplete: true
+        - name: versionStatus
+          displayName: Version status
+          type: string
+          header: Loculus
+          generateIndex: true
+          autocomplete: true
+        - name: pipelineVersion
+          displayName: Pipeline version
+          type: int
+          header: Loculus
+        - name: dataUseTerms
+          displayName: Data use terms
+          type: string
+          header: Data use terms
+          generateIndex: true
+          autocomplete: true
+        - name: dataUseTermsRestrictedUntil
+          displayName: Data use terms restricted until
+          type: date
+          header: Data use terms
+        - name: dataBecameOpenAt
+          displayName: Date data became open
+          type: date
+          header: Data use terms
+        - name: dataUseTermsUrl
+          displayName: Data use terms URL
+          type: string
+          header: Data use terms
+        - name: date
+          displayName: Date
+          type: date
+          header: Collection Details
+          initiallyVisible: true
+        - name: region
+          displayName: Region
+          type: string
+          header: Collection Details
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+        - name: country
+          displayName: Country
+          type: string
+          header: Collection Details
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+        - name: division
+          displayName: Division
+          type: string
+          header: Collection Details
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+        - name: host
+          displayName: Host
+          type: string
+          header: Collection Details
+          autocomplete: true
+          initiallyVisible: true
+        - name: lineage
+          displayName: Lineage
+          type: string
+          header: Sample details
+          initiallyVisible: true
+        - name: versionComment
+          displayName: versionComment
+          type: string
+          header: Sample details
+        - name: organism
+          displayName: Organism
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: Sample details
+          initiallyVisible: true
+          includeInDownloadsByDefault: true
+        primaryKey: accessionVersion
+        defaultOrderBy: date
+        defaultOrder: descending
+        features:
+        - name: generalizedAdvancedQuery
+    tableColumns:
+      - organism
+      - country
+      - date
+      - region
+      - division
+      - host
+      - lineage

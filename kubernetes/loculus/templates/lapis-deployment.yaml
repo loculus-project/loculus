@@ -1,8 +1,13 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- $backendHost := .Values.disableBackend | ternary
+    "http://host.k3d.internal:8079"
+    "http://loculus-backend-service:8079"
+}}
 
 {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
 {{- $organismContent := $item.contents }}
+{{- $configVersion := default 1 ($organismContent.configVersion) }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -26,7 +31,13 @@ spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       {{- include "loculus.podScheduling" $ | nindent 6 }}
       initContainers:
-        {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
+        {{- include "loculus.configAdapterInitContainer" (dict
+              "organismKey" $key
+              "configVersion" $configVersion
+              "dockerTag" $dockerTag
+              "imagePullPolicy" $.Values.imagePullPolicy
+              "images" $.Values.images
+              "backendUrl" $backendHost) | nindent 8 }}
       containers:
         - name: lapis
           image: "{{ $.Values.images.lapis.repository }}:{{ $.Values.images.lapis.tag }}"
@@ -67,5 +78,5 @@ spec:
             failureThreshold: 3
             timeoutSeconds: 5
       volumes:
-        {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 8 }}
+        {{- include "loculus.adapterVolume" . | nindent 8 }}
 {{- end }}

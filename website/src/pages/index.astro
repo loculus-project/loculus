@@ -3,8 +3,10 @@ import Faq from '../components/IndexPage/FAQ.mdx';
 import OrganismCard from '../components/IndexPage/OrganismCard.astro';
 import WelcomeMessage from '../components/IndexPage/WelcomeMessage.astro';
 import { getOrganismStatisticsMap } from '../components/IndexPage/getOrganismStatistics';
-import { getConfiguredOrganisms, getWebsiteConfig } from '../config';
+import { buttonClasses } from '../components/common/buttonStyles';
+import { getConfiguredOrganisms, getConfiguredViews, getWebsiteConfig, overviewIsEnabled } from '../config';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { routes } from '../routes/routes';
 const websiteConfig = getWebsiteConfig();
 const { name: websiteName, welcomeMessageHTML } = websiteConfig;
 import '../styles/mdcontainer.css';
@@ -14,11 +16,54 @@ const organismStatisticsMap = await getOrganismStatisticsMap(
     getConfiguredOrganisms().map((organism) => organism.key),
     numberDaysAgoStatistics,
 );
+const additionalViews = getConfiguredViews().filter((view) => view.key !== 'overview');
+const viewDescriptions = new Map([
+    [
+        'real-organisms',
+        'Browse released records from the NCBI-ingested organism databases with their shared metadata fields.',
+    ],
+    ['test-organisms', 'Explore the configured test organisms through a shared metadata view.'],
+    [
+        'co-infections',
+        'Find real-organism records linked by submitting group and isolate name across multiple organisms.',
+    ],
+]);
 ---
 
 <BaseLayout title='Home'>
     <div class='max-w-6xl mx-auto'>
         <WelcomeMessage websiteName={websiteName} welcomeMessageHTML={welcomeMessageHTML} />
+
+        {
+            (overviewIsEnabled() || additionalViews.length > 0) && (
+                <div class='mb-8'>
+                    {overviewIsEnabled() && (
+                        <div class='mb-4 flex justify-center sm:justify-start'>
+                            <a href={routes.overviewPage()} class={buttonClasses({ variant: 'primary', size: 'md' })}>
+                                See all samples
+                            </a>
+                        </div>
+                    )}
+                    {additionalViews.length > 0 && (
+                        <div class='grid gap-3 md:grid-cols-3'>
+                            {additionalViews.map((view) => (
+                                <article class='rounded-md border border-gray-200 bg-white p-4 shadow-sm'>
+                                    <a
+                                        href={routes.viewPage(view.key)}
+                                        class={buttonClasses({ variant: 'outline', size: 'md' })}
+                                    >
+                                        {view.displayName}
+                                    </a>
+                                    <p class='mt-3 text-sm leading-6 text-gray-700'>
+                                        {viewDescriptions.get(view.key) ?? 'Browse this configured metadata view.'}
+                                    </p>
+                                </article>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )
+        }
 
         <div class='flex justify-center'>
             <div

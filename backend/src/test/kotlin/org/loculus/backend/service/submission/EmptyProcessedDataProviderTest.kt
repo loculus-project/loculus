@@ -1,18 +1,20 @@
 package org.loculus.backend.service.submission
 
 import com.fasterxml.jackson.databind.node.NullNode
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.datetime.LocalDateTime
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Organism
-import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.config.DataUseTerms
-import org.loculus.backend.config.InstanceConfig
 import org.loculus.backend.config.Metadata
 import org.loculus.backend.config.MetadataType
+import org.loculus.backend.config.OrganismConfig
 import org.loculus.backend.config.ReferenceGenome
 import org.loculus.backend.config.ReferenceSequence
 import org.loculus.backend.config.Schema
+import org.loculus.backend.config.service.ConfigService
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 
 private const val FIRST_METADATA_FIELD = "required"
@@ -23,14 +25,20 @@ private const val FIRST_AMINO_ACID_SEQUENCE = "firstAminoAcidSequence"
 private const val SECOND_AMINO_ACID_SEQUENCE = "secondAminoAcidSequence"
 
 class EmptyProcessedDataProviderTest {
-    private val underTest = EmptyProcessedDataProvider(
-        BackendConfig(
-            accessionPrefix = "LOC_",
-            organisms = mapOf(
-                DEFAULT_ORGANISM to InstanceConfig(
+    private val configService: ConfigService = mockk()
+    private val underTest = EmptyProcessedDataProvider(configService)
+
+    init {
+        every { configService.getOrganismConfig(Organism(DEFAULT_ORGANISM)) } returns
+            ConfigService.VersionedOrganism(
+                key = DEFAULT_ORGANISM,
+                version = 1L,
+                publishedAt = LocalDateTime(2024, 1, 1, 0, 0),
+                publishedBy = "test",
+                config = OrganismConfig(
                     schema = Schema(
-                        FIRST_NUCLEOTIDE_SEQUENCE,
-                        listOf(
+                        organismName = FIRST_NUCLEOTIDE_SEQUENCE,
+                        metadata = listOf(
                             Metadata(name = FIRST_METADATA_FIELD, type = MetadataType.STRING, required = true),
                             Metadata(name = SECOND_METADATA_FIELD, type = MetadataType.DATE, required = false),
                         ),
@@ -46,12 +54,8 @@ class EmptyProcessedDataProviderTest {
                         ),
                     ),
                 ),
-            ),
-            dataUseTerms = DataUseTerms(true, null),
-            websiteUrl = "example.com",
-            backendUrl = "http://dummy-backend.com",
-        ),
-    )
+            )
+    }
 
     @Test
     fun `GIVEN backend config for schema THEN returns processed data with all fields and sequences empty`() {

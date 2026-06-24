@@ -1,0 +1,25 @@
+# Helm values overlay for running Loculus from locally-built images imported into k3d.
+#
+# Applied automatically by `./deploy.py helm --branch local`. The `imagePullPolicy:
+# IfNotPresent` settings stop kubelet from trying to fetch each image from ghcr.io,
+# which would fail because the `:local` tag only exists in the k3d cluster's
+# containerd (put there by `./build-local-images.sh`).
+#
+# Pair this with `--branch local` so the chart's docker-tag helper resolves to the
+# literal `local` tag.
+
+imagePullPolicy: IfNotPresent
+images:
+  loculusSilo:
+    pullPolicy: IfNotPresent
+  # `lapis` keeps `pullPolicy: Always` from values.yaml: that's the upstream
+  # GenSpectrum image which we don't build locally, so we want kubelet to pull it
+  # normally (and k3d caches once).
+  website:
+    pullPolicy: IfNotPresent
+  backend:
+    pullPolicy: IfNotPresent
+  configLoader:
+    pullPolicy: IfNotPresent
+  configAdapter:
+    pullPolicy: IfNotPresent

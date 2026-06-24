@@ -1,0 +1,40 @@
+---
+import { InstanceConfigEditor } from '../../../components/admin/InstanceConfigEditor';
+import { getRuntimeConfig } from '../../../config';
+import AdminConfigLayout from '../../../layouts/AdminConfigLayout.astro';
+import { AdminConfigError, getAdminConfigClient } from '../../../services/adminConfigClient';
+import { fetchInstanceConfig } from '../../../services/configClient';
+import type { CanonicalInstanceConfig, InstanceDraftResponse } from '../../../types/loculusConfig';
+
+const session = Astro.locals.session!;
+const client = await getAdminConfigClient(session);
+const runtime = getRuntimeConfig();
+const publicBackendUrl = runtime.public.backendUrl;
+
+let loadError: string | null = null;
+let draft: InstanceDraftResponse | null = null;
+let published: CanonicalInstanceConfig | null = null;
+try {
+    [draft, published] = await Promise.all([
+        client.getInstanceDraft(),
+        fetchInstanceConfig(runtime.serverSide.backendUrl).then((r) => r.config),
+    ]);
+} catch (e) {
+    loadError = AdminConfigError.isInstance(e) ? (e.body.message ?? e.body.error) : String(e);
+}
+---
+
+<AdminConfigLayout title='Instance config'>
+    {loadError !== null && <p class='text-red-600 mb-4'>Failed to load: {loadError}</p>}
+    {
+        loadError === null && published !== null && (
+            <InstanceConfigEditor
+                accessToken={session.token!.accessToken}
+                backendUrl={publicBackendUrl}
+                initialDraft={draft}
+                publishedConfig={published}
+                client:load
+            />
+        )
+    }
+</AdminConfigLayout>
