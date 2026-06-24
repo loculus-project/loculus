@@ -329,10 +329,11 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     const handleDiscardFile = (submissionId: string, file: SingleFileUpload) => {
         setFileUploadState((state) => {
             if (state?.type === 'uploadCompleted') {
-                const remaining = state.files[submissionId].filter((f) => f.name !== file.name);
-                if (remaining.length === 0) return undefined;
+                const remainingFiles = state.files[submissionId].filter((f) => f.name !== file.name);
+                if (remainingFiles.length === 0) return undefined;
+
                 return produce(state, (draft) => {
-                    draft.files[submissionId] = remaining;
+                    draft.files[submissionId] = remainingFiles;
                 });
             }
             return state;
@@ -341,9 +342,9 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
     const handleDiscardAllFiles = () => setFileUploadState(undefined);
 
-    // Currently only supported in form mode
     const handleAddAdditionalFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || fileUploadState?.type !== 'uploadCompleted') return;
+        // Currently only supported in form mode
+        if (inputMode === 'bulk' || !e.target.files || fileUploadState?.type !== 'uploadCompleted') return;
 
         // exclude dot files, because files like .DS_Store cause problems otherwise
         const filesArray = filterDotFiles(Array.from(e.target.files));
@@ -352,47 +353,39 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         e.target.value = '';
         if (filesArray.length === 0) return;
 
-        const selectedNamesList = filesArray.map((f) => f.name);
-        const duplicateName = selectedNamesList.find((name, index) => selectedNamesList.indexOf(name) !== index);
+        // Check for duplicate file names in the selection
+        const selectedFileNames = filesArray.map((f) => f.name);
+        const duplicateName = selectedFileNames.find((name, index) => selectedFileNames.indexOf(name) !== index);
         if (duplicateName !== undefined) {
             onError(`Cannot add multiple files with the same name: ${duplicateName}`);
             return;
         }
 
+        // Check for collisions with existing files
         const submissionId = Object.keys(fileUploadState.files)[0];
         const existingFiles = fileUploadState.files[submissionId];
-        const selectedNames = new Set(selectedNamesList);
-        const collisions = existingFiles.filter((file) => selectedNames.has(file.name));
+        const uniqueSelectedNames = new Set(selectedFileNames);
+        const existingFileCollisions = existingFiles.filter((file) => uniqueSelectedNames.has(file.name));
 
-        const addFiles = async (
-            submissionId: string,
-            existingFiles: (Uploaded | PreviousUpload)[],
-            filesArray: File[],
-            selectedNames: Set<string>,
-        ) => {
-            // Files whose names collide with the selection are replaced, so drop them before appending.
-            const survivingFiles = existingFiles.filter((file) => !selectedNames.has(file.name));
+        const addAdditionalFiles = async () => {
+            const nonCollidingFiles = existingFiles.filter((file) => !uniqueSelectedNames.has(file.name));
             const newPendingFiles = await requestFileUploads(filesArray.map((f) => ({ file: f, name: f.name })));
             setFileUploadState({
                 type: 'uploadInProgress',
-                files: { [submissionId]: [...survivingFiles, ...newPendingFiles] },
+                files: { [submissionId]: [...nonCollidingFiles, ...newPendingFiles] },
             });
             void startUploading({ [submissionId]: newPendingFiles });
         };
 
-        const proceed = () => void addFiles(submissionId, existingFiles, filesArray, selectedNames);
-
-        if (collisions.length > 0) {
+        if (existingFileCollisions.length > 0) {
             displayConfirmationDialog({
                 dialogText:
                     'The following file(s) already exist and will be replaced: ' +
-                    collisions.map((file) => file.name).join(', '),
+                    existingFileCollisions.map((file) => file.name).join(', '),
                 confirmButtonText: 'Replace',
-                onConfirmation: proceed,
+                onConfirmation: addAdditionalFiles,
             });
-        } else {
-            proceed();
-        }
+        } else void addAdditionalFiles();
     };
 
     return fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
