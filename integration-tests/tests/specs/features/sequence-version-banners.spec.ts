@@ -222,7 +222,7 @@ test.describe('Sequence version banners', () => {
         await detailPage.goto(revisedAccessionVersion);
 
         // Navigate to versions page
-        const versionsPage = await detailPage.gotoAllVersions();
+        const versionsPage = await detailPage.gotoCompareVersions();
 
         // Verify versions page content
         await versionsPage.expectVersionsPageFor(accession);
@@ -278,6 +278,8 @@ test.describe('Sequence version banners', () => {
         await expect.poll(() => versionsPage.getCompareParam()).toBe('2,3');
         await versionsPage.expectFieldRowPresent('Length');
         await versionsPage.expectSharedMutationsHiddenByDefault();
+        await versionsPage.expectNucleotideMutationDiff('Substitutions', null, 'A165G');
+        await versionsPage.expectNucleotideMutationDiff('Deletions', null, '228-230');
         await versionsPage.expectFieldRowAbsent('Collection date');
 
         // Flip the selection to compare versions 1 and 2 (uncheck 3, check 1 - deterministic

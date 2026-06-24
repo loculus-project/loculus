@@ -93,6 +93,30 @@ export class VersionsPage {
     }
 
     /**
+     * Assert the mutation values rendered for each version. Pass null when the
+     * corresponding version column is expected to be empty.
+     */
+    async expectNucleotideMutationDiff(
+        fieldLabel: string,
+        version1Mutation: string | null,
+        version2Mutation: string | null,
+    ) {
+        await expect(this.page.getByText('Nucleotide mutations', { exact: true })).toBeVisible();
+
+        const cells = this.diffRow(fieldLabel).getByRole('cell');
+        for (const [cellIndex, mutation] of [
+            [1, version1Mutation],
+            [2, version2Mutation],
+        ] as const) {
+            if (mutation === null) {
+                await expect(cells.nth(cellIndex)).toBeEmpty();
+            } else {
+                await expect(cells.nth(cellIndex)).toContainText(mutation);
+            }
+        }
+    }
+
+    /**
      * Assert that a field row is not present in the diff table (e.g. an unchanged
      * field while "Hide unchanged fields" is on).
      */

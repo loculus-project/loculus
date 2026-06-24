@@ -57,14 +57,14 @@ export class SequenceDetailPage {
         await expect(this.page.getByText('This is a revocation version.')).toBeVisible();
     }
 
-    async gotoAllVersions(): Promise<VersionsPage> {
+    async gotoCompareVersions(): Promise<VersionsPage> {
         const versionLink = this.page.getByText(/Version \d+/);
         await expect(versionLink).toBeVisible();
         await versionLink.click();
 
-        const allVersionsLink = this.page.getByRole('link', { name: 'All versions' });
-        await expect(allVersionsLink).toBeVisible();
-        await allVersionsLink.click();
+        const compareVersionsLink = this.page.getByRole('link', { name: 'Compare versions' });
+        await expect(compareVersionsLink).toBeVisible();
+        await compareVersionsLink.click();
 
         return new VersionsPage(this.page);
     }
