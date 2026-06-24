@@ -17,6 +17,8 @@ spec:
     type: Recreate
   template:
     metadata:
+      annotations:
+        valuesHash: {{ .Values | toJson | sha256sum | quote }}
       labels:
         app: loculus
         component: database
