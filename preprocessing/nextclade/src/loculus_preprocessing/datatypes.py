@@ -120,13 +120,13 @@ class UnprocessedAfterNextclade:
 @dataclass
 class ProcessedData:
     metadata: ProcessedMetadata
+    files: dict[str, list[FileIdAndName]] | None
     unalignedNucleotideSequences: dict[SequenceName, Any]  # noqa: N815
     alignedNucleotideSequences: dict[SequenceName, Any]  # noqa: N815
     nucleotideInsertions: dict[SequenceName, Any]  # noqa: N815
     alignedAminoAcidSequences: dict[GeneName, Any]  # noqa: N815
     aminoAcidInsertions: dict[GeneName, Any]  # noqa: N815
     sequenceNameToFastaId: dict[SequenceName, FastaId]  # noqa: N815
-    files: dict[str, list[FileIdAndName]] | None
 
 
 @dataclass

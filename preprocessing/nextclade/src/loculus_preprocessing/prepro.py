@@ -296,13 +296,13 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
             version=version_from_str(accession_version),
             data=ProcessedData(
                 metadata=output_metadata,
+                files=unprocessed.files,
                 unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
                 alignedNucleotideSequences=aligned_nucleotide_sequences,
                 nucleotideInsertions=nucleotide_insertions,
                 alignedAminoAcidSequences=aligned_aminoacid_sequences,
                 aminoAcidInsertions=amino_acid_insertions,
                 sequenceNameToFastaId=sequenceNameToFastaId,
-                files=unprocessed.files,
             ),
             errors=errors,
             warnings=warnings,
@@ -535,13 +535,13 @@ def process_single(
         version=version_from_str(accession_version),
         data=ProcessedData(
             metadata=output_metadata,
+            files=unprocessed.files,
             unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
             alignedNucleotideSequences=unprocessed.alignedNucleotideSequences,
             nucleotideInsertions=unprocessed.nucleotideInsertions,
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
             sequenceNameToFastaId=unprocessed.sequenceNameToFastaId,
-            files=unprocessed.files,
         ),
         errors=list(
             set(
@@ -597,13 +597,13 @@ def processed_entry_with_errors(id) -> SubmissionData:
             version=version_from_str(id),
             data=ProcessedData(
                 metadata=dict[str, ProcessedMetadataValue](),
+                files=None,
                 unalignedNucleotideSequences=defaultdict(dict[str, Any]),
                 alignedNucleotideSequences=defaultdict(dict[str, Any]),
                 nucleotideInsertions=defaultdict(dict[str, Any]),
                 alignedAminoAcidSequences=defaultdict(dict[str, Any]),
                 aminoAcidInsertions=defaultdict(dict[str, Any]),
                 sequenceNameToFastaId=defaultdict(str),
-                files=None,
             ),
             errors=[
                 ProcessingAnnotation.from_single(
