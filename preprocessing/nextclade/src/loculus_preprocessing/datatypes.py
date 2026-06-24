@@ -104,7 +104,7 @@ FunctionArgs = dict[ArgName, ArgValue]
 @dataclass
 class UnprocessedAfterNextclade:
     inputMetadata: InputMetadata  # noqa: N815
-    files: dict[str, list[FileIdAndName]]
+    files: dict[str, list[FileIdAndName]] | None
     # Derived metadata produced by Nextclade
     nextcladeMetadata: dict[SequenceName, Any] | None  # noqa: N815
     unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815

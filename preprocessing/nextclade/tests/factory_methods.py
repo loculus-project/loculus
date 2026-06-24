@@ -89,6 +89,7 @@ class UnprocessedEntryFactory:
                 group_id=group_id,
                 metadata=metadata_dict,
                 unalignedNucleotideSequences=sequences,
+                files=None,
             ),
         )
 
@@ -153,6 +154,7 @@ class ProcessedEntryFactory:
                 alignedAminoAcidSequences=processed_alignment.alignedAminoAcidSequences,
                 aminoAcidInsertions=processed_alignment.aminoAcidInsertions,
                 sequenceNameToFastaId=processed_alignment.sequenceNameToFastaId,
+                files=None,
             ),
             errors=errors,
             warnings=warnings,

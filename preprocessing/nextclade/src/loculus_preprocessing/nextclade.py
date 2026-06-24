@@ -802,8 +802,8 @@ def enrich_with_nextclade(  # noqa: PLR0914
         }
         for entry in unprocessed
     }
-    input_files: dict[AccessionVersion, dict[str, list[FileIdAndName]]] = {
-        entry.accessionVersion: entry.data.files or {} for entry in unprocessed
+    input_files: dict[AccessionVersion, dict[str, list[FileIdAndName]] | None] = {
+        entry.accessionVersion: entry.data.files for entry in unprocessed
     }
 
     batch = assign_segment_for_alignment(unprocessed, config=config, dataset_dir=dataset_dir)

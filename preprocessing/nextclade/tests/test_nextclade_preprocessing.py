@@ -1285,6 +1285,7 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
                 "ebola-sudan": sequence_with_mutation("ebola-sudan"),
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
+            files=None,
         ),
     )
 
@@ -1299,6 +1300,7 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
             unalignedNucleotideSequences={
                 "ebola-sudan": sequence_with_mutation("ebola-sudan"),
             },
+            files=None,
         ),
     )
 
@@ -1332,6 +1334,7 @@ def test_preprocessing_without_metadata() -> None:
                 "ebola-sudan": sequence_with_mutation("ebola-sudan"),
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
+            files=None,
         ),
     )
 
@@ -1455,6 +1458,7 @@ def test_create_flatfile():
                 "authors": "Smith, Doe A;",
             },
             unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
+            files=None,
         ),
     )
 
