@@ -3,13 +3,18 @@ package org.loculus.backend.service.maintenance
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
+import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.log.AuditLogger
+import org.loculus.backend.service.scheduler.TaskLock
 import org.loculus.backend.service.submission.UploadDatabaseService
 import org.loculus.backend.utils.DateProvider
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import java.util.concurrent.TimeUnit
 
 private val log = mu.KotlinLogging.logger {}
+
+const val CLEAN_UP_AUX_TABLE_TASK_NAME = "clean-up-aux-table"
 
 @Component
 class CleanUpAuxTableTask(
@@ -19,9 +24,19 @@ class CleanUpAuxTableTask(
 ) {
 
     /**
-     * Runs every hour and deletes auxTable entries older than 24 hours.
+     * Scheduled to poll every CLEAN_UP_AUX_TABLE_RUN_EVERY_HOURS hours.
+     * Deletes auxTable entries older than 24 hours.
      */
-    @Scheduled(fixedDelay = 1, timeUnit = java.util.concurrent.TimeUnit.HOURS)
+    @Scheduled(
+        initialDelay = 1,
+        fixedRateString = "\${${BackendSpringProperty.CLEAN_UP_AUX_TABLE_RUN_EVERY_HOURS}}",
+        timeUnit = TimeUnit.HOURS,
+    )
+    @TaskLock(
+        name = CLEAN_UP_AUX_TABLE_TASK_NAME,
+        intervalString = "\${${BackendSpringProperty.CLEAN_UP_AUX_TABLE_RUN_EVERY_HOURS}}",
+        timeUnit = TimeUnit.HOURS,
+    )
     fun task() {
         val hourCutoff = 24L
         val now = dateProvider.getCurrentInstant()
