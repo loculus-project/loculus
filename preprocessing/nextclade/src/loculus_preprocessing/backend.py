@@ -94,13 +94,14 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
             key: trim_ns(value) if value else None
             for key, value in unaligned_nucleotide_sequences.items()
         }
+        user_files = json_object["data"].get("files")
         file_mapping = (
             {
                 # The backend also attaches the url in data.files; narrow to just FileIdAndName here
                 category: [FileIdAndName(fileId=f["fileId"], name=f["name"]) for f in files]
-                for category, files in (json_object["data"]["files"]).items()
+                for category, files in user_files.items()
             }
-            if json_object["data"]["files"]
+            if user_files
             else None
         )
         unprocessed_data = UnprocessedData(
