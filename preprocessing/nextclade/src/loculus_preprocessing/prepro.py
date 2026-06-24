@@ -3,7 +3,7 @@ import time
 from collections import defaultdict
 from collections.abc import Sequence
 from tempfile import TemporaryDirectory
-from typing import Any, Optional
+from typing import Any
 
 from .backend import (
     download_diamond_db,
