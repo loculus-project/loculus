@@ -91,7 +91,7 @@ class FileMappingPreconditionValidator(
                 "The following file IDs do not exist: " + nonExistentFileIds.joinToString(),
             )
         }
-        val markedForDeletion = filesDatabaseService.getMarkedForDeletionFileIds(fileIds)
+        val markedForDeletion = filesDatabaseService.filterMarkedForDeletionFileIds(fileIds)
         if (markedForDeletion.isNotEmpty()) {
             throw UnprocessableEntityException(
                 "The following file IDs are no longer valid: " + markedForDeletion.joinToString(),

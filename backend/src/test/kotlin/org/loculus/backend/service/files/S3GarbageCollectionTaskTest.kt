@@ -101,7 +101,7 @@ class S3GarbageCollectionTaskTest(
 
         verify(exactly = 0) { s3Service.deleteFile(any()) }
         assertThat(filesDatabaseService.getNonExistentFileIds(setOf(orphan)), `is`(emptySet()))
-        assertThat(filesDatabaseService.getMarkedForDeletionFileIds(setOf(orphan)), `is`(setOf(orphan)))
+        assertThat(filesDatabaseService.filterMarkedForDeletionFileIds(setOf(orphan)), `is`(setOf(orphan)))
     }
 
     @Test

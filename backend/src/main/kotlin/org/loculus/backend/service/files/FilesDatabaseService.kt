@@ -139,7 +139,7 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         }
     }
 
-    fun getMarkedForDeletionFileIds(fileIds: Set<FileId>): Set<FileId> = fileIds.chunkedForDatabase({ chunk ->
+    fun filterMarkedForDeletionFileIds(fileIds: Set<FileId>): Set<FileId> = fileIds.chunkedForDatabase({ chunk ->
         FilesTable
             .select(FilesTable.idColumn)
             .where { FilesTable.idColumn inList chunk and FilesTable.markedForDeletionAtColumn.isNotNull() }
