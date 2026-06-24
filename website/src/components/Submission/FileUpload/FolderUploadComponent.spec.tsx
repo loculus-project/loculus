@@ -327,4 +327,17 @@ describe('FolderUploadComponent', () => {
         await userEvent.upload(screen.getByTestId('add_extraFiles'), file);
         await waitFor(() => expect(screen.getByTestId('add_button_extraFiles')).toBeDisabled());
     });
+
+    it('disables the individual discard buttons while an upload is in progress', async () => {
+        mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'added-id', urls: ['http://test.com/url1'] }]));
+        // Keep the upload pending so the component stays in the uploadInProgress state.
+        vi.mocked(multipartUpload.uploadPart).mockReturnValue(new Promise(() => {}));
+
+        render(<FolderUploadComponent {...defaultPropsWithFiles} />);
+
+        const file = new File(['content'], 'added.txt', { type: 'text/plain' });
+        Object.defineProperty(file, 'webkitRelativePath', { value: '', writable: false });
+        await userEvent.upload(screen.getByTestId('add_extraFiles'), file);
+        await waitFor(() => expect(screen.getByTestId('discard_extraFiles_file-a.txt')).toBeDisabled());
+    });
 });
