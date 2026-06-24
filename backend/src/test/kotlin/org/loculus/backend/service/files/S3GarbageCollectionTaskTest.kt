@@ -4,6 +4,7 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.verify
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.FileIdAndName
@@ -21,6 +22,7 @@ import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.files.daysAgo
 import org.loculus.backend.service.files.insertFile
+import org.loculus.backend.service.scheduler.TASK_LOCK_TABLE_NAME
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import java.util.UUID
@@ -110,6 +112,7 @@ class S3GarbageCollectionTaskTest(
         insertFile(orphan, groupId, daysAgo(2))
 
         s3GarbageCollectionTask.task() // phase 1: marks the file
+        transaction { exec("TRUNCATE TABLE $TASK_LOCK_TABLE_NAME") }
         s3GarbageCollectionTask.task() // phase 2: deletes it
 
         verify { s3Service.deleteFile(orphan) }
@@ -126,6 +129,7 @@ class S3GarbageCollectionTaskTest(
         createProcessedSubmissionReferencingFile(referenced)
 
         s3GarbageCollectionTask.task() // phase 1: marks orphan, skips referenced
+        transaction { exec("TRUNCATE TABLE $TASK_LOCK_TABLE_NAME") }
         s3GarbageCollectionTask.task() // phase 2: deletes orphan
 
         verify { s3Service.deleteFile(orphan) }

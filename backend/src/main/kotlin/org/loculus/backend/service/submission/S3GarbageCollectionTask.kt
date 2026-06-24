@@ -29,7 +29,7 @@ class S3GarbageCollectionTask(
     private val dateProvider: DateProvider,
     private val auditLogger: AuditLogger,
     @Value("\${${BackendSpringProperty.S3_GC_ORPHAN_RETENTION_PERIOD_MINUTES}}") private val orphanRetentionPeriod: Int,
-    @Value("\${${BackendSpringProperty.S3_GC_ENABLED}}") private val enabled: Boolean
+    @Value("\${${BackendSpringProperty.S3_GC_ENABLED}}") private val enabled: Boolean,
 ) {
 
     /**
@@ -42,8 +42,8 @@ class S3GarbageCollectionTask(
      * - Phase 2: delete files that were already marked in a previous run and are still unreferenced
      */
     @Scheduled(
-        initialDelayString = "\${${BackendSpringProperty.S3_GC_INITIAL_DELAY_MINUTES}:15}",
-        fixedDelayString = "\${${BackendSpringProperty.S3_GC_FREQUENCY_MINUTES}:1440}",
+        initialDelayString = "\${${BackendSpringProperty.S3_GC_INITIAL_DELAY_MINUTES}}",
+        fixedDelayString = "\${${BackendSpringProperty.S3_GC_FREQUENCY_MINUTES}}",
         timeUnit = TimeUnit.MINUTES,
     )
     @TaskLock(
