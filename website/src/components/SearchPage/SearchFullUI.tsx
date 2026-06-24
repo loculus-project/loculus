@@ -72,7 +72,7 @@ const buildSequenceCountText = (totalSequences: number | undefined, oldCount: nu
 };
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access -- TODO(#3451) this component is a mess a needs to be refactored */
-export const InnerSearchFullUI = ({
+const InnerSearchFullUI = ({
     accessToken,
     referenceGenomesInfo,
     myGroups,

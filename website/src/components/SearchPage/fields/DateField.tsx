@@ -21,7 +21,7 @@ type CustomizedDatePickerProps = {
  * which converts to UTC and can shift dates (e.g., May 7 0010 becomes May 6 0010).
  * Native getFullYear/getMonth/getDate preserve the exact calendar date displayed.
  */
-export function jsDateToISOString(date: Date | null): string {
+function jsDateToISOString(date: Date | null): string {
     if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
         return '';
     }
@@ -42,7 +42,7 @@ export function jsDateToISOString(date: Date | null): string {
  * Luxon to create dates with slight time offsets (e.g., 8 seconds).
  * Setting to midnight ensures we get back exactly what rsuite gave us.
  */
-export function isoStringToJsDate(value: string): Date | null {
+function isoStringToJsDate(value: string): Date | null {
     if (!value) return null;
 
     const dt = DateTime.fromFormat(value, 'yyyy-MM-dd');
@@ -60,7 +60,7 @@ export function isoStringToJsDate(value: string): Date | null {
  * This ignores actual timezone info to ensure consistent round-trip behavior.
  * Note: Years < 100 not supported (would be misinterpreted by Date constructor).
  */
-export function jsDateToTimestamp(date: Date | null, isUpperBound: boolean): string {
+function jsDateToTimestamp(date: Date | null, isUpperBound: boolean): string {
     if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
         return '';
     }
@@ -82,7 +82,7 @@ export function jsDateToTimestamp(date: Date | null, isUpperBound: boolean): str
  * Converts UTC timestamp back to Date with UTC components as local components.
  * Reverses the "local as UTC" conversion for round-trip consistency.
  */
-export function timestampToJsDate(value: string): Date | null {
+function timestampToJsDate(value: string): Date | null {
     if (!value) return null;
 
     const timestamp = parseInt(value, 10);
