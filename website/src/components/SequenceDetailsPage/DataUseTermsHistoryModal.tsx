@@ -9,11 +9,11 @@ export type DataUseTermsHistoryProps = {
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
 };
 
+const formatDate = (dateString: string) =>
+    DateTime.fromISO(dateString, { zone: FixedOffsetZone.utcInstance }).setLocale('en').toFormat('yyyy-MM-dd T');
+
 export const DataUseTermsHistoryModal: FC<DataUseTermsHistoryProps> = ({ dataUseTermsHistory }) => {
     const [isOpen, setIsOpen] = useState(false);
-
-    const formatDate = (dateString: string) =>
-        DateTime.fromISO(dateString, { zone: FixedOffsetZone.utcInstance }).setLocale('en').toFormat('yyyy-MM-dd T');
 
     return (
         <>
@@ -27,7 +27,7 @@ export const DataUseTermsHistoryModal: FC<DataUseTermsHistoryProps> = ({ dataUse
                 isOpen={isOpen}
                 onClose={() => setIsOpen(false)}
                 fullWidth={false}
-                className='relative max-w-md'
+                className='max-w-md'
             >
                 <table className='w-full text-sm [&_:where(th,td)]:px-3 [&_:where(th,td)]:py-2 [&_:where(th,td)]:text-left [&_th]:font-semibold [&_tbody_tr]:border-t [&_tbody_tr]:border-base-200'>
                     <thead>
