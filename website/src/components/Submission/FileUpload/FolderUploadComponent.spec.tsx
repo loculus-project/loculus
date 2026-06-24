@@ -52,6 +52,7 @@ const submissionId = 'SUBMISSION_ID_123';
 const defaultPropsWithFiles = {
     ...defaultProps,
     inputMode: 'form' as const,
+    formSubmissionId: submissionId,
     fileMapping: {
         [submissionId]: {
             extraFiles: [

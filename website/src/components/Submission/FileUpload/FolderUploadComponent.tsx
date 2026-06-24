@@ -363,7 +363,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         }
 
         // Check for collisions with existing files
-        const submissionId = Object.keys(fileUploadState.files)[0];
+        const submissionId = formSubmissionId ?? DUMMY_SUBMISSION_ID;
         const existingFiles = fileUploadState.files[submissionId];
         const uniqueSelectedNames = new Set(selectedFileNames);
         const existingFileCollisions = existingFiles.filter((file) => uniqueSelectedNames.has(file.name));
@@ -461,13 +461,14 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 <div>
                     <h3 className='text-sm font-medium'>Files</h3>
                     {inputMode === 'form'
-                        ? Object.values(fileUploadState.files)[0].map((file) => (
+                        ? fileUploadState.files[formSubmissionId ?? DUMMY_SUBMISSION_ID].map((file) => (
                               <div key={file.name} className='flex items-center mb-2 gap-2'>
                                   <div className='flex-1 min-w-0'>
                                       <FileListItem file={file} />
                                   </div>
                                   <Button
-                                      onClick={() => handleDiscardFile(Object.keys(fileUploadState.files)[0], file)}
+                                      onClick={() => handleDiscardFile(formSubmissionId ?? DUMMY_SUBMISSION_ID, file)}
+                                      disabled={fileUploadState.type !== 'uploadCompleted'}
                                       data-testid={`discard_${fileCategory.name}_${file.name}`}
                                       variant='outline-neutral'
                                       className='font-normal!'
