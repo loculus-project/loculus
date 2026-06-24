@@ -603,7 +603,7 @@ def processed_entry_with_errors(id) -> SubmissionData:
                 alignedAminoAcidSequences=defaultdict(dict[str, Any]),
                 aminoAcidInsertions=defaultdict(dict[str, Any]),
                 sequenceNameToFastaId=defaultdict(str),
-                files=defaultdict(list[FileIdAndName]),
+                files=None,
             ),
             errors=[
                 ProcessingAnnotation.from_single(
@@ -664,9 +664,9 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             url = upload_info.url
             upload_embl_file_to_presigned_url(file_content, url)
             processed_files = submission_data.processed_entry.data.files or {}
-            if not processed_files.get("annotations"):
-                processed_files["annotations"] = []
-            processed_files["annotations"].append(FileIdAndName(fileId=file_id, name=file_name))
+            processed_files.setdefault("annotations", []).append(
+                FileIdAndName(fileId=file_id, name=file_name)
+            )
             submission_data.processed_entry.data.files = processed_files
         except Exception as e:
             logger.error("Error creating or uploading EMBL file: %s", e)
