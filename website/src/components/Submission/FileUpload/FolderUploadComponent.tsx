@@ -476,14 +476,16 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     <h3 className='text-sm font-medium'>Files</h3>
                     {inputMode === 'form'
                         ? Object.values(fileUploadState.files)[0].map((file) => (
-                              <div key={file.name} className='flex items-center mb-2'>
+                              <div key={file.name} className='flex items-center mb-2 gap-2'>
                                   <div className='flex-1 min-w-0'>
                                       <FileListItem file={file} />
                                   </div>
                                   <Button
                                       onClick={() => handleDiscardFile(Object.keys(fileUploadState.files)[0], file)}
                                       data-testid={`discard_${fileCategory.name}_${file.name}`}
-                                      className='text-xs whitespace-nowrap text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50 ml-2'
+                                      variant='outline-neutral'
+                                      className='font-normal!'
+                                      size='sm'
                                   >
                                       Discard file
                                   </Button>
@@ -517,7 +519,9 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                             onClick={() => document.getElementById(`${fileCategory.name}_add`)?.click()}
                             disabled={fileUploadState.type !== 'uploadCompleted'}
                             data-testid={`add_button_${fileCategory.name}`}
-                            className='w-full text-xs wrap-break-word text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
+                            variant='outline-neutral'
+                            className='font-normal!'
+                            size='sm'
                         >
                             Add additional files
                         </Button>
@@ -532,7 +536,9 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                         })
                     }
                     data-testid={`discard_${fileCategory.name}`}
-                    className='w-full text-xs wrap-break-word text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
+                    variant='outline-neutral'
+                    className='font-normal!'
+                    size='sm'
                 >
                     Discard all files
                 </Button>
