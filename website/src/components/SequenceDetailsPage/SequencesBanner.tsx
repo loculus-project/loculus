@@ -8,14 +8,10 @@ import { Button } from '../common/Button.tsx';
 type SequencesBannerProps = {
     sequenceEntryHistory: SequenceEntryHistory;
     accessionVersion: string;
-    handleNavigateToVersion?: (accessionVersion: string) => void;
+    setPreviewedSeqId?: (seqId: string | null) => void;
 };
 
-const SequencesBanner: FC<SequencesBannerProps> = ({
-    sequenceEntryHistory,
-    accessionVersion,
-    handleNavigateToVersion,
-}) => {
+const SequencesBanner: FC<SequencesBannerProps> = ({ sequenceEntryHistory, accessionVersion, setPreviewedSeqId }) => {
     const ownHistoryEntry = sequenceEntryHistory.find((entry) => entry.accessionVersion === accessionVersion);
 
     const latestAccessionVersion = getLatestAccessionVersion(sequenceEntryHistory);
@@ -32,9 +28,9 @@ const SequencesBanner: FC<SequencesBannerProps> = ({
                     {latestAccessionVersion && (
                         <p>
                             The latest version is:
-                            {handleNavigateToVersion ? (
+                            {setPreviewedSeqId ? (
                                 <Button
-                                    onClick={() => handleNavigateToVersion(latestAccessionVersion.accessionVersion)}
+                                    onClick={() => setPreviewedSeqId(latestAccessionVersion.accessionVersion)}
                                     className='font-bold underline mx-1'
                                 >
                                     {getAccessionVersionString(latestAccessionVersion)}

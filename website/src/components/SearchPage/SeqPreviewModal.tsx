@@ -81,7 +81,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                 <SequencesBanner
                     sequenceEntryHistory={data.sequenceEntryHistory}
                     accessionVersion={data.accessionVersion}
-                    handleNavigateToVersion={setPreviewedSeqId}
+                    setPreviewedSeqId={setPreviewedSeqId}
                 />
             )}
 
