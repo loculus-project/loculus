@@ -122,7 +122,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, dat
                                 data-testid='json-radio'
                                 checked={selectedDownload === 0}
                                 type='radio'
-                                className='h-4 w-4 p-2 border-gray-300 text-primary-600 focus:ring-primary-600 inline-block'
+                                className='h-4 w-4 p-2 text-primary-600 focus:ring-primary-600 inline-block'
                                 onChange={() => setSelectedDownload(0)}
                             />
                             <label
@@ -138,7 +138,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, dat
                                 data-testid='tsv-radio'
                                 type='radio'
                                 checked={selectedDownload === 1}
-                                className='h-4 w-4 p-2 border-gray-300 text-primary-600 focus:ring-primary-600 inline-block'
+                                className='h-4 w-4 p-2 text-primary-600 focus:ring-primary-600 inline-block'
                                 onChange={() => setSelectedDownload(1)}
                             />
                             <label
@@ -163,7 +163,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, dat
                             checked={selectedCitation === 0}
                             type='radio'
                             name='inline-radio-group'
-                            className='h-4 w-4 p-2 border-gray-300 text-primary-600 focus:ring-primary-600 inline-block'
+                            className='h-4 w-4 p-2 text-primary-600 focus:ring-primary-600 inline-block'
                             onChange={() => setSelectedCitation(0)}
                         />
                         <label
@@ -179,7 +179,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, dat
                             type='radio'
                             checked={selectedCitation === 1}
                             name='inline-radio-group'
-                            className='h-4 w-4 p-2 border-gray-300 text-primary-600 focus:ring-primary-600 inline-block'
+                            className='h-4 w-4 p-2 text-primary-600 focus:ring-primary-600 inline-block'
                             onChange={() => setSelectedCitation(1)}
                         />
                         <label
@@ -195,7 +195,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, dat
                             type='radio'
                             checked={selectedCitation === 2}
                             name='inline-radio-group'
-                            className='h-4 w-4 p-2 border-gray-300 text-primary-600 focus:ring-primary-600 inline-block'
+                            className='h-4 w-4 p-2 text-primary-600 focus:ring-primary-600 inline-block'
                             onChange={() => setSelectedCitation(2)}
                         />
                         <label
