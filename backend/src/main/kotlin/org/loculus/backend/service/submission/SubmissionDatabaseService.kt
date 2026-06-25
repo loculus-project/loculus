@@ -1523,8 +1523,8 @@ class SubmissionDatabaseService(
         }
 
         // PostgreSQL allows up to 65,535 query parameters, allowing for max 32767 entries
-        return accessions.chunked(32767)
-            .flatMap { chunk ->
+        return buildMap {
+            accessions.chunked(32767).forEach { chunk ->
                 SequenceEntriesView
                     .select(
                         SequenceEntriesView.accessionColumn,
@@ -1535,12 +1535,14 @@ class SubmissionDatabaseService(
                             SequenceEntriesView.isMaxVersion and
                             SequenceEntriesView.organismIs(organism)
                     }
-                    .map {
-                        it[SequenceEntriesView.accessionColumn] to
-                            (it[SequenceEntriesView.submittedDataColumn]?.files ?: emptyMap())
+                    .forEach {
+                        put(
+                            it[SequenceEntriesView.accessionColumn],
+                            it[SequenceEntriesView.submittedDataColumn]?.files ?: emptyMap(),
+                        )
                     }
             }
-            .toMap()
+        }
     }
 
     fun getReleasedAt(accessionVersions: List<AccessionVersion>): Map<AccessionVersion, LocalDateTime?> =
