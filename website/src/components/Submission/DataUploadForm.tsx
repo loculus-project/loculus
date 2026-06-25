@@ -78,27 +78,23 @@ const InnerDataUploadForm = ({
     useEffect(() => {
         if (!extraFilesEnabled || action !== 'revise' || reviseMetadataFile === undefined) return;
 
-        let cancelled = false;
-
         const fetchFileMapping = async () => {
             try {
                 const pairs = await parseRevisionMetadataForFileMapping(reviseMetadataFile);
-                if (cancelled || pairs.length === 0) return;
+                if (pairs.length === 0) return;
 
                 const result = await backendClient.getFileMapping(
                     accessToken,
                     organism,
                     pairs.map((p) => p.accession),
                 );
-                if (cancelled) return;
 
                 result.match(
                     (fileMappingByAccession) => {
                         const mappedBySubmissionId: FilesBySubmissionId = {};
                         for (const { accession, submissionId } of pairs) {
-                            const files = fileMappingByAccession[accession];
-                            if (files !== undefined) {
-                                mappedBySubmissionId[submissionId] = files;
+                            if (accession in fileMappingByAccession) {
+                                mappedBySubmissionId[submissionId] = fileMappingByAccession[accession];
                             }
                         }
                         if (Object.keys(mappedBySubmissionId).length > 0) {
@@ -116,9 +112,6 @@ const InnerDataUploadForm = ({
         };
 
         void fetchFileMapping();
-        return () => {
-            cancelled = true;
-        };
     }, [reviseMetadataFile]);
 
     const [agreedToINSDCUploadTerms, setAgreedToINSDCUploadTerms] = useState(false);

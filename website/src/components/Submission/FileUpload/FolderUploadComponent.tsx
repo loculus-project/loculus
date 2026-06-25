@@ -521,7 +521,10 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                               <div key={submissionId} className='mb-3'>
                                   <h4 className='text-xs font-medium py-1'>{submissionId}</h4>
                                   {files.map((file) => (
-                                      <div key={`${submissionId}/${file.name}`} className='flex items-center mb-1 gap-2'>
+                                      <div
+                                          key={`${submissionId}/${file.name}`}
+                                          className='flex items-center mb-1 gap-2'
+                                      >
                                           <div className='flex-1 min-w-0'>
                                               <FileListItem file={file} />
                                           </div>
