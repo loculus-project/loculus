@@ -828,6 +828,7 @@ def test_preprocessing_without_consensus_sequences(config: Config) -> None:
                 "name_required": sequence_name,
             },
             unalignedNucleotideSequences={},
+            files=None,
         ),
     )
 
