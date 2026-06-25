@@ -150,7 +150,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, dat
                         </div>
                     </div>
                     <div className='pb-8 pt-4'>
-                        <Button variant='neutral' onClick={downloadSeqSet} disabled={isDownloading}>
+                        <Button variant='primary' onClick={downloadSeqSet} disabled={isDownloading}>
                             Download
                         </Button>
                     </div>
@@ -218,7 +218,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, dat
                     />
                 </div>
                 <div className='pb-8'>
-                    <Button variant='neutral' onClick={() => void copyToClipboard()} disabled={isDownloading}>
+                    <Button variant='primary' onClick={() => void copyToClipboard()} disabled={isDownloading}>
                         Copy to clipboard
                     </Button>
                 </div>
