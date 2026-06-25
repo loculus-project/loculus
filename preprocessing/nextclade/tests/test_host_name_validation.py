@@ -34,6 +34,7 @@ def make_entry(metadata: dict, group_id: int) -> UnprocessedEntry:
             group_id=group_id,
             metadata=metadata,
             unalignedNucleotideSequences={},
+            files=None,
         ),
     )
 
