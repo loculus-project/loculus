@@ -26,3 +26,20 @@ fun extractSubmittedDataZipContents(zipContent: ByteArray): Pair<String, String>
 
     return Pair(metadataTsv, sequencesFasta)
 }
+
+/**
+ * Extracts every entry of a downloaded submitted-data zip, keyed by entry name.
+ */
+fun extractSubmittedDataZipEntries(zipContent: ByteArray): Map<String, String> {
+    val entries = mutableMapOf<String, String>()
+
+    ZipInputStream(ByteArrayInputStream(zipContent)).use { zis ->
+        var entry = zis.nextEntry
+        while (entry != null) {
+            entries[entry.name] = zis.readBytes().decodeToString()
+            entry = zis.nextEntry
+        }
+    }
+
+    return entries
+}
