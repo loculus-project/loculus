@@ -478,3 +478,21 @@ fun FileCategoryFilesMap.getDuplicateFileNames(category: FileCategory): Set<Stri
 
     return nameCounts.filterValues { it > 1 }.keys
 }
+
+/**
+ * Merge two file maps, with [override] taking priority over [base] per (category, file name).
+ *
+ * Used when revising: existing files referenced in the metadata `existingFiles_<category>` columns are
+ * the [base], and freshly uploaded files are the [override]. If the same file name appears in both for a
+ * given category, the freshly uploaded file wins.
+ */
+fun mergeFileCategoryFilesMaps(base: FileCategoryFilesMap?, override: FileCategoryFilesMap?): FileCategoryFilesMap? {
+    if (base.isNullOrEmpty()) return override?.ifEmpty { null }
+    if (override.isNullOrEmpty()) return base.ifEmpty { null }
+
+    return (base.keys + override.keys).associateWith { category ->
+        val overrideFiles = override[category].orEmpty()
+        val overrideNames = overrideFiles.map { it.name }.toSet()
+        base[category].orEmpty().filter { it.name !in overrideNames } + overrideFiles
+    }
+}

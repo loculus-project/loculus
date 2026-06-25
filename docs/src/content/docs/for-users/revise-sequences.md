@@ -27,6 +27,23 @@ The metadata file should include all the metadata fields that were originally in
 
 The metadata file should only have rows of data for the sequences in the FASTA file. It needs to include an `accession` column, which includes the Loculus accessions assigned at initial submission. You should also include the `id` column, which will match the sequence ids in your FASTA file. (In the case of segmented organisms, the FASTA ids will additionally contain segment suffix, e.g. `_L` for segment L)
 
+## Reusing previously uploaded files
+
+For organisms that support file uploads (e.g. raw reads), you do not need to re-upload files that should stay attached to an entry. When you download the originally submitted data, the `metadata.tsv` includes one column per file category named `existingFiles_<category>` (for example `existingFiles_raw_reads`). Each cell lists the files currently attached to that entry as a `|`-separated list of `name:fileId` pairs, for example:
+
+```
+reads_1.fastq:8d8ac610-566d-4ef0-9c22-186b2a5ed793 | reads_2.fastq:41ad1234-566d-4ef0-9c22-186b2a5ed111
+```
+
+When revising, you control these files by editing the column:
+
+- **Keep files** – leave the column untouched.
+- **Remove a file** – delete its `name:fileId` entry from the cell.
+- **Remove all files** – empty the cell.
+- **Add files** – upload a folder of new files exactly as during an original submission. New uploads are added alongside the files kept in the column. If an uploaded file has the same name and category as a kept file, the newly uploaded file takes priority.
+
+You can only reference files that belong to your group.
+
 ## Preparing the FASTA file
 
 Create a FASTA file that contains only the sequences you'd like to revise, with whatever changes you'd like to make. There is no reason to edit the sequence names in the FASTA file, as long as they still match those in your metadata file.
