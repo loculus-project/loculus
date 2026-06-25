@@ -9,6 +9,8 @@ import { EditableSequences } from '../Edit/EditableSequences';
 import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
 import { SequencesForm } from '../Edit/SequencesForm';
 
+export type { ProcessedFile };
+
 export type InputMode = 'form' | 'bulk';
 
 /**
@@ -43,6 +45,7 @@ type FormOrUploadWrapperProps = {
     action: UploadAction;
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
+    onMetadataFileChange?: (file: ProcessedFile | undefined) => void;
 };
 
 /**
@@ -59,6 +62,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     action,
     metadataTemplateFields,
     submissionDataTypes,
+    onMetadataFileChange,
 }) => {
     const enableConsensusSequences = submissionDataTypes.consensusSequences;
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.empty());
@@ -70,6 +74,10 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     const [sequenceFile, setSequenceFile] = useState<ProcessedFile | undefined>(undefined);
     // The columnMapping can be null; if null -> don't apply mapping.
     const [columnMapping, setColumnMapping] = useState<ColumnMapping | null>(null);
+
+    useEffect(() => {
+        onMetadataFileChange?.(metadataFile);
+    }, [metadataFile]);
 
     useEffect(() => {
         setFileFactory(() => {

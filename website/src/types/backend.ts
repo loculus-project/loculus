@@ -184,6 +184,9 @@ const filesByCategory = z.record(
 export const filesBySubmissionId = z.record(filesByCategory);
 export type FilesBySubmissionId = z.infer<typeof filesBySubmissionId>;
 
+export const filesByAccession = z.record(filesByCategory);
+export type FilesByAccession = z.infer<typeof filesByAccession>;
+
 export const editedSequenceEntryData = accessionVersion.merge(
     z.object({
         data: z.object({
