@@ -50,6 +50,7 @@ import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.FileCategory
+import org.loculus.backend.api.FileCategoryFilesMap
 import org.loculus.backend.api.FileIdAndMaybeReleasedAt
 import org.loculus.backend.api.FileIdAndNameAndReadUrl
 import org.loculus.backend.api.GeneticSequence
@@ -1509,6 +1510,40 @@ class SubmissionDatabaseService(
                 null
             }
         }.firstOrNull()
+
+    fun getFileMappingForAccessions(
+        accessions: List<Accession>,
+        authenticatedUser: AuthenticatedUser,
+        organism: Organism,
+    ): Map<Accession, FileCategoryFilesMap> {
+        accessionPreconditionValidator.validate {
+            thatAccessionsExist(accessions)
+                .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
+                .andThatOrganismIs(organism)
+        }
+
+        // PostgreSQL allows up to 65,535 query parameters, allowing for max 32767 entries
+        return buildMap {
+            accessions.chunked(32767).forEach { chunk ->
+                SequenceEntriesView
+                    .select(
+                        SequenceEntriesView.accessionColumn,
+                        SequenceEntriesView.submittedDataColumn,
+                    )
+                    .where {
+                        (SequenceEntriesView.accessionColumn inList chunk) and
+                            SequenceEntriesView.isMaxVersion and
+                            SequenceEntriesView.organismIs(organism)
+                    }
+                    .forEach {
+                        put(
+                            it[SequenceEntriesView.accessionColumn],
+                            it[SequenceEntriesView.submittedDataColumn]?.files ?: emptyMap(),
+                        )
+                    }
+            }
+        }
+    }
 
     fun getReleasedAt(accessionVersions: List<AccessionVersion>): Map<AccessionVersion, LocalDateTime?> =
         accessionVersions

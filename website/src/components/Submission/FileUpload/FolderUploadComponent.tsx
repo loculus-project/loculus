@@ -331,14 +331,53 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         setFileUploadState((state) => {
             if (state?.type === 'uploadCompleted') {
                 const remainingFiles = state.files[submissionId].filter((f) => f.name !== file.name);
-                if (remainingFiles.length === 0) return undefined;
-
+                if (remainingFiles.length === 0) {
+                    const updatedFiles = produce(state.files, (draft) => {
+                        delete draft[submissionId];
+                    });
+                    if (Object.keys(updatedFiles).length === 0) return undefined;
+                    return { ...state, files: updatedFiles };
+                }
                 return produce(state, (draft) => {
                     draft.files[submissionId] = remainingFiles;
                 });
             }
             return state;
         });
+    };
+
+    const handleAddFilesForSubmission = (submissionId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || fileUploadState?.type !== 'uploadCompleted') return;
+        const filesArray = filterDotFiles(Array.from(e.target.files));
+        e.target.value = '';
+        if (filesArray.length === 0) return;
+
+        const existingFiles = fileUploadState.files[submissionId] ?? [];
+
+        const addFiles = async () => {
+            const uniqueSelectedNames = new Set(filesArray.map((f) => f.name));
+            const nonCollidingFiles = existingFiles.filter((f) => !uniqueSelectedNames.has(f.name));
+            const newPendingFiles = await requestFileUploads(filesArray.map((f) => ({ file: f, name: f.name })));
+            const currentCompleted = fileUploadState;
+            setFileUploadState({
+                type: 'uploadInProgress',
+                files: { ...currentCompleted.files, [submissionId]: [...nonCollidingFiles, ...newPendingFiles] },
+            });
+            void startUploading({ [submissionId]: newPendingFiles });
+        };
+
+        const collidingFiles = existingFiles.filter((f) => filesArray.some((nf) => nf.name === f.name));
+        if (collidingFiles.length > 0) {
+            displayConfirmationDialog({
+                dialogText:
+                    'The following file(s) already exist and will be replaced: ' +
+                    collidingFiles.map((f) => f.name).join(', '),
+                confirmButtonText: 'Replace',
+                onConfirmation: addFiles,
+            });
+        } else {
+            void addFiles();
+        }
     };
 
     const handleDiscardAllFiles = () => setFileUploadState(undefined);
@@ -478,11 +517,51 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                                   </Button>
                               </div>
                           ))
-                        : Object.entries(fileUploadState.files).flatMap(([submissionId, files]) => [
-                              <h4 key={submissionId} className='text-xs font-medium py-2'>
-                                  {submissionId}
-                              </h4>,
-                              ...files.map((file) => <FileListItem key={`${submissionId}/${file.name}`} file={file} />),
+                        : Object.entries(fileUploadState.files).flatMap(([submissionId, files], idx) => [
+                              <div key={submissionId} className='mb-3'>
+                                  <h4 className='text-xs font-medium py-1'>{submissionId}</h4>
+                                  {files.map((file) => (
+                                      <div
+                                          key={`${submissionId}/${file.name}`}
+                                          className='flex items-center mb-1 gap-2'
+                                      >
+                                          <div className='flex-1 min-w-0'>
+                                              <FileListItem file={file} />
+                                          </div>
+                                          <Button
+                                              onClick={() => handleDiscardFile(submissionId, file)}
+                                              disabled={fileUploadState.type !== 'uploadCompleted'}
+                                              data-testid={`discard_${fileCategory.name}_${submissionId}_${file.name}`}
+                                              variant='outline-neutral'
+                                              className='font-normal!'
+                                              size='sm'
+                                          >
+                                              Discard
+                                          </Button>
+                                      </div>
+                                  ))}
+                                  {isClient && (
+                                      <input
+                                          id={`${fileCategory.name}_add_bulk_${idx}`}
+                                          type='file'
+                                          className='sr-only'
+                                          aria-label={`Add files for ${submissionId} in ${fileCategory.displayName ?? fileCategory.name}`}
+                                          onChange={(e) => handleAddFilesForSubmission(submissionId, e)}
+                                          multiple
+                                      />
+                                  )}
+                                  <Button
+                                      onClick={() =>
+                                          document.getElementById(`${fileCategory.name}_add_bulk_${idx}`)?.click()
+                                      }
+                                      disabled={fileUploadState.type !== 'uploadCompleted'}
+                                      variant='outline-neutral'
+                                      className='font-normal! mt-1'
+                                      size='sm'
+                                  >
+                                      Add files
+                                  </Button>
+                              </div>,
                           ])}
                     <ul></ul>
                 </div>

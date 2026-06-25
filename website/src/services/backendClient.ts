@@ -4,6 +4,7 @@ import { z, ZodSchema } from 'zod';
 
 import {
     dataUseTermsHistoryEntry,
+    filesByAccession,
     getSequencesResponse,
     info,
     requestMultipartUploadResponse,
@@ -93,6 +94,17 @@ export class BackendClient {
             z.unknown(),
             createAuthorizationHeader(token),
             fileIdsAndEtags,
+            undefined,
+        );
+    }
+
+    public getFileMapping(token: string, organism: string, accessionList: string[]) {
+        return this.request(
+            `/${organism}/get-file-mapping`,
+            'POST',
+            filesByAccession,
+            createAuthorizationHeader(token),
+            { accessions: accessionList },
             undefined,
         );
     }

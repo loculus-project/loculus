@@ -1,14 +1,15 @@
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { DateTime } from 'luxon';
-import { type FormEvent, useState, type Dispatch, type SetStateAction } from 'react';
+import { type FormEvent, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 
-import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
+import { type FileFactory, FormOrUploadWrapper, type InputMode, type ProcessedFile } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { backendApi } from '../../services/backendApi.ts';
+import { BackendClient } from '../../services/backendClient.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
     type DataUseTermsOption,
@@ -67,8 +68,51 @@ const InnerDataUploadForm = ({
     const { submit, revise, isPending } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
     const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(undefined);
+    const [fileMappingKey, setFileMappingKey] = useState(0);
+    const [reviseMetadataFile, setReviseMetadataFile] = useState<ProcessedFile | undefined>(undefined);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
     const [restrictedUntil, setRestrictedUntil] = useState(dateTimeInMonths(6));
+
+    const backendClient = useMemo(() => new BackendClient(clientConfig.backendUrl), [clientConfig.backendUrl]);
+
+    useEffect(() => {
+        if (!extraFilesEnabled || action !== 'revise' || reviseMetadataFile === undefined) return;
+
+        const fetchFileMapping = async () => {
+            try {
+                const pairs = await parseRevisionMetadataForFileMapping(reviseMetadataFile);
+                if (pairs.length === 0) return;
+
+                const result = await backendClient.getFileMapping(
+                    accessToken,
+                    organism,
+                    pairs.map((p) => p.accession),
+                );
+
+                result.match(
+                    (fileMappingByAccession) => {
+                        const mappedBySubmissionId: FilesBySubmissionId = {};
+                        for (const { accession, submissionId } of pairs) {
+                            if (accession in fileMappingByAccession) {
+                                mappedBySubmissionId[submissionId] = fileMappingByAccession[accession];
+                            }
+                        }
+                        if (Object.keys(mappedBySubmissionId).length > 0) {
+                            setFileMapping(mappedBySubmissionId);
+                            setFileMappingKey((k) => k + 1);
+                        }
+                    },
+                    (err) => {
+                        void logger.error(`Failed to fetch file mapping: ${err.detail}`);
+                    },
+                );
+            } catch (e) {
+                void logger.error(`Error parsing revision metadata: ${e}`);
+            }
+        };
+
+        void fetchFileMapping();
+    }, [reviseMetadataFile]);
 
     const [agreedToINSDCUploadTerms, setAgreedToINSDCUploadTerms] = useState(false);
 
@@ -173,12 +217,14 @@ const InnerDataUploadForm = ({
                         action={action}
                         metadataTemplateFields={metadataTemplateFields}
                         submissionDataTypes={submissionDataTypes}
+                        onMetadataFileChange={setReviseMetadataFile}
                     />
                 )}
                 <hr />
                 {extraFilesEnabled && (
                     <>
                         <ExtraFilesUpload
+                            key={fileMappingKey}
                             fileCategories={submissionDataTypes.files?.categories ?? []}
                             accessToken={accessToken}
                             inputMode={inputMode}
@@ -480,6 +526,32 @@ function useSubmitFiles(
         revise: revise.mutate,
         isPending: submit.isPending || revise.isPending,
     };
+}
+
+async function parseRevisionMetadataForFileMapping(
+    processedFile: ProcessedFile,
+): Promise<{ accession: string; submissionId: string }[]> {
+    const text = await processedFile.text();
+    const lines = text.split('\n');
+    if (lines.length === 0) return [];
+
+    const headers = lines[0].split('\t');
+    const accessionIdx = headers.indexOf('accession');
+    const idIdx = headers.includes('id') ? headers.indexOf('id') : headers.indexOf('submissionId');
+
+    if (accessionIdx === -1 || idIdx === -1) return [];
+
+    return lines
+        .slice(1)
+        .filter((line) => line.trim() !== '')
+        .map((line) => {
+            const cols = line.split('\t');
+            return {
+                accession: (cols[accessionIdx] ?? '').trim(),
+                submissionId: (cols[idIdx] ?? '').trim(),
+            };
+        })
+        .filter((row) => row.accession !== '' && row.submissionId !== '');
 }
 
 function handleError(onError: (message: string) => void, action: UploadAction) {
