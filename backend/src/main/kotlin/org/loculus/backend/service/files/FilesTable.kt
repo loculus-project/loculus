@@ -43,4 +43,6 @@ object FilesTable : Table(FILES_TABLE_NAME) {
     val multipartCompleted = bool("multipart_completed")
 
     val multipartUploadId = text("multipart_upload_id").nullable()
+
+    val markedForDeletionAtColumn = datetime("marked_for_deletion_at").nullable()
 }
