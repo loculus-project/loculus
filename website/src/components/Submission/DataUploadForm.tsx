@@ -6,6 +6,7 @@ import { type FormEvent, useState, type Dispatch, type SetStateAction } from 're
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
+import { parseExistingFilesTsv } from './FileUpload/parseExistingFilesTsv.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { backendApi } from '../../services/backendApi.ts';
@@ -67,12 +68,23 @@ const InnerDataUploadForm = ({
     const { submit, revise, isPending } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
     const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(undefined);
+    // Bumped on files.tsv load to remount the upload subtree, which reads fileMapping only at mount.
+    const [fileMappingVersion, setFileMappingVersion] = useState(0);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
     const [restrictedUntil, setRestrictedUntil] = useState(dateTimeInMonths(6));
 
     const [agreedToINSDCUploadTerms, setAgreedToINSDCUploadTerms] = useState(false);
 
     const [confirmedNoPII, setConfirmedNoPII] = useState(false);
+
+    const loadExistingFilesTsv = async (file: File) => {
+        try {
+            setFileMapping(parseExistingFilesTsv(await file.text()));
+            setFileMappingVersion((version) => version + 1);
+        } catch (error) {
+            onError(error instanceof Error ? error.message : 'Failed to parse files.tsv');
+        }
+    };
 
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
@@ -179,6 +191,8 @@ const InnerDataUploadForm = ({
                 {extraFilesEnabled && (
                     <>
                         <ExtraFilesUpload
+                            key={`extra-files-${fileMappingVersion}`}
+                            action={action}
                             fileCategories={submissionDataTypes.files?.categories ?? []}
                             accessToken={accessToken}
                             inputMode={inputMode}
@@ -187,6 +201,7 @@ const InnerDataUploadForm = ({
                             onError={onError}
                             fileMapping={fileMapping}
                             setFileMapping={setFileMapping}
+                            onLoadExistingFilesTsv={(file) => void loadExistingFilesTsv(file)}
                         />
                         <hr />
                     </>
@@ -283,49 +298,72 @@ export const ExtraFilesUpload = ({
     accessToken,
     clientConfig,
     inputMode,
+    action,
     groupId,
     fileCategories,
     fileMapping,
     setFileMapping,
     formSubmissionId,
     onError,
+    onLoadExistingFilesTsv,
 }: {
     accessToken: string;
     clientConfig: ClientConfig;
     inputMode: InputMode;
+    action?: UploadAction;
     groupId: number;
     fileCategories: FileCategory[];
     fileMapping: FilesBySubmissionId | undefined;
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
     formSubmissionId?: string;
     onError: (message: string) => void;
+    onLoadExistingFilesTsv?: (file: File) => void;
 }) => {
+    // files.tsv is only offered for bulk revisions, which start from previously submitted files.
+    const showExistingFilesTsv = action === 'revise' && inputMode === 'bulk' && onLoadExistingFilesTsv !== undefined;
+
+    const folderDescription =
+        inputMode === 'bulk'
+            ? 'The folder you select needs to contain one folder per sequence ID, which contains the files for that sequence entry'
+            : 'Upload a folder of files for this sequence';
+
+    const folderUploads = fileCategories.map((fileCategory) => (
+        <FolderUploadComponent
+            key={fileCategory.name}
+            fileCategory={fileCategory}
+            inputMode={inputMode}
+            accessToken={accessToken}
+            clientConfig={clientConfig}
+            groupId={groupId}
+            onError={onError}
+            fileMapping={fileMapping}
+            setFileMapping={setFileMapping}
+            formSubmissionId={formSubmissionId}
+            onLoadExistingFilesTsv={showExistingFilesTsv ? onLoadExistingFilesTsv : undefined}
+        />
+    ));
+
     return (
         <div className='grid sm:grid-cols-3 gap-x-16 gap-y-4'>
             <div>
                 <h2 className='font-medium text-lg'>Extra files</h2>
-                <p className='text-gray-500 text-sm'>
-                    {inputMode === 'bulk'
-                        ? 'The folder you select needs to contain one folder per sequence ID, which contains the files for that sequence entry'
-                        : 'Upload a folder of files for this sequence'}
-                </p>
+                {showExistingFilesTsv ? (
+                    <>
+                        <p className='text-gray-500 text-sm mb-2'>
+                            <strong>To keep files that were previously submitted, you must upload the files.tsv</strong>{' '}
+                            from your download. Any files you do not keep this way are discarded.
+                        </p>
+                        <p className='text-gray-500 text-sm'>
+                            Use the folder upload to <strong>add new or additional files</strong> (one folder per
+                            sequence ID). A file with the same name as a kept file replaces it; the rest are added
+                            alongside.
+                        </p>
+                    </>
+                ) : (
+                    <p className='text-gray-500 text-sm'>{folderDescription}</p>
+                )}
             </div>
-            <div className='col-span-2 flex flex-col gap-4'>
-                {fileCategories.map((fileCategory) => (
-                    <FolderUploadComponent
-                        key={fileCategory.name}
-                        fileCategory={fileCategory}
-                        inputMode={inputMode}
-                        accessToken={accessToken}
-                        clientConfig={clientConfig}
-                        groupId={groupId}
-                        onError={onError}
-                        fileMapping={fileMapping}
-                        setFileMapping={setFileMapping}
-                        formSubmissionId={formSubmissionId}
-                    />
-                ))}
-            </div>
+            <div className='col-span-2 flex flex-col gap-4'>{folderUploads}</div>
         </div>
     );
 };

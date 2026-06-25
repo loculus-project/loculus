@@ -12,6 +12,7 @@ import { displayConfirmationDialog } from '../../ConfirmationDialog';
 import { Button } from '../../common/Button';
 import type { InputMode } from '../FormOrUploadWrapper';
 import LucideFile from '~icons/lucide/file';
+import LucideFileText from '~icons/lucide/file-text';
 import LucideFolderUp from '~icons/lucide/folder-up';
 import LucideLoader from '~icons/lucide/loader';
 
@@ -95,6 +96,8 @@ type FolderUploadComponentProps = {
     // where it is used instead of the dummySubmissionId placeholder.
     formSubmissionId?: string;
     onError: (message: string) => void;
+    // Bulk revisions: shows a files.tsv drop zone next to the folder upload to keep previous files.
+    onLoadExistingFilesTsv?: (file: File) => void;
 };
 
 export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
@@ -107,6 +110,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     setFileMapping,
     formSubmissionId,
     onError,
+    onLoadExistingFilesTsv,
 }) => {
     const isClient = useClientFlag();
     const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(() => {
@@ -329,15 +333,24 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
     const handleDiscardFile = (submissionId: string, file: SingleFileUpload) => {
         setFileUploadState((state) => {
-            if (state?.type === 'uploadCompleted') {
-                const remainingFiles = state.files[submissionId].filter((f) => f.name !== file.name);
-                if (remainingFiles.length === 0) return undefined;
+            if (state?.type !== 'uploadCompleted') return state;
 
+            const remainingFiles = state.files[submissionId].filter((f) => f.name !== file.name);
+
+            // Form mode has a single submission, so emptying it reverts to the upload UI.
+            if (inputMode === 'form') {
+                if (remainingFiles.length === 0) return undefined;
                 return produce(state, (draft) => {
                     draft.files[submissionId] = remainingFiles;
                 });
             }
-            return state;
+
+            // Bulk: only revert to the upload UI once no submission has any files left.
+            const updated = produce(state, (draft) => {
+                draft.files[submissionId] = remainingFiles;
+            });
+            const anyFilesRemain = Object.values(updated.files).some((files) => files.length > 0);
+            return anyFilesRemain ? updated : undefined;
         });
     };
 
@@ -391,71 +404,81 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         } else void addAdditionalFiles();
     };
 
-    return fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
-        <div
-            className={`flex flex-col items-center justify-center flex-1 py-2 px-4 border rounded-lg ${fileUploadState !== undefined ? 'border-hidden' : isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}
-            onDragEnter={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsDragging(true);
-            }}
-            onDragOver={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsDragging(true);
-            }}
-            onDragLeave={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsDragging(false);
-            }}
-            onDrop={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsDragging(false);
-                toast.info(
-                    'Sorry, drag and drop is not currently supported but you can select an entire folder to upload by clicking the Upload folder button.',
-                );
-            }}
-        >
-            <LucideFolderUp
-                className={`mx-auto mt-4 mb-2 h-12 w-12 text-gray-300`}
-                aria-hidden='true'
-                data-testid='folder-up-icon'
+    // Bulk add: overlay a selected folder onto current files (same name replaces, others are added).
+    const handleAddAdditionalFilesBulk = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (inputMode !== 'bulk' || !e.target.files || fileUploadState?.type !== 'uploadCompleted') return;
+
+        const filesArray = filterDotFiles(Array.from(e.target.files));
+        // Reset the input so selecting the same folder again re-triggers onChange.
+        e.target.value = '';
+        if (filesArray.length === 0) return;
+
+        const validationError = isFilesArrayValid(filesArray, 'bulk');
+        if (validationError) {
+            onError(validationError);
+            return;
+        }
+
+        // Group by the sequence ID in each path: folder/<submissionId>/<file>.
+        const selectedBySubmissionId: Record<SubmissionId, FileAndName[]> = {};
+        filesArray.forEach((file) => {
+            const submissionId = file.webkitRelativePath.split('/')[1];
+            (selectedBySubmissionId[submissionId] ??= []).push({ file, name: file.name });
+        });
+
+        // Reject duplicate names within one sequence ID.
+        for (const [submissionId, files] of Object.entries(selectedBySubmissionId)) {
+            const names = files.map((f) => f.name);
+            const duplicateName = names.find((name, index) => names.indexOf(name) !== index);
+            if (duplicateName !== undefined) {
+                onError(`Cannot add multiple files with the same name for ${submissionId}: ${duplicateName}`);
+                return;
+            }
+        }
+
+        const existingFiles = fileUploadState.files;
+        void (async () => {
+            const mergedFiles: Record<SubmissionId, SingleFileUpload[]> = { ...existingFiles };
+            const newPendingFiles: Record<SubmissionId, Pending[]> = {};
+
+            for (const [submissionId, files] of Object.entries(selectedBySubmissionId)) {
+                const newNames = new Set(files.map((f) => f.name));
+                const keptExisting = (existingFiles[submissionId] ?? []).filter((file) => !newNames.has(file.name));
+                const pending = await requestFileUploads(files);
+                newPendingFiles[submissionId] = pending;
+                mergedFiles[submissionId] = [...keptExisting, ...pending];
+            }
+
+            setFileUploadState({ type: 'uploadInProgress', files: mergedFiles });
+            void startUploading(newPendingFiles);
+        })();
+    };
+
+    if (fileUploadState === undefined || fileUploadState.type === 'awaitingUrls') {
+        const folderDropZone = (
+            <FolderDropZone
+                fileCategory={fileCategory}
+                isClient={isClient}
+                isPreparing={fileUploadState !== undefined}
+                isDragging={isDragging}
+                setIsDragging={setIsDragging}
+                onSelect={handleFolderSelect}
             />
-            <div>
-                {fileUploadState === undefined ? (
-                    <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-hidden focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
-                        <span
-                            onClick={(e) => {
-                                e.preventDefault();
-                                document.getElementById(fileCategory.name)?.click();
-                            }}
-                        >
-                            Upload folder: {fileCategory.displayName ?? fileCategory.name}
-                        </span>
-                        {isClient && (
-                            <input
-                                id={fileCategory.name}
-                                name={fileCategory.name}
-                                type='file'
-                                className='sr-only'
-                                aria-label={`Upload ${fileCategory.displayName ?? fileCategory.name}`}
-                                data-testid={fileCategory.name}
-                                onChange={handleFolderSelect}
-                                /* The webkitdirectory attribute enables folder selection */
-                                {...{ webkitdirectory: '', directory: '' }}
-                                multiple
-                            />
-                        )}
-                    </label>
-                ) : (
-                    <p>Preparing upload ...</p>
-                )}
-            </div>
-            <p className='text-sm pt-2 leading-5 text-gray-600'>Upload an entire folder of files</p>
-        </div>
-    ) : (
+        );
+
+        if (onLoadExistingFilesTsv !== undefined) {
+            return (
+                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                    <ExistingFilesTsvDropZone onLoad={onLoadExistingFilesTsv} />
+                    {folderDropZone}
+                </div>
+            );
+        }
+
+        return folderDropZone;
+    }
+
+    return (
         <div className='flex flex-col text-left px-4 py-3'>
             <div className='flex justify-between items-center mb-3'>
                 <div>
@@ -478,42 +501,61 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                                   </Button>
                               </div>
                           ))
-                        : Object.entries(fileUploadState.files).flatMap(([submissionId, files]) => [
-                              <h4 key={submissionId} className='text-xs font-medium py-2'>
-                                  {submissionId}
-                              </h4>,
-                              ...files.map((file) => <FileListItem key={`${submissionId}/${file.name}`} file={file} />),
-                          ])}
+                        : Object.entries(fileUploadState.files)
+                              .filter(([, files]) => files.length > 0)
+                              .flatMap(([submissionId, files]) => [
+                                  <h4 key={submissionId} className='text-xs font-medium py-2'>
+                                      {submissionId}
+                                  </h4>,
+                                  ...files.map((file) => (
+                                      <div
+                                          key={`${submissionId}/${file.name}`}
+                                          className='flex items-center mb-2 gap-2'
+                                      >
+                                          <div className='flex-1 min-w-0'>
+                                              <FileListItem file={file} />
+                                          </div>
+                                          <Button
+                                              onClick={() => handleDiscardFile(submissionId, file)}
+                                              disabled={fileUploadState.type !== 'uploadCompleted'}
+                                              data-testid={`discard_${fileCategory.name}_${submissionId}_${file.name}`}
+                                              variant='outline-neutral'
+                                              className='font-normal!'
+                                              size='sm'
+                                          >
+                                              Discard file
+                                          </Button>
+                                      </div>
+                                  )),
+                              ])}
                     <ul></ul>
                 </div>
             </div>
 
-            <div className={`grid gap-2 w-full ${inputMode === 'form' ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                {inputMode === 'form' && (
-                    <>
-                        {isClient && (
-                            <input
-                                id={`${fileCategory.name}_add`}
-                                type='file'
-                                className='sr-only'
-                                aria-label={`Add files to ${fileCategory.displayName ?? fileCategory.name}`}
-                                data-testid={`add_${fileCategory.name}`}
-                                onChange={handleAddAdditionalFiles}
-                                multiple
-                            />
-                        )}
-                        <Button
-                            onClick={() => document.getElementById(`${fileCategory.name}_add`)?.click()}
-                            disabled={fileUploadState.type !== 'uploadCompleted'}
-                            data-testid={`add_button_${fileCategory.name}`}
-                            variant='outline-neutral'
-                            className='font-normal!'
-                            size='sm'
-                        >
-                            Add additional files
-                        </Button>
-                    </>
+            <div className='grid gap-2 w-full grid-cols-2'>
+                {isClient && (
+                    <input
+                        id={`${fileCategory.name}_add`}
+                        type='file'
+                        className='sr-only'
+                        aria-label={`Add files to ${fileCategory.displayName ?? fileCategory.name}`}
+                        data-testid={`add_${fileCategory.name}`}
+                        onChange={inputMode === 'form' ? handleAddAdditionalFiles : handleAddAdditionalFilesBulk}
+                        multiple
+                        /* In bulk mode a whole folder (one subfolder per sequence ID) is selected. */
+                        {...(inputMode === 'bulk' ? { webkitdirectory: '', directory: '' } : {})}
+                    />
                 )}
+                <Button
+                    onClick={() => document.getElementById(`${fileCategory.name}_add`)?.click()}
+                    disabled={fileUploadState.type !== 'uploadCompleted'}
+                    data-testid={`add_button_${fileCategory.name}`}
+                    variant='outline-neutral'
+                    className='font-normal!'
+                    size='sm'
+                >
+                    Add additional files
+                </Button>
                 <Button
                     onClick={() =>
                         displayConfirmationDialog({
@@ -530,6 +572,150 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     Discard all files
                 </Button>
             </div>
+        </div>
+    );
+};
+
+/** The dashed "Upload folder" drop zone shown before any files exist. */
+const FolderDropZone: FC<{
+    fileCategory: FileCategory;
+    isClient: boolean;
+    isPreparing: boolean;
+    isDragging: boolean;
+    setIsDragging: (dragging: boolean) => void;
+    onSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}> = ({ fileCategory, isClient, isPreparing, isDragging, setIsDragging, onSelect }) => (
+    <div
+        className={`flex flex-col items-center justify-center flex-1 py-2 px-4 border rounded-lg ${isPreparing ? 'border-hidden' : isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}
+        onDragEnter={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragging(true);
+        }}
+        onDragOver={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragging(true);
+        }}
+        onDragLeave={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragging(false);
+        }}
+        onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragging(false);
+            toast.info(
+                'Sorry, drag and drop is not currently supported but you can select an entire folder to upload by clicking the Upload folder button.',
+            );
+        }}
+    >
+        <LucideFolderUp
+            className={`mx-auto mt-4 mb-2 h-12 w-12 text-gray-300`}
+            aria-hidden='true'
+            data-testid='folder-up-icon'
+        />
+        <div>
+            {!isPreparing ? (
+                <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-hidden focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
+                    <span
+                        onClick={(e) => {
+                            e.preventDefault();
+                            document.getElementById(fileCategory.name)?.click();
+                        }}
+                    >
+                        Upload folder: {fileCategory.displayName ?? fileCategory.name}
+                    </span>
+                    {isClient && (
+                        <input
+                            id={fileCategory.name}
+                            name={fileCategory.name}
+                            type='file'
+                            className='sr-only'
+                            aria-label={`Upload ${fileCategory.displayName ?? fileCategory.name}`}
+                            data-testid={fileCategory.name}
+                            onChange={onSelect}
+                            /* The webkitdirectory attribute enables folder selection */
+                            {...{ webkitdirectory: '', directory: '' }}
+                            multiple
+                        />
+                    )}
+                </label>
+            ) : (
+                <p>Preparing upload ...</p>
+            )}
+        </div>
+        <p className='text-sm pt-2 leading-5 text-gray-600'>Upload an entire folder of files</p>
+    </div>
+);
+
+/** Drop zone for the downloaded files.tsv; the parent loads the kept files into the mapping. */
+const ExistingFilesTsvDropZone: FC<{ onLoad: (file: File) => void }> = ({ onLoad }) => {
+    const isClient = useClientFlag();
+    const [isDragOver, setIsDragOver] = useState(false);
+    const inputId = 'existing-files-tsv';
+
+    return (
+        <div
+            className={`flex flex-col items-center justify-center flex-1 py-2 px-4 border rounded-lg ${isDragOver ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}
+            onDragEnter={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragOver(true);
+            }}
+            onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragOver(true);
+            }}
+            onDragLeave={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragOver(false);
+            }}
+            onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragOver(false);
+                const file = e.dataTransfer.files.item(0);
+                if (file) {
+                    onLoad(file);
+                }
+            }}
+        >
+            <LucideFileText className='mx-auto mt-4 mb-2 h-12 w-12 text-gray-300' aria-hidden='true' />
+            <div>
+                <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-hidden focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
+                    <span
+                        onClick={(e) => {
+                            e.preventDefault();
+                            document.getElementById(inputId)?.click();
+                        }}
+                    >
+                        Upload files.tsv
+                    </span>
+                    {isClient && (
+                        <input
+                            id={inputId}
+                            type='file'
+                            accept='.tsv,.csv,text/tab-separated-values'
+                            className='sr-only'
+                            aria-label='Upload files.tsv'
+                            data-testid='existing-files-tsv'
+                            onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                // Reset so selecting the same file again re-triggers onChange.
+                                e.target.value = '';
+                                if (file) {
+                                    onLoad(file);
+                                }
+                            }}
+                        />
+                    )}
+                </label>
+            </div>
+            <p className='text-sm pt-2 leading-5 text-gray-600'>Reuse existing files</p>
         </div>
     );
 };

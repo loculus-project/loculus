@@ -527,6 +527,7 @@ open class SubmissionController(
         val instanceConfig = backendConfig.getInstanceConfig(organism)
         val hasConsensusSequences = instanceConfig.schema.submissionDataTypes.consensusSequences
         val isMultiSegmented = instanceConfig.referenceGenome.nucleotideSequences.size > 1
+        val hasFiles = instanceConfig.schema.submissionDataTypes.files.enabled
 
         val streamBody = StreamingResponseBody { responseBodyStream ->
             val startTime = System.currentTimeMillis()
@@ -568,6 +569,12 @@ open class SubmissionController(
                                 zipOut,
                                 isMultiSegmented,
                             )
+                            zipOut.closeEntry()
+                        }
+
+                        if (hasFiles) {
+                            zipOut.putNextEntry(java.util.zip.ZipEntry("files.tsv"))
+                            GetSubmittedDataHelpers.writeExistingFilesTsv(data, metadataIds, zipOut)
                             zipOut.closeEntry()
                         }
                     }

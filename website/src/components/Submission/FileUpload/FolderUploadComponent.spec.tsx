@@ -75,6 +75,25 @@ describe('FolderUploadComponent', () => {
         render(<FolderUploadComponent {...defaultProps} />);
         expect(screen.getByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).toBeInTheDocument();
         expect(screen.getByTestId('folder-up-icon')).toBeInTheDocument();
+        // No files.tsv drop zone unless onLoadExistingFilesTsv is provided.
+        expect(screen.queryByTestId('existing-files-tsv')).not.toBeInTheDocument();
+    });
+
+    it('shows a files.tsv drop zone alongside the folder upload when onLoadExistingFilesTsv is provided', async () => {
+        const onLoad = vi.fn();
+        render(<FolderUploadComponent {...defaultProps} onLoadExistingFilesTsv={onLoad} />);
+
+        // Both drop zones are shown.
+        expect(screen.getByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).toBeInTheDocument();
+        expect(screen.getByTestId('existing-files-tsv')).toBeInTheDocument();
+
+        const tsv = new File(['id\tcategory\tfileId\tfileName\n'], 'files.tsv', {
+            type: 'text/tab-separated-values',
+        });
+        await userEvent.upload(screen.getByTestId('existing-files-tsv'), tsv);
+
+        expect(onLoad).toHaveBeenCalledTimes(1);
+        expect((onLoad.mock.calls[0][0] as File).name).toBe('files.tsv');
     });
 
     it('displays files after selection', async () => {
@@ -302,7 +321,7 @@ describe('FolderUploadComponent', () => {
         await waitFor(() => expect(mockRequestMultipartUpload).toHaveBeenCalled());
     });
 
-    it('does not show the additional files button in bulk mode', () => {
+    it('shows the add new files button in bulk mode once files are loaded', () => {
         render(
             <FolderUploadComponent
                 {...defaultProps}
@@ -312,7 +331,64 @@ describe('FolderUploadComponent', () => {
         );
 
         expect(screen.getByText('file-a.txt')).toBeInTheDocument();
-        expect(screen.queryByTestId('add_button_extraFiles')).not.toBeInTheDocument();
+        expect(screen.getByTestId('add_button_extraFiles')).toBeInTheDocument();
+    });
+
+    const bulkFilesProps = {
+        ...defaultProps,
+        inputMode: 'bulk' as const,
+        fileMapping: {
+            sample1: { extraFiles: [{ fileId: 'file-1', name: 'file-a.txt' }] },
+            sample2: { extraFiles: [{ fileId: 'file-2', name: 'file-b.txt' }] },
+        },
+    };
+
+    it('discards an individual file in bulk mode while keeping other submissions', async () => {
+        render(<FolderUploadComponent {...bulkFilesProps} />);
+
+        await userEvent.click(screen.getByTestId('discard_extraFiles_sample1_file-a.txt'));
+
+        await waitFor(() => expect(screen.queryByText('file-a.txt')).not.toBeInTheDocument());
+        // The other submission's file is untouched and we stay in the file list (not the folder prompt).
+        expect(screen.getByText('file-b.txt')).toBeInTheDocument();
+        expect(screen.getByText('sample2')).toBeInTheDocument();
+        expect(screen.queryByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).not.toBeInTheDocument();
+    });
+
+    it('reverts to the upload folder prompt only once the last bulk file is discarded', async () => {
+        render(<FolderUploadComponent {...bulkFilesProps} />);
+
+        await userEvent.click(screen.getByTestId('discard_extraFiles_sample1_file-a.txt'));
+        await userEvent.click(screen.getByTestId('discard_extraFiles_sample2_file-b.txt'));
+
+        await waitFor(() =>
+            expect(screen.getByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).toBeInTheDocument(),
+        );
+    });
+
+    it('adds new files via a folder overlay in bulk mode, replacing same-named files and adding new IDs', async () => {
+        mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'added-id', urls: ['http://test.com/url1'] }]));
+
+        render(<FolderUploadComponent {...bulkFilesProps} />);
+
+        const withPath = (content: string, name: string, path: string) => {
+            const file = new File([content], name, { type: 'text/plain' });
+            Object.defineProperty(file, 'webkitRelativePath', { value: path, writable: false });
+            return file;
+        };
+        // Overlay: replace sample1's file-a.txt, add a new file to sample1, and add a brand-new sample3.
+        await userEvent.upload(screen.getByTestId('add_extraFiles'), [
+            withPath('new', 'file-a.txt', 'upload/sample1/file-a.txt'),
+            withPath('new', 'extra.txt', 'upload/sample1/extra.txt'),
+            withPath('new', 'reads.txt', 'upload/sample3/reads.txt'),
+        ]);
+
+        await waitFor(() => expect(screen.getByText('extra.txt')).toBeInTheDocument());
+        // New ID and its file appear; sample1 keeps file-a.txt (replaced, same name); sample2 untouched.
+        expect(screen.getByText('sample3')).toBeInTheDocument();
+        expect(screen.getByText('reads.txt')).toBeInTheDocument();
+        expect(screen.getByText('file-a.txt')).toBeInTheDocument();
+        expect(screen.getByText('file-b.txt')).toBeInTheDocument();
     });
 
     it('disables the additional files button while an upload is in progress', async () => {
