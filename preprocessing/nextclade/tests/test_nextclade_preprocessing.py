@@ -288,14 +288,14 @@ single_segment_case_definitions = [
     Case(
         name="with file",
         input_metadata={},
-        input_sequence={"fastaHeader": sequence_with_mutation("single")},
-        accession_id="1",
-        files={
+        input_files={
             "raw_reads": [
                 FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
                 FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
             ]
         },
+        input_sequence={"fastaHeader": sequence_with_mutation("single")},
+        accession_id="1",
         expected_metadata={
             "completeness": 1.0,
             "totalInsertedNucs": 0,
@@ -304,6 +304,12 @@ single_segment_case_definitions = [
             "length": len(consensus_sequence("single")),
             "nonExistentField": "None",
             "variant": True,
+        },
+        expected_files={
+            "raw_reads": [
+                FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
+                FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
+            ]
         },
         expected_errors=[],
         expected_warnings=[],

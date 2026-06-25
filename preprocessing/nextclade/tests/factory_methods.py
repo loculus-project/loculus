@@ -168,14 +168,15 @@ class ProcessedEntryFactory:
 class Case:
     name: str
     input_metadata: dict[str, str | None] = field(default_factory=dict)
+    input_files: dict[str, list[FileIdAndName]] | None = None
     input_sequence: dict[str, str | None] = field(default_factory=lambda: {"main": None})
     accession_id: str = "000999"
     expected_metadata: dict[str, ProcessedMetadataValue] = field(default_factory=dict)
+    expected_files: dict[str, list[FileIdAndName]] | None = None
     expected_errors: list[ProcessingAnnotation] | None = None
     expected_warnings: list[ProcessingAnnotation] | None = None
     expected_processed_alignment: ProcessedAlignment | None = None
     group_id: int = 2
-    files: dict[str, list[FileIdAndName]] | None = None
 
     def create_test_case(self, factory_custom: ProcessedEntryFactory) -> ProcessingTestCase:
         if not self.expected_processed_alignment:
@@ -185,7 +186,7 @@ class Case:
             accession_id=self.accession_id,
             sequences=self.input_sequence,
             group_id=self.group_id,
-            files=self.files,
+            files=self.input_files,
         )
         expected_output = factory_custom.create_processed_entry(
             metadata_dict=self.expected_metadata,
@@ -193,7 +194,7 @@ class Case:
             errors=self.expected_errors or [],
             warnings=self.expected_warnings or [],
             processed_alignment=self.expected_processed_alignment,
-            files=self.files,
+            files=self.expected_files,
         )
         return ProcessingTestCase(
             name=self.name, input=unprocessed_entry, expected_output=expected_output
@@ -273,6 +274,8 @@ def verify_processed_entry(
         f"{test_name}: sequence name to fasta header map '{actual.sequenceNameToFastaId}' do not "
         f"match expectation '{expected.sequenceNameToFastaId}'."
     )
+
+    # Check files
     assert actual.files == expected.files, (
         f"{test_name}: files '{actual.files}' do not match expectation '{expected.files}'."
     )
