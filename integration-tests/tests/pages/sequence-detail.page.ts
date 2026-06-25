@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import { VersionsPage } from './versions.page';
 
 export class SequenceDetailPage {
     constructor(private page: Page) {}
@@ -56,31 +57,15 @@ export class SequenceDetailPage {
         await expect(this.page.getByText('This is a revocation version.')).toBeVisible();
     }
 
-    async gotoAllVersions() {
+    async gotoCompareVersions(): Promise<VersionsPage> {
         const versionLink = this.page.getByText(/Version \d+/);
         await expect(versionLink).toBeVisible();
         await versionLink.click();
 
-        const allVersionsLink = this.page.getByRole('link', { name: 'All versions' });
-        await expect(allVersionsLink).toBeVisible();
-        await allVersionsLink.click();
-    }
+        const compareVersionsLink = this.page.getByRole('link', { name: 'Compare versions' });
+        await expect(compareVersionsLink).toBeVisible();
+        await compareVersionsLink.click();
 
-    async expectVersionsPageFor(accession: string) {
-        await expect(this.page.getByText(`Versions for accession ${accession}`)).toBeVisible();
-    }
-
-    async expectLatestVersionLabel() {
-        await expect(this.page.getByText('Latest version')).toBeVisible();
-    }
-
-    async expectPreviousVersionLabel() {
-        await expect(this.page.getByText('Previous version')).toBeVisible();
-    }
-
-    async clickVersionLink(accessionVersion: string) {
-        const link = this.page.getByRole('link', { name: accessionVersion });
-        await expect(link).toBeVisible();
-        await link.click();
+        return new VersionsPage(this.page);
     }
 }
