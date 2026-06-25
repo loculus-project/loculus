@@ -297,6 +297,7 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
             version=version_from_str(accession_version),
             data=ProcessedData(
                 metadata=output_metadata,
+                files=unprocessed.files,
                 unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
                 alignedNucleotideSequences=aligned_nucleotide_sequences,
                 nucleotideInsertions=nucleotide_insertions,
@@ -538,6 +539,7 @@ def process_single(
         version=version_from_str(accession_version),
         data=ProcessedData(
             metadata=output_metadata,
+            files=unprocessed.files,
             unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
             alignedNucleotideSequences=unprocessed.alignedNucleotideSequences,
             nucleotideInsertions=unprocessed.nucleotideInsertions,
@@ -599,6 +601,7 @@ def processed_entry_with_errors(id) -> SubmissionData:
             version=version_from_str(id),
             data=ProcessedData(
                 metadata=dict[str, ProcessedMetadataValue](),
+                files=None,
                 unalignedNucleotideSequences=defaultdict(dict[str, Any]),
                 alignedNucleotideSequences=defaultdict(dict[str, Any]),
                 nucleotideInsertions=defaultdict(dict[str, Any]),
@@ -662,10 +665,13 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             file_name = f"{accession}.{version}.embl"
             upload_info = request_upload(submission_data.group_id, 1, config)[0]
             file_id = upload_info.fileId
-            upload_embl_file_to_presigned_url(file_content, upload_info.url, upload_info.headers)
-            submission_data.processed_entry.data.files = {
-                "annotations": [FileIdAndName(fileId=file_id, name=file_name)]
-            }
+            url = upload_info.url
+            upload_embl_file_to_presigned_url(file_content, url)
+            processed_files = submission_data.processed_entry.data.files or {}
+            processed_files.setdefault("annotations", []).append(
+                FileIdAndName(fileId=file_id, name=file_name)
+            )
+            submission_data.processed_entry.data.files = processed_files
         except Exception as e:
             logger.error("Error creating or uploading EMBL file: %s", e)
             submission_data.processed_entry.errors.append(
