@@ -94,6 +94,8 @@ defaultOrganismConfig: &defaultOrganismConfig
     files:
       - name: annotations
         displayName: Annotations
+      - name: raw_reads
+        displayName: Raw reads
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)
