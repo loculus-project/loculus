@@ -33,8 +33,8 @@ class S3GarbageCollectionTask(
 ) {
 
     /**
-     * Runs once daily by default (with an initial delay of 15 minutes) and deletes S3 objects older than
-     * `loculus.s3.gc-gc-orphan-retention-period-minutes` that are not referenced in submitted_data or processed_data.
+     * Runs once daily by default (with an initial delay of S3_GC_INITIAL_DELAY_MINUTES minutes) and deletes S3 objects older than
+     * `loculus.s3.gc-gc-orphan-retention-period-minutes` that are not referenced in submitted_data, archive_of_submitted_data or processed_data.
      *
      * Uses a two-phase deletion approach to avoid a race condition where a file could be deleted
      * while a submission referencing it is in-flight:
