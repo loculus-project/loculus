@@ -18,12 +18,14 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionsFilterWithApprovalScope
 import org.loculus.backend.api.AccessionVersionsFilterWithDeletionScope
+import org.loculus.backend.api.Accessions
 import org.loculus.backend.api.AccessionsToRevokeWithComment
 import org.loculus.backend.api.CompressionFormat
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.ExternalSubmittedData
+import org.loculus.backend.api.FileCategoryFilesMap
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.GetSubmittedDataRequest
 import org.loculus.backend.api.Organism
@@ -366,6 +368,18 @@ open class SubmissionController(
     ): SequenceEntryVersionToEdit = submissionDatabaseService.getSequenceEntryVersionToEdit(
         authenticatedUser,
         AccessionVersion(accession, version),
+        organism,
+    )
+
+    @Operation(description = GET_FILE_MAPPING_DESCRIPTION)
+    @PostMapping("/get-file-mapping", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getFileMapping(
+        @PathVariable @Valid organism: Organism,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestBody body: Accessions,
+    ): Map<Accession, FileCategoryFilesMap> = submissionDatabaseService.getFileMappingForAccessions(
+        body.accessions,
+        authenticatedUser,
         organism,
     )
 

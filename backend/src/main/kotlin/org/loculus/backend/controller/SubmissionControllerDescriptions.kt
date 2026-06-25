@@ -152,6 +152,12 @@ This endpoint performs validation (type validation, missing/required fields) on 
 If any of above is not fulfilled, this will return an error and roll back the whole transaction.
 """
 
+const val GET_FILE_MAPPING_DESCRIPTION = """
+Get the file mapping of the latest versions of the given accessions.
+Returns a map from accession to the file mapping of its latest version.
+$FILE_MAPPING_DESCRIPTION
+"""
+
 const val DELETE_SEQUENCES_DESCRIPTION = """
 Delete existing accession versions. 
 If any of the given accession versions do not exist, or the user has no right to delete any of the accession versions 
