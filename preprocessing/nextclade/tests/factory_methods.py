@@ -9,6 +9,7 @@ import pytz
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
     AnnotationSourceType,
+    FileCategory,
     FileIdAndName,
     NucleotideSequence,
     ProcessedData,
@@ -78,7 +79,7 @@ class UnprocessedEntryFactory:
         accession_id: str,
         sequences: dict[SegmentName, NucleotideSequence | None],
         group_id: int = 2,
-        files: dict[str, list[FileIdAndName]] | None = None,
+        files: dict[FileCategory, list[FileIdAndName]] | None = None,
     ) -> UnprocessedEntry:
         return UnprocessedEntry(
             accessionVersion=f"LOC_{accession_id}.1",
@@ -133,7 +134,7 @@ class ProcessedEntryFactory:
         errors: list[ProcessingAnnotation] | None = None,
         warnings: list[ProcessingAnnotation] | None = None,
         processed_alignment: ProcessedAlignment | None = None,
-        files: dict[str, list[FileIdAndName]] | None = None,
+        files: dict[FileCategory, list[FileIdAndName]] | None = None,
     ) -> ProcessedEntry:
         if errors is None:
             errors = []
@@ -168,11 +169,11 @@ class ProcessedEntryFactory:
 class Case:
     name: str
     input_metadata: dict[str, str | None] = field(default_factory=dict)
-    input_files: dict[str, list[FileIdAndName]] | None = None
+    input_files: dict[FileCategory, list[FileIdAndName]] | None = None
     input_sequence: dict[str, str | None] = field(default_factory=lambda: {"main": None})
     accession_id: str = "000999"
     expected_metadata: dict[str, ProcessedMetadataValue] = field(default_factory=dict)
-    expected_files: dict[str, list[FileIdAndName]] | None = None
+    expected_files: dict[FileCategory, list[FileIdAndName]] | None = None
     expected_errors: list[ProcessingAnnotation] | None = None
     expected_warnings: list[ProcessingAnnotation] | None = None
     expected_processed_alignment: ProcessedAlignment | None = None
