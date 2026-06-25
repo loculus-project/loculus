@@ -13,6 +13,7 @@ import {
     type ProblemDetail,
     type CompleteMultipartUploadRequest,
 } from '../types/backend.ts';
+import { adminSeqSetCitations } from '../types/seqSetCitation.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 
 type GetSequencesParameters = {
@@ -121,6 +122,17 @@ export class BackendClient {
             '/admin/current-pipeline-versions',
             'GET',
             currentPipelineVersions,
+            createAuthorizationHeader(token),
+            undefined,
+            undefined,
+        );
+    }
+
+    public getAllSeqSetCitations(token: string) {
+        return this.request(
+            '/admin/get-all-seqset-citations',
+            'GET',
+            adminSeqSetCitations,
             createAuthorizationHeader(token),
             undefined,
             undefined,

@@ -26,10 +26,12 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
 import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.api.AccessionVersion
+import org.loculus.backend.api.AdminSeqSetCitation
 import org.loculus.backend.api.AuthorProfile
 import org.loculus.backend.api.CitationOrigin
 import org.loculus.backend.api.CitationSource
 import org.loculus.backend.api.CitedBy
+import org.loculus.backend.api.CitedSeqSet
 import org.loculus.backend.api.ResponseSeqSet
 import org.loculus.backend.api.SeqSet
 import org.loculus.backend.api.SeqSetCitation
@@ -579,6 +581,42 @@ class SeqSetCitationsDatabaseService(
                                 it[SeqSetsTable.seqSetVersion],
                             ).displayAccessionVersion(),
                             sequenceAccession = it[SeqSetRecordsTable.accession],
+                        )
+                    },
+                )
+            }
+    }
+
+    fun getAllSeqSetCitations(): List<AdminSeqSetCitation> {
+        log.info { "Get all seqSet citations" }
+
+        return SeqSetCitationSourceTable.innerJoin(
+            SeqSetToCitationSourceTable,
+        ).innerJoin(
+            SeqSetsTable,
+        ).selectAll()
+            .orderBy(
+                SeqSetCitationSourceTable.year to SortOrder.DESC,
+                SeqSetCitationSourceTable.citationSourceId to SortOrder.DESC,
+            )
+            .groupBy { it[SeqSetCitationSourceTable.citationSourceId] }
+            .map { (_, rows) ->
+                val first = rows.first()
+                AdminSeqSetCitation(
+                    source = CitationSource(
+                        sourceDOI = first[SeqSetCitationSourceTable.sourceDOI],
+                        title = first[SeqSetCitationSourceTable.title],
+                        year = first[SeqSetCitationSourceTable.year],
+                        contributors = first[SeqSetCitationSourceTable.contributors],
+                    ),
+                    seqSets = rows.map {
+                        CitedSeqSet(
+                            seqSetAccessionVersion = AccessionVersion(
+                                it[SeqSetsTable.seqSetId],
+                                it[SeqSetsTable.seqSetVersion],
+                            ).displayAccessionVersion(),
+                            name = it[SeqSetsTable.name],
+                            seqSetDOI = it[SeqSetsTable.seqSetDOI],
                         )
                     },
                 )

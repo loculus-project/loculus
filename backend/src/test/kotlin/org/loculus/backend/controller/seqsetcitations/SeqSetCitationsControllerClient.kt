@@ -1,6 +1,7 @@
 package org.loculus.backend.controller.seqsetcitations
 
 import org.loculus.backend.controller.jwtForDefaultUser
+import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.withAuth
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
@@ -126,6 +127,11 @@ class SeqSetCitationsControllerClient(private val mockMvc: MockMvc) {
         get("/get-seqset-citations")
             .param("seqSetId", seqSetId)
             .param("version", seqSetVersion.toString()),
+    )
+
+    fun getAllSeqSetCitations(jwt: String? = jwtForSuperUser): ResultActions = mockMvc.perform(
+        get("/admin/get-all-seqset-citations")
+            .withAuth(jwt),
     )
 
     fun getSequenceCitations(accession: String = MOCK_SEQ_ACCESSION, version: Long? = MOCK_SEQ_VERSION): ResultActions =
