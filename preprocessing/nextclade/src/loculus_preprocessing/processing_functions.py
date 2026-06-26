@@ -25,6 +25,7 @@ from urllib3.util.retry import Retry
 from .datatypes import (
     AnnotationSource,
     AnnotationSourceType,
+    FileIdAndName,
     FunctionArgs,
     InputData,
     InputMetadata,
@@ -1946,6 +1947,38 @@ def single_metadata_annotation(
             message=message,
         )
     ]
+
+
+def validate_raw_reads_submission(
+    files: list[FileIdAndName],
+) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
+    errors: list[ProcessingAnnotation] = []
+    warnings: list[ProcessingAnnotation] = []
+
+    min_files, max_files = 1, 2
+    if not (min_files <= len(files) <= max_files):
+        name = "; ".join(f.name for f in files)
+        message = f"Raw reads must be submitted as one or two files, got {len(files)}"
+        errors.append(
+            ProcessingAnnotation.from_single(
+                name=name, type=AnnotationSourceType.SUBMITTED_FILE, message=message
+            )
+        )
+
+    allowed_extensions = ["fastq", "fastq.gz", "fq", "fq.gz"]
+    for file in files:
+        if not any(file.name.endswith(extension) for extension in allowed_extensions):
+            message = (
+                f"Raw reads file '{file.name}' has unrecognized extension."
+                f" Allowed extensions: {allowed_extensions}"
+            )
+            errors.append(
+                ProcessingAnnotation.from_single(
+                    name=file.name, type=AnnotationSourceType.SUBMITTED_FILE, message=message
+                )
+            )
+
+    return errors, warnings
 
 
 def process_frameshifts(input: str | None) -> InputData:
