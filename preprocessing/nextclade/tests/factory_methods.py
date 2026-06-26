@@ -9,7 +9,6 @@ import pytz
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
     AnnotationSourceType,
-    SubmissionFileCategory,
     FileIdAndName,
     NucleotideSequence,
     ProcessedData,
@@ -18,6 +17,7 @@ from loculus_preprocessing.datatypes import (
     ProcessingAnnotation,
     ProcessingAnnotationAlignment,
     SegmentName,
+    SubmissionFileCategory,
     UnprocessedData,
     UnprocessedEntry,
 )
