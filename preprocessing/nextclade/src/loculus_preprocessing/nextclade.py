@@ -26,7 +26,6 @@ from .datatypes import (
     AminoAcidSequence,
     AnnotationSourceType,
     FastaId,
-    SubmissionFileCategory,
     FileIdAndName,
     GeneName,
     GenericSequence,
@@ -38,6 +37,7 @@ from .datatypes import (
     SegmentName,
     SequenceAssignment,
     SequenceAssignmentBatch,
+    SubmissionFileCategory,
     UnprocessedAfterNextclade,
     UnprocessedEntry,
 )
