@@ -26,6 +26,7 @@ from .datatypes import (
     AminoAcidSequence,
     AnnotationSourceType,
     FastaId,
+    FileCategory,
     FileIdAndName,
     GeneName,
     GenericSequence,
@@ -37,7 +38,6 @@ from .datatypes import (
     SegmentName,
     SequenceAssignment,
     SequenceAssignmentBatch,
-    SubmissionFileCategory,
     UnprocessedAfterNextclade,
     UnprocessedEntry,
 )
@@ -803,9 +803,9 @@ def enrich_with_nextclade(  # noqa: PLR0914
         }
         for entry in unprocessed
     }
-    input_files: dict[
-        AccessionVersion, dict[SubmissionFileCategory, list[FileIdAndName]] | None
-    ] = {entry.accessionVersion: entry.data.files for entry in unprocessed}
+    input_files: dict[AccessionVersion, dict[FileCategory, list[FileIdAndName]] | None] = {
+        entry.accessionVersion: entry.data.files for entry in unprocessed
+    }
 
     batch = assign_segment_for_alignment(unprocessed, config=config, dataset_dir=dataset_dir)
     unaligned_nucleotide_sequences = batch.unalignedNucleotideSequences

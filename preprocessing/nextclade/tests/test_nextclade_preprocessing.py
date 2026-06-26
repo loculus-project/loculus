@@ -26,10 +26,10 @@ from loculus_preprocessing.config import (
 )
 from loculus_preprocessing.datatypes import (
     AnnotationSourceType,
+    FileCategory,
     FileIdAndName,
     SegmentClassificationMethod,
     SubmissionData,
-    SubmissionFileCategory,
     UnprocessedData,
     UnprocessedEntry,
 )
@@ -290,7 +290,7 @@ single_segment_case_definitions = [
         name="with file",
         input_metadata={},
         input_files={
-            SubmissionFileCategory.RAW_READS: [
+            FileCategory.RAW_READS: [
                 FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
                 FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
             ]
@@ -307,7 +307,7 @@ single_segment_case_definitions = [
             "variant": True,
         },
         expected_files={
-            SubmissionFileCategory.RAW_READS: [
+            FileCategory.RAW_READS: [
                 FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
                 FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
             ]
@@ -330,7 +330,7 @@ single_segment_case_definitions = [
         name="with too many raw read files",
         input_metadata={},
         input_files={
-            SubmissionFileCategory.RAW_READS: [
+            FileCategory.RAW_READS: [
                 FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
                 FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
                 FileIdAndName(fileId="file-id-0003", name="reads_R3.fastq"),
@@ -348,7 +348,7 @@ single_segment_case_definitions = [
             "variant": True,
         },
         expected_files={
-            SubmissionFileCategory.RAW_READS: [
+            FileCategory.RAW_READS: [
                 FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
                 FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
                 FileIdAndName(fileId="file-id-0003", name="reads_R3.fastq"),
@@ -381,9 +381,7 @@ single_segment_case_definitions = [
         name="with unrecognized raw read file extension",
         input_metadata={},
         input_files={
-            SubmissionFileCategory.RAW_READS: [
-                FileIdAndName(fileId="file-id-0001", name="reads.txt")
-            ]
+            FileCategory.RAW_READS: [FileIdAndName(fileId="file-id-0001", name="reads.txt")]
         },
         input_sequence={"fastaHeader": sequence_with_mutation("single")},
         accession_id="1",
@@ -397,9 +395,7 @@ single_segment_case_definitions = [
             "variant": True,
         },
         expected_files={
-            SubmissionFileCategory.RAW_READS: [
-                FileIdAndName(fileId="file-id-0001", name="reads.txt")
-            ]
+            FileCategory.RAW_READS: [FileIdAndName(fileId="file-id-0001", name="reads.txt")]
         },
         expected_errors=build_processing_annotations(
             [
@@ -1284,14 +1280,10 @@ multi_segment_case_definitions_none_requirement = [
         },
         accession_id="1",
         input_files={
-            SubmissionFileCategory.RAW_READS: [
-                FileIdAndName(fileId="file-id-0001", name="reads.txt")
-            ]
+            FileCategory.RAW_READS: [FileIdAndName(fileId="file-id-0001", name="reads.txt")]
         },
         expected_files={
-            SubmissionFileCategory.RAW_READS: [
-                FileIdAndName(fileId="file-id-0001", name="reads.txt")
-            ]
+            FileCategory.RAW_READS: [FileIdAndName(fileId="file-id-0001", name="reads.txt")]
         },
         expected_metadata={
             "length_ebola-sudan": len(consensus_sequence("ebola-sudan")),
