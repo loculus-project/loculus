@@ -26,6 +26,7 @@ from .datatypes import (
     AminoAcidSequence,
     AnnotationSource,
     AnnotationSourceType,
+    FileCategory,
     FileIdAndName,
     GeneName,
     InputData,
@@ -42,7 +43,6 @@ from .datatypes import (
     SegmentClassificationMethod,
     SegmentName,
     SubmissionData,
-    SubmissionFileCategory,
     UnprocessedAfterNextclade,
     UnprocessedData,
     UnprocessedEntry,
@@ -439,19 +439,19 @@ def get_output_metadata(
 
 
 def process_submitted_files(
-    file_mapping: dict[SubmissionFileCategory, list[FileIdAndName]],
+    file_mapping: dict[FileCategory, list[FileIdAndName]],
 ) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
 
     for category, files in file_mapping.items():
         match category:
-            case SubmissionFileCategory.RAW_READS:
+            case FileCategory.RAW_READS:
                 rr_errors, rr_warnings = validate_raw_reads_submission(files)
                 errors.extend(rr_errors)
                 warnings.extend(rr_warnings)
             case _:
-                logger.warning(f"Submitted file is of unrecognized category {category}")
+                logger.warning(f"Submitted file is of unexpected category {category}")
 
     return errors, warnings
 
@@ -692,7 +692,7 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             file_id = upload_info.fileId
             upload_embl_file_to_presigned_url(file_content, upload_info.url, upload_info.headers)
             processed_files = submission_data.processed_entry.data.files or {}
-            processed_files.setdefault("annotations", []).append(
+            processed_files.setdefault(FileCategory.ANNOTATIONS, []).append(
                 FileIdAndName(fileId=file_id, name=file_name)
             )
             submission_data.processed_entry.data.files = processed_files
