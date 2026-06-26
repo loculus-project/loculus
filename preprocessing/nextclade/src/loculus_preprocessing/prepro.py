@@ -445,6 +445,9 @@ def process_submitted_files(
     warnings: list[ProcessingAnnotation] = []
 
     for category, files in file_mapping.items():
+        if not files:
+            # Backend always includes a key with empty list for enabled categories
+            continue
         match category:
             case FileCategory.RAW_READS:
                 rr_errors, rr_warnings = validate_raw_reads_submission(files)
