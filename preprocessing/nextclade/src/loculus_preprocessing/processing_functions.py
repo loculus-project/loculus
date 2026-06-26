@@ -1955,8 +1955,7 @@ def validate_raw_reads_submission(
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
 
-    min_files, max_files = 1, 2
-    if not (min_files <= len(files) <= max_files):
+    if len(files) > 2:  # noqa: PLR2004
         name = "; ".join(f.name for f in files)
         message = f"Raw reads must be submitted as one or two files, got {len(files)}"
         errors.append(
