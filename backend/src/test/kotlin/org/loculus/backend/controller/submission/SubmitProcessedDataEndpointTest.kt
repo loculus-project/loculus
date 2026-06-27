@@ -466,7 +466,7 @@ class SubmitProcessedDataEndpointTest(
                         FileIdAndName(secondFileIdAndUrl.fileId, "foo-2.txt"),
                     ),
                 ),
-            ).copy(errors = PreparedProcessedData.withErrors(accessions[1]).errors),
+            ),
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
