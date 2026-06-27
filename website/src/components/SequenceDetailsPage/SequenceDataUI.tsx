@@ -12,6 +12,7 @@ import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms 
 import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
+import { type SequenceCitation } from '../../types/seqSetCitation.ts';
 import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import { Button } from '../common/Button';
@@ -30,6 +31,7 @@ interface Props {
     accessToken: string | undefined;
     sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
     referenceGenomesInfo: ReferenceGenomesInfo;
+    sequenceCitations?: SequenceCitation[];
     isRevocation?: boolean;
     onRevokeSuccess?: () => void;
 }
@@ -46,6 +48,7 @@ export const SequenceDataUI: FC<Props> = ({
     accessToken,
     sequenceFlaggingConfig,
     referenceGenomesInfo,
+    sequenceCitations,
     isRevocation,
     onRevokeSuccess,
 }: Props) => {
@@ -73,6 +76,7 @@ export const SequenceDataUI: FC<Props> = ({
                 segmentReferences={segmentReferences}
                 dataUseTermsHistory={dataUseTermsHistory}
                 referenceGenomesInfo={referenceGenomesInfo}
+                sequenceCitations={sequenceCitations}
             />
             {schema.submissionDataTypes.consensusSequences && !isRevocation && (
                 <div className='mt-10'>

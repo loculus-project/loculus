@@ -52,10 +52,10 @@ export class RevisionPage {
     }
 
     /**
-     * Click the Submit button
+     * Click the Upload (submit) button
      */
     async clickSubmit() {
-        await this.page.getByRole('button', { name: 'Submit' }).click();
+        await this.page.getByRole('button', { name: 'Upload and proceed to Approval' }).click();
     }
 
     /**

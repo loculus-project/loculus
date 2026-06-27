@@ -112,7 +112,7 @@ interface DisplayRevocationProps {
     onConfirmation: (inputValue: string) => void;
 }
 
-export const displayRevocationDialog = ({ dialogText, onConfirmation }: DisplayRevocationProps) => {
+const displayRevocationDialog = ({ dialogText, onConfirmation }: DisplayRevocationProps) => {
     confirmAlert({
         closeOnClickOutside: false,
         customUI: ({ onClose }) => (
@@ -134,7 +134,7 @@ interface RevocationDialogProps {
     onClose: () => void;
 }
 
-export const RevocationDialog: FC<RevocationDialogProps> = ({ dialogText, onConfirmation, onClose }) => {
+const RevocationDialog: FC<RevocationDialogProps> = ({ dialogText, onConfirmation, onClose }) => {
     const [inputValue, setInputValue] = useState('');
 
     return (

@@ -35,11 +35,11 @@ test.describe('Submission flow', () => {
         await page.getByLabel('I confirm that the data').check();
         await page.getByLabel('I confirm I have not and will').check();
 
-        await page.getByRole('button', { name: 'Submit sequences' }).click();
+        await page.getByRole('button', { name: 'Upload and proceed to Approval' }).click();
         await page.getByRole('button', { name: 'Continue under Open terms' }).click();
 
         await expect(
-            page.getByRole('heading', { name: 'Review current submissions' }),
+            page.getByRole('heading', { name: 'Review pending submissions' }),
         ).toBeVisible();
 
         const reviewPage = new ReviewPage(page);
@@ -87,7 +87,7 @@ test.describe('Submission flow', () => {
         const reviewPage = await submissionPage.submitSequence();
 
         await expect(
-            page.getByRole('heading', { name: 'Review current submissions' }),
+            page.getByRole('heading', { name: 'Review pending submissions' }),
         ).toBeVisible();
 
         await reviewPage.releaseAndGoToReleasedSequences();

@@ -1,8 +1,9 @@
 import { type FC, useEffect, useMemo, useState } from 'react';
 
 import type { OrganismMetadata } from './OrganismMetadataTableSelector.tsx';
+import useClientFlag from '../../hooks/isClient.ts';
 import { routes } from '../../routes/routes.ts';
-import type { InputField, Metadata } from '../../types/config.ts';
+import type { InputField, InputFieldOption, Metadata } from '../../types/config.ts';
 import { getUrl } from '../../utils/getUrl.ts';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../common/BoxWithTabs.tsx';
 import { Button } from '../common/Button.tsx';
@@ -163,9 +164,13 @@ export const OrganismMetadataTable: FC<{ organism: OrganismMetadata }> = ({ orga
                 {activeTab === FieldType.INPUT && (
                     <div className='mt-4'>
                         <div className='mb-4'>
-                            You can download all input metadata fields (with their descriptions and examples) here:{' '}
-                            <a href={routes.metadataOverview(organism.key)} className='text-primary-700 opacity-90'>
-                                {`${organism.displayName.replaceAll(' ', '_')}_metadata_overview.tsv`}
+                            You can download a submission template with an overview of input metadata fields (with their
+                            descriptions and examples) here:{' '}
+                            <a
+                                href={routes.metadataTemplate(organism.key, 'submit', 'xlsx')}
+                                className='text-primary-700 opacity-90'
+                            >
+                                {`${organism.displayName.replaceAll(' ', '_')}_metadata_template.xlsx`}
                             </a>
                         </div>
                         <MetadataSearchBar
@@ -309,6 +314,79 @@ const FieldNameCell: FC<{ header: string; field: TypedInputField | Metadata; fie
     );
 };
 
+type AllowedValuesListProps = {
+    options: InputFieldOption[];
+    fieldName: string;
+};
+
+export const AllowedValuesList: FC<AllowedValuesListProps> = ({ options, fieldName }) => {
+    const [query, setQuery] = useState('');
+    const [copied, setCopied] = useState(false);
+    const isClient = useClientFlag();
+
+    const trimmedQuery = query.trim();
+
+    const filtered = useMemo(
+        () =>
+            trimmedQuery === ''
+                ? options
+                : options.filter((o) => o.name.toLowerCase().includes(trimmedQuery.toLowerCase())),
+        [options, trimmedQuery],
+    );
+
+    const handleCopy = async () => {
+        await navigator.clipboard.writeText(filtered.map((o) => o.name).join('\n'));
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <div className='flex flex-col gap-1'>
+            <label htmlFor={`allowed-values-search-${fieldName}`} className='text-sm font-medium text-primary-600'>
+                Search available options
+            </label>
+            <input
+                id={`allowed-values-search-${fieldName}`}
+                type='text'
+                placeholder={`Search ${options.length} values…`}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                disabled={!isClient}
+                className='border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-100'
+            />
+            <ul
+                className='max-h-40 overflow-y-auto border border-gray-200 rounded text-sm'
+                aria-label={`Allowed values for ${fieldName}`}
+            >
+                {filtered.length === 0 ? (
+                    <li className='px-2 py-1 text-gray-400 italic'>No matches</li>
+                ) : (
+                    filtered.map((o) => (
+                        <li key={o.name} className='px-2 py-1 even:bg-gray-50'>
+                            {o.name}
+                        </li>
+                    ))
+                )}
+            </ul>
+            <div className='flex items-center gap-2'>
+                {trimmedQuery !== '' && (
+                    <span className='text-xs text-gray-400'>
+                        {filtered.length} of {options.length}
+                    </span>
+                )}
+                <Button
+                    onClick={() => void handleCopy()}
+                    disabled={!isClient}
+                    title={`Copy ${filtered.length} value${filtered.length === 1 ? '' : 's'} to clipboard`}
+                    className='text-xs px-2 py-1 border border-gray-300 rounded text-gray-600 hover:text-primary-600 hover:border-primary-500 whitespace-nowrap'
+                >
+                    {copied ? 'Copied!' : 'Copy values'}
+                </Button>
+            </div>
+        </div>
+    );
+};
+
 const MetadataTable: FC<MetadataTableProps> = (props) => {
     return (
         <table className='table-auto border-collapse border border-gray-200 w-full'>
@@ -328,12 +406,19 @@ const MetadataTable: FC<MetadataTableProps> = (props) => {
                                   <td className='border border-gray-300 px-4 py-2'>
                                       <FieldNameCell header={props.header} field={field} fieldType={FieldType.INPUT} />
                                   </td>
-                                  <td className='border border-gray-300 px-4 py-2'>{field.type}</td>
+                                  <td className='border border-gray-300 px-4 py-2'>
+                                      {field.options && field.options.length > 0 ? <span>enum</span> : field.type}
+                                  </td>
                                   <td className='border border-gray-300 px-4 py-2'>
                                       <FormattedText
                                           text={[field.definition, field.guidance].filter(Boolean).join(' ')}
                                           formatLinks
                                       />
+                                      {field.options && field.options.length > 0 && (
+                                          <div className='mt-2'>
+                                              <AllowedValuesList options={field.options} fieldName={field.name} />
+                                          </div>
+                                      )}
                                   </td>
                                   <td className='border border-gray-300 px-4 py-2'>{field.example ?? ''}</td>
                               </tr>

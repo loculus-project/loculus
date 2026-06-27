@@ -903,6 +903,12 @@
                   },
                   "required": ["method"]
                 },
+                "muted_hashes_url": {
+                  "groups": ["ingest"],
+                  "docsIncludePrefix": false,
+                  "type": "string",
+                  "description": "URL to a TSV file mapping accessions to hashes that should not trigger a revision."
+                },
                 "grouping_override_url": {
                   "groups": ["ingest"],
                   "docsIncludePrefix": false,
@@ -1252,7 +1258,7 @@
         },
         "crossRef": {
           "groups": ["general"],
-          "type": "object",
+          "type": ["object", "null"],
           "additionalProperties": false,
           "description": "Configuration for CrossRef integration. Set to `null` to disable CrossRef integration (you can still use SeqSets without CrossRef DOIs).",
           "properties": {
@@ -1281,11 +1287,6 @@
               "groups": ["general"],
               "type": "string",
               "description": "The organization name for CrossRef"
-            },
-            "hostUrl": {
-              "groups": ["general"],
-              "type": "string",
-              "description": "The host URL for CrossRef callbacks"
             },
             "writeEnabled": {
               "groups": ["general"],
@@ -1743,6 +1744,30 @@
           "type": "boolean",
           "default": false,
           "description": "Whether to enable S3. S3 is needed for the file sharing feature."
+        },
+        "gcEnabled": {
+          "groups": ["s3"],
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the S3 garbage collection task in the backend should delete orphan files (if true) or just output a log with orphan files (if false)."
+        },
+        "gcFrequencyMinutes": {
+          "groups": ["s3"],
+          "type": "integer",
+          "default": 1440,
+          "description": "Frequency in minutes at which the backend runs the S3 garbage collection task."
+        },
+        "gcInitialDelayMinutes": {
+          "groups": ["s3"],
+          "type": "integer",
+          "default": 15,
+          "description": "How many minutes it takes before the first garbage collection task runs after the backend starts."
+        },
+        "gcOrphanRetentionPeriodMinutes": {
+          "groups": ["s3"],
+          "type": "integer",
+          "default": 10080,
+          "description": "Files uploaded to S3 but never attached to a sequence entry are garbage-collected after this many minutes."
         },
         "bucket": {
           "type": "object",

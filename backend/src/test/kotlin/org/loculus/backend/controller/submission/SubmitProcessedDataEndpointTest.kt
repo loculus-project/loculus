@@ -408,7 +408,7 @@ class SubmitProcessedDataEndpointTest(
             groupId = groupId,
             jwt = jwtForDefaultUser,
         ).andGetFileIdsAndUrls()[0]
-        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT)
+        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT, fileIdAndUrl.headers)
         val accession = prepareUnprocessedSequenceEntry(DEFAULT_ORGANISM, groupId = groupId)
 
         submissionControllerClient.submitProcessedData(
@@ -625,7 +625,7 @@ class SubmitProcessedDataEndpointTest(
             groupId = groupId,
             jwt = jwtForDefaultUser,
         ).andGetFileIdsAndUrls()[0]
-        convenienceClient.uploadFile(fileIdAndUrlV1.presignedWriteUrl, "FileV1")
+        convenienceClient.uploadFile(fileIdAndUrlV1.presignedWriteUrl, "FileV1", fileIdAndUrlV1.headers)
         convenienceClient.extractUnprocessedData(pipelineVersion = 1)
 
         submissionControllerClient.submitProcessedData(
@@ -644,7 +644,7 @@ class SubmitProcessedDataEndpointTest(
             groupId = groupId,
             jwt = jwtForDefaultUser,
         ).andGetFileIdsAndUrls()[0]
-        convenienceClient.uploadFile(fileIdAndUrlV2.presignedWriteUrl, "FileV2")
+        convenienceClient.uploadFile(fileIdAndUrlV2.presignedWriteUrl, "FileV2", fileIdAndUrlV2.headers)
         convenienceClient.extractUnprocessedData(pipelineVersion = 2)
 
         submissionControllerClient.submitProcessedData(
@@ -690,7 +690,7 @@ class SubmitProcessedDataEndpointTest(
             groupId = groupId,
             jwt = jwtForDefaultUser,
         ).andGetFileIdsAndUrls()[0]
-        convenienceClient.uploadFile(fileIdAndUrlV1.presignedWriteUrl, "FileV1")
+        convenienceClient.uploadFile(fileIdAndUrlV1.presignedWriteUrl, "FileV1", fileIdAndUrlV1.headers)
         convenienceClient.extractUnprocessedData(pipelineVersion = 1)
 
         submissionControllerClient.submitProcessedData(
@@ -706,7 +706,7 @@ class SubmitProcessedDataEndpointTest(
             groupId = groupId,
             jwt = jwtForDefaultUser,
         ).andGetFileIdsAndUrls()[0]
-        convenienceClient.uploadFile(fileIdAndUrlV2.presignedWriteUrl, "FileV2")
+        convenienceClient.uploadFile(fileIdAndUrlV2.presignedWriteUrl, "FileV2", fileIdAndUrlV2.headers)
         convenienceClient.extractUnprocessedData(pipelineVersion = 2)
 
         submissionControllerClient.submitProcessedData(
