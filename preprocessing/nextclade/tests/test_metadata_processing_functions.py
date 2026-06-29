@@ -1335,7 +1335,7 @@ def test_display_name_construction() -> None:  # noqa: PLR0915
         input_data, output_field, input_fields(), args_with_prefix()
     )
     assert res.datum == "DENV-1/Switzerland/myExtractedSample/2025"
-    assert res_insdc.datum == "DENV-1/Switzerland/version.1/2025"
+    assert res_insdc.datum == "DENV-1/Switzerland/mySample/2025"
     assert res_prefix.datum == "hYF/Switzerland/myExtractedSample/2025"
 
     input_data["specimenCollectorSampleId"] = submission_id_formatted_unexpected
@@ -1346,11 +1346,12 @@ def test_display_name_construction() -> None:  # noqa: PLR0915
     res_prefix = ProcessingFunctions.build_display_name(
         input_data, output_field, input_fields(), args_with_prefix()
     )
-    assert res.datum == "DENV-1/Switzerland/version.1/2025"
-    assert res_insdc.datum == "DENV-1/Switzerland/version.1/2025"
-    assert res_prefix.datum == "hYF/Switzerland/version.1/2025"
+    assert res.datum == "DENV-1/Switzerland/mySample/2025"
+    assert res_insdc.datum == "DENV-1/Switzerland/mySample/2025"
+    assert res_prefix.datum == "hYF/Switzerland/mySample/2025"
 
     input_data["specimenCollectorSampleId"] = submission_id_formatted_unexpected
+    input_data["submissionId"] = submission_id_formatted_unexpected
     input_data["geoLocCountry"] = ""
     res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
     res_insdc = ProcessingFunctions.build_display_name(
