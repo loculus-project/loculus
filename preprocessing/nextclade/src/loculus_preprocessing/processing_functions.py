@@ -1956,20 +1956,22 @@ def validate_raw_reads_submission(
     warnings: list[ProcessingAnnotation] = []
 
     if len(files) > 2:  # noqa: PLR2004
-        name = "; ".join(f.name for f in files)
         message = f"Raw reads must be submitted as one or two files, got {len(files)}"
         errors.append(
-            ProcessingAnnotation.from_single(
-                name=name, type=AnnotationSourceType.SUBMITTED_FILE, message=message
+            ProcessingAnnotation.from_fields(
+                input_fields=[f.name for f in files],
+                output_fields=[f.name for f in files],
+                type=AnnotationSourceType.SUBMITTED_FILE,
+                message=message,
             )
         )
 
-    allowed_extensions = ["fastq", "fastq.gz", "fq", "fq.gz"]
+    allowed_extensions = [".fastq", ".fastq.gz", ".fq", ".fq.gz"]
     for file in files:
         if not any(file.name.endswith(extension) for extension in allowed_extensions):
             message = (
                 f"Raw reads file '{file.name}' has unrecognized extension."
-                f" Allowed extensions: {allowed_extensions}"
+                f" Allowed extensions: {', '.join(allowed_extensions)}"
             )
             errors.append(
                 ProcessingAnnotation.from_single(
