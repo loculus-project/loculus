@@ -357,8 +357,8 @@ single_segment_case_definitions = [
         expected_errors=build_processing_annotations(
             [
                 ProcessingAnnotationHelper(
-                    ["reads_R1.fastq; reads_R2.fastq; reads_R3.fastq"],
-                    ["reads_R1.fastq; reads_R2.fastq; reads_R3.fastq"],
+                    ["reads_R1.fastq", "reads_R2.fastq", "reads_R3.fastq"],
+                    ["reads_R1.fastq", "reads_R2.fastq", "reads_R3.fastq"],
                     "Raw reads must be submitted as one or two files, got 3",
                     AnnotationSourceType.SUBMITTED_FILE,
                 )
