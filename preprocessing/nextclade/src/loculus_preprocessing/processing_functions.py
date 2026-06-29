@@ -2145,7 +2145,7 @@ DISPLAY_NAME_SEPARATORS = [" ", "/"]
 
 
 def has_display_name_separators(input: str) -> bool:
-    """Check if the input string contains any characters that are used as displayName separators."""
+    """Check if the input string contains any DISPLAY_NAME_SEPARATORS characters."""
     return any(char in input for char in DISPLAY_NAME_SEPARATORS)
 
 
