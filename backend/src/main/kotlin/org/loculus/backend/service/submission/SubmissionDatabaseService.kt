@@ -866,6 +866,10 @@ class SubmissionDatabaseService(
                 not(SequenceEntriesView.statusIs(Status.PROCESSED))
         }
 
+        val versionCommentExpression = SequenceEntriesView.unprocessedDataColumn
+            .extract<String>("metadata", "versionComment", toScalar = true)
+            .alias("version_comment")
+
         val entries = SequenceEntriesView
             .join(
                 DataUseTermsTable,
@@ -886,6 +890,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesView.processingResultColumn,
                 DataUseTermsTable.dataUseTermsTypeColumn,
                 DataUseTermsTable.restrictedUntilColumn,
+                versionCommentExpression,
             )
             .where { groupCondition and organismCondition and statusCondition and processingResultCondition }
             .orderBy(SequenceEntriesView.accessionColumn)
@@ -912,6 +917,7 @@ class SubmissionDatabaseService(
                         DataUseTermsType.fromString(row[DataUseTermsTable.dataUseTermsTypeColumn]),
                         row[DataUseTermsTable.restrictedUntilColumn],
                     ),
+                    versionComment = row[versionCommentExpression],
                 )
             }
 
