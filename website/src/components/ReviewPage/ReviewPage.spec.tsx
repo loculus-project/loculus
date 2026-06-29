@@ -17,6 +17,7 @@ import {
     openDataUseTermsOption,
 } from '../../types/backend.ts';
 import { SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES } from '../../types/referenceGenomes.spec.ts';
+import { ConfirmDialogContainer } from '../ConfirmationDialog.tsx';
 
 const openDataUseTerms = { type: openDataUseTermsOption } as const;
 
@@ -26,15 +27,18 @@ const testGroup = testGroups[0];
 
 function renderReviewPage() {
     return render(
-        <ReviewPage
-            group={testGroup}
-            organism={testOrganism}
-            metadataDisplayNames={new Map()}
-            accessToken={testAccessToken}
-            clientConfig={testConfig.public}
-            filesEnabled={false}
-            referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
-        />,
+        <>
+            <ReviewPage
+                group={testGroup}
+                organism={testOrganism}
+                metadataDisplayNames={new Map()}
+                accessToken={testAccessToken}
+                clientConfig={testConfig.public}
+                filesEnabled={false}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
+            />
+            <ConfirmDialogContainer />
+        </>,
     );
 }
 

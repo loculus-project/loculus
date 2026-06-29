@@ -33,6 +33,12 @@ function subscribe(listener: () => void) {
     listeners.add(listener);
     return () => {
         listeners.delete(listener);
+        // No host mounted means there can be no pending confirmation. (In the app
+        // the single host lives for the whole session, so this never fires there;
+        // it keeps state from leaking between tests that remount the host.)
+        if (listeners.size === 0) {
+            currentOptions = null;
+        }
     };
 }
 
