@@ -156,6 +156,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                 onClose={() => setEditModalVisible(false)}
                 title=''
                 fullWidth={false}
+                dismissible={false}
                 className='min-h-[60vh]'
             >
                 <div className='min-w-[1000px]'></div>

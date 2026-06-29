@@ -35,8 +35,9 @@ const SeqSetListActionsInner: FC<SeqSetListActionsProps> = ({ clientConfig, acce
                 onClose={() => setCreateModalVisible(false)}
                 fullWidth={false}
                 dismissible={false}
-                className='max-w-3xl'
+                className='min-h-[60vh]'
             >
+                <div className='min-w-[1000px]'></div>
                 <SeqSetForm clientConfig={clientConfig} accessToken={accessToken} />
             </BaseDialog>
         </>
