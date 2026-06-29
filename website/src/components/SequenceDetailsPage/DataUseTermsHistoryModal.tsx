@@ -40,8 +40,8 @@ export const DataUseTermsHistoryModal: FC<DataUseTermsHistoryProps> = ({ dataUse
                     <tbody>
                         {dataUseTermsHistory.map((row, index) => (
                             <tr key={index}>
-                                <td>{formatDate(row.changeDate)}</td>
-                                <td>{row.userName}</td>
+                                <td className='whitespace-nowrap'>{formatDate(row.changeDate)}</td>
+                                <td className='whitespace-nowrap'>{row.userName}</td>
                                 <td>
                                     {row.dataUseTerms.type}
                                     {row.dataUseTerms.type === restrictedDataUseTermsOption
