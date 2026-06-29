@@ -23,7 +23,7 @@ let _runtimeConfig: RuntimeConfig | null = null;
 function getConfigDir(): string {
     const configDir = import.meta.env.CONFIG_DIR;
     if (typeof configDir !== 'string' || configDir === '') {
-        throw new Error(`CONFIG_DIR environment variable was not configured, is '${configDir}'`);
+        throw new Error(`CONFIG_DIR environment variable was not set during build time, is '${configDir}'`);
     }
     return configDir;
 }
