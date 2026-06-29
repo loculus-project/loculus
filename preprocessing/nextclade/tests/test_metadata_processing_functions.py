@@ -1396,15 +1396,21 @@ def test_display_name_construction(case: DisplayNameCase) -> None:
     }
 
     res = ProcessingFunctions.build_display_name(
-        input_data, _DISPLAY_NAME_OUTPUT_FIELD, _DISPLAY_NAME_INPUT_FIELDS,
+        input_data,
+        _DISPLAY_NAME_OUTPUT_FIELD,
+        _DISPLAY_NAME_INPUT_FIELDS,
         _DISPLAY_NAME_BASE_ARGS | case.extra_args,
     )
     res_insdc = ProcessingFunctions.build_display_name(
-        input_data, _DISPLAY_NAME_OUTPUT_FIELD, _DISPLAY_NAME_INPUT_FIELDS,
+        input_data,
+        _DISPLAY_NAME_OUTPUT_FIELD,
+        _DISPLAY_NAME_INPUT_FIELDS,
         _DISPLAY_NAME_INSDC_ARGS | case.extra_args,
     )
     res_prefix = ProcessingFunctions.build_display_name(
-        input_data, _DISPLAY_NAME_OUTPUT_FIELD, _DISPLAY_NAME_INPUT_FIELDS,
+        input_data,
+        _DISPLAY_NAME_OUTPUT_FIELD,
+        _DISPLAY_NAME_INPUT_FIELDS,
         _DISPLAY_NAME_PREFIX_ARGS | case.extra_args,
     )
 
