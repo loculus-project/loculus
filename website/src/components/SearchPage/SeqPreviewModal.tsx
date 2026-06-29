@@ -91,7 +91,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                 <div className='px-6'>
                     <SequenceDataUI
                         {...data}
-                        referenceGenomesInfo={referenceGenomesInfo}
+                        referenceGenomesInfo={data.referenceGenomesInfo ?? referenceGenomesInfo}
                         myGroups={myGroups}
                         accessToken={accessToken}
                         sequenceFlaggingConfig={data.isRevocation ? undefined : sequenceFlaggingConfig}

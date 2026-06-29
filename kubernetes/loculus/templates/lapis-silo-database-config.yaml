@@ -1,41 +1,24 @@
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
-
-{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
-{{- $key := $item.key }}
-{{- $organismContent := $item.contents }}
-
-{{- $lineageSystem := $organismContent | include "loculus.lineageSystemForOrganism" | fromYamlArray }}
-{{- $hierarchicalFilters := $organismContent | include "loculus.hierarchicalFiltersForOrganism" | fromYaml }}
-{{- $allLineageNames := $lineageSystem }}
-{{- range $name, $_ := $hierarchicalFilters }}
-  {{- $allLineageNames = append $allLineageNames $name }}
-{{- end }}
+{{- $organisms := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- $args := dict
+    "commonMetadata" $commonMetadata
+    "sharedMetadata" $.Values.sharedMetadata
+    "organisms" $organisms
+}}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: lapis-silo-database-config-{{ $key }}
+  name: lapis-silo-database-config
 data:
-  {{- $args := dict
-    "schema" ($organismContent.schema | include "loculus.patchMetadataSchema" | fromYaml)
-    "commonMetadata" $commonMetadata
-    "referenceGenomes" $organismContent.referenceGenomes
-  }}
   database_config.yaml: |
-    {{ include "loculus.siloDatabaseConfig" $args | nindent 4 }}
+    {{ include "loculus.unifiedSiloDatabaseConfig" $args | nindent 4 }}
 
   preprocessing_config.yaml: |
     inputDirectory: /preprocessing/input
     outputDirectory: /preprocessing/output
     ndjsonInputFilename: data.ndjson.zst
     referenceGenomeFilename: reference_genomes.json
-    {{- if $allLineageNames }}
-    lineageDefinitionFilenames:
-    {{- range $name := $allLineageNames }}
-      - {{ printf "%s.yaml" $name }}
-    {{- end }}
-    {{- end }}
 
   reference_genomes.json: |
-    {{ include "loculus.mergeReferenceGenomes" $organismContent.referenceGenomes | fromYaml | toJson }}
-{{- end }}
+    {{ include "loculus.mergeAllOrganismReferenceGenomes" (dict "organisms" $organisms) | fromYaml | toJson }}

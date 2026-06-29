@@ -1,18 +1,15 @@
-{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
-{{- $key := $item.key }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "loculus.lapisServiceName" $key }}
+  name: loculus-lapis-service
 spec:
   type: ClusterIP
   selector:
     app: loculus
-    component: lapis-{{ $key }}
+    component: lapis
   ports:
     - port: 8080
       targetPort: 8080
       protocol: TCP
       name: http
-{{- end }}

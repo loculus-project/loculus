@@ -168,7 +168,7 @@ describe('DownloadDialog', () => {
         await checkAgreement();
 
         let { path, query } = parseDownloadHref();
-        expectRouteInPathMatches(path, `/sample/details`);
+        expectRouteInPathMatches(path, `/details`);
         expect(query).toMatch(
             /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2%2Cgenotype&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
         );
@@ -177,18 +177,18 @@ describe('DownloadDialog', () => {
         await userEvent.click(screen.getByLabelText(gzipCompressionLabel));
 
         ({ path, query } = parseDownloadHref());
-        expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+        expectRouteInPathMatches(path, `/unalignedNucleotideSequences`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=fasta&compression=gzip&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
+            /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=fasta&compression=gzip&organism=ebola&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
         );
 
         await userEvent.click(screen.getByLabelText(/include restricted data/));
         await userEvent.click(screen.getByLabelText(/Zstandard/));
 
         ({ path, query } = parseDownloadHref());
-        expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+        expectRouteInPathMatches(path, `/unalignedNucleotideSequences`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataFormat=fasta&compression=zstd&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
+            /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataFormat=fasta&compression=zstd&organism=ebola&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
         );
     });
 
@@ -197,7 +197,7 @@ describe('DownloadDialog', () => {
         await checkAgreement();
 
         let { path, query } = parseDownloadHref();
-        expectRouteInPathMatches(path, `/sample/details`);
+        expectRouteInPathMatches(path, `/details`);
         expect(query).toMatch(
             /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2%2Cgenotype&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
@@ -206,18 +206,18 @@ describe('DownloadDialog', () => {
         await userEvent.click(screen.getByLabelText(gzipCompressionLabel));
 
         ({ path, query } = parseDownloadHref());
-        expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+        expectRouteInPathMatches(path, `/unalignedNucleotideSequences`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=fasta&compression=gzip&accessionVersion=SEQID1&accessionVersion=SEQID2/,
+            /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=fasta&compression=gzip&organism=ebola&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
 
         await userEvent.click(screen.getByLabelText(/include restricted data/));
         await userEvent.click(screen.getByLabelText(/Zstandard/));
 
         ({ path, query } = parseDownloadHref());
-        expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+        expectRouteInPathMatches(path, `/unalignedNucleotideSequences`);
         expect(query).toMatch(
-            /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataFormat=fasta&compression=zstd&accessionVersion=SEQID1&accessionVersion=SEQID2/,
+            /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataFormat=fasta&compression=zstd&organism=ebola&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
     });
 
@@ -253,7 +253,7 @@ describe('DownloadDialog', () => {
         await checkAgreement();
 
         const { path } = parseDownloadHref();
-        expectRouteInPathMatches(path, `/sample/details`);
+        expectRouteInPathMatches(path, `/details`);
 
         expect(screen.queryByLabelText(rawNucleotideSequencesLabel)).not.toBeInTheDocument();
         expect(screen.getByLabelText(gzipCompressionLabel)).toBeInTheDocument();
@@ -288,7 +288,7 @@ describe('DownloadDialog', () => {
         expect(clipboardMock).toHaveBeenCalledTimes(1);
         const copiedText = clipboardMock.mock.calls[0][0];
 
-        const expectedPrefix = 'https://lapis/sample/details?downloadAsFile=true&downloadFileBasename=ebola_metadata_';
+        const expectedPrefix = 'https://lapis/details?downloadAsFile=true&downloadFileBasename=ebola_metadata_';
         expectStringStartsWith(copiedText, expectedPrefix);
 
         const expectedSuffix = '&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2%2Cgenotype';
@@ -314,7 +314,7 @@ describe('DownloadDialog', () => {
         await checkAgreement();
 
         const { path, query } = parseDownloadHref();
-        expectRouteInPathMatches(path, `/sample/details`);
+        expectRouteInPathMatches(path, `/details`);
         expect(query).toMatch(/field2=/);
         expect(query).not.toMatch(/field1=/);
     });
@@ -367,9 +367,9 @@ describe('DownloadDialog', () => {
             await userEvent.click(screen.getByLabelText(displayNameFastaHeaderStyleLabel));
 
             const [path, query] = getDownloadHref()?.split('?') ?? [];
-            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+            expectRouteInPathMatches(path, `/unalignedNucleotideSequences`);
             expect(query).toMatch(
-                /^downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&fastaHeaderTemplate=%7Bfield1%7D%7C%7Bfield2%7D&accession=accession1&accession=accession2&field1=value1/,
+                /^downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&fastaHeaderTemplate=%7Bfield1%7D%7C%7Bfield2%7D&organism=ebola&accession=accession1&accession=accession2&field1=value1/,
             );
         });
     });
@@ -418,7 +418,7 @@ describe('DownloadDialog', () => {
             await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
 
             const { path, query } = parseDownloadHref();
-            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+            expectRouteInPathMatches(path, `/unalignedNucleotideSequences`);
             expect(query).contains('fastaHeaderTemplate=%7BaccessionVersion%7D');
         });
 
@@ -434,7 +434,7 @@ describe('DownloadDialog', () => {
             await userEvent.click(screen.getByLabelText(displayNameFastaHeaderStyleLabel));
 
             const { path, query } = parseDownloadHref();
-            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+            expectRouteInPathMatches(path, `/unalignedNucleotideSequences`);
             expect(query).contains('fastaHeaderTemplate=%7BdisplayName%7D');
             expect(query).not.contains('fastaHeaderTemplate=%7BaccessionVersion%7D');
         });
@@ -449,7 +449,7 @@ describe('DownloadDialog', () => {
             await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
 
             const { path, query } = parseDownloadHref();
-            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+            expectRouteInPathMatches(path, `/unalignedNucleotideSequences`);
             expect(query).contains('fastaHeaderTemplate=%7BaccessionVersion%7D');
             expect(query).contains('segments=L-ref1%2CL-ref2');
         });
@@ -476,7 +476,7 @@ describe('DownloadDialog', () => {
             await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
 
             const { path } = parseDownloadHref();
-            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+            expectRouteInPathMatches(path, `/unalignedNucleotideSequences`);
             const { query } = parseDownloadHref();
             expect(query).toMatch(/segments=ref1/);
         });
@@ -491,8 +491,9 @@ describe('DownloadDialog', () => {
             await checkAgreement();
             await userEvent.click(screen.getByLabelText(alignedNucleotideSequencesLabel));
 
-            const { path } = parseDownloadHref();
-            expectRouteInPathMatches(path, `/sample/alignedNucleotideSequences/ref1`);
+            const { path, query } = parseDownloadHref();
+            expectRouteInPathMatches(path, `/alignedNucleotideSequences`);
+            expect(query).toContain('reference=ref1');
         });
 
         test('should download only the selected aligned reference amino acid sequences when reference is selected', async () => {
@@ -506,8 +507,10 @@ describe('DownloadDialog', () => {
             await userEvent.click(screen.getByLabelText(alignedAminoAcidSequencesLabel));
             await userEvent.selectOptions(screen.getByRole('combobox', { name: 'alignedAminoAcidSequences' }), 'gene2');
 
-            const { path } = parseDownloadHref();
-            expectRouteInPathMatches(path, `/sample/alignedAminoAcidSequences/gene2-ref1`);
+            const { path: aaPath, query: aaQuery } = parseDownloadHref();
+            expectRouteInPathMatches(aaPath, `/alignedAminoAcidSequences`);
+            expect(aaQuery).toContain('gene=gene2');
+            expect(aaQuery).toContain('reference=ref1');
         });
 
         const metadataWithOnlyForReferenceName: Metadata[] = [
