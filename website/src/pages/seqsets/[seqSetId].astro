@@ -18,7 +18,11 @@ try {
         const versions = seqSets.parse(await response.json());
         if (versions.length > 0) {
             const latestVersion = Math.max(...versions.map((s) => s.seqSetVersion));
-            return Astro.redirect(`/seqsets/${seqSetId}.${latestVersion}`);
+            const redirectTarget = `/seqsets/${seqSetId}.${latestVersion}`;
+            const redirectResponse = Astro.redirect(redirectTarget);
+            if (redirectResponse) {
+                return redirectResponse;
+            }
         }
     }
 } catch (error) {
