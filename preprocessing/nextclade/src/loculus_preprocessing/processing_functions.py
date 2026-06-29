@@ -227,7 +227,7 @@ def format_authors(authors: str) -> str:
 
 
 def config_error(input_fields: list[str], output_field: str, message: str) -> ProcessingResult:
-    full_message = f"{message}"
+    full_message = f"Internal Error. {message} Please contact the administrator."
     logger.error(full_message)
     return ProcessingResult(
         datum=None,
