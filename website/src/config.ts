@@ -21,9 +21,9 @@ let _config: WebsiteConfig | null = null;
 let _runtimeConfig: RuntimeConfig | null = null;
 
 function getConfigDir(): string {
-    const configDir = process.env.CONFIG_DIR;
+    const configDir = import.meta.env.CONFIG_DIR;
     if (typeof configDir !== 'string' || configDir === '') {
-        throw new Error(`CONFIG_DIR environment variable was not set at runtime, is '${configDir}'`);
+        throw new Error(`CONFIG_DIR environment variable was not configured, is '${configDir}'`);
     }
     return configDir;
 }

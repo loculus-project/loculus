@@ -13,7 +13,7 @@ export const getClientMetadata = () => {
 };
 
 const getClientSecret = () => {
-    const configDir = process.env.CONFIG_DIR;
+    const configDir = import.meta.env.CONFIG_DIR;
     if (typeof configDir !== 'string' || configDir === '') {
         return 'dummySecret';
     }
