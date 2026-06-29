@@ -1181,21 +1181,17 @@ class ProcessingFunctions:
             concatenate_field_types = replace_identifier(field_types, "string")
             input_data["IDENTIFIER"] = identifier
         else:
-            # Unable to parse specimenCollectorSampleId or submissionID, use ACCESSION_VERSION
+            # Unable to parse specimenCollectorSampleId and submissionID, use ACCESSION_VERSION
             if not insdc_ingested and regex_pattern is not None:
-                failed_source = (
-                    collector_id
-                    if isinstance(collector_id, str) and collector_id
-                    else submission_id
-                )
                 warnings.append(
                     ProcessingAnnotation.from_fields(
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
                         message=(
-                            f"identifier string '{failed_source}' could not be parsed,"
-                            " using ACCESSION_VERSION in displayName instead"
+                            f"specimencollectorSampleId '{collector_id}' and submissionId"
+                            f" '{submission_id}' could not be parsed, using ACCESSION_VERSION"
+                            f" in displayName instead"
                         ),
                     )
                 )
@@ -1580,7 +1576,7 @@ def process_phenotype_values(input: str | None, args: FunctionArgs | None) -> In
 def parse_identifier_string(
     input: ProcessedMetadataValue, insdc_ingested: bool, regex_pattern: str | None = None
 ) -> str | None:
-    """Return a IDENTIFIER string to use in the displayName or None if `input` cannot be used
+    """Return an IDENTIFIER string to use in the displayName or None if `input` cannot be used
     as an identifier.
     """
     if not isinstance(input, str):
