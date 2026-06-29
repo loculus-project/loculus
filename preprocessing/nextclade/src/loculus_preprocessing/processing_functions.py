@@ -1591,7 +1591,7 @@ class ProcessingFunctions:
         input_fields: list[str],
         args: FunctionArgs,
     ) -> ProcessingResult:
-        """Wraps concatenate() to resolve the IDENTIFIER slot in args['order']/args['type'].
+        """Create a display name by wrapping concatenate() and resolving the IDENTIFIER slot.
 
         The IDENTIFIER slot is filled by the best available sample identifier:
           1. specimenCollectorSampleId — used as-is if it contains no slashes or spaces;
@@ -2145,7 +2145,7 @@ DISPLAY_NAME_SEPARATORS = [" ", "/"]
 
 
 def has_display_name_separators(input: str) -> bool:
-    """Check if the input string contains any characters that are not allowed in a displayName."""
+    """Check if the input string contains any characters that are used as displayName separators."""
     return any(char in input for char in DISPLAY_NAME_SEPARATORS)
 
 
