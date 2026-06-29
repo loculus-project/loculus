@@ -27,13 +27,13 @@ export const DataUseTermsHistoryModal: FC<DataUseTermsHistoryProps> = ({ dataUse
                 isOpen={isOpen}
                 onClose={() => setIsOpen(false)}
                 fullWidth={false}
-                className='max-w-md'
+                className='max-w-xl'
             >
                 <table className='w-full text-sm [&_:where(th,td)]:px-3 [&_:where(th,td)]:py-2 [&_:where(th,td)]:text-left [&_th]:font-semibold [&_tbody_tr]:border-t [&_tbody_tr]:border-base-200'>
                     <thead>
                         <tr>
-                            <th>Changed</th>
-                            <th>User</th>
+                            <th className='whitespace-nowrap'>Changed</th>
+                            <th className='whitespace-nowrap'>User</th>
                             <th>Data use terms</th>
                         </tr>
                     </thead>
