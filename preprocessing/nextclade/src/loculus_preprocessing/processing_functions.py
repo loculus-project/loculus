@@ -1638,7 +1638,10 @@ class ProcessingFunctions:
             )
 
         regex_pattern = args.get("regex_pattern")
-        if regex_pattern is not None and "<identifier>" not in str(regex_pattern):
+        if (
+            regex_pattern is not None
+            and "identifier" not in re.compile(str(regex_pattern)).groupindex
+        ):
             return ProcessingResult(
                 datum=None,
                 warnings=warnings,
