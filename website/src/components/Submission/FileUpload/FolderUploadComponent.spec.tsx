@@ -5,6 +5,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { FolderUploadComponent } from './FolderUploadComponent';
 import * as multipartUpload from '../../../utils/multipartUpload';
+import { ConfirmDialogContainer } from '../../ConfirmationDialog';
 
 const mockRequestMultipartUpload = vi.fn();
 const mockCompleteMultipartUpload = vi.fn();
@@ -225,7 +226,12 @@ describe('FolderUploadComponent', () => {
     });
 
     it('shows a dialog before discarding all files and discards after confirmation', async () => {
-        render(<FolderUploadComponent {...defaultPropsWithFiles} />);
+        render(
+            <>
+                <FolderUploadComponent {...defaultPropsWithFiles} />
+                <ConfirmDialogContainer />
+            </>,
+        );
 
         await userEvent.click(screen.getByTestId('discard_extraFiles'));
         await waitFor(() => expect(screen.getByText(/are you sure you want to discard/i)).toBeInTheDocument());
@@ -288,7 +294,12 @@ describe('FolderUploadComponent', () => {
     it('confirms before overwriting an existing file with the same name', async () => {
         mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'replacement-id', urls: ['http://test.com/url1'] }]));
 
-        render(<FolderUploadComponent {...defaultPropsWithFiles} />);
+        render(
+            <>
+                <FolderUploadComponent {...defaultPropsWithFiles} />
+                <ConfirmDialogContainer />
+            </>,
+        );
 
         const file = new File(['content'], 'file-a.txt', { type: 'text/plain' });
         Object.defineProperty(file, 'webkitRelativePath', { value: '', writable: false });

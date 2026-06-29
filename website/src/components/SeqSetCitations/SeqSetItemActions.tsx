@@ -10,7 +10,7 @@ import type { ClientConfig } from '../../types/runtimeConfig';
 import type { AuthorProfile, SeqSetRecord, SeqSet } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
-import { useConfirmDialog } from '../ConfirmationDialog.tsx';
+import { displayConfirmation } from '../ConfirmationDialog.tsx';
 import { CitationTable } from './CitationTable.tsx';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { Button } from '../common/Button';
@@ -58,7 +58,6 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
     const [exportModalVisible, setExportModalVisible] = useState(false);
     const [citationsModalVisible, setCitationsModalVisible] = useState(false);
     const [creatorInfoVisible, setCreatorInfoVisible] = useState(false);
-    const { confirm, confirmDialog } = useConfirmDialog();
 
     const {
         isLoading: isSeqSetCitationsLoading,
@@ -139,7 +138,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                             variant='outline'
                             className='flex items-center gap-2'
                             onClick={() =>
-                                confirm({
+                                displayConfirmation({
                                     dialogText: `Are you sure you want to delete this seqSet version?`,
                                     onConfirmation: handleDeleteSeqSet,
                                 })
@@ -204,7 +203,6 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                 <CreatorDetailEntry label='Created by' value={createdByValue} />
                 <CreatorDetailEntry label='Created date' value={formatDate(seqSet.createdAt)} />
             </BaseDialog>
-            {confirmDialog}
         </div>
     );
 };

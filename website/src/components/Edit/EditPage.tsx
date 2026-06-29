@@ -14,7 +14,7 @@ import { type InputField, type SubmissionDataTypes } from '../../types/config.ts
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
-import { useConfirmDialog } from '../ConfirmationDialog.tsx';
+import { displayConfirmation } from '../ConfirmationDialog.tsx';
 import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
 import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';
@@ -56,7 +56,6 @@ const InnerEditPage: FC<EditPageProps> = ({
     const [editableSequences, setEditableSequences] = useState(
         EditableSequences.fromInitialData(dataToEdit, submissionDataTypes.maxSequencesPerEntry),
     );
-    const { confirm, confirmDialog } = useConfirmDialog();
 
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
     const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(() =>
@@ -182,7 +181,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                 <Button
                     variant='primary'
                     onClick={() =>
-                        confirm({
+                        displayConfirmation({
                             dialogText: 'Do you really want to submit?',
                             onConfirmation: submitEditedDataForAccessionVersion,
                         })
@@ -193,7 +192,6 @@ const InnerEditPage: FC<EditPageProps> = ({
                     Submit
                 </Button>
             </div>
-            {confirmDialog}
         </>
     );
 };

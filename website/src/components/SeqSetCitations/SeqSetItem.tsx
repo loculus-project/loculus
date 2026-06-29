@@ -14,7 +14,7 @@ import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { getThemeColor } from '../../utils/getThemeColor';
-import { useConfirmDialog } from '../ConfirmationDialog.tsx';
+import { displayConfirmation } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button.tsx';
 import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
@@ -74,7 +74,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
 }) => {
     const [page, setPage] = useState(1);
     const [wideGraphs, setWideGraphs] = useState(false);
-    const { confirm, confirmDialog } = useConfirmDialog();
     const sequencesPerPage = 10;
 
     const {
@@ -147,7 +146,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
             <a
                 className='mr-4 cursor-pointer font-medium text-blue-600 hover:text-blue-800'
                 onClick={() =>
-                    confirm({
+                    displayConfirmation({
                         dialogText: `Are you sure you want to create a DOI for this version of your seqSet?`,
                         onConfirmation: handleCreateDOI,
                     })
@@ -263,7 +262,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                     />
                 ) : null}
             </SeqSetSection>
-            {confirmDialog}
         </div>
     );
 };

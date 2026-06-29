@@ -8,7 +8,7 @@ import type { FilesBySubmissionId } from '../../../types/backend';
 import { type FileCategory } from '../../../types/config';
 import type { ClientConfig } from '../../../types/runtimeConfig';
 import { calculatePartSizeAndCount, splitFileIntoParts, uploadPart } from '../../../utils/multipartUpload';
-import { useConfirmDialog } from '../../ConfirmationDialog';
+import { displayConfirmation } from '../../ConfirmationDialog';
 import { Button } from '../../common/Button';
 import type { InputMode } from '../FormOrUploadWrapper';
 import LucideFile from '~icons/lucide/file';
@@ -109,7 +109,6 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     onError,
 }) => {
     const isClient = useClientFlag();
-    const { confirm, confirmDialog } = useConfirmDialog();
     const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(() => {
         if (fileMapping === undefined) return undefined;
 
@@ -384,7 +383,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
         // If there are collisions, show a confirmation dialog before proceeding
         if (existingFileCollisions.length > 0) {
-            confirm({
+            displayConfirmation({
                 dialogText:
                     'The following file(s) already exist and will be replaced: ' +
                     existingFileCollisions.map((file) => file.name).join(', '),
@@ -396,7 +395,6 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
     return (
         <>
-            {confirmDialog}
             {fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
                 <div
                     className={`flex flex-col items-center justify-center flex-1 py-2 px-4 border rounded-lg ${fileUploadState !== undefined ? 'border-hidden' : isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}
@@ -526,7 +524,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                         )}
                         <Button
                             onClick={() =>
-                                confirm({
+                                displayConfirmation({
                                     dialogText: 'Are you sure you want to discard all files?',
                                     confirmButtonText: 'Discard',
                                     onConfirmation: handleDiscardAllFiles,
