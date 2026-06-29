@@ -2149,13 +2149,11 @@ def has_display_name_separators(input: str) -> bool:
     return any(char in input for char in DISPLAY_NAME_SEPARATORS)
 
 
-def parse_identifier_string(
-    input: str, regex_pattern: str
-) -> str | None:
+def parse_identifier_string(input: str, regex_pattern: str) -> str | None:
     """Extract a usable display-name identifier from `input`, or return None.
 
-    Returns input as-is if it contains no displayName separators (space, slash, …).
-    If it contains separators, attempts to extract a usable identifier 
+    Returns input as-is if it contains no DISPLAY_NAME_SEPARATORS.
+    If it contains separators, attempts to extract a usable identifier
     using the provided regex_pattern.
     """
     if not has_display_name_separators(input):
