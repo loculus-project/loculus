@@ -26,6 +26,7 @@ from .datatypes import (
     AminoAcidSequence,
     AnnotationSource,
     AnnotationSourceType,
+    FileCategory,
     FileIdAndName,
     GeneName,
     InputData,
@@ -60,6 +61,7 @@ from .processing_functions import (
     process_mutations_from_clade_founder,
     process_phenotype_values,
     process_stop_codons,
+    validate_raw_reads_submission,
 )
 from .sequence_checks import error_on_excess_sequences, errors_if_non_iupac
 
@@ -436,6 +438,27 @@ def get_output_metadata(
     return output_metadata, errors, warnings
 
 
+def process_submitted_files(
+    file_mapping: dict[FileCategory, list[FileIdAndName]],
+) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
+    errors: list[ProcessingAnnotation] = []
+    warnings: list[ProcessingAnnotation] = []
+
+    for category, files in file_mapping.items():
+        if not files:
+            # Backend always includes a key with empty list for enabled categories
+            continue
+        match category:
+            case FileCategory.RAW_READS:
+                rr_errors, rr_warnings = validate_raw_reads_submission(files)
+                errors.extend(rr_errors)
+                warnings.extend(rr_warnings)
+            case _:
+                logger.warning(f"Submitted file is of unexpected category {category}")
+
+    return errors, warnings
+
+
 def alignment_errors_warnings(
     unprocessed: UnprocessedAfterNextclade,
     config: Config,
@@ -530,6 +553,8 @@ def process_single(
         accession_version, unprocessed, config
     )
 
+    file_errors, file_warnings = process_submitted_files(unprocessed.files or {})
+
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
         version=version_from_str(accession_version),
@@ -550,9 +575,12 @@ def process_single(
                 + max_seq_errors
                 + alignment_errors
                 + metadata_errors
+                + file_errors
             )
         ),
-        warnings=list(set(unprocessed.warnings + alignment_warnings + metadata_warnings)),
+        warnings=list(
+            set(unprocessed.warnings + alignment_warnings + metadata_warnings + file_warnings)
+        ),
     )
 
     return SubmissionData(
@@ -580,12 +608,16 @@ def process_single_unaligned(
         accession_version, unprocessed, config
     )
 
+    file_errors, file_warnings = process_submitted_files(unprocessed.files or {})
+
     return processed_entry_no_alignment(
         accession_version=accession_version,
         unprocessed=unprocessed,
         output_metadata=output_metadata,
-        errors=list(set(iupac_errors + metadata_errors + segment_assignment.alert.errors)),
-        warnings=list(set(metadata_warnings)),
+        errors=list(
+            set(iupac_errors + metadata_errors + segment_assignment.alert.errors + file_errors)
+        ),
+        warnings=list(set(metadata_warnings + file_warnings)),
         sequenceNameToFastaId=segment_assignment.sequenceNameToFastaId,
     )
 
@@ -664,7 +696,7 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             url = upload_info.url
             upload_embl_file_to_presigned_url(file_content, url)
             processed_files = submission_data.processed_entry.data.files or {}
-            processed_files.setdefault("annotations", []).append(
+            processed_files.setdefault(FileCategory.ANNOTATIONS, []).append(
                 FileIdAndName(fileId=file_id, name=file_name)
             )
             submission_data.processed_entry.data.files = processed_files

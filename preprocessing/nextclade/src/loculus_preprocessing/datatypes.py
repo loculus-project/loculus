@@ -23,15 +23,21 @@ ProcessedMetadata = dict[str, ProcessedMetadataValue]
 InputMetadataValue = str | None
 InputMetadata = dict[str, InputMetadataValue]
 FastaId = str
-FileCategory = str
 
 ProcessingAnnotationAlignment: Final = "alignment"
+
+
+@unique
+class FileCategory(StrEnum):
+    RAW_READS = "raw_reads"
+    ANNOTATIONS = "annotations"
 
 
 @unique
 class AnnotationSourceType(StrEnum):
     METADATA = "Metadata"
     NUCLEOTIDE_SEQUENCE = "NucleotideSequence"
+    SUBMITTED_FILE = "SubmittedFile"
 
 
 @dataclass(frozen=True)
