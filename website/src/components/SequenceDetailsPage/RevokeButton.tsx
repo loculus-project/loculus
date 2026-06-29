@@ -102,13 +102,7 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
             <Button size='sm' variant='unstyled' className='bg-red-400' onClick={() => setIsDialogOpen(true)}>
                 Revoke this sequence
             </Button>
-            <BaseDialog
-                title=''
-                isOpen={isDialogOpen}
-                onClose={closeDialog}
-                fullWidth={false}
-                dismissible={false}
-            >
+            <BaseDialog title='' isOpen={isDialogOpen} onClose={closeDialog} fullWidth={false} dismissible={false}>
                 <h3 className='font-bold text-lg pr-8'>Are you sure you want to revoke this sequence?</h3>
                 <input
                     type='text'
