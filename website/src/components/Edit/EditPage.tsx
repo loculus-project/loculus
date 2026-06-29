@@ -56,10 +56,15 @@ const InnerEditPage: FC<EditPageProps> = ({
     const [editableSequences, setEditableSequences] = useState(
         EditableSequences.fromInitialData(dataToEdit, submissionDataTypes.maxSequencesPerEntry),
     );
-    const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(undefined);
+
+    const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
+    const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(() =>
+        extraFilesEnabled && dataToEdit.submittedData.files
+            ? { [dataToEdit.submissionId]: dataToEdit.submittedData.files }
+            : undefined,
+    );
 
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
-    const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
 
     const { mutate: submitRevision, isPending: isRevisionPending } = useSubmitRevision(
         organism,
@@ -78,6 +83,8 @@ const InnerEditPage: FC<EditPageProps> = ({
     );
 
     const submitEditedDataForAccessionVersion = () => {
+        const fileMappingForSubmission = extraFilesEnabled ? fileMapping : undefined;
+
         if (isCreatingRevision) {
             const fastaIds = submissionDataTypes.consensusSequences ? editableSequences.getFastaIds() : undefined;
             const metadataFile = editableMetadata.getMetadataTsv(
@@ -90,16 +97,10 @@ const InnerEditPage: FC<EditPageProps> = ({
                 return;
             }
 
-            let fileMappingWithSubmissionId: FilesBySubmissionId | undefined;
-            if (extraFilesEnabled && fileMapping !== undefined && Object.keys(fileMapping).length > 0) {
-                const files = Object.values(fileMapping)[0];
-                fileMappingWithSubmissionId = { [dataToEdit.submissionId]: files };
-            }
-
             if (!submissionDataTypes.consensusSequences) {
                 submitRevision({
                     metadataFile,
-                    fileMapping: fileMappingWithSubmissionId,
+                    fileMapping: fileMappingForSubmission,
                 });
                 return;
             }
@@ -114,15 +115,17 @@ const InnerEditPage: FC<EditPageProps> = ({
             submitRevision({
                 metadataFile,
                 sequenceFile,
-                fileMapping: fileMappingWithSubmissionId,
+                fileMapping: fileMappingForSubmission,
             });
         } else {
+            const fileMappingForEdit = fileMappingForSubmission?.[dataToEdit.submissionId] ?? null;
             submitEdit({
                 accession: dataToEdit.accession,
                 version: dataToEdit.version,
                 data: {
                     metadata: editableMetadata.getMetadataRecord(),
                     unalignedNucleotideSequences: editableSequences.getSequenceRecord(),
+                    files: fileMappingForEdit,
                 },
             });
         }
@@ -159,7 +162,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                     />
                 </div>
             )}
-            {isCreatingRevision && extraFilesEnabled && (
+            {extraFilesEnabled && (
                 <div className='mt-4'>
                     <ExtraFilesUpload
                         accessToken={accessToken}
@@ -167,7 +170,9 @@ const InnerEditPage: FC<EditPageProps> = ({
                         inputMode='form'
                         groupId={dataToEdit.groupId}
                         fileCategories={submissionDataTypes.files?.categories ?? []}
+                        fileMapping={fileMapping}
                         setFileMapping={setFileMapping}
+                        formSubmissionId={dataToEdit.submissionId}
                         onError={(msg) => toast.error(msg, { position: 'top-center', autoClose: false })}
                     />
                 </div>
