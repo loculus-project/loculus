@@ -1647,9 +1647,9 @@ class ProcessingFunctions:
                 None if has_display_name_separators(str(collector_id)) else str(collector_id)
             )
         else:
-            identifier = parse_identifier_string(collector_id, str(regex_pattern))
+            identifier = parse_identifier_string(str(collector_id), str(regex_pattern))
             if identifier is None:
-                identifier = parse_identifier_string(submission_id, str(regex_pattern))
+                identifier = parse_identifier_string(str(submission_id), str(regex_pattern))
 
         warnings: list[ProcessingAnnotation] = []
         if identifier is not None:
@@ -2150,21 +2150,17 @@ def has_display_name_separators(input: str) -> bool:
 
 
 def parse_identifier_string(
-    input: ProcessedMetadataValue, regex_pattern: str | None = None
+    input: str, regex_pattern: str
 ) -> str | None:
-    """Return an IDENTIFIER string to use in the displayName or None if `input` cannot be used
-    as an identifier.
-    """
-    if not isinstance(input, str):
-        return None
+    """Extract a usable display-name identifier from `input`, or return None.
 
+    Returns input as-is if it contains no displayName separators (space, slash, …).
+    If it contains separators, attempts to extract a usable identifier 
+    using the provided regex_pattern.
+    """
     if not has_display_name_separators(input):
-        # Direct submission without forbidden_char: use the value as-is, no regex parsing
         return input
 
-    # Direct submission containing forbidden_char: attempt regex extraction of identifier field
-    if regex_pattern is None:
-        return None
     extract_result = ProcessingFunctions.extract_regex(
         input_data={"regex_field": input},
         output_field="IDENTIFIER",
