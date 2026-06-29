@@ -403,7 +403,7 @@ single_segment_case_definitions = [
                     ["reads.txt"],
                     ["reads.txt"],
                     "Raw reads file 'reads.txt' has unrecognized extension. "
-                    "Allowed extensions: ['fastq', 'fastq.gz', 'fq', 'fq.gz']",
+                    "Allowed extensions: .fastq, .fastq.gz, .fq, .fq.gz",
                     AnnotationSourceType.SUBMITTED_FILE,
                 )
             ]
@@ -1295,7 +1295,7 @@ multi_segment_case_definitions_none_requirement = [
                     ["reads.txt"],
                     ["reads.txt"],
                     "Raw reads file 'reads.txt' has unrecognized extension. "
-                    "Allowed extensions: ['fastq', 'fastq.gz', 'fq', 'fq.gz']",
+                    "Allowed extensions: .fastq, .fastq.gz, .fq, .fq.gz",
                     AnnotationSourceType.SUBMITTED_FILE,
                 )
             ]
