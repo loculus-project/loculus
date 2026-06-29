@@ -90,7 +90,7 @@ export const SequenceDataUI: FC<Props> = ({
                     />
                 </div>
             )}
-            {isMyGroup && accessToken !== undefined && (
+            {isMyGroup && !isRevocation && accessToken !== undefined && (
                 <>
                     <hr className='my-4' />
                     <div className='my-8'>
