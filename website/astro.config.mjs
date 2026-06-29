@@ -11,7 +11,9 @@ export default defineConfig({
     output: 'server',
     integrations: [react(), mdx(), flowbiteReact()],
     security: {
-        // Loculus deployments terminate public traffic at the trusted ingress/proxy.
+        // Allow any forwarded host/proto (required for ingress-terminated deployments with dynamic hostnames).
+        // This intentionally disables Astro's host allowlist hardening; rely on network-level controls (ClusterIP + ingress).
+        // See https://docs.astro.build/en/reference/configuration-reference/#security and https://github.com/withastro/astro/issues/15713
         allowedDomains: [{}],
     },
     adapter: node({
