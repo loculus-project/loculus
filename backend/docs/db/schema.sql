@@ -331,7 +331,8 @@ CREATE TABLE public.files (
     group_id integer NOT NULL,
     size bigint,
     multipart_completed boolean DEFAULT false NOT NULL,
-    multipart_upload_id text
+    multipart_upload_id text,
+    marked_for_deletion_at timestamp without time zone
 );
 
 
@@ -975,6 +976,13 @@ ALTER TABLE ONLY public.user_groups_table
 --
 
 CREATE INDEX data_use_terms_table_accession_idx ON public.data_use_terms_table USING btree (accession);
+
+
+--
+-- Name: files_upload_requested_at_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX files_upload_requested_at_idx ON public.files USING btree (upload_requested_at);
 
 
 --
