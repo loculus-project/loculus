@@ -1,5 +1,4 @@
 import { type FC, useState } from 'react';
-import { confirmAlert } from 'react-confirm-alert';
 import { toast } from 'react-toastify';
 
 import { backendClientHooks } from '../../services/serviceHooks';
@@ -7,8 +6,8 @@ import { approveAllDataScope } from '../../types/backend';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
+import { BaseDialog } from '../common/BaseDialog';
 import { Button } from '../common/Button';
-import { ModalBox } from '../common/ModalBox';
 import { withQueryProvider } from '../common/withQueryProvider';
 
 type RevokeSequenceEntryProps = {
@@ -31,6 +30,9 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
     onRevokeSuccess,
 }) => {
     const hooks = backendClientHooks(clientConfig);
+
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [versionComment, setVersionComment] = useState('');
 
     const useApproveProcessedData = hooks.useApproveProcessedData(
         {
@@ -90,87 +92,47 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
         useRevokeSequenceEntries.mutate({ accessions: [accessionVersion], versionComment: inputValue });
     };
 
-    return (
-        <Button
-            size='sm'
-            variant='unstyled'
-            className='bg-red-400'
-            onClick={() =>
-                displayRevocationDialog({
-                    dialogText: 'Are you sure you want to revoke this sequence?',
-                    onConfirmation: handleRevokeSequenceEntry,
-                })
-            }
-        >
-            Revoke this sequence
-        </Button>
-    );
-};
-
-interface DisplayRevocationProps {
-    dialogText: string;
-    onConfirmation: (inputValue: string) => void;
-}
-
-const displayRevocationDialog = ({ dialogText, onConfirmation }: DisplayRevocationProps) => {
-    confirmAlert({
-        closeOnClickOutside: false,
-        customUI: ({ onClose }) => (
-            <RevocationDialog
-                dialogText={dialogText}
-                onConfirmation={(inputValue) => {
-                    onConfirmation(inputValue);
-                    onClose();
-                }}
-                onClose={onClose}
-            />
-        ),
-    });
-};
-
-interface RevocationDialogProps {
-    dialogText: string;
-    onConfirmation: (inputValue: string) => void;
-    onClose: () => void;
-}
-
-const RevocationDialog: FC<RevocationDialogProps> = ({ dialogText, onConfirmation, onClose }) => {
-    const [inputValue, setInputValue] = useState('');
+    const closeDialog = () => {
+        setIsDialogOpen(false);
+        setVersionComment('');
+    };
 
     return (
-        <ModalBox>
-            <form method='dialog'>
-                <Button size='sm' circle variant='ghost' className='absolute right-2 top-2' onClick={onClose}>
-                    ✕
-                </Button>
-            </form>
-            <h3 className='font-bold text-lg pr-8'>{dialogText}</h3>
-            <input
-                type='text'
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder='Enter reason for revocation'
-                className='mt-4 w-11/12 mx-auto block'
-            />
-            <div className='flex justify-end gap-4 mt-4'>
-                <form method='dialog'>
-                    <Button variant='primary' onClick={onClose}>
+        <>
+            <Button size='sm' variant='unstyled' className='bg-red-400' onClick={() => setIsDialogOpen(true)}>
+                Revoke this sequence
+            </Button>
+            <BaseDialog
+                title=''
+                isOpen={isDialogOpen}
+                onClose={closeDialog}
+                fullWidth={false}
+                dismissible={false}
+            >
+                <h3 className='font-bold text-lg pr-8'>Are you sure you want to revoke this sequence?</h3>
+                <input
+                    type='text'
+                    value={versionComment}
+                    onChange={(e) => setVersionComment(e.target.value)}
+                    placeholder='Enter reason for revocation'
+                    className='mt-4 w-11/12 mx-auto block'
+                />
+                <div className='flex justify-end gap-4 mt-4'>
+                    <Button variant='primary' onClick={closeDialog}>
                         Cancel
                     </Button>
-                </form>
-                <form method='dialog'>
                     <Button
                         variant='primary'
-                        onClick={(e) => {
-                            e.preventDefault();
-                            onConfirmation(inputValue);
+                        onClick={() => {
+                            handleRevokeSequenceEntry(versionComment);
+                            closeDialog();
                         }}
                     >
                         Confirm
                     </Button>
-                </form>
-            </div>
-        </ModalBox>
+                </div>
+            </BaseDialog>
+        </>
     );
 };
 

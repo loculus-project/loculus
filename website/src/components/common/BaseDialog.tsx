@@ -3,6 +3,18 @@ import React, { type ReactNode } from 'react';
 
 import { Button } from './Button';
 
+/**
+ * `BaseDialog` is the single modal component used across the website.
+ *
+ * By default it is easily dismissed: clicking the backdrop or pressing Escape
+ * closes it (via Headless UI's `Dialog` `onClose`). Use that for lightweight,
+ * informational modals where accidentally closing the dialog is harmless (e.g.
+ * showing details or citations).
+ *
+ * Pass `dismissible={false}` for confirmation dialogs and involved modals (e.g.
+ * forms) where the user might lose significant state to an accidental backdrop
+ * click. The dialog then only closes via the close button or an explicit action.
+ */
 interface BaseDialogProps {
     title: string;
     isOpen: boolean;
@@ -10,6 +22,8 @@ interface BaseDialogProps {
     children: ReactNode;
     fullWidth?: boolean;
     className?: string;
+    /** When false, backdrop clicks and Escape do not close the dialog. Defaults to true. */
+    dismissible?: boolean;
 }
 
 export const BaseDialog: React.FC<BaseDialogProps> = ({
@@ -19,10 +33,11 @@ export const BaseDialog: React.FC<BaseDialogProps> = ({
     children,
     fullWidth = true,
     className,
+    dismissible = true,
 }) => {
     const fullWidthClasses = fullWidth ? 'w-full' : '';
     return (
-        <Dialog open={isOpen} onClose={onClose} className='relative z-40'>
+        <Dialog open={isOpen} onClose={dismissible ? onClose : () => {}} className='relative z-40'>
             <div className='fixed inset-0 bg-black/25' />
             <div className='fixed inset-0 overflow-y-auto'>
                 <div className='flex min-h-full items-center justify-center p-4 text-center'>
