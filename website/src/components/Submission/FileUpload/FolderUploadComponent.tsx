@@ -331,11 +331,13 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         setFileUploadState((state) => {
             if (state?.type === 'uploadCompleted') {
                 const remainingFiles = state.files[submissionId].filter((f) => f.name !== file.name);
-                if (remainingFiles.length === 0) return undefined;
-
-                return produce(state, (draft) => {
-                    draft.files[submissionId] = remainingFiles;
+                const result = produce(state, (draft) => {
+                    if (remainingFiles.length === 0) delete draft.files[submissionId];
+                    else draft.files[submissionId] = remainingFiles;
                 });
+
+                if (Object.values(result.files).every((files) => files.length === 0)) return undefined;
+                else return result;
             }
             return state;
         });
