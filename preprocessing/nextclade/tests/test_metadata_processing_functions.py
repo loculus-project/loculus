@@ -1193,7 +1193,7 @@ _CONCATENATE_CASES = [
         input_data={"date": "2021-01-01/2021-12-31", "country": "USA"},
         input_fields=["date", "country"],
         concatenate_args={
-            "ACCESSION_VERSION": "version.1",
+            "ACCESSION_VERSION": "accession.1",
             "order": ["date", "country"],
             "type": ["dateRangeString", "string"],
         },
@@ -1204,41 +1204,41 @@ _CONCATENATE_CASES = [
         input_data={"someInt": "", "geoLocCountry": "", "sampleCollectionDate": "2025"},
         input_fields=["geoLocCountry", "sampleCollectionDate"],
         concatenate_args={
-            "ACCESSION_VERSION": "version.1",
+            "ACCESSION_VERSION": "accession.1",
             "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
             "type": ["integer", "string", "ACCESSION_VERSION", "date"],
         },
-        expected="version.1/2025-01-01",
+        expected="accession.1/2025-01-01",
     ),
     ConcatenateCase(
         name="present_int_field_and_empty_string_field_with_no_fallback",
         input_data={"someInt": "0", "geoLocCountry": "", "sampleCollectionDate": "2025"},
         input_fields=["geoLocCountry", "sampleCollectionDate"],
         concatenate_args={
-            "ACCESSION_VERSION": "version.1",
+            "ACCESSION_VERSION": "accession.1",
             "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
             "type": ["integer", "string", "ACCESSION_VERSION", "date"],
         },
-        expected="0//version.1/2025-01-01",
+        expected="0//accession.1/2025-01-01",
     ),
     ConcatenateCase(
         name="empty_string_field_uses_fallback_value",
         input_data={"someInt": "0", "geoLocCountry": "", "sampleCollectionDate": "2025"},
         input_fields=["geoLocCountry", "sampleCollectionDate"],
         concatenate_args={
-            "ACCESSION_VERSION": "version.1",
+            "ACCESSION_VERSION": "accession.1",
             "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
             "type": ["integer", "string", "ACCESSION_VERSION", "date"],
             "fallback_value": "unknown",
         },
-        expected="0/unknown/version.1/2025-01-01",
+        expected="0/unknown/accession.1/2025-01-01",
     ),
     ConcatenateCase(
         name="accession_version_omitted_from_order",
         input_data={"someInt": "0", "geoLocCountry": "", "sampleCollectionDate": "2025"},
         input_fields=["geoLocCountry", "sampleCollectionDate"],
         concatenate_args={
-            "ACCESSION_VERSION": "version.1",
+            "ACCESSION_VERSION": "accession.1",
             "order": ["someInt", "geoLocCountry", "sampleCollectionDate"],
             "type": ["integer", "string", "date"],
             "fallback_value": "unknown",
@@ -1250,12 +1250,12 @@ _CONCATENATE_CASES = [
         input_data={"someInt": "0", "geoLocCountry": "", "sampleCollectionDate": None},
         input_fields=["geoLocCountry", "sampleCollectionDate"],
         concatenate_args={
-            "ACCESSION_VERSION": "version.1",
+            "ACCESSION_VERSION": "accession.1",
             "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
             "type": ["integer", "string", "ACCESSION_VERSION", "date"],
             "fallback_value": "unknown",
         },
-        expected="0/unknown/version.1/unknown",
+        expected="0/unknown/accession.1/unknown",
     ),
 ]
 
@@ -1281,7 +1281,7 @@ _DISPLAY_NAME_INPUT_FIELDS = [
     "sampleCollectionDate",
 ]
 _DISPLAY_NAME_BASE_ARGS: FunctionArgs = {
-    "ACCESSION_VERSION": "version.1",
+    "ACCESSION_VERSION": "accession.1",
     "is_insdc_ingest_group": False,
     "order": ["nextclade.clade", "geoLocCountry", "IDENTIFIER", "sampleCollectionDate"],
     "type": ["string", "string", "IDENTIFIER", "string"],
@@ -1322,7 +1322,7 @@ _DISPLAY_NAME_CASES = [
         submission_id="mySample",
         geo_loc_country="Switzerland",
         expected_regular="DENV-1/Switzerland/mySample/2025",
-        expected_insdc="DENV-1/Switzerland/mySample/2025",
+        expected_insdc="DENV-1/Switzerland/accession.1/2025",
         expected_prefix="hYF/Switzerland/mySample/2025",
     ),
     DisplayNameCase(
@@ -1340,7 +1340,7 @@ _DISPLAY_NAME_CASES = [
         submission_id="mySample",
         geo_loc_country="Switzerland",
         expected_regular="DENV-1/Switzerland/myExtractedSample/2025",
-        expected_insdc="DENV-1/Switzerland/mySample/2025",  # INSDC skips regex extraction
+        expected_insdc="DENV-1/Switzerland/accession.1/2025",  # INSDC skips submissionId
         expected_prefix="hYF/Switzerland/myExtractedSample/2025",
     ),
     DisplayNameCase(
@@ -1349,7 +1349,7 @@ _DISPLAY_NAME_CASES = [
         submission_id="mySample",
         geo_loc_country="Switzerland",
         expected_regular="DENV-1/Switzerland/mySample/2025",
-        expected_insdc="DENV-1/Switzerland/mySample/2025",
+        expected_insdc="DENV-1/Switzerland/accession.1/2025",  # INSDC skips submissionId
         expected_prefix="hYF/Switzerland/mySample/2025",
     ),
     DisplayNameCase(
@@ -1357,9 +1357,9 @@ _DISPLAY_NAME_CASES = [
         specimen_collector_id="hDENV1/myExtractedSample/2025",
         submission_id="hDENV1/myExtractedSample/2025",
         geo_loc_country="",
-        expected_regular="DENV-1/unknown/version.1/2025",
-        expected_insdc="DENV-1/unknown/version.1/2025",
-        expected_prefix="hYF/unknown/version.1/2025",
+        expected_regular="DENV-1/unknown/accession.1/2025",
+        expected_insdc="DENV-1/unknown/accession.1/2025",
+        expected_prefix="hYF/unknown/accession.1/2025",
         warning_regular=_UNPARSEABLE_IDENTIFIER_WARNING,
         warning_prefix=_UNPARSEABLE_IDENTIFIER_WARNING,
     ),
@@ -1369,9 +1369,9 @@ _DISPLAY_NAME_CASES = [
         submission_id="hDENV1/myExtractedSample/2025",
         geo_loc_country="",
         extra_args={"fallback_value": "another_fallback"},
-        expected_regular="DENV-1/another_fallback/version.1/2025",
-        expected_insdc="DENV-1/another_fallback/version.1/2025",
-        expected_prefix="hYF/another_fallback/version.1/2025",
+        expected_regular="DENV-1/another_fallback/accession.1/2025",
+        expected_insdc="DENV-1/another_fallback/accession.1/2025",
+        expected_prefix="hYF/another_fallback/accession.1/2025",
         warning_regular=_UNPARSEABLE_IDENTIFIER_WARNING,
         warning_prefix=_UNPARSEABLE_IDENTIFIER_WARNING,
     ),
