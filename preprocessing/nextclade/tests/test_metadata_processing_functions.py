@@ -1187,7 +1187,7 @@ class ConcatenateCase:
     expected: str
 
 
-_CONCATENATE_CASES = [
+CONCATENATE_CASES = [
     ConcatenateCase(
         name="date_range_converted_to_lucene",
         input_data={"date": "2021-01-01/2021-12-31", "country": "USA"},
@@ -1260,7 +1260,7 @@ _CONCATENATE_CASES = [
 ]
 
 
-@pytest.mark.parametrize("case", _CONCATENATE_CASES, ids=lambda c: c.name)
+@pytest.mark.parametrize("case", CONCATENATE_CASES, ids=lambda c: c.name)
 def test_concatenate(case: ConcatenateCase) -> None:
     result = ProcessingFunctions.concatenate(
         input_data=case.input_data,
