@@ -113,9 +113,7 @@ test.describe('Sequence version banners', () => {
 
         // Click on the sequence and revoke it (auto-approves on confirmation)
         await page.getByRole('cell', { name: 'Germany' }).click();
-        await page.getByRole('button', { name: 'Revoke this sequence' }).click();
-        await page.getByRole('button', { name: 'Confirm' }).click();
-        await expect(page.getByText('Sequence revoked successfully.')).toBeVisible();
+        await search.revokeSequence();
 
         // Release the revision (the revocation is already approved automatically)
         const reviewPage2 = new ReviewPage(page);
