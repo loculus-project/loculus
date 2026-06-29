@@ -1,6 +1,7 @@
 # ruff: noqa: S101
-import pytest
 from dataclasses import dataclass, field
+
+import pytest
 from factory_methods import (
     Case,
     ProcessedEntryFactory,
