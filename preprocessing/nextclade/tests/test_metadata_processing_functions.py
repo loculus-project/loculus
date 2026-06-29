@@ -1361,16 +1361,16 @@ def test_display_name_construction() -> None:  # noqa: PLR0915
     assert res.datum == "DENV-1/unknown/version.1/2025"
     assert len(res.warnings) == 1
     assert (
-        res.warnings[0]
-        == "identifier string 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
+        res.warnings[0].message
+        == "specimencollectorSampleId 'hDENV1/myExtractedSample/2025' and submissionId 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
     )
     assert res_insdc.datum == "DENV-1/unknown/version.1/2025"
     assert len(res_insdc.warnings) == 0
     assert res_prefix.datum == "hYF/unknown/version.1/2025"
     assert len(res_prefix.warnings) == 1
     assert (
-        res_prefix.warnings[0]
-        == "identifier string 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
+        res_prefix.warnings[0].message
+        == "specimencollectorSampleId 'hDENV1/myExtractedSample/2025' and submissionId 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
     )
 
     input_data["specimenCollectorSampleId"] = submission_id_formatted_unexpected
@@ -1395,16 +1395,16 @@ def test_display_name_construction() -> None:  # noqa: PLR0915
     assert res.datum == "DENV-1/another_fallback/version.1/2025"
     assert len(res.warnings) == 1
     assert (
-        res.warnings[0]
-        == "identifier string 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
+        res.warnings[0].message
+        == "specimencollectorSampleId 'hDENV1/myExtractedSample/2025' and submissionId 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
     )
     assert res_insdc.datum == "DENV-1/another_fallback/version.1/2025"
     assert len(res_insdc.warnings) == 0
     assert res_prefix.datum == "hYF/another_fallback/version.1/2025"
     assert len(res_prefix.warnings) == 1
     assert (
-        res_prefix.warnings[0]
-        == "identifier string 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
+        res_prefix.warnings[0].message
+        == "specimencollectorSampleId 'hDENV1/myExtractedSample/2025' and submissionId 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
     )
 
 
