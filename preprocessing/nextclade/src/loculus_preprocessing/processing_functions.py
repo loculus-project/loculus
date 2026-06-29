@@ -1110,8 +1110,7 @@ class ProcessingFunctions:
                 return config_error(
                     input_fields,
                     output_field,
-                    f"The pattern '{pattern}' does not contain a capture group: "
-                    f"'{capture_group}'.",
+                    f"The pattern '{pattern}' does not contain a capture group: '{capture_group}'.",
                 )
         return ProcessingResult(
             datum=None,
