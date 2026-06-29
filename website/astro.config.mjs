@@ -10,6 +10,10 @@ import flowbiteReact from 'flowbite-react/plugin/astro';
 export default defineConfig({
     output: 'server',
     integrations: [react(), mdx(), flowbiteReact()],
+    security: {
+        // Loculus deployments terminate public traffic at the trusted ingress/proxy.
+        allowedDomains: [{}],
+    },
     adapter: node({
         mode: 'standalone',
     }),
