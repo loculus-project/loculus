@@ -29,8 +29,4 @@ export class SeqSetCitationClient extends ZodiosWrapperClient<typeof seqSetCitat
             headers: createAuthorizationHeader(accessToken),
         });
     }
-
-    public getAuthor(username: string) {
-        return this.call('getAuthor', { params: { username } });
-    }
 }

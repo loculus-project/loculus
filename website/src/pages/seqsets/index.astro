@@ -1,12 +1,13 @@
 ---
 import { ErrorFeedback } from '../../components/ErrorFeedback';
-import { AuthorDetails } from '../../components/SeqSetCitations/AuthorDetails';
 import { SeqSetList } from '../../components/SeqSetCitations/SeqSetList';
 import { SeqSetListActions } from '../../components/SeqSetCitations/SeqSetListActions';
+import { UserDetails } from '../../components/User/UserDetails';
 import NeedToLogin from '../../components/common/NeedToLogin.astro';
 import { getRuntimeConfig, seqSetsAreEnabled } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SeqSetCitationClient } from '../../services/seqSetCitationClient.ts';
+import { UserClient } from '../../services/userClient.ts';
 import { getAccessToken } from '../../utils/getAccessToken';
 import { getUrlForKeycloakAccountPage } from '../../utils/getAuthUrl.ts';
 
@@ -20,9 +21,10 @@ const accessToken = getAccessToken(session)!;
 const username = session.user?.username ?? '';
 const clientConfig = getRuntimeConfig().public;
 const seqSetClient = SeqSetCitationClient.create();
+const userClient = UserClient.create();
 
 const seqSetsResponse = await seqSetClient.getSeqSetsOfUser(accessToken);
-const authorResponse = await seqSetClient.getAuthor(username);
+const userResponse = await userClient.getUser(username);
 const editAccountUrl = (await getUrlForKeycloakAccountPage()) + '/#/personal-info';
 ---
 
@@ -34,20 +36,20 @@ const editAccountUrl = (await getUrlForKeycloakAccountPage()) + '/#/personal-inf
             ) : (
                 <div class='flex flex-wrap w-full'>
                     <div class='flex flex-col'>
-                        {authorResponse.match(
-                            (authorProfile) => (
-                                <AuthorDetails
+                        {userResponse.match(
+                            (userProfile) => (
+                                <UserDetails
                                     displayFullDetails
-                                    firstName={authorProfile.firstName}
-                                    lastName={authorProfile.lastName}
-                                    emailDomain={authorProfile.emailDomain}
-                                    university={authorProfile.university}
+                                    firstName={userProfile.firstName}
+                                    lastName={userProfile.lastName}
+                                    emailDomain={userProfile.emailDomain}
+                                    university={userProfile.university}
                                     editAccountUrl={editAccountUrl}
                                 />
                             ),
                             (error) => (
                                 <ErrorFeedback
-                                    message={'Error while fetching author profile: ' + JSON.stringify(error)}
+                                    message={'Error while fetching user profile: ' + JSON.stringify(error)}
                                     client:load
                                 />
                             ),

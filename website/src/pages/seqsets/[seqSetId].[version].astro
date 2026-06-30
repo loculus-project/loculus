@@ -9,6 +9,7 @@ import { getRuntimeConfig, seqSetsAreEnabled, getWebsiteConfig } from '../../con
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes/routes';
 import { SeqSetCitationClient } from '../../services/seqSetCitationClient.ts';
+import { UserClient } from '../../services/userClient.ts';
 import type { ProblemDetail } from '../../types/backend';
 import type { SeqSet } from '../../types/seqSetCitation';
 import { getAccessToken } from '../../utils/getAccessToken';
@@ -32,6 +33,7 @@ if (!seqSetsAreEnabled()) {
 }
 
 const seqSetClient = SeqSetCitationClient.create();
+const userClient = UserClient.create();
 const seqSetVersionsResponse = await seqSetClient.call('getSeqSetVersions', { params: { seqSetId } });
 const seqSetRecordsResponse = await seqSetClient.call('getSeqSetRecords', { params: { seqSetId, version } });
 
@@ -49,9 +51,7 @@ const seqSetResponse = seqSetVersionsResponse.map((seqSetVersions) => getSeqSetB
 const latestSeqSetVersion = seqSetVersionsResponse.isOk()
     ? Math.max(...seqSetVersionsResponse.value.map((s) => s.seqSetVersion))
     : undefined;
-const seqSetAuthorResponse = seqSetResponse.isOk()
-    ? await seqSetClient.getAuthor(seqSetResponse.value.createdBy)
-    : err();
+const seqSetCreatorResponse = seqSetResponse.isOk() ? await userClient.getUser(seqSetResponse.value.createdBy) : err();
 
 const accessions = seqSetRecordsResponse.unwrapOr([]).map((record) => record.accession);
 const seqSetGraphs = websiteConfig.seqSetsGraphs ?? [];
@@ -59,14 +59,14 @@ const seqSetGraphResponses = await Promise.all(
     seqSetGraphs.map((graph) => getSeqSetStatistics(accessions, graph.fields)),
 );
 
-const seqSetAuthor = seqSetAuthorResponse.unwrapOr(undefined);
+const seqSetCreator = seqSetCreatorResponse.unwrapOr(undefined);
 const seqSetGraphsData = Object.fromEntries(
     seqSetGraphs.map((graph, i) => [graph.name, seqSetGraphResponses[i].unwrapOr([])]),
 );
 
 const secondaryErrors = (
     [
-        [seqSetAuthorResponse, 'Error while fetching author profile'],
+        [seqSetCreatorResponse, 'Error while fetching user profile'],
         ...seqSetGraphResponses.map((response) => [response, 'Error while fetching seqSet statistics']),
     ] as [Result<unknown, ProblemDetail>, string][]
 ).flatMap(([response, message]) => (response.isErr() ? [`${message}: ${JSON.stringify(response.error)}`] : []));
@@ -107,7 +107,7 @@ const secondaryErrors = (
                     clientConfig={clientConfig}
                     accessToken={accessToken}
                     seqSet={seqSetResponse.value}
-                    seqSetAuthor={seqSetAuthor}
+                    seqSetCreator={seqSetCreator}
                     seqSetRecords={seqSetRecordsResponse.value}
                     isAdminView={seqSetResponse.value.createdBy === username}
                     databaseName={websiteConfig.name}

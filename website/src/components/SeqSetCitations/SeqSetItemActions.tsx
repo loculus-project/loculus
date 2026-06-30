@@ -1,17 +1,18 @@
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { AuthorDetails } from './AuthorDetails.tsx';
+import { CitationTable } from './CitationTable.tsx';
 import { ExportSeqSet } from './ExportSeqSet';
 import { SeqSetForm } from './SeqSetForm';
 import { getClientLogger } from '../../clientLogger';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import type { AuthorProfile, SeqSetRecord, SeqSet } from '../../types/seqSetCitation';
+import type { SeqSetRecord, SeqSet } from '../../types/seqSetCitation';
+import type { UserProfile } from '../../types/user.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
-import { CitationTable } from './CitationTable.tsx';
+import { UserDetails } from '../User/UserDetails.tsx';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { Button } from '../common/Button';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
@@ -34,7 +35,7 @@ type SeqSetItemActionsProps = {
     clientConfig: ClientConfig;
     accessToken: string;
     seqSet: SeqSet;
-    seqSetAuthor?: AuthorProfile;
+    seqSetCreator?: UserProfile;
     seqSetRecords: SeqSetRecord[];
     isAdminView?: boolean;
     databaseName: string;
@@ -44,7 +45,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
     clientConfig,
     accessToken,
     seqSet,
-    seqSetAuthor,
+    seqSetCreator,
     seqSetRecords,
     isAdminView = false,
     databaseName,
@@ -86,8 +87,8 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
         return new Date(date).toISOString().split('T')[0];
     };
 
-    const createdByValue = seqSetAuthor ? (
-        <AuthorDetails displayFullDetails={false} firstName={seqSetAuthor.firstName} lastName={seqSetAuthor.lastName} />
+    const createdByValue = seqSetCreator ? (
+        <UserDetails displayFullDetails={false} firstName={seqSetCreator.firstName} lastName={seqSetCreator.lastName} />
     ) : (
         'Unknown'
     );

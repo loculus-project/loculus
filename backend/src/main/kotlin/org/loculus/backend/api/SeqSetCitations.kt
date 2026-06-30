@@ -132,19 +132,6 @@ data class CitedBy(
     val citations: MutableList<Long>,
 )
 
-data class AuthorProfile(
-    val username: String,
-    val firstName: String,
-    val lastName: String,
-    val emailDomain: String,
-    @Schema(
-        description = "The university the author is affiliated with.",
-        type = "string",
-        example = "University of Example",
-    )
-    val university: String?,
-)
-
 object SeqSetCitationsConstants {
     const val DOI_WEEKLY_RATE_LIMIT = 7
 }

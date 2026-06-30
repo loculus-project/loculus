@@ -3,7 +3,6 @@ package org.loculus.backend.controller
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.AuthorProfile
 import org.loculus.backend.api.CitedBy
 import org.loculus.backend.api.ResponseSeqSet
 import org.loculus.backend.api.SeqSet
@@ -17,7 +16,6 @@ import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.config.ENABLE_SEQSETS_TRUE_VALUE
-import org.loculus.backend.service.KeycloakAdapter
 import org.loculus.backend.service.seqsetcitations.SeqSetCitationsDatabaseService
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -40,7 +38,6 @@ import org.springframework.web.bind.annotation.RestController
 class SeqSetCitationsController(
     private val seqSetCitationsService: SeqSetCitationsDatabaseService,
     private val submissionDatabaseService: SubmissionDatabaseService,
-    private val keycloakAdapter: KeycloakAdapter,
 ) {
     @Operation(description = "Get a SeqSet")
     @GetMapping("/get-seqset")
@@ -115,13 +112,4 @@ class SeqSetCitationsController(
     @GetMapping("/get-sequence-citations")
     fun getSequenceCitations(@RequestParam accession: String, @RequestParam version: Long?): List<SequenceCitation> =
         seqSetCitationsService.getSequenceCitations(accession, version)
-
-    @Operation(description = "Get an author")
-    @GetMapping("/get-author")
-    fun getAuthor(@RequestParam username: String): AuthorProfile {
-        val keycloakUser = keycloakAdapter.getUsersWithName(username).firstOrNull()
-            ?: throw NotFoundException("Author profile $username does not exist")
-
-        return seqSetCitationsService.transformKeycloakUserToAuthorProfile(keycloakUser)
-    }
 }

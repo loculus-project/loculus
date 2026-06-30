@@ -24,9 +24,7 @@ import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
-import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.AuthorProfile
 import org.loculus.backend.api.CitationOrigin
 import org.loculus.backend.api.CitationSource
 import org.loculus.backend.api.CitedBy
@@ -657,16 +655,5 @@ class SeqSetCitationsDatabaseService(
         ) {
             throw UnprocessableEntityException("SeqSet update must contain at least one change")
         }
-    }
-
-    fun transformKeycloakUserToAuthorProfile(keycloakUser: UserRepresentation): AuthorProfile {
-        val emailDomain = keycloakUser.email?.substringAfterLast("@") ?: ""
-        return AuthorProfile(
-            keycloakUser.username,
-            keycloakUser.firstName,
-            keycloakUser.lastName,
-            emailDomain,
-            keycloakUser.attributes["university"]?.firstOrNull(),
-        )
     }
 }

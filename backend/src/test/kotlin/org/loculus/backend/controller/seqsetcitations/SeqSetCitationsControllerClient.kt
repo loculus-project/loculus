@@ -135,11 +135,6 @@ class SeqSetCitationsControllerClient(private val mockMvc: MockMvc) {
                 .apply { version?.let { param("version", it.toString()) } },
         )
 
-    fun getAuthor(username: String): ResultActions = mockMvc.perform(
-        get("/get-author")
-            .param("username", username),
-    )
-
     fun validateSeqSetRecords(seqSetRecords: String, jwt: String? = jwtForDefaultUser): ResultActions = mockMvc.perform(
         post("/validate-seqset-records")
             .contentType(MediaType.APPLICATION_JSON_VALUE)

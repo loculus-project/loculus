@@ -2,14 +2,7 @@ import { makeApi, makeEndpoint } from '@zodios/core';
 import z from 'zod';
 
 import { authorizationHeader, notAuthorizedError } from './commonApiTypes.ts';
-import {
-    authorProfile,
-    seqSets,
-    seqSetRecords,
-    citedByResult,
-    seqSetCitations,
-    sequenceCitations,
-} from '../types/seqSetCitation.ts';
+import { seqSets, seqSetRecords, citedByResult, seqSetCitations, sequenceCitations } from '../types/seqSetCitation.ts';
 
 const getSeqSetsOfUserEndpoint = makeEndpoint({
     method: 'get',
@@ -184,14 +177,6 @@ const deleteSeqSetEndpoint = makeEndpoint({
     errors: [notAuthorizedError],
 });
 
-const getAuthorEndpoint = makeEndpoint({
-    method: 'get',
-    path: '/get-author?username=:username',
-    alias: 'getAuthor',
-    response: authorProfile,
-    errors: [notAuthorizedError],
-});
-
 export const seqSetCitationApi = makeApi([
     getSeqSetsOfUserEndpoint,
     getUserCitedByEndpoint,
@@ -205,5 +190,4 @@ export const seqSetCitationApi = makeApi([
     createSeqSetDOIEndpoint,
     updateSeqSetEndpoint,
     deleteSeqSetEndpoint,
-    getAuthorEndpoint,
 ]);

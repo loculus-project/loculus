@@ -13,7 +13,7 @@ type Props = {
     editAccountUrl?: string | null;
 };
 
-export const AuthorDetails: FC<Props> = ({
+export const UserDetails: FC<Props> = ({
     displayFullDetails,
     firstName,
     lastName,

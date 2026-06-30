@@ -21,6 +21,7 @@ import org.loculus.backend.controller.groupmanagement.GroupManagementControllerC
 import org.loculus.backend.controller.seqsetcitations.SeqSetCitationsControllerClient
 import org.loculus.backend.controller.submission.SubmissionControllerClient
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
+import org.loculus.backend.controller.user.UserControllerClient
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.files.FILES_TABLE_NAME
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
@@ -57,6 +58,7 @@ import org.springframework.test.context.ActiveProfiles
     GroupManagementControllerClient::class,
     DataUseTermsControllerClient::class,
     SeqSetCitationsControllerClient::class,
+    UserControllerClient::class,
     PublicJwtKeyConfig::class,
     FilesClient::class,
 )
