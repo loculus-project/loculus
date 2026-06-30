@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import traceback
 import uuid
 from collections.abc import Iterator
 from http import HTTPMethod
@@ -192,3 +193,24 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
                 for k, v in full_json.items()
                 if k in {"metadata", "unalignedNucleotideSequences"}
             }
+
+
+def get_address(config: Config, center_name: str, group_id: int) -> str | None:
+    if not config.is_broker:
+        return None
+    try:
+        group_details = get_group_info(config, group_id)
+    except Exception as e:
+        logger.error(f"Failed to fetch group info for groupId={group_id}\n{traceback.format_exc()}")
+        msg = f"Failed to fetch group info from Loculus for group: {group_id}, {e}"
+        raise RuntimeError(msg) from e
+    address = group_details.address
+    address_list = [
+        center_name,  # corresponds to Loculus' "Institution" group field
+        address.city,
+        address.state,
+        address.country,
+    ]
+    address_string = ", ".join([x for x in address_list if x])
+    logger.debug("Created address from group_info")
+    return address_string

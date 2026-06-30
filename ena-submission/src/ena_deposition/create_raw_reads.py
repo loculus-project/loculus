@@ -1,8 +1,7 @@
 import json
 import logging
-import random
-import string
 import threading
+import time
 import traceback
 from dataclasses import asdict
 from datetime import datetime, timedelta
@@ -13,35 +12,27 @@ from sqlalchemy import Engine
 
 from ena_deposition import call_loculus
 
-from .config import Config, EnaOrganismDetails
+from .config import Config
 from .ena_submission_helper import (
     CreationResult,
-    accession_exists,
-    create_chromosome_list,
     create_ena_assembly,
-    create_flatfile,
     create_manifest,
     get_authors,
     get_description,
     get_ena_analysis_process,
     retry_failed_submissions_for_matching_errors,
-    set_accession_does_not_exist_error,
 )
 from .ena_types import (
-    DEFAULT_EMBL_PROPERTY_FIELDS,
-    AssemblyChromosomeListFile,
-    AssemblyChromosomeListFileObject,
-    AssemblyManifest,
-    ChromosomeType,
+    RawReadsManifest,
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
     AccessionVersion,
-    AssemblyTableEntry,
+    RawReadsTableEntry,
     Status,
     StatusAll,
     SubmissionTableEntry,
-    add_to_assembly_table,
+    add_to_raw_reads_table,
     db_init,
     find_conditions_in_db,
     find_errors_or_stuck_in_db,
@@ -55,51 +46,6 @@ from .submission_db_helper import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-def create_chromosome_list_object(
-    unaligned_sequences: dict[str, str | None],
-    accession: str,
-    organism_metadata: EnaOrganismDetails,
-) -> AssemblyChromosomeListFile:
-    # Use https://www.ebi.ac.uk/ena/browser/view/GCA_900094155.1?show=chromosomes as a template
-    # Use https://www.ebi.ac.uk/ena/browser/view/GCA_000854165.1?show=chromosomes for multi-segment
-
-    entries: list[AssemblyChromosomeListFileObject] = []
-
-    multi_segment = organism_metadata.is_multi_segment()
-
-    segment_order = get_segment_order(unaligned_sequences)
-
-    for segment_name in segment_order:
-        topology = organism_metadata.topology
-        if multi_segment:
-            entry = AssemblyChromosomeListFileObject(
-                object_name=f"{accession}_{segment_name}",
-                chromosome_name=segment_name,
-                chromosome_type=ChromosomeType.SEGMENTED,
-                topology=topology,
-            )
-            entries.append(entry)
-            continue
-        entry = AssemblyChromosomeListFileObject(
-            object_name=f"{accession}",
-            chromosome_name="genome",
-            chromosome_type=ChromosomeType.MONOPARTITE,
-            topology=topology,
-        )
-        entries.append(entry)
-
-    return AssemblyChromosomeListFile(chromosomes=entries)
-
-
-def get_segment_order(unaligned_sequences: dict[str, str | None]) -> list[str]:
-    """Order in which we put the segments in the chromosome list file"""
-    segment_order = []
-    for segment_name, item in unaligned_sequences.items():
-        if item:  # Only list sequenced segments
-            segment_order.append(segment_name)
-    return sorted(segment_order)
 
 
 def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) -> dict[str, str]:
@@ -135,27 +81,15 @@ def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) ->
     return assembly_values
 
 
-def make_assembly_name(accession: str, version: int) -> str:
-    """
-    Create a unique assembly name based on accession, version and timestamp.
-    Add a timestamp to the alias suffix.
-
-    Unlike biosample revisions, assembly revisions require a new assemblyName.
-    """
-    entropy = "".join(random.choices(string.ascii_letters + string.digits, k=4))  # noqa: S311
-    timestamp = datetime.now(tz=pytz.utc).strftime("%Y%m%d_%H%M%S")
-    return f"{accession}.{version}_{timestamp}_{entropy}"
-
-
 def create_manifest_object(
     config: Config,
     sample_accession: str,
     study_accession: str,
     submission_row: SubmissionTableEntry,
     dir: str | None = None,
-) -> AssemblyManifest:
+) -> RawReadsManifest:
     """
-    Create an AssemblyManifest object for an entry in the assembly table using:
+    Create an RawReadsManifest object for an entry in the raw reads table using:
     - the corresponding ena_sample_accession and bioproject_accession
     - the organism metadata from the config file
     - sequencing metadata from the corresponding submission table entry
@@ -166,89 +100,60 @@ def create_manifest_object(
     manifest for testing.
     """
     metadata = submission_row.seq_metadata
-
-    assembly_name = make_assembly_name(
-        submission_row.accession,
-        submission_row.version,
-    )
-
-    unaligned_nucleotide_sequences = submission_row.unaligned_nucleotide_sequences
-    ena_organism = config.enaOrganisms[submission_row.organism]
-    chromosome_list_object = create_chromosome_list_object(
-        unaligned_nucleotide_sequences, submission_row.accession, ena_organism
-    )
-    chromosome_list_file = create_chromosome_list(list_object=chromosome_list_object, dir=dir)
-    logger.debug("Created chromosome list file")
-
-    flat_file = create_flatfile(config, metadata, ena_organism, unaligned_nucleotide_sequences, dir)
-
     assembly_values = get_assembly_values_in_metadata(config, metadata)
 
     try:
-        manifest = AssemblyManifest(
+        manifest = RawReadsManifest(
             study=study_accession,
             sample=sample_accession,
-            assemblyname=assembly_name,
-            flatfile=flat_file,
-            chromosome_list=chromosome_list_file,
             description=get_description(config, metadata),
-            moleculetype=ena_organism.molecule_type,
             **assembly_values,  # type: ignore
             address=call_loculus.get_address(
                 config, submission_row.center_name, submission_row.seq_metadata["groupId"]
             ),
+            fastq=submission_row.fastq_files,
         )
     except Exception as e:
         # log traceback for better debugging
-        logger.error(f"Error creating AssemblyManifest: {e}. Traceback: {traceback.format_exc()}")
-        msg = f"Failed to create AssemblyManifest for accession {submission_row.accession}"
+        logger.error(f"Error creating RawReadsManifest: {e}. Traceback: {traceback.format_exc()}")
+        msg = f"Failed to create RawReadsManifest for accession {submission_row.accession}"
         raise RuntimeError(msg) from e
 
     return manifest
 
 
-def submission_table_start(db_engine: Engine, config: Config) -> None:
+def submission_table_start(db_engine: Engine) -> None:
     """
     1. Find all entries in submission_table in state SUBMITTED_SAMPLE
-    2. If entry has insdcRawReadsAccession, check it exists in ENA, if not set error and continue
-    3. If (exists an entry in the assembly_table for (accession, version)):
+    2. Filter for entries where submit_raw_reads is True
+    3. If (exists an entry in the raw_reads_table for (accession, version)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_ALL
-    b.      Else update state to SUBMITTING_ASSEMBLY
-    4. Else create corresponding entry in assembly_table
+    b.      Else update state to SUBMITTING_RAW_READS
+    4. Else create corresponding entry in raw_reads_table
     """
-    conditions = {"status_all": StatusAll.SUBMITTED_SAMPLE}
+    conditions = {"status_all": StatusAll.SUBMITTED_SAMPLE, "submit_raw_reads": True}
     ready_to_submit = find_conditions_in_db(db_engine, SubmissionTableEntry, conditions=conditions)
     logger.debug(
-        f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_SAMPLE"
+        f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_SAMPLE with submit_raw_reads=True"
     )
     for row in ready_to_submit:
         seq_key = asdict(row.pkey)
 
-        run_ref = row.seq_metadata.get("insdcRawReadsAccession")
-        if run_ref and not accession_exists(run_ref, config):
-            set_accession_does_not_exist_error(
-                conditions=seq_key,
-                accession=run_ref,
-                accession_type="RUN_REF",
-                db_engine=db_engine,
-            )
-            continue
-
-        # 1. check if there exists an entry in the assembly_table for seq_key
-        corresponding_assembly = find_conditions_in_db(
-            db_engine, AssemblyTableEntry, conditions=seq_key
+        # 1. check if there exists an entry in the raw_reads_table for seq_key
+        corresponding_raw_reads = find_conditions_in_db(
+            db_engine, RawReadsTableEntry, conditions=seq_key
         )
         status_all = None
-        if len(corresponding_assembly) == 1:
-            if corresponding_assembly[0].status == Status.SUBMITTED:
+        if len(corresponding_raw_reads) == 1:
+            if corresponding_raw_reads[0].status == Status.SUBMITTED:
                 status_all = StatusAll.SUBMITTED_ALL
             else:
-                status_all = StatusAll.SUBMITTING_ASSEMBLY
+                status_all = StatusAll.SUBMITTING_RAW_READS
         else:
-            # If not: create assembly_entry, change status to SUBMITTING_ASSEMBLY
-            if not add_to_assembly_table(db_engine, AssemblyTableEntry(**seq_key)):
+            # If not: create raw_reads_entry, change status to SUBMITTING_RAW_READS
+            if not add_to_raw_reads_table(db_engine, RawReadsTableEntry(**seq_key)):
                 continue
-            status_all = StatusAll.SUBMITTING_ASSEMBLY
+            status_all = StatusAll.SUBMITTING_RAW_READS
         update_db_where_conditions(
             db_engine,
             model_class=SubmissionTableEntry,
@@ -259,27 +164,27 @@ def submission_table_start(db_engine: Engine, config: Config) -> None:
 
 def submission_table_update(db_engine: Engine) -> None:
     """
-    1. Find all entries in submission_table in state SUBMITTING_ASSEMBLY
-    2. If (exists an entry in the assembly_table for (accession, version)):
+    1. Find all entries in submission_table in state SUBMITTING_RAW_READS
+    2. If (exists an entry in the raw_reads_table for (accession, version)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_ALL
     3. Else throw Error
     """
-    conditions = {"status_all": StatusAll.SUBMITTING_ASSEMBLY}
-    submitting_assembly = find_conditions_in_db(
+    conditions = {"status_all": StatusAll.SUBMITTING_RAW_READS}
+    submitting_raw_reads = find_conditions_in_db(
         db_engine, SubmissionTableEntry, conditions=conditions
     )
-    if len(submitting_assembly) > 0:
+    if len(submitting_raw_reads) > 0:
         logger.debug(
-            f"Found {len(submitting_assembly)} entries in submission_table "
-            f"in status SUBMITTING_ASSEMBLY"
+            f"Found {len(submitting_raw_reads)} entries in submission_table "
+            f"in status SUBMITTING_RAW_READS"
         )
-    for row in submitting_assembly:
+    for row in submitting_raw_reads:
         seq_key = asdict(row.pkey)
 
-        corresponding_assembly = find_conditions_in_db(
-            db_engine, AssemblyTableEntry, conditions=seq_key
+        corresponding_raw_reads = find_conditions_in_db(
+            db_engine, RawReadsTableEntry, conditions=seq_key
         )
-        if len(corresponding_assembly) == 1 and corresponding_assembly[0].status == str(
+        if len(corresponding_raw_reads) == 1 and corresponding_raw_reads[0].status == str(
             Status.SUBMITTED
         ):
             update_values = {"status_all": StatusAll.SUBMITTED_ALL}
@@ -289,22 +194,22 @@ def submission_table_update(db_engine: Engine) -> None:
                 conditions=seq_key,
                 update_values=update_values,
             )
-        if len(corresponding_assembly) == 0:
+        if len(corresponding_raw_reads) == 0:
             error_msg = (
-                "Entry in submission_table in status SUBMITTING_ASSEMBLY",
-                " with no corresponding assembly",
+                "Entry in submission_table in status SUBMITTING_RAW_READS",
+                " with no corresponding raw reads entry in raw_reads_table",
             )
             raise RuntimeError(error_msg)
 
 
-def update_assembly_error(
+def update_raw_reads_error(
     db_engine: Engine,
     error: list[str],
     seq_key: dict[str, Any],
     update_type: Literal["revision"] | Literal["creation"],
 ) -> None:
     logger.error(
-        f"Assembly {update_type} failed for accession {seq_key['accession']} "
+        f"Raw reads {update_type} failed for accession {seq_key['accession']} "
         f"version {seq_key['version']}. Propagating to db. Error: {error}"
     )
     update_with_retry(
@@ -315,56 +220,13 @@ def update_assembly_error(
             "errors": error,
             "started_at": datetime.now(tz=pytz.utc),
         },
-        model_class=AssemblyTableEntry,
+        model_class=RawReadsTableEntry,
     )
-
-
-def manifest_fields_changed(
-    config: Config,
-    db_engine: Engine,
-    submission_row: SubmissionTableEntry,
-    last_version_entry: SubmissionTableEntry,
-) -> bool:
-    differing_fields = {}
-    for mapping in config.manifest_fields_mapping.values():
-        loculus_field_names = mapping.loculus_fields
-        for loculus_field_name in loculus_field_names:
-            last_entry = last_version_entry.seq_metadata.get(loculus_field_name)
-            new_entry = submission_row.seq_metadata.get(loculus_field_name)
-            if loculus_field_name == "authors":
-                try:
-                    last_entry = get_authors(last_entry) if last_entry else last_entry
-                    new_entry = get_authors(new_entry) if new_entry else new_entry
-                except Exception as e:
-                    logger.error(
-                        f"Error formatting authors field for comparison: {e}. "
-                        f"Traceback: {traceback.format_exc()}"
-                    )
-                    differing_fields[loculus_field_name] = (
-                        f"Last: {last_entry}, New: {new_entry}, Error reformatting: {e}"
-                    )
-                    continue
-            if last_entry != new_entry:
-                differing_fields[loculus_field_name] = f"Last: {last_entry}, New: {new_entry}, "
-    if differing_fields:
-        error = (
-            "Assembly cannot be revised because metadata fields in manifest would change from "
-            f"last version: {json.dumps(differing_fields)}"
-        )
-        logger.error(error)
-        update_assembly_error(
-            db_engine,
-            [error],
-            seq_key=asdict(submission_row.pkey),
-            update_type="revision",
-        )
-        return True
-    return False
 
 
 def can_be_revised(config: Config, db_engine: Engine, submission_row: SubmissionTableEntry) -> bool:
     """
-    Check if assembly can be revised
+    Check if raw reads can be revised
     1. Last version exists in submission_table, otherwise throw RuntimeError
     2. If biosampleAccession and bioprojectAccession provided by submitter (e.g. raw reads linked)
        those must be same as in previous version, otherwise cannot be revised
@@ -397,11 +259,11 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
         new_sample_accession = submission_row.seq_metadata["biosampleAccession"]
         if previous_sample_accession != new_sample_accession:
             error = (
-                "Assembly cannot be revised because biosampleAccession in new version: "
+                "Raw reads cannot be revised because biosampleAccession in new version: "
                 f"{new_sample_accession} differs from last version: {previous_sample_accession}"
             )
             logger.error(error)
-            update_assembly_error(
+            update_raw_reads_error(
                 db_engine,
                 [error],
                 seq_key=asdict(submission_row.pkey),
@@ -412,87 +274,70 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
         new_project_accession = submission_row.seq_metadata["bioprojectAccession"]
         if new_project_accession != previous_study_accession:
             error = (
-                "Assembly cannot be revised because bioprojectAccession in new version: "
+                "Raw reads cannot be revised because bioprojectAccession in new version: "
                 f"{new_project_accession} differs from last version: {previous_study_accession}"
             )
             logger.error(error)
-            update_assembly_error(
+            update_raw_reads_error(
                 db_engine,
                 [error],
                 seq_key=asdict(submission_row.pkey),
                 update_type="revision",
             )
             return False
-    if config.allow_revision_with_manifest_changes:
-        logger.debug(
-            "allow_revision_with_manifest_changes=True, skipping manifest field comparison"
+
+    differing_fields = {}
+    for mapping in config.manifest_fields_mapping.values():
+        loculus_field_names = mapping.loculus_fields
+        for loculus_field_name in loculus_field_names:
+            last_entry = last_version_entry.seq_metadata.get(loculus_field_name)
+            new_entry = submission_row.seq_metadata.get(loculus_field_name)
+            if loculus_field_name == "authors":
+                try:
+                    last_entry = get_authors(last_entry) if last_entry else last_entry
+                    new_entry = get_authors(new_entry) if new_entry else new_entry
+                except Exception as e:
+                    logger.error(
+                        f"Error formatting authors field for comparison: {e}. "
+                        f"Traceback: {traceback.format_exc()}"
+                    )
+                    differing_fields[loculus_field_name] = (
+                        f"Last: {last_entry}, New: {new_entry}, Error reformatting: {e}"
+                    )
+                    continue
+            if last_entry != new_entry:
+                differing_fields[loculus_field_name] = f"Last: {last_entry}, New: {new_entry}, "
+    if differing_fields:
+        error = (
+            "Raw reads cannot be revised because metadata fields in manifest would change from "
+            f"last version: {json.dumps(differing_fields)}"
         )
-        return True
-    return not manifest_fields_changed(config, db_engine, submission_row, last_version_entry)
+        logger.error(error)
+        update_raw_reads_error(
+            db_engine,
+            [error],
+            seq_key=asdict(submission_row.pkey),
+            update_type="revision",
+        )
+        return False
+    return True
 
 
-def is_flatfile_data_changed(db_engine: Engine, submission_row: SubmissionTableEntry) -> bool:
-    """
-    Check if change in sequence or flatfile metadata has occurred since last version.
-    """
-    seq_key = submission_row.pkey
+def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: AccessionVersion):
     version_to_revise = previous_version(db_engine, seq_key)
     last_version_rows = find_conditions_in_db(
         db_engine,
-        SubmissionTableEntry,
-        conditions={"accession": seq_key.accession, "version": version_to_revise},
-    )
-    if len(last_version_rows) == 0:
-        error_msg = f"Last version {version_to_revise} not found in submission_table"
-        raise RuntimeError(error_msg)
-
-    last_entry = last_version_rows[0]
-
-    if submission_row.unaligned_nucleotide_sequences != last_entry.unaligned_nucleotide_sequences:
-        logger.debug(
-            f"Unaligned nucleotide sequences have changed for {seq_key.accession}, "
-            f"from {version_to_revise} to {seq_key.version} - should be revised"
-            "(Metadata maybe also changed.)"
-        )
-        return True
-
-    fields = [
-        DEFAULT_EMBL_PROPERTY_FIELDS.country_property,
-        DEFAULT_EMBL_PROPERTY_FIELDS.collection_date_property,
-        DEFAULT_EMBL_PROPERTY_FIELDS.authors_property,
-        *DEFAULT_EMBL_PROPERTY_FIELDS.admin_level_properties,
-    ]
-    for field in fields:
-        last_val = last_entry.seq_metadata.get(field)
-        new_val = submission_row.seq_metadata.get(field)
-        if last_val != new_val:
-            logger.debug(
-                f"Field {field} has changed from {last_val} to {new_val} "
-                f"for {submission_row.accession}. (Maybe other fields changed as well)"
-            )
-            return True
-    logger.debug(
-        f"No changes detected for {submission_row.accession} from version {version_to_revise} "
-        f"to {submission_row.version}"
-    )
-    return False
-
-
-def update_assembly_results_with_latest_version(db_engine: Engine, seq_key: AccessionVersion):
-    version_to_revise = previous_version(db_engine, seq_key)
-    last_version_rows = find_conditions_in_db(
-        db_engine,
-        AssemblyTableEntry,
+        RawReadsTableEntry,
         conditions={
             "accession": seq_key.accession,
             "version": version_to_revise,
         },
     )
     if len(last_version_rows) == 0:
-        error_msg = f"Last version {version_to_revise} not found in assembly_table"
+        error_msg = f"Last version {version_to_revise} not found in raw_reads_table"
         raise RuntimeError(error_msg)
     logger.info(
-        f"Updating assembly results for accession {seq_key.accession} version "
+        f"Updating raw reads results for accession {seq_key.accession} version "
         f"{seq_key.version} using results from version {version_to_revise} as there was no"
         "change in flatfile data."
     )
@@ -503,30 +348,30 @@ def update_assembly_results_with_latest_version(db_engine: Engine, seq_key: Acce
             "status": Status.SUBMITTED,
             "result": last_version_rows[0].result,
         },
-        model_class=AssemblyTableEntry,
+        model_class=RawReadsTableEntry,
         reraise=False,
     )
 
 
-def assembly_table_create(db_engine: Engine, config: Config):
+def raw_reads_table_create(db_engine: Engine, config: Config):
     """
-    1. Find all entries in assembly_table in state READY
+    1. Find all entries in raw_reads_table in state READY
     2. Create temporary files: chromosome_list_file, embl_file, manifest_file
-    3. Update assembly_table to state SUBMITTING (only proceed if update succeeds)
+    3. Update raw_reads_table to state SUBMITTING (only proceed if update succeeds)
     4. If (create_ena_assembly succeeds): update state to SUBMITTED with results
     3. Else update state to HAS_ERRORS with error messages
 
     If config.test=True: use the test ENA webin-cli endpoint for submission.
     """
     conditions = {"status": Status.READY}
-    ready_to_submit_assembly = find_conditions_in_db(
-        db_engine, AssemblyTableEntry, conditions=conditions
+    ready_to_submit_raw_reads = find_conditions_in_db(
+        db_engine, RawReadsTableEntry, conditions=conditions
     )
-    if len(ready_to_submit_assembly) > 0:
+    if len(ready_to_submit_raw_reads) > 0:
         logger.debug(
-            f"Found {len(ready_to_submit_assembly)} entries in assembly_table in status READY"
+            f"Found {len(ready_to_submit_raw_reads)} entries in raw_reads_table in status READY"
         )
-    for row in ready_to_submit_assembly:
+    for row in ready_to_submit_raw_reads:
         seq_key = row.pkey
         submission_rows = find_conditions_in_db(
             db_engine, SubmissionTableEntry, conditions=asdict(seq_key)
@@ -545,9 +390,6 @@ def assembly_table_create(db_engine: Engine, config: Config):
             logger.debug(f"Entry {row.accession} is a revision, checking if it can be revised")
             if not can_be_revised(config, db_engine, submission_row):
                 continue
-            if not is_flatfile_data_changed(db_engine, submission_row):
-                update_assembly_results_with_latest_version(db_engine, seq_key)
-                continue
 
         try:
             manifest_object = create_manifest_object(
@@ -564,45 +406,43 @@ def assembly_table_create(db_engine: Engine, config: Config):
         update_values: dict[str, Any] = {"status": Status.SUBMITTING}
         number_rows_updated = update_db_where_conditions(
             db_engine,
-            model_class=AssemblyTableEntry,
+            model_class=RawReadsTableEntry,
             conditions=asdict(seq_key),
             update_values=update_values,
         )
         if number_rows_updated != 1:
             # state not correctly updated - do not start submission
             logger.warning(
-                "assembly_table: Status update from READY to SUBMITTING failed - "
+                "raw_reads_table: Status update from READY to SUBMITTING failed - "
                 "not starting submission."
             )
             continue
-        logger.info(f"Starting assembly creation for accession {row.accession}")
-        segment_order = get_segment_order(submission_row.unaligned_nucleotide_sequences)
+        logger.info(f"Starting raw reads creation for accession {row.accession}")
 
         # Actual webin-cli command is run here
-        assembly_creation_results: CreationResult = create_ena_assembly(
+        raw_reads_creation_results: CreationResult = create_ena_assembly(
             config=config,
             manifest_filename=manifest_file,
             center_name=center_name,
         )
-        if assembly_creation_results.result:
-            assembly_creation_results.result["segment_order"] = segment_order
+        if raw_reads_creation_results.result:
             update_values = {
                 "status": Status.WAITING,
-                "result": assembly_creation_results.result,
+                "result": raw_reads_creation_results.result,
             }
             logger.info(
-                f"Assembly creation succeeded for {seq_key.accession} version {seq_key.version}"
+                f"Raw reads creation succeeded for {seq_key.accession} version {seq_key.version}"
             )
             update_with_retry(
                 db_engine=db_engine,
                 conditions=asdict(seq_key),
                 update_values=update_values,
-                model_class=AssemblyTableEntry,
+                model_class=RawReadsTableEntry,
             )
         else:
-            update_assembly_error(
+            update_raw_reads_error(
                 db_engine,
-                assembly_creation_results.errors,
+                raw_reads_creation_results.errors,
                 seq_key=asdict(row.pkey),
                 update_type="creation",
             )
@@ -611,18 +451,18 @@ def assembly_table_create(db_engine: Engine, config: Config):
 _last_ena_check: datetime | None = None
 
 
-def assembly_table_update(db_engine: Engine, config: Config, time_threshold: int = 5):
+def raw_reads_table_update(db_engine: Engine, config: Config, time_threshold: int = 5):
     """
     - time_threshold (minutes)
-    1. Find all entries in assembly_table in state WAITING
+    1. Find all entries in raw_reads_table in state WAITING
     2. If over time_threshold since last check, check if accession exists in ENA
     3. If (exists): update state to SUBMITTED with results
     """
     global _last_ena_check  # noqa: PLW0603
     conditions = {"status": Status.WAITING}
-    waiting = find_conditions_in_db(db_engine, AssemblyTableEntry, conditions=conditions)
+    waiting = find_conditions_in_db(db_engine, RawReadsTableEntry, conditions=conditions)
     if len(waiting) > 0:
-        logger.debug(f"Found {len(waiting)} entries in assembly_table in status WAITING")
+        logger.debug(f"Found {len(waiting)} entries in raw_reads_table in status WAITING")
     # Check if ENA has assigned an accession, don't do this too frequently
     now = datetime.now(tz=pytz.utc)
     if not _last_ena_check or now - timedelta(minutes=time_threshold) > _last_ena_check:
@@ -663,13 +503,13 @@ def assembly_table_update(db_engine: Engine, config: Config, time_threshold: int
                     continue
                 status = Status.WAITING
                 logger.info(
-                    f"Assembly partially accessioned by ENA for {seq_key.accession} "
+                    f"Raw reads partially accessioned by ENA for {seq_key.accession} "
                     f"version {seq_key.version}"
                 )
             else:
                 status = Status.SUBMITTED
                 logger.info(
-                    f"Assembly accessioned by ENA for {seq_key.accession} version {seq_key.version}"
+                    f"Raw reads accessioned by ENA for {seq_key.accession} version {seq_key.version}"
                 )
             update_with_retry(
                 db_engine=db_engine,
@@ -679,19 +519,19 @@ def assembly_table_update(db_engine: Engine, config: Config, time_threshold: int
                     "result": new_result.result,
                     "finished_at": datetime.now(tz=pytz.utc),
                 },
-                model_class=AssemblyTableEntry,
+                model_class=RawReadsTableEntry,
                 reraise=False,
             )
 
 
-def assembly_table_handle_errors(
+def raw_reads_table_handle_errors(
     db_engine: Engine,
     config: Config,
     slack_config: SlackConfig,
     last_retry_time: datetime | None,
 ) -> datetime | None:
     """
-    1. Find all entries in assembly_table in state HAS_ERRORS or SUBMITTING
+    1. Find all entries in raw_reads_table in state HAS_ERRORS or SUBMITTING
         over submitting_time_threshold_min
     2. If time since last slack notification is over slack_retry_threshold_min send notification
     3. Trigger retry if time since last retry is over retry_threshold_min
@@ -699,7 +539,7 @@ def assembly_table_handle_errors(
     entries_waiting = find_waiting_in_db(db_engine, time_threshold=config.waiting_threshold_hours)
     entries_with_errors = find_errors_or_stuck_in_db(
         db_engine,
-        AssemblyTableEntry,
+        RawReadsTableEntry,
         time_threshold=config.submitting_time_threshold_min,
     )
 
@@ -709,7 +549,7 @@ def assembly_table_handle_errors(
         top3_accessions = [entry.accession for entry in entries_waiting[:3]]
         msg = (
             f"{config.backend_url}: ENA Submission pipeline found "
-            f"{len(entries_waiting)} entries in assembly_table in "
+            f"{len(entries_waiting)} entries in raw_reads_table in "
             f"status WAITING for over {config.waiting_threshold_hours}h. "
             f"First accessions: {top3_accessions}"
         )
@@ -718,7 +558,7 @@ def assembly_table_handle_errors(
     if entries_with_errors:
         msg = (
             f"{config.backend_url}: ENA Submission pipeline found "
-            f"{len(entries_with_errors)} entries in assembly_table in status"
+            f"{len(entries_with_errors)} entries in raw_reads_table in status"
             f" HAS_ERRORS or SUBMITTING for over {config.submitting_time_threshold_min}m"
         )
         messages.append(msg)
@@ -726,12 +566,12 @@ def assembly_table_handle_errors(
         last_retry_time = retry_failed_submissions_for_matching_errors(
             entries_with_errors,
             db_engine,
-            model_class=AssemblyTableEntry,
+            model_class=RawReadsTableEntry,
             config=config,
             last_retry=last_retry_time,
         )
-        # TODO: Query ENA to check if assembly has in fact been created
-        # If created update assembly_table
+        # TODO: Query ENA to check if raw reads have in fact been created
+        # If created update raw_reads_table
         # If not retry 3 times, then raise for manual intervention
 
     if messages:
@@ -747,7 +587,7 @@ def assembly_table_handle_errors(
     return last_retry_time
 
 
-def create_assembly(config: Config, stop_event: threading.Event):
+def create_raw_reads(config: Config, stop_event: threading.Event):
     db_engine = db_init(config.db_password, config.db_username, config.db_url)
     slack_config = slack_conn_init(
         slack_hook_default=config.slack_hook,
@@ -758,17 +598,15 @@ def create_assembly(config: Config, stop_event: threading.Event):
 
     while True:
         if stop_event.is_set():
-            logger.warning("create_assembly stopped due to exception in another task")
+            logger.warning("create_raw_reads stopped due to exception in another task")
             return
-        logger.debug("Checking for assemblies to create")
-        submission_table_start(db_engine, config)
+        logger.debug("Checking for raw reads to create")
+        submission_table_start(db_engine)
         submission_table_update(db_engine)
 
-        assembly_table_create(db_engine, config)
-        assembly_table_update(db_engine, config, time_threshold=config.min_between_ena_checks)
-        last_retry_time = assembly_table_handle_errors(
+        raw_reads_table_create(db_engine, config)
+        raw_reads_table_update(db_engine, config, time_threshold=config.min_between_ena_checks)
+        last_retry_time = raw_reads_table_handle_errors(
             db_engine, config, slack_config, last_retry_time
         )
-        if stop_event.wait(timeout=config.time_between_iterations):
-            logger.info("create_assembly stopped due to exception in another task")
-            return
+        time.sleep(config.time_between_iterations)

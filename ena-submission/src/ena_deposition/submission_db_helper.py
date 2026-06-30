@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import StrEnum
-from typing import Any, Final
+from typing import Any, Final, cast
 
 import pytz
 from sqlalchemy import Engine, Enum, create_engine, delete, func, make_url, or_, select, update
@@ -62,6 +62,7 @@ class StatusAll(StrEnum):
     READY_TO_SUBMIT = "READY_TO_SUBMIT"
     SUBMITTED_PROJECT = "SUBMITTED_PROJECT"
     SUBMITTED_SAMPLE = "SUBMITTED_SAMPLE"
+    SUBMITTING_RAW_READS = "SUBMITTING_RAW_READS"
     SUBMITTING_ASSEMBLY = "SUBMITTING_ASSEMBLY"
     SUBMITTED_ALL = "SUBMITTED_ALL"
     SENT_TO_LOCULUS = "SENT_TO_LOCULUS"
@@ -138,6 +139,7 @@ class SubmissionTableEntry(Base):
     version: Mapped[int] = mapped_column(primary_key=True)
     organism: Mapped[str] = mapped_column()
     group_id: Mapped[int] = mapped_column()
+    submit_raw_reads: Mapped[bool] = mapped_column(default=False)
 
     # Optional fields with defaults.
     # 'seq_metadata' maps to the DB column "metadata".
@@ -219,6 +221,33 @@ class SampleTableEntry(Base):
         return AccessionVersion(accession=self.accession, version=self.version)
 
 
+class RawReadsTableEntry(Base):
+    """Maps to raw_reads_table. Primary key: (accession, version)."""
+
+    __tablename__ = "raw_reads_table"
+    __table_args__: typing.ClassVar[dict[str, Any]] = {"schema": "ena_deposition_schema"}
+
+    accession: Mapped[str] = mapped_column(primary_key=True)
+    version: Mapped[int] = mapped_column(primary_key=True)
+    errors: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
+    warnings: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
+    status: Mapped[Status] = mapped_column(
+        Enum(Status, native_enum=False),
+        default=Status.READY,
+    )
+    started_at: Mapped[datetime | None] = mapped_column(default=None)
+    finished_at: Mapped[datetime | None] = mapped_column(default=None)
+    result: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(JSONB, default=None)
+    ena_run_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
+    ncbi_run_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
+    ena_experiment_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
+    ncbi_experiment_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
+
+    @property
+    def pkey(self) -> AccessionVersion:
+        return AccessionVersion(accession=self.accession, version=self.version)
+
+
 class AssemblyTableEntry(Base):
     """Maps to assembly_table. Primary key: (accession, version)."""
 
@@ -246,7 +275,13 @@ class AssemblyTableEntry(Base):
         return AccessionVersion(accession=self.accession, version=self.version)
 
 
-type TableEntry = SubmissionTableEntry | ProjectTableEntry | SampleTableEntry | AssemblyTableEntry
+type TableEntry = (
+    SubmissionTableEntry
+    | ProjectTableEntry
+    | SampleTableEntry
+    | AssemblyTableEntry
+    | RawReadsTableEntry
+)
 
 
 def highest_version_in_submission_table(engine: Engine) -> dict[Accession, Version]:
@@ -501,6 +536,19 @@ def add_to_assembly_table(engine: Engine, entry: AssemblyTableEntry) -> bool:
         return False
 
 
+def add_to_raw_reads_table(engine: Engine, entry: RawReadsTableEntry) -> bool:
+    """Insert *entry* into raw_reads_table. Returns True on success."""
+    entry.started_at = datetime.now(tz=pytz.utc)
+    try:
+        with Session(engine, expire_on_commit=False) as session:
+            session.add(entry)
+            session.commit()
+        return True
+    except Exception as e:
+        logger.warning(f"add_to_raw_reads_table errored with: {e}")
+        return False
+
+
 def in_submission_table(engine: Engine, conditions: dict[str, Any]) -> bool:
     """Return True if any row in submission_table matches *conditions*."""
     with Session(engine) as session:
@@ -562,3 +610,36 @@ def previous_version(engine: Engine, seq_key: AccessionVersion) -> int | None:
     )
     all_versions = sorted(row.version for row in rows)
     return all_versions[-2]
+
+
+def get_project_and_sample_results(
+    db_engine: Engine, submission_row: SubmissionTableEntry
+) -> tuple[str, str]:
+    seq_key = {"accession": submission_row.accession, "version": submission_row.version}
+
+    sample_rows = find_conditions_in_db(db_engine, SampleTableEntry, conditions=seq_key)
+    if len(sample_rows) == 0:
+        error_msg = f"Entry {submission_row.accession} not found in sample_table"
+        raise RuntimeError(error_msg)
+
+    project_rows = find_conditions_in_db(
+        db_engine,
+        ProjectTableEntry,
+        conditions={"project_id": submission_row.project_id},
+    )
+    if len(project_rows) == 0:
+        error_msg = f"Entry {submission_row.accession} not found in project_table"
+        raise RuntimeError(error_msg)
+    sample_accession = (
+        sample_rows[0].result.get("ena_sample_accession") if sample_rows[0].result else None
+    )
+    study_accession = (
+        project_rows[0].result.get("bioproject_accession") if project_rows[0].result else None
+    )
+    if not sample_accession or not study_accession:
+        error_msg = (
+            f"Missing sample_accession or study_accession for accession {submission_row.accession} "
+            "cannot create manifest"
+        )
+        raise RuntimeError(error_msg)
+    return cast(str, sample_accession), cast(str, study_accession)
