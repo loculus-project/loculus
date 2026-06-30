@@ -9,6 +9,7 @@ from loculus_preprocessing.config import get_config
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
     AnnotationSourceType,
+    FunctionArgs,
     UnprocessedData,
     UnprocessedEntry,
 )
@@ -204,7 +205,7 @@ def test_call_function_converts_raw_errors_to_annotations(mock_session: MagicMoc
 
     input_fields = ["host"]
     output_field = "hostTaxonId"
-    args = {"taxonomy_service_url": "http://localhost:5000", "is_insdc_ingest_group": False}
+    args: FunctionArgs = {"taxonomy_service_url": "http://localhost:5000", "is_insdc_ingest_group": False}
 
     result = ProcessingFunctions.call_function(
         "resolve_host_taxon_id",
