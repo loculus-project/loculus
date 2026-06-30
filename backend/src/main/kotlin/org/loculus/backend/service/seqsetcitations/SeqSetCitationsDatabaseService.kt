@@ -638,6 +638,17 @@ class SeqSetCitationsDatabaseService(
             throw UnprocessableEntityException("At least one cited SeqSet must be provided")
         }
 
+        val existingOrigin = SeqSetCitationSourceTable
+            .select(SeqSetCitationSourceTable.origin)
+            .where { SeqSetCitationSourceTable.sourceDOI eq request.source.sourceDOI }
+            .singleOrNull()
+            ?.get(SeqSetCitationSourceTable.origin)
+        if (existingOrigin == CitationOrigin.CROSSREF) {
+            throw UnprocessableEntityException(
+                "Citation source ${request.source.sourceDOI} was discovered via CrossRef and cannot be modified manually",
+            )
+        }
+
         val accessionVersions = request.seqSetAccessionVersions.map { AccessionVersion.fromString(it) }
 
         val existingSeqSets = SeqSetsTable
@@ -671,16 +682,24 @@ class SeqSetCitationsDatabaseService(
             this[SeqSetToCitationSourceTable.seqSetVersion] = accessionVersion.version
         }
 
+        val linkedSeqSets = SeqSetToCitationSourceTable
+            .innerJoin(SeqSetsTable)
+            .selectAll()
+            .where { SeqSetToCitationSourceTable.citationSourceId eq citationSourceId }
+            .map {
+                CitedSeqSet(
+                    seqSetAccessionVersion = AccessionVersion(
+                        it[SeqSetsTable.seqSetId],
+                        it[SeqSetsTable.seqSetVersion],
+                    ).displayAccessionVersion(),
+                    name = it[SeqSetsTable.name],
+                    seqSetDOI = it[SeqSetsTable.seqSetDOI],
+                )
+            }
+
         return AdminSeqSetCitation(
             source = request.source,
-            seqSets = accessionVersions.map { accessionVersion ->
-                val seqSetRow = existingSeqSets.getValue(accessionVersion)
-                CitedSeqSet(
-                    seqSetAccessionVersion = accessionVersion.displayAccessionVersion(),
-                    name = seqSetRow[SeqSetsTable.name],
-                    seqSetDOI = seqSetRow[SeqSetsTable.seqSetDOI],
-                )
-            },
+            seqSets = linkedSeqSets,
             origin = CitationOrigin.CURATED,
         )
     }

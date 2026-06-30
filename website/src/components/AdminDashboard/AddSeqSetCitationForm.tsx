@@ -1,6 +1,7 @@
 import { type FC, type FormEvent, useState } from 'react';
 import { toast } from 'react-toastify';
 
+import useClientFlag from '../../hooks/isClient';
 import { BackendClient } from '../../services/backendClient';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import type { AdminSeqSetCitation } from '../../types/seqSetCitation';
@@ -56,6 +57,7 @@ const extractYear = (work: CrossRefWork): number | undefined => {
 };
 
 export const AddSeqSetCitationForm: FC<Props> = ({ clientConfig, accessToken, onCitationAdded }) => {
+    const isClient = useClientFlag();
     const [sourceDOI, setSourceDOI] = useState('');
     const [title, setTitle] = useState('');
     const [year, setYear] = useState('');
@@ -128,7 +130,7 @@ export const AddSeqSetCitationForm: FC<Props> = ({ clientConfig, accessToken, on
             setValidationMessage('Source DOI and title are required.');
             return;
         }
-        if (!Number.isInteger(parsedYear)) {
+        if (year.trim() === '' || !Number.isInteger(parsedYear)) {
             setValidationMessage('Year must be a whole number.');
             return;
         }
@@ -182,6 +184,7 @@ export const AddSeqSetCitationForm: FC<Props> = ({ clientConfig, accessToken, on
                         className={inputStyles}
                         value={sourceDOI}
                         onChange={(e) => setSourceDOI(e.target.value)}
+                        disabled={!isClient}
                     />
                     <Button
                         type='button'
@@ -207,6 +210,7 @@ export const AddSeqSetCitationForm: FC<Props> = ({ clientConfig, accessToken, on
                     className={inputStyles}
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
+                    disabled={!isClient}
                 />
             </div>
             <div className='mb-4'>
@@ -219,6 +223,7 @@ export const AddSeqSetCitationForm: FC<Props> = ({ clientConfig, accessToken, on
                     className={inputStyles}
                     value={year}
                     onChange={(e) => setYear(e.target.value)}
+                    disabled={!isClient}
                 />
             </div>
             <div className='mb-4'>
@@ -231,6 +236,7 @@ export const AddSeqSetCitationForm: FC<Props> = ({ clientConfig, accessToken, on
                     rows={3}
                     value={contributorsInput}
                     onChange={(e) => setContributorsInput(e.target.value)}
+                    disabled={!isClient}
                 />
             </div>
             <div className='mb-4'>
@@ -243,6 +249,7 @@ export const AddSeqSetCitationForm: FC<Props> = ({ clientConfig, accessToken, on
                     rows={2}
                     value={seqSetAccessionsInput}
                     onChange={(e) => setSeqSetAccessionsInput(e.target.value)}
+                    disabled={!isClient}
                 />
             </div>
             {validationMessage !== '' && <p className='mb-4 text-red-500 text-sm italic'>{validationMessage}</p>}

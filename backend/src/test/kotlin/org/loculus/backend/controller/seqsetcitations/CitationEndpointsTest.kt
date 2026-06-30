@@ -338,7 +338,7 @@ class CitationEndpointsTest(
     }
 
     @Test
-    fun `WHEN re-adding the same citation source DOI with an additional seqSet THEN both seqSets are linked`() {
+    fun `WHEN re-adding the same citation source DOI with only a new seqSet THEN both seqSets are still linked`() {
         val firstSeqSetResult = client.createSeqSet().andExpect(status().isOk).andReturn()
         val firstSeqSetId = JsonPath.read<String>(firstSeqSetResult.response.contentAsString, "$.seqSetId")
         val firstSeqSetVersion =
@@ -352,12 +352,11 @@ class CitationEndpointsTest(
         client.addSeqSetCitation(seqSetAccessionVersions = listOf("$firstSeqSetId.$firstSeqSetVersion"))
             .andExpect(status().isOk)
 
+        // The second request only lists the new seqSet, not the one already linked from the first request.
+        // The response (and subsequent reads) should still report both, since the existing link isn't dropped.
         client.addSeqSetCitation(
             title = "Updated title",
-            seqSetAccessionVersions = listOf(
-                "$firstSeqSetId.$firstSeqSetVersion",
-                "$secondSeqSetId.$secondSeqSetVersion",
-            ),
+            seqSetAccessionVersions = listOf("$secondSeqSetId.$secondSeqSetVersion"),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("\$.source.title").value("Updated title"))
@@ -368,6 +367,41 @@ class CitationEndpointsTest(
             .andExpect(jsonPath("\$.length()").value(1))
             .andExpect(jsonPath("\$[0].source.title").value("Updated title"))
             .andExpect(jsonPath("\$[0].seqSets.length()").value(2))
+    }
+
+    @Test
+    fun `WHEN adding a citation for a DOI already discovered via CrossRef THEN returns unprocessable entity`() {
+        val seqSetResult = client.createSeqSet().andExpect(status().isOk).andReturn()
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
+        val seqSetVersion = JsonPath.read<Int>(seqSetResult.response.contentAsString, "$.seqSetVersion").toLong()
+        client.createSeqSetDOI(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
+            .andExpect(status().isOk)
+
+        val seqSetDOI = "${MOCK_DOI_PREFIX}/$seqSetId.$seqSetVersion"
+        val seqSetCitationSource = SeqSetCitationSource(
+            CitationSource(
+                sourceDOI = "10.5678/crossref-paper",
+                title = "A crossref-discovered paper",
+                year = 2024,
+                contributors = listOf(CitationContributor(givenName = "Jane", surname = "Doe")),
+            ),
+            seqSetDOIs = setOf(seqSetDOI),
+        )
+        every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns
+            CrossRefCitedByResult(listOf(seqSetCitationSource), emptyList())
+        seqSetCrossRefCitationsTask.task()
+
+        client.addSeqSetCitation(
+            sourceDOI = "10.5678/crossref-paper",
+            seqSetAccessionVersions = listOf("$seqSetId.$seqSetVersion"),
+        )
+            .andExpect(status().isUnprocessableEntity)
+
+        // The citation must still be reported as CrossRef-origin, untouched by the rejected request.
+        client.getAllSeqSetCitations()
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.length()").value(1))
+            .andExpect(jsonPath("\$[0].origin").value("CROSSREF"))
     }
 
     @Test
