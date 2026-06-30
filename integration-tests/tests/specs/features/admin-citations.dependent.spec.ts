@@ -28,6 +28,7 @@ test.describe('Admin SeqSet citations', () => {
             name: seqSetName,
             focalAccessions: [focalAccession],
         });
+        await page.waitForURL(/\/seqsets\/.+\.\d+$/);
         await seqSetPage.expectAccessionMatchesUrl();
         const seqSetAccessionVersion = page.url().split('/seqsets/')[1];
 
