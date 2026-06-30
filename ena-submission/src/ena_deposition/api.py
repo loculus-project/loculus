@@ -5,7 +5,7 @@ from typing import cast
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import Engine, select
+from sqlalchemy import Engine, select, text
 from sqlalchemy.orm import Session
 
 from .config import Config
@@ -56,6 +56,11 @@ def init_app(config: Config):
 @app.get("/")
 def read_root():
     return {"message": "ENA Deposition Pod API is running"}
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 
 @app.get("/submitted", response_model=SubmittedAccessionsResponse)
