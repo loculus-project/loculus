@@ -1,5 +1,5 @@
 export type ButtonSize = 'md' | 'sm' | 'xs';
-export type ButtonVariant = 'neutral' | 'primary' | 'ghost' | 'outline' | 'unstyled';
+export type ButtonVariant = 'neutral' | 'primary' | 'ghost' | 'outline' | 'outline-neutral' | 'unstyled';
 
 interface ButtonClassOptions {
     size?: ButtonSize;
@@ -33,11 +33,13 @@ const circleSizeClasses: Record<ButtonSize, string> = {
 };
 
 const variantClasses: Record<ButtonVariant, string> = {
-    neutral: 'bg-base-200 text-base-content border-base-300 hover:bg-base-300 no-underline!',
-    primary: 'bg-[var(--color-main)] text-white border-transparent hover:bg-primary-700 no-underline!',
-    ghost: 'bg-transparent border-transparent hover:bg-base-200 no-underline!',
-    outline: 'bg-white border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white no-underline!',
-    unstyled: '',
+    'neutral': 'bg-base-200 text-base-content border-base-300 hover:bg-base-300 no-underline!',
+    'primary': 'bg-[var(--color-main)] text-white border-transparent hover:bg-primary-700 no-underline!',
+    'ghost': 'bg-transparent border-transparent hover:bg-base-200 no-underline!',
+    'outline': 'bg-white border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white no-underline!',
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    'outline-neutral': 'bg-white border-base-300 text-base-content hover:bg-base-200 no-underline!',
+    'unstyled': '',
 };
 
 export function buttonClasses({

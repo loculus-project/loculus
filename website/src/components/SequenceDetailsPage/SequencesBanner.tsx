@@ -3,13 +3,15 @@ import type { FC } from 'react';
 import { routes } from '../../routes/routes.ts';
 import { getLatestAccessionVersion, versionStatuses, type SequenceEntryHistory } from '../../types/lapis';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion';
+import { Button } from '../common/Button.tsx';
 
 type SequencesBannerProps = {
     sequenceEntryHistory: SequenceEntryHistory;
     accessionVersion: string;
+    setPreviewedSeqId?: (seqId: string | null) => void;
 };
 
-const SequencesBanner: FC<SequencesBannerProps> = ({ sequenceEntryHistory, accessionVersion }) => {
+const SequencesBanner: FC<SequencesBannerProps> = ({ sequenceEntryHistory, accessionVersion, setPreviewedSeqId }) => {
     const ownHistoryEntry = sequenceEntryHistory.find((entry) => entry.accessionVersion === accessionVersion);
 
     const latestAccessionVersion = getLatestAccessionVersion(sequenceEntryHistory);
@@ -26,12 +28,21 @@ const SequencesBanner: FC<SequencesBannerProps> = ({ sequenceEntryHistory, acces
                     {latestAccessionVersion && (
                         <p>
                             The latest version is:
-                            <a
-                                href={routes.sequenceEntryDetailsPage(latestAccessionVersion)}
-                                className='font-bold underline mx-1'
-                            >
-                                {getAccessionVersionString(latestAccessionVersion)}
-                            </a>
+                            {setPreviewedSeqId ? (
+                                <Button
+                                    onClick={() => setPreviewedSeqId(latestAccessionVersion.accessionVersion)}
+                                    className='font-bold underline mx-1'
+                                >
+                                    {getAccessionVersionString(latestAccessionVersion)}
+                                </Button>
+                            ) : (
+                                <a
+                                    href={routes.sequenceEntryDetailsPage(latestAccessionVersion)}
+                                    className='font-bold underline mx-1'
+                                >
+                                    {getAccessionVersionString(latestAccessionVersion)}
+                                </a>
+                            )}
                         </p>
                     )}
                 </div>

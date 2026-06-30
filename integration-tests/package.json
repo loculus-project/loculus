@@ -10,16 +10,16 @@
     "devDependencies": {
         "@eslint/js": "^9.39.2",
         "@lokalise/xlsx": "^0.20.3",
-        "@playwright/test": "^1.61.0",
-        "@types/node": "^25.9.3",
+        "@playwright/test": "^1.61.1",
+        "@types/node": "^26.0.1",
         "@types/papaparse": "^5.5.2",
-        "@typescript-eslint/eslint-plugin": "^8.61.1",
-        "@typescript-eslint/parser": "^8.61.1",
+        "@typescript-eslint/eslint-plugin": "^8.62.0",
+        "@typescript-eslint/parser": "^8.62.0",
         "eslint": "^10.5.0",
-        "eslint-plugin-unicorn": "^65.0.1",
-        "papaparse": "^5.5.3",
+        "eslint-plugin-unicorn": "^68.0.0",
+        "papaparse": "^5.5.4",
         "prettier": "^3.8.4",
-        "typescript-eslint": "^8.61.1",
-        "uuid": "^14.0.0"
+        "typescript-eslint": "^8.62.0",
+        "uuid": "^14.0.1"
     }
 }

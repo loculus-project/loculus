@@ -45,6 +45,10 @@ object BackendSpringProperty {
     const val CLEAN_UP_AUX_TABLE_RUN_EVERY_HOURS = "loculus.maintenance.clean-up-aux-table.run-every-hours"
 
     const val S3_ENABLED = "loculus.s3.enabled"
+    const val S3_GC_ENABLED = "loculus.s3.gc-enabled"
+    const val S3_GC_INITIAL_DELAY_MINUTES = "loculus.s3.gc-initial-delay-minutes"
+    const val S3_GC_FREQUENCY_MINUTES = "loculus.s3.gc-frequency-minutes"
+    const val S3_GC_ORPHAN_RETENTION_PERIOD_MINUTES = "loculus.s3.gc-orphan-retention-period-minutes"
     const val S3_BUCKET_ENDPOINT = "loculus.s3.bucket.endpoint"
     const val S3_BUCKET_INTERNAL_ENDPOINT = "loculus.s3.bucket.internal-endpoint"
     const val S3_BUCKET_BUCKET = "loculus.s3.bucket.bucket"
