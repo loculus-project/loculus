@@ -1157,6 +1157,7 @@ class TestRevisionWithManifestChangeTests(TestSubmission):
         mock_submit_external_metadata: Mock,
     ) -> None:
         self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
+        self.config.allow_revision_with_manifest_changes = False
         multi_segment_submission(
             self.db_engine, self.config, mock_get_group_info, mock_submit_external_metadata
         )
