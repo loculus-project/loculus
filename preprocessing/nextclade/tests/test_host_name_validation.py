@@ -6,8 +6,14 @@ import pytest
 
 from loculus_preprocessing import processing_functions
 from loculus_preprocessing.config import get_config
-from loculus_preprocessing.datatypes import UnprocessedData, UnprocessedEntry
+from loculus_preprocessing.datatypes import (
+    AnnotationSource,
+    AnnotationSourceType,
+    UnprocessedData,
+    UnprocessedEntry,
+)
 from loculus_preprocessing.prepro import process_all
+from loculus_preprocessing.processing_functions import ProcessingFunctions
 
 HOST_PROCESSING_CONFIG = "tests/host_processing_config.yaml"
 
@@ -188,3 +194,35 @@ def test_host_processing_invalid_host_direct(mock_session: MagicMock) -> None:
     assert result[0].processed_entry.warnings == []
     assert len(result[0].processed_entry.errors) == 1
     assert "Host validation for" in result[0].processed_entry.errors[0].message
+
+
+@patch.object(processing_functions.taxonomy_cache, "session")
+def test_call_function_converts_raw_errors_to_annotations(mock_session: MagicMock) -> None:
+    """call_function must convert RawProcessingResult string errors into ProcessingAnnotations
+    with correct message and field linkage."""
+    mock_session.get.return_value = make_response(404, {"detail": "not found"})
+
+    input_fields = ["host"]
+    output_field = "hostTaxonId"
+    args = {"taxonomy_service_url": "http://localhost:5000", "is_insdc_ingest_group": False}
+
+    result = ProcessingFunctions.call_function(
+        "resolve_host_taxon_id",
+        args=args,
+        input_data={"host": "not a real species"},
+        output_field=output_field,
+        input_fields=input_fields,
+    )
+
+    assert result.datum is None
+    assert result.warnings == []
+    assert len(result.errors) == 1
+
+    annotation = result.errors[0]
+    assert "Host validation for" in annotation.message
+    assert annotation.processedFields == (
+        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA),
+    )
+    assert annotation.unprocessedFields == (
+        AnnotationSource(name="host", type=AnnotationSourceType.METADATA),
+    )
