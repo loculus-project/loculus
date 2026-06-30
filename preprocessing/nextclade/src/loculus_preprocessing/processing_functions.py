@@ -1358,9 +1358,7 @@ class ProcessingFunctions:
         tax_id: str | None = input_data.get("hostTaxonId")
         if not tax_id:
             return RawProcessingResult(
-                datum=input_data.get("hostNameScientific")
-                if args["is_insdc_ingest_group"]
-                else None,
+                datum=None,
             )
 
         url = f"{tax_service}/taxa/{tax_id}"
