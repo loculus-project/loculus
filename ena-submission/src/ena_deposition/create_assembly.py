@@ -346,6 +346,49 @@ def update_assembly_error(
     )
 
 
+def manifest_fields_changed(
+    config: Config,
+    db_engine: Engine,
+    submission_row: SubmissionTableEntry,
+    last_version_entry: SubmissionTableEntry,
+) -> bool:
+    differing_fields = {}
+    for mapping in config.manifest_fields_mapping.values():
+        loculus_field_names = mapping.loculus_fields
+        for loculus_field_name in loculus_field_names:
+            last_entry = last_version_entry.seq_metadata.get(loculus_field_name)
+            new_entry = submission_row.seq_metadata.get(loculus_field_name)
+            if loculus_field_name == "authors":
+                try:
+                    last_entry = get_authors(last_entry) if last_entry else last_entry
+                    new_entry = get_authors(new_entry) if new_entry else new_entry
+                except Exception as e:
+                    logger.error(
+                        f"Error formatting authors field for comparison: {e}. "
+                        f"Traceback: {traceback.format_exc()}"
+                    )
+                    differing_fields[loculus_field_name] = (
+                        f"Last: {last_entry}, New: {new_entry}, Error reformatting: {e}"
+                    )
+                    continue
+            if last_entry != new_entry:
+                differing_fields[loculus_field_name] = f"Last: {last_entry}, New: {new_entry}, "
+    if differing_fields:
+        error = (
+            "Assembly cannot be revised because metadata fields in manifest would change from "
+            f"last version: {json.dumps(differing_fields)}"
+        )
+        logger.error(error)
+        update_assembly_error(
+            db_engine,
+            [error],
+            seq_key=asdict(submission_row.pkey),
+            update_type="revision",
+        )
+        return True
+    return False
+
+
 def can_be_revised(config: Config, db_engine: Engine, submission_row: SubmissionTableEntry) -> bool:
     """
     Check if assembly can be revised
@@ -407,46 +450,12 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
                 update_type="revision",
             )
             return False
-    if config.allow_retry_for_manifest_changes:
+    if config.allow_revision_with_manifest_changes:
         logger.debug(
-            "allow_retry_for_manifest_changes is True, skipping manifest field comparison for revision"
+            "allow_revision_with_manifest_changes is True, skipping manifest field comparison for revision"
         )
         return True
-    differing_fields = {}
-    for mapping in config.manifest_fields_mapping.values():
-        loculus_field_names = mapping.loculus_fields
-        for loculus_field_name in loculus_field_names:
-            last_entry = last_version_entry.seq_metadata.get(loculus_field_name)
-            new_entry = submission_row.seq_metadata.get(loculus_field_name)
-            if loculus_field_name == "authors":
-                try:
-                    last_entry = get_authors(last_entry) if last_entry else last_entry
-                    new_entry = get_authors(new_entry) if new_entry else new_entry
-                except Exception as e:
-                    logger.error(
-                        f"Error formatting authors field for comparison: {e}. "
-                        f"Traceback: {traceback.format_exc()}"
-                    )
-                    differing_fields[loculus_field_name] = (
-                        f"Last: {last_entry}, New: {new_entry}, Error reformatting: {e}"
-                    )
-                    continue
-            if last_entry != new_entry:
-                differing_fields[loculus_field_name] = f"Last: {last_entry}, New: {new_entry}, "
-    if differing_fields:
-        error = (
-            "Assembly cannot be revised because metadata fields in manifest would change from "
-            f"last version: {json.dumps(differing_fields)}"
-        )
-        logger.error(error)
-        update_assembly_error(
-            db_engine,
-            [error],
-            seq_key=asdict(submission_row.pkey),
-            update_type="revision",
-        )
-        return False
-    return True
+    return not manifest_fields_changed(config, db_engine, submission_row, last_version_entry)
 
 
 def is_flatfile_data_changed(db_engine: Engine, submission_row: SubmissionTableEntry) -> bool:
