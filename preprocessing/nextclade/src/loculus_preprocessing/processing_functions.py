@@ -162,9 +162,7 @@ def check_latin_characters(
         if ord(char) < 128:
             continue
         if char.isalpha() and not (0x0000 <= ord(char) <= 0x024F):
-            errors = [
-                f"Unsupported non-Latin character encountered: {char} (U+{ord(char):04X})."
-            ]
+            errors = [f"Unsupported non-Latin character encountered: {char} (U+{ord(char):04X})."]
     return (errors, warnings)
 
 
@@ -214,7 +212,9 @@ def regex_error(
     )
 
 
-def missing_taxonomy_service_error(input_fields: list[str], output_field: str) -> RawProcessingResult:
+def missing_taxonomy_service_error(
+    input_fields: list[str], output_field: str
+) -> RawProcessingResult:
     return processing_error(
         "Configuration error: taxonomy_service_url was None. Please contact the administrator."
     )
@@ -538,14 +538,11 @@ class ProcessingFunctions:
                 )
 
         if datum and datum.message:
-            warnings.append(
-                f"Metadata field {output_field}:'{input_date_str}' - " + datum.message
-            )
+            warnings.append(f"Metadata field {output_field}:'{input_date_str}' - " + datum.message)
 
         if datum is None:
             return processing_error(
-                f"Metadata field {output_field}: "
-                f"Date {input_date_str} could not be parsed."
+                f"Metadata field {output_field}: Date {input_date_str} could not be parsed."
             )
 
         logger.debug(f"parsed_date: {datum}")
@@ -572,9 +569,7 @@ class ProcessingFunctions:
             logger.debug(
                 f"Lower range of date: {datum.date_range_lower} > {datetime.now(tz=pytz.utc)}"
             )
-            errors.append(
-                f"Metadata field {output_field}:'{input_date_str}' is in the future."
-            )
+            errors.append(f"Metadata field {output_field}:'{input_date_str}' is in the future.")
 
         if release_date and datum.date_range_lower and (datum.date_range_lower > release_date):
             logger.debug(
@@ -649,15 +644,11 @@ class ProcessingFunctions:
                 logger.debug(f"parsed_date: {parsed_date}")
 
                 if message:
-                    warnings.append(
-                        f"Metadata field {output_field}:'{date_str}' - " + message
-                    )
+                    warnings.append(f"Metadata field {output_field}:'{date_str}' - " + message)
 
                 if parsed_date > datetime.now(tz=pytz.utc):
                     logger.debug(f"parsed_date: {parsed_date} > {datetime.now(tz=pytz.utc)}")
-                    errors.append(
-                        f"Metadata field {output_field}:'{date_str}' is in the future."
-                    )
+                    errors.append(f"Metadata field {output_field}:'{date_str}' is in the future.")
 
                 if release_date and parsed_date > release_date:
                     logger.debug(f"parsed_date: {parsed_date} > release_date: {release_date}")
@@ -670,9 +661,7 @@ class ProcessingFunctions:
                 continue
 
         # If all parsing attempts fail, it's an unrecognized format
-        return processing_error(
-            f"Metadata field {output_field}: Date format is not recognized."
-        )
+        return processing_error(f"Metadata field {output_field}: Date format is not recognized.")
 
     @staticmethod
     def parse_timestamp(
@@ -908,13 +897,9 @@ class ProcessingFunctions:
         if not regex_field:
             return RawProcessingResult()
         if not isinstance(pattern, str):
-            return processing_error(
-                regex_error("extract_regex", "pattern", input_data, args)
-            )
+            return processing_error(regex_error("extract_regex", "pattern", input_data, args))
         if not isinstance(capture_group, str):
-            return processing_error(
-                regex_error("extract_regex", "capture_group", input_data, args)
-            )
+            return processing_error(regex_error("extract_regex", "capture_group", input_data, args))
         match = re.match(pattern, regex_field.strip())
         if match:
             try:
@@ -930,8 +915,7 @@ class ProcessingFunctions:
                 )
         else:
             errors.append(
-                f"The value '{regex_field}' does not match the expected regex "
-                f"pattern: '{pattern}'."
+                f"The value '{regex_field}' does not match the expected regex pattern: '{pattern}'."
             )
         return RawProcessingResult(errors=errors)
 
@@ -953,15 +937,12 @@ class ProcessingFunctions:
         if not regex_field:
             return RawProcessingResult()
         if not isinstance(pattern, str):
-            return processing_error(
-                regex_error("check_regex", "pattern", input_data, args)
-            )
+            return processing_error(regex_error("check_regex", "pattern", input_data, args))
         regex_field = regex_field.strip()
         if re.match(pattern, regex_field):
             return RawProcessingResult(datum=regex_field)
         return processing_error(
-            f"The value '{regex_field}' does not match the expected regex "
-            f"pattern: '{pattern}'."
+            f"The value '{regex_field}' does not match the expected regex pattern: '{pattern}'."
         )
 
     @staticmethod
@@ -984,9 +965,7 @@ class ProcessingFunctions:
                         output_datum = int(input_datum)
                     except ValueError:
                         output_datum = None
-                        errors.append(
-                            f"Invalid int value: {input_datum} for field {output_field}."
-                        )
+                        errors.append(f"Invalid int value: {input_datum} for field {output_field}.")
                 case "float":
                     try:
                         output_datum = float(input_datum)

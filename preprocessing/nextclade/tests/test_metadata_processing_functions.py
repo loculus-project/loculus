@@ -1107,8 +1107,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeString",
                 "submittedAt": ts_from_ymd(2022, 1, 1),
             },
-        )
-        .errors[0]
+        ).errors[0]
         == "Metadata field field_name: Detected date range but could not parse date: 20-01-2020/2021-06-30."
     ), "Invalid date range format errors."
     assert (
@@ -1120,8 +1119,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeString",
                 "submittedAt": ts_from_ymd(2022, 1, 1),
             },
-        )
-        .errors[0]
+        ).errors[0]
         == "Metadata field field_name:'2022-01-01/2021-06-30' is an invalid date range. Lower bound: 2022-01-01 00:00:00+00:00 is after upper bound: 2021-06-30 00:00:00+00:00."
     ), "Invalid date range format errors."
     assert (
