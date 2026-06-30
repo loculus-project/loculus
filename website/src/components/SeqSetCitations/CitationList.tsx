@@ -26,7 +26,7 @@ const CitationList: FC<CitationListProps> = ({ citations, maxDisplayedCitations,
             >
                 <CitationTable isLoading={false} error={null} citations={citations} />
             </BaseDialog>
-            {citations.length > 0 ? (
+            {citations.length > 0 && (
                 <div className='space-y-2'>
                     <ul className='space-y-4'>
                         {(maxDisplayedCitations !== undefined
@@ -43,10 +43,6 @@ const CitationList: FC<CitationListProps> = ({ citations, maxDisplayedCitations,
                             View all citations ({citations.length})...
                         </Button>
                     )}
-                </div>
-            ) : (
-                <div className='py-8 text-center'>
-                    <span>No citations found.</span>
                 </div>
             )}
         </div>
