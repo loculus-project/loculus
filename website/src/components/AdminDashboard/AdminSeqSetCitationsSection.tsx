@@ -43,11 +43,6 @@ export const AdminSeqSetCitationsSection: FC<Props> = ({ citations, clientConfig
 
     return (
         <>
-            <AddSeqSetCitationForm
-                clientConfig={clientConfig}
-                accessToken={accessToken}
-                onCitationAdded={handleCitationAdded}
-            />
             <div className='overflow-x-auto'>
                 <AdminSeqSetCitationsTable
                     citations={citationList}
@@ -55,6 +50,11 @@ export const AdminSeqSetCitationsSection: FC<Props> = ({ citations, clientConfig
                     onDelete={handleDelete}
                 />
             </div>
+            <AddSeqSetCitationForm
+                clientConfig={clientConfig}
+                accessToken={accessToken}
+                onCitationAdded={handleCitationAdded}
+            />
         </>
     );
 };
