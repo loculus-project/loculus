@@ -838,8 +838,6 @@ class ProcessingFunctions:
             "are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.;' "
             "or 'Xu,;' if the first name is unknown."
         )
-        warnings: list[str] = []
-        errors: list[str] = []
 
         if not authors:
             return RawProcessingResult()
