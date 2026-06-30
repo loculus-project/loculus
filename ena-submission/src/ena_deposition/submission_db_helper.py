@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import StrEnum
-from typing import Any, Final
+from typing import Any, Final, cast
 
 import pytz
 from sqlalchemy import Engine, Enum, create_engine, delete, func, make_url, or_, select, update
@@ -610,3 +610,36 @@ def previous_version(engine: Engine, seq_key: AccessionVersion) -> int | None:
     )
     all_versions = sorted(row.version for row in rows)
     return all_versions[-2]
+
+
+def get_project_and_sample_results(
+    db_engine: Engine, submission_row: SubmissionTableEntry
+) -> tuple[str, str]:
+    seq_key = {"accession": submission_row.accession, "version": submission_row.version}
+
+    sample_rows = find_conditions_in_db(db_engine, SampleTableEntry, conditions=seq_key)
+    if len(sample_rows) == 0:
+        error_msg = f"Entry {submission_row.accession} not found in sample_table"
+        raise RuntimeError(error_msg)
+
+    project_rows = find_conditions_in_db(
+        db_engine,
+        ProjectTableEntry,
+        conditions={"project_id": submission_row.project_id},
+    )
+    if len(project_rows) == 0:
+        error_msg = f"Entry {submission_row.accession} not found in project_table"
+        raise RuntimeError(error_msg)
+    sample_accession = (
+        sample_rows[0].result.get("ena_sample_accession") if sample_rows[0].result else None
+    )
+    study_accession = (
+        project_rows[0].result.get("bioproject_accession") if project_rows[0].result else None
+    )
+    if not sample_accession or not study_accession:
+        error_msg = (
+            f"Missing sample_accession or study_accession for accession {submission_row.accession} "
+            "cannot create manifest"
+        )
+        raise RuntimeError(error_msg)
+    return cast(str, sample_accession), cast(str, study_accession)
