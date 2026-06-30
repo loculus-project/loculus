@@ -4,6 +4,7 @@ const panelClasses = [
     'invisible absolute z-20 opacity-0 transition-opacity duration-150',
     'group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100',
     'flex flex-col gap-px bg-base-100 rounded-lg shadow-sm p-1',
+    'max-h-[75vh] overflow-y-auto',
 ].join(' ');
 
 interface DropdownMenuProps {
