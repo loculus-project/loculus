@@ -62,6 +62,7 @@ class StatusAll(StrEnum):
     READY_TO_SUBMIT = "READY_TO_SUBMIT"
     SUBMITTED_PROJECT = "SUBMITTED_PROJECT"
     SUBMITTED_SAMPLE = "SUBMITTED_SAMPLE"
+    SUBMITTING_RAW_READS = "SUBMITTING_RAW_READS"
     SUBMITTING_ASSEMBLY = "SUBMITTING_ASSEMBLY"
     SUBMITTED_ALL = "SUBMITTED_ALL"
     SENT_TO_LOCULUS = "SENT_TO_LOCULUS"
@@ -138,6 +139,7 @@ class SubmissionTableEntry(Base):
     version: Mapped[int] = mapped_column(primary_key=True)
     organism: Mapped[str] = mapped_column()
     group_id: Mapped[int] = mapped_column()
+    submit_raw_reads: Mapped[bool] = mapped_column(default=False)
 
     # Optional fields with defaults.
     # 'seq_metadata' maps to the DB column "metadata".
@@ -219,6 +221,33 @@ class SampleTableEntry(Base):
         return AccessionVersion(accession=self.accession, version=self.version)
 
 
+class RawReadsTableEntry(Base):
+    """Maps to raw_reads_table. Primary key: (accession, version)."""
+
+    __tablename__ = "raw_reads_table"
+    __table_args__: typing.ClassVar[dict[str, Any]] = {"schema": "ena_deposition_schema"}
+
+    accession: Mapped[str] = mapped_column(primary_key=True)
+    version: Mapped[int] = mapped_column(primary_key=True)
+    errors: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
+    warnings: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
+    status: Mapped[Status] = mapped_column(
+        Enum(Status, native_enum=False),
+        default=Status.READY,
+    )
+    started_at: Mapped[datetime | None] = mapped_column(default=None)
+    finished_at: Mapped[datetime | None] = mapped_column(default=None)
+    result: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(JSONB, default=None)
+    ena_run_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
+    ncbi_run_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
+    ena_experiment_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
+    ncbi_experiment_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
+
+    @property
+    def pkey(self) -> AccessionVersion:
+        return AccessionVersion(accession=self.accession, version=self.version)
+
+
 class AssemblyTableEntry(Base):
     """Maps to assembly_table. Primary key: (accession, version)."""
 
@@ -246,7 +275,13 @@ class AssemblyTableEntry(Base):
         return AccessionVersion(accession=self.accession, version=self.version)
 
 
-type TableEntry = SubmissionTableEntry | ProjectTableEntry | SampleTableEntry | AssemblyTableEntry
+type TableEntry = (
+    SubmissionTableEntry
+    | ProjectTableEntry
+    | SampleTableEntry
+    | AssemblyTableEntry
+    | RawReadsTableEntry
+)
 
 
 def highest_version_in_submission_table(engine: Engine) -> dict[Accession, Version]:
@@ -498,6 +533,19 @@ def add_to_assembly_table(engine: Engine, entry: AssemblyTableEntry) -> bool:
         return True
     except Exception as e:
         logger.warning(f"add_to_assembly_table errored with: {e}")
+        return False
+
+
+def add_to_raw_reads_table(engine: Engine, entry: RawReadsTableEntry) -> bool:
+    """Insert *entry* into raw_reads_table. Returns True on success."""
+    entry.started_at = datetime.now(tz=pytz.utc)
+    try:
+        with Session(engine, expire_on_commit=False) as session:
+            session.add(entry)
+            session.commit()
+        return True
+    except Exception as e:
+        logger.warning(f"add_to_raw_reads_table errored with: {e}")
         return False
 
 

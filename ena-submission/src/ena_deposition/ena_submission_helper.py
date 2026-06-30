@@ -10,7 +10,7 @@ import subprocess  # noqa: S404
 import tempfile
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
-from dataclasses import Field, asdict, dataclass, is_dataclass
+from dataclasses import Field, asdict, dataclass, fields, is_dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, ClassVar, Final, Literal, Protocol
@@ -45,6 +45,7 @@ from .ena_types import (
     Hold,
     MoleculeType,
     ProjectSet,
+    RawReadsManifest,
     SampleSetType,
     Submission,
     XmlAttribute,
@@ -513,54 +514,36 @@ def create_flatfile(
 
 
 def create_manifest(
-    manifest: AssemblyManifest, is_broker: bool = False, dir: str | None = None
+    manifest: AssemblyManifest | RawReadsManifest, is_broker: bool = False, dir: str | None = None
 ) -> str:
     """
     Creates a temp manifest file:
     https://ena-docs.readthedocs.io/en/latest/submit/assembly/genome.html#manifest-files
     """
+    if isinstance(manifest, AssemblyManifest) and not manifest.fasta and not manifest.flatfile:
+        msg = "Either fasta or flatfile must be provided"
+        raise ValueError(msg)
+
     if dir:
         os.makedirs(dir, exist_ok=True)
         filename = os.path.join(dir, "manifest.tsv")
     else:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".tsv") as temp:
             filename = temp.name
-    if not manifest.fasta and not manifest.flatfile:
-        msg = "Either fasta or flatfile must be provided"
-        raise ValueError(msg)
+
     with open(filename, "w", encoding="utf-8") as f:
-        f.write(f"STUDY\t{manifest.study}\n")
-        f.write(f"SAMPLE\t{manifest.sample}\n")
-        f.write(
-            f"ASSEMBLYNAME\t{manifest.assemblyname}\n"
-        )  # This is the alias that needs to be unique
-        f.write(f"ASSEMBLY_TYPE\t{manifest.assembly_type!s}\n")
-        f.write(f"COVERAGE\t{manifest.coverage}\n")
-        f.write(f"PROGRAM\t{manifest.program}\n")
-        f.write(f"PLATFORM\t{manifest.platform}\n")
-        if manifest.flatfile:
-            f.write(f"FLATFILE\t{manifest.flatfile}\n")
-        if manifest.fasta:
-            f.write(f"FASTA\t{manifest.fasta}\n")
-        f.write(f"CHROMOSOME_LIST\t{manifest.chromosome_list}\n")
-        if manifest.description:
-            f.write(f"DESCRIPTION\t{manifest.description}\n")
-        if manifest.moleculetype:
-            f.write(f"MOLECULETYPE\t{manifest.moleculetype!s}\n")
-        if manifest.run_ref:
-            f.write(f"RUN_REF\t{manifest.run_ref}\n")
-        if manifest.authors:
-            if not is_broker:
-                logger.error("Cannot set authors field for non broker")
-                msg = "Cannot set authors field for non broker"
+        for field in fields(manifest):
+            value = getattr(manifest, field.name)
+            if value is None:
+                continue
+            if isinstance(value, list):
+                f.writelines(f"{field.name.upper()}\t{val}\n" for val in value)
+                continue
+            if field.name in ("authors", "address") and not is_broker:
+                msg = f"Cannot set {field.name} field for non broker"
+                logger.error(msg)
                 raise ValueError(msg)
-            f.write(f"AUTHORS\t{manifest.authors}\n")
-        if manifest.address:
-            if not is_broker:
-                logger.error("Cannot set address field for non broker")
-                msg = "Cannot set address field for non broker"
-                raise ValueError(msg)
-            f.write(f"ADDRESS\t{manifest.address}\n")
+            f.write(f"{field.name.upper()}\t{value}\n")
 
     return filename
 

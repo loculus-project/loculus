@@ -35,6 +35,8 @@ def upload_sequences(db_engine: Engine, sequences_to_upload: dict[str, Any]):
             group_id=data["metadata"]["groupId"],
             organism=data["organism"],
             seq_metadata=data["metadata"],
+            # TODO: this is ugly and should come from config, also the data structure is terrible
+            submit_raw_reads=data["metadata"].get("rawreads", False),
             unaligned_nucleotide_sequences=data["unalignedNucleotideSequences"],
         )
         add_to_submission_table(db_engine, entry)

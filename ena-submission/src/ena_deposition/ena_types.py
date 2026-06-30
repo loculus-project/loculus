@@ -197,6 +197,24 @@ class AssemblyManifest:
     authors: str | None = None
 
 
+@dataclass
+class RawReadsManifest:
+    study: str
+    sample: str
+    name: str
+    fastq: list[str]
+    platform: str | None = None
+    instrument: str = "unspecified"
+    insert_size: int | None = None
+    library_name: str | None = None
+    library_source: str = "VIRAL RNA"
+    library_selection: str = "unspecified"
+    library_strategy: str = "OTHER"
+    description: str | None = None
+    address: str | None = None
+    authors: str | None = None
+
+
 class ChromosomeType(StrEnum):
     CHROMOSOME = "chromosome"
     PLASMID = "plasmid"
