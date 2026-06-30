@@ -452,7 +452,7 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
             return False
     if config.allow_revision_with_manifest_changes:
         logger.debug(
-            "allow_revision_with_manifest_changes is True, skipping manifest field comparison for revision"
+            "allow_revision_with_manifest_changes=True, skipping manifest field comparison"
         )
         return True
     return not manifest_fields_changed(config, db_engine, submission_row, last_version_entry)
