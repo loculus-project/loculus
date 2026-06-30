@@ -50,6 +50,21 @@ const linkOuts = [
 ];
 
 describe('LinkOutMenu with enabled data use terms', () => {
+    test('prevents the tools button label from wrapping', () => {
+        render(
+            <LinkOutMenu
+                downloadUrlGenerator={realDownloadUrlGenerator}
+                sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
+                linkOuts={linkOuts}
+                dataUseTermsEnabled={true}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
+            />,
+        );
+
+        expect(screen.getByRole('button', { name: /Tools/ })).toHaveClass('whitespace-nowrap');
+    });
+
     test('opens modal when a tool is clicked', () => {
         render(
             <LinkOutMenu
