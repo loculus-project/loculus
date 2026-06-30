@@ -283,4 +283,6 @@ def upload_external_metadata(config: Config, stop_event: threading.Event):
             config,
             slack_config,
         )
-        time.sleep(config.time_between_iterations)
+        if stop_event.wait(timeout=config.time_between_iterations):
+            logger.info("upload_external_metadata stopped due to exception in another task")
+            return

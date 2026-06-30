@@ -816,4 +816,6 @@ def create_assembly(config: Config, stop_event: threading.Event):
         last_retry_time = assembly_table_handle_errors(
             db_engine, config, slack_config, last_retry_time
         )
-        time.sleep(config.time_between_iterations)
+        if stop_event.wait(timeout=config.time_between_iterations):
+            logger.info("create_assembly stopped due to exception in another task")
+            return

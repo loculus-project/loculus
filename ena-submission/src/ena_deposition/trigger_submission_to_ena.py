@@ -68,7 +68,9 @@ def trigger_submission_to_ena(
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             logger.error(f"Failed to retrieve file due to requests exception: {e}")
-            time.sleep(config.min_between_github_requests * 60)
+            if stop_event.wait(timeout=config.min_between_github_requests * 60):
+                logger.info("trigger_submission_to_ena stopped due to exception in another task")
+                return
             continue
         try:
             sequences_to_upload = response.json()
@@ -76,6 +78,5 @@ def trigger_submission_to_ena(
         except Exception as upload_error:
             logger.error(f"Failed to upload sequences: {upload_error}")
         finally:
-            time.sleep(
-                config.min_between_github_requests * 60
-            )  # Sleep for x min to not overwhelm github
+            if stop_event.wait(timeout=config.min_between_github_requests * 60):
+                logger.info("trigger_submission_to_ena stopped due to exception in another task")
