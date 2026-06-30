@@ -150,9 +150,7 @@ def reformat_authors_from_latin_to_ascii(authors: str) -> str:
     return unicodedata.normalize("NFKD", authors).encode("ascii", "ignore").decode("ascii")
 
 
-def check_latin_characters(
-    authors: str, input_fields: list[str], output_field: str
-) -> tuple[list[str], list[str]]:
+def check_latin_characters(authors: str) -> tuple[list[str], list[str]]:
     warnings: list[str] = []
     errors: list[str] = []
     # Check if all characters in the authors string are Latin letters or spaces
@@ -212,9 +210,7 @@ def regex_error(
     )
 
 
-def missing_taxonomy_service_error(
-    input_fields: list[str], output_field: str
-) -> RawProcessingResult:
+def missing_taxonomy_service_error() -> RawProcessingResult:
     return processing_error(
         "Configuration error: taxonomy_service_url was None. Please contact the administrator."
     )
@@ -224,8 +220,6 @@ def taxonomy_network_error(
     subject: str,
     action: str,
     e: Exception,
-    input_fields: list[str],
-    output_field: str,
 ) -> RawProcessingResult:
     return processing_error(
         f"Internal error: network error while {action} '{subject}': {e}. Please contact the administrator."
@@ -841,7 +835,7 @@ class ProcessingFunctions:
 
         if not authors:
             return RawProcessingResult()
-        errors, warnings = check_latin_characters(authors, input_fields, output_field)
+        errors, warnings = check_latin_characters(authors)
         if errors or warnings:
             return RawProcessingResult(warnings=warnings, errors=errors)
 
@@ -1297,7 +1291,7 @@ class ProcessingFunctions:
         """
         tax_service = args.get("taxonomy_service_url")
         if not tax_service:
-            return missing_taxonomy_service_error(input_fields, output_field)
+            return missing_taxonomy_service_error()
 
         unvalidated_host = input_data.get("host")
         if not unvalidated_host:
@@ -1313,9 +1307,7 @@ class ProcessingFunctions:
             response = taxonomy_cache.get_or_fetch(url)
             body = response.json()
         except requests.exceptions.RequestException as e:
-            return taxonomy_network_error(
-                unvalidated_host, "validating", e, input_fields, output_field
-            )
+            return taxonomy_network_error(unvalidated_host, "validating", e)
 
         if response.status_code != requests.codes.ok:
             # an invalid host organism is a warning for INSDC ingested sequences, but an error for everyone else
@@ -1351,7 +1343,7 @@ class ProcessingFunctions:
     ) -> RawProcessingResult:
         tax_service = args.get("taxonomy_service_url")
         if not tax_service:
-            return missing_taxonomy_service_error(input_fields, output_field)
+            return missing_taxonomy_service_error()
 
         tax_id: str | None = input_data.get("hostTaxonId")
         if not tax_id:
@@ -1364,7 +1356,7 @@ class ProcessingFunctions:
             response = taxonomy_cache.get_or_fetch(url)
             body = response.json()
         except requests.exceptions.RequestException as e:
-            return taxonomy_network_error(tax_id, "validating", e, input_fields, output_field)
+            return taxonomy_network_error(tax_id, "validating", e)
 
         if response.status_code != requests.codes.ok:
             message = f"Could not map '{tax_id}' to scientific name. Code {response.status_code}: {body.get('detail', '')}"
@@ -1392,7 +1384,7 @@ class ProcessingFunctions:
     ) -> RawProcessingResult:
         tax_service = args.get("taxonomy_service_url")
         if not tax_service:
-            return missing_taxonomy_service_error(input_fields, output_field)
+            return missing_taxonomy_service_error()
 
         tax_id: str | None = input_data.get("hostTaxonId")
         if not tax_id:
@@ -1403,9 +1395,7 @@ class ProcessingFunctions:
             response = taxonomy_cache.get_or_fetch(url)
             body = response.json()
         except requests.exceptions.RequestException as e:
-            return taxonomy_network_error(
-                tax_id, "getting common name for", e, input_fields, output_field
-            )
+            return taxonomy_network_error(tax_id, "getting common name for", e)
 
         if response.status_code != requests.codes.ok:
             return RawProcessingResult(
