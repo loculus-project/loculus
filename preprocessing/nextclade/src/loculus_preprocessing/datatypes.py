@@ -195,11 +195,6 @@ def processing_error(message: str) -> "RawProcessingResult":
     return RawProcessingResult(datum=None, errors=[message])
 
 
-def processing_warning(message: str, datum: ProcessedMetadataValue = None) -> "RawProcessingResult":
-    """Helper to create a RawProcessingResult with a single warning."""
-    return RawProcessingResult(datum=datum, warnings=[message])
-
-
 @unique
 class SegmentClassificationMethod(StrEnum):
     """
