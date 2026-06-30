@@ -32,6 +32,29 @@ const parseContributor = (line: string) => {
     return { givenName, surname };
 };
 
+// CrossRef's REST API response uses kebab-case field names that we can't rename.
+/* eslint-disable @typescript-eslint/naming-convention */
+type CrossRefWork = {
+    'title'?: string[];
+    'author'?: { given?: string; family?: string }[];
+    'issued'?: { 'date-parts'?: number[][] };
+    'published'?: { 'date-parts'?: number[][] };
+    'published-print'?: { 'date-parts'?: number[][] };
+    'published-online'?: { 'date-parts'?: number[][] };
+};
+/* eslint-enable @typescript-eslint/naming-convention */
+
+const extractYear = (work: CrossRefWork): number | undefined => {
+    const candidates = [work.issued, work.published, work['published-print'], work['published-online']];
+    for (const candidate of candidates) {
+        const year = candidate?.['date-parts']?.[0]?.[0];
+        if (typeof year === 'number') {
+            return year;
+        }
+    }
+    return undefined;
+};
+
 export const AddSeqSetCitationForm: FC<Props> = ({ clientConfig, accessToken, onCitationAdded }) => {
     const [sourceDOI, setSourceDOI] = useState('');
     const [title, setTitle] = useState('');
@@ -39,6 +62,7 @@ export const AddSeqSetCitationForm: FC<Props> = ({ clientConfig, accessToken, on
     const [contributorsInput, setContributorsInput] = useState('');
     const [seqSetAccessionsInput, setSeqSetAccessionsInput] = useState('');
     const [isPending, setIsPending] = useState(false);
+    const [isFetchingDoi, setIsFetchingDoi] = useState(false);
     const [validationMessage, setValidationMessage] = useState('');
 
     const backendClient = new BackendClient(clientConfig.backendUrl);
@@ -49,6 +73,48 @@ export const AddSeqSetCitationForm: FC<Props> = ({ clientConfig, accessToken, on
         setYear('');
         setContributorsInput('');
         setSeqSetAccessionsInput('');
+    };
+
+    const handleFetchFromDoi = async () => {
+        const doi = sourceDOI.trim();
+        if (doi === '') {
+            setValidationMessage('Enter a source DOI first.');
+            return;
+        }
+        setValidationMessage('');
+        setIsFetchingDoi(true);
+        try {
+            const response = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}`);
+            if (!response.ok) {
+                throw new Error(`CrossRef lookup failed (${response.status})`);
+            }
+            const data = (await response.json()) as { message: CrossRefWork };
+            const work = data.message;
+
+            if (work.title?.[0] !== undefined) {
+                setTitle(work.title[0]);
+            }
+            const year = extractYear(work);
+            if (year !== undefined) {
+                setYear(String(year));
+            }
+            if (work.author !== undefined) {
+                setContributorsInput(
+                    work.author
+                        .map((a) => [a.given, a.family].filter((part) => part !== undefined && part !== '').join(' '))
+                        .filter((name) => name !== '')
+                        .join('\n'),
+                );
+            }
+            toast.success('Populated from CrossRef.', { position: 'top-center', autoClose: 2000 });
+        } catch {
+            toast.error(`Could not fetch metadata for DOI ${doi} from CrossRef.`, {
+                position: 'top-center',
+                autoClose: false,
+            });
+        } finally {
+            setIsFetchingDoi(false);
+        }
     };
 
     const handleSubmit = async (event: FormEvent) => {
@@ -109,13 +175,27 @@ export const AddSeqSetCitationForm: FC<Props> = ({ clientConfig, accessToken, on
                 <label htmlFor='citation-source-doi' className='block mb-1 text-sm font-medium text-gray-900'>
                     * Source DOI
                 </label>
-                <input
-                    id='citation-source-doi'
-                    type='text'
-                    className={inputStyles}
-                    value={sourceDOI}
-                    onChange={(e) => setSourceDOI(e.target.value)}
-                />
+                <div className='flex gap-2'>
+                    <input
+                        id='citation-source-doi'
+                        type='text'
+                        className={inputStyles}
+                        value={sourceDOI}
+                        onChange={(e) => setSourceDOI(e.target.value)}
+                    />
+                    <Button
+                        type='button'
+                        variant='outline'
+                        className='shrink-0 whitespace-nowrap'
+                        disabled={isFetchingDoi}
+                        data-testid='fetch-doi-button'
+                        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                        onClick={handleFetchFromDoi}
+                    >
+                        {isFetchingDoi ? <Spinner size='sm' /> : 'Fetch from DOI'}
+                    </Button>
+                </div>
+                <p className='mt-1 text-xs text-gray-500'>Populates title, year, and contributors below.</p>
             </div>
             <div className='mb-4'>
                 <label htmlFor='citation-title' className='block mb-1 text-sm font-medium text-gray-900'>
