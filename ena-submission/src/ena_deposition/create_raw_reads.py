@@ -110,7 +110,7 @@ def create_manifest_object(
             description=get_description(config, metadata),
             **assembly_values,  # type: ignore
             address=call_loculus.get_address(
-                config, submission_row.accession, submission_row.seq_metadata["groupId"]
+                config, submission_row.center_name, submission_row.seq_metadata["groupId"]
             ),
             fastq=submission_row.fastq_files,
         )

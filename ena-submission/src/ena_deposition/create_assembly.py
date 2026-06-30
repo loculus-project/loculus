@@ -195,7 +195,7 @@ def create_manifest_object(
             moleculetype=ena_organism.molecule_type,
             **assembly_values,  # type: ignore
             address=call_loculus.get_address(
-                config, submission_row.accession, submission_row.seq_metadata["groupId"]
+                config, submission_row.center_name, submission_row.seq_metadata["groupId"]
             ),
         )
     except Exception as e:
