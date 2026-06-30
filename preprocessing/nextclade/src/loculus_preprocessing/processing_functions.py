@@ -432,10 +432,8 @@ class ProcessingFunctions:
                 warnings.append("Date is in the future.")
             return RawProcessingResult(datum=date, warnings=warnings)
         except ValueError as e:
-            return RawProcessingResult(
-                errors=[
-                    f"Date is {date} which is not in the required format YYYY-MM-DD. Parsing error: {e}"
-                ],
+            return processing_error(
+                f"Date is {date} which is not in the required format YYYY-MM-DD. Parsing error: {e}"
             )
 
     @staticmethod
