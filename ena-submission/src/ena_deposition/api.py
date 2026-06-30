@@ -58,6 +58,11 @@ def read_root():
     return {"message": "ENA Deposition Pod API is running"}
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 @app.get("/submitted", response_model=SubmittedAccessionsResponse)
 def submitted_insdc_accessions():
     engine = app.state.engine
