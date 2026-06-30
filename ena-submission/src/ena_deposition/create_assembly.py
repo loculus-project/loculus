@@ -7,6 +7,7 @@ import time
 import traceback
 from dataclasses import asdict
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any, Literal, cast
 
 import pytz
@@ -14,7 +15,7 @@ from sqlalchemy import Engine
 
 from ena_deposition import call_loculus
 
-from .config import Config, EnaOrganismDetails
+from .config import Config, EnaOrganismDetails, ManifestChangePolicy
 from .ena_submission_helper import (
     CreationResult,
     accession_exists,
@@ -35,7 +36,12 @@ from .ena_types import (
     AssemblyManifest,
     ChromosomeType,
 )
-from .notifications import SlackConfig, send_slack_notification, slack_conn_init
+from .notifications import (
+    SlackConfig,
+    send_slack_notification,
+    slack_conn_init,
+    upload_file_with_comment,
+)
 from .submission_db_helper import (
     AccessionVersion,
     AssemblyTableEntry,
@@ -346,68 +352,11 @@ def update_assembly_error(
     )
 
 
-def can_be_revised(config: Config, db_engine: Engine, submission_row: SubmissionTableEntry) -> bool:
-    """
-    Check if assembly can be revised
-    1. Last version exists in submission_table, otherwise throw RuntimeError
-    2. If biosampleAccession and bioprojectAccession provided by submitter (e.g. raw reads linked)
-       those must be same as in previous version, otherwise cannot be revised
-    3. metadata fields in manifest haven't changed since previous version, otherwise
-       requires manual revision
-    """
-    seq_key = submission_row.pkey
-    if not is_latest_revision(db_engine, seq_key):
-        return False
-    version_to_revise = previous_version(db_engine, seq_key)
-    last_version_rows = find_conditions_in_db(
-        db_engine,
-        SubmissionTableEntry,
-        conditions={"accession": submission_row.accession, "version": version_to_revise},
-    )
-    if len(last_version_rows) == 0:
-        error_msg = f"Last version {version_to_revise} not found in submission_table"
-        raise RuntimeError(error_msg)
-
-    last_version_entry = last_version_rows[0]
-
-    previous_sample_accession, previous_study_accession = get_project_and_sample_results(
-        db_engine, last_version_entry
-    )
-    logger.debug(
-        f"Previous sample accession: {previous_sample_accession}, "
-        f"previous study accession: {previous_study_accession}"
-    )
-    if submission_row.seq_metadata.get("biosampleAccession"):
-        new_sample_accession = submission_row.seq_metadata["biosampleAccession"]
-        if previous_sample_accession != new_sample_accession:
-            error = (
-                "Assembly cannot be revised because biosampleAccession in new version: "
-                f"{new_sample_accession} differs from last version: {previous_sample_accession}"
-            )
-            logger.error(error)
-            update_assembly_error(
-                db_engine,
-                [error],
-                seq_key=asdict(submission_row.pkey),
-                update_type="revision",
-            )
-            return False
-    if submission_row.seq_metadata.get("bioprojectAccession"):
-        new_project_accession = submission_row.seq_metadata["bioprojectAccession"]
-        if new_project_accession != previous_study_accession:
-            error = (
-                "Assembly cannot be revised because bioprojectAccession in new version: "
-                f"{new_project_accession} differs from last version: {previous_study_accession}"
-            )
-            logger.error(error)
-            update_assembly_error(
-                db_engine,
-                [error],
-                seq_key=asdict(submission_row.pkey),
-                update_type="revision",
-            )
-            return False
-
+def manifest_fields_changed(
+    config: Config,
+    submission_row: SubmissionTableEntry,
+    last_version_entry: SubmissionTableEntry,
+) -> dict:
     differing_fields = {}
     for mapping in config.manifest_fields_mapping.values():
         loculus_field_names = mapping.loculus_fields
@@ -429,20 +378,104 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
                     continue
             if last_entry != new_entry:
                 differing_fields[loculus_field_name] = f"Last: {last_entry}, New: {new_entry}, "
-    if differing_fields:
-        error = (
-            "Assembly cannot be revised because metadata fields in manifest would change from "
-            f"last version: {json.dumps(differing_fields)}"
-        )
-        logger.error(error)
-        update_assembly_error(
-            db_engine,
-            [error],
-            seq_key=asdict(submission_row.pkey),
-            update_type="revision",
-        )
-        return False
-    return True
+    return differing_fields
+
+
+def can_be_revised(
+    config: Config, db_engine: Engine, submission_row: SubmissionTableEntry
+) -> tuple[bool, str]:
+    """
+    Check if assembly can be revised
+    1. Last version exists in submission_table, otherwise throw RuntimeError
+    2. If biosampleAccession and bioprojectAccession provided by submitter (e.g. raw reads linked)
+       those must be same as in previous version, otherwise cannot be revised
+    3. metadata fields in manifest haven't changed since previous version, otherwise
+       requires manual revision
+    """
+    notification = ""
+    seq_key = submission_row.pkey
+    if not is_latest_revision(db_engine, seq_key):
+        return False, ""
+
+    version_to_revise = previous_version(db_engine, seq_key)
+    last_version_rows = find_conditions_in_db(
+        db_engine,
+        SubmissionTableEntry,
+        conditions={"accession": submission_row.accession, "version": version_to_revise},
+    )
+    if len(last_version_rows) == 0:
+        error_msg = f"Last version {version_to_revise} not found in submission_table"
+        raise RuntimeError(error_msg)
+    last_version_entry = last_version_rows[0]
+    previous_sample_accession, previous_study_accession = get_project_and_sample_results(
+        db_engine, last_version_entry
+    )
+    logger.debug(
+        f"Previous sample accession: {previous_sample_accession}, "
+        f"previous study accession: {previous_study_accession}"
+    )
+
+    if submission_row.seq_metadata.get("biosampleAccession"):
+        new_sample_accession = submission_row.seq_metadata["biosampleAccession"]
+        if previous_sample_accession != new_sample_accession:
+            error = (
+                "Assembly cannot be revised because biosampleAccession in new version: "
+                f"{new_sample_accession} differs from last version: {previous_sample_accession}"
+            )
+            logger.error(error)
+            update_assembly_error(
+                db_engine,
+                [error],
+                seq_key=asdict(submission_row.pkey),
+                update_type="revision",
+            )
+            return False, ""
+
+    if submission_row.seq_metadata.get("bioprojectAccession"):
+        new_project_accession = submission_row.seq_metadata["bioprojectAccession"]
+        if new_project_accession != previous_study_accession:
+            error = (
+                "Assembly cannot be revised because bioprojectAccession in new version: "
+                f"{new_project_accession} differs from last version: {previous_study_accession}"
+            )
+            logger.error(error)
+            update_assembly_error(
+                db_engine,
+                [error],
+                seq_key=asdict(submission_row.pkey),
+                update_type="revision",
+            )
+            return False, ""
+
+    if config.revision_manifest_change_policy != ManifestChangePolicy.ALLOW and (
+        differing_fields := manifest_fields_changed(config, submission_row, last_version_entry)
+    ):
+        match config.revision_manifest_change_policy:
+            case ManifestChangePolicy.ERROR:
+                error = (
+                    "Assembly cannot be revised because metadata fields in manifest would change"
+                    f" from last version: {json.dumps(differing_fields)}"
+                )
+                logger.error(error)
+                update_assembly_error(
+                    db_engine,
+                    [error],
+                    seq_key=asdict(submission_row.pkey),
+                    update_type="revision",
+                )
+                return False, ""
+            case ManifestChangePolicy.WARN:
+                logger.warning(
+                    "Manifest fields have changed since last version, but continuing "
+                    "because revision_manifest_change_policy=WARN"
+                )
+                notification = "Manifest fields have changed since last version: " + json.dumps(
+                    differing_fields
+                )
+            case ManifestChangePolicy.ALLOW:
+                pass
+
+    return True, notification
 
 
 def is_flatfile_data_changed(db_engine: Engine, submission_row: SubmissionTableEntry) -> bool:
@@ -573,6 +606,7 @@ def assembly_table_create(db_engine: Engine, config: Config):
         logger.debug(
             f"Found {len(ready_to_submit_assembly)} entries in assembly_table in status READY"
         )
+    notifications = {}
     for row in ready_to_submit_assembly:
         seq_key = row.pkey
         submission_rows = find_conditions_in_db(
@@ -590,7 +624,9 @@ def assembly_table_create(db_engine: Engine, config: Config):
 
         if is_revision(db_engine, seq_key):
             logger.debug(f"Entry {row.accession} is a revision, checking if it can be revised")
-            if not can_be_revised(config, db_engine, submission_row):
+            can_revise, notification = can_be_revised(config, db_engine, submission_row)
+            notifications[seq_key.accession] = notification
+            if not can_revise:
                 continue
             if not is_flatfile_data_changed(db_engine, submission_row):
                 update_assembly_results_with_latest_version(db_engine, seq_key)
@@ -653,6 +689,22 @@ def assembly_table_create(db_engine: Engine, config: Config):
                 seq_key=asdict(row.pkey),
                 update_type="creation",
             )
+
+    if len(notifications) > 0:
+        file_path = "assembly_creation_notifications.json"
+        Path(file_path).write_text(json.dumps(notifications, indent=2), encoding="utf-8")
+        upload_file_with_comment(
+            config=slack_conn_init(
+                slack_hook_default=config.slack_hook,
+                slack_token_default=config.slack_token,
+                slack_channel_id_default=config.slack_channel_id,
+            ),
+            file_path=file_path,
+            comment=(
+                f"Assembly creation notifications for {len(notifications)} "
+                "entries in assembly_table"
+            ),
+        )
 
 
 _last_ena_check: datetime | None = None

@@ -119,3 +119,4 @@ slack_retry_substrings:
   - "does not exist in ENA"
 submitting_time_threshold_min: 15
 waiting_threshold_hours: 48
+allow_revision_with_manifest_changes: true
