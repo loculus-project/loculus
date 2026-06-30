@@ -1,4 +1,4 @@
-{{- if not .Values.disableBackend }}
+{{- if and (not .Values.disableBackend) .Values.enableServiceMonitor }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:

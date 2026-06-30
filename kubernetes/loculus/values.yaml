@@ -2709,6 +2709,7 @@ taxonomyService:
   dbVersion: "ncbi_taxonomy_2026-05-01"
   taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
 subdomainSeparator: "-"
+enableServiceMonitor: false
 backendExtraArgs:
   - "--management.endpoint.prometheus.enabled=true"
   - "--management.endpoints.web.exposure.include=health,prometheus"
