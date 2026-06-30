@@ -775,7 +775,12 @@ class ProcessingFunctions:
         except ValueError as e:
             return RawProcessingResult(
                 warnings=warnings,
-                errors=[*errors, _internal_error_message(f"Concatenation failed for '{output_field}' with error: {e} (ACCESSION_VERSION: {accession_version}).")],
+                errors=[
+                    *errors,
+                    _internal_error_message(
+                        f"Concatenation failed for '{output_field}' with error: {e} (ACCESSION_VERSION: {accession_version})."
+                    ),
+                ],
             )
 
     @staticmethod
