@@ -407,7 +407,11 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
                 update_type="revision",
             )
             return False
-
+    if config.allow_retry_for_manifest_changes:
+        logger.debug(
+            "allow_retry_for_manifest_changes is True, skipping manifest field comparison for revision"
+        )
+        return True
     differing_fields = {}
     for mapping in config.manifest_fields_mapping.values():
         loculus_field_names = mapping.loculus_fields
