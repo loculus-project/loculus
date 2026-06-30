@@ -28,7 +28,6 @@ from .ena_types import (
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
     AccessionVersion,
-    AssemblyTableEntry,
     RawReadsTableEntry,
     Status,
     StatusAll,
@@ -127,10 +126,10 @@ def submission_table_start(db_engine: Engine) -> None:
     """
     1. Find all entries in submission_table in state SUBMITTED_SAMPLE
     2. Filter for entries where submit_raw_reads is True
-    3. If (exists an entry in the assembly_table for (accession, version)):
+    3. If (exists an entry in the raw_reads_table for (accession, version)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_ALL
-    b.      Else update state to SUBMITTING_ASSEMBLY
-    4. Else create corresponding entry in assembly_table
+    b.      Else update state to SUBMITTING_RAW_READS
+    4. Else create corresponding entry in raw_reads_table
     """
     conditions = {"status_all": StatusAll.SUBMITTED_SAMPLE, "submit_raw_reads": True}
     ready_to_submit = find_conditions_in_db(db_engine, SubmissionTableEntry, conditions=conditions)
@@ -151,7 +150,7 @@ def submission_table_start(db_engine: Engine) -> None:
             else:
                 status_all = StatusAll.SUBMITTING_RAW_READS
         else:
-            # If not: create assembly_entry, change status to SUBMITTING_RAW_READS
+            # If not: create raw_reads_entry, change status to SUBMITTING_RAW_READS
             if not add_to_raw_reads_table(db_engine, RawReadsTableEntry(**seq_key)):
                 continue
             status_all = StatusAll.SUBMITTING_RAW_READS
@@ -203,14 +202,14 @@ def submission_table_update(db_engine: Engine) -> None:
             raise RuntimeError(error_msg)
 
 
-def update_assembly_error(
+def update_raw_reads_error(
     db_engine: Engine,
     error: list[str],
     seq_key: dict[str, Any],
     update_type: Literal["revision"] | Literal["creation"],
 ) -> None:
     logger.error(
-        f"Assembly {update_type} failed for accession {seq_key['accession']} "
+        f"Raw reads {update_type} failed for accession {seq_key['accession']} "
         f"version {seq_key['version']}. Propagating to db. Error: {error}"
     )
     update_with_retry(
@@ -221,13 +220,13 @@ def update_assembly_error(
             "errors": error,
             "started_at": datetime.now(tz=pytz.utc),
         },
-        model_class=AssemblyTableEntry,
+        model_class=RawReadsTableEntry,
     )
 
 
 def can_be_revised(config: Config, db_engine: Engine, submission_row: SubmissionTableEntry) -> bool:
     """
-    Check if assembly can be revised
+    Check if raw reads can be revised
     1. Last version exists in submission_table, otherwise throw RuntimeError
     2. If biosampleAccession and bioprojectAccession provided by submitter (e.g. raw reads linked)
        those must be same as in previous version, otherwise cannot be revised
@@ -260,11 +259,11 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
         new_sample_accession = submission_row.seq_metadata["biosampleAccession"]
         if previous_sample_accession != new_sample_accession:
             error = (
-                "Assembly cannot be revised because biosampleAccession in new version: "
+                "Raw reads cannot be revised because biosampleAccession in new version: "
                 f"{new_sample_accession} differs from last version: {previous_sample_accession}"
             )
             logger.error(error)
-            update_assembly_error(
+            update_raw_reads_error(
                 db_engine,
                 [error],
                 seq_key=asdict(submission_row.pkey),
@@ -275,11 +274,11 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
         new_project_accession = submission_row.seq_metadata["bioprojectAccession"]
         if new_project_accession != previous_study_accession:
             error = (
-                "Assembly cannot be revised because bioprojectAccession in new version: "
+                "Raw reads cannot be revised because bioprojectAccession in new version: "
                 f"{new_project_accession} differs from last version: {previous_study_accession}"
             )
             logger.error(error)
-            update_assembly_error(
+            update_raw_reads_error(
                 db_engine,
                 [error],
                 seq_key=asdict(submission_row.pkey),
@@ -310,11 +309,11 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
                 differing_fields[loculus_field_name] = f"Last: {last_entry}, New: {new_entry}, "
     if differing_fields:
         error = (
-            "Assembly cannot be revised because metadata fields in manifest would change from "
+            "Raw reads cannot be revised because metadata fields in manifest would change from "
             f"last version: {json.dumps(differing_fields)}"
         )
         logger.error(error)
-        update_assembly_error(
+        update_raw_reads_error(
             db_engine,
             [error],
             seq_key=asdict(submission_row.pkey),
@@ -421,29 +420,29 @@ def raw_reads_table_create(db_engine: Engine, config: Config):
         logger.info(f"Starting raw reads creation for accession {row.accession}")
 
         # Actual webin-cli command is run here
-        assembly_creation_results: CreationResult = create_ena_assembly(
+        raw_reads_creation_results: CreationResult = create_ena_assembly(
             config=config,
             manifest_filename=manifest_file,
             center_name=center_name,
         )
-        if assembly_creation_results.result:
+        if raw_reads_creation_results.result:
             update_values = {
                 "status": Status.WAITING,
-                "result": assembly_creation_results.result,
+                "result": raw_reads_creation_results.result,
             }
             logger.info(
-                f"Assembly creation succeeded for {seq_key.accession} version {seq_key.version}"
+                f"Raw reads creation succeeded for {seq_key.accession} version {seq_key.version}"
             )
             update_with_retry(
                 db_engine=db_engine,
                 conditions=asdict(seq_key),
                 update_values=update_values,
-                model_class=AssemblyTableEntry,
+                model_class=RawReadsTableEntry,
             )
         else:
-            update_assembly_error(
+            update_raw_reads_error(
                 db_engine,
-                assembly_creation_results.errors,
+                raw_reads_creation_results.errors,
                 seq_key=asdict(row.pkey),
                 update_type="creation",
             )
@@ -504,13 +503,13 @@ def raw_reads_table_update(db_engine: Engine, config: Config, time_threshold: in
                     continue
                 status = Status.WAITING
                 logger.info(
-                    f"Assembly partially accessioned by ENA for {seq_key.accession} "
+                    f"Raw reads partially accessioned by ENA for {seq_key.accession} "
                     f"version {seq_key.version}"
                 )
             else:
                 status = Status.SUBMITTED
                 logger.info(
-                    f"Assembly accessioned by ENA for {seq_key.accession} version {seq_key.version}"
+                    f"Raw reads accessioned by ENA for {seq_key.accession} version {seq_key.version}"
                 )
             update_with_retry(
                 db_engine=db_engine,
@@ -520,7 +519,7 @@ def raw_reads_table_update(db_engine: Engine, config: Config, time_threshold: in
                     "result": new_result.result,
                     "finished_at": datetime.now(tz=pytz.utc),
                 },
-                model_class=AssemblyTableEntry,
+                model_class=RawReadsTableEntry,
                 reraise=False,
             )
 
@@ -571,8 +570,8 @@ def raw_reads_table_handle_errors(
             config=config,
             last_retry=last_retry_time,
         )
-        # TODO: Query ENA to check if assembly has in fact been created
-        # If created update assembly_table
+        # TODO: Query ENA to check if raw reads have in fact been created
+        # If created update raw_reads_table
         # If not retry 3 times, then raise for manual intervention
 
     if messages:
