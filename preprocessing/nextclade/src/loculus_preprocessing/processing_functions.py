@@ -199,11 +199,14 @@ def format_authors(authors: str) -> str:
     return "; ".join(loculus_authors).strip()
 
 
+def _internal_error_message(message: str) -> str:
+    full = f"Internal Error. {message} Please contact the administrator."
+    logger.error(full)
+    return full
+
+
 def raw_internal_error(message: str) -> RawProcessingResult:
-    """Create a RawProcessingResult for internal/config errors with standard formatting and logging."""
-    full_message = f"Internal Error. {message} Please contact the administrator."
-    logger.error(full_message)
-    return processing_error(full_message)
+    return processing_error(_internal_error_message(message))
 
 
 def regex_error(
@@ -725,10 +728,10 @@ class ProcessingFunctions:
                     raw_value = str(raw).strip()
                     if raw_value.count("/") > 1:
                         date_string = None
-                        errors.extend(
-                            raw_internal_error(
+                        errors.append(
+                            _internal_error_message(
                                 f"dateRangeString field '{order[i]}' has an unexpected format: '{raw_value}' (ACCESSION_VERSION: {accession_version})."
-                            ).errors
+                            )
                         )
                     else:
                         date_string = raw_value.replace("/", " TO ")
@@ -772,10 +775,7 @@ class ProcessingFunctions:
         except ValueError as e:
             return RawProcessingResult(
                 warnings=warnings,
-                errors=errors
-                + raw_internal_error(
-                    f"Concatenation failed for '{output_field}' with error: {e} (ACCESSION_VERSION: {accession_version})."
-                ).errors,
+                errors=[*errors, _internal_error_message(f"Concatenation failed for '{output_field}' with error: {e} (ACCESSION_VERSION: {accession_version}).")],
             )
 
     @staticmethod
