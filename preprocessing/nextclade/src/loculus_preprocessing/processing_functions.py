@@ -160,7 +160,9 @@ def check_latin_characters(authors: str) -> tuple[list[str], list[str]]:
         if ord(char) < 128:
             continue
         if char.isalpha() and not (0x0000 <= ord(char) <= 0x024F):
-            errors.append(f"Unsupported non-Latin character encountered: {char} (U+{ord(char):04X}).")
+            errors.append(
+                f"Unsupported non-Latin character encountered: {char} (U+{ord(char):04X})."
+            )
     return (errors, warnings)
 
 
