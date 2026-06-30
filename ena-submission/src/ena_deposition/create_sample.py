@@ -1,7 +1,6 @@
 import logging
 import re
 import threading
-import time
 from dataclasses import asdict
 from datetime import datetime
 

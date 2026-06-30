@@ -5,7 +5,7 @@ from typing import cast
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import Engine, select, text
+from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session
 
 from .config import Config
