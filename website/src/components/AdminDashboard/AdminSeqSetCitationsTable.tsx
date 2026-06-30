@@ -20,7 +20,16 @@ export const AdminSeqSetCitationsTable: FC<Props> = ({ citations, onDelete }) =>
     }
 
     return (
-        <table className='table-auto border-collapse border border-gray-200 mt-4' data-testid='seqset-citations-table'>
+        <table
+            className='table-fixed w-full border-collapse border border-gray-200 mt-4'
+            data-testid='seqset-citations-table'
+        >
+            <colgroup>
+                <col className='w-[40%]' />
+                <col className='w-20' />
+                <col className={onDelete !== undefined ? 'w-[35%]' : 'w-[40%]'} />
+                {onDelete !== undefined && <col className='w-28' />}
+            </colgroup>
             <thead>
                 <tr>
                     <th className='border px-2 py-1 text-left'>Citation</th>
@@ -32,7 +41,7 @@ export const AdminSeqSetCitationsTable: FC<Props> = ({ citations, onDelete }) =>
             <tbody>
                 {citations.map((citation) => (
                     <tr key={citation.source.sourceDOI} data-testid={`citation-row-${citation.source.sourceDOI}`}>
-                        <td className='border px-2 py-1 align-top'>
+                        <td className='border px-2 py-1 align-top break-words'>
                             <a
                                 className='text-primary-700'
                                 href={`https://doi.org/${citation.source.sourceDOI}`}
@@ -47,7 +56,7 @@ export const AdminSeqSetCitationsTable: FC<Props> = ({ citations, onDelete }) =>
                             <div className='text-xs text-gray-500'>{citation.source.sourceDOI}</div>
                         </td>
                         <td className='border px-2 py-1 align-top text-right'>{citation.source.year}</td>
-                        <td className='border px-2 py-1 align-top'>
+                        <td className='border px-2 py-1 align-top break-words'>
                             <ul className='space-y-1'>
                                 {citation.seqSets.map((seqSet) => (
                                     <li key={seqSet.seqSetAccessionVersion}>
