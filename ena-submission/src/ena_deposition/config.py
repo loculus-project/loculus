@@ -1,6 +1,7 @@
 import logging
 import os
 from dataclasses import field
+from enum import StrEnum
 
 import dotenv
 import yaml
@@ -58,6 +59,12 @@ class EnaOrganismDetails(BaseModel):
 
 
 type EnaOrganismName = str
+
+
+class ManifestChangePolicy(StrEnum):
+    ERROR = "error"
+    WARN = "warn"
+    ALLOW = "allow"
 
 
 class Config(BaseModel):
@@ -123,8 +130,7 @@ class Config(BaseModel):
     min_between_publicness_checks: int = 12 * 60  # 12 hours
     min_between_ena_checks: int = 5
     log_level: str = "DEBUG"
-
-    allow_revision_with_manifest_changes: bool = True
+    revision_manifest_change_policy: ManifestChangePolicy = ManifestChangePolicy.ERROR
     retry_threshold_min: int = 240
     slack_retry_substrings: list[str] = field(default_factory=list)
     slack_retry_threshold_min: int = 720
