@@ -4,7 +4,6 @@
 import json
 import logging
 import threading
-import time
 from typing import Any
 
 import requests
@@ -68,7 +67,7 @@ def trigger_submission_to_ena(
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             logger.error(f"Failed to retrieve file due to requests exception: {e}")
-            time.sleep(config.min_between_github_requests * 60)
+            stop_event.wait(config.min_between_github_requests * 60)
             continue
         try:
             sequences_to_upload = response.json()
@@ -76,6 +75,6 @@ def trigger_submission_to_ena(
         except Exception as upload_error:
             logger.error(f"Failed to upload sequences: {upload_error}")
         finally:
-            time.sleep(
+            stop_event.wait(
                 config.min_between_github_requests * 60
             )  # Sleep for x min to not overwhelm github

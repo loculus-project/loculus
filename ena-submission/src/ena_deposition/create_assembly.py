@@ -3,7 +3,6 @@ import logging
 import random
 import string
 import threading
-import time
 import traceback
 from dataclasses import asdict
 from datetime import datetime, timedelta
@@ -816,4 +815,4 @@ def create_assembly(config: Config, stop_event: threading.Event):
         last_retry_time = assembly_table_handle_errors(
             db_engine, config, slack_config, last_retry_time
         )
-        time.sleep(config.time_between_iterations)
+        stop_event.wait(config.time_between_iterations)

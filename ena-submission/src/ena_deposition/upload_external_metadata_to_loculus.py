@@ -2,7 +2,6 @@
 
 import logging
 import threading
-import time
 from dataclasses import asdict
 from datetime import datetime
 from typing import Any
@@ -283,4 +282,4 @@ def upload_external_metadata(config: Config, stop_event: threading.Event):
             config,
             slack_config,
         )
-        time.sleep(config.time_between_iterations)
+        stop_event.wait(config.time_between_iterations)

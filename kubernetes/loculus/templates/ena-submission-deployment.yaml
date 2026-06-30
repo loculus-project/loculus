@@ -1,4 +1,5 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- $testconfig := .Values.testconfig | default false }}
 {{- if not .Values.disableEnaSubmission }}
 ---
 apiVersion: apps/v1
@@ -102,8 +103,31 @@ spec:
                   name: ena-submission
                   key: password
           args:
-            - ena_deposition 
+            - ena_deposition
             - "--config-file=/config/config.yaml"
+          ports:
+            - containerPort: 5000
+          {{- if not $testconfig }}
+          # The API thread shuts down uvicorn as soon as the shared stop_event
+          # is set (i.e. when any worker thread dies), so a probe against the
+          # API port doubles as a liveness signal for the whole pod: if a worker
+          # crashes and a stuck thread keeps the process from exiting, the port
+          # stops responding and Kubernetes restarts the container.
+          # Skipped under testconfig, where the API binds to 127.0.0.1 and is
+          # unreachable from the kubelet probe.
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          {{- end }}
           volumeMounts:
             - name: loculus-ena-submission-config-volume
               mountPath: /config/config.yaml
