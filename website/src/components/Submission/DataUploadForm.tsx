@@ -152,43 +152,21 @@ const InnerDataUploadForm = ({
     return (
         <div className='text-left mt-3 max-w-4xl mb-3'>
             <div className='flex-col flex gap-8'>
-                {action === 'submit' ? (
-                    <>
-                        <h1 className='title'>Submit sequences</h1>
-                        <InputModeTabs
-                            action={action}
-                            organism={organism}
-                            groupId={group.groupId}
-                            currentInputMode={inputMode}
-                        />
-                        <FormOrUploadWrapper
-                            inputMode={inputMode}
-                            setFileFactory={setFileFactory}
-                            organism={organism}
-                            action={action}
-                            metadataTemplateFields={metadataTemplateFields}
-                            submissionDataTypes={submissionDataTypes}
-                        />
-                    </>
-                ) : (
-                    <>
-                        <h1 className='title'>Revise sequences</h1>
-                        <InputModeTabs
-                            action={action}
-                            organism={organism}
-                            groupId={group.groupId}
-                            currentInputMode={inputMode}
-                        />
-                        <FormOrUploadWrapper
-                            inputMode={inputMode}
-                            setFileFactory={setFileFactory}
-                            organism={organism}
-                            action={action}
-                            metadataTemplateFields={metadataTemplateFields}
-                            submissionDataTypes={submissionDataTypes}
-                        />
-                    </>
-                )}
+                <h1 className='title'>{action === 'submit' ? 'Submit' : 'Revise'} sequences</h1>
+                <InputModeTabs
+                    action={action}
+                    organism={organism}
+                    groupId={group.groupId}
+                    currentInputMode={inputMode}
+                />
+                <FormOrUploadWrapper
+                    inputMode={inputMode}
+                    setFileFactory={setFileFactory}
+                    organism={organism}
+                    action={action}
+                    metadataTemplateFields={metadataTemplateFields}
+                    submissionDataTypes={submissionDataTypes}
+                />
                 <hr />
                 {extraFilesEnabled && (
                     <>
