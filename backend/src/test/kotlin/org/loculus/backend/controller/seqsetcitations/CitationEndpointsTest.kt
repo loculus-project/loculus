@@ -288,6 +288,151 @@ class CitationEndpointsTest(
     }
 
     @Test
+    fun `WHEN adding a seqSet citation as non-superuser THEN returns forbidden`() {
+        val seqSetResult = client.createSeqSet().andExpect(status().isOk).andReturn()
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
+        val seqSetVersion = JsonPath.read<Int>(seqSetResult.response.contentAsString, "$.seqSetVersion").toLong()
+
+        client.addSeqSetCitation(
+            seqSetAccessionVersions = listOf("$seqSetId.$seqSetVersion"),
+            jwt = jwtForDefaultUser,
+        ).andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `WHEN adding a seqSet citation without auth THEN returns forbidden`() {
+        client.addSeqSetCitation(seqSetAccessionVersions = listOf("$MOCK_SEQSET_ID.$MOCK_SEQSET_VERSION"), jwt = null)
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `WHEN adding a seqSet citation for an existing seqSet THEN it appears with origin CURATED`() {
+        val seqSetResult = client.createSeqSet().andExpect(status().isOk).andReturn()
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
+        val seqSetVersion = JsonPath.read<Int>(seqSetResult.response.contentAsString, "$.seqSetVersion").toLong()
+
+        client.addSeqSetCitation(seqSetAccessionVersions = listOf("$seqSetId.$seqSetVersion"))
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.source.sourceDOI").value(MOCK_CITATION_DOI))
+            .andExpect(jsonPath("\$.origin").value("CURATED"))
+            .andExpect(jsonPath("\$.seqSets.length()").value(1))
+            .andExpect(jsonPath("\$.seqSets[0].seqSetAccessionVersion").value("$seqSetId.$seqSetVersion"))
+
+        client.getAllSeqSetCitations()
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.length()").value(1))
+            .andExpect(jsonPath("\$[0].source.sourceDOI").value(MOCK_CITATION_DOI))
+            .andExpect(jsonPath("\$[0].origin").value("CURATED"))
+
+        client.getSeqSetCitations(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.length()").value(1))
+            .andExpect(jsonPath("\$[0].source.sourceDOI").value(MOCK_CITATION_DOI))
+    }
+
+    @Test
+    fun `WHEN adding a seqSet citation for a non-existing seqSet THEN returns not found`() {
+        client.addSeqSetCitation(seqSetAccessionVersions = listOf("does-not-exist.1"))
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `WHEN re-adding the same citation source DOI with an additional seqSet THEN both seqSets are linked`() {
+        val firstSeqSetResult = client.createSeqSet().andExpect(status().isOk).andReturn()
+        val firstSeqSetId = JsonPath.read<String>(firstSeqSetResult.response.contentAsString, "$.seqSetId")
+        val firstSeqSetVersion =
+            JsonPath.read<Int>(firstSeqSetResult.response.contentAsString, "$.seqSetVersion").toLong()
+
+        val secondSeqSetResult = client.createSeqSet().andExpect(status().isOk).andReturn()
+        val secondSeqSetId = JsonPath.read<String>(secondSeqSetResult.response.contentAsString, "$.seqSetId")
+        val secondSeqSetVersion =
+            JsonPath.read<Int>(secondSeqSetResult.response.contentAsString, "$.seqSetVersion").toLong()
+
+        client.addSeqSetCitation(seqSetAccessionVersions = listOf("$firstSeqSetId.$firstSeqSetVersion"))
+            .andExpect(status().isOk)
+
+        client.addSeqSetCitation(
+            title = "Updated title",
+            seqSetAccessionVersions = listOf(
+                "$firstSeqSetId.$firstSeqSetVersion",
+                "$secondSeqSetId.$secondSeqSetVersion",
+            ),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.source.title").value("Updated title"))
+            .andExpect(jsonPath("\$.seqSets.length()").value(2))
+
+        client.getAllSeqSetCitations()
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.length()").value(1))
+            .andExpect(jsonPath("\$[0].source.title").value("Updated title"))
+            .andExpect(jsonPath("\$[0].seqSets.length()").value(2))
+    }
+
+    @Test
+    fun `WHEN deleting a seqSet citation as non-superuser THEN returns forbidden`() {
+        client.deleteSeqSetCitation(jwt = jwtForDefaultUser)
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `WHEN deleting a seqSet citation without auth THEN returns forbidden`() {
+        client.deleteSeqSetCitation(jwt = null)
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `WHEN deleting an unknown citation source DOI THEN returns not found`() {
+        client.deleteSeqSetCitation(sourceDOI = "10.0000/does-not-exist")
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `WHEN deleting a curated seqSet citation THEN it is removed`() {
+        val seqSetResult = client.createSeqSet().andExpect(status().isOk).andReturn()
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
+        val seqSetVersion = JsonPath.read<Int>(seqSetResult.response.contentAsString, "$.seqSetVersion").toLong()
+
+        client.addSeqSetCitation(seqSetAccessionVersions = listOf("$seqSetId.$seqSetVersion"))
+            .andExpect(status().isOk)
+
+        client.deleteSeqSetCitation()
+            .andExpect(status().isOk)
+
+        client.getAllSeqSetCitations()
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$").isArray)
+            .andExpect(jsonPath("\$").isEmpty)
+    }
+
+    @Test
+    fun `WHEN deleting a crossref-origin seqSet citation THEN returns unprocessable entity`() {
+        val seqSetResult = client.createSeqSet().andExpect(status().isOk).andReturn()
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
+        val seqSetVersion = JsonPath.read<Int>(seqSetResult.response.contentAsString, "$.seqSetVersion").toLong()
+        client.createSeqSetDOI(seqSetId = seqSetId, seqSetVersion = seqSetVersion)
+            .andExpect(status().isOk)
+
+        val seqSetDOI = "${MOCK_DOI_PREFIX}/$seqSetId.$seqSetVersion"
+        val seqSetCitationSource = SeqSetCitationSource(
+            CitationSource(
+                sourceDOI = "10.5678/crossref-paper",
+                title = "A crossref-discovered paper",
+                year = 2024,
+                contributors = listOf(CitationContributor(givenName = "Jane", surname = "Doe")),
+            ),
+            seqSetDOIs = setOf(seqSetDOI),
+        )
+        every { crossRefService.getCrossRefCitedBy(MOCK_DOI_PREFIX) } returns
+            CrossRefCitedByResult(listOf(seqSetCitationSource), emptyList())
+        seqSetCrossRefCitationsTask.task()
+
+        client.deleteSeqSetCitation(sourceDOI = "10.5678/crossref-paper")
+            .andExpect(status().isUnprocessableEntity)
+    }
+
+    @Test
     fun `WHEN multiple crossref citation runs link the same citation source THEN all citations are recorded`() {
         fun createSeqSetWithDOI(): Triple<String, Long, String> {
             val result = client.createSeqSet().andExpect(status().isOk).andReturn()

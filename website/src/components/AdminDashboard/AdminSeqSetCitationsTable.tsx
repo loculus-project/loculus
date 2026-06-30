@@ -2,9 +2,11 @@ import type { FC } from 'react';
 
 import { routes } from '../../routes/routes';
 import type { AdminSeqSetCitation } from '../../types/seqSetCitation';
+import { Button } from '../common/Button';
 
 interface Props {
     citations: AdminSeqSetCitation[];
+    onDelete?: (sourceDOI: string) => void;
 }
 
 const formatContributors = (contributors: AdminSeqSetCitation['source']['contributors']) =>
@@ -12,23 +14,24 @@ const formatContributors = (contributors: AdminSeqSetCitation['source']['contrib
         .map((contributor) => [contributor.givenName, contributor.surname].filter((name) => name).join(' '))
         .join(', ');
 
-export const SeqSetCitationsTable: FC<Props> = ({ citations }) => {
+export const AdminSeqSetCitationsTable: FC<Props> = ({ citations, onDelete }) => {
     if (citations.length === 0) {
         return <p className='mt-4'>No publications currently cite any SeqSet.</p>;
     }
 
     return (
-        <table className='table-auto border-collapse border border-gray-200 mt-4'>
+        <table className='table-auto border-collapse border border-gray-200 mt-4' data-testid='seqset-citations-table'>
             <thead>
                 <tr>
                     <th className='border px-2 py-1 text-left'>Citation</th>
                     <th className='border px-2 py-1 text-left'>Year</th>
                     <th className='border px-2 py-1 text-left'>Cited SeqSets</th>
+                    {onDelete !== undefined && <th className='border px-2 py-1 text-left'>&nbsp;</th>}
                 </tr>
             </thead>
             <tbody>
                 {citations.map((citation) => (
-                    <tr key={citation.source.sourceDOI}>
+                    <tr key={citation.source.sourceDOI} data-testid={`citation-row-${citation.source.sourceDOI}`}>
                         <td className='border px-2 py-1 align-top'>
                             <a
                                 className='text-primary-700'
@@ -62,6 +65,21 @@ export const SeqSetCitationsTable: FC<Props> = ({ citations }) => {
                                 ))}
                             </ul>
                         </td>
+                        {onDelete !== undefined && (
+                            <td className='border px-2 py-1 align-top'>
+                                {citation.origin === 'CURATED' && (
+                                    <Button
+                                        type='button'
+                                        variant='outline'
+                                        size='sm'
+                                        data-testid='delete-citation-button'
+                                        onClick={() => onDelete(citation.source.sourceDOI)}
+                                    >
+                                        Remove
+                                    </Button>
+                                )}
+                            </td>
+                        )}
                     </tr>
                 ))}
             </tbody>

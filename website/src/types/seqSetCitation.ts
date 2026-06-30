@@ -44,12 +44,15 @@ const citationContributor = z.object({
     surname: z.string(),
 });
 
-const citationSource = z.object({
+export const citationSource = z.object({
     sourceDOI: z.string(),
     title: z.string(),
     year: z.number(),
     contributors: z.array(citationContributor),
 });
+
+export const citationOrigin = z.enum(['CROSSREF', 'CURATED']);
+export type CitationOrigin = z.infer<typeof citationOrigin>;
 
 const seqSetCitation = z.object({
     source: citationSource,
@@ -82,7 +85,14 @@ export type CitedSeqSet = z.infer<typeof citedSeqSet>;
 export const adminSeqSetCitation = z.object({
     source: citationSource,
     seqSets: z.array(citedSeqSet),
+    origin: citationOrigin,
 });
 export type AdminSeqSetCitation = z.infer<typeof adminSeqSetCitation>;
 
 export const adminSeqSetCitations = z.array(adminSeqSetCitation);
+
+export const addSeqSetCitationRequest = z.object({
+    source: citationSource,
+    seqSetAccessionVersions: z.array(z.string()),
+});
+export type AddSeqSetCitationRequest = z.infer<typeof addSeqSetCitationRequest>;

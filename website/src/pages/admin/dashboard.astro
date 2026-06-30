@@ -1,9 +1,9 @@
 ---
 import type { Result } from 'neverthrow';
 
+import { AdminSeqSetCitationsSection } from '../../components/AdminDashboard/AdminSeqSetCitationsSection';
 import { PipelineStatisticsTable } from '../../components/AdminDashboard/PipelineStatisticsTable';
-import { SeqSetCitationsTable } from '../../components/AdminDashboard/SeqSetCitationsTable';
-import { seqSetsAreEnabled } from '../../config';
+import { seqSetsAreEnabled, getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { createBackendClient } from '../../services/backendClientFactory';
 import type { CurrentPipelineVersions, ProblemDetail } from '../../types/backend';
@@ -12,6 +12,7 @@ import { getAccessToken } from '../../utils/getAccessToken';
 
 const accessToken = getAccessToken(Astro.locals.session);
 const seqSetsEnabled = seqSetsAreEnabled();
+const clientConfig = getRuntimeConfig().public;
 let statisticsResult;
 let currentVersionsResult: Result<CurrentPipelineVersions, ProblemDetail> | undefined;
 let seqSetCitationsResult: Result<AdminSeqSetCitation[], ProblemDetail> | undefined;
@@ -50,9 +51,12 @@ if (accessToken !== undefined) {
                                 <p class='mb-4'>All publications that cite a SeqSet in this instance.</p>
                                 {seqSetCitationsResult?.match(
                                     (citations) => (
-                                        <div class='overflow-x-auto'>
-                                            <SeqSetCitationsTable citations={citations} />
-                                        </div>
+                                        <AdminSeqSetCitationsSection
+                                            citations={citations}
+                                            clientConfig={clientConfig}
+                                            accessToken={accessToken}
+                                            client:load
+                                        />
                                     ),
                                     (_error) => (
                                         <pre>Error: could not load SeqSet citations.</pre>

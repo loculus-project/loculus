@@ -3,6 +3,7 @@ package org.loculus.backend.controller
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.loculus.backend.api.AccessionVersion
+import org.loculus.backend.api.AddSeqSetCitationRequest
 import org.loculus.backend.api.AdminSeqSetCitation
 import org.loculus.backend.api.AuthorProfile
 import org.loculus.backend.api.CitedBy
@@ -115,6 +116,20 @@ class SeqSetCitationsController(
     @Operation(description = "Get all citations to all SeqSets in this instance. Restricted to super users.")
     @GetMapping("/admin/get-all-seqset-citations")
     fun getAllSeqSetCitations(): List<AdminSeqSetCitation> = seqSetCitationsService.getAllSeqSetCitations()
+
+    @Operation(
+        description = "Manually register a publication or other source as citing one or more SeqSets. " +
+            "Restricted to super users.",
+    )
+    @PostMapping("/admin/add-seqset-citation")
+    fun addSeqSetCitation(@RequestBody body: AddSeqSetCitationRequest): AdminSeqSetCitation =
+        seqSetCitationsService.addCuratedCitation(body)
+
+    @Operation(
+        description = "Delete a manually registered SeqSet citation by its source DOI. Restricted to super users.",
+    )
+    @DeleteMapping("/admin/delete-seqset-citation")
+    fun deleteSeqSetCitation(@RequestParam sourceDOI: String) = seqSetCitationsService.deleteCuratedCitation(sourceDOI)
 
     @Operation(description = "Get sequence citations from publications or other sources")
     @GetMapping("/get-sequence-citations")

@@ -25,6 +25,9 @@ const val MOCK_USER_FIRST_NAME = "Test"
 const val MOCK_USER_LAST_NAME = "User"
 const val MOCK_USER_UNIVERSITY = "Test University"
 const val MOCK_DOI_PREFIX = "10.1234"
+const val MOCK_CITATION_DOI = "10.5678/citing-paper"
+const val MOCK_CITATION_TITLE = "A manually curated paper citing the seqSet"
+const val MOCK_CITATION_YEAR = 2024
 
 class SeqSetCitationsControllerClient(private val mockMvc: MockMvc) {
 
@@ -133,6 +136,39 @@ class SeqSetCitationsControllerClient(private val mockMvc: MockMvc) {
         get("/admin/get-all-seqset-citations")
             .withAuth(jwt),
     )
+
+    fun addSeqSetCitation(
+        sourceDOI: String = MOCK_CITATION_DOI,
+        title: String = MOCK_CITATION_TITLE,
+        year: Int = MOCK_CITATION_YEAR,
+        seqSetAccessionVersions: List<String>,
+        jwt: String? = jwtForSuperUser,
+    ): ResultActions {
+        val accessionVersionsJson = seqSetAccessionVersions.joinToString(",") { "\"$it\"" }
+        return mockMvc.perform(
+            post("/admin/add-seqset-citation")
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(
+                    """{
+                        "source": {
+                            "sourceDOI": "$sourceDOI",
+                            "title": "$title",
+                            "year": $year,
+                            "contributors": [{ "givenName": "Jane", "surname": "Doe" }]
+                        },
+                        "seqSetAccessionVersions": [$accessionVersionsJson]
+                    }""",
+                )
+                .withAuth(jwt),
+        )
+    }
+
+    fun deleteSeqSetCitation(sourceDOI: String = MOCK_CITATION_DOI, jwt: String? = jwtForSuperUser): ResultActions =
+        mockMvc.perform(
+            delete("/admin/delete-seqset-citation")
+                .param("sourceDOI", sourceDOI)
+                .withAuth(jwt),
+        )
 
     fun getSequenceCitations(accession: String = MOCK_SEQ_ACCESSION, version: Long? = MOCK_SEQ_VERSION): ResultActions =
         mockMvc.perform(
