@@ -24,6 +24,7 @@ const CitationList: FC<CitationListProps> = ({ citations, maxDisplayedCitations,
                 fullWidth={false}
                 className='min-h-[60vh]'
             >
+                <div className='w-[1000px]'></div>
                 <CitationTable isLoading={false} error={null} citations={citations} />
             </BaseDialog>
             <ul className='space-y-4'>
