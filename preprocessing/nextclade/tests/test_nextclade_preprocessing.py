@@ -26,6 +26,7 @@ from loculus_preprocessing.config import (
 )
 from loculus_preprocessing.datatypes import (
     AnnotationSourceType,
+    FileIdAndName,
     SegmentClassificationMethod,
     SubmissionData,
     UnprocessedData,
@@ -279,6 +280,46 @@ single_segment_case_definitions = [
                 "VP35EbolaSudan": ebola_sudan_aa(
                     sequence_with_deletion("single", aligned=True), "VP35"
                 ),
+            },
+            aminoAcidInsertions={},
+            sequenceNameToFastaId={"main": "fastaHeader"},
+        ),
+    ),
+    Case(
+        name="with file",
+        input_metadata={},
+        input_files={
+            "raw_reads": [
+                FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
+                FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
+            ]
+        },
+        input_sequence={"fastaHeader": sequence_with_mutation("single")},
+        accession_id="1",
+        expected_metadata={
+            "completeness": 1.0,
+            "totalInsertedNucs": 0,
+            "totalSnps": 1,
+            "totalDeletedNucs": 0,
+            "length": len(consensus_sequence("single")),
+            "nonExistentField": "None",
+            "variant": True,
+        },
+        expected_files={
+            "raw_reads": [
+                FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
+                FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
+            ]
+        },
+        expected_errors=[],
+        expected_warnings=[],
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
+            alignedNucleotideSequences={"main": sequence_with_mutation("single")},
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={
+                "NPEbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "NP"),
+                "VP35EbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "VP35"),
             },
             aminoAcidInsertions={},
             sequenceNameToFastaId={"main": "fastaHeader"},
@@ -1285,6 +1326,7 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
                 "ebola-sudan": sequence_with_mutation("ebola-sudan"),
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
+            files=None,
         ),
     )
 
@@ -1299,6 +1341,7 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
             unalignedNucleotideSequences={
                 "ebola-sudan": sequence_with_mutation("ebola-sudan"),
             },
+            files=None,
         ),
     )
 
@@ -1332,6 +1375,7 @@ def test_preprocessing_without_metadata() -> None:
                 "ebola-sudan": sequence_with_mutation("ebola-sudan"),
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
+            files=None,
         ),
     )
 
@@ -1455,6 +1499,7 @@ def test_create_flatfile():
                 "authors": "Smith, Doe A;",
             },
             unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
+            files=None,
         ),
     )
 
