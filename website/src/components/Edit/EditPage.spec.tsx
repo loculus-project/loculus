@@ -65,7 +65,7 @@ describe('EditPage', () => {
     test('should render the form with submit button', async () => {
         renderEditPage();
 
-        const submitButton = screen.getByRole('button', { name: 'Upload and proceed to Approval' });
+        const submitButton = screen.getByRole('button', { name: 'Submit edits and proceed to Approval' });
         expect(submitButton).toBeInTheDocument();
 
         await userEvent.click(submitButton);
