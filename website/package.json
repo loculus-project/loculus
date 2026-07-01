@@ -64,7 +64,7 @@
     },
     "devDependencies": {
         "@astrojs/check": "^0.9.9",
-        "@astrojs/react": "^5.0.7",
+        "@astrojs/react": "^6.0.0",
         "@emotion/styled": "^11.14.1",
         "@eslint/js": "^9.39.2",
         "@iconify/json": "^2.2.490",
