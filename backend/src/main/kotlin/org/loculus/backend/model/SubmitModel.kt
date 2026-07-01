@@ -17,6 +17,7 @@ import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.service.submission.SubmissionIdFilesMappingPreconditionValidator
+import org.loculus.backend.service.submission.SubmissionMetrics
 import org.loculus.backend.service.submission.UploadDatabaseService
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.FastaReader
@@ -35,6 +36,10 @@ const val FASTA_IDS_SEPARATOR = " "
 
 const val ACCESSION_HEADER = "accession"
 private val log = KotlinLogging.logger { }
+private const val SUBMIT_ENDPOINT = "submit"
+private const val REVISE_ENDPOINT = "revise"
+private const val COPY_TO_AUX_TABLE_PHASE = "copy-to-aux-table"
+private const val INSERT_SEQUENCE_ENTRIES_PHASE = "insert-sequence-entries"
 
 typealias SubmissionId = String
 typealias FastaId = String
@@ -85,6 +90,7 @@ class SubmitModel(
     private val submissionIdFilesMappingPreconditionValidator: SubmissionIdFilesMappingPreconditionValidator,
     private val dateProvider: DateProvider,
     private val backendConfig: BackendConfig,
+    private val submissionMetrics: SubmissionMetrics,
 ) {
 
     companion object AcceptedFileTypes {
@@ -106,6 +112,8 @@ class SubmitModel(
         submissionParams: SubmissionParams,
         batchSize: Int = 1000,
     ): List<SubmissionIdMapping> = try {
+        val endpoint = submissionParams.uploadType.metricEndpoint()
+
         log.info {
             "Processing submission (type: ${submissionParams.uploadType.name}) with uploadId $uploadId"
         }
@@ -117,11 +125,16 @@ class SubmitModel(
             .validateMultipartUploads(submissionParams.files)
             .validateFilesExist(submissionParams.files)
 
-        insertDataIntoAux(
-            uploadId,
-            submissionParams,
-            batchSize,
-        )
+        val copyToAuxTableSample = submissionMetrics.startTimer()
+        try {
+            insertDataIntoAux(
+                uploadId,
+                submissionParams,
+                batchSize,
+            )
+        } finally {
+            submissionMetrics.recordWritePhase(copyToAuxTableSample, endpoint, COPY_TO_AUX_TABLE_PHASE)
+        }
 
         val metadataSubmissionIds = uploadDatabaseService.getMetadataUploadSubmissionIds(uploadId).toSet()
         if (requiresConsensusSequenceFile(submissionParams.organism)) {
@@ -156,7 +169,17 @@ class SubmitModel(
         }
 
         log.debug { "Persisting submission with uploadId $uploadId" }
-        uploadDatabaseService.mapAndCopy(uploadId, submissionParams)
+        val insertSequenceEntriesSample = submissionMetrics.startTimer()
+        val submissionIdMappings = try {
+            uploadDatabaseService.mapAndCopy(uploadId, submissionParams)
+        } finally {
+            submissionMetrics.recordWritePhase(insertSequenceEntriesSample, endpoint, INSERT_SEQUENCE_ENTRIES_PHASE)
+        }
+        submissionMetrics.recordUploadedSequences(
+            organism = submissionParams.organism.name,
+            count = submissionIdMappings.size,
+        )
+        submissionIdMappings
     } finally {
         uploadDatabaseService.deleteUploadData(uploadId)
     }
@@ -418,4 +441,9 @@ class SubmitModel(
         .schema
         .submissionDataTypes
         .consensusSequences
+
+    private fun UploadType.metricEndpoint() = when (this) {
+        UploadType.ORIGINAL -> SUBMIT_ENDPOINT
+        UploadType.REVISION -> REVISE_ENDPOINT
+    }
 }

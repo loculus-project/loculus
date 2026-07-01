@@ -106,6 +106,8 @@ import java.util.Locale
 import kotlin.time.Instant
 
 private val log = KotlinLogging.logger { }
+private const val SUBMIT_PROCESSED_DATA_ENDPOINT = "submit-processed-data"
+private const val STORE_PREPROCESSED_DATA_PHASE = "store-preprocessed-data"
 
 @Service
 @Transactional
@@ -124,6 +126,7 @@ class SubmissionDatabaseService(
     private val processedDataPostprocessor: ProcessedDataPostprocessor,
     private val auditLogger: AuditLogger,
     private val dateProvider: DateProvider,
+    private val submissionMetrics: SubmissionMetrics,
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
 ) {
     private var lastPreprocessedDataUpdate: String? = null
@@ -270,6 +273,16 @@ class SubmissionDatabaseService(
     }
 
     fun updateProcessedData(inputStream: InputStream, organism: Organism, pipelineVersion: Long) {
+        val sample = submissionMetrics.startTimer()
+
+        try {
+            updateProcessedDataAndRecordCount(inputStream, organism, pipelineVersion)
+        } finally {
+            submissionMetrics.recordWritePhase(sample, SUBMIT_PROCESSED_DATA_ENDPOINT, STORE_PREPROCESSED_DATA_PHASE)
+        }
+    }
+
+    private fun updateProcessedDataAndRecordCount(inputStream: InputStream, organism: Organism, pipelineVersion: Long) {
         log.info { "updating processed data" }
 
         val processedAccessionVersions = mutableListOf<String>()
@@ -322,6 +335,11 @@ class SubmissionDatabaseService(
                 processedAccessionVersions.joinToString() +
                 "Processing result counts: " +
                 processingResultCounts.entries.joinToString { "${it.key}=${it.value}" },
+        )
+
+        submissionMetrics.recordProcessedSequencesStored(
+            organism = organism.name,
+            count = processedAccessionVersions.size,
         )
     }
 
