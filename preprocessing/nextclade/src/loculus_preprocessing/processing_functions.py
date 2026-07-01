@@ -1154,10 +1154,8 @@ class ProcessingFunctions:
             )
 
         regex_pattern = args.get("regex_pattern")
-        if (
-            regex_pattern is not None
-            and "identifier" not in re.compile(str(regex_pattern)).groupindex
-        ):
+        regex_pattern = str(regex_pattern) if regex_pattern is not None else None
+        if regex_pattern is not None and "identifier" not in re.compile(regex_pattern).groupindex:
             return raw_internal_error(
                 "If provided, 'regex_pattern' must contain a named capture group called 'identifier'."
             )
@@ -1169,12 +1167,12 @@ class ProcessingFunctions:
             return [replacement if v == "IDENTIFIER" else v for v in values]
 
         insdc_ingested = bool(args["is_insdc_ingest_group"])
-        pattern = str(regex_pattern) if regex_pattern is not None else None
 
-        # Try specimenCollectorSampleId first, fall back to submissionId.
-        identifier = parse_identifier_string(collector_id, insdc_ingested, pattern)
-        if identifier is None:
-            identifier = parse_identifier_string(submission_id, insdc_ingested, pattern)
+        # Try to parse the specimenCollectorSampleId first
+        identifier = parse_identifier_string(collector_id, insdc_ingested, regex_pattern)
+        if identifier is None and not insdc_ingested:
+            # For direct submissions only: try to parse the submissionId
+            identifier = parse_identifier_string(submission_id, insdc_ingested, regex_pattern)
 
         if identifier is not None:
             # We were able to parse an IDENTIFIER, treat it as a string
@@ -1189,7 +1187,7 @@ class ProcessingFunctions:
                         [output_field],
                         AnnotationSourceType.METADATA,
                         message=(
-                            f"specimencollectorSampleId '{collector_id}' and submissionId"
+                            f"specimenCollectorSampleId '{collector_id}' and submissionId"
                             f" '{submission_id}' could not be parsed, using ACCESSION_VERSION"
                             f" in displayName instead"
                         ),
