@@ -66,7 +66,7 @@ class SubmissionMetrics(private val meterRegistry: MeterRegistry) {
         const val READ_PHASE_DURATION_TIMER = "loculus.read.phase.duration"
 
         const val ORGANISM_TAG = "organism"
-        const val ENDPOINT_TAG = "endpoint"
+        const val ENDPOINT_TAG = "operation"
         const val PHASE_TAG = "phase"
     }
 }
