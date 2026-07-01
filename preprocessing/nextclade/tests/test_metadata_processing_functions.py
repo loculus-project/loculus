@@ -1,4 +1,6 @@
 # ruff: noqa: S101
+from dataclasses import dataclass, field
+
 import pytest
 from factory_methods import (
     Case,
@@ -1176,238 +1178,253 @@ def test_parse_date_into_range() -> None:
     ), "dateRangeUpper: lucene range upper bound should be tightened by submittedAt."
 
 
-def test_concatenate() -> None:
-    assert (
-        ProcessingFunctions.concatenate(
-            {"date": "2021-01-01/2021-12-31", "country": "USA"},
-            "field_name",
-            ["date", "country"],
-            {
-                "type": ["dateRangeString", "string"],
-                "order": ["date", "country"],
-                "ACCESSION_VERSION": "version.1",
-            },
-        ).datum
-        == "2021-01-01_TO_2021-12-31/USA"
-    ), "ISO date range is converted to lucene format for displayNames."
-    input_data: InputMetadata = {
-        "someInt": "",
-        "geoLocCountry": "",
-        "sampleCollectionDate": "2025",
-    }
-    output_field: str = "displayName"
-    input_fields: list[str] = ["geoLocCountry", "sampleCollectionDate"]
-    args: FunctionArgs = {
-        "ACCESSION_VERSION": "version.1",
-        "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
-        "type": ["integer", "string", "ACCESSION_VERSION", "date"],
-    }
-    args_no_accession_version: FunctionArgs = {
-        "ACCESSION_VERSION": "version.1",
-        "order": ["someInt", "geoLocCountry", "sampleCollectionDate"],
-        "type": ["integer", "string", "date"],
-        "fallback_value": "unknown",
-    }
+@dataclass
+class ConcatenateCase:
+    name: str
+    input_data: InputMetadata
+    input_fields: list[str]
+    concatenate_args: FunctionArgs
+    expected: str
 
-    res_no_fallback_no_int = ProcessingFunctions.concatenate(
-        input_data,
-        output_field,
-        input_fields,
-        args,
+
+concatenate_cases = [
+    ConcatenateCase(
+        name="date_range_converted_to_lucene",
+        input_data={"date": "2021-01-01/2021-12-31", "country": "USA"},
+        input_fields=["date", "country"],
+        concatenate_args={
+            "ACCESSION_VERSION": "accession.1",
+            "order": ["date", "country"],
+            "type": ["dateRangeString", "string"],
+        },
+        expected="2021-01-01_TO_2021-12-31/USA",
+    ),
+    ConcatenateCase(
+        name="empty_int_field_skipped",
+        input_data={"someInt": "", "geoLocCountry": "", "sampleCollectionDate": "2025"},
+        input_fields=["geoLocCountry", "sampleCollectionDate"],
+        concatenate_args={
+            "ACCESSION_VERSION": "accession.1",
+            "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
+            "type": ["integer", "string", "ACCESSION_VERSION", "date"],
+        },
+        expected="accession.1/2025-01-01",
+    ),
+    ConcatenateCase(
+        name="present_int_field_and_empty_string_field_with_no_fallback",
+        input_data={"someInt": "0", "geoLocCountry": "", "sampleCollectionDate": "2025"},
+        input_fields=["geoLocCountry", "sampleCollectionDate"],
+        concatenate_args={
+            "ACCESSION_VERSION": "accession.1",
+            "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
+            "type": ["integer", "string", "ACCESSION_VERSION", "date"],
+        },
+        expected="0//accession.1/2025-01-01",
+    ),
+    ConcatenateCase(
+        name="empty_string_field_uses_fallback_value",
+        input_data={"someInt": "0", "geoLocCountry": "", "sampleCollectionDate": "2025"},
+        input_fields=["geoLocCountry", "sampleCollectionDate"],
+        concatenate_args={
+            "ACCESSION_VERSION": "accession.1",
+            "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
+            "type": ["integer", "string", "ACCESSION_VERSION", "date"],
+            "fallback_value": "unknown",
+        },
+        expected="0/unknown/accession.1/2025-01-01",
+    ),
+    ConcatenateCase(
+        name="accession_version_omitted_from_order",
+        input_data={"someInt": "0", "geoLocCountry": "", "sampleCollectionDate": "2025"},
+        input_fields=["geoLocCountry", "sampleCollectionDate"],
+        concatenate_args={
+            "ACCESSION_VERSION": "accession.1",
+            "order": ["someInt", "geoLocCountry", "sampleCollectionDate"],
+            "type": ["integer", "string", "date"],
+            "fallback_value": "unknown",
+        },
+        expected="0/unknown/2025-01-01",
+    ),
+    ConcatenateCase(
+        name="null_date_field_uses_fallback_value",
+        input_data={"someInt": "0", "geoLocCountry": "", "sampleCollectionDate": None},
+        input_fields=["geoLocCountry", "sampleCollectionDate"],
+        concatenate_args={
+            "ACCESSION_VERSION": "accession.1",
+            "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
+            "type": ["integer", "string", "ACCESSION_VERSION", "date"],
+            "fallback_value": "unknown",
+        },
+        expected="0/unknown/accession.1/unknown",
+    ),
+]
+
+
+@pytest.mark.parametrize("case", concatenate_cases, ids=lambda c: c.name)
+def test_concatenate(case: ConcatenateCase) -> None:
+    result = ProcessingFunctions.concatenate(
+        input_data=case.input_data,
+        output_field="displayName",
+        input_fields=case.input_fields,
+        args=case.concatenate_args,
     )
-
-    input_data["someInt"] = "0"
-    res_no_fallback = ProcessingFunctions.concatenate(
-        input_data,
-        output_field,
-        input_fields,
-        args,
-    )
-
-    args["fallback_value"] = "unknown"
-    res_fallback = ProcessingFunctions.concatenate(
-        input_data,
-        output_field,
-        input_fields,
-        args,
-    )
-
-    res_fallback_no_accession_version = ProcessingFunctions.concatenate(
-        input_data,
-        output_field,
-        input_fields,
-        args_no_accession_version,
-    )
-
-    input_data["sampleCollectionDate"] = None
-    res_fallback_explicit_null = ProcessingFunctions.concatenate(
-        input_data,
-        output_field,
-        input_fields,
-        args,
-    )
-
-    assert res_no_fallback_no_int.datum == "version.1/2025-01-01"
-    assert res_no_fallback.datum == "0//version.1/2025-01-01"
-    assert res_fallback.datum == "0/unknown/version.1/2025-01-01"
-    assert res_fallback_no_accession_version.datum == "0/unknown/2025-01-01"
-    assert res_fallback_explicit_null.datum == "0/unknown/version.1/unknown"
+    assert result.datum == case.expected
 
 
-def test_display_name_construction() -> None:  # noqa: PLR0915
-    submission_id = "mySample"
-    submission_id_formatted = "hDENV1/Germany/myExtractedSample/2025"
-    submission_id_formatted_unexpected = "hDENV1/myExtractedSample/2025"
-    input_data: InputMetadata = {
-        "nextclade.clade": "DENV-1",
-        "geoLocCountry": "Switzerland",
-        "sampleCollectionDate": "2025",
-        "submissionId": submission_id,
-    }
-    output_field: str = "displayName"
+@dataclass
+class DisplayNameCase:
+    name: str
+    specimen_collector_id: str | None
+    submission_id: str
+    geo_loc_country: str
+    extra_args: FunctionArgs = field(default_factory=dict)
+    expected_regular: str = ""
+    expected_insdc: str = ""
+    expected_prefix: str = ""
+    warning_regular: str | None = None
+    warning_insdc: str | None = None
+    warning_prefix: str | None = None
 
-    def input_fields():
-        return [
-            "nextclade.clade",
-            "geoLocCountry",
-            "specimenCollectorSampleId",
-            "submissionId",
-            "sampleCollectionDate",
-        ]
 
-    def args():
+unparseable_identifier_warning = (
+    "specimenCollectorSampleId 'hDENV1/myExtractedSample/2025' and submissionId "
+    "'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION "
+    "in displayName instead"
+)
+
+
+display_name_cases = [
+    DisplayNameCase(
+        name="no_specimen_collector_id",
+        specimen_collector_id=None,
+        submission_id="mySample",
+        geo_loc_country="Switzerland",
+        expected_regular="DENV-1/Switzerland/mySample/2025",
+        expected_insdc="DENV-1/Switzerland/accession.1/2025",
+        expected_prefix="hYF/Switzerland/mySample/2025",
+    ),
+    DisplayNameCase(
+        name="specimen_collector_id_plain",
+        specimen_collector_id="myCollectorSample",
+        submission_id="mySample",
+        geo_loc_country="Switzerland",
+        expected_regular="DENV-1/Switzerland/myCollectorSample/2025",
+        expected_insdc="DENV-1/Switzerland/myCollectorSample/2025",
+        expected_prefix="hYF/Switzerland/myCollectorSample/2025",
+    ),
+    DisplayNameCase(
+        name="specimen_collector_id_matches_regex_extracts_identifier",
+        specimen_collector_id="hDENV1/Germany/myExtractedSample/2025",
+        submission_id="mySample",
+        geo_loc_country="Switzerland",
+        expected_regular="DENV-1/Switzerland/myExtractedSample/2025",
+        expected_insdc="DENV-1/Switzerland/accession.1/2025",  # INSDC skips submissionId
+        expected_prefix="hYF/Switzerland/myExtractedSample/2025",
+    ),
+    DisplayNameCase(
+        name="specimen_collector_id_no_regex_match_falls_back_to_submission_id",
+        specimen_collector_id="hDENV1/myExtractedSample/2025",
+        submission_id="mySample",
+        geo_loc_country="Switzerland",
+        expected_regular="DENV-1/Switzerland/mySample/2025",
+        expected_insdc="DENV-1/Switzerland/accession.1/2025",  # INSDC skips submissionId
+        expected_prefix="hYF/Switzerland/mySample/2025",
+    ),
+    DisplayNameCase(
+        name="both_ids_unparseable_empty_country_uses_accession_version",
+        specimen_collector_id="hDENV1/myExtractedSample/2025",
+        submission_id="hDENV1/myExtractedSample/2025",
+        geo_loc_country="",
+        expected_regular="DENV-1/unknown/accession.1/2025",
+        expected_insdc="DENV-1/unknown/accession.1/2025",
+        expected_prefix="hYF/unknown/accession.1/2025",
+        warning_regular=unparseable_identifier_warning,
+        warning_prefix=unparseable_identifier_warning,
+    ),
+    DisplayNameCase(
+        name="fallback_value_replaces_unknown_country_when_ids_unparseable",
+        specimen_collector_id="hDENV1/myExtractedSample/2025",
+        submission_id="hDENV1/myExtractedSample/2025",
+        geo_loc_country="",
+        extra_args={"fallback_value": "another_fallback"},
+        expected_regular="DENV-1/another_fallback/accession.1/2025",
+        expected_insdc="DENV-1/another_fallback/accession.1/2025",
+        expected_prefix="hYF/another_fallback/accession.1/2025",
+        warning_regular=unparseable_identifier_warning,
+        warning_prefix=unparseable_identifier_warning,
+    ),
+]
+
+
+def _assert_display_name_warnings(warnings: list, expected_message: str | None) -> None:
+    if expected_message is None:
+        assert len(warnings) == 0
+    else:
+        assert len(warnings) == 1
+        assert warnings[0].message == expected_message
+
+
+input_fields = [
+    "nextclade.clade",
+    "geoLocCountry",
+    "specimenCollectorSampleId",
+    "submissionId",
+    "sampleCollectionDate",
+]
+base_args: FunctionArgs = {
+    "ACCESSION_VERSION": "accession.1",
+    "is_insdc_ingest_group": False,
+    "order": ["nextclade.clade", "geoLocCountry", "IDENTIFIER", "sampleCollectionDate"],
+    "type": ["string", "string", "IDENTIFIER", "string"],
+    "regex_pattern": r"^[^\/][^/]*/[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$",
+}
+insdc_args: FunctionArgs = {**base_args, "is_insdc_ingest_group": True}
+prefix_args: FunctionArgs = {
+    **base_args,
+    "order": ["ARG:prefix", "geoLocCountry", "IDENTIFIER", "sampleCollectionDate"],
+    "type": ["ARG:prefix", "string", "IDENTIFIER", "string"],
+    "prefix": "hYF",
+}
+
+
+@pytest.mark.parametrize("case", display_name_cases, ids=lambda c: c.name)
+def test_display_name_construction(case: DisplayNameCase) -> None:
+    def input_data() -> InputMetadata:
+        # make new input data each time: build_display_name mutates
         return {
-            "ACCESSION_VERSION": "version.1",
-            "is_insdc_ingest_group": False,
-            "order": ["nextclade.clade", "geoLocCountry", "IDENTIFIER", "sampleCollectionDate"],
-            "type": ["string", "string", "IDENTIFIER", "string"],
-            "regex_pattern": r"^[^\/][^/]*/[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$",
+            "nextclade.clade": "DENV-1",
+            "geoLocCountry": case.geo_loc_country,
+            "sampleCollectionDate": "2025",
+            "submissionId": case.submission_id,
+            "specimenCollectorSampleId": case.specimen_collector_id,
         }
 
-    def args_with_prefix():
-        return {
-            "ACCESSION_VERSION": "version.1",
-            "is_insdc_ingest_group": False,
-            "order": ["ARG:prefix", "geoLocCountry", "IDENTIFIER", "sampleCollectionDate"],
-            "type": ["ARG:prefix", "string", "IDENTIFIER", "string"],
-            "prefix": "hYF",
-            "regex_pattern": r"^[^\/][^/]*/[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$",
-        }
-
-    def args_insdc():
-        return {
-            "ACCESSION_VERSION": "version.1",
-            "is_insdc_ingest_group": True,
-            "order": ["nextclade.clade", "geoLocCountry", "IDENTIFIER", "sampleCollectionDate"],
-            "type": ["string", "string", "IDENTIFIER", "string"],
-            "regex_pattern": r"^[^\/][^/]*/[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$",
-        }
-
-    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
-    res_insdc = ProcessingFunctions.build_display_name(
-        input_data, output_field, input_fields(), args_insdc()
-    )
-    res_prefix = ProcessingFunctions.build_display_name(
-        input_data, output_field, input_fields(), args_with_prefix()
-    )
-    assert res.datum == "DENV-1/Switzerland/mySample/2025"
-    assert res_insdc.datum == "DENV-1/Switzerland/mySample/2025"
-    assert res_prefix.datum == "hYF/Switzerland/mySample/2025"
-
-    input_data["specimenCollectorSampleId"] = "myCollectorSample"
-    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
-    res_insdc = ProcessingFunctions.build_display_name(
-        input_data, output_field, input_fields(), args_insdc()
-    )
-    res_prefix = ProcessingFunctions.build_display_name(
-        input_data, output_field, input_fields(), args_with_prefix()
-    )
-    assert res.datum == "DENV-1/Switzerland/myCollectorSample/2025"
-    assert res_insdc.datum == "DENV-1/Switzerland/myCollectorSample/2025"
-    assert res_prefix.datum == "hYF/Switzerland/myCollectorSample/2025"
-
-    input_data["specimenCollectorSampleId"] = submission_id_formatted
-    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
-    res_insdc = ProcessingFunctions.build_display_name(
-        input_data, output_field, input_fields(), args_insdc()
-    )
-    res_prefix = ProcessingFunctions.build_display_name(
-        input_data, output_field, input_fields(), args_with_prefix()
-    )
-    assert res.datum == "DENV-1/Switzerland/myExtractedSample/2025"
-    assert res_insdc.datum == "DENV-1/Switzerland/mySample/2025"
-    assert res_prefix.datum == "hYF/Switzerland/myExtractedSample/2025"
-
-    input_data["specimenCollectorSampleId"] = submission_id_formatted_unexpected
-    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
-    res_insdc = ProcessingFunctions.build_display_name(
-        input_data, output_field, input_fields(), args_insdc()
-    )
-    res_prefix = ProcessingFunctions.build_display_name(
-        input_data, output_field, input_fields(), args_with_prefix()
-    )
-    assert res.datum == "DENV-1/Switzerland/mySample/2025"
-    assert res_insdc.datum == "DENV-1/Switzerland/mySample/2025"
-    assert res_prefix.datum == "hYF/Switzerland/mySample/2025"
-
-    input_data["specimenCollectorSampleId"] = submission_id_formatted_unexpected
-    input_data["submissionId"] = submission_id_formatted_unexpected
-    input_data["geoLocCountry"] = ""
-    res = ProcessingFunctions.build_display_name(input_data, output_field, input_fields(), args())
-    res_insdc = ProcessingFunctions.build_display_name(
-        input_data, output_field, input_fields(), args_insdc()
-    )
-    res_prefix = ProcessingFunctions.build_display_name(
-        input_data, output_field, input_fields(), args_with_prefix()
-    )
-    assert res.datum == "DENV-1/unknown/version.1/2025"
-    assert len(res.warnings) == 1
-    assert (
-        res.warnings[0].message
-        == "specimencollectorSampleId 'hDENV1/myExtractedSample/2025' and submissionId 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
-    )
-    assert res_insdc.datum == "DENV-1/unknown/version.1/2025"
-    assert len(res_insdc.warnings) == 0
-    assert res_prefix.datum == "hYF/unknown/version.1/2025"
-    assert len(res_prefix.warnings) == 1
-    assert (
-        res_prefix.warnings[0].message
-        == "specimencollectorSampleId 'hDENV1/myExtractedSample/2025' and submissionId 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
-    )
-
-    input_data["specimenCollectorSampleId"] = submission_id_formatted_unexpected
     res = ProcessingFunctions.build_display_name(
-        input_data,
-        output_field,
-        input_fields(),
-        {"fallback_value": "another_fallback"} | args(),  # type: ignore
+        input_data(),
+        "displayName",
+        input_fields,
+        base_args | case.extra_args,
     )
     res_insdc = ProcessingFunctions.build_display_name(
-        input_data,
-        output_field,
-        input_fields(),
-        {"fallback_value": "another_fallback"} | args_insdc(),  # type: ignore
+        input_data(),
+        "displayName",
+        input_fields,
+        insdc_args | case.extra_args,
     )
     res_prefix = ProcessingFunctions.build_display_name(
-        input_data,
-        output_field,
-        input_fields(),
-        {"fallback_value": "another_fallback"} | args_with_prefix(),  # type: ignore
+        input_data(),
+        "displayName",
+        input_fields,
+        prefix_args | case.extra_args,
     )
-    assert res.datum == "DENV-1/another_fallback/version.1/2025"
-    assert len(res.warnings) == 1
-    assert (
-        res.warnings[0].message
-        == "specimencollectorSampleId 'hDENV1/myExtractedSample/2025' and submissionId 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
-    )
-    assert res_insdc.datum == "DENV-1/another_fallback/version.1/2025"
-    assert len(res_insdc.warnings) == 0
-    assert res_prefix.datum == "hYF/another_fallback/version.1/2025"
-    assert len(res_prefix.warnings) == 1
-    assert (
-        res_prefix.warnings[0].message
-        == "specimencollectorSampleId 'hDENV1/myExtractedSample/2025' and submissionId 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
-    )
+
+    assert res.datum == case.expected_regular
+    assert res_insdc.datum == case.expected_insdc
+    assert res_prefix.datum == case.expected_prefix
+
+    _assert_display_name_warnings(res.warnings, case.warning_regular)
+    _assert_display_name_warnings(res_insdc.warnings, case.warning_insdc)
+    _assert_display_name_warnings(res_prefix.warnings, case.warning_prefix)
 
 
 if __name__ == "__main__":
