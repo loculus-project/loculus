@@ -26,22 +26,20 @@ const CitationList: FC<CitationListProps> = ({ citations, maxDisplayedCitations,
             >
                 <CitationTable isLoading={false} error={null} citations={citations} />
             </BaseDialog>
-            <div className='space-y-2'>
-                <ul className='space-y-4'>
-                    {(maxDisplayedCitations !== undefined ? citations.slice(0, maxDisplayedCitations) : citations).map(
-                        (citation: SeqSetCitation | SequenceCitation) => (
-                            <li key={citation.source.sourceDOI}>
-                                <CitationDetails citation={citation} className='text-sm' displayYear />
-                            </li>
-                        ),
-                    )}
-                </ul>
-                {displayCitationsModalButton && (
-                    <Button className='text-sm hover:underline' onClick={() => setIsOpen(true)}>
-                        View all citations ({citations.length})...
-                    </Button>
+            <ul className='space-y-4'>
+                {(maxDisplayedCitations !== undefined ? citations.slice(0, maxDisplayedCitations) : citations).map(
+                    (citation: SeqSetCitation | SequenceCitation) => (
+                        <li key={citation.source.sourceDOI}>
+                            <CitationDetails citation={citation} className='text-sm' displayYear />
+                        </li>
+                    ),
                 )}
-            </div>
+            </ul>
+            {displayCitationsModalButton && (
+                <Button className='text-sm hover:underline' onClick={() => setIsOpen(true)}>
+                    View all citations ({citations.length})...
+                </Button>
+            )}
         </div>
     );
 };
