@@ -14,7 +14,7 @@ import { type InputField, type SubmissionDataTypes } from '../../types/config.ts
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
-import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { displayConfirmation } from '../ConfirmationDialog.tsx';
 import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
 import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';
@@ -181,7 +181,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                 <Button
                     variant='primary'
                     onClick={() =>
-                        displayConfirmationDialog({
+                        displayConfirmation({
                             dialogText: 'Do you really want to submit?',
                             onConfirmation: submitEditedDataForAccessionVersion,
                         })

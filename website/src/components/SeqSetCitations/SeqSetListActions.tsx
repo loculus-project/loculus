@@ -2,8 +2,8 @@ import { type FC, useState } from 'react';
 
 import { SeqSetForm } from './SeqSetForm';
 import type { ClientConfig } from '../../types/runtimeConfig';
+import { BaseDialog } from '../common/BaseDialog';
 import { Button } from '../common/Button';
-import Modal from '../common/Modal';
 import { withQueryProvider } from '../common/withQueryProvider';
 import AddBoxIcon from '~icons/ic/baseline-library-add';
 
@@ -29,9 +29,17 @@ const SeqSetListActionsInner: FC<SeqSetListActionsProps> = ({ clientConfig, acce
                     Create SeqSet
                 </Button>
             </div>
-            <Modal isModalVisible={createModalVisible} setModalVisible={setCreateModalVisible}>
+            <BaseDialog
+                title=''
+                isOpen={createModalVisible}
+                onClose={() => setCreateModalVisible(false)}
+                fullWidth={false}
+                dismissible={false}
+                className='min-h-[60vh]'
+            >
+                <div className='min-w-[1000px]'></div>
                 <SeqSetForm clientConfig={clientConfig} accessToken={accessToken} />
-            </Modal>
+            </BaseDialog>
         </>
     );
 };

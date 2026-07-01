@@ -12,7 +12,7 @@ import { GROUP_ID_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../..
 import type { Address, Group, GroupDetails } from '../../types/backend.ts';
 import { versionStatuses } from '../../types/lapis.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
-import { displayConfirmationDialog } from '../ConfirmationDialog.js';
+import { displayConfirmation } from '../ConfirmationDialog.js';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { Button } from '../common/Button';
 import { DropdownMenu, DropdownMenuItem } from '../common/DropdownMenu';
@@ -177,7 +177,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                         'You are the last user in this group. Leaving will leave the group without any members, meaning that nobody is able to add future members. ';
                                     const dialogText = `${isLastMember ? lastMemberWarning : ''}Are you sure you want to leave the ${groupName} group?`;
 
-                                    displayConfirmationDialog({
+                                    displayConfirmation({
                                         dialogText,
                                         onConfirmation: async () => {
                                             await removeFromGroup(username);
@@ -287,7 +287,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                     {user.name !== username && (
                                         <Button
                                             onClick={() => {
-                                                displayConfirmationDialog({
+                                                displayConfirmation({
                                                     dialogText: `Are you sure you want to remove ${user.name} from the group ${groupName}?`,
                                                     onConfirmation: async () => {
                                                         await removeFromGroup(user.name);

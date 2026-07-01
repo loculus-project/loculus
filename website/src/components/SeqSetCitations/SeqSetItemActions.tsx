@@ -10,7 +10,7 @@ import type { ClientConfig } from '../../types/runtimeConfig';
 import type { AuthorProfile, SeqSetRecord, SeqSet } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
-import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { displayConfirmation } from '../ConfirmationDialog.tsx';
 import { CitationTable } from './CitationTable.tsx';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { Button } from '../common/Button';
@@ -138,7 +138,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                             variant='outline'
                             className='flex items-center gap-2'
                             onClick={() =>
-                                displayConfirmationDialog({
+                                displayConfirmation({
                                     dialogText: `Are you sure you want to delete this seqSet version?`,
                                     onConfirmation: handleDeleteSeqSet,
                                 })
@@ -155,6 +155,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                 onClose={() => setEditModalVisible(false)}
                 title=''
                 fullWidth={false}
+                dismissible={false}
                 className='min-h-[60vh]'
             >
                 <div className='min-w-[1000px]'></div>

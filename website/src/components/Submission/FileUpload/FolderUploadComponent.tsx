@@ -8,7 +8,7 @@ import type { FilesBySubmissionId } from '../../../types/backend';
 import { type FileCategory } from '../../../types/config';
 import type { ClientConfig } from '../../../types/runtimeConfig';
 import { calculatePartSizeAndCount, splitFileIntoParts, uploadPart } from '../../../utils/multipartUpload';
-import { displayConfirmationDialog } from '../../ConfirmationDialog';
+import { displayConfirmation } from '../../ConfirmationDialog';
 import { Button } from '../../common/Button';
 import type { InputMode } from '../FormOrUploadWrapper';
 import LucideFile from '~icons/lucide/file';
@@ -383,7 +383,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
         // If there are collisions, show a confirmation dialog before proceeding
         if (existingFileCollisions.length > 0) {
-            displayConfirmationDialog({
+            displayConfirmation({
                 dialogText:
                     'The following file(s) already exist and will be replaced: ' +
                     existingFileCollisions.map((file) => file.name).join(', '),
@@ -393,146 +393,154 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         } else void addAdditionalFiles();
     };
 
-    return fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
-        <div
-            className={`flex flex-col items-center justify-center flex-1 py-2 px-4 border rounded-lg ${fileUploadState !== undefined ? 'border-hidden' : isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}
-            onDragEnter={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsDragging(true);
-            }}
-            onDragOver={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsDragging(true);
-            }}
-            onDragLeave={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsDragging(false);
-            }}
-            onDrop={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsDragging(false);
-                toast.info(
-                    'Sorry, drag and drop is not currently supported but you can select an entire folder to upload by clicking the Upload folder button.',
-                );
-            }}
-        >
-            <LucideFolderUp
-                className={`mx-auto mt-4 mb-2 h-12 w-12 text-gray-300`}
-                aria-hidden='true'
-                data-testid='folder-up-icon'
-            />
-            <div>
-                {fileUploadState === undefined ? (
-                    <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-hidden focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
-                        <span
-                            onClick={(e) => {
-                                e.preventDefault();
-                                document.getElementById(fileCategory.name)?.click();
-                            }}
-                        >
-                            Upload folder: {fileCategory.displayName ?? fileCategory.name}
-                        </span>
-                        {isClient && (
-                            <input
-                                id={fileCategory.name}
-                                name={fileCategory.name}
-                                type='file'
-                                className='sr-only'
-                                aria-label={`Upload ${fileCategory.displayName ?? fileCategory.name}`}
-                                data-testid={fileCategory.name}
-                                onChange={handleFolderSelect}
-                                /* The webkitdirectory attribute enables folder selection */
-                                {...{ webkitdirectory: '', directory: '' }}
-                                multiple
-                            />
+    return (
+        <>
+            {fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
+                <div
+                    className={`flex flex-col items-center justify-center flex-1 py-2 px-4 border rounded-lg ${fileUploadState !== undefined ? 'border-hidden' : isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}
+                    onDragEnter={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsDragging(true);
+                    }}
+                    onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsDragging(true);
+                    }}
+                    onDragLeave={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsDragging(false);
+                    }}
+                    onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsDragging(false);
+                        toast.info(
+                            'Sorry, drag and drop is not currently supported but you can select an entire folder to upload by clicking the Upload folder button.',
+                        );
+                    }}
+                >
+                    <LucideFolderUp
+                        className={`mx-auto mt-4 mb-2 h-12 w-12 text-gray-300`}
+                        aria-hidden='true'
+                        data-testid='folder-up-icon'
+                    />
+                    <div>
+                        {fileUploadState === undefined ? (
+                            <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-hidden focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
+                                <span
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        document.getElementById(fileCategory.name)?.click();
+                                    }}
+                                >
+                                    Upload folder: {fileCategory.displayName ?? fileCategory.name}
+                                </span>
+                                {isClient && (
+                                    <input
+                                        id={fileCategory.name}
+                                        name={fileCategory.name}
+                                        type='file'
+                                        className='sr-only'
+                                        aria-label={`Upload ${fileCategory.displayName ?? fileCategory.name}`}
+                                        data-testid={fileCategory.name}
+                                        onChange={handleFolderSelect}
+                                        /* The webkitdirectory attribute enables folder selection */
+                                        {...{ webkitdirectory: '', directory: '' }}
+                                        multiple
+                                    />
+                                )}
+                            </label>
+                        ) : (
+                            <p>Preparing upload ...</p>
                         )}
-                    </label>
-                ) : (
-                    <p>Preparing upload ...</p>
-                )}
-            </div>
-            <p className='text-sm pt-2 leading-5 text-gray-600'>Upload an entire folder of files</p>
-        </div>
-    ) : (
-        <div className='flex flex-col text-left px-4 py-3'>
-            <div className='flex justify-between items-center mb-3'>
-                <div>
-                    <h3 className='text-sm font-medium'>Files</h3>
-                    {inputMode === 'form'
-                        ? fileUploadState.files[formSubmissionId ?? DUMMY_SUBMISSION_ID].map((file) => (
-                              <div key={file.name} className='flex items-center mb-2 gap-2'>
-                                  <div className='flex-1 min-w-0'>
-                                      <FileListItem file={file} />
-                                  </div>
-                                  <Button
-                                      onClick={() => handleDiscardFile(formSubmissionId ?? DUMMY_SUBMISSION_ID, file)}
-                                      disabled={fileUploadState.type !== 'uploadCompleted'}
-                                      data-testid={`discard_${fileCategory.name}_${file.name}`}
-                                      variant='outline-neutral'
-                                      className='font-normal!'
-                                      size='sm'
-                                  >
-                                      Discard file
-                                  </Button>
-                              </div>
-                          ))
-                        : Object.entries(fileUploadState.files).flatMap(([submissionId, files]) => [
-                              <h4 key={submissionId} className='text-xs font-medium py-2'>
-                                  {submissionId}
-                              </h4>,
-                              ...files.map((file) => <FileListItem key={`${submissionId}/${file.name}`} file={file} />),
-                          ])}
-                    <ul></ul>
+                    </div>
+                    <p className='text-sm pt-2 leading-5 text-gray-600'>Upload an entire folder of files</p>
                 </div>
-            </div>
+            ) : (
+                <div className='flex flex-col text-left px-4 py-3'>
+                    <div className='flex justify-between items-center mb-3'>
+                        <div>
+                            <h3 className='text-sm font-medium'>Files</h3>
+                            {inputMode === 'form'
+                                ? fileUploadState.files[formSubmissionId ?? DUMMY_SUBMISSION_ID].map((file) => (
+                                      <div key={file.name} className='flex items-center mb-2 gap-2'>
+                                          <div className='flex-1 min-w-0'>
+                                              <FileListItem file={file} />
+                                          </div>
+                                          <Button
+                                              onClick={() =>
+                                                  handleDiscardFile(formSubmissionId ?? DUMMY_SUBMISSION_ID, file)
+                                              }
+                                              disabled={fileUploadState.type !== 'uploadCompleted'}
+                                              data-testid={`discard_${fileCategory.name}_${file.name}`}
+                                              variant='outline-neutral'
+                                              className='font-normal!'
+                                              size='sm'
+                                          >
+                                              Discard file
+                                          </Button>
+                                      </div>
+                                  ))
+                                : Object.entries(fileUploadState.files).flatMap(([submissionId, files]) => [
+                                      <h4 key={submissionId} className='text-xs font-medium py-2'>
+                                          {submissionId}
+                                      </h4>,
+                                      ...files.map((file) => (
+                                          <FileListItem key={`${submissionId}/${file.name}`} file={file} />
+                                      )),
+                                  ])}
+                            <ul></ul>
+                        </div>
+                    </div>
 
-            <div className={`grid gap-2 w-full ${inputMode === 'form' ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                {inputMode === 'form' && (
-                    <>
-                        {isClient && (
-                            <input
-                                id={`${fileCategory.name}_add`}
-                                type='file'
-                                className='sr-only'
-                                aria-label={`Add files to ${fileCategory.displayName ?? fileCategory.name}`}
-                                data-testid={`add_${fileCategory.name}`}
-                                onChange={handleAddAdditionalFiles}
-                                multiple
-                            />
+                    <div className={`grid gap-2 w-full ${inputMode === 'form' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                        {inputMode === 'form' && (
+                            <>
+                                {isClient && (
+                                    <input
+                                        id={`${fileCategory.name}_add`}
+                                        type='file'
+                                        className='sr-only'
+                                        aria-label={`Add files to ${fileCategory.displayName ?? fileCategory.name}`}
+                                        data-testid={`add_${fileCategory.name}`}
+                                        onChange={handleAddAdditionalFiles}
+                                        multiple
+                                    />
+                                )}
+                                <Button
+                                    onClick={() => document.getElementById(`${fileCategory.name}_add`)?.click()}
+                                    disabled={fileUploadState.type !== 'uploadCompleted'}
+                                    data-testid={`add_button_${fileCategory.name}`}
+                                    variant='outline-neutral'
+                                    className='font-normal!'
+                                    size='sm'
+                                >
+                                    Add additional files
+                                </Button>
+                            </>
                         )}
                         <Button
-                            onClick={() => document.getElementById(`${fileCategory.name}_add`)?.click()}
-                            disabled={fileUploadState.type !== 'uploadCompleted'}
-                            data-testid={`add_button_${fileCategory.name}`}
+                            onClick={() =>
+                                displayConfirmation({
+                                    dialogText: 'Are you sure you want to discard all files?',
+                                    confirmButtonText: 'Discard',
+                                    onConfirmation: handleDiscardAllFiles,
+                                })
+                            }
+                            data-testid={`discard_${fileCategory.name}`}
                             variant='outline-neutral'
                             className='font-normal!'
                             size='sm'
                         >
-                            Add additional files
+                            Discard all files
                         </Button>
-                    </>
-                )}
-                <Button
-                    onClick={() =>
-                        displayConfirmationDialog({
-                            dialogText: 'Are you sure you want to discard all files?',
-                            confirmButtonText: 'Discard',
-                            onConfirmation: handleDiscardAllFiles,
-                        })
-                    }
-                    data-testid={`discard_${fileCategory.name}`}
-                    variant='outline-neutral'
-                    className='font-normal!'
-                    size='sm'
-                >
-                    Discard all files
-                </Button>
-            </div>
-        </div>
+                    </div>
+                </div>
+            )}
+        </>
     );
 };
 

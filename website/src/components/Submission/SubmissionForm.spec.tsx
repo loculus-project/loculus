@@ -8,6 +8,7 @@ import { SubmissionForm } from './SubmissionForm';
 import { mockRequest, testAccessToken, testConfig, testGroups, testOrganism } from '../../../vitest.setup.ts';
 import { SUBMISSION_ID_INPUT_FIELD } from '../../settings.ts';
 import type { Group, ProblemDetail, SubmissionIdMapping } from '../../types/backend.ts';
+import { ConfirmDialogContainer } from '../ConfirmationDialog.tsx';
 
 vi.mock('../../api', () => ({
     getClientLogger: () => ({
@@ -50,31 +51,34 @@ function renderSubmissionForm({
     dataUseTermsEnabled?: boolean;
 } = {}) {
     return render(
-        <SubmissionForm
-            instanceName={INSTANCE_NAME}
-            inputMode={inputMode}
-            accessToken={testAccessToken}
-            organism={testOrganism}
-            clientConfig={testConfig.public}
-            group={group}
-            metadataTemplateFields={
-                new Map([
-                    [
-                        'fooSection',
+        <>
+            <SubmissionForm
+                instanceName={INSTANCE_NAME}
+                inputMode={inputMode}
+                accessToken={testAccessToken}
+                organism={testOrganism}
+                clientConfig={testConfig.public}
+                group={group}
+                metadataTemplateFields={
+                    new Map([
                         [
-                            { name: SUBMISSION_ID_INPUT_FIELD, displayName: 'ID', noEdit: true },
-                            { name: 'foo', displayName: 'Foo' },
-                            { name: 'bar', displayName: 'Bar' },
+                            'fooSection',
+                            [
+                                { name: SUBMISSION_ID_INPUT_FIELD, displayName: 'ID', noEdit: true },
+                                { name: 'foo', displayName: 'Foo' },
+                                { name: 'bar', displayName: 'Bar' },
+                            ],
                         ],
-                    ],
-                ])
-            }
-            submissionDataTypes={{
-                consensusSequences: allowSubmissionOfConsensusSequences,
-                maxSequencesPerEntry: 1,
-            }}
-            dataUseTermsEnabled={dataUseTermsEnabled}
-        />,
+                    ])
+                }
+                submissionDataTypes={{
+                    consensusSequences: allowSubmissionOfConsensusSequences,
+                    maxSequencesPerEntry: 1,
+                }}
+                dataUseTermsEnabled={dataUseTermsEnabled}
+            />
+            <ConfirmDialogContainer />
+        </>,
     );
 }
 

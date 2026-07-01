@@ -23,7 +23,7 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
-import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { displayConfirmation } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button';
 import { Checkbox } from '../common/Checkbox';
 import { Spinner } from '../common/Spinner';
@@ -137,7 +137,7 @@ const InnerDataUploadForm = ({
         };
 
         if (action === 'submit' && dataUseTermsEnabled && dataUseTermsType === openDataUseTermsOption) {
-            displayConfirmationDialog({
+            displayConfirmation({
                 dialogText:
                     'You have selected the Open Data Use Terms. Once released under the Open Data Use Terms sequences will be deposited to INSDC and cannot be changed to the Restricted-Use Data Use Terms.',
                 confirmButtonText: 'Continue under Open terms',

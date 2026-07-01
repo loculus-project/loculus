@@ -24,7 +24,7 @@ import {
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
-import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { displayConfirmation } from '../ConfirmationDialog.tsx';
 import { getLastApprovalTimeKey } from '../SearchPage/RecentSequencesBanner.tsx';
 import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';
@@ -274,7 +274,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                                     <Button
                                         className={menuItemClassName}
                                         onClick={() =>
-                                            displayConfirmationDialog({
+                                            displayConfirmation({
                                                 dialogText:
                                                     'Are you sure you want to discard all sequences with errors?',
                                                 confirmButtonText: 'Discard',
@@ -296,7 +296,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                                 <Button
                                     className={menuItemClassName}
                                     onClick={() =>
-                                        displayConfirmationDialog({
+                                        displayConfirmation({
                                             dialogText: `Are you sure you want to discard all ${processedCount} processed sequences?`,
                                             confirmButtonText: 'Discard',
                                             onConfirmation: () => {
@@ -320,7 +320,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                 <Button
                     className='border rounded-md p-1 bg-primary-600 text-white px-2'
                     onClick={() =>
-                        displayConfirmationDialog({
+                        displayConfirmation({
                             dialogText: 'Are you sure you want to approve all valid sequences for release?',
                             confirmButtonText: 'Approve',
                             onConfirmation: () => {
@@ -351,7 +351,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                             sequenceEntryStatus={sequence}
                             metadataDisplayNames={metadataDisplayNames}
                             approveAccessionVersion={() =>
-                                displayConfirmationDialog({
+                                displayConfirmation({
                                     dialogText: `Are you sure you want to approve ${getAccessionVersionString(sequence)}?`,
                                     confirmButtonText: 'Approve',
                                     onConfirmation: () => {
@@ -365,7 +365,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                                 })
                             }
                             deleteAccessionVersion={() =>
-                                displayConfirmationDialog({
+                                displayConfirmation({
                                     dialogText: `Are you sure you want to discard ${getAccessionVersionString(sequence)}?`,
                                     confirmButtonText: 'Discard',
                                     onConfirmation: () => {
