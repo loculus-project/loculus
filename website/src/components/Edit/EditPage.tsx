@@ -177,7 +177,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                     />
                 </div>
             )}
-            <div className='flex items-center gap-4 mt-4'>
+            <div className='flex justify-end gap-x-6'>
                 <Button
                     variant='primary'
                     onClick={() =>
@@ -189,7 +189,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                     disabled={isPending}
                 >
                     {isPending && <Spinner size='sm' className='mr-2' />}
-                    Submit
+                    Upload and proceed to Approval
                 </Button>
             </div>
         </>

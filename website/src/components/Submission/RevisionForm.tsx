@@ -3,7 +3,7 @@ import { toast } from 'react-toastify';
 
 import { DataUploadForm } from './DataUploadForm.tsx';
 import type { InputMode } from './FormOrUploadWrapper.tsx';
-import { InlineRevisionForm } from './InlineRevisionForm.tsx';
+import { IndividualRevisionForm } from './IndividualRevisionForm.tsx';
 import { routes } from '../../routes/routes.ts';
 import { type Group } from '../../types/backend.ts';
 import type { InputField } from '../../types/config.ts';
@@ -38,7 +38,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
     return (
         <div className='flex flex-col items-center'>
             {inputMode === 'form' ? (
-                <InlineRevisionForm
+                <IndividualRevisionForm
                     accessToken={accessToken}
                     organism={organism}
                     clientConfig={clientConfig}
