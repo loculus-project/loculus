@@ -153,21 +153,6 @@ data class AddSeqSetCitationRequest(
 
 data class ResponseSeqSet(val seqSetId: String, val seqSetVersion: Long)
 
-data class CitedBy(
-    @Schema(
-        description = "The years in which the SeqSet or sequence was cited.",
-        type = "array",
-        example = "[2000, 2001, 2002]",
-    )
-    val years: MutableList<Long>,
-    @Schema(
-        description = "The number of citations per year.",
-        type = "array",
-        example = "[1, 2, 3]",
-    )
-    val citations: MutableList<Long>,
-)
-
 data class AuthorProfile(
     val username: String,
     val firstName: String,

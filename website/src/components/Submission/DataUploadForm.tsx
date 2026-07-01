@@ -68,7 +68,7 @@ const InnerDataUploadForm = ({
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
     const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(undefined);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
-    const [restrictedUntil, setRestrictedUntil] = useState(dateTimeInMonths(6));
+    const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
     const [agreedToINSDCUploadTerms, setAgreedToINSDCUploadTerms] = useState(false);
 
@@ -185,6 +185,7 @@ const InnerDataUploadForm = ({
                             clientConfig={clientConfig}
                             groupId={group.groupId}
                             onError={onError}
+                            fileMapping={fileMapping}
                             setFileMapping={setFileMapping}
                         />
                         <hr />
@@ -284,7 +285,9 @@ export const ExtraFilesUpload = ({
     inputMode,
     groupId,
     fileCategories,
+    fileMapping,
     setFileMapping,
+    formSubmissionId,
     onError,
 }: {
     accessToken: string;
@@ -292,7 +295,9 @@ export const ExtraFilesUpload = ({
     inputMode: InputMode;
     groupId: number;
     fileCategories: FileCategory[];
+    fileMapping: FilesBySubmissionId | undefined;
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
+    formSubmissionId?: string;
     onError: (message: string) => void;
 }) => {
     return (
@@ -315,7 +320,9 @@ export const ExtraFilesUpload = ({
                         clientConfig={clientConfig}
                         groupId={groupId}
                         onError={onError}
+                        fileMapping={fileMapping}
                         setFileMapping={setFileMapping}
+                        formSubmissionId={formSubmissionId}
                     />
                 ))}
             </div>

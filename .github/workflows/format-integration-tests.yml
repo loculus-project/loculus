@@ -17,12 +17,12 @@ jobs:
         working-directory: ./integration-tests
     
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version-file: integration-tests/.nvmrc
           cache: 'npm'
           cache-dependency-path: integration-tests/package-lock.json
       

@@ -6,7 +6,6 @@ import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AddSeqSetCitationRequest
 import org.loculus.backend.api.AdminSeqSetCitation
 import org.loculus.backend.api.AuthorProfile
-import org.loculus.backend.api.CitedBy
 import org.loculus.backend.api.ResponseSeqSet
 import org.loculus.backend.api.SeqSet
 import org.loculus.backend.api.SeqSetCitation
@@ -21,7 +20,6 @@ import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.config.ENABLE_SEQSETS_TRUE_VALUE
 import org.loculus.backend.service.KeycloakAdapter
 import org.loculus.backend.service.seqsetcitations.SeqSetCitationsDatabaseService
-import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -41,7 +39,6 @@ import org.springframework.web.bind.annotation.RestController
 )
 class SeqSetCitationsController(
     private val seqSetCitationsService: SeqSetCitationsDatabaseService,
-    private val submissionDatabaseService: SubmissionDatabaseService,
     private val keycloakAdapter: KeycloakAdapter,
 ) {
     @Operation(description = "Get a SeqSet")
@@ -100,13 +97,6 @@ class SeqSetCitationsController(
         @RequestParam seqSetId: String,
         @RequestParam version: Long,
     ): ResponseSeqSet = seqSetCitationsService.createSeqSetDOI(authenticatedUser, seqSetId, version)
-
-    @Operation(description = "Get count of user sequences cited by SeqSets")
-    @GetMapping("/get-user-cited-by-seqset")
-    fun getUserCitedBySeqSet(@HiddenParam authenticatedUser: AuthenticatedUser): CitedBy =
-        seqSetCitationsService.getUserCitedBySeqSet(
-            submissionDatabaseService.getApprovedUserAccessionVersions(authenticatedUser),
-        )
 
     @Operation(description = "Get citations for a SeqSet from publications or other sources")
     @GetMapping("/get-seqset-citations")
