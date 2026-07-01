@@ -47,7 +47,7 @@ sequenceTest(
             buffer: Buffer.from('>S description\n' + CCHF_S_SEGMENT_FULL_SEQUENCE),
         });
 
-        await page.getByRole('button', { name: 'Submit' }).click();
+        await page.getByRole('button', { name: /proceed to Approval/ }).click();
         await page.getByRole('button', { name: 'Confirm' }).click();
 
         const reviewPage = new ReviewPage(page);
