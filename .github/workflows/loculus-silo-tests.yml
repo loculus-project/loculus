@@ -21,7 +21,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install .[test]
-      - uses: dtolnay/rust-toolchain@1.92
+      - uses: dtolnay/rust-toolchain@1.100
       - name: build rust binary
         run: |
           REPO=https://github.com/GenSpectrum/LAPIS-SILO.git
