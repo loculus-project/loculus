@@ -6,14 +6,12 @@ import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.LikePattern
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.like
-import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.batchInsert
@@ -29,7 +27,6 @@ import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AuthorProfile
 import org.loculus.backend.api.CitationOrigin
 import org.loculus.backend.api.CitationSource
-import org.loculus.backend.api.CitedBy
 import org.loculus.backend.api.ResponseSeqSet
 import org.loculus.backend.api.SeqSet
 import org.loculus.backend.api.SeqSetCitation
@@ -440,73 +437,6 @@ class SeqSetCitationsDatabaseService(
 
         // Return upserted citation sources
         return CitationSourcesUpdateResult(matchedSources.mapTo(mutableSetOf()) { it.source.sourceDOI })
-    }
-
-    fun getUserCitedBySeqSet(accessionVersions: List<AccessionVersion>): CitedBy {
-        log.info { "Get user cited by seqSet" }
-
-        data class SeqSetWithAccession(
-            val accession: String,
-            val seqSetId: String,
-            val seqSetVersion: Long,
-            val createdAt: Timestamp,
-        )
-
-        val userAccessionStrings = accessionVersions
-            .flatMap { listOf(it.accession, it.displayAccessionVersion()) }
-            .toSet()
-
-        val maxSeqSetVersion = SeqSetsTable.seqSetVersion.max().alias("max_version")
-        val maxVersionPerSeqSet = SeqSetsTable
-            .select(SeqSetsTable.seqSetId, maxSeqSetVersion)
-            .groupBy(SeqSetsTable.seqSetId)
-            .alias("maxVersionPerSeqSet")
-
-        val latestSeqSetWithUserAccession = SeqSetRecordsTable
-            .innerJoin(SeqSetToRecordsTable)
-            .innerJoin(SeqSetsTable)
-            .join(
-                maxVersionPerSeqSet,
-                JoinType.INNER,
-                additionalConstraint = {
-                    (SeqSetToRecordsTable.seqSetId eq maxVersionPerSeqSet[SeqSetsTable.seqSetId]) and
-                        (SeqSetToRecordsTable.seqSetVersion eq maxVersionPerSeqSet[maxSeqSetVersion])
-                },
-            )
-            .selectAll()
-            .where { (SeqSetRecordsTable.accession inList userAccessionStrings) }
-            .map {
-                SeqSetWithAccession(
-                    it[SeqSetRecordsTable.accession],
-                    it[SeqSetToRecordsTable.seqSetId],
-                    it[SeqSetToRecordsTable.seqSetVersion],
-                    Timestamp.valueOf(it[SeqSetsTable.createdAt].toJavaLocalDateTime()),
-                )
-            }
-
-        val citedBy = CitedBy(
-            mutableListOf(),
-            mutableListOf(),
-        )
-
-        val uniqueSeqSetIds = latestSeqSetWithUserAccession.map { it.seqSetId }.toSet()
-        for (seqSetId in uniqueSeqSetIds) {
-            val year = latestSeqSetWithUserAccession
-                .first { it.seqSetId == seqSetId }
-                .createdAt.toLocalDateTime().year.toLong()
-            if (citedBy.years.contains(year)) {
-                val index = citedBy.years.indexOf(year)
-                while (index >= citedBy.citations.size) {
-                    citedBy.citations.add(0)
-                }
-                citedBy.citations[index] = citedBy.citations[index] + 1
-            } else {
-                citedBy.years.add(year)
-                citedBy.citations.add(1)
-            }
-        }
-
-        return citedBy
     }
 
     fun getSeqSetCitations(seqSetId: String, version: Long): List<SeqSetCitation> {

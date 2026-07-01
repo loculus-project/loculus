@@ -24,12 +24,6 @@ export const seqSet = z.object({
 export const seqSets = z.array(seqSet);
 export type SeqSet = z.infer<typeof seqSet>;
 
-export const citedByResult = z.object({
-    years: z.array(z.number()),
-    citations: z.array(z.number()),
-});
-export type CitedByResult = z.infer<typeof citedByResult>;
-
 export const authorProfile = z.object({
     username: z.string(),
     firstName: z.string(),
