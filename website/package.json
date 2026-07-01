@@ -18,8 +18,8 @@
         "test-fast": "vitest --bail=1"
     },
     "dependencies": {
-        "@astrojs/mdx": "^4.3.13",
-        "@astrojs/node": "^9.5.2",
+        "@astrojs/mdx": "^5.0.6",
+        "@astrojs/node": "^10.1.4",
         "@emotion/react": "^11.14.0",
         "@headlessui/react": "^2.2.10",
         "@lokalise/xlsx": "^0.20.3",
@@ -30,7 +30,7 @@
         "@types/sanitize-html": "^2.16.1",
         "@zodios/core": "^10.9.6",
         "@zodios/react": "^10.4.5",
-        "astro": "^5.17.1",
+        "astro": "^6.4.8",
         "axios": "^1.18.1",
         "change-case": "~5.3.0",
         "chart.js": "^4.5.1",
@@ -64,7 +64,7 @@
     },
     "devDependencies": {
         "@astrojs/check": "^0.9.9",
-        "@astrojs/react": "^4.4.2",
+        "@astrojs/react": "^5.0.7",
         "@emotion/styled": "^11.14.1",
         "@eslint/js": "^9.39.2",
         "@iconify/json": "^2.2.490",
@@ -98,10 +98,10 @@
         "tailwindcss": "^4.3.0",
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.62.0",
-        "vite": "^6.4.3",
+        "vite": "^7.3.6",
         "vitest": "4.1.9"
     },
     "comments": {
-        "vite": "Keep the explicit Vite dev dependency pinned to Astro 5's Vite major. npm ci --omit=dev can otherwise resolve Astro's optional vitefu peer to root Vite 7, mixing esbuild 0.25 and 0.27 in the production Docker install. Relax this after upgrading to Astro 6+, which uses Vite 7 across Astro packages."
+        "vite": "Keep the explicit Vite dev dependency aligned with Astro's Vite major. npm ci --omit=dev can otherwise resolve Astro's optional vitefu peer independently from the root Vite version."
     }
 }
