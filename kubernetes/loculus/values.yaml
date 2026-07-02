@@ -2694,8 +2694,6 @@ runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 runDevelopmentS3: true
 developmentDatabasePersistence: false
-enforceHTTPS: true
-traefikVersion: 2
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 
@@ -2708,7 +2706,12 @@ enaDeposition:
 taxonomyService:
   dbVersion: "ncbi_taxonomy_2026-05-01"
   taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
-subdomainSeparator: "-"
+
+networking:
+  subdomainSeparator: "-"
+  enforceHTTPS: true
+  traefikVersion: 2
+
 replicas:
   website: 1
   backend: 1
