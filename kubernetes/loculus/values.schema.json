@@ -1599,6 +1599,12 @@
       "default": false,
       "description": "If true, disables the backend API deployment."
     },
+    "enableServiceMonitor": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, deploys a Prometheus Operator ServiceMonitor for the backend. Requires kube-prometheus-stack CRDs to be installed."
+    },
     "disablePreprocessing": {
       "groups": ["services"],
       "type": "boolean",

@@ -2709,6 +2709,8 @@ taxonomyService:
   dbVersion: "ncbi_taxonomy_2026-05-01"
   taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
 subdomainSeparator: "-"
+enableServiceMonitor: false
+
 replicas:
   website: 1
   backend: 1

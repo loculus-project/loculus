@@ -83,6 +83,10 @@ spec:
             - "--loculus.s3.bucket.access-key=$(S3_BUCKET_ACCESS_KEY)"
             - "--loculus.s3.bucket.secret-key=$(S3_BUCKET_SECRET_KEY)"
             {{- end }}
+            {{- if .Values.enableServiceMonitor }}
+            - "--management.endpoint.prometheus.enabled=true"
+            - "--management.endpoints.web.exposure.include=health,prometheus"
+            {{- end }}
             {{- if .Values.backendExtraArgs }}
               {{- .Values.backendExtraArgs | toYaml | nindent 12 }}
             {{- end }}
