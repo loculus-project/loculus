@@ -1,6 +1,6 @@
 import { DateTime, FixedOffsetZone } from 'luxon';
 
-const UTC_DATETIME_FORMAT = 'yyyy-MM-dd TTT';
+const UTC_DATETIME_FORMAT = 'yyyy-MM-dd TTT'; // TTT = timezone abbreviation (e.g. "UTC")
 const DATE_ONLY_FORMAT = 'yyyy-MM-dd';
 
 /**
