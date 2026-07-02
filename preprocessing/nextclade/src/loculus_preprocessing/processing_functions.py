@@ -340,10 +340,8 @@ class ProcessingFunctions:
         try:
             result = func(input_data, output_field, input_fields=input_fields, args=args)
         except Exception as e:
-            result = processing_error(
-                _internal_error_message(
-                    f"{function_name} raised an unexpected exception for output field '{output_field}': {e}. "
-                )
+            result = raw_internal_error(
+                f"{function_name} raised an unexpected exception for output field '{output_field}': {e}. "
             )
         if isinstance(result, RawProcessingResult):
             return ProcessingResult(

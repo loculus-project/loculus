@@ -12,6 +12,8 @@ from factory_methods import (
 
 from loculus_preprocessing.config import Config, get_config, get_processing_order
 from loculus_preprocessing.datatypes import (
+    AnnotationSource,
+    AnnotationSourceType,
     FunctionArgs,
     InputMetadata,
     ProcessedEntry,
@@ -1402,6 +1404,38 @@ def test_display_name_construction() -> None:  # noqa: PLR0915
     assert (
         res_prefix.warnings[0]
         == "identifier string 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
+    )
+
+
+def test_call_function_converts_raw_errors_to_annotations() -> None:
+    """call_function must convert RawProcessingResult string errors into ProcessingAnnotations
+    with correct message and field linkage."""
+    input_fields = ["myField"]
+    output_field = "myField"
+    args: FunctionArgs = {
+        "options": ["OptionA", "OptionB"],
+        "is_insdc_ingest_group": False,
+    }
+
+    result = ProcessingFunctions.call_function(
+        "process_options",
+        args=args,
+        input_data={"input": "NotAnOption"},
+        output_field=output_field,
+        input_fields=input_fields,
+    )
+
+    assert result.datum is None
+    assert result.warnings == []
+    assert len(result.errors) == 1
+
+    annotation = result.errors[0]
+    assert "not in list of accepted options" in annotation.message
+    assert annotation.processedFields == (
+        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA),
+    )
+    assert annotation.unprocessedFields == (
+        AnnotationSource(name="myField", type=AnnotationSourceType.METADATA),
     )
 
 
