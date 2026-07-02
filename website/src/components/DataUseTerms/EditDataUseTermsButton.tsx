@@ -10,6 +10,7 @@ import { backendClientHooks } from '../../services/serviceHooks';
 import { type RestrictedDataUseTerms, type DataUseTerms } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
+import { formatDateOnly } from '../../utils/dateFormatting';
 
 type EditDataUseTermsButtonProps = {
     accessToken: string;
@@ -64,7 +65,7 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
                     </Button>
                     <label className='block text-sm font-medium leading-6 text-gray-900'>Edit data use terms</label>
                     <p className='text-sm text-gray-900 mb-4 py-2'>
-                        Currently restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>
+                        Currently restricted until <b>{formatDateOnly(restrictedUntil)}</b>
                     </p>
                     <div className='mt-2'>
                         <div className='mt-6 space-y-2'>

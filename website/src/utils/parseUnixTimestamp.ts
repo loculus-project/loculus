@@ -1,5 +1,5 @@
-import { DateTime, FixedOffsetZone } from 'luxon';
+import { formatUnixTimestamp } from './dateFormatting';
 
 export function parseUnixTimestamp(value: number) {
-    return DateTime.fromSeconds(value, { zone: FixedOffsetZone.utcInstance }).toFormat('yyyy-MM-dd TTT');
+    return formatUnixTimestamp(value);
 }

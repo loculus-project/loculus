@@ -1,16 +1,13 @@
-import { DateTime, FixedOffsetZone } from 'luxon';
 import { type FC, useState } from 'react';
 
 import { type DataUseTermsHistoryEntry, restrictedDataUseTermsOption } from '../../types/backend.ts';
+import { formatUtcDatetime } from '../../utils/dateFormatting';
 import { BaseDialog } from '../common/BaseDialog';
 import { Button } from '../common/Button';
 
 export type DataUseTermsHistoryProps = {
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
 };
-
-const formatDate = (dateString: string) =>
-    DateTime.fromISO(dateString, { zone: FixedOffsetZone.utcInstance }).setLocale('en').toFormat('yyyy-MM-dd TTT');
 
 export const DataUseTermsHistoryModal: FC<DataUseTermsHistoryProps> = ({ dataUseTermsHistory }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -40,7 +37,7 @@ export const DataUseTermsHistoryModal: FC<DataUseTermsHistoryProps> = ({ dataUse
                     <tbody>
                         {dataUseTermsHistory.map((row, index) => (
                             <tr key={index}>
-                                <td className='whitespace-nowrap'>{formatDate(row.changeDate)}</td>
+                                <td className='whitespace-nowrap'>{formatUtcDatetime(row.changeDate)}</td>
                                 <td className='whitespace-nowrap'>{row.userName}</td>
                                 <td>
                                     {row.dataUseTerms.type}
