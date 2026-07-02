@@ -4,6 +4,7 @@ import { type FC, type MouseEvent, useState, useMemo } from 'react';
 import useClientFlag from '../../hooks/isClient';
 import { routes } from '../../routes/routes';
 import type { SeqSet } from '../../types/seqSetCitation';
+import { formatIsoToDateOnly } from '../../utils/dateFormatting';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
 
@@ -146,8 +147,7 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets }) => {
     };
 
     const formatDate = (date: string) => {
-        const dateObj = new Date(date);
-        return dateObj.toISOString().split('T')[0];
+        return formatIsoToDateOnly(date);
     };
 
     return (

@@ -15,6 +15,7 @@ import {
 import type { Details } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
+import { formatDateOnly } from '../../utils/dateFormatting';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber';
 import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
 import { ActiveFilters } from '../common/ActiveFilters';
@@ -216,7 +217,7 @@ const EditControl: FC<EditControlProps> = ({ clientConfig, accessToken, state, c
                 </div>
             );
         case 'allRestricted': {
-            const earliestDateDisplay = state.earliestRestrictedUntil!.toFormat('yyyy-MM-dd');
+            const earliestDateDisplay = formatDateOnly(state.earliestRestrictedUntil!);
             return (
                 <div className='space-y-4'>
                     <ActiveFilters sequenceFilter={sequenceFilter} />
