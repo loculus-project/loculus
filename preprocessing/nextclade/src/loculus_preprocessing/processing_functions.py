@@ -340,19 +340,10 @@ class ProcessingFunctions:
         try:
             result = func(input_data, output_field, input_fields=input_fields, args=args)
         except Exception as e:
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=_internal_error_message(
-                            f"{function_name} raised an unexpected exception for output field '{output_field}': {e}. "
-                        ),
-                    )
-                ],
+            result = processing_error(
+                _internal_error_message(
+                    f"{function_name} raised an unexpected exception for output field '{output_field}': {e}. "
+                )
             )
         if isinstance(result, RawProcessingResult):
             return ProcessingResult(
