@@ -13,6 +13,7 @@ import {
     type ProblemDetail,
     type CompleteMultipartUploadRequest,
 } from '../types/backend.ts';
+import { adminSeqSetCitation, adminSeqSetCitations, type AddSeqSetCitationRequest } from '../types/seqSetCitation.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 
 type GetSequencesParameters = {
@@ -124,6 +125,39 @@ export class BackendClient {
             createAuthorizationHeader(token),
             undefined,
             undefined,
+        );
+    }
+
+    public getAllSeqSetCitations(token: string) {
+        return this.request(
+            '/admin/get-all-seqset-citations',
+            'GET',
+            adminSeqSetCitations,
+            createAuthorizationHeader(token),
+            undefined,
+            undefined,
+        );
+    }
+
+    public addSeqSetCitation(token: string, request: AddSeqSetCitationRequest) {
+        return this.request(
+            '/admin/add-seqset-citation',
+            'POST',
+            adminSeqSetCitation,
+            createAuthorizationHeader(token),
+            request,
+            undefined,
+        );
+    }
+
+    public deleteSeqSetCitation(token: string, sourceDOI: string) {
+        return this.request(
+            '/admin/delete-seqset-citation',
+            'DELETE',
+            z.unknown(),
+            createAuthorizationHeader(token),
+            undefined,
+            { sourceDOI },
         );
     }
 
