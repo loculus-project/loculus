@@ -340,8 +340,6 @@ class ProcessingFunctions:
         try:
             result = func(input_data, output_field, input_fields=input_fields, args=args)
         except Exception as e:
-            message = f"Internal Error. {function_name} raised an unexpected exception for output field '{output_field}': {e}. Please contact the administrator."
-            logger.exception(message)
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -350,7 +348,9 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=message,
+                        message=_internal_error_message(
+                            f"{function_name} raised an unexpected exception for output field '{output_field}': {e}. "
+                        ),
                     )
                 ],
             )
@@ -377,8 +377,6 @@ class ProcessingFunctions:
                 ],
             )
         if not isinstance(result, ProcessingResult):
-            message = f"Internal Error. {function_name} returned an unexpected type '{type(result).__name__}'. Please contact the administrator."
-            logger.error(message)
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -387,7 +385,9 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=message,
+                        message=_internal_error_message(
+                            f"{function_name} returned an unexpected type '{type(result).__name__}. "
+                        ),
                     )
                 ],
             )
@@ -1391,15 +1391,11 @@ def process_frameshifts(input: str | None) -> InputData:
     try:
         return InputData(datum=format_frameshift(input))
     except Exception as e:
-        msg = (
-            f"Internal Error. Frameshift formatting failed: {e}. Please contact the administrator."
-        )
-        logger.error(msg)
         return InputData(
             datum=None,
             errors=single_metadata_annotation(
                 "frameshifts",
-                msg,
+                _internal_error_message(f"Frameshift formatting failed: {e}. "),
             ),
         )
 
@@ -1474,15 +1470,11 @@ def process_stop_codons(input: str | None) -> InputData:
     try:
         return InputData(datum=format_stop_codon(input))
     except Exception as e:
-        msg = (
-            f"Internal Error. Stop codon formatting failed: {e}. Please contact the administrator."
-        )
-        logger.error(msg)
         return InputData(
             datum=None,
             errors=single_metadata_annotation(
                 "stopCodons",
-                msg,
+                _internal_error_message(f"Stop codon formatting failed: {e}. "),
             ),
         )
 
@@ -1533,13 +1525,11 @@ def process_mutations_from_clade_founder(input: str | None, args: FunctionArgs |
         if mutations:
             return InputData(datum=" ".join(mutations))
     except Exception as e:
-        msg = f"Internal Error. Clade founder mutation processing failed: {e}. Please contact the administrator."
-        logger.error(msg)
         return InputData(
             datum=None,
             errors=single_metadata_annotation(
                 "mutationsFromCladeFounder",
-                msg,
+                _internal_error_message(f"Clade founder mutation processing failed: {e}. "),
             ),
         )
     return InputData(datum=None)
@@ -1587,7 +1577,7 @@ def process_phenotype_values(input: str | None, args: FunctionArgs | None) -> In
                 value = entry.get("value")
                 return InputData(datum=str(value) if value is not None else None)
     except Exception as e:
-        msg = _internal_error_message(f"Labeled mutation processing failed: {e}. ")
+        msg = _internal_error_message(f"Phenotype value processing failed: {e}. ")
         return InputData(
             datum=None,
             errors=single_metadata_annotation(
