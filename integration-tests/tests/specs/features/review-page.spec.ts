@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { ReviewPage } from '../../pages/review.page';
-import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
+import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import { createTestMetadata, createTestSequenceData } from '../../test-helpers/test-data';
 
 test.describe('Review page functionality', () => {
@@ -36,12 +36,15 @@ test.describe('Review page functionality', () => {
 
     test('should allow bulk approval of sequences', async ({ page, groupId }) => {
         test.setTimeout(120_000);
-        const submissionPage = new SingleSequenceSubmissionPage(page);
+        const submissionPage = new BulkSubmissionPage(page);
 
-        // Submit 3 sequences to test bulk operations properly
-        for (let i = 0; i < 3; i++) {
-            await submissionPage.completeSubmission(createTestMetadata(), createTestSequenceData());
-        }
+        // Use bulk submission for efficiency
+        await submissionPage.completeBulkSubmission({
+            count: 3,
+            metadata: createTestMetadata(),
+            sequenceData: createTestSequenceData(),
+            groupId,
+        });
 
         const reviewPage = new ReviewPage(page);
         await reviewPage.goto(groupId);
@@ -59,12 +62,15 @@ test.describe('Review page functionality', () => {
 
     test('should allow bulk discarding of sequences', async ({ page, groupId }) => {
         test.setTimeout(120_000);
-        const submissionPage = new SingleSequenceSubmissionPage(page);
+        const submissionPage = new BulkSubmissionPage(page);
 
-        // Submit 3 sequences to test bulk operations properly
-        for (let i = 0; i < 3; i++) {
-            await submissionPage.completeSubmission(createTestMetadata(), createTestSequenceData());
-        }
+        // Use bulk submission for efficiency
+        await submissionPage.completeBulkSubmission({
+            count: 3,
+            metadata: createTestMetadata(),
+            sequenceData: createTestSequenceData(),
+            groupId,
+        });
 
         const reviewPage = new ReviewPage(page);
         await reviewPage.goto(groupId);
