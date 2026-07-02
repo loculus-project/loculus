@@ -1566,8 +1566,7 @@ def process_labeled_mutations(input: str | None, args: FunctionArgs | None) -> I
         if mutations:
             return InputData(datum=" ".join(mutations))
     except Exception as e:
-        msg = f"Internal Error. Labeled mutation processing failed: {e}. Please contact the administrator."
-        logger.error(msg)
+        msg = _internal_error_message(f"Labeled mutation processing failed: {e}. ")
         return InputData(
             datum=None,
             errors=single_metadata_annotation(
@@ -1590,8 +1589,7 @@ def process_phenotype_values(input: str | None, args: FunctionArgs | None) -> In
                 value = entry.get("value")
                 return InputData(datum=str(value) if value is not None else None)
     except Exception as e:
-        msg = f"Internal Error. Phenotype value processing failed: {e}. Please contact the administrator."
-        logger.error(msg)
+        msg = _internal_error_message(f"Labeled mutation processing failed: {e}. ")
         return InputData(
             datum=None,
             errors=single_metadata_annotation(
