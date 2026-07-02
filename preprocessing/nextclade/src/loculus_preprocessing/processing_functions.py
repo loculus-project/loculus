@@ -23,7 +23,6 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from .datatypes import (
-    AnnotationSource,
     AnnotationSourceType,
     FunctionArgs,
     InputData,
@@ -202,20 +201,26 @@ def format_authors(authors: str) -> str:
     return "; ".join(loculus_authors).strip()
 
 
+def _internal_error_message(message: str) -> str:
+    full = f"Internal Error. {message} Please contact the administrator."
+    logger.error(full)
+    return full
+
+
+def raw_internal_error(message: str) -> RawProcessingResult:
+    return processing_error(_internal_error_message(message))
+
+
 def regex_error(
     function_name: str, function_arg: str, input_data: InputMetadata, args: FunctionArgs
-) -> str:
-    return (
-        f"Internal Error: Function {function_name} did not receive valid "
-        f"regex {function_arg}, with input {input_data} and args {args}, "
-        "please contact the administrator."
+) -> RawProcessingResult:
+    return raw_internal_error(
+        f"{function_name} did not receive a valid {function_arg}, with input {input_data} and args {args}."
     )
 
 
 def missing_taxonomy_service_error() -> RawProcessingResult:
-    return processing_error(
-        "Configuration error: taxonomy_service_url was None. Please contact the administrator."
-    )
+    return raw_internal_error("taxonomy_service_url was not configured.")
 
 
 def taxonomy_network_error(
@@ -223,9 +228,7 @@ def taxonomy_network_error(
     action: str,
     e: Exception,
 ) -> RawProcessingResult:
-    return processing_error(
-        f"Internal error: network error while {action} '{subject}': {e}. Please contact the administrator."
-    )
+    return raw_internal_error(f"Network error while {action} '{subject}': {e}.")
 
 
 @dataclass
@@ -337,28 +340,17 @@ class ProcessingFunctions:
         try:
             result = func(input_data, output_field, input_fields=input_fields, args=args)
         except Exception as e:
-            message = (
-                f"Error calling function {function_name} for output field {output_field} "
-                f"with input {input_data} and args {args}: {e}"
-            )
+            message = f"Internal Error. {function_name} raised an unexpected exception for output field '{output_field}': {e}. Please contact the administrator."
             logger.exception(message)
             return ProcessingResult(
                 datum=None,
                 warnings=[],
                 errors=[
-                    ProcessingAnnotation(
-                        processedFields=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                        ],
-                        unprocessedFields=[
-                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                            for field in input_fields
-                        ],
-                        message=(
-                            f"Internal Error: Function {function_name} did not return "
-                            f"ProcessingResult with input {input_data} and args {args}, "
-                            "please contact the administrator."
-                        ),
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=message,
                     )
                 ],
             )
@@ -385,11 +377,8 @@ class ProcessingFunctions:
                 ],
             )
         if not isinstance(result, ProcessingResult):
-            logger.error(
-                f"ERROR: Function {function_name} did not return ProcessingResult "
-                f"given input {input_data} and args {args}. "
-                "This is likely a preprocessing bug."
-            )
+            message = f"Internal Error. {function_name} returned an unexpected type '{type(result).__name__}'. Please contact the administrator."
+            logger.error(message)
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -398,11 +387,7 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=(
-                            f"Internal Error: Function {function_name} did not return "
-                            f"ProcessingResult with input {input_data} and args {args}, "
-                            "please contact the administrator."
-                        ),
+                        message=message,
                     )
                 ],
             )
@@ -470,10 +455,8 @@ class ProcessingFunctions:
         try:
             submitted_at = datetime.fromtimestamp(float(str(args["submittedAt"])), tz=pytz.utc)
         except Exception:
-            return processing_error(
-                f"Internal Error: Function parse_into_ranges did not receive valid "
-                f"submittedAt date, with input {input_data} and args {args}, "
-                "please contact the administrator."
+            return raw_internal_error(
+                f"parse_into_ranges did not receive a valid submittedAt date, with input {input_data} and args {args}."
             )
 
         max_upper_limit = min(submitted_at, release_date) if release_date else submitted_at
@@ -694,10 +677,8 @@ class ProcessingFunctions:
         errors: list[str] = []
 
         if not isinstance(args["ACCESSION_VERSION"], str):
-            return processing_error(
-                "Internal Error: Function concatenate did not receive "
-                f"accession_version ProcessingResult with input {input_data} "
-                f"and args {args}, please contact the administrator."
+            return raw_internal_error(
+                f"concatenate did not receive a valid ACCESSION_VERSION (got: {args['ACCESSION_VERSION']!r})."
             )
 
         accession_version: str = args["ACCESSION_VERSION"]
@@ -707,18 +688,10 @@ class ProcessingFunctions:
             str(args["fallback_value"]).strip() if args.get("fallback_value") is not None else ""
         )
 
-        error_msg = (
-            "Concatenation failed."
-            "This may be a configuration error, please contact the administrator."
-        )
-
         if not isinstance(order, list):
-            logger.error(
-                f"Concatenate: Expected order field to be a list. "
-                f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
+            return raw_internal_error(
+                f"concatenate expected 'order' to be a list (ACCESSION_VERSION: {accession_version})."
             )
-            errors.append(error_msg)
-            return RawProcessingResult(errors=errors)
 
         n_inputs = len(input_data.keys())
         # exclude ACCESSION_VERSION as it's provided by _call_preprocessing_function() and should not be an input_metadata field
@@ -726,19 +699,13 @@ class ProcessingFunctions:
             [i for i in order if i != "ACCESSION_VERSION" and not i.startswith("ARG:")]
         )
         if n_inputs < n_expected:
-            logger.error(
-                f"Concatenate: Expected {n_expected} fields, got {n_inputs}. "
-                f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
+            return raw_internal_error(
+                f"concatenate expected {n_expected} input fields but got {n_inputs} (ACCESSION_VERSION: {accession_version})."
             )
-            errors.append(error_msg)
-            return RawProcessingResult(errors=errors)
         if not isinstance(field_types, list):
-            logger.error(
-                f"Concatenate: Expected type field to be a list. "
-                f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
+            return raw_internal_error(
+                f"concatenate expected 'type' to be a list (ACCESSION_VERSION: {accession_version})."
             )
-            errors.append(error_msg)
-            return RawProcessingResult(errors=errors)
 
         formatted_input_data: list[str] = []
         try:
@@ -761,7 +728,11 @@ class ProcessingFunctions:
                     raw_value = str(raw).strip()
                     if raw_value.count("/") > 1:
                         date_string = None
-                        errors.append(error_msg)
+                        errors.append(
+                            _internal_error_message(
+                                f"dateRangeString field '{order[i]}' has an unexpected format: '{raw_value}' (ACCESSION_VERSION: {accession_version})."
+                            )
+                        )
                     else:
                         date_string = raw_value.replace("/", " TO ")
                     formatted_input_data.append(
@@ -780,12 +751,9 @@ class ProcessingFunctions:
                     formatted_input_data.append(accession_version)
                 elif field_types[i].startswith("ARG:"):
                     if field_types[i][4:] not in args:
-                        logger.error(
-                            f"Concatenate: Missing argument {field_types[i][4:]} in args. "
-                            f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
+                        return raw_internal_error(
+                            f"concatenate is missing argument '{field_types[i][4:]}' in args (ACCESSION_VERSION: {accession_version})."
                         )
-                        errors.append(error_msg)
-                        return RawProcessingResult(errors=errors, warnings=warnings)
                     formatted_input_data.append(str(args[field_types[i][4:]]))
                 elif order[i] in input_data:
                     formatted_input_data.append(
@@ -794,12 +762,9 @@ class ProcessingFunctions:
                         else str(input_data[order[i]]).strip()
                     )
                 else:
-                    logger.error(
-                        f"Concatenate: cannot find field {order[i]} of {field_types[i]} in input_data"
-                        f"This is probably a configuration error. (ACCESSION_VERSION: {accession_version})"
+                    return raw_internal_error(
+                        f"concatenate could not find field '{order[i]}' (type: {field_types[i]}) in input_data (ACCESSION_VERSION: {accession_version})."
                     )
-                    errors.append(error_msg)
-                    return RawProcessingResult(errors=errors, warnings=warnings)
 
             result = "/".join(formatted_input_data)
             # To avoid downstream issues do not let the result start or end in a "/"
@@ -808,12 +773,15 @@ class ProcessingFunctions:
 
             return RawProcessingResult(datum=result, warnings=warnings, errors=errors)
         except ValueError as e:
-            logger.error(f"Concatenate failed with {e} (ACCESSION_VERSION: {accession_version})")
-            errors.append(
-                f"Concatenation failed for {output_field}. This is a technical error, "
-                "please contact the administrator."
+            return RawProcessingResult(
+                warnings=warnings,
+                errors=[
+                    *errors,
+                    _internal_error_message(
+                        f"Concatenation failed for '{output_field}' with error: {e} (ACCESSION_VERSION: {accession_version})."
+                    ),
+                ],
             )
-            return RawProcessingResult(errors=errors, warnings=warnings)
 
     @staticmethod
     def check_authors(
@@ -889,9 +857,9 @@ class ProcessingFunctions:
         if not regex_field:
             return RawProcessingResult()
         if not isinstance(pattern, str):
-            return processing_error(regex_error("extract_regex", "pattern", input_data, args))
+            return regex_error("extract_regex", "pattern", input_data, args)
         if not isinstance(capture_group, str):
-            return processing_error(regex_error("extract_regex", "capture_group", input_data, args))
+            return regex_error("extract_regex", "capture_group", input_data, args)
         match = re.match(pattern, regex_field.strip())
         if match:
             try:
@@ -900,10 +868,8 @@ class ProcessingFunctions:
                     result = result.upper()
                 return RawProcessingResult(datum=result)
             except IndexError:
-                errors.append(
-                    f"The pattern '{pattern}' does not contain a capture group: "
-                    f"'{capture_group}'- this is an internal error,"
-                    " please contact your local administrator."
+                return raw_internal_error(
+                    f"Pattern '{pattern}' does not contain capture group '{capture_group}'."
                 )
         else:
             errors.append(
@@ -929,7 +895,7 @@ class ProcessingFunctions:
         if not regex_field:
             return RawProcessingResult()
         if not isinstance(pattern, str):
-            return processing_error(regex_error("check_regex", "pattern", input_data, args))
+            return regex_error("check_regex", "pattern", input_data, args)
         regex_field = regex_field.strip()
         if re.match(pattern, regex_field):
             return RawProcessingResult(datum=regex_field)
@@ -1183,9 +1149,7 @@ class ProcessingFunctions:
         submission_id = input_data.get("submissionId", None)
         warnings: list[str] = []
         if submission_id is None:
-            return processing_error(
-                "Internal Error: 'submissionId' must not be None for build_display_name(). Please contact the administrator."
-            )
+            return raw_internal_error("'submissionId' must not be None for build_display_name().")
 
         order = args.get("order")
         field_types = args.get("type")
@@ -1195,8 +1159,8 @@ class ProcessingFunctions:
             or len(order) != len(field_types)
             or "IDENTIFIER" not in order
         ):
-            return processing_error(
-                "Internal Error: 'order' and 'type' must be lists of equal length, and 'order' must contain IDENTIFIER - this is required for build_display_name to function. Please contact the administrator."
+            return raw_internal_error(
+                "'order' and 'type' must be lists of equal length and 'order' must contain IDENTIFIER."
             )
 
         regex_pattern = args.get("regex_pattern")
@@ -1204,8 +1168,8 @@ class ProcessingFunctions:
             regex_pattern is not None
             and "identifier" not in re.compile(str(regex_pattern)).groupindex
         ):
-            return processing_error(
-                "Internal Error: if provided, 'regex_pattern' must contain a named capture group called 'identifier'"
+            return raw_internal_error(
+                "If provided, 'regex_pattern' must contain a named capture group called 'identifier'."
             )
 
         concatenate_order = order.copy()
@@ -1326,10 +1290,8 @@ class ProcessingFunctions:
 
         tax_id = taxon.get("tax_id")
         if tax_id is None:
-            return processing_error(
-                f"Internal error: host validation for '{unvalidated_host}' "
-                f"was successful but response json 'tax_id' was missing. "
-                f"Please contact the administrator"
+            return raw_internal_error(
+                f"Host validation for '{unvalidated_host}' was successful but response json 'tax_id' was missing."
             )
 
         return RawProcessingResult(datum=str(tax_id))
@@ -1367,8 +1329,8 @@ class ProcessingFunctions:
 
         scientific_name = body.get("scientific_name")
         if scientific_name is None:
-            return processing_error(
-                f"Internal error: '{tax_id}' is a valid taxon ID but response json had no 'scientific_name'. Please contact the administrator"
+            return raw_internal_error(
+                f"'{tax_id}' is a valid taxon ID but response json had no 'scientific_name'."
             )
 
         return RawProcessingResult(datum=scientific_name)
@@ -1404,8 +1366,8 @@ class ProcessingFunctions:
 
         common_name = body.get("common_name")
         if common_name is None:
-            return processing_error(
-                f"Internal error: taxonomy service indicated common name was found for hostTaxonId '{tax_id}', but failed to return it. Please contact the administrator."
+            return raw_internal_error(
+                f"Taxonomy service indicated common name was found for hostTaxonId '{tax_id}', but failed to return it."
             )
 
         return RawProcessingResult(datum=common_name)
@@ -1430,10 +1392,9 @@ def process_frameshifts(input: str | None) -> InputData:
         return InputData(datum=format_frameshift(input))
     except Exception as e:
         msg = (
-            "Was unable to format frameshift - this is likely an internal error. "
-            "Please contact the administrator."
+            f"Internal Error. Frameshift formatting failed: {e}. Please contact the administrator."
         )
-        logger.error(msg + f" Error: {e}")
+        logger.error(msg)
         return InputData(
             datum=None,
             errors=single_metadata_annotation(
@@ -1514,10 +1475,9 @@ def process_stop_codons(input: str | None) -> InputData:
         return InputData(datum=format_stop_codon(input))
     except Exception as e:
         msg = (
-            "Was unable to format stop codon - this is likely an internal error. "
-            "Please contact the administrator."
+            f"Internal Error. Stop codon formatting failed: {e}. Please contact the administrator."
         )
-        logger.error(msg + f" Error: {e}")
+        logger.error(msg)
         return InputData(
             datum=None,
             errors=single_metadata_annotation(
@@ -1573,11 +1533,8 @@ def process_mutations_from_clade_founder(input: str | None, args: FunctionArgs |
         if mutations:
             return InputData(datum=" ".join(mutations))
     except Exception as e:
-        msg = (
-            "Was unable to process mutations from clade founder - this is likely an internal error. "
-            "Please contact the administrator."
-        )
-        logger.error(msg + f" Error: {e}")
+        msg = f"Internal Error. Clade founder mutation processing failed: {e}. Please contact the administrator."
+        logger.error(msg)
         return InputData(
             datum=None,
             errors=single_metadata_annotation(
@@ -1607,11 +1564,7 @@ def process_labeled_mutations(input: str | None, args: FunctionArgs | None) -> I
         if mutations:
             return InputData(datum=" ".join(mutations))
     except Exception as e:
-        msg = (
-            "Was unable to process labeled mutations - this is likely an internal error. "
-            "Please contact the administrator."
-        )
-        logger.error(msg + f" Error: {e}")
+        msg = _internal_error_message(f"Labeled mutation processing failed: {e}. ")
         return InputData(
             datum=None,
             errors=single_metadata_annotation(
@@ -1634,11 +1587,7 @@ def process_phenotype_values(input: str | None, args: FunctionArgs | None) -> In
                 value = entry.get("value")
                 return InputData(datum=str(value) if value is not None else None)
     except Exception as e:
-        msg = (
-            "Was unable to process phenotype values - this is likely an internal error. "
-            "Please contact the administrator."
-        )
-        logger.error(msg + f" Error: {e}")
+        msg = _internal_error_message(f"Labeled mutation processing failed: {e}. ")
         return InputData(
             datum=None,
             errors=single_metadata_annotation(
