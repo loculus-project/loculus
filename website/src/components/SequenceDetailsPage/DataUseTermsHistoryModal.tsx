@@ -10,7 +10,7 @@ export type DataUseTermsHistoryProps = {
 };
 
 const formatDate = (dateString: string) =>
-    DateTime.fromISO(dateString, { zone: FixedOffsetZone.utcInstance }).setLocale('en').toFormat('yyyy-MM-dd T');
+    DateTime.fromISO(dateString, { zone: FixedOffsetZone.utcInstance }).setLocale('en').toFormat('yyyy-MM-dd TTT');
 
 export const DataUseTermsHistoryModal: FC<DataUseTermsHistoryProps> = ({ dataUseTermsHistory }) => {
     const [isOpen, setIsOpen] = useState(false);
