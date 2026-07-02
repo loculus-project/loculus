@@ -1,4 +1,4 @@
-import { err, ok } from 'neverthrow';
+import { err } from 'neverthrow';
 
 import { getSequenceDetailsTableData } from './getSequenceDetailsTableData.ts';
 import { getConfiguredOrganisms } from '../../../config.ts';
@@ -6,17 +6,11 @@ import { getConfiguredOrganisms } from '../../../config.ts';
 export async function findOrganismAndData(accessionVersion: string) {
     const organisms = getConfiguredOrganisms();
 
-    const promises = organisms.map(({ key }) =>
-        getSequenceDetailsTableData(accessionVersion, key).then((result) =>
-            result.isOk()
-                ? ok({ organism: key, result: result.value })
-                : Promise.reject(new Error(`${key}: '${result.error.detail}'`)),
-        ),
-    );
-
     try {
-        const firstSuccess = await Promise.any(promises);
-        return firstSuccess;
+        const result = await getSequenceDetailsTableData(accessionVersion, organisms);
+        return result
+            .map((value) => ({ organism: value.organism, result: value }))
+            .mapErr((error) => ({ message: error.detail }));
     } catch (error) {
         const message =
             error instanceof AggregateError
