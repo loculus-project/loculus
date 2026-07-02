@@ -1570,25 +1570,27 @@ class ProcessingFunctions:
         return ProcessingResult(datum=None, warnings=[], errors=[])
 
     @staticmethod
-    def build_display_name(  # noqa: C901
+    def build_display_name(
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
     ) -> ProcessingResult:
-        """Builds a displayName from input_fields. The identifier field in the displayName is based on
-        specimenCollectorSampleId or - if it is not set - submissionId.
+        """Builds a displayName from input_fields. The identifier field in the displayName is
+        based on specimenCollectorSampleId; if that cannot be parsed we fall back to submissionId,
+        and only if neither can be parsed do we fall back to ACCESSION_VERSION.
 
         This method wraps ProcessingFunctions.concatenate(). Thus, it has the same required input
         args, as well as adding some additional checks and requirements:
             - submissionId and specimenCollectorSampleId must be in the input_data
             - IDENTIFIER keyword must be in args['order'] and args['type']
-            - if the IDENTIFIER is in an unrecognized format, it will be replaced with the ACCESSION_VERSION
-            - if fallback_value is not in args, { 'fallback_value': 'unknown' } is added to the args before passing
-              them on to concatenate()
-            - for sequences ingested from INSDC, we do not try to parse the IDENTIFIER field using regex. We
-              will use the Isolate Name as IDENTIFIER field if it contains no slashes or spaces (otherwise we fall back to
-              ACCESSION_VERSION)
+            - the IDENTIFIER is resolved by trying specimenCollectorSampleId first, then
+              submissionId; if neither yields a usable value it is replaced with ACCESSION_VERSION
+            - if fallback_value is not in args, { 'fallback_value': 'unknown' } is added to the args
+              before passing them on to concatenate()
+            - for sequences ingested from INSDC, we do not try to parse the IDENTIFIER field using
+              regex. We will use the Isolate Name as IDENTIFIER field if it contains no slashes or
+              spaces (otherwise we fall back to ACCESSION_VERSION)
         """
         collector_id = input_data.get("specimenCollectorSampleId", None)
         submission_id = input_data.get("submissionId", None)
@@ -1596,14 +1598,15 @@ class ProcessingFunctions:
         if submission_id is None:
             return ProcessingResult(
                 datum=None,
-                warnings=[],
+                warnings=warnings,
                 errors=[
                     ProcessingAnnotation.from_fields(
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
                         message=(
-                            "Internal Error: 'submissionId' must not be None for build_display_name(). Please contact the administrator."
+                            "Internal Error: 'submissionId' must not be None for"
+                            " build_display_name(). Please contact the administrator."
                         ),
                     )
                 ],
@@ -1619,35 +1622,33 @@ class ProcessingFunctions:
         ):
             return ProcessingResult(
                 datum=None,
-                warnings=[],
+                warnings=warnings,
                 errors=[
                     ProcessingAnnotation.from_fields(
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
                         message=(
-                            "Internal Error: 'order' and 'type' must be lists of equal length, and 'order' must contain IDENTIFIER - this is required for build_display_name to function. Please contact the administrator."
+                            "Internal Error: 'order' and 'type' must be lists of equal length, and"
+                            " 'order' must contain IDENTIFIER - this is required for"
+                            " build_display_name. Please contact the administrator."
                         ),
                     )
                 ],
             )
 
         regex_pattern = args.get("regex_pattern")
-        if (
-            regex_pattern is not None
-            and "identifier" not in re.compile(str(regex_pattern)).groupindex
-        ):
+        regex_pattern = str(regex_pattern) if regex_pattern is not None else None
+        if regex_pattern is not None and "identifier" not in re.compile(regex_pattern).groupindex:
             return ProcessingResult(
                 datum=None,
-                warnings=[],
+                warnings=warnings,
                 errors=[
                     ProcessingAnnotation.from_fields(
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=(
-                            "Internal Error: if provided, 'regex_pattern' must contain a named capture group called 'identifier'"
-                        ),
+                        message=regex_error("extract_regex", "capture_group", input_data, args),
                     )
                 ],
             )
@@ -1658,47 +1659,35 @@ class ProcessingFunctions:
         def replace_identifier(values, replacement):
             return [replacement if v == "IDENTIFIER" else v for v in values]
 
-        identifier: ProcessedMetadataValue = collector_id or submission_id
-        if not isinstance(identifier, str):
-            identifier = None
-        elif args["is_insdc_ingest_group"]:
-            # For INSDC ingested sequence: use ID as is unless it contains ' ' or '/'
-            # If it does: fall back to ACCESSION_VERSION
-            if " " in identifier or "/" in identifier:
-                identifier = None
-        elif "/" in identifier:
-            # For direct submissions with "/": try to extract ID field using regex
-            if regex_pattern is None:
-                identifier = None
-            else:
-                extract_result = ProcessingFunctions.extract_regex(
-                    input_data={"regex_field": identifier},
-                    output_field="IDENTIFIER",
-                    input_fields=[],
-                    args={"pattern": regex_pattern, "capture_group": "identifier"},
-                )
-                if extract_result.datum is None:
-                    # regex extraction of ID field failed, fall back to ACCESSION_VERSION
-                    warnings.append(
-                        ProcessingAnnotation.from_fields(
-                            input_fields,
-                            [output_field],
-                            AnnotationSourceType.METADATA,
-                            message=(
-                                f"identifier string '{identifier}' could not be parsed, using ACCESSION_VERSION in displayName instead"
-                            ),
-                        )
-                    )
-                identifier = extract_result.datum
+        insdc_ingested = bool(args["is_insdc_ingest_group"])
 
-        if identifier is None:
-            # Use ACCESSION_VERSION instead of IDENTIFIER
+        # Try to parse the specimenCollectorSampleId first
+        identifier = parse_identifier_string(collector_id, insdc_ingested, regex_pattern)
+        if identifier is None and not insdc_ingested:
+            # For direct submissions only: try to parse the submissionId
+            identifier = parse_identifier_string(submission_id, insdc_ingested, regex_pattern)
+
+        if identifier is not None:
+            # We were able to parse an IDENTIFIER, treat it as a string
+            concatenate_field_types = replace_identifier(field_types, "string")
+            input_data["IDENTIFIER"] = identifier
+        else:
+            # Unable to parse specimenCollectorSampleId and submissionID, use ACCESSION_VERSION
+            if not insdc_ingested and regex_pattern is not None:
+                warnings.append(
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            f"specimenCollectorSampleId '{collector_id}' and submissionId"
+                            f" '{submission_id}' could not be parsed, using ACCESSION_VERSION"
+                            f" in displayName instead"
+                        ),
+                    )
+                )
             concatenate_order = replace_identifier(order, "ACCESSION_VERSION")
             concatenate_field_types = replace_identifier(field_types, "ACCESSION_VERSION")
-        else:
-            # Keep IDENTIFIER but treat it as string
-            concatenate_field_types = replace_identifier(field_types, "string")
-            input_data["IDENTIFIER"] = str(identifier)
 
         new_args = args.copy()
         new_args.update(
@@ -2171,6 +2160,36 @@ def process_phenotype_values(input: str | None, args: FunctionArgs | None) -> In
             ),
         )
     return InputData(datum=None)
+
+
+def parse_identifier_string(
+    input: ProcessedMetadataValue, insdc_ingested: bool, regex_pattern: str | None = None
+) -> str | None:
+    """Return an IDENTIFIER string to use in the displayName or None if `input` cannot be used
+    as an identifier.
+    """
+    if not isinstance(input, str):
+        return None
+    has_forbidden_char = " " in input or "/" in input
+
+    if insdc_ingested:
+        # For INSDC ingested sequences: use the value as-is unless it contains a ' ' or '/'
+        return None if has_forbidden_char else input
+
+    if not has_forbidden_char:
+        # Direct submission without forbidden_char: use the value as-is, no regex parsing
+        return input
+
+    # Direct submission containing forbidden_char: attempt regex extraction of identifier field
+    if regex_pattern is None:
+        return None
+    extract_result = ProcessingFunctions.extract_regex(
+        input_data={"regex_field": input},
+        output_field="IDENTIFIER",
+        input_fields=[],
+        args={"pattern": regex_pattern, "capture_group": "identifier"},
+    )
+    return None if extract_result.datum is None else str(extract_result.datum)
 
 
 def trim_ns(sequence: str) -> str:
