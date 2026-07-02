@@ -113,10 +113,7 @@ export const SequenceDataUI: FC<Props> = ({
                             <Button
                                 as='a'
                                 size='sm'
-                                href={routes.editPage(organism, {
-                                    accession: accessionVersion.split('.')[0],
-                                    version: parseInt(accessionVersion.split('.')[1], 10),
-                                })}
+                                href={routes.revisePage(organism, groupId, 'form', accessionVersion)}
                             >
                                 Revise this sequence
                             </Button>

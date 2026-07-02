@@ -10,7 +10,10 @@ type PortalPageRoute = BaseSubmissionRoute<'portal'>;
 type SubmitPageRoute = BaseSubmissionRoute<'submit'> & {
     inputMode: InputMode;
 };
-type RevisePageRoute = BaseSubmissionRoute<'revise'>;
+type RevisePageRoute = BaseSubmissionRoute<'revise'> & {
+    inputMode: InputMode;
+    accessionVersion?: string;
+};
 type ReviewPageRoute = BaseSubmissionRoute<'review'>;
 type ReleasedPageRoute = BaseSubmissionRoute<'released'> & {
     searchParams: URLSearchParams;
@@ -53,7 +56,12 @@ export const SubmissionRouteUtils = {
                     inputMode: searchParams.get('inputMode') === 'form' ? 'form' : 'bulk',
                 };
             case 'revise':
-                return { ...baseRoute, name: 'revise' };
+                return {
+                    ...baseRoute,
+                    name: 'revise',
+                    inputMode: searchParams.get('inputMode') === 'form' ? 'form' : 'bulk',
+                    accessionVersion: searchParams.get('accessionVersion') ?? undefined,
+                };
             case 'review':
                 return { ...baseRoute, name: 'review' };
             case 'released': {
@@ -71,6 +79,7 @@ export const SubmissionRouteUtils = {
             case 'portal':
                 return baseUrl;
             case 'revise':
+                return `${baseUrl}/${route.name}?inputMode=${route.inputMode}${route.accessionVersion ? `&accessionVersion=${route.accessionVersion}` : ''}`;
             case 'review':
                 return `${baseUrl}/${route.name}`;
             case 'submit':

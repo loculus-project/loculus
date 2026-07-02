@@ -44,8 +44,8 @@ export const routes = {
         SubmissionRouteUtils.toUrl({ name: 'portal', organism, groupId }),
     submitPage: (organism: string, groupId: number, inputMode: InputMode = 'bulk') =>
         SubmissionRouteUtils.toUrl({ name: 'submit', organism, groupId, inputMode }),
-    revisePage: (organism: string, groupId: number) =>
-        SubmissionRouteUtils.toUrl({ name: 'revise', organism, groupId }),
+    revisePage: (organism: string, groupId: number, inputMode: InputMode = 'bulk', accessionVersion?: string) =>
+        SubmissionRouteUtils.toUrl({ name: 'revise', organism, groupId, inputMode, accessionVersion }),
     editPage: (organism: string, accessionVersion: AccessionVersion) =>
         withOrganism(organism, `/submission/edit/${accessionVersion.accession}/${accessionVersion.version}`),
     userOverviewPage: (_organism?: string) => {
