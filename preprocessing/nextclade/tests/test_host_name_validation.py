@@ -12,7 +12,6 @@ from loculus_preprocessing.datatypes import (
 )
 from loculus_preprocessing.prepro import process_all
 
-
 HOST_PROCESSING_CONFIG = "tests/host_processing_config.yaml"
 
 
