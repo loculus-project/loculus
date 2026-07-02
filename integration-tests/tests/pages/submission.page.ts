@@ -199,6 +199,31 @@ export class BulkSubmissionPage extends SubmissionPage {
         });
     }
 
+    /**
+     * Upload a metadata TSV file from raw bytes, bypassing any CSV serialization.
+     * Use this when the file content must be byte-for-byte exact, e.g. to test
+     * null bytes, invalid UTF-8 or other characters that a CSV writer would mangle.
+     */
+    async uploadRawMetadataFile(content: string | Buffer) {
+        await this.page.getByTestId('metadata_file').setInputFiles({
+            name: 'metadata.tsv',
+            mimeType: 'text/plain',
+            buffer: Buffer.isBuffer(content) ? content : Buffer.from(content),
+        });
+    }
+
+    /**
+     * Upload a sequences FASTA file from raw bytes, bypassing any string assembly.
+     * Use this when the file content must be byte-for-byte exact (see uploadRawMetadataFile).
+     */
+    async uploadRawSequenceFile(content: string | Buffer) {
+        await this.page.getByTestId('sequence_file').setInputFiles({
+            name: 'sequences.fasta',
+            mimeType: 'text/plain',
+            buffer: Buffer.isBuffer(content) ? content : Buffer.from(content),
+        });
+    }
+
     async uploadSequencesFile(sequenceData: Record<string, string>) {
         const fastaContent = Object.entries(sequenceData)
             .map(([id, sequence]) => `>${id}\n${sequence}`)
