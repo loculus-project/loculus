@@ -13,6 +13,7 @@ import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
 import { type SequenceCitation } from '../../types/seqSetCitation.ts';
+import { parseAccessionVersionFromString } from '../../utils/extractAccessionVersion.ts';
 import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import { Button } from '../common/Button';
@@ -53,6 +54,8 @@ export const SequenceDataUI: FC<Props> = ({
     onRevokeSuccess,
 }: Props) => {
     const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as number;
+
+    const { accession, version } = parseAccessionVersionFromString(accessionVersion);
 
     const isMyGroup = myGroups.some((group) => group.groupId === groupId);
 
@@ -113,7 +116,7 @@ export const SequenceDataUI: FC<Props> = ({
                             <Button
                                 as='a'
                                 size='sm'
-                                href={routes.revisePage(organism, groupId, 'form', accessionVersion)}
+                                href={routes.revisePage(organism, groupId, 'form', accession, version?.toString())}
                             >
                                 Revise this sequence
                             </Button>

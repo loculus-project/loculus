@@ -1,12 +1,25 @@
 import { Zodios } from '@zodios/core';
 import { ZodiosHooks, type ZodiosHooksInstance } from '@zodios/react';
 import { isAxiosError } from 'axios';
+import { useEffect, useMemo } from 'react';
 
 import { backendApi } from './backendApi.ts';
 import { lapisApi } from './lapisApi.ts';
 import { seqSetCitationApi } from './seqSetCitationApi.ts';
+import {
+    ACCESSION_FIELD,
+    ACCESSION_VERSION_FIELD,
+    IS_REVOCATION_FIELD,
+    SUBMITTED_AT_FIELD,
+    VERSION_FIELD,
+    VERSION_STATUS_FIELD,
+} from '../settings.ts';
 import { problemDetail } from '../types/backend.ts';
-import type { SequenceRequest } from '../types/lapis.ts';
+import {
+    sequenceEntryHistory as sequenceEntryHistorySchema,
+    type SequenceEntryHistory,
+    type SequenceRequest,
+} from '../types/lapis.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { fastaEntries } from '../utils/parseFasta.ts';
 import { isAlignedSequence, isUnalignedSequence, type SequenceType } from '../utils/sequenceTypeHelpers.ts';
@@ -33,6 +46,7 @@ export function lapisClientHooks(lapisUrl: string) {
         useAggregated: () => zodiosHooks.useAggregated({}, { ...LAPIS_RETRY_OPTIONS }),
         useDetails: () => zodiosHooks.useDetails({}, { ...LAPIS_RETRY_OPTIONS }),
         useLineageDefinition: zodiosHooks.useLineageDefinition,
+        useSequenceEntryHistory: (accession: string | undefined) => sequenceEntryHistoryHook(zodiosHooks, accession),
         useGetSequence(accessionVersion: string, sequenceType: SequenceType, useLapisMultiSegmentedEndpoint: boolean) {
             return getSequenceHook(
                 zodiosHooks,
@@ -44,6 +58,39 @@ export function lapisClientHooks(lapisUrl: string) {
                 useLapisMultiSegmentedEndpoint,
             );
         },
+    };
+}
+
+function sequenceEntryHistoryHook(hooks: ZodiosHooksInstance<typeof lapisApi>, accession: string | undefined) {
+    const detailsHook = hooks.useDetails({}, { ...LAPIS_RETRY_OPTIONS });
+
+    useEffect(() => {
+        if (accession !== undefined)
+            // @ts-expect-error Zod issue: https://github.com/colinhacks/zod/issues/3136
+            detailsHook.mutate({
+                accession,
+                fields: [
+                    ACCESSION_VERSION_FIELD,
+                    ACCESSION_FIELD,
+                    VERSION_FIELD,
+                    VERSION_STATUS_FIELD,
+                    IS_REVOCATION_FIELD,
+                    SUBMITTED_AT_FIELD,
+                ],
+                orderBy: [{ field: VERSION_FIELD, type: 'ascending' }],
+            });
+    }, [accession]);
+
+    const data = useMemo((): SequenceEntryHistory | undefined => {
+        if (detailsHook.data === undefined) return undefined;
+        const parseResult = sequenceEntryHistorySchema.safeParse(detailsHook.data.data);
+        return parseResult.success ? parseResult.data : undefined;
+    }, [detailsHook.data]);
+
+    return {
+        data,
+        isLoading: detailsHook.isPending,
+        error: detailsHook.error,
     };
 }
 

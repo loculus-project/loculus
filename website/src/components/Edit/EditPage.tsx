@@ -11,12 +11,15 @@ import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { type FilesBySubmissionId, type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
 import { type InputField, type SubmissionDataTypes } from '../../types/config.ts';
+import { getLatestAccessionVersion, type SequenceEntryHistory } from '../../types/lapis.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
-import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
+import { getAccessionVersionString, parseAccessionVersionFromString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu.tsx';
 import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
 import { Button } from '../common/Button';
+import ErrorBox from '../common/ErrorBox';
 import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
@@ -27,6 +30,7 @@ type EditPageProps = {
     accessToken: string;
     groupedInputFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
+    sequenceEntryHistory?: SequenceEntryHistory;
 };
 
 const logger = getClientLogger('EditPage');
@@ -51,6 +55,7 @@ const InnerEditPage: FC<EditPageProps> = ({
     accessToken,
     groupedInputFields,
     submissionDataTypes,
+    sequenceEntryHistory,
 }) => {
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.fromInitialData(dataToEdit));
     const [editableSequences, setEditableSequences] = useState(
@@ -132,15 +137,50 @@ const InnerEditPage: FC<EditPageProps> = ({
     };
 
     const isPending = isRevisionPending || isEditPending;
+    const latestVersion = sequenceEntryHistory ? getLatestAccessionVersion(sequenceEntryHistory)?.version : undefined;
 
     return (
         <>
-            <div className='flex items-center mb-4'>
+            <div className='flex items-center justify-between mb-4'>
                 <h1 className='title'>
                     {isCreatingRevision ? 'Create new revision from' : 'Edit'} {dataToEdit.accession}.
                     {dataToEdit.version}
                 </h1>
+                {sequenceEntryHistory && sequenceEntryHistory.length > 1 && (
+                    <SequenceEntryHistoryMenu
+                        sequenceEntryHistory={sequenceEntryHistory}
+                        accessionVersion={`${dataToEdit.accession}.${dataToEdit.version}`}
+                        handleSelect={(accessionVersion) => {
+                            const { version } = parseAccessionVersionFromString(accessionVersion);
+                            window.location.href = routes.revisePage(
+                                organism,
+                                dataToEdit.groupId,
+                                'form',
+                                dataToEdit.accession,
+                                version?.toString(),
+                            );
+                        }}
+                    />
+                )}
             </div>
+            {isCreatingRevision && latestVersion !== undefined && dataToEdit.version < latestVersion && (
+                <ErrorBox
+                    title='This is not the latest version of this sequence entry.'
+                    level='warning'
+                    className='mb-2'
+                >
+                    <div className='space-y-2 mt-2'>
+                        <p>By revising from this version, existing changes from later versions will be lost.</p>
+                        <p>
+                            To revise from the latest version, click{' '}
+                            <a href={routes.revisePage(organism, dataToEdit.groupId, 'form', dataToEdit.accession)}>
+                                here
+                            </a>
+                            .
+                        </p>
+                    </div>
+                </ErrorBox>
+            )}
             <table className='customTable'>
                 <tbody className='w-full'>
                     <Subtitle title='Original data' bold />

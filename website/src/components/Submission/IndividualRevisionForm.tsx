@@ -1,10 +1,12 @@
 import { type FC, type FormEvent, useState } from 'react';
 
 import { InputModeTabs } from './DataUploadForm.tsx';
+import { getLapisUrl } from '../../config.ts';
 import { routes } from '../../routes/routes.ts';
-import { backendClientHooks } from '../../services/serviceHooks.ts';
-import { type AccessionVersion, type Group } from '../../types/backend.ts';
+import { backendClientHooks, lapisClientHooks } from '../../services/serviceHooks.ts';
+import { type Group } from '../../types/backend.ts';
 import type { InputField, SubmissionDataTypes } from '../../types/config.ts';
+import { getLatestAccessionVersion } from '../../types/lapis.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { parseAccessionVersionFromString } from '../../utils/extractAccessionVersion.ts';
@@ -20,7 +22,8 @@ type IndividualRevisionFormProps = {
     group: Group;
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
-    accessionVersion?: string;
+    accession?: string;
+    version?: string;
 };
 
 const RevisionInfo: FC<{
@@ -57,7 +60,7 @@ const AccessionVersionSearch: FC<{
     return (
         <form className='flex flex-col gap-2' onSubmit={handleSubmit}>
             <label htmlFor='revise-accession-input' className='text-sm font-medium text-gray-900'>
-                Accession and version of sequence to revise
+                Accession of sequence to revise
             </label>
             <div className='flex gap-2'>
                 <input
@@ -66,7 +69,7 @@ const AccessionVersionSearch: FC<{
                     className='border border-gray-300 rounded px-3 py-2 w-80'
                     value={input ?? ''}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder='LOC_0001234.1'
+                    placeholder='LOC_0001234'
                 />
                 <Button
                     type='submit'
@@ -91,55 +94,74 @@ const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
     group,
     metadataTemplateFields,
     submissionDataTypes,
-    accessionVersion,
+    accession,
+    version,
 }) => {
-    const getValidAccessionVersion = (value: string | undefined) => {
-        const parsed = parseAccessionVersionFromString(value?.trim() ?? '');
-        if (parsed.version === undefined) {
-            return undefined;
-        }
-        return parsed as AccessionVersion;
-    };
+    const [input, setInput] = useState<string | undefined>(accession);
+    const [searchAccession, setSearchAccession] = useState<string | undefined>(accession);
+    const [selectedVersion, setSelectedVersion] = useState<number | undefined>(
+        version !== undefined && Number.isInteger(Number(version)) ? Number(version) : undefined,
+    );
 
-    const [input, setInput] = useState<string | undefined>(accessionVersion);
-    const [search, setSearch] = useState<AccessionVersion | undefined>(getValidAccessionVersion(accessionVersion));
+    const {
+        data: sequenceEntryHistory,
+        isLoading: isHistoryLoading,
+        error: historyError,
+    } = lapisClientHooks(getLapisUrl(clientConfig, organism)).useSequenceEntryHistory(searchAccession);
+
+    const resolvedVersion =
+        selectedVersion ??
+        (sequenceEntryHistory ? getLatestAccessionVersion(sequenceEntryHistory)?.version : undefined);
 
     const {
         data,
         error: apiError,
-        isFetching,
+        isFetching: isEditFetching,
     } = backendClientHooks(clientConfig).useGetDataToEdit(
         {
             headers: createAuthorizationHeader(accessToken),
             params: {
                 organism,
-                accession: search?.accession ?? '',
-                version: search?.version ?? 1,
+                accession: searchAccession ?? '',
+                version: resolvedVersion ?? 1,
             },
         },
-        { enabled: search !== undefined },
+        { enabled: searchAccession !== undefined && resolvedVersion !== undefined },
     );
+
+    const isFetching = isHistoryLoading || isEditFetching;
+
+    const trimmedInput = input?.trim();
+    const inputHasVersion =
+        trimmedInput !== undefined &&
+        trimmedInput !== '' &&
+        parseAccessionVersionFromString(trimmedInput).version !== undefined;
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-
-        const value = input?.trim();
+        if (trimmedInput === undefined || trimmedInput === '' || inputHasVersion) {
+            return;
+        }
+        setSearchAccession(trimmedInput);
+        setSelectedVersion(undefined);
         const url = new URL(window.location.href);
-        if (!value) url.searchParams.delete('accessionVersion');
-        else url.searchParams.set('accessionVersion', value);
+        url.searchParams.set('accession', trimmedInput);
+        url.searchParams.delete('version');
         window.history.replaceState(null, '', url.toString());
-
-        setSearch(getValidAccessionVersion(value));
     };
 
-    const parseError =
-        !input?.trim() || getValidAccessionVersion(input)
-            ? undefined
-            : 'Please enter an accession and version, e.g. LOC_0001234.1';
+    const notFound =
+        searchAccession !== undefined &&
+        !isHistoryLoading &&
+        (historyError !== null || sequenceEntryHistory?.length === 0);
 
-    const error =
-        parseError ??
-        (apiError ? 'Could not load that sequence. Make sure the accession belongs to your group.' : undefined);
+    const error = inputHasVersion
+        ? 'Enter an accession only, without a version.'
+        : notFound
+          ? 'Could not find that accession. Please check it and try again.'
+          : apiError
+            ? 'Could not load that sequence. Make sure the accession belongs to your group.'
+            : undefined;
 
     return (
         <div className='text-left mt-3 max-w-4xl mb-3'>
@@ -169,6 +191,7 @@ const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
                             dataToEdit={data}
                             groupedInputFields={metadataTemplateFields}
                             submissionDataTypes={submissionDataTypes}
+                            sequenceEntryHistory={sequenceEntryHistory}
                         />
                     )}
                 </div>

@@ -19,7 +19,8 @@ const organism = Astro.params.organism!;
 const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
 
 const inputMode: InputMode = Astro.url.searchParams.get('inputMode') === 'form' ? 'form' : 'bulk';
-const accessionVersion = Astro.url.searchParams.get('accessionVersion') || undefined;
+const accession = Astro.url.searchParams.get('accession') || undefined;
+const version = Astro.url.searchParams.get('version') || undefined;
 
 if (!cleanedOrganism) {
     return {
@@ -49,7 +50,8 @@ const clientConfig = getRuntimeConfig().public;
                     inputMode={inputMode}
                     submissionDataTypes={schema.submissionDataTypes}
                     dataUseTermsEnabled={dataUseTermsAreEnabled()}
-                    accessionVersion={accessionVersion}
+                    accession={accession}
+                    version={version}
                     client:load
                 />
             ),
