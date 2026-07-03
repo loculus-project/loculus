@@ -1,5 +1,3 @@
-{{- $ingressHosts := $.Values.networking.ingressHosts | default dict }}
-{{- $keycloakHost := $ingressHosts.keycloak | default (printf "authentication%s%s" $.Values.networking.subdomainSeparator (.Values.host | default "")) }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -258,8 +256,7 @@ data:
           "publicClient": true,
           "directAccessGrantsEnabled": true,
           "redirectUris": [
-            "https://{{ $ingressHosts.website | default (.Values.host | default "") }}/*",
-            "http://{{ $ingressHosts.website | default (.Values.host | default "") }}/*",
+            "{{ include "loculus.websiteUrl" . }}/*",
             "http://localhost:3000/*"
           ]
         },
