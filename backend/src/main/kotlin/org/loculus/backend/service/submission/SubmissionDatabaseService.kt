@@ -278,7 +278,12 @@ class SubmissionDatabaseService(
         try {
             updateProcessedDataAndRecordCount(inputStream, organism, pipelineVersion)
         } finally {
-            submissionMetrics.recordWritePhase(sample, SUBMIT_PROCESSED_DATA_ENDPOINT, STORE_PREPROCESSED_DATA_PHASE)
+            submissionMetrics.recordWritePhase(
+                sample,
+                SUBMIT_PROCESSED_DATA_ENDPOINT,
+                organism.name,
+                STORE_PREPROCESSED_DATA_PHASE,
+            )
         }
     }
 

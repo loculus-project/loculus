@@ -120,13 +120,14 @@ class SubmitModel(
         batchSize: Int = 1000,
     ): List<SubmissionIdMapping> {
         val endpoint = submissionParams.uploadType.metricEndpoint()
+        val organism = submissionParams.organism.name
 
         try {
             log.info {
                 "Processing submission (type: ${submissionParams.uploadType.name}) with uploadId $uploadId"
             }
 
-            timeWritePhase(endpoint, VALIDATE_UPLOAD_PHASE) {
+            timeWritePhase(endpoint, organism, VALIDATE_UPLOAD_PHASE) {
                 submissionIdFilesMappingPreconditionValidator
                     .validateFilenameCharacters(submissionParams.files)
                     .validateFilenamesAreUnique(submissionParams.files)
@@ -135,7 +136,7 @@ class SubmitModel(
                     .validateFilesExist(submissionParams.files)
             }
 
-            timeWritePhase(endpoint, COPY_TO_AUX_TABLE_PHASE) {
+            timeWritePhase(endpoint, organism, COPY_TO_AUX_TABLE_PHASE) {
                 insertDataIntoAux(
                     uploadId,
                     submissionParams,
@@ -143,11 +144,11 @@ class SubmitModel(
                 )
             }
 
-            val metadataSubmissionIds = timeWritePhase(endpoint, LOAD_METADATA_SUBMISSION_IDS_PHASE) {
+            val metadataSubmissionIds = timeWritePhase(endpoint, organism, LOAD_METADATA_SUBMISSION_IDS_PHASE) {
                 uploadDatabaseService.getMetadataUploadSubmissionIds(uploadId).toSet()
             }
             if (requiresConsensusSequenceFile(submissionParams.organism)) {
-                timeWritePhase(endpoint, VALIDATE_CONSENSUS_SEQUENCES_PHASE) {
+                timeWritePhase(endpoint, organism, VALIDATE_CONSENSUS_SEQUENCES_PHASE) {
                     log.debug { "Validating submission with uploadId $uploadId" }
                     val metadataFastaIds = uploadDatabaseService.getFastaIdsForMetadata(uploadId).flatten()
                     val metadataFastaIdsSet = metadataFastaIds.toSet()
@@ -160,7 +161,7 @@ class SubmitModel(
             }
 
             if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
-                timeWritePhase(endpoint, ASSOCIATE_REVISED_DATA_PHASE) {
+                timeWritePhase(endpoint, organism, ASSOCIATE_REVISED_DATA_PHASE) {
                     log.info {
                         "Associating uploaded sequence data with existing sequence entries with uploadId $uploadId"
                     }
@@ -173,7 +174,7 @@ class SubmitModel(
             }
 
             submissionParams.files?.let { submittedFiles ->
-                timeWritePhase(endpoint, VALIDATE_FILE_MAPPING_PHASE) {
+                timeWritePhase(endpoint, organism, VALIDATE_FILE_MAPPING_PHASE) {
                     val fileSubmissionIds = submittedFiles.keys
                     validateSubmissionIdSetsForFiles(metadataSubmissionIds, fileSubmissionIds)
                     validateFileGroupOwnership(submittedFiles, submissionParams, uploadId)
@@ -181,34 +182,34 @@ class SubmitModel(
             }
 
             if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
-                timeWritePhase(endpoint, GENERATE_ACCESSIONS_PHASE) {
+                timeWritePhase(endpoint, organism, GENERATE_ACCESSIONS_PHASE) {
                     log.info { "Generating new accessions for uploaded sequence data with uploadId $uploadId" }
                     uploadDatabaseService.generateNewAccessionsForOriginalUpload(uploadId)
                 }
             }
 
             log.debug { "Persisting submission with uploadId $uploadId" }
-            val submissionIdMappings = timeWritePhase(endpoint, INSERT_SEQUENCE_ENTRIES_PHASE) {
+            val submissionIdMappings = timeWritePhase(endpoint, organism, INSERT_SEQUENCE_ENTRIES_PHASE) {
                 uploadDatabaseService.mapAndCopy(uploadId, submissionParams)
             }
             submissionMetrics.recordUploadedSequences(
-                organism = submissionParams.organism.name,
+                organism = organism,
                 count = submissionIdMappings.size,
             )
             return submissionIdMappings
         } finally {
-            timeWritePhase(endpoint, CLEANUP_UPLOAD_DATA_PHASE) {
+            timeWritePhase(endpoint, organism, CLEANUP_UPLOAD_DATA_PHASE) {
                 uploadDatabaseService.deleteUploadData(uploadId)
             }
         }
     }
 
-    private fun <T> timeWritePhase(endpoint: String, phase: String, block: () -> T): T {
+    private fun <T> timeWritePhase(endpoint: String, organism: String, phase: String, block: () -> T): T {
         val sample = submissionMetrics.startTimer()
         return try {
             block()
         } finally {
-            submissionMetrics.recordWritePhase(sample, endpoint, phase)
+            submissionMetrics.recordWritePhase(sample, endpoint, organism, phase)
         }
     }
 
