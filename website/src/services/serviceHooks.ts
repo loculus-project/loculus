@@ -3,6 +3,7 @@ import { ZodiosHooks, type ZodiosHooksInstance } from '@zodios/react';
 import { isAxiosError } from 'axios';
 
 import { backendApi } from './backendApi.ts';
+import { groupManagementApi } from './groupManagementApi.ts';
 import { lapisApi } from './lapisApi.ts';
 import { seqSetCitationApi } from './seqSetCitationApi.ts';
 import { problemDetail } from '../types/backend.ts';
@@ -24,6 +25,10 @@ const LAPIS_RETRY_OPTIONS = {
 
 export function backendClientHooks(clientConfig: ClientConfig) {
     return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, backendApi));
+}
+
+export function groupManagementClientHooks(clientConfig: ClientConfig) {
+    return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, groupManagementApi));
 }
 
 export function lapisClientHooks(lapisUrl: string) {

@@ -165,6 +165,15 @@ export const getSequencesResponse = z.object({
 });
 export type GetSequencesResponse = z.infer<typeof getSequencesResponse>;
 
+export const reviewCount = z.object({
+    organism: z.string(),
+    groupId: z.number(),
+    count: z.number(),
+});
+export type ReviewCount = z.infer<typeof reviewCount>;
+
+export const reviewCountsResponse = z.array(reviewCount);
+
 export const submissionIdMapping = accessionVersion.merge(
     z.object({
         submissionId: z.string(),

@@ -292,6 +292,16 @@ data class GetSequenceResponse(
     val processingResultCounts: Map<ProcessingResult, Int>,
 )
 
+/**
+ * The number of unreleased sequence entries a user has in one group of one organism, used to power the
+ * "sequences awaiting review" notification bell. The count includes everything not yet released
+ * (RECEIVED / IN_PROCESSING / PROCESSED), so some counted entries may still be processing rather than
+ * strictly awaiting approval. This is intentional: it is computed from the base sequence_entries table
+ * only (no join on preprocessed data), which keeps it cheap. If an exact "awaiting approval" count is
+ * ever needed, this could be narrowed to Status.PROCESSED by querying SequenceEntriesView instead.
+ */
+data class ReviewCount(val organism: String, val groupId: Int, val count: Int)
+
 data class SequenceEntryStatus(
     override val accession: Accession,
     override val version: Version,
