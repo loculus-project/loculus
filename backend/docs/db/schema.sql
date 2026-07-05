@@ -1028,6 +1028,13 @@ CREATE INDEX sequence_entries_submitter_idx ON public.sequence_entries USING btr
 
 
 --
+-- Name: sequence_entries_unreleased_by_organism_group_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX sequence_entries_unreleased_by_organism_group_idx ON public.sequence_entries USING btree (organism, group_id) WHERE (released_at IS NULL);
+
+
+--
 -- Name: user_groups_table_user_name_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
