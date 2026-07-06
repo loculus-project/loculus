@@ -67,6 +67,14 @@ s3:
   gcEnabled: false
   gcFrequencyMinutes: 1440
   gcOrphanRetentionPeriodMinutes: 10080
+  # Name of a k8s secret with `accessKey`/`secretKey` keys, used to authenticate to S3 with
+  # static credentials (e.g. MinIO). Set to "" to omit static credentials and instead rely on
+  # IAM role credentials (e.g. IRSA on EKS) - in that case also set serviceAccountAnnotations
+  # below to attach the IAM role to the backend pod.
+  credentialsSecretName: s3-bucket
+  # Annotations to add to the backend's ServiceAccount, e.g. to attach an IAM role via IRSA
+  # on EKS: {eks.amazonaws.com/role-arn: "arn:aws:iam::<account-id>:role/<role-name>"}.
+  serviceAccountAnnotations: {}
   bucket:
     region: us-east-1
     bucket: loculus-preview-private
