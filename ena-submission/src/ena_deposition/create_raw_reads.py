@@ -124,12 +124,11 @@ def create_manifest_object(
 
 def submission_table_start(db_engine: Engine) -> None:
     """
-    1. Find all entries in submission_table in state SUBMITTED_SAMPLE
-    2. Filter for entries where submit_raw_reads is True
-    3. If (exists an entry in the raw_reads_table for (accession, version)):
+    1. Find all entries in submission_table in state SUBMITTED_SAMPLE and submit_raw_reads=True
+    2. If (exists an entry in the raw_reads_table for (accession, version)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_ALL
     b.      Else update state to SUBMITTING_RAW_READS
-    4. Else create corresponding entry in raw_reads_table
+    3. Else create corresponding entry in raw_reads_table
     """
     conditions = {"status_all": StatusAll.SUBMITTED_SAMPLE, "submit_raw_reads": True}
     ready_to_submit = find_conditions_in_db(db_engine, SubmissionTableEntry, conditions=conditions)
@@ -609,4 +608,6 @@ def create_raw_reads(config: Config, stop_event: threading.Event):
         last_retry_time = raw_reads_table_handle_errors(
             db_engine, config, slack_config, last_retry_time
         )
-        time.sleep(config.time_between_iterations)
+        if stop_event.wait(timeout=config.time_between_iterations):
+            logger.info("create_raw_reads stopped due to exception in another task")
+            return

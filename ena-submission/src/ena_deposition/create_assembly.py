@@ -38,6 +38,7 @@ from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
     AccessionVersion,
     AssemblyTableEntry,
+    RawReadsTableEntry,
     Status,
     StatusAll,
     SubmissionTableEntry,
@@ -102,9 +103,14 @@ def get_segment_order(unaligned_sequences: dict[str, str | None]) -> list[str]:
     return sorted(segment_order)
 
 
-def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) -> dict[str, str]:
+def get_assembly_values_in_metadata(
+    config: Config, metadata: dict[str, str], run_ref: str | None = None
+) -> dict[str, str]:
     assembly_values = {}
     for key in config.manifest_fields_mapping:
+        if key == "run_ref" and run_ref:
+            assembly_values[key] = run_ref
+            continue
         default = config.manifest_fields_mapping[key].default
         loculus_fields = config.manifest_fields_mapping[key].loculus_fields
         type = config.manifest_fields_mapping[key].type
@@ -153,6 +159,7 @@ def create_manifest_object(
     study_accession: str,
     submission_row: SubmissionTableEntry,
     dir: str | None = None,
+    run_ref: str | None = None,
 ) -> AssemblyManifest:
     """
     Create an AssemblyManifest object for an entry in the assembly table using:
@@ -182,7 +189,7 @@ def create_manifest_object(
 
     flat_file = create_flatfile(config, metadata, ena_organism, unaligned_nucleotide_sequences, dir)
 
-    assembly_values = get_assembly_values_in_metadata(config, metadata)
+    assembly_values = get_assembly_values_in_metadata(config, metadata, run_ref=run_ref)
 
     try:
         manifest = AssemblyManifest(
@@ -207,6 +214,38 @@ def create_manifest_object(
     return manifest
 
 
+def _ensure_assembly_and_update_submission(
+    db_engine: Engine,
+    seq_key: dict,
+    result: dict | None = None,
+) -> None:
+    corresponding_assembly = find_conditions_in_db(
+        db_engine,
+        AssemblyTableEntry,
+        conditions=seq_key,
+    )
+
+    if len(corresponding_assembly) == 1:
+        status_all = (
+            StatusAll.SUBMITTED_ALL
+            if corresponding_assembly[0].status == Status.SUBMITTED
+            else StatusAll.SUBMITTING_ASSEMBLY
+        )
+    else:
+        assembly_entry = AssemblyTableEntry(**seq_key, result=result or {})
+        if not add_to_assembly_table(db_engine, assembly_entry):
+            return
+
+        status_all = StatusAll.SUBMITTING_ASSEMBLY
+
+    update_db_where_conditions(
+        db_engine,
+        model_class=SubmissionTableEntry,
+        conditions=seq_key,
+        update_values={"status_all": status_all},
+    )
+
+
 def submission_table_start(db_engine: Engine, config: Config) -> None:
     """
     1. Find all entries in submission_table in state SUBMITTED_SAMPLE
@@ -216,14 +255,26 @@ def submission_table_start(db_engine: Engine, config: Config) -> None:
     b.      Else update state to SUBMITTING_ASSEMBLY
     4. Else create corresponding entry in assembly_table
     """
-    conditions = {"status_all": StatusAll.SUBMITTED_SAMPLE}
-    ready_to_submit = find_conditions_in_db(db_engine, SubmissionTableEntry, conditions=conditions)
-    logger.debug(
-        f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_SAMPLE"
+
+    submitted_sample_conditions = {
+        "status_all": StatusAll.SUBMITTED_SAMPLE,
+        "submit_raw_reads": False,
+    }
+    submitted_sample_rows = find_conditions_in_db(
+        db_engine,
+        SubmissionTableEntry,
+        conditions=submitted_sample_conditions,
     )
-    for row in ready_to_submit:
+
+    logger.debug(
+        f"Found {len(submitted_sample_rows)} entries in submission_table in status SUBMITTED_SAMPLE"
+    )
+
+    for row in submitted_sample_rows:
         seq_key = asdict(row.pkey)
 
+        # TODO: remove once raw read submission is fully implemented and users
+        # can no longer submit `insdcRawReadsAccession` directly.
         run_ref = row.seq_metadata.get("insdcRawReadsAccession")
         if run_ref and not accession_exists(run_ref, config):
             set_accession_does_not_exist_error(
@@ -234,26 +285,38 @@ def submission_table_start(db_engine: Engine, config: Config) -> None:
             )
             continue
 
-        # 1. check if there exists an entry in the assembly_table for seq_key
-        corresponding_assembly = find_conditions_in_db(
-            db_engine, AssemblyTableEntry, conditions=seq_key
-        )
-        status_all = None
-        if len(corresponding_assembly) == 1:
-            if corresponding_assembly[0].status == Status.SUBMITTED:
-                status_all = StatusAll.SUBMITTED_ALL
-            else:
-                status_all = StatusAll.SUBMITTING_ASSEMBLY
-        else:
-            # If not: create assembly_entry, change status to SUBMITTING_ASSEMBLY
-            if not add_to_assembly_table(db_engine, AssemblyTableEntry(**seq_key)):
-                continue
-            status_all = StatusAll.SUBMITTING_ASSEMBLY
-        update_db_where_conditions(
+        _ensure_assembly_and_update_submission(db_engine, seq_key)
+
+    submitted_raw_reads_conditions = {
+        "status_all": StatusAll.SUBMITTED_RAW_READS,
+        "submit_raw_reads": True,
+    }
+    submitted_raw_reads_rows = find_conditions_in_db(
+        db_engine,
+        SubmissionTableEntry,
+        conditions=submitted_raw_reads_conditions,
+    )
+
+    logger.debug(
+        f"Found {len(submitted_raw_reads_rows)} entries in submission_table "
+        "in status SUBMITTED_RAW_READS"
+    )
+
+    for row in submitted_raw_reads_rows:
+        seq_key = asdict(row.pkey)
+
+        corresponding_raw_reads = find_conditions_in_db(
             db_engine,
-            model_class=SubmissionTableEntry,
+            RawReadsTableEntry,
             conditions=seq_key,
-            update_values={"status_all": status_all},
+        )
+
+        run_ref = corresponding_raw_reads[0].result.get("run") if corresponding_raw_reads else None
+
+        _ensure_assembly_and_update_submission(
+            db_engine,
+            seq_key,
+            result={"run": run_ref} if run_ref else None,
         )
 
 
@@ -528,6 +591,7 @@ def assembly_table_create(db_engine: Engine, config: Config):
         )
     for row in ready_to_submit_assembly:
         seq_key = row.pkey
+        run_ref = row.result.get("run") if row.result else None
         submission_rows = find_conditions_in_db(
             db_engine, SubmissionTableEntry, conditions=asdict(seq_key)
         )
@@ -551,10 +615,7 @@ def assembly_table_create(db_engine: Engine, config: Config):
 
         try:
             manifest_object = create_manifest_object(
-                config,
-                sample_accession,
-                study_accession,
-                submission_row,
+                config, sample_accession, study_accession, submission_row, run_ref=run_ref
             )
             manifest_file = create_manifest(manifest_object, is_broker=config.is_broker)
         except Exception as e:
