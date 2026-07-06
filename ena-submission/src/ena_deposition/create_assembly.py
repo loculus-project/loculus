@@ -152,7 +152,7 @@ def create_manifest_object(
     flat_file = create_flatfile(config, metadata, ena_organism, unaligned_nucleotide_sequences, dir)
     program = [
         metadata.get("consensusSequenceSoftwareName"),
-        metadata.get("consensusSequenceSoftwareVersion")
+        metadata.get("consensusSequenceSoftwareVersion"),
     ]
     program_joined = ", ".join([x for x in program if x is not None])
 
@@ -172,7 +172,9 @@ def create_manifest_object(
             run_ref=run_ref or metadata.get("insdcRawReadsAccession"),
             address=call_loculus.get_address(
                 config, submission_row.center_name, submission_row.seq_metadata["groupId"]
-            ) if config.is_broker else None,
+            )
+            if config.is_broker
+            else None,
         )
     except Exception as e:
         # log traceback for better debugging
