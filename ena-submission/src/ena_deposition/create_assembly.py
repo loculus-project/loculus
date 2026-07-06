@@ -165,9 +165,9 @@ def create_manifest_object(
             chromosome_list=chromosome_list_file,
             description=get_description(config, metadata),
             moleculetype=ena_organism.molecule_type,
-            platform=metadata.get("sequencingInstrument", "Unknown"),
+            platform=metadata.get("sequencingInstrument") or "Unknown",
             program=program_joined or "Unknown",
-            coverage=metadata.get("depthOfCoverage", 1),
+            coverage=metadata.get("depthOfCoverage") or "1",
             authors=get_authors(metadata.get("authors", "")) if config.is_broker else None,
             run_ref=run_ref or metadata.get("insdcRawReadsAccession"),
             address=call_loculus.get_address(
@@ -282,7 +282,11 @@ def submission_table_start(db_engine: Engine, config: Config) -> None:
             conditions=seq_key,
         )
 
-        run_ref = corresponding_raw_reads[0].result.get("run") if corresponding_raw_reads else None
+        run_ref = (
+            corresponding_raw_reads[0].result.get("err_accession")
+            if corresponding_raw_reads
+            else None
+        )
 
         _ensure_assembly_and_update_submission(
             db_engine,

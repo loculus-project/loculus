@@ -83,6 +83,10 @@ def mock_config():
     config.metadata_mapping = {
         key: MetadataMapping(**item) for key, item in defaults["metadata_mapping"].items()
     }
+    config.manifest_fields_mapping = {
+        key: ManifestFieldDetails(**item)
+        for key, item in defaults["manifest_fields_mapping"].items()
+    }
     config.ena_checklist = "ERC000033"
     config.set_alias_suffix = None
     config.is_broker = True
@@ -350,6 +354,7 @@ class AssemblyCreationTests(unittest.TestCase):
             study_accession,
             sample_data_in_submission_table(),
         )
+        print(f"Manifest object: {manifest}")
         manifest_file_name = create_manifest(manifest, is_broker=True)
         data = {}
         with open(manifest_file_name, encoding="utf-8") as gz:

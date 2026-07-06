@@ -42,7 +42,6 @@ manifest_fields_mapping:
     default: "Unknown"
   coverage:
     loculus_fields: [depthOfCoverage]
-    type: int
     default: 1
   run_ref:
     loculus_fields: [insdcRawReadsAccession]

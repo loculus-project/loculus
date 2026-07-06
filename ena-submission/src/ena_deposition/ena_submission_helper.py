@@ -523,6 +523,9 @@ def create_manifest(
     if isinstance(manifest, AssemblyManifest) and not manifest.fasta and not manifest.flatfile:
         msg = "Either fasta or flatfile must be provided"
         raise ValueError(msg)
+    if isinstance(manifest, RawReadsManifest) and not manifest.fastq:
+        msg = "Fastq files must be provided"
+        raise ValueError(msg)
 
     if dir:
         os.makedirs(dir, exist_ok=True)
@@ -553,6 +556,7 @@ def post_webin_cli(
     manifest_filename,
     tmpdir: tempfile.TemporaryDirectory,
     center_name=None,
+    context: Literal["genome", "reads"] = "genome",
 ) -> subprocess.CompletedProcess:
     logger.debug(
         f"Posting manifest {manifest_filename} to ENA Webin CLI with test={config.test} and "
@@ -563,7 +567,7 @@ def post_webin_cli(
         f"-username={config.ena_submission_username}",
         f"-centername={center_name}" if center_name else "",
         "-submit",
-        "-context=genome",
+        f"-context={context}",
         f"-manifest={manifest_filename}",
         f"-outputdir={tmpdir.name}",
         "-test" if config.test else "",
@@ -628,6 +632,77 @@ def create_ena_assembly(config: Config, manifest_filename: str, center_name=None
         error_message = f"Webin CLI command failed with status: {response.returncode}. "
     else:
         error_message = "Webin CLI command succeeded but did not return ERZ accession. "
+    error_message += f"Stdout: {response.stdout}, Stderr: {response.stderr}"
+    logger.error(error_message)
+    errors.append(error_message)
+
+    try:
+        manifest_contents = Path(manifest_filename).read_text(encoding="utf-8")
+        logger.info(f"manifest.tsv contents:\n{manifest_contents}")
+    except Exception as e:
+        logger.warning(f"Reading manifest from {manifest_filename} failed: {e}")
+
+    for file_path in glob.glob(f"{output_tmpdir.name}/**", recursive=True, include_hidden=True):
+        logger.info(f"Attempting to print webin-cli log file: {file_path}")
+        try:
+            contents = Path(file_path).read_text(encoding="utf-8")
+            logger.info(f"webin-cli log file {file_path} contents:\n{contents}")
+        except Exception as e:
+            logger.warning(f"Reading webin-cli log file {file_path} failed: {e}")
+    return CreationResult(errors=errors, warnings=warnings)
+
+
+def create_ena_raw_reads(
+    config: Config, manifest_filename: str, center_name=None
+) -> CreationResult:
+    """
+    This is equivalent to running:
+    ena-webin-cli -submit \\
+        -context reads \\
+        -manifest manifest.tsv \\
+        -username Webin-XXXXX \\
+        -password YYYYYY
+    config.test=True, adds the `-test` flag which means submissions will use the ENA dev endpoint.
+    """
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    # create a tmp dir for output files
+    # use normal python stuff for that
+
+    output_tmpdir = tempfile.TemporaryDirectory()
+
+    response = post_webin_cli(
+        config, manifest_filename, tmpdir=output_tmpdir, center_name=center_name, context="reads"
+    )
+    erx_accession = None
+    err_accession = None
+
+    # Happy path: webin-cli succeeded and returned ERZ accession
+    if response.returncode == 0:
+        for line in response.stdout.splitlines():
+            if "The following experiment accession was assigned to the submission:" in line:
+                match = re.search(r"ERX\d+", line)
+                if match:
+                    erx_accession = match.group(0)
+                    logger.info(f"Webin CLI succeeded and returned ERX accession: {erx_accession}")
+            if "The following run accession was assigned to the submission:" in line:
+                match = re.search(r"ERR\d+", line)
+                if match:
+                    err_accession = match.group(0)
+                    logger.info(f"Webin CLI succeeded and returned ERR accession: {err_accession}")
+    if erx_accession is not None and err_accession is not None:
+        return CreationResult(
+            result={"err_accession": err_accession, "erx_accession": erx_accession},
+            errors=errors,
+            warnings=warnings,
+        )
+
+    # Handle the case where the webin-cli command fails or does not return ERX accession
+    if response.returncode != 0:
+        error_message = f"Webin CLI command failed with status: {response.returncode}. "
+    else:
+        error_message = "Webin CLI command succeeded but did not return ERR or ERX accession. "
     error_message += f"Stdout: {response.stdout}, Stderr: {response.stderr}"
     logger.error(error_message)
     errors.append(error_message)

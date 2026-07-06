@@ -14,7 +14,7 @@ from ena_deposition import call_loculus
 from .config import Config
 from .ena_submission_helper import (
     CreationResult,
-    create_ena_assembly,
+    create_ena_raw_reads,
     create_manifest,
     get_alias,
     get_authors,
@@ -115,9 +115,9 @@ def create_manifest_object(
             authors=get_authors(metadata.get("authors", "")) if config.is_broker else None,
             platform=platform,
             instrument=instrument,
-            library_source=metadata.get("sequencingLibrarySource", "OTHER"),
-            library_selection=metadata.get("sequencingLibrarySelection", "unspecified"),
-            library_strategy=metadata.get("sequencingLibraryStrategy", "OTHER"),
+            library_source=metadata.get("sequencingLibrarySource") or "OTHER",
+            library_selection=metadata.get("sequencingLibrarySelection") or "unspecified",
+            library_strategy=metadata.get("sequencingLibraryStrategy") or "OTHER",
             address=call_loculus.get_address(
                 config, submission_row.center_name, submission_row.seq_metadata["groupId"]
             )
@@ -413,7 +413,9 @@ def raw_reads_table_create(db_engine: Engine, config: Config):
             )
             manifest_file = create_manifest(manifest_object, is_broker=config.is_broker)
         except Exception as e:
-            logger.error(f"Manifest creation failed for accession {row.accession} with error {e}")
+            logger.error(
+                f"Raw reads manifest creation failed for accession {row.accession} with error {e}"
+            )
             continue
 
         update_values: dict[str, Any] = {"status": Status.SUBMITTING}
@@ -433,7 +435,7 @@ def raw_reads_table_create(db_engine: Engine, config: Config):
         logger.info(f"Starting raw reads creation for accession {row.accession}")
 
         # Actual webin-cli command is run here
-        raw_reads_creation_results: CreationResult = create_ena_assembly(
+        raw_reads_creation_results: CreationResult = create_ena_raw_reads(
             config=config,
             manifest_filename=manifest_file,
             center_name=center_name,
