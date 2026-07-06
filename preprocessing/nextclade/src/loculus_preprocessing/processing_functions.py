@@ -1182,7 +1182,9 @@ class ProcessingFunctions:
                 warnings.append(
                     f"specimenCollectorSampleId '{collector_id}' and submissionId"
                     f" '{submission_id}' could not be parsed, using ACCESSION_VERSION"
-                    f" in displayName instead"
+                    f" in displayName instead. Alternatively, you may edit the"
+                    f" specimenCollectorSampleId to not contain any whitespace or '/' characters"
+                    f" so it can be incorporated in the displayName of this sequence."
                 )
             concatenate_order = replace_identifier(order, "ACCESSION_VERSION")
             concatenate_field_types = replace_identifier(field_types, "ACCESSION_VERSION")
