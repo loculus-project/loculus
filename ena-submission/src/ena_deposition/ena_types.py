@@ -2,10 +2,32 @@ import dataclasses
 from collections import UserString
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import Self, overload
 
 
 class XmlNone(UserString):
     pass
+
+
+class LookupStrEnum(StrEnum):
+    """StrEnum with case-insensitive lookup by ENA's controlled-vocabulary value."""
+
+    @overload
+    @classmethod
+    def from_value(cls, raw_value: str | None) -> Self | None: ...
+    @overload
+    @classmethod
+    def from_value(cls, raw_value: str | None, default: Self) -> Self: ...
+
+    @classmethod
+    def from_value(cls, raw_value: str | None, default: Self | None = None) -> Self | None:
+        if not raw_value:
+            return default
+        normalized = raw_value.strip().lower()
+        for member in cls:
+            if member.value.lower() == normalized:
+                return member
+        return default
 
 
 @dataclass
@@ -177,7 +199,7 @@ class MoleculeType(StrEnum):
     VIRAL_CRNA = "viral cRNA"
 
 
-class Instrument(StrEnum):
+class Instrument(LookupStrEnum):
     HiSeq_X_Five = "HiSeq X Five"
     HiSeq_X_Ten = "HiSeq X Ten"
     Illumina_Genome_Analyzer = "Illumina Genome Analyzer"
@@ -254,7 +276,7 @@ class Instrument(StrEnum):
     AVITI_24 = "AVITI 24"
 
 
-class Platform(StrEnum):
+class Platform(LookupStrEnum):
     ILLUMINA = "ILLUMINA"
     PACBIO_SMRT = "PACBIO_SMRT"
     OXFORD_NANOPORE = "OXFORD_NANOPORE"
@@ -272,7 +294,7 @@ class Platform(StrEnum):
     AVITI = "AVITI"
 
 
-class LibrarySource(StrEnum):
+class LibrarySource(LookupStrEnum):
     GENOMIC = "GENOMIC"
     GENOMIC_SINGLE_CELL = "GENOMIC SINGLE CELL"
     TRANSCRIPTOMIC = "TRANSCRIPTOMIC"
@@ -284,7 +306,7 @@ class LibrarySource(StrEnum):
     OTHER = "OTHER"
 
 
-class LibrarySelection(StrEnum):
+class LibrarySelection(LookupStrEnum):
     RANDOM = "RANDOM"
     PCR = "PCR"
     RANDOM_PCR = "RANDOM PCR"
@@ -318,7 +340,7 @@ class LibrarySelection(StrEnum):
     UNSPECIFIED = "unspecified"
 
 
-class LibraryStrategy(StrEnum):
+class LibraryStrategy(LookupStrEnum):
     WGS = "WGS"
     WGA = "WGA"
     WXS = "WXS"

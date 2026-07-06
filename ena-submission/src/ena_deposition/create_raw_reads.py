@@ -1,10 +1,9 @@
-import json
 import logging
 import threading
 import traceback
 from dataclasses import asdict
-from datetime import datetime, timedelta
-from typing import Any, Literal, cast
+from datetime import datetime
+from typing import Any, Literal
 
 import pytz
 from sqlalchemy import Engine
@@ -19,11 +18,13 @@ from .ena_submission_helper import (
     get_alias,
     get_authors,
     get_description,
-    get_ena_analysis_process,
     retry_failed_submissions_for_matching_errors,
 )
 from .ena_types import (
     Instrument,
+    LibrarySelection,
+    LibrarySource,
+    LibraryStrategy,
     Platform,
     RawReadsManifest,
 )
@@ -38,9 +39,7 @@ from .submission_db_helper import (
     db_init,
     find_conditions_in_db,
     find_errors_or_stuck_in_db,
-    find_waiting_in_db,
     get_project_and_sample_results,
-    is_latest_revision,
     is_revision,
     previous_version,
     update_db_where_conditions,
@@ -48,9 +47,6 @@ from .submission_db_helper import (
 )
 
 logger = logging.getLogger(__name__)
-
-_PLATFORM_BY_VALUE = {platform.value.lower(): platform for platform in Platform}
-_INSTRUMENT_BY_VALUE = {instrument.value.lower(): instrument for instrument in Instrument}
 
 
 def get_platform_and_instrument(
@@ -62,11 +58,10 @@ def get_platform_and_instrument(
     permitted value sets don't overlap, so a case-insensitive lookup against both
     unambiguously tells us which one the user provided.
     """
-    normalized = raw_value.strip().lower()
-    if normalized in _INSTRUMENT_BY_VALUE:
-        return None, _INSTRUMENT_BY_VALUE[normalized]
-    if normalized in _PLATFORM_BY_VALUE:
-        return _PLATFORM_BY_VALUE[normalized], Instrument.unspecified
+    if instrument := Instrument.from_value(raw_value):
+        return None, instrument
+    if platform := Platform.from_value(raw_value):
+        return platform, Instrument.unspecified
     if raw_value != "unspecified":
         logger.warning(
             f"sequencingInstrument value '{raw_value}' for accession {accession} matches "
@@ -106,24 +101,40 @@ def create_manifest_object(
         msg = f"No fastq files found for accession {submission_row.accession}"
         raise RuntimeError(msg)
 
+    authors = get_authors(metadata.get("authors", "")) if config.is_broker else None
+    address = (
+        call_loculus.get_address(config, submission_row.center_name, metadata["groupId"])
+        if config.is_broker
+        else None
+    )
+    paired_nominal_length = metadata.get("pairedNominalLength")
+    insert_size = (
+        int(paired_nominal_length) if len(fastq_files) > 1 and paired_nominal_length else None
+    )
+    library_source = LibrarySource.from_value(
+        metadata.get("sequencingLibrarySource"), LibrarySource.OTHER
+    )
+    library_selection = LibrarySelection.from_value(
+        metadata.get("sequencingLibrarySelection"), LibrarySelection.UNSPECIFIED
+    )
+    library_strategy = LibraryStrategy.from_value(
+        metadata.get("sequencingLibraryStrategy"), LibraryStrategy.OTHER
+    )
+
     try:
         manifest = RawReadsManifest(
             study=study_accession,
             sample=sample_accession,
             name=alias,
             description=get_description(config, metadata),
-            authors=get_authors(metadata.get("authors", "")) if config.is_broker else None,
+            authors=authors,
             platform=platform,
             instrument=instrument,
-            library_source=metadata.get("sequencingLibrarySource") or "OTHER",
-            library_selection=metadata.get("sequencingLibrarySelection") or "unspecified",
-            library_strategy=metadata.get("sequencingLibraryStrategy") or "OTHER",
-            address=call_loculus.get_address(
-                config, submission_row.center_name, submission_row.seq_metadata["groupId"]
-            )
-            if config.is_broker
-            else None,
-            insert_size=metadata.get("pairedNominalLength") if len(fastq_files) > 1 else None,
+            library_source=library_source,
+            library_selection=library_selection,
+            library_strategy=library_strategy,
+            address=address,
+            insert_size=insert_size,
             fastq=fastq_files,
         )
     except Exception as e:
@@ -237,103 +248,27 @@ def update_raw_reads_error(
     )
 
 
-def can_be_revised(config: Config, db_engine: Engine, submission_row: SubmissionTableEntry) -> bool:
-    """
-    Check if raw reads can be revised
-    1. Last version exists in submission_table, otherwise throw RuntimeError
-    2. If biosampleAccession and bioprojectAccession provided by submitter (e.g. raw reads linked)
-       those must be same as in previous version, otherwise cannot be revised
-    3. metadata fields in manifest haven't changed since previous version, otherwise
-       requires manual revision
-    """
+def has_raw_reads_changed(db_engine: Engine, submission_row: SubmissionTableEntry) -> bool:
     seq_key = submission_row.pkey
-    if not is_latest_revision(db_engine, seq_key):
-        return False
     version_to_revise = previous_version(db_engine, seq_key)
     last_version_rows = find_conditions_in_db(
         db_engine,
         SubmissionTableEntry,
-        conditions={"accession": submission_row.accession, "version": version_to_revise},
+        conditions={"accession": seq_key.accession, "version": version_to_revise},
     )
     if len(last_version_rows) == 0:
         error_msg = f"Last version {version_to_revise} not found in submission_table"
         raise RuntimeError(error_msg)
 
-    last_version_entry = last_version_rows[0]
-
-    previous_sample_accession, previous_study_accession = get_project_and_sample_results(
-        db_engine, last_version_entry
-    )
-    logger.debug(
-        f"Previous sample accession: {previous_sample_accession}, "
-        f"previous study accession: {previous_study_accession}"
-    )
-    if submission_row.seq_metadata.get("biosampleAccession"):
-        new_sample_accession = submission_row.seq_metadata["biosampleAccession"]
-        if previous_sample_accession != new_sample_accession:
-            error = (
-                "Raw reads cannot be revised because biosampleAccession in new version: "
-                f"{new_sample_accession} differs from last version: {previous_sample_accession}"
-            )
-            logger.error(error)
-            update_raw_reads_error(
-                db_engine,
-                [error],
-                seq_key=asdict(submission_row.pkey),
-                update_type="revision",
-            )
-            return False
-    if submission_row.seq_metadata.get("bioprojectAccession"):
-        new_project_accession = submission_row.seq_metadata["bioprojectAccession"]
-        if new_project_accession != previous_study_accession:
-            error = (
-                "Raw reads cannot be revised because bioprojectAccession in new version: "
-                f"{new_project_accession} differs from last version: {previous_study_accession}"
-            )
-            logger.error(error)
-            update_raw_reads_error(
-                db_engine,
-                [error],
-                seq_key=asdict(submission_row.pkey),
-                update_type="revision",
-            )
-            return False
-
-    differing_fields = {}
-    for mapping in config.manifest_fields_mapping.values():
-        loculus_field_names = mapping.loculus_fields
-        for loculus_field_name in loculus_field_names:
-            last_entry = last_version_entry.seq_metadata.get(loculus_field_name)
-            new_entry = submission_row.seq_metadata.get(loculus_field_name)
-            if loculus_field_name == "authors":
-                try:
-                    last_entry = get_authors(last_entry) if last_entry else last_entry
-                    new_entry = get_authors(new_entry) if new_entry else new_entry
-                except Exception as e:
-                    logger.error(
-                        f"Error formatting authors field for comparison: {e}. "
-                        f"Traceback: {traceback.format_exc()}"
-                    )
-                    differing_fields[loculus_field_name] = (
-                        f"Last: {last_entry}, New: {new_entry}, Error reformatting: {e}"
-                    )
-                    continue
-            if last_entry != new_entry:
-                differing_fields[loculus_field_name] = f"Last: {last_entry}, New: {new_entry}, "
-    if differing_fields:
-        error = (
-            "Raw reads cannot be revised because metadata fields in manifest would change from "
-            f"last version: {json.dumps(differing_fields)}"
+    last_entry = last_version_rows[0]
+    if submission_row.metadata.get("rawreads") != last_entry.metadata.get("rawreads"):
+        logger.debug(
+            f"Raw read file URLs have changed for {seq_key.accession}, "
+            f"from {version_to_revise} to {seq_key.version} - should be revised"
+            "(Metadata maybe also changed.)"
         )
-        logger.error(error)
-        update_raw_reads_error(
-            db_engine,
-            [error],
-            seq_key=asdict(submission_row.pkey),
-            update_type="revision",
-        )
-        return False
-    return True
+        return True
+    return False
 
 
 def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: AccessionVersion):
@@ -401,7 +336,8 @@ def raw_reads_table_create(db_engine: Engine, config: Config):
 
         if is_revision(db_engine, seq_key):
             logger.debug(f"Entry {row.accession} is a revision, checking if it can be revised")
-            if not can_be_revised(config, db_engine, submission_row):
+            if not has_raw_reads_changed(db_engine, submission_row):
+                update_raw_reads_results_with_latest_version(db_engine, seq_key)
                 continue
 
         try:
@@ -442,7 +378,7 @@ def raw_reads_table_create(db_engine: Engine, config: Config):
         )
         if raw_reads_creation_results.result:
             update_values = {
-                "status": Status.WAITING,
+                "status": Status.SUBMITTED,
                 "result": raw_reads_creation_results.result,
             }
             logger.info(
@@ -463,83 +399,6 @@ def raw_reads_table_create(db_engine: Engine, config: Config):
             )
 
 
-_last_ena_check: datetime | None = None
-
-
-def raw_reads_table_update(db_engine: Engine, config: Config, time_threshold: int = 5):
-    """
-    - time_threshold (minutes)
-    1. Find all entries in raw_reads_table in state WAITING
-    2. If over time_threshold since last check, check if accession exists in ENA
-    3. If (exists): update state to SUBMITTED with results
-    """
-    global _last_ena_check  # noqa: PLW0603
-    conditions = {"status": Status.WAITING}
-    waiting = find_conditions_in_db(db_engine, RawReadsTableEntry, conditions=conditions)
-    if len(waiting) > 0:
-        logger.debug(f"Found {len(waiting)} entries in raw_reads_table in status WAITING")
-    # Check if ENA has assigned an accession, don't do this too frequently
-    now = datetime.now(tz=pytz.utc)
-    if not _last_ena_check or now - timedelta(minutes=time_threshold) > _last_ena_check:
-        logger.debug("Checking state in ENA")
-        for row in waiting:
-            seq_key = row.pkey
-            submission_rows = find_conditions_in_db(
-                db_engine, SubmissionTableEntry, conditions=asdict(seq_key)
-            )
-            if len(submission_rows) == 0:
-                error_msg = f"Entry {row.accession} not found in submitting_table"
-                raise RuntimeError(error_msg)
-            organism = config.enaOrganisms[submission_rows[0].organism]
-            # Previous means from the last time the entry was checked, from db
-            segment_order = row.result.get("segment_order") if row.result else None
-            erz_accession = row.result.get("erz_accession") if row.result else None
-            if not erz_accession or not segment_order:
-                logger.warning(
-                    f"Missing erz_accession or segment_order for {seq_key.accession} version "
-                    f"{seq_key.version} - cannot check ENA for accession yet."
-                )
-                continue
-            new_result: CreationResult = get_ena_analysis_process(
-                config, cast(str, erz_accession), cast(list[str], segment_order), organism
-            )
-            _last_ena_check = now
-
-            if not new_result.result:
-                continue
-
-            result_contains_gca_accession = "gca_accession" in new_result.result
-            result_contains_insdc_accession = any(
-                key.startswith("insdc_accession_full") for key in new_result.result
-            )
-
-            if not (result_contains_gca_accession and result_contains_insdc_accession):
-                if row.result == new_result.result:
-                    continue
-                status = Status.WAITING
-                logger.info(
-                    f"Raw reads partially accessioned by ENA for {seq_key.accession} "
-                    f"version {seq_key.version}"
-                )
-            else:
-                status = Status.SUBMITTED
-                logger.info(
-                    f"Raw reads accessioned by ENA for {seq_key.accession} "
-                    f"version {seq_key.version}"
-                )
-            update_with_retry(
-                db_engine=db_engine,
-                conditions=asdict(seq_key),
-                update_values={
-                    "status": status,
-                    "result": new_result.result,
-                    "finished_at": datetime.now(tz=pytz.utc),
-                },
-                model_class=RawReadsTableEntry,
-                reraise=False,
-            )
-
-
 def raw_reads_table_handle_errors(
     db_engine: Engine,
     config: Config,
@@ -552,7 +411,6 @@ def raw_reads_table_handle_errors(
     2. If time since last slack notification is over slack_retry_threshold_min send notification
     3. Trigger retry if time since last retry is over retry_threshold_min
     """
-    entries_waiting = find_waiting_in_db(db_engine, time_threshold=config.waiting_threshold_hours)
     entries_with_errors = find_errors_or_stuck_in_db(
         db_engine,
         RawReadsTableEntry,
@@ -560,16 +418,6 @@ def raw_reads_table_handle_errors(
     )
 
     messages = []
-
-    if entries_waiting:
-        top3_accessions = [entry.accession for entry in entries_waiting[:3]]
-        msg = (
-            f"{config.backend_url}: ENA Submission pipeline found "
-            f"{len(entries_waiting)} entries in raw_reads_table in "
-            f"status WAITING for over {config.waiting_threshold_hours}h. "
-            f"First accessions: {top3_accessions}"
-        )
-        messages.append(msg)
 
     if entries_with_errors:
         msg = (
@@ -621,7 +469,6 @@ def create_raw_reads(config: Config, stop_event: threading.Event):
         submission_table_update(db_engine)
 
         raw_reads_table_create(db_engine, config)
-        raw_reads_table_update(db_engine, config, time_threshold=config.min_between_ena_checks)
         last_retry_time = raw_reads_table_handle_errors(
             db_engine, config, slack_config, last_retry_time
         )
