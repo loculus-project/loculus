@@ -24,7 +24,11 @@ export const sequenceEntryProcessingResultNames = z.union([
 ]);
 export type SequenceEntryProcessingResultNames = z.infer<typeof sequenceEntryProcessingResultNames>;
 
-const processingAnnotationSourceType = z.union([z.literal('Metadata'), z.literal('NucleotideSequence')]);
+const processingAnnotationSourceType = z.union([
+    z.literal('Metadata'),
+    z.literal('NucleotideSequence'),
+    z.literal('File'),
+]);
 export type ProcessingAnnotationSourceType = z.infer<typeof processingAnnotationSourceType>;
 
 const processingAnnotation = z.object({

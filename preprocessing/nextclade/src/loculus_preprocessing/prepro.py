@@ -5,6 +5,8 @@ from collections.abc import Sequence
 from tempfile import TemporaryDirectory
 from typing import Any
 
+from loculus_preprocessing.file_processing_functions import process_submitted_files
+
 from .backend import (
     download_diamond_db,
     download_minimizer,
@@ -28,6 +30,7 @@ from .datatypes import (
     AminoAcidSequence,
     AnnotationSource,
     AnnotationSourceType,
+    FileCategory,
     FileIdAndName,
     GeneName,
     InputData,
@@ -534,6 +537,8 @@ def process_single(
         accession_version, unprocessed, config
     )
 
+    file_errors, file_warnings = process_submitted_files(unprocessed.files or {})
+
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
         version=version_from_str(accession_version),
@@ -554,9 +559,12 @@ def process_single(
                 + max_seq_errors
                 + alignment_errors
                 + metadata_errors
+                + file_errors
             )
         ),
-        warnings=list(set(unprocessed.warnings + alignment_warnings + metadata_warnings)),
+        warnings=list(
+            set(unprocessed.warnings + alignment_warnings + metadata_warnings + file_warnings)
+        ),
     )
 
     return SubmissionData(
@@ -584,12 +592,16 @@ def process_single_unaligned(
         accession_version, unprocessed, config
     )
 
+    file_errors, file_warnings = process_submitted_files(unprocessed.files or {})
+
     return processed_entry_no_alignment(
         accession_version=accession_version,
         unprocessed=unprocessed,
         output_metadata=output_metadata,
-        errors=list(set(iupac_errors + metadata_errors + segment_assignment.alert.errors)),
-        warnings=list(set(metadata_warnings)),
+        errors=list(
+            set(iupac_errors + metadata_errors + segment_assignment.alert.errors + file_errors)
+        ),
+        warnings=list(set(metadata_warnings + file_warnings)),
         sequenceNameToFastaId=segment_assignment.sequenceNameToFastaId,
     )
 
@@ -667,7 +679,7 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             file_id = upload_info.fileId
             upload_embl_file_to_presigned_url(file_content, upload_info.url, upload_info.headers)
             processed_files = submission_data.processed_entry.data.files or {}
-            processed_files.setdefault("annotations", []).append(
+            processed_files.setdefault(FileCategory.ANNOTATIONS, []).append(
                 FileIdAndName(fileId=file_id, name=file_name)
             )
             submission_data.processed_entry.data.files = processed_files
