@@ -354,7 +354,6 @@ class AssemblyCreationTests(unittest.TestCase):
             study_accession,
             sample_data_in_submission_table(),
         )
-        print(f"Manifest object: {manifest}")
         manifest_file_name = create_manifest(manifest, is_broker=True)
         data = {}
         with open(manifest_file_name, encoding="utf-8") as gz:
