@@ -221,19 +221,19 @@ def download_fastq_files(
     config: Config, metadata: dict[str, Any], accession: str, dir: str | None = None
 ) -> list[str]:
     """
-    Download the fastq files listed under the `raw_reads` metadata field to local disk
+    Download the fastq files listed under the `rawreads` metadata field to local disk
     and return their paths.
 
-    `raw_reads` is a JSON-encoded string of the form
+    `rawreads` is a JSON-encoded string of the form
     '[{"fileId": ..., "name": ..., "url": ...}, ...]'. Each `url` points at the backend's
     `/files/get/{accession}/{version}/{fileCategory}/{fileName}` endpoint, which responds
     with a 307 redirect to a pre-signed S3 URL - requests follows the redirect automatically
     and drops the Authorization header once the redirect target's host differs from the
     backend's.
     """
-    raw_reads = metadata.get("raw_reads")
+    raw_reads = metadata.get("rawreads")
     if not raw_reads:
-        msg = f"No raw_reads files found in metadata for accession {accession}"
+        msg = f"No rawreads files found in metadata for accession {accession}"
         raise RuntimeError(msg)
     files = json.loads(raw_reads)
 
