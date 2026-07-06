@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { Zodios } from '@zodios/core';
 import { ZodiosHooks, type ZodiosHooksInstance } from '@zodios/react';
 import { isAxiosError } from 'axios';
@@ -129,7 +129,10 @@ export function seqSetCitationClientHooks(clientConfig: ClientConfig) {
     return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, seqSetCitationApi));
 }
 
-export function useSequenceEntryHistory(lapisUrl: string, accession: string | undefined) {
+export function useSequenceEntryHistory(
+    lapisUrl: string,
+    accession: string | undefined,
+): UseQueryResult<SequenceEntryHistory, Error> {
     return useQuery({
         queryKey: ['sequence-entry-history', lapisUrl, accession],
         queryFn: async (): Promise<SequenceEntryHistory> => {

@@ -9,7 +9,7 @@ import type { InputField, SubmissionDataTypes } from '../../types/config.ts';
 import { getLatestAccessionVersion } from '../../types/lapis.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
-import { parseAccessionVersionFromString } from '../../utils/extractAccessionVersion.ts';
+import { getUrl } from '../../utils/getUrl.ts';
 import { EditPage } from '../Edit/EditPage.tsx';
 import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';
@@ -51,23 +51,25 @@ const RevisionInfo: FC<{
 };
 
 const AccessionVersionSearch: FC<{
-    input: string | undefined;
-    setInput: (value: string | undefined) => void;
+    input: string;
+    setInput: (value: string) => void;
     handleSubmit: (e: FormEvent) => void;
     error?: string;
     isFetching: boolean;
 }> = ({ input, setInput, handleSubmit, error, isFetching }) => {
+    const inputId = 'revise-accession-version-search';
+
     return (
         <form className='flex flex-col gap-2' onSubmit={handleSubmit}>
-            <label htmlFor='revise-accession-input' className='text-sm font-medium text-gray-900'>
+            <label htmlFor={inputId} className='text-sm font-medium text-gray-900'>
                 Accession of sequence to revise
             </label>
             <div className='flex gap-2'>
                 <input
-                    id='revise-accession-input'
+                    id={inputId}
                     type='text'
                     className='border border-gray-300 rounded px-3 py-2 w-80'
-                    value={input ?? ''}
+                    value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder='LOC_0001234'
                 />
@@ -87,6 +89,11 @@ const AccessionVersionSearch: FC<{
     );
 };
 
+const formatAccessionVersion = (accession: string | undefined, version: string | undefined) => {
+    if (accession === undefined) return '';
+    return version !== undefined ? `${accession}.${version}` : accession;
+};
+
 const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
     accessToken,
     organism,
@@ -97,71 +104,62 @@ const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
     accession,
     version,
 }) => {
-    const [input, setInput] = useState<string | undefined>(accession);
-    const [searchAccession, setSearchAccession] = useState<string | undefined>(accession);
-    const [selectedVersion, setSelectedVersion] = useState<number | undefined>(
-        version !== undefined && Number.isInteger(Number(version)) ? Number(version) : undefined,
+    const [input, setInput] = useState<string>(formatAccessionVersion(accession, version));
+    const [accessionVersion, setAccessionVersion] = useState<{ accession: string; version?: string } | undefined>(
+        accession !== undefined ? { accession, version } : undefined,
     );
 
-    const {
-        data: sequenceEntryHistory,
-        isLoading: isHistoryLoading,
-        error: historyError,
-    } = useSequenceEntryHistory(getLapisUrl(clientConfig, organism), searchAccession);
+    const { data: sequenceEntryHistory, isFetching: isSequenceEntryHistoryFetching } = useSequenceEntryHistory(
+        getLapisUrl(clientConfig, organism),
+        accessionVersion?.accession,
+    );
 
+    // Only look up the data to edit once its confirmed the accession exists and we have a valid version.
+    // If a version was not provided, resolve to the latest one.
     const resolvedVersion =
-        selectedVersion ??
-        (sequenceEntryHistory ? getLatestAccessionVersion(sequenceEntryHistory)?.version : undefined);
+        accessionVersion?.version !== undefined
+            ? Number(accessionVersion.version)
+            : getLatestAccessionVersion(sequenceEntryHistory ?? [])?.version;
+    const isValidAccessionVersion =
+        resolvedVersion !== undefined &&
+        (sequenceEntryHistory?.some((entry) => entry.version === resolvedVersion) ?? false);
 
     const {
         data,
-        error: apiError,
-        isFetching: isEditFetching,
+        error: dataToEditError,
+        isFetching: isDataToEditFetching,
     } = backendClientHooks(clientConfig).useGetDataToEdit(
         {
             headers: createAuthorizationHeader(accessToken),
             params: {
                 organism,
-                accession: searchAccession ?? '',
+                accession: accessionVersion?.accession ?? '',
                 version: resolvedVersion ?? 1,
             },
         },
-        { enabled: searchAccession !== undefined && resolvedVersion !== undefined },
+        { enabled: isValidAccessionVersion },
     );
-
-    const isFetching = isHistoryLoading || isEditFetching;
-
-    const trimmedInput = input?.trim();
-    const inputHasVersion =
-        trimmedInput !== undefined &&
-        trimmedInput !== '' &&
-        parseAccessionVersionFromString(trimmedInput).version !== undefined;
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        if (trimmedInput === undefined || trimmedInput === '' || inputHasVersion) {
-            return;
-        }
-        setSearchAccession(trimmedInput);
-        setSelectedVersion(undefined);
-        const url = new URL(window.location.href);
-        url.searchParams.set('accession', trimmedInput);
-        url.searchParams.delete('version');
-        window.history.replaceState(null, '', url.toString());
+        const value = input.trim();
+        if (value === '') return;
+        const [accession, version] = value.split('.');
+        setAccessionVersion({ accession, version });
+
+        const params = new URLSearchParams(window.location.search);
+        params.set('accession', accession);
+        if (version) params.set('version', version);
+        else params.delete('version');
+        window.history.replaceState(null, '', getUrl(window.location.origin, window.location.pathname, params));
     };
 
-    const notFound =
-        searchAccession !== undefined &&
-        !isHistoryLoading &&
-        (historyError !== null || sequenceEntryHistory?.length === 0);
-
-    const error = inputHasVersion
-        ? 'Enter an accession only, without a version.'
-        : notFound
-          ? 'Could not find that accession. Please check it and try again.'
-          : apiError
-            ? 'Could not load that sequence. Make sure the accession belongs to your group.'
-            : undefined;
+    const error =
+        accessionVersion !== undefined && !isSequenceEntryHistoryFetching && !isValidAccessionVersion
+            ? 'Could not find that sequence entry. Please check the accession and version and try again.'
+            : dataToEditError
+              ? 'Could not load that sequence. Make sure the accession belongs to your group.'
+              : undefined;
 
     return (
         <div className='text-left mt-3 max-w-4xl mb-3'>
@@ -180,7 +178,7 @@ const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
                         setInput={setInput}
                         handleSubmit={handleSubmit}
                         error={error}
-                        isFetching={isFetching}
+                        isFetching={isSequenceEntryHistoryFetching || isDataToEditFetching}
                     />
                     {data && (
                         <EditPage
