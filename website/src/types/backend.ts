@@ -27,7 +27,7 @@ export type SequenceEntryProcessingResultNames = z.infer<typeof sequenceEntryPro
 const processingAnnotationSourceType = z.union([
     z.literal('Metadata'),
     z.literal('NucleotideSequence'),
-    z.literal('SubmittedFile'),
+    z.literal('File'),
 ]);
 export type ProcessingAnnotationSourceType = z.infer<typeof processingAnnotationSourceType>;
 

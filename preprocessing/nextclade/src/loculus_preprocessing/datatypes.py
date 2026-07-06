@@ -37,7 +37,7 @@ class FileCategory(StrEnum):
 class AnnotationSourceType(StrEnum):
     METADATA = "Metadata"
     NUCLEOTIDE_SEQUENCE = "NucleotideSequence"
-    SUBMITTED_FILE = "SubmittedFile"
+    FILE = "File"
 
 
 @dataclass(frozen=True)

@@ -359,8 +359,8 @@ single_segment_case_definitions = [
                 ProcessingAnnotationHelper(
                     ["reads_R1.fastq", "reads_R2.fastq", "reads_R3.fastq"],
                     ["reads_R1.fastq", "reads_R2.fastq", "reads_R3.fastq"],
-                    "Raw reads must be submitted as one or two files, got 3",
-                    AnnotationSourceType.SUBMITTED_FILE,
+                    "Received 3 for raw reads upload. Please submit raw reads as one or two FASTQ files containing raw single-end or paired-end reads.",
+                    AnnotationSourceType.FILE,
                 )
             ]
         ),
@@ -404,7 +404,7 @@ single_segment_case_definitions = [
                     ["reads.txt"],
                     "Raw reads file 'reads.txt' has unrecognized extension. "
                     "Allowed extensions: .fastq, .fastq.gz, .fq, .fq.gz",
-                    AnnotationSourceType.SUBMITTED_FILE,
+                    AnnotationSourceType.FILE,
                 )
             ]
         ),
@@ -1296,7 +1296,7 @@ multi_segment_case_definitions_none_requirement = [
                     ["reads.txt"],
                     "Raw reads file 'reads.txt' has unrecognized extension. "
                     "Allowed extensions: .fastq, .fastq.gz, .fq, .fq.gz",
-                    AnnotationSourceType.SUBMITTED_FILE,
+                    AnnotationSourceType.FILE,
                 )
             ]
         ),

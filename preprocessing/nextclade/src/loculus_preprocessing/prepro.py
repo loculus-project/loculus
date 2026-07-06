@@ -5,6 +5,8 @@ from collections.abc import Sequence
 from tempfile import TemporaryDirectory
 from typing import Any
 
+from loculus_preprocessing.file_processing_functions import process_submitted_files
+
 from .backend import (
     download_diamond_db,
     download_minimizer,
@@ -61,7 +63,6 @@ from .processing_functions import (
     process_mutations_from_clade_founder,
     process_phenotype_values,
     process_stop_codons,
-    validate_raw_reads_submission,
 )
 from .sequence_checks import error_on_excess_sequences, errors_if_non_iupac
 
@@ -436,27 +437,6 @@ def get_output_metadata(
             )
     logger.debug(f"Processed {accession_version}: {output_metadata}")
     return output_metadata, errors, warnings
-
-
-def process_submitted_files(
-    file_mapping: dict[FileCategory, list[FileIdAndName]],
-) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
-    errors: list[ProcessingAnnotation] = []
-    warnings: list[ProcessingAnnotation] = []
-
-    for category, files in file_mapping.items():
-        if not files:
-            # Backend always includes a key with empty list for enabled categories
-            continue
-        match category:
-            case FileCategory.RAW_READS:
-                rr_errors, rr_warnings = validate_raw_reads_submission(files)
-                errors.extend(rr_errors)
-                warnings.extend(rr_warnings)
-            case _:
-                logger.warning(f"Submitted file is of unexpected category {category}")
-
-    return errors, warnings
 
 
 def alignment_errors_warnings(
