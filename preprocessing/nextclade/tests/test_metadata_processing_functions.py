@@ -1359,7 +1359,7 @@ def _assert_display_name_warnings(warnings: list, expected_message: str | None) 
         assert len(warnings) == 0
     else:
         assert len(warnings) == 1
-        assert warnings[0].message == expected_message
+        assert warnings[0] == expected_message
 
 
 input_fields = [

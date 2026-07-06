@@ -1120,8 +1120,8 @@ class ProcessingFunctions:
         input_fields: list[str],
         args: FunctionArgs,
     ) -> RawProcessingResult:
-        """Builds a displayName from input_fields. The identifier field in the displayName is based on
-        specimenCollectorSampleId or - if it is not set - submissionId.
+        """Builds a displayName from input_fields. The identifier field in the displayName is based
+        on specimenCollectorSampleId or - if it is not set - submissionId (direct submissions only).
 
         This method wraps ProcessingFunctions.concatenate(). Thus, it has the same required input
         args, as well as adding some additional checks and requirements:
@@ -1138,8 +1138,6 @@ class ProcessingFunctions:
         collector_id = input_data.get("specimenCollectorSampleId", None)
         submission_id = input_data.get("submissionId", None)
         warnings: list[str] = []
-        if submission_id is None:
-            return raw_internal_error("'submissionId' must not be None for build_display_name().")
 
         order = args.get("order")
         field_types = args.get("type")
@@ -1163,9 +1161,6 @@ class ProcessingFunctions:
         concatenate_order = order.copy()
         concatenate_field_types = field_types.copy()
 
-        def replace_identifier(values, replacement):
-            return [replacement if v == "IDENTIFIER" else v for v in values]
-
         insdc_ingested = bool(args["is_insdc_ingest_group"])
 
         # Try to parse the specimenCollectorSampleId first
@@ -1173,6 +1168,9 @@ class ProcessingFunctions:
         if identifier is None and not insdc_ingested:
             # For direct submissions only: try to parse the submissionId
             identifier = parse_identifier_string(submission_id, insdc_ingested, regex_pattern)
+
+        def replace_identifier(values, replacement):
+            return [replacement if v == "IDENTIFIER" else v for v in values]
 
         if identifier is not None:
             # We were able to parse an IDENTIFIER, treat it as a string
