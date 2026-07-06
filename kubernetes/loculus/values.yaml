@@ -1280,6 +1280,28 @@ defaultOrganismConfig: &defaultOrganismConfig
           - name: "GBS"
           - name: "Ribo-seq"
           - name: "OTHER"
+      - name: sequencingLibrarySource
+        definition: The type of biomaterial that was sequenced, also called library source in the INSDC.
+        guidance: 'Example Guidance: Provide the name of the DNA or RNA sequencing library source used in your study. If unsure refer to the protocol documentation, or provide a null value.'
+        desired: true
+        example: VIRAL RNA
+        displayName: Sequencing library source
+        header: Sequencing
+        orderOnDetailsPage: 2125
+        preprocessing:
+          function: process_options
+          inputs:
+            input: sequencingLibrarySource
+        options:
+          - name: "GENOMIC"
+          - name: "GENOMIC SINGLE CELL"
+          - name: "TRANSCRIPTOMIC"
+          - name: "TRANSCRIPTOMIC SINGLE CELL"
+          - name: "METAGENOMIC"
+          - name: "METATRANSCRIPTOMIC"
+          - name: "SYNTHETIC"
+          - name: "VIRAL RNA"
+          - name: "OTHER"
       - name: sequencedByOrganization
         ontology_id: GENEPIO:0100416
         definition: The name of the agency, organization or institution responsible for sequencing the isolate's genome.
