@@ -593,12 +593,54 @@ def post_webin_cli(
     )
 
 
-def create_ena_assembly(config: Config, manifest_filename: str, center_name=None) -> CreationResult:
+_WEBIN_CLI_ACCESSION_MARKER = "The following {kind} accession was assigned to the submission:"
+
+
+def _extract_accessions(
+    stdout: str,
+    patterns: dict[str, tuple[str, str]],
+) -> dict[str, str | Sequence[str]] | None:
     """
-    This is equivalent to running:
-    ena-webin-cli -username {params.ena_submission_username} \\
-        -password {params.ena_submission_password} -context genome \\
-        -manifest {manifest_file} -submit
+    Extract accessions from Webin CLI output.
+
+    patterns maps output keys to (kind, regex), where `kind` is the noun Webin CLI uses in
+    its "The following {kind} accession was assigned to the submission:" marker line, e.g.
+    "analysis", "experiment", "run".
+    """
+    result: dict[str, str | Sequence[str]] = {}
+
+    for line in stdout.splitlines():
+        for key, (kind, regex) in patterns.items():
+            if _WEBIN_CLI_ACCESSION_MARKER.format(kind=kind) not in line:
+                continue
+
+            match = re.search(regex, line)
+            if match:
+                accession = match.group(0)
+                result[key] = accession
+                logger.info(
+                    "Webin CLI succeeded and returned %s: %s",
+                    key,
+                    accession,
+                )
+
+    return result if len(result) == len(patterns) else None
+
+
+def _run_webin_cli_submission(
+    config: Config,
+    manifest_filename: str,
+    center_name: str | None,
+    context: Literal["genome", "reads"],
+    patterns: dict[str, tuple[str, str]],
+) -> CreationResult:
+    """
+    Runs `ena-webin-cli -submit` for the given context and manifest, extracting the
+    accession(s) named in `patterns` (see `_extract_accessions`) from stdout on success.
+
+    On failure - a non-zero exit code, or a zero exit code without all expected
+    accessions - logs the manifest and webin-cli log files and returns the errors instead.
+
     config.test=True, adds the `-test` flag which means submissions will use the ENA dev endpoint.
     """
     errors: list[str] = []
@@ -610,28 +652,21 @@ def create_ena_assembly(config: Config, manifest_filename: str, center_name=None
     output_tmpdir = tempfile.TemporaryDirectory()
 
     response = post_webin_cli(
-        config, manifest_filename, tmpdir=output_tmpdir, center_name=center_name
+        config, manifest_filename, tmpdir=output_tmpdir, center_name=center_name, context=context
     )
 
-    # Happy path: webin-cli succeeded and returned ERZ accession
+    # Happy path: webin-cli succeeded and returned the expected accession(s)
     if response.returncode == 0:
-        for line in response.stdout.splitlines():
-            if "The following analysis accession was assigned to the submission:" in line:
-                match = re.search(r"ERZ\d+", line)
-                if match:
-                    erz_accession = match.group(0)
-                    logger.info(f"Webin CLI succeeded and returned ERZ accession: {erz_accession}")
-                    return CreationResult(
-                        result={"erz_accession": erz_accession},
-                        errors=errors,
-                        warnings=warnings,
-                    )
+        result = _extract_accessions(response.stdout, patterns)
+        if result:
+            return CreationResult(result=result, errors=errors, warnings=warnings)
 
-    # Handle the case where the webin-cli command fails or does not return ERZ accession
+    # Handle the case where the webin-cli command fails or does not return the expected accession(s)
     if response.returncode != 0:
         error_message = f"Webin CLI command failed with status: {response.returncode}. "
     else:
-        error_message = "Webin CLI command succeeded but did not return ERZ accession. "
+        missing_accessions = " or ".join(f"{kind} accession" for kind, _ in patterns.values())
+        error_message = f"Webin CLI command succeeded but did not return {missing_accessions}. "
     error_message += f"Stdout: {response.stdout}, Stderr: {response.stderr}"
     logger.error(error_message)
     errors.append(error_message)
@@ -650,6 +685,23 @@ def create_ena_assembly(config: Config, manifest_filename: str, center_name=None
         except Exception as e:
             logger.warning(f"Reading webin-cli log file {file_path} failed: {e}")
     return CreationResult(errors=errors, warnings=warnings)
+
+
+def create_ena_assembly(config: Config, manifest_filename: str, center_name=None) -> CreationResult:
+    """
+    This is equivalent to running:
+    ena-webin-cli -username {params.ena_submission_username} \\
+        -password {params.ena_submission_password} -context genome \\
+        -manifest {manifest_file} -submit
+    config.test=True, adds the `-test` flag which means submissions will use the ENA dev endpoint.
+    """
+    return _run_webin_cli_submission(
+        config,
+        manifest_filename,
+        center_name,
+        context="genome",
+        patterns={"erz_accession": ("analysis", r"ERZ\d+")},
+    )
 
 
 def create_ena_raw_reads(
@@ -664,63 +716,16 @@ def create_ena_raw_reads(
         -password YYYYYY
     config.test=True, adds the `-test` flag which means submissions will use the ENA dev endpoint.
     """
-    errors: list[str] = []
-    warnings: list[str] = []
-
-    # create a tmp dir for output files
-    # use normal python stuff for that
-
-    output_tmpdir = tempfile.TemporaryDirectory()
-
-    response = post_webin_cli(
-        config, manifest_filename, tmpdir=output_tmpdir, center_name=center_name, context="reads"
+    return _run_webin_cli_submission(
+        config,
+        manifest_filename,
+        center_name,
+        context="reads",
+        patterns={
+            "erx_accession": ("experiment", r"ERX\d+"),
+            "err_accession": ("run", r"ERR\d+"),
+        },
     )
-    erx_accession = None
-    err_accession = None
-
-    # Happy path: webin-cli succeeded and returned ERZ accession
-    if response.returncode == 0:
-        for line in response.stdout.splitlines():
-            if "The following experiment accession was assigned to the submission:" in line:
-                match = re.search(r"ERX\d+", line)
-                if match:
-                    erx_accession = match.group(0)
-                    logger.info(f"Webin CLI succeeded and returned ERX accession: {erx_accession}")
-            if "The following run accession was assigned to the submission:" in line:
-                match = re.search(r"ERR\d+", line)
-                if match:
-                    err_accession = match.group(0)
-                    logger.info(f"Webin CLI succeeded and returned ERR accession: {err_accession}")
-    if erx_accession is not None and err_accession is not None:
-        return CreationResult(
-            result={"err_accession": err_accession, "erx_accession": erx_accession},
-            errors=errors,
-            warnings=warnings,
-        )
-
-    # Handle the case where the webin-cli command fails or does not return ERX accession
-    if response.returncode != 0:
-        error_message = f"Webin CLI command failed with status: {response.returncode}. "
-    else:
-        error_message = "Webin CLI command succeeded but did not return ERR or ERX accession. "
-    error_message += f"Stdout: {response.stdout}, Stderr: {response.stderr}"
-    logger.error(error_message)
-    errors.append(error_message)
-
-    try:
-        manifest_contents = Path(manifest_filename).read_text(encoding="utf-8")
-        logger.info(f"manifest.tsv contents:\n{manifest_contents}")
-    except Exception as e:
-        logger.warning(f"Reading manifest from {manifest_filename} failed: {e}")
-
-    for file_path in glob.glob(f"{output_tmpdir.name}/**", recursive=True, include_hidden=True):
-        logger.info(f"Attempting to print webin-cli log file: {file_path}")
-        try:
-            contents = Path(file_path).read_text(encoding="utf-8")
-            logger.info(f"webin-cli log file {file_path} contents:\n{contents}")
-        except Exception as e:
-            logger.warning(f"Reading webin-cli log file {file_path} failed: {e}")
-    return CreationResult(errors=errors, warnings=warnings)
 
 
 def get_ena_analysis_process(
