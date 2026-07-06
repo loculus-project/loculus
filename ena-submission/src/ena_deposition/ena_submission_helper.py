@@ -572,7 +572,7 @@ def create_manifest(
             if isinstance(value, list):
                 f.writelines(f"{field.name.upper()}\t{val}\n" for val in value)
                 continue
-            if field.name in ("authors", "address") and not is_broker:
+            if field.name in {"authors", "address"} and not is_broker:
                 msg = f"Cannot set {field.name} field for non broker"
                 logger.error(msg)
                 raise ValueError(msg)

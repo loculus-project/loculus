@@ -89,8 +89,8 @@ def create_manifest_object(
     - the organism metadata from the config file
     - downloaded fastq files from the corresponding submission table entry,
 
-    If random_alias=True add a timestamp to the alias suffix to allow for multiple submissions of the same
-    manifest for testing.
+    If random_alias=True add a timestamp to the alias suffix to allow for multiple
+    submissions of the same manifest for testing.
     """
     alias = get_alias(
         f"{submission_row.accession}:{submission_row.organism}:{config.unique_raw_reads_suffix}",
@@ -144,7 +144,8 @@ def submission_table_start(db_engine: Engine) -> None:
     conditions = {"status_all": StatusAll.SUBMITTED_SAMPLE, "submit_raw_reads": True}
     ready_to_submit = find_conditions_in_db(db_engine, SubmissionTableEntry, conditions=conditions)
     logger.debug(
-        f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_SAMPLE with submit_raw_reads=True"
+        f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_SAMPLE "
+        "with submit_raw_reads=True"
     )
     for row in ready_to_submit:
         seq_key = asdict(row.pkey)
@@ -519,7 +520,8 @@ def raw_reads_table_update(db_engine: Engine, config: Config, time_threshold: in
             else:
                 status = Status.SUBMITTED
                 logger.info(
-                    f"Raw reads accessioned by ENA for {seq_key.accession} version {seq_key.version}"
+                    f"Raw reads accessioned by ENA for {seq_key.accession} "
+                    f"version {seq_key.version}"
                 )
             update_with_retry(
                 db_engine=db_engine,
