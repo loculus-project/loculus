@@ -22,10 +22,8 @@ log/
 .flowbite-react/
 
 justfile
-/tests/config/backend_config.json
-/tests/config/website_config.json
-/tests/config/runtime_config.json
-
+# Generated local test config (backend/website/runtime configs)
+/tests/config/*.json
 /tests/config/*.yaml
 
 .eslintcache
