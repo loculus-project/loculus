@@ -158,7 +158,7 @@ const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
         accessionVersion !== undefined && !isSequenceEntryHistoryFetching && !isValidAccessionVersion
             ? 'Could not find that sequence entry. Please check the accession and version and try again.'
             : dataToEditError
-              ? 'Could not load that sequence. Make sure the accession belongs to your group.'
+              ? 'Could not load that sequence. Please make sure the accession belongs to your group.'
               : undefined;
 
     return (
