@@ -197,8 +197,6 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
 
 
 def get_address(config: Config, center_name: str, group_id: int) -> str | None:
-    if not config.is_broker:
-        return None
     try:
         group_details = get_group_info(config, group_id)
     except Exception as e:

@@ -112,7 +112,7 @@ def create_manifest_object(
             sample=sample_accession,
             name=alias,
             description=get_description(config, metadata),
-            authors=get_authors(metadata.get("authors", "")),
+            authors=get_authors(metadata.get("authors", "")) if config.is_broker else None,
             platform=platform,
             instrument=instrument,
             library_source=metadata.get("sequencingLibrarySource", "OTHER"),
@@ -120,7 +120,7 @@ def create_manifest_object(
             library_strategy=metadata.get("sequencingLibraryStrategy", "OTHER"),
             address=call_loculus.get_address(
                 config, submission_row.center_name, submission_row.seq_metadata["groupId"]
-            ),
+            ) if config.is_broker else None,
             insert_size=metadata.get("pairedNominalLength") if len(fastq_files) > 1 else None,
             fastq=fastq_files,
         )

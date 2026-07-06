@@ -24,7 +24,6 @@ from .ena_submission_helper import (
     get_authors,
     get_description,
     get_ena_analysis_process,
-    get_manifest_values_in_metadata,
     retry_failed_submissions_for_matching_errors,
     set_accession_does_not_exist_error,
 )
@@ -151,10 +150,11 @@ def create_manifest_object(
     logger.debug("Created chromosome list file")
 
     flat_file = create_flatfile(config, metadata, ena_organism, unaligned_nucleotide_sequences, dir)
-
-    assembly_values = get_manifest_values_in_metadata(config, metadata)
-    if run_ref:
-        assembly_values["run_ref"] = run_ref
+    program = [
+        metadata.get("consensusSequenceSoftwareName"),
+        metadata.get("consensusSequenceSoftwareVersion")
+    ]
+    program_joined = ", ".join([x for x in program if x is not None])
 
     try:
         manifest = AssemblyManifest(
@@ -165,10 +165,14 @@ def create_manifest_object(
             chromosome_list=chromosome_list_file,
             description=get_description(config, metadata),
             moleculetype=ena_organism.molecule_type,
-            **assembly_values,  # type: ignore
+            platform=metadata.get("sequencingInstrument", "Unknown"),
+            program=program_joined or "Unknown",
+            coverage=metadata.get("depthOfCoverage", 1),
+            authors=get_authors(metadata.get("authors", "")) if config.is_broker else None,
+            run_ref=run_ref or metadata.get("insdcRawReadsAccession"),
             address=call_loculus.get_address(
                 config, submission_row.center_name, submission_row.seq_metadata["groupId"]
-            ),
+            ) if config.is_broker else None,
         )
     except Exception as e:
         # log traceback for better debugging
