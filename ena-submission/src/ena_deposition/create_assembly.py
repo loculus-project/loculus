@@ -24,6 +24,7 @@ from .ena_submission_helper import (
     get_authors,
     get_description,
     get_ena_analysis_process,
+    get_manifest_values_in_metadata,
     retry_failed_submissions_for_matching_errors,
     set_accession_does_not_exist_error,
 )
@@ -103,44 +104,6 @@ def get_segment_order(unaligned_sequences: dict[str, str | None]) -> list[str]:
     return sorted(segment_order)
 
 
-def get_assembly_values_in_metadata(
-    config: Config, metadata: dict[str, str], run_ref: str | None = None
-) -> dict[str, str]:
-    assembly_values = {}
-    for key in config.manifest_fields_mapping:
-        if key == "run_ref" and run_ref:
-            assembly_values[key] = run_ref
-            continue
-        default = config.manifest_fields_mapping[key].default
-        loculus_fields = config.manifest_fields_mapping[key].loculus_fields
-        type = config.manifest_fields_mapping[key].type
-        function = config.manifest_fields_mapping[key].function
-        if type == "int":
-            if len(loculus_fields) != 1:
-                msg = (
-                    "Only one loculus field allowed for int type but found: len(loculus_fields): "
-                    f"{len(loculus_fields)} for key: {key}. Fields: {loculus_fields}."
-                )
-                raise ValueError(msg)
-            try:
-                value = str(int(metadata.get(loculus_fields[0])))  # type: ignore
-            except TypeError:
-                value = default  # type: ignore
-        else:
-            values = [
-                metadata.get(loculus_field)
-                for loculus_field in loculus_fields
-                if metadata.get(loculus_field)
-            ]
-            value = default or None if not values else ", ".join(values)  # type: ignore
-        if function == "reformat_authors":
-            value = get_authors(str(value))
-        if not config.is_broker and key == "authors":
-            continue
-        assembly_values[key] = value
-    return assembly_values
-
-
 def make_assembly_name(accession: str, version: int) -> str:
     """
     Create a unique assembly name based on accession, version and timestamp.
@@ -189,7 +152,9 @@ def create_manifest_object(
 
     flat_file = create_flatfile(config, metadata, ena_organism, unaligned_nucleotide_sequences, dir)
 
-    assembly_values = get_assembly_values_in_metadata(config, metadata, run_ref=run_ref)
+    assembly_values = get_manifest_values_in_metadata(config, metadata)
+    if run_ref:
+        assembly_values["run_ref"] = run_ref
 
     try:
         manifest = AssemblyManifest(

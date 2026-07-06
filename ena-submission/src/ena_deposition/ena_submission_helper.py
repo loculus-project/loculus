@@ -513,6 +513,39 @@ def create_flatfile(
     return gzip_filename
 
 
+def get_manifest_values_in_metadata(config: Config, metadata: dict[str, str]) -> dict[str, str]:
+    assembly_values = {}
+    for key in config.manifest_fields_mapping:
+        default = config.manifest_fields_mapping[key].default
+        loculus_fields = config.manifest_fields_mapping[key].loculus_fields
+        type = config.manifest_fields_mapping[key].type
+        function = config.manifest_fields_mapping[key].function
+        if type == "int":
+            if len(loculus_fields) != 1:
+                msg = (
+                    "Only one loculus field allowed for int type but found: len(loculus_fields): "
+                    f"{len(loculus_fields)} for key: {key}. Fields: {loculus_fields}."
+                )
+                raise ValueError(msg)
+            try:
+                value = str(int(metadata.get(loculus_fields[0])))  # type: ignore
+            except TypeError:
+                value = default  # type: ignore
+        else:
+            values = [
+                metadata.get(loculus_field)
+                for loculus_field in loculus_fields
+                if metadata.get(loculus_field)
+            ]
+            value = default or None if not values else ", ".join(values)  # type: ignore
+        if not config.is_broker and key == "authors":
+            continue
+        if function == "reformat_authors":
+            value = get_authors(str(value))
+        assembly_values[key] = value
+    return assembly_values
+
+
 def create_manifest(
     manifest: AssemblyManifest | RawReadsManifest, is_broker: bool = False, dir: str | None = None
 ) -> str:

@@ -177,42 +177,189 @@ class MoleculeType(StrEnum):
     VIRAL_CRNA = "viral cRNA"
 
 
-@dataclass
-class AssemblyManifest:
-    study: str
-    sample: str
-    assemblyname: str  # Note: this SHOULD be 1 word no hyphen
-    coverage: str
-    program: str
-    platform: str
-    chromosome_list: str
-    assembly_type: AssemblyType = AssemblyType.ISOLATE
-    fasta: str | None = None
-    flatfile: str | None = None
-    mingaplength: int | None = None
-    moleculetype: MoleculeType | None = None
-    description: str | None = None
-    run_ref: str | None = None
-    address: str | None = None
-    authors: str | None = None
+class Instrument(StrEnum):
+    HiSeq_X_Five = "HiSeq X Five"
+    HiSeq_X_Ten = "HiSeq X Ten"
+    Illumina_Genome_Analyzer = "Illumina Genome Analyzer"
+    Illumina_Genome_Analyzer_II = "Illumina Genome Analyzer II"
+    Illumina_Genome_Analyzer_IIx = "Illumina Genome Analyzer IIx"
+    Illumina_HiScanSQ = "Illumina HiScanSQ"
+    Illumina_HiSeq_1000 = "Illumina HiSeq 1000"
+    Illumina_HiSeq_1500 = "Illumina HiSeq 1500"
+    Illumina_HiSeq_2000 = "Illumina HiSeq 2000"
+    Illumina_HiSeq_2500 = "Illumina HiSeq 2500"
+    Illumina_HiSeq_3000 = "Illumina HiSeq 3000"
+    Illumina_HiSeq_4000 = "Illumina HiSeq 4000"
+    Illumina_HiSeq_X = "Illumina HiSeq X"
+    Illumina_iSeq_100 = "Illumina iSeq 100"
+    Illumina_MiSeq = "Illumina MiSeq"
+    Illumina_MiniSeq = "Illumina MiniSeq"
+    Illumina_NovaSeq_6000 = "Illumina NovaSeq 6000"
+    Illumina_NovaSeq_X = "Illumina NovaSeq X"
+    Illumina_NovaSeq_X_Plus = "Illumina NovaSeq X Plus"
+    NextSeq_500 = "NextSeq 500"
+    NextSeq_550 = "NextSeq 550"
+    NextSeq_1000 = "NextSeq 1000"
+    NextSeq_2000 = "NextSeq 2000"
+    MinION = "MinION"
+    GridION = "GridION"
+    PromethION = "PromethION"
+    Onso = "Onso"
+    PacBio_RS = "PacBio RS"
+    PacBio_RS_II = "PacBio RS II"
+    Revio = "Revio"
+    Sequel = "Sequel"
+    Sequel_II = "Sequel II"
+    Sequel_IIe = "Sequel IIe"
+    BGISEQ_50 = "BGISEQ-50"
+    BGISEQ_500 = "BGISEQ-500"
+    MGISEQ_2000RS = "MGISEQ-2000RS"
+    GS_454 = "454 GS"
+    GS_454_20 = "454 GS 20"
+    GS_454_FLX = "454 GS FLX"
+    GS_454_FLX_Plus = "454 GS FLX+"
+    GS_454_FLX_Titanium = "454 GS FLX Titanium"
+    GS_454_Junior = "454 GS Junior"
+    Ion_Torrent_Genexus = "Ion Torrent Genexus"
+    Ion_Torrent_PGM = "Ion Torrent PGM"
+    Ion_Torrent_Proton = "Ion Torrent Proton"
+    Ion_Torrent_S5 = "Ion Torrent S5"
+    Ion_Torrent_S5_XL = "Ion Torrent S5 XL"
+    Ion_GeneStudio_S5 = "Ion GeneStudio S5"
+    Ion_GeneStudio_S5_Plus = "Ion GeneStudio S5 Plus"
+    Ion_GeneStudio_S5_Prime = "Ion GeneStudio S5 Prime"
+    AB_3730xL_Genetic_Analyzer = "AB 3730xL Genetic Analyzer"
+    AB_3730_Genetic_Analyzer = "AB 3730 Genetic Analyzer"
+    AB_3500xL_Genetic_Analyzer = "AB 3500xL Genetic Analyzer"
+    AB_3500_Genetic_Analyzer = "AB 3500 Genetic Analyzer"
+    AB_3130xL_Genetic_Analyzer = "AB 3130xL Genetic Analyzer"
+    AB_3130_Genetic_Analyzer = "AB 3130 Genetic Analyzer"
+    AB_310_Genetic_Analyzer = "AB 310 Genetic Analyzer"
+    DNBSEQ_T7 = "DNBSEQ-T7"
+    DNBSEQ_G400 = "DNBSEQ-G400"
+    DNBSEQ_G50 = "DNBSEQ-G50"
+    DNBSEQ_G400_FAST = "DNBSEQ-G400 FAST"
+    DNBSEQ_T10x4RS = "DNBSEQ-T10x4RS"
+    Element_AVITI = "Element AVITI"
+    UG_100 = "UG 100"
+    Sentosa_SQ301 = "Sentosa SQ301"
+    GENIUS = "GENIUS"
+    Genapsys_Sequencer = "Genapsys Sequencer"
+    GS111 = "GS111"
+    GenoCare_1600 = "GenoCare 1600"
+    GenoLab_M = "GenoLab M"
+    FASTASeq_300 = "FASTASeq 300"
+    Tapestri = "Tapestri"
+    unspecified = "unspecified"
+    AVITI_24 = "AVITI 24"
 
 
-@dataclass
-class RawReadsManifest:
-    study: str
-    sample: str
-    name: str
-    fastq: list[str]
-    platform: str | None = None
-    instrument: str = "unspecified"
-    insert_size: int | None = None
-    library_name: str | None = None
-    library_source: str = "VIRAL RNA"
-    library_selection: str = "unspecified"
-    library_strategy: str = "OTHER"
-    description: str | None = None
-    address: str | None = None
-    authors: str | None = None
+class Platform(StrEnum):
+    ILLUMINA = "ILLUMINA"
+    PACBIO_SMRT = "PACBIO_SMRT"
+    OXFORD_NANOPORE = "OXFORD_NANOPORE"
+    BGISEQ = "BGISEQ"
+    LS454 = "LS454"
+    ION_TORRENT = "ION_TORRENT"
+    CAPILLARY = "CAPILLARY"
+    DNBSEQ = "DNBSEQ"
+    ELEMENT = "ELEMENT"
+    ULTIMA = "ULTIMA"
+    VELA_DIAGNOSTICS = "VELA_DIAGNOSTICS"
+    GENAPSYS = "GENAPSYS"
+    GENEMIND = "GENEMIND"
+    TAPESTRI = "TAPESTRI"
+    AVITI = "AVITI"
+
+
+class LibrarySource(StrEnum):
+    GENOMIC = "GENOMIC"
+    GENOMIC_SINGLE_CELL = "GENOMIC SINGLE CELL"
+    TRANSCRIPTOMIC = "TRANSCRIPTOMIC"
+    TRANSCRIPTOMIC_SINGLE_CELL = "TRANSCRIPTOMIC SINGLE CELL"
+    METAGENOMIC = "METAGENOMIC"
+    METATRANSCRIPTOMIC = "METATRANSCRIPTOMIC"
+    SYNTHETIC = "SYNTHETIC"
+    VIRAL_RNA = "VIRAL RNA"
+    OTHER = "OTHER"
+
+
+class LibrarySelection(StrEnum):
+    RANDOM = "RANDOM"
+    PCR = "PCR"
+    RANDOM_PCR = "RANDOM PCR"
+    RT_PCR = "RT-PCR"
+    HMPR = "HMPR"
+    MF = "MF"
+    REPEAT_FRACTIONATION = "repeat fractionation"
+    SIZE_FRACTIONATION = "size fractionation"
+    MSLL = "MSLL"
+    CDNA = "cDNA"
+    CDNA_RANDOM_PRIMING = "cDNA_randomPriming"
+    CDNA_OLIGO_DT = "cDNA_oligo_dT"
+    POLYA = "PolyA"
+    OLIGO_DT = "Oligo-dT"
+    INVERSE_RRNA = "Inverse rRNA"
+    INVERSE_RRNA_SELECTION = "Inverse rRNA selection"
+    CHIP = "ChIP"
+    CHIP_SEQ = "ChIP-Seq"
+    MNASE = "MNase"
+    DNASE = "DNase"
+    HYBRID_SELECTION = "Hybrid Selection"
+    REDUCED_REPRESENTATION = "Reduced Representation"
+    RESTRICTION_DIGEST = "Restriction Digest"
+    METHYLCYTIDINE_ANTIBODY = "5-methylcytidine antibody"
+    MBD2_PROTEIN_METHYL_CPG_BINDING_DOMAIN = "MBD2 protein methyl-CpG binding domain"
+    CAGE = "CAGE"
+    RACE = "RACE"
+    MDA = "MDA"
+    PADLOCK_PROBES_CAPTURE_METHOD = "padlock probes capture method"
+    OTHER = "other"
+    UNSPECIFIED = "unspecified"
+
+
+class LibraryStrategy(StrEnum):
+    WGS = "WGS"
+    WGA = "WGA"
+    WXS = "WXS"
+    RNA_SEQ = "RNA-Seq"
+    SSRNA_SEQ = "ssRNA-seq"
+    SNRNA_SEQ = "snRNA-seq"
+    MIRNA_SEQ = "miRNA-Seq"
+    NCRNA_SEQ = "ncRNA-Seq"
+    FL_CDNA = "FL-cDNA"
+    EST = "EST"
+    HI_C = "Hi-C"
+    ATAC_SEQ = "ATAC-seq"
+    WCS = "WCS"
+    RAD_SEQ = "RAD-Seq"
+    CLONE = "CLONE"
+    POOLCLONE = "POOLCLONE"
+    AMPLICON = "AMPLICON"
+    CLONEEND = "CLONEEND"
+    FINISHING = "FINISHING"
+    CHIP_SEQ = "ChIP-Seq"
+    MNASE_SEQ = "MNase-Seq"
+    DNASE_HYPERSENSITIVITY = "DNase-Hypersensitivity"
+    BISULFITE_SEQ = "Bisulfite-Seq"
+    CTS = "CTS"
+    MRE_SEQ = "MRE-Seq"
+    MEDIP_SEQ = "MeDIP-Seq"
+    MBD_SEQ = "MBD-Seq"
+    TN_SEQ = "Tn-Seq"
+    VALIDATION = "VALIDATION"
+    FAIRE_SEQ = "FAIRE-seq"
+    SELEX = "SELEX"
+    RIP_SEQ = "RIP-Seq"
+    CHIA_PET = "ChIA-PET"
+    SYNTHETIC_LONG_READ = "Synthetic-Long-Read"
+    TARGETED_CAPTURE = "Targeted-Capture"
+    TETHERED_CHROMATIN_CONFORMATION_CAPTURE = "Tethered Chromatin Conformation Capture"
+    NOME_SEQ = "NOMe-seq"
+    CHM_SEQ = "ChM-Seq"
+    GBS = "GBS"
+    RIBO_SEQ = "Ribo-seq"
+    OTHER = "OTHER"
 
 
 class ChromosomeType(StrEnum):
@@ -248,6 +395,44 @@ class ChromosomeLocation(StrEnum):
 class Topology(StrEnum):
     LINEAR = "linear"
     CIRCULAR = "circular"
+
+
+@dataclass
+class AssemblyManifest:
+    study: str
+    sample: str
+    assemblyname: str  # Note: this SHOULD be 1 word no hyphen
+    coverage: str
+    program: str
+    platform: str
+    chromosome_list: str
+    assembly_type: AssemblyType = AssemblyType.ISOLATE
+    fasta: str | None = None
+    flatfile: str | None = None
+    mingaplength: int | None = None
+    moleculetype: MoleculeType | None = None
+    description: str | None = None
+    run_ref: str | None = None
+    address: str | None = None
+    authors: str | None = None
+
+
+@dataclass
+class RawReadsManifest:
+    study: str
+    sample: str
+    name: str
+    fastq: list[str]
+    platform: Platform | None = None
+    instrument: Instrument = Instrument.unspecified
+    insert_size: int | None = None
+    library_name: str | None = None
+    library_source: LibrarySource = LibrarySource.OTHER
+    library_selection: LibrarySelection = LibrarySelection.UNSPECIFIED
+    library_strategy: LibraryStrategy = LibraryStrategy.OTHER
+    description: str | None = None
+    address: str | None = None
+    authors: str | None = None
 
 
 @dataclass
