@@ -131,3 +131,41 @@ groupTest.describe('Bulk sequence revision', () => {
         expect(overview.total).toBeGreaterThanOrEqual(SEQUENCES_TO_REVISE);
     });
 });
+
+sequenceTest.describe('Individual sequence revision via accession search', () => {
+    sequenceTest(
+        'finds a released sequence by accession and rejects invalid input',
+        async ({ page, releasedSequence, groupId }) => {
+            void releasedSequence;
+            sequenceTest.setTimeout(200_000);
+
+            // Reach the group's released sequences to read the released accession (as in the flow above),
+            // which also ensures it is indexed in search before we look it up on the form.
+            const searchPage = new SearchPage(page);
+            await searchPage.cchf();
+            const navigation = new NavigationPage(page);
+            await navigation.clickSubmitSequences();
+            await page.getByRole('link', { name: "View View your group's" }).click();
+            const [{ accession }] = await searchPage.waitForSequencesInSearch(
+                1,
+                SEARCH_INDEXING_TIMEOUT,
+            );
+
+            const revisionPage = new RevisionPage(page);
+            await revisionPage.goto('cchf', groupId, 'form');
+
+            // Unversioned accession resolves to the latest version and loads the form
+            await revisionPage.searchAccessionVersion(accession);
+            await revisionPage.expectRevisionFormLoaded(accession);
+
+            // A non-numeric version is rejected and does not load the form
+            await revisionPage.searchAccessionVersion(`${accession}.A`);
+            await revisionPage.expectCouldNotAccessionVersionError();
+            await revisionPage.expectRevisionFormNotLoaded();
+
+            // An unknown accession is rejected
+            await revisionPage.searchAccessionVersion('LOC_NONEXISTENT');
+            await revisionPage.expectCouldNotAccessionVersionError();
+        },
+    );
+});

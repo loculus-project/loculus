@@ -11,8 +11,51 @@ export class RevisionPage {
     /**
      * Navigate to the revision page for a specific group
      */
-    async goto(organism: string, groupId: number) {
-        await this.page.goto(`/${organism}/submission/${groupId}/revise`);
+    async goto(organism: string, groupId: number, inputMode?: 'form' | 'bulk') {
+        await this.page.goto(
+            `/${organism}/submission/${groupId}/revise${inputMode ? '?inputMode=' + inputMode : ''}`,
+        );
+    }
+
+    /**
+     * Look up an individual sequence entry to revise in form mode
+     */
+    async searchAccessionVersion(accessionVersion: string) {
+        await this.page
+            .getByRole('textbox', { name: 'Accession of sequence to revise' })
+            .fill(accessionVersion);
+        await this.page.getByRole('button', { name: 'Find sequence entry' }).click();
+    }
+
+    /**
+     * Assert the individual sequence entry revision form displays for the accessionVersion
+     */
+    async expectRevisionFormLoaded(accessionVersion: string) {
+        await expect(
+            this.page.getByRole('heading', {
+                name: new RegExp(`Create new revision from ${accessionVersion}`),
+            }),
+        ).toBeVisible();
+    }
+
+    /**
+     * Assert the individual sequence entry revision form is not shown (e.g. after an invalid search)
+     */
+    async expectRevisionFormNotLoaded() {
+        await expect(
+            this.page.getByRole('heading', { name: /Create new revision from/ }),
+        ).toBeHidden();
+    }
+
+    /**
+     * Assert the "could not find that sequence entry" search error is shown
+     */
+    async expectCouldNotAccessionVersionError() {
+        await expect(
+            this.page.getByText(
+                'Could not find that sequence entry. Please check the accession and version and try again.',
+            ),
+        ).toBeVisible();
     }
 
     /**
