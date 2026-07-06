@@ -138,6 +138,9 @@ const InnerEditPage: FC<EditPageProps> = ({
 
     const isPending = isRevisionPending || isEditPending;
     const latestVersion = sequenceEntryHistory ? getLatestAccessionVersion(sequenceEntryHistory)?.version : undefined;
+    const revisePageRoute = (accession: string, version: number | undefined) => {
+        return routes.revisePage(organism, dataToEdit.groupId, 'form', accession, version?.toString());
+    };
 
     return (
         <>
@@ -149,16 +152,10 @@ const InnerEditPage: FC<EditPageProps> = ({
                 {sequenceEntryHistory && sequenceEntryHistory.length > 1 && (
                     <SequenceEntryHistoryMenu
                         sequenceEntryHistory={sequenceEntryHistory}
-                        accessionVersion={`${dataToEdit.accession}.${dataToEdit.version}`}
-                        handleSelect={(accessionVersion) => {
-                            const { version } = parseAccessionVersionFromString(accessionVersion);
-                            window.location.href = routes.revisePage(
-                                organism,
-                                dataToEdit.groupId,
-                                'form',
-                                dataToEdit.accession,
-                                version?.toString(),
-                            );
+                        accessionVersion={getAccessionVersionString(dataToEdit)}
+                        handleLink={(accessionVersion) => {
+                            const { accession, version } = parseAccessionVersionFromString(accessionVersion);
+                            return revisePageRoute(accession, version);
                         }}
                     />
                 )}
@@ -173,10 +170,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                         <p>By revising from this version, existing changes from later versions will be lost.</p>
                         <p>
                             To revise from the latest version, click{' '}
-                            <a href={routes.revisePage(organism, dataToEdit.groupId, 'form', dataToEdit.accession)}>
-                                here
-                            </a>
-                            .
+                            <a href={revisePageRoute(dataToEdit.accession, latestVersion)}>here</a>.
                         </p>
                     </div>
                 </ErrorBox>

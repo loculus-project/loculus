@@ -12,9 +12,15 @@ interface Props {
     sequenceEntryHistory: SequenceEntryHistory;
     accessionVersion: string;
     handleSelect?: (accessionVersion: string) => void;
+    handleLink?: (accessionVersion: string) => string;
 }
 
-export const SequenceEntryHistoryMenu: React.FC<Props> = ({ sequenceEntryHistory, accessionVersion, handleSelect }) => {
+export const SequenceEntryHistoryMenu: React.FC<Props> = ({
+    sequenceEntryHistory,
+    accessionVersion,
+    handleSelect,
+    handleLink,
+}) => {
     const selectedVersion = sequenceEntryHistory.find((version) => version.accessionVersion === accessionVersion);
     return (
         <>
@@ -45,7 +51,11 @@ export const SequenceEntryHistoryMenu: React.FC<Props> = ({ sequenceEntryHistory
                     return (
                         <DropdownMenuItem
                             key={version.accessionVersion}
-                            href={routes.sequenceEntryDetailsPage(version.accessionVersion)}
+                            href={
+                                handleLink
+                                    ? handleLink(version.accessionVersion)
+                                    : routes.sequenceEntryDetailsPage(version.accessionVersion)
+                            }
                             onClick={(e) => {
                                 if (handleSelect) {
                                     handleSelect(version.accessionVersion);
