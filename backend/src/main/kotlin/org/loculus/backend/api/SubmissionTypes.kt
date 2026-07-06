@@ -284,6 +284,7 @@ data class PreprocessingAnnotationSource(
 enum class PreprocessingAnnotationSourceType {
     Metadata,
     NucleotideSequence,
+    File,
 }
 
 data class GetSequenceResponse(
