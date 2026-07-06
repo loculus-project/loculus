@@ -1287,7 +1287,9 @@ class DisplayNameCase:
 unparseable_identifier_warning = (
     "specimenCollectorSampleId 'hDENV1/myExtractedSample/2025' and submissionId "
     "'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION "
-    "in displayName instead"
+    "in displayName instead. Alternatively, you may edit the specimenCollectorSampleId "
+    "or submissionId to not contain any whitespace or '/' characters so it can be "
+    "incorporated in the displayName."
 )
 
 
