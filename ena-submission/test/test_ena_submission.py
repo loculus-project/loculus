@@ -83,10 +83,6 @@ def mock_config():
     config.metadata_mapping = {
         key: MetadataMapping(**item) for key, item in defaults["metadata_mapping"].items()
     }
-    config.manifest_fields_mapping = {
-        key: ManifestFieldDetails(**item)
-        for key, item in defaults["manifest_fields_mapping"].items()
-    }
     config.ena_checklist = "ERC000033"
     config.set_alias_suffix = None
     config.is_broker = True
