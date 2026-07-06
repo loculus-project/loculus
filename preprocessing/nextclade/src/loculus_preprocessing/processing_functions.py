@@ -1182,16 +1182,9 @@ class ProcessingFunctions:
             # Unable to parse specimenCollectorSampleId and submissionID, use ACCESSION_VERSION
             if not insdc_ingested and regex_pattern is not None:
                 warnings.append(
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=(
-                            f"specimenCollectorSampleId '{collector_id}' and submissionId"
-                            f" '{submission_id}' could not be parsed, using ACCESSION_VERSION"
-                            f" in displayName instead"
-                        ),
-                    )
+                    f"specimenCollectorSampleId '{collector_id}' and submissionId"
+                    f" '{submission_id}' could not be parsed, using ACCESSION_VERSION"
+                    f" in displayName instead"
                 )
             concatenate_order = replace_identifier(order, "ACCESSION_VERSION")
             concatenate_field_types = replace_identifier(field_types, "ACCESSION_VERSION")
