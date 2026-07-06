@@ -75,14 +75,25 @@ export function getWebsiteConfig(): WebsiteConfig {
 export function readWebsiteConfigFromDir(configDir: string): WebsiteConfig {
     const config = readTypedConfigFile(configDir, 'website_config.json', websiteConfig);
     const organismsDir = path.join(configDir, 'organisms');
-    if (!fs.existsSync(organismsDir)) {
-        return config;
+
+    let organismFiles: string[];
+    try {
+        const stat = fs.statSync(organismsDir);
+        if (!stat.isDirectory()) {
+            return config;
+        }
+        organismFiles = fs.readdirSync(organismsDir);
+    } catch (e: unknown) {
+        if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
+            return config;
+        }
+        throw e;
     }
 
-    for (const fileName of fs
-        .readdirSync(organismsDir)
-        .filter((fileName) => fileName.endsWith('.json'))
-        .sort()) {
+    // Each organisms/*.json holds a single organism's config; it is merged into (and overrides any
+    // same-key entry in) the base website_config.json. In production the Helm template always strips
+    // organisms from the base config, so these split files are the sole source of organism configs.
+    for (const fileName of organismFiles.filter((fileName) => fileName.endsWith('.json')).sort()) {
         config.organisms[path.basename(fileName, '.json')] = readTypedConfigFile(
             configDir,
             path.join('organisms', fileName),
