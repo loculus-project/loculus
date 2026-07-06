@@ -3,7 +3,7 @@ import { type FC, type FormEvent, useState } from 'react';
 import { InputModeTabs } from './DataUploadForm.tsx';
 import { getLapisUrl } from '../../config.ts';
 import { routes } from '../../routes/routes.ts';
-import { backendClientHooks, lapisClientHooks } from '../../services/serviceHooks.ts';
+import { backendClientHooks, useSequenceEntryHistory } from '../../services/serviceHooks.ts';
 import { type Group } from '../../types/backend.ts';
 import type { InputField, SubmissionDataTypes } from '../../types/config.ts';
 import { getLatestAccessionVersion } from '../../types/lapis.ts';
@@ -33,11 +33,11 @@ const RevisionInfo: FC<{
     return (
         <div className='text-gray-600 space-y-2'>
             <p>
-                To find the sequence entry you wish to revise, you can browse your group's{' '}
+                To find the sequence entry you wish to revise, you can browse the{' '}
                 <a href={routes.mySequencesPage(organism, group.groupId)} className='text-primary-600 hover:underline'>
                     Released sequences
                 </a>{' '}
-                page.
+                page for your group.
             </p>
             <p>
                 Once you have found the sequence you wish to revise, open the sequence details page and click the{' '}
@@ -107,7 +107,7 @@ const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
         data: sequenceEntryHistory,
         isLoading: isHistoryLoading,
         error: historyError,
-    } = lapisClientHooks(getLapisUrl(clientConfig, organism)).useSequenceEntryHistory(searchAccession);
+    } = useSequenceEntryHistory(getLapisUrl(clientConfig, organism), searchAccession);
 
     const resolvedVersion =
         selectedVersion ??
