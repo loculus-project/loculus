@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import tempfile
 import traceback
 import uuid
 from collections.abc import Iterator
@@ -214,3 +215,52 @@ def get_address(config: Config, center_name: str, group_id: int) -> str | None:
     address_string = ", ".join([x for x in address_list if x])
     logger.debug("Created address from group_info")
     return address_string
+
+
+def download_fastq_files(
+    config: Config, metadata: dict[str, Any], accession: str, dir: str | None = None
+) -> list[str]:
+    """
+    Download the fastq files listed under the `raw_reads` metadata field to local disk
+    and return their paths.
+
+    `raw_reads` is a JSON-encoded string of the form
+    '[{"fileId": ..., "name": ..., "url": ...}, ...]'. Each `url` points at the backend's
+    `/files/get/{accession}/{version}/{fileCategory}/{fileName}` endpoint, which responds
+    with a 307 redirect to a pre-signed S3 URL - requests follows the redirect automatically
+    and drops the Authorization header once the redirect target's host differs from the
+    backend's.
+    """
+    raw_reads = metadata.get("raw_reads")
+    if not raw_reads:
+        msg = f"No raw_reads files found in metadata for accession {accession}"
+        raise RuntimeError(msg)
+    files = json.loads(raw_reads)
+
+    if dir:
+        os.makedirs(dir, exist_ok=True)
+
+    jwt = get_jwt(config)
+    headers = {"Authorization": f"Bearer {jwt}"}
+
+    fastq_files = []
+    for file_entry in files:
+        file_name = file_entry["name"]
+        if dir:
+            file_path = os.path.join(dir, file_name)
+        else:
+            with tempfile.NamedTemporaryFile(
+                delete=False, suffix=os.path.splitext(file_name)[1]
+            ) as temp:
+                file_path = temp.name
+
+        with requests.get(
+            file_entry["url"], headers=headers, stream=True, timeout=3600
+        ) as response:
+            response.raise_for_status()
+            with open(file_path, "wb") as f:
+                f.writelines(response.iter_content(chunk_size=1 << 20))
+
+        fastq_files.append(file_path)
+
+    return fastq_files

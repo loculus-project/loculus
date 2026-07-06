@@ -1,7 +1,6 @@
 import json
 import logging
 import threading
-import time
 import traceback
 from dataclasses import asdict
 from datetime import datetime, timedelta
@@ -17,12 +16,15 @@ from .ena_submission_helper import (
     CreationResult,
     create_ena_assembly,
     create_manifest,
+    get_alias,
     get_authors,
     get_description,
     get_ena_analysis_process,
     retry_failed_submissions_for_matching_errors,
 )
 from .ena_types import (
+    Instrument,
+    Platform,
     RawReadsManifest,
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
@@ -47,38 +49,30 @@ from .submission_db_helper import (
 
 logger = logging.getLogger(__name__)
 
+_PLATFORM_BY_VALUE = {platform.value.lower(): platform for platform in Platform}
+_INSTRUMENT_BY_VALUE = {instrument.value.lower(): instrument for instrument in Instrument}
 
-def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) -> dict[str, str]:
-    assembly_values = {}
-    for key in config.manifest_fields_mapping:
-        default = config.manifest_fields_mapping[key].default
-        loculus_fields = config.manifest_fields_mapping[key].loculus_fields
-        type = config.manifest_fields_mapping[key].type
-        function = config.manifest_fields_mapping[key].function
-        if type == "int":
-            if len(loculus_fields) != 1:
-                msg = (
-                    "Only one loculus field allowed for int type but found: len(loculus_fields): "
-                    f"{len(loculus_fields)} for key: {key}. Fields: {loculus_fields}."
-                )
-                raise ValueError(msg)
-            try:
-                value = str(int(metadata.get(loculus_fields[0])))  # type: ignore
-            except TypeError:
-                value = default  # type: ignore
-        else:
-            values = [
-                metadata.get(loculus_field)
-                for loculus_field in loculus_fields
-                if metadata.get(loculus_field)
-            ]
-            value = default or None if not values else ", ".join(values)  # type: ignore
-        if function == "reformat_authors":
-            value = get_authors(str(value))
-        if not config.is_broker and key == "authors":
-            continue
-        assembly_values[key] = value
-    return assembly_values
+
+def get_platform_and_instrument(
+    raw_value: str, accession: str
+) -> tuple[Platform | None, Instrument]:
+    """
+    The `sequencingInstrument` metadata field may hold either an ENA PLATFORM value
+    (e.g. "ILLUMINA") or an ENA INSTRUMENT value (e.g. "Illumina MiSeq") - the two
+    permitted value sets don't overlap, so a case-insensitive lookup against both
+    unambiguously tells us which one the user provided.
+    """
+    normalized = raw_value.strip().lower()
+    if normalized in _INSTRUMENT_BY_VALUE:
+        return None, _INSTRUMENT_BY_VALUE[normalized]
+    if normalized in _PLATFORM_BY_VALUE:
+        return _PLATFORM_BY_VALUE[normalized], Instrument.unspecified
+    if raw_value != "unspecified":
+        logger.warning(
+            f"sequencingInstrument value '{raw_value}' for accession {accession} matches "
+            "neither ENA's platform nor instrument list, defaulting to instrument=unspecified"
+        )
+    return None, Instrument.unspecified
 
 
 def create_manifest_object(
@@ -87,31 +81,48 @@ def create_manifest_object(
     study_accession: str,
     submission_row: SubmissionTableEntry,
     dir: str | None = None,
+    random_alias: bool = False,
 ) -> RawReadsManifest:
     """
     Create an RawReadsManifest object for an entry in the raw reads table using:
     - the corresponding ena_sample_accession and bioproject_accession
     - the organism metadata from the config file
-    - sequencing metadata from the corresponding submission table entry
-    - unaligned nucleotide sequences from the corresponding submission table entry,
-    these are used to create chromosome files and emblflat files which are passed to the manifest.
+    - downloaded fastq files from the corresponding submission table entry,
 
-    If test=True add a timestamp to the alias suffix to allow for multiple submissions of the same
+    If random_alias=True add a timestamp to the alias suffix to allow for multiple submissions of the same
     manifest for testing.
     """
+    alias = get_alias(
+        f"{submission_row.accession}:{submission_row.organism}:{config.unique_raw_reads_suffix}",
+        random_alias,
+        config.set_alias_suffix,
+    ).name
     metadata = submission_row.seq_metadata
-    assembly_values = get_assembly_values_in_metadata(config, metadata)
+    platform, instrument = get_platform_and_instrument(
+        metadata.get("sequencingInstrument", "unspecified"), submission_row.accession
+    )
+    fastq_files = call_loculus.download_fastq_files(config, metadata, submission_row.accession, dir)
+    if len(fastq_files) == 0:
+        msg = f"No fastq files found for accession {submission_row.accession}"
+        raise RuntimeError(msg)
 
     try:
         manifest = RawReadsManifest(
             study=study_accession,
             sample=sample_accession,
+            name=alias,
             description=get_description(config, metadata),
-            **assembly_values,  # type: ignore
+            authors=get_authors(metadata.get("authors", "")),
+            platform=platform,
+            instrument=instrument,
+            library_source=metadata.get("sequencingLibrarySource", "OTHER"),
+            library_selection=metadata.get("sequencingLibrarySelection", "unspecified"),
+            library_strategy=metadata.get("sequencingLibraryStrategy", "OTHER"),
             address=call_loculus.get_address(
                 config, submission_row.center_name, submission_row.seq_metadata["groupId"]
             ),
-            fastq=submission_row.fastq_files,
+            insert_size=metadata.get("pairedNominalLength") if len(fastq_files) > 1 else None,
+            fastq=fastq_files,
         )
     except Exception as e:
         # log traceback for better debugging
@@ -355,7 +366,7 @@ def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: Acc
 def raw_reads_table_create(db_engine: Engine, config: Config):
     """
     1. Find all entries in raw_reads_table in state READY
-    2. Create temporary files: chromosome_list_file, embl_file, manifest_file
+    2. Create temporary files: download fastq files, manifest_file
     3. Update raw_reads_table to state SUBMITTING (only proceed if update succeeds)
     4. If (create_ena_assembly succeeds): update state to SUBMITTED with results
     3. Else update state to HAS_ERRORS with error messages

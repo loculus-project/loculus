@@ -10,6 +10,7 @@ keycloak_client_id: backend-client
 ingest_pipeline_submission_group: 1
 db_name: Loculus
 unique_project_suffix: Loculus
+unique_raw_reads_suffix: Loculus
 ena_submission_username: fake-user
 ena_submission_password: fake-password
 submit_to_ena_prod: False
