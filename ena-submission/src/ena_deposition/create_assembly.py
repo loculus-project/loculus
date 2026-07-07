@@ -291,7 +291,7 @@ def submission_table_start(db_engine: Engine, config: Config) -> None:
         _ensure_assembly_and_update_submission(
             db_engine,
             seq_key,
-            result={"run": run_ref} if run_ref else None,
+            result={"err_accession": run_ref} if run_ref else None,
         )
 
 
@@ -566,7 +566,7 @@ def assembly_table_create(db_engine: Engine, config: Config):
         )
     for row in ready_to_submit_assembly:
         seq_key = row.pkey
-        run_ref = row.result.get("run") if row.result else None
+        run_ref = row.result.get("err_accession") if row.result else None
         submission_rows = find_conditions_in_db(
             db_engine, SubmissionTableEntry, conditions=asdict(seq_key)
         )

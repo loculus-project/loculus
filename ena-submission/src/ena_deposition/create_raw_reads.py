@@ -144,19 +144,17 @@ def create_manifest_object(
     return manifest
 
 
-def submission_table_start(db_engine: Engine) -> None:
+def sync_state_with_submission_table(db_engine: Engine):
     """
     1. Find all entries in submission_table in state SUBMITTED_SAMPLE and submit_raw_reads=True
     2. If (exists an entry in the raw_reads_table for (accession, version)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_ALL
-    b.      Else update state to SUBMITTING_RAW_READS
-    3. Else create corresponding entry in raw_reads_table
+    3. Else create corresponding entry in raw_reads_table in state READY
     """
     conditions = {"status_all": StatusAll.SUBMITTED_SAMPLE, "submit_raw_reads": True}
     ready_to_submit = find_conditions_in_db(db_engine, SubmissionTableEntry, conditions=conditions)
     logger.debug(
-        f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_SAMPLE "
-        "with submit_raw_reads=True"
+        f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_SAMPLE and submit_raw_reads=True"
     )
     for row in ready_to_submit:
         seq_key = asdict(row.pkey)
@@ -165,63 +163,23 @@ def submission_table_start(db_engine: Engine) -> None:
         corresponding_raw_reads = find_conditions_in_db(
             db_engine, RawReadsTableEntry, conditions=seq_key
         )
-        status_all = None
-        if len(corresponding_raw_reads) == 1:
-            if corresponding_raw_reads[0].status == Status.SUBMITTED:
-                status_all = StatusAll.SUBMITTED_ALL
-            else:
-                status_all = StatusAll.SUBMITTING_RAW_READS
-        else:
-            # If not: create raw_reads_entry, change status to SUBMITTING_RAW_READS
-            if not add_to_raw_reads_table(db_engine, RawReadsTableEntry(**seq_key)):
-                continue
-            status_all = StatusAll.SUBMITTING_RAW_READS
-        update_db_where_conditions(
-            db_engine,
-            model_class=SubmissionTableEntry,
-            conditions=seq_key,
-            update_values={"status_all": status_all},
-        )
-
-
-def submission_table_update(db_engine: Engine) -> None:
-    """
-    1. Find all entries in submission_table in state SUBMITTING_RAW_READS
-    2. If (exists an entry in the raw_reads_table for (accession, version)):
-    a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_ALL
-    3. Else throw Error
-    """
-    conditions = {"status_all": StatusAll.SUBMITTING_RAW_READS}
-    submitting_raw_reads = find_conditions_in_db(
-        db_engine, SubmissionTableEntry, conditions=conditions
-    )
-    if len(submitting_raw_reads) > 0:
-        logger.debug(
-            f"Found {len(submitting_raw_reads)} entries in submission_table "
-            f"in status SUBMITTING_RAW_READS"
-        )
-    for row in submitting_raw_reads:
-        seq_key = asdict(row.pkey)
-
-        corresponding_raw_reads = find_conditions_in_db(
-            db_engine, RawReadsTableEntry, conditions=seq_key
-        )
-        if len(corresponding_raw_reads) == 1 and corresponding_raw_reads[0].status == str(
-            Status.SUBMITTED
+        if (
+            len(corresponding_raw_reads) == 1
+            and corresponding_raw_reads[0].status == Status.SUBMITTED
         ):
-            update_values = {"status_all": StatusAll.SUBMITTED_ALL}
             update_db_where_conditions(
                 db_engine,
                 model_class=SubmissionTableEntry,
                 conditions=seq_key,
-                update_values=update_values,
+                update_values={"status_all": StatusAll.SUBMITTED_RAW_READS},
             )
-        if len(corresponding_raw_reads) == 0:
-            error_msg = (
-                "Entry in submission_table in status SUBMITTING_RAW_READS",
-                " with no corresponding raw reads entry in raw_reads_table",
+        if len(corresponding_raw_reads) == 1:
+            logger.debug(
+                f"Entry for {seq_key} already exists in raw_reads_table with status "
+                f"{corresponding_raw_reads[0].status}, not updating submission_table status."
             )
-            raise RuntimeError(error_msg)
+            continue
+        add_to_raw_reads_table(db_engine, RawReadsTableEntry(**seq_key))
 
 
 def update_raw_reads_error(
@@ -463,13 +421,13 @@ def create_raw_reads(config: Config, stop_event: threading.Event):
             logger.warning("create_raw_reads stopped due to exception in another task")
             return
         logger.debug("Checking for raw reads to create")
-        submission_table_start(db_engine)
-        submission_table_update(db_engine)
+        sync_state_with_submission_table(db_engine)
 
         raw_reads_table_create(db_engine, config)
         last_retry_time = raw_reads_table_handle_errors(
             db_engine, config, slack_config, last_retry_time
         )
+        sync_state_with_submission_table(db_engine)
         if stop_event.wait(timeout=config.time_between_iterations):
             logger.info("create_raw_reads stopped due to exception in another task")
             return
