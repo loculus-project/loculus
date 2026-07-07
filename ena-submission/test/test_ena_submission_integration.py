@@ -445,9 +445,14 @@ def _test_successful_project_submission(
     check_project_submission_submitted(db_engine, sequences_to_upload)
 
 
-def get_sequences() -> dict[str, Any]:
+def get_sequences(with_raw_reads: bool = False) -> dict[str, Any]:
     with open(INPUT_FILE, encoding="utf-8") as json_file:
         sequences: dict[str, Any] = json.load(json_file)
+        if with_raw_reads:
+            for value in sequences.values():
+                value["metadata"]["raw_reads"] = (
+                    '[{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d8","name":"rawReads.fastq.gz","url":"https://loculus.org/files/get/LOC_0001TLY/1/raw_reads/rawReads.fastq.gz"}]'
+                )
         return sequences
 
 
@@ -484,13 +489,14 @@ def multi_segment_submission(
     mock_get_group_info: Mock,
     mock_submit_external_metadata: Mock,
     single_segment: bool = False,
+    with_raw_reads: bool = False,
 ) -> None:
     """Test the full ENA submission pipeline with CCHF data
     If single_segment is True, there's only one segment in the assembly
     Otherwise there are 2"""
     mock_get_group_info.return_value = TEST_GROUP
     mock_submit_external_metadata.return_value = mock_requests_post()
-    sequences_to_upload = get_sequences()
+    sequences_to_upload = get_sequences(with_raw_reads=with_raw_reads)
 
     if single_segment:
         # Set segment M to None so we have only one segment in the assembly
@@ -1178,6 +1184,24 @@ class TestRevisionWithManifestChangeTests(TestSubmission):
         _test_assembly_submission_errored(
             self.db_engine, self.config, self.slack_config, sequences_to_upload, mock_notify
         )
+
+
+# class TestSimpleSubmissionWithRawReads(TestSubmission):
+#     @patch(
+#         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
+#     )
+#     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
+#     def test_submit(self, mock_get_group_info: Mock, mock_submit_external_metadata: Mock) -> None:
+#         """
+#         Test the full ENA submission pipeline with accurate data - this should succeed
+#         """
+#         multi_segment_submission(
+#             self.db_engine,
+#             self.config,
+#             mock_get_group_info,
+#             mock_submit_external_metadata,
+#             with_raw_reads=True,
+#         )
 
 
 if __name__ == "__main__":
