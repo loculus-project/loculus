@@ -154,7 +154,8 @@ def sync_state_with_submission_table(db_engine: Engine):
     conditions = {"status_all": StatusAll.SUBMITTED_SAMPLE, "submit_raw_reads": True}
     ready_to_submit = find_conditions_in_db(db_engine, SubmissionTableEntry, conditions=conditions)
     logger.debug(
-        f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_SAMPLE and submit_raw_reads=True"
+        f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_SAMPLE "
+        f"and submit_raw_reads=True"
     )
     for row in ready_to_submit:
         seq_key = asdict(row.pkey)

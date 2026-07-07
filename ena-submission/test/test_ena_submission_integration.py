@@ -518,8 +518,8 @@ def get_sequences(with_raw_reads: bool = False) -> dict[str, Any]:
         sequences: dict[str, Any] = json.load(json_file)
         if with_raw_reads:
             sequences[TEST_ACCESSION_VERSION]["metadata"]["raw_reads"] = (
-                    '[{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d8","name":"rawReads.fastq.gz","url":"https://loculus.org/files/get/LOC_0001TLY/1/raw_reads/rawReads.fastq.gz"}]'
-                )
+                '[{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d8","name":"rawReads.fastq.gz","url":"https://loculus.org/files/get/LOC_0001TLY/1/raw_reads/rawReads.fastq.gz"}]'
+            )
         return sequences
 
 
@@ -547,14 +547,14 @@ def mock_download_fastq_files_side_effect(
     config: Config,  # noqa: ARG001
     metadata: dict[str, Any],  # noqa: ARG001
     accession: str,  # noqa: ARG001
-    dir: str | None = None,  # noqa: A002
+    dir: str | None = None,
 ) -> list[str]:
     """Stand-in for call_loculus.download_fastq_files that avoids hitting the backend.
 
     Copies the checked-in fixture fastq.gz into the directory the real download would
     have used, so downstream code (webin-cli) still has a real file to submit.
     """
-    target_dir = dir if dir else tempfile.mkdtemp()
+    target_dir = dir or tempfile.mkdtemp()
     os.makedirs(target_dir, exist_ok=True)
     dest_path = os.path.join(target_dir, os.path.basename(RAW_READS_FIXTURE_FILE))
     shutil.copy(RAW_READS_FIXTURE_FILE, dest_path)
