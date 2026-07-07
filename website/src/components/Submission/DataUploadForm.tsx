@@ -5,7 +5,7 @@ import { type FormEvent, useState, type Dispatch, type SetStateAction } from 're
 
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
-import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
+import { FolderUploadComponent, type FileCategoryStatus } from './FileUpload/FolderUploadComponent.tsx';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { backendApi } from '../../services/backendApi.ts';
@@ -67,14 +67,14 @@ const InnerDataUploadForm = ({
     const { submit, revise, isPending } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
     const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(undefined);
-    const [categoryUploadStatus, setCategoryUploadStatus] = useState<Record<string, string | undefined>>(() => {
-        const uploadStatus: Record<string, string | undefined> = {};
+    const [fileCategoryStatus, setFileCategoryStatus] = useState<FileCategoryStatus>(() => {
+        const status: FileCategoryStatus = {};
         (submissionDataTypes.files?.categories ?? []).forEach((category) => {
-            uploadStatus[category.name] = undefined;
+            status[category.name] = undefined;
         });
-        return uploadStatus;
+        return status;
     });
-    const isFileUploadsPending = Object.values(categoryUploadStatus).some((status) => status === 'uploadInProgress');
+    const isFileUploadsPending = Object.values(fileCategoryStatus).some((status) => status === 'uploadInProgress');
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
@@ -200,7 +200,7 @@ const InnerDataUploadForm = ({
                             onError={onError}
                             fileMapping={fileMapping}
                             setFileMapping={setFileMapping}
-                            setCategoryUploadStatus={setCategoryUploadStatus}
+                            setFileCategoryStatus={setFileCategoryStatus}
                         />
                         <hr />
                     </>
@@ -301,7 +301,7 @@ export const ExtraFilesUpload = ({
     fileCategories,
     fileMapping,
     setFileMapping,
-    setCategoryUploadStatus,
+    setFileCategoryStatus,
     formSubmissionId,
     onError,
 }: {
@@ -312,7 +312,7 @@ export const ExtraFilesUpload = ({
     fileCategories: FileCategory[];
     fileMapping: FilesBySubmissionId | undefined;
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
-    setCategoryUploadStatus: Dispatch<SetStateAction<Record<string, string | undefined>>>;
+    setFileCategoryStatus: Dispatch<SetStateAction<FileCategoryStatus>>;
     formSubmissionId?: string;
     onError: (message: string) => void;
 }) => {
@@ -338,7 +338,7 @@ export const ExtraFilesUpload = ({
                         onError={onError}
                         fileMapping={fileMapping}
                         setFileMapping={setFileMapping}
-                        setCategoryUploadStatus={setCategoryUploadStatus}
+                        setFileCategoryStatus={setFileCategoryStatus}
                         formSubmissionId={formSubmissionId}
                     />
                 ))}

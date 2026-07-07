@@ -16,6 +16,7 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
+import { type FileCategoryStatus } from '../Submission/FileUpload/FolderUploadComponent.tsx';
 import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
@@ -63,14 +64,14 @@ const InnerEditPage: FC<EditPageProps> = ({
             ? { [dataToEdit.submissionId]: dataToEdit.submittedData.files }
             : undefined,
     );
-    const [categoryUploadStatus, setCategoryUploadStatus] = useState<Record<string, string | undefined>>(() => {
-        const uploadStatus: Record<string, string | undefined> = {};
+    const [fileCategoryStatus, setFileCategoryStatus] = useState<FileCategoryStatus>(() => {
+        const status: FileCategoryStatus = {};
         (submissionDataTypes.files?.categories ?? []).forEach((category) => {
-            uploadStatus[category.name] = undefined;
+            status[category.name] = undefined;
         });
-        return uploadStatus;
+        return status;
     });
-    const isFileUploadsPending = Object.values(categoryUploadStatus).some((status) => status === 'uploadInProgress');
+    const isFileUploadsPending = Object.values(fileCategoryStatus).some((status) => status === 'uploadInProgress');
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
 
     const { mutate: submitRevision, isPending: isRevisionPending } = useSubmitRevision(
@@ -88,6 +89,20 @@ const InnerEditPage: FC<EditPageProps> = ({
         dataToEdit,
         (message) => toast.error(message, { position: 'top-center', autoClose: false }),
     );
+
+    const handleSubmit = () => {
+        if (isFileUploadsPending) {
+            toast.error('Please wait for files to finish uploading before submitting edited data.', {
+                position: 'top-center',
+                autoClose: false,
+            });
+            return;
+        }
+        displayConfirmationDialog({
+            dialogText: 'Do you really want to submit?',
+            onConfirmation: submitEditedDataForAccessionVersion,
+        });
+    };
 
     const submitEditedDataForAccessionVersion = () => {
         const fileMappingForSubmission = extraFilesEnabled ? fileMapping : undefined;
@@ -179,23 +194,14 @@ const InnerEditPage: FC<EditPageProps> = ({
                         fileCategories={submissionDataTypes.files?.categories ?? []}
                         fileMapping={fileMapping}
                         setFileMapping={setFileMapping}
-                        setCategoryUploadStatus={setCategoryUploadStatus}
+                        setFileCategoryStatus={setFileCategoryStatus}
                         formSubmissionId={dataToEdit.submissionId}
                         onError={(msg) => toast.error(msg, { position: 'top-center', autoClose: false })}
                     />
                 </div>
             )}
             <div className='flex items-center gap-4 mt-4'>
-                <Button
-                    variant='primary'
-                    onClick={() =>
-                        displayConfirmationDialog({
-                            dialogText: 'Do you really want to submit?',
-                            onConfirmation: submitEditedDataForAccessionVersion,
-                        })
-                    }
-                    alsoDisabledIf={isPending || isFileUploadsPending}
-                >
+                <Button variant='primary' onClick={handleSubmit} alsoDisabledIf={isPending}>
                     {isPending && <Spinner size='sm' className='mr-2' />}
                     Submit
                 </Button>
