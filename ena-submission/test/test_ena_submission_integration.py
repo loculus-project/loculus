@@ -593,7 +593,7 @@ def multi_segment_submission(
     get_external_metadata_and_send_to_loculus(db_engine, config)
     mock_submit_external_metadata.assert_not_called()
 
-    upload_sequences(db_engine, sequences_to_upload)
+    upload_sequences(config, db_engine, sequences_to_upload)
     check_sequences_uploaded(db_engine, sequences_to_upload)
     get_external_metadata_and_send_to_loculus(db_engine, config)
     mock_submit_external_metadata.assert_not_called()
@@ -907,7 +907,7 @@ class TestKnownBioproject(TestSubmission):
             entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
 
         # upload sequences
-        upload_sequences(self.db_engine, sequences_to_upload)
+        upload_sequences(self.config, self.db_engine, sequences_to_upload)
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit
@@ -935,7 +935,7 @@ class TestIncorrectBioprojectPassed(TestSubmission):
             entry["metadata"]["bioprojectAccession"] = "INVALID_ACCESSION"
 
         # upload sequences
-        upload_sequences(self.db_engine, sequences_to_upload)
+        upload_sequences(self.config, self.db_engine, sequences_to_upload)
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # check project submission fails and sends notification
@@ -1000,7 +1000,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
             entry["metadata"]["biosampleAccession"] = "SAMN11077987"
 
         # upload
-        upload_sequences(self.db_engine, sequences_to_upload)
+        upload_sequences(self.config, self.db_engine, sequences_to_upload)
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit
@@ -1042,7 +1042,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
             entry["metadata"]["biosampleAccession"] = "SAMN11077987"
 
         # upload
-        upload_sequences(self.db_engine, sequences_to_upload)
+        upload_sequences(self.config, self.db_engine, sequences_to_upload)
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # check project submission fails
@@ -1098,7 +1098,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
             entry["metadata"]["biosampleAccession"] = "SAMN11077987"
 
         # upload
-        upload_sequences(self.db_engine, sequences_to_upload)
+        upload_sequences(self.config, self.db_engine, sequences_to_upload)
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit
@@ -1149,7 +1149,7 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
             entry["metadata"]["biosampleAccession"] = "INVALID_ACCESSION"
 
         # upload
-        upload_sequences(self.db_engine, sequences_to_upload)
+        upload_sequences(self.config, self.db_engine, sequences_to_upload)
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit project
@@ -1209,7 +1209,7 @@ class TestRevisionAssemblyModificationTests(TestSubmission):
         sequences_to_upload = get_revisions()
 
         # upload sequences
-        upload_sequences(self.db_engine, sequences_to_upload)
+        upload_sequences(self.config, self.db_engine, sequences_to_upload)
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit
@@ -1241,7 +1241,7 @@ class TestRevisionNoAssemblyModificationTests(TestSubmission):
         sequences_to_upload = get_revisions(modify_assembly=False)
 
         # upload sequences
-        upload_sequences(self.db_engine, sequences_to_upload)
+        upload_sequences(self.config, self.db_engine, sequences_to_upload)
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit
@@ -1281,7 +1281,7 @@ class TestRevisionWithManifestChangeTests(TestSubmission):
         sequences_to_upload = get_revisions(modify_manifest=True)
 
         # upload sequences
-        upload_sequences(self.db_engine, sequences_to_upload)
+        upload_sequences(self.config, self.db_engine, sequences_to_upload)
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
         # submit
