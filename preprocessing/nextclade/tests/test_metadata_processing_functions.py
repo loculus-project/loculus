@@ -5,12 +5,13 @@ from factory_methods import (
     ProcessedEntryFactory,
     ProcessingAnnotationHelper,
     ProcessingTestCase,
+    UnprocessedEntryFactory,
     build_processing_annotations,
     ts_from_ymd,
     verify_processed_entry,
 )
 
-from loculus_preprocessing.config import Config, get_config, get_processing_order
+from loculus_preprocessing.config import Config, ProcessingSpec, get_config, get_processing_order
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
     AnnotationSourceType,
@@ -48,7 +49,7 @@ test_case_definitions = [
                 ProcessingAnnotationHelper(
                     ["ncbi_required_collection_date"],
                     ["required_collection_date"],
-                    "Metadata field `required_collection_date` is required. Please provide input metadata field(s): `ncbi_required_collection_date`",
+                    "Metadata field `required_collection_date` is required.",
                 ),
             ]
         ),
@@ -66,7 +67,7 @@ test_case_definitions = [
                 ProcessingAnnotationHelper(
                     ["ncbi_required_collection_date"],
                     ["required_collection_date"],
-                    "Metadata field `required_collection_date` is required. Please provide input metadata field(s): `ncbi_required_collection_date`",
+                    "Metadata field `required_collection_date` is required.",
                 ),
             ]
         ),
@@ -769,6 +770,43 @@ def test_preprocessing_metadata_dependencies(test_case_def: Case, config_depende
     config_dependency.processing_order = wrong_order
     processed_entry = process_single_entry(test_case, config_dependency)
     assert processed_entry.data.metadata != test_case.expected_output.data.metadata
+
+
+def test_required_field_message_lists_only_submittable_inputs() -> None:
+    config = get_config(NO_ALIGNMENT_CONFIG, ignore_args=True)
+    config.processing_spec.update(
+        {
+            "submittable_input": ProcessingSpec(
+                function="identity", inputs={"input": "submittable_input"}
+            ),
+            "unsubmittable_input": ProcessingSpec(
+                function="identity", inputs={"input": "unsubmittable_input"}, no_input=True
+            ),
+            "required_field": ProcessingSpec(
+                function="identity",
+                inputs={"input": "submittable_input", "fallback": "unsubmittable_input"},
+                required=True,
+            ),
+        }
+    )
+    config.processing_order = get_processing_order(config)
+
+    entry = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={"submissionId": "no_input_filtering", "name_required": "name"},
+        accession_id="0",
+        sequences={"main": None},
+    )
+    processed_entry = process_all([entry], "temp_dataset_dir", config)[0].processed_entry
+
+    messages = {
+        annotation.processedFields[0].name: annotation.message
+        for annotation in processed_entry.errors
+        if annotation.processedFields
+    }
+    assert messages["required_field"] == (
+        "Metadata field `required_field` is required. "
+        "Please provide input metadata field(s): `submittable_input`"
+    )
 
 
 def test_preprocessing_without_consensus_sequences(config: Config) -> None:

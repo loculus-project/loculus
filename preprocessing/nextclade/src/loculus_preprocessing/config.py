@@ -39,6 +39,7 @@ class ProcessingSpec(BaseModel):
     inputs: FunctionInputs
     function: FunctionName = "identity"
     required: bool = False
+    no_input: bool = False
     args: FunctionArgs | None = None
 
 
@@ -184,6 +185,11 @@ class Config(BaseModel):
         if len(datasets) > 1:
             raise Exception
         return datasets[0]
+
+    def is_submittable(self, field: str) -> bool:
+        if (spec := self.processing_spec.get(field)) is None:
+            return False
+        return not spec.no_input
 
 
 def set_sequence_name(
