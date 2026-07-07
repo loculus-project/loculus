@@ -92,7 +92,7 @@ const InnerEditPage: FC<EditPageProps> = ({
 
     const handleSubmit = () => {
         if (isFileUploadsPending) {
-            toast.error('Please wait for files to finish uploading before submitting edited data.', {
+            toast.error('Please wait for files to finish uploading before submitting.', {
                 position: 'top-center',
                 autoClose: false,
             });
