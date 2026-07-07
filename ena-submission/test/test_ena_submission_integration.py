@@ -87,7 +87,7 @@ from sqlalchemy import Engine
 
 CONFIG_FILE = "./test/test_config.yaml"
 INPUT_FILE = "./test/data/approved_ena_submission_list_test.json"
-RAW_READS_FIXTURE_FILE = "./test/data/SRR38154636.fastq.gz"
+RAW_READS_FIXTURE_FILE = "./test/data/SRR38154636.part_001.fastq.gz"
 TEST_ACCESSION = "LOC_0001TLY"
 TEST_ACCESSION_VERSION = "LOC_0001TLY.1"
 TEST_VERSION = 1
