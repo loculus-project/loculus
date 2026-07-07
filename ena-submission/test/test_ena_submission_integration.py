@@ -654,6 +654,8 @@ def multi_segment_submission(
     extra_items = set()
     if not single_segment:
         extra_items = {"gcaAccession", "insdcAccessionBase_M", "insdcAccessionFull_M"}
+    if with_raw_reads:
+        extra_items.add("insdcRawReadsAccession")
     assert set(payload["externalMetadata"]) == {
         "bioprojectAccession",
         "biosampleAccession",
