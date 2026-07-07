@@ -1,4 +1,5 @@
 import logging
+import os
 import threading
 import traceback
 from dataclasses import asdict
@@ -213,9 +214,9 @@ def has_raw_reads_changed(
         raise RuntimeError(error_msg)
 
     last_entry = last_version_rows[0]
-    if submission_row.metadata.get(config.raw_reads_metadata_field) != last_entry.metadata.get(
+    if submission_row.seq_metadata.get(
         config.raw_reads_metadata_field
-    ):
+    ) != last_entry.seq_metadata.get(config.raw_reads_metadata_field):
         logger.debug(
             f"Raw read file URLs have changed for {seq_key.accession}, "
             f"from {version_to_revise} to {seq_key.version} - should be revised"
@@ -300,6 +301,7 @@ def raw_reads_table_create(db_engine: Engine, config: Config):
                 sample_accession,
                 study_accession,
                 submission_row,
+                random_alias=config.random_alias,
             )
             manifest_file = create_manifest(manifest_object, is_broker=config.is_broker)
         except Exception as e:
@@ -344,6 +346,12 @@ def raw_reads_table_create(db_engine: Engine, config: Config):
                 update_values=update_values,
                 model_class=RawReadsTableEntry,
             )
+            for file in manifest_object.fastq:
+                try:
+                    logger.info(f"Cleaning up temporary file {file} after successful submission")
+                    os.remove(file)
+                except Exception as e:
+                    logger.warning(f"Failed to remove temporary file {file}: {e}")
         else:
             update_raw_reads_error(
                 db_engine,

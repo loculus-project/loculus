@@ -453,8 +453,6 @@ class RawReadsManifest:
     library_selection: LibrarySelection = LibrarySelection.UNSPECIFIED
     library_strategy: LibraryStrategy = LibraryStrategy.OTHER
     description: str | None = None
-    address: str | None = None
-    authors: str | None = None
 
 
 @dataclass

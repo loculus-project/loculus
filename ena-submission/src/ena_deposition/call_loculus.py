@@ -243,7 +243,7 @@ def download_fastq_files(
 
     fastq_files = []
     for file_entry in files:
-        file_name = file_entry["name"]
+        file_name = os.path.basename(file_entry["name"])
         logger.info(f"Starting download of {file_name}")
         if dir:
             file_path = os.path.join(dir, file_name)
