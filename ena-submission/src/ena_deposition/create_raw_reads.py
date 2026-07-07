@@ -16,7 +16,6 @@ from .ena_submission_helper import (
     create_ena_raw_reads,
     create_manifest,
     get_alias,
-    get_authors,
     get_description,
     retry_failed_submissions_for_matching_errors,
 )
@@ -121,17 +120,11 @@ def create_manifest_object(
             sample=sample_accession,
             name=alias,
             description=get_description(config, metadata),
-            authors=get_authors(metadata.get("authors", "")) if config.is_broker else None,
             platform=platform,
             instrument=instrument,
             library_source=library_source,
             library_selection=library_selection,
             library_strategy=library_strategy,
-            address=call_loculus.get_address(
-                config, submission_row.center_name, metadata["groupId"]
-            )
-            if config.is_broker
-            else None,
             insert_size=insert_size,
             fastq=fastq_files,
         )

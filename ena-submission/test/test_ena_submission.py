@@ -515,33 +515,11 @@ class RawReadsCreationTests(unittest.TestCase):
             manifest.description,
             "Original sequence submitted to Loculus with accession: LOC_0001TLY, version: 1",
         )
-        self.assertEqual(
-            manifest.authors,
-            "Umair M., Haider S.A., Jamal Z., Ammar M., Hakim R., Ali Q., Salman M.;",
-        )
-        self.assertEqual(manifest.address, "Fake center name, Basel, BS, Switzerland")
-
-    @mock.patch("ena_deposition.call_loculus.download_fastq_files")
-    def test_create_manifest_non_broker(self, mock_download_fastq_files):
-        """authors/address must be None when config.is_broker is False."""
-        mock_download_fastq_files.return_value = self.fastq_files
-        config = mock_config()
-        config.is_broker = False
-
-        manifest = create_raw_reads_manifest_object(
-            config,
-            "Test Sample Accession",
-            "Test Study Accession",
-            sample_data_in_submission_table(),
-        )
-        self.assertIsNone(manifest.authors)
-        self.assertIsNone(manifest.address)
 
     @mock.patch("ena_deposition.call_loculus.download_fastq_files")
     def test_create_manifest_insert_size_ignored_for_single_end(self, mock_download_fastq_files):
         mock_download_fastq_files.return_value = [self.fastq_files[0]]
         config = mock_config()
-        config.is_broker = False
         submission_row = sample_data_in_submission_table()
         submission_row.seq_metadata = {
             **submission_row.seq_metadata,
@@ -568,16 +546,14 @@ class RawReadsCreationTests(unittest.TestCase):
         self.assertIn("No fastq files found", str(ctx.exception))
         self.assertIsNone(ctx.exception.__cause__)
 
-    @mock.patch("ena_deposition.create_raw_reads.get_authors")
+    @mock.patch("ena_deposition.create_raw_reads.get_description")
     @mock.patch("ena_deposition.call_loculus.download_fastq_files")
-    def test_create_manifest_author_error_wrapped(
-        self, mock_download_fastq_files, mock_get_authors
-    ):
+    def test_create_manifest_error_wrapped(self, mock_download_fastq_files, mock_get_description):
         """Errors raised while building the RawReadsManifest itself should be wrapped in
         a RuntimeError that identifies the offending accession, with the original error
         preserved as the cause."""
         mock_download_fastq_files.return_value = self.fastq_files
-        mock_get_authors.side_effect = ValueError("boom")
+        mock_get_description.side_effect = ValueError("boom")
         config = mock_config()
         submission_row = sample_data_in_submission_table()
 
@@ -592,7 +568,6 @@ class RawReadsCreationTests(unittest.TestCase):
     def test_create_manifest_instrument_no_platform(self, mock_download_fastq_files):
         mock_download_fastq_files.return_value = self.fastq_files
         config = mock_config()
-        config.is_broker = False
         submission_row = sample_data_in_submission_table()
         submission_row.seq_metadata = {
             **submission_row.seq_metadata,
@@ -609,7 +584,6 @@ class RawReadsCreationTests(unittest.TestCase):
     def test_create_manifest_unrecognized_instrument_warns(self, mock_download_fastq_files):
         mock_download_fastq_files.return_value = self.fastq_files
         config = mock_config()
-        config.is_broker = False
         submission_row = sample_data_in_submission_table()
         submission_row.seq_metadata = {
             **submission_row.seq_metadata,
