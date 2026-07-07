@@ -63,7 +63,14 @@ const InnerEditPage: FC<EditPageProps> = ({
             ? { [dataToEdit.submissionId]: dataToEdit.submittedData.files }
             : undefined,
     );
-
+    const [categoryUploadStatus, setCategoryUploadStatus] = useState<Record<string, string | undefined>>(() => {
+        const uploadStatus: Record<string, string | undefined> = {};
+        (submissionDataTypes.files?.categories ?? []).forEach((category) => {
+            uploadStatus[category.name] = undefined;
+        });
+        return uploadStatus;
+    });
+    const isFileUploadsPending = Object.values(categoryUploadStatus).some((status) => status === 'uploadInProgress');
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
 
     const { mutate: submitRevision, isPending: isRevisionPending } = useSubmitRevision(
@@ -172,6 +179,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                         fileCategories={submissionDataTypes.files?.categories ?? []}
                         fileMapping={fileMapping}
                         setFileMapping={setFileMapping}
+                        setCategoryUploadStatus={setCategoryUploadStatus}
                         formSubmissionId={dataToEdit.submissionId}
                         onError={(msg) => toast.error(msg, { position: 'top-center', autoClose: false })}
                     />
@@ -186,7 +194,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                             onConfirmation: submitEditedDataForAccessionVersion,
                         })
                     }
-                    disabled={isPending}
+                    alsoDisabledIf={isPending || isFileUploadsPending}
                 >
                     {isPending && <Spinner size='sm' className='mr-2' />}
                     Submit

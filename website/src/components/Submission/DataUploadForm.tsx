@@ -17,7 +17,7 @@ import {
     restrictedDataUseTermsOption,
     type FilesBySubmissionId,
 } from '../../types/backend.ts';
-import type { FileCategory, InputField } from '../../types/config.ts';
+import { type FileCategory, type InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
@@ -67,6 +67,14 @@ const InnerDataUploadForm = ({
     const { submit, revise, isPending } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
     const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(undefined);
+    const [categoryUploadStatus, setCategoryUploadStatus] = useState<Record<string, string | undefined>>(() => {
+        const uploadStatus: Record<string, string | undefined> = {};
+        (submissionDataTypes.files?.categories ?? []).forEach((category) => {
+            uploadStatus[category.name] = undefined;
+        });
+        return uploadStatus;
+    });
+    const isFileUploadsPending = Object.values(categoryUploadStatus).some((status) => status === 'uploadInProgress');
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
@@ -187,6 +195,7 @@ const InnerDataUploadForm = ({
                             onError={onError}
                             fileMapping={fileMapping}
                             setFileMapping={setFileMapping}
+                            setCategoryUploadStatus={setCategoryUploadStatus}
                         />
                         <hr />
                     </>
@@ -221,7 +230,7 @@ const InnerDataUploadForm = ({
                         type='submit'
                         className='rounded-md py-2 text-sm font-semibold shadow-xs focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
                         onClick={(e) => void handleSubmit(e)}
-                        alsoDisabledIf={isPending}
+                        alsoDisabledIf={isPending || isFileUploadsPending}
                     >
                         <div className={`absolute ml-1.5 inline-flex ${isPending ? 'visible' : 'invisible'}`}>
                             <Spinner size='sm' />
@@ -287,6 +296,7 @@ export const ExtraFilesUpload = ({
     fileCategories,
     fileMapping,
     setFileMapping,
+    setCategoryUploadStatus,
     formSubmissionId,
     onError,
 }: {
@@ -297,6 +307,7 @@ export const ExtraFilesUpload = ({
     fileCategories: FileCategory[];
     fileMapping: FilesBySubmissionId | undefined;
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
+    setCategoryUploadStatus: Dispatch<SetStateAction<Record<string, string | undefined>>>;
     formSubmissionId?: string;
     onError: (message: string) => void;
 }) => {
@@ -322,6 +333,7 @@ export const ExtraFilesUpload = ({
                         onError={onError}
                         fileMapping={fileMapping}
                         setFileMapping={setFileMapping}
+                        setCategoryUploadStatus={setCategoryUploadStatus}
                         formSubmissionId={formSubmissionId}
                     />
                 ))}

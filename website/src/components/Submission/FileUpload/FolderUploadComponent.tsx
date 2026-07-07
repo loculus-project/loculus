@@ -45,7 +45,7 @@ type UploadCompleted = {
     files: Record<SubmissionId, (Uploaded | PreviousUpload)[]>;
 };
 
-type FileUploadState = AwaitingUrlState | UploadInProgressState | UploadCompleted;
+export type FileUploadState = AwaitingUrlState | UploadInProgressState | UploadCompleted;
 
 type UploadStatus = 'pending' | 'uploaded' | 'previousUpload' | 'error';
 
@@ -91,10 +91,30 @@ type FolderUploadComponentProps = {
     groupId: number;
     fileMapping: FilesBySubmissionId | undefined;
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
+    setCategoryUploadStatus: Dispatch<SetStateAction<Record<string, string | undefined>>>;
     // Passed when the submissionId is known (e.g. editing/revising an entry) in form mode,
     // where it is used instead of the dummySubmissionId placeholder.
     formSubmissionId?: string;
     onError: (message: string) => void;
+};
+
+const getInitialFileUploadState = (fileCategory: FileCategory, fileMapping: FilesBySubmissionId | undefined) => {
+    if (fileMapping === undefined) return undefined;
+
+    const previousUploadFiles: Record<SubmissionId, PreviousUpload[]> = {};
+    Object.entries(fileMapping).forEach(([submissionId, categories]) => {
+        const fileCategoryFiles = categories[fileCategory.name] ?? [];
+        previousUploadFiles[submissionId] = fileCategoryFiles.map((file) => ({
+            type: 'previousUpload',
+            fileId: file.fileId,
+            name: file.name,
+        }));
+    });
+
+    const hasPreviousFiles = Object.values(previousUploadFiles).some((files) => files.length > 0);
+    if (!hasPreviousFiles) return undefined;
+
+    return { type: 'uploadCompleted', files: previousUploadFiles } as FileUploadState;
 };
 
 export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
@@ -105,28 +125,14 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     groupId,
     fileMapping,
     setFileMapping,
+    setCategoryUploadStatus,
     formSubmissionId,
     onError,
 }) => {
     const isClient = useClientFlag();
-    const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(() => {
-        if (fileMapping === undefined) return undefined;
-
-        const previousUploadFiles: Record<SubmissionId, PreviousUpload[]> = {};
-        Object.entries(fileMapping).forEach(([submissionId, categories]) => {
-            const fileCategoryFiles = categories[fileCategory.name] ?? [];
-            previousUploadFiles[submissionId] = fileCategoryFiles.map((file) => ({
-                type: 'previousUpload',
-                fileId: file.fileId,
-                name: file.name,
-            }));
-        });
-
-        const hasPreviousFiles = Object.values(previousUploadFiles).some((files) => files.length > 0);
-        if (!hasPreviousFiles) return undefined;
-
-        return { type: 'uploadCompleted', files: previousUploadFiles };
-    });
+    const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(() =>
+        getInitialFileUploadState(fileCategory, fileMapping),
+    );
     const [isDragging, setIsDragging] = useState(false);
 
     const backendClient = new BackendClient(clientConfig.backendUrl);
@@ -253,6 +259,11 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     for (const [submissionId, files] of Object.entries(fileUploadState.files)) {
                         pendingFiles[submissionId] = await requestFileUploads(files);
                     }
+                    setCategoryUploadStatus((state) => {
+                        return produce(state, (draft) => {
+                            draft[fileCategory.name] = 'uploadInProgress';
+                        });
+                    });
                     setFileUploadState({ type: 'uploadInProgress', files: pendingFiles });
                     void startUploading(pendingFiles);
                 })();
@@ -264,6 +275,11 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                         .flatMap((x) => x)
                         .every(({ type }) => type === 'uploaded' || type === 'previousUpload')
                 ) {
+                    setCategoryUploadStatus((state) => {
+                        return produce(state, (draft) => {
+                            draft[fileCategory.name] = 'uploadCompleted';
+                        });
+                    });
                     setFileUploadState({
                         type: 'uploadCompleted',
                         files: fileUploadState.files as Record<SubmissionId, (Uploaded | PreviousUpload)[]>,
