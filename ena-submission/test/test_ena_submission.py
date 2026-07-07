@@ -589,6 +589,23 @@ class RawReadsCreationTests(unittest.TestCase):
         self.assertIsInstance(ctx.exception.__cause__, ValueError)
 
     @mock.patch("ena_deposition.call_loculus.download_fastq_files")
+    def test_create_manifest_instrument_no_platform(self, mock_download_fastq_files):
+        mock_download_fastq_files.return_value = self.fastq_files
+        config = mock_config()
+        config.is_broker = False
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "sequencingInstrument": "HiSeq X Five",
+        }
+
+        manifest = create_raw_reads_manifest_object(
+                config, "Test Sample Accession", "Test Study Accession", submission_row
+            )
+        self.assertIsNone(manifest.platform)
+        self.assertEqual(manifest.instrument, Instrument.HiSeq_X_Five)
+
+    @mock.patch("ena_deposition.call_loculus.download_fastq_files")
     def test_create_manifest_unrecognized_instrument_warns(self, mock_download_fastq_files):
         mock_download_fastq_files.return_value = self.fastq_files
         config = mock_config()
