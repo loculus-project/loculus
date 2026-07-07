@@ -21,6 +21,7 @@ data:
     db_name: {{ $enaDbName }}
     is_broker: {{ $enaIsBroker }}
     unique_project_suffix: {{ $enaUniqueSuffix }}
+    unique_raw_reads_suffix: {{ $enaUniqueSuffix }}
     raw_reads_metadata_field: {{ $rawReadsMetadataField }}
     backend_url: {{ $backendHost }}
     ena_deposition_host: {{ $enaDepositionHost }}
