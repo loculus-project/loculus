@@ -132,42 +132,6 @@ describe('AccessionSearchBox', () => {
         expect(window.location.href).toBe(routes.seqSetPage('TEST_SS_ABC123.1'));
     });
 
-    it('uppercases the input before navigation when the prefix is all-uppercase', async () => {
-        render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} defaultOpen={true} />);
-
-        const input = screen.getByPlaceholderText('Search by accession');
-        const form = screen.getByRole('search', { name: 'Accession search' });
-
-        await userEvent.type(input, 'test_abc123.1');
-        fireEvent.submit(form);
-
-        expect(window.location.href).toBe(routes.sequenceEntryDetailsPage('TEST_ABC123.1'));
-    });
-
-    it('uppercases seqset accessions before navigation when the prefix is all-uppercase', async () => {
-        render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} defaultOpen={true} />);
-
-        const input = screen.getByPlaceholderText('Search by accession');
-        const form = screen.getByRole('search', { name: 'Accession search' });
-
-        await userEvent.type(input, 'test_ss_abc123.1');
-        fireEvent.submit(form);
-
-        expect(window.location.href).toBe(routes.seqSetPage('TEST_SS_ABC123.1'));
-    });
-
-    it('preserves input case when the prefix is not all-uppercase', async () => {
-        render(<AccessionSearchBox accessionPrefix='Loc_' defaultOpen={true} />);
-
-        const input = screen.getByPlaceholderText('Search by accession');
-        const form = screen.getByRole('search', { name: 'Accession search' });
-
-        await userEvent.type(input, 'loc_abc123.1');
-        fireEvent.submit(form);
-
-        expect(window.location.href).toBe(routes.sequenceEntryDetailsPage('loc_abc123.1'));
-    });
-
     it('does not navigate when submitting an empty input', () => {
         render(<AccessionSearchBox accessionPrefix={ACCESSION_PREFIX} defaultOpen={true} />);
 

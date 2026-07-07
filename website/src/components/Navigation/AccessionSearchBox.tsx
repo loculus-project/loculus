@@ -35,13 +35,6 @@ export const AccessionSearchBox: FC<Props> = ({
         return /^[A-Za-z0-9._-]+$/.test(input);
     }
 
-    // When the accession prefix is all-uppercase, accessions are effectively case-insensitive,
-    // so normalize the user's input to uppercase (e.g. "pp_00123" -> "PP_00123").
-    function normalizeAccessionCase(input: string): string {
-        const prefixIsUppercase = /[A-Z]/.test(accessionPrefix) && !/[a-z]/.test(accessionPrefix);
-        return prefixIsUppercase ? input.toUpperCase() : input;
-    }
-
     // Evaluate if the accession is a seqSet
     function isSeqSetAccession(accession: string): boolean {
         const seqSetPrefix = `${accessionPrefix}SS_`;
@@ -50,7 +43,7 @@ export const AccessionSearchBox: FC<Props> = ({
 
     const onSubmit = (e: FormEvent) => {
         e.preventDefault();
-        const v = normalizeAccessionCase(value.trim());
+        const v = value.trim();
         if (!v) {
             setOpen(true);
             setError(null);
