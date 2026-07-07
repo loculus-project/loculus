@@ -18,10 +18,6 @@ import { getSegmentNames } from '../../../utils/sequenceTypeHelpers';
 
 const rawAccessionVersion = Astro.params.accessionVersion!;
 
-// Accessions are case-insensitive when the configured prefix is all-uppercase.
-// Normalize the case here (rather than at each entry point, e.g. the search
-// box) so that any way of reaching this page resolves the same entry, then
-// redirect to the canonical URL so the address bar and downstream links match.
 const accessionVersion = normalizeAccessionCase(rawAccessionVersion, getWebsiteConfig().accessionPrefix);
 if (accessionVersion !== rawAccessionVersion) {
     return Astro.redirect(`/seq/${accessionVersion}`);
