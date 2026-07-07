@@ -31,6 +31,7 @@ vi.mock('../../../utils/multipartUpload', async () => {
 });
 
 const mockSetFileMapping = vi.fn();
+const mockSetFileCategoryStatus = vi.fn();
 const mockOnError = vi.fn();
 
 const defaultProps = {
@@ -44,6 +45,7 @@ const defaultProps = {
     groupId: 1,
     fileMapping: undefined,
     setFileMapping: mockSetFileMapping,
+    setFileCategoryStatus: mockSetFileCategoryStatus,
     onError: mockOnError,
 };
 
