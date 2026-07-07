@@ -354,7 +354,7 @@ class AssemblyCreationTests(unittest.TestCase):
             study_accession,
             sample_data_in_submission_table(),
         )
-        manifest_file_name = create_manifest(manifest, is_broker=True)
+        manifest_file_name = create_manifest(manifest)
         data = {}
         with open(manifest_file_name, encoding="utf-8") as gz:
             reader = csv.reader(gz, delimiter="\t")

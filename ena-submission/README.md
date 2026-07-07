@@ -215,8 +215,6 @@ You can also run the integration tests locally, these will submit sequences to E
 
 You also need to set the environment variables `ENA_USERNAME` and `ENA_PASSWORD` to your ENA test account credentials. You can use the `.env` file in the root of this repository to set these variables.
 
-Depending on the type of ENA account you are using, you need to set `is_broker` to `True` or `False`. By default it's `False`.
-
 ```sh
 docker run --name test-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=unsecure -e POSTGRES_DB=loculus -p 5432:5432 -d postgres
 flyway -url=jdbc:postgresql://localhost:5432/loculus -schemas=ena_deposition_schema -user=postgres -password=unsecure -locations=filesystem:./flyway/sql migrate

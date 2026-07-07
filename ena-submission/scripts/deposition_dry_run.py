@@ -4,7 +4,6 @@
 # produce the same output as would be sent to ENA by the pipeline.
 
 # WARNING: Please still review submission files manually before using them!!
-# WARNING: If submitting as a broker please add `is_broker=true` to the config file
 import json
 import logging
 import os
@@ -167,7 +166,7 @@ def local_ena_submission_generator(
         manifest_object = create_manifest_object(
             config, biosample, bioproject, entry, dir=directory
         )
-        create_manifest(manifest_object, is_broker=config.is_broker, dir=directory)
+        create_manifest(manifest_object, dir=directory)
         logger.info(
             "You can submit the assembly to ENA using the command: \n"
             "ena-webin-cli -username $ena_submission_username "
@@ -175,7 +174,6 @@ def local_ena_submission_generator(
             "-manifest assembly/manifest.tsv -submit "
             f"-centername {center_name}"
             "\n Remember to submit with -test if you do not want to submit to production"
-            "\n Remember to add `is_broker=true` to config"
             "if you are submitting as a broker"
         )
 
