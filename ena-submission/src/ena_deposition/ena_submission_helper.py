@@ -418,7 +418,7 @@ def get_authors(authors: str) -> str:
         authors = reformat_authors_from_loculus_to_embl_style(authors)
         logger.debug("Reformatted authors")
     except Exception as err:
-        msg = f"Was unable to format authors: {authors} as ENA expects"
+        msg = f"Was unable to format authors as ENA expects: {authors}"
         logger.error(msg)
         raise ValueError(msg) from err
     return authors
