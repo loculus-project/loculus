@@ -105,6 +105,8 @@ class Config(BaseModel):
     enaOrganisms: dict[EnaOrganismName, EnaOrganismDetails]  # noqa: N815
     unique_project_suffix: str
     unique_raw_reads_suffix: str
+    # Name of the Loculus metadata field that holds the JSON-encoded list of raw read files
+    raw_reads_metadata_field: str = "raw_reads"
     metadata_mapping: dict[str, MetadataMapping]
     metadata_fallback_fields: dict[str, str]
     manifest_fields_mapping: dict[str, ManifestFieldDetails]

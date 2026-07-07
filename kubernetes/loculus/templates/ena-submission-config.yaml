@@ -9,6 +9,7 @@
 {{- $enaIsBroker := .Values.enaDeposition.enaIsBroker | default false }}
 {{- $enaApprovedListTestUrl := .Values.enaDeposition.enaApprovedListTestUrl | default "" }}
 {{- $enaSuppressedListTestUrl := .Values.enaDeposition.enaSuppressedListTestUrl | default "" }}
+{{- $rawReadsMetadataField := .Values.enaDeposition.rawReadsMetadataField | default "raw_reads" }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -20,6 +21,7 @@ data:
     db_name: {{ $enaDbName }}
     is_broker: {{ $enaIsBroker }}
     unique_project_suffix: {{ $enaUniqueSuffix }}
+    raw_reads_metadata_field: {{ $rawReadsMetadataField }}
     backend_url: {{ $backendHost }}
     ena_deposition_host: {{ $enaDepositionHost }}
     keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token

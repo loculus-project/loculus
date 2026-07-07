@@ -229,7 +229,7 @@ def download_fastq_files(
     and drops the Authorization header once the redirect target's host differs from the
     backend's.
     """
-    raw_reads = metadata.get("raw_reads")
+    raw_reads = metadata.get(config.raw_reads_metadata_field)
     if not raw_reads:
         msg = f"No rawreads files found in metadata for accession {accession}"
         raise RuntimeError(msg)

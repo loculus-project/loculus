@@ -205,7 +205,9 @@ def update_raw_reads_error(
     )
 
 
-def has_raw_reads_changed(db_engine: Engine, submission_row: SubmissionTableEntry) -> bool:
+def has_raw_reads_changed(
+    config: Config, db_engine: Engine, submission_row: SubmissionTableEntry
+) -> bool:
     seq_key = submission_row.pkey
     version_to_revise = previous_version(db_engine, seq_key)
     last_version_rows = find_conditions_in_db(
@@ -218,7 +220,9 @@ def has_raw_reads_changed(db_engine: Engine, submission_row: SubmissionTableEntr
         raise RuntimeError(error_msg)
 
     last_entry = last_version_rows[0]
-    if submission_row.metadata.get("raw_reads") != last_entry.metadata.get("raw_reads"):
+    if submission_row.metadata.get(config.raw_reads_metadata_field) != last_entry.metadata.get(
+        config.raw_reads_metadata_field
+    ):
         logger.debug(
             f"Raw read file URLs have changed for {seq_key.accession}, "
             f"from {version_to_revise} to {seq_key.version} - should be revised"
@@ -293,7 +297,7 @@ def raw_reads_table_create(db_engine: Engine, config: Config):
 
         if is_revision(db_engine, seq_key):
             logger.debug(f"Entry {row.accession} is a revision, checking if it can be revised")
-            if not has_raw_reads_changed(db_engine, submission_row):
+            if not has_raw_reads_changed(config, db_engine, submission_row):
                 update_raw_reads_results_with_latest_version(db_engine, seq_key)
                 continue
 

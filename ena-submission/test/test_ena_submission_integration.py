@@ -482,12 +482,12 @@ def _test_assembly_submission_errored(
 def _test_successful_raw_reads_submission(
     db_engine: Engine, config: Config, sequences_to_upload: dict[str, Any]
 ) -> None:
-    create_raw_reads_sync_state_with_submission_table(db_engine, config)
+    create_raw_reads_sync_state_with_submission_table(db_engine)
     check_raw_reads_submission_started(db_engine, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
     raw_reads_table_create(db_engine, config)
-    create_raw_reads_sync_state_with_submission_table(db_engine, config)
+    create_raw_reads_sync_state_with_submission_table(db_engine)
     check_raw_reads_submission_submitted(db_engine, sequences_to_upload)
 
 
