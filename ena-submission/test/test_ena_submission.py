@@ -600,8 +600,8 @@ class RawReadsCreationTests(unittest.TestCase):
         }
 
         manifest = create_raw_reads_manifest_object(
-                config, "Test Sample Accession", "Test Study Accession", submission_row
-            )
+            config, "Test Sample Accession", "Test Study Accession", submission_row
+        )
         self.assertIsNone(manifest.platform)
         self.assertEqual(manifest.instrument, Instrument.HiSeq_X_Five)
 
