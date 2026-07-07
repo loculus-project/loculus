@@ -11,8 +11,8 @@ describe('normalizeAccessionCase', () => {
         expect(normalizeAccessionCase('PP_00123', 'PP_')).toBe('PP_00123');
     });
 
-    it('uppercases the version suffix (harmless, digits only)', () => {
-        expect(normalizeAccessionCase('pp_00123.1', 'PP_')).toBe('PP_00123.1');
+    it('uppercases the suffix', () => {
+        expect(normalizeAccessionCase('pp_0012a.1', 'PP_')).toBe('PP_0012A.1');
     });
 
     it('uppercases seqset accessions', () => {
