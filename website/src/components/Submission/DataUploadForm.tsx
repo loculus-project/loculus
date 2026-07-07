@@ -111,6 +111,11 @@ const InnerDataUploadForm = ({
             return;
         }
 
+        if (isFileUploadsPending) {
+            onError('Please wait for files to finish uploading before proceeding to Approval.');
+            return;
+        }
+
         let fileMappingWithSubmissionId = fileMapping;
         // for single submission, use the submissionID that the user gave in the form
         if (extraFilesEnabled && inputMode === 'form' && fileMapping !== undefined) {
@@ -230,7 +235,7 @@ const InnerDataUploadForm = ({
                         type='submit'
                         className='rounded-md py-2 text-sm font-semibold shadow-xs focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
                         onClick={(e) => void handleSubmit(e)}
-                        alsoDisabledIf={isPending || isFileUploadsPending}
+                        alsoDisabledIf={isPending}
                     >
                         <div className={`absolute ml-1.5 inline-flex ${isPending ? 'visible' : 'invisible'}`}>
                             <Spinner size='sm' />
