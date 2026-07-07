@@ -101,12 +101,6 @@ def create_manifest_object(
         msg = f"No fastq files found for accession {submission_row.accession}"
         raise RuntimeError(msg)
 
-    authors = get_authors(metadata.get("authors", "")) if config.is_broker else None
-    address = (
-        call_loculus.get_address(config, submission_row.center_name, metadata["groupId"])
-        if config.is_broker
-        else None
-    )
     paired_nominal_length = metadata.get("pairedNominalLength")
     insert_size = (
         int(paired_nominal_length) if len(fastq_files) > 1 and paired_nominal_length else None
@@ -127,13 +121,17 @@ def create_manifest_object(
             sample=sample_accession,
             name=alias,
             description=get_description(config, metadata),
-            authors=authors,
+            authors=get_authors(metadata.get("authors", "")) if config.is_broker else None,
             platform=platform,
             instrument=instrument,
             library_source=library_source,
             library_selection=library_selection,
             library_strategy=library_strategy,
-            address=address,
+            address=call_loculus.get_address(
+                config, submission_row.center_name, metadata["groupId"]
+            )
+            if config.is_broker
+            else None,
             insert_size=insert_size,
             fastq=fastq_files,
         )

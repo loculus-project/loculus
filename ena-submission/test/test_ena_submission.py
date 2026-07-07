@@ -18,6 +18,9 @@ from ena_deposition.create_assembly import (
     create_manifest_object,
 )
 from ena_deposition.create_project import construct_project_set_object
+from ena_deposition.create_raw_reads import (
+    create_manifest_object as create_raw_reads_manifest_object,
+)
 from ena_deposition.create_sample import construct_sample_set_object
 from ena_deposition.ena_submission_helper import (
     create_chromosome_list,
@@ -32,7 +35,12 @@ from ena_deposition.ena_submission_helper import (
     reformat_authors_from_loculus_to_embl_style,
 )
 from ena_deposition.ena_types import (
+    Instrument,
+    LibrarySelection,
+    LibrarySource,
+    LibraryStrategy,
     MoleculeType,
+    Platform,
     Topology,
     default_project_set,
     default_sample_set_type,
@@ -469,6 +477,135 @@ class AssemblyCreationTests(unittest.TestCase):
             "segment_order": ["main"],
         }
         self.assertEqual(response.result, desired_response)
+
+
+class RawReadsCreationTests(unittest.TestCase):
+    def setUp(self):
+        self.seq_key = "LOC_0001TLY"
+        self.fastq_files = ["/tmp/fake_R1.fastq.gz", "/tmp/fake_R2.fastq.gz"]  # noqa: S108
+
+    @mock.patch("ena_deposition.call_loculus.get_group_info")
+    @mock.patch("ena_deposition.call_loculus.download_fastq_files")
+    def test_create_manifest(self, mock_download_fastq_files, mock_get_group_info):
+        mock_download_fastq_files.return_value = self.fastq_files
+        mock_get_group_info.return_value = TEST_GROUP
+        config = mock_config()
+        config.unique_raw_reads_suffix = "Test suffix"
+
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "pairedNominalLength": "350",
+        }
+
+        manifest = create_raw_reads_manifest_object(
+            config, "Test Sample Accession", "Test Study Accession", submission_row
+        )
+        self.assertEqual(manifest.insert_size, 350)
+        self.assertEqual(manifest.study, "Test Study Accession")
+        self.assertEqual(manifest.sample, "Test Sample Accession")
+        self.assertEqual(manifest.name, f"{self.seq_key}:Test organism:Test suffix")
+        self.assertEqual(manifest.fastq, self.fastq_files)
+        self.assertEqual(manifest.platform, Platform.ILLUMINA)
+        self.assertEqual(manifest.instrument, Instrument.unspecified)
+        self.assertEqual(manifest.library_source, LibrarySource.OTHER)
+        self.assertEqual(manifest.library_selection, LibrarySelection.UNSPECIFIED)
+        self.assertEqual(manifest.library_strategy, LibraryStrategy.OTHER)
+        self.assertEqual(
+            manifest.description,
+            "Original sequence submitted to Loculus with accession: LOC_0001TLY, version: 1",
+        )
+        self.assertEqual(
+            manifest.authors,
+            "Umair M., Haider S.A., Jamal Z., Ammar M., Hakim R., Ali Q., Salman M.;",
+        )
+        self.assertEqual(manifest.address, "Fake center name, Basel, BS, Switzerland")
+
+    @mock.patch("ena_deposition.call_loculus.download_fastq_files")
+    def test_create_manifest_non_broker(self, mock_download_fastq_files):
+        """authors/address must be None when config.is_broker is False."""
+        mock_download_fastq_files.return_value = self.fastq_files
+        config = mock_config()
+        config.is_broker = False
+
+        manifest = create_raw_reads_manifest_object(
+            config,
+            "Test Sample Accession",
+            "Test Study Accession",
+            sample_data_in_submission_table(),
+        )
+        self.assertIsNone(manifest.authors)
+        self.assertIsNone(manifest.address)
+
+    @mock.patch("ena_deposition.call_loculus.download_fastq_files")
+    def test_create_manifest_insert_size_ignored_for_single_end(self, mock_download_fastq_files):
+        mock_download_fastq_files.return_value = [self.fastq_files[0]]
+        config = mock_config()
+        config.is_broker = False
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "pairedNominalLength": "350",
+        }
+
+        manifest = create_raw_reads_manifest_object(
+            config, "Test Sample Accession", "Test Study Accession", submission_row
+        )
+        self.assertIsNone(manifest.insert_size)
+
+    @mock.patch("ena_deposition.call_loculus.download_fastq_files")
+    def test_create_manifest_no_fastq_files(self, mock_download_fastq_files):
+        """If no fastq files are found, a RuntimeError is raised directly (not wrapped,
+        since this check happens before the manifest is built)."""
+        mock_download_fastq_files.return_value = []
+        config = mock_config()
+        submission_row = sample_data_in_submission_table()
+
+        with self.assertRaises(RuntimeError) as ctx:
+            create_raw_reads_manifest_object(
+                config, "Test Sample Accession", "Test Study Accession", submission_row
+            )
+        self.assertIn("No fastq files found", str(ctx.exception))
+        self.assertIsNone(ctx.exception.__cause__)
+
+    @mock.patch("ena_deposition.create_raw_reads.get_authors")
+    @mock.patch("ena_deposition.call_loculus.download_fastq_files")
+    def test_create_manifest_author_error_wrapped(
+        self, mock_download_fastq_files, mock_get_authors
+    ):
+        """Errors raised while building the RawReadsManifest itself should be wrapped in
+        a RuntimeError that identifies the offending accession, with the original error
+        preserved as the cause."""
+        mock_download_fastq_files.return_value = self.fastq_files
+        mock_get_authors.side_effect = ValueError("boom")
+        config = mock_config()
+        submission_row = sample_data_in_submission_table()
+
+        with self.assertRaises(RuntimeError) as ctx:
+            create_raw_reads_manifest_object(
+                config, "Test Sample Accession", "Test Study Accession", submission_row
+            )
+        self.assertIn(submission_row.accession, str(ctx.exception))
+        self.assertIsInstance(ctx.exception.__cause__, ValueError)
+
+    @mock.patch("ena_deposition.call_loculus.download_fastq_files")
+    def test_create_manifest_unrecognized_instrument_warns(self, mock_download_fastq_files):
+        mock_download_fastq_files.return_value = self.fastq_files
+        config = mock_config()
+        config.is_broker = False
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "sequencingInstrument": "Not a real instrument",
+        }
+
+        with self.assertLogs("ena_deposition.create_raw_reads", level="WARNING") as cm:
+            manifest = create_raw_reads_manifest_object(
+                config, "Test Sample Accession", "Test Study Accession", submission_row
+            )
+        self.assertIsNone(manifest.platform)
+        self.assertEqual(manifest.instrument, Instrument.unspecified)
+        self.assertIn("matches neither ENA's platform nor instrument list", cm.output[0])
 
 
 if __name__ == "__main__":
