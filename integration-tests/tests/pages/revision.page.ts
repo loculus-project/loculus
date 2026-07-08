@@ -50,12 +50,19 @@ export class RevisionPage {
     /**
      * Assert the "could not find that sequence entry" search error is shown
      */
-    async expectCouldNotAccessionVersionError() {
+    async expectAccessionNotFoundError() {
         await expect(
             this.page.getByText(
                 'Could not find that sequence entry. Please check the accession and version and try again.',
             ),
         ).toBeVisible();
+    }
+
+    /**
+     * Assert the "invalid accession format" search error is shown
+     */
+    async expectInvalidAccessionFormatError() {
+        await expect(this.page.getByText('Please enter a valid accession format.')).toBeVisible();
     }
 
     /**

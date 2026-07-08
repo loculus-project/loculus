@@ -158,14 +158,15 @@ sequenceTest.describe('Individual sequence revision via accession search', () =>
             await revisionPage.searchAccessionVersion(accession);
             await revisionPage.expectRevisionFormLoaded(accession);
 
-            // A non-numeric version is rejected and does not load the form
+            // A non-numeric version is rejected
             await revisionPage.searchAccessionVersion(`${accession}.A`);
-            await revisionPage.expectCouldNotAccessionVersionError();
+            await revisionPage.expectInvalidAccessionFormatError();
             await revisionPage.expectRevisionFormNotLoaded();
 
             // An unknown accession is rejected
             await revisionPage.searchAccessionVersion('LOC_NONEXISTENT');
-            await revisionPage.expectCouldNotAccessionVersionError();
+            await revisionPage.expectAccessionNotFoundError();
+            await revisionPage.expectRevisionFormNotLoaded();
         },
     );
 });
