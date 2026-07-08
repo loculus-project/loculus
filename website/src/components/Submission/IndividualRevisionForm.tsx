@@ -1,4 +1,4 @@
-import { type FC, type FormEvent, useState } from 'react';
+import { type FC, type FormEvent, useMemo, useState } from 'react';
 
 import { InputModeTabs } from './DataUploadForm.tsx';
 import { getLapisUrl } from '../../config.ts';
@@ -110,21 +110,42 @@ const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
     );
     const [submitError, setSubmitError] = useState<string | undefined>(undefined);
 
-    const { data: sequenceEntryHistory, isFetching: isSequenceEntryHistoryFetching } = useSequenceEntryHistory(
-        getLapisUrl(clientConfig, organism),
-        accessionVersion?.accession,
-    );
+    const {
+        data: sequenceEntryHistory,
+        error: sequenceEntryHistoryError,
+        isFetching: isSequenceEntryHistoryFetching,
+    } = useSequenceEntryHistory(getLapisUrl(clientConfig, organism), accessionVersion?.accession);
 
-    // If a version was not provided, resolve to the latest one
-    const resolvedVersion =
-        accessionVersion?.version !== undefined
-            ? Number(accessionVersion.version)
-            : getLatestAccessionVersionForRevision(sequenceEntryHistory ?? [])?.version;
-    const sequenceEntry = sequenceEntryHistory?.find((entry) => entry.version === resolvedVersion);
-    const isValidAccessionVersion = resolvedVersion !== undefined && sequenceEntry !== undefined;
-    const isRevocationEntry = resolvedVersion !== undefined && sequenceEntry?.isRevocation;
+    const { sequenceEntry, sequenceEntryError } = useMemo(() => {
+        if (sequenceEntryHistory === undefined) return { sequenceEntry: undefined, sequenceEntryError: undefined };
 
-    // Only look up the data to edit once its confirmed the accession exists and we have a valid version
+        // If a version was not provided, resolve to the latest one
+        const resolvedVersion =
+            accessionVersion?.version !== undefined
+                ? Number(accessionVersion.version)
+                : getLatestAccessionVersionForRevision(sequenceEntryHistory)?.version;
+
+        // Retrieve the sequence entry
+        const sequenceEntry = sequenceEntryHistory.find((entry) => entry.version === resolvedVersion);
+        if (sequenceEntry === undefined)
+            return {
+                sequenceEntry: undefined,
+                sequenceEntryError:
+                    'Could not find that sequence entry. Please check the accession and version and try again.',
+            };
+
+        // Sequence is a revocation entry
+        if (sequenceEntry.isRevocation)
+            return {
+                sequenceEntry: undefined,
+                sequenceEntryError:
+                    'Could not load that sequence as it is a revocation entry. Please choose an earlier entry for this sequence to revise from.',
+            };
+
+        return { sequenceEntry, sequenceEntryError: undefined };
+    }, [accessionVersion, sequenceEntryHistory]);
+
+    // Only look up the data to edit once its confirmed the entry exists and can be revised from
     const {
         data,
         error: dataToEditError,
@@ -134,11 +155,11 @@ const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
             headers: createAuthorizationHeader(accessToken),
             params: {
                 organism,
-                accession: accessionVersion?.accession ?? '',
-                version: resolvedVersion ?? 1,
+                accession: sequenceEntry?.accession ?? '',
+                version: sequenceEntry?.version ?? 1,
             },
         },
-        { enabled: isValidAccessionVersion && !isRevocationEntry },
+        { enabled: !!sequenceEntry },
     );
 
     const handleSubmit = (e: FormEvent) => {
@@ -173,13 +194,12 @@ const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
 
     const error =
         submitError ??
-        (accessionVersion !== undefined && !isSequenceEntryHistoryFetching && !isValidAccessionVersion
-            ? 'Could not find that sequence entry. Please check the accession and version and try again.'
-            : isRevocationEntry
-              ? 'Could not load that sequence as it is a revocation entry. Please choose an earlier entry for this sequence to revise from.'
-              : dataToEditError
-                ? 'Could not load that sequence. Please make sure the accession belongs to your group.'
-                : undefined);
+        sequenceEntryError ??
+        (sequenceEntryHistoryError
+            ? 'Failed to fetch sequence entry history.'
+            : dataToEditError
+              ? 'Failed to fetch sequence. Please make sure the accession belongs to your group.'
+              : undefined);
 
     return (
         <div className='text-left mt-3 max-w-4xl mb-3'>
