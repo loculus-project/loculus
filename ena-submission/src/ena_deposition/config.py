@@ -28,8 +28,7 @@ class MetadataMapping(BaseModel):
 class ManifestFieldDetails(BaseModel):
     loculus_fields: list[str] = field(default_factory=list)
     function: str | None = None
-    type: str | None = None
-    default: str | int | None = None
+    default: str | None = None
 
 
 class ExternalMetadataField(BaseModel):
@@ -109,7 +108,8 @@ class Config(BaseModel):
     raw_reads_metadata_field: str = "raw_reads"
     metadata_mapping: dict[str, MetadataMapping]
     metadata_fallback_fields: dict[str, str]
-    manifest_fields_mapping: dict[str, ManifestFieldDetails]
+    assembly_manifest_fields_mapping: dict[str, ManifestFieldDetails]
+    raw_reads_manifest_fields_mapping: dict[str, ManifestFieldDetails]
     ingest_pipeline_submission_group: int
     ena_checklist: str | None = None
     set_alias_suffix: str | None = None  # Add to test revisions in dev

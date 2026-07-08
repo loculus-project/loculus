@@ -91,9 +91,13 @@ def mock_config():
     config.metadata_mapping = {
         key: MetadataMapping(**item) for key, item in defaults["metadata_mapping"].items()
     }
-    config.manifest_fields_mapping = {
+    config.assembly_manifest_fields_mapping = {
         key: ManifestFieldDetails(**item)
-        for key, item in defaults["manifest_fields_mapping"].items()
+        for key, item in defaults["assembly_manifest_fields_mapping"].items()
+    }
+    config.raw_reads_manifest_fields_mapping = {
+        key: ManifestFieldDetails(**item)
+        for key, item in defaults["raw_reads_manifest_fields_mapping"].items()
     }
     config.ena_checklist = "ERC000033"
     config.set_alias_suffix = None

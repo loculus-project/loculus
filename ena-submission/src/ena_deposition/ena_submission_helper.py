@@ -8,6 +8,7 @@ import re
 import string
 import subprocess  # noqa: S404
 import tempfile
+import traceback
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import Field, asdict, dataclass, fields, is_dataclass
@@ -34,7 +35,7 @@ from tenacity import (
 )
 from unidecode import unidecode
 
-from ena_deposition.config import Config, EnaOrganismDetails
+from ena_deposition.config import Config, EnaOrganismDetails, ManifestFieldDetails
 
 from .ena_types import (
     DEFAULT_EMBL_PROPERTY_FIELDS,
@@ -56,6 +57,7 @@ from .submission_db_helper import (
     ProjectTableEntry,
     SampleTableEntry,
     Status,
+    SubmissionTableEntry,
     add_to_assembly_table,
     update_db_where_conditions,
     update_with_retry,
@@ -422,6 +424,66 @@ def get_authors(authors: str) -> str:
         logger.error(msg)
         raise ValueError(msg) from err
     return authors
+
+
+def resolve_manifest_field(
+    field_details: ManifestFieldDetails, metadata: dict[str, Any]
+) -> str | None:
+    """Resolve an assembly manifest field's value from Loculus metadata per
+    config.assembly_manifest_fields_mapping, falling back to field_details.default if the
+    mapped Loculus fields are absent or empty."""
+    values = [metadata.get(loculus_field) for loculus_field in field_details.loculus_fields]
+
+    if field_details.function == "reformat_authors":
+        value = get_authors(values[0] or "")
+    else:
+        value = ", ".join(str(v) for v in values if v is not None) or None
+
+    if value is not None:
+        return value
+    return str(field_details.default) if field_details.default is not None else None
+
+
+def manifest_fields_diff(
+    assembly_manifest_fields_mapping: dict[str, ManifestFieldDetails],
+    submission_row: SubmissionTableEntry,
+    last_version_entry: SubmissionTableEntry,
+) -> dict[str, str]:
+    differing_fields = {}
+    for field, mapping in assembly_manifest_fields_mapping.items():
+        try:
+            last_value = resolve_manifest_field(mapping, last_version_entry.seq_metadata)
+            new_value = resolve_manifest_field(mapping, submission_row.seq_metadata)
+        except Exception as e:
+            logger.error(
+                f"Error resolving manifest field {field} for comparison: {e}. "
+                f"Traceback: {traceback.format_exc()}"
+            )
+            differing_fields[field] = f"Error resolving field: {e}"
+            continue
+        if last_value != new_value:
+            differing_fields[field] = f"Last: {last_value}, New: {new_value}, "
+    return differing_fields
+
+
+def linked_accession_diff(
+    submission_row: SubmissionTableEntry,
+    previous_sample_accession: str,
+    previous_study_accession: str,
+) -> dict[str, str]:
+    """If the submitter provided a biosampleAccession/bioprojectAccession (e.g. because reads
+    are linked to an already-existing sample/project), check it still matches the accession
+    used for the previous version."""
+    previous_accessions = {
+        "biosampleAccession": previous_sample_accession,
+        "bioprojectAccession": previous_study_accession,
+    }
+    differing_fields = {}
+    for field, previous_accession in previous_accessions.items():
+        new_accession = submission_row.seq_metadata.get(field)
+        if new_accession and new_accession != previous_accession:
+            differing_fields[field] = f"Last: {previous_accession}, New: {new_accession}"
+    return differing_fields
 
 
 def get_country(metadata: dict[str, str]) -> str:

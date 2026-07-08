@@ -1,10 +1,11 @@
+import json
 import logging
 import os
 import threading
 import traceback
 from dataclasses import asdict
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import pytz
 from sqlalchemy import Engine
@@ -18,6 +19,9 @@ from .ena_submission_helper import (
     create_manifest,
     get_alias,
     get_description,
+    linked_accession_diff,
+    manifest_fields_diff,
+    resolve_manifest_field,
     retry_failed_submissions_for_matching_errors,
 )
 from .ena_types import (
@@ -93,26 +97,36 @@ def create_manifest_object(
         config.set_alias_suffix,
     ).name
     metadata = submission_row.seq_metadata
+    raw_reads_manifest_fields_mapping = config.raw_reads_manifest_fields_mapping
+
+    # instrument_model mapping always defines a default, so resolution cannot return None
+    sequencing_instrument = cast(
+        str,
+        resolve_manifest_field(raw_reads_manifest_fields_mapping["instrument"], metadata),
+    )
     platform, instrument = get_platform_and_instrument(
-        metadata.get("sequencingInstrument", "unspecified"), submission_row.accession
+        sequencing_instrument, submission_row.accession
     )
     fastq_files = call_loculus.download_fastq_files(config, metadata, submission_row.accession, dir)
     if len(fastq_files) == 0:
         msg = f"No fastq files found for accession {submission_row.accession}"
         raise RuntimeError(msg)
 
-    paired_nominal_length = metadata.get("pairedNominalLength")
-    insert_size = (
-        int(paired_nominal_length) if len(fastq_files) > 1 and paired_nominal_length else None
+    insert_size_ = resolve_manifest_field(
+        raw_reads_manifest_fields_mapping["insert_size"], metadata
     )
+    insert_size = int(insert_size_) if len(fastq_files) > 1 and insert_size_ else None
     library_source = LibrarySource.from_value(
-        metadata.get("sequencingLibrarySource"), LibrarySource.OTHER
+        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_source"], metadata),
+        LibrarySource.OTHER,
     )
     library_selection = LibrarySelection.from_value(
-        metadata.get("sequencingLibrarySelection"), LibrarySelection.UNSPECIFIED
+        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_selection"], metadata),
+        LibrarySelection.UNSPECIFIED,
     )
     library_strategy = LibraryStrategy.from_value(
-        metadata.get("sequencingLibraryStrategy"), LibraryStrategy.OTHER
+        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_strategy"], metadata),
+        LibraryStrategy.OTHER,
     )
 
     try:
@@ -199,7 +213,32 @@ def update_raw_reads_error(
     )
 
 
-def has_raw_reads_changed(
+def manifest_fields_changed(
+    config: Config,
+    db_engine: Engine,
+    submission_row: SubmissionTableEntry,
+    last_version_entry: SubmissionTableEntry,
+) -> bool:
+    differing_fields = manifest_fields_diff(
+        config.raw_reads_manifest_fields_mapping, submission_row, last_version_entry
+    )
+    if differing_fields:
+        error = (
+            "Raw reads cannot be revised because metadata fields in manifest would change from "
+            f"last version: {json.dumps(differing_fields)}"
+        )
+        logger.error(error)
+        update_raw_reads_error(
+            db_engine,
+            [error],
+            seq_key=asdict(submission_row.pkey),
+            update_type="revision",
+        )
+        return True
+    return False
+
+
+def can_revise_raw_reads(
     config: Config, db_engine: Engine, submission_row: SubmissionTableEntry
 ) -> bool:
     seq_key = submission_row.pkey
@@ -213,6 +252,44 @@ def has_raw_reads_changed(
         error_msg = f"Last version {version_to_revise} not found in submission_table"
         raise RuntimeError(error_msg)
 
+    last_entry = last_version_rows[0]
+
+    previous_sample_accession, previous_study_accession = get_project_and_sample_results(
+        db_engine, last_entry
+    )
+    linked_accession_mismatches = linked_accession_diff(
+        submission_row, previous_sample_accession, previous_study_accession
+    )
+    if linked_accession_mismatches:
+        error = (
+            "Raw reads cannot be revised because linked accessions in new version differ from "
+            f"last version: {json.dumps(linked_accession_mismatches)}"
+        )
+        logger.error(error)
+        update_raw_reads_error(
+            db_engine, [error], seq_key=asdict(submission_row.pkey), update_type="revision"
+        )
+        return False
+
+    if manifest_fields_changed(config, db_engine, submission_row, last_entry):
+        logger.debug(
+            f"Manifest fields have changed for {seq_key.accession}, "
+            f"from {version_to_revise} to {seq_key.version} - should be revised manually"
+        )
+        return False
+    return True
+
+
+def has_raw_reads_changed(
+    config: Config, db_engine: Engine, submission_row: SubmissionTableEntry
+) -> bool:
+    seq_key = submission_row.pkey
+    version_to_revise = previous_version(db_engine, seq_key)
+    last_version_rows = find_conditions_in_db(
+        db_engine,
+        SubmissionTableEntry,
+        conditions={"accession": seq_key.accession, "version": version_to_revise},
+    )
     last_entry = last_version_rows[0]
     if submission_row.seq_metadata.get(
         config.raw_reads_metadata_field
@@ -291,6 +368,8 @@ def raw_reads_table_create(db_engine: Engine, config: Config):
 
         if is_revision(db_engine, seq_key):
             logger.debug(f"Entry {row.accession} is a revision, checking if it can be revised")
+            if not can_revise_raw_reads(config, db_engine, submission_row):
+                continue
             if not has_raw_reads_changed(config, db_engine, submission_row):
                 update_raw_reads_results_with_latest_version(db_engine, seq_key)
                 continue

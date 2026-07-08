@@ -21,9 +21,11 @@ from .ena_submission_helper import (
     create_ena_assembly,
     create_flatfile,
     create_manifest,
-    get_authors,
     get_description,
     get_ena_analysis_process,
+    linked_accession_diff,
+    manifest_fields_diff,
+    resolve_manifest_field,
     retry_failed_submissions_for_matching_errors,
     set_accession_does_not_exist_error,
 )
@@ -150,11 +152,7 @@ def create_manifest_object(
     logger.debug("Created chromosome list file")
 
     flat_file = create_flatfile(config, metadata, ena_organism, unaligned_nucleotide_sequences, dir)
-    program = [
-        metadata.get("consensusSequenceSoftwareName"),
-        metadata.get("consensusSequenceSoftwareVersion"),
-    ]
-    program_joined = ", ".join([x for x in program if x is not None])
+    assembly_manifest_fields_mapping = config.assembly_manifest_fields_mapping
 
     try:
         manifest = AssemblyManifest(
@@ -165,11 +163,22 @@ def create_manifest_object(
             chromosome_list=chromosome_list_file,
             description=get_description(config, metadata),
             moleculetype=ena_organism.molecule_type,
-            platform=metadata.get("sequencingInstrument") or "Unknown",
-            program=program_joined or "Unknown",
-            coverage=metadata.get("depthOfCoverage") or "1",
-            authors=get_authors(metadata.get("authors", "")) if config.is_broker else None,
-            run_ref=run_ref or metadata.get("insdcRawReadsAccession"),
+            # platform/program/coverage mappings always define a default, so resolution
+            # cannot return None
+            platform=cast(
+                str, resolve_manifest_field(assembly_manifest_fields_mapping["platform"], metadata)
+            ),
+            program=cast(
+                str, resolve_manifest_field(assembly_manifest_fields_mapping["program"], metadata)
+            ),
+            coverage=cast(
+                str, resolve_manifest_field(assembly_manifest_fields_mapping["coverage"], metadata)
+            ),
+            authors=resolve_manifest_field(assembly_manifest_fields_mapping["authors"], metadata)
+            if config.is_broker
+            else None,
+            run_ref=run_ref
+            or resolve_manifest_field(assembly_manifest_fields_mapping["run_ref"], metadata),
             address=call_loculus.get_address(
                 config, submission_row.center_name, submission_row.seq_metadata["groupId"]
             )
@@ -363,27 +372,9 @@ def manifest_fields_changed(
     submission_row: SubmissionTableEntry,
     last_version_entry: SubmissionTableEntry,
 ) -> bool:
-    differing_fields = {}
-    for mapping in config.manifest_fields_mapping.values():
-        loculus_field_names = mapping.loculus_fields
-        for loculus_field_name in loculus_field_names:
-            last_entry = last_version_entry.seq_metadata.get(loculus_field_name)
-            new_entry = submission_row.seq_metadata.get(loculus_field_name)
-            if loculus_field_name == "authors":
-                try:
-                    last_entry = get_authors(last_entry) if last_entry else last_entry
-                    new_entry = get_authors(new_entry) if new_entry else new_entry
-                except Exception as e:
-                    logger.error(
-                        f"Error formatting authors field for comparison: {e}. "
-                        f"Traceback: {traceback.format_exc()}"
-                    )
-                    differing_fields[loculus_field_name] = (
-                        f"Last: {last_entry}, New: {new_entry}, Error reformatting: {e}"
-                    )
-                    continue
-            if last_entry != new_entry:
-                differing_fields[loculus_field_name] = f"Last: {last_entry}, New: {new_entry}, "
+    differing_fields = manifest_fields_diff(
+        config.assembly_manifest_fields_mapping, submission_row, last_version_entry
+    )
     if differing_fields:
         error = (
             "Assembly cannot be revised because metadata fields in manifest would change from "
@@ -431,36 +422,19 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
         f"Previous sample accession: {previous_sample_accession}, "
         f"previous study accession: {previous_study_accession}"
     )
-    if submission_row.seq_metadata.get("biosampleAccession"):
-        new_sample_accession = submission_row.seq_metadata["biosampleAccession"]
-        if previous_sample_accession != new_sample_accession:
-            error = (
-                "Assembly cannot be revised because biosampleAccession in new version: "
-                f"{new_sample_accession} differs from last version: {previous_sample_accession}"
-            )
-            logger.error(error)
-            update_assembly_error(
-                db_engine,
-                [error],
-                seq_key=asdict(submission_row.pkey),
-                update_type="revision",
-            )
-            return False
-    if submission_row.seq_metadata.get("bioprojectAccession"):
-        new_project_accession = submission_row.seq_metadata["bioprojectAccession"]
-        if new_project_accession != previous_study_accession:
-            error = (
-                "Assembly cannot be revised because bioprojectAccession in new version: "
-                f"{new_project_accession} differs from last version: {previous_study_accession}"
-            )
-            logger.error(error)
-            update_assembly_error(
-                db_engine,
-                [error],
-                seq_key=asdict(submission_row.pkey),
-                update_type="revision",
-            )
-            return False
+    linked_accession_mismatches = linked_accession_diff(
+        submission_row, previous_sample_accession, previous_study_accession
+    )
+    if linked_accession_mismatches:
+        error = (
+            "Assembly cannot be revised because linked accessions in new version differ from "
+            f"last version: {json.dumps(linked_accession_mismatches)}"
+        )
+        logger.error(error)
+        update_assembly_error(
+            db_engine, [error], seq_key=asdict(submission_row.pkey), update_type="revision"
+        )
+        return False
     if config.allow_revision_with_manifest_changes:
         logger.debug(
             "allow_revision_with_manifest_changes=True, skipping manifest field comparison"
