@@ -11,6 +11,7 @@ import {
     type Schema,
     type SequenceFlaggingConfig,
     type WebsiteConfig,
+    instanceConfig,
     websiteConfig,
 } from './types/config.ts';
 import { type ReferenceGenomesInfo } from './types/referencesGenomes.ts';
@@ -61,7 +62,7 @@ export function validateWebsiteConfig(config: WebsiteConfig): Error[] {
 
 export function getWebsiteConfig(): WebsiteConfig {
     if (_config === null) {
-        const config = readTypedConfigFile('website_config.json', websiteConfig);
+        const config = readWebsiteConfigFromDir(getConfigDir());
         const validationErrors = validateWebsiteConfig(config);
         if (validationErrors.length > 0) {
             throw new AggregateError(validationErrors, 'There were validation errors in the website_config.json');
@@ -69,6 +70,37 @@ export function getWebsiteConfig(): WebsiteConfig {
         _config = config;
     }
     return _config;
+}
+
+export function readWebsiteConfigFromDir(configDir: string): WebsiteConfig {
+    const config = readTypedConfigFile(configDir, 'website_config.json', websiteConfig);
+    const organismsDir = path.join(configDir, 'organisms');
+
+    let organismFiles: string[];
+    try {
+        const stat = fs.statSync(organismsDir);
+        if (!stat.isDirectory()) {
+            return config;
+        }
+        organismFiles = fs.readdirSync(organismsDir);
+    } catch (e: unknown) {
+        if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
+            return config;
+        }
+        throw e;
+    }
+
+    // Each organisms/*.json holds a single organism's config; it is merged into (and overrides any
+    // same-key entry in) the base website_config.json. In production the Helm template always strips
+    // organisms from the base config, so these split files are the sole source of organism configs.
+    for (const fileName of organismFiles.filter((fileName) => fileName.endsWith('.json')).sort()) {
+        config.organisms[path.basename(fileName, '.json')] = readTypedConfigFile(
+            configDir,
+            path.join('organisms', fileName),
+            instanceConfig,
+        );
+    }
+    return config;
 }
 
 export function getContactConfig(websiteConfig: WebsiteConfig) {
@@ -289,7 +321,7 @@ export function getGroupedInputFields(
 }
 
 export function getRuntimeConfig(): RuntimeConfig {
-    _runtimeConfig ??= readTypedConfigFile('runtime_config.json', runtimeConfig);
+    _runtimeConfig ??= readTypedConfigFile(getConfigDir(), 'runtime_config.json', runtimeConfig);
     return _runtimeConfig;
 }
 
@@ -316,8 +348,12 @@ export function getDataUseTermsAgreementHTML() {
     return getWebsiteConfig().dataUseTermsAgreementHTML;
 }
 
-function readTypedConfigFile<Schema extends z.ZodTypeAny>(fileName: string, schema: Schema): z.infer<Schema> {
-    const configFilePath = path.join(getConfigDir(), fileName);
+function readTypedConfigFile<Schema extends z.ZodTypeAny>(
+    configDir: string,
+    fileName: string,
+    schema: Schema,
+): z.infer<Schema> {
+    const configFilePath = path.join(configDir, fileName);
     const json = JSON.parse(fs.readFileSync(configFilePath, 'utf8'));
     try {
         return schema.parse(json) as z.infer<Schema>;
