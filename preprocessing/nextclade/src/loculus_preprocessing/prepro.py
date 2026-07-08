@@ -14,7 +14,9 @@ from .backend import (
     upload_embl_file_to_presigned_url,
 )
 from .config import (
+    ASSIGNED_REFERENCE_PREFIX,
     METADATA_DEPENDENCY_PREFIX,
+    NEXTCLADE_PREFIX,
     AlignmentRequirement,
     Config,
     ProcessingSpec,
@@ -233,12 +235,11 @@ def add_input_metadata(
     config: Config,
 ) -> InputData:
     """Returns value of input_path in unprocessed metadata"""
-    if input_path.startswith("ASSIGNED_REFERENCE"):
+    if input_path.startswith(ASSIGNED_REFERENCE_PREFIX):
         return add_assigned_reference(spec, unprocessed, config=config)
     # If field starts with "nextclade.", take from nextclade metadata
-    nextclade_prefix = "nextclade."
-    if input_path.startswith(nextclade_prefix):
-        nextclade_path = input_path[len(nextclade_prefix) :]
+    if input_path.startswith(NEXTCLADE_PREFIX):
+        nextclade_path = input_path[len(NEXTCLADE_PREFIX) :]
         return add_nextclade_metadata(spec, unprocessed, nextclade_path, config=config)
     if input_path not in unprocessed.inputMetadata:
         return InputData(datum=None)
@@ -420,9 +421,12 @@ def get_output_metadata(
             and group_id != config.insdc_ingest_group_id
         ):
             message = f"Metadata field `{output_field}` is required."
-            additional_inputs = [i for i in input_fields if i != output_field]
-            if additional_inputs:
-                message += f" Please provide input metadata field(s): {', '.join(f'`{field}`' for field in additional_inputs)}"
+            user_inputs = [field for field in input_fields if config.is_user_input(field)]
+            if any(field != output_field for field in user_inputs):
+                message += (
+                    f" Please provide input metadata field(s): "
+                    f"{', '.join(f'`{field}`' for field in user_inputs)}"
+                )
             errors.append(
                 ProcessingAnnotation.from_fields(
                     spec.inputs.values(),
