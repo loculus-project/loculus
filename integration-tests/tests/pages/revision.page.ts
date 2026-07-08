@@ -33,7 +33,7 @@ export class RevisionPage {
     async expectRevisionFormLoaded(accessionVersion: string) {
         await expect(
             this.page.getByRole('heading', {
-                name: new RegExp(`Create new revision from ${accessionVersion}`),
+                name: `Create new revision from ${accessionVersion}`,
             }),
         ).toBeVisible();
     }

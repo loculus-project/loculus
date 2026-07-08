@@ -60,7 +60,7 @@ sequenceTest(
 
         expect(tabs).toContain('S (unaligned)');
         await reviewPage.switchSequenceTab('S (unaligned)');
-        const actual = removeWhitespaces(await reviewPage.getSequenceContent());
+        const actual = removeWhitespaces((await reviewPage.getSequenceContent()) ?? '');
         expect(actual).toBe(CCHF_S_SEGMENT_FULL_SEQUENCE);
 
         await reviewPage.closeSequencesDialog();
