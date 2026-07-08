@@ -1167,6 +1167,8 @@ class ProcessingFunctions:
         identifier = parse_identifier_string(collector_id, insdc_ingested, regex_pattern)
         if identifier is None and not insdc_ingested:
             # For direct submissions only: try to parse the submissionId
+            # Don't do this for ingested since there the submissionId is just the
+            # (concatenation of) nuccore accession(s) of the sequence(s)
             identifier = parse_identifier_string(submission_id, insdc_ingested, regex_pattern)
 
         def replace_identifier(values, replacement):
