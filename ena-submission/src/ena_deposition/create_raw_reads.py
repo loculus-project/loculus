@@ -43,7 +43,9 @@ from .submission_db_helper import (
     db_init,
     find_conditions_in_db,
     find_errors_or_stuck_in_db,
+    get_last_entry,
     get_project_and_sample_results,
+    is_latest_revision,
     is_revision,
     previous_version,
     update_db_where_conditions,
@@ -241,18 +243,9 @@ def manifest_fields_changed(
 def can_revise_raw_reads(
     config: Config, db_engine: Engine, submission_row: SubmissionTableEntry
 ) -> bool:
-    seq_key = submission_row.pkey
-    version_to_revise = previous_version(db_engine, seq_key)
-    last_version_rows = find_conditions_in_db(
-        db_engine,
-        SubmissionTableEntry,
-        conditions={"accession": seq_key.accession, "version": version_to_revise},
-    )
-    if len(last_version_rows) == 0:
-        error_msg = f"Last version {version_to_revise} not found in submission_table"
-        raise RuntimeError(error_msg)
-
-    last_entry = last_version_rows[0]
+    last_entry = get_last_entry(db_engine, submission_row.pkey)
+    if not is_latest_revision(db_engine, submission_row.pkey):
+        return False
 
     previous_sample_accession, previous_study_accession = get_project_and_sample_results(
         db_engine, last_entry
@@ -273,8 +266,8 @@ def can_revise_raw_reads(
 
     if manifest_fields_changed(config, db_engine, submission_row, last_entry):
         logger.debug(
-            f"Manifest fields have changed for {seq_key.accession}, "
-            f"from {version_to_revise} to {seq_key.version} - should be revised manually"
+            f"Manifest fields have changed for {submission_row.accession}, "
+            f"from {last_entry.version} to {submission_row.version} - should be revised manually"
         )
         return False
     return True
@@ -283,20 +276,13 @@ def can_revise_raw_reads(
 def has_raw_reads_changed(
     config: Config, db_engine: Engine, submission_row: SubmissionTableEntry
 ) -> bool:
-    seq_key = submission_row.pkey
-    version_to_revise = previous_version(db_engine, seq_key)
-    last_version_rows = find_conditions_in_db(
-        db_engine,
-        SubmissionTableEntry,
-        conditions={"accession": seq_key.accession, "version": version_to_revise},
-    )
-    last_entry = last_version_rows[0]
+    last_entry = get_last_entry(db_engine, submission_row.pkey)
     if submission_row.seq_metadata.get(
         config.raw_reads_metadata_field
     ) != last_entry.seq_metadata.get(config.raw_reads_metadata_field):
         logger.debug(
-            f"Raw read file URLs have changed for {seq_key.accession}, "
-            f"from {version_to_revise} to {seq_key.version} - should be revised"
+            f"Raw read file URLs have changed for {submission_row.accession}, "
+            f"from {last_entry.version} to {submission_row.version} - should be revised"
             "(Metadata maybe also changed.)"
         )
         return True

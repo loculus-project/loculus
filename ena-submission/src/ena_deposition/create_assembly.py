@@ -49,6 +49,7 @@ from .submission_db_helper import (
     find_conditions_in_db,
     find_errors_or_stuck_in_db,
     find_waiting_in_db,
+    get_last_entry,
     get_project_and_sample_results,
     is_latest_revision,
     is_revision,
@@ -403,17 +404,7 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
     seq_key = submission_row.pkey
     if not is_latest_revision(db_engine, seq_key):
         return False
-    version_to_revise = previous_version(db_engine, seq_key)
-    last_version_rows = find_conditions_in_db(
-        db_engine,
-        SubmissionTableEntry,
-        conditions={"accession": submission_row.accession, "version": version_to_revise},
-    )
-    if len(last_version_rows) == 0:
-        error_msg = f"Last version {version_to_revise} not found in submission_table"
-        raise RuntimeError(error_msg)
-
-    last_version_entry = last_version_rows[0]
+    last_version_entry = get_last_entry(db_engine, seq_key)
 
     previous_sample_accession, previous_study_accession = get_project_and_sample_results(
         db_engine, last_version_entry
@@ -447,23 +438,12 @@ def is_flatfile_data_changed(db_engine: Engine, submission_row: SubmissionTableE
     """
     Check if change in sequence or flatfile metadata has occurred since last version.
     """
-    seq_key = submission_row.pkey
-    version_to_revise = previous_version(db_engine, seq_key)
-    last_version_rows = find_conditions_in_db(
-        db_engine,
-        SubmissionTableEntry,
-        conditions={"accession": seq_key.accession, "version": version_to_revise},
-    )
-    if len(last_version_rows) == 0:
-        error_msg = f"Last version {version_to_revise} not found in submission_table"
-        raise RuntimeError(error_msg)
-
-    last_entry = last_version_rows[0]
+    last_entry = get_last_entry(db_engine, submission_row.pkey)
 
     if submission_row.unaligned_nucleotide_sequences != last_entry.unaligned_nucleotide_sequences:
         logger.debug(
-            f"Unaligned nucleotide sequences have changed for {seq_key.accession}, "
-            f"from {version_to_revise} to {seq_key.version} - should be revised"
+            f"Unaligned nucleotide sequences have changed for {submission_row.accession}, "
+            f"from {last_entry.version} to {submission_row.version} - should be revised"
             "(Metadata maybe also changed.)"
         )
         return True
@@ -484,7 +464,7 @@ def is_flatfile_data_changed(db_engine: Engine, submission_row: SubmissionTableE
             )
             return True
     logger.debug(
-        f"No changes detected for {submission_row.accession} from version {version_to_revise} "
+        f"No changes detected for {submission_row.accession} from version {last_entry.version} "
         f"to {submission_row.version}"
     )
     return False

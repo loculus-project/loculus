@@ -612,6 +612,20 @@ def previous_version(engine: Engine, seq_key: AccessionVersion) -> int | None:
     return all_versions[-2]
 
 
+def get_last_entry(db_engine: Engine, accession_version: AccessionVersion) -> SubmissionTableEntry:
+    version_to_revise = previous_version(db_engine, accession_version)
+    last_version_rows = find_conditions_in_db(
+        db_engine,
+        SubmissionTableEntry,
+        conditions={"accession": accession_version.accession, "version": version_to_revise},
+    )
+    if len(last_version_rows) == 0:
+        error_msg = f"Last version {version_to_revise} not found in submission_table"
+        raise RuntimeError(error_msg)
+
+    return last_version_rows[0]
+
+
 def get_project_and_sample_results(
     db_engine: Engine, submission_row: SubmissionTableEntry
 ) -> tuple[str, str]:
