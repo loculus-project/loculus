@@ -1,5 +1,6 @@
 ---
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
+import type { InputMode } from '../../../../components/Submission/FormOrUploadWrapper';
 import { RevisionForm } from '../../../../components/Submission/RevisionForm';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
 import {
@@ -14,7 +15,11 @@ import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 
 const instanceName = getWebsiteConfig().name;
 const organism = Astro.params.organism!;
+
 const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
+
+const inputMode: InputMode = Astro.url.searchParams.get('inputMode') === 'form' ? 'form' : 'bulk';
+const title = inputMode === 'bulk' ? 'Revise sequences' : 'Revise sequence';
 
 if (!cleanedOrganism) {
     return {
@@ -30,7 +35,7 @@ const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.s
 const clientConfig = getRuntimeConfig().public;
 ---
 
-<SubmissionPageWrapper title='Revise sequences' groupsResult={groupsResult}>
+<SubmissionPageWrapper title={title} disablePageTitle={true} groupsResult={groupsResult}>
     {
         groupsResult.match(
             ({ currentGroup: group }) => (
@@ -41,6 +46,7 @@ const clientConfig = getRuntimeConfig().public;
                     metadataTemplateFields={groupedInputFields}
                     clientConfig={clientConfig}
                     group={group}
+                    inputMode={inputMode}
                     submissionDataTypes={schema.submissionDataTypes}
                     dataUseTermsEnabled={dataUseTermsAreEnabled()}
                     client:load

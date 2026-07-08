@@ -155,7 +155,12 @@ const InnerDataUploadForm = ({
                 {action === 'submit' ? (
                     <>
                         <h1 className='title'>Submit sequences</h1>
-                        <InputModeTabs organism={organism} groupId={group.groupId} currentInputMode={inputMode} />
+                        <InputModeTabs
+                            action={action}
+                            organism={organism}
+                            groupId={group.groupId}
+                            currentInputMode={inputMode}
+                        />
                         <FormOrUploadWrapper
                             inputMode={inputMode}
                             setFileFactory={setFileFactory}
@@ -166,14 +171,23 @@ const InnerDataUploadForm = ({
                         />
                     </>
                 ) : (
-                    <FormOrUploadWrapper
-                        inputMode='bulk'
-                        setFileFactory={setFileFactory}
-                        organism={organism}
-                        action={action}
-                        metadataTemplateFields={metadataTemplateFields}
-                        submissionDataTypes={submissionDataTypes}
-                    />
+                    <>
+                        <h1 className='title'>Revise sequences</h1>
+                        <InputModeTabs
+                            action={action}
+                            organism={organism}
+                            groupId={group.groupId}
+                            currentInputMode='bulk'
+                        />
+                        <FormOrUploadWrapper
+                            inputMode='bulk'
+                            setFileFactory={setFileFactory}
+                            organism={organism}
+                            action={action}
+                            metadataTemplateFields={metadataTemplateFields}
+                            submissionDataTypes={submissionDataTypes}
+                        />
+                    </>
                 )}
                 <hr />
                 {extraFilesEnabled && (
@@ -236,18 +250,20 @@ const InnerDataUploadForm = ({
 
 export const DataUploadForm = withQueryProvider(InnerDataUploadForm);
 
-const InputModeTabs = ({
+export const InputModeTabs = ({
+    action,
     organism,
     groupId,
     currentInputMode,
 }: {
+    action: UploadAction;
     organism: string;
     groupId: number;
     currentInputMode: InputMode;
 }) => {
     const inputModeUrl = (inputMode: InputMode) =>
         SubmissionRouteUtils.toUrl({
-            name: 'submit',
+            name: action,
             organism,
             groupId,
             inputMode,
@@ -273,7 +289,9 @@ const InputModeTabs = ({
                 } hover:text-primary-600`}
                 href={inputModeUrl('form')}
             >
-                Submit individual sequence entry using a form
+                {action === 'submit'
+                    ? 'Submit individual sequence entry using a form'
+                    : 'Revising individual sequences'}
             </a>
         </div>
     );
