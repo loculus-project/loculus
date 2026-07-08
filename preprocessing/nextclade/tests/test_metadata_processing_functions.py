@@ -49,7 +49,7 @@ test_case_definitions = [
                 ProcessingAnnotationHelper(
                     ["ncbi_required_collection_date"],
                     ["required_collection_date"],
-                    "Metadata field `required_collection_date` is required.",
+                    "Metadata field `required_collection_date` is required. Please provide input metadata field(s): `ncbi_required_collection_date`",
                 ),
             ]
         ),
@@ -67,7 +67,7 @@ test_case_definitions = [
                 ProcessingAnnotationHelper(
                     ["ncbi_required_collection_date"],
                     ["required_collection_date"],
-                    "Metadata field `required_collection_date` is required.",
+                    "Metadata field `required_collection_date` is required. Please provide input metadata field(s): `ncbi_required_collection_date`",
                 ),
             ]
         ),
@@ -772,19 +772,24 @@ def test_preprocessing_metadata_dependencies(test_case_def: Case, config_depende
     assert processed_entry.data.metadata != test_case.expected_output.data.metadata
 
 
-def test_required_field_message_lists_only_submittable_inputs() -> None:
+def test_required_field_message_lists_only_user_input_fields() -> None:
     config = get_config(NO_ALIGNMENT_CONFIG, ignore_args=True)
     config.processing_spec.update(
         {
-            "submittable_input": ProcessingSpec(
-                function="identity", inputs={"input": "submittable_input"}
-            ),
-            "unsubmittable_input": ProcessingSpec(
-                function="identity", inputs={"input": "unsubmittable_input"}, no_input=True
+            "user_input": ProcessingSpec(function="identity", inputs={"input": "user_input"}),
+            "non_user_input": ProcessingSpec(
+                function="identity", inputs={"input": "non_user_input"}, no_input=True
             ),
             "required_field": ProcessingSpec(
                 function="identity",
-                inputs={"input": "submittable_input", "fallback": "unsubmittable_input"},
+                inputs={
+                    "input": "user_input",
+                    # extraInputField without a processing spec, must be part of message
+                    "extra": "extra_user_input",
+                    "fallback": "non_user_input",
+                    # Internal source with no spec, must not be part of message
+                    "internal": "ASSIGNED_REFERENCE",
+                },
                 required=True,
             ),
         }
@@ -805,7 +810,7 @@ def test_required_field_message_lists_only_submittable_inputs() -> None:
     }
     assert messages["required_field"] == (
         "Metadata field `required_field` is required. "
-        "Please provide input metadata field(s): `submittable_input`"
+        "Please provide input metadata field(s): `user_input`, `extra_user_input`"
     )
 
 

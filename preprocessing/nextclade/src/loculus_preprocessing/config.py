@@ -24,6 +24,9 @@ logger = logging.getLogger(__name__)
 CLI_TYPES = [str, int, float, bool]
 
 METADATA_DEPENDENCY_PREFIX = "processed."
+NEXTCLADE_PREFIX = "nextclade."
+ASSIGNED_REFERENCE_PREFIX = "ASSIGNED_REFERENCE"
+INTERNAL_INPUT_PREFIXES = (NEXTCLADE_PREFIX, ASSIGNED_REFERENCE_PREFIX)
 
 
 class EmblInfoMetadataPropertyNames(BaseModel):
@@ -186,10 +189,11 @@ class Config(BaseModel):
             raise Exception
         return datasets[0]
 
-    def is_submittable(self, field: str) -> bool:
-        if (spec := self.processing_spec.get(field)) is None:
-            return False
-        return not spec.no_input
+    def is_user_input(self, field: str) -> bool:
+        if (spec := self.processing_spec.get(field)) is not None:
+            return not spec.no_input
+        # fields without a spec may be `extraInputFields` and therefore still user input
+        return not field.startswith(INTERNAL_INPUT_PREFIXES)
 
 
 def set_sequence_name(
