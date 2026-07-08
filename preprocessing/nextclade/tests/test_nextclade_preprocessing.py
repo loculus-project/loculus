@@ -27,7 +27,7 @@ from loculus_preprocessing.config import (
 from loculus_preprocessing.datatypes import (
     AnnotationSourceType,
     FileCategory,
-    FileIdAndName,
+    FileIdAndNameAndReadUrl,
     SegmentClassificationMethod,
     SubmissionData,
     UnprocessedData,
@@ -291,8 +291,8 @@ single_segment_case_definitions = [
         input_metadata={},
         input_files={
             FileCategory.RAW_READS: [
-                FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
-                FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
+                FileIdAndNameAndReadUrl(fileId="file-id-0001", name="reads_R1.fastq"),
+                FileIdAndNameAndReadUrl(fileId="file-id-0002", name="reads_R2.fastq"),
             ]
         },
         input_sequence={"fastaHeader": sequence_with_mutation("single")},
@@ -308,8 +308,8 @@ single_segment_case_definitions = [
         },
         expected_files={
             FileCategory.RAW_READS: [
-                FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
-                FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
+                FileIdAndNameAndReadUrl(fileId="file-id-0001", name="reads_R1.fastq"),
+                FileIdAndNameAndReadUrl(fileId="file-id-0002", name="reads_R2.fastq"),
             ]
         },
         expected_errors=[],
@@ -331,9 +331,9 @@ single_segment_case_definitions = [
         input_metadata={},
         input_files={
             FileCategory.RAW_READS: [
-                FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
-                FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
-                FileIdAndName(fileId="file-id-0003", name="reads_R3.fastq"),
+                FileIdAndNameAndReadUrl(fileId="file-id-0001", name="reads_R1.fastq"),
+                FileIdAndNameAndReadUrl(fileId="file-id-0002", name="reads_R2.fastq"),
+                FileIdAndNameAndReadUrl(fileId="file-id-0003", name="reads_R3.fastq"),
             ]
         },
         input_sequence={"fastaHeader": sequence_with_mutation("single")},
@@ -349,9 +349,9 @@ single_segment_case_definitions = [
         },
         expected_files={
             FileCategory.RAW_READS: [
-                FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
-                FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
-                FileIdAndName(fileId="file-id-0003", name="reads_R3.fastq"),
+                FileIdAndNameAndReadUrl(fileId="file-id-0001", name="reads_R1.fastq"),
+                FileIdAndNameAndReadUrl(fileId="file-id-0002", name="reads_R2.fastq"),
+                FileIdAndNameAndReadUrl(fileId="file-id-0003", name="reads_R3.fastq"),
             ]
         },
         expected_errors=build_processing_annotations(
@@ -381,7 +381,9 @@ single_segment_case_definitions = [
         name="with unrecognized raw read file extension",
         input_metadata={},
         input_files={
-            FileCategory.RAW_READS: [FileIdAndName(fileId="file-id-0001", name="reads.txt")]
+            FileCategory.RAW_READS: [
+                FileIdAndNameAndReadUrl(fileId="file-id-0001", name="reads.txt")
+            ]
         },
         input_sequence={"fastaHeader": sequence_with_mutation("single")},
         accession_id="1",
@@ -395,7 +397,9 @@ single_segment_case_definitions = [
             "variant": True,
         },
         expected_files={
-            FileCategory.RAW_READS: [FileIdAndName(fileId="file-id-0001", name="reads.txt")]
+            FileCategory.RAW_READS: [
+                FileIdAndNameAndReadUrl(fileId="file-id-0001", name="reads.txt")
+            ]
         },
         expected_errors=build_processing_annotations(
             [
@@ -1280,10 +1284,14 @@ multi_segment_case_definitions_none_requirement = [
         },
         accession_id="1",
         input_files={
-            FileCategory.RAW_READS: [FileIdAndName(fileId="file-id-0001", name="reads.txt")]
+            FileCategory.RAW_READS: [
+                FileIdAndNameAndReadUrl(fileId="file-id-0001", name="reads.txt")
+            ]
         },
         expected_files={
-            FileCategory.RAW_READS: [FileIdAndName(fileId="file-id-0001", name="reads.txt")]
+            FileCategory.RAW_READS: [
+                FileIdAndNameAndReadUrl(fileId="file-id-0001", name="reads.txt")
+            ]
         },
         expected_metadata={
             "length_ebola-sudan": len(consensus_sequence("ebola-sudan")),

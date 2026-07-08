@@ -17,7 +17,7 @@ import requests
 
 from .config import Config
 from .datatypes import (
-    FileIdAndName,
+    FileIdAndNameAndReadUrl,
     FileUploadInfo,
     ProcessedEntry,
     UnprocessedData,
@@ -97,7 +97,10 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
         submitted_files = json_object["data"].get("files")
         file_mapping = (
             {
-                category: [FileIdAndName(fileId=f["fileId"], name=f["name"]) for f in files]
+                category: [
+                    FileIdAndNameAndReadUrl(fileId=f["fileId"], name=f["name"], url=f.get("url"))
+                    for f in files
+                ]
                 for category, files in submitted_files.items()
             }
             if submitted_files
@@ -243,6 +246,12 @@ def upload_embl_file_to_presigned_url(
     if not r.ok:
         msg = f"Upload failed: {r.status_code}, {r.text}"
         raise RuntimeError(msg)
+
+
+def download_file(config: Config, url: str, save_path: str):
+    response = requests.get(url, timeout=config.backend_request_timeout_seconds)
+    response.raise_for_status()
+    Path(save_path).write_bytes(response.content)
 
 
 def download_minimizer(config, save_path):
