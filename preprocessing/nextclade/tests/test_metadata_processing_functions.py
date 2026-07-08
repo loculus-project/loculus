@@ -1198,7 +1198,7 @@ concatenate_cases = [
         expected="2021-01-01_TO_2021-12-31/USA",
     ),
     ConcatenateCase(
-        name="empty_int_field_skipped",
+        name="empty_fields_at_start_dropped",
         input_data={"someInt": "", "geoLocCountry": "", "sampleCollectionDate": "2025"},
         input_fields=["geoLocCountry", "sampleCollectionDate"],
         concatenate_args={
@@ -1209,7 +1209,7 @@ concatenate_cases = [
         expected="accession.1/2025-01-01",
     ),
     ConcatenateCase(
-        name="present_int_field_and_empty_string_field_with_no_fallback",
+        name="empty_field_in_middle_with_no_fallback_results_is_not_dropped",
         input_data={"someInt": "0", "geoLocCountry": "", "sampleCollectionDate": "2025"},
         input_fields=["geoLocCountry", "sampleCollectionDate"],
         concatenate_args={
@@ -1220,7 +1220,7 @@ concatenate_cases = [
         expected="0//accession.1/2025-01-01",
     ),
     ConcatenateCase(
-        name="empty_string_field_uses_fallback_value",
+        name="empty_field_uses_fallback_value",
         input_data={"someInt": "0", "geoLocCountry": "", "sampleCollectionDate": "2025"},
         input_fields=["geoLocCountry", "sampleCollectionDate"],
         concatenate_args={
@@ -1232,7 +1232,7 @@ concatenate_cases = [
         expected="0/unknown/accession.1/2025-01-01",
     ),
     ConcatenateCase(
-        name="accession_version_omitted_from_order",
+        name="concatenate_only_uses_fields_in_list",
         input_data={"someInt": "0", "geoLocCountry": "", "sampleCollectionDate": "2025"},
         input_fields=["geoLocCountry", "sampleCollectionDate"],
         concatenate_args={
