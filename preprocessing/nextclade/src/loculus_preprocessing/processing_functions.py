@@ -1574,10 +1574,11 @@ def parse_identifier_string(
     """
     if not isinstance(input, str):
         return None
-    has_forbidden_char = " " in input or "/" in input
+    has_forbidden_char = any(c.isspace() for c in input) or "/" in input
 
     if insdc_ingested:
-        # For INSDC ingested sequences: use the value as-is unless it contains a ' ' or '/'
+        # For INSDC ingested sequences: use the value as-is unless it contains whitespace or '/'
+        # Don't attempt to parse these as the format on INSDC isolate names is very inconsistent
         return None if has_forbidden_char else input
 
     if not has_forbidden_char:
