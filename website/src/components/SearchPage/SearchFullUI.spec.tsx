@@ -149,7 +149,7 @@ describe('SearchFullUI', () => {
 
     it('renders without crashing', () => {
         renderSearchFullUI();
-        expect(screen.getByText(/Search returned 2 sequences/i)).toBeInTheDocument();
+        expect(screen.getByText(/Search returned 2 sequence entries/i)).toBeInTheDocument();
     });
 
     it('displays sequences data correctly', async () => {

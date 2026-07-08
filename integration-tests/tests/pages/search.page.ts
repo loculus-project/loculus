@@ -219,7 +219,7 @@ export class SearchPage {
 
     async expectSequenceCount(count: number) {
         await expect(
-            this.page.getByText(new RegExp(`Search returned ${count} sequence`)),
+            this.page.getByText(new RegExp(`Search returned ${count} sequence entr`)),
         ).toBeVisible();
     }
 

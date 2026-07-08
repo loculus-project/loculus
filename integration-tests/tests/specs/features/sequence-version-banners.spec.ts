@@ -75,7 +75,7 @@ test.describe('Sequence version banners', () => {
         await reviewPage.releaseAndGoToReleasedSequences();
 
         // Wait for sequences to appear in search
-        while (!(await page.getByText('Search returned 2 sequences').isVisible())) {
+        while (!(await page.getByText('Search returned 2 sequence entries').isVisible())) {
             await page.reload();
             await page.waitForTimeout(2000);
         }
