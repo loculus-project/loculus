@@ -72,6 +72,7 @@ from ena_deposition.submission_db_helper import (
     SubmissionTableEntry,
     add_to_assembly_table,
     add_to_project_table,
+    add_to_raw_reads_table,
     add_to_sample_table,
     db_init,
     delete_records_in_db,
@@ -762,6 +763,28 @@ class TestFirstPublicUpdate(TestSubmission):
         "add_function": add_to_assembly_table,
     }
 
+    RUN_CONFIG: Final = {
+        "invalid_result": {"err_accession": "ERR999"},
+        "valid_result": {"err_accession": "ERR14673164"},
+        "base_entry": {
+            "accession": "test_accession",
+            "version": 1,
+            "status": Status.SUBMITTED,
+        },
+        "add_function": add_to_raw_reads_table,
+    }
+
+    EXPERIMENT_CONFIG: Final = {
+        "invalid_result": {"erx_accession": "ERX999"},
+        "valid_result": {"erx_accession": "ERX14074779"},
+        "base_entry": {
+            "accession": "test_accession",
+            "version": 1,
+            "status": Status.SUBMITTED,
+        },
+        "add_function": add_to_raw_reads_table,
+    }
+
     TEST_DATA: Final = {
         (EntityType.PROJECT, "ena_first_publicly_visible"): PROJECT_CONFIG,
         (EntityType.PROJECT, "ncbi_first_publicly_visible"): PROJECT_CONFIG,
@@ -770,6 +793,10 @@ class TestFirstPublicUpdate(TestSubmission):
         (EntityType.ASSEMBLY, "ena_nucleotide_first_publicly_visible"): NUCLEOTIDE_CONFIG,
         (EntityType.ASSEMBLY, "ncbi_nucleotide_first_publicly_visible"): NUCLEOTIDE_CONFIG,
         (EntityType.ASSEMBLY, "ena_gca_first_publicly_visible"): GCA_CONFIG,
+        (EntityType.ASSEMBLY, "ena_run_first_publicly_visible"): RUN_CONFIG,
+        (EntityType.ASSEMBLY, "ncbi_run_first_publicly_visible"): RUN_CONFIG,
+        (EntityType.ASSEMBLY, "ena_experiment_first_publicly_visible"): EXPERIMENT_CONFIG,
+        (EntityType.ASSEMBLY, "ncbi_experiment_first_publicly_visible"): EXPERIMENT_CONFIG,
     }
 
     @pytest.mark.parametrize(
