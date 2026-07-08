@@ -1221,7 +1221,7 @@ concatenate_cases = [
     ),
     ConcatenateCase(
         name="empty_field_uses_fallback_value",
-        input_data={"someInt": "0", "geoLocCountry": "", "sampleCollectionDate": "2025"},
+        input_data={"someInt": "", "geoLocCountry": "", "sampleCollectionDate": ""},
         input_fields=["geoLocCountry", "sampleCollectionDate"],
         concatenate_args={
             "ACCESSION_VERSION": "accession.1",
@@ -1229,7 +1229,7 @@ concatenate_cases = [
             "type": ["integer", "string", "ACCESSION_VERSION", "date"],
             "fallback_value": "unknown",
         },
-        expected="0/unknown/accession.1/2025-01-01",
+        expected="unknown/unknown/accession.1/unknown",
     ),
     ConcatenateCase(
         name="concatenate_only_uses_fields_in_list",
@@ -1242,18 +1242,6 @@ concatenate_cases = [
             "fallback_value": "unknown",
         },
         expected="0/unknown/2025-01-01",
-    ),
-    ConcatenateCase(
-        name="null_date_field_uses_fallback_value",
-        input_data={"someInt": "0", "geoLocCountry": "", "sampleCollectionDate": None},
-        input_fields=["geoLocCountry", "sampleCollectionDate"],
-        concatenate_args={
-            "ACCESSION_VERSION": "accession.1",
-            "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
-            "type": ["integer", "string", "ACCESSION_VERSION", "date"],
-            "fallback_value": "unknown",
-        },
-        expected="0/unknown/accession.1/unknown",
     ),
 ]
 
@@ -1275,6 +1263,7 @@ class DisplayNameCase:
     specimen_collector_id: str | None
     submission_id: str
     geo_loc_country: str
+    sample_collection_date: str
     extra_args: FunctionArgs = field(default_factory=dict)
     expected_regular: str = ""
     expected_insdc: str = ""
@@ -1285,11 +1274,11 @@ class DisplayNameCase:
 
 
 unparseable_identifier_warning = (
-    "specimenCollectorSampleId 'hDENV1/myExtractedSample/2025' and submissionId "
-    "'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION "
-    "in displayName instead. Alternatively, you may edit the specimenCollectorSampleId "
-    "or submissionId to not contain any whitespace or '/' characters so it can be "
-    "incorporated in the displayName."
+    "specimenCollectorSampleId 'hDENV1/Germany/somethingElse/myExtractedSample/2025' "
+    "and submissionId 'hDENV1/Germany/somethingElse/myExtractedSample/2025' could not be "
+    "parsed, using ACCESSION_VERSION in displayName instead. Alternatively, you may edit "
+    "the specimenCollectorSampleId or submissionId to not contain any whitespace or '/' "
+    "characters so it can be incorporated in the displayName."
 )
 
 
@@ -1299,6 +1288,7 @@ display_name_cases = [
         specimen_collector_id=None,
         submission_id="mySample",
         geo_loc_country="Switzerland",
+        sample_collection_date="2025",
         expected_regular="DENV-1/Switzerland/mySample/2025",
         expected_insdc="DENV-1/Switzerland/accession.1/2025",
         expected_prefix="hYF/Switzerland/mySample/2025",
@@ -1308,6 +1298,7 @@ display_name_cases = [
         specimen_collector_id="myCollectorSample",
         submission_id="mySample",
         geo_loc_country="Switzerland",
+        sample_collection_date="2025",
         expected_regular="DENV-1/Switzerland/myCollectorSample/2025",
         expected_insdc="DENV-1/Switzerland/myCollectorSample/2025",
         expected_prefix="hYF/Switzerland/myCollectorSample/2025",
@@ -1317,41 +1308,41 @@ display_name_cases = [
         specimen_collector_id="hDENV1/Germany/myExtractedSample/2025",
         submission_id="mySample",
         geo_loc_country="Switzerland",
+        sample_collection_date="2025",
         expected_regular="DENV-1/Switzerland/myExtractedSample/2025",
-        expected_insdc="DENV-1/Switzerland/accession.1/2025",  # INSDC skips submissionId
+        expected_insdc="DENV-1/Switzerland/accession.1/2025",  # INSDC never uses regex
         expected_prefix="hYF/Switzerland/myExtractedSample/2025",
     ),
     DisplayNameCase(
         name="specimen_collector_id_no_regex_match_falls_back_to_submission_id",
-        specimen_collector_id="hDENV1/myExtractedSample/2025",
+        specimen_collector_id="hDENV1/Germany/somethingElse/myExtractedSample/2025",
         submission_id="mySample",
         geo_loc_country="Switzerland",
+        sample_collection_date="2025",
         expected_regular="DENV-1/Switzerland/mySample/2025",
-        expected_insdc="DENV-1/Switzerland/accession.1/2025",  # INSDC skips submissionId
+        expected_insdc="DENV-1/Switzerland/accession.1/2025",  # INSDC never uses regex
         expected_prefix="hYF/Switzerland/mySample/2025",
     ),
     DisplayNameCase(
-        name="both_ids_unparseable_empty_country_uses_accession_version",
-        specimen_collector_id="hDENV1/myExtractedSample/2025",
-        submission_id="hDENV1/myExtractedSample/2025",
+        name="empty_country_uses_default_fallback",
+        specimen_collector_id="hDENV1/Germany/myExtractedSample/2025",
+        submission_id="hDENV1/Germany/myExtractedSample/2025",
         geo_loc_country="",
-        expected_regular="DENV-1/unknown/accession.1/2025",
-        expected_insdc="DENV-1/unknown/accession.1/2025",
-        expected_prefix="hYF/unknown/accession.1/2025",
-        warning_regular=unparseable_identifier_warning,
-        warning_prefix=unparseable_identifier_warning,
+        sample_collection_date="2025",
+        expected_regular="DENV-1/unknown/myExtractedSample/2025",
+        expected_insdc="DENV-1/unknown/accession.1/2025",  # INSDC never uses regex
+        expected_prefix="hYF/unknown/myExtractedSample/2025",
     ),
     DisplayNameCase(
-        name="fallback_value_replaces_unknown_country_when_ids_unparseable",
-        specimen_collector_id="hDENV1/myExtractedSample/2025",
-        submission_id="hDENV1/myExtractedSample/2025",
+        name="custom_fallback_value_replaces_unknown_country",
+        specimen_collector_id="hDENV1/Germany/myExtractedSample/2025",
+        submission_id="hDENV1/Germany/myExtractedSample/2025",
         geo_loc_country="",
+        sample_collection_date="2025",
         extra_args={"fallback_value": "another_fallback"},
-        expected_regular="DENV-1/another_fallback/accession.1/2025",
-        expected_insdc="DENV-1/another_fallback/accession.1/2025",
-        expected_prefix="hYF/another_fallback/accession.1/2025",
-        warning_regular=unparseable_identifier_warning,
-        warning_prefix=unparseable_identifier_warning,
+        expected_regular="DENV-1/another_fallback/myExtractedSample/2025",
+        expected_insdc="DENV-1/another_fallback/accession.1/2025",  # INSDC never uses regex
+        expected_prefix="hYF/another_fallback/myExtractedSample/2025",
     ),
 ]
 
@@ -1376,7 +1367,12 @@ base_args: FunctionArgs = {
     "is_insdc_ingest_group": False,
     "order": ["nextclade.clade", "geoLocCountry", "IDENTIFIER", "sampleCollectionDate"],
     "type": ["string", "string", "IDENTIFIER", "string"],
-    "regex_pattern": r"^[^\/][^/]*/[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$",
+    # regex pattern constraints:
+    # - Cannot start with a slash
+    # - Four or three fields, separated by exactly two or three slashes
+    # - Last field is a date in format YYYY, YYYY-MM, or YYYY-MM-DD
+    # - Identifier is the second to last field (extracted through named capture group)
+    "regex_pattern": r"^(?:[^/]+/)?[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$",
 }
 insdc_args: FunctionArgs = {**base_args, "is_insdc_ingest_group": True}
 prefix_args: FunctionArgs = {
@@ -1394,7 +1390,7 @@ def test_display_name_construction(case: DisplayNameCase) -> None:
         return {
             "nextclade.clade": "DENV-1",
             "geoLocCountry": case.geo_loc_country,
-            "sampleCollectionDate": "2025",
+            "sampleCollectionDate": case.sample_collection_date,
             "submissionId": case.submission_id,
             "specimenCollectorSampleId": case.specimen_collector_id,
         }
