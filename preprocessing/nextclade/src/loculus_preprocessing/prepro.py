@@ -31,7 +31,7 @@ from .datatypes import (
     AnnotationSource,
     AnnotationSourceType,
     FileCategory,
-    FileIdAndName,
+    FileIdAndNameAndReadUrl,
     GeneName,
     InputData,
     InputMetadata,
@@ -537,7 +537,7 @@ def process_single(
         accession_version, unprocessed, config
     )
 
-    file_errors, file_warnings = process_submitted_files(unprocessed.files or {})
+    file_errors, file_warnings = process_submitted_files(config, unprocessed.files or {})
 
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
@@ -592,7 +592,7 @@ def process_single_unaligned(
         accession_version, unprocessed, config
     )
 
-    file_errors, file_warnings = process_submitted_files(unprocessed.files or {})
+    file_errors, file_warnings = process_submitted_files(config, unprocessed.files or {})
 
     return processed_entry_no_alignment(
         accession_version=accession_version,
@@ -680,7 +680,7 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             upload_embl_file_to_presigned_url(file_content, upload_info.url, upload_info.headers)
             processed_files = submission_data.processed_entry.data.files or {}
             processed_files.setdefault(FileCategory.ANNOTATIONS, []).append(
-                FileIdAndName(fileId=file_id, name=file_name)
+                FileIdAndNameAndReadUrl(fileId=file_id, name=file_name)
             )
             submission_data.processed_entry.data.files = processed_files
         except Exception as e:
