@@ -11,7 +11,7 @@ import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { type FilesBySubmissionId, type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
 import { type InputField, type SubmissionDataTypes } from '../../types/config.ts';
-import { getLatestAccessionVersion, type SequenceEntryHistory } from '../../types/lapis.ts';
+import { getLatestAccessionVersionForRevision, type SequenceEntryHistory } from '../../types/lapis.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString, parseAccessionVersionFromString } from '../../utils/extractAccessionVersion.ts';
@@ -137,7 +137,9 @@ const InnerEditPage: FC<EditPageProps> = ({
     };
 
     const isPending = isRevisionPending || isEditPending;
-    const latestVersion = sequenceEntryHistory ? getLatestAccessionVersion(sequenceEntryHistory)?.version : undefined;
+    const latestVersionForRevision = sequenceEntryHistory
+        ? getLatestAccessionVersionForRevision(sequenceEntryHistory)?.version
+        : undefined;
     const revisePageRoute = (accession: string, version: number | undefined) => {
         return routes.revisePage(organism, dataToEdit.groupId, 'form', accession, version?.toString());
     };
@@ -160,21 +162,23 @@ const InnerEditPage: FC<EditPageProps> = ({
                     />
                 )}
             </div>
-            {isCreatingRevision && latestVersion !== undefined && dataToEdit.version < latestVersion && (
-                <ErrorBox
-                    title='This is not the latest version of this sequence entry.'
-                    level='warning'
-                    className='mb-2'
-                >
-                    <div className='space-y-2 mt-2'>
-                        <p>By revising from this version, existing changes from later versions will be lost.</p>
-                        <p>
-                            To revise from the latest version, click{' '}
-                            <a href={revisePageRoute(dataToEdit.accession, latestVersion)}>here</a>.
-                        </p>
-                    </div>
-                </ErrorBox>
-            )}
+            {isCreatingRevision &&
+                latestVersionForRevision !== undefined &&
+                dataToEdit.version < latestVersionForRevision && (
+                    <ErrorBox
+                        title='This is not the latest version of this sequence entry.'
+                        level='warning'
+                        className='mb-2'
+                    >
+                        <div className='space-y-2 mt-2'>
+                            <p>By revising from this version, existing changes from later versions will be lost.</p>
+                            <p>
+                                To revise from the latest version, click{' '}
+                                <a href={revisePageRoute(dataToEdit.accession, latestVersionForRevision)}>here</a>.
+                            </p>
+                        </div>
+                    </ErrorBox>
+                )}
             <table className='customTable'>
                 <tbody className='w-full'>
                     <Subtitle title='Original data' bold />

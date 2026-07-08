@@ -6,7 +6,7 @@ import { routes } from '../../routes/routes.ts';
 import { backendClientHooks, useSequenceEntryHistory } from '../../services/serviceHooks.ts';
 import { type Group } from '../../types/backend.ts';
 import type { InputField, SubmissionDataTypes } from '../../types/config.ts';
-import { getLatestAccessionVersion } from '../../types/lapis.ts';
+import { getLatestAccessionVersionForRevision } from '../../types/lapis.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getUrl } from '../../utils/getUrl.ts';
@@ -108,22 +108,23 @@ const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
     const [accessionVersion, setAccessionVersion] = useState<{ accession: string; version?: string } | undefined>(
         accession !== undefined ? { accession, version } : undefined,
     );
+    const [submitError, setSubmitError] = useState<string | undefined>(undefined);
 
     const { data: sequenceEntryHistory, isFetching: isSequenceEntryHistoryFetching } = useSequenceEntryHistory(
         getLapisUrl(clientConfig, organism),
         accessionVersion?.accession,
     );
 
-    // Only look up the data to edit once its confirmed the accession exists and we have a valid version.
-    // If a version was not provided, resolve to the latest one.
+    // If a version was not provided, resolve to the latest one
     const resolvedVersion =
         accessionVersion?.version !== undefined
             ? Number(accessionVersion.version)
-            : getLatestAccessionVersion(sequenceEntryHistory ?? [])?.version;
-    const isValidAccessionVersion =
-        resolvedVersion !== undefined &&
-        (sequenceEntryHistory?.some((entry) => entry.version === resolvedVersion) ?? false);
+            : getLatestAccessionVersionForRevision(sequenceEntryHistory ?? [])?.version;
+    const sequenceEntry = sequenceEntryHistory?.find((entry) => entry.version === resolvedVersion);
+    const isValidAccessionVersion = resolvedVersion !== undefined && sequenceEntry !== undefined;
+    const isRevocationEntry = resolvedVersion !== undefined && sequenceEntry?.isRevocation;
 
+    // Only look up the data to edit once its confirmed the accession exists and we have a valid version
     const {
         data,
         error: dataToEditError,
@@ -137,29 +138,48 @@ const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
                 version: resolvedVersion ?? 1,
             },
         },
-        { enabled: isValidAccessionVersion },
+        { enabled: isValidAccessionVersion && !isRevocationEntry },
     );
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        const value = input.trim();
-        if (value === '') return;
-        const [accession, version] = value.split('.');
-        setAccessionVersion({ accession, version });
-
         const params = new URLSearchParams(window.location.search);
-        params.set('accession', accession);
-        if (version) params.set('version', version);
-        else params.delete('version');
+        const value = input.trim();
+
+        if (value === '') {
+            params.delete('accession');
+            params.delete('version');
+
+            setAccessionVersion(undefined);
+            setSubmitError(undefined);
+        } else if (!/^[A-Za-z0-9_]+(\.\d+)?$/.test(value)) {
+            params.delete('accession');
+            params.delete('version');
+
+            setAccessionVersion(undefined);
+            setSubmitError('Please enter a valid accession format.');
+        } else {
+            const [accession, version] = value.split('.');
+
+            params.set('accession', accession);
+            if (version) params.set('version', version);
+            else params.delete('version');
+
+            setAccessionVersion({ accession, version });
+            setSubmitError(undefined);
+        }
         window.history.replaceState(null, '', getUrl(window.location.origin, window.location.pathname, params));
     };
 
     const error =
-        accessionVersion !== undefined && !isSequenceEntryHistoryFetching && !isValidAccessionVersion
+        submitError ??
+        (accessionVersion !== undefined && !isSequenceEntryHistoryFetching && !isValidAccessionVersion
             ? 'Could not find that sequence entry. Please check the accession and version and try again.'
-            : dataToEditError
-              ? 'Could not load that sequence. Please make sure the accession belongs to your group.'
-              : undefined;
+            : isRevocationEntry
+              ? 'Could not load that sequence as it is a revocation entry. Please choose an earlier entry for this sequence to revise from.'
+              : dataToEditError
+                ? 'Could not load that sequence. Please make sure the accession belongs to your group.'
+                : undefined);
 
     return (
         <div className='text-left mt-3 max-w-4xl mb-3'>
