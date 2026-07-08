@@ -263,6 +263,11 @@ def can_revise_raw_reads(
             db_engine, [error], seq_key=asdict(submission_row.pkey), update_type="revision"
         )
         return False
+    if config.allow_revision_with_manifest_changes:
+        logger.debug(
+            "allow_revision_with_manifest_changes=True, skipping manifest field comparison"
+        )
+        return True
 
     if manifest_fields_changed(config, db_engine, submission_row, last_entry):
         logger.debug(
