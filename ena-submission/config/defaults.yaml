@@ -27,7 +27,8 @@ ena_http_post_retry_attempts: 1
 # 12 hours in minutes
 min_between_publicness_checks: 720
 log_level: DEBUG
-#ena_checklist: ERC000033 - do not use until all fields are mapped to ENA accepted options
+metadata_fallback_fields:
+  specimenCollectorSampleId: submissionId
 manifest_fields_mapping:
   authors:
     loculus_fields: [authors]
@@ -44,6 +45,7 @@ manifest_fields_mapping:
     default: 1
   run_ref:
     loculus_fields: [insdcRawReadsAccession]
+#ena_checklist: ERC000033 - do not use until all fields are mapped to ENA accepted options
 metadata_mapping:
   'subject exposure':
     loculus_fields: [exposureEvent]
