@@ -101,7 +101,7 @@ def create_manifest_object(
         parts.append(str(submission_row.version))
     parts.extend([submission_row.organism, config.unique_raw_reads_suffix])
 
-    alias = get_alias(":".join(parts), random_alias).name
+    alias = get_alias(":".join(parts), random_alias, config.set_alias_suffix).name
     logger.debug(f"Submitting with alias {alias} for accession {submission_row.accession}")
     metadata = submission_row.seq_metadata
     raw_reads_manifest_fields_mapping = config.raw_reads_manifest_fields_mapping

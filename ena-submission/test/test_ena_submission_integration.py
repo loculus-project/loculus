@@ -868,10 +868,10 @@ class TestFirstPublicUpdate(TestSubmission):
         (EntityType.ASSEMBLY, "ena_nucleotide_first_publicly_visible"): NUCLEOTIDE_CONFIG,
         (EntityType.ASSEMBLY, "ncbi_nucleotide_first_publicly_visible"): NUCLEOTIDE_CONFIG,
         (EntityType.ASSEMBLY, "ena_gca_first_publicly_visible"): GCA_CONFIG,
-        (EntityType.ASSEMBLY, "ena_run_first_publicly_visible"): RUN_CONFIG,
-        (EntityType.ASSEMBLY, "ncbi_run_first_publicly_visible"): RUN_CONFIG,
-        (EntityType.ASSEMBLY, "ena_experiment_first_publicly_visible"): EXPERIMENT_CONFIG,
-        (EntityType.ASSEMBLY, "ncbi_experiment_first_publicly_visible"): EXPERIMENT_CONFIG,
+        (EntityType.RAW_READS, "ena_run_first_publicly_visible"): RUN_CONFIG,
+        (EntityType.RAW_READS, "ncbi_run_first_publicly_visible"): RUN_CONFIG,
+        (EntityType.RAW_READS, "ena_experiment_first_publicly_visible"): EXPERIMENT_CONFIG,
+        (EntityType.RAW_READS, "ncbi_experiment_first_publicly_visible"): EXPERIMENT_CONFIG,
     }
 
     @pytest.mark.parametrize(
