@@ -129,6 +129,7 @@ def delete_all_records(db_engine: Engine) -> None:
         ProjectTableEntry,
         SampleTableEntry,
         AssemblyTableEntry,
+        RawReadsTableEntry
     ]:
         delete_records_in_db(db_engine, model_class, {})
 
