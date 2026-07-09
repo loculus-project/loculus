@@ -129,7 +129,7 @@ def delete_all_records(db_engine: Engine) -> None:
         ProjectTableEntry,
         SampleTableEntry,
         AssemblyTableEntry,
-        RawReadsTableEntry
+        RawReadsTableEntry,
     ]:
         delete_records_in_db(db_engine, model_class, {})
 
@@ -568,7 +568,10 @@ def get_sequences(with_raw_reads: bool = False) -> dict[str, Any]:
 
 
 def get_revisions(
-    modify_manifest: bool = False, modify_assembly: bool = True, modify_raw_reads: bool = False
+    modify_manifest: bool = False,
+    modify_assembly: bool = True,
+    modify_raw_reads: bool = False,
+    with_raw_reads: bool = False,
 ) -> dict[str, Any]:
     with open(INPUT_FILE, encoding="utf-8") as json_file:
         sequences: dict[str, Any] = json.load(json_file)
@@ -579,6 +582,10 @@ def get_revisions(
             accession_version = accession + ".2"
             new_value["metadata"]["version"] = 2
             new_value["metadata"]["accessionVersion"] = accession_version
+            if with_raw_reads:
+                new_value["metadata"]["raw_reads"] = (
+                    '[{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d8","name":"rawReads.fastq.gz","url":"https://loculus.org/files/get/LOC_0001TLY/1/raw_reads/rawReads.fastq.gz"}]'
+                )
             if modify_assembly:
                 new_value["metadata"]["geoLocAdmin1"] = "revised location"
             else:
@@ -1406,58 +1413,58 @@ class TestSimpleSubmissionWithRawReads(TestSubmission):
         )
 
 
-# class TestRevisionRawReadsModificationTests(TestSubmission):
-#     @patch(
-#         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
-#     )
-#     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-#     @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
-#     def test_revise(
-#         self,
-#         mock_download_fastq_files: Mock,
-#         mock_get_group_info: Mock,
-#         mock_submit_external_metadata: Mock,
-#     ) -> None:
-#         self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
-#         payload = multi_segment_submission(
-#             self.db_engine,
-#             self.config,
-#             mock_get_group_info,
-#             mock_submit_external_metadata,
-#             with_raw_reads=True,
-#             mock_download_fastq_files=mock_download_fastq_files,
-#         )
+class TestRevisionRawReadsModificationTests(TestSubmission):
+    @patch(
+        "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
+    )
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
+    @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
+    def test_revise(
+        self,
+        mock_download_fastq_files: Mock,
+        mock_get_group_info: Mock,
+        mock_submit_external_metadata: Mock,
+    ) -> None:
+        self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
+        payload = multi_segment_submission(
+            self.db_engine,
+            self.config,
+            mock_get_group_info,
+            mock_submit_external_metadata,
+            with_raw_reads=True,
+            mock_download_fastq_files=mock_download_fastq_files,
+        )
 
-#         # get data
-#         mock_get_group_info.return_value = TEST_GROUP
-#         mock_submit_external_metadata.return_value = mock_requests_post()
-#         sequences_to_upload = get_revisions(modify_raw_reads=True)
+        # get data
+        mock_get_group_info.return_value = TEST_GROUP
+        mock_submit_external_metadata.return_value = mock_requests_post()
+        sequences_to_upload = get_revisions(modify_raw_reads=True, with_raw_reads=True)
 
-#         # upload sequences
-#         upload_sequences(self.config, self.db_engine, sequences_to_upload)
-#         check_sequences_uploaded(self.db_engine, sequences_to_upload)
+        # upload sequences
+        upload_sequences(self.config, self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
-#         # submit
-#         create_project_sync_state_with_submission_table(self.db_engine)
-#         project_table_create(self.db_engine, self.config)
-#         check_project_submission_submitted(self.db_engine, sequences_to_upload)
-#         _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
-#         _test_successful_raw_reads_submission(self.db_engine, self.config, sequences_to_upload)
-#         _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
+        # submit
+        create_project_sync_state_with_submission_table(self.db_engine)
+        project_table_create(self.db_engine, self.config)
+        check_project_submission_submitted(self.db_engine, sequences_to_upload)
+        _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_raw_reads_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
 
-#         # send to loculus
-#         mock_submit_external_metadata.return_value = mock_requests_post()
-#         get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
-#         args = mock_submit_external_metadata.call_args_list
+        # send to loculus
+        mock_submit_external_metadata.return_value = mock_requests_post()
+        get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
+        args = mock_submit_external_metadata.call_args_list
 
-#         assert len(args) == 1
-#         payload_revision = args[0][0][0]  # first positional argument of first call
-#         # Run accession should change because the raw reads have changed
-#         assert (
-#             payload["externalMetadata"]["insdcRawReadsAccession"]
-#             != payload_revision["externalMetadata"]["insdcRawReadsAccession"]
-#         )
-#         check_sent_to_loculus(self.db_engine, sequences_to_upload)
+        assert len(args) == 1
+        payload_revision = args[0][0][0]  # first positional argument of first call
+        # Run accession should change because the raw reads have changed
+        assert (
+            payload["externalMetadata"]["insdcRawReadsAccession"]
+            != payload_revision["externalMetadata"]["insdcRawReadsAccession"]
+        )
+        check_sent_to_loculus(self.db_engine, sequences_to_upload)
 
 
 class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
@@ -1485,7 +1492,10 @@ class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
         # get data
         mock_get_group_info.return_value = TEST_GROUP
         mock_submit_external_metadata.return_value = mock_requests_post()
-        sequences_to_upload = get_revisions(modify_assembly=False, modify_raw_reads=False)
+        sequences_to_upload = get_revisions(
+            modify_assembly=False, modify_raw_reads=False, with_raw_reads=True
+        )
+        print(f"sequences_to_upload: {sequences_to_upload}")
 
         # upload sequences
         upload_sequences(self.config, self.db_engine, sequences_to_upload)
@@ -1516,48 +1526,48 @@ class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
         check_sent_to_loculus(self.db_engine, sequences_to_upload)
 
 
-# class TestRevisionWithRawReadsManifestChangeTests(TestSubmission):
-#     @patch(
-#         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
-#     )
-#     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-#     @patch("ena_deposition.notifications.notify", autospec=True)
-#     @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
-#     def test_revise(
-#         self,
-#         mock_download_fastq_files: Mock,
-#         mock_notify: Mock,
-#         mock_get_group_info: Mock,
-#         mock_submit_external_metadata: Mock,
-#     ) -> None:
-#         self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
-#         self.config.allow_revision_with_manifest_changes = False
-#         multi_segment_submission(
-#             self.db_engine,
-#             self.config,
-#             mock_get_group_info,
-#             mock_submit_external_metadata,
-#             with_raw_reads=True,
-#             mock_download_fastq_files=mock_download_fastq_files,
-#         )
-#         # get data
-#         mock_get_group_info.return_value = TEST_GROUP
-#         mock_submit_external_metadata.return_value = mock_requests_post()
-#         sequences_to_upload = get_revisions(modify_manifest=True)
+class TestRevisionWithRawReadsManifestChangeTests(TestSubmission):
+    @patch(
+        "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
+    )
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
+    @patch("ena_deposition.notifications.notify", autospec=True)
+    @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
+    def test_revise(
+        self,
+        mock_download_fastq_files: Mock,
+        mock_notify: Mock,
+        mock_get_group_info: Mock,
+        mock_submit_external_metadata: Mock,
+    ) -> None:
+        self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
+        self.config.allow_revision_with_manifest_changes = False
+        multi_segment_submission(
+            self.db_engine,
+            self.config,
+            mock_get_group_info,
+            mock_submit_external_metadata,
+            with_raw_reads=True,
+            mock_download_fastq_files=mock_download_fastq_files,
+        )
+        # get data
+        mock_get_group_info.return_value = TEST_GROUP
+        mock_submit_external_metadata.return_value = mock_requests_post()
+        sequences_to_upload = get_revisions(modify_manifest=True, with_raw_reads=True)
 
-#         # upload sequences
-#         upload_sequences(self.config, self.db_engine, sequences_to_upload)
-#         check_sequences_uploaded(self.db_engine, sequences_to_upload)
+        # upload sequences
+        upload_sequences(self.config, self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload)
 
-#         # submit
-#         create_project_sync_state_with_submission_table(self.db_engine)
-#         check_project_submission_submitted(self.db_engine, sequences_to_upload)
-#         _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
+        # submit
+        create_project_sync_state_with_submission_table(self.db_engine)
+        check_project_submission_submitted(self.db_engine, sequences_to_upload)
+        _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
 
-#         # check notified cannot submit raw reads
-#         _test_raw_reads_submission_errored(
-#             self.db_engine, self.config, self.slack_config, sequences_to_upload, mock_notify
-#         )
+        # check notified cannot submit raw reads
+        _test_raw_reads_submission_errored(
+            self.db_engine, self.config, self.slack_config, sequences_to_upload, mock_notify
+        )
 
 
 if __name__ == "__main__":
