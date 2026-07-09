@@ -20,6 +20,8 @@ updates:
       - dependency-name: "change-case"
       - dependency-name: "@types/node"
         versions: [">=23"] # Increase when we update node version in .nvmrc
+      - dependency-name: "vite"
+        versions: [">=8.0.0"] # Astro 6 uses Vite 7; relax when upgrading to Astro 7: https://github.com/loculus-project/loculus/issues/6781
       - dependency-name: "zod"
         versions: [">=4.0.0"] #https://github.com/loculus-project/loculus/issues/3295
       - dependency-name: "react"

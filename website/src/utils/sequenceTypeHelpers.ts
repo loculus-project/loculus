@@ -8,8 +8,7 @@ import type {
 } from '../types/referencesGenomes';
 
 export type SequenceType =
-    | { type: 'nucleotide'; aligned: boolean; name: SegmentInfo }
-    | { type: 'aminoAcid'; aligned: true; name: GeneInfo };
+    { type: 'nucleotide'; aligned: boolean; name: SegmentInfo } | { type: 'aminoAcid'; aligned: true; name: GeneInfo };
 export type BaseType = SequenceType['type'];
 
 export type SegmentInfo = {
