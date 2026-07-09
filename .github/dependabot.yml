@@ -27,11 +27,9 @@ updates:
       - dependency-name: "react"
         versions: [">=19.0.0"] #https://github.com/loculus-project/loculus/issues/3452
     groups:
-      minor:
+      minorAndPatch:
         update-types:
           - "minor"
-      patch:
-        update-types:
           - "patch"
   - package-ecosystem: npm
     directory: docs/
@@ -47,11 +45,9 @@ updates:
     schedule:
       interval: weekly
     groups:
-      minor:
+      minorAndPatch:
         update-types:
           - "minor"
-      patch:
-        update-types:
           - "patch"
   - package-ecosystem: npm
     directory: keycloak/keycloakify
