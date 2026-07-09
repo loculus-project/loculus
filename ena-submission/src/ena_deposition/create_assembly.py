@@ -465,8 +465,8 @@ def is_flatfile_data_changed(
                 f"for {submission_row.accession}. (Maybe other fields changed as well)"
             )
             return True
-    if config.allow_revision_with_manifest_changes and manifest_fields_changed(
-        config, db_engine, submission_row, last_entry
+    if config.allow_revision_with_manifest_changes and manifest_fields_diff(
+        config.assembly_manifest_fields_mapping, submission_row, last_entry
     ):
         logger.debug(
             f"Manifest fields have changed for {submission_row.accession}, "

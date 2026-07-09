@@ -82,7 +82,6 @@ def create_manifest_object(
     study_accession: str,
     submission_row: SubmissionTableEntry,
     dir: str | None = None,
-    create_new_alias: bool = False,
     random_alias: bool = False,
 ) -> RawReadsManifest:
     """
@@ -94,15 +93,11 @@ def create_manifest_object(
     If random_alias=True add a timestamp to the alias suffix to allow for multiple
     submissions of the same manifest for testing.
     """
-    # We must create a new run read accession for each revision that changes the files,
-    # but keep the same alias for any revision that only changes the manifest.
-    parts = [submission_row.accession]
-    if create_new_alias:
-        parts.append(str(submission_row.version))
-    parts.extend([submission_row.organism, config.unique_raw_reads_suffix])
-
-    alias = get_alias(":".join(parts), random_alias, config.set_alias_suffix).name
-    logger.debug(f"Submitting with alias {alias} for accession {submission_row.accession}")
+    # We must create a new run read accession for each revision that changes the files
+    alias = get_alias(
+        f"{submission_row.accession}:{submission_row.version}:{submission_row.organism}:{config.unique_raw_reads_suffix}",
+        random_alias,
+    ).name
     metadata = submission_row.seq_metadata
     raw_reads_manifest_fields_mapping = config.raw_reads_manifest_fields_mapping
 
@@ -268,15 +263,18 @@ def can_revise_raw_reads(
             db_engine, [error], seq_key=asdict(submission_row.pkey), update_type="revision"
         )
         return False
-    if config.allow_revision_with_manifest_changes:
-        logger.debug(
-            "allow_revision_with_manifest_changes=True, skipping manifest field comparison"
-        )
-        return True
+    # TODO: Automate automatic revisions of raw reads metadata fields
+    # if config.allow_revision_with_manifest_changes:
+    #     logger.debug(
+    #         "allow_revision_with_manifest_changes=True, skipping manifest field comparison"
+    #     )
+    #     return True
 
-    if manifest_fields_changed(config, db_engine, submission_row, last_entry):
+    if manifest_fields_changed(
+        config, db_engine, submission_row, last_entry
+    ) and not has_raw_reads_changed(config, db_engine, submission_row):
         logger.debug(
-            f"Manifest fields have changed for {submission_row.accession}, "
+            f"Only manifest fields have changed for {submission_row.accession}, "
             f"from {last_entry.version} to {submission_row.version} - should be revised manually"
         )
         return False
@@ -294,21 +292,6 @@ def has_raw_reads_changed(
             f"Raw read file URLs have changed for {submission_row.accession}, "
             f"from {last_entry.version} to {submission_row.version} - should be revised"
             "(Metadata maybe also changed.)"
-        )
-        return True
-    return False
-
-
-def has_raw_reads_manifest_changed(
-    config: Config, db_engine: Engine, submission_row: SubmissionTableEntry
-) -> bool:
-    last_entry = get_last_entry(db_engine, submission_row.pkey)
-    if config.allow_revision_with_manifest_changes and manifest_fields_diff(
-        config.raw_reads_manifest_fields_mapping, submission_row, last_entry
-    ):
-        logger.debug(
-            f"Manifest fields have changed for {submission_row.accession}, "
-            f"from {last_entry.version} to {submission_row.version} - should be revised"
         )
         return True
     return False
@@ -377,19 +360,13 @@ def raw_reads_table_create(db_engine: Engine, config: Config):
             db_engine, submission_row
         )
 
-        create_new_alias = False
         if is_revision(db_engine, seq_key):
             logger.debug(f"Entry {row.accession} is a revision, checking if it can be revised")
             if not can_revise_raw_reads(config, db_engine, submission_row):
                 continue
-            manifest_fields_changed_flag = has_raw_reads_manifest_changed(
-                config, db_engine, submission_row
-            )
-            raw_reads_changed_flag = has_raw_reads_changed(config, db_engine, submission_row)
-            if not raw_reads_changed_flag and not manifest_fields_changed_flag:
+            if not has_raw_reads_changed(config, db_engine, submission_row):
                 update_raw_reads_results_with_latest_version(db_engine, seq_key)
                 continue
-            create_new_alias = raw_reads_changed_flag
 
         try:
             manifest_object = create_manifest_object(
@@ -397,7 +374,6 @@ def raw_reads_table_create(db_engine: Engine, config: Config):
                 sample_accession,
                 study_accession,
                 submission_row,
-                create_new_alias=create_new_alias,
                 random_alias=config.random_alias,
             )
             manifest_file = create_manifest(manifest_object, is_broker=config.is_broker)
