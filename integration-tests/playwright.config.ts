@@ -35,7 +35,10 @@ const config = {
 
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
         trace: (process.env.CI ? 'retain-on-failure' : 'on') as
-            'on' | 'off' | 'retain-on-failure' | 'on-first-retry',
+            | 'on'
+            | 'off'
+            | 'retain-on-failure'
+            | 'on-first-retry',
     },
 
     /* Configure projects for major browsers */

@@ -96,7 +96,9 @@ export class RevisionPage {
         await this.page
             .getByText('I confirm I have not and will not submit this data independently to INSDC')
             .click();
-        await this.page.getByText('I confirm that I have the legal right to submit this data').click();
+        await this.page
+            .getByText('I confirm that I have the legal right to submit this data')
+            .click();
     }
 
     /**
