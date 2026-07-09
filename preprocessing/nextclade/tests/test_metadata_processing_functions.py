@@ -1283,7 +1283,7 @@ unparseable_identifier_warning = (
 display_name_cases = [
     DisplayNameCase(
         name="no_specimen_collector_id",
-        specimen_collector_id=None,
+        specimen_collector_id="",
         submission_id="mySample",
         geo_loc_country="Switzerland",
         sample_collection_date="2025",
