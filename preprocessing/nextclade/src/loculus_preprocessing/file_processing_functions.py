@@ -102,8 +102,8 @@ def validate_raw_reads_submission(
                 download_file(config, url, file_name_internal)
             except HTTPError as e:
                 logger.error(f"Error downloading file '{file.name}' from S3: {e}")
-            summary_json = os.path.join(tmp_dir, f"{file.fileId}_summary.json")
-            deacon_summary = run_deacon(file_name_internal, summary_json)
+            summary_json_path = os.path.join(tmp_dir, f"{file.fileId}_summary.json")
+            deacon_summary = run_deacon(file_name_internal, summary_json_path)
             if deacon_summary.seqs_removed_proportion > (1.0 - max_host_proportion):
                 message = f"File {file.name} (id: {file.fileId}) had "
                 errors.append(
