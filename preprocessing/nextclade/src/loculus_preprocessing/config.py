@@ -24,6 +24,9 @@ logger = logging.getLogger(__name__)
 CLI_TYPES = [str, int, float, bool]
 
 METADATA_DEPENDENCY_PREFIX = "processed."
+NEXTCLADE_PREFIX = "nextclade."
+ASSIGNED_REFERENCE_PREFIX = "ASSIGNED_REFERENCE"
+INTERNAL_INPUT_PREFIXES = (NEXTCLADE_PREFIX, ASSIGNED_REFERENCE_PREFIX)
 
 
 class EmblInfoMetadataPropertyNames(BaseModel):
@@ -39,6 +42,7 @@ class ProcessingSpec(BaseModel):
     inputs: FunctionInputs
     function: FunctionName = "identity"
     required: bool = False
+    no_input: bool = False
     args: FunctionArgs | None = None
 
 
@@ -184,6 +188,12 @@ class Config(BaseModel):
         if len(datasets) > 1:
             raise Exception
         return datasets[0]
+
+    def is_user_input(self, field: str) -> bool:
+        if (spec := self.processing_spec.get(field)) is not None:
+            return not spec.no_input
+        # fields without a spec may be `extraInputFields` and therefore still user input
+        return not field.startswith(INTERNAL_INPUT_PREFIXES)
 
 
 def set_sequence_name(
