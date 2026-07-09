@@ -1462,12 +1462,11 @@ class TestRevisionRawReadsModificationTests(TestSubmission):
         _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
 
         # send to loculus
-        mock_submit_external_metadata.return_value = mock_requests_post()
         get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
         args = mock_submit_external_metadata.call_args_list
 
         assert len(args) == 1
-        payload_revision = args[0][0][0]  # first positional argument of first call
+        payload_revision = args[-1][0][0]  # first positional argument of last call
         # Run accession should change because the raw reads have changed
         assert (
             payload["externalMetadata"]["insdcRawReadsAccession"]
@@ -1520,11 +1519,10 @@ class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
         )
 
         # send to loculus
-        mock_submit_external_metadata.return_value = mock_requests_post()
         get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
         args = mock_submit_external_metadata.call_args_list
 
-        payload_revision = args[0][0][0]  # first positional argument of first call
+        payload_revision = args[-1][0][0]  # first positional argument of last call
         # Run accession should remain the same as the original submission
         assert (
             payload["externalMetadata"]["insdcRawReadsAccession"]

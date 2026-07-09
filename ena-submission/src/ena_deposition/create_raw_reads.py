@@ -310,7 +310,7 @@ def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: Acc
     logger.info(
         f"Updating raw reads results for accession {seq_key.accession} version "
         f"{seq_key.version} using results from version {version_to_revise} as there was no"
-        "change in flatfile data."
+        "change in raw read data."
     )
     update_with_retry(
         db_engine=db_engine,
