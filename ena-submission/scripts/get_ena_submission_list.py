@@ -111,7 +111,7 @@ def assign_ena_organism(
     raise ValueError(error_msg)
 
 
-def filter_for_submission(
+def filter_for_submission(  # noqa: PLR0912
     config: Config,
     db_engine: Engine,
     entries_iterator: Iterator[dict[str, Any]],
