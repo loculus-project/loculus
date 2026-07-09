@@ -1582,7 +1582,7 @@ def parse_identifier_string(
     """Return an IDENTIFIER string to use in the displayName or None if `input` cannot be used
     as an identifier.
     """
-    if not isinstance(input, str):
+    if not isinstance(input, str) or not input.strip():
         return None
     has_forbidden_char = any(c.isspace() for c in input) or "/" in input
 
