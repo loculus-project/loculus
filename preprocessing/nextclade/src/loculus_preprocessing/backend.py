@@ -248,7 +248,7 @@ def upload_embl_file_to_presigned_url(
         raise RuntimeError(msg)
 
 
-def download_file(config: Config, url: str, save_path: str):
+def download_file(config: Config, url: str, save_path: str) -> None:
     response = requests.get(url, timeout=config.backend_request_timeout_seconds)
     response.raise_for_status()
     Path(save_path).write_bytes(response.content)
