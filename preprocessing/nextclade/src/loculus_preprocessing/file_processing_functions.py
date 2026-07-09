@@ -14,12 +14,10 @@ from loculus_preprocessing.datatypes import (
     FileIdAndNameAndReadUrl,
     ProcessingAnnotation,
 )
-from loculus_preprocessing.processing_functions import _internal_error_message
 
 logger = logging.getLogger(__name__)
 
 
-# TODO: pass Config here as well (backend_request_timeout_seconds, host read proportion)
 def process_submitted_files(
     config: Config,
     file_mapping: dict[FileCategory, list[FileIdAndNameAndReadUrl]],
@@ -88,6 +86,10 @@ def validate_raw_reads_submission(
             )
 
     with TemporaryDirectory() as tmp_dir:
+        index_path = os.path.join(tmp_dir, "panhuman-1.k31w15.idx")
+        if not run_deacon_fetch(index_path):
+            return errors, warnings
+
         for file in files:
             if (url := file.url) is None:
                 message = f"Cannot download file '{file.name}': preprocessing did not receive a URL"
@@ -102,10 +104,15 @@ def validate_raw_reads_submission(
                 download_file(config, url, file_name_internal)
             except HTTPError as e:
                 logger.error(f"Error downloading file '{file.name}' from S3: {e}")
+                continue
             summary_json_path = os.path.join(tmp_dir, f"{file.fileId}_summary.json")
-            deacon_summary = run_deacon(file_name_internal, summary_json_path)
-            if deacon_summary.seqs_removed_proportion > (1.0 - max_host_proportion):
-                message = f"File {file.name} (id: {file.fileId}) had "
+            deacon_summary = run_deacon_filter(index_path, file_name_internal, summary_json_path)
+            if deacon_summary.seqs_removed_proportion > max_host_proportion:
+                message = (
+                    f"File {file.name} (id: {file.fileId}) had a host reads proportion of "
+                    f"{deacon_summary.seqs_removed_proportion}, maximum allowed proportion "
+                    f"is {max_host_proportion}"
+                )
                 errors.append(
                     ProcessingAnnotation.from_single(
                         name=file.name, type=AnnotationSourceType.FILE, message=message
@@ -115,23 +122,24 @@ def validate_raw_reads_submission(
     return errors, warnings
 
 
-def run_deacon(input_file: str, summary_json: str):
-    index = ""
-    args = [
-        "deacon",
-        "filter",
-        "--threads",
-        1,
-        "--summary",
-        summary_json,
-        index,
-        input_file,
-        "2> /dev/null",
-    ]
+def run_deacon_fetch(index_path: str) -> bool:
+    args = ["deacon", "index", "fetch", "--output", index_path, "panhuman-1"]
+    exit_code = subprocess.run(args, check=False, stderr=subprocess.DEVNULL).returncode  # noqa: S603
+    if exit_code != 0:
+        msg = f"deacon fetch failed with exit code {exit_code}"
+        logger.error(msg)
+        return False
+    return True
+
+
+def run_deacon_filter(index: str, input_file: str, summary_json: str) -> DeaconSummary:
+    args = ["deacon", "filter", "--threads", "1", "--summary", summary_json, index, input_file]
 
     logger.debug(f"Checking for host sequences in raw read file {input_file}: {' '.join(args)}")
 
-    exit_code = subprocess.run(args, check=False).returncode  # noqa: S603
+    exit_code = subprocess.run(  # noqa: S603
+        args, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+    ).returncode
     if exit_code != 0:
         msg = f"deacon filter failed with exit code {exit_code}"
         raise Exception(msg)
