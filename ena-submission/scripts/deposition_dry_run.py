@@ -174,7 +174,6 @@ def local_ena_submission_generator(
             "-manifest assembly/manifest.tsv -submit "
             f"-centername {center_name}"
             "\n Remember to submit with -test if you do not want to submit to production"
-            "if you are submitting as a broker"
         )
 
 
