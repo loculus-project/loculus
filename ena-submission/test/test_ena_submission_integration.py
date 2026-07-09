@@ -1504,7 +1504,6 @@ class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
         sequences_to_upload = get_revisions(
             modify_assembly=False, modify_raw_reads=False, with_raw_reads=True
         )
-        print(f"sequences_to_upload['metadata']: {sequences_to_upload['LOC_0001TLY.2']['metadata']["raw_reads"]}")
 
         # upload sequences
         upload_sequences(self.config, self.db_engine, sequences_to_upload)
