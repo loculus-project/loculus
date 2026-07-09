@@ -49,7 +49,7 @@ from ena_deposition.create_project import (
 from ena_deposition.create_project import (
     sync_state_with_submission_table as create_project_sync_state_with_submission_table,
 )
-from ena_deposition.create_raw_reads import raw_reads_table_create
+from ena_deposition.create_raw_reads import raw_reads_table_create, raw_reads_table_handle_errors
 from ena_deposition.create_raw_reads import (
     sync_state_with_submission_table as create_raw_reads_sync_state_with_submission_table,
 )
@@ -88,7 +88,8 @@ from sqlalchemy import Engine
 
 CONFIG_FILE = "./test/test_config.yaml"
 INPUT_FILE = "./test/data/approved_ena_submission_list_test.json"
-RAW_READS_FIXTURE_FILE = "./test/data/SRR38154636.part_001.fastq.gz"
+RAW_READS_FIXTURE_FILE_1 = "./test/data/SRR38154636.part_001.fastq.gz"
+RAW_READS_FIXTURE_FILE_2 = "./test/data/SRR38154636.part_002.fastq.gz"
 TEST_ACCESSION = "LOC_0001TLY"
 TEST_ACCESSION_VERSION = "LOC_0001TLY.1"
 TEST_VERSION = 1
@@ -240,6 +241,19 @@ def check_sample_submission_has_errors(
             conditions={"accession": accession, "version": version, "status": "HAS_ERRORS"},
         )
         assert_biosample_accession(rows, data["metadata"]["biosampleAccession"], full_accession)
+
+
+def check_raw_reads_submission_has_errors(
+    db_engine: Engine, sequences_to_upload: dict[str, Any]
+) -> None:
+    for full_accession in sequences_to_upload:
+        accession, version = full_accession.split(".")
+        rows = find_conditions_in_db(
+            db_engine,
+            RawReadsTableEntry,
+            conditions={"accession": accession, "version": version, "status": "HAS_ERRORS"},
+        )
+        assert len(rows) == 1, f"Raw reads for {full_accession} not found in raw reads table."
 
 
 def check_assembly_submission_waiting(
@@ -480,6 +494,34 @@ def _test_assembly_submission_errored(
     mock_notify.assert_called_once_with(slack_config, msg)
 
 
+def _test_raw_reads_submission_errored(
+    db_engine: Engine,
+    config: Config,
+    slack_config: SlackConfig,
+    sequences_to_upload: dict[str, Any],
+    mock_notify: Mock,
+) -> None:
+    create_raw_reads_sync_state_with_submission_table(db_engine)
+    check_raw_reads_submission_started(db_engine, sequences_to_upload)
+
+    assert config.test, "Not submitting to dev - stopping"
+    raw_reads_table_create(db_engine, config)
+    create_raw_reads_sync_state_with_submission_table(db_engine)
+    check_raw_reads_submission_has_errors(db_engine, sequences_to_upload)
+
+    raw_reads_table_handle_errors(
+        db_engine,
+        config,
+        slack_config,
+        last_retry_time=datetime.now(tz=pytz.utc),
+    )
+    msg = (
+        f"{config.backend_url}: ENA Submission pipeline found 1 entries in raw_reads_table in "
+        "status HAS_ERRORS or SUBMITTING for over 0m"
+    )
+    mock_notify.assert_called_once_with(slack_config, msg)
+
+
 def _test_successful_raw_reads_submission(
     db_engine: Engine, config: Config, sequences_to_upload: dict[str, Any]
 ) -> None:
@@ -524,7 +566,9 @@ def get_sequences(with_raw_reads: bool = False) -> dict[str, Any]:
         return sequences
 
 
-def get_revisions(modify_manifest: bool = False, modify_assembly: bool = True) -> dict[str, Any]:
+def get_revisions(
+    modify_manifest: bool = False, modify_assembly: bool = True, modify_raw_reads: bool = False
+) -> dict[str, Any]:
     with open(INPUT_FILE, encoding="utf-8") as json_file:
         sequences: dict[str, Any] = json.load(json_file)
         revised_sequences: dict[str, Any] = {}
@@ -539,7 +583,14 @@ def get_revisions(modify_manifest: bool = False, modify_assembly: bool = True) -
             else:
                 new_value["metadata"]["hostAge"] = "revised host age"
             if modify_manifest:
-                new_value["metadata"]["authors"] = "Author, Revised;"
+                new_value["metadata"]["authors"] = "Author, Revised;"  # assembly manifest
+                new_value["metadata"]["sequencingLibrarySelection"] = "ChIP"  # raw reads manifest
+            if modify_raw_reads:
+                new_value["metadata"]["pairedNominalLength"] = 150
+                new_value["metadata"]["raw_reads"] = (
+                    '[{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d8","name":"rawReads.fastq.gz","url":"https://loculus.org/files/get/LOC_0001TLY/1/raw_reads/rawReads.fastq.gz"},'
+                    '{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d9","name":"rawReads2.fastq.gz","url":"https://loculus.org/files/get/LOC_0001TLY/1/raw_reads/rawReads2.fastq.gz"}]'
+                )
             revised_sequences[accession_version] = new_value
         return revised_sequences
 
@@ -550,15 +601,19 @@ def mock_download_fastq_files_side_effect(
     accession: str,  # noqa: ARG001
     dir: str | None = None,
 ) -> list[str]:
-    """Stand-in for call_loculus.download_fastq_files that avoids hitting the backend.
-
-    Copies the checked-in fixture fastq.gz into the directory the real download would
-    have used, so downstream code (webin-cli) still has a real file to submit.
     """
+    Mock side effect for download_fastq_files that returns a
+    different file each time it's called.
+
+    If called more than twice it will error.
+    """
+    source = next(iter([RAW_READS_FIXTURE_FILE_1, RAW_READS_FIXTURE_FILE_2]))
+
     target_dir = dir or tempfile.mkdtemp()
     os.makedirs(target_dir, exist_ok=True)
-    dest_path = os.path.join(target_dir, os.path.basename(RAW_READS_FIXTURE_FILE))
-    shutil.copy(RAW_READS_FIXTURE_FILE, dest_path)
+
+    dest_path = os.path.join(target_dir, os.path.basename(source))
+    shutil.copy(source, dest_path)
     return [dest_path]
 
 
@@ -577,7 +632,7 @@ def multi_segment_submission(
     mock_download_fastq_files: Mock | None = None,
     single_segment: bool = False,
     with_raw_reads: bool = False,
-) -> None:
+) -> Any:
     """Test the full ENA submission pipeline with CCHF data
     If single_segment is True, there's only one segment in the assembly
     Otherwise there are 2"""
@@ -684,6 +739,7 @@ def multi_segment_submission(
             f"gcaAccession '{payload['externalMetadata']['gcaAccession']}' "
             f"does not match GCA pattern {gca_pattern}"
         )
+    return payload
 
 
 class TestSubmission:
@@ -1287,7 +1343,7 @@ class TestRevisionNoAssemblyModificationTests(TestSubmission):
         check_sent_to_loculus(self.db_engine, sequences_to_upload)
 
 
-class TestRevisionWithManifestChangeTests(TestSubmission):
+class TestRevisionWithAssemblyManifestChangeTests(TestSubmission):
     @patch(
         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
     )
@@ -1346,6 +1402,160 @@ class TestSimpleSubmissionWithRawReads(TestSubmission):
             mock_submit_external_metadata,
             with_raw_reads=True,
             mock_download_fastq_files=mock_download_fastq_files,
+        )
+
+
+class TestRevisionRawReadsModificationTests(TestSubmission):
+    @patch(
+        "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
+    )
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
+    @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
+    def test_revise(
+        self,
+        mock_download_fastq_files: Mock,
+        mock_get_group_info: Mock,
+        mock_submit_external_metadata: Mock,
+    ) -> None:
+        self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
+        payload = multi_segment_submission(
+            self.db_engine,
+            self.config,
+            mock_get_group_info,
+            mock_submit_external_metadata,
+            with_raw_reads=True,
+            mock_download_fastq_files=mock_download_fastq_files,
+        )
+
+        # get data
+        mock_get_group_info.return_value = TEST_GROUP
+        mock_submit_external_metadata.return_value = mock_requests_post()
+        sequences_to_upload = get_revisions(modify_raw_reads=True)
+
+        # upload sequences
+        upload_sequences(self.config, self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload)
+
+        # submit
+        create_project_sync_state_with_submission_table(self.db_engine)
+        project_table_create(self.db_engine, self.config)
+        check_project_submission_submitted(self.db_engine, sequences_to_upload)
+        _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_raw_reads_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
+
+        # send to loculus
+        mock_submit_external_metadata.return_value = mock_requests_post()
+        get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
+        args = mock_submit_external_metadata.call_args_list
+
+        assert len(args) == 1
+        payload_revision = args[0][0][0]  # first positional argument of first call
+        # Run accession should change because the raw reads have changed
+        assert (
+            payload["externalMetadata"]["insdcRawReadsAccession"]
+            != payload_revision["externalMetadata"]["insdcRawReadsAccession"]
+        )
+        check_sent_to_loculus(self.db_engine, sequences_to_upload)
+
+
+class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
+    @patch(
+        "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
+    )
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
+    @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
+    def test_revise(
+        self,
+        mock_download_fastq_files: Mock,
+        mock_get_group_info: Mock,
+        mock_submit_external_metadata: Mock,
+    ) -> None:
+        self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
+        payload = multi_segment_submission(
+            self.db_engine,
+            self.config,
+            mock_get_group_info,
+            mock_submit_external_metadata,
+            with_raw_reads=True,
+            mock_download_fastq_files=mock_download_fastq_files,
+        )
+
+        # get data
+        mock_get_group_info.return_value = TEST_GROUP
+        mock_submit_external_metadata.return_value = mock_requests_post()
+        sequences_to_upload = get_revisions(modify_assembly=False, modify_raw_reads=False)
+
+        # upload sequences
+        upload_sequences(self.config, self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload)
+
+        # submit
+        create_project_sync_state_with_submission_table(self.db_engine)
+        project_table_create(self.db_engine, self.config)
+        check_project_submission_submitted(self.db_engine, sequences_to_upload)
+        _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_raw_reads_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_assembly_submission_no_wait(
+            self.db_engine, self.config, sequences_to_upload
+        )
+
+        # send to loculus
+        mock_submit_external_metadata.return_value = mock_requests_post()
+        get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
+        args = mock_submit_external_metadata.call_args_list
+
+        assert len(args) == 1
+        payload_revision = args[0][0][0]  # first positional argument of first call
+        # Run accession should remain the same as the original submission
+        assert (
+            payload["externalMetadata"]["insdcRawReadsAccession"]
+            == payload_revision["externalMetadata"]["insdcRawReadsAccession"]
+        )
+        check_sent_to_loculus(self.db_engine, sequences_to_upload)
+
+
+class TestRevisionWithRawReadsManifestChangeTests(TestSubmission):
+    @patch(
+        "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
+    )
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
+    @patch("ena_deposition.notifications.notify", autospec=True)
+    @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
+    def test_revise(
+        self,
+        mock_download_fastq_files: Mock,
+        mock_notify: Mock,
+        mock_get_group_info: Mock,
+        mock_submit_external_metadata: Mock,
+    ) -> None:
+        self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
+        self.config.allow_revision_with_manifest_changes = False
+        multi_segment_submission(
+            self.db_engine,
+            self.config,
+            mock_get_group_info,
+            mock_submit_external_metadata,
+            with_raw_reads=True,
+            mock_download_fastq_files=mock_download_fastq_files,
+        )
+        # get data
+        mock_get_group_info.return_value = TEST_GROUP
+        mock_submit_external_metadata.return_value = mock_requests_post()
+        sequences_to_upload = get_revisions(modify_manifest=True)
+
+        # upload sequences
+        upload_sequences(self.config, self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload)
+
+        # submit
+        create_project_sync_state_with_submission_table(self.db_engine)
+        check_project_submission_submitted(self.db_engine, sequences_to_upload)
+        _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
+
+        # check notified cannot submit raw reads
+        _test_raw_reads_submission_errored(
+            self.db_engine, self.config, self.slack_config, sequences_to_upload, mock_notify
         )
 
 
