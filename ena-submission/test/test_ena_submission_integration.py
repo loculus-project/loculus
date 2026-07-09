@@ -134,12 +134,21 @@ def delete_all_records(db_engine: Engine) -> None:
         delete_records_in_db(db_engine, model_class, {})
 
 
-def check_sequences_uploaded(db_engine: Engine, sequences_to_upload: dict[str, Any]) -> None:
+def check_sequences_uploaded(
+    db_engine: Engine, sequences_to_upload: dict[str, Any], with_raw_reads: bool = False
+) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
-        assert in_submission_table(
-            db_engine, {"accession": accession, "version": version, "status_all": "READY_TO_SUBMIT"}
-        ), f"Sequence {accession}.{version} not found in submission table."
+        state: dict[str, Any] = {
+            "accession": accession,
+            "version": version,
+            "status_all": "READY_TO_SUBMIT",
+        }
+        if with_raw_reads:
+            state["submit_raw_reads"] = True
+        assert in_submission_table(db_engine, state), (
+            f"Sequence {accession}.{version} not found in submission table."
+        )
 
 
 def check_project_submission_started(
@@ -1442,7 +1451,7 @@ class TestRevisionRawReadsModificationTests(TestSubmission):
 
         # upload sequences
         upload_sequences(self.config, self.db_engine, sequences_to_upload)
-        check_sequences_uploaded(self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload, with_raw_reads=True)
 
         # submit
         create_project_sync_state_with_submission_table(self.db_engine)
@@ -1495,11 +1504,11 @@ class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
         sequences_to_upload = get_revisions(
             modify_assembly=False, modify_raw_reads=False, with_raw_reads=True
         )
-        print(f"sequences_to_upload: {sequences_to_upload}")
+        print(f"sequences_to_upload['metadata']: {sequences_to_upload['LOC_0001TLY.2']['metadata']["raw_reads"]}")
 
         # upload sequences
         upload_sequences(self.config, self.db_engine, sequences_to_upload)
-        check_sequences_uploaded(self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload, with_raw_reads=True)
 
         # submit
         create_project_sync_state_with_submission_table(self.db_engine)
@@ -1557,7 +1566,7 @@ class TestRevisionWithRawReadsManifestChangeTests(TestSubmission):
 
         # upload sequences
         upload_sequences(self.config, self.db_engine, sequences_to_upload)
-        check_sequences_uploaded(self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload, with_raw_reads=True)
 
         # submit
         create_project_sync_state_with_submission_table(self.db_engine)
