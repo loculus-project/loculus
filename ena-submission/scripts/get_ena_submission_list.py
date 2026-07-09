@@ -163,9 +163,9 @@ def filter_for_submission(
 
         entry["organism"] = assign_ena_organism(entry, ena_organisms)
 
-        if not entry["metadata"].get("specimenCollectorSampleId"):
-            # fallback to sampleId if specimenCollectorSampleId is not present
-            entry["metadata"]["specimenCollectorSampleId"] = entry["metadata"].get("sampleId")
+        for field, fallback_value in config.metadata_fallback_values.items():
+            if not entry["metadata"].get(field):
+                entry["metadata"][field] = entry["metadata"].get(fallback_value)
 
         ena_specific_metadata_fields = [
             value.name for value in config.enaOrganisms[entry["organism"]].externalMetadata
