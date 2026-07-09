@@ -132,7 +132,6 @@ def filter_for_submission(
     Filter data in state APPROVED_FOR_RELEASE:
     - data must be state "OPEN" for use
     - data must not already exist in ENA or be in the submission process.
-    Additionally, update the entry with any missing or fallback fields.
     To prevent this we need to make sure:
         - data was not submitted by the config.ingest_pipeline_submission_group
         - data is not in submission_table
@@ -141,6 +140,7 @@ def filter_for_submission(
           from doing so)
         - the latest version is not a revocation entry
           (if it is, we send a separate notification)
+          Additionally, update the entry with any missing or fallback fields.
     """
     entries_to_submit: dict[Accession, dict[str, Any]] = {}
     entries_with_external_metadata: set[Accession] = set()
