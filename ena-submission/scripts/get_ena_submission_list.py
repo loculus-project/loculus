@@ -163,9 +163,9 @@ def filter_for_submission(
 
         entry["organism"] = assign_ena_organism(entry, ena_organisms)
 
-        for field, fallback_value in config.metadata_fallback_values.items():
+        for field, fallback_field in config.metadata_fallback_fields.items():
             if not entry["metadata"].get(field):
-                entry["metadata"][field] = entry["metadata"].get(fallback_value)
+                entry["metadata"][field] = entry["metadata"].get(fallback_field)
 
         ena_specific_metadata_fields = [
             value.name for value in config.enaOrganisms[entry["organism"]].externalMetadata

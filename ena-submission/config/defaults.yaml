@@ -27,7 +27,7 @@ ena_http_post_retry_attempts: 1
 # 12 hours in minutes
 min_between_publicness_checks: 720
 log_level: DEBUG
-metadata_fallback_values:
+metadata_fallback_fields:
   specimenCollectorSampleId: submissionId
 manifest_fields_mapping:
   authors:
