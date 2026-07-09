@@ -1134,6 +1134,9 @@ class ProcessingFunctions:
             - for sequences ingested from INSDC, we do not try to parse the IDENTIFIER field using
               regex. We will use the Isolate Name as IDENTIFIER field if it contains no slashes or
               spaces (otherwise we fall back to ACCESSION_VERSION)
+            - if regex_pattern is provided, human_readable_pattern must also be provided. It is a
+              submitter-friendly rendering of the pattern to show in error messages
+              (e.g. '<any>/<any>/<identifier>/<date>')
         """
         collector_id = input_data.get("specimenCollectorSampleId", None)
         submission_id = input_data.get("submissionId", None)
@@ -1156,6 +1159,15 @@ class ProcessingFunctions:
         if regex_pattern is not None and "identifier" not in re.compile(regex_pattern).groupindex:
             return raw_internal_error(
                 "If provided, 'regex_pattern' must contain a named capture group called 'identifier'."
+            )
+
+        human_readable_pattern = args.get("human_readable_pattern")
+        human_readable_pattern = (
+            str(human_readable_pattern) if human_readable_pattern is not None else None
+        )
+        if regex_pattern is not None and human_readable_pattern is None:
+            return raw_internal_error(
+                "If 'regex_pattern' is provided, 'human_readable_pattern' must also be provided."
             )
 
         concatenate_order = order.copy()
@@ -1182,11 +1194,9 @@ class ProcessingFunctions:
             # Unable to parse specimenCollectorSampleId and submissionID, use ACCESSION_VERSION
             if not insdc_ingested and regex_pattern is not None:
                 warnings.append(
-                    f"specimenCollectorSampleId '{collector_id}' and submissionId"
-                    f" '{submission_id}' could not be parsed, using ACCESSION_VERSION"
-                    f" in displayName instead. Alternatively, you may edit the"
-                    f" specimenCollectorSampleId or submissionId to not contain any whitespace"
-                    f" or '/' characters so it can be incorporated in the displayName."
+                    f"specimenCollectorSampleId and submissionId could not be parsed, using "
+                    f"ACCESSION_VERSION in displayName instead. To include your own identifier, "
+                    f"remove whitespace and '/' characters or use format '{human_readable_pattern}'"
                 )
             concatenate_order = replace_identifier(order, "ACCESSION_VERSION")
             concatenate_field_types = replace_identifier(field_types, "ACCESSION_VERSION")

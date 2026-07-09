@@ -1274,11 +1274,9 @@ class DisplayNameCase:
 
 
 unparseable_identifier_warning = (
-    "specimenCollectorSampleId 'hDENV1/Germany/somethingElse/myExtractedSample/2025' "
-    "and submissionId 'hDENV1/Germany/somethingElse/myExtractedSample/2025' could not be "
-    "parsed, using ACCESSION_VERSION in displayName instead. Alternatively, you may edit "
-    "the specimenCollectorSampleId or submissionId to not contain any whitespace or '/' "
-    "characters so it can be incorporated in the displayName."
+    "specimenCollectorSampleId and submissionId could not be parsed, using "
+    "ACCESSION_VERSION in displayName instead. To include your own identifier, "
+    "remove whitespace and '/' characters or use format '<any>/<any>/<identifier>/<date>'"
 )
 
 
@@ -1322,6 +1320,19 @@ display_name_cases = [
         expected_regular="DENV-1/Switzerland/mySample/2025",
         expected_insdc="DENV-1/Switzerland/accession.1/2025",  # INSDC never uses regex
         expected_prefix="hYF/Switzerland/mySample/2025",
+    ),
+    DisplayNameCase(
+        name="both_ids_unparseable_falls_back_to_accession_version_with_warning",
+        specimen_collector_id="hDENV1/Germany/somethingElse/myExtractedSample/2025",
+        submission_id="hDENV1/Germany/somethingElse/myExtractedSample/2025",
+        geo_loc_country="Switzerland",
+        sample_collection_date="2025",
+        expected_regular="DENV-1/Switzerland/accession.1/2025",
+        expected_insdc="DENV-1/Switzerland/accession.1/2025",  # INSDC never uses regex
+        expected_prefix="hYF/Switzerland/accession.1/2025",
+        warning_regular=unparseable_identifier_warning,
+        warning_insdc=None,  # warning is only emitted for direct (non-INSDC) submissions
+        warning_prefix=unparseable_identifier_warning,
     ),
     DisplayNameCase(
         name="empty_country_uses_default_fallback",
@@ -1373,6 +1384,7 @@ base_args: FunctionArgs = {
     # - Last field is a date in format YYYY, YYYY-MM, or YYYY-MM-DD
     # - Identifier is the second to last field (extracted through named capture group)
     "regex_pattern": r"^(?:[^/]+/)?[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$",
+    "human_readable_pattern": "<any>/<any>/<identifier>/<date>",
 }
 insdc_args: FunctionArgs = {**base_args, "is_insdc_ingest_group": True}
 prefix_args: FunctionArgs = {
