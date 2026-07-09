@@ -93,10 +93,11 @@ def create_manifest_object(
     If random_alias=True add a timestamp to the alias suffix to allow for multiple
     submissions of the same manifest for testing.
     """
+    # We must create a new run read accession for each revision,
+    # thus the alias must be unique for each accessionVersion.
     alias = get_alias(
-        f"{submission_row.accession}:{submission_row.organism}:{config.unique_raw_reads_suffix}",
+        f"{submission_row.accession}:{submission_row.version}:{submission_row.organism}:{config.unique_raw_reads_suffix}",
         random_alias,
-        config.set_alias_suffix,
     ).name
     metadata = submission_row.seq_metadata
     raw_reads_manifest_fields_mapping = config.raw_reads_manifest_fields_mapping

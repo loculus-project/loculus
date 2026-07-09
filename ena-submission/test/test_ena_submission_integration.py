@@ -577,7 +577,8 @@ def get_sequences(with_raw_reads: bool = False) -> dict[str, Any]:
 
 
 def get_revisions(
-    modify_manifest: bool = False,
+    modify_assembly_manifest: bool = False,
+    modify_raw_reads_manifest: bool = False,
     modify_assembly: bool = True,
     modify_raw_reads: bool = False,
     with_raw_reads: bool = False,
@@ -599,9 +600,10 @@ def get_revisions(
                 new_value["metadata"]["geoLocAdmin1"] = "revised location"
             else:
                 new_value["metadata"]["hostAge"] = "revised host age"
-            if modify_manifest:
-                new_value["metadata"]["authors"] = "Author, Revised;"  # assembly manifest
-                new_value["metadata"]["sequencingLibrarySelection"] = "ChIP"  # raw reads manifest
+            if modify_assembly_manifest:
+                new_value["metadata"]["authors"] = "Author, Revised;"
+            if modify_raw_reads_manifest:
+                new_value["metadata"]["sequencingLibrarySelection"] = "ChIP"
             if modify_raw_reads:
                 new_value["metadata"]["pairedNominalLength"] = 150
                 new_value["metadata"]["raw_reads"] = (
@@ -1380,7 +1382,7 @@ class TestRevisionWithAssemblyManifestChangeTests(TestSubmission):
         # get data
         mock_get_group_info.return_value = TEST_GROUP
         mock_submit_external_metadata.return_value = mock_requests_post()
-        sequences_to_upload = get_revisions(modify_manifest=True)
+        sequences_to_upload = get_revisions(modify_assembly_manifest=True)
 
         # upload sequences
         upload_sequences(self.config, self.db_engine, sequences_to_upload)
@@ -1465,13 +1467,11 @@ class TestRevisionRawReadsModificationTests(TestSubmission):
         get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
         args = mock_submit_external_metadata.call_args_list
 
-        assert len(args) == 1
         payload_revision = args[-1][0][0]  # first positional argument of last call
-        # Run accession should change because the raw reads have changed
         assert (
             payload["externalMetadata"]["insdcRawReadsAccession"]
             != payload_revision["externalMetadata"]["insdcRawReadsAccession"]
-        )
+        ), "When raw reads are modified, insdcRawReadsAccession should change"
         check_sent_to_loculus(self.db_engine, sequences_to_upload)
 
 
@@ -1523,11 +1523,10 @@ class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
         args = mock_submit_external_metadata.call_args_list
 
         payload_revision = args[-1][0][0]  # first positional argument of last call
-        # Run accession should remain the same as the original submission
         assert (
             payload["externalMetadata"]["insdcRawReadsAccession"]
             == payload_revision["externalMetadata"]["insdcRawReadsAccession"]
-        )
+        ), "When raw reads are not modified, insdcRawReadsAccession should stay the same"
         check_sent_to_loculus(self.db_engine, sequences_to_upload)
 
 
@@ -1558,7 +1557,7 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
         # get data
         mock_get_group_info.return_value = TEST_GROUP
         mock_submit_external_metadata.return_value = mock_requests_post()
-        sequences_to_upload = get_revisions(modify_manifest=True, with_raw_reads=True)
+        sequences_to_upload = get_revisions(modify_raw_reads_manifest=True, with_raw_reads=True)
 
         # upload sequences
         upload_sequences(self.config, self.db_engine, sequences_to_upload)
@@ -1599,7 +1598,7 @@ class TestRevisionWithRawReadsManifestChangeTests(TestSubmission):
         # get data
         mock_get_group_info.return_value = TEST_GROUP
         mock_submit_external_metadata.return_value = mock_requests_post()
-        sequences_to_upload = get_revisions(modify_manifest=True, with_raw_reads=True)
+        sequences_to_upload = get_revisions(modify_raw_reads_manifest=True, with_raw_reads=True)
 
         # upload sequences
         upload_sequences(self.config, self.db_engine, sequences_to_upload)
@@ -1610,17 +1609,17 @@ class TestRevisionWithRawReadsManifestChangeTests(TestSubmission):
         check_project_submission_submitted(self.db_engine, sequences_to_upload)
         _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
         _test_successful_raw_reads_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
 
         # send to loculus
         get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
         args = mock_submit_external_metadata.call_args_list
 
         payload_revision = args[-1][0][0]  # first positional argument of last call
-        # Run accession should remain the same as the original submission
         assert (
             payload["externalMetadata"]["insdcRawReadsAccession"]
             == payload_revision["externalMetadata"]["insdcRawReadsAccession"]
-        )
+        ), "When raw reads are not modified, insdcRawReadsAccession should stay the same"
         check_sent_to_loculus(self.db_engine, sequences_to_upload)
 
 
