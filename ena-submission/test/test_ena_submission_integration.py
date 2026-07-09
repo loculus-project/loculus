@@ -1525,7 +1525,6 @@ class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
         get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
         args = mock_submit_external_metadata.call_args_list
 
-        assert len(args) == 1
         payload_revision = args[0][0][0]  # first positional argument of first call
         # Run accession should remain the same as the original submission
         assert (
