@@ -87,6 +87,7 @@ def mock_config():
     config = mock.Mock()
     config.db_name = "Loculus"
     config.unique_project_suffix = "Test suffix"
+    config.unique_raw_reads_suffix = "Test suffix"
     config.enaOrganisms = {"Test organism": mock_organism()}
     config.metadata_mapping = {
         key: MetadataMapping(**item) for key, item in defaults["metadata_mapping"].items()
@@ -508,7 +509,7 @@ class RawReadsCreationTests(unittest.TestCase):
         self.assertEqual(manifest.insert_size, 350)
         self.assertEqual(manifest.study, "Test Study Accession")
         self.assertEqual(manifest.sample, "Test Sample Accession")
-        self.assertEqual(manifest.name, f"{self.seq_key}:1:Test organism:Test suffix")
+        self.assertEqual(manifest.name, f"{self.seq_key}:Test organism:Test suffix")
         self.assertEqual(manifest.fastq, self.fastq_files)
         self.assertEqual(manifest.platform, Platform.ILLUMINA)
         self.assertEqual(manifest.instrument, Instrument.unspecified)

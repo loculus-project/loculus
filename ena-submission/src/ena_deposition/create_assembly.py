@@ -434,7 +434,9 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
     return not manifest_fields_changed(config, db_engine, submission_row, last_version_entry)
 
 
-def is_flatfile_data_changed(db_engine: Engine, submission_row: SubmissionTableEntry) -> bool:
+def is_flatfile_data_changed(
+    config: Config, db_engine: Engine, submission_row: SubmissionTableEntry
+) -> bool:
     """
     Check if change in sequence or flatfile metadata has occurred since last version.
     """
@@ -463,6 +465,14 @@ def is_flatfile_data_changed(db_engine: Engine, submission_row: SubmissionTableE
                 f"for {submission_row.accession}. (Maybe other fields changed as well)"
             )
             return True
+    if config.allow_revision_with_manifest_changes and manifest_fields_changed(
+        config, db_engine, submission_row, last_entry
+    ):
+        logger.debug(
+            f"Manifest fields have changed for {submission_row.accession}, "
+            f"from {last_entry.version} to {submission_row.version} - should be revised"
+        )
+        return True
     logger.debug(
         f"No changes detected for {submission_row.accession} from version {last_entry.version} "
         f"to {submission_row.version}"
@@ -538,7 +548,7 @@ def assembly_table_create(db_engine: Engine, config: Config):
             logger.debug(f"Entry {row.accession} is a revision, checking if it can be revised")
             if not can_be_revised(config, db_engine, submission_row):
                 continue
-            if not is_flatfile_data_changed(db_engine, submission_row):
+            if not is_flatfile_data_changed(config, db_engine, submission_row):
                 update_assembly_results_with_latest_version(db_engine, seq_key)
                 continue
 
