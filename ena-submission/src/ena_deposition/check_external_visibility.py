@@ -77,7 +77,6 @@ class NCBIVisibilityChecker(VisibilityChecker):
     """Checker for NCBI visibility"""
 
     def check_visibility(self, config: Config, accession: str) -> datetime | None:
-
         if accession.startswith("PRJ"):
             path = "bioproject"
         elif accession.startswith("SAM"):
