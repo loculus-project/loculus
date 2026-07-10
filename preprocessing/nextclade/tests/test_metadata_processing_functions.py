@@ -1276,7 +1276,8 @@ class DisplayNameCase:
 unparseable_identifier_warning = (
     "specimenCollectorSampleId and submissionId could not be parsed, using "
     "ACCESSION_VERSION in displayName instead. To include your own identifier, "
-    "remove whitespace and '/' characters or use format '<any>/<any>/<identifier>/<date>'"
+    "remove whitespace and '/' characters or use the format '<any>/<any>/<identifier>/<date>' "
+    "and we will parse the `identifier` from the submission."
 )
 
 
@@ -1335,25 +1336,25 @@ display_name_cases = [
         warning_prefix=unparseable_identifier_warning,
     ),
     DisplayNameCase(
-        name="empty_country_uses_default_fallback",
+        name="empty_fields_use_default_fallback",
         specimen_collector_id="hDENV1/Germany/myExtractedSample/2025",
         submission_id="hDENV1/Germany/myExtractedSample/2025",
         geo_loc_country="",
-        sample_collection_date="2025",
-        expected_regular="DENV-1/unknown/myExtractedSample/2025",
-        expected_insdc="DENV-1/unknown/accession.1/2025",  # INSDC never uses regex
-        expected_prefix="hYF/unknown/myExtractedSample/2025",
+        sample_collection_date="",
+        expected_regular="DENV-1/unknown/myExtractedSample/unknown",
+        expected_insdc="DENV-1/unknown/accession.1/unknown",  # INSDC never uses regex
+        expected_prefix="hYF/unknown/myExtractedSample/unknown",
     ),
     DisplayNameCase(
-        name="custom_fallback_value_replaces_unknown_country",
+        name="custom_fallback_value_replaces_empty_fields",
         specimen_collector_id="hDENV1/Germany/myExtractedSample/2025",
         submission_id="hDENV1/Germany/myExtractedSample/2025",
         geo_loc_country="",
-        sample_collection_date="2025",
+        sample_collection_date="",
         extra_args={"fallback_value": "another_fallback"},
-        expected_regular="DENV-1/another_fallback/myExtractedSample/2025",
-        expected_insdc="DENV-1/another_fallback/accession.1/2025",  # INSDC never uses regex
-        expected_prefix="hYF/another_fallback/myExtractedSample/2025",
+        expected_regular="DENV-1/another_fallback/myExtractedSample/another_fallback",
+        expected_insdc="DENV-1/another_fallback/accession.1/another_fallback",  # INSDC never uses regex
+        expected_prefix="hYF/another_fallback/myExtractedSample/another_fallback",
     ),
 ]
 
