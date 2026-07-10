@@ -42,4 +42,4 @@ addopts = [
     "--strict-config",
     # Remove --showlocals to avoid the massive variable output
 ]
-testpaths = ["scripts"]
+testpaths = ["test"]
