@@ -74,7 +74,7 @@ defaultOrganisms:
           <<: *preprocessingConfigFile
           # use a minimizer to figure out which suborganism a submitted sequence belongs to
           segment_classification_method: "minimizer"
-          minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
+          minimizer_url: "https://alejandra-gonzalezsanchez.github.io/loculus-evs/evs_minimizer-index.json"
           segments:
             - name: main
               references:
