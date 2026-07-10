@@ -27,7 +27,6 @@ import org.loculus.backend.controller.files.andGetFileIdsAndUrls
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
-import org.loculus.backend.controller.jwtForAlternativeUser
 import org.loculus.backend.controller.jwtForSuperUser
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -365,11 +364,8 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         )
 
         // File owned by another group
-        val otherGroupId = groupManagementClient.createNewGroup(jwt = jwtForAlternativeUser).andGetGroupId()
-        val otherGroupFileIdAndUrl = filesClient.requestUploads(
-            groupId = otherGroupId,
-            jwt = jwtForAlternativeUser,
-        ).andGetFileIdsAndUrls()[0]
+        val otherGroupId = groupManagementClient.createNewGroup().andGetGroupId()
+        val otherGroupFileIdAndUrl = filesClient.requestUploads(groupId = otherGroupId).andGetFileIdsAndUrls()[0]
         convenienceClient.uploadFile(
             otherGroupFileIdAndUrl.presignedWriteUrl,
             DEFAULT_SIMPLE_FILE_CONTENT,
