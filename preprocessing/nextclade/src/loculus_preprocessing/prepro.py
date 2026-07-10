@@ -1,11 +1,15 @@
 import logging
+import os
 import time
 from collections import defaultdict
 from collections.abc import Sequence
 from tempfile import TemporaryDirectory
 from typing import Any
 
-from loculus_preprocessing.file_processing_functions import process_submitted_files
+from loculus_preprocessing.file_processing_functions import (
+    process_submitted_files,
+    run_deacon_fetch,
+)
 
 from .backend import (
     download_diamond_db,
@@ -17,6 +21,7 @@ from .backend import (
 )
 from .config import (
     ASSIGNED_REFERENCE_PREFIX,
+    DEACON_INDEX,
     METADATA_DEPENDENCY_PREFIX,
     NEXTCLADE_PREFIX,
     AlignmentRequirement,
@@ -518,6 +523,7 @@ def unpack_annotations(config, nextclade_metadata: dict[str, Any] | None) -> dic
 def process_single(
     accession_version: AccessionVersion,
     unprocessed: UnprocessedAfterNextclade,
+    dataset_dir: str,
     config: Config,
 ) -> SubmissionData:
     """Process a single sequence per config"""
@@ -537,7 +543,9 @@ def process_single(
         accession_version, unprocessed, config
     )
 
-    file_errors, file_warnings = process_submitted_files(config, unprocessed.files or {})
+    file_errors, file_warnings = process_submitted_files(
+        config, dataset_dir, unprocessed.files or {}
+    )
 
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
@@ -578,6 +586,7 @@ def process_single(
 def process_single_unaligned(
     accession_version: AccessionVersion,
     unprocessed: UnprocessedData,
+    dataset_dir: str,
     config: Config,
 ) -> SubmissionData:
     """Process a single sequence per config"""
@@ -592,7 +601,9 @@ def process_single_unaligned(
         accession_version, unprocessed, config
     )
 
-    file_errors, file_warnings = process_submitted_files(config, unprocessed.files or {})
+    file_errors, file_warnings = process_submitted_files(
+        config, dataset_dir, unprocessed.files or {}
+    )
 
     return processed_entry_no_alignment(
         accession_version=accession_version,
@@ -646,7 +657,7 @@ def process_all(
         nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
         for id, result in nextclade_results.items():
             try:
-                processed_single = process_single(id, result, config)
+                processed_single = process_single(id, result, dataset_dir, config)
             except Exception as e:
                 logger.error(f"Processing failed for {id} with error: {e}")
                 processed_single = processed_entry_with_errors(id)
@@ -655,7 +666,7 @@ def process_all(
         for entry in unprocessed:
             try:
                 processed_single = process_single_unaligned(
-                    entry.accessionVersion, entry.data, config
+                    entry.accessionVersion, entry.data, dataset_dir, config
                 )
             except Exception as e:
                 logger.error(f"Processing failed for {entry.accessionVersion} with error: {e}")
@@ -713,6 +724,13 @@ def run(config: Config) -> None:  # noqa: C901
                 msg = "Diamond database URL must be provided for diamond segment classification"
                 raise ValueError(msg)
             download_diamond_db(config, dataset_dir + "/diamond/diamond.dmnd")
+        if FileCategory.RAW_READS in config.submission_file_categories:
+            # TODO: Should we host this ourselves somewhere instead of fetching from external?
+            index_path = os.path.join(dataset_dir, DEACON_INDEX)
+            if not run_deacon_fetch(index_path):
+                msg = "Failed to fetch Deacon index"
+                raise RuntimeError(msg)
+
         total_processed = 0
         etag = None
         last_force_refresh = time.time()

@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 from requests import HTTPError
 
 from loculus_preprocessing.backend import download_file
-from loculus_preprocessing.config import Config
+from loculus_preprocessing.config import DEACON_INDEX, Config
 from loculus_preprocessing.datatypes import (
     AnnotationSourceType,
     DeaconSummary,
@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 def process_submitted_files(
     config: Config,
+    dataset_dir: str,
     file_mapping: dict[FileCategory, list[FileIdAndNameAndReadUrl]],
 ) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
     errors: list[ProcessingAnnotation] = []
@@ -31,7 +32,9 @@ def process_submitted_files(
             continue
         match category:
             case FileCategory.RAW_READS:
-                rr_errors, rr_warnings = validate_raw_reads_submission(config, files, 0.05)
+                rr_errors, rr_warnings = validate_raw_reads_submission(
+                    config, dataset_dir, files, 0.05
+                )
                 errors.extend(rr_errors)
                 warnings.extend(rr_warnings)
             case _:
@@ -52,6 +55,7 @@ def process_submitted_files(
 
 def validate_raw_reads_submission(
     config: Config,
+    dataset_dir: str,
     files: list[FileIdAndNameAndReadUrl],
     max_host_proportion: float,
 ) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
@@ -85,28 +89,33 @@ def validate_raw_reads_submission(
                 )
             )
 
+    deacon_index = os.path.join(dataset_dir, DEACON_INDEX)
     with TemporaryDirectory() as tmp_dir:
-        index_path = os.path.join(tmp_dir, "panhuman-1.k31w15.idx")
-        if not run_deacon_fetch(index_path):
-            return errors, warnings
-
         for file in files:
             if (url := file.url) is None:
-                message = f"Cannot download file '{file.name}': preprocessing did not receive a URL"
+                message = f"No URL for file '{file.name}' with id '{file.fileId}'"
                 errors.append(
                     ProcessingAnnotation.from_single(
                         name=file.name, type=AnnotationSourceType.FILE, message=message
                     )
                 )
                 continue
-            file_name_internal = os.path.join(tmp_dir, file.fileId)
+
+            file_name_internal = os.path.join(tmp_dir, f"{file.fileId}-{file.name}")
             try:
                 download_file(config, url, file_name_internal)
             except HTTPError as e:
-                logger.error(f"Error downloading file '{file.name}' from S3: {e}")
+                message = f"Error downloading file '{file.name}' from S3: {e}"
+                logger.error(message)
+                errors.append(
+                    ProcessingAnnotation.from_single(
+                        name=file.name, type=AnnotationSourceType.FILE, message=message
+                    )
+                )
                 continue
+
             summary_json_path = os.path.join(tmp_dir, f"{file.fileId}_summary.json")
-            deacon_summary = run_deacon_filter(index_path, file_name_internal, summary_json_path)
+            deacon_summary = run_deacon_filter(deacon_index, file_name_internal, summary_json_path)
             if deacon_summary.seqs_removed_proportion > max_host_proportion:
                 message = (
                     f"File {file.name} (id: {file.fileId}) had a host reads proportion of "
@@ -124,24 +133,25 @@ def validate_raw_reads_submission(
 
 def run_deacon_fetch(index_path: str) -> bool:
     args = ["deacon", "index", "fetch", "--output", index_path, "panhuman-1"]
-    exit_code = subprocess.run(args, check=False, stderr=subprocess.DEVNULL).returncode  # noqa: S603
+    logger.debug(f"Running Deacon fetch: {args}")
+
+    exit_code = subprocess.run(args, check=False).returncode  # noqa: S603
     if exit_code != 0:
-        msg = f"deacon fetch failed with exit code {exit_code}"
-        logger.error(msg)
+        message = f"Deacon fetch failed with exit code {exit_code}"
+        logger.error(message)
         return False
     return True
 
 
 def run_deacon_filter(index: str, input_file: str, summary_json: str) -> DeaconSummary:
     args = ["deacon", "filter", "--threads", "1", "--summary", summary_json, index, input_file]
-
-    logger.debug(f"Checking for host sequences in raw read file {input_file}: {' '.join(args)}")
+    logger.debug(f"Running Deacon filter on '{input_file}': {args}")
 
     exit_code = subprocess.run(  # noqa: S603
         args, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
     ).returncode
     if exit_code != 0:
-        msg = f"deacon filter failed with exit code {exit_code}"
-        raise Exception(msg)
-
+        message = f"Deacon filter failed with exit code {exit_code}"
+        logger.error(message)
+        raise Exception(message)
     return DeaconSummary.from_json(summary_json)

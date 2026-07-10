@@ -27,6 +27,7 @@ METADATA_DEPENDENCY_PREFIX = "processed."
 NEXTCLADE_PREFIX = "nextclade."
 ASSIGNED_REFERENCE_PREFIX = "ASSIGNED_REFERENCE"
 INTERNAL_INPUT_PREFIXES = (NEXTCLADE_PREFIX, ASSIGNED_REFERENCE_PREFIX)
+DEACON_INDEX = "panhuman-1.k31w15.idx"
 
 
 class EmblInfoMetadataPropertyNames(BaseModel):
@@ -120,6 +121,7 @@ class Config(BaseModel):
     minimizer_url: str | None = None
     diamond_dmnd_url: str | None = None
 
+    submission_file_categories: list[str] = Field(default_factory=list)
     create_embl_file: bool = False
     scientific_name: str = "Orthonairovirus haemorrhagiae"
     molecule_type: MoleculeType = MoleculeType.GENOMIC_RNA
