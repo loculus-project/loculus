@@ -87,21 +87,16 @@ class ReleaseConfirmationEmailService(
             "",
         )
 
-        content.organisms
-            .sortedBy { it.organism }
-            .forEach { organismSummary ->
-                lines += organismSummary.organism
-                val displayedAccessions = organismSummary.accessionVersions
-                    .sortedWith(compareBy({ it.accession }, { it.version }))
-                    .take(MAX_ACCESSIONS_IN_EMAIL)
-                displayedAccessions.forEach { lines += "- ${it.accession}.${it.version}" }
-                val omittedCount = organismSummary.count - displayedAccessions.size.toLong()
-                if (omittedCount > 0) {
-                    lines += "- …and $omittedCount more"
-                }
-                lines += "${backendConfig.websiteUrl}/${organismSummary.organism}/submission/$groupId/released"
-                lines += ""
+        content.organisms.forEach { organismSummary ->
+            lines += organismSummary.organism
+            organismSummary.accessionVersions.forEach { lines += "- ${it.accession}.${it.version}" }
+            val omittedCount = organismSummary.count - organismSummary.accessionVersions.size.toLong()
+            if (omittedCount > 0) {
+                lines += "- …and $omittedCount more"
             }
+            lines += "${backendConfig.websiteUrl}/${organismSummary.organism}/submission/$groupId/released"
+            lines += ""
+        }
 
         lines += if (copiedToGroup) {
             "This message was sent to the user who approved the release and copied to the group's contact email."
@@ -119,9 +114,5 @@ class ReleaseConfirmationEmailService(
                 InternetAddress.parse(value, true).single().validate()
             }.isSuccess,
         ) { "Release-confirmation email $propertyName address is invalid" }
-    }
-
-    private companion object {
-        const val MAX_ACCESSIONS_IN_EMAIL = 100
     }
 }
