@@ -688,42 +688,27 @@ class SubmissionDatabaseService(
 
         val organismCondition = SequenceEntriesView.organismIs(organism)
 
-        val accessionVersionsByGroup = SequenceEntriesView
-            .select(
-                SequenceEntriesView.accessionColumn,
-                SequenceEntriesView.versionColumn,
-                SequenceEntriesView.groupIdColumn,
-            )
+        val accessionVersionsToUpdate = SequenceEntriesView
+            .select(SequenceEntriesView.accessionColumn, SequenceEntriesView.versionColumn)
             .where {
                 statusCondition and accessionCondition and scopeCondition and groupCondition and
                     organismCondition and submitterCondition
             }
-            .groupBy(
-                keySelector = { it[SequenceEntriesView.groupIdColumn] },
-                valueTransform = {
-                    AccessionVersion(
-                        it[SequenceEntriesView.accessionColumn],
-                        it[SequenceEntriesView.versionColumn],
-                    )
-                },
-            )
+            .map { AccessionVersion(it[SequenceEntriesView.accessionColumn], it[SequenceEntriesView.versionColumn]) }
 
-        if (accessionVersionsByGroup.isEmpty()) {
+        if (accessionVersionsToUpdate.isEmpty()) {
             return emptyList()
         }
 
-        val accessionVersionsToUpdate = accessionVersionsByGroup.values.flatten()
         val now = dateProvider.getCurrentDateTime()
-        for (accessionVersions in accessionVersionsByGroup.toSortedMap().values) {
-            for (accessionVersionsChunk in accessionVersions.chunked(1000)) {
-                SequenceEntriesTable.update(
-                    where = {
-                        SequenceEntriesTable.accessionVersionIsIn(accessionVersionsChunk)
-                    },
-                ) {
-                    it[releasedAtTimestampColumn] = now
-                    it[approverColumn] = authenticatedUser.username
-                }
+        for (accessionVersionsChunk in accessionVersionsToUpdate.chunked(1000)) {
+            SequenceEntriesTable.update(
+                where = {
+                    SequenceEntriesTable.accessionVersionIsIn(accessionVersionsChunk)
+                },
+            ) {
+                it[releasedAtTimestampColumn] = now
+                it[approverColumn] = authenticatedUser.username
             }
         }
 
