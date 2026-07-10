@@ -122,6 +122,8 @@ process_response_text = Path("test/data/get_ena_analysis_process_response.json")
     encoding="utf-8"
 )
 
+EMBL_FLATFILE: Final = "test/data/test_flatfile_with_apostrophe.embl"
+
 
 # Test sample
 with open("test/data/approved_ena_submission_list_test.json", encoding="utf-8") as f:
@@ -301,7 +303,7 @@ class AssemblyCreationTests(unittest.TestCase):
         with gzip.open(flatfile_path, "rt", encoding="utf-8") as f:
             generated_content = f.read()
 
-        expected_flatfile_path = Path("test/test_flatfile_with_apostrophe.embl")
+        expected_flatfile_path = Path(EMBL_FLATFILE)
         expected_content = Path(expected_flatfile_path).read_text(encoding="utf-8")
 
         self.assertEqual(generated_content, expected_content)

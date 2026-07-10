@@ -43,3 +43,4 @@ addopts = [
     # Remove --showlocals to avoid the massive variable output
 ]
 testpaths = ["test"]
+pythonpath = ["scripts"]
