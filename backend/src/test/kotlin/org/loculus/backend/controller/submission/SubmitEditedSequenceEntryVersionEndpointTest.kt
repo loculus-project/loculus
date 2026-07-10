@@ -328,6 +328,34 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     }
 
     @Test
+    fun `WHEN submitting edited data with a file owned by the same group THEN it succeeds`() {
+        // Submission and files owned by group
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+        val accessionVersion = AccessionVersion(
+            convenienceClient.prepareDataTo(Status.PROCESSED, groupId = groupId).first().accession,
+            1,
+        )
+        val fileIdAndUrl = filesClient.requestUploads(groupId = groupId).andGetFileIdsAndUrls()[0]
+        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT, fileIdAndUrl.headers)
+
+        val editedData = EditedSequenceEntryData(
+            accession = accessionVersion.accession,
+            version = accessionVersion.version,
+            data = SubmittedData(
+                metadata = emptyMap(),
+                unalignedNucleotideSequences = emptyMap(),
+                files = mapOf("myFileCategory" to listOf(FileIdAndName(fileIdAndUrl.fileId, "foo.txt"))),
+            ),
+        )
+
+        client.submitEditedSequenceEntryVersion(editedData)
+            .andExpect(status().isNoContent)
+
+        convenienceClient.getSequenceEntry(accession = accessionVersion.accession, version = accessionVersion.version)
+            .assertStatusIs(Status.RECEIVED)
+    }
+
+    @Test
     fun `WHEN submitting a file ID owned by another group THEN an error is returned`() {
         // Submission owned by group
         val groupId = groupManagementClient.createNewGroup().andGetGroupId()
