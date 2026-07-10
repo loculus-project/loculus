@@ -248,6 +248,7 @@ def upload_embl_file_to_presigned_url(
         raise RuntimeError(msg)
 
 
+# TODO: Stream data instead of loading all at once with write_bytes
 def download_file(config: Config, url: str, save_path: str) -> None:
     response = requests.get(url, timeout=config.backend_request_timeout_seconds)
     response.raise_for_status()
