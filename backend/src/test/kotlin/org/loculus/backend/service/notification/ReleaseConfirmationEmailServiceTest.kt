@@ -6,11 +6,11 @@ import io.mockk.mockk
 import jakarta.mail.Message
 import jakarta.mail.Session
 import jakarta.mail.internet.MimeMessage
-import kotlinx.datetime.LocalDateTime
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.equalTo
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.config.BackendConfig
 import org.springframework.mail.javamail.JavaMailSender
@@ -32,17 +32,21 @@ class ReleaseConfirmationEmailServiceTest {
         every { mailSender.createMimeMessage() } returns message
         justRun { mailSender.send(message) }
         every { backendConfig.websiteUrl } returns "https://loculus.example"
-        val notifications = listOf(notification("LOC_1"), notification("LOC_2"))
+        val content = content("LOC_1", "LOC_2")
 
         service.sendReleaseConfirmation(
             recipientEmail = "approver@example.com",
             ccEmail = "group@example.com",
-            notifications = notifications,
+            approver = "approver",
+            groupId = 1,
+            content = content,
             messageId = "<message@loculus>",
         )
 
         assertThat(message.getRecipients(Message.RecipientType.TO).single().toString(), equalTo("approver@example.com"))
         assertThat(message.getRecipients(Message.RecipientType.CC).single().toString(), equalTo("group@example.com"))
+        assertThat(message.from.single().toString(), equalTo("noreply@loculus.org"))
+        assertThat(message.replyTo.single().toString(), equalTo("support@loculus.org"))
         assertThat(message.subject, equalTo("Loculus: 2 sequences released for Test group"))
         assertThat(message.content.toString(), containsString("LOC_1.1"))
         assertThat(message.content.toString(), containsString("LOC_2.1"))
@@ -51,10 +55,14 @@ class ReleaseConfirmationEmailServiceTest {
             containsString("https://loculus.example/test-organism/submission/1/released"),
         )
         assertThat(message.getHeader("Message-ID").single(), equalTo("<message@loculus>"))
+        assertThat(
+            message.content.toString(),
+            containsString("and copied to the group's contact email"),
+        )
     }
 
     @Test
-    fun `does not copy the group when it has the approver email`() {
+    fun `describes the actual delivery when the group is not copied`() {
         val message = MimeMessage(Session.getInstance(Properties()))
         every { mailSender.createMimeMessage() } returns message
         justRun { mailSender.send(message) }
@@ -62,21 +70,45 @@ class ReleaseConfirmationEmailServiceTest {
 
         service.sendReleaseConfirmation(
             recipientEmail = "same@example.com",
-            ccEmail = "SAME@example.com",
-            notifications = listOf(notification("LOC_1")),
+            ccEmail = null,
+            approver = "approver",
+            groupId = 1,
+            content = content("LOC_1"),
             messageId = "<message@loculus>",
         )
 
         assertThat(message.getRecipients(Message.RecipientType.CC), equalTo(null))
+        assertThat(
+            message.content.toString(),
+            containsString("This message was sent to the user who approved the release."),
+        )
     }
 
-    private fun notification(accession: String) = PendingReleaseNotification(
-        accessionVersion = AccessionVersion(accession, 1),
-        organism = "test-organism",
-        groupId = 1,
+    @Test
+    fun `rejects invalid configured sender and reply-to addresses`() {
+        assertThrows<IllegalArgumentException> {
+            ReleaseConfirmationEmailService(mailSender, backendConfig, from = "", replyTo = "")
+        }
+        assertThrows<IllegalArgumentException> {
+            ReleaseConfirmationEmailService(
+                mailSender,
+                backendConfig,
+                from = "noreply@loculus.org",
+                replyTo = "not-an-email",
+            )
+        }
+    }
+
+    private fun content(vararg accessions: String) = ReleaseNotificationContent(
         groupName = "Test group",
         groupContactEmail = "group@example.com",
-        approver = "approver",
-        releasedAt = LocalDateTime(2026, 7, 10, 12, 0),
+        totalCount = accessions.size.toLong(),
+        organisms = listOf(
+            ReleaseNotificationOrganismSummary(
+                organism = "test-organism",
+                count = accessions.size.toLong(),
+                accessionVersions = accessions.map { AccessionVersion(it, 1) },
+            ),
+        ),
     )
 }

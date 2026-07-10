@@ -87,6 +87,7 @@ import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GroupEntity
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
+import org.loculus.backend.service.notification.ReleaseNotificationDatabaseService
 import org.loculus.backend.service.submission.SequenceEntriesTable.accessionColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.groupIdColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.versionColumn
@@ -124,7 +125,10 @@ class SubmissionDatabaseService(
     private val processedDataPostprocessor: ProcessedDataPostprocessor,
     private val auditLogger: AuditLogger,
     private val dateProvider: DateProvider,
+    private val releaseNotificationDatabaseService: ReleaseNotificationDatabaseService,
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
+    @Value("\${${BackendSpringProperty.RELEASE_CONFIRMATION_EMAILS_ENABLED}}")
+    private val releaseConfirmationEmailsEnabled: Boolean,
 ) {
     private var lastPreprocessedDataUpdate: String? = null
 
@@ -684,28 +688,51 @@ class SubmissionDatabaseService(
 
         val organismCondition = SequenceEntriesView.organismIs(organism)
 
-        val accessionVersionsToUpdate = SequenceEntriesView
-            .select(SequenceEntriesView.accessionColumn, SequenceEntriesView.versionColumn)
+        val accessionVersionsByGroup = SequenceEntriesView
+            .select(
+                SequenceEntriesView.accessionColumn,
+                SequenceEntriesView.versionColumn,
+                SequenceEntriesView.groupIdColumn,
+            )
             .where {
                 statusCondition and accessionCondition and scopeCondition and groupCondition and
                     organismCondition and submitterCondition
             }
-            .map { AccessionVersion(it[SequenceEntriesView.accessionColumn], it[SequenceEntriesView.versionColumn]) }
+            .groupBy(
+                keySelector = { it[SequenceEntriesView.groupIdColumn] },
+                valueTransform = {
+                    AccessionVersion(
+                        it[SequenceEntriesView.accessionColumn],
+                        it[SequenceEntriesView.versionColumn],
+                    )
+                },
+            )
 
-        if (accessionVersionsToUpdate.isEmpty()) {
+        if (accessionVersionsByGroup.isEmpty()) {
             return emptyList()
         }
 
+        val accessionVersionsToUpdate = accessionVersionsByGroup.values.flatten()
         val now = dateProvider.getCurrentDateTime()
-        for (accessionVersionsChunk in accessionVersionsToUpdate.chunked(1000)) {
-            SequenceEntriesTable.update(
-                where = {
-                    SequenceEntriesTable.accessionVersionIsIn(accessionVersionsChunk)
-                },
-            ) {
-                it[releasedAtTimestampColumn] = now
-                it[approverColumn] = authenticatedUser.username
+        for (accessionVersions in accessionVersionsByGroup.toSortedMap().values) {
+            for (accessionVersionsChunk in accessionVersions.chunked(1000)) {
+                SequenceEntriesTable.update(
+                    where = {
+                        SequenceEntriesTable.accessionVersionIsIn(accessionVersionsChunk)
+                    },
+                ) {
+                    it[releasedAtTimestampColumn] = now
+                    it[approverColumn] = authenticatedUser.username
+                }
             }
+        }
+
+        if (releaseConfirmationEmailsEnabled) {
+            releaseNotificationDatabaseService.enqueueReleaseNotifications(
+                approver = authenticatedUser.username,
+                organism = organism.name,
+                accessionVersionsByGroup = accessionVersionsByGroup,
+            )
         }
 
         val filesToPublish = this.selectFilesToPublishForAccessionVersions(accessionVersionsToUpdate)

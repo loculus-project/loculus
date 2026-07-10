@@ -73,16 +73,16 @@ spec:
             - "--loculus.release-confirmation-emails.enabled={{ $.Values.releaseConfirmationEmails.enabled }}"
             - "--loculus.release-confirmation-emails.run-every-seconds={{ $.Values.releaseConfirmationEmails.runEverySeconds }}"
             {{- if $.Values.releaseConfirmationEmails.enabled }}
-            - "--loculus.release-confirmation-emails.from={{ $.Values.auth.smtp.from }}"
-            - "--loculus.release-confirmation-emails.reply-to={{ $.Values.auth.smtp.replyTo }}"
-            - "--spring.mail.host={{ $.Values.auth.smtp.host }}"
-            - "--spring.mail.port={{ $.Values.auth.smtp.port }}"
-            - "--spring.mail.username={{ $.Values.auth.smtp.user }}"
-            - "--spring.mail.password=$(SMTP_PASSWORD)"
+            {{- $smtp := required "releaseConfirmationEmails.enabled requires auth.smtp to be configured" $.Values.auth.smtp }}
+            - "--loculus.release-confirmation-emails.from={{ required "releaseConfirmationEmails.enabled requires auth.smtp.from" $smtp.from }}"
+            - "--loculus.release-confirmation-emails.reply-to={{ $smtp.replyTo | default "" }}"
+            - "--spring.mail.host={{ required "releaseConfirmationEmails.enabled requires auth.smtp.host" $smtp.host }}"
+            - "--spring.mail.port={{ required "releaseConfirmationEmails.enabled requires auth.smtp.port" $smtp.port }}"
+            - "--spring.mail.username={{ required "releaseConfirmationEmails.enabled requires auth.smtp.user" $smtp.user }}"
             - "--spring.mail.properties.mail.smtp.auth=true"
             - "--spring.mail.properties.mail.smtp.starttls.enable=true"
             - "--spring.mail.properties.mail.smtp.starttls.required=true"
-            - "--spring.mail.properties.mail.smtp.from={{ $.Values.auth.smtp.envelopeFrom }}"
+            - "--spring.mail.properties.mail.smtp.from={{ required "releaseConfirmationEmails.enabled requires auth.smtp.envelopeFrom" $smtp.envelopeFrom }}"
             {{- end }}
             - "--loculus.s3.enabled=$(S3_ENABLED)"
             {{- if $.Values.s3.enabled }}
@@ -133,7 +133,7 @@ spec:
                   name: service-accounts
                   key: backendUserPassword
             {{- if $.Values.releaseConfirmationEmails.enabled }}
-            - name: SMTP_PASSWORD
+            - name: SPRING_MAIL_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: smtp-password

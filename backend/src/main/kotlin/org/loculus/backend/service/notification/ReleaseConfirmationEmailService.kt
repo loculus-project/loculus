@@ -1,5 +1,6 @@
 package org.loculus.backend.service.notification
 
+import jakarta.mail.internet.InternetAddress
 import jakarta.mail.internet.MimeMessage
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BackendSpringProperty
@@ -22,74 +23,102 @@ class ReleaseConfirmationEmailService(
     @Value("\${${BackendSpringProperty.RELEASE_CONFIRMATION_EMAILS_FROM}}") private val from: String,
     @Value("\${${BackendSpringProperty.RELEASE_CONFIRMATION_EMAILS_REPLY_TO}}") private val replyTo: String,
 ) {
+    init {
+        validateConfiguredAddress("from", from, required = true)
+        validateConfiguredAddress("reply-to", replyTo, required = false)
+    }
+
     fun sendReleaseConfirmation(
         recipientEmail: String,
-        ccEmail: String,
-        notifications: List<PendingReleaseNotification>,
+        ccEmail: String?,
+        approver: String,
+        groupId: Int,
+        content: ReleaseNotificationContent,
         messageId: String,
     ) {
-        require(notifications.isNotEmpty()) { "Cannot send an empty release confirmation" }
+        require(content.totalCount > 0) { "Cannot send an empty release confirmation" }
 
         val message = mailSender.createMimeMessage()
-        populateMessage(message, recipientEmail, ccEmail, notifications, messageId)
+        populateMessage(message, recipientEmail, ccEmail, approver, groupId, content, messageId)
         mailSender.send(message)
     }
 
     private fun populateMessage(
         message: MimeMessage,
         recipientEmail: String,
-        ccEmail: String,
-        notifications: List<PendingReleaseNotification>,
+        ccEmail: String?,
+        approver: String,
+        groupId: Int,
+        content: ReleaseNotificationContent,
         messageId: String,
     ) {
         val helper = MimeMessageHelper(message, false, StandardCharsets.UTF_8.name())
         helper.setFrom(from)
         helper.setTo(recipientEmail)
-        if (!recipientEmail.equals(ccEmail, ignoreCase = true)) {
+        if (ccEmail != null) {
             helper.setCc(ccEmail)
         }
         if (replyTo.isNotBlank()) {
             helper.setReplyTo(replyTo)
         }
-        helper.setSubject(buildSubject(notifications))
-        helper.setText(buildBody(notifications), false)
+        helper.setSubject(buildSubject(content))
+        helper.setText(buildBody(approver, groupId, content, copiedToGroup = ccEmail != null), false)
         message.setHeader("Message-ID", messageId)
     }
 
-    private fun buildSubject(notifications: List<PendingReleaseNotification>): String {
-        val count = notifications.size
-        val sequenceWord = if (count == 1) "sequence" else "sequences"
-        return "Loculus: $count $sequenceWord released for ${notifications.first().groupName}"
+    private fun buildSubject(content: ReleaseNotificationContent): String {
+        val count = content.totalCount
+        val sequenceWord = if (count == 1L) "sequence" else "sequences"
+        return "Loculus: $count $sequenceWord released for ${content.groupName}"
     }
 
-    private fun buildBody(notifications: List<PendingReleaseNotification>): String {
-        val count = notifications.size
-        val sequenceWord = if (count == 1) "sequence was" else "sequences were"
+    private fun buildBody(
+        approver: String,
+        groupId: Int,
+        content: ReleaseNotificationContent,
+        copiedToGroup: Boolean,
+    ): String {
+        val count = content.totalCount
+        val sequenceWord = if (count == 1L) "sequence was" else "sequences were"
         val lines = mutableListOf(
-            "Hello ${notifications.first().approver},",
+            "Hello $approver,",
             "",
-            "$count $sequenceWord successfully released for ${notifications.first().groupName}.",
+            "$count $sequenceWord successfully released for ${content.groupName}.",
             "",
         )
 
-        notifications
-            .groupBy { it.organism }
-            .toSortedMap()
-            .forEach { (organism, organismNotifications) ->
-                lines += organism
-                organismNotifications
-                    .sortedWith(compareBy({ it.accessionVersion.accession }, { it.accessionVersion.version }))
+        content.organisms
+            .sortedBy { it.organism }
+            .forEach { organismSummary ->
+                lines += organismSummary.organism
+                val displayedAccessions = organismSummary.accessionVersions
+                    .sortedWith(compareBy({ it.accession }, { it.version }))
                     .take(MAX_ACCESSIONS_IN_EMAIL)
-                    .forEach { lines += "- ${it.accessionVersion.accession}.${it.accessionVersion.version}" }
-                if (organismNotifications.size > MAX_ACCESSIONS_IN_EMAIL) {
-                    lines += "- …and ${organismNotifications.size - MAX_ACCESSIONS_IN_EMAIL} more"
+                displayedAccessions.forEach { lines += "- ${it.accession}.${it.version}" }
+                val omittedCount = organismSummary.count - displayedAccessions.size.toLong()
+                if (omittedCount > 0) {
+                    lines += "- …and $omittedCount more"
                 }
-                lines += "${backendConfig.websiteUrl}/$organism/submission/${notifications.first().groupId}/released"
+                lines += "${backendConfig.websiteUrl}/${organismSummary.organism}/submission/$groupId/released"
                 lines += ""
             }
 
-        lines += "This message was sent to the user who approved the release and copied to the group's contact email."
+        lines += if (copiedToGroup) {
+            "This message was sent to the user who approved the release and copied to the group's contact email."
+        } else {
+            "This message was sent to the user who approved the release."
+        }
         return lines.joinToString("\n")
+    }
+
+    private fun validateConfiguredAddress(propertyName: String, value: String, required: Boolean) {
+        if (!required && value.isBlank()) return
+        require(value.isNotBlank()) { "Release-confirmation email $propertyName address must not be blank" }
+        require(
+            runCatching {
+                InternetAddress.parse(value, true).single().validate()
+            }.isSuccess,
+        ) { "Release-confirmation email $propertyName address is invalid" }
     }
 
     private companion object {

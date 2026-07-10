@@ -5,7 +5,7 @@
 \restrict dummy
 
 -- Dumped from database version 15.18 (Debian 15.18-1.pgdg13+1)
--- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
+-- Dumped by pg_dump version 16.14 (Ubuntu 16.14-0ubuntu0.24.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -424,23 +424,20 @@ CREATE TABLE public.metadata_upload_aux_table (
 ALTER TABLE public.metadata_upload_aux_table OWNER TO postgres;
 
 --
--- Name: sent_notifications; Type: TABLE; Schema: public; Owner: postgres
+-- Name: pending_release_notifications; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.sent_notifications (
-    notification_type character varying(64) NOT NULL,
+CREATE TABLE public.pending_release_notifications (
     accession text NOT NULL,
     version bigint NOT NULL,
+    organism text NOT NULL,
+    approver text NOT NULL,
     group_id integer NOT NULL,
-    recipient_username text NOT NULL,
-    recipient_email text NOT NULL,
-    cc_email text NOT NULL,
-    message_id text NOT NULL,
-    sent_at timestamp without time zone NOT NULL
+    enqueued_at timestamp without time zone DEFAULT timezone('UTC'::text, CURRENT_TIMESTAMP) NOT NULL
 );
 
 
-ALTER TABLE public.sent_notifications OWNER TO postgres;
+ALTER TABLE public.pending_release_notifications OWNER TO postgres;
 
 --
 -- Name: seqset_citation_source; Type: TABLE; Schema: public; Owner: postgres
@@ -887,11 +884,11 @@ ALTER TABLE ONLY public.metadata_upload_aux_table
 
 
 --
--- Name: sent_notifications sent_notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: pending_release_notifications pending_release_notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.sent_notifications
-    ADD CONSTRAINT sent_notifications_pkey PRIMARY KEY (notification_type, accession, version);
+ALTER TABLE ONLY public.pending_release_notifications
+    ADD CONSTRAINT pending_release_notifications_pkey PRIMARY KEY (accession, version);
 
 
 --
@@ -1020,10 +1017,17 @@ CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING b
 
 
 --
--- Name: sent_notifications_message_id_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: pending_release_notifications_group_id_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX sent_notifications_message_id_idx ON public.sent_notifications USING btree (message_id);
+CREATE INDEX pending_release_notifications_group_id_idx ON public.pending_release_notifications USING btree (group_id);
+
+
+--
+-- Name: pending_release_notifications_grouped_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX pending_release_notifications_grouped_idx ON public.pending_release_notifications USING btree (approver, group_id, enqueued_at, organism, accession, version);
 
 
 --
@@ -1242,11 +1246,19 @@ ALTER TABLE ONLY public.seqset_to_records
 
 
 --
--- Name: sent_notifications sent_notifications_accession_version_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: pending_release_notifications pending_release_notifications_accession_version_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.sent_notifications
-    ADD CONSTRAINT sent_notifications_accession_version_fkey FOREIGN KEY (accession, version) REFERENCES public.sequence_entries(accession, version) ON DELETE CASCADE;
+ALTER TABLE ONLY public.pending_release_notifications
+    ADD CONSTRAINT pending_release_notifications_accession_version_fkey FOREIGN KEY (accession, version) REFERENCES public.sequence_entries(accession, version) ON DELETE CASCADE;
+
+
+--
+-- Name: pending_release_notifications pending_release_notifications_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pending_release_notifications
+    ADD CONSTRAINT pending_release_notifications_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.groups_table(group_id);
 
 
 --
