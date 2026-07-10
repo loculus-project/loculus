@@ -758,7 +758,6 @@ class TestSimpleSubmission(TestSubmission):
         multi_segment_submission(
             self.db_engine, self.config, mock_get_group_info, mock_submit_external_metadata
         )
-        assert True == False, "Test failed"
 
 
 class TestSingleSegmentOfMultiSegmentOrganismWithoutGCA(TestSubmission):
