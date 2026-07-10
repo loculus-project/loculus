@@ -102,29 +102,29 @@ MOCK_CONFIG: Final = mock_config()
 
 
 # Example XMLs
-test_project_xml_response = Path("test/test_project_response.xml").read_text(encoding="utf-8")
-text_project_xml_request = Path("test/text_project_request.xml").read_text(encoding="utf-8")
+test_project_xml_response = Path("test/data/test_project_response.xml").read_text(encoding="utf-8")
+text_project_xml_request = Path("test/data/project_request.xml").read_text(encoding="utf-8")
 test_project_xml_failure_response = (
     '<RECEIPT receiptDate="2017-05-09T16:58:08.634+01:00" submissionFile="submission.xml"'
     ' success="false">'
     "\n</RECEIPT>"
 )
 
-test_sample_xml_request = Path("test/test_sample_request.xml").read_text(encoding="utf-8")
-test_sample_xml_request_gisaid = Path("test/test_sample_request_gisaid.xml").read_text(
+test_sample_xml_request = Path("test/data/test_sample_request.xml").read_text(encoding="utf-8")
+test_sample_xml_request_gisaid = Path("test/data/test_sample_request_gisaid.xml").read_text(
     encoding="utf-8"
 )
-test_sample_xml_response = Path("test/test_sample_response.xml").read_text(encoding="utf-8")
-revision_submission_xml_request = Path("test/test_revision_submission_request.xml").read_text(
+test_sample_xml_response = Path("test/data/test_sample_response.xml").read_text(encoding="utf-8")
+revision_submission_xml_request = Path("test/data/test_revision_submission_request.xml").read_text(
     encoding="utf-8"
 )
-process_response_text = Path("test/get_ena_analysis_process_response.json").read_text(
+process_response_text = Path("test/data/get_ena_analysis_process_response.json").read_text(
     encoding="utf-8"
 )
 
 
 # Test sample
-with open("test/approved_ena_submission_list_test.json", encoding="utf-8") as f:
+with open("test/data/approved_ena_submission_list_test.json", encoding="utf-8") as f:
     loculus_sample: dict = json.load(f)
 
 
