@@ -10,9 +10,9 @@ import orjsonl
 from deepdiff import DeepDiff
 
 CONFIG_FILE = "./test/test_config.yaml"
-GET_RELEASED_ENTRIES_PATH = "./test/get-released-data.ndjson"
+GET_RELEASED_ENTRIES_PATH = "./test/data/get-released-data.ndjson"
 
-APPROVED_RELEASED_DATA_PATH = "./test/approved_ena_submission_list_test.json"
+APPROVED_RELEASED_DATA_PATH = "./test/data/approved_ena_submission_list_test.json"
 
 
 def json_diff(path_a, path_b):
