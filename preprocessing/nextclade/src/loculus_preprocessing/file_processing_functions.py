@@ -1,6 +1,6 @@
 import logging
 import os
-import subprocess
+import subprocess  # noqa: S404
 from tempfile import TemporaryDirectory
 
 from requests import HTTPError
@@ -33,7 +33,10 @@ def process_submitted_files(
         match category:
             case FileCategory.RAW_READS:
                 rr_errors, rr_warnings = validate_raw_reads_submission(
-                    config, dataset_dir, files, 0.05
+                    config,
+                    dataset_dir,
+                    files,
+                    0.05,  # TODO: make configurable
                 )
                 errors.extend(rr_errors)
                 warnings.extend(rr_warnings)
