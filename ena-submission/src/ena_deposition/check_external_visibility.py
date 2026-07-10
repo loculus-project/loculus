@@ -73,63 +73,10 @@ class ENAVisibilityChecker(VisibilityChecker):
         return None
 
 
-GcaCacheKey = tuple[str] | tuple[str, str] | tuple[str, str, str]
-
-gca_cache: dict[GcaCacheKey, bool] = {}
-
-
-def _check_and_cache_ncbi_gca(config: Config, path_segments: GcaCacheKey) -> bool:
-    """
-    Helper function to check NCBI for a GCA accession part and cache the result.
-    Returns True if found and caches True, False if not found and caches False.
-    """
-    cache_key = path_segments
-
-    if cache_key in gca_cache:
-        return gca_cache[cache_key]
-
-    url_path = "/".join(path_segments)
-    response = requests.get(
-        f"https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/{url_path}/",
-        allow_redirects=False,
-        timeout=config.ncbi_public_search_timeout_seconds,
-    )
-
-    if response.status_code == HTTPStatus.OK:
-        gca_cache[cache_key] = True
-        return True
-    gca_cache[cache_key] = False
-    return False
-
-
-def check_gca_cached(config: "Config", accession: str) -> datetime | None:
-    """
-    Checks if a GCA accession exists on NCBI by querying NCBI's API, with caching.
-    It attempts to validate parts of the accession from longest to shortest.
-    """
-    _prefix, numbers = accession.split("_")
-    first_three = numbers[:3]
-    second_three = numbers[3:6]
-    third_three = numbers[6:9]
-
-    if not _check_and_cache_ncbi_gca(config, (first_three,)):
-        return None
-
-    if not _check_and_cache_ncbi_gca(config, (first_three, second_three)):
-        return None
-
-    if not _check_and_cache_ncbi_gca(config, (first_three, second_three, third_three)):
-        return None
-
-    return datetime.now(pytz.UTC)
-
-
 class NCBIVisibilityChecker(VisibilityChecker):
     """Checker for NCBI visibility"""
 
     def check_visibility(self, config: Config, accession: str) -> datetime | None:
-        if accession.startswith("GCA"):
-            return check_gca_cached(config, accession)
 
         if accession.startswith("PRJ"):
             path = "bioproject"
@@ -192,12 +139,6 @@ COLUMN_CONFIGS = {
         visibility_column="ena_gca_first_publicly_visible",
         accession_field_name_prefix="gca_accession",
         checker_class=ENAVisibilityChecker,
-    ),
-    (EntityType.ASSEMBLY, "ncbi_gca_first_publicly_visible"): ColumnCheckConfig(
-        entry_class=AssemblyTableEntry,
-        visibility_column="ncbi_gca_first_publicly_visible",
-        accession_field_name_prefix="gca_accession",
-        checker_class=NCBIVisibilityChecker,
     ),
 }
 
@@ -347,8 +288,6 @@ def check_and_update_visibility(config: Config, stop_event: threading.Event):
 
         check_and_update_visibility_all_columns(config, db_engine)
         logger.debug("check_and_update_visibility finished, sleeping for a while")
-
-        gca_cache.clear()
 
         elapsed_time = time.time() - start_time
         if elapsed_time < 60 * config.min_between_publicness_checks:
