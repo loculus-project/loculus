@@ -1,7 +1,9 @@
 package org.loculus.backend.service.notification
 
 import com.ninjasquad.springmockk.MockkBean
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -12,6 +14,7 @@ import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
+import org.loculus.backend.service.submission.SequenceEntriesTable
 import org.springframework.beans.factory.annotation.Autowired
 
 @EndpointTest(
@@ -82,15 +85,31 @@ private data class QueuedReleaseNotification(
 )
 
 private fun readPendingReleaseNotifications(): List<QueuedReleaseNotification> = transaction {
-    PendingReleaseNotificationsTable.selectAll().map {
-        QueuedReleaseNotification(
-            accessionVersion = AccessionVersion(
-                it[PendingReleaseNotificationsTable.accessionColumn],
-                it[PendingReleaseNotificationsTable.versionColumn],
-            ),
-            organism = it[PendingReleaseNotificationsTable.organismColumn],
-            approver = it[PendingReleaseNotificationsTable.approverColumn],
-            groupId = it[PendingReleaseNotificationsTable.groupIdColumn],
+    PendingReleaseNotificationsTable
+        .join(
+            SequenceEntriesTable,
+            JoinType.INNER,
+            additionalConstraint = {
+                (PendingReleaseNotificationsTable.accessionColumn eq SequenceEntriesTable.accessionColumn) and
+                    (PendingReleaseNotificationsTable.versionColumn eq SequenceEntriesTable.versionColumn)
+            },
         )
-    }
+        .select(
+            PendingReleaseNotificationsTable.accessionColumn,
+            PendingReleaseNotificationsTable.versionColumn,
+            SequenceEntriesTable.organismColumn,
+            SequenceEntriesTable.approverColumn,
+            SequenceEntriesTable.groupIdColumn,
+        )
+        .map {
+            QueuedReleaseNotification(
+                accessionVersion = AccessionVersion(
+                    it[PendingReleaseNotificationsTable.accessionColumn],
+                    it[PendingReleaseNotificationsTable.versionColumn],
+                ),
+                organism = it[SequenceEntriesTable.organismColumn],
+                approver = it[SequenceEntriesTable.approverColumn],
+                groupId = it[SequenceEntriesTable.groupIdColumn],
+            )
+        }
 }

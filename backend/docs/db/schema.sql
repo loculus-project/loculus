@@ -430,9 +430,6 @@ ALTER TABLE public.metadata_upload_aux_table OWNER TO postgres;
 CREATE TABLE public.pending_release_notifications (
     accession text NOT NULL,
     version bigint NOT NULL,
-    organism text NOT NULL,
-    approver text NOT NULL,
-    group_id integer NOT NULL,
     enqueued_at timestamp without time zone DEFAULT timezone('UTC'::text, CURRENT_TIMESTAMP) NOT NULL
 );
 
@@ -1017,17 +1014,10 @@ CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING b
 
 
 --
--- Name: pending_release_notifications_group_id_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: pending_release_notifications_enqueued_at_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX pending_release_notifications_group_id_idx ON public.pending_release_notifications USING btree (group_id);
-
-
---
--- Name: pending_release_notifications_grouped_idx; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX pending_release_notifications_grouped_idx ON public.pending_release_notifications USING btree (approver, group_id, enqueued_at, organism, accession, version);
+CREATE INDEX pending_release_notifications_enqueued_at_idx ON public.pending_release_notifications USING btree (enqueued_at);
 
 
 --
@@ -1251,14 +1241,6 @@ ALTER TABLE ONLY public.seqset_to_records
 
 ALTER TABLE ONLY public.pending_release_notifications
     ADD CONSTRAINT pending_release_notifications_accession_version_fkey FOREIGN KEY (accession, version) REFERENCES public.sequence_entries(accession, version) ON DELETE CASCADE;
-
-
---
--- Name: pending_release_notifications pending_release_notifications_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.pending_release_notifications
-    ADD CONSTRAINT pending_release_notifications_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.groups_table(group_id);
 
 
 --

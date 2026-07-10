@@ -728,11 +728,7 @@ class SubmissionDatabaseService(
         }
 
         if (releaseConfirmationEmailsEnabled) {
-            releaseNotificationDatabaseService.enqueueReleaseNotifications(
-                approver = authenticatedUser.username,
-                organism = organism.name,
-                accessionVersionsByGroup = accessionVersionsByGroup,
-            )
+            releaseNotificationDatabaseService.enqueueReleaseNotifications(accessionVersionsToUpdate)
         }
 
         val filesToPublish = this.selectFilesToPublishForAccessionVersions(accessionVersionsToUpdate)

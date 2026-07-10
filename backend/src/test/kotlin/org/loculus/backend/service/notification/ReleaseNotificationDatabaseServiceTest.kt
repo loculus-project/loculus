@@ -29,11 +29,7 @@ class ReleaseNotificationDatabaseServiceTest(
         val firstRelease = released.take(1)
         val concurrentRelease = released.drop(1)
 
-        databaseService.enqueueReleaseNotifications(
-            approver = DEFAULT_USER_NAME,
-            organism = DEFAULT_ORGANISM,
-            accessionVersionsByGroup = mapOf(groupId to firstRelease),
-        )
+        databaseService.enqueueReleaseNotifications(firstRelease)
         val snapshot = databaseService.getPendingReleaseNotifications()
 
         assertEquals(firstRelease, snapshot.map(PendingReleaseNotification::accessionVersion))
@@ -46,11 +42,7 @@ class ReleaseNotificationDatabaseServiceTest(
             snapshot.map(PendingReleaseNotification::groupContactEmail).toSet(),
         )
 
-        databaseService.enqueueReleaseNotifications(
-            approver = DEFAULT_USER_NAME,
-            organism = DEFAULT_ORGANISM,
-            accessionVersionsByGroup = mapOf(groupId to concurrentRelease),
-        )
+        databaseService.enqueueReleaseNotifications(concurrentRelease)
         databaseService.deletePendingReleaseNotifications(snapshot)
 
         val remaining = databaseService.getPendingReleaseNotifications()
@@ -66,31 +58,26 @@ class ReleaseNotificationDatabaseServiceTest(
 
     @Test
     fun `a scheduler snapshot is bounded by approver and group partitions`() {
-        val released = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        val releasedForGroupA = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
             .map { AccessionVersion(it.accession, it.version) }
-        require(released.size >= 2)
-        val groupId = groupIdOf(released.first())
-        databaseService.enqueueReleaseNotifications(
-            approver = "approver-a",
-            organism = DEFAULT_ORGANISM,
-            accessionVersionsByGroup = mapOf(groupId to released.take(1)),
-        )
-        databaseService.enqueueReleaseNotifications(
-            approver = "approver-b",
-            organism = DEFAULT_ORGANISM,
-            accessionVersionsByGroup = mapOf(groupId to released.drop(1)),
-        )
+        val releasedForGroupB = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+            .map { AccessionVersion(it.accession, it.version) }
+        val groupA = groupIdOf(releasedForGroupA.first())
+        val groupB = groupIdOf(releasedForGroupB.first())
+        require(groupA != groupB) { "Expected the two releases to belong to distinct groups" }
+        databaseService.enqueueReleaseNotifications(releasedForGroupA)
+        databaseService.enqueueReleaseNotifications(releasedForGroupB)
 
         val firstSnapshot = databaseService.getPendingReleaseNotifications(maxPartitions = 1)
+        val firstGroups = firstSnapshot.map(PendingReleaseNotification::groupId).toSet()
+        assertEquals(1, firstGroups.size, "A single partition covers exactly one approver/group")
 
-        assertEquals(setOf("approver-a"), firstSnapshot.map(PendingReleaseNotification::approver).toSet())
         databaseService.deletePendingReleaseNotifications(firstSnapshot)
-        assertEquals(
-            setOf("approver-b"),
-            databaseService.getPendingReleaseNotifications(maxPartitions = 1)
-                .map(PendingReleaseNotification::approver)
-                .toSet(),
-        )
+        val secondGroups = databaseService.getPendingReleaseNotifications(maxPartitions = 1)
+            .map(PendingReleaseNotification::groupId)
+            .toSet()
+        assertEquals(1, secondGroups.size, "A single partition covers exactly one approver/group")
+        assertEquals(setOf(groupA, groupB), firstGroups + secondGroups)
     }
 
     private fun groupIdOf(accessionVersion: AccessionVersionInterface): Int = transaction {
