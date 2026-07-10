@@ -207,7 +207,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                 <MenuButton
                     className={buttonClasses({
                         variant: 'outline',
-                        className: 'flex items-center min-w-[100px] justify-between',
+                        className: 'flex items-center min-w-[100px] justify-between whitespace-nowrap',
                     })}
                     onClick={() => setIsOpen(!isOpen)}
                 >

@@ -354,4 +354,6 @@ def check_and_update_visibility(config: Config, stop_event: threading.Event):
         if elapsed_time < 60 * config.min_between_publicness_checks:
             wait_time = 60 * config.min_between_publicness_checks - elapsed_time
             logger.debug(f"Waiting {wait_time:.2f} seconds before next iteration")
-            time.sleep(wait_time)
+            if stop_event.wait(timeout=wait_time):
+                logger.info("check_and_update_visibility stopped due to exception in another task")
+                return

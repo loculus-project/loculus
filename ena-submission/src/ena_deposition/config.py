@@ -105,6 +105,7 @@ class Config(BaseModel):
     enaOrganisms: dict[EnaOrganismName, EnaOrganismDetails]  # noqa: N815
     unique_project_suffix: str
     metadata_mapping: dict[str, MetadataMapping]
+    metadata_fallback_fields: dict[str, str]
     manifest_fields_mapping: dict[str, ManifestFieldDetails]
     ingest_pipeline_submission_group: int
     ena_checklist: str | None = None
@@ -124,6 +125,7 @@ class Config(BaseModel):
     min_between_ena_checks: int = 5
     log_level: str = "DEBUG"
 
+    allow_revision_with_manifest_changes: bool = True
     retry_threshold_min: int = 240
     slack_retry_substrings: list[str] = field(default_factory=list)
     slack_retry_threshold_min: int = 720

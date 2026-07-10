@@ -19,7 +19,6 @@ const organism = Astro.params.organism!;
 const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
 
 const inputMode: InputMode = Astro.url.searchParams.get('inputMode') === 'form' ? 'form' : 'bulk';
-const title = inputMode === 'bulk' ? 'Submit sequences' : 'Submit sequence';
 
 if (!cleanedOrganism) {
     return {
@@ -40,7 +39,7 @@ Astro.response.headers.append('Pragma', 'no-cache');
 Astro.response.headers.append('Expires', '0');
 ---
 
-<SubmissionPageWrapper title={title} disablePageTitle={true} groupsResult={groupsResult}>
+<SubmissionPageWrapper title='Submit sequences' disablePageTitle={true} groupsResult={groupsResult}>
     {
         groupsResult.match(
             ({ currentGroup: group }) => (

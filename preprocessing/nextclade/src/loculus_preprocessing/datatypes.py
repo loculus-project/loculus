@@ -176,6 +176,25 @@ class ProcessingResult:
     errors: list[ProcessingAnnotation] = field(default_factory=list)
 
 
+@dataclass
+class RawProcessingResult:
+    """A simplified ProcessingResult where warnings/errors are plain strings.
+
+    Processing functions return this type; the caller (call_function) converts
+    it into a full ProcessingResult by attaching input_fields, output_field,
+    and annotation source type information.
+    """
+
+    datum: ProcessedMetadataValue = None
+    warnings: list[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+
+
+def processing_error(message: str) -> "RawProcessingResult":
+    """Helper to create a RawProcessingResult with a single error and no datum."""
+    return RawProcessingResult(datum=None, errors=[message])
+
+
 @unique
 class SegmentClassificationMethod(StrEnum):
     """

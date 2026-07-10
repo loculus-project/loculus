@@ -5,13 +5,16 @@ from factory_methods import (
     ProcessedEntryFactory,
     ProcessingAnnotationHelper,
     ProcessingTestCase,
+    UnprocessedEntryFactory,
     build_processing_annotations,
     ts_from_ymd,
     verify_processed_entry,
 )
 
-from loculus_preprocessing.config import Config, get_config, get_processing_order
+from loculus_preprocessing.config import Config, ProcessingSpec, get_config, get_processing_order
 from loculus_preprocessing.datatypes import (
+    AnnotationSource,
+    AnnotationSourceType,
     FunctionArgs,
     InputMetadata,
     ProcessedEntry,
@@ -769,6 +772,48 @@ def test_preprocessing_metadata_dependencies(test_case_def: Case, config_depende
     assert processed_entry.data.metadata != test_case.expected_output.data.metadata
 
 
+def test_required_field_message_lists_only_user_input_fields() -> None:
+    config = get_config(NO_ALIGNMENT_CONFIG, ignore_args=True)
+    config.processing_spec.update(
+        {
+            "user_input": ProcessingSpec(function="identity", inputs={"input": "user_input"}),
+            "non_user_input": ProcessingSpec(
+                function="identity", inputs={"input": "non_user_input"}, no_input=True
+            ),
+            "required_field": ProcessingSpec(
+                function="identity",
+                inputs={
+                    "input": "user_input",
+                    # extraInputField without a processing spec, must be part of message
+                    "extra": "extra_user_input",
+                    "fallback": "non_user_input",
+                    # Internal source with no spec, must not be part of message
+                    "internal": "ASSIGNED_REFERENCE",
+                },
+                required=True,
+            ),
+        }
+    )
+    config.processing_order = get_processing_order(config)
+
+    entry = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={"submissionId": "no_input_filtering", "name_required": "name"},
+        accession_id="0",
+        sequences={"main": None},
+    )
+    processed_entry = process_all([entry], "temp_dataset_dir", config)[0].processed_entry
+
+    messages = {
+        annotation.processedFields[0].name: annotation.message
+        for annotation in processed_entry.errors
+        if annotation.processedFields
+    }
+    assert messages["required_field"] == (
+        "Metadata field `required_field` is required. "
+        "Please provide input metadata field(s): `user_input`, `extra_user_input`"
+    )
+
+
 def test_preprocessing_without_consensus_sequences(config: Config) -> None:
     sequence_name = "entry without sequences"
     sequence_entry_data = UnprocessedEntry(
@@ -1107,9 +1152,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeString",
                 "submittedAt": ts_from_ymd(2022, 1, 1),
             },
-        )
-        .errors[0]
-        .message
+        ).errors[0]
         == "Metadata field field_name: Detected date range but could not parse date: 20-01-2020/2021-06-30."
     ), "Invalid date range format errors."
     assert (
@@ -1121,9 +1164,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeString",
                 "submittedAt": ts_from_ymd(2022, 1, 1),
             },
-        )
-        .errors[0]
-        .message
+        ).errors[0]
         == "Metadata field field_name:'2022-01-01/2021-06-30' is an invalid date range. Lower bound: 2022-01-01 00:00:00+00:00 is after upper bound: 2021-06-30 00:00:00+00:00."
     ), "Invalid date range format errors."
     assert (
@@ -1362,7 +1403,7 @@ def test_display_name_construction() -> None:  # noqa: PLR0915
     assert res.datum == "DENV-1/unknown/version.1/2025"
     assert len(res.warnings) == 1
     assert (
-        res.warnings[0].message
+        res.warnings[0]
         == "identifier string 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
     )
     assert res_insdc.datum == "DENV-1/unknown/version.1/2025"
@@ -1370,7 +1411,7 @@ def test_display_name_construction() -> None:  # noqa: PLR0915
     assert res_prefix.datum == "hYF/unknown/version.1/2025"
     assert len(res_prefix.warnings) == 1
     assert (
-        res_prefix.warnings[0].message
+        res_prefix.warnings[0]
         == "identifier string 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
     )
 
@@ -1396,7 +1437,7 @@ def test_display_name_construction() -> None:  # noqa: PLR0915
     assert res.datum == "DENV-1/another_fallback/version.1/2025"
     assert len(res.warnings) == 1
     assert (
-        res.warnings[0].message
+        res.warnings[0]
         == "identifier string 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
     )
     assert res_insdc.datum == "DENV-1/another_fallback/version.1/2025"
@@ -1404,8 +1445,40 @@ def test_display_name_construction() -> None:  # noqa: PLR0915
     assert res_prefix.datum == "hYF/another_fallback/version.1/2025"
     assert len(res_prefix.warnings) == 1
     assert (
-        res_prefix.warnings[0].message
+        res_prefix.warnings[0]
         == "identifier string 'hDENV1/myExtractedSample/2025' could not be parsed, using ACCESSION_VERSION in displayName instead"
+    )
+
+
+def test_call_function_converts_raw_errors_to_annotations() -> None:
+    """call_function must convert RawProcessingResult string errors into ProcessingAnnotations
+    with correct message and field linkage."""
+    input_fields = ["myField"]
+    output_field = "myField"
+    args: FunctionArgs = {
+        "options": ["OptionA", "OptionB"],
+        "is_insdc_ingest_group": False,
+    }
+
+    result = ProcessingFunctions.call_function(
+        "process_options",
+        args=args,
+        input_data={"input": "NotAnOption"},
+        output_field=output_field,
+        input_fields=input_fields,
+    )
+
+    assert result.datum is None
+    assert result.warnings == []
+    assert len(result.errors) == 1
+
+    annotation = result.errors[0]
+    assert "not in list of accepted options" in annotation.message
+    assert annotation.processedFields == (
+        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA),
+    )
+    assert annotation.unprocessedFields == (
+        AnnotationSource(name="myField", type=AnnotationSourceType.METADATA),
     )
 
 

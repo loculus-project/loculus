@@ -34,10 +34,12 @@ class SubmissionPage {
 
     async discardRawReadsFiles() {
         await this.page.getByTestId('discard_raw_reads').click();
+        // Confirmation modal appears and the discard button must be clicked
+        await this.page.getByRole('button', { name: 'Discard', exact: true }).click();
     }
 
     async acceptTerms() {
-        await this.page.getByText('I confirm that the data').click();
+        await this.page.getByText('I confirm that I have the legal right').click();
         await this.page.getByText('I confirm I have not and will').click();
     }
 

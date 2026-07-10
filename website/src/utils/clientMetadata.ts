@@ -13,10 +13,6 @@ export const getClientMetadata = () => {
 };
 
 const getClientSecret = () => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (import.meta.env === undefined) {
-        return 'dummySecret';
-    }
     const configDir = import.meta.env.CONFIG_DIR;
     if (typeof configDir !== 'string' || configDir === '') {
         return 'dummySecret';

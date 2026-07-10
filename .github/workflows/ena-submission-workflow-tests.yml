@@ -4,9 +4,6 @@ on:
     paths:
       - "ena-submission/**"
       - ".github/workflows/ena-submission-workflow-tests.yml"
-  push:
-    branches:
-      - main
   workflow_dispatch:
 jobs:
   Tests:
@@ -30,7 +27,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Extract Flyway version
         id: flyway_version
         run: |
@@ -68,6 +65,6 @@ jobs:
         run: |
             # The unit tests are run in ena-submission-unit-tests.yaml
             pytest \
-              --ignore=./scripts/test_ena_submission.py
+              --ignore=./test/test_ena_submission.py
         shell: micromamba-shell {0}
         working-directory: ena-submission

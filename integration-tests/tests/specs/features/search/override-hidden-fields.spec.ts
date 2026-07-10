@@ -60,7 +60,7 @@ test('Override hidden fields', async ({ page, groupId }) => {
     await page.getByRole('cell', { name: 'France' }).click();
     await search.reviseSequence();
     await page.getByLabel('Collection date').fill('2012-12-13');
-    await page.getByRole('button', { name: 'Submit' }).click();
+    await page.getByRole('button', { name: /proceed to Approval/ }).click();
     await page.getByRole('button', { name: 'Confirm' }).click();
     await expect(page.getByText('Review pending submissions')).toBeVisible();
 
@@ -75,9 +75,7 @@ test('Override hidden fields', async ({ page, groupId }) => {
     const revokedAccession = revokedId.split('.')[0];
     const expectedRevocationAccessionVersion = `${revokedAccession}.2`;
     await page.getByRole('cell', { name: 'Uganda' }).click();
-    await page.getByRole('button', { name: 'Revoke this sequence' }).click();
-    await page.getByRole('button', { name: 'Confirm' }).click();
-    await expect(page.getByText('Sequence revoked successfully.')).toBeVisible();
+    await search.revokeSequence();
 
     // The revocation is auto-approved; only the revision still needs to be released
     reviewPage = new ReviewPage(page);

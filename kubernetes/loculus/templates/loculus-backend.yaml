@@ -72,6 +72,10 @@ spec:
             - "--loculus.pipeline-version-upgrade-check.interval-seconds={{- .Values.pipelineVersionUpgradeCheckIntervalSeconds | default 10 }}"
             - "--loculus.s3.enabled=$(S3_ENABLED)"
             {{- if $.Values.s3.enabled }}
+            - "--loculus.s3.gc-enabled=$(S3_GC_ENABLED)"
+            - "--loculus.s3.gc-orphan-retention-period-minutes=$(S3_GC_ORPHAN_RETENTION_PERIOD_MINUTES)"
+            - "--loculus.s3.gc-initial-delay-minutes=$(S3_GC_INITIAL_DELAY_MINUTES)"
+            - "--loculus.s3.gc-frequency-minutes=$(S3_GC_FREQUENCY_MINUTES)"
             - "--loculus.s3.bucket.endpoint=$(S3_BUCKET_ENDPOINT)"
             - "--loculus.s3.bucket.internal-endpoint=$(S3_BUCKET_INTERNAL_ENDPOINT)"
             - "--loculus.s3.bucket.region=$(S3_BUCKET_REGION)"
@@ -132,6 +136,14 @@ spec:
             - name: S3_ENABLED
               value: {{$.Values.s3.enabled | quote }}
             {{- if $.Values.s3.enabled }}
+            - name: S3_GC_ENABLED
+              value: {{$.Values.s3.gcEnabled | quote }}
+            - name: S3_GC_INITIAL_DELAY_MINUTES
+              value: {{$.Values.s3.gcInitialDelayMinutes | quote }}
+            - name: S3_GC_FREQUENCY_MINUTES
+              value: {{$.Values.s3.gcFrequencyMinutes | quote }}
+            - name: S3_GC_ORPHAN_RETENTION_PERIOD_MINUTES
+              value: {{$.Values.s3.gcOrphanRetentionPeriodMinutes | quote }}
             - name: S3_BUCKET_ENDPOINT
               value: {{ include "loculus.s3Url" . | quote }}
             - name: S3_BUCKET_INTERNAL_ENDPOINT
