@@ -151,11 +151,21 @@ def run_deacon_fetch(index_path: str) -> bool:
 
 
 def run_deacon_filter(index: str, input_file: str, summary_json: str) -> DeaconSummary:
-    args = ["deacon", "filter", "--threads", "1", "--summary", summary_json, index, input_file]
+    args = [
+        "deacon",
+        "filter",
+        "--deplete",
+        "--threads",
+        "1",
+        "--summary",
+        summary_json,
+        index,
+        input_file,
+    ]
     logger.debug(f"Running Deacon filter on '{input_file}': {args}")
 
     exit_code = subprocess.run(  # noqa: S603
-        args, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        args, check=False, stdout=subprocess.DEVNULL
     ).returncode
     if exit_code != 0:
         message = f"Deacon filter failed with exit code {exit_code}"
