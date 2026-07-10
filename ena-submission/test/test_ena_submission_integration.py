@@ -78,7 +78,7 @@ from ena_deposition.upload_external_metadata_to_loculus import (
 from sqlalchemy import Engine
 
 CONFIG_FILE = "./test/test_config.yaml"
-INPUT_FILE = "./test/approved_ena_submission_list_test.json"
+INPUT_FILE = "./test/data/approved_ena_submission_list_test.json"
 
 
 logger = logging.getLogger(__name__)
