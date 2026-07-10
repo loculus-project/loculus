@@ -103,7 +103,7 @@ MOCK_CONFIG: Final = mock_config()
 
 # Example XMLs
 test_project_xml_response = Path("test/data/test_project_response.xml").read_text(encoding="utf-8")
-text_project_xml_request = Path("test/data/project_request.xml").read_text(encoding="utf-8")
+text_project_xml_request = Path("test/data/text_project_request.xml").read_text(encoding="utf-8")
 test_project_xml_failure_response = (
     '<RECEIPT receiptDate="2017-05-09T16:58:08.634+01:00" submissionFile="submission.xml"'
     ' success="false">'
