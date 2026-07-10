@@ -43,6 +43,11 @@ object BackendSpringProperty {
     const val ENABLE_SEQSETS = "loculus.enable-seqsets"
     const val SEQSET_CITATIONS_RUN_EVERY_MINUTES = "loculus.seqset-citations.run-every-minutes"
     const val CLEAN_UP_AUX_TABLE_RUN_EVERY_HOURS = "loculus.maintenance.clean-up-aux-table.run-every-hours"
+    const val RELEASE_CONFIRMATION_EMAILS_ENABLED = "loculus.release-confirmation-emails.enabled"
+    const val RELEASE_CONFIRMATION_EMAILS_RUN_EVERY_SECONDS =
+        "loculus.release-confirmation-emails.run-every-seconds"
+    const val RELEASE_CONFIRMATION_EMAILS_FROM = "loculus.release-confirmation-emails.from"
+    const val RELEASE_CONFIRMATION_EMAILS_REPLY_TO = "loculus.release-confirmation-emails.reply-to"
 
     const val S3_ENABLED = "loculus.s3.enabled"
     const val S3_GC_ENABLED = "loculus.s3.gc-enabled"
@@ -59,6 +64,7 @@ object BackendSpringProperty {
 
 const val DEBUG_MODE_ON_VALUE = "true"
 const val ENABLE_SEQSETS_TRUE_VALUE = "true"
+const val RELEASE_CONFIRMATION_EMAILS_ENABLED_VALUE = "true"
 
 private val logger = mu.KotlinLogging.logger {}
 

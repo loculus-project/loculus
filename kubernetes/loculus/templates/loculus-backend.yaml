@@ -70,6 +70,20 @@ spec:
             - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
             - "--loculus.cleanup.task.reset-stale-in-processing-after-seconds={{- .Values.preprocessingTimeout | default 120 }}"
             - "--loculus.pipeline-version-upgrade-check.interval-seconds={{- .Values.pipelineVersionUpgradeCheckIntervalSeconds | default 10 }}"
+            - "--loculus.release-confirmation-emails.enabled={{ $.Values.releaseConfirmationEmails.enabled }}"
+            - "--loculus.release-confirmation-emails.run-every-seconds={{ $.Values.releaseConfirmationEmails.runEverySeconds }}"
+            {{- if $.Values.releaseConfirmationEmails.enabled }}
+            - "--loculus.release-confirmation-emails.from={{ $.Values.auth.smtp.from }}"
+            - "--loculus.release-confirmation-emails.reply-to={{ $.Values.auth.smtp.replyTo }}"
+            - "--spring.mail.host={{ $.Values.auth.smtp.host }}"
+            - "--spring.mail.port={{ $.Values.auth.smtp.port }}"
+            - "--spring.mail.username={{ $.Values.auth.smtp.user }}"
+            - "--spring.mail.password=$(SMTP_PASSWORD)"
+            - "--spring.mail.properties.mail.smtp.auth=true"
+            - "--spring.mail.properties.mail.smtp.starttls.enable=true"
+            - "--spring.mail.properties.mail.smtp.starttls.required=true"
+            - "--spring.mail.properties.mail.smtp.from={{ $.Values.auth.smtp.envelopeFrom }}"
+            {{- end }}
             - "--loculus.s3.enabled=$(S3_ENABLED)"
             {{- if $.Values.s3.enabled }}
             - "--loculus.s3.gc-enabled=$(S3_GC_ENABLED)"
@@ -118,6 +132,13 @@ spec:
                 secretKeyRef:
                   name: service-accounts
                   key: backendUserPassword
+            {{- if $.Values.releaseConfirmationEmails.enabled }}
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-password
+                  key: secretKey
+            {{- end }}
             - name: DB_URL
               valueFrom:
                secretKeyRef:

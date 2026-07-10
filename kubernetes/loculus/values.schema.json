@@ -1467,6 +1467,28 @@
         }
       }
     },
+    "releaseConfirmationEmails": {
+      "groups": ["backend", "auth"],
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Confirmation emails sent after users release sequences",
+      "properties": {
+        "enabled": {
+          "groups": ["backend", "auth"],
+          "type": "boolean",
+          "default": false,
+          "description": "Enable release confirmation emails"
+        },
+        "runEverySeconds": {
+          "groups": ["backend", "auth"],
+          "type": "integer",
+          "minimum": 1,
+          "default": 60,
+          "description": "Interval between release confirmation email batches"
+        }
+      },
+      "required": ["enabled", "runEverySeconds"]
+    },
     "auth": {
       "groups": ["auth"],
       "type": "object",

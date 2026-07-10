@@ -2612,6 +2612,9 @@ auth:
   verifyEmail: false
   resetPasswordAllowed: true
   registrationAllowed: true
+releaseConfirmationEmails:
+  enabled: false
+  runEverySeconds: 60
 insecureCookies: false
 bannerMessage: "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly."
 welcomeMessageHTML: null
