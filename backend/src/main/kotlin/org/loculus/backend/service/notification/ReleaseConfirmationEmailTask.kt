@@ -87,10 +87,12 @@ class ReleaseConfirmationEmailTask(
                 ReleaseNotificationOrganismSummary(
                     organism = organism,
                     count = notifications.size.toLong(),
-                    accessionVersions = notifications
-                        .map(PendingReleaseNotification::accessionVersion)
-                        .sortedWith(compareBy({ it.accession }, { it.version }))
-                        .take(MAX_ACCESSIONS_PER_ORGANISM),
+                    accessions = notifications
+                        .sortedWith(
+                            compareBy({ it.accessionVersion.accession }, { it.accessionVersion.version }),
+                        )
+                        .take(MAX_ACCESSIONS_PER_ORGANISM)
+                        .map { ReleasedAccessionVersion(it.accessionVersion, it.kind) },
                 )
             }
 
@@ -98,6 +100,9 @@ class ReleaseConfirmationEmailTask(
             groupName = first.groupName,
             groupContactEmail = first.groupContactEmail,
             totalCount = size.toLong(),
+            kindCounts = groupingBy(PendingReleaseNotification::kind)
+                .eachCount()
+                .mapValues { (_, count) -> count.toLong() },
             organisms = organismSummaries,
         )
     }

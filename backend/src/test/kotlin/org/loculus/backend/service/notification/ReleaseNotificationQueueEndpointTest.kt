@@ -58,6 +58,20 @@ class ReleaseNotificationQueueEnabledEndpointTest(
         assertEquals(setOf(DEFAULT_USER_NAME), pending.map(QueuedReleaseNotification::approver).toSet())
         assertEquals(setOf(DEFAULT_ORGANISM), pending.map(QueuedReleaseNotification::organism).toSet())
         assertEquals(1, pending.map(QueuedReleaseNotification::groupId).toSet().size)
+        assertEquals(setOf(false), pending.map(QueuedReleaseNotification::isRevocation).toSet())
+    }
+
+    @Test
+    fun `revoked sequences are enqueued and flagged as revocations`() {
+        val revoked = convenienceClient.prepareRevokedSequenceEntries()
+            .map { AccessionVersion(it.accession, it.version) }
+
+        val flaggedAsRevocation = readPendingReleaseNotifications()
+            .filter(QueuedReleaseNotification::isRevocation)
+            .map(QueuedReleaseNotification::accessionVersion)
+            .toSet()
+
+        assertEquals(revoked.toSet(), flaggedAsRevocation)
     }
 
     @Test
@@ -82,6 +96,7 @@ private data class QueuedReleaseNotification(
     val organism: String,
     val approver: String,
     val groupId: Int,
+    val isRevocation: Boolean,
 )
 
 private fun readPendingReleaseNotifications(): List<QueuedReleaseNotification> = transaction {
@@ -100,6 +115,7 @@ private fun readPendingReleaseNotifications(): List<QueuedReleaseNotification> =
             SequenceEntriesTable.organismColumn,
             SequenceEntriesTable.approverColumn,
             SequenceEntriesTable.groupIdColumn,
+            SequenceEntriesTable.isRevocationColumn,
         )
         .map {
             QueuedReleaseNotification(
@@ -110,6 +126,7 @@ private fun readPendingReleaseNotifications(): List<QueuedReleaseNotification> =
                 organism = it[SequenceEntriesTable.organismColumn],
                 approver = it[SequenceEntriesTable.approverColumn],
                 groupId = it[SequenceEntriesTable.groupIdColumn],
+                isRevocation = it[SequenceEntriesTable.isRevocationColumn],
             )
         }
 }

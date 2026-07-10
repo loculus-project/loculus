@@ -9,6 +9,7 @@ import jakarta.mail.internet.MimeMessage
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.equalTo
+import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.loculus.backend.api.AccessionVersion
@@ -59,6 +60,47 @@ class ReleaseConfirmationEmailServiceTest {
             message.content.toString(),
             containsString("and copied to the group's contact email"),
         )
+        assertThat(message.content.toString(), not(containsString("This included")))
+    }
+
+    @Test
+    fun `labels revisions and revocations and summarizes the release by kind`() {
+        val message = MimeMessage(Session.getInstance(Properties()))
+        every { mailSender.createMimeMessage() } returns message
+        justRun { mailSender.send(message) }
+        every { backendConfig.websiteUrl } returns "https://loculus.example"
+        val content = ReleaseNotificationContent(
+            groupName = "Test group",
+            groupContactEmail = "group@example.com",
+            totalCount = 3,
+            kindCounts = mapOf(ReleaseKind.NEW to 1L, ReleaseKind.REVISION to 1L, ReleaseKind.REVOCATION to 1L),
+            organisms = listOf(
+                ReleaseNotificationOrganismSummary(
+                    organism = "test-organism",
+                    count = 3,
+                    accessions = listOf(
+                        ReleasedAccessionVersion(AccessionVersion("LOC_1", 1), ReleaseKind.NEW),
+                        ReleasedAccessionVersion(AccessionVersion("LOC_2", 2), ReleaseKind.REVISION),
+                        ReleasedAccessionVersion(AccessionVersion("LOC_3", 2), ReleaseKind.REVOCATION),
+                    ),
+                ),
+            ),
+        )
+
+        service.sendReleaseConfirmation(
+            recipientEmail = "approver@example.com",
+            ccEmail = null,
+            approver = "approver",
+            groupId = 1,
+            content = content,
+            messageId = "<message@loculus>",
+        )
+
+        val body = message.content.toString()
+        assertThat(body, containsString("This included 1 new, 1 revised, 1 revoked."))
+        assertThat(body, containsString("LOC_1.1"))
+        assertThat(body, containsString("LOC_2.2 (revision)"))
+        assertThat(body, containsString("LOC_3.2 (revocation)"))
     }
 
     @Test
@@ -103,11 +145,12 @@ class ReleaseConfirmationEmailServiceTest {
         groupName = "Test group",
         groupContactEmail = "group@example.com",
         totalCount = accessions.size.toLong(),
+        kindCounts = mapOf(ReleaseKind.NEW to accessions.size.toLong()),
         organisms = listOf(
             ReleaseNotificationOrganismSummary(
                 organism = "test-organism",
                 count = accessions.size.toLong(),
-                accessionVersions = accessions.map { AccessionVersion(it, 1) },
+                accessions = accessions.map { ReleasedAccessionVersion(AccessionVersion(it, 1), ReleaseKind.NEW) },
             ),
         ),
     )

@@ -3,9 +3,11 @@ package org.loculus.backend.service.notification
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import io.mockk.verifyOrder
 import kotlinx.datetime.LocalDateTime
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -39,16 +41,17 @@ class ReleaseConfirmationEmailTaskTest {
             groupName = "Group 1",
             groupContactEmail = "group-1@example.com",
             totalCount = 2,
+            kindCounts = mapOf(ReleaseKind.NEW to 2L),
             organisms = listOf(
                 ReleaseNotificationOrganismSummary(
                     organism = "alpha-organism",
                     count = 1,
-                    accessionVersions = listOf(AccessionVersion("LOC_1", 1)),
+                    accessions = listOf(ReleasedAccessionVersion(AccessionVersion("LOC_1", 1), ReleaseKind.NEW)),
                 ),
                 ReleaseNotificationOrganismSummary(
                     organism = "zeta-organism",
                     count = 1,
-                    accessionVersions = listOf(AccessionVersion("LOC_2", 1)),
+                    accessions = listOf(ReleasedAccessionVersion(AccessionVersion("LOC_2", 1), ReleaseKind.NEW)),
                 ),
             ),
         )
@@ -174,12 +177,16 @@ class ReleaseConfirmationEmailTaskTest {
             groupName = "Group 1",
             groupContactEmail = "group-1@example.com",
             totalCount = 105,
+            kindCounts = mapOf(ReleaseKind.NEW to 105L),
             organisms = listOf(
                 ReleaseNotificationOrganismSummary(
                     organism = "test-organism",
                     count = 105,
-                    accessionVersions = (1..100).map { index ->
-                        AccessionVersion("LOC_${index.toString().padStart(3, '0')}", 1)
+                    accessions = (1..100).map { index ->
+                        ReleasedAccessionVersion(
+                            AccessionVersion("LOC_${index.toString().padStart(3, '0')}", 1),
+                            ReleaseKind.NEW,
+                        )
                     },
                 ),
             ),
@@ -204,19 +211,53 @@ class ReleaseConfirmationEmailTaskTest {
         verify(exactly = 1) { databaseService.deletePendingReleaseNotifications(batch) }
     }
 
+    @Test
+    fun `classifies new submissions, revisions, and revocations`() {
+        val batch = listOf(
+            notification("LOC_1", version = 1),
+            notification("LOC_2", version = 3),
+            notification("LOC_3", version = 2, isRevocation = true),
+        )
+        every { databaseService.getPendingReleaseNotifications() } returns batch
+        givenKeycloakUser("approver", "approver@example.com")
+        val contentSlot = slot<ReleaseNotificationContent>()
+        justRun {
+            emailService.sendReleaseConfirmation(any(), any(), any(), any(), capture(contentSlot), any())
+        }
+        justRun { databaseService.deletePendingReleaseNotifications(batch) }
+
+        task.task()
+
+        assertEquals(
+            mapOf(ReleaseKind.NEW to 1L, ReleaseKind.REVISION to 1L, ReleaseKind.REVOCATION to 1L),
+            contentSlot.captured.kindCounts,
+        )
+        assertEquals(
+            listOf(
+                ReleasedAccessionVersion(AccessionVersion("LOC_1", 1), ReleaseKind.NEW),
+                ReleasedAccessionVersion(AccessionVersion("LOC_2", 3), ReleaseKind.REVISION),
+                ReleasedAccessionVersion(AccessionVersion("LOC_3", 2), ReleaseKind.REVOCATION),
+            ),
+            contentSlot.captured.organisms.single().accessions,
+        )
+    }
+
     private fun notification(
         accession: String,
+        version: Long = 1,
         organism: String = "test-organism",
         groupId: Int = 1,
         approver: String = "approver",
         groupContactEmail: String = "group-$groupId@example.com",
+        isRevocation: Boolean = false,
     ) = PendingReleaseNotification(
-        accessionVersion = AccessionVersion(accession, 1),
+        accessionVersion = AccessionVersion(accession, version),
         organism = organism,
         groupId = groupId,
         groupName = "Group $groupId",
         groupContactEmail = groupContactEmail,
         approver = approver,
+        isRevocation = isRevocation,
         enqueuedAt = LocalDateTime(2026, 7, 10, 12, 0),
     )
 
@@ -224,11 +265,12 @@ class ReleaseConfirmationEmailTaskTest {
         groupName = notification.groupName,
         groupContactEmail = notification.groupContactEmail,
         totalCount = 1,
+        kindCounts = mapOf(notification.kind to 1L),
         organisms = listOf(
             ReleaseNotificationOrganismSummary(
                 organism = notification.organism,
                 count = 1,
-                accessionVersions = listOf(notification.accessionVersion),
+                accessions = listOf(ReleasedAccessionVersion(notification.accessionVersion, notification.kind)),
             ),
         ),
     )

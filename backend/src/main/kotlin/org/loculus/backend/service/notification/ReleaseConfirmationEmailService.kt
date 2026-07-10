@@ -84,13 +84,14 @@ class ReleaseConfirmationEmailService(
             "Hello $approver,",
             "",
             "$count $sequenceWord successfully released for ${content.groupName}.",
-            "",
         )
+        buildKindBreakdown(content.kindCounts)?.let { lines += it }
+        lines += ""
 
         content.organisms.forEach { organismSummary ->
             lines += organismSummary.organism
-            organismSummary.accessionVersions.forEach { lines += "- ${it.accession}.${it.version}" }
-            val omittedCount = organismSummary.count - organismSummary.accessionVersions.size.toLong()
+            organismSummary.accessions.forEach { lines += "- ${formatAccession(it)}" }
+            val omittedCount = organismSummary.count - organismSummary.accessions.size.toLong()
             if (omittedCount > 0) {
                 lines += "- …and $omittedCount more"
             }
@@ -104,6 +105,33 @@ class ReleaseConfirmationEmailService(
             "This message was sent to the user who approved the release."
         }
         return lines.joinToString("\n")
+    }
+
+    private fun formatAccession(released: ReleasedAccessionVersion): String {
+        val accessionVersion = "${released.accessionVersion.accession}.${released.accessionVersion.version}"
+        return when (released.kind) {
+            ReleaseKind.NEW -> accessionVersion
+            ReleaseKind.REVISION -> "$accessionVersion (revision)"
+            ReleaseKind.REVOCATION -> "$accessionVersion (revocation)"
+        }
+    }
+
+    /**
+     * Summarizes the release by kind, e.g. "This included 2 new, 1 revised.". Returns null when everything is a new
+     * submission, so the common case stays uncluttered.
+     */
+    private fun buildKindBreakdown(kindCounts: Map<ReleaseKind, Long>): String? {
+        val newCount = kindCounts[ReleaseKind.NEW] ?: 0
+        val revisedCount = kindCounts[ReleaseKind.REVISION] ?: 0
+        val revokedCount = kindCounts[ReleaseKind.REVOCATION] ?: 0
+        if (revisedCount == 0L && revokedCount == 0L) return null
+
+        val parts = buildList {
+            if (newCount > 0) add("$newCount new")
+            if (revisedCount > 0) add("$revisedCount revised")
+            if (revokedCount > 0) add("$revokedCount revoked")
+        }
+        return "This included ${parts.joinToString(", ")}."
     }
 
     private fun validateConfiguredAddress(propertyName: String, value: String, required: Boolean) {

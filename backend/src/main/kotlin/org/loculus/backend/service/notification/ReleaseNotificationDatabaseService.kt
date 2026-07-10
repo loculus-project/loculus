@@ -16,6 +16,8 @@ import org.loculus.backend.utils.DateProvider
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
+enum class ReleaseKind { NEW, REVISION, REVOCATION }
+
 data class PendingReleaseNotification(
     val accessionVersion: AccessionVersion,
     val organism: String,
@@ -23,21 +25,32 @@ data class PendingReleaseNotification(
     val groupName: String,
     val groupContactEmail: String,
     val approver: String,
+    val isRevocation: Boolean,
     val enqueuedAt: LocalDateTime,
-)
+) {
+    val kind: ReleaseKind
+        get() = when {
+            isRevocation -> ReleaseKind.REVOCATION
+            accessionVersion.version == 1L -> ReleaseKind.NEW
+            else -> ReleaseKind.REVISION
+        }
+}
 
 data class ReleaseNotificationContent(
     val groupName: String,
     val groupContactEmail: String,
     val totalCount: Long,
+    val kindCounts: Map<ReleaseKind, Long>,
     val organisms: List<ReleaseNotificationOrganismSummary>,
 )
 
 data class ReleaseNotificationOrganismSummary(
     val organism: String,
     val count: Long,
-    val accessionVersions: List<AccessionVersion>,
+    val accessions: List<ReleasedAccessionVersion>,
 )
+
+data class ReleasedAccessionVersion(val accessionVersion: AccessionVersion, val kind: ReleaseKind)
 
 @Service
 @Transactional
@@ -104,6 +117,7 @@ class ReleaseNotificationDatabaseService(private val dateProvider: DateProvider)
                 SequenceEntriesTable.organismColumn,
                 SequenceEntriesTable.approverColumn,
                 SequenceEntriesTable.groupIdColumn,
+                SequenceEntriesTable.isRevocationColumn,
             )
             .where {
                 Pair(
@@ -147,6 +161,7 @@ class ReleaseNotificationDatabaseService(private val dateProvider: DateProvider)
                 groupName = group.name,
                 groupContactEmail = group.contactEmail,
                 approver = row[SequenceEntriesTable.approverColumn],
+                isRevocation = row[SequenceEntriesTable.isRevocationColumn],
                 enqueuedAt = row[PendingReleaseNotificationsTable.enqueuedAtColumn],
             )
         }
