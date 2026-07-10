@@ -1,7 +1,7 @@
+import json
 from collections.abc import Iterable
 from dataclasses import dataclass, field, fields
 from enum import StrEnum, unique
-import json
 from typing import Any, Final, Self
 
 AccessionVersion = str
