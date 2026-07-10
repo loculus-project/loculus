@@ -38,8 +38,6 @@ class ReleaseConfirmationEmailServiceTest {
         service.sendReleaseConfirmation(
             recipientEmail = "approver@example.com",
             ccEmail = "group@example.com",
-            approver = "approver",
-            groupId = 1,
             content = content,
             messageId = "<message@loculus>",
         )
@@ -70,6 +68,8 @@ class ReleaseConfirmationEmailServiceTest {
         justRun { mailSender.send(message) }
         every { backendConfig.websiteUrl } returns "https://loculus.example"
         val content = ReleaseNotificationContent(
+            approver = "approver",
+            groupId = 1,
             groupName = "Test group",
             groupContactEmail = "group@example.com",
             totalCount = 3,
@@ -90,8 +90,6 @@ class ReleaseConfirmationEmailServiceTest {
         service.sendReleaseConfirmation(
             recipientEmail = "approver@example.com",
             ccEmail = null,
-            approver = "approver",
-            groupId = 1,
             content = content,
             messageId = "<message@loculus>",
         )
@@ -113,8 +111,6 @@ class ReleaseConfirmationEmailServiceTest {
         service.sendReleaseConfirmation(
             recipientEmail = "same@example.com",
             ccEmail = null,
-            approver = "approver",
-            groupId = 1,
             content = content("LOC_1"),
             messageId = "<message@loculus>",
         )
@@ -142,6 +138,8 @@ class ReleaseConfirmationEmailServiceTest {
     }
 
     private fun content(vararg accessions: String) = ReleaseNotificationContent(
+        approver = "approver",
+        groupId = 1,
         groupName = "Test group",
         groupContactEmail = "group@example.com",
         totalCount = accessions.size.toLong(),

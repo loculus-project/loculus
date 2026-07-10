@@ -1,7 +1,5 @@
 package org.loculus.backend.service.notification
 
-import jakarta.mail.internet.AddressException
-import jakarta.mail.internet.InternetAddress
 import mu.KotlinLogging
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.config.RELEASE_CONFIRMATION_EMAILS_ENABLED_VALUE
@@ -61,8 +59,6 @@ class ReleaseConfirmationEmailTask(
             emailService.sendReleaseConfirmation(
                 recipientEmail = recipientEmail,
                 ccEmail = ccEmail,
-                approver = batchKey.approver,
-                groupId = batchKey.groupId,
                 content = content,
                 messageId = messageId,
             )
@@ -97,6 +93,8 @@ class ReleaseConfirmationEmailTask(
             }
 
         return ReleaseNotificationContent(
+            approver = first.approver,
+            groupId = first.groupId,
             groupName = first.groupName,
             groupContactEmail = first.groupContactEmail,
             totalCount = size.toLong(),
@@ -112,7 +110,7 @@ class ReleaseConfirmationEmailTask(
             ?: throw IllegalStateException("Could not find exactly one Keycloak user named '$username'")
         val email = user.email?.takeIf { it.isNotBlank() }
             ?: throw IllegalStateException("Keycloak user '$username' does not have an email address")
-        parseSingleAddress(email)
+        parseSingleInternetAddress(email)
             ?: throw IllegalStateException("Keycloak user '$username' does not have a valid email address")
         return email.trim()
     }
@@ -124,22 +122,15 @@ class ReleaseConfirmationEmailTask(
             return null
         }
 
-        val parsedCc = parseSingleAddress(candidate)
+        val parsedCc = parseSingleInternetAddress(candidate)
         if (parsedCc == null) {
             log.warn { "Group $groupId has an invalid contact email; omitting it from the release confirmation" }
             return null
         }
-        val parsedRecipient = parseSingleAddress(recipientEmail)
+        val parsedRecipient = parseSingleInternetAddress(recipientEmail)
         if (parsedRecipient?.address.equals(parsedCc.address, ignoreCase = true)) return null
 
         return candidate
-    }
-
-    private fun parseSingleAddress(value: String): InternetAddress? = try {
-        val parsedAddresses = InternetAddress.parse(value, true)
-        parsedAddresses.singleOrNull()?.also { it.validate() }
-    } catch (_: AddressException) {
-        null
     }
 
     private data class ReleaseNotificationBatchKey(val approver: String, val groupId: Int)

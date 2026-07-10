@@ -1,5 +1,6 @@
 package org.loculus.backend.service.notification
 
+import jakarta.mail.internet.AddressException
 import jakarta.mail.internet.InternetAddress
 import jakarta.mail.internet.MimeMessage
 import org.loculus.backend.config.BackendConfig
@@ -31,15 +32,13 @@ class ReleaseConfirmationEmailService(
     fun sendReleaseConfirmation(
         recipientEmail: String,
         ccEmail: String?,
-        approver: String,
-        groupId: Int,
         content: ReleaseNotificationContent,
         messageId: String,
     ) {
         require(content.totalCount > 0) { "Cannot send an empty release confirmation" }
 
         val message = mailSender.createMimeMessage()
-        populateMessage(message, recipientEmail, ccEmail, approver, groupId, content, messageId)
+        populateMessage(message, recipientEmail, ccEmail, content, messageId)
         mailSender.send(message)
     }
 
@@ -47,8 +46,6 @@ class ReleaseConfirmationEmailService(
         message: MimeMessage,
         recipientEmail: String,
         ccEmail: String?,
-        approver: String,
-        groupId: Int,
         content: ReleaseNotificationContent,
         messageId: String,
     ) {
@@ -62,7 +59,7 @@ class ReleaseConfirmationEmailService(
             helper.setReplyTo(replyTo)
         }
         helper.setSubject(buildSubject(content))
-        helper.setText(buildBody(approver, groupId, content, copiedToGroup = ccEmail != null), false)
+        helper.setText(buildBody(content, copiedToGroup = ccEmail != null), false)
         message.setHeader("Message-ID", messageId)
     }
 
@@ -72,16 +69,11 @@ class ReleaseConfirmationEmailService(
         return "Loculus: $count $sequenceWord released for ${content.groupName}"
     }
 
-    private fun buildBody(
-        approver: String,
-        groupId: Int,
-        content: ReleaseNotificationContent,
-        copiedToGroup: Boolean,
-    ): String {
+    private fun buildBody(content: ReleaseNotificationContent, copiedToGroup: Boolean): String {
         val count = content.totalCount
         val sequenceWord = if (count == 1L) "sequence was" else "sequences were"
         val lines = mutableListOf(
-            "Hello $approver,",
+            "Hello ${content.approver},",
             "",
             "$count $sequenceWord successfully released for ${content.groupName}.",
         )
@@ -95,7 +87,7 @@ class ReleaseConfirmationEmailService(
             if (omittedCount > 0) {
                 lines += "- …and $omittedCount more"
             }
-            lines += "${backendConfig.websiteUrl}/${organismSummary.organism}/submission/$groupId/released"
+            lines += "${backendConfig.websiteUrl}/${organismSummary.organism}/submission/${content.groupId}/released"
             lines += ""
         }
 
@@ -137,10 +129,15 @@ class ReleaseConfirmationEmailService(
     private fun validateConfiguredAddress(propertyName: String, value: String, required: Boolean) {
         if (!required && value.isBlank()) return
         require(value.isNotBlank()) { "Release-confirmation email $propertyName address must not be blank" }
-        require(
-            runCatching {
-                InternetAddress.parse(value, true).single().validate()
-            }.isSuccess,
-        ) { "Release-confirmation email $propertyName address is invalid" }
+        require(parseSingleInternetAddress(value) != null) {
+            "Release-confirmation email $propertyName address is invalid"
+        }
     }
+}
+
+/** Parses [value] as exactly one valid email address, returning null if it is blank, malformed, or a list. */
+internal fun parseSingleInternetAddress(value: String): InternetAddress? = try {
+    InternetAddress.parse(value, true).singleOrNull()?.also { it.validate() }
+} catch (_: AddressException) {
+    null
 }

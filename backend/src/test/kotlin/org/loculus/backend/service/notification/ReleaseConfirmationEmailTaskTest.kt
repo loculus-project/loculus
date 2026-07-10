@@ -34,10 +34,12 @@ class ReleaseConfirmationEmailTaskTest {
         } returns firstBatch + secondBatch + thirdBatch
         givenKeycloakUser("approver", "approver@example.com")
         givenKeycloakUser("other", "other@example.com")
-        justRun { emailService.sendReleaseConfirmation(any(), any(), any(), any(), any(), any()) }
+        justRun { emailService.sendReleaseConfirmation(any(), any(), any(), any()) }
         justRun { databaseService.deletePendingReleaseNotifications(any()) }
 
         val firstContent = ReleaseNotificationContent(
+            approver = "approver",
+            groupId = 1,
             groupName = "Group 1",
             groupContactEmail = "group-1@example.com",
             totalCount = 2,
@@ -62,35 +64,14 @@ class ReleaseConfirmationEmailTaskTest {
 
         verify(exactly = 1) { databaseService.getPendingReleaseNotifications() }
         verify(exactly = 3) {
-            emailService.sendReleaseConfirmation(any(), any(), any(), any(), any(), any())
+            emailService.sendReleaseConfirmation(any(), any(), any(), any())
         }
         verifyOrder {
-            emailService.sendReleaseConfirmation(
-                "approver@example.com",
-                "group-1@example.com",
-                "approver",
-                1,
-                firstContent,
-                any(),
-            )
+            emailService.sendReleaseConfirmation("approver@example.com", "group-1@example.com", firstContent, any())
             databaseService.deletePendingReleaseNotifications(firstBatch)
-            emailService.sendReleaseConfirmation(
-                "approver@example.com",
-                "group-2@example.com",
-                "approver",
-                2,
-                secondContent,
-                any(),
-            )
+            emailService.sendReleaseConfirmation("approver@example.com", "group-2@example.com", secondContent, any())
             databaseService.deletePendingReleaseNotifications(secondBatch)
-            emailService.sendReleaseConfirmation(
-                "other@example.com",
-                "group-1@example.com",
-                "other",
-                1,
-                thirdContent,
-                any(),
-            )
+            emailService.sendReleaseConfirmation("other@example.com", "group-1@example.com", thirdContent, any())
             databaseService.deletePendingReleaseNotifications(thirdBatch)
         }
     }
@@ -108,8 +89,6 @@ class ReleaseConfirmationEmailTaskTest {
             emailService.sendReleaseConfirmation(
                 "first@example.com",
                 "group-1@example.com",
-                "first",
-                1,
                 contentFor(failedBatch.single()),
                 any(),
             )
@@ -118,8 +97,6 @@ class ReleaseConfirmationEmailTaskTest {
             emailService.sendReleaseConfirmation(
                 "second@example.com",
                 "group-2@example.com",
-                "second",
-                2,
                 contentFor(successfulBatch.single()),
                 any(),
             )
@@ -136,8 +113,6 @@ class ReleaseConfirmationEmailTaskTest {
             emailService.sendReleaseConfirmation(
                 "second@example.com",
                 "group-2@example.com",
-                "second",
-                2,
                 contentFor(successfulBatch.single()),
                 any(),
             )
@@ -150,7 +125,7 @@ class ReleaseConfirmationEmailTaskTest {
         val batch = listOf(notification("LOC_1", groupContactEmail = groupContactEmail))
         every { databaseService.getPendingReleaseNotifications() } returns batch
         givenKeycloakUser("approver", "approver@example.com")
-        justRun { emailService.sendReleaseConfirmation(any(), any(), any(), any(), any(), any()) }
+        justRun { emailService.sendReleaseConfirmation(any(), any(), any(), any()) }
         justRun { databaseService.deletePendingReleaseNotifications(batch) }
 
         task.task()
@@ -159,8 +134,6 @@ class ReleaseConfirmationEmailTaskTest {
             emailService.sendReleaseConfirmation(
                 "approver@example.com",
                 null,
-                "approver",
-                1,
                 contentFor(batch.single()),
                 any(),
             )
@@ -174,6 +147,8 @@ class ReleaseConfirmationEmailTaskTest {
             notification("LOC_${index.toString().padStart(3, '0')}")
         }
         val expectedContent = ReleaseNotificationContent(
+            approver = "approver",
+            groupId = 1,
             groupName = "Group 1",
             groupContactEmail = "group-1@example.com",
             totalCount = 105,
@@ -193,7 +168,7 @@ class ReleaseConfirmationEmailTaskTest {
         )
         every { databaseService.getPendingReleaseNotifications() } returns batch
         givenKeycloakUser("approver", "approver@example.com")
-        justRun { emailService.sendReleaseConfirmation(any(), any(), any(), any(), any(), any()) }
+        justRun { emailService.sendReleaseConfirmation(any(), any(), any(), any()) }
         justRun { databaseService.deletePendingReleaseNotifications(batch) }
 
         task.task()
@@ -202,8 +177,6 @@ class ReleaseConfirmationEmailTaskTest {
             emailService.sendReleaseConfirmation(
                 "approver@example.com",
                 "group-1@example.com",
-                "approver",
-                1,
                 expectedContent,
                 any(),
             )
@@ -222,7 +195,7 @@ class ReleaseConfirmationEmailTaskTest {
         givenKeycloakUser("approver", "approver@example.com")
         val contentSlot = slot<ReleaseNotificationContent>()
         justRun {
-            emailService.sendReleaseConfirmation(any(), any(), any(), any(), capture(contentSlot), any())
+            emailService.sendReleaseConfirmation(any(), any(), capture(contentSlot), any())
         }
         justRun { databaseService.deletePendingReleaseNotifications(batch) }
 
@@ -262,6 +235,8 @@ class ReleaseConfirmationEmailTaskTest {
     )
 
     private fun contentFor(notification: PendingReleaseNotification) = ReleaseNotificationContent(
+        approver = notification.approver,
+        groupId = notification.groupId,
         groupName = notification.groupName,
         groupContactEmail = notification.groupContactEmail,
         totalCount = 1,

@@ -37,6 +37,8 @@ data class PendingReleaseNotification(
 }
 
 data class ReleaseNotificationContent(
+    val approver: String,
+    val groupId: Int,
     val groupName: String,
     val groupContactEmail: String,
     val totalCount: Long,
