@@ -424,6 +424,25 @@ CREATE TABLE public.metadata_upload_aux_table (
 ALTER TABLE public.metadata_upload_aux_table OWNER TO postgres;
 
 --
+-- Name: sent_notifications; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.sent_notifications (
+    notification_type character varying(64) NOT NULL,
+    accession text NOT NULL,
+    version bigint NOT NULL,
+    group_id integer NOT NULL,
+    recipient_username text NOT NULL,
+    recipient_email text NOT NULL,
+    cc_email text NOT NULL,
+    message_id text NOT NULL,
+    sent_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.sent_notifications OWNER TO postgres;
+
+--
 -- Name: seqset_citation_source; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -868,6 +887,14 @@ ALTER TABLE ONLY public.metadata_upload_aux_table
 
 
 --
+-- Name: sent_notifications sent_notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.sent_notifications
+    ADD CONSTRAINT sent_notifications_pkey PRIMARY KEY (notification_type, accession, version);
+
+
+--
 -- Name: seqset_citation_source seqset_citation_source_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -990,6 +1017,13 @@ CREATE INDEX files_upload_requested_at_idx ON public.files USING btree (upload_r
 --
 
 CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING btree (success);
+
+
+--
+-- Name: sent_notifications_message_id_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX sent_notifications_message_id_idx ON public.sent_notifications USING btree (message_id);
 
 
 --
@@ -1205,6 +1239,14 @@ ALTER TABLE ONLY public.seqset_to_records
 
 ALTER TABLE ONLY public.seqset_to_records
     ADD CONSTRAINT foreign_key_seqset_record_id FOREIGN KEY (seqset_record_id) REFERENCES public.seqset_records(seqset_record_id) ON DELETE CASCADE;
+
+
+--
+-- Name: sent_notifications sent_notifications_accession_version_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.sent_notifications
+    ADD CONSTRAINT sent_notifications_accession_version_fkey FOREIGN KEY (accession, version) REFERENCES public.sequence_entries(accession, version) ON DELETE CASCADE;
 
 
 --
