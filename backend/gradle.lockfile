@@ -1,6 +1,7 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
+# To regenerate this file, run: ./gradlew :dependencies --write-locks
 ch.qos.logback:logback-classic:1.5.20=compileClasspath,ktlint,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 ch.qos.logback:logback-core:1.5.20=compileClasspath,ktlint,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.carrotsearch.thirdparty:simple-xml-safe:2.7.1=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
@@ -26,7 +27,7 @@ com.github.docker-java:docker-java-api:3.7.1=testCompileClasspath,testRuntimeCla
 com.github.docker-java:docker-java-transport-zerodep:3.7.1=testCompileClasspath,testRuntimeClasspath
 com.github.docker-java:docker-java-transport:3.7.1=testCompileClasspath,testRuntimeClasspath
 com.github.java-json-tools:json-patch:1.13=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-com.github.luben:zstd-jni:1.5.7-9=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.github.luben:zstd-jni:1.5.7-11=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.github.stephenc.jcip:jcip-annotations:1.0-1=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.google.errorprone:error_prone_annotations:2.40.0=swiftExportClasspathResolvable
 com.google.errorprone:error_prone_annotations:2.47.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
