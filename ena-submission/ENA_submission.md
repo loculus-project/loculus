@@ -526,7 +526,8 @@ Currently we automate revision of studies and assemblies, if a manifest update i
 
 ## 3. [Revising Raw Reads](https://ena-docs.readthedocs.io/en/latest/update/metadata/programmatic-read.html)
 
-ENA only has documentation on how to revise runs and experiments submitted as XMLs, we opted to submit raw reads using the webin-cli which creates these XMLs for us. However, it is likely that the revision requirements for the alias (called `NAME` in the manifest.tsv) are the same: `Please note that the new experiment or run XML must either contain the original alias or the assigned accession number for the correct object to be updated.`
+It is not possible to revise run files after they have been submitted, see [docs](https://ena-docs.readthedocs.io/en/latest/update/metadata/interactive.html#common-run-updates). 
+ENA allows the automated revision of run and experiment metadata submitted as XMLs - [docs](https://ena-docs.readthedocs.io/en/latest/update/metadata/programmatic-read.html), we opted to submit raw reads using the webin-cli which creates these XMLs for us - thus we cannot yet revise raw reads metadata fields. Revision requirements for the alias are: `Please note that the new experiment or run XML must either contain the original alias or the assigned accession number for the correct object to be updated.`
 
 ## Promises made to ENA
 
