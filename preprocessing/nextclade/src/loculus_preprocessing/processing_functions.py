@@ -1196,7 +1196,7 @@ class ProcessingFunctions:
                 warnings.append(
                     f"specimenCollectorSampleId and submissionId could not be parsed, using "
                     f"ACCESSION_VERSION in displayName instead. To include your own identifier, "
-                    f"remove whitespace and '/' characters or use format '{human_readable_pattern}'"
+                    f"remove whitespace and '/' characters or use the format '{human_readable_pattern}' and we will parse the `identifier` from the submission."
                 )
             concatenate_order = replace_identifier(order, "ACCESSION_VERSION")
             concatenate_field_types = replace_identifier(field_types, "ACCESSION_VERSION")
