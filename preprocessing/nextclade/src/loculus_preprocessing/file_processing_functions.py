@@ -89,6 +89,10 @@ def validate_raw_reads_submission(
                 )
             )
 
+    if errors:
+        # only do in-depth validation if basic checks pass
+        return errors, warnings
+
     deacon_index = os.path.join(dataset_dir, DEACON_INDEX)
     with TemporaryDirectory() as tmp_dir:
         for file in files:
