@@ -32,7 +32,7 @@ from .ena_types import (
     Platform,
     RawReadsManifest,
 )
-from .notifications import SlackConfig, send_slack_notification, slack_conn_init
+from .notifications import SlackConfig, notify, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
     AccessionVersion,
     RawReadsTableEntry,
@@ -327,13 +327,14 @@ def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: Acc
     )
 
 
-def raw_reads_table_create(db_engine: Engine, config: Config):
+def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: SlackConfig):  # noqa: PLR0912, PLR0915
     """
     1. Find all entries in raw_reads_table in state READY
     2. Create temporary files: download fastq files, manifest_file
     3. Update raw_reads_table to state SUBMITTING (only proceed if update succeeds)
     4. If (create_ena_assembly succeeds): update state to SUBMITTED with results
-    3. Else update state to HAS_ERRORS with error messages
+    5. Else update state to HAS_ERRORS with error messages
+    6. Notify slack channel if there are old RUN accessions to suppress
 
     If config.test=True: use the test ENA webin-cli endpoint for submission.
     """
@@ -345,6 +346,7 @@ def raw_reads_table_create(db_engine: Engine, config: Config):
         logger.debug(
             f"Found {len(ready_to_submit_raw_reads)} entries in raw_reads_table in status READY"
         )
+    run_accessions_to_suppress = set()
     for row in ready_to_submit_raw_reads:
         seq_key = row.pkey
         submission_rows = find_conditions_in_db(
@@ -360,13 +362,16 @@ def raw_reads_table_create(db_engine: Engine, config: Config):
             db_engine, submission_row
         )
 
-        if is_revision(db_engine, seq_key):
+        revision = is_revision(db_engine, seq_key)
+        if revision:
             logger.debug(f"Entry {row.accession} is a revision, checking if it can be revised")
             if not can_revise_raw_reads(config, db_engine, submission_row):
                 continue
             if not has_raw_reads_changed(config, db_engine, submission_row):
                 update_raw_reads_results_with_latest_version(db_engine, seq_key)
                 continue
+            last_entry = get_last_entry(db_engine, submission_row.pkey)
+            old_run_accession = last_entry.seq_metadata.get(config.raw_reads_metadata_field)
 
         try:
             manifest_object = create_manifest_object(
@@ -419,6 +424,7 @@ def raw_reads_table_create(db_engine: Engine, config: Config):
                 update_values=update_values,
                 model_class=RawReadsTableEntry,
             )
+            run_accessions_to_suppress.add(old_run_accession) if revision else None
             for file in manifest_object.fastq:
                 try:
                     logger.info(f"Cleaning up temporary file {file} after successful submission")
@@ -432,6 +438,13 @@ def raw_reads_table_create(db_engine: Engine, config: Config):
                 seq_key=asdict(row.pkey),
                 update_type="creation",
             )
+    if run_accessions_to_suppress:
+        notify_msg = (
+            f"Raw reads creation succeeded for {len(run_accessions_to_suppress)} revisions, "
+            "required suppression of old run accessions in ENA - send an email. "
+            f"Run accessions to suppress: {', '.join(run_accessions_to_suppress)}"
+        )
+        notify(slack_config, notify_msg)
 
 
 def raw_reads_table_handle_errors(
@@ -502,7 +515,7 @@ def create_raw_reads(config: Config, stop_event: threading.Event):
         logger.debug("Checking for raw reads to create")
         sync_state_with_submission_table(db_engine)
 
-        raw_reads_table_create(db_engine, config)
+        raw_reads_table_create(db_engine, config, slack_config)
         last_retry_time = raw_reads_table_handle_errors(
             db_engine, config, slack_config, last_retry_time
         )

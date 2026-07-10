@@ -515,7 +515,7 @@ def _test_raw_reads_submission_errored(
     check_raw_reads_submission_started(db_engine, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
-    raw_reads_table_create(db_engine, config)
+    raw_reads_table_create(db_engine, config, slack_config)
     create_raw_reads_sync_state_with_submission_table(db_engine)
     check_raw_reads_submission_has_errors(db_engine, sequences_to_upload)
 
@@ -533,13 +533,16 @@ def _test_raw_reads_submission_errored(
 
 
 def _test_successful_raw_reads_submission(
-    db_engine: Engine, config: Config, sequences_to_upload: dict[str, Any]
+    db_engine: Engine,
+    config: Config,
+    sequences_to_upload: dict[str, Any],
+    slack_config: SlackConfig,
 ) -> None:
     create_raw_reads_sync_state_with_submission_table(db_engine)
     check_raw_reads_submission_started(db_engine, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
-    raw_reads_table_create(db_engine, config)
+    raw_reads_table_create(db_engine, config, slack_config)
     create_raw_reads_sync_state_with_submission_table(db_engine)
     check_raw_reads_submission_submitted(db_engine, sequences_to_upload)
 
@@ -646,6 +649,7 @@ def mock_requests_post() -> Mock:
 def multi_segment_submission(
     db_engine: Engine,
     config: Config,
+    slack_config: SlackConfig,
     mock_get_group_info: Mock,
     mock_submit_external_metadata: Mock,
     mock_download_fastq_files: Mock | None = None,
@@ -696,7 +700,7 @@ def multi_segment_submission(
     assert payload["externalMetadata"]["biosampleAccession"].startswith("SAMEA")
 
     if with_raw_reads:
-        _test_successful_raw_reads_submission(db_engine, config, sequences_to_upload)
+        _test_successful_raw_reads_submission(db_engine, config, sequences_to_upload, slack_config)
         get_external_metadata_and_send_to_loculus(db_engine, config)
         args = mock_submit_external_metadata.call_args_list
         assert len(args) == 3  # noqa: PLR2004
@@ -975,7 +979,11 @@ class TestSimpleSubmission(TestSubmission):
         Test the full ENA submission pipeline with accurate data - this should succeed
         """
         multi_segment_submission(
-            self.db_engine, self.config, mock_get_group_info, mock_submit_external_metadata
+            self.db_engine,
+            self.config,
+            self.slack_config,
+            mock_get_group_info,
+            mock_submit_external_metadata,
         )
 
 
@@ -988,6 +996,7 @@ class TestSingleSegmentOfMultiSegmentOrganismWithoutGCA(TestSubmission):
         multi_segment_submission(
             self.db_engine,
             self.config,
+            self.slack_config,
             mock_get_group_info,
             mock_submit_external_metadata,
             single_segment=True,
@@ -1304,7 +1313,11 @@ class TestRevisionAssemblyModificationTests(TestSubmission):
     def test_revise(self, mock_get_group_info: Mock, mock_submit_external_metadata: Mock) -> None:
         self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
         multi_segment_submission(
-            self.db_engine, self.config, mock_get_group_info, mock_submit_external_metadata
+            self.db_engine,
+            self.config,
+            self.slack_config,
+            mock_get_group_info,
+            mock_submit_external_metadata,
         )
 
         # get data
@@ -1336,7 +1349,11 @@ class TestRevisionNoAssemblyModificationTests(TestSubmission):
     def test_revise(self, mock_get_group_info: Mock, mock_submit_external_metadata: Mock) -> None:
         self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
         multi_segment_submission(
-            self.db_engine, self.config, mock_get_group_info, mock_submit_external_metadata
+            self.db_engine,
+            self.config,
+            self.slack_config,
+            mock_get_group_info,
+            mock_submit_external_metadata,
         )
 
         # get data
@@ -1377,7 +1394,11 @@ class TestRevisionWithAssemblyManifestChangeTests(TestSubmission):
         self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
         self.config.allow_revision_with_manifest_changes = False
         multi_segment_submission(
-            self.db_engine, self.config, mock_get_group_info, mock_submit_external_metadata
+            self.db_engine,
+            self.config,
+            self.slack_config,
+            mock_get_group_info,
+            mock_submit_external_metadata,
         )
         # get data
         mock_get_group_info.return_value = TEST_GROUP
@@ -1417,6 +1438,7 @@ class TestSimpleSubmissionWithRawReads(TestSubmission):
         multi_segment_submission(
             self.db_engine,
             self.config,
+            self.slack_config,
             mock_get_group_info,
             mock_submit_external_metadata,
             with_raw_reads=True,
@@ -1430,8 +1452,10 @@ class TestRevisionRawReadsModificationTests(TestSubmission):
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
     @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
+    @patch("ena_deposition.create_raw_reads.notify", autospec=True)
     def test_revise(
         self,
+        mock_notify: Mock,  # noqa: ARG002 - used in _test_successful_raw_reads_submission
         mock_download_fastq_files: Mock,
         mock_get_group_info: Mock,
         mock_submit_external_metadata: Mock,
@@ -1440,6 +1464,7 @@ class TestRevisionRawReadsModificationTests(TestSubmission):
         payload = multi_segment_submission(
             self.db_engine,
             self.config,
+            self.slack_config,
             mock_get_group_info,
             mock_submit_external_metadata,
             with_raw_reads=True,
@@ -1460,7 +1485,9 @@ class TestRevisionRawReadsModificationTests(TestSubmission):
         project_table_create(self.db_engine, self.config)
         check_project_submission_submitted(self.db_engine, sequences_to_upload)
         _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
-        _test_successful_raw_reads_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_raw_reads_submission(
+            self.db_engine, self.config, sequences_to_upload, self.slack_config
+        )
         _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
 
         # send to loculus
@@ -1491,6 +1518,7 @@ class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
         payload = multi_segment_submission(
             self.db_engine,
             self.config,
+            self.slack_config,
             mock_get_group_info,
             mock_submit_external_metadata,
             with_raw_reads=True,
@@ -1513,7 +1541,9 @@ class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
         project_table_create(self.db_engine, self.config)
         check_project_submission_submitted(self.db_engine, sequences_to_upload)
         _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
-        _test_successful_raw_reads_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_raw_reads_submission(
+            self.db_engine, self.config, sequences_to_upload, self.slack_config
+        )
         _test_successful_assembly_submission_no_wait(
             self.db_engine, self.config, sequences_to_upload
         )
@@ -1549,6 +1579,7 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
         multi_segment_submission(
             self.db_engine,
             self.config,
+            self.slack_config,
             mock_get_group_info,
             mock_submit_external_metadata,
             with_raw_reads=True,
@@ -1577,7 +1608,8 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
 # TODO(6877): add support for revision with raw reads manifest changes
 # class TestRevisionWithRawReadsManifestChangeTests(TestSubmission):
 #     @patch(
-#         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True  # noqa: E501
+#         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata",
+#         autospec=True,
 #     )
 #     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
 #     @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
@@ -1591,6 +1623,7 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
 #         payload = multi_segment_submission(
 #             self.db_engine,
 #             self.config,
+#             self.slack_config,
 #             mock_get_group_info,
 #             mock_submit_external_metadata,
 #             with_raw_reads=True,
@@ -1609,7 +1642,9 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
 #         create_project_sync_state_with_submission_table(self.db_engine)
 #         check_project_submission_submitted(self.db_engine, sequences_to_upload)
 #         _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
-#         _test_successful_raw_reads_submission(self.db_engine, self.config, sequences_to_upload)
+#         _test_successful_raw_reads_submission(
+#             self.db_engine, self.config, sequences_to_upload, self.slack_config
+#         )
 #         _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
 
 #         # send to loculus
