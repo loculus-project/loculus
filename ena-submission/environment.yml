@@ -27,7 +27,7 @@ dependencies:
   - ruff=0.14.2 # if changing update .pre-commit-config.yaml as well
   - tenacity=9.1.2
   - types-pytz=2025.2.0.20250809
-  - types-psycopg2=2.9.21.20251012
+  - types-psycopg2=2.9.21.20260518
   - types-requests=2.32.4.20250913
   - types-pyyaml=6.0.12.20250915
   - types-xmltodict=1.0.1.20250920
