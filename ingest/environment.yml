@@ -8,9 +8,9 @@ dependencies:
   - python=3.14.6 # Pinned to 3.12.x series, check for patch updates within 3.12
   # Extra dependencies
   - biopython=1.87
-  - click=8.4.1
+  - click=8.4.2
   - curl=8.21.0
-  - ijson=3.5.0
+  - ijson=3.5.1
   - jsonlines=4.0.0
   - ncbi-datasets-cli=18.32.0
   - nextclade=3.21.2
