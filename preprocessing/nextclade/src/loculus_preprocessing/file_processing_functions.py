@@ -172,3 +172,39 @@ def run_deacon_filter(index: str, input_file: str, summary_json: str) -> DeaconS
         logger.error(message)
         raise Exception(message)
     return DeaconSummary.from_json(summary_json)
+
+
+def start_deacon_server() -> subprocess.Popen:
+    args = [
+        "deacon",
+        "server",
+        "start",
+    ]
+    logger.debug("Starting Deacon server")
+
+    return subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # noqa: S603
+
+
+def stop_deacon_server(proc: subprocess.Popen | None) -> int:
+    args = ["deacon", "--use-server", "server", "stop"]
+    logger.debug("Stopping Deacon server")
+
+    exit_code = subprocess.run(  # noqa: S603
+        args,
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    ).returncode
+
+    if proc is None:
+        return exit_code
+
+    try:
+        return proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:  # server didn't stop -> kill manually
+        proc.terminate()
+        try:
+            return proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            return proc.wait()
