@@ -64,5 +64,5 @@ jobs:
           # The integration tests are run in a separate workflow
           # They require postgres to be running
             pytest \
-            --ignore=./scripts/test_ena_submission_integration.py \
-            --ignore=./scripts/test_api.py
+            --ignore=./test/test_ena_submission_integration.py \
+            --ignore=./test/test_api.py
