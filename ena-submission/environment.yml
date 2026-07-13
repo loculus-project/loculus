@@ -29,7 +29,7 @@ dependencies:
   - types-pytz=2025.2.0.20250809
   - types-psycopg2=2.9.21.20251012
   - types-requests=2.32.4.20250913
-  - types-pyyaml=6.0.12.20250915
+  - types-pyyaml=6.0.12.20260518
   - types-xmltodict=1.0.1.20250920
   - python-dotenv=1.2.1
   - pytest=8.4.2
