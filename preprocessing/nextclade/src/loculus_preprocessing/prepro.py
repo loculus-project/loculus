@@ -728,7 +728,6 @@ def run(config: Config) -> None:  # noqa: C901
             download_diamond_db(config, dataset_dir + "/diamond/diamond.dmnd")
         can_submit_raw_reads = FileCategory.RAW_READS in config.submission_file_categories
         if can_submit_raw_reads:
-            # TODO: Should we host this ourselves somewhere instead of fetching from external?
             index_path = os.path.join(dataset_dir, DEACON_INDEX)
             run_deacon_fetch(index_path)
 
@@ -750,9 +749,9 @@ def run(config: Config) -> None:  # noqa: C901
             # Don't use etag if we just got data
             # preprocessing only asks for 100 sequences to process at a time, so there might be more
             etag = None
-            proc = None
+            deacon_server_process = None
             if can_submit_raw_reads:
-                proc = start_deacon_server()
+                deacon_server_process = start_deacon_server()
             try:
                 processed = process_all(unprocessed, dataset_dir, config)
             except Exception as e:
@@ -761,8 +760,8 @@ def run(config: Config) -> None:  # noqa: C901
                 )
                 continue
             finally:
-                if proc is not None:
-                    stop_deacon_server(proc)
+                if deacon_server_process is not None:
+                    stop_deacon_server(deacon_server_process)
 
             if config.create_embl_file:
                 upload_flatfiles(processed, config)
