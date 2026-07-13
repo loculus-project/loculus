@@ -730,9 +730,7 @@ def run(config: Config) -> None:  # noqa: C901
         if can_submit_raw_reads:
             # TODO: Should we host this ourselves somewhere instead of fetching from external?
             index_path = os.path.join(dataset_dir, DEACON_INDEX)
-            if not run_deacon_fetch(index_path):
-                msg = "Failed to fetch Deacon index"
-                raise RuntimeError(msg)
+            run_deacon_fetch(index_path)
 
         total_processed = 0
         etag = None
@@ -762,11 +760,9 @@ def run(config: Config) -> None:  # noqa: C901
                     f"Processing failed. Traceback : {e}. Unprocessed data: {unprocessed}"
                 )
                 continue
-            if can_submit_raw_reads:
-                exit_code = stop_deacon_server(proc)
-                if exit_code != 0:
-                    message = f"Stopping Deacon server failed with exit code: {exit_code}"
-                    logger.error(message)
+            finally:
+                if proc is not None:
+                    stop_deacon_server(proc)
 
             if config.create_embl_file:
                 upload_flatfiles(processed, config)
