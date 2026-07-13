@@ -8,6 +8,7 @@ import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.LikePattern
 import org.jetbrains.exposed.sql.Op
+import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
@@ -29,7 +30,6 @@ import org.loculus.backend.api.AdminSeqSetCitation
 import org.loculus.backend.api.AuthorProfile
 import org.loculus.backend.api.CitationOrigin
 import org.loculus.backend.api.CitationSource
-import org.loculus.backend.api.CitedSeqSet
 import org.loculus.backend.api.ResponseSeqSet
 import org.loculus.backend.api.SeqSet
 import org.loculus.backend.api.SeqSetCitation
@@ -61,6 +61,16 @@ private val log = KotlinLogging.logger { }
 data class CitationSourcesUpdateResult(val updatedCitationSourceDOIs: Set<String>)
 
 data class SeqSetToCitationSourceEntry(val citationSourceId: Long, val seqSetId: String, val seqSetVersion: Long)
+
+private fun ResultRow.toSeqSet() = SeqSet(
+    seqSetId = this[SeqSetsTable.seqSetId],
+    seqSetVersion = this[SeqSetsTable.seqSetVersion],
+    name = this[SeqSetsTable.name],
+    createdAt = Timestamp.valueOf(this[SeqSetsTable.createdAt].toJavaLocalDateTime()),
+    createdBy = this[SeqSetsTable.createdBy],
+    description = this[SeqSetsTable.description],
+    seqSetDOI = this[SeqSetsTable.seqSetDOI],
+)
 
 @Service
 @Transactional
@@ -214,17 +224,7 @@ class SeqSetCitationsDatabaseService(
             throw NotFoundException("SeqSet $seqSetId, version $version does not exist")
         }
 
-        return query.map { row ->
-            SeqSet(
-                row[SeqSetsTable.seqSetId],
-                row[SeqSetsTable.seqSetVersion],
-                row[SeqSetsTable.name],
-                Timestamp.valueOf(row[SeqSetsTable.createdAt].toJavaLocalDateTime()),
-                row[SeqSetsTable.createdBy],
-                row[SeqSetsTable.description],
-                row[SeqSetsTable.seqSetDOI],
-            )
-        }
+        return query.map { it.toSeqSet() }
     }
 
     fun getSeqSetRecords(seqSetId: String, version: Long?): List<SeqSetRecord> {
@@ -279,17 +279,7 @@ class SeqSetCitationsDatabaseService(
             .selectAll()
             .where { SeqSetsTable.createdBy eq username }
 
-        return selectedSeqSets.map {
-            SeqSet(
-                it[SeqSetsTable.seqSetId],
-                it[SeqSetsTable.seqSetVersion],
-                it[SeqSetsTable.name],
-                Timestamp.valueOf(it[SeqSetsTable.createdAt].toJavaLocalDateTime()),
-                it[SeqSetsTable.createdBy],
-                it[SeqSetsTable.description],
-                it[SeqSetsTable.seqSetDOI],
-            )
-        }
+        return selectedSeqSets.map { it.toSeqSet() }
     }
 
     fun deleteSeqSet(authenticatedUser: AuthenticatedUser, seqSetId: String, version: Long) {
@@ -540,16 +530,7 @@ class SeqSetCitationsDatabaseService(
                         year = first[SeqSetCitationSourceTable.year],
                         contributors = first[SeqSetCitationSourceTable.contributors],
                     ),
-                    seqSets = rows.map {
-                        CitedSeqSet(
-                            seqSetAccessionVersion = AccessionVersion(
-                                it[SeqSetsTable.seqSetId],
-                                it[SeqSetsTable.seqSetVersion],
-                            ).displayAccessionVersion(),
-                            name = it[SeqSetsTable.name],
-                            seqSetDOI = it[SeqSetsTable.seqSetDOI],
-                        )
-                    },
+                    seqSets = rows.map { it.toSeqSet() },
                     origin = first[SeqSetCitationSourceTable.origin],
                 )
             }
@@ -616,16 +597,7 @@ class SeqSetCitationsDatabaseService(
             .innerJoin(SeqSetsTable)
             .selectAll()
             .where { SeqSetToCitationSourceTable.citationSourceId eq citationSourceId }
-            .map {
-                CitedSeqSet(
-                    seqSetAccessionVersion = AccessionVersion(
-                        it[SeqSetsTable.seqSetId],
-                        it[SeqSetsTable.seqSetVersion],
-                    ).displayAccessionVersion(),
-                    name = it[SeqSetsTable.name],
-                    seqSetDOI = it[SeqSetsTable.seqSetDOI],
-                )
-            }
+            .map { it.toSeqSet() }
 
         return AdminSeqSetCitation(
             source = request.source,

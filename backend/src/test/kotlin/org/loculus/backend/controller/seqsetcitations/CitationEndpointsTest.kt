@@ -224,8 +224,12 @@ class CitationEndpointsTest(
             .andExpect(jsonPath("\$[0].source.title").value(seqSetCitationSource.source.title))
             .andExpect(jsonPath("\$[0].source.year").value(seqSetCitationSource.source.year))
             .andExpect(jsonPath("\$[0].seqSets.length()").value(1))
-            .andExpect(jsonPath("\$[0].seqSets[0].seqSetAccessionVersion").value("$seqSetId.$seqSetVersion"))
+            .andExpect(jsonPath("\$[0].seqSets[0].seqSetId").value(seqSetId))
+            .andExpect(jsonPath("\$[0].seqSets[0].seqSetVersion").value(seqSetVersion))
             .andExpect(jsonPath("\$[0].seqSets[0].name").value(MOCK_SEQSET_NAME))
+            .andExpect(jsonPath("\$[0].seqSets[0].description").value(MOCK_SEQSET_DESCRIPTION))
+            .andExpect(jsonPath("\$[0].seqSets[0].createdAt").isString)
+            .andExpect(jsonPath("\$[0].seqSets[0].createdBy").value(MOCK_USERNAME))
             .andExpect(jsonPath("\$[0].seqSets[0].seqSetDOI").value(seqSetDOI))
     }
 
@@ -259,7 +263,8 @@ class CitationEndpointsTest(
             .andExpect(jsonPath("\$.source.sourceDOI").value(MOCK_CITATION_DOI))
             .andExpect(jsonPath("\$.origin").value("CURATED"))
             .andExpect(jsonPath("\$.seqSets.length()").value(1))
-            .andExpect(jsonPath("\$.seqSets[0].seqSetAccessionVersion").value("$seqSetId.$seqSetVersion"))
+            .andExpect(jsonPath("\$.seqSets[0].seqSetId").value(seqSetId))
+            .andExpect(jsonPath("\$.seqSets[0].seqSetVersion").value(seqSetVersion))
 
         client.getAllSeqSetCitations()
             .andExpect(status().isOk)

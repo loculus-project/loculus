@@ -115,30 +115,8 @@ data class SeqSetCitingSequence(
 @Schema(description = "A citation of a sequence.")
 data class SequenceCitation(val source: CitationSource, val seqSets: List<SeqSetCitingSequence>)
 
-@Schema(description = "A SeqSet that is referenced by a citation source.")
-data class CitedSeqSet(
-    @Schema(
-        description = "The accession and version of the SeqSet that was cited.",
-        type = "string",
-        example = "PP_SS_1.1",
-    )
-    val seqSetAccessionVersion: String,
-    @Schema(
-        description = "The name of the cited SeqSet.",
-        type = "string",
-        example = "My SeqSet",
-    )
-    val name: String,
-    @Schema(
-        description = "The DOI of the cited SeqSet, if one has been minted.",
-        type = "string",
-        example = "10.1234/5678",
-    )
-    val seqSetDOI: String?,
-)
-
 @Schema(description = "A citation of one or more SeqSets, with the SeqSets it references.")
-data class AdminSeqSetCitation(val source: CitationSource, val seqSets: List<CitedSeqSet>, val origin: CitationOrigin)
+data class AdminSeqSetCitation(val source: CitationSource, val seqSets: List<SeqSet>, val origin: CitationOrigin)
 
 @Schema(description = "A request to manually register a publication or other source as citing one or more SeqSets.")
 data class AddSeqSetCitationRequest(

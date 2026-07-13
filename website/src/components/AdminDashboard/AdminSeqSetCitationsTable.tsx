@@ -2,6 +2,7 @@ import type { FC } from 'react';
 
 import { routes } from '../../routes/routes';
 import type { AdminSeqSetCitation } from '../../types/seqSetCitation';
+import { getAccessionVersionString } from '../../utils/extractAccessionVersion';
 import { Button } from '../common/Button';
 
 interface Props {
@@ -58,20 +59,27 @@ export const AdminSeqSetCitationsTable: FC<Props> = ({ citations, onDelete }) =>
                         <td className='border px-2 py-1 align-top text-right'>{citation.source.year}</td>
                         <td className='border px-2 py-1 align-top break-words'>
                             <ul className='space-y-1'>
-                                {citation.seqSets.map((seqSet) => (
-                                    <li key={seqSet.seqSetAccessionVersion}>
-                                        <a
-                                            className='text-primary-700'
-                                            href={routes.seqSetPage(seqSet.seqSetAccessionVersion)}
-                                        >
-                                            {seqSet.name}
-                                        </a>
-                                        <span className='text-gray-500 text-sm ml-1'>
-                                            ({seqSet.seqSetAccessionVersion}
-                                            {seqSet.seqSetDOI ? `, DOI ${seqSet.seqSetDOI}` : ''})
-                                        </span>
-                                    </li>
-                                ))}
+                                {citation.seqSets.map((seqSet) => {
+                                    const seqSetAccessionVersion = getAccessionVersionString({
+                                        accession: seqSet.seqSetId,
+                                        version: seqSet.seqSetVersion,
+                                    });
+
+                                    return (
+                                        <li key={seqSetAccessionVersion}>
+                                            <a
+                                                className='text-primary-700'
+                                                href={routes.seqSetPage(seqSetAccessionVersion)}
+                                            >
+                                                {seqSet.name}
+                                            </a>
+                                            <span className='text-gray-500 text-sm ml-1'>
+                                                ({seqSetAccessionVersion}
+                                                {seqSet.seqSetDOI ? `, DOI ${seqSet.seqSetDOI}` : ''})
+                                            </span>
+                                        </li>
+                                    );
+                                })}
                             </ul>
                         </td>
                         {onDelete !== undefined && (
