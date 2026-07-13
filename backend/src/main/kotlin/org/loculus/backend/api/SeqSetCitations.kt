@@ -115,6 +115,20 @@ data class SeqSetCitingSequence(
 @Schema(description = "A citation of a sequence.")
 data class SequenceCitation(val source: CitationSource, val seqSets: List<SeqSetCitingSequence>)
 
+@Schema(description = "A citation of one or more SeqSets, with the SeqSets it references.")
+data class AdminSeqSetCitation(val source: CitationSource, val seqSets: List<SeqSet>, val origin: CitationOrigin)
+
+@Schema(description = "A request to manually register a publication or other source as citing one or more SeqSets.")
+data class AddSeqSetCitationRequest(
+    val source: CitationSource,
+    @Schema(
+        description = "Accession versions of the SeqSets that this source cites.",
+        type = "array",
+        example = "[\"PP_SS_1.1\"]",
+    )
+    val seqSetAccessionVersions: List<String>,
+)
+
 data class ResponseSeqSet(val seqSetId: String, val seqSetVersion: Long)
 
 data class AuthorProfile(
