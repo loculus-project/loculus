@@ -138,7 +138,7 @@ def validate_raw_reads_submission(
     return errors, warnings
 
 
-def run_deacon_fetch(index_path: str) -> bool:
+def run_deacon_fetch(index_path: str) -> None:
     args = ["deacon", "index", "fetch", "--output", index_path, "panhuman-1"]
     logger.debug(f"Running Deacon fetch: {args}")
 
@@ -146,13 +146,13 @@ def run_deacon_fetch(index_path: str) -> bool:
     if exit_code != 0:
         message = f"Deacon fetch failed with exit code {exit_code}"
         logger.error(message)
-        return False
-    return True
+        raise RuntimeError(message)
 
 
 def run_deacon_filter(index: str, input_file: str, summary_json: str) -> DeaconSummary:
     args = [
         "deacon",
+        "--use-server",
         "filter",
         "--deplete",
         "--threads",
@@ -185,26 +185,20 @@ def start_deacon_server() -> subprocess.Popen:
     return subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # noqa: S603
 
 
-def stop_deacon_server(proc: subprocess.Popen | None) -> int:
+def stop_deacon_server(proc: subprocess.Popen) -> None:
     args = ["deacon", "--use-server", "server", "stop"]
     logger.debug("Stopping Deacon server")
 
-    exit_code = subprocess.run(  # noqa: S603
+    subprocess.run(  # noqa: S603
         args,
         check=False,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
-    ).returncode
-
-    if proc is None:
-        return exit_code
+    )
 
     try:
-        return proc.wait(timeout=5)
-    except subprocess.TimeoutExpired:  # server didn't stop -> kill manually
-        proc.terminate()
-        try:
-            return proc.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            proc.kill()
-            return proc.wait()
+        proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        logger.warning("Failed to stop Deacon server gracefully, sending SIGKILL")
+        proc.kill()
+        proc.wait()
