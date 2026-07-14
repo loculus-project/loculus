@@ -113,13 +113,6 @@ class SubmitModel(
             "Processing submission (type: ${submissionParams.uploadType.name}) with uploadId $uploadId"
         }
 
-        submissionIdFilesMappingPreconditionValidator
-            .validateFilenameCharacters(submissionParams.files)
-            .validateFilenamesAreUnique(submissionParams.files)
-            .validateCategoriesMatchSchema(submissionParams.files, submissionParams.organism)
-            .validateMultipartUploads(submissionParams.files)
-            .validateFilesExist(submissionParams.files)
-
         insertDataIntoAux(
             uploadId,
             submissionParams,
@@ -147,10 +140,20 @@ class SubmitModel(
             )
         }
 
-        submissionParams.files?.let { submittedFiles ->
-            val fileSubmissionIds = submittedFiles.keys
-            validateSubmissionIdSetsForFiles(metadataSubmissionIds, fileSubmissionIds)
-            validateFileGroupOwnership(submittedFiles, submissionParams, uploadId)
+        // File mappings in submissionParams can contain submission Ids not present in the metadata
+        // This is implicitly validated for the file mappings within the metadata column
+        // TODO: This can be removed once file mappings JSON support is removed
+        submissionParams.files?.let { validateSubmissionIdSetsForFiles(metadataSubmissionIds, it.keys) }
+
+        val files = uploadDatabaseService.getFilesForUpload(uploadId)
+        if (files.isNotEmpty()) {
+            submissionIdFilesMappingPreconditionValidator
+                .validateFilenameCharacters(files)
+                .validateFilenamesAreUnique(files)
+                .validateCategoriesMatchSchema(files, submissionParams.organism)
+                .validateMultipartUploads(files)
+                .validateFilesExist(files)
+            validateFileGroupOwnership(files, submissionParams, uploadId)
         }
 
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
