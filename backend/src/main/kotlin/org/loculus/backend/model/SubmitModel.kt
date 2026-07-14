@@ -33,6 +33,9 @@ const val METADATA_ID_HEADER_ALTERNATE_FOR_BACKCOMPAT = "submissionId"
 const val FASTA_IDS_HEADER = "fastaIds"
 const val FASTA_IDS_SEPARATOR = " "
 
+const val FILES_HEADER_PREFIX = "files."
+const val FILES_SEPARATOR = " "
+
 const val ACCESSION_HEADER = "accession"
 private val log = KotlinLogging.logger { }
 
