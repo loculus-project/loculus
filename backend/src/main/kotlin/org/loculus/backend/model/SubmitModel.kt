@@ -113,6 +113,13 @@ class SubmitModel(
             "Processing submission (type: ${submissionParams.uploadType.name}) with uploadId $uploadId"
         }
 
+        submissionIdFilesMappingPreconditionValidator
+            .validateFilenameCharacters(submissionParams.files)
+            .validateFilenamesAreUnique(submissionParams.files)
+            .validateCategoriesMatchSchema(submissionParams.files, submissionParams.organism)
+            .validateMultipartUploads(submissionParams.files)
+            .validateFilesExist(submissionParams.files)
+
         insertDataIntoAux(
             uploadId,
             submissionParams,
