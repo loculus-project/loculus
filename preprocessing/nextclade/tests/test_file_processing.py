@@ -21,7 +21,10 @@ MAX_HOST_PROPORTION = 0.05
 
 @pytest.fixture
 def config() -> Config:
-    return Config()
+    return Config(
+        submission_file_categories=[FileCategory.RAW_READS],
+        deacon_max_host_proportion=MAX_HOST_PROPORTION,
+    )
 
 
 @pytest.fixture
@@ -74,18 +77,22 @@ def test_fetch_deacon_idx_only_when_raw_reads_enabled(config, monkeypatch):
     monkeypatch.setattr(prepro, "run_deacon_fetch", fetch_index_mock)
     monkeypatch.setattr(prepro, "fetch_unprocessed_sequences", MagicMock(side_effect=_ExitLoop))
 
-    # RAW_READS not enabled for this organism -> the index must not be fetched.
-    with pytest.raises(_ExitLoop):
-        prepro.run(config)
-    fetch_index_mock.assert_not_called()
-
-    # RAW_READS enabled -> the index is fetched once, into the dataset dir.
-    config.submission_file_categories = [FileCategory.RAW_READS]
+    # RAW_READS enabled -> the index is fetched once
     with pytest.raises(_ExitLoop):
         prepro.run(config)
     fetch_index_mock.assert_called_once()
     (index_path,) = fetch_index_mock.call_args.args
     assert index_path.endswith(prepro.DEACON_INDEX)
+
+    fetch_index_mock = MagicMock(return_value=True)
+    monkeypatch.setattr(prepro, "run_deacon_fetch", fetch_index_mock)
+
+    # RAW_READS not enabled -> the index must not be fetched.
+    config.submission_file_categories = []
+    config.deacon_max_host_proportion = None
+    with pytest.raises(_ExitLoop):
+        prepro.run(config)
+    fetch_index_mock.assert_not_called()
 
 
 def test_process_submitted_files_runs_raw_reads_check(config, tmp_path, monkeypatch):
@@ -97,7 +104,7 @@ def test_process_submitted_files_runs_raw_reads_check(config, tmp_path, monkeypa
         config, str(tmp_path), {FileCategory.RAW_READS: files}
     )
 
-    validate_mock.assert_called_once_with(config, str(tmp_path), files, 0.05)
+    validate_mock.assert_called_once_with(config, str(tmp_path), files)
     assert errors == []
     assert warnings == []
 
@@ -125,9 +132,7 @@ def test_process_submitted_files_reports_unsupported_category(config, tmp_path):
 @pytest.mark.usefixtures("mock_deacon")
 def test_single_valid_fastq_passes(config, tmp_path):
     files = [fastq_file("f1", "reads.fastq")]
-    errors, warnings = validate_raw_reads_submission(
-        config, str(tmp_path), files, MAX_HOST_PROPORTION
-    )
+    errors, warnings = validate_raw_reads_submission(config, str(tmp_path), files)
     assert errors == []
     assert warnings == []
 
@@ -135,9 +140,7 @@ def test_single_valid_fastq_passes(config, tmp_path):
 @pytest.mark.usefixtures("mock_deacon")
 def test_paired_valid_fastq_passes(config, tmp_path):
     files = [fastq_file("f1", "reads_R1.fastq"), fastq_file("f2", "reads_R2.fastq.gz")]
-    errors, warnings = validate_raw_reads_submission(
-        config, str(tmp_path), files, MAX_HOST_PROPORTION
-    )
+    errors, warnings = validate_raw_reads_submission(config, str(tmp_path), files)
     assert errors == []
     assert warnings == []
 
@@ -149,7 +152,7 @@ def test_too_many_files_reports_error(config, tmp_path):
         fastq_file("f2", "r2.fastq"),
         fastq_file("f3", "r3.fastq"),
     ]
-    errors, _ = validate_raw_reads_submission(config, str(tmp_path), files, MAX_HOST_PROPORTION)
+    errors, _ = validate_raw_reads_submission(config, str(tmp_path), files)
     assert len(errors) == 1
     assert "Received 3" in errors[0].message
 
@@ -157,7 +160,7 @@ def test_too_many_files_reports_error(config, tmp_path):
 @pytest.mark.usefixtures("mock_deacon")
 def test_unrecognized_extension_reports_error(config, tmp_path):
     files = [fastq_file("f1", "reads.txt")]
-    errors, _ = validate_raw_reads_submission(config, str(tmp_path), files, MAX_HOST_PROPORTION)
+    errors, _ = validate_raw_reads_submission(config, str(tmp_path), files)
     assert len(errors) == 1
     assert "unrecognized extension" in errors[0].message
 
@@ -165,14 +168,14 @@ def test_unrecognized_extension_reports_error(config, tmp_path):
 def test_host_contamination_within_threshold(config, tmp_path, mock_deacon):
     mock_deacon(0.01)
     files = [fastq_file("f1", "reads.fastq")]
-    errors, _ = validate_raw_reads_submission(config, str(tmp_path), files, MAX_HOST_PROPORTION)
+    errors, _ = validate_raw_reads_submission(config, str(tmp_path), files)
     assert errors == []
 
 
 def test_host_contamination_exceeds_threshold(config, tmp_path, mock_deacon):
     mock_deacon(0.9)
     files = [fastq_file("f1", "reads.fastq")]
-    errors, _ = validate_raw_reads_submission(config, str(tmp_path), files, MAX_HOST_PROPORTION)
+    errors, _ = validate_raw_reads_submission(config, str(tmp_path), files)
     assert len(errors) == 1
     assert "host reads proportion" in errors[0].message
 
@@ -184,6 +187,6 @@ def test_missing_url_reports_error_and_skips_deacon(config, tmp_path, monkeypatc
 
     monkeypatch.setattr(file_processing_functions, "run_deacon_filter", fail_if_called)
     files = [fastq_file("f1", "reads.fastq", url=None)]
-    errors, _ = validate_raw_reads_submission(config, str(tmp_path), files, MAX_HOST_PROPORTION)
+    errors, _ = validate_raw_reads_submission(config, str(tmp_path), files)
     assert len(errors) == 1
     assert "no URL for file" in errors[0].message

@@ -712,7 +712,7 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             )
 
 
-def run(config: Config) -> None:  # noqa: C901
+def run(config: Config) -> None:  # noqa: C901, PLR0912
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
         if config.alignment_requirement != AlignmentRequirement.NONE:
             download_nextclade_dataset(dataset_dir, config)
