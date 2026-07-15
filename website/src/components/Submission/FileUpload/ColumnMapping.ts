@@ -4,6 +4,8 @@ import { type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
 import stringSimilarity from '../../../utils/stringSimilarity';
 
+const FILES_HEADER_PREFIX = 'files.';
+
 export class ColumnMapping {
     private constructor(private readonly map: ReadonlyMap<string, string | null>) {}
 
@@ -97,10 +99,20 @@ export class ColumnMapping {
         const headersInFile = inputRows.splice(0, 1)[0];
         const headers: string[] = [];
         const indices: number[] = [];
+        const mappedSourceColumns = new Set<string>();
         this.entries().forEach(([sourceCol, targetCol]) => {
             if (targetCol === null) return;
+            mappedSourceColumns.add(sourceCol);
             headers.push(targetCol);
             indices.push(headersInFile.findIndex((sourceHeader) => sourceHeader === sourceCol));
+        });
+
+        // Include file category columns, as these will not be present in the column mapping
+        headersInFile.forEach((sourceHeader, sourceIndex) => {
+            if (sourceHeader.startsWith(FILES_HEADER_PREFIX) && !mappedSourceColumns.has(sourceHeader)) {
+                headers.push(sourceHeader);
+                indices.push(sourceIndex);
+            }
         });
         const newRows = inputRows.map((row) => indices.map((i) => row[i]));
         const newFileContent = Papa.unparse([headers, ...newRows], { delimiter: '\t', newline: '\n' });
