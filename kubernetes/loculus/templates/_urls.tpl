@@ -6,7 +6,7 @@
   {{- else if $ingressHosts.backend -}}
     {{- printf "https://%s" $ingressHosts.backend -}}
   {{- else if eq $.Values.environment "server" -}}
-    {{- (printf "https://backend%s%s" $.Values.networking.subdomainSeparator (.Values.host | default "")) -}}
+    {{- (printf "https://backend%s%s" $.Values.networking.subdomainSeparator $.Values.host) -}}
   {{- else -}}
     {{- printf "http://%s:8079" $.Values.localHost -}}
   {{- end -}}
@@ -20,7 +20,7 @@
   {{- else if $ingressHosts.website -}}
     {{- printf "https://%s" $ingressHosts.website -}}
   {{- else if eq $.Values.environment "server" -}}
-    {{- (printf "https://%s" (.Values.host | default "")) -}}
+    {{- (printf "https://%s" $.Values.host) -}}
   {{- else -}}
     {{- printf "http://%s:3000" $.Values.localHost -}}
   {{- end -}}
@@ -32,7 +32,7 @@
     {{- if $ingressHosts.minio -}}
         {{- printf "https://%s" $ingressHosts.minio -}}
     {{- else if eq $.Values.environment "server" -}}
-        {{- (printf "https://s3%s%s" $.Values.networking.subdomainSeparator (.Values.host | default "")) -}}
+        {{- (printf "https://s3%s%s" $.Values.networking.subdomainSeparator $.Values.host) -}}
     {{- else -}}
         {{- printf "http://%s:8084" $.Values.localHost -}}
     {{- end -}}
@@ -57,7 +57,7 @@
   {{- else if $ingressHosts.keycloak -}}
     {{- printf "https://%s" $ingressHosts.keycloak -}}
   {{- else if eq $.Values.environment "server" -}}
-    {{- (printf "https://authentication%s%s" $.Values.networking.subdomainSeparator (.Values.host | default "")) -}}
+    {{- (printf "https://authentication%s%s" $.Values.networking.subdomainSeparator $.Values.host) -}}
   {{- else -}}
     {{- printf "http://%s:8083" $.Values.localHost -}}
   {{- end -}}
