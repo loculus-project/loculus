@@ -1,6 +1,6 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- $ingressHosts := $.Values.networking.ingressHosts | default dict }}
-{{- $docsHost := $ingressHosts.docs | default (printf "docs%s%s" .Values.networking.subdomainSeparator (.Values.host | default "")) }}
+{{- $docsHost := $ingressHosts.docs | default (printf "docs%s%s" $.Values.networking.subdomainSeparator $.Values.host) }}
 {{- if .Values.previewDocs }}
 ---
 apiVersion: apps/v1

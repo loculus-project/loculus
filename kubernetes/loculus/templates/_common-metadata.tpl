@@ -623,7 +623,7 @@ fields:
 {{- else if $ingressHosts.lapis }}
   {{- $lapisUrlTemplate = printf "https://%s/%%organism%%" $ingressHosts.lapis }}
 {{- else if eq $.Values.environment "server" }}
-  {{- $lapisUrlTemplate = printf "https://lapis%s%s/%s" $.Values.networking.subdomainSeparator (.Values.host | default "") "%organism%" }}
+  {{- $lapisUrlTemplate = printf "https://lapis%s%s/%s" $.Values.networking.subdomainSeparator $.Values.host "%organism%" }}
 {{- else }}
   {{- $lapisUrlTemplate = printf "http://%s:8080/%%organism%%" $.Values.localHost }}
 {{- end }}
