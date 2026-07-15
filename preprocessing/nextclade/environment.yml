@@ -24,3 +24,4 @@ dependencies:
   - pytest=9.1.1
   - pydantic=2.13.4
   - diamond=2.2.2
+  - deacon=0.15.0

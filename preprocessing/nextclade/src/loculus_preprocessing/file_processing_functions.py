@@ -1,9 +1,19 @@
 import logging
+import os
+import subprocess  # noqa: S404
+from tempfile import TemporaryDirectory
+from typing import cast
+from uuid import uuid4
 
+from requests import HTTPError
+
+from loculus_preprocessing.backend import download_file
+from loculus_preprocessing.config import DEACON_INDEX, Config
 from loculus_preprocessing.datatypes import (
     AnnotationSourceType,
+    DeaconSummary,
     FileCategory,
-    FileIdAndName,
+    FileIdAndNameAndReadUrl,
     ProcessingAnnotation,
 )
 
@@ -11,7 +21,9 @@ logger = logging.getLogger(__name__)
 
 
 def process_submitted_files(
-    file_mapping: dict[FileCategory, list[FileIdAndName]],
+    config: Config,
+    dataset_dir: str,
+    file_mapping: dict[FileCategory, list[FileIdAndNameAndReadUrl]],
 ) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
@@ -22,7 +34,11 @@ def process_submitted_files(
             continue
         match category:
             case FileCategory.RAW_READS:
-                rr_errors, rr_warnings = validate_raw_reads_submission(files)
+                rr_errors, rr_warnings = validate_raw_reads_submission(
+                    config,
+                    dataset_dir,
+                    files,
+                )
                 errors.extend(rr_errors)
                 warnings.extend(rr_warnings)
             case _:
@@ -42,7 +58,9 @@ def process_submitted_files(
 
 
 def validate_raw_reads_submission(
-    files: list[FileIdAndName],
+    config: Config,
+    dataset_dir: str,
+    files: list[FileIdAndNameAndReadUrl],
 ) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
@@ -74,4 +92,125 @@ def validate_raw_reads_submission(
                 )
             )
 
+    if errors:
+        # only do in-depth validation if basic checks pass
+        return errors, warnings
+
+    deacon_index = os.path.join(dataset_dir, DEACON_INDEX)
+    with TemporaryDirectory() as tmp_dir:
+        local_files = []
+        for file in files:
+            if (url := file.url) is None:
+                message = (
+                    f"Internal error: no URL for file '{file.name}' with id "
+                    f"'{file.fileId}'. Please contact the administrator."
+                )
+                errors.append(
+                    ProcessingAnnotation.from_single(
+                        name=file.name, type=AnnotationSourceType.FILE, message=message
+                    )
+                )
+                continue
+
+            file_name_internal = os.path.join(tmp_dir, f"{file.fileId}-{file.name}")
+            try:
+                download_file(config, url, file_name_internal)
+            except HTTPError as e:
+                message = f"Error downloading file '{file.name}' from S3: {e}"
+                logger.error(message)
+                errors.append(
+                    ProcessingAnnotation.from_single(
+                        name=file.name, type=AnnotationSourceType.FILE, message=message
+                    )
+                )
+                continue
+            local_files.append(file_name_internal)
+        if errors:
+            return errors, warnings
+
+        summary_json_path = os.path.join(tmp_dir, f"{uuid4()}_summary.json")
+        deacon_summary = run_deacon_filter(deacon_index, local_files, summary_json_path)
+        # deacon_max_host_proportion is guaranteed not None by Config.finalize()
+        if deacon_summary.seqs_removed_proportion > cast(float, config.deacon_max_host_proportion):
+            names = ", ".join(file.name for file in files)
+            message = (
+                f"File(s) '{names}' had a host reads proportion of "
+                f"{deacon_summary.seqs_removed_proportion}, maximum allowed proportion "
+                f"is {config.deacon_max_host_proportion}"
+            )
+            errors.append(
+                ProcessingAnnotation.from_fields(
+                    input_fields=[f.name for f in files],
+                    output_fields=[f.name for f in files],
+                    type=AnnotationSourceType.FILE,
+                    message=message,
+                )
+            )
+
     return errors, warnings
+
+
+def run_deacon_fetch(index_path: str) -> None:
+    args = ["deacon", "index", "fetch", "--output", index_path, "panhuman-1"]
+    logger.debug(f"Running Deacon fetch: {args}")
+
+    exit_code = subprocess.run(args, check=False).returncode  # noqa: S603
+    if exit_code != 0:
+        message = f"Deacon fetch failed with exit code {exit_code}"
+        logger.error(message)
+        raise RuntimeError(message)
+
+
+def run_deacon_filter(index: str, input_files: list[str], summary_json: str) -> DeaconSummary:
+    args = [
+        "deacon",
+        "--use-server",
+        "filter",
+        "--deplete",
+        "--threads",
+        "1",
+        "--summary",
+        summary_json,
+        index,
+        *input_files,
+    ]
+    logger.debug(f"Running Deacon filter on '{', '.join(input_files)}': {args}")
+
+    exit_code = subprocess.run(  # noqa: S603
+        args, check=False, stdout=subprocess.DEVNULL
+    ).returncode
+    if exit_code != 0:
+        message = f"Deacon filter failed with exit code {exit_code}"
+        logger.error(message)
+        raise Exception(message)
+    return DeaconSummary.from_json(summary_json)
+
+
+def start_deacon_server() -> subprocess.Popen:
+    args = [
+        "deacon",
+        "server",
+        "start",
+    ]
+    logger.debug("Starting Deacon server")
+
+    return subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # noqa: S603
+
+
+def stop_deacon_server(proc: subprocess.Popen) -> None:
+    args = ["deacon", "--use-server", "server", "stop"]
+    logger.debug("Stopping Deacon server")
+
+    subprocess.run(  # noqa: S603
+        args,
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    try:
+        proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        logger.warning("Failed to stop Deacon server gracefully, sending SIGKILL")
+        proc.kill()
+        proc.wait()

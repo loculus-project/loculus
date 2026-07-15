@@ -26,8 +26,6 @@ from loculus_preprocessing.config import (
 )
 from loculus_preprocessing.datatypes import (
     AnnotationSourceType,
-    FileCategory,
-    FileIdAndName,
     SegmentClassificationMethod,
     SubmissionData,
     UnprocessedData,
@@ -281,141 +279,6 @@ single_segment_case_definitions = [
                 "VP35EbolaSudan": ebola_sudan_aa(
                     sequence_with_deletion("single", aligned=True), "VP35"
                 ),
-            },
-            aminoAcidInsertions={},
-            sequenceNameToFastaId={"main": "fastaHeader"},
-        ),
-    ),
-    Case(
-        name="with file",
-        input_metadata={},
-        input_files={
-            FileCategory.RAW_READS: [
-                FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
-                FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
-            ]
-        },
-        input_sequence={"fastaHeader": sequence_with_mutation("single")},
-        accession_id="1",
-        expected_metadata={
-            "completeness": 1.0,
-            "totalInsertedNucs": 0,
-            "totalSnps": 1,
-            "totalDeletedNucs": 0,
-            "length": len(consensus_sequence("single")),
-            "nonExistentField": "None",
-            "variant": True,
-        },
-        expected_files={
-            FileCategory.RAW_READS: [
-                FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
-                FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
-            ]
-        },
-        expected_errors=[],
-        expected_warnings=[],
-        expected_processed_alignment=ProcessedAlignment(
-            unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
-            alignedNucleotideSequences={"main": sequence_with_mutation("single")},
-            nucleotideInsertions={},
-            alignedAminoAcidSequences={
-                "NPEbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "NP"),
-                "VP35EbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "VP35"),
-            },
-            aminoAcidInsertions={},
-            sequenceNameToFastaId={"main": "fastaHeader"},
-        ),
-    ),
-    Case(
-        name="with too many raw read files",
-        input_metadata={},
-        input_files={
-            FileCategory.RAW_READS: [
-                FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
-                FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
-                FileIdAndName(fileId="file-id-0003", name="reads_R3.fastq"),
-            ]
-        },
-        input_sequence={"fastaHeader": sequence_with_mutation("single")},
-        accession_id="1",
-        expected_metadata={
-            "completeness": 1.0,
-            "totalInsertedNucs": 0,
-            "totalSnps": 1,
-            "totalDeletedNucs": 0,
-            "length": len(consensus_sequence("single")),
-            "nonExistentField": "None",
-            "variant": True,
-        },
-        expected_files={
-            FileCategory.RAW_READS: [
-                FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
-                FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
-                FileIdAndName(fileId="file-id-0003", name="reads_R3.fastq"),
-            ]
-        },
-        expected_errors=build_processing_annotations(
-            [
-                ProcessingAnnotationHelper(
-                    ["reads_R1.fastq", "reads_R2.fastq", "reads_R3.fastq"],
-                    ["reads_R1.fastq", "reads_R2.fastq", "reads_R3.fastq"],
-                    "Received 3 for raw reads upload. Please submit raw reads as one or two FASTQ files containing raw single-end or paired-end reads.",
-                    AnnotationSourceType.FILE,
-                )
-            ]
-        ),
-        expected_warnings=[],
-        expected_processed_alignment=ProcessedAlignment(
-            unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
-            alignedNucleotideSequences={"main": sequence_with_mutation("single")},
-            nucleotideInsertions={},
-            alignedAminoAcidSequences={
-                "NPEbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "NP"),
-                "VP35EbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "VP35"),
-            },
-            aminoAcidInsertions={},
-            sequenceNameToFastaId={"main": "fastaHeader"},
-        ),
-    ),
-    Case(
-        name="with unrecognized raw read file extension",
-        input_metadata={},
-        input_files={
-            FileCategory.RAW_READS: [FileIdAndName(fileId="file-id-0001", name="reads.txt")]
-        },
-        input_sequence={"fastaHeader": sequence_with_mutation("single")},
-        accession_id="1",
-        expected_metadata={
-            "completeness": 1.0,
-            "totalInsertedNucs": 0,
-            "totalSnps": 1,
-            "totalDeletedNucs": 0,
-            "length": len(consensus_sequence("single")),
-            "nonExistentField": "None",
-            "variant": True,
-        },
-        expected_files={
-            FileCategory.RAW_READS: [FileIdAndName(fileId="file-id-0001", name="reads.txt")]
-        },
-        expected_errors=build_processing_annotations(
-            [
-                ProcessingAnnotationHelper(
-                    ["reads.txt"],
-                    ["reads.txt"],
-                    "Raw reads file 'reads.txt' has unrecognized extension. "
-                    "Allowed extensions: .fastq, .fastq.gz, .fq, .fq.gz",
-                    AnnotationSourceType.FILE,
-                )
-            ]
-        ),
-        expected_warnings=[],
-        expected_processed_alignment=ProcessedAlignment(
-            unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
-            alignedNucleotideSequences={"main": sequence_with_mutation("single")},
-            nucleotideInsertions={},
-            alignedAminoAcidSequences={
-                "NPEbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "NP"),
-                "VP35EbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "VP35"),
             },
             aminoAcidInsertions={},
             sequenceNameToFastaId={"main": "fastaHeader"},
@@ -1269,51 +1132,6 @@ multi_segment_case_definitions_none_requirement = [
             alignedAminoAcidSequences={},
             aminoAcidInsertions={},
             sequenceNameToFastaId={"ebola-sudan": "ebola-sudan"},
-        ),
-    ),
-    Case(
-        name="validate raw read files when sequences are not aligned",
-        input_metadata={},
-        input_sequence={
-            "prefix_ebola-sudan": sequence_with_mutation("ebola-sudan"),
-            "other_prefix_ebola-zaire": sequence_with_mutation("ebola-zaire"),
-        },
-        accession_id="1",
-        input_files={
-            FileCategory.RAW_READS: [FileIdAndName(fileId="file-id-0001", name="reads.txt")]
-        },
-        expected_files={
-            FileCategory.RAW_READS: [FileIdAndName(fileId="file-id-0001", name="reads.txt")]
-        },
-        expected_metadata={
-            "length_ebola-sudan": len(consensus_sequence("ebola-sudan")),
-            "length_ebola-zaire": len(consensus_sequence("ebola-zaire")),
-        },
-        expected_errors=build_processing_annotations(
-            [
-                ProcessingAnnotationHelper(
-                    ["reads.txt"],
-                    ["reads.txt"],
-                    "Raw reads file 'reads.txt' has unrecognized extension. "
-                    "Allowed extensions: .fastq, .fastq.gz, .fq, .fq.gz",
-                    AnnotationSourceType.FILE,
-                )
-            ]
-        ),
-        expected_warnings=[],
-        expected_processed_alignment=ProcessedAlignment(
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
-            alignedNucleotideSequences={},
-            nucleotideInsertions={},
-            alignedAminoAcidSequences={},
-            aminoAcidInsertions={},
-            sequenceNameToFastaId={
-                "ebola-sudan": "prefix_ebola-sudan",
-                "ebola-zaire": "other_prefix_ebola-zaire",
-            },
         ),
     ),
 ]

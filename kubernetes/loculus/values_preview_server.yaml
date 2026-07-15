@@ -142,7 +142,7 @@ resources:
       memory: "200Mi"
       cpu: "10m"
     limits:
-      memory: "3Gi"
+      memory: "8Gi"
   minio:
     requests:
       memory: "250Mi"
@@ -156,3 +156,23 @@ defaultResources:
   limits:
     memory: "1Gi"
     cpu: "20m"
+
+# Preview only: run just the west-nile preprocessing pipeline while testing the deacon
+# host-depletion step. Each enabled organism runs its own prepro pod and fetches the
+# ~3.1Gi panhuman index, so disabling the rest keeps startup and memory manageable.
+# Deep-merges `enabled: false` onto the base defaultOrganisms entries.
+defaultOrganisms:
+  cchf:
+    enabled: false
+  cchf-multi-ref:
+    enabled: false
+  dummy-organism:
+    enabled: false
+  dummy-organism-with-files:
+    enabled: false
+  ebola-sudan:
+    enabled: false
+  enteroviruses:
+    enabled: false
+  not-aligned-organism:
+    enabled: false
