@@ -15,14 +15,7 @@ import LucideFile from '~icons/lucide/file';
 import LucideFolderUp from '~icons/lucide/folder-up';
 import LucideLoader from '~icons/lucide/loader';
 
-type SubmissionId = string;
-
 const DUMMY_SUBMISSION_ID = 'dummySubmissionId';
-
-type FileAndName = {
-    file: File;
-    name: string;
-};
 
 /**
  * The state that the component is in, right after the user dropped the files.
@@ -30,32 +23,37 @@ type FileAndName = {
  */
 type AwaitingUrlState = {
     type: 'awaitingUrls';
-    files: Record<SubmissionId, FileAndName[]>;
+    files: Awaiting[];
 };
-
-type SingleFileUpload = Pending | Uploaded | PreviousUpload | Error;
 
 type UploadInProgressState = {
     type: 'uploadInProgress';
-    files: Record<SubmissionId, SingleFileUpload[]>;
+    files: SingleFileUpload[];
 };
 
 type UploadCompleted = {
     type: 'uploadCompleted';
-    files: Record<SubmissionId, (Uploaded | PreviousUpload)[]>;
+    files: (Uploaded | PreviousUpload)[];
 };
 
 type FileUploadState = AwaitingUrlState | UploadInProgressState | UploadCompleted;
 
 type UploadStatus = 'pending' | 'uploaded' | 'previousUpload' | 'error';
 
+type Awaiting = {
+    type: 'awaiting';
+    file: File;
+    name: string;
+    path: string;
+};
+
 type Pending = {
     type: 'pending';
     file: File;
     name: string;
+    path: string;
     size: number;
     fileId: string;
-
     urls: string[];
     uploadedParts: number;
     totalParts: number;
@@ -67,6 +65,7 @@ type Uploaded = {
     type: 'uploaded';
     fileId: string;
     name: string;
+    path: string;
     size: number;
 };
 
@@ -79,9 +78,12 @@ type PreviousUpload = {
 type Error = {
     type: 'error';
     name: string;
+    path: string;
     size: number;
     msg: string;
 };
+
+type SingleFileUpload = Pending | Uploaded | PreviousUpload | Error;
 
 type FolderUploadComponentProps = {
     fileCategory: FileCategory;
@@ -112,30 +114,31 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(() => {
         if (fileMapping === undefined) return undefined;
 
-        const previousUploadFiles: Record<SubmissionId, PreviousUpload[]> = {};
-        Object.entries(fileMapping).forEach(([submissionId, categories]) => {
-            const fileCategoryFiles = categories[fileCategory.name] ?? [];
-            previousUploadFiles[submissionId] = fileCategoryFiles.map((file) => ({
-                type: 'previousUpload',
-                fileId: file.fileId,
-                name: file.name,
-            }));
-        });
+        // TODO: Re-implement previous uploads
+        // const previousUploadFiles: Record<SubmissionId, PreviousUpload[]> = {};
+        // Object.entries(fileMapping).forEach(([submissionId, categories]) => {
+        //     const fileCategoryFiles = categories[fileCategory.name] ?? [];
+        //     previousUploadFiles[submissionId] = fileCategoryFiles.map((file) => ({
+        //         type: 'previousUpload',
+        //         fileId: file.fileId,
+        //         name: file.name,
+        //     }));
+        // });
 
-        const hasPreviousFiles = Object.values(previousUploadFiles).some((files) => files.length > 0);
-        if (!hasPreviousFiles) return undefined;
+        // const hasPreviousFiles = Object.values(previousUploadFiles).some((files) => files.length > 0);
+        // if (!hasPreviousFiles) return undefined;
 
-        return { type: 'uploadCompleted', files: previousUploadFiles };
+        return { type: 'uploadCompleted', files: [] };
     });
     const [isDragging, setIsDragging] = useState(false);
 
     const backendClient = new BackendClient(clientConfig.backendUrl);
 
-    function updatePartProgress(submissionId: string, fileId: string, uploadedParts: number, totalParts: number) {
+    function updatePartProgress(fileId: string, uploadedParts: number, totalParts: number) {
         setFileUploadState((state) => {
             if (state?.type === 'uploadInProgress') {
                 return produce(state, (draft) => {
-                    const file = draft.files[submissionId].find((f) => f.type === 'pending' && f.fileId === fileId);
+                    const file = draft.files.find((f) => f.type === 'pending' && f.fileId === fileId);
                     if (file?.type === 'pending') {
                         file.uploadedParts = uploadedParts;
                         file.totalParts = totalParts;
@@ -146,16 +149,22 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         });
     }
 
-    function updateFileState(submissionId: string, fileId: string, newStatus: 'uploaded' | 'error', errorMsg?: string) {
+    function updateFileState(fileId: string, newStatus: 'uploaded' | 'error', errorMsg?: string) {
         setFileUploadState((state) => {
             if (state?.type === 'uploadInProgress') {
                 return produce(state, (draft) => {
-                    draft.files[submissionId] = state.files[submissionId].map((file) => {
+                    draft.files = draft.files.map((file) => {
                         if (file.type === 'pending' && file.fileId === fileId) {
                             if (newStatus === 'uploaded') {
-                                return { type: 'uploaded', fileId, name: file.name, size: file.size };
+                                return { type: 'uploaded', fileId, name: file.name, path: file.path, size: file.size };
                             } else {
-                                return { type: 'error', name: file.name, size: file.size, msg: errorMsg! };
+                                return {
+                                    type: 'error',
+                                    name: file.name,
+                                    path: file.path,
+                                    size: file.size,
+                                    msg: errorMsg!,
+                                };
                             }
                         }
                         return file;
@@ -166,36 +175,34 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         });
     }
 
-    async function uploadMultipartFile(submissionId: string, pending: Pending) {
+    async function uploadMultipartFile(pending: Pending) {
         const parts = splitFileIntoParts(pending.file, pending.partSize);
         const etags: string[] = [];
 
         for (let i = 0; i < parts.length; i++) {
             const etag = await uploadPart(pending.urls[i], parts[i]);
             etags.push(etag);
-            updatePartProgress(submissionId, pending.fileId, i + 1, pending.totalParts);
+            updatePartProgress(pending.fileId, i + 1, pending.totalParts);
         }
 
         const result = await backendClient.completeMultipartUpload(accessToken, [{ fileId: pending.fileId, etags }]);
         result.match(
-            () => updateFileState(submissionId, pending.fileId, 'uploaded'),
+            () => updateFileState(pending.fileId, 'uploaded'),
             (err) => {
-                updateFileState(submissionId, pending.fileId, 'error', err.detail);
+                updateFileState(pending.fileId, 'error', err.detail);
                 onError(err.detail);
                 throw new Error(`Upload of file ${pending.fileId} failed: ${err.detail}`);
             },
         );
     }
 
-    async function startUploading(submissionIdFileMap: Record<SubmissionId, Pending[]>) {
-        for (const [submissionId, files] of Object.entries(submissionIdFileMap)) {
-            for (const pending of files) {
-                await uploadMultipartFile(submissionId, pending);
-            }
+    async function startUploading(pendingFiles: Pending[]) {
+        for (const pending of pendingFiles) {
+            await uploadMultipartFile(pending);
         }
     }
 
-    async function requestFileUploads(filesAwaitingUrls: FileAndName[]): Promise<Pending[]> {
+    async function requestFileUploads(filesAwaitingUrls: Awaiting[]): Promise<Pending[]> {
         const pendingFiles: Pending[] = [];
         for (const file of filesAwaitingUrls) {
             const { partCount, partSize } = calculatePartSizeAndCount(file.file.size);
@@ -206,6 +213,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                         type: 'pending',
                         file: file.file,
                         name: file.name,
+                        path: file.path,
                         size: file.file.size,
                         fileId: data[0].fileId,
                         urls: data[0].urls,
@@ -249,41 +257,35 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             // and set the state to 'uploadInProgress'.
             case 'awaitingUrls': {
                 void (async () => {
-                    const pendingFiles: Record<SubmissionId, Pending[]> = {};
-                    for (const [submissionId, files] of Object.entries(fileUploadState.files)) {
-                        pendingFiles[submissionId] = await requestFileUploads(files);
-                    }
+                    const pendingFiles = await requestFileUploads(fileUploadState.files);
                     setFileUploadState({ type: 'uploadInProgress', files: pendingFiles });
                     void startUploading(pendingFiles);
                 })();
                 break;
             }
             case 'uploadInProgress': {
-                if (
-                    Object.values(fileUploadState.files)
-                        .flatMap((x) => x)
-                        .every(({ type }) => type === 'uploaded' || type === 'previousUpload')
-                ) {
+                if (fileUploadState.files.every(({ type }) => type === 'uploaded' || type === 'previousUpload')) {
                     setFileUploadState({
                         type: 'uploadCompleted',
-                        files: fileUploadState.files as Record<SubmissionId, (Uploaded | PreviousUpload)[]>,
+                        files: fileUploadState.files as (Uploaded | PreviousUpload)[],
                     });
                 }
                 break;
             }
             case 'uploadCompleted': {
-                setFileMapping((currentMapping) =>
-                    produce(currentMapping ?? {}, (draft) => {
-                        Object.entries(fileUploadState.files).forEach(([submissionId, files]) => {
-                            if (currentMapping?.[submissionId] !== undefined) {
-                                draft[submissionId] = { ...currentMapping[submissionId] };
-                            } else {
-                                draft[submissionId] = {};
-                            }
-                            draft[submissionId][fileCategory.name] = files;
-                        });
-                    }),
-                );
+                // TODO: Re-implement file mapping updates
+                // setFileMapping((currentMapping) =>
+                //     produce(currentMapping ?? {}, (draft) => {
+                //         Object.entries(fileUploadState.files).forEach(([submissionId, files]) => {
+                //             if (currentMapping?.[submissionId] !== undefined) {
+                //                 draft[submissionId] = { ...currentMapping[submissionId] };
+                //             } else {
+                //                 draft[submissionId] = {};
+                //             }
+                //             draft[submissionId][fileCategory.name] = files;
+                //         });
+                //     }),
+                // );
                 break;
             }
         }
@@ -300,43 +302,26 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 return;
             }
 
-            if (inputMode === 'form') {
-                setFileUploadState({
-                    type: 'awaitingUrls',
-                    files: {
-                        [formSubmissionId ?? DUMMY_SUBMISSION_ID]: filesArray.map((f) => ({ file: f, name: f.name })),
-                    },
-                });
-            } else {
-                const files: Record<SubmissionId, FileAndName[]> = Object.fromEntries(
-                    filesArray
-                        .map((file) => file.webkitRelativePath.split('/'))
-                        .map((pathSegments) => [pathSegments[1], []]),
-                );
-
-                filesArray.forEach((file) => {
-                    const submissionId = file.webkitRelativePath.split('/')[1];
-                    files[submissionId].push({ file, name: file.name });
-                });
-
-                setFileUploadState({
-                    type: 'awaitingUrls',
-                    files,
-                });
-            }
+            setFileUploadState({
+                type: 'awaitingUrls',
+                files: filesArray.map((f) => ({
+                    type: 'awaiting',
+                    file: f,
+                    name: f.name,
+                    path: getRelativePath(f.webkitRelativePath),
+                })),
+            });
         }
     };
 
-    const handleDiscardFile = (submissionId: string, file: SingleFileUpload) => {
+    const handleDiscardFile = (key: string) => {
         setFileUploadState((state) => {
             if (state?.type === 'uploadCompleted') {
-                const remainingFiles = state.files[submissionId].filter((f) => f.name !== file.name);
                 const result = produce(state, (draft) => {
-                    if (remainingFiles.length === 0) delete draft.files[submissionId];
-                    else draft.files[submissionId] = remainingFiles;
+                    draft.files = draft.files.filter((f) => !hasFileKey(f, key));
                 });
 
-                if (Object.values(result.files).every((files) => files.length === 0)) return undefined;
+                if (result.files.length === 0) return undefined;
                 else return result;
             }
             return state;
@@ -346,51 +331,51 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     const handleDiscardAllFiles = () => setFileUploadState(undefined);
 
     const handleAddAdditionalFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Currently only supported in form mode
-        if (inputMode === 'bulk' || !e.target.files || fileUploadState?.type !== 'uploadCompleted') return;
+        if (e.target.files) {
+            if (fileUploadState?.type !== 'uploadCompleted') return;
 
-        // exclude dot files, because files like .DS_Store cause problems otherwise
-        const filesArray = filterDotFiles(Array.from(e.target.files));
+            // exclude dot files, because files like .DS_Store cause problems otherwise
+            const filesArray = filterDotFiles(Array.from(e.target.files));
 
-        // Reset the input so selecting the same file again re-triggers onChange.
-        e.target.value = '';
-        if (filesArray.length === 0) return;
+            // Reset the input so selecting the same file again re-triggers onChange.
+            e.target.value = '';
+            if (filesArray.length === 0) return;
 
-        // Check for duplicate file names in the selection
-        const selectedFileNames = filesArray.map((f) => f.name);
-        const duplicateName = selectedFileNames.find((name, index) => selectedFileNames.indexOf(name) !== index);
-        if (duplicateName !== undefined) {
-            onError(`Cannot add multiple files with the same name: ${duplicateName}`);
-            return;
+            const awaiting: Awaiting[] = filesArray.map((f) => ({
+                type: 'awaiting',
+                file: f,
+                name: f.name,
+                path: f.name,
+            }));
+
+            // Check for collisions with existing files
+            const filePaths = new Set(awaiting.map((file) => file.path));
+            const collisions = fileUploadState.files.filter((file) => 'path' in file && filePaths.has(file.path));
+
+            // Updates the state of file uploads and triggers the upload of the new files
+            const addAdditionalFiles = async () => {
+                const existingFiles = fileUploadState.files.filter(
+                    (file) => !('path' in file) || !filePaths.has(file.path),
+                );
+                const pendingFiles = await requestFileUploads(awaiting);
+                setFileUploadState({
+                    type: 'uploadInProgress',
+                    files: [...existingFiles, ...pendingFiles],
+                });
+                void startUploading(pendingFiles);
+            };
+
+            // If there are collisions, show a confirmation dialog before proceeding
+            if (collisions.length > 0) {
+                displayConfirmationDialog({
+                    dialogText:
+                        'The following file(s) already exist and will be replaced: ' +
+                        collisions.map((file) => file.name).join(', '),
+                    confirmButtonText: 'Replace',
+                    onConfirmation: addAdditionalFiles,
+                });
+            } else void addAdditionalFiles();
         }
-
-        // Check for collisions with existing files
-        const submissionId = formSubmissionId ?? DUMMY_SUBMISSION_ID;
-        const existingFiles = fileUploadState.files[submissionId];
-        const uniqueSelectedNames = new Set(selectedFileNames);
-        const existingFileCollisions = existingFiles.filter((file) => uniqueSelectedNames.has(file.name));
-
-        // Updates the state of file uploads and triggers the upload of the new files
-        const addAdditionalFiles = async () => {
-            const nonCollidingFiles = existingFiles.filter((file) => !uniqueSelectedNames.has(file.name));
-            const newPendingFiles = await requestFileUploads(filesArray.map((f) => ({ file: f, name: f.name })));
-            setFileUploadState({
-                type: 'uploadInProgress',
-                files: { [submissionId]: [...nonCollidingFiles, ...newPendingFiles] },
-            });
-            void startUploading({ [submissionId]: newPendingFiles });
-        };
-
-        // If there are collisions, show a confirmation dialog before proceeding
-        if (existingFileCollisions.length > 0) {
-            displayConfirmationDialog({
-                dialogText:
-                    'The following file(s) already exist and will be replaced: ' +
-                    existingFileCollisions.map((file) => file.name).join(', '),
-                confirmButtonText: 'Replace',
-                onConfirmation: addAdditionalFiles,
-            });
-        } else void addAdditionalFiles();
     };
 
     return fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
@@ -462,60 +447,47 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             <div className='flex justify-between items-center mb-3'>
                 <div>
                     <h3 className='text-sm font-medium'>Files</h3>
-                    {inputMode === 'form'
-                        ? fileUploadState.files[formSubmissionId ?? DUMMY_SUBMISSION_ID].map((file) => (
-                              <div key={file.name} className='flex items-center mb-2 gap-2'>
-                                  <div className='flex-1 min-w-0'>
-                                      <FileListItem file={file} />
-                                  </div>
-                                  <Button
-                                      onClick={() => handleDiscardFile(formSubmissionId ?? DUMMY_SUBMISSION_ID, file)}
-                                      disabled={fileUploadState.type !== 'uploadCompleted'}
-                                      data-testid={`discard_${fileCategory.name}_${file.name}`}
-                                      variant='outline-neutral'
-                                      className='font-normal!'
-                                      size='sm'
-                                  >
-                                      Discard file
-                                  </Button>
-                              </div>
-                          ))
-                        : Object.entries(fileUploadState.files).flatMap(([submissionId, files]) => [
-                              <h4 key={submissionId} className='text-xs font-medium py-2'>
-                                  {submissionId}
-                              </h4>,
-                              ...files.map((file) => <FileListItem key={`${submissionId}/${file.name}`} file={file} />),
-                          ])}
-                    <ul></ul>
+                    {fileUploadState.files.map((file) => (
+                        <div key={getFileKey(file)} className='flex items-center mb-2 gap-2'>
+                            <div className='flex-1 min-w-0'>
+                                <FileListItem file={file} />
+                            </div>
+                            <Button
+                                onClick={() => handleDiscardFile(getFileKey(file))}
+                                disabled={fileUploadState.type !== 'uploadCompleted'}
+                                data-testid={`discard_${fileCategory.name}_${getFileKey(file)}`}
+                                variant='outline-neutral'
+                                className='font-normal!'
+                                size='sm'
+                            >
+                                Discard file
+                            </Button>
+                        </div>
+                    ))}
                 </div>
             </div>
-
-            <div className={`grid gap-2 w-full ${inputMode === 'form' ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                {inputMode === 'form' && (
-                    <>
-                        {isClient && (
-                            <input
-                                id={`${fileCategory.name}_add`}
-                                type='file'
-                                className='sr-only'
-                                aria-label={`Add files to ${fileCategory.displayName ?? fileCategory.name}`}
-                                data-testid={`add_${fileCategory.name}`}
-                                onChange={handleAddAdditionalFiles}
-                                multiple
-                            />
-                        )}
-                        <Button
-                            onClick={() => document.getElementById(`${fileCategory.name}_add`)?.click()}
-                            disabled={fileUploadState.type !== 'uploadCompleted'}
-                            data-testid={`add_button_${fileCategory.name}`}
-                            variant='outline-neutral'
-                            className='font-normal!'
-                            size='sm'
-                        >
-                            Add additional files
-                        </Button>
-                    </>
+            <div className='grid gap-2 w-full grid-cols-2'>
+                {isClient && (
+                    <input
+                        id={`${fileCategory.name}_add`}
+                        type='file'
+                        className='sr-only'
+                        aria-label={`Add files to ${fileCategory.displayName ?? fileCategory.name}`}
+                        data-testid={`add_${fileCategory.name}`}
+                        onChange={handleAddAdditionalFiles}
+                        multiple
+                    />
                 )}
+                <Button
+                    onClick={() => document.getElementById(`${fileCategory.name}_add`)?.click()}
+                    disabled={fileUploadState.type !== 'uploadCompleted'}
+                    data-testid={`add_button_${fileCategory.name}`}
+                    variant='outline-neutral'
+                    className='font-normal!'
+                    size='sm'
+                >
+                    Add additional files
+                </Button>
                 <Button
                     onClick={() =>
                         displayConfirmationDialog({
@@ -543,12 +515,19 @@ type FileListeItemProps = {
 const FileListItem: FC<FileListeItemProps> = ({ file }) => {
     const showProgress = file.type === 'pending';
     const percentage = showProgress ? Math.round((file.uploadedParts / file.totalParts) * 100) : 0;
+    const folderPath = file.type !== 'previousUpload' ? file.path.split('/').slice(0, -1) : [];
 
     return (
         <div className='flex flex-row'>
             <div className='w-3.5' />
             <LucideFile className='h-4 w-4 text-gray-500 ml-1 mr-1' />
             <div className='flex-1 min-w-0 flex items-center'>
+                {file.type !== 'previousUpload' && folderPath.length > 0 && (
+                    <>
+                        <span className='text-xs text-gray-400 truncate max-w-[140px]'>{folderPath.join('/')}</span>
+                        <span className='text-xs text-gray-400'>/</span>
+                    </>
+                )}
                 <span className='text-xs text-gray-700 truncate max-w-[140px]'>{file.name}</span>
                 {file.type === 'previousUpload' ? (
                     <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>(uploaded)</span>
@@ -603,18 +582,22 @@ const filterDotFiles = (files: File[]): File[] => {
  * Returns `undefined` if the files are fine, or an error otherwise.
  */
 const isFilesArrayValid = (files: File[], inputMode: InputMode): string | undefined => {
-    const subdirectories = files
-        .map((file) => file.webkitRelativePath.split('/'))
-        .filter((pathSegments) => pathSegments.length > (inputMode === 'form' ? 2 : 3))
-        .map((pathSegments) => pathSegments[pathSegments.length - 2]);
-    if (subdirectories.length > 0) {
-        return 'Subdirectories are not yet supported.';
+    if (inputMode === 'form') {
+        if (files.some((f) => f.webkitRelativePath.split('/').length > 2)) {
+            return 'Subdirectories are not supported for individual submissions.';
+        }
     }
-    const toplevelFiles = files
-        .map((file) => file.webkitRelativePath.split('/'))
-        .filter((pathSegments) => pathSegments.length < (inputMode === 'form' ? 2 : 3))
-        .map((pathSegments) => pathSegments[pathSegments.length - 1]);
-    if (toplevelFiles.length > 0) {
-        return `All files need to be inside a directory named with a sequence ID; these files are not: ${toplevelFiles.join(', ')}`;
-    }
+};
+
+/* Takes a webkitRelativePath and returns the path without the parent folder. */
+const getRelativePath = (path: string) => {
+    return path.split('/').slice(1).join('/');
+};
+
+const getFileKey = (file: SingleFileUpload) => {
+    return 'path' in file ? file.path : file.fileId;
+};
+
+const hasFileKey = (file: SingleFileUpload, key: string) => {
+    return getFileKey(file) === key;
 };
