@@ -1558,6 +1558,7 @@ defaultOrganismConfig: &defaultOrganismConfig
               - name: singleReference
                 genes: []
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
+        deacon_max_host_proportion: 0.01
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
     configFile:

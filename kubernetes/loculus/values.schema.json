@@ -814,6 +814,14 @@
                     "type": "string",
                     "description": "Minimizer used for nextclade sort (if require_nextclade_sort_match or if segments are to be assigned using nextclade sort)"
                   },
+                  "deacon_max_host_proportion": {
+                    "groups": ["nextcladePipelineConfigFile"],
+                    "docsIncludePrefix": false,
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Maximum proportion of host reads in submitted raw read files, as detected by Deacon."
+                  },
                   "backend_request_timeout_seconds": {
                     "groups": ["nextcladePipelineConfigFile"],
                     "docsIncludePrefix": false,

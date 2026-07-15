@@ -10,6 +10,7 @@ import yaml
 from pydantic import BaseModel, Field, model_validator
 
 from loculus_preprocessing.datatypes import (
+    FileCategory,
     FunctionArgs,
     FunctionInputs,
     FunctionName,
@@ -120,6 +121,7 @@ class Config(BaseModel):
     require_nextclade_sort_match: bool = False
     minimizer_url: str | None = None
     diamond_dmnd_url: str | None = None
+    deacon_max_host_proportion: float | None = None
 
     submission_file_categories: list[str] = Field(default_factory=list)
     create_embl_file: bool = False
@@ -143,6 +145,14 @@ class Config(BaseModel):
 
         if not self.backend_host:  # Set here so we can use organism
             self.backend_host = f"http://127.0.0.1:8079/{self.organism}"
+
+        if FileCategory.RAW_READS in self.submission_file_categories:
+            if self.deacon_max_host_proportion is None:
+                msg = "deacon_max_host_proportion must be set if raw reads submissions are enabled"
+                raise ValueError(msg)
+            if not (0.0 <= self.deacon_max_host_proportion <= 1.0):
+                msg = "deacon_max_host_proportion must be in [0.0, 1.0]"
+                raise ValueError(msg)
 
         self.processing_order = get_processing_order(self)
 

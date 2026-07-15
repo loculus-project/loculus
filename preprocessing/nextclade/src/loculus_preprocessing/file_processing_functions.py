@@ -2,6 +2,7 @@ import logging
 import os
 import subprocess  # noqa: S404
 from tempfile import TemporaryDirectory
+from typing import cast
 from uuid import uuid4
 
 from requests import HTTPError
@@ -37,7 +38,6 @@ def process_submitted_files(
                     config,
                     dataset_dir,
                     files,
-                    0.05,  # TODO: make configurable
                 )
                 errors.extend(rr_errors)
                 warnings.extend(rr_warnings)
@@ -61,7 +61,6 @@ def validate_raw_reads_submission(
     config: Config,
     dataset_dir: str,
     files: list[FileIdAndNameAndReadUrl],
-    max_host_proportion: float,
 ) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
@@ -131,12 +130,13 @@ def validate_raw_reads_submission(
 
         summary_json_path = os.path.join(tmp_dir, f"{uuid4()}_summary.json")
         deacon_summary = run_deacon_filter(deacon_index, local_files, summary_json_path)
-        if deacon_summary.seqs_removed_proportion > max_host_proportion:
+        # deacon_max_host_proportion is guaranteed not None by Config.finalize()
+        if deacon_summary.seqs_removed_proportion > cast(float, config.deacon_max_host_proportion):
             names = ", ".join(file.name for file in files)
             message = (
                 f"File(s) '{names}' had a host reads proportion of "
                 f"{deacon_summary.seqs_removed_proportion}, maximum allowed proportion "
-                f"is {max_host_proportion}"
+                f"is {config.deacon_max_host_proportion}"
             )
             errors.append(
                 ProcessingAnnotation.from_fields(
