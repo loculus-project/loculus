@@ -186,4 +186,4 @@ def test_missing_url_reports_error_and_skips_deacon(config, tmp_path, monkeypatc
     files = [fastq_file("f1", "reads.fastq", url=None)]
     errors, _ = validate_raw_reads_submission(config, str(tmp_path), files, MAX_HOST_PROPORTION)
     assert len(errors) == 1
-    assert "No URL for file" in errors[0].message
+    assert "no URL for file" in errors[0].message

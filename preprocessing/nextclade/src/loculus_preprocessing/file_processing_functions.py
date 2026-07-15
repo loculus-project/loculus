@@ -2,6 +2,7 @@ import logging
 import os
 import subprocess  # noqa: S404
 from tempfile import TemporaryDirectory
+from uuid import uuid4
 
 from requests import HTTPError
 
@@ -98,9 +99,13 @@ def validate_raw_reads_submission(
 
     deacon_index = os.path.join(dataset_dir, DEACON_INDEX)
     with TemporaryDirectory() as tmp_dir:
+        local_files = []
         for file in files:
             if (url := file.url) is None:
-                message = f"No URL for file '{file.name}' with id '{file.fileId}'"
+                message = (
+                    f"Internal error: no URL for file '{file.name}' with id "
+                    f"'{file.fileId}'. Please contact the administrator."
+                )
                 errors.append(
                     ProcessingAnnotation.from_single(
                         name=file.name, type=AnnotationSourceType.FILE, message=message
@@ -120,20 +125,27 @@ def validate_raw_reads_submission(
                     )
                 )
                 continue
+            local_files.append(file_name_internal)
+        if errors:
+            return errors, warnings
 
-            summary_json_path = os.path.join(tmp_dir, f"{file.fileId}_summary.json")
-            deacon_summary = run_deacon_filter(deacon_index, file_name_internal, summary_json_path)
-            if deacon_summary.seqs_removed_proportion > max_host_proportion:
-                message = (
-                    f"File {file.name} (id: {file.fileId}) had a host reads proportion of "
-                    f"{deacon_summary.seqs_removed_proportion}, maximum allowed proportion "
-                    f"is {max_host_proportion}"
+        summary_json_path = os.path.join(tmp_dir, f"{uuid4()}_summary.json")
+        deacon_summary = run_deacon_filter(deacon_index, local_files, summary_json_path)
+        if deacon_summary.seqs_removed_proportion > max_host_proportion:
+            names = ", ".join(file.name for file in files)
+            message = (
+                f"File(s) '{names}' had a host reads proportion of "
+                f"{deacon_summary.seqs_removed_proportion}, maximum allowed proportion "
+                f"is {max_host_proportion}"
+            )
+            errors.append(
+                ProcessingAnnotation.from_fields(
+                    input_fields=[f.name for f in files],
+                    output_fields=[f.name for f in files],
+                    type=AnnotationSourceType.FILE,
+                    message=message,
                 )
-                errors.append(
-                    ProcessingAnnotation.from_single(
-                        name=file.name, type=AnnotationSourceType.FILE, message=message
-                    )
-                )
+            )
 
     return errors, warnings
 
@@ -149,7 +161,7 @@ def run_deacon_fetch(index_path: str) -> None:
         raise RuntimeError(message)
 
 
-def run_deacon_filter(index: str, input_file: str, summary_json: str) -> DeaconSummary:
+def run_deacon_filter(index: str, input_files: list[str], summary_json: str) -> DeaconSummary:
     args = [
         "deacon",
         "--use-server",
@@ -160,9 +172,9 @@ def run_deacon_filter(index: str, input_file: str, summary_json: str) -> DeaconS
         "--summary",
         summary_json,
         index,
-        input_file,
+        *input_files,
     ]
-    logger.debug(f"Running Deacon filter on '{input_file}': {args}")
+    logger.debug(f"Running Deacon filter on '{', '.join(input_files)}': {args}")
 
     exit_code = subprocess.run(  # noqa: S603
         args, check=False, stdout=subprocess.DEVNULL
