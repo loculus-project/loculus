@@ -12,6 +12,7 @@ export const test = base.extend({
                     'ERR_INCOMPLETE_CHUNKED_ENCODING',
                     "Response to preflight request doesn't pass access control check", // LAPIS sometimes hangs up preflight requests for unknown reasons
                     'has been externalized for browser compatibility.',
+                    "from origin 'http://localhost:3000' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header",
                 ];
 
                 const isHarmless = harmlessMessages.some((harmless) =>
