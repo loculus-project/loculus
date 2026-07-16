@@ -20,7 +20,7 @@ class FileIdAndNameAndReadUrl(BaseModel):
 Files = dict[FileCategory, list[FileIdAndNameAndReadUrl]]
 
 class Annotation(BaseModel):
-    fileId: str | None = None  # noqa: N815
+    fileName: str | None = None  # noqa: N815
     fileCategory: FileCategory  = FileCategory.RAW_READS  # noqa: N815
     message: str
 

@@ -9,9 +9,10 @@ class Config(BaseModel):
     backend_request_timeout_seconds: int
     file_service_host: str | None = None
     file_service_port: int | None = None
+    deacon_index_url: str | None = None
 
     deacon_max_host_reads_proportion: float
-    deacon_max_host_bp_proportion: float
+    deacon_max_host_bp: int  # maximum number of host base pairs allowed in a sample before it is flagged as contaminated
 
     # deacon parameters
     deacon_a: int = 2  # absolute number of k-mers in a read that need to map to index to be flagged

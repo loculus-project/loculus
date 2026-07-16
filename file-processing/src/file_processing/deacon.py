@@ -113,15 +113,15 @@ DEACON_WARNING_PROMPT = (
 
 
 def deacon_message(
-    files, numbers, maximum, type: Literal["base pairs", "reads"], error: bool
+    file_names: str, numbers: str, maximum: float, type: Literal["base pairs", "reads"], error: bool
 ) -> str:
     return (
         f"Our QC pipeline identified {type} that map to the human genome. "
         if error
         else f"Our QC pipeline identified a small number of {type} that map to the human genome. "
-        f"File(s): '{', '.join(file.name for file in files)}' "
-        f"had {type} which mapped to the human genome, with a proportion of {numbers}, "
-        f"the maximum allowed proportion is {maximum}. "
+        f"File(s): '{file_names}' "
+        f"had {type} which mapped to the human genome, with {numbers}, "
+        f"the maximum allowed {"proportion" if type == "reads" else "base pairs"} is {maximum}. "
         f"{DEACON_ERROR_PROMPT}"
         if error
         else f"{DEACON_WARNING_PROMPT}"
@@ -131,24 +131,25 @@ def deacon_message(
 def process_deacon_run(
     deacon_summary: DeaconSummary, files: list, config: Config
 ) -> tuple[list[Annotation], list[Annotation]]:
+    file_names = ", ".join(file.name for file in files)
     if deacon_summary.seqs_out_proportion > cast(float, config.deacon_max_host_reads_proportion):
         message = deacon_message(
-            files,
+            file_names,
             f"{deacon_summary.seqs_out_proportion} ({deacon_summary.seqs_out}/ {deacon_summary.seqs_in})",
             config.deacon_max_host_reads_proportion,
             "reads",
             True,
         )
-        return [Annotation(fileId=None, fileCategory=FileCategory.RAW_READS, message=message)], []
-    if deacon_summary.bp_out_proportion > cast(float, config.deacon_max_host_bp_proportion):
+        return [Annotation(fileName=file_names, fileCategory=FileCategory.RAW_READS, message=message)], []
+    if deacon_summary.bp_out > cast(int, config.deacon_max_host_bp):
         message = deacon_message(
-            files,
-            f"{deacon_summary.bp_out_proportion} ({deacon_summary.bp_out}/ {deacon_summary.bp_in})",
-            config.deacon_max_host_bp_proportion,
+            file_names,
+            f"{deacon_summary.bp_out}",
+            config.deacon_max_host_bp,
             "base pairs",
             True,
         )
-        return [Annotation(fileId=None, fileCategory=FileCategory.RAW_READS, message=message)], []
+        return [Annotation(fileName=file_names, fileCategory=FileCategory.RAW_READS, message=message)], []
     warnings: list[Annotation] = []
     if (
         0
@@ -156,24 +157,24 @@ def process_deacon_run(
         <= cast(float, config.deacon_max_host_reads_proportion)
     ):
         message = deacon_message(
-            files,
+            file_names,
             f"{deacon_summary.seqs_out_proportion} ({deacon_summary.seqs_out}/ {deacon_summary.seqs_in})",
             config.deacon_max_host_reads_proportion,
             "reads",
             False,
         )
         warnings.append(
-            Annotation(fileId=None, fileCategory=FileCategory.RAW_READS, message=message)
+            Annotation(fileName=file_names, fileCategory=FileCategory.RAW_READS, message=message)
         )
-    if 0 < deacon_summary.bp_out_proportion <= cast(float, config.deacon_max_host_bp_proportion):
+    if 0 < deacon_summary.bp_out <= cast(int, config.deacon_max_host_bp):
         message = deacon_message(
-            files,
-            f"{deacon_summary.bp_out_proportion} ({deacon_summary.bp_out}/ {deacon_summary.bp_in})",
-            config.deacon_max_host_bp_proportion,
+            file_names,
+            f"{deacon_summary.bp_out}",
+            config.deacon_max_host_bp,
             "base pairs",
             False,
         )
         warnings.append(
-            Annotation(fileId=None, fileCategory=FileCategory.RAW_READS, message=message)
+            Annotation(fileName=file_names, fileCategory=FileCategory.RAW_READS, message=message)
         )
     return [], warnings

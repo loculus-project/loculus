@@ -1,7 +1,6 @@
 import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import cast
 
 import requests
 from file_processing.config import Config
@@ -48,7 +47,7 @@ def process_submitted_files(
                 logger.warning(message)
                 errors.append(
                     Annotation(
-                        fileId=category,
+                        fileName=category,
                         fileCategory=category,
                         message=f"Internal error: {message} Please contact the administrator.",
                     )
@@ -90,7 +89,7 @@ def validate_raw_reads_submission(
                 logger.error(message)
                 errors.append(
                     Annotation(
-                        fileId=file.fileId,
+                        fileName=file.name,
                         fileCategory=FileCategory.RAW_READS,
                         message=message,
                     )

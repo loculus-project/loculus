@@ -1,1 +1,7 @@
 log_level: DEBUG
+backend_request_timeout_seconds: 600
+deacon_max_host_reads_proportion: 0.4
+deacon_max_host_bp: 1000000000 # 1 Million
+deacon_a: 2
+deacon_r: 0.05
+deacon_index_url: fake_url

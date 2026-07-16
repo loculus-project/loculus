@@ -536,15 +536,15 @@ def process_single(
     output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
         accession_version, unprocessed, config
     )
-
-    # file_processing_service = FileProcessingService(
-    #     file_processing_service_url=config.file_processing_service.file_processing_service_url
-    #     if config.file_processing_service
-    #     else None
-    # )
-    # file_errors, file_warnings = file_processing_service.process_files(unprocessed.files)
-
-    file_errors, file_warnings = [], []
+    if unprocessed.files:
+        file_processing_service = FileProcessingService(
+            file_processing_service_url=config.file_processing_service.file_processing_service_url
+            if config.file_processing_service
+            else None
+        )
+        file_errors, file_warnings = file_processing_service.process_files(unprocessed.files)
+    else:
+        file_errors, file_warnings = [], []
 
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
@@ -599,8 +599,15 @@ def process_single_unaligned(
         accession_version, unprocessed, config
     )
 
-    # TODO: call file processing service
-    file_errors, file_warnings = [], []
+    if unprocessed.files:
+        file_processing_service = FileProcessingService(
+            file_processing_service_url=config.file_processing_service.file_processing_service_url
+            if config.file_processing_service
+            else None
+        )
+        file_errors, file_warnings = file_processing_service.process_files(unprocessed.files)
+    else:
+        file_errors, file_warnings = [], []
 
     return processed_entry_no_alignment(
         accession_version=accession_version,
