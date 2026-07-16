@@ -2,6 +2,7 @@ import { type FC } from 'react';
 
 import { routes } from '../../routes/routes';
 import { type SeqSetCitation, type SequenceCitation } from '../../types/seqSetCitation';
+import { formatCitationContributors } from './formatCitationContributors';
 
 interface CitationTableProps {
     isLoading: boolean;
@@ -30,10 +31,11 @@ export const CitationDetails: FC<{
                 {displayYear && ` (${citation.source.year})`}
             </a>
             <div className='text-sm text-gray-700'>
-                {citation.source.contributors
-                    .map((contributor) => [contributor.givenName, contributor.surname].filter((name) => name).join(' '))
-                    .join(', ')}
+                {formatCitationContributors(citation.source.contributors)}
             </div>
+            {citation.source.journal !== undefined && citation.source.journal !== null && (
+                <div className='text-sm italic text-gray-700'>{citation.source.journal}</div>
+            )}
             {'seqSets' in citation && citation.seqSets.length > 0 && (
                 <span className='text-sm text-gray-500'>
                     From SeqSet{citation.seqSets.length > 1 ? 's' : ''}:

@@ -37,6 +37,7 @@ const parseContributor = (line: string) => {
 /* eslint-disable @typescript-eslint/naming-convention */
 type CrossRefWork = {
     'title'?: string[];
+    'container-title'?: string[];
     'author'?: { given?: string; family?: string }[];
     'issued'?: { 'date-parts'?: number[][] };
     'published'?: { 'date-parts'?: number[][] };
@@ -60,6 +61,7 @@ export const AddSeqSetCitationForm: FC<Props> = ({ clientConfig, accessToken, on
     const isClient = useClientFlag();
     const [sourceDOI, setSourceDOI] = useState('');
     const [title, setTitle] = useState('');
+    const [journal, setJournal] = useState('');
     const [year, setYear] = useState('');
     const [contributorsInput, setContributorsInput] = useState('');
     const [seqSetAccessionsInput, setSeqSetAccessionsInput] = useState('');
@@ -72,6 +74,7 @@ export const AddSeqSetCitationForm: FC<Props> = ({ clientConfig, accessToken, on
     const resetForm = () => {
         setSourceDOI('');
         setTitle('');
+        setJournal('');
         setYear('');
         setContributorsInput('');
         setSeqSetAccessionsInput('');
@@ -95,6 +98,9 @@ export const AddSeqSetCitationForm: FC<Props> = ({ clientConfig, accessToken, on
 
             if (work.title?.[0] !== undefined) {
                 setTitle(work.title[0]);
+            }
+            if (work['container-title']?.[0] !== undefined) {
+                setJournal(work['container-title'][0]);
             }
             const year = extractYear(work);
             if (year !== undefined) {
@@ -146,6 +152,7 @@ export const AddSeqSetCitationForm: FC<Props> = ({ clientConfig, accessToken, on
                 title: title.trim(),
                 year: parsedYear,
                 contributors: splitLines(contributorsInput).map(parseContributor),
+                journal: journal.trim() || undefined,
             },
             seqSetAccessionVersions,
         });
@@ -223,6 +230,19 @@ export const AddSeqSetCitationForm: FC<Props> = ({ clientConfig, accessToken, on
                     className={inputStyles}
                     value={year}
                     onChange={(e) => setYear(e.target.value)}
+                    disabled={!isClient}
+                />
+            </div>
+            <div className='mb-4'>
+                <label htmlFor='citation-journal' className='block mb-1 text-sm font-medium text-gray-900'>
+                    Journal
+                </label>
+                <input
+                    id='citation-journal'
+                    type='text'
+                    className={inputStyles}
+                    value={journal}
+                    onChange={(e) => setJournal(e.target.value)}
                     disabled={!isClient}
                 />
             </div>

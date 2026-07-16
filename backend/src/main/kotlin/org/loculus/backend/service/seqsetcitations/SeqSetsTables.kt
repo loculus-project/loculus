@@ -44,6 +44,7 @@ object SeqSetCitationSourceTable : Table("seqset_citation_source") {
     val title = text("title")
     val year = integer("year")
     val contributors = jacksonSerializableJsonb<List<CitationContributor>>("contributors")
+    val journal = text("journal").nullable()
     override val primaryKey = PrimaryKey(citationSourceId)
 }
 
