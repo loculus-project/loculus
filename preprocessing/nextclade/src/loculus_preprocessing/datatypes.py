@@ -1,8 +1,7 @@
-import json
 from collections.abc import Iterable
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field
 from enum import StrEnum, unique
-from typing import Any, Final, Self
+from typing import Any, Final
 
 AccessionVersion = str
 GeneName = str
@@ -267,19 +266,3 @@ class MoleculeType(StrEnum):
 class Topology(StrEnum):
     LINEAR = "linear"
     CIRCULAR = "circular"
-
-
-@dataclass
-class DeaconSummary:
-    time: float
-    seqs_in: int
-    seqs_out: int
-    seqs_removed: int
-    seqs_removed_proportion: float
-
-    @classmethod
-    def from_json(cls, json_path: str) -> Self:
-        with open(json_path, encoding="utf-8") as f:
-            data = json.load(f)
-        wanted = {f.name for f in fields(cls)}
-        return cls(**{k: v for k, v in data.items() if k in wanted})

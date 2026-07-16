@@ -1,17 +1,9 @@
 import logging
-import os
 import time
 from collections import defaultdict
 from collections.abc import Sequence
 from tempfile import TemporaryDirectory
 from typing import Any
-
-from loculus_preprocessing.file_processing_functions import (
-    process_submitted_files,
-    run_deacon_fetch,
-    start_deacon_server,
-    stop_deacon_server,
-)
 
 from .backend import (
     download_diamond_db,
@@ -23,7 +15,6 @@ from .backend import (
 )
 from .config import (
     ASSIGNED_REFERENCE_PREFIX,
-    DEACON_INDEX,
     METADATA_DEPENDENCY_PREFIX,
     NEXTCLADE_PREFIX,
     AlignmentRequirement,
@@ -332,7 +323,7 @@ def get_sequence_length(
     return len(sequence) if sequence else 0
 
 
-def get_output_metadata(
+def get_output_metadata(  # noqa: C901, PLR0912, PLR0914, PLR0915
     accession_version: AccessionVersion,
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
     config: Config,
@@ -403,7 +394,7 @@ def get_output_metadata(
                 )
                 submitted_at = unprocessed.inputMetadata["submittedAt"]
             else:
-                input_data[arg_name] = (
+                input_data[arg_name] = (  # type: ignore
                     output_metadata.get(resolved_path)  # type: ignore
                     if get_from_processed
                     else unprocessed.metadata.get(resolved_path)
@@ -544,10 +535,8 @@ def process_single(
     output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
         accession_version, unprocessed, config
     )
-
-    file_errors, file_warnings = process_submitted_files(
-        config, dataset_dir, unprocessed.files or {}
-    )
+    # TODO: call file processing service
+    file_errors, file_warnings = [], []
 
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
@@ -603,9 +592,8 @@ def process_single_unaligned(
         accession_version, unprocessed, config
     )
 
-    file_errors, file_warnings = process_submitted_files(
-        config, dataset_dir, unprocessed.files or {}
-    )
+    # TODO: call file processing service
+    file_errors, file_warnings = [], []
 
     return processed_entry_no_alignment(
         accession_version=accession_version,
@@ -726,10 +714,6 @@ def run(config: Config) -> None:  # noqa: C901, PLR0912
                 msg = "Diamond database URL must be provided for diamond segment classification"
                 raise ValueError(msg)
             download_diamond_db(config, dataset_dir + "/diamond/diamond.dmnd")
-        can_submit_raw_reads = FileCategory.RAW_READS in config.submission_file_categories
-        if can_submit_raw_reads:
-            index_path = os.path.join(dataset_dir, DEACON_INDEX)
-            run_deacon_fetch(index_path)
 
         total_processed = 0
         etag = None
@@ -749,9 +733,6 @@ def run(config: Config) -> None:  # noqa: C901, PLR0912
             # Don't use etag if we just got data
             # preprocessing only asks for 100 sequences to process at a time, so there might be more
             etag = None
-            deacon_server_process = None
-            if can_submit_raw_reads:
-                deacon_server_process = start_deacon_server()
             try:
                 processed = process_all(unprocessed, dataset_dir, config)
             except Exception as e:
@@ -759,9 +740,6 @@ def run(config: Config) -> None:  # noqa: C901, PLR0912
                     f"Processing failed. Traceback : {e}. Unprocessed data: {unprocessed}"
                 )
                 continue
-            finally:
-                if deacon_server_process is not None:
-                    stop_deacon_server(deacon_server_process)
 
             if config.create_embl_file:
                 upload_flatfiles(processed, config)

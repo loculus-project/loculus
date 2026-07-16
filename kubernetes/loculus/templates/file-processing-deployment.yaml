@@ -1,0 +1,58 @@
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- if not .Values.disableFileProcessingService }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-file-processing
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-file-processing
+  template:
+    metadata:
+      annotations:
+        valuesHash: {{ .Values | toJson | sha256sum | quote }}
+      labels:
+        app: loculus
+        component: loculus-file-processing
+    spec:
+      {{- include "possiblePriorityClassName" $ | nindent 6 }}
+      {{- include "loculus.podScheduling" $ | nindent 6 }}
+      containers:
+        - name: file-processing
+          image: "ghcr.io/loculus-project/file-processing-service:{{ $dockerTag }}"
+          imagePullPolicy: {{ $.Values.imagePullPolicy }}
+          {{- include "loculus.resources" (list "file-processing" $.Values) | nindent 10 }}
+          args:
+            - file_processing
+            - "--config-file=/config/config.yaml"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          volumeMounts:
+            - name: loculus-file-processing-config-volume
+              mountPath: /config/config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: loculus-file-processing-config-volume
+          configMap:
+            name: loculus-file-processing-config
+        - name: taxonomy-db
+          emptyDir: {}
+{{- end }}

@@ -1,0 +1,10 @@
+{{- if not .Values.disableFileProcessingService }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-file-processing-config
+data:
+  config.yaml: |
+    {{ .Values.fileProcessingConfig | default dict | toYaml | nindent 4 }}
+{{- end }}

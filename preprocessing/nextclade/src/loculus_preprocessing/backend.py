@@ -248,13 +248,6 @@ def upload_embl_file_to_presigned_url(
         raise RuntimeError(msg)
 
 
-def download_file(config: Config, url: str, save_path: str) -> None:
-    with requests.get(url, stream=True, timeout=config.backend_request_timeout_seconds) as response:
-        response.raise_for_status()
-        with Path(save_path).open("wb") as f:
-            f.writelines(response.iter_content(chunk_size=1024 * 1024))
-
-
 def download_minimizer(config, save_path):
     if config.minimizer_url:
         url = config.minimizer_url

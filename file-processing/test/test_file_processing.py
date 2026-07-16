@@ -3,15 +3,14 @@
 from unittest.mock import MagicMock
 
 import pytest
-
-from loculus_preprocessing import file_processing_functions, prepro
-from loculus_preprocessing.config import Config
-from loculus_preprocessing.datatypes import (
+from file_processing import file_processing_functions, prepro
+from file_processing.config import Config
+from file_processing.datatypes import (
     DeaconSummary,
     FileCategory,
     FileIdAndNameAndReadUrl,
 )
-from loculus_preprocessing.file_processing_functions import (
+from file_processing.file_processing_functions import (
     process_submitted_files,
     validate_raw_reads_submission,
 )
@@ -23,7 +22,7 @@ MAX_HOST_PROPORTION = 0.05
 def config() -> Config:
     return Config(
         submission_file_categories=[FileCategory.RAW_READS],
-        deacon_max_host_proportion=MAX_HOST_PROPORTION,
+        deacon_max_host_reads_proportion=MAX_HOST_PROPORTION,
     )
 
 
@@ -89,7 +88,7 @@ def test_fetch_deacon_idx_only_when_raw_reads_enabled(config, monkeypatch):
 
     # RAW_READS not enabled -> the index must not be fetched.
     config.submission_file_categories = []
-    config.deacon_max_host_proportion = None
+    config.deacon_max_host_reads_proportion = None
     with pytest.raises(_ExitLoop):
         prepro.run(config)
     fetch_index_mock.assert_not_called()
