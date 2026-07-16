@@ -1,8 +1,8 @@
 import { type FC } from 'react';
 
+import { formatCitationContributors } from './formatCitationContributors';
 import { routes } from '../../routes/routes';
 import { type SeqSetCitation, type SequenceCitation } from '../../types/seqSetCitation';
-import { formatCitationContributors } from './formatCitationContributors';
 
 interface CitationTableProps {
     isLoading: boolean;
