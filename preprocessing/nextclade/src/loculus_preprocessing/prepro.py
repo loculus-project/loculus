@@ -5,6 +5,8 @@ from collections.abc import Sequence
 from tempfile import TemporaryDirectory
 from typing import Any
 
+from loculus_preprocessing.external_services import FileProcessingService
+
 from .backend import (
     download_diamond_db,
     download_minimizer,
@@ -263,7 +265,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     args["ACCESSION_VERSION"] = accession_version
 
     try:
-        processing_result = ProcessingFunctions.call_function(
+        processing_result = ProcessingFunctions(config=config).call_function(
             spec.function,
             args,
             input_data,
@@ -516,7 +518,6 @@ def unpack_annotations(config, nextclade_metadata: dict[str, Any] | None) -> dic
 def process_single(
     accession_version: AccessionVersion,
     unprocessed: UnprocessedAfterNextclade,
-    dataset_dir: str,
     config: Config,
 ) -> SubmissionData:
     """Process a single sequence per config"""
@@ -535,7 +536,14 @@ def process_single(
     output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
         accession_version, unprocessed, config
     )
-    # TODO: call file processing service
+
+    # file_processing_service = FileProcessingService(
+    #     file_processing_service_url=config.file_processing_service.file_processing_service_url
+    #     if config.file_processing_service
+    #     else None
+    # )
+    # file_errors, file_warnings = file_processing_service.process_files(unprocessed.files)
+
     file_errors, file_warnings = [], []
 
     processed_entry = ProcessedEntry(
@@ -577,7 +585,6 @@ def process_single(
 def process_single_unaligned(
     accession_version: AccessionVersion,
     unprocessed: UnprocessedData,
-    dataset_dir: str,
     config: Config,
 ) -> SubmissionData:
     """Process a single sequence per config"""
@@ -647,7 +654,7 @@ def process_all(
         nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
         for id, result in nextclade_results.items():
             try:
-                processed_single = process_single(id, result, dataset_dir, config)
+                processed_single = process_single(id, result, config)
             except Exception as e:
                 logger.error(f"Processing failed for {id} with error: {e}")
                 processed_single = processed_entry_with_errors(id)
@@ -656,7 +663,7 @@ def process_all(
         for entry in unprocessed:
             try:
                 processed_single = process_single_unaligned(
-                    entry.accessionVersion, entry.data, dataset_dir, config
+                    entry.accessionVersion, entry.data, config
                 )
             except Exception as e:
                 logger.error(f"Processing failed for {entry.accessionVersion} with error: {e}")
@@ -700,7 +707,7 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             )
 
 
-def run(config: Config) -> None:  # noqa: C901, PLR0912
+def run(config: Config) -> None:  # noqa: C901
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
         if config.alignment_requirement != AlignmentRequirement.NONE:
             download_nextclade_dataset(dataset_dir, config)
