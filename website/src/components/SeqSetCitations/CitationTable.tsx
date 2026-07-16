@@ -20,7 +20,7 @@ export const CitationDetails: FC<{
     displayYear?: boolean;
 }> = ({ citation, className = '', displayYear = false }) => {
     return (
-        <div className={`flex flex-col gap-2 ${className}`}>
+        <div className={`flex flex-col gap-1 ${className}`}>
             <a
                 className='text-primary-700'
                 href={`https://doi.org/${citation.source.sourceDOI}`}
