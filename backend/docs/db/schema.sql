@@ -1237,3 +1237,4 @@ ALTER TABLE ONLY public.user_groups_table
 --
 
 \unrestrict dummy
+
