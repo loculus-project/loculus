@@ -31,18 +31,22 @@ spec:
           args:
             - file_processing
             - "--config-file=/config/config.yaml"
+          startupProbe:
+            httpGet:
+              path: /
+              port: 5000
+            periodSeconds: 10
+            failureThreshold: 60
           livenessProbe:
             httpGet:
               path: /
               port: 5000
-            initialDelaySeconds: 10
             periodSeconds: 10
             failureThreshold: 3
           readinessProbe:
             httpGet:
               path: /
               port: 5000
-            initialDelaySeconds: 5
             periodSeconds: 10
             failureThreshold: 3
           volumeMounts:

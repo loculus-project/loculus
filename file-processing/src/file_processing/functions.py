@@ -12,6 +12,7 @@ from file_processing.datatypes import (
     ResponseWithFiles,
 )
 from file_processing.deacon import process_deacon_run, run_deacon_filter
+from file_processing.file_validation import FormatType, run_validation
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +101,14 @@ def validate_raw_reads_submission(
             return ResponseWithFiles(
                 files={FileCategory.RAW_READS: files}, errors=errors, warnings=warnings
             )
-
+        file_format_validation = run_validation(local_files, tmp_dir, FormatType.FASTQ)
+        if file_format_validation:
+            errors.append(
+                file_format_validation
+            )
+            return ResponseWithFiles(
+                files={FileCategory.RAW_READS: files}, errors=errors, warnings=warnings
+            )
         deacon_summary = run_deacon_filter(local_files, tmp_dir, config)
         errors, warnings = process_deacon_run(deacon_summary, files, config)
 

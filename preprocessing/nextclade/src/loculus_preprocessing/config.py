@@ -17,7 +17,6 @@ from loculus_preprocessing.datatypes import (
     SegmentClassificationMethod,
     Topology,
 )
-from loculus_preprocessing.external_services import TaxonomyService
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +128,6 @@ class Config(BaseModel):
     minimizer_url: str | None = None
     diamond_dmnd_url: str | None = None
 
-    submission_file_categories: list[str] = Field(default_factory=list)
     create_embl_file: bool = False
     scientific_name: str = "Orthonairovirus haemorrhagiae"
     molecule_type: MoleculeType = MoleculeType.GENOMIC_RNA

@@ -697,6 +697,19 @@
                   }
                 }
               },
+              "fileProcessingServiceArgs": {
+                "groups": ["preprocessing"],
+                "docsIncludePrefix": false,
+                "type": "object",
+                "description": "Settings to configure the file processing service host and port",
+                "properties": {
+                  "file_processing_service_url": {
+                    "groups": ["preprocessing"],
+                    "type": "string",
+                    "description": "Host and port where the file processing service runs"
+                  }
+                }
+              },
               "configFile": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
@@ -1622,6 +1635,12 @@
       "type": "boolean",
       "default": false,
       "description": "If true, disables the taxonomy service deployment."
+    },
+    "disableFileProcessingService": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, disables the file processing service deployment."
     },
     "readOnlyMode": {
       "groups": ["services"],

@@ -37,6 +37,7 @@ disablePreprocessing: false
 disableIngest: false
 disableEnaSubmission: true
 disableTaxonomyService: false
+disableFileProcessingService: false
 readOnlyMode: false
 website:
   websiteConfig:
@@ -1540,8 +1541,10 @@ defaultOrganismConfig: &defaultOrganismConfig
       args:
         - "prepro"
       replicas: 1
-      taxonomyServiceArgs: &preprocessingTaxonomyServiceArgs
+      taxonomyServiceArgs:
         taxonomy_service_url: &taxonomy_service_url http://loculus-taxonomy-service:5000
+      fileProcessingServiceArgs:
+        file_processing_service_url: http://loculus-file-processing-service:5000
       configFile: &preprocessingConfigFile
         log_level: DEBUG
         batch_size: 100

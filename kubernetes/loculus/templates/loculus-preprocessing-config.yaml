@@ -17,22 +17,14 @@ data:
     {{- $processingConfig.configFile | toYaml | nindent 4 }}
     {{- if $processingConfig.taxonomyServiceArgs }}
     taxonomy_service:
-    {{ $processingConfig.taxonomyServiceArgs.taxonomy_service_url | toYaml | nindent 6 }}
+    {{ $processingConfig.taxonomyServiceArgs | toYaml | nindent 6 }}
     {{- end }}
     {{- if $processingConfig.fileProcessingServiceArgs }}
     file_processing_service:
-    {{ $processingConfig.fileProcessingServiceArgs.file_processing_service_url | toYaml | nindent 6 }}
+    {{ $processingConfig.fileProcessingServiceArgs | toYaml | nindent 6 }}
     {{- end }}
     {{- if and (hasKey $organismConfig.schema "submissionDataTypes") (hasKey $organismConfig.schema.submissionDataTypes "maxSequencesPerEntry") }}
     max_sequences_per_entry: {{ $organismConfig.schema.submissionDataTypes.maxSequencesPerEntry }}
-    {{- end }}
-    {{- if and (hasKey $organismConfig.schema "submissionDataTypes") (hasKey $organismConfig.schema.submissionDataTypes "files") }}
-    {{- if $organismConfig.schema.submissionDataTypes.files.enabled }}
-    submission_file_categories:
-    {{- range $organismConfig.schema.submissionDataTypes.files.categories }}
-      - {{ .name }}
-    {{- end }}
-    {{- end }}
     {{- end }}
     processing_spec:
       {{- $args := dict "metadata" $metadata "referenceGenomes" $organismConfig.referenceGenomes }}

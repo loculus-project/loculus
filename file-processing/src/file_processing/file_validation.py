@@ -43,7 +43,7 @@ def run_validation(
             message = f"File validation failed with exit code {exit_code}"
             logger.error(message)
             return Annotation(
-                fileId=file,
+                fileName=Path(file).name,
                 message=message,
             )
     return None

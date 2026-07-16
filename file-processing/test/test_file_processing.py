@@ -21,7 +21,6 @@ MAX_HOST_PROPORTION = 0.05
 @pytest.fixture
 def config() -> Config:
     return Config(
-        submission_file_categories=[FileCategory.RAW_READS],
         deacon_max_host_reads_proportion=MAX_HOST_PROPORTION,
     )
 
@@ -86,8 +85,6 @@ def test_fetch_deacon_idx_only_when_raw_reads_enabled(config, monkeypatch):
     fetch_index_mock = MagicMock(return_value=True)
     monkeypatch.setattr(prepro, "run_deacon_fetch", fetch_index_mock)
 
-    # RAW_READS not enabled -> the index must not be fetched.
-    config.submission_file_categories = []
     config.deacon_max_host_reads_proportion = None
     with pytest.raises(_ExitLoop):
         prepro.run(config)

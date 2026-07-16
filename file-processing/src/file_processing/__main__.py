@@ -23,7 +23,8 @@ def run(config_file: str):
     logging.getLogger().setLevel(config.log_level)
     logging.getLogger("requests").setLevel(logging.INFO)
     logger.info(f"Config: {config}")
-    
+
+    # TODO: index takes long to download - potentially move download to an init container
     logger.info("Downloading deacon index and starting deacon server...")
     download_deacon_index(config)
     start_deacon_server()

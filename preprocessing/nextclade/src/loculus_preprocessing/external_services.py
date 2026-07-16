@@ -175,6 +175,14 @@ class TaxonomyService:
             )
 
 
+def file_processing_service_error(file_names: str, message: str) -> ProcessingAnnotation:
+    return ProcessingAnnotation(
+        [AnnotationSource(file_names, AnnotationSourceType.FILE)],
+        [AnnotationSource(file_names, AnnotationSourceType.FILE)],
+        message,
+    )
+
+
 class FileProcessingService:
     def __init__(self, file_processing_service_url: str | None):
         self.file_processing_service_url = file_processing_service_url
@@ -185,9 +193,8 @@ class FileProcessingService:
         file_names = ", ".join(file.name for file_list in files.values() for file in file_list)
         if not self.file_processing_service_url:
             return [
-                ProcessingAnnotation(
-                    [AnnotationSource(file_names, AnnotationSourceType.FILE)],
-                    [AnnotationSource(file_names, AnnotationSourceType.FILE)],
+                file_processing_service_error(
+                    file_names,
                     _internal_error_message("File processing service URL is not configured."),
                 )
             ], []
@@ -198,32 +205,19 @@ class FileProcessingService:
             response.raise_for_status()
             body = response.json()
 
-            # list with fileId, fileCategory, message
-            errors = body.get("errors")
-            warnings = body.get("warnings")
-            # want ProcessingAnnotation with unprocessedFields, processedFields, message
             errors = [
-                ProcessingAnnotation(
-                    [AnnotationSource(file_name, AnnotationSourceType.FILE)],
-                    [AnnotationSource(file_name, AnnotationSourceType.FILE)],
-                    message,
-                )
-                for file_name, file_category, message in errors
+                file_processing_service_error(file_name, message)
+                for file_name, file_category, message in body.get("errors")
             ]
             warnings = [
-                ProcessingAnnotation(
-                    [AnnotationSource(file_name, AnnotationSourceType.FILE)],
-                    [AnnotationSource(file_name, AnnotationSourceType.FILE)],
-                    message,
-                )
-                for file_name, file_category, message in warnings
+                file_processing_service_error(file_name, message)
+                for file_name, file_category, message in body.get("warnings")
             ]
             return errors, warnings
         except requests.exceptions.RequestException as e:
             return [
-                ProcessingAnnotation(
-                    [AnnotationSource(file_names, AnnotationSourceType.FILE)],
-                    [AnnotationSource(file_names, AnnotationSourceType.FILE)],
+                file_processing_service_error(
+                    file_names,
                     _internal_error_message(f"An error: {e} occurred while processing files."),
                 )
             ], []

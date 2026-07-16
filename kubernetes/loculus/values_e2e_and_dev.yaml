@@ -10,6 +10,7 @@ createTestAccounts: true
 backendExtraArgs:
   - "--loculus.debug-mode=true"
 disableEnaSubmission: true
+disableFileProcessingService: true
 auth:
   verifyEmail: false
 host: localhost:3000
