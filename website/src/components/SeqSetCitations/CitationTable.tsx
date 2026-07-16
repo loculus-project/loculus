@@ -30,9 +30,7 @@ export const CitationDetails: FC<{
                 {citation.source.title}
                 {displayYear && ` (${citation.source.year})`}
             </a>
-            <div className='text-sm text-gray-700'>
-                {formatCitationContributors(citation.source.contributors)}
-            </div>
+            <div className='text-sm text-gray-700'>{formatCitationContributors(citation.source.contributors)}</div>
             {citation.source.journal !== undefined && citation.source.journal !== null && (
                 <div className='text-sm italic text-gray-700'>{citation.source.journal}</div>
             )}
