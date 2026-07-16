@@ -244,6 +244,8 @@ private fun clearDatabaseStatement(): String = """
             seqsets,
             seqset_records,
             seqset_to_records,
+            seqset_citation_source,
+            seqset_to_citation_source,
             audit_log,
             table_update_tracker,
             task_lock
@@ -253,6 +255,7 @@ private fun clearDatabaseStatement(): String = """
         alter sequence seqset_id_sequence restart with 1;
         alter sequence seqset_records_seqset_record_id_seq restart with 1;
         alter sequence seqset_to_records_seqset_record_id_seq restart with 1;
+        alter sequence seqset_citation_source_citation_source_id_seq restart with 1;
         alter sequence user_groups_table_id_seq restart with 1;
         alter sequence audit_log_id_seq restart with 1;
         insert into $CURRENT_PROCESSING_PIPELINE_TABLE_NAME values

@@ -8,6 +8,7 @@ import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.LikePattern
 import org.jetbrains.exposed.sql.Op
+import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
@@ -24,6 +25,8 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
 import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.api.AccessionVersion
+import org.loculus.backend.api.AddSeqSetCitationRequest
+import org.loculus.backend.api.AdminSeqSetCitation
 import org.loculus.backend.api.AuthorProfile
 import org.loculus.backend.api.CitationOrigin
 import org.loculus.backend.api.CitationSource
@@ -58,6 +61,16 @@ private val log = KotlinLogging.logger { }
 data class CitationSourcesUpdateResult(val updatedCitationSourceDOIs: Set<String>)
 
 data class SeqSetToCitationSourceEntry(val citationSourceId: Long, val seqSetId: String, val seqSetVersion: Long)
+
+private fun ResultRow.toSeqSet() = SeqSet(
+    seqSetId = this[SeqSetsTable.seqSetId],
+    seqSetVersion = this[SeqSetsTable.seqSetVersion],
+    name = this[SeqSetsTable.name],
+    createdAt = Timestamp.valueOf(this[SeqSetsTable.createdAt].toJavaLocalDateTime()),
+    createdBy = this[SeqSetsTable.createdBy],
+    description = this[SeqSetsTable.description],
+    seqSetDOI = this[SeqSetsTable.seqSetDOI],
+)
 
 @Service
 @Transactional
@@ -211,17 +224,7 @@ class SeqSetCitationsDatabaseService(
             throw NotFoundException("SeqSet $seqSetId, version $version does not exist")
         }
 
-        return query.map { row ->
-            SeqSet(
-                row[SeqSetsTable.seqSetId],
-                row[SeqSetsTable.seqSetVersion],
-                row[SeqSetsTable.name],
-                Timestamp.valueOf(row[SeqSetsTable.createdAt].toJavaLocalDateTime()),
-                row[SeqSetsTable.createdBy],
-                row[SeqSetsTable.description],
-                row[SeqSetsTable.seqSetDOI],
-            )
-        }
+        return query.map { it.toSeqSet() }
     }
 
     fun getSeqSetRecords(seqSetId: String, version: Long?): List<SeqSetRecord> {
@@ -276,17 +279,7 @@ class SeqSetCitationsDatabaseService(
             .selectAll()
             .where { SeqSetsTable.createdBy eq username }
 
-        return selectedSeqSets.map {
-            SeqSet(
-                it[SeqSetsTable.seqSetId],
-                it[SeqSetsTable.seqSetVersion],
-                it[SeqSetsTable.name],
-                Timestamp.valueOf(it[SeqSetsTable.createdAt].toJavaLocalDateTime()),
-                it[SeqSetsTable.createdBy],
-                it[SeqSetsTable.description],
-                it[SeqSetsTable.seqSetDOI],
-            )
-        }
+        return selectedSeqSets.map { it.toSeqSet() }
     }
 
     fun deleteSeqSet(authenticatedUser: AuthenticatedUser, seqSetId: String, version: Long) {
@@ -513,6 +506,122 @@ class SeqSetCitationsDatabaseService(
                     },
                 )
             }
+    }
+
+    fun getAllSeqSetCitations(): List<AdminSeqSetCitation> {
+        log.info { "Get all seqSet citations" }
+
+        return SeqSetCitationSourceTable.innerJoin(
+            SeqSetToCitationSourceTable,
+        ).innerJoin(
+            SeqSetsTable,
+        ).selectAll()
+            .orderBy(
+                SeqSetCitationSourceTable.year to SortOrder.DESC,
+                SeqSetCitationSourceTable.citationSourceId to SortOrder.DESC,
+            )
+            .groupBy { it[SeqSetCitationSourceTable.citationSourceId] }
+            .map { (_, rows) ->
+                val first = rows.first()
+                AdminSeqSetCitation(
+                    source = CitationSource(
+                        sourceDOI = first[SeqSetCitationSourceTable.sourceDOI],
+                        title = first[SeqSetCitationSourceTable.title],
+                        year = first[SeqSetCitationSourceTable.year],
+                        contributors = first[SeqSetCitationSourceTable.contributors],
+                    ),
+                    seqSets = rows.map { it.toSeqSet() },
+                    origin = first[SeqSetCitationSourceTable.origin],
+                )
+            }
+    }
+
+    fun addCuratedCitation(request: AddSeqSetCitationRequest): AdminSeqSetCitation {
+        log.info { "Add curated seqSet citation ${request.source.sourceDOI}" }
+
+        if (request.source.sourceDOI.isBlank()) {
+            throw UnprocessableEntityException("Citation source DOI must not be empty")
+        }
+        if (request.source.title.isBlank()) {
+            throw UnprocessableEntityException("Citation source title must not be empty")
+        }
+        if (request.seqSetAccessionVersions.isEmpty()) {
+            throw UnprocessableEntityException("At least one cited SeqSet must be provided")
+        }
+
+        val existingOrigin = SeqSetCitationSourceTable
+            .select(SeqSetCitationSourceTable.origin)
+            .where { SeqSetCitationSourceTable.sourceDOI eq request.source.sourceDOI }
+            .singleOrNull()
+            ?.get(SeqSetCitationSourceTable.origin)
+        if (existingOrigin == CitationOrigin.CROSSREF) {
+            throw UnprocessableEntityException(
+                "Citation source ${request.source.sourceDOI} was discovered via CrossRef and cannot be modified manually",
+            )
+        }
+
+        val accessionVersions = request.seqSetAccessionVersions.map { AccessionVersion.fromString(it) }
+
+        val existingSeqSets = SeqSetsTable
+            .select(SeqSetsTable.seqSetId, SeqSetsTable.seqSetVersion, SeqSetsTable.name, SeqSetsTable.seqSetDOI)
+            .where {
+                Pair(SeqSetsTable.seqSetId, SeqSetsTable.seqSetVersion) inList
+                    accessionVersions.map { it.accession to it.version }
+            }
+            .associateBy { AccessionVersion(it[SeqSetsTable.seqSetId], it[SeqSetsTable.seqSetVersion]) }
+
+        val missing = accessionVersions.filterNot { it in existingSeqSets }
+        if (missing.isNotEmpty()) {
+            throw NotFoundException(
+                "The following SeqSets do not exist: ${missing.joinToString(", ") { it.displayAccessionVersion() }}",
+            )
+        }
+
+        val citationSourceId = SeqSetCitationSourceTable
+            .batchUpsert(listOf(request.source), SeqSetCitationSourceTable.sourceDOI) {
+                this[SeqSetCitationSourceTable.sourceDOI] = it.sourceDOI
+                this[SeqSetCitationSourceTable.origin] = CitationOrigin.CURATED
+                this[SeqSetCitationSourceTable.title] = it.title
+                this[SeqSetCitationSourceTable.year] = it.year
+                this[SeqSetCitationSourceTable.contributors] = it.contributors
+            }
+            .single()[SeqSetCitationSourceTable.citationSourceId]
+
+        SeqSetToCitationSourceTable.batchInsert(accessionVersions, ignore = true) { accessionVersion ->
+            this[SeqSetToCitationSourceTable.citationSourceId] = citationSourceId
+            this[SeqSetToCitationSourceTable.seqSetId] = accessionVersion.accession
+            this[SeqSetToCitationSourceTable.seqSetVersion] = accessionVersion.version
+        }
+
+        val linkedSeqSets = SeqSetToCitationSourceTable
+            .innerJoin(SeqSetsTable)
+            .selectAll()
+            .where { SeqSetToCitationSourceTable.citationSourceId eq citationSourceId }
+            .map { it.toSeqSet() }
+
+        return AdminSeqSetCitation(
+            source = request.source,
+            seqSets = linkedSeqSets,
+            origin = CitationOrigin.CURATED,
+        )
+    }
+
+    fun deleteCuratedCitation(sourceDOI: String) {
+        log.info { "Delete curated seqSet citation $sourceDOI" }
+
+        val citationSource = SeqSetCitationSourceTable
+            .selectAll()
+            .where { SeqSetCitationSourceTable.sourceDOI eq sourceDOI }
+            .singleOrNull()
+            ?: throw NotFoundException("Citation source $sourceDOI does not exist")
+
+        if (citationSource[SeqSetCitationSourceTable.origin] != CitationOrigin.CURATED) {
+            throw UnprocessableEntityException(
+                "Citation source $sourceDOI was not manually curated and cannot be deleted",
+            )
+        }
+
+        SeqSetCitationSourceTable.deleteWhere { SeqSetCitationSourceTable.sourceDOI eq sourceDOI }
     }
 
     fun validateSeqSetRecords(seqSetRecords: List<SubmittedSeqSetRecord>) {

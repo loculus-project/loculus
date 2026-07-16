@@ -92,7 +92,7 @@
         "happy-dom": "^20.10.6",
         "jsdom-testing-mocks": "^1.16.0",
         "msw": "^2.15.0",
-        "prettier": "3.9.4",
+        "prettier": "3.9.5",
         "prettier-plugin-astro": "^0.14.1",
         "resize-observer-polyfill": "^1.5.1",
         "tailwindcss": "^4.3.0",
