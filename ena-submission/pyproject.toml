@@ -23,16 +23,16 @@ build-backend = "hatchling.build"
 packages = ["src/ena_deposition"]
 
 [tool.pytest.ini_options]
-# Live logging - show INFO+ during execution
-log_cli = true
-log_cli_level = "INFO"  # Show INFO logs during execution
-log_cli_format = "%(asctime)s [%(levelname)8s] %(name)s: %(message)s (%(filename)s:%(lineno)d)"
-log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+# Logs are only printed for failing tests (under "Captured log call"),
+# instead of live-streaming (and interleaving) logs for every test.
+log_level = "INFO"
+log_format = "%(asctime)s [%(levelname)8s] [%(test_name)s] %(name)s: %(message)s (%(filename)s:%(lineno)d)"
+log_date_format = "%Y-%m-%d %H:%M:%S"
 
-# File logging - captures everything for detailed analysis
+# File logging - captures everything for detailed analysis, regardless of pass/fail
 log_file = "tests.log"
 log_file_level = "DEBUG"
-log_file_format = "%(asctime)s [%(levelname)8s] %(name)s: %(message)s (%(filename)s:%(lineno)d)"
+log_file_format = "%(asctime)s [%(levelname)8s] [%(test_name)s] %(name)s: %(message)s (%(filename)s:%(lineno)d)"
 log_file_date_format = "%Y-%m-%d %H:%M:%S"
 
 addopts = [
