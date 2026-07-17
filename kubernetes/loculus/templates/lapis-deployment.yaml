@@ -1,27 +1,22 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
-
-{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
-{{- $key := $item.key }}
-{{- $organismContent := $item.contents }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: loculus-lapis-{{ $key }}
-  annotations:
+  name: loculus-lapis
 spec:
   replicas: {{ $.Values.replicas.lapis | default 1 }}
   selector:
     matchLabels:
       app: loculus
-      component: lapis-{{ $key }}
+      component: lapis
   template:
     metadata:
       annotations:
         valuesHash: {{ $.Values | toJson | sha256sum | quote }}
       labels:
         app: loculus
-        component: lapis-{{ $key }}
+        component: lapis
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       {{- include "loculus.podScheduling" $ | nindent 6 }}
@@ -31,11 +26,11 @@ spec:
         - name: lapis
           image: "{{ $.Values.images.lapis.repository }}:{{ $.Values.images.lapis.tag }}"
           imagePullPolicy: "{{ $.Values.images.lapis.pullPolicy | default $.Values.imagePullPolicy }}"
-          {{- include "loculus.resources" (list "lapis" $.Values $key) | nindent 10 }}
+          {{- include "loculus.resources" (list "lapis" $.Values) | nindent 10 }}
           ports:
             - containerPort: 8080
           args:
-            - "--silo.url=http://loculus-silo-service-{{ $key }}:8081"
+            - "--silo.url=http://loculus-silo-service:8081"
           env:
             - name: JVM_OPTS
               value: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2 -XX:MaxGCPauseMillis=100
@@ -67,5 +62,4 @@ spec:
             failureThreshold: 3
             timeoutSeconds: 5
       volumes:
-        {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 8 }}
-{{- end }}
+        {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" "lapis-silo-database-config") | nindent 8 }}

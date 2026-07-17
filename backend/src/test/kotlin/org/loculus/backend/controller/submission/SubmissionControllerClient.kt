@@ -241,7 +241,8 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         compression: String? = null,
         ifNoneMatch: String? = null,
     ): ResultActions = mockMvc.perform(
-        get(addOrganismToPath("/get-released-data", organism = organism))
+        get("/get-released-data")
+            .param("organism", organism)
             .also {
                 when (compression) {
                     null -> it

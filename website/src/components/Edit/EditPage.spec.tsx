@@ -14,11 +14,10 @@ import {
 } from '../../../vitest.setup.ts';
 import { type SubmittedMetadataRecord } from '../../types/backend.ts';
 import type { InputField } from '../../types/config.ts';
-import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 const queryClient = new QueryClient();
 
-const dummyConfig = { backendUrl: 'dummy' } as ClientConfig;
+const dummyConfig = { backendUrl: 'dummy' };
 const groupedInputFields = new Map<string, InputField[]>([
     [
         'Header',

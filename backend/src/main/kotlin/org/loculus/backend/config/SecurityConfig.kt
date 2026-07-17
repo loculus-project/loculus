@@ -58,7 +58,7 @@ class SecurityConfig {
         "/get-seqset-citations",
         "/get-sequence-citations",
         "/get-author",
-        "/*/get-released-data",
+        "/get-released-data",
         "/files/get/**",
         "/groups/*",
     )
@@ -79,7 +79,10 @@ class SecurityConfig {
     fun securityFilterChain(
         httpSecurity: HttpSecurity,
         keycloakAuthoritiesConverter: KeycloakAuthenticationConverter,
+        corsConfigurationSource: org.springframework.web.cors.CorsConfigurationSource,
     ): SecurityFilterChain = httpSecurity
+        .csrf { it.disable() }
+        .cors { it.configurationSource(corsConfigurationSource) }
         .authorizeHttpRequests { auth ->
             auth.requestMatchers(
                 "/",
@@ -93,6 +96,7 @@ class SecurityConfig {
             auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
             auth.requestMatchers(HttpMethod.HEAD, *headEndpointsThatArePublic).permitAll()
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
+            auth.requestMatchers("/query/**").permitAll()
             auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
             auth.requestMatchers(
                 *endpointsForExternalMetadataUpdater,

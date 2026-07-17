@@ -59,6 +59,7 @@ type SeqSetItemProps = {
     isAdminView?: boolean;
     fieldsToDisplay?: { field: string; displayName: string }[];
     organismDisplayNames?: Record<string, string>;
+    organisms?: string[];
 };
 
 const SeqSetItemInner: FC<SeqSetItemProps> = ({
@@ -73,6 +74,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     isAdminView = false,
     fieldsToDisplay,
     organismDisplayNames,
+    organisms = [],
 }) => {
     const [page, setPage] = useState(1);
     const [wideGraphs, setWideGraphs] = useState(false);
@@ -210,6 +212,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                 <SeqSetRecordsTableWithMetadata
                     seqSetRecords={getPaginatedSeqSetRecords()}
                     clientConfig={clientConfig}
+                    organisms={organisms}
                     fieldsToDisplay={fieldsToDisplay}
                     organismDisplayNames={organismDisplayNames}
                 />

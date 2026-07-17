@@ -315,13 +315,10 @@ async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, 
     const counts: Record<string, number> = {};
     await Promise.all(
         organisms.map(async ({ key }) => {
-            const url = clientConfig.lapisUrls[key];
-            if (!url) {
-                counts[key] = 0;
-                return;
-            }
+            const url = `${clientConfig.backendUrl}/query`;
             try {
-                const response = await axios.post(`${url}/sample/aggregated`, {
+                const response = await axios.post(`${url}/aggregated`, {
+                    organism: key,
                     [GROUP_ID_FIELD]: groupId,
                     [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
                     [IS_REVOCATION_FIELD]: 'false',
@@ -347,13 +344,10 @@ async function fetchTimeSeriesData(
     const data: TimeSeriesData = {};
     await Promise.all(
         organisms.map(async ({ key }) => {
-            const url = clientConfig.lapisUrls[key];
-            if (!url) {
-                data[key] = [];
-                return;
-            }
+            const url = `${clientConfig.backendUrl}/query`;
             try {
-                const response = await axios.post(`${url}/sample/aggregated`, {
+                const response = await axios.post(`${url}/aggregated`, {
+                    organism: key,
                     [GROUP_ID_FIELD]: groupId,
                     [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
                     [IS_REVOCATION_FIELD]: 'false',

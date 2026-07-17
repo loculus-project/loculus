@@ -91,18 +91,20 @@ export const SINGLE_SEG_MULTI_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
         main: {
             ref1: {
                 lapisName: 'ref1',
+                referenceName: 'ref1',
                 insdcAccessionFull: 'defaultInsdcAccession1',
                 genes: [
-                    { lapisName: 'gene1-ref1', name: 'gene1' },
-                    { lapisName: 'gene2-ref1', name: 'gene2' },
+                    { lapisName: 'gene1-ref1', name: 'gene1', referenceName: 'ref1' },
+                    { lapisName: 'gene2-ref1', name: 'gene2', referenceName: 'ref1' },
                 ],
             },
             ref2: {
                 lapisName: 'ref2',
+                referenceName: 'ref2',
                 insdcAccessionFull: 'defaultInsdcAccession2',
                 genes: [
-                    { lapisName: 'gene1-ref2', name: 'gene1' },
-                    { lapisName: 'gene2-ref2', name: 'gene2' },
+                    { lapisName: 'gene1-ref2', name: 'gene1', referenceName: 'ref2' },
+                    { lapisName: 'gene2-ref2', name: 'gene2', referenceName: 'ref2' },
                 ],
             },
         },
@@ -143,18 +145,20 @@ export const MULTI_SEG_MULTI_REF_REFERENCEGENOMES: ReferenceGenomesInfo = {
         L: {
             ref1: {
                 lapisName: 'L-ref1',
+                referenceName: 'ref1',
                 insdcAccessionFull: 'defaultInsdcAccession1',
                 genes: [
-                    { lapisName: 'gene1L-ref1', name: 'gene1L' },
-                    { lapisName: 'gene2L-ref1', name: 'gene2L' },
+                    { lapisName: 'gene1L-ref1', name: 'gene1L', referenceName: 'ref1' },
+                    { lapisName: 'gene2L-ref1', name: 'gene2L', referenceName: 'ref1' },
                 ],
             },
             ref2: {
                 lapisName: 'L-ref2',
+                referenceName: 'ref2',
                 insdcAccessionFull: 'defaultInsdcAccession2',
                 genes: [
-                    { lapisName: 'gene1L-ref2', name: 'gene1L' },
-                    { lapisName: 'gene2L-ref2', name: 'gene2L' },
+                    { lapisName: 'gene1L-ref2', name: 'gene1L', referenceName: 'ref2' },
+                    { lapisName: 'gene2L-ref2', name: 'gene2L', referenceName: 'ref2' },
                 ],
             },
         },

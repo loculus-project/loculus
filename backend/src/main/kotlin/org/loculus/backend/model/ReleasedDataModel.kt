@@ -64,6 +64,65 @@ open class ReleasedDataModel(
     private val objectMapper: ObjectMapper,
 ) {
     @Transactional(readOnly = true)
+    open fun getAllReleasedData(): Sequence<ReleasedData> {
+        log.info { "Fetching released submissions from database for all organisms" }
+
+        // Pre-compute all column keys across every organism so each row can be padded with nulls
+        // for columns belonging to other organisms. SILO requires every defined column to be
+        // present (even as null) in every row.
+        val allMetadataKeys = mutableSetOf<String>()
+        val allNucleotideKeys = mutableSetOf<String>()
+        val allAminoAcidKeys = mutableSetOf<String>()
+        backendConfig.organisms.keys.forEach { name ->
+            val config = backendConfig.getInstanceConfig(Organism(name))
+            config.schema.metadata.forEach { field -> allMetadataKeys.add(field.name) }
+            val refGenome = config.referenceGenome
+            val single = refGenome.nucleotideSequences.size == 1
+            refGenome.nucleotideSequences.forEach { seq ->
+                allNucleotideKeys.add(if (single) name else "${name}_${seq.name}")
+            }
+            refGenome.genes.forEach { gene -> allAminoAcidKeys.add("${name}_${gene.name}") }
+        }
+
+        return backendConfig.organisms.keys.asSequence().flatMap { organismName ->
+            val organism = Organism(organismName)
+            val referenceGenome = backendConfig.getInstanceConfig(organism).referenceGenome
+            val isSingleSegment = referenceGenome.nucleotideSequences.size == 1
+            getReleasedData(organism).map { record ->
+                val prefixedNucleotide = record.unalignedNucleotideSequences.mapKeys { (segment, _) ->
+                    if (isSingleSegment) organismName else "${organismName}_$segment"
+                }
+                val prefixedAlignedNucleotide = record.alignedNucleotideSequences.mapKeys { (segment, _) ->
+                    if (isSingleSegment) organismName else "${organismName}_$segment"
+                }
+                val prefixedInsertions = record.nucleotideInsertions.mapKeys { (segment, _) ->
+                    if (isSingleSegment) organismName else "${organismName}_$segment"
+                }
+                val prefixedAminoAcid = record.alignedAminoAcidSequences.mapKeys { (gene, _) ->
+                    "${organismName}_$gene"
+                }
+                val prefixedAminoAcidInsertions = record.aminoAcidInsertions.mapKeys { (gene, _) ->
+                    "${organismName}_$gene"
+                }
+                val paddedMetadata = record.metadata +
+                    allMetadataKeys.filter { it !in record.metadata }.associateWith { NullNode.instance as JsonNode } +
+                    mapOf("organism" to TextNode(organismName))
+                record.copy(
+                    metadata = paddedMetadata,
+                    unalignedNucleotideSequences = allNucleotideKeys.associateWith { prefixedNucleotide[it] },
+                    alignedNucleotideSequences = allNucleotideKeys.associateWith { prefixedAlignedNucleotide[it] },
+                    nucleotideInsertions = allNucleotideKeys.associateWith { prefixedInsertions[it] ?: emptyList() },
+                    alignedAminoAcidSequences = allAminoAcidKeys.associateWith { prefixedAminoAcid[it] },
+                    aminoAcidInsertions = allAminoAcidKeys.associateWith {
+                        prefixedAminoAcidInsertions[it]
+                            ?: emptyList()
+                    },
+                )
+            }
+        }
+    }
+
+    @Transactional(readOnly = true)
     open fun getReleasedData(organism: Organism): Sequence<ReleasedData> {
         log.info { "Fetching released submissions from database for organism $organism" }
 

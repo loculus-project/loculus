@@ -73,4 +73,5 @@ fun backendConfig(metadataList: List<Metadata>, earliestReleaseDate: EarliestRel
     dataUseTerms = DataUseTerms(true, null),
     websiteUrl = "https://example.com",
     backendUrl = "http://foo.com",
+    lapisUrl = "http://lapis.dummy",
 )

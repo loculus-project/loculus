@@ -50,6 +50,7 @@ class EmptyProcessedDataProviderTest {
             dataUseTerms = DataUseTerms(true, null),
             websiteUrl = "example.com",
             backendUrl = "http://dummy-backend.com",
+            lapisUrl = "http://lapis.dummy",
         ),
     )
 

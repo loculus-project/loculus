@@ -13,12 +13,12 @@ import {
 } from '../types/lapis.ts';
 
 function withSample<Path extends `/${string}`>(path: Path) {
-    return `/sample${path}` as const;
+    return path;
 }
 
 const detailsEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/details'),
+    path: withSample('/metadata'),
     alias: 'details',
     parameters: [
         {
@@ -46,7 +46,7 @@ const aggregatedEndpoint = makeEndpoint({
 
 const nucleotideMutationsEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/nucleotideMutations'),
+    path: withSample('/nucleotide-mutations'),
     alias: 'nucleotideMutations',
     parameters: [
         {
@@ -60,7 +60,7 @@ const nucleotideMutationsEndpoint = makeEndpoint({
 
 const aminoAcidMutationsEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/aminoAcidMutations'),
+    path: withSample('/amino-acid-mutations'),
     alias: 'aminoAcidMutations',
     parameters: [
         {
@@ -74,7 +74,7 @@ const aminoAcidMutationsEndpoint = makeEndpoint({
 
 const nucleotideInsertionsEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/nucleotideInsertions'),
+    path: withSample('/nucleotide-insertions'),
     alias: 'nucleotideInsertions',
     parameters: [
         {
@@ -88,7 +88,7 @@ const nucleotideInsertionsEndpoint = makeEndpoint({
 
 const aminoAcidInsertionsEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/aminoAcidInsertions'),
+    path: withSample('/amino-acid-insertions'),
     alias: 'aminoAcidInsertions',
     parameters: [
         {
@@ -102,40 +102,25 @@ const aminoAcidInsertionsEndpoint = makeEndpoint({
 
 const alignedNucleotideSequencesEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/alignedNucleotideSequences'),
+    path: withSample('/aligned-nucleotide-sequences'),
     alias: 'alignedNucleotideSequences',
     immutable: true,
     parameters: [
         {
-            name: 'request',
-            type: 'Body',
-            schema: sequenceRequest,
+            name: 'organism',
+            type: 'Query',
+            schema: z.string().optional(),
         },
-    ],
-    response: z.string(),
-});
-
-const alignedNucleotideSequencesMultiSegmentEndpoint = makeEndpoint({
-    method: 'post',
-    path: withSample('/alignedNucleotideSequences/:segment'),
-    alias: 'alignedNucleotideSequencesMultiSegment',
-    immutable: true,
-    parameters: [
         {
-            name: 'request',
-            type: 'Body',
-            schema: sequenceRequest,
+            name: 'segment',
+            type: 'Query',
+            schema: z.string().optional(),
         },
-    ],
-    response: z.string(),
-});
-
-const unalignedNucleotideSequencesMultiSegmentEndpoint = makeEndpoint({
-    method: 'post',
-    path: withSample('/unalignedNucleotideSequences/:segment'),
-    alias: 'unalignedNucleotideSequencesMultiSegment',
-    immutable: true,
-    parameters: [
+        {
+            name: 'reference',
+            type: 'Query',
+            schema: z.string().optional(),
+        },
         {
             name: 'request',
             type: 'Body',
@@ -147,10 +132,25 @@ const unalignedNucleotideSequencesMultiSegmentEndpoint = makeEndpoint({
 
 const unalignedNucleotideSequencesEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/unalignedNucleotideSequences'),
+    path: withSample('/unaligned-nucleotide-sequences'),
     alias: 'unalignedNucleotideSequences',
     immutable: true,
     parameters: [
+        {
+            name: 'organism',
+            type: 'Query',
+            schema: z.string().optional(),
+        },
+        {
+            name: 'segment',
+            type: 'Query',
+            schema: z.string().optional(),
+        },
+        {
+            name: 'reference',
+            type: 'Query',
+            schema: z.string().optional(),
+        },
         {
             name: 'request',
             type: 'Body',
@@ -162,10 +162,25 @@ const unalignedNucleotideSequencesEndpoint = makeEndpoint({
 
 const alignedAminoAcidSequencesEndpoint = makeEndpoint({
     method: 'post',
-    path: withSample('/alignedAminoAcidSequences/:gene'),
+    path: withSample('/aligned-amino-acid-sequences'),
     alias: 'alignedAminoAcidSequences',
     immutable: true,
     parameters: [
+        {
+            name: 'organism',
+            type: 'Query',
+            schema: z.string().optional(),
+        },
+        {
+            name: 'gene',
+            type: 'Query',
+            schema: z.string(),
+        },
+        {
+            name: 'reference',
+            type: 'Query',
+            schema: z.string().optional(),
+        },
         {
             name: 'request',
             type: 'Body',
@@ -177,7 +192,7 @@ const alignedAminoAcidSequencesEndpoint = makeEndpoint({
 
 const lineageDefinitionEndpoint = makeEndpoint({
     method: 'get',
-    path: withSample('/lineageDefinition/:column'),
+    path: withSample('/lineage-definition/:column'),
     alias: 'lineageDefinition',
     immutable: true,
     response: lineageDefinition,
@@ -191,9 +206,7 @@ export const lapisApi = makeApi([
     nucleotideInsertionsEndpoint,
     aminoAcidInsertionsEndpoint,
     alignedNucleotideSequencesEndpoint,
-    alignedNucleotideSequencesMultiSegmentEndpoint,
     unalignedNucleotideSequencesEndpoint,
-    unalignedNucleotideSequencesMultiSegmentEndpoint,
     alignedAminoAcidSequencesEndpoint,
     lineageDefinitionEndpoint,
 ]);

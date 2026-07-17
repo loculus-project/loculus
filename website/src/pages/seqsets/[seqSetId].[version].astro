@@ -128,6 +128,7 @@ const secondaryErrors = (
                     isAdminView={seqSetResponse.value.createdBy === username}
                     fieldsToDisplay={websiteConfig.seqSetsFieldsToDisplay}
                     organismDisplayNames={organismDisplayNames}
+                    organisms={Object.keys(websiteConfig.organisms)}
                     client:load
                 />
             </div>

@@ -56,10 +56,10 @@ describe('getSegmentAndGeneInfo', () => {
 
         const out = getSegmentAndGeneInfo(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, selected);
 
-        expect(out.nucleotideSegmentInfos).toEqual([{ name: 'main', lapisName: 'ref2' }]);
+        expect(out.nucleotideSegmentInfos).toEqual([{ name: 'main', lapisName: 'ref2', referenceName: 'ref2' }]);
         expect(out.geneInfos).toEqual([
-            { lapisName: 'gene1-ref2', name: 'gene1', segmentName: 'main' },
-            { lapisName: 'gene2-ref2', name: 'gene2', segmentName: 'main' },
+            { lapisName: 'gene1-ref2', name: 'gene1', referenceName: 'ref2', segmentName: 'main' },
+            { lapisName: 'gene2-ref2', name: 'gene2', referenceName: 'ref2', segmentName: 'main' },
         ]);
         expect(out.useLapisMultiSegmentedEndpoint).toBe(true);
         expect(out.multiSegmented).toBe(false);

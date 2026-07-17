@@ -48,7 +48,19 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
     }
 
     public static createForOrganism(organism: string) {
-        return this.create(getLapisUrl(getRuntimeConfig().serverSide, organism), getSchema(organism));
+        const client = this.create(getLapisUrl(getRuntimeConfig().serverSide), getSchema(organism));
+        // Inject organism into every POST body so SILO can filter by organism.
+        client.zodios.axios.interceptors.request.use((config) => {
+            if (config.method === 'post' && config.data !== undefined) {
+                const body =
+                    typeof config.data === 'string'
+                        ? (JSON.parse(config.data) as Record<string, unknown>)
+                        : (config.data as Record<string, unknown>);
+                config.data = JSON.stringify({ ...body, organism });
+            }
+            return config;
+        });
+        return client;
     }
 
     public static create(lapisUrl: string, schema: Schema, logger: InstanceLogger = getInstanceLogger('lapisClient')) {
@@ -171,12 +183,12 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         const results = await Promise.all(
             segmentNames.map((segment) =>
                 this.call(
-                    'unalignedNucleotideSequencesMultiSegment',
+                    'unalignedNucleotideSequences',
                     {
                         [this.schema.primaryKey]: accessionVersion,
                         dataFormat: 'FASTA',
                     },
-                    { params: { segment } },
+                    { queries: { segment } },
                 ),
             ),
         );
@@ -220,7 +232,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
             dataFormat?: 'fasta' | 'json' | 'ndjson';
         },
     ) {
-        const baseUrl = `${this.url}/sample/unalignedNucleotideSequences`;
+        const baseUrl = `${this.url}/unaligned-nucleotide-sequences`;
         const url = segment === undefined ? baseUrl : `${baseUrl}/${segment}`;
         return axios.post<Readable>(url, request, { responseType: 'stream' });
     }
@@ -229,7 +241,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         [key: string]: string | number | null | string[] | undefined;
         fields?: string[];
     }): Promise<Result<DetailsResponse, ProblemDetail>> {
-        return this.request('/sample/details', 'post', { ...request, dataFormat: 'json' }, detailsResponse);
+        return this.request('/metadata', 'post', { ...request, dataFormat: 'json' }, detailsResponse);
     }
 
     private async request<T>(
@@ -254,7 +266,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
                 title: 'bad response',
                 status: 0,
                 detail: `Failed to parse LAPIS response: ${responseDataResult.error.toString()}`,
-                instance: '/sample/details',
+                instance: '/metadata',
             });
         } catch (e) {
             const axiosError = e as AxiosError;

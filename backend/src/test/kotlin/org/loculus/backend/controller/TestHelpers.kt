@@ -125,16 +125,11 @@ fun SequenceEntryStatus.assertIsRevocationIs(revoked: Boolean): SequenceEntrySta
 fun expectUnauthorizedResponse(isModifyingRequest: Boolean = false, apiCall: (jwt: String?) -> ResultActions) {
     val response = apiCall(null)
 
-    // Spring handles non-modifying requests differently than modifying requests
-    // See https://github.com/spring-projects/spring-security/blob/c2d88eca5ac2b1638e28041e4ee8aaecf6b5ac6a/web/src/main/java/org/springframework/security/web/csrf/CsrfFilter.java#L205
-    when (isModifyingRequest) {
-        true -> response.andExpect(status().isForbidden)
-
-        false ->
-            response
-                .andExpect(status().isUnauthorized)
-                .andExpect(MockMvcResultMatchers.header().string("WWW-Authenticate", Matchers.containsString("Bearer")))
-    }
+    // CSRF is disabled in this branch, so both modifying and non-modifying requests return 401
+    // when no token is provided (JWT resource server filter handles auth uniformly).
+    response
+        .andExpect(status().isUnauthorized)
+        .andExpect(MockMvcResultMatchers.header().string("WWW-Authenticate", Matchers.containsString("Bearer")))
 
     apiCall("invalidToken")
         .andExpect(status().isUnauthorized)

@@ -15,6 +15,8 @@ import {
     segmentsWithMultipleReferences,
     type SegmentReferenceSelections,
     getSegmentLapisNames,
+    type GeneInfo,
+    type SegmentInfo,
     type SegmentLapisNames,
 } from '../../../utils/sequenceTypeHelpers.ts';
 
@@ -23,8 +25,8 @@ export type DownloadFormState = {
     dataType: DownloadDataType['type'];
     compression: Compression;
     unalignedNucleotideSequence: SegmentLapisNames;
-    alignedNucleotideSequence: string;
-    alignedAminoAcidSequence: string;
+    alignedNucleotideSequence: SegmentInfo;
+    alignedAminoAcidSequence: GeneInfo;
     includeRichFastaHeaders: boolean;
 };
 
@@ -173,12 +175,12 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                                 label: <>{segment.displayName ?? segment.name}</>,
                             }))}
                             selected={nucleotideSegmentInfos.findIndex(
-                                (info) => info.lapisName === downloadFormState.alignedNucleotideSequence,
+                                (info) => info.lapisName === downloadFormState.alignedNucleotideSequence.lapisName,
                             )}
                             onSelect={(value) =>
                                 setDownloadFormState((previous) => ({
                                     ...previous,
-                                    alignedNucleotideSequence: nucleotideSegmentInfos[value].lapisName,
+                                    alignedNucleotideSequence: nucleotideSegmentInfos[value],
                                 }))
                             }
                             disabled={downloadFormState.dataType !== 'alignedNucleotideSequences'}
@@ -197,12 +199,12 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                                     label: <>{gene.name}</>,
                                 }))}
                                 selected={geneInfos.findIndex(
-                                    (info) => info.lapisName === downloadFormState.alignedAminoAcidSequence,
+                                    (info) => info.lapisName === downloadFormState.alignedAminoAcidSequence.lapisName,
                                 )}
                                 onSelect={(value) =>
                                     setDownloadFormState((previous) => ({
                                         ...previous,
-                                        alignedAminoAcidSequence: geneInfos[value].lapisName,
+                                        alignedAminoAcidSequence: geneInfos[value],
                                     }))
                                 }
                                 disabled={downloadFormState.dataType !== 'alignedAminoAcidSequences'}

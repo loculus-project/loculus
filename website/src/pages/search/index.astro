@@ -1,0 +1,95 @@
+---
+import { SearchFullUI } from '../../components/SearchPage/SearchFullUI';
+import { dataUseTermsAreEnabled, getDataUseTermsAgreementHTML, getRuntimeConfig, getWebsiteConfig } from '../../config';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings';
+import type { Metadata, Schema } from '../../types/config';
+import { versionStatuses } from '../../types/lapis';
+import type { ReferenceGenomesInfo } from '../../types/referencesGenomes';
+import { getAccessToken } from '../../utils/getAccessToken';
+import { getMyGroups } from '../../utils/getMyGroups';
+import { parseUrlSearchParams } from '../../utils/parseUrlSearchParams';
+import { performLapisSearchQueries } from '../../utils/serversideSearch';
+
+const clientConfig = getRuntimeConfig().public;
+const websiteConfig = getWebsiteConfig();
+
+// Compute shared metadata: fields present in every organism's schema (by name)
+const organismSchemas = Object.values(websiteConfig.organisms).map((o) => o.schema.metadata);
+const fieldNameSets = organismSchemas.map((fields) => new Set(fields.map((f: Metadata) => f.name)));
+const sharedFieldNames = fieldNameSets.reduce(
+    (acc, set) => new Set([...acc].filter((name) => set.has(name))),
+    fieldNameSets[0] ?? new Set<string>(),
+);
+const sharedMetadata: Metadata[] = (organismSchemas[0] ?? []).filter((f: Metadata) => sharedFieldNames.has(f.name));
+
+// The organism field is indexed in SILO but not in per-organism website schemas — add it explicitly.
+const organismField: Metadata = {
+    name: 'organism',
+    displayName: 'Organism',
+    type: 'string',
+    autocomplete: true,
+    initiallyVisible: true,
+};
+
+const crossOrganismMetadata: Metadata[] = [organismField, ...sharedMetadata];
+
+const tableColumns = [
+    'organism',
+    ...sharedMetadata.filter((f: Metadata) => f.initiallyVisible === true).map((f: Metadata) => f.name),
+];
+
+const crossOrganismSchema: Schema = {
+    organismName: 'All organisms',
+    metadata: crossOrganismMetadata,
+    tableColumns,
+    primaryKey: 'accessionVersion',
+    defaultOrderBy: 'accessionVersion',
+    defaultOrder: 'descending',
+    // consensusSequences: false disables mutation search and sequence downloads
+    submissionDataTypes: { consensusSequences: false },
+    inputFields: [],
+};
+
+const emptyReferenceGenomesInfo: ReferenceGenomesInfo = {
+    segmentReferenceGenomes: {},
+    segmentDisplayNames: {},
+    isMultiSegmented: false,
+    useLapisMultiSegmentedEndpoint: false,
+};
+
+const hiddenFieldValues = {
+    [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
+    [IS_REVOCATION_FIELD]: 'false',
+};
+
+const accessToken = getAccessToken(Astro.locals.session);
+const myGroups = accessToken !== undefined ? await getMyGroups(accessToken) : [];
+
+const initialQueryDict = parseUrlSearchParams(Astro.url.searchParams);
+const { data, totalCount } = await performLapisSearchQueries(
+    initialQueryDict,
+    crossOrganismSchema,
+    emptyReferenceGenomesInfo,
+    hiddenFieldValues,
+);
+---
+
+<BaseLayout title='Browse all organisms' fullWidth withoutMargin>
+    <SearchFullUI
+        client:load
+        clientConfig={clientConfig}
+        organism=''
+        schema={crossOrganismSchema}
+        myGroups={myGroups}
+        accessToken={accessToken}
+        referenceGenomesInfo={emptyReferenceGenomesInfo}
+        hiddenFieldValues={hiddenFieldValues}
+        initialData={data}
+        initialCount={totalCount}
+        initialQueryDict={initialQueryDict}
+        dataUseTermsEnabled={dataUseTermsAreEnabled()}
+        dataUseTermsAgreementHTML={getDataUseTermsAgreementHTML()}
+        isReleasedPage={false}
+    />
+</BaseLayout>

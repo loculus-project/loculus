@@ -18,12 +18,6 @@ import { getMyGroups } from '../../../utils/getMyGroups';
 import { parseUrlSearchParams } from '../../../utils/parseUrlSearchParams';
 import { performLapisSearchQueries } from '../../../utils/serversideSearch';
 
-// These values are defaults that we already set
-const hiddenFieldValues = {
-    [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
-    [IS_REVOCATION_FIELD]: 'false',
-};
-
 const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
 
 if (!cleanedOrganism) {
@@ -32,6 +26,14 @@ if (!cleanedOrganism) {
         body: 'Organism not found',
     };
 }
+
+// These values are defaults that we already set; organism is included so that
+// LAPIS/SILO filters results to this organism in the unified single-instance setup.
+const hiddenFieldValues = {
+    [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
+    [IS_REVOCATION_FIELD]: 'false',
+    organism: cleanedOrganism.key,
+};
 
 const clientConfig = getRuntimeConfig().public;
 const schema = getSchema(cleanedOrganism.key);
