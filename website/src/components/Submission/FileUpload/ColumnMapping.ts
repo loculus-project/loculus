@@ -1,27 +1,9 @@
-import { type Result, ok, err } from 'neverthrow';
 import Papa from 'papaparse';
 
+import { FILES_HEADER_PREFIX } from './fileMapping';
 import { type ProcessedFile } from './fileProcessing';
-import { SUBMISSION_ID_INPUT_FIELD } from '../../../settings';
 import type { InputField } from '../../../types/config';
 import stringSimilarity from '../../../utils/stringSimilarity';
-
-// File columns begin with the 'files.' prefix.
-// File entries are space-separated and can have one of the following forms: name, name::path, name::path:fileId
-const FILES_HEADER_PREFIX = 'files.';
-export const FILE_ENTRY_SEPARATOR = ' ';
-const FILE_ENTRY_REGEX = /^([^:]+)(?:::([^:]+))?(?::([^:]+))?$/; // TODO: Add name:fileId
-
-type SubmissionId = string;
-export type SubmissionFile = {
-    name: string;
-    path: string;
-    fileId?: string;
-};
-type Category = string;
-type FilePath = string;
-export type FileMapping = Map<Category, Map<FilePath, SubmissionFile>>;
-export type SubmissionFileMapping = Map<SubmissionId, FileMapping>;
 
 export class ColumnMapping {
     private constructor(private readonly map: ReadonlyMap<string, string | null>) {}
@@ -147,71 +129,3 @@ export class ColumnMapping {
         return mapsAreEqual(this.map, other.map);
     }
 }
-
-function parseFileEntry(entry: string): Result<SubmissionFile, Error> {
-    const match = FILE_ENTRY_REGEX.exec(entry.trim());
-    if (!match)
-        return err(
-            new Error(
-                'Failed to parse file entry. Please ensure all file entries are one of: name, name::path, name::path:id, name:id.',
-            ),
-        );
-    const [, name, path, fileId] = match;
-    return ok({ name, path: !path ? name : path, fileId });
-}
-
-export const parseFileMappingFromSubmission = (text: string): Result<SubmissionFileMapping, Error> => {
-    const parsed = Papa.parse<string[]>(text, { delimiter: '\t', skipEmptyLines: true });
-
-    if (parsed.data.length === 0) return err(new Error('Please provide a non-empty metadata file.'));
-    const columns = parsed.data[0].map((column, index) => ({ name: column, index }));
-    const rows = parsed.data.slice(1);
-
-    const fileColumns = columns.filter((column) => column.name.startsWith(FILES_HEADER_PREFIX));
-    const idColumn = columns.find((column) => [SUBMISSION_ID_INPUT_FIELD, 'submissionId'].includes(column.name));
-    if (idColumn === undefined)
-        return err(new Error('Missing id column. Please ensure this is included in the uploaded metadata file.'));
-
-    const submissionFileMapping: SubmissionFileMapping = new Map();
-    for (const row of rows) {
-        const submissionId = row[idColumn.index] ?? '';
-        if (submissionId.trim() === '')
-            return err(new Error('Found empty id value within metadata file. Please ensure all rows contain ids.'));
-        if (submissionFileMapping.has(submissionId))
-            return err(
-                new Error('Found duplicate id value within metadata file. Please ensure all rows contain unique ids.'),
-            );
-
-        const fileMapping: FileMapping = new Map();
-        submissionFileMapping.set(submissionId, fileMapping);
-
-        for (const fileColumn of fileColumns) {
-            const fileCategory = fileColumn.name.slice(FILES_HEADER_PREFIX.length);
-            const cell = row[fileColumn.index] ?? '';
-            if (cell.trim() === '') continue;
-
-            if (fileMapping.has(fileCategory))
-                return err(
-                    new Error(
-                        'Found duplicate file category within metadata file. Please ensure all rows contain unique ids.',
-                    ),
-                );
-
-            const fileEntryResults = cell
-                .split(FILE_ENTRY_SEPARATOR)
-                .map((entry) => entry.trim())
-                .filter((entry) => entry !== '')
-                .map((entry) => parseFileEntry(entry));
-
-            const fileEntryError = fileEntryResults.find((result) => result.isErr());
-            if (fileEntryError !== undefined) return err(new Error(fileEntryError.error.message));
-
-            const fileEntries = new Map(
-                fileEntryResults.filter((entry) => entry.isOk()).map((entry) => [entry.value.path, entry.value]),
-            );
-            fileMapping.set(fileCategory, fileEntries);
-        }
-    }
-
-    return ok(submissionFileMapping);
-};

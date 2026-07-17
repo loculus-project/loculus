@@ -28,7 +28,12 @@ import { Button } from '../common/Button';
 import { Checkbox } from '../common/Checkbox';
 import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import type { FileMapping, SubmissionFileMapping } from './FileUpload/ColumnMapping.ts';
+import {
+    applyFileMappings,
+    mergeFileMappings,
+    type FileMapping,
+    type SubmissionFileMapping,
+} from './FileUpload/fileMapping.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -105,20 +110,24 @@ const InnerDataUploadForm = ({
             return;
         }
 
-        // let fileMappingWithSubmissionId = fileMapping;
-        // // for single submission, use the submissionID that the user gave in the form
-        // if (extraFilesEnabled && inputMode === 'form' && fileMapping !== undefined) {
-        //     fileMappingWithSubmissionId = { [submissionId!]: Object.values(fileMapping)[0] };
-        // }
+        // TODO: Fix form mode
+        let finalMetadataFile = metadataFile;
+        if (extraFilesEnabled && submissionFileMapping !== undefined) {
+            const merged = mergeFileMappings(submissionFileMapping, fileMapping ?? new Map());
+            if (merged.isErr()) {
+                onError(merged.error.message);
+                return;
+            }
+            finalMetadataFile = await applyFileMappings(metadataFile, merged.value);
+        }
 
         const submitSequenceData = () => {
             switch (action) {
                 case 'submit': {
                     const groupId = group.groupId;
                     submit({
-                        metadataFile: metadataFile,
+                        metadataFile: finalMetadataFile,
                         sequenceFile: sequenceFile,
-                        // fileMapping: extraFilesEnabled ? fileMappingWithSubmissionId : undefined,
                         groupId,
                         dataUseTermsType,
                         restrictedUntil:
@@ -130,9 +139,8 @@ const InnerDataUploadForm = ({
                 }
                 case 'revise':
                     revise({
-                        metadataFile: metadataFile,
+                        metadataFile: finalMetadataFile,
                         sequenceFile: sequenceFile,
-                        // fileMapping: extraFilesEnabled ? fileMappingWithSubmissionId : undefined,
                     });
                     break;
             }
@@ -169,6 +177,7 @@ const InnerDataUploadForm = ({
                     action={action}
                     metadataTemplateFields={metadataTemplateFields}
                     submissionDataTypes={submissionDataTypes}
+                    onError={onError}
                 />
                 <hr />
                 {extraFilesEnabled && (

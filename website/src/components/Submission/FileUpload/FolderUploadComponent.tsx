@@ -2,7 +2,7 @@ import { produce } from 'immer';
 import { useEffect, useMemo, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
 
-import type { FileMapping, SubmissionFileMapping } from './ColumnMapping';
+import type { FileMapping, SubmissionFileMapping } from './fileMapping';
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
 import { type FileCategory } from '../../../types/config';

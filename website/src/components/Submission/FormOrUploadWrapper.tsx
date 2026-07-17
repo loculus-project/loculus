@@ -1,14 +1,14 @@
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 
 import type { UploadAction } from './DataUploadForm';
-import type { ColumnMapping, SubmissionFileMapping } from './FileUpload/ColumnMapping';
+import type { ColumnMapping } from './FileUpload/ColumnMapping';
 import { SequenceEntryUpload } from './FileUpload/SequenceEntryUploadComponent';
 import type { ProcessedFile } from './FileUpload/fileProcessing';
 import type { InputField, SubmissionDataTypes } from '../../types/config';
 import { EditableSequences } from '../Edit/EditableSequences';
 import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
 import { SequencesForm } from '../Edit/SequencesForm';
-import { parseFileMappingFromSubmission } from './FileUpload/ColumnMapping';
+import { parseSubmissionFileMapping, type SubmissionFileMapping } from './FileUpload/fileMapping';
 
 export type InputMode = 'form' | 'bulk';
 
@@ -45,6 +45,7 @@ type FormOrUploadWrapperProps = {
     action: UploadAction;
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
+    onError: (message: string) => void;
 };
 
 /**
@@ -62,6 +63,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     action,
     metadataTemplateFields,
     submissionDataTypes,
+    onError,
 }) => {
     const enableConsensusSequences = submissionDataTypes.consensusSequences;
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.empty());
@@ -84,8 +86,14 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
             const text = columnMapping
                 ? await (await columnMapping.applyTo(metadataFile)).text()
                 : await metadataFile.text();
-            if (!controller.signal.aborted)
-                setSubmissionFileMapping(parseFileMappingFromSubmission(text).unwrapOr(undefined));
+            if (!controller.signal.aborted) {
+                const submissionFileMapping = parseSubmissionFileMapping(text);
+                if (submissionFileMapping.isOk()) setSubmissionFileMapping(submissionFileMapping.value);
+                else {
+                    setSubmissionFileMapping(undefined);
+                    onError(submissionFileMapping.error.message);
+                }
+            }
         })();
         return () => controller.abort();
     }, [metadataFile, columnMapping]);
