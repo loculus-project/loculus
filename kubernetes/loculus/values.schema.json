@@ -1769,6 +1769,19 @@
           "default": 10080,
           "description": "Files uploaded to S3 but never attached to a sequence entry are garbage-collected after this many minutes."
         },
+        "credentialsSecretName": {
+          "groups": ["s3"],
+          "type": "string",
+          "default": "s3-bucket",
+          "description": "Name of a k8s secret with `accessKey`/`secretKey` keys, used to authenticate to S3 with static credentials (e.g. MinIO). Set to \"\" to omit static credentials and instead rely on IAM role credentials (e.g. IRSA on EKS)."
+        },
+        "serviceAccountAnnotations": {
+          "groups": ["s3"],
+          "type": "object",
+          "default": {},
+          "additionalProperties": { "type": "string" },
+          "description": "Annotations to add to the backend's ServiceAccount, e.g. to attach an IAM role via IRSA on EKS."
+        },
         "bucket": {
           "type": "object",
           "properties": {

@@ -1,5 +1,14 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- if not .Values.disableBackend }}
+{{- if $.Values.s3.serviceAccountAnnotations }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: loculus-backend
+  annotations:
+{{ $.Values.s3.serviceAccountAnnotations | toYaml | indent 4 }}
+{{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -21,6 +30,9 @@ spec:
         app: loculus
         component: backend
     spec:
+      {{- if $.Values.s3.serviceAccountAnnotations }}
+      serviceAccountName: loculus-backend
+      {{- end }}
       {{- include "possiblePriorityClassName" . | nindent 6 }}
       {{- include "loculus.podScheduling" . | nindent 6 }}
       initContainers:
@@ -80,8 +92,10 @@ spec:
             - "--loculus.s3.bucket.internal-endpoint=$(S3_BUCKET_INTERNAL_ENDPOINT)"
             - "--loculus.s3.bucket.region=$(S3_BUCKET_REGION)"
             - "--loculus.s3.bucket.bucket=$(S3_BUCKET_BUCKET)"
+            {{- if $.Values.s3.credentialsSecretName }}
             - "--loculus.s3.bucket.access-key=$(S3_BUCKET_ACCESS_KEY)"
             - "--loculus.s3.bucket.secret-key=$(S3_BUCKET_SECRET_KEY)"
+            {{- end }}
             {{- end }}
             {{- if .Values.backendExtraArgs }}
               {{- .Values.backendExtraArgs | toYaml | nindent 12 }}
@@ -152,16 +166,18 @@ spec:
               value: {{$.Values.s3.bucket.region | quote }}
             - name: S3_BUCKET_BUCKET
               value: {{$.Values.s3.bucket.bucket | quote }}
+            {{- if $.Values.s3.credentialsSecretName }}
             - name: S3_BUCKET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: s3-bucket
+                  name: {{ $.Values.s3.credentialsSecretName }}
                   key: accessKey
             - name: S3_BUCKET_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: s3-bucket
+                  name: {{ $.Values.s3.credentialsSecretName }}
                   key: secretKey
+            {{- end }}
             {{- end }}
           volumeMounts:
             - name: loculus-backend-config-processed
