@@ -15,7 +15,7 @@ import {
     type Group,
     openDataUseTermsOption,
     restrictedDataUseTermsOption,
-    type FilesBySubmissionId,
+    // type FilesBySubmissionId,
 } from '../../types/backend.ts';
 import type { FileCategory, InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
@@ -28,6 +28,7 @@ import { Button } from '../common/Button';
 import { Checkbox } from '../common/Checkbox';
 import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
+import type { FileMapping, SubmissionFileMapping } from './FileUpload/ColumnMapping.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -48,14 +49,6 @@ type DataUploadFormProps = {
 
 const logger = getClientLogger('DataUploadForm');
 
-type SubmissionId = string;
-export type SubmissionFile = {
-    fileName: string;
-    filePath: string;
-    fileId?: string;
-};
-export type SubmissionFileMapping = Map<SubmissionId, Map<string, SubmissionFile[]>>;
-
 const InnerDataUploadForm = ({
     accessToken,
     instanceName,
@@ -74,7 +67,7 @@ const InnerDataUploadForm = ({
 
     const { submit, revise, isPending } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
-    const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(undefined);
+    const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(undefined);
     const [submissionFileMapping, setSubmissionFileMapping] = useState<SubmissionFileMapping | undefined>(undefined);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
@@ -112,11 +105,11 @@ const InnerDataUploadForm = ({
             return;
         }
 
-        let fileMappingWithSubmissionId = fileMapping;
-        // for single submission, use the submissionID that the user gave in the form
-        if (extraFilesEnabled && inputMode === 'form' && fileMapping !== undefined) {
-            fileMappingWithSubmissionId = { [submissionId!]: Object.values(fileMapping)[0] };
-        }
+        // let fileMappingWithSubmissionId = fileMapping;
+        // // for single submission, use the submissionID that the user gave in the form
+        // if (extraFilesEnabled && inputMode === 'form' && fileMapping !== undefined) {
+        //     fileMappingWithSubmissionId = { [submissionId!]: Object.values(fileMapping)[0] };
+        // }
 
         const submitSequenceData = () => {
             switch (action) {
@@ -125,7 +118,7 @@ const InnerDataUploadForm = ({
                     submit({
                         metadataFile: metadataFile,
                         sequenceFile: sequenceFile,
-                        fileMapping: extraFilesEnabled ? fileMappingWithSubmissionId : undefined,
+                        // fileMapping: extraFilesEnabled ? fileMappingWithSubmissionId : undefined,
                         groupId,
                         dataUseTermsType,
                         restrictedUntil:
@@ -139,7 +132,7 @@ const InnerDataUploadForm = ({
                     revise({
                         metadataFile: metadataFile,
                         sequenceFile: sequenceFile,
-                        fileMapping: extraFilesEnabled ? fileMappingWithSubmissionId : undefined,
+                        // fileMapping: extraFilesEnabled ? fileMappingWithSubmissionId : undefined,
                     });
                     break;
             }
@@ -301,8 +294,8 @@ export const ExtraFilesUpload = ({
     inputMode: InputMode;
     groupId: number;
     fileCategories: FileCategory[];
-    fileMapping: FilesBySubmissionId | undefined;
-    setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
+    fileMapping: FileMapping | undefined;
+    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
     submissionFileMapping: SubmissionFileMapping | undefined;
     formSubmissionId?: string;
     onError: (message: string) => void;

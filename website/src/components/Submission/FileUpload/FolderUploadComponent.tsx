@@ -2,21 +2,18 @@ import { produce } from 'immer';
 import { useEffect, useMemo, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
 
+import type { FileMapping, SubmissionFileMapping } from './ColumnMapping';
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
-import type { FilesBySubmissionId } from '../../../types/backend';
 import { type FileCategory } from '../../../types/config';
 import type { ClientConfig } from '../../../types/runtimeConfig';
 import { calculatePartSizeAndCount, splitFileIntoParts, uploadPart } from '../../../utils/multipartUpload';
 import { displayConfirmationDialog } from '../../ConfirmationDialog';
 import { Button } from '../../common/Button';
-import type { SubmissionFileMapping } from '../DataUploadForm';
 import type { InputMode } from '../FormOrUploadWrapper';
 import LucideFile from '~icons/lucide/file';
 import LucideFolderUp from '~icons/lucide/folder-up';
 import LucideLoader from '~icons/lucide/loader';
-
-const DUMMY_SUBMISSION_ID = 'dummySubmissionId';
 
 /**
  * The state that the component is in, right after the user dropped the files.
@@ -92,8 +89,8 @@ type FolderUploadComponentProps = {
     accessToken: string;
     clientConfig: ClientConfig;
     groupId: number;
-    fileMapping: FilesBySubmissionId | undefined;
-    setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
+    fileMapping: FileMapping | undefined;
+    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
     submissionFileMapping: SubmissionFileMapping | undefined;
     // Passed when the submissionId is known (e.g. editing/revising an entry) in form mode,
     // where it is used instead of the dummySubmissionId placeholder.
@@ -110,7 +107,6 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     fileMapping,
     setFileMapping,
     submissionFileMapping,
-    formSubmissionId,
     onError,
 }) => {
     const isClient = useClientFlag();
@@ -140,9 +136,10 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     const submissionFilePaths = useMemo(() => {
         return submissionFileMapping
             ? new Set(
-                  Array.from(submissionFileMapping.values()).flatMap(
-                      (categories) =>
-                          categories.get(fileCategory.name)?.map((submissionFile) => submissionFile.filePath) ?? [],
+                  Array.from(submissionFileMapping.values()).flatMap((categories) =>
+                      Array.from(categories.get(fileCategory.name)?.values() ?? []).map(
+                          (submissionFile) => submissionFile.path,
+                      ),
                   ),
               )
             : undefined;
@@ -245,24 +242,11 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
     useEffect(() => {
         if (fileUploadState === undefined) {
-            // TODO: Refactor
             setFileMapping((currentMapping) => {
-                if (inputMode === 'bulk') {
-                    if (currentMapping !== undefined) {
-                        return produce(currentMapping, (draft) => {
-                            Object.keys(draft).forEach((submissionId) => {
-                                draft[submissionId][fileCategory.name] = [];
-                            });
-                        });
-                    } else {
-                        return undefined;
-                    }
-                } else {
-                    return produce(currentMapping ?? {}, (draft) => {
-                        const submissionId = formSubmissionId ?? DUMMY_SUBMISSION_ID;
-                        draft[submissionId] = { ...draft[submissionId], [fileCategory.name]: [] };
-                    });
-                }
+                if (currentMapping === undefined) return undefined;
+                const newMapping = new Map(currentMapping);
+                newMapping.delete(fileCategory.name);
+                return newMapping;
             });
             return;
         }
@@ -288,19 +272,34 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 break;
             }
             case 'uploadCompleted': {
-                // TODO: Re-implement file mapping updates
-                // setFileMapping((currentMapping) =>
-                //     produce(currentMapping ?? {}, (draft) => {
-                //         Object.entries(fileUploadState.files).forEach(([submissionId, files]) => {
-                //             if (currentMapping?.[submissionId] !== undefined) {
-                //                 draft[submissionId] = { ...currentMapping[submissionId] };
-                //             } else {
-                //                 draft[submissionId] = {};
-                //             }
-                //             draft[submissionId][fileCategory.name] = files;
-                //         });
-                //     }),
-                // );
+                setFileMapping((currentMapping) => {
+                    const newMapping = new Map(currentMapping);
+                    newMapping.set(
+                        fileCategory.name,
+                        new Map(
+                            fileUploadState.files.map((file) =>
+                                file.type !== 'previousUpload'
+                                    ? [
+                                          file.path,
+                                          {
+                                              name: file.name,
+                                              path: file.path,
+                                              fileId: file.fileId,
+                                          },
+                                      ]
+                                    : [
+                                          file.fileId,
+                                          {
+                                              name: file.name,
+                                              path: file.fileId,
+                                              fileId: file.fileId,
+                                          },
+                                      ],
+                            ),
+                        ),
+                    );
+                    return newMapping;
+                });
                 break;
             }
         }
@@ -469,7 +468,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                             </div>
                             <Button
                                 onClick={() => handleDiscardFile(getFileKey(file))}
-                                disabled={fileUploadState.type !== 'uploadCompleted'}
+                                alsoDisabledIf={fileUploadState.type !== 'uploadCompleted'}
                                 data-testid={`discard_${fileCategory.name}_${getFileKey(file)}`}
                                 variant='outline-neutral'
                                 className='font-normal!'
@@ -495,7 +494,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 )}
                 <Button
                     onClick={() => document.getElementById(`${fileCategory.name}_add`)?.click()}
-                    disabled={fileUploadState.type !== 'uploadCompleted'}
+                    alsoDisabledIf={fileUploadState.type !== 'uploadCompleted'}
                     data-testid={`add_button_${fileCategory.name}`}
                     variant='outline-neutral'
                     className='font-normal!'

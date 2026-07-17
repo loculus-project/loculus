@@ -1,7 +1,7 @@
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 
-import type { SubmissionFileMapping, UploadAction } from './DataUploadForm';
-import type { ColumnMapping } from './FileUpload/ColumnMapping';
+import type { UploadAction } from './DataUploadForm';
+import type { ColumnMapping, SubmissionFileMapping } from './FileUpload/ColumnMapping';
 import { SequenceEntryUpload } from './FileUpload/SequenceEntryUploadComponent';
 import type { ProcessedFile } from './FileUpload/fileProcessing';
 import type { InputField, SubmissionDataTypes } from '../../types/config';
@@ -84,7 +84,8 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
             const text = columnMapping
                 ? await (await columnMapping.applyTo(metadataFile)).text()
                 : await metadataFile.text();
-            if (!controller.signal.aborted) setSubmissionFileMapping(parseFileMappingFromSubmission(text));
+            if (!controller.signal.aborted)
+                setSubmissionFileMapping(parseFileMappingFromSubmission(text).unwrapOr(undefined));
         })();
         return () => controller.abort();
     }, [metadataFile, columnMapping]);
