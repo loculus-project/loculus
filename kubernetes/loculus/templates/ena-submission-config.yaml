@@ -6,7 +6,6 @@
 {{- $submitToEnaProduction := .Values.enaDeposition.submitToEnaProduction | default false }}
 {{- $enaDbName := .Values.enaDeposition.enaDbName | default false }}
 {{- $enaUniqueSuffix := .Values.enaDeposition.enaUniqueSuffix | default false }}
-{{- $enaIsBroker := .Values.enaDeposition.enaIsBroker | default false }}
 {{- $enaApprovedListTestUrl := .Values.enaDeposition.enaApprovedListTestUrl | default "" }}
 {{- $enaSuppressedListTestUrl := .Values.enaDeposition.enaSuppressedListTestUrl | default "" }}
 ---
@@ -18,7 +17,6 @@ data:
   config.yaml: |
     submit_to_ena_prod: {{ $submitToEnaProduction }}
     db_name: {{ $enaDbName }}
-    is_broker: {{ $enaIsBroker }}
     unique_project_suffix: {{ $enaUniqueSuffix }}
     backend_url: {{ $backendHost }}
     ena_deposition_host: {{ $enaDepositionHost }}

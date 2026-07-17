@@ -89,7 +89,6 @@ def mock_config():
     }
     config.ena_checklist = "ERC000033"
     config.set_alias_suffix = None
-    config.is_broker = True
     config.ena_submission_url = "https://test.url"
     config.ena_reports_service_url = "https://test.url"
     config.ena_submission_password = "test_password"  # noqa: S105

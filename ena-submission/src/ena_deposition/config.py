@@ -88,7 +88,6 @@ class Config(BaseModel):
     ena_submission_username: str
     ena_reports_service_url: str
     submit_to_ena_prod: bool = False
-    is_broker: bool = False
     allowed_submission_hosts: list[str] = field(
         default_factory=lambda: ["https://backend.pathoplexus.org"]
     )
