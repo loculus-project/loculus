@@ -3,6 +3,7 @@ import Papa from 'papaparse';
 import { type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
 import stringSimilarity from '../../../utils/stringSimilarity';
+import type { SubmissionFileMapping, SubmissionFile } from '../DataUploadForm';
 
 const FILES_HEADER_PREFIX = 'files.';
 
@@ -130,3 +131,65 @@ export class ColumnMapping {
         return mapsAreEqual(this.map, other.map);
     }
 }
+
+// TODO: Clean up
+
+const SUBMISSION_ID_HEADERS = ['id', 'submissionId'];
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const FILES_SEPARATOR = ' ';
+
+export function parseFileToken(token: string): SubmissionFile {
+    let ref = token;
+    let fileId: string | undefined;
+
+    const lastColon = token.lastIndexOf(':');
+    if (lastColon >= 0 && UUID_REGEX.test(token.slice(lastColon + 1))) {
+        fileId = token.slice(lastColon + 1);
+        ref = token.slice(0, lastColon);
+    }
+
+    const separatorIndex = ref.indexOf('::');
+    if (separatorIndex >= 0) {
+        return { fileName: ref.slice(0, separatorIndex), filePath: ref.slice(separatorIndex + 2), fileId };
+    }
+    return { fileName: ref, filePath: ref, fileId };
+}
+
+// TODO: Add error handling
+export const parseFileMappingFromSubmission = (text: string): SubmissionFileMapping | undefined => {
+    const parsed = Papa.parse<string[]>(text, { delimiter: '\t', skipEmptyLines: true });
+
+    if (parsed.data.length === 0) return undefined;
+    const columns = parsed.data[0].map((column, index) => ({ name: column, index }));
+    const rows = parsed.data.slice(1);
+
+    const fileColumns = columns.filter((column) => column.name.startsWith(FILES_HEADER_PREFIX));
+    const idColumn = columns.find((column) => SUBMISSION_ID_HEADERS.includes(column.name));
+    if (idColumn === undefined) return undefined;
+
+    const fileMapping: SubmissionFileMapping = new Map();
+    rows.forEach((row) => {
+        const submissionId = row[idColumn.index] ?? '';
+        if (submissionId.trim() === '') return;
+        if (fileMapping.has(submissionId)) return;
+
+        const submissionFiles = new Map<string, SubmissionFile[]>();
+        fileMapping.set(submissionId, submissionFiles);
+
+        fileColumns.forEach((column) => {
+            const fileCategory = column.name.slice(FILES_HEADER_PREFIX.length);
+            const cell = row[column.index] ?? '';
+            if (cell.trim() === '') return;
+            if (submissionFiles.has(fileCategory)) return;
+
+            const cellFiles = cell
+                .split(FILES_SEPARATOR)
+                .map((token) => token.trim())
+                .filter((token) => token !== '')
+                .map((token) => parseFileToken(token));
+            submissionFiles.set(fileCategory, cellFiles);
+        });
+    });
+
+    return fileMapping;
+};

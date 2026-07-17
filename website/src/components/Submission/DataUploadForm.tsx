@@ -48,6 +48,14 @@ type DataUploadFormProps = {
 
 const logger = getClientLogger('DataUploadForm');
 
+type SubmissionId = string;
+export type SubmissionFile = {
+    fileName: string;
+    filePath: string;
+    fileId?: string;
+};
+export type SubmissionFileMapping = Map<SubmissionId, Map<string, SubmissionFile[]>>;
+
 const InnerDataUploadForm = ({
     accessToken,
     instanceName,
@@ -67,6 +75,7 @@ const InnerDataUploadForm = ({
     const { submit, revise, isPending } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
     const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(undefined);
+    const [submissionFileMapping, setSubmissionFileMapping] = useState<SubmissionFileMapping | undefined>(undefined);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
@@ -162,6 +171,7 @@ const InnerDataUploadForm = ({
                 <FormOrUploadWrapper
                     inputMode={inputMode}
                     setFileFactory={setFileFactory}
+                    setSubmissionFileMapping={setSubmissionFileMapping}
                     organism={organism}
                     action={action}
                     metadataTemplateFields={metadataTemplateFields}
@@ -179,6 +189,7 @@ const InnerDataUploadForm = ({
                             onError={onError}
                             fileMapping={fileMapping}
                             setFileMapping={setFileMapping}
+                            submissionFileMapping={submissionFileMapping}
                         />
                         <hr />
                     </>
@@ -281,6 +292,7 @@ export const ExtraFilesUpload = ({
     fileCategories,
     fileMapping,
     setFileMapping,
+    submissionFileMapping,
     formSubmissionId,
     onError,
 }: {
@@ -291,6 +303,7 @@ export const ExtraFilesUpload = ({
     fileCategories: FileCategory[];
     fileMapping: FilesBySubmissionId | undefined;
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
+    submissionFileMapping: SubmissionFileMapping | undefined;
     formSubmissionId?: string;
     onError: (message: string) => void;
 }) => {
@@ -316,6 +329,7 @@ export const ExtraFilesUpload = ({
                         onError={onError}
                         fileMapping={fileMapping}
                         setFileMapping={setFileMapping}
+                        submissionFileMapping={submissionFileMapping}
                         formSubmissionId={formSubmissionId}
                     />
                 ))}

@@ -1,5 +1,5 @@
 import { produce } from 'immer';
-import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
+import { useEffect, useMemo, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
 
 import useClientFlag from '../../../hooks/isClient';
@@ -10,6 +10,7 @@ import type { ClientConfig } from '../../../types/runtimeConfig';
 import { calculatePartSizeAndCount, splitFileIntoParts, uploadPart } from '../../../utils/multipartUpload';
 import { displayConfirmationDialog } from '../../ConfirmationDialog';
 import { Button } from '../../common/Button';
+import type { SubmissionFileMapping } from '../DataUploadForm';
 import type { InputMode } from '../FormOrUploadWrapper';
 import LucideFile from '~icons/lucide/file';
 import LucideFolderUp from '~icons/lucide/folder-up';
@@ -93,6 +94,7 @@ type FolderUploadComponentProps = {
     groupId: number;
     fileMapping: FilesBySubmissionId | undefined;
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
+    submissionFileMapping: SubmissionFileMapping | undefined;
     // Passed when the submissionId is known (e.g. editing/revising an entry) in form mode,
     // where it is used instead of the dummySubmissionId placeholder.
     formSubmissionId?: string;
@@ -107,6 +109,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     groupId,
     fileMapping,
     setFileMapping,
+    submissionFileMapping,
     formSubmissionId,
     onError,
 }) => {
@@ -133,6 +136,17 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     const [isDragging, setIsDragging] = useState(false);
 
     const backendClient = new BackendClient(clientConfig.backendUrl);
+
+    const submissionFilePaths = useMemo(() => {
+        return submissionFileMapping
+            ? new Set(
+                  Array.from(submissionFileMapping.values()).flatMap(
+                      (categories) =>
+                          categories.get(fileCategory.name)?.map((submissionFile) => submissionFile.filePath) ?? [],
+                  ),
+              )
+            : undefined;
+    }, [fileCategory.name, submissionFileMapping]);
 
     function updatePartProgress(fileId: string, uploadedParts: number, totalParts: number) {
         setFileUploadState((state) => {
@@ -231,6 +245,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
     useEffect(() => {
         if (fileUploadState === undefined) {
+            // TODO: Refactor
             setFileMapping((currentMapping) => {
                 if (inputMode === 'bulk') {
                     if (currentMapping !== undefined) {
@@ -446,11 +461,11 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         <div className='flex flex-col text-left px-4 py-3'>
             <div className='flex justify-between items-center mb-3'>
                 <div>
-                    <h3 className='text-sm font-medium'>Files</h3>
+                    <h3 className='text-sm font-medium'>{fileCategory.displayName ?? fileCategory.name}</h3>
                     {fileUploadState.files.map((file) => (
                         <div key={getFileKey(file)} className='flex items-center mb-2 gap-2'>
                             <div className='flex-1 min-w-0'>
-                                <FileListItem file={file} />
+                                <FileListItem file={file} filePaths={submissionFilePaths} />
                             </div>
                             <Button
                                 onClick={() => handleDiscardFile(getFileKey(file))}
@@ -510,12 +525,14 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
 type FileListeItemProps = {
     file: SingleFileUpload;
+    filePaths: Set<string> | undefined;
 };
 
-const FileListItem: FC<FileListeItemProps> = ({ file }) => {
+const FileListItem: FC<FileListeItemProps> = ({ file, filePaths }) => {
     const showProgress = file.type === 'pending';
     const percentage = showProgress ? Math.round((file.uploadedParts / file.totalParts) * 100) : 0;
     const folderPath = file.type !== 'previousUpload' ? file.path.split('/').slice(0, -1) : [];
+    const isLinked = file.type !== 'previousUpload' && filePaths?.has(file.path);
 
     return (
         <div className='flex flex-row'>
@@ -540,6 +557,13 @@ const FileListItem: FC<FileListeItemProps> = ({ file }) => {
             </div>
             {/* Status icon */}
             <div className='ml-2 w-5 flex justify-center'>{getStatusIcon(file.type)}</div>
+            <div className='text-xs'>
+                {isLinked ? (
+                    <span className='text-green-500'>LINKED</span>
+                ) : (
+                    <span className='text-gray-400'>UNLINKED</span>
+                )}
+            </div>
         </div>
     );
 };
