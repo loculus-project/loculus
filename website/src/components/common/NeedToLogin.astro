@@ -3,7 +3,7 @@ import { buttonClasses } from './buttonStyles';
 import { getAuthUrl } from '../../utils/getAuthUrl';
 import IcOutlineLogin from '~icons/ic/outline-login';
 
-const loginUrl = await getAuthUrl(Astro.url.toString());
+const loginUrl = await getAuthUrl(Astro.url.toString(), Astro);
 
 interface Props {
     message?: string;

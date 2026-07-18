@@ -8,6 +8,7 @@ import { type BaseClient, type TokenSet } from 'openid-client';
 import { getConfiguredOrganisms, getRuntimeConfig, getWebsiteConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
 import { KeycloakClientManager } from '../utils/KeycloakClientManager.ts';
+import { popAuthRequestCookies } from '../utils/authRequestCookies.ts';
 import { getAuthUrl } from '../utils/getAuthUrl.ts';
 import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
@@ -231,9 +232,12 @@ async function getTokenFromParams(context: APIContext, client: BaseClient): Prom
     if (params.code !== undefined) {
         const redirectUri = removeTokenCodeFromSearchParams(context.url);
         logger.debug(`Keycloak callback redirect uri: ${redirectUri}`);
+        const { state, nonce } = popAuthRequestCookies(context.cookies);
         const tokenSet = await client
             .callback(redirectUri, params, {
                 response_type: 'code', // eslint-disable-line @typescript-eslint/naming-convention
+                state,
+                nonce,
             })
             .catch((error: unknown) => {
                 logger.info(`Keycloak callback error: ${error}`);
@@ -284,7 +288,7 @@ const redirectToAuth = async (context: APIContext) => {
     const redirectUrl = removeTokenCodeFromSearchParams(currentUrl);
 
     logger.debug(`Redirecting to auth with redirect url: ${redirectUrl}`);
-    const authUrl = await getAuthUrl(redirectUrl);
+    const authUrl = await getAuthUrl(redirectUrl, context);
 
     deleteCookie(context);
     return createRedirectWithModifiableHeaders(authUrl);
