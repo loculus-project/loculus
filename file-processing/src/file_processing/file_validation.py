@@ -1,4 +1,5 @@
 import logging
+import os
 import subprocess  # noqa: S404
 from enum import StrEnum
 from pathlib import Path
@@ -7,7 +8,7 @@ from file_processing.datatypes import Annotation
 
 logger = logging.getLogger(__name__)
 
-VALIDATION_JAR_PATH = "/opt/app/lib/readtools.jar"
+VALIDATION_JAR_PATH = os.environ.get("READTOOLS_JAR", "/opt/app/lib/readtools.jar")
 
 
 class FormatType(StrEnum):
@@ -16,9 +17,45 @@ class FormatType(StrEnum):
     CRAM = "CRAM"
 
 
-def run_validation(
-    input_files: list[str], data_dir: str, format_type: FormatType
-) -> Annotation | None:
+ACCEPTED_FASTQ_EXTENSIONS = {".fastq", ".fq", ".fastq.gz", ".fq.gz"}
+ACCEPTED_BAM_EXTENSIONS = {".bam", ".sam"}
+
+
+def _parse_validation_error(log_file_path: Path, error_log_path: Path) -> str:
+    """Extract the reason readtools reported RESULT: INVALID.
+
+    readtools prints e.g.
+        RESULT: INVALID
+          Sequence header must start with @: >seq1 at line 1 in fastq
+    to stdout; fall back to stderr if that line is missing.
+    """
+    stdout_lines = log_file_path.read_text().splitlines()
+    for i, line in enumerate(stdout_lines):
+        if line.strip() == "RESULT: INVALID":
+            details = [detail.strip() for detail in stdout_lines[i + 1 :] if detail.strip()]
+            if details:
+                return "; ".join(details)
+            break
+    stderr_content = error_log_path.read_text().strip()
+    return stderr_content or "File validation failed"
+
+
+def run_validation(input_files: list[str], data_dir: str) -> Annotation | None:
+    if input_files and all(
+        Path(file).suffix.lower() in ACCEPTED_FASTQ_EXTENSIONS for file in input_files
+    ):
+        format_type = FormatType.FASTQ
+    elif input_files and all(
+        Path(file).suffix.lower() in ACCEPTED_BAM_EXTENSIONS for file in input_files
+    ):
+        format_type = FormatType.BAM
+    else:
+        message = "Input files have mixed or unsupported formats. Please provide files with consistent and supported formats (FASTQ or BAM)."
+        logger.error(message)
+        return Annotation(
+            fileName=",".join(input_files),
+            message=message,
+        )
     for file in input_files:
         args = [
             "java",
@@ -39,8 +76,7 @@ def run_validation(
             stderr=error_log_path.open("w"),
         ).returncode
         if exit_code != 0:
-            # TODO: parse error message from stdout/stderr and include in Annotation
-            message = f"File validation failed with exit code {exit_code}"
+            message = _parse_validation_error(log_file_path, error_log_path)
             logger.error(message)
             return Annotation(
                 fileName=Path(file).name,

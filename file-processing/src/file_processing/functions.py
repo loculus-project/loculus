@@ -101,7 +101,7 @@ def validate_raw_reads_submission(
             return ResponseWithFiles(
                 files={FileCategory.RAW_READS: files}, errors=errors, warnings=warnings
             )
-        file_format_validation = run_validation(local_files, tmp_dir, FormatType.FASTQ)
+        file_format_validation = run_validation(local_files, tmp_dir)
         if file_format_validation:
             errors.append(
                 file_format_validation
