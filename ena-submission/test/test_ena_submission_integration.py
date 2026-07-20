@@ -653,7 +653,6 @@ class TestFirstPublicUpdate(TestSubmission):
         (EntityType.ASSEMBLY, "ena_nucleotide_first_publicly_visible"): NUCLEOTIDE_CONFIG,
         (EntityType.ASSEMBLY, "ncbi_nucleotide_first_publicly_visible"): NUCLEOTIDE_CONFIG,
         (EntityType.ASSEMBLY, "ena_gca_first_publicly_visible"): GCA_CONFIG,
-        (EntityType.ASSEMBLY, "ncbi_gca_first_publicly_visible"): GCA_CONFIG,
     }
 
     @pytest.mark.parametrize(

@@ -1167,6 +1167,12 @@ class SubmissionDatabaseService(
                 .validateCategoriesMatchSubmissionSchema(fileMapping, organism)
                 .validateMultipartUploads(fileMapping.fileIds)
                 .validateFilesExist(fileMapping.fileIds)
+            validateFilesBelongToSubmittingGroups(
+                mapOf(
+                    AccessionVersion(editedSequenceEntryData.accession, editedSequenceEntryData.version) to
+                        fileMapping.fileIds,
+                ),
+            )
         }
 
         SequenceEntriesTable.update(
