@@ -33,7 +33,7 @@
           "type": "boolean",
           "description": "Whether the field is required by backend."
         },
-        "required_when": {
+        "requiredWhen": {
           "groups": ["metadata"],
           "type": "array",
           "description": "Array of conditions under which this metadata field is required. Conditions can be the presence of a file category, specified as files.<file_category>, or another metadata fields, specified as processed.<field_name>"
