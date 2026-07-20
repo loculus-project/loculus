@@ -117,6 +117,37 @@ class GetReleasedDataEndpointTest(
     }
 
     @Test
+    fun `GIVEN no sequence entries WHEN requesting zstd THEN returns a valid empty compressed response`() {
+        val response = submissionControllerClient.getReleasedData(compression = "zstd")
+            .andExpect(status().isOk)
+            .andExpect(header().string(HttpHeaders.CONTENT_ENCODING, "zstd"))
+            .andExpect(header().string("x-total-records", `is`("0")))
+            .andReturn()
+        response.getAsyncResult()
+
+        val decompressedContent = ZstdInputStream(response.response.contentAsByteArray.inputStream())
+            .apply { continuous = true }
+            .readAllBytes()
+            .decodeToString()
+
+        assertThat(decompressedContent, `is`(""))
+    }
+
+    @Test
+    fun `GIVEN released data THEN sets a Content-Length header matching the served body`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+
+        val response = submissionControllerClient.getReleasedData()
+            .andExpect(status().isOk)
+            .andReturn()
+        response.getAsyncResult()
+
+        val bodyLength = response.response.contentAsByteArray.size
+        assertThat(bodyLength, greaterThan(0))
+        assertThat(response.response.getHeader(HttpHeaders.CONTENT_LENGTH), `is`(bodyLength.toString()))
+    }
+
+    @Test
     fun `Given released data THEN does not have unknown top-level fields`() {
         val allowedKeys = setOf(
             "metadata",

@@ -30,6 +30,8 @@ from .transformer import TransformationError, transform_data_format
 
 logger = logging.getLogger(__name__)
 
+CONNECT_TIMEOUT_SECONDS = 30
+
 
 class RecordCountValidationError(Exception):
     """Record count does not match expected value."""
@@ -85,7 +87,7 @@ def _download_file(
     url: str,
     output_path: Path,
     etag: str | None = None,
-    timeout: int = 300,
+    read_timeout: int = 3600,
 ) -> HttpResponse:
     """
     Download a file using requests.
@@ -94,7 +96,7 @@ def _download_file(
         url: URL to download from
         output_path: Where to save the response body
         etag: Optional ETag for conditional request
-        timeout: Request timeout in seconds
+        read_timeout: Read timeout in seconds
 
     Returns:
         HttpResponse with status code and headers
@@ -109,7 +111,11 @@ def _download_file(
     try:  # noqa: PLW0717
         session = requests.Session()
         session.headers.update(headers)
-        response = session.get(url, timeout=timeout, stream=True)
+        response = session.get(
+            url,
+            timeout=(CONNECT_TIMEOUT_SECONDS, read_timeout),
+            stream=True,
+        )
 
         # Write response body to file (raw, no automatic decompression)
         with output_path.open("wb") as f:
@@ -174,7 +180,7 @@ class DownloadManager:
                 config.released_data_endpoint,
                 data_path,
                 last_etag,
-                300,
+                config.download_timeout,
             )
 
             if response.status_code >= BAD_REQUEST:

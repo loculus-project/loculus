@@ -47,8 +47,21 @@ siloImport:
   siloTimeoutSeconds: 3600
   hardRefreshIntervalSeconds: 3600
   pollIntervalSeconds: 30
+  # Allow enough time for the backend to prepare the download.
+  downloadTimeoutSeconds: 3600
+  # Allow three hours for the initial import.
+  progressDeadlineSeconds: 10800
+backendStreamSpool:
+  directory: /var/lib/loculus/spool
+  sizeLimit: 20Gi
+  maxTotalBytes: 19327352832
+  maxConcurrentSpools: 4
+  minFreeBytes: 1073741824
+  fileTtlMinutes: 180
+  sweepEveryMinutes: 30
 ingestLimitSeconds: 1800
-getSubmissionListLimitSeconds: 600
+# Allow three hours for download and processing.
+getSubmissionListLimitSeconds: 10800
 preprocessingTimeout: 600
 accessionPrefix: "LOC_"
 dateFieldForGroupGraph: null
