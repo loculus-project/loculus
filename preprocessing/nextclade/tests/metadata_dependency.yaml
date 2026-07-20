@@ -14,3 +14,19 @@ processing_spec:
     function: parse_and_assert_past_date
     inputs:
       date: A
+  required_when_B:
+    function: identity
+    inputs:
+      input: required_when_B
+    required_when:
+      - processed.B
+  B:
+    function: identity
+    inputs:
+      input: B
+  required_when_raw_reads:
+    function: identity
+    inputs:
+      input: required_when_raw_reads
+    required_when:
+      - files.raw_reads
