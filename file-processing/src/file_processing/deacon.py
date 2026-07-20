@@ -41,7 +41,9 @@ def download_deacon_index(config):
         logger.error(msg)
         raise RuntimeError(msg) from e
 
-    logger.info(f"Deacon index downloaded successfully and saved to '{DEACON_INDEX_PATH}'")
+    logger.info(
+        f"Deacon index downloaded successfully and saved to '{DEACON_INDEX_PATH}'"
+    )
 
 
 def start_deacon_server() -> subprocess.Popen:
@@ -74,7 +76,9 @@ def stop_deacon_server(proc: subprocess.Popen) -> None:
         proc.wait()
 
 
-def run_deacon_filter(input_files: list[str], data_dir: str, config: Config) -> DeaconSummary:
+def run_deacon_filter(
+    input_files: list[str], data_dir: str, config: Config
+) -> DeaconSummary:
     summary_json_path = Path(data_dir) / "summary.json"
     args = [
         "deacon",
@@ -113,7 +117,11 @@ DEACON_WARNING_PROMPT = (
 
 
 def deacon_message(
-    file_names: str, numbers: str, maximum: float, type: Literal["base pairs", "reads"], error: bool
+    file_names: str,
+    numbers: str,
+    maximum: float,
+    type: Literal["base pairs", "reads"],
+    error: bool,
 ) -> str:
     return (
         f"Our QC pipeline identified {type} that map to the human genome. "
@@ -121,7 +129,7 @@ def deacon_message(
         else f"Our QC pipeline identified a small number of {type} that map to the human genome. "
         f"File(s): '{file_names}' "
         f"had {type} which mapped to the human genome, with {numbers}, "
-        f"the maximum allowed {"proportion" if type == "reads" else "base pairs"} is {maximum}. "
+        f"the maximum allowed {'proportion' if type == 'reads' else 'base pairs'} is {maximum}. "
         f"{DEACON_ERROR_PROMPT}"
         if error
         else f"{DEACON_WARNING_PROMPT}"
@@ -132,7 +140,9 @@ def process_deacon_run(
     deacon_summary: DeaconSummary, files: list, config: Config
 ) -> tuple[list[Annotation], list[Annotation]]:
     file_names = ", ".join(file.name for file in files)
-    if deacon_summary.seqs_out_proportion > cast(float, config.deacon_max_host_reads_proportion):
+    if deacon_summary.seqs_out_proportion > cast(
+        float, config.deacon_max_host_reads_proportion
+    ):
         message = deacon_message(
             file_names,
             f"{deacon_summary.seqs_out_proportion} ({deacon_summary.seqs_out}/ {deacon_summary.seqs_in})",
@@ -140,7 +150,13 @@ def process_deacon_run(
             "reads",
             True,
         )
-        return [Annotation(fileName=file_names, fileCategory=FileCategory.RAW_READS, message=message)], []
+        return [
+            Annotation(
+                fileName=file_names,
+                fileCategory=FileCategory.RAW_READS,
+                message=message,
+            )
+        ], []
     if deacon_summary.bp_out > cast(int, config.deacon_max_host_bp):
         message = deacon_message(
             file_names,
@@ -149,7 +165,13 @@ def process_deacon_run(
             "base pairs",
             True,
         )
-        return [Annotation(fileName=file_names, fileCategory=FileCategory.RAW_READS, message=message)], []
+        return [
+            Annotation(
+                fileName=file_names,
+                fileCategory=FileCategory.RAW_READS,
+                message=message,
+            )
+        ], []
     warnings: list[Annotation] = []
     if (
         0
@@ -164,7 +186,11 @@ def process_deacon_run(
             False,
         )
         warnings.append(
-            Annotation(fileName=file_names, fileCategory=FileCategory.RAW_READS, message=message)
+            Annotation(
+                fileName=file_names,
+                fileCategory=FileCategory.RAW_READS,
+                message=message,
+            )
         )
     if 0 < deacon_summary.bp_out <= cast(int, config.deacon_max_host_bp):
         message = deacon_message(
@@ -175,6 +201,10 @@ def process_deacon_run(
             False,
         )
         warnings.append(
-            Annotation(fileName=file_names, fileCategory=FileCategory.RAW_READS, message=message)
+            Annotation(
+                fileName=file_names,
+                fileCategory=FileCategory.RAW_READS,
+                message=message,
+            )
         )
     return [], warnings

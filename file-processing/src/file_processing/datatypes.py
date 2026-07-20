@@ -12,17 +12,21 @@ class FileCategory(StrEnum):
     RAW_READS = "raw_reads"
     ANNOTATIONS = "annotations"
 
+
 class FileIdAndNameAndReadUrl(BaseModel):
     fileId: str  # noqa: N815
     name: str
     url: str
 
+
 Files = dict[FileCategory, list[FileIdAndNameAndReadUrl]]
+
 
 class Annotation(BaseModel):
     fileName: str | None = None  # noqa: N815
-    fileCategory: FileCategory  = FileCategory.RAW_READS  # noqa: N815
+    fileCategory: FileCategory = FileCategory.RAW_READS  # noqa: N815
     message: str
+
 
 class ResponseWithFiles(BaseModel):
     files: Files
@@ -46,4 +50,3 @@ class DeaconSummary:
             data = json.load(f)
         wanted = {f.name for f in fields(cls)}
         return cls(**{k: v for k, v in data.items() if k in wanted})
-

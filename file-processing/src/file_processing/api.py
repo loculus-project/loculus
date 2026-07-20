@@ -23,7 +23,7 @@ def read_root() -> dict[str, str]:
 def post_process_files(
     payload: Files,
 ) -> Response:
-    
+
     response_with_files = process_submitted_files(
         config=app.state.config,
         file_mapping=payload,

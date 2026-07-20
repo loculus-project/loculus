@@ -15,8 +15,12 @@ class Config(BaseModel):
     deacon_max_host_bp: int  # maximum number of host base pairs allowed in a sample before it is flagged as contaminated
 
     # deacon parameters
-    deacon_a: int = 2  # absolute number of k-mers in a read that need to map to index to be flagged
-    deacon_r: float = 0.05  # relative proportion of k-mers in a read that need to map to index
+    deacon_a: int = (
+        2  # absolute number of k-mers in a read that need to map to index to be flagged
+    )
+    deacon_r: float = (
+        0.05  # relative proportion of k-mers in a read that need to map to index
+    )
 
 
 def get_config(config_file: str | Path) -> Config:

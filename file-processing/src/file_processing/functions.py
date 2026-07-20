@@ -12,13 +12,19 @@ from file_processing.datatypes import (
     ResponseWithFiles,
 )
 from file_processing.deacon import process_deacon_run, run_deacon_filter
-from file_processing.file_validation import FormatType, run_validation
+from file_processing.file_validation import (
+    ACCEPTED_FORMATS,
+    determine_format_type,
+    run_validation,
+)
 
 logger = logging.getLogger(__name__)
 
 
 def download_file(config: Config, url: str, save_path: Path) -> None:
-    with requests.get(url, stream=True, timeout=config.backend_request_timeout_seconds) as response:
+    with requests.get(
+        url, stream=True, timeout=config.backend_request_timeout_seconds
+    ) as response:
         response.raise_for_status()
         with save_path.open("wb") as f:
             f.writelines(response.iter_content(chunk_size=1024 * 1024))
@@ -42,9 +48,7 @@ def process_submitted_files(
                     files,
                 )
             case _:
-                message = (
-                    f"File category '{category}' is enabled but not supported by preprocessing."
-                )
+                message = f"File category '{category}' is enabled but not supported by preprocessing."
                 logger.warning(message)
                 errors.append(
                     Annotation(
@@ -64,15 +68,13 @@ def validate_raw_reads_submission(
     errors: list[Annotation] = []
     warnings: list[Annotation] = []
 
-    if len(files) > 2:  # noqa: PLR2004
-        message = (
-            f"Received {len(files)} for raw reads upload. Please submit raw reads as one "
-            "or two FASTQ files containing raw single-end or paired-end reads."
-        )
+    format_type = determine_format_type([file.name for file in files])
+    if format_type not in ACCEPTED_FORMATS:
         errors.append(
             Annotation(
+                fileName=", ".join(file.name for file in files),
                 fileCategory=FileCategory.RAW_READS,
-                message=message,
+                message=f"File format: {format_type} is not in the list of accepted formats: {ACCEPTED_FORMATS}. Paired-end FASTQ files must be submitted as separate, de-interleaved files.",
             )
         )
         return ResponseWithFiles(
@@ -103,9 +105,7 @@ def validate_raw_reads_submission(
             )
         file_format_validation = run_validation(local_files, tmp_dir)
         if file_format_validation:
-            errors.append(
-                file_format_validation
-            )
+            errors.append(file_format_validation)
             return ResponseWithFiles(
                 files={FileCategory.RAW_READS: files}, errors=errors, warnings=warnings
             )
