@@ -27,6 +27,9 @@ export default defineConfig({
         optimizeDeps: {
             exclude: ['fsevents', 'msw/node', 'msw', 'chromium-bidi'],
         },
+        // Required after upgrading Astro to v7. Astro v7 and msw v2.15 use different versions of this package.
+        // The msw version was being hoisted, but then removed for prod builds as msw is a dev dependency.
+        // This led to a build failure as the cookie package could not be found - including it in the server bundle fixes that.
         ssr: { noExternal: ['cookie'] },
         plugins: [tailwindcss(), Icons({ compiler: 'jsx', jsx: 'react' })],
     },
