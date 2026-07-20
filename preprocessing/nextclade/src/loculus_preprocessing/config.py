@@ -42,6 +42,7 @@ class ProcessingSpec(BaseModel):
     inputs: FunctionInputs
     function: FunctionName = "identity"
     required: bool = False
+    required_when: list[str] = []
     no_input: bool = False
     args: FunctionArgs | None = None
 
