@@ -754,9 +754,9 @@ test_metadata_dependency_test_definitions = [
         expected_warnings=[],
     ),
     Case(
-        name="required_when_reads_provided",
+        name="raw_reads_prerequisite_present",
         input_metadata={
-            "submissionId": "required_when_reads_provided",
+            "submissionId": "raw_reads_prerequisite_present",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
             "continent": "Asia",
@@ -778,18 +778,16 @@ test_metadata_dependency_test_definitions = [
         expected_errors=[],
         expected_warnings=[],
     ),
-    # required_when with a `processed.<field>` condition: the trigger field has a processed
-    # value but the conditionally-required field is missing -> error. Also exercises the
-    # ordering guarantee (required_when_B must be processed before B).
     Case(
-        name="required_when_processed_field_missing",
+        name="metadata_field_prerequisite_missing",
         input_metadata={
-            "submissionId": "required_when_processed_field_missing",
+            "submissionId": "metadata_field_prerequisite_missing",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
             "continent": "Asia",
             "A": "2022-11-01",
             "B": "present",
+            "required_when_B": "",
         },
         accession_id="32",
         expected_metadata={
@@ -820,9 +818,8 @@ def config():
     return get_config(NO_ALIGNMENT_CONFIG, ignore_args=True)
 
 
-@pytest.fixture(scope="module")
-def config_dependency(config: Config):
-    # Add metadata dependency to config, recompute processing order
+def generate_config_with_deps() -> Config:
+    config = get_config(NO_ALIGNMENT_CONFIG, ignore_args=True)
     dependency_fields = get_config(METADATA_DEPENDENCY_CONFIG, ignore_args=True).processing_spec
     config.processing_spec.update(dependency_fields)
     config.processing_order = get_processing_order(config)
@@ -853,12 +850,11 @@ def test_preprocessing(test_case_def: Case, config: Config, factory_custom: Proc
     test_metadata_dependency_test_definitions,
     ids=lambda tc: f"metadata fields with dependencies use processed fields {tc.name}",
 )
-def test_preprocessing_metadata_dependencies(test_case_def: Case, config_dependency: Config):
-    factory_custom = ProcessedEntryFactory(
-        all_metadata_fields=list(config_dependency.processing_spec.keys())
-    )
+def test_preprocessing_metadata_dependencies(test_case_def: Case):
+    config = generate_config_with_deps()
+    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
     test_case = test_case_def.create_test_case(factory_custom)
-    processed_entry = process_single_entry(test_case, config_dependency)
+    processed_entry = process_single_entry(test_case, config)
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
 
 
@@ -889,6 +885,26 @@ def test_required_when_conflicts_with_required() -> None:
                 )
             }
         )
+
+
+def test_processing_order() -> None:
+    """`depends_on_A` reads the processed value of `A`, so `A` must be processed first."""
+    config = generate_config_with_deps()
+    test_case = Case(
+        name="processing_order",
+        input_metadata={"continent": "Asia", "A": "2022-11-01"},
+        accession_id="40",
+    ).create_test_case(ProcessedEntryFactory())
+
+    # Correct order includes the processed value of A; the wrong order builds depends_on_A first.
+    correct_order = process_single_entry(test_case, config)
+    assert correct_order.data.metadata["depends_on_A"] == "Asia/LOC_40.1/2022-11-01"
+
+    config.processing_order = tuple(
+        ["depends_on_A"] + [f for f in config.processing_order if f != "depends_on_A"]
+    )
+    wrong_order = process_single_entry(test_case, config)
+    assert wrong_order.data.metadata["depends_on_A"] == "Asia/LOC_40.1"
 
 
 def test_required_field_message_lists_only_user_input_fields() -> None:

@@ -267,7 +267,7 @@ def validate_required_when(config: Config) -> None:
                 field = condition.removeprefix(PROCESSED_PREFIX)
                 if field not in config.processing_spec:
                     msg = (
-                        f"invalid configuration: field '{output_field}' has a required_when "
+                        f"invalid configuration: field '{output_field}' has a requiredWhen "
                         f"condition referencing non-existing metadata field '{field}'"
                     )
                     raise ValueError(msg)
