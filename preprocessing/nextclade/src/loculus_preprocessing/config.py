@@ -256,6 +256,12 @@ def validate_required_when(config: Config) -> None:
     or `files.<category>` (a valid FileCategory).
     """
     for output_field, spec in config.processing_spec.items():
+        if spec.required and spec.required_when:
+            msg = (
+                f"invalid configuration: field '{output_field}' sets both 'required: true' and "
+                "'requiredWhen'. This is not allowed."
+            )
+            raise ValueError(msg)
         for condition in spec.required_when:
             if condition.startswith(PROCESSED_PREFIX):
                 field = condition.removeprefix(PROCESSED_PREFIX)

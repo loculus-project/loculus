@@ -346,6 +346,16 @@
             },
             "errorMessage": "When rangeOverlapSearch is set, type must be numeric or date ('int', 'float', 'number', or 'date')"
           }
+        },
+        {
+          "if": {
+            "properties": { "required": { "const": true } },
+            "required": ["required"]
+          },
+          "then": {
+            "not": { "required": ["requiredWhen"] },
+            "errorMessage": "A field with required: true cannot also set requiredWhen (it is already always required)."
+          }
         }
       ]
     },
