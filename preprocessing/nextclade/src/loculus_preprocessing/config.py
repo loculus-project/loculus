@@ -265,17 +265,23 @@ def validate_required_when(config: Config) -> None:
                         f"condition referencing non-existing metadata field '{field}'"
                     )
                     raise ValueError(msg)
+                if field == output_field:
+                    msg = (
+                        f"invalid configuration: field '{output_field}' lists itself "
+                        "in `requiredWhen`"
+                    )
+                    raise ValueError(msg)
             elif condition.startswith(FILES_PREFIX):
                 category = condition.removeprefix(FILES_PREFIX)
                 if category not in FileCategory:
                     msg = (
-                        f"invalid configuration: field '{output_field}' has a required_when "
-                        f"condition referencing unknown file category '{category}'. "
+                        f"invalid configuration: field '{output_field}' has a requiredWhen "
+                        f"condition referencing unknown file category '{category}'."
                     )
                     raise ValueError(msg)
             else:
                 msg = (
-                    f"invalid configuration: field '{output_field}' has an invalid required_when "
+                    f"invalid configuration: field '{output_field}' has an invalid requiredWhen "
                     f"condition '{condition}'. Conditions must start with "
                     f"'{PROCESSED_PREFIX}' or '{FILES_PREFIX}'."
                 )
