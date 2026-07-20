@@ -27,6 +27,7 @@ export default defineConfig({
         optimizeDeps: {
             exclude: ['fsevents', 'msw/node', 'msw', 'chromium-bidi'],
         },
+        ssr: { noExternal: ['cookie'] },
         plugins: [tailwindcss(), Icons({ compiler: 'jsx', jsx: 'react' })],
     },
 });
