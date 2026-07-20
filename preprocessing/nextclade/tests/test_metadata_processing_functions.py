@@ -15,6 +15,8 @@ from loculus_preprocessing.config import Config, ProcessingSpec, get_config, get
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
     AnnotationSourceType,
+    FileCategory,
+    FileIdAndName,
     FunctionArgs,
     InputMetadata,
     ProcessedEntry,
@@ -685,6 +687,10 @@ not_accepted_authors = [
     "Count4th, EwanMcGregor, Count4th",
 ]
 
+RAW_READS_FILES = {
+    FileCategory.RAW_READS: [FileIdAndName(fileId="file-raw-reads", name="reads.fastq.gz")]
+}
+
 test_metadata_dependency_test_definitions = [
     Case(
         name="metadata_dependency",
@@ -714,6 +720,97 @@ test_metadata_dependency_test_definitions = [
                 ),
             ]
         ),
+    ),
+    Case(
+        name="raw_reads_prerequisite_missing",
+        input_metadata={
+            "submissionId": "raw_reads_prerequisite_missing",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "continent": "Asia",
+            "A": "2022-11-01",
+            "required_when_raw_reads": "",
+        },
+        input_files=RAW_READS_FILES,
+        accession_id="30",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "Asia/LOC_30.1/2022-11-01",
+            "continent": "Asia",
+            "A": "2022-11-01",
+            "depends_on_A": "Asia/LOC_30.1/2022-11-01",
+        },
+        expected_files=RAW_READS_FILES,
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["required_when_raw_reads"],
+                    ["required_when_raw_reads"],
+                    "Metadata field `required_when_raw_reads` is required when `raw_reads` files are provided.",
+                ),
+            ]
+        ),
+        expected_warnings=[],
+    ),
+    Case(
+        name="required_when_reads_provided",
+        input_metadata={
+            "submissionId": "required_when_reads_provided",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "continent": "Asia",
+            "A": "2022-11-01",
+            "required_when_raw_reads": "present",
+        },
+        input_files=RAW_READS_FILES,
+        accession_id="31",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "Asia/LOC_31.1/2022-11-01",
+            "continent": "Asia",
+            "A": "2022-11-01",
+            "depends_on_A": "Asia/LOC_31.1/2022-11-01",
+            "required_when_raw_reads": "present",
+        },
+        expected_files=RAW_READS_FILES,
+        expected_errors=[],
+        expected_warnings=[],
+    ),
+    # required_when with a `processed.<field>` condition: the trigger field has a processed
+    # value but the conditionally-required field is missing -> error. Also exercises the
+    # ordering guarantee (required_when_B must be processed before B).
+    Case(
+        name="required_when_processed_field_missing",
+        input_metadata={
+            "submissionId": "required_when_processed_field_missing",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "continent": "Asia",
+            "A": "2022-11-01",
+            "B": "present",
+        },
+        accession_id="32",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "Asia/LOC_32.1/2022-11-01",
+            "continent": "Asia",
+            "A": "2022-11-01",
+            "depends_on_A": "Asia/LOC_32.1/2022-11-01",
+            "B": "present",
+        },
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["required_when_B"],
+                    ["required_when_B"],
+                    "Metadata field `required_when_B` is required when `B` is provided.",
+                ),
+            ]
+        ),
+        expected_warnings=[],
     ),
 ]
 
@@ -764,12 +861,34 @@ def test_preprocessing_metadata_dependencies(test_case_def: Case, config_depende
     processed_entry = process_single_entry(test_case, config_dependency)
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
 
-    wrong_order = tuple(
-        ["depends_on_A"] + [i for i in config_dependency.processing_order if i != "depends_on_A"]
-    )
-    config_dependency.processing_order = wrong_order
-    processed_entry = process_single_entry(test_case, config_dependency)
-    assert processed_entry.data.metadata != test_case.expected_output.data.metadata
+
+@pytest.mark.parametrize(
+    ("condition", "match"),
+    [
+        ("files.not_a_category", "unknown file category"),
+        ("processed.does_not_exist", "non-existing metadata field"),
+        ("collection_date", "Conditions must start with"),
+        ("processed.field", "lists itself"),
+    ],
+)
+def test_required_when_validation(condition: str, match: str) -> None:
+    with pytest.raises(ValueError, match=match):
+        Config(
+            processing_spec={
+                "field": ProcessingSpec(inputs={"input": "field"}, required_when=[condition])
+            }
+        )
+
+
+def test_required_when_conflicts_with_required() -> None:
+    with pytest.raises(ValueError, match="both 'required: true' and 'requiredWhen'"):
+        Config(
+            processing_spec={
+                "field": ProcessingSpec(
+                    inputs={"input": "field"}, required=True, required_when=["files.raw_reads"]
+                )
+            }
+        )
 
 
 def test_required_field_message_lists_only_user_input_fields() -> None:
