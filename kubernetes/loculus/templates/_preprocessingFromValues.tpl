@@ -54,7 +54,7 @@
   {{- if .required}}
   required: true
   {{- end }}
-  {{- if .required_when}}
+  {{- if .requiredWhen}}
   required_when: {{- toYaml .requiredWhen | nindent 4 }}
   {{- end }}
   {{- if .noInput}}

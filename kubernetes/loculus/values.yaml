@@ -1065,7 +1065,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sequencing
         desired: true
         orderOnDetailsPage: 2080
-        required_when:
+        requiredWhen:
           - files.raw_reads
       - name: sequencingProtocol
         ontology_id: GENEPIO:0001454
