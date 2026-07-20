@@ -27,11 +27,12 @@ def _parse_validation_error(log_file_path: Path, error_log_path: Path) -> str:
     readtools prints e.g.
         RESULT: INVALID
           Sequence header must start with @: >seq1 at line 1 in fastq
-    to stdout; fall back to stderr if that line is missing.
+    to stdout (sometimes as "RESULT: INVALID (file structure / parse error)");
+    fall back to stderr if that line is missing.
     """
     stdout_lines = log_file_path.read_text().splitlines()
     for i, line in enumerate(stdout_lines):
-        if line.strip() == "RESULT: INVALID":
+        if line.strip().startswith("RESULT: INVALID"):
             details = [detail.strip() for detail in stdout_lines[i + 1 :] if detail.strip()]
             if details:
                 return "; ".join(details)
