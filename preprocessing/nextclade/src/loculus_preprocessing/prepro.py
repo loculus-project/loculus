@@ -18,8 +18,8 @@ from .backend import (
 from .config import (
     ASSIGNED_REFERENCE_PREFIX,
     FILES_PREFIX,
-    PROCESSED_PREFIX,
     NEXTCLADE_PREFIX,
+    PROCESSED_PREFIX,
     AlignmentRequirement,
     Config,
     ProcessingSpec,
