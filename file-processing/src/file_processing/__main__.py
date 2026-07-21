@@ -4,7 +4,7 @@ import click
 
 from .api import start_api
 from .config import get_config
-from .deacon import download_deacon_index, start_deacon_server
+from .deacon import prepare_deacon_index, start_deacon_server
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +24,8 @@ def run(config_file: str):
     logging.getLogger("requests").setLevel(logging.INFO)
     logger.info(f"Config: {config}")
 
-    # TODO: index takes long to download - potentially move download to an init container
-    logger.info("Downloading deacon index and starting deacon server...")
-    download_deacon_index(config)
+    logger.info("Preparing deacon index and starting deacon server...")
+    prepare_deacon_index()
     start_deacon_server()
 
     logger.info("Starting API...")

@@ -1,6 +1,6 @@
-import json
 import urllib.parse
 from collections import OrderedDict
+from dataclasses import asdict
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -201,17 +201,22 @@ class FileProcessingService:
 
         url = f"{self.file_processing_service_url}/process-files"
         try:
-            response = requests.post(url, data=json.dumps(files), timeout=10)
+            payload = {
+                category.value: [asdict(f) for f in file_list]
+                for category, file_list in files.items()
+            }
+
+            response = requests.post(url, json=payload, timeout=10)
             response.raise_for_status()
             body = response.json()
 
             errors = [
-                file_processing_service_error(file_name, message)
-                for file_name, file_category, message in body.get("errors")
+                file_processing_service_error(error["fileName"], error["message"])
+                for error in body.get("errors") or []
             ]
             warnings = [
-                file_processing_service_error(file_name, message)
-                for file_name, file_category, message in body.get("warnings")
+                file_processing_service_error(warning["fileName"], warning["message"])
+                for warning in body.get("warnings") or []
             ]
             return errors, warnings
         except requests.exceptions.RequestException as e:

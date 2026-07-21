@@ -13,6 +13,7 @@ from file_processing.functions import validate_raw_reads_submission
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
+
 @pytest.fixture
 def config() -> Config:
     return Config(
@@ -60,14 +61,19 @@ def deacon_server():
 @pytest.fixture
 def deacon_index(monkeypatch, deacon_server):
     # Index created with `deacon index build test/fixtures/test_small_1.fastq -k 31 -w 15 -o deacon.idx`
-    monkeypatch.setattr(deacon_module, "DEACON_INDEX_PATH", str(FIXTURES_DIR / "deacon.idx"))
+    monkeypatch.setattr(
+        deacon_module, "DEACON_INDEX_PATH", str(FIXTURES_DIR / "deacon.idx")
+    )
 
 
 @pytest.mark.usefixtures("mock_downstream")
 def test_only_fastq_files_are_allowed(config):
     files = [_file("R1.bam", url="https://example.test/reads")]
     result = validate_raw_reads_submission(config, files)
-    assert "File format: BAM is not in the list of accepted formats" in result.errors[0].message
+    assert (
+        "File format: BAM is not in the list of accepted formats"
+        in result.errors[0].message
+    )
 
 
 @pytest.mark.usefixtures("mock_downstream", "deacon_index")

@@ -15,11 +15,11 @@ data:
   preprocessing-config.yaml: |
     organism: {{ $organism }}
     {{- $processingConfig.configFile | toYaml | nindent 4 }}
-    {{- if $processingConfig.taxonomyServiceArgs }}
+    {{- if and $processingConfig.taxonomyServiceArgs (not $.Values.disableTaxonomyService) }}
     taxonomy_service:
     {{ $processingConfig.taxonomyServiceArgs | toYaml | nindent 6 }}
     {{- end }}
-    {{- if $processingConfig.fileProcessingServiceArgs }}
+    {{- if and $processingConfig.fileProcessingServiceArgs (not $.Values.disableFileProcessingService) }}
     file_processing_service:
     {{ $processingConfig.fileProcessingServiceArgs | toYaml | nindent 6 }}
     {{- end }}

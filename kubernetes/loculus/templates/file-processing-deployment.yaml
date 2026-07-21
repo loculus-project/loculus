@@ -54,7 +54,9 @@ spec:
               mountPath: /config/config.yaml
               subPath: config.yaml
             - name: deacon-index
-              mountPath: deacon.idx
+              mountPath: /data/deacon.idx
+              subPath: deacon.idx
+              readOnly: true
       volumes:
         - name: loculus-file-processing-config-volume
           configMap:

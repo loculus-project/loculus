@@ -5,7 +5,7 @@ PATHOPLEXUS_URL="https://pathoplexus.org"
 LAPIS_URL="https://lapis.pathoplexus.org"
 
 KMER_LEN=31
-WINDOW_SIZE=21
+WINDOW_SIZE=15
 KDUST_MIN=0.80
 
 usage() {

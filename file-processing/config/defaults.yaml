@@ -5,4 +5,3 @@ deacon_max_host_reads_proportion: 0.4
 deacon_max_host_bp: 300000000 # 300kBp - or 10^-4 coverage of the human genome
 deacon_a: 2
 deacon_r: 0.05
-deacon_index_url: null

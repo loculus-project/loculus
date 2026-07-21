@@ -1,6 +1,9 @@
 name: Create and Upload Custom Deacon Index
 
 on:
+  push:
+    branches:  # remove after triggering
+      - deacon-service
   workflow_dispatch: # Only manual trigger for now, since this is a rare operation
 
 env:
@@ -44,7 +47,7 @@ jobs:
       - name: Create deacon index
         shell: bash -l {0}
         run: |
-          ./build-index.sh -o "${INDEX_VERSIONED}"
+          ./file-processing/build-index.sh -o "${INDEX_VERSIONED}"
           ls -lh "${INDEX_VERSIONED}"
 
       - name: Set up oras

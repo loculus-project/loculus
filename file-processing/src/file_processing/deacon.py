@@ -4,46 +4,19 @@ from pathlib import Path
 from typing import cast
 from typing_extensions import Literal
 
-import requests
 from file_processing.config import Config
 from file_processing.datatypes import Annotation, DeaconSummary, FileCategory
 
 logger = logging.getLogger(__name__)
 
-DEACON_INDEX_PATH = "deacon.idx"
+DEACON_INDEX_PATH = "/data/deacon.idx"
 
 
-def fetch_default_deacon_index() -> None:
-    args = ["deacon", "index", "fetch", "--output", DEACON_INDEX_PATH, "panhuman-1"]
-    logger.debug(f"Fetching default deacon panhuman-1 index: {args}")
-
-    exit_code = subprocess.run(args, check=False).returncode  # noqa: S603
-    if exit_code != 0:
-        message = f"Deacon fetch failed with exit code {exit_code}"
-        logger.error(message)
-        raise RuntimeError(message)
-
-
-def download_deacon_index(config):
-    if config.deacon_index_url:
-        url = config.deacon_index_url
-    else:
-        fetch_default_deacon_index()
-        return
-
-    try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        Path(DEACON_INDEX_PATH).parent.mkdir(parents=True, exist_ok=True)
-        Path(DEACON_INDEX_PATH).write_bytes(response.content)
-    except requests.exceptions.RequestException as e:
-        msg = f"Failed to download deacon index: {e}"
-        logger.error(msg)
-        raise RuntimeError(msg) from e
-
-    logger.info(
-        f"Deacon index downloaded successfully and saved to '{DEACON_INDEX_PATH}'"
-    )
+def prepare_deacon_index() -> None:
+    if not Path(DEACON_INDEX_PATH).is_file():
+        raise RuntimeError(
+            f"Deacon index not found at '{DEACON_INDEX_PATH}'. Please ensure the deacon index is mounted as an OCI image volume."
+        )
 
 
 def start_deacon_server() -> subprocess.Popen:
@@ -93,7 +66,9 @@ def run_deacon_filter(
         DEACON_INDEX_PATH,
         *input_files,
     ]
-    logger.debug(f"Running Deacon filter on '{', '.join(str(f) for f in input_files)}': {args}")
+    logger.debug(
+        f"Running Deacon filter on '{', '.join(str(f) for f in input_files)}': {args}"
+    )
 
     exit_code = subprocess.run(  # noqa: S603
         args, check=False, stdout=subprocess.DEVNULL
