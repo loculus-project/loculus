@@ -622,7 +622,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sample details
         orderOnDetailsPage: 500
         ### TO REVERT
-        required_when: 
+        requiredWhen: 
           - processed.geoLocCountry
       - name: geoLocSite
         ontology_id: GENEPIO:0100436
