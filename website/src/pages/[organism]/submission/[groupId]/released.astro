@@ -11,6 +11,7 @@ import {
     getWebsiteConfig,
 } from '../../../../config';
 import { GROUP_ID_FIELD, VERSION_STATUS_FIELD } from '../../../../settings';
+import type { Group } from '../../../../types/backend';
 import { versionStatuses } from '../../../../types/lapis';
 import { getAccessToken } from '../../../../utils/getAccessToken';
 import { parseUrlSearchParams } from '../../../../utils/parseUrlSearchParams';
@@ -18,18 +19,11 @@ import { performLapisSearchQueries } from '../../../../utils/serversideSearch';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
-if (groupsResult.isErr()) {
-    return new Response(undefined, { status: groupsResult.error.status });
-}
-const { currentGroup: group } = groupsResult.value;
 
 const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
 
 if (!cleanedOrganism) {
-    return {
-        statusCode: 404,
-        body: 'Organism not found',
-    };
+    return new Response('Organism not found', { status: 404 });
 }
 
 const clientConfig = getRuntimeConfig().public;
@@ -39,43 +33,54 @@ const accessToken = getAccessToken(Astro.locals.session);
 
 const referenceGenomesInfo = getReferenceGenomes(cleanedOrganism.key);
 
-const hiddenFieldValues = {
-    [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
-    [GROUP_ID_FIELD]: String(group.groupId),
-};
-
 const initialQueryDict = parseUrlSearchParams(Astro.url.searchParams);
-const { data, totalCount } = await performLapisSearchQueries(
-    initialQueryDict,
-    schema,
-    referenceGenomesInfo,
-    hiddenFieldValues,
-    cleanedOrganism.key,
-);
 
 const websiteConfig = getWebsiteConfig();
 const sequenceFlaggingConfig = websiteConfig.sequenceFlagging;
 const contactConfig = getContactConfig(websiteConfig);
+
+const loadReleasedSequences = async (group: Group) => {
+    const hiddenFieldValues = {
+        [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
+        [GROUP_ID_FIELD]: String(group.groupId),
+    };
+    const { data, totalCount } = await performLapisSearchQueries(
+        initialQueryDict,
+        schema,
+        referenceGenomesInfo,
+        hiddenFieldValues,
+        cleanedOrganism.key,
+    );
+    return { group, hiddenFieldValues, data, totalCount };
+};
+
+// The search is scoped to a group, so it can only run once we have one. Without a group
+// SubmissionPageWrapper renders the login prompt or error state instead.
+const searchProps = groupsResult.isOk() ? await loadReleasedSequences(groupsResult.value.currentGroup) : undefined;
 ---
 
 <SubmissionPageWrapper groupsResult={groupsResult} title='Released sequences'>
-    <SearchFullUI
-        client:load
-        clientConfig={clientConfig}
-        organism={cleanedOrganism.key}
-        schema={schema}
-        myGroups={[group]}
-        accessToken={accessToken}
-        referenceGenomesInfo={referenceGenomesInfo}
-        hiddenFieldValues={hiddenFieldValues}
-        initialData={data}
-        initialCount={totalCount}
-        initialQueryDict={initialQueryDict}
-        dataUseTermsEnabled={dataUseTermsAreEnabled()}
-        sequenceFlaggingConfig={sequenceFlaggingConfig}
-        contactConfig={contactConfig}
-        showEditDataUseTermsControls
-        groupId={group.groupId}
-        isReleasedPage={true}
-    />
+    {
+        searchProps !== undefined && (
+            <SearchFullUI
+                client:load
+                clientConfig={clientConfig}
+                organism={cleanedOrganism.key}
+                schema={schema}
+                myGroups={[searchProps.group]}
+                accessToken={accessToken}
+                referenceGenomesInfo={referenceGenomesInfo}
+                hiddenFieldValues={searchProps.hiddenFieldValues}
+                initialData={searchProps.data}
+                initialCount={searchProps.totalCount}
+                initialQueryDict={initialQueryDict}
+                dataUseTermsEnabled={dataUseTermsAreEnabled()}
+                sequenceFlaggingConfig={sequenceFlaggingConfig}
+                contactConfig={contactConfig}
+                showEditDataUseTermsControls
+                groupId={searchProps.group.groupId}
+                isReleasedPage={true}
+            />
+        )
+    }
 </SubmissionPageWrapper>

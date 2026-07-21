@@ -8,7 +8,6 @@ export type GetGroupsResult = Result<Group[], GetGroupsError>;
 
 export type GetGroupsError = {
     type: 'not_logged_in' | 'could_not_load_groups';
-    status: number;
 };
 
 export type GetGroupsAndCurrentGroupResult = Result<GetGroupsAndCurrentGroupValue, GetGroupsAndCurrentGroupError>;
@@ -22,7 +21,6 @@ export type GetGroupsAndCurrentGroupError =
     | GetGroupsError
     | {
           type: 'missing_group_id' | 'group_not_found';
-          status: number;
       };
 
 export const getGroups = async (session: Session | undefined): Promise<GetGroupsResult> => {
@@ -30,7 +28,6 @@ export const getGroups = async (session: Session | undefined): Promise<GetGroups
     if (accessToken === undefined) {
         return err({
             type: 'not_logged_in',
-            status: 200,
         });
     }
 
@@ -38,7 +35,6 @@ export const getGroups = async (session: Session | undefined): Promise<GetGroups
     if (groupsResult.isErr()) {
         return err({
             type: 'could_not_load_groups',
-            status: 500,
         });
     }
     const groupsOfUser: Group[] = groupsResult.value;
@@ -60,7 +56,6 @@ export const getGroupsAndCurrentGroup = async (
     if (isNaN(groupId)) {
         return err({
             type: 'missing_group_id',
-            status: 400,
         });
     }
 
@@ -68,7 +63,6 @@ export const getGroupsAndCurrentGroup = async (
     if (currentGroup === undefined) {
         return err({
             type: 'group_not_found',
-            status: 404,
         });
     }
 
