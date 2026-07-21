@@ -621,6 +621,9 @@ defaultOrganismConfig: &defaultOrganismConfig
         autocomplete: true
         header: Sample details
         orderOnDetailsPage: 500
+        ### TO REVERT
+        required_when: 
+          - processed.geoLocCountry
       - name: geoLocSite
         ontology_id: GENEPIO:0100436
         definition: The name of a specific geographical location e.g. Credit River (rather than river).
