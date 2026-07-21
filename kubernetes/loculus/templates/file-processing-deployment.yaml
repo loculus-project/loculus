@@ -53,10 +53,14 @@ spec:
             - name: loculus-file-processing-config-volume
               mountPath: /config/config.yaml
               subPath: config.yaml
+            - name: deacon-index
+              mountPath: deacon.idx
       volumes:
         - name: loculus-file-processing-config-volume
           configMap:
             name: loculus-file-processing-config
-        - name: taxonomy-db
-          emptyDir: {}
+        - name: deacon-index
+          image:
+            reference: ghcr.io/loculus-project/deacon-index:latest
+            pullPolicy: IfNotPresent
 {{- end }}
