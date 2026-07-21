@@ -339,73 +339,56 @@ const InnerSearchFullUI = ({
                             <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
                         </div>
                     )}
-                    {/*
-                     * Narrowing is given up in stages. `flex-wrap` here keeps the sequence count
-                     * beside the buttons for as long as they actually fit and moves it onto its own
-                     * line only when they do not -- content-driven, because how wide this row is
-                     * varies a lot by page (the released-sequences page carries five buttons, a
-                     * public search two or three, and a fixed breakpoint tuned for one is badly
-                     * wrong for the other).
-                     *
-                     * The button row then holds one line for as long as it can, narrowing buttons
-                     * so their labels wrap, and only breaks them onto separate lines below `@3xl`.
-                     * That last stage has to be a breakpoint: flexbox breaks a line at an item's
-                     * *unshrunk* width, so a wrapping row would put buttons on separate lines long
-                     * before it let any of them narrow and wrap a label. It is a container query
-                     * rather than a viewport one because the search form sits alongside this column
-                     * from `md` up, so the width available here is not monotonic in viewport width
-                     * -- it is narrower at a 768px viewport than at a 640px one.
-                     */}
-                    <div className='@container'>
-                        <div className='text-sm text-gray-800 mb-6 justify-between flex flex-wrap items-baseline gap-x-4 gap-y-2'>
-                            <div className='mt-auto'>
-                                {buildSequenceCountText(totalSequences, oldCount, initialCount)}
-                                {detailsHook.isPending ||
-                                aggregatedHook.isPending ||
-                                !firstClientSideLoadOfCountCompleted ||
-                                !firstClientSideLoadOfDataCompleted ? (
-                                    <span className='ml-3 appearSlowly inline-block'>
-                                        <Spinner size='xs' />
-                                    </span>
-                                ) : null}
-                            </div>
-                            <div className='flex flex-wrap @3xl:flex-nowrap items-center gap-2 *:max-w-full'>
-                                {showEditDataUseTermsControls && dataUseTermsEnabled && (
-                                    <EditDataUseTermsModal
-                                        lapisUrl={lapisUrl}
-                                        clientConfig={clientConfig}
-                                        accessToken={accessToken}
-                                        sequenceFilter={downloadFilter}
-                                    />
-                                )}
-                                <Button
-                                    className='underline text-primary-700 hover:text-primary-500'
-                                    onClick={() => setIsColumnModalOpen(true)}
-                                >
-                                    Customize columns
-                                </Button>
-                                {sequencesSelected ? (
-                                    <Button
-                                        className='underline text-primary-700 hover:text-primary-500'
-                                        onClick={clearSelectedSeqs}
-                                    >
-                                        Clear selection
-                                    </Button>
-                                ) : null}
-
-                                <DownloadDialog
-                                    downloadUrlGenerator={downloadUrlGenerator}
+                    <div className='text-sm text-gray-800 mb-6 justify-between flex flex-col sm:flex-row items-baseline gap-4'>
+                        <div className='mt-auto'>
+                            {buildSequenceCountText(totalSequences, oldCount, initialCount)}
+                            {detailsHook.isPending ||
+                            aggregatedHook.isPending ||
+                            !firstClientSideLoadOfCountCompleted ||
+                            !firstClientSideLoadOfDataCompleted ? (
+                                <span className='ml-3 appearSlowly inline-block'>
+                                    <Spinner size='xs' />
+                                </span>
+                            ) : null}
+                        </div>
+                        <div className='flex'>
+                            {showEditDataUseTermsControls && dataUseTermsEnabled && (
+                                <EditDataUseTermsModal
+                                    lapisUrl={lapisUrl}
+                                    clientConfig={clientConfig}
+                                    accessToken={accessToken}
                                     sequenceFilter={downloadFilter}
-                                    referenceGenomesInfo={referenceGenomesInfo}
-                                    allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
-                                    dataUseTermsEnabled={dataUseTermsEnabled}
-                                    dataUseTermsAgreementHTML={dataUseTermsAgreementHTML}
-                                    schema={schema}
-                                    richFastaHeaderFields={schema.richFastaHeaderFields}
-                                    selectedReferenceNames={referenceSelection?.selectedReferences}
-                                    referenceIdentifierField={schema.referenceIdentifierField}
                                 />
-                                {isReleasedPage && accessToken !== undefined && groupId !== undefined && (
+                            )}
+                            <Button
+                                className='mr-4 underline text-primary-700 hover:text-primary-500'
+                                onClick={() => setIsColumnModalOpen(true)}
+                            >
+                                Customize columns
+                            </Button>
+                            {sequencesSelected ? (
+                                <Button
+                                    className='mr-4 underline text-primary-700 hover:text-primary-500'
+                                    onClick={clearSelectedSeqs}
+                                >
+                                    Clear selection
+                                </Button>
+                            ) : null}
+
+                            <DownloadDialog
+                                downloadUrlGenerator={downloadUrlGenerator}
+                                sequenceFilter={downloadFilter}
+                                referenceGenomesInfo={referenceGenomesInfo}
+                                allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
+                                dataUseTermsEnabled={dataUseTermsEnabled}
+                                dataUseTermsAgreementHTML={dataUseTermsAgreementHTML}
+                                schema={schema}
+                                richFastaHeaderFields={schema.richFastaHeaderFields}
+                                selectedReferenceNames={referenceSelection?.selectedReferences}
+                                referenceIdentifierField={schema.referenceIdentifierField}
+                            />
+                            {isReleasedPage && accessToken !== undefined && groupId !== undefined && (
+                                <div className='ml-2'>
                                     <DownloadSubmittedDataButton
                                         sequenceFilter={downloadFilter}
                                         backendUrl={clientConfig.backendUrl}
@@ -415,19 +398,19 @@ const InnerSearchFullUI = ({
                                         totalSequences={totalSequences}
                                         fetchAccessions={fetchAccessions}
                                     />
-                                )}
-                                {linkOuts !== undefined && linkOuts.length > 0 && (
-                                    <LinkOutMenu
-                                        downloadUrlGenerator={downloadUrlGenerator}
-                                        sequenceFilter={downloadFilter}
-                                        sequenceCount={linkOutSequenceCount}
-                                        linkOuts={linkOuts}
-                                        dataUseTermsEnabled={dataUseTermsEnabled}
-                                        referenceGenomesInfo={referenceGenomesInfo}
-                                        referenceSelection={referenceSelection}
-                                    />
-                                )}
-                            </div>
+                                </div>
+                            )}
+                            {linkOuts !== undefined && linkOuts.length > 0 && (
+                                <LinkOutMenu
+                                    downloadUrlGenerator={downloadUrlGenerator}
+                                    sequenceFilter={downloadFilter}
+                                    sequenceCount={linkOutSequenceCount}
+                                    linkOuts={linkOuts}
+                                    dataUseTermsEnabled={dataUseTermsEnabled}
+                                    referenceGenomesInfo={referenceGenomesInfo}
+                                    referenceSelection={referenceSelection}
+                                />
+                            )}
                         </div>
                     </div>
 

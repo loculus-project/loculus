@@ -20,15 +20,10 @@ const base =
  */
 const disabledLook = 'pointer-events-none bg-base-content/10 text-base-content/20 border-transparent';
 
-/*
- * A minimum height rather than a fixed one: a single-line button is the same
- * height it has always been, but one whose label has to wrap grows to fit it
- * instead of letting the text spill outside its own border.
- */
 const sizeClasses: Record<ButtonSize, string> = {
-    md: 'min-h-10 px-4 py-1.5 text-sm',
-    sm: 'min-h-8 px-3 py-1 text-xs',
-    xs: 'min-h-6 px-2 py-0.5 text-[11px]',
+    md: 'h-10 px-4 text-sm',
+    sm: 'h-8 px-3 text-xs',
+    xs: 'h-6 px-2 text-[11px]',
 };
 
 const circleSizeClasses: Record<ButtonSize, string> = {

@@ -15,19 +15,16 @@ type DownloadDialogButtonProps = {
  */
 export const DownloadDialogButton: FC<DownloadDialogButtonProps> = ({ onClick, sequenceFilter }) => {
     let buttonText = '';
-    // A floor rather than a fixed width: it holds the button steady against layout shifts as the
-    // number of selected entries changes, while still letting counts too long for it widen the
-    // button instead of wrapping the label.
-    let buttonWidthClass = '';
+    let buttonWidthClass = ''; // fix the width so we don't get layout shifts with changing number of selected entries
     const sequenceCount = sequenceFilter.sequenceCount();
     if (sequenceCount === undefined) {
         buttonText = 'Download all entries';
-        buttonWidthClass = 'min-w-44';
+        buttonWidthClass = 'w-44';
     } else {
         const formattedCount = formatNumberWithDefaultLocale(sequenceCount);
         const entries = sequenceCount === 1 ? 'entry' : 'entries';
         buttonText = `Download ${formattedCount} selected ${entries}`;
-        buttonWidthClass = 'min-w-60';
+        buttonWidthClass = 'w-60'; // this width is fine for up to two digit numbers
     }
     return (
         <Button variant='outline' className={buttonWidthClass} onClick={onClick}>
