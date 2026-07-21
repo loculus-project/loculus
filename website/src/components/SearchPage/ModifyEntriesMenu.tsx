@@ -65,7 +65,9 @@ export const ModifyEntriesMenu: FC<ModifyEntriesMenuProps> = ({
                         variant: 'outline',
                         // A floor rather than a fixed width, so the button does not jump about as
                         // the number of selected entries changes but can still hold a long count.
-                        className: 'flex items-center justify-between whitespace-nowrap min-w-44',
+                        // Deliberately allowed to wrap: with a minimum rather than a fixed height,
+                        // a long count grows the button rather than spilling out of it.
+                        className: 'flex items-center justify-between min-w-44',
                     })}
                 >
                     <span className='flex items-center'>
