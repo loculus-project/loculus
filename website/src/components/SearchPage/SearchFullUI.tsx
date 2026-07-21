@@ -339,7 +339,15 @@ const InnerSearchFullUI = ({
                             <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
                         </div>
                     )}
-                    <div className='text-sm text-gray-800 mb-6 justify-between flex flex-col sm:flex-row items-baseline gap-4'>
+                    {/*
+                     * Narrowing is absorbed in two stages: `flex-wrap` here drops the sequence
+                     * count onto its own line as soon as the buttons no longer fit beside it,
+                     * giving them the full width before they start wrapping among themselves.
+                     * In the button row, `whitespace-nowrap` is inherited so a label never wraps
+                     * *inside* the fixed-height button box, and `*:shrink-0` keeps buttons at
+                     * their natural width so they wrap as whole buttons rather than being squeezed.
+                     */}
+                    <div className='text-sm text-gray-800 mb-6 justify-between flex flex-wrap items-baseline gap-x-4 gap-y-2'>
                         <div className='mt-auto'>
                             {buildSequenceCountText(totalSequences, oldCount, initialCount)}
                             {detailsHook.isPending ||
@@ -351,7 +359,7 @@ const InnerSearchFullUI = ({
                                 </span>
                             ) : null}
                         </div>
-                        <div className='flex'>
+                        <div className='flex flex-wrap items-center gap-2 whitespace-nowrap *:shrink-0'>
                             {showEditDataUseTermsControls && dataUseTermsEnabled && (
                                 <EditDataUseTermsModal
                                     lapisUrl={lapisUrl}
@@ -361,14 +369,14 @@ const InnerSearchFullUI = ({
                                 />
                             )}
                             <Button
-                                className='mr-4 underline text-primary-700 hover:text-primary-500'
+                                className='underline text-primary-700 hover:text-primary-500'
                                 onClick={() => setIsColumnModalOpen(true)}
                             >
                                 Customize columns
                             </Button>
                             {sequencesSelected ? (
                                 <Button
-                                    className='mr-4 underline text-primary-700 hover:text-primary-500'
+                                    className='underline text-primary-700 hover:text-primary-500'
                                     onClick={clearSelectedSeqs}
                                 >
                                     Clear selection
@@ -388,17 +396,15 @@ const InnerSearchFullUI = ({
                                 referenceIdentifierField={schema.referenceIdentifierField}
                             />
                             {isReleasedPage && accessToken !== undefined && groupId !== undefined && (
-                                <div className='ml-2'>
-                                    <DownloadSubmittedDataButton
-                                        sequenceFilter={downloadFilter}
-                                        backendUrl={clientConfig.backendUrl}
-                                        accessToken={accessToken}
-                                        organism={organism}
-                                        groupId={groupId}
-                                        totalSequences={totalSequences}
-                                        fetchAccessions={fetchAccessions}
-                                    />
-                                </div>
+                                <DownloadSubmittedDataButton
+                                    sequenceFilter={downloadFilter}
+                                    backendUrl={clientConfig.backendUrl}
+                                    accessToken={accessToken}
+                                    organism={organism}
+                                    groupId={groupId}
+                                    totalSequences={totalSequences}
+                                    fetchAccessions={fetchAccessions}
+                                />
                             )}
                             {linkOuts !== undefined && linkOuts.length > 0 && (
                                 <LinkOutMenu
