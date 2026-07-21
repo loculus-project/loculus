@@ -387,8 +387,12 @@ const InnerSearchFullUI = ({
                          * item's automatic minimum size collapses to one character: "Customize
                          * columns" came out 13px wide and 260px tall. Breaking at word boundaries
                          * instead floors each button at its longest word.
+                         *
+                         * It has to be `!important` to get there: that rule in `base.css` sits
+                         * outside any cascade layer, and unlayered declarations beat layered ones
+                         * whatever their specificity, so a plain utility loses to it.
                          */}
-                        <div className='flex items-center gap-2 ml-auto *:break-normal'>
+                        <div className='flex items-center gap-2 ml-auto *:break-normal!'>
                             <Button
                                 className='underline text-primary-700 hover:text-primary-500'
                                 onClick={() => setIsColumnModalOpen(true)}
