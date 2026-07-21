@@ -379,17 +379,20 @@ const InnerSearchFullUI = ({
                          * taken its own line and they are alone on theirs. Above that width the
                          * count has already grown into the space between, so there is none left
                          * for the margin to take and it changes nothing.
+                         *
+                         * They wrap among themselves rather than being squeezed: without this a
+                         * narrow screen crushes "Customize columns" to one letter per line.
                          */}
-                        <div className='flex ml-auto'>
+                        <div className='flex flex-wrap items-center gap-2 ml-auto'>
                             <Button
-                                className='mr-4 underline text-primary-700 hover:text-primary-500'
+                                className='underline text-primary-700 hover:text-primary-500'
                                 onClick={() => setIsColumnModalOpen(true)}
                             >
                                 Customize columns
                             </Button>
                             {sequencesSelected ? (
                                 <Button
-                                    className='mr-4 underline text-primary-700 hover:text-primary-500'
+                                    className='underline text-primary-700 hover:text-primary-500'
                                     onClick={clearSelectedSeqs}
                                 >
                                     Clear selection
@@ -409,16 +412,14 @@ const InnerSearchFullUI = ({
                                 referenceIdentifierField={schema.referenceIdentifierField}
                             />
                             {(showModifyEntriesMenu || submittedDataDownload !== undefined) && (
-                                <div className='ml-2'>
-                                    <ModifyEntriesMenu
-                                        sequenceFilter={downloadFilter}
-                                        clientConfig={clientConfig}
-                                        lapisUrl={lapisUrl}
-                                        accessToken={accessToken}
-                                        showEditDataUseTerms={showModifyEntriesMenu}
-                                        submittedDataDownload={submittedDataDownload}
-                                    />
-                                </div>
+                                <ModifyEntriesMenu
+                                    sequenceFilter={downloadFilter}
+                                    clientConfig={clientConfig}
+                                    lapisUrl={lapisUrl}
+                                    accessToken={accessToken}
+                                    showEditDataUseTerms={showModifyEntriesMenu}
+                                    submittedDataDownload={submittedDataDownload}
+                                />
                             )}
                             {linkOuts !== undefined && linkOuts.length > 0 && (
                                 <LinkOutMenu
