@@ -4,11 +4,13 @@ import { type FC, useState } from 'react';
 import { type SequenceFilter } from './DownloadDialog/SequenceFilters';
 import { useSubmittedDataDownload } from './DownloadDialog/useSubmittedDataDownload';
 import type { ClientConfig } from '../../types/runtimeConfig';
+import { formatNumberWithDefaultLocale } from '../../utils/formatNumber';
 import { EditDataUseTermsModal, editDataUseTermsLabel } from '../DataUseTerms/EditDataUseTermsModal';
 import { Button } from '../common/Button';
 import { HoverTooltip } from '../common/HoverTooltip';
 import { buttonClasses } from '../common/buttonStyles';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
+import PajamasAdmin from '~icons/pajamas/admin';
 
 type ModifyEntriesMenuProps = {
     sequenceFilter: SequenceFilter;
@@ -29,6 +31,16 @@ type ModifyEntriesMenuProps = {
 
 const itemClasses = (focus: boolean) =>
     `${focus ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} block px-4 py-2 text-sm w-full text-left`;
+
+/** Reads as its neighbouring download button does, so the two describe their scope alike. */
+const menuButtonLabel = (sequenceFilter: SequenceFilter): string => {
+    const sequenceCount = sequenceFilter.sequenceCount();
+    if (sequenceCount === undefined) {
+        return 'Modify all entries';
+    }
+    const formattedCount = formatNumberWithDefaultLocale(sequenceCount);
+    return `Modify ${formattedCount} selected ${sequenceCount === 1 ? 'entry' : 'entries'}`;
+};
 
 /**
  * The ways of altering entries you have already released, gathered behind one button rather than
@@ -51,10 +63,15 @@ export const ModifyEntriesMenu: FC<ModifyEntriesMenuProps> = ({
                 <MenuButton
                     className={buttonClasses({
                         variant: 'outline',
-                        className: 'flex items-center justify-between whitespace-nowrap',
+                        // A floor rather than a fixed width, so the button does not jump about as
+                        // the number of selected entries changes but can still hold a long count.
+                        className: 'flex items-center justify-between whitespace-nowrap min-w-44',
                     })}
                 >
-                    <span>Modify entries</span>
+                    <span className='flex items-center'>
+                        <PajamasAdmin className='mr-2 h-4 w-4 shrink-0' aria-hidden='true' />
+                        {menuButtonLabel(sequenceFilter)}
+                    </span>
                     <IwwaArrowDown className='ml-2 h-5 w-5' aria-hidden='true' />
                 </MenuButton>
 

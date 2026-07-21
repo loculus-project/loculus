@@ -271,7 +271,7 @@ export class SearchPage {
     }
 
     async openModifyEntriesMenu() {
-        await this.page.getByRole('button', { name: 'Modify entries' }).click();
+        await this.page.getByRole('button', { name: /^Modify/ }).click();
     }
 
     async downloadForBulkRevision({ menuAlreadyOpen = false } = {}) {

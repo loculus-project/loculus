@@ -40,24 +40,24 @@ describe('ModifyEntriesMenu', () => {
     it('keeps its actions behind a single button until opened', async () => {
         renderMenu();
 
-        expect(screen.getByRole('button', { name: /Modify entries/ })).toBeVisible();
+        expect(screen.getByRole('button', { name: /^Modify/ })).toBeVisible();
         expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
 
-        await userEvent.click(screen.getByRole('button', { name: /Modify entries/ }));
+        await userEvent.click(screen.getByRole('button', { name: /^Modify/ }));
 
         expect(screen.getByRole('menuitem', { name: /for bulk revision/ })).toBeVisible();
     });
 
     it('describes the submitted-data download by what it is for and how much it covers', async () => {
         renderMenu();
-        await userEvent.click(screen.getByRole('button', { name: /Modify entries/ }));
+        await userEvent.click(screen.getByRole('button', { name: /^Modify/ }));
 
         expect(screen.getByRole('menuitem', { name: 'Download 2 selected entries for bulk revision' })).toBeVisible();
     });
 
     it('gathers both ways of modifying entries under the one button', async () => {
         renderMenu({ showEditDataUseTerms: true });
-        await userEvent.click(screen.getByRole('button', { name: /Modify entries/ }));
+        await userEvent.click(screen.getByRole('button', { name: /^Modify/ }));
 
         expect(screen.getByRole('menuitem', { name: /Edit data use terms \(2 sequences\)/ })).toBeVisible();
         expect(screen.getByRole('menuitem', { name: /for bulk revision/ })).toBeVisible();
@@ -65,7 +65,7 @@ describe('ModifyEntriesMenu', () => {
 
     it('offers only the download when data use terms are not editable', async () => {
         renderMenu({ showEditDataUseTerms: false });
-        await userEvent.click(screen.getByRole('button', { name: /Modify entries/ }));
+        await userEvent.click(screen.getByRole('button', { name: /^Modify/ }));
 
         expect(screen.getAllByRole('menuitem')).toHaveLength(1);
         expect(screen.queryByRole('menuitem', { name: /data use terms/ })).not.toBeInTheDocument();
@@ -73,7 +73,7 @@ describe('ModifyEntriesMenu', () => {
 
     it('omits the download when there is no group to download it from', async () => {
         renderMenu({ submittedDataDownload: undefined });
-        await userEvent.click(screen.getByRole('button', { name: /Modify entries/ }));
+        await userEvent.click(screen.getByRole('button', { name: /^Modify/ }));
 
         expect(screen.queryByRole('menuitem', { name: /for bulk revision/ })).not.toBeInTheDocument();
     });
