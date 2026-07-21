@@ -270,6 +270,17 @@ export class SearchPage {
         await this.page.goto(`/${organism}/submission/${groupId}/released`);
     }
 
+    async openModifyEntriesMenu() {
+        await this.page.getByRole('button', { name: 'Modify entries' }).click();
+    }
+
+    async downloadForBulkRevision({ menuAlreadyOpen = false } = {}) {
+        if (!menuAlreadyOpen) {
+            await this.openModifyEntriesMenu();
+        }
+        await this.page.getByRole('menuitem', { name: /for bulk revision/ }).click();
+    }
+
     async getAccessionVersions(): Promise<AccessionVersion[]> {
         const rows = this.getSequenceRows();
         const count = await rows.count();

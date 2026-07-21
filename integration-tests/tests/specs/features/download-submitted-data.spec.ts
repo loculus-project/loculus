@@ -48,7 +48,7 @@ test.describe('Download Submitted Data', () => {
         expect(accessionVersions).toHaveLength(2);
 
         const downloadPromise = page.waitForEvent('download');
-        await page.getByRole('button', { name: /Download originally submitted data/ }).click();
+        await searchPage.downloadForBulkRevision();
         const download = await downloadPromise;
 
         const downloadPath = await download.path();
@@ -146,12 +146,13 @@ test.describe('Download Submitted Data', () => {
             await checkboxCell.click();
         }
 
+        await searchPage.openModifyEntriesMenu();
         await expect(
-            page.getByRole('button', { name: /Download originally submitted data \(2 selected\)/ }),
+            page.getByRole('menuitem', { name: /Download 2 selected entries for bulk revision/ }),
         ).toBeVisible();
 
         const downloadPromise = page.waitForEvent('download');
-        await page.getByRole('button', { name: /Download originally submitted data/ }).click();
+        await searchPage.downloadForBulkRevision({ menuAlreadyOpen: true });
         const download = await downloadPromise;
 
         const downloadPath = await download.path();

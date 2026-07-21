@@ -3,13 +3,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Button } from '../common/Button';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
-import {
-    DownloadSubmittedDataButton,
-    MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES,
-} from './DownloadDialog/DownloadSubmittedDataButton.tsx';
 import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
 import { LinkOutMenu } from './DownloadDialog/LinkOutMenu.tsx';
 import { FieldFilterSet, SequenceEntrySelection, type SequenceFilter } from './DownloadDialog/SequenceFilters.tsx';
+import { MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES } from './DownloadDialog/useSubmittedDataDownload.ts';
+import { ModifyEntriesMenu } from './ModifyEntriesMenu.tsx';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
@@ -35,7 +33,6 @@ import {
     MetadataFilterSchema,
 } from '../../utils/search.ts';
 import { getSegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers.ts';
-import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
 import ErrorContactMessage from '../common/ErrorContactMessage.tsx';
@@ -224,6 +221,18 @@ const InnerSearchFullUI = ({
         return response.data.map((item) => String(item[schema.primaryKey]));
     }, [lapisUrl, lapisSearchParameters, schema.primaryKey]);
 
+    const showModifyEntriesMenu = showEditDataUseTermsControls && dataUseTermsEnabled;
+    const submittedDataDownload =
+        isReleasedPage && accessToken !== undefined && groupId !== undefined
+            ? {
+                  backendUrl: clientConfig.backendUrl,
+                  organism,
+                  groupId,
+                  totalSequences,
+                  fetchAccessions,
+              }
+            : undefined;
+
     const [oldData, setOldData] = useState<TableSequenceData[] | null>(null);
     const [oldCount, setOldCount] = useState<number | null>(null);
     const [firstClientSideLoadOfDataCompleted, setFirstClientSideLoadOfDataCompleted] = useState(false);
@@ -352,14 +361,6 @@ const InnerSearchFullUI = ({
                             ) : null}
                         </div>
                         <div className='flex'>
-                            {showEditDataUseTermsControls && dataUseTermsEnabled && (
-                                <EditDataUseTermsModal
-                                    lapisUrl={lapisUrl}
-                                    clientConfig={clientConfig}
-                                    accessToken={accessToken}
-                                    sequenceFilter={downloadFilter}
-                                />
-                            )}
                             <Button
                                 className='mr-4 underline text-primary-700 hover:text-primary-500'
                                 onClick={() => setIsColumnModalOpen(true)}
@@ -387,16 +388,15 @@ const InnerSearchFullUI = ({
                                 selectedReferenceNames={referenceSelection?.selectedReferences}
                                 referenceIdentifierField={schema.referenceIdentifierField}
                             />
-                            {isReleasedPage && accessToken !== undefined && groupId !== undefined && (
+                            {(showModifyEntriesMenu || submittedDataDownload !== undefined) && (
                                 <div className='ml-2'>
-                                    <DownloadSubmittedDataButton
+                                    <ModifyEntriesMenu
                                         sequenceFilter={downloadFilter}
-                                        backendUrl={clientConfig.backendUrl}
+                                        clientConfig={clientConfig}
+                                        lapisUrl={lapisUrl}
                                         accessToken={accessToken}
-                                        organism={organism}
-                                        groupId={groupId}
-                                        totalSequences={totalSequences}
-                                        fetchAccessions={fetchAccessions}
+                                        showEditDataUseTerms={showModifyEntriesMenu}
+                                        submittedDataDownload={submittedDataDownload}
                                     />
                                 </div>
                             )}

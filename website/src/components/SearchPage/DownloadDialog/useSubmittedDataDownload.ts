@@ -1,4 +1,4 @@
-import { type FC, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
 
 import { type SequenceFilter } from './SequenceFilters';
@@ -6,12 +6,10 @@ import { getSubmittedData } from '../../../services/backendClientSideApi';
 import { downloadBlob } from '../../../utils/downloadBlob';
 import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber';
-import { Button } from '../../common/Button';
-import { HoverTooltip } from '../../common/HoverTooltip';
 
 export const MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES = 500;
 
-type DownloadSubmittedDataButtonProps = {
+type UseSubmittedDataDownloadProps = {
     sequenceFilter: SequenceFilter;
     backendUrl: string;
     accessToken: string;
@@ -21,12 +19,28 @@ type DownloadSubmittedDataButtonProps = {
     fetchAccessions: () => Promise<string[]>;
 };
 
+type SubmittedDataDownload = {
+    /** Label describing what will be downloaded, including how many entries. */
+    label: string;
+    isDownloading: boolean;
+    /** True when there are more entries than the backend will return in one go. */
+    exceedsLimit: boolean;
+    /** Explains `exceedsLimit`, for a tooltip on whatever is disabled because of it. */
+    limitMessage: string;
+    download: () => void;
+};
+
 const extractAccessions = (accessionVersions: string[]): string[] => {
     const accessions = accessionVersions.map((av) => parseAccessionVersionFromString(av).accession);
     return [...new Set(accessions)];
 };
 
-export const DownloadSubmittedDataButton: FC<DownloadSubmittedDataButtonProps> = ({
+/**
+ * Downloads the files a group originally uploaded, as opposed to the processed data the rest of
+ * the download machinery deals in. Editing these and submitting them back is how a bulk revision
+ * is made, which is why this is offered alongside the other ways of modifying released entries.
+ */
+export const useSubmittedDataDownload = ({
     sequenceFilter,
     backendUrl,
     accessToken,
@@ -34,7 +48,7 @@ export const DownloadSubmittedDataButton: FC<DownloadSubmittedDataButtonProps> =
     groupId,
     totalSequences,
     fetchAccessions,
-}) => {
+}: UseSubmittedDataDownloadProps): SubmittedDataDownload => {
     const [isDownloading, setIsDownloading] = useState(false);
 
     const sequenceCount = sequenceFilter.sequenceCount();
@@ -42,13 +56,13 @@ export const DownloadSubmittedDataButton: FC<DownloadSubmittedDataButtonProps> =
     const exceedsLimit = effectiveCount !== undefined && effectiveCount > MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES;
     const limitMessage = `Download is limited to ${formatNumberWithDefaultLocale(MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES)} entries. Please select fewer.`;
 
-    let buttonText: string;
+    let label: string;
     if (sequenceCount === undefined) {
         const formattedCount = totalSequences !== undefined ? formatNumberWithDefaultLocale(totalSequences) : 'all';
-        buttonText = `Download originally submitted data (${formattedCount})`;
+        label = `Download ${formattedCount} entries for bulk revision`;
     } else {
         const formattedCount = formatNumberWithDefaultLocale(sequenceCount);
-        buttonText = `Download originally submitted data (${formattedCount} selected)`;
+        label = `Download ${formattedCount} selected ${sequenceCount === 1 ? 'entry' : 'entries'} for bulk revision`;
     }
 
     const handleDownload = useCallback(async () => {
@@ -102,13 +116,11 @@ export const DownloadSubmittedDataButton: FC<DownloadSubmittedDataButtonProps> =
         }
     }, [sequenceFilter, backendUrl, accessToken, organism, groupId, sequenceCount, fetchAccessions, limitMessage]);
 
-    const button = (
-        <Button variant='outline' onClick={() => void handleDownload()} disabled={isDownloading || exceedsLimit}>
-            {isDownloading ? 'Downloading...' : buttonText}
-        </Button>
-    );
-
-    // The tooltip has to live on a wrapper rather than the button itself: a disabled
-    // button is `pointer-events-none`, so it never sees the hover.
-    return exceedsLimit ? <HoverTooltip content={limitMessage}>{button}</HoverTooltip> : button;
+    return {
+        label,
+        isDownloading,
+        exceedsLimit,
+        limitMessage,
+        download: () => void handleDownload(),
+    };
 };

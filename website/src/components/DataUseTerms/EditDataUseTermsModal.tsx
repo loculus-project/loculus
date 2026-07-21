@@ -26,7 +26,19 @@ interface EditDataUseTermsModalProps {
     clientConfig: ClientConfig;
     accessToken?: string;
     sequenceFilter: SequenceFilter;
+    isOpen: boolean;
+    onClose: () => void;
 }
+
+/** Label for whatever opens the dialog, so a caller can describe it without rendering it. */
+export const editDataUseTermsLabel = (sequenceFilter: SequenceFilter): string => {
+    const sequenceCount = sequenceFilter.sequenceCount();
+    if (sequenceCount === undefined) {
+        return 'Edit data use terms (all sequences)';
+    }
+    const formatted = formatNumberWithDefaultLocale(sequenceCount);
+    return `Edit data use terms (${formatted} sequence${sequenceCount === 1 ? '' : 's'})`;
+};
 
 type LoadingState = {
     type: 'loading';
@@ -96,11 +108,9 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
     clientConfig,
     accessToken,
     sequenceFilter,
+    isOpen,
+    onClose: closeDialog,
 }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const openDialog = () => setIsOpen(true);
-    const closeDialog = () => setIsOpen(false);
-
     const detailsHook = lapisClientHooks(lapisUrl).useDetails();
 
     useEffect(() => {
@@ -126,19 +136,8 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
         }
     }, [detailsHook.data, detailsHook.error, detailsHook.isPending]);
 
-    const sequenceCount = sequenceFilter.sequenceCount();
-    let buttonText = 'Edit data use terms (all sequences)';
-    if (sequenceCount !== undefined) {
-        const formatted = formatNumberWithDefaultLocale(sequenceCount);
-        const plural = sequenceCount === 1 ? '' : 's';
-        buttonText = `Edit data use terms (${formatted} sequence${plural})`;
-    }
-
     return (
         <>
-            <Button className='mr-4 underline text-primary-700 hover:text-primary-500' onClick={openDialog}>
-                {buttonText}
-            </Button>
             <BaseDialog title='Edit data use terms' isOpen={isOpen} onClose={closeDialog}>
                 {state.type === 'loading' && 'loading'}
                 {state.type === 'error' && `error: ${state.error}`}
