@@ -1,4 +1,5 @@
 import { type FC, useState, useCallback } from 'react';
+import { toast } from 'react-toastify';
 
 import { type SequenceFilter } from './SequenceFilters';
 import { getSubmittedData } from '../../../services/backendClientSideApi';
@@ -6,6 +7,7 @@ import { downloadBlob } from '../../../utils/downloadBlob';
 import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber';
 import { Button } from '../../common/Button';
+import { HoverTooltip } from '../../common/HoverTooltip';
 
 export const MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES = 500;
 
@@ -34,11 +36,11 @@ export const DownloadSubmittedDataButton: FC<DownloadSubmittedDataButtonProps> =
     fetchAccessions,
 }) => {
     const [isDownloading, setIsDownloading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const sequenceCount = sequenceFilter.sequenceCount();
     const effectiveCount = sequenceCount ?? totalSequences;
     const exceedsLimit = effectiveCount !== undefined && effectiveCount > MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES;
+    const limitMessage = `Download is limited to ${formatNumberWithDefaultLocale(MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES)} entries. Please select fewer.`;
 
     let buttonText: string;
     if (sequenceCount === undefined) {
@@ -51,7 +53,6 @@ export const DownloadSubmittedDataButton: FC<DownloadSubmittedDataButtonProps> =
 
     const handleDownload = useCallback(async () => {
         setIsDownloading(true);
-        setError(null);
 
         try {
             let accessionVersions: string[];
@@ -72,9 +73,7 @@ export const DownloadSubmittedDataButton: FC<DownloadSubmittedDataButtonProps> =
                 throw new Error('No sequences to download');
             }
             if (accessions.length > MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES) {
-                throw new Error(
-                    `Download is limited to ${formatNumberWithDefaultLocale(MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES)} entries. Please select fewer.`,
-                );
+                throw new Error(limitMessage);
             }
 
             const result = await getSubmittedData(backendUrl, organism, accessToken, {
@@ -97,45 +96,19 @@ export const DownloadSubmittedDataButton: FC<DownloadSubmittedDataButtonProps> =
             downloadBlob(result.blob, filename);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Download failed';
-            setError(message);
+            toast.error(message, { position: 'top-center', autoClose: 8000 });
         } finally {
             setIsDownloading(false);
         }
-    }, [sequenceFilter, backendUrl, accessToken, organism, groupId, sequenceCount, fetchAccessions]);
+    }, [sequenceFilter, backendUrl, accessToken, organism, groupId, sequenceCount, fetchAccessions, limitMessage]);
 
-    const isDisabled = isDownloading || exceedsLimit;
-
-    return (
-        <div className='relative'>
-            <div className='group relative inline-block'>
-                <Button
-                    variant='outline'
-                    className={`w-[18rem] ${exceedsLimit ? 'opacity-50 cursor-not-allowed hover:bg-white hover:text-primary-600' : ''}`}
-                    onClick={() => void handleDownload()}
-                    disabled={isDisabled}
-                >
-                    {isDownloading ? 'Downloading...' : buttonText}
-                </Button>
-                {exceedsLimit && (
-                    <div className='invisible group-hover:visible absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 text-sm text-white bg-gray-800 rounded-md shadow-lg whitespace-nowrap z-20'>
-                        Limited to {formatNumberWithDefaultLocale(MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES)} entries. Please
-                        select fewer.
-                        <div className='absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-gray-800' />
-                    </div>
-                )}
-            </div>
-            {error !== null && (
-                <div className='absolute top-full left-0 mt-1 text-sm text-red-600 bg-white p-2 rounded shadow-md z-10 max-w-xs'>
-                    {error}
-                    <Button
-                        className='ml-2 text-gray-500 hover:text-gray-700'
-                        onClick={() => setError(null)}
-                        aria-label='Dismiss error'
-                    >
-                        x
-                    </Button>
-                </div>
-            )}
-        </div>
+    const button = (
+        <Button variant='outline' onClick={() => void handleDownload()} disabled={isDownloading || exceedsLimit}>
+            {isDownloading ? 'Downloading...' : buttonText}
+        </Button>
     );
+
+    // The tooltip has to live on a wrapper rather than the button itself: a disabled
+    // button is `pointer-events-none`, so it never sees the hover.
+    return exceedsLimit ? <HoverTooltip content={limitMessage}>{button}</HoverTooltip> : button;
 };
