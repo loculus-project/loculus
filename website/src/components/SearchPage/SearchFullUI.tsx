@@ -348,13 +348,18 @@ const InnerSearchFullUI = ({
                      * wrong for the other).
                      *
                      * The button row then holds one line for as long as it can, narrowing buttons
-                     * so their labels wrap, and only breaks them onto separate lines below `@3xl`.
-                     * That last stage has to be a breakpoint: flexbox breaks a line at an item's
-                     * *unshrunk* width, so a wrapping row would put buttons on separate lines long
-                     * before it let any of them narrow and wrap a label. It is a container query
-                     * rather than a viewport one because the search form sits alongside this column
-                     * from `md` up, so the width available here is not monotonic in viewport width
-                     * -- it is narrower at a 768px viewport than at a 640px one.
+                     * so their labels wrap, and only breaks them onto separate lines below `@lg`
+                     * (512px). That last stage has to be a breakpoint: flexbox breaks a line at an
+                     * item's *unshrunk* width, so a wrapping row would put buttons on separate
+                     * lines long before it let any of them narrow and wrap a label. It is a
+                     * container query rather than a viewport one because the search form sits
+                     * alongside this column from `md` up, so the width available here is not
+                     * monotonic in viewport width -- it is narrower at a 768px viewport than at a
+                     * 640px one.
+                     *
+                     * 512px is close to the floor: the widest row that exists cannot occupy one
+                     * line below 473px however hard it is squeezed. Buttons are correspondingly
+                     * tall by then, which is the accepted trade for not breaking the row up early.
                      */}
                     <div className='@container'>
                         <div className='text-sm text-gray-800 mb-6 justify-between flex flex-wrap items-baseline gap-x-4 gap-y-2'>
@@ -369,7 +374,7 @@ const InnerSearchFullUI = ({
                                     </span>
                                 ) : null}
                             </div>
-                            <div className='flex flex-wrap @3xl:flex-nowrap items-center gap-2 *:max-w-full'>
+                            <div className='flex flex-wrap @lg:flex-nowrap items-center gap-2 *:max-w-full'>
                                 {showEditDataUseTermsControls && dataUseTermsEnabled && (
                                     <EditDataUseTermsModal
                                         lapisUrl={lapisUrl}
