@@ -361,7 +361,7 @@ const InnerSearchFullUI = ({
                      * moment they stop fitting.
                      */}
                     <div className='text-sm text-gray-800 mb-6 justify-between flex flex-wrap items-baseline gap-x-4 gap-y-2'>
-                        <div className='mt-auto min-w-80'>
+                        <div className='mt-auto min-w-70'>
                             {buildSequenceCountText(totalSequences, oldCount, initialCount)}
                             {detailsHook.isPending ||
                             aggregatedHook.isPending ||
