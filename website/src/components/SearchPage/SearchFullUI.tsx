@@ -340,22 +340,24 @@ const InnerSearchFullUI = ({
                         </div>
                     )}
                     {/*
-                     * Narrowing is given up in stages, cheapest concession first: the buttons wrap
-                     * their own labels over two lines, then the sequence count moves onto its own
-                     * line to hand them the full width, and only when even that is not enough do
-                     * the buttons break onto separate lines.
+                     * Narrowing is given up in stages. `flex-wrap` here keeps the sequence count
+                     * beside the buttons for as long as they actually fit and moves it onto its own
+                     * line only when they do not -- content-driven, because how wide this row is
+                     * varies a lot by page (the released-sequences page carries five buttons, a
+                     * public search two or three, and a fixed breakpoint tuned for one is badly
+                     * wrong for the other).
                      *
-                     * The stages key off container queries rather than the viewport because the
-                     * search form sits alongside this column at `md` and above, so the width
-                     * actually available here is not monotonic in the viewport width -- it is
-                     * narrower at a 768px viewport than at a 640px one.
-                     *
-                     * Within the button row, wrapping is off until the last stage: flexbox breaks
-                     * a line at an item's *unshrunk* width, so a wrapping row would put buttons on
-                     * separate lines long before it let any of them narrow and wrap its label.
+                     * The button row then holds one line for as long as it can, narrowing buttons
+                     * so their labels wrap, and only breaks them onto separate lines below `@3xl`.
+                     * That last stage has to be a breakpoint: flexbox breaks a line at an item's
+                     * *unshrunk* width, so a wrapping row would put buttons on separate lines long
+                     * before it let any of them narrow and wrap a label. It is a container query
+                     * rather than a viewport one because the search form sits alongside this column
+                     * from `md` up, so the width available here is not monotonic in viewport width
+                     * -- it is narrower at a 768px viewport than at a 640px one.
                      */}
                     <div className='@container'>
-                        <div className='text-sm text-gray-800 mb-6 justify-between flex flex-col @4xl:flex-row @4xl:items-baseline gap-x-4 gap-y-2'>
+                        <div className='text-sm text-gray-800 mb-6 justify-between flex flex-wrap items-baseline gap-x-4 gap-y-2'>
                             <div className='mt-auto'>
                                 {buildSequenceCountText(totalSequences, oldCount, initialCount)}
                                 {detailsHook.isPending ||
