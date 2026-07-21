@@ -10,6 +10,7 @@ import {
     restrictedDataUseTermsOption,
     type DataUseTerms,
 } from '../../types/backend.ts';
+import { formatDateOnly } from '../../utils/dateFormatting';
 import { Button } from '../common/Button';
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
@@ -39,7 +40,7 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
             case restrictedDataUseTermsOption:
                 setDataUseTerms({
                     type: restrictedDataUseTermsOption,
-                    restrictedUntil: newDate.toFormat('yyyy-MM-dd'),
+                    restrictedUntil: formatDateOnly(newDate),
                 });
                 break;
         }
@@ -147,7 +148,7 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
                 )}
                 {selectedOption === restrictedDataUseTermsOption && (
                     <span className='py-4 text-sm ml-8'>
-                        Data use will be restricted until <b>{selectedDate.toFormat('yyyy-MM-dd')}</b>.{' '}
+                        Data use will be restricted until <b>{formatDateOnly(selectedDate)}</b>.{' '}
                         {calendarUseModal && (
                             <Button
                                 className='border rounded-sm px-2 py-1'

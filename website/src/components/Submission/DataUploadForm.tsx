@@ -22,6 +22,7 @@ import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
+import { formatDateOnly } from '../../utils/dateFormatting.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button';
@@ -120,9 +121,7 @@ const InnerDataUploadForm = ({
                         groupId,
                         dataUseTermsType,
                         restrictedUntil:
-                            dataUseTermsType === restrictedDataUseTermsOption
-                                ? restrictedUntil.toFormat('yyyy-MM-dd')
-                                : null,
+                            dataUseTermsType === restrictedDataUseTermsOption ? formatDateOnly(restrictedUntil) : null,
                     });
                     break;
                 }
@@ -368,7 +367,7 @@ const DataUseTerms = ({
                     ) : (
                         <p className='text-sm'>
                             Your data will be available on {instanceName}, under the restricted use terms until{' '}
-                            {restrictedUntil.toFormat('yyyy-MM-dd')} and under the open use terms after that date.
+                            {formatDateOnly(restrictedUntil)} and under the open use terms after that date.
                         </p>
                     )}
                 </div>

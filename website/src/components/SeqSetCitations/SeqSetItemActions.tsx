@@ -9,6 +9,7 @@ import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import type { AuthorProfile, SeqSetRecord, SeqSet } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
+import { formatIsoToDateOnly } from '../../utils/dateFormatting';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { BaseDialog } from '../common/BaseDialog.tsx';
@@ -72,7 +73,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
         if (date === undefined) {
             return 'N/A';
         }
-        return new Date(date).toISOString().split('T')[0];
+        return formatIsoToDateOnly(date);
     };
 
     const createdByValue = seqSetAuthor ? (
