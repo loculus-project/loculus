@@ -356,12 +356,14 @@ const InnerSearchFullUI = ({
                      * so there is less room here at a 768px viewport than at a 640px one -- and
                      * because the buttons on offer, and the counts in their labels, vary by page.
                      *
-                     * The count claims a little more width than its text needs, so that the two
-                     * separate while the buttons still have room to breathe rather than at the
-                     * moment they stop fitting.
+                     * The count keeps its place well into narrow widths: `basis-0` means the row
+                     * breaks on how little space the count will accept rather than how much its
+                     * text would like, so it narrows and wraps beside the buttons first and only
+                     * takes its own line once even 160px is not there. `grow` gives it the space
+                     * going spare, so at ordinary widths it still reads as one line on the left.
                      */}
                     <div className='text-sm text-gray-800 mb-6 justify-between flex flex-wrap items-baseline gap-x-4 gap-y-2'>
-                        <div className='mt-auto min-w-70'>
+                        <div className='mt-auto basis-0 grow min-w-40'>
                             {buildSequenceCountText(totalSequences, oldCount, initialCount)}
                             {detailsHook.isPending ||
                             aggregatedHook.isPending ||
