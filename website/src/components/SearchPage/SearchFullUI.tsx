@@ -368,7 +368,7 @@ const InnerSearchFullUI = ({
                             </Button>
                             {sequencesSelected ? (
                                 <Button
-                                    className='underline text-primary-700 hover:text-primary-500'
+                                    className='mr-2 underline text-primary-700 hover:text-primary-500'
                                     onClick={clearSelectedSeqs}
                                 >
                                     Clear selection
