@@ -1,0 +1,78 @@
+name: file-processing-unit-tests
+on:
+  # test
+  pull_request:
+    paths:
+      - "file-processing/**"
+      - ".github/workflows/file-processing-unit-tests.yaml"
+      - "ruff.toml"
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-file-processing-unit-tests
+  cancel-in-progress: true
+defaults:
+  run:
+    shell: micromamba-shell {0}
+    working-directory: file-processing
+jobs:
+  checkFormat:
+    name: Check formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v3
+        with:
+          environment-file: "file-processing/environment.yml"
+          micromamba-version: "latest"
+          cache-environment: true
+      - name: Run ruff format check
+        run: ruff check . --fix --diff
+  lint:
+    name: Lint code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v3
+        with:
+          environment-file: "file-processing/environment.yml"
+          micromamba-version: "latest"
+          cache-environment: true
+      - name: Run ruff check
+        run: ruff check .
+  unitTests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v3
+        with:
+          environment-file: "file-processing/environment.yml"
+          micromamba-version: "latest"
+          cache-environment: true
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: "21"
+          distribution: "adopt"
+      - name: Download readtools
+        shell: bash
+        run: |
+            curl --fail --location --show-error \
+              --output readtools.jar \
+              https://github.com/loculus-project/readtools/releases/download/v1.0.0/readtools-2.15.1-all.jar
+        working-directory: file-processing
+      - name: Install package
+        run: |
+            uv pip install --system .
+      - name: Run tests
+        env:
+          READTOOLS_JAR: readtools.jar
+        run: |
+            pytest
