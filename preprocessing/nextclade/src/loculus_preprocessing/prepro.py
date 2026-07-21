@@ -421,8 +421,12 @@ def get_output_metadata(
         errors.extend(processing_result.errors)
         warnings.extend(processing_result.warnings)
 
+        if group_id == config.insdc_ingest_group_id:
+            # don't enforce required and required_when conditions for INSDC ingested data
+            continue
+
         is_null = null_per_backend(processing_result.datum)
-        if is_null and spec.required and group_id != config.insdc_ingest_group_id:
+        if is_null and spec.required:
             message = f"Metadata field `{output_field}` is required."
             user_inputs = [field for field in input_fields if config.is_user_input(field)]
             if any(field != output_field for field in user_inputs):
