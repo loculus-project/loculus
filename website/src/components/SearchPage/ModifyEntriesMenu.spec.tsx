@@ -52,7 +52,7 @@ describe('ModifyEntriesMenu', () => {
         renderMenu();
         await userEvent.click(screen.getByRole('button', { name: /^Modify/ }));
 
-        expect(screen.getByRole('menuitem', { name: 'Download 2 selected entries for bulk revision' })).toBeVisible();
+        expect(screen.getByRole('menuitem', { name: 'Download data for bulk revision (2 sequences)' })).toBeVisible();
     });
 
     it('gathers both ways of modifying entries under the one button', async () => {

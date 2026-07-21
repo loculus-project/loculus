@@ -56,14 +56,12 @@ export const useSubmittedDataDownload = ({
     const exceedsLimit = effectiveCount !== undefined && effectiveCount > MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES;
     const limitMessage = `Download is limited to ${formatNumberWithDefaultLocale(MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES)} entries. Please select fewer.`;
 
-    let label: string;
-    if (sequenceCount === undefined) {
-        const formattedCount = totalSequences !== undefined ? formatNumberWithDefaultLocale(totalSequences) : 'all';
-        label = `Download ${formattedCount} entries for bulk revision`;
-    } else {
-        const formattedCount = formatNumberWithDefaultLocale(sequenceCount);
-        label = `Download ${formattedCount} selected ${sequenceCount === 1 ? 'entry' : 'entries'} for bulk revision`;
-    }
+    // Scoped the way the data use terms item beside it is, so the two read alike.
+    const scope =
+        effectiveCount === undefined
+            ? 'all sequences'
+            : `${formatNumberWithDefaultLocale(effectiveCount)} sequence${effectiveCount === 1 ? '' : 's'}`;
+    const label = `Download data for bulk revision (${scope})`;
 
     const handleDownload = useCallback(async () => {
         setIsDownloading(true);
