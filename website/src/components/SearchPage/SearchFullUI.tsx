@@ -340,84 +340,92 @@ const InnerSearchFullUI = ({
                         </div>
                     )}
                     {/*
-                     * Narrowing is absorbed in stages. `flex-wrap` here drops the sequence count
-                     * onto its own line as soon as the buttons no longer fit beside it, giving
-                     * them the full width before they start wrapping among themselves. In the
-                     * button row, `*:shrink-0` keeps each button at its natural width so they
-                     * wrap as whole buttons rather than being squeezed, while `*:max-w-full` caps
-                     * them at the row width -- so a label only wraps when the button genuinely
-                     * cannot fit on one line, which at that point is preferable to overflowing.
+                     * Narrowing is given up in stages, cheapest concession first: the buttons wrap
+                     * their own labels over two lines, then the sequence count moves onto its own
+                     * line to hand them the full width, and only when even that is not enough do
+                     * the buttons break onto separate lines.
+                     *
+                     * The stages key off container queries rather than the viewport because the
+                     * search form sits alongside this column at `md` and above, so the width
+                     * actually available here is not monotonic in the viewport width -- it is
+                     * narrower at a 768px viewport than at a 640px one.
+                     *
+                     * Within the button row, wrapping is off until the last stage: flexbox breaks
+                     * a line at an item's *unshrunk* width, so a wrapping row would put buttons on
+                     * separate lines long before it let any of them narrow and wrap its label.
                      */}
-                    <div className='text-sm text-gray-800 mb-6 justify-between flex flex-wrap items-baseline gap-x-4 gap-y-2'>
-                        <div className='mt-auto'>
-                            {buildSequenceCountText(totalSequences, oldCount, initialCount)}
-                            {detailsHook.isPending ||
-                            aggregatedHook.isPending ||
-                            !firstClientSideLoadOfCountCompleted ||
-                            !firstClientSideLoadOfDataCompleted ? (
-                                <span className='ml-3 appearSlowly inline-block'>
-                                    <Spinner size='xs' />
-                                </span>
-                            ) : null}
-                        </div>
-                        <div className='flex flex-wrap items-center gap-2 *:shrink-0 *:max-w-full'>
-                            {showEditDataUseTermsControls && dataUseTermsEnabled && (
-                                <EditDataUseTermsModal
-                                    lapisUrl={lapisUrl}
-                                    clientConfig={clientConfig}
-                                    accessToken={accessToken}
-                                    sequenceFilter={downloadFilter}
-                                />
-                            )}
-                            <Button
-                                className='underline text-primary-700 hover:text-primary-500'
-                                onClick={() => setIsColumnModalOpen(true)}
-                            >
-                                Customize columns
-                            </Button>
-                            {sequencesSelected ? (
+                    <div className='@container'>
+                        <div className='text-sm text-gray-800 mb-6 justify-between flex flex-col @4xl:flex-row @4xl:items-baseline gap-x-4 gap-y-2'>
+                            <div className='mt-auto'>
+                                {buildSequenceCountText(totalSequences, oldCount, initialCount)}
+                                {detailsHook.isPending ||
+                                aggregatedHook.isPending ||
+                                !firstClientSideLoadOfCountCompleted ||
+                                !firstClientSideLoadOfDataCompleted ? (
+                                    <span className='ml-3 appearSlowly inline-block'>
+                                        <Spinner size='xs' />
+                                    </span>
+                                ) : null}
+                            </div>
+                            <div className='flex flex-wrap @3xl:flex-nowrap items-center gap-2 *:max-w-full'>
+                                {showEditDataUseTermsControls && dataUseTermsEnabled && (
+                                    <EditDataUseTermsModal
+                                        lapisUrl={lapisUrl}
+                                        clientConfig={clientConfig}
+                                        accessToken={accessToken}
+                                        sequenceFilter={downloadFilter}
+                                    />
+                                )}
                                 <Button
                                     className='underline text-primary-700 hover:text-primary-500'
-                                    onClick={clearSelectedSeqs}
+                                    onClick={() => setIsColumnModalOpen(true)}
                                 >
-                                    Clear selection
+                                    Customize columns
                                 </Button>
-                            ) : null}
+                                {sequencesSelected ? (
+                                    <Button
+                                        className='underline text-primary-700 hover:text-primary-500'
+                                        onClick={clearSelectedSeqs}
+                                    >
+                                        Clear selection
+                                    </Button>
+                                ) : null}
 
-                            <DownloadDialog
-                                downloadUrlGenerator={downloadUrlGenerator}
-                                sequenceFilter={downloadFilter}
-                                referenceGenomesInfo={referenceGenomesInfo}
-                                allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
-                                dataUseTermsEnabled={dataUseTermsEnabled}
-                                dataUseTermsAgreementHTML={dataUseTermsAgreementHTML}
-                                schema={schema}
-                                richFastaHeaderFields={schema.richFastaHeaderFields}
-                                selectedReferenceNames={referenceSelection?.selectedReferences}
-                                referenceIdentifierField={schema.referenceIdentifierField}
-                            />
-                            {isReleasedPage && accessToken !== undefined && groupId !== undefined && (
-                                <DownloadSubmittedDataButton
-                                    sequenceFilter={downloadFilter}
-                                    backendUrl={clientConfig.backendUrl}
-                                    accessToken={accessToken}
-                                    organism={organism}
-                                    groupId={groupId}
-                                    totalSequences={totalSequences}
-                                    fetchAccessions={fetchAccessions}
-                                />
-                            )}
-                            {linkOuts !== undefined && linkOuts.length > 0 && (
-                                <LinkOutMenu
+                                <DownloadDialog
                                     downloadUrlGenerator={downloadUrlGenerator}
                                     sequenceFilter={downloadFilter}
-                                    sequenceCount={linkOutSequenceCount}
-                                    linkOuts={linkOuts}
-                                    dataUseTermsEnabled={dataUseTermsEnabled}
                                     referenceGenomesInfo={referenceGenomesInfo}
-                                    referenceSelection={referenceSelection}
+                                    allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
+                                    dataUseTermsEnabled={dataUseTermsEnabled}
+                                    dataUseTermsAgreementHTML={dataUseTermsAgreementHTML}
+                                    schema={schema}
+                                    richFastaHeaderFields={schema.richFastaHeaderFields}
+                                    selectedReferenceNames={referenceSelection?.selectedReferences}
+                                    referenceIdentifierField={schema.referenceIdentifierField}
                                 />
-                            )}
+                                {isReleasedPage && accessToken !== undefined && groupId !== undefined && (
+                                    <DownloadSubmittedDataButton
+                                        sequenceFilter={downloadFilter}
+                                        backendUrl={clientConfig.backendUrl}
+                                        accessToken={accessToken}
+                                        organism={organism}
+                                        groupId={groupId}
+                                        totalSequences={totalSequences}
+                                        fetchAccessions={fetchAccessions}
+                                    />
+                                )}
+                                {linkOuts !== undefined && linkOuts.length > 0 && (
+                                    <LinkOutMenu
+                                        downloadUrlGenerator={downloadUrlGenerator}
+                                        sequenceFilter={downloadFilter}
+                                        sequenceCount={linkOutSequenceCount}
+                                        linkOuts={linkOuts}
+                                        dataUseTermsEnabled={dataUseTermsEnabled}
+                                        referenceGenomesInfo={referenceGenomesInfo}
+                                        referenceSelection={referenceSelection}
+                                    />
+                                )}
+                            </div>
                         </div>
                     </div>
 
