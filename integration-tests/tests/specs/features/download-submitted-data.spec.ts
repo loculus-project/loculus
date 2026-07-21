@@ -148,7 +148,9 @@ test.describe('Download Submitted Data', () => {
 
         await searchPage.openModifyEntriesMenu();
         await expect(
-            page.getByRole('menuitem', { name: /Download data for bulk revision \(2 sequences\)/ }),
+            page.getByRole('menuitem', {
+                name: /Download original data to prepare bulk revision \(2 selected sequences\)/,
+            }),
         ).toBeVisible();
 
         const downloadPromise = page.waitForEvent('download');

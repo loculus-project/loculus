@@ -2,9 +2,12 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { SequenceEntrySelection } from './DownloadDialog/SequenceFilters';
+import { SequenceEntrySelection, type SequenceFilter } from './DownloadDialog/SequenceFilters';
 import { ModifyEntriesMenu } from './ModifyEntriesMenu';
 import type { ClientConfig } from '../../types/runtimeConfig';
+
+/** Stands in for a filtered-but-unselected result set, where the count is not a selection. */
+const wholeResultSet = { sequenceCount: () => undefined, toApiParams: () => ({}) } as unknown as SequenceFilter;
 
 // The data use terms dialog loads the current terms as soon as it is mounted, which it is
 // (closed) whenever that action is on offer.
@@ -45,14 +48,38 @@ describe('ModifyEntriesMenu', () => {
 
         await userEvent.click(screen.getByRole('button', { name: /^Modify/ }));
 
-        expect(screen.getByRole('menuitem', { name: /for bulk revision/ })).toBeVisible();
+        expect(screen.getByRole('menuitem', { name: /bulk revision/ })).toBeVisible();
     });
 
     it('describes the submitted-data download by what it is for and how much it covers', async () => {
         renderMenu();
         await userEvent.click(screen.getByRole('button', { name: /^Modify/ }));
 
-        expect(screen.getByRole('menuitem', { name: 'Download data for bulk revision (2 sequences)' })).toBeVisible();
+        expect(
+            screen.getByRole('menuitem', {
+                name: 'Download original data to prepare bulk revision (2 selected sequences)',
+            }),
+        ).toBeVisible();
+    });
+
+    it('says so when the scope is the whole result set rather than a selection', async () => {
+        renderMenu({
+            sequenceFilter: wholeResultSet,
+            submittedDataDownload: {
+                backendUrl: 'http://backend',
+                organism: 'ebola-sudan',
+                groupId: 1,
+                totalSequences: 1234,
+                fetchAccessions: vi.fn(),
+            },
+        });
+        await userEvent.click(screen.getByRole('button', { name: /^Modify/ }));
+
+        expect(
+            screen.getByRole('menuitem', {
+                name: 'Download original data to prepare bulk revision (1,234 sequences)',
+            }),
+        ).toBeVisible();
     });
 
     it('gathers both ways of modifying entries under the one button', async () => {
@@ -60,7 +87,7 @@ describe('ModifyEntriesMenu', () => {
         await userEvent.click(screen.getByRole('button', { name: /^Modify/ }));
 
         expect(screen.getByRole('menuitem', { name: /Edit data use terms \(2 sequences\)/ })).toBeVisible();
-        expect(screen.getByRole('menuitem', { name: /for bulk revision/ })).toBeVisible();
+        expect(screen.getByRole('menuitem', { name: /bulk revision/ })).toBeVisible();
     });
 
     it('offers only the download when data use terms are not editable', async () => {
@@ -75,6 +102,6 @@ describe('ModifyEntriesMenu', () => {
         renderMenu({ submittedDataDownload: undefined });
         await userEvent.click(screen.getByRole('button', { name: /^Modify/ }));
 
-        expect(screen.queryByRole('menuitem', { name: /for bulk revision/ })).not.toBeInTheDocument();
+        expect(screen.queryByRole('menuitem', { name: /bulk revision/ })).not.toBeInTheDocument();
     });
 });

@@ -278,7 +278,7 @@ export class SearchPage {
         if (!menuAlreadyOpen) {
             await this.openModifyEntriesMenu();
         }
-        await this.page.getByRole('menuitem', { name: /for bulk revision/ }).click();
+        await this.page.getByRole('menuitem', { name: /bulk revision/ }).click();
     }
 
     async getAccessionVersions(): Promise<AccessionVersion[]> {
