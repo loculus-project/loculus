@@ -136,7 +136,7 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
 
     return (
         <>
-            <Button className='mr-2 underline text-primary-700 hover:text-primary-500' onClick={openDialog}>
+            <Button className='mr-4 underline text-primary-700 hover:text-primary-500' onClick={openDialog}>
                 {buttonText}
             </Button>
             <BaseDialog title='Edit data use terms' isOpen={isOpen} onClose={closeDialog}>

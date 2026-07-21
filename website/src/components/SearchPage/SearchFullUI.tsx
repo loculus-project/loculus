@@ -339,7 +339,7 @@ const InnerSearchFullUI = ({
                             <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
                         </div>
                     )}
-                    <div className='text-sm text-gray-800 mb-6 justify-between flex flex-wrap gap-4'>
+                    <div className='text-sm text-gray-800 mb-6 justify-between flex flex-col sm:flex-row items-baseline gap-4'>
                         <div className='mt-auto'>
                             {buildSequenceCountText(totalSequences, oldCount, initialCount)}
                             {detailsHook.isPending ||
@@ -351,7 +351,7 @@ const InnerSearchFullUI = ({
                                 </span>
                             ) : null}
                         </div>
-                        <div className='flex flex-wrap justify-start gap-2'>
+                        <div className='flex'>
                             {showEditDataUseTermsControls && dataUseTermsEnabled && (
                                 <EditDataUseTermsModal
                                     lapisUrl={lapisUrl}
@@ -361,14 +361,14 @@ const InnerSearchFullUI = ({
                                 />
                             )}
                             <Button
-                                className='mr-2 underline text-primary-700 hover:text-primary-500'
+                                className='mr-4 underline text-primary-700 hover:text-primary-500'
                                 onClick={() => setIsColumnModalOpen(true)}
                             >
                                 Customize columns
                             </Button>
                             {sequencesSelected ? (
                                 <Button
-                                    className='mr-2 underline text-primary-700 hover:text-primary-500'
+                                    className='mr-4 underline text-primary-700 hover:text-primary-500'
                                     onClick={clearSelectedSeqs}
                                 >
                                     Clear selection
@@ -388,15 +388,17 @@ const InnerSearchFullUI = ({
                                 referenceIdentifierField={schema.referenceIdentifierField}
                             />
                             {isReleasedPage && accessToken !== undefined && groupId !== undefined && (
-                                <DownloadSubmittedDataButton
-                                    sequenceFilter={downloadFilter}
-                                    backendUrl={clientConfig.backendUrl}
-                                    accessToken={accessToken}
-                                    organism={organism}
-                                    groupId={groupId}
-                                    totalSequences={totalSequences}
-                                    fetchAccessions={fetchAccessions}
-                                />
+                                <div className='ml-2'>
+                                    <DownloadSubmittedDataButton
+                                        sequenceFilter={downloadFilter}
+                                        backendUrl={clientConfig.backendUrl}
+                                        accessToken={accessToken}
+                                        organism={organism}
+                                        groupId={groupId}
+                                        totalSequences={totalSequences}
+                                        fetchAccessions={fetchAccessions}
+                                    />
+                                </div>
                             )}
                             {linkOuts !== undefined && linkOuts.length > 0 && (
                                 <LinkOutMenu
