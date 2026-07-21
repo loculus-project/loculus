@@ -1,7 +1,7 @@
 import { DateTime, Settings } from 'luxon';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { dateTimeInMonths, utcToday } from './DateTimeInMonths.tsx';
+import { dateTimeInMonths, utcToday } from './utcDates.ts';
 
 // Zones that are a fixed offset from UTC all year round, so the tests don't depend on daylight saving.
 const bangkok = 'Asia/Bangkok'; // UTC+7

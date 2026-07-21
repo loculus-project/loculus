@@ -10,7 +10,7 @@ import {
     restrictedDataUseTermsOption,
     type DataUseTerms,
 } from '../../types/backend.ts';
-import { utcToday } from '../../utils/DateTimeInMonths.tsx';
+import { utcToday } from '../../utils/utcDates.ts';
 import { Button } from '../common/Button';
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';

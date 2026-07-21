@@ -3,7 +3,7 @@ import { DateTime } from 'luxon';
 import { useState } from 'react';
 
 import { getClientLogger } from '../../clientLogger';
-import { utcToday } from '../../utils/DateTimeInMonths';
+import { utcToday } from '../../utils/utcDates.ts';
 import { Button } from '../common/Button';
 
 const logger = getClientLogger('DateChangeModal');
