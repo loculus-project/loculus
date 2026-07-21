@@ -93,7 +93,7 @@ def run_deacon_filter(
         DEACON_INDEX_PATH,
         *input_files,
     ]
-    logger.debug(f"Running Deacon filter on '{', '.join(input_files)}': {args}")
+    logger.debug(f"Running Deacon filter on '{', '.join(str(f) for f in input_files)}': {args}")
 
     exit_code = subprocess.run(  # noqa: S603
         args, check=False, stdout=subprocess.DEVNULL
@@ -123,17 +123,18 @@ def deacon_message(
     type: Literal["base pairs", "reads"],
     error: bool,
 ) -> str:
-    return (
+    intro = (
         f"Our QC pipeline identified {type} that map to the human genome. "
         if error
         else f"Our QC pipeline identified a small number of {type} that map to the human genome. "
+    )
+    detail = (
         f"File(s): '{file_names}' "
         f"had {type} which mapped to the human genome, with {numbers}, "
         f"the maximum allowed {'proportion' if type == 'reads' else 'base pairs'} is {maximum}. "
-        f"{DEACON_ERROR_PROMPT}"
-        if error
-        else f"{DEACON_WARNING_PROMPT}"
     )
+    prompt = DEACON_ERROR_PROMPT if error else DEACON_WARNING_PROMPT
+    return intro + detail + prompt
 
 
 def process_deacon_run(
