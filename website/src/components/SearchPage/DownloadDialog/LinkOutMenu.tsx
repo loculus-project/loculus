@@ -203,7 +203,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
 
     return (
         <>
-            <Menu as='div' className='ml-2 relative inline-block text-left'>
+            <Menu as='div' className='relative inline-block text-left'>
                 <MenuButton
                     className={buttonClasses({
                         variant: 'outline',
