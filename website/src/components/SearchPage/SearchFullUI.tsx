@@ -348,8 +348,20 @@ const InnerSearchFullUI = ({
                             <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
                         </div>
                     )}
-                    <div className='text-sm text-gray-800 mb-6 justify-between flex flex-col sm:flex-row items-baseline gap-4'>
-                        <div className='mt-auto'>
+                    {/*
+                     * The sequence count sits beside the buttons and takes its own line once they
+                     * no longer fit next to it. `flex-wrap` decides that from the content rather
+                     * than a breakpoint, because viewport width is a poor guide to the width this
+                     * row actually has -- the search form sits alongside this column from `md` up,
+                     * so there is less room here at a 768px viewport than at a 640px one -- and
+                     * because the buttons on offer, and the counts in their labels, vary by page.
+                     *
+                     * The count claims a little more width than its text needs, so that the two
+                     * separate while the buttons still have room to breathe rather than at the
+                     * moment they stop fitting.
+                     */}
+                    <div className='text-sm text-gray-800 mb-6 justify-between flex flex-wrap items-baseline gap-x-4 gap-y-2'>
+                        <div className='mt-auto min-w-80'>
                             {buildSequenceCountText(totalSequences, oldCount, initialCount)}
                             {detailsHook.isPending ||
                             aggregatedHook.isPending ||
