@@ -380,10 +380,15 @@ const InnerSearchFullUI = ({
                          * count has already grown into the space between, so there is none left
                          * for the margin to take and it changes nothing.
                          *
-                         * They wrap among themselves rather than being squeezed: without this a
-                         * narrow screen crushes "Customize columns" to one letter per line.
+                         * The buttons are squeezed rather than wrapped as the row narrows, but
+                         * `*:break-normal` stops that going too far. `base.css` sets
+                         * `word-break: break-word` on everything, and that legacy value lets a line
+                         * break between any two characters *for intrinsic sizing too*, so a flex
+                         * item's automatic minimum size collapses to one character: "Customize
+                         * columns" came out 13px wide and 260px tall. Breaking at word boundaries
+                         * instead floors each button at its longest word.
                          */}
-                        <div className='flex flex-wrap items-center gap-2 ml-auto'>
+                        <div className='flex items-center gap-2 ml-auto *:break-normal'>
                             <Button
                                 className='underline text-primary-700 hover:text-primary-500'
                                 onClick={() => setIsColumnModalOpen(true)}
