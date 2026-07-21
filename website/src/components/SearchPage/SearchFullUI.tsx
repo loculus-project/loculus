@@ -374,7 +374,13 @@ const InnerSearchFullUI = ({
                                 </span>
                             ) : null}
                         </div>
-                        <div className='flex'>
+                        {/*
+                         * `ml-auto` keeps the buttons against the right edge once the count has
+                         * taken its own line and they are alone on theirs. Above that width the
+                         * count has already grown into the space between, so there is none left
+                         * for the margin to take and it changes nothing.
+                         */}
+                        <div className='flex ml-auto'>
                             <Button
                                 className='mr-4 underline text-primary-700 hover:text-primary-500'
                                 onClick={() => setIsColumnModalOpen(true)}
