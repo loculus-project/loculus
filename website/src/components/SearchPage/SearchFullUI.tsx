@@ -340,12 +340,13 @@ const InnerSearchFullUI = ({
                         </div>
                     )}
                     {/*
-                     * Narrowing is absorbed in two stages: `flex-wrap` here drops the sequence
-                     * count onto its own line as soon as the buttons no longer fit beside it,
-                     * giving them the full width before they start wrapping among themselves.
-                     * In the button row, `whitespace-nowrap` is inherited so a label never wraps
-                     * *inside* the fixed-height button box, and `*:shrink-0` keeps buttons at
-                     * their natural width so they wrap as whole buttons rather than being squeezed.
+                     * Narrowing is absorbed in stages. `flex-wrap` here drops the sequence count
+                     * onto its own line as soon as the buttons no longer fit beside it, giving
+                     * them the full width before they start wrapping among themselves. In the
+                     * button row, `*:shrink-0` keeps each button at its natural width so they
+                     * wrap as whole buttons rather than being squeezed, while `*:max-w-full` caps
+                     * them at the row width -- so a label only wraps when the button genuinely
+                     * cannot fit on one line, which at that point is preferable to overflowing.
                      */}
                     <div className='text-sm text-gray-800 mb-6 justify-between flex flex-wrap items-baseline gap-x-4 gap-y-2'>
                         <div className='mt-auto'>
@@ -359,7 +360,7 @@ const InnerSearchFullUI = ({
                                 </span>
                             ) : null}
                         </div>
-                        <div className='flex flex-wrap items-center gap-2 whitespace-nowrap *:shrink-0'>
+                        <div className='flex flex-wrap items-center gap-2 *:shrink-0 *:max-w-full'>
                             {showEditDataUseTermsControls && dataUseTermsEnabled && (
                                 <EditDataUseTermsModal
                                     lapisUrl={lapisUrl}
