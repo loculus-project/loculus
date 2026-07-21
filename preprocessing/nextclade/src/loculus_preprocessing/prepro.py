@@ -536,7 +536,7 @@ def process_single(
     output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
         accession_version, unprocessed, config
     )
-    if unprocessed.files:
+    if unprocessed.files and any(unprocessed.files.values()):
         file_processing_service = FileProcessingService(
             file_processing_service_url=config.file_processing_service.file_processing_service_url
             if config.file_processing_service
@@ -599,7 +599,7 @@ def process_single_unaligned(
         accession_version, unprocessed, config
     )
 
-    if unprocessed.files:
+    if unprocessed.files and any(unprocessed.files.values()):
         file_processing_service = FileProcessingService(
             file_processing_service_url=config.file_processing_service.file_processing_service_url
             if config.file_processing_service

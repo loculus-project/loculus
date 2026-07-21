@@ -1,9 +1,6 @@
 name: Create and Upload Custom Deacon Index
 
 on:
-  push:
-    branches:  # remove after triggering
-      - deacon-service
   workflow_dispatch: # Only manual trigger for now, since this is a rare operation
 
 env:
