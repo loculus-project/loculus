@@ -62,39 +62,51 @@ const DataTableComponent: React.FC<Props> = ({
     const mutationSections = dataTableData.table.filter(
         ({ header }) => header === DEFAULT_NUC_MUTATION_DETAILS_HEADER || header === DEFAULT_AA_MUTATION_DETAILS_HEADER,
     );
+    const sequenceDisplayName = dataTableData.topmatter.sequenceDisplayName;
+    const authors = dataTableData.topmatter.authors ?? [];
+    const hasAuthors = authors.length > 0;
+    const hasRecordOverview = sequenceDisplayName !== undefined || hasAuthors;
     const hasSequenceCitations = sequenceCitations !== undefined && sequenceCitations.length > 0;
 
     return (
         <div>
-            {dataTableData.topmatter.sequenceDisplayName !== undefined && (
-                <div className='pr-6 mb-4 italic'>{dataTableData.topmatter.sequenceDisplayName}</div>
-            )}
-            {dataTableData.topmatter.authors !== undefined && dataTableData.topmatter.authors.length > 0 && (
-                <div className='pr-6 mb-4'>
-                    <AuthorList authors={dataTableData.topmatter.authors} />
-                    {authorSection
-                        .flatMap(({ rows }) => rows)
-                        .map((entry: TableDataEntry, index: number) => (
-                            <h4 key={index} className='text-sm text-gray-500 mt-1' title={entry.label}>
-                                {typeof entry.value === 'string'
-                                    ? deduplicateSemicolonSeparated(entry.value)
-                                    : entry.value}
-                            </h4>
-                        ))}
+            {hasRecordOverview && (
+                <div className='w-[calc(100%+2rem)] -ml-4 mb-3 p-4'>
+                    {sequenceDisplayName !== undefined && (
+                        <div
+                            className={`pr-6 text-lg font-semibold text-gray-900 leading-snug ${hasAuthors ? 'mb-3' : ''}`}
+                        >
+                            {sequenceDisplayName}
+                        </div>
+                    )}
+                    {hasAuthors && (
+                        <div className='pr-6'>
+                            <AuthorList authors={authors} />
+                            {authorSection
+                                .flatMap(({ rows }) => rows)
+                                .map((entry: TableDataEntry, index: number) => (
+                                    <h4 key={index} className='text-sm text-gray-500 mt-1' title={entry.label}>
+                                        {typeof entry.value === 'string'
+                                            ? deduplicateSemicolonSeparated(entry.value)
+                                            : entry.value}
+                                    </h4>
+                                ))}
+                        </div>
+                    )}
                 </div>
             )}
 
             {(generalSections.length > 0 || hasSequenceCitations) && (
                 <div
-                    className='grid gap-x-6'
+                    className='w-[calc(100%+2rem)] -ml-4 p-4 grid gap-x-10 gap-y-5'
                     style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100vw, 32rem), 1fr))' }}
                 >
                     {generalSections.map(({ header, rows }) => (
-                        <div key={header} className='p-4 pl-0'>
-                            <div className='flex flex-row'>
-                                <h1 className='py-2 text-lg font-semibold border-b mr-2'>{header}</h1>
+                        <div key={header} className='min-w-0'>
+                            <div className='flex flex-row pb-1 border-b border-gray-200'>
+                                <h1 className='text-sm font-semibold text-gray-800'>{header}</h1>
                             </div>
-                            <div className='mt-4'>
+                            <div className='mt-1'>
                                 {rows.map((entry: TableDataEntry, index: number) => (
                                     <DataTableEntry
                                         key={index}
@@ -107,11 +119,11 @@ const DataTableComponent: React.FC<Props> = ({
                         </div>
                     ))}
                     {hasSequenceCitations && (
-                        <div className='p-4 pl-0'>
-                            <div className='flex flex-row'>
-                                <h1 className='py-2 text-lg font-semibold border-b mr-2'>Cited in</h1>
+                        <div className='min-w-0'>
+                            <div className='flex flex-row pb-1 border-b border-gray-200'>
+                                <h1 className='text-sm font-semibold text-gray-800'>Cited in</h1>
                             </div>
-                            <div className='mt-4'>
+                            <div className='mt-2'>
                                 <CitationList
                                     citations={sequenceCitations}
                                     maxDisplayedCitations={3}
@@ -123,52 +135,43 @@ const DataTableComponent: React.FC<Props> = ({
                 </div>
             )}
 
-            {alignmentSections.length > 0 && <hr className='my-8 border-t-2 border-gray-200' />}
-
             {alignmentSections.length > 0 && (
-                <div>
-                    <h2 className='text-xl font-bold mb-2'>Alignment and QC</h2>
-                </div>
-            )}
-
-            {alignmentSections.length > 0 && (
-                <div
-                    className={alignmentSections.length === 1 ? '' : 'grid gap-x-6'}
-                    style={
-                        alignmentSections.length === 1
-                            ? undefined
-                            : { gridTemplateColumns: 'repeat(auto-fill, minmax(min(100vw, 20rem), 1fr))' }
-                    }
-                >
-                    {alignmentSections.map(({ header, rows }) => (
-                        <div key={header} className='p-4 pl-0'>
-                            <div className='flex flex-row'></div>
-                            <div className='mt-4'>
-                                {rows.map((entry: TableDataEntry, index: number) => (
-                                    <DataTableEntry
-                                        key={index}
-                                        data={entry}
-                                        dataUseTermsHistory={dataUseTermsHistory}
-                                        referenceGenomesInfo={referenceGenomesInfo}
-                                    />
-                                ))}
+                <div className='-mx-4 xl:mr-0 xl:max-w-xl mt-8 p-4'>
+                    <h2 className='text-sm font-semibold text-gray-800 pb-1 border-b border-gray-200 mb-1'>
+                        Alignment and QC
+                    </h2>
+                    <div
+                        className={alignmentSections.length === 1 ? '' : 'grid gap-x-10 gap-y-5'}
+                        style={
+                            alignmentSections.length === 1
+                                ? undefined
+                                : { gridTemplateColumns: 'repeat(auto-fill, minmax(min(100vw, 20rem), 1fr))' }
+                        }
+                    >
+                        {alignmentSections.map(({ header, rows }) => (
+                            <div key={header} className='min-w-0'>
+                                <div className='mt-1'>
+                                    {rows.map((entry: TableDataEntry, index: number) => (
+                                        <DataTableEntry
+                                            key={index}
+                                            data={entry}
+                                            dataUseTermsHistory={dataUseTermsHistory}
+                                            referenceGenomesInfo={referenceGenomesInfo}
+                                        />
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             )}
-
-            {mutationSections.length > 0 && <hr className='my-8 border-t-2 border-gray-200' />}
 
             {mutationSections.length > 0 && (
-                <div
-                    className='grid gap-x-6'
-                    style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100vw, 32rem), 1fr))' }}
-                >
+                <div className='w-[calc(100%+2rem)] -ml-4 mt-8 p-4 grid gap-y-6'>
                     {mutationSections.map(({ header, rows }) => (
-                        <div key={header} className='p-4 pl-0'>
-                            <div className='flex flex-row'>
-                                <h1 className='py-2 text-lg font-semibold border-b mr-2'>{header}</h1>
+                        <div key={header} className='min-w-0'>
+                            <div className='flex flex-row pb-1 border-b border-gray-200'>
+                                <h1 className='text-sm font-semibold text-gray-800'>{header}</h1>
                             </div>
                             {hasReferenceAccession &&
                                 (header === DEFAULT_NUC_MUTATION_DETAILS_HEADER ||
@@ -182,7 +185,7 @@ const DataTableComponent: React.FC<Props> = ({
                                         {references.length > 1 ? 's' : ''}
                                     </h2>
                                 )}
-                            <div className='mt-4'>
+                            <div className='mt-2'>
                                 {rows.map((entry: TableDataEntry, index: number) => (
                                     <DataTableEntry
                                         key={index}

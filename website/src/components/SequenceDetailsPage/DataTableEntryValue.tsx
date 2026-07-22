@@ -195,7 +195,7 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, re
     const { value, customDisplay } = data;
 
     return (
-        <div className='whitespace-normal text-gray-600 break-inside-avoid'>
+        <div className='whitespace-normal font-medium text-gray-800 break-inside-avoid'>
             <div>
                 {!customDisplay && <PlainValueDisplay value={value} />}
                 {customDisplay?.type === 'percentage' && typeof value === 'number' && `${(100 * value).toFixed(2)}%`}
