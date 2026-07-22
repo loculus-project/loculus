@@ -36,7 +36,7 @@
         "requiredWhen": {
           "groups": ["metadata"],
           "type": "array",
-          "description": "Array of conditions under which this metadata field is required. Conditions can be the presence of a file category - specified as files.<file_category>, or another metadata field - specified as processed.<field_name>"
+          "description": "Array of conditions under which this metadata field is required. Conditions can be the presence of a file category - specified as files.<file_category>, or another metadata field - specified as <field_name>"
         },
         "desired": {
           "groups": ["metadata"],
@@ -354,7 +354,7 @@
           },
           "then": {
             "not": { "required": ["requiredWhen"] },
-            "errorMessage": "A field with required: true cannot also set requiredWhen (it is already always required)."
+            "errorMessage": "A field with 'required: true' cannot also set 'requiredWhen' (it is already always required)."
           }
         }
       ]
