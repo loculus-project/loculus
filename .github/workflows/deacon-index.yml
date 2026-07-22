@@ -47,8 +47,8 @@ jobs:
           ./file-processing/build-index.sh -o "${INDEX_VERSIONED}"
           ls -lh "${INDEX_VERSIONED}"
 
-      - name: Set up oras
-        uses: oras-project/setup-oras@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v4
@@ -57,15 +57,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish deacon index as an OCI artifact for the file-processing image volume
+      - name: Publish deacon index as an OCI image for the file-processing image volume
         run: |
           # Push under a stable filename ("deacon.idx") regardless of the dated
           # build filename, so the mounted path in the deployment never changes.
+          #
+          # This must be a real container image (FROM scratch + COPY), not a bare
+          # OCI artifact (e.g. `oras push --artifact-type ...`): Kubernetes'
+          # ImageVolume / containerd only support images with a proper image
+          # config (rootfs.diff_ids matching the layers). Artifacts with an empty
+          # config fail to mount with "mismatched image rootfs and manifest layers".
+          # See https://github.com/containerd/containerd/issues/11907
           cp "${INDEX_VERSIONED}" deacon.idx
-          oras push "${DEACON_INDEX_IMAGE}:${DATE_TAG}" \
-            --artifact-type application/vnd.loculus.deacon-index \
-            deacon.idx
-          oras tag "${DEACON_INDEX_IMAGE}:${DATE_TAG}" latest
+          cat <<'EOF' > Dockerfile.deacon-index
+          FROM scratch
+          COPY deacon.idx /deacon.idx
+          EOF
+          docker buildx build \
+            --push \
+            --tag "${DEACON_INDEX_IMAGE}:${DATE_TAG}" \
+            --tag "${DEACON_INDEX_IMAGE}:latest" \
+            -f Dockerfile.deacon-index .
 
       - name: Create S3cmd config
         run: |

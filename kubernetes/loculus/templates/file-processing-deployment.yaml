@@ -54,8 +54,7 @@ spec:
               mountPath: /config/config.yaml
               subPath: config.yaml
             - name: deacon-index
-              mountPath: /data/deacon.idx
-              subPath: deacon.idx
+              mountPath: /data
               readOnly: true
       volumes:
         - name: loculus-file-processing-config-volume
@@ -64,5 +63,5 @@ spec:
         - name: deacon-index
           image:
             reference: ghcr.io/loculus-project/deacon-index:latest
-            pullPolicy: IfNotPresent
+            pullPolicy: Always # TODO: revert to IfNotPresent
 {{- end }}

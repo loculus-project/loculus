@@ -2710,7 +2710,7 @@ taxonomyService:
   taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
   taxonomy_service_url: *taxonomy_service_url
 fileProcessingService:
-  file_processing_service_url: http://loculus-file-processing-service:5000
+  file_processing_service_url: http://loculus-file-processing:5000
 subdomainSeparator: "-"
 replicas:
   website: 1

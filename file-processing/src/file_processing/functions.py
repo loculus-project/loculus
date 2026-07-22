@@ -98,7 +98,7 @@ def validate_raw_reads_submission(
                     )
                 )
                 continue
-            local_files.append(file_name_internal)
+            local_files.append(str(file_name_internal))
         if errors:
             return ResponseWithFiles(
                 files={FileCategory.RAW_READS: files}, errors=errors, warnings=warnings
