@@ -27,10 +27,7 @@ const hiddenFieldValues = {
 const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
 
 if (!cleanedOrganism) {
-    return {
-        statusCode: 404,
-        body: 'Organism not found',
-    };
+    return new Response(undefined, { status: 404 });
 }
 
 const clientConfig = getRuntimeConfig().public;

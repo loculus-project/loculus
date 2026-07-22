@@ -23,10 +23,7 @@ const accession = Astro.url.searchParams.get('accession') || undefined;
 const version = Astro.url.searchParams.get('version') || undefined;
 
 if (!cleanedOrganism) {
-    return {
-        statusCode: 404,
-        body: 'Organism not found',
-    };
+    return new Response(undefined, { status: 404 });
 }
 const schema = getSchema(cleanedOrganism.key);
 const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'revise', true);
