@@ -24,6 +24,7 @@ from ena_deposition.config import Config
 from ena_deposition.submission_db_helper import (
     AssemblyTableEntry,
     ProjectTableEntry,
+    RawReadsTableEntry,
     SampleTableEntry,
     Status,
     db_init,
@@ -38,6 +39,7 @@ class EntityType(Enum):
     PROJECT = "project"
     SAMPLE = "sample"
     ASSEMBLY = "assembly"
+    RAW_READS = "raw_reads"
 
 
 @dataclass
@@ -62,7 +64,7 @@ class ENAVisibilityChecker(VisibilityChecker):
     """Checker for ENA visibility"""
 
     def check_visibility(self, config: Config, accession: str) -> datetime | None:
-        file_type = "xml" if accession.startswith(("PRJ", "SAM", "GCA")) else "embl"
+        file_type = "xml" if accession.startswith(("PRJ", "SAM", "GCA", "ERR", "ERX")) else "embl"
         response = requests.get(
             f"https://www.ebi.ac.uk/ena/browser/api/{file_type}/{accession}",
             allow_redirects=False,
@@ -81,6 +83,8 @@ class NCBIVisibilityChecker(VisibilityChecker):
             path = "bioproject"
         elif accession.startswith("SAM"):
             path = "biosample"
+        elif accession.startswith(("ERR", "ERX")):
+            path = "sra"
         else:
             path = "nuccore"
         response = requests.get(
@@ -139,12 +143,36 @@ COLUMN_CONFIGS = {
         accession_field_name_prefix="gca_accession",
         checker_class=ENAVisibilityChecker,
     ),
+    (EntityType.RAW_READS, "ena_run_first_publicly_visible"): ColumnCheckConfig(
+        entry_class=RawReadsTableEntry,
+        visibility_column="ena_run_first_publicly_visible",
+        accession_field_name_prefix="err_accession",
+        checker_class=ENAVisibilityChecker,
+    ),
+    (EntityType.RAW_READS, "ncbi_run_first_publicly_visible"): ColumnCheckConfig(
+        entry_class=RawReadsTableEntry,
+        visibility_column="ncbi_run_first_publicly_visible",
+        accession_field_name_prefix="err_accession",
+        checker_class=NCBIVisibilityChecker,
+    ),
+    (EntityType.RAW_READS, "ena_experiment_first_publicly_visible"): ColumnCheckConfig(
+        entry_class=RawReadsTableEntry,
+        visibility_column="ena_experiment_first_publicly_visible",
+        accession_field_name_prefix="erx_accession",
+        checker_class=ENAVisibilityChecker,
+    ),
+    (EntityType.RAW_READS, "ncbi_experiment_first_publicly_visible"): ColumnCheckConfig(
+        entry_class=RawReadsTableEntry,
+        visibility_column="ncbi_experiment_first_publicly_visible",
+        accession_field_name_prefix="erx_accession",
+        checker_class=NCBIVisibilityChecker,
+    ),
 }
 
 
 def get_entities_needing_column_check(
     db_engine: Engine, column_config: ColumnCheckConfig
-) -> list[SampleTableEntry | ProjectTableEntry | AssemblyTableEntry]:
+) -> list[SampleTableEntry | ProjectTableEntry | AssemblyTableEntry | RawReadsTableEntry]:
     """Get entities that don't have a timestamp for a specific visibility column"""
     return find_conditions_in_db(
         db_engine,
@@ -157,7 +185,7 @@ def get_entities_needing_column_check(
 
 
 def get_accessions_to_check(
-    entity: SampleTableEntry | ProjectTableEntry | AssemblyTableEntry,
+    entity: SampleTableEntry | ProjectTableEntry | AssemblyTableEntry | RawReadsTableEntry,
     column_config: ColumnCheckConfig,
 ) -> set[str]:
     """

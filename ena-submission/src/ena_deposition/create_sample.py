@@ -242,6 +242,8 @@ def sync_state_with_submission_table(db_engine: Engine):
             )
             continue
         biosample = None
+        # TODO: remove this once raw read submission and prevent users from submitting
+        # `biosampleAccession` once raw read submission is fully implemented and tested
         if row and row.seq_metadata.get("biosampleAccession"):
             biosample = row.seq_metadata["biosampleAccession"]
         add_to_sample_table(
@@ -281,6 +283,8 @@ def sample_table_create(db_engine: Engine, config: Config):
             db_engine, SubmissionTableEntry, conditions=asdict(seq_key)
         )
 
+        # TODO: remove this once raw read submission and prevent users from submitting
+        # `biosampleAccession` once raw read submission is fully implemented and tested
         if row.result and row.result.get("biosample_accession"):
             update_with_existing_biosample(db_engine, sample_data_in_submission_table[0], config)
             continue

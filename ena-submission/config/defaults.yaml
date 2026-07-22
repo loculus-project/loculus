@@ -10,6 +10,8 @@ keycloak_client_id: backend-client
 ingest_pipeline_submission_group: 1
 db_name: Loculus
 unique_project_suffix: Loculus
+unique_raw_reads_suffix: Loculus
+raw_reads_metadata_field: raw_reads
 ena_submission_username: fake-user
 ena_submission_password: fake-password
 submit_to_ena_prod: False
@@ -29,7 +31,7 @@ min_between_publicness_checks: 720
 log_level: DEBUG
 metadata_fallback_fields:
   specimenCollectorSampleId: submissionId
-manifest_fields_mapping:
+assembly_manifest_fields_mapping:
   authors:
     loculus_fields: [authors]
     function: reformat_authors
@@ -41,10 +43,26 @@ manifest_fields_mapping:
     default: "Unknown"
   coverage:
     loculus_fields: [depthOfCoverage]
-    type: int
-    default: 1
+    default: "1"
   run_ref:
     loculus_fields: [insdcRawReadsAccession]
+raw_reads_manifest_fields_mapping:
+  instrument:
+    loculus_fields: [sequencingInstrument]
+    default: "unspecified"
+  platform:
+    loculus_fields: [sequencingInstrument]
+  library_source:
+    loculus_fields: [sequencingLibrarySource]
+    default: "OTHER"
+  library_selection:
+    loculus_fields: [sequencingLibrarySelection]
+    default: "unspecified"
+  library_strategy:
+    loculus_fields: [sequencingLibraryStrategy]
+    default: "unspecified"
+  insert_size:
+    loculus_fields: [pairedNominalLength]
 #ena_checklist: ERC000033 - do not use until all fields are mapped to ENA accepted options
 metadata_mapping:
   'subject exposure':

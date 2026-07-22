@@ -2940,6 +2940,8 @@ enaDeposition:
   enaUniqueSuffix: Loculus
   enaIsBroker: False
   enaSuppressedListTestUrl: "https://loculus-project.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt"
+  enaApprovedListTestUrl: "https://raw.githubusercontent.com/pathoplexus/ena-submission/raw_reads_test/test/approved_ena_submission_list.json"
+  rawReadsMetadataField: raw_reads
 taxonomyService:
   dbVersion: "ncbi_taxonomy_2026-05-01"
   taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
