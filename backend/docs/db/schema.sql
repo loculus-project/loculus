@@ -434,6 +434,7 @@ CREATE TABLE public.seqset_citation_source (
     title text NOT NULL,
     year integer NOT NULL,
     contributors jsonb NOT NULL,
+    journal text,
     CONSTRAINT seqset_citation_source_origin_check CHECK ((origin = ANY (ARRAY['CROSSREF'::text, 'CURATED'::text])))
 );
 
