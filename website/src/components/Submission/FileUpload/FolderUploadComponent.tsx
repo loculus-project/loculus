@@ -71,6 +71,7 @@ type PreviousUpload = {
     type: 'previousUpload';
     fileId: string;
     name: string;
+    path: string;
 };
 
 type Error = {
@@ -111,23 +112,16 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 }) => {
     const isClient = useClientFlag();
     const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(() => {
-        if (fileMapping === undefined) return undefined;
+        const categoryFiles = fileMapping?.get(fileCategory.name);
+        if (categoryFiles === undefined || categoryFiles.size === 0) return undefined;
 
-        // TODO: Re-implement previous uploads
-        // const previousUploadFiles: Record<SubmissionId, PreviousUpload[]> = {};
-        // Object.entries(fileMapping).forEach(([submissionId, categories]) => {
-        //     const fileCategoryFiles = categories[fileCategory.name] ?? [];
-        //     previousUploadFiles[submissionId] = fileCategoryFiles.map((file) => ({
-        //         type: 'previousUpload',
-        //         fileId: file.fileId,
-        //         name: file.name,
-        //     }));
-        // });
-
-        // const hasPreviousFiles = Object.values(previousUploadFiles).some((files) => files.length > 0);
-        // if (!hasPreviousFiles) return undefined;
-
-        return { type: 'uploadCompleted', files: [] };
+        const files: PreviousUpload[] = [...categoryFiles.values()].map((file) => ({
+            type: 'previousUpload',
+            fileId: file.fileId!,
+            name: file.name,
+            path: file.path,
+        }));
+        return { type: 'uploadCompleted', files };
     });
     const [isDragging, setIsDragging] = useState(false);
 
@@ -277,25 +271,14 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     newMapping.set(
                         fileCategory.name,
                         new Map(
-                            fileUploadState.files.map((file) =>
-                                file.type !== 'previousUpload'
-                                    ? [
-                                          file.path,
-                                          {
-                                              name: file.name,
-                                              path: file.path,
-                                              fileId: file.fileId,
-                                          },
-                                      ]
-                                    : [
-                                          file.fileId,
-                                          {
-                                              name: file.name,
-                                              path: file.fileId,
-                                              fileId: file.fileId,
-                                          },
-                                      ],
-                            ),
+                            fileUploadState.files.map((file) => [
+                                file.path,
+                                {
+                                    name: file.name,
+                                    path: file.path,
+                                    fileId: file.fileId,
+                                },
+                            ]),
                         ),
                     );
                     return newMapping;
@@ -332,7 +315,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         setFileUploadState((state) => {
             if (state?.type === 'uploadCompleted') {
                 const result = produce(state, (draft) => {
-                    draft.files = draft.files.filter((f) => !hasFileKey(f, key));
+                    draft.files = draft.files.filter((f) => !(f.path === key));
                 });
 
                 if (result.files.length === 0) return undefined;
@@ -364,13 +347,11 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
             // Check for collisions with existing files
             const filePaths = new Set(awaiting.map((file) => file.path));
-            const collisions = fileUploadState.files.filter((file) => 'path' in file && filePaths.has(file.path));
+            const collisions = fileUploadState.files.filter((file) => filePaths.has(file.path));
 
             // Updates the state of file uploads and triggers the upload of the new files
             const addAdditionalFiles = async () => {
-                const existingFiles = fileUploadState.files.filter(
-                    (file) => !('path' in file) || !filePaths.has(file.path),
-                );
+                const existingFiles = fileUploadState.files.filter((file) => !filePaths.has(file.path));
                 const pendingFiles = await requestFileUploads(awaiting);
                 setFileUploadState({
                     type: 'uploadInProgress',
@@ -462,14 +443,14 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 <div>
                     <h3 className='text-sm font-medium'>{fileCategory.displayName ?? fileCategory.name}</h3>
                     {fileUploadState.files.map((file) => (
-                        <div key={getFileKey(file)} className='flex items-center mb-2 gap-2'>
+                        <div key={file.path} className='flex items-center mb-2 gap-2'>
                             <div className='flex-1 min-w-0'>
-                                <FileListItem file={file} filePaths={submissionFilePaths} />
+                                <FileListItem file={file} filePaths={submissionFilePaths} inputMode={inputMode} />
                             </div>
                             <Button
-                                onClick={() => handleDiscardFile(getFileKey(file))}
+                                onClick={() => handleDiscardFile(file.path)}
                                 alsoDisabledIf={fileUploadState.type !== 'uploadCompleted'}
-                                data-testid={`discard_${fileCategory.name}_${getFileKey(file)}`}
+                                data-testid={`discard_${fileCategory.name}_${file.path}`}
                                 variant='outline-neutral'
                                 className='font-normal!'
                                 size='sm'
@@ -525,44 +506,36 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 type FileListeItemProps = {
     file: SingleFileUpload;
     filePaths: Set<string> | undefined;
+    inputMode: InputMode;
 };
 
-const FileListItem: FC<FileListeItemProps> = ({ file, filePaths }) => {
+const FileListItem: FC<FileListeItemProps> = ({ file, filePaths, inputMode }) => {
     const showProgress = file.type === 'pending';
     const percentage = showProgress ? Math.round((file.uploadedParts / file.totalParts) * 100) : 0;
-    const folderPath = file.type !== 'previousUpload' ? file.path.split('/').slice(0, -1) : [];
-    const isLinked = file.type !== 'previousUpload' && filePaths?.has(file.path);
+    const folderPath = file.path.split('/').slice(0, -1);
 
     return (
         <div className='flex flex-row'>
             <div className='w-3.5' />
             <LucideFile className='h-4 w-4 text-gray-500 ml-1 mr-1' />
             <div className='flex-1 min-w-0 flex items-center'>
-                {file.type !== 'previousUpload' && folderPath.length > 0 && (
+                {folderPath.length > 0 && (
                     <>
                         <span className='text-xs text-gray-400 truncate max-w-[140px]'>{folderPath.join('/')}</span>
                         <span className='text-xs text-gray-400'>/</span>
                     </>
                 )}
                 <span className='text-xs text-gray-700 truncate max-w-[140px]'>{file.name}</span>
-                {file.type === 'previousUpload' ? (
-                    <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>(uploaded)</span>
-                ) : (
-                    <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>({formatFileSize(file.size)})</span>
-                )}
+                <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>
+                    ({file.type === 'previousUpload' ? 'uploaded' : formatFileSize(file.size)})
+                </span>
                 <span className='text-xs text-blue-500 ml-2 w-9 shrink-0 text-right whitespace-nowrap'>
                     {showProgress ? `${percentage}%` : ''}
                 </span>
             </div>
             {/* Status icon */}
             <div className='ml-2 w-5 flex justify-center'>{getStatusIcon(file.type)}</div>
-            <div className='text-xs'>
-                {isLinked ? (
-                    <span className='text-green-500'>LINKED</span>
-                ) : (
-                    <span className='text-gray-400'>UNLINKED</span>
-                )}
-            </div>
+            <div className='text-xs'>{inputMode === 'bulk' && getLinkageIcon(file, filePaths)}</div>
         </div>
     );
 };
@@ -590,6 +563,14 @@ const getStatusIcon = (status: UploadStatus) => {
     }
 };
 
+const getLinkageIcon = (file: SingleFileUpload, filePaths?: Set<string>) => {
+    return filePaths?.has(file.path) ? (
+        <span className='text-green-500'>LINKED</span>
+    ) : (
+        <span className='text-gray-400'>UNLINKED</span>
+    );
+};
+
 /**
  * Returns a filtered file list, filtering out any file that starts with a period/dot
  * or is in a directory that starts with a period/dot.
@@ -615,12 +596,4 @@ const isFilesArrayValid = (files: File[], inputMode: InputMode): string | undefi
 /* Takes a webkitRelativePath and returns the path without the parent folder. */
 const getRelativePath = (path: string) => {
     return path.split('/').slice(1).join('/');
-};
-
-const getFileKey = (file: SingleFileUpload) => {
-    return 'path' in file ? file.path : file.fileId;
-};
-
-const hasFileKey = (file: SingleFileUpload, key: string) => {
-    return getFileKey(file) === key;
 };

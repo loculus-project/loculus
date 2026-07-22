@@ -40,6 +40,8 @@ export function parseSubmissionFileMapping(text: string): Result<SubmissionFileM
     const rows = parsed.data.slice(1);
 
     const fileColumns = columns.filter((column) => column.name.startsWith(FILES_HEADER_PREFIX));
+    if (fileColumns.length === 0) return ok(new Map());
+
     const idColumn = columns.find((column) => [SUBMISSION_ID_INPUT_FIELD, 'submissionId'].includes(column.name));
     if (idColumn === undefined)
         return err(new Error('Missing id column. Please ensure this is included in the uploaded metadata file.'));
@@ -123,6 +125,15 @@ export async function applyFileMappings(metadataFile: File, merged: SubmissionFi
     if (rows.length === 0) return metadataFile;
 
     const header = rows[0];
+
+    // ensure a column exists for every (category) present in the merged mapping
+    const categories = new Set<string>();
+    for (const byCategory of merged.values()) for (const c of byCategory.keys()) categories.add(c);
+    for (const category of categories) {
+        const name = `${FILES_HEADER_PREFIX}${category}`;
+        if (!header.includes(name)) header.push(name); // header is a mutable copy
+    }
+
     const idIndex = header.findIndex((h) => [SUBMISSION_ID_INPUT_FIELD, 'submissionId'].includes(h));
     const fileColumns = header
         .map((name, index) => ({ category: name.slice(FILES_HEADER_PREFIX.length), index }))

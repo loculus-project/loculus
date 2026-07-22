@@ -9,7 +9,7 @@ import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
-import { type FilesBySubmissionId, type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
+import { type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
 import { type InputField, type SubmissionDataTypes } from '../../types/config.ts';
 import { getLatestAccessionVersionForRevision, type SequenceEntryHistory } from '../../types/lapis.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -18,6 +18,7 @@ import { getAccessionVersionString, parseAccessionVersionFromString } from '../.
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu.tsx';
 import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
+import { applyFileMappings, type FileMapping } from '../Submission/FileUpload/fileMapping.ts';
 import { Button } from '../common/Button';
 import ErrorBox from '../common/ErrorBox';
 import { Spinner } from '../common/Spinner';
@@ -63,11 +64,16 @@ const InnerEditPage: FC<EditPageProps> = ({
     );
 
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
-    const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(() =>
-        extraFilesEnabled && dataToEdit.submittedData.files
-            ? { [dataToEdit.submissionId]: dataToEdit.submittedData.files }
-            : undefined,
-    );
+    const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(() => {
+        const previousFiles = dataToEdit.submittedData.files;
+        if (!previousFiles) return undefined;
+        return new Map(
+            Object.entries(previousFiles).map(([category, files]) => [
+                category,
+                new Map(files.map((file) => [file.name, { name: file.name, path: file.name, fileId: file.fileId }])),
+            ]),
+        );
+    });
 
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
 
@@ -87,9 +93,7 @@ const InnerEditPage: FC<EditPageProps> = ({
         (message) => toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
-    const submitEditedDataForAccessionVersion = () => {
-        const fileMappingForSubmission = extraFilesEnabled ? fileMapping : undefined;
-
+    const submitEditedDataForAccessionVersion = async () => {
         if (isCreatingRevision) {
             const fastaIds = submissionDataTypes.consensusSequences ? editableSequences.getFastaIds() : undefined;
             const metadataFile = editableMetadata.getMetadataTsv(
@@ -102,10 +106,16 @@ const InnerEditPage: FC<EditPageProps> = ({
                 return;
             }
 
+            let finalMetadataFile = metadataFile;
+            const finalSubmissionFileMapping = new Map([[dataToEdit.submissionId, fileMapping ?? new Map()]]);
+
+            if (extraFilesEnabled) {
+                finalMetadataFile = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
+            }
+
             if (!submissionDataTypes.consensusSequences) {
                 submitRevision({
-                    metadataFile,
-                    fileMapping: fileMappingForSubmission,
+                    metadataFile: finalMetadataFile,
                 });
                 return;
             }
@@ -118,12 +128,19 @@ const InnerEditPage: FC<EditPageProps> = ({
                 return;
             }
             submitRevision({
-                metadataFile,
+                metadataFile: finalMetadataFile,
                 sequenceFile,
-                fileMapping: fileMappingForSubmission,
             });
         } else {
-            const fileMappingForEdit = fileMappingForSubmission?.[dataToEdit.submissionId] ?? null;
+            const fileMappingForEdit =
+                extraFilesEnabled && fileMapping !== undefined
+                    ? Object.fromEntries(
+                          [...fileMapping].map(([category, files]) => [
+                              category,
+                              [...files.values()].map((file) => ({ fileId: file.fileId!, name: file.name })),
+                          ]),
+                      )
+                    : null;
             submitEdit({
                 accession: dataToEdit.accession,
                 version: dataToEdit.version,

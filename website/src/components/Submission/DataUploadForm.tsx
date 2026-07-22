@@ -110,10 +110,15 @@ const InnerDataUploadForm = ({
             return;
         }
 
-        // TODO: Fix form mode
         let finalMetadataFile = metadataFile;
-        if (extraFilesEnabled && submissionFileMapping !== undefined) {
-            const merged = mergeFileMappings(submissionFileMapping, fileMapping ?? new Map());
+        let finalSubmissionFileMapping = submissionFileMapping;
+
+        if (submissionId !== undefined && inputMode === 'form') {
+            finalSubmissionFileMapping = new Map([[submissionId, fileMapping ?? new Map()]]);
+        }
+
+        if (extraFilesEnabled && finalSubmissionFileMapping !== undefined) {
+            const merged = mergeFileMappings(finalSubmissionFileMapping, fileMapping ?? new Map());
             if (merged.isErr()) {
                 onError(merged.error.message);
                 return;
@@ -305,7 +310,7 @@ export const ExtraFilesUpload = ({
     fileCategories: FileCategory[];
     fileMapping: FileMapping | undefined;
     setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
-    submissionFileMapping: SubmissionFileMapping | undefined;
+    submissionFileMapping?: SubmissionFileMapping | undefined;
     formSubmissionId?: string;
     onError: (message: string) => void;
 }) => {
