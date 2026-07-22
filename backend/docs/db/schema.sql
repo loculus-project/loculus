@@ -424,6 +424,19 @@ CREATE TABLE public.metadata_upload_aux_table (
 ALTER TABLE public.metadata_upload_aux_table OWNER TO postgres;
 
 --
+-- Name: pending_release_notifications; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.pending_release_notifications (
+    accession text NOT NULL,
+    version bigint NOT NULL,
+    enqueued_at timestamp without time zone DEFAULT timezone('UTC'::text, CURRENT_TIMESTAMP) NOT NULL
+);
+
+
+ALTER TABLE public.pending_release_notifications OWNER TO postgres;
+
+--
 -- Name: seqset_citation_source; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -869,6 +882,14 @@ ALTER TABLE ONLY public.metadata_upload_aux_table
 
 
 --
+-- Name: pending_release_notifications pending_release_notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pending_release_notifications
+    ADD CONSTRAINT pending_release_notifications_pkey PRIMARY KEY (accession, version);
+
+
+--
 -- Name: seqset_citation_source seqset_citation_source_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -991,6 +1012,13 @@ CREATE INDEX files_upload_requested_at_idx ON public.files USING btree (upload_r
 --
 
 CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING btree (success);
+
+
+--
+-- Name: pending_release_notifications_enqueued_at_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX pending_release_notifications_enqueued_at_idx ON public.pending_release_notifications USING btree (enqueued_at);
 
 
 --
@@ -1206,6 +1234,14 @@ ALTER TABLE ONLY public.seqset_to_records
 
 ALTER TABLE ONLY public.seqset_to_records
     ADD CONSTRAINT foreign_key_seqset_record_id FOREIGN KEY (seqset_record_id) REFERENCES public.seqset_records(seqset_record_id) ON DELETE CASCADE;
+
+
+--
+-- Name: pending_release_notifications pending_release_notifications_accession_version_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pending_release_notifications
+    ADD CONSTRAINT pending_release_notifications_accession_version_fkey FOREIGN KEY (accession, version) REFERENCES public.sequence_entries(accession, version) ON DELETE CASCADE;
 
 
 --
