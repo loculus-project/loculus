@@ -33,16 +33,18 @@ export const authorProfile = z.object({
 });
 export type AuthorProfile = z.infer<typeof authorProfile>;
 
-const citationContributor = z.object({
+export const citationContributor = z.object({
     givenName: z.string(),
     surname: z.string(),
 });
+export type CitationContributor = z.infer<typeof citationContributor>;
 
 export const citationSource = z.object({
     sourceDOI: z.string(),
     title: z.string(),
     year: z.number(),
     contributors: z.array(citationContributor),
+    journal: z.string().nullish(),
 });
 
 export const citationOrigin = z.enum(['CROSSREF', 'CURATED']);
