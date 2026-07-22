@@ -19,7 +19,7 @@ processing_spec:
     inputs:
       input: required_when_B
     required_when:
-      - processed.B
+      - B
   B:
     function: identity
     inputs:

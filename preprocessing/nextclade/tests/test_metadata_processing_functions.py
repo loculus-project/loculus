@@ -862,9 +862,9 @@ def test_preprocessing_metadata_dependencies(test_case_def: Case):
     ("condition", "match"),
     [
         ("files.not_a_category", "unknown file category"),
-        ("processed.does_not_exist", "non-existing metadata field"),
+        ("does_not_exist", "has an invalid requiredWhen condition"),
         ("collection_date", "Conditions must start with"),
-        ("processed.field", "lists itself"),
+        ("field", "lists itself"),
     ],
 )
 def test_required_when_validation(condition: str, match: str) -> None:

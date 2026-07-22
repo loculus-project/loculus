@@ -442,22 +442,28 @@ def get_output_metadata(
                     message=message,
                 )
             )
+
+        if isinstance(unprocessed, UnprocessedAfterNextclade):
+            unprocessed_metadata = unprocessed.inputMetadata
+        else:
+            unprocessed_metadata = unprocessed.metadata
         for condition in spec.required_when:
             error_message = None
-            if condition.startswith(PROCESSED_PREFIX):
-                field_name = condition.removeprefix(PROCESSED_PREFIX)
-                if is_null and not null_per_backend(output_metadata[field_name]):
-                    error_message = (
-                        f"Metadata field `{output_field}` is required when "
-                        f"`{field_name}` is provided."
-                    )
-            elif unprocessed.files and condition.startswith(FILES_PREFIX):
+            if condition.startswith(FILES_PREFIX):
                 file_category = condition.removeprefix(FILES_PREFIX)
-                if is_null and unprocessed.files.get(FileCategory(file_category)):
+                if (
+                    is_null
+                    and unprocessed.files
+                    and unprocessed.files.get(FileCategory(file_category))
+                ):
                     error_message = (
                         f"Metadata field `{output_field}` is required when "
                         f"`{file_category}` files are provided."
                     )
+            elif is_null and not null_per_backend(unprocessed_metadata.get(condition)):
+                error_message = (
+                    f"Metadata field `{output_field}` is required when `{condition}` is provided."
+                )
             if error_message:
                 errors.append(
                     ProcessingAnnotation.from_fields(
