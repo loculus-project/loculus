@@ -1679,7 +1679,7 @@
       "groups": ["general"],
       "type": "integer",
       "enum": [2, 3],
-      "default": 2,
+      "default": 3,
       "description": "Traefik major version for CRD API group. Use 2 for traefik.containo.us/v1alpha1 (Traefik v2) or 3 for traefik.io/v1alpha1 (Traefik v3)."
     },
     "ingestLimitSeconds": {
