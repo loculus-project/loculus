@@ -23,6 +23,8 @@ const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.s
 const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
 
 if (!cleanedOrganism) {
+    // undefined renders the configured Astro 404 page
+    // Note - this check is currently unused as middleware exists to check the organism, but useful for type-checking
     return new Response(undefined, { status: 404 });
 }
 
