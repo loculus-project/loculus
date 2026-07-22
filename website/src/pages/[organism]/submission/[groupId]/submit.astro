@@ -21,6 +21,8 @@ const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
 const inputMode: InputMode = Astro.url.searchParams.get('inputMode') === 'form' ? 'form' : 'bulk';
 
 if (!cleanedOrganism) {
+    // undefined renders the configured Astro 404 page
+    // Note - this check is currently unused as middleware exists to check the organism, but useful for type-checking
     return new Response(undefined, { status: 404 });
 }
 const schema = getSchema(cleanedOrganism.key);
