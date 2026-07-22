@@ -23,7 +23,7 @@ const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.s
 const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
 
 if (!cleanedOrganism) {
-    return new Response('Organism not found', { status: 404 });
+    return new Response(undefined, { status: 404 });
 }
 
 const clientConfig = getRuntimeConfig().public;
