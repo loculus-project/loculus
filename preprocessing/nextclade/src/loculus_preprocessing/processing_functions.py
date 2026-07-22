@@ -250,9 +250,7 @@ class ProcessingFunctions:
     taxonomy_service: TaxonomyService
 
     def __init__(self, config):
-        self.taxonomy_service_class = TaxonomyService(
-            config.taxonomy_service.taxonomy_service_url if config.taxonomy_service else None
-        )
+        self.taxonomy_service_class = TaxonomyService(config.taxonomy_service_url)
 
     def call_function(
         self,

@@ -93,14 +93,6 @@ class NextcladeSequenceAndDataset(BaseModel):
     nextclade_additional_args: list[str] = Field(default_factory=list)
 
 
-class TaxonomyServiceArgs(BaseModel):
-    taxonomy_service_url: str = "http://loculus-taxonomy-service:5000"
-
-
-class FileProcessingServiceArgs(BaseModel):
-    file_processing_service_url: str = "http://loculus-file-processing-service:8079"
-
-
 class Config(BaseModel):
     log_level: str = "DEBUG"
     keep_tmp_dir: bool = False
@@ -138,8 +130,8 @@ class Config(BaseModel):
     insdc_ingest_group_id: int = 1
 
     # External services
-    taxonomy_service: TaxonomyServiceArgs | None = None
-    file_processing_service: FileProcessingServiceArgs | None = None
+    taxonomy_service_url: str | None = None
+    file_processing_service_url: str | None = None
 
     @model_validator(mode="after")
     def finalize(self):

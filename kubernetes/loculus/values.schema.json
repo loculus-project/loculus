@@ -684,32 +684,6 @@
                 },
                 "description": "Array of Strings. Arguments passed to the preprocessing pipeline."
               },
-              "taxonomyServiceArgs": {
-                "groups": ["preprocessing"],
-                "docsIncludePrefix": false,
-                "type": "object",
-                "description": "Settings to configure the taxonomy service host and port",
-                "properties": {
-                  "taxonomy_service_url": {
-                    "groups": ["preprocessing"],
-                    "type": "string",
-                    "description": "Host and port where the taxonomy service runs"
-                  }
-                }
-              },
-              "fileProcessingServiceArgs": {
-                "groups": ["preprocessing"],
-                "docsIncludePrefix": false,
-                "type": "object",
-                "description": "Settings to configure the file processing service host and port",
-                "properties": {
-                  "file_processing_service_url": {
-                    "groups": ["preprocessing"],
-                    "type": "string",
-                    "description": "Host and port where the file processing service runs"
-                  }
-                }
-              },
               "configFile": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
@@ -1910,6 +1884,19 @@
         "taxonomyDbPath": {
           "type": "string",
           "description": "Path where the taxonomy SQLite database is mounted inside the container"
+        },
+        "taxonomy_service_url": {
+          "type": "string",
+          "description": "URL where the taxonomy service is accessible"
+        }
+      }
+    },
+    "fileProcessingService": {
+      "type": "object",
+      "properties": {
+        "file_processing_service_url": {
+          "type": "string",
+          "description": "URL where the file processing service is accessible"
         }
       }
     },

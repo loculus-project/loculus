@@ -1,5 +1,4 @@
-taxonomy_service:
-  taxonomy_service_url: "http://localhost:5000"
+taxonomy_service_url: "http://localhost:5000"
 
 processing_spec:
   hostNameScientific:

@@ -538,9 +538,7 @@ def process_single(
     )
     if unprocessed.files and any(unprocessed.files.values()):
         file_processing_service = FileProcessingService(
-            file_processing_service_url=config.file_processing_service.file_processing_service_url
-            if config.file_processing_service
-            else None
+            file_processing_service_url=config.file_processing_service_url
         )
         file_errors, file_warnings = file_processing_service.process_files(unprocessed.files)
     else:
@@ -601,9 +599,7 @@ def process_single_unaligned(
 
     if unprocessed.files and any(unprocessed.files.values()):
         file_processing_service = FileProcessingService(
-            file_processing_service_url=config.file_processing_service.file_processing_service_url
-            if config.file_processing_service
-            else None
+            file_processing_service_url=config.file_processing_service_url
         )
         file_errors, file_warnings = file_processing_service.process_files(unprocessed.files)
     else:

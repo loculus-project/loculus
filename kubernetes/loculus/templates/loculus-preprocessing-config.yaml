@@ -15,13 +15,11 @@ data:
   preprocessing-config.yaml: |
     organism: {{ $organism }}
     {{- $processingConfig.configFile | toYaml | nindent 4 }}
-    {{- if and $processingConfig.taxonomyServiceArgs (not $.Values.disableTaxonomyService) }}
-    taxonomy_service:
-    {{ $processingConfig.taxonomyServiceArgs | toYaml | nindent 6 }}
+    {{- if and $.Values.TaxonomyService (not $.Values.disableTaxonomyService) }}
+    taxonomy_service_url: {{ $.Values.TaxonomyService.taxonomy_service_url }}
     {{- end }}
-    {{- if and $processingConfig.fileProcessingServiceArgs (not $.Values.disableFileProcessingService) }}
-    file_processing_service:
-    {{ $processingConfig.fileProcessingServiceArgs | toYaml | nindent 6 }}
+    {{- if and $.Values.FileProcessingService (not $.Values.disableFileProcessingService) }}
+    file_processing_service_url: {{ $.Values.FileProcessingService.file_processing_service_url }}
     {{- end }}
     {{- if and (hasKey $organismConfig.schema "submissionDataTypes") (hasKey $organismConfig.schema.submissionDataTypes "maxSequencesPerEntry") }}
     max_sequences_per_entry: {{ $organismConfig.schema.submissionDataTypes.maxSequencesPerEntry }}

@@ -1541,10 +1541,6 @@ defaultOrganismConfig: &defaultOrganismConfig
       args:
         - "prepro"
       replicas: 1
-      taxonomyServiceArgs:
-        taxonomy_service_url: &taxonomy_service_url http://loculus-taxonomy-service:5000
-      fileProcessingServiceArgs:
-        file_processing_service_url: http://loculus-file-processing-service:5000
       configFile: &preprocessingConfigFile
         log_level: DEBUG
         batch_size: 100
@@ -1668,7 +1664,7 @@ defaultOrganisms:
               regex_pattern: '^(?:[^/]+/)?[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$'
         - <<: *hostTaxonIdConfig
           required: true
-          hierarchicalFilter: *taxonomy_service_url
+          hierarchicalFilter: &taxonomy_service_url http://loculus-taxonomy-service:5000
           hierarchicalSearchLabel: "include subtaxa"
           initiallyVisible: true
         - name: lineage
@@ -2712,6 +2708,9 @@ enaDeposition:
 taxonomyService:
   dbVersion: "ncbi_taxonomy_2026-05-01"
   taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
+  taxonomy_service_url: *taxonomy_service_url
+fileProcessingService:
+  file_processing_service_url: http://loculus-file-processing-service:5000
 subdomainSeparator: "-"
 replicas:
   website: 1
