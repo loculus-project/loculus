@@ -243,16 +243,10 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
     ): ResultActions = mockMvc.perform(
         get(addOrganismToPath("/get-released-data", organism = organism))
             .also {
-                when (compression) {
-                    null -> it
-                    else -> it.param("compression", compression)
-                }
+                if (compression != null) it.param("compression", compression)
             }
             .also {
-                when (ifNoneMatch) {
-                    null -> it
-                    else -> it.header("If-None-Match", ifNoneMatch)
-                }
+                if (ifNoneMatch != null) it.header("If-None-Match", ifNoneMatch)
             },
     )
 
@@ -314,10 +308,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         get(addOrganismToPath("/get-submitted-metadata", organism = organism))
             .withAuth(jwt)
             .also {
-                when (compression) {
-                    null -> it
-                    else -> it.param("compression", compression)
-                }
+                if (compression != null) it.param("compression", compression)
             }
             .param("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
             .param("statusesFilter", statusesFilter?.joinToString(",") { it.name })
