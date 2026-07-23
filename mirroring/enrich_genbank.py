@@ -76,7 +76,49 @@ def children_text(node, path):
     return [child.text for child in node.findall(path) if child.text]
 
 
+def parse_gbseq(node):
+    """Parse the GBSeq XML schema returned by nuccore EFetch."""
+    qualifiers = {}
+    for feature in node.findall("./GBSeq_feature-table/GBFeature"):
+        if feature.findtext("GBFeature_key") != "source":
+            continue
+        for item in feature.findall("./GBFeature_quals/GBQualifier"):
+            key = item.findtext("GBQualifier_name")
+            value = item.findtext("GBQualifier_value")
+            if key and value:
+                qualifiers.setdefault(key, []).append(value)
+
+    direct_submission_authors = []
+    authors = []
+    for reference in node.findall("./GBSeq_references/GBReference"):
+        reference_authors = children_text(reference, "./GBReference_authors/GBAuthor")
+        authors.extend(reference_authors)
+        if reference.findtext("GBReference_title") == "Direct Submission":
+            direct_submission_authors.extend(reference_authors)
+
+    return {
+        "accession_version": node.findtext("GBSeq_accession-version"),
+        "accession_base": node.findtext("GBSeq_primary-accession"),
+        "definition": node.findtext("GBSeq_definition"),
+        "organism": node.findtext("GBSeq_organism"),
+        "taxonomy": node.findtext("GBSeq_taxonomy"),
+        "division": node.findtext("GBSeq_division"),
+        "length": node.findtext("GBSeq_length"),
+        "update_date": node.findtext("GBSeq_update-date"),
+        "create_date": node.findtext("GBSeq_create-date"),
+        "strain": qualifiers.get("strain", []),
+        "isolate": qualifiers.get("isolate", []),
+        "host": qualifiers.get("host", []),
+        "host_age": qualifiers.get("host_age", []),
+        "authors": direct_submission_authors or authors,
+        "source_qualifiers": qualifiers,
+    }
+
+
 def parse_record(node):
+    if node.tag == "GBSeq":
+        return parse_gbseq(node)
+
     qualifiers = {}
     for feature in node.findall("./INSDSeq_feature-table/INSDFeature"):
         if feature.findtext("INSDFeature_key") != "source":
@@ -125,7 +167,7 @@ def fetch_batch(accessions, email, api_key):
     with urllib.request.urlopen(url, timeout=90) as response:
         root = ET.parse(response).getroot()
     records = {}
-    for sequence in root.findall("INSDSeq"):
+    for sequence in root.findall("INSDSeq") + root.findall("GBSeq"):
         record = parse_record(sequence)
         for key in (record["accession_version"], record["accession_base"]):
             if key:
