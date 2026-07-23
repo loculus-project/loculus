@@ -24,6 +24,12 @@ processing_spec:
     function: identity
     inputs:
       input: B
+  required_when_processed_B:
+    function: identity
+    inputs:
+      input: required_when_processed_B
+    required_when:
+      - processed.B
   required_when_raw_reads:
     function: identity
     inputs:
