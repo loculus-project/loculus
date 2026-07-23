@@ -46,7 +46,7 @@ COMBINED_FASTA="$TMP_DIR/combined.fasta"
 
 mkdir -p "$(dirname "$OUTPUT_FILE")"
 
-deacon index fetch --output "$TEMP_INDEX" "panhuman-1"
+wget https://objectstorage.uk-london-1.oraclecloud.com/n/lrbvkel2wjot/b/human-genome-bucket/o/deacon/misc/panhuman-1.k31w15c8.idx -O "$TEMP_INDEX"
 
 mapfile -t organisms < <(
     curl -fsSL "${PATHOPLEXUS_URL}/loculus-info" \

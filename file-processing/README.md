@@ -75,8 +75,7 @@ READTOOLS_JAR=readtools.jar java -jar readtools.jar reads.fastq --format FASTQ
 ## Host decontamination (deacon)
 
 Files that pass format validation are screened for human host reads with
-[deacon](https://github.com/bede/deacon), run against a custom index that we generate.
-[TODO: add index and docs]. 
+[deacon](https://github.com/bede/deacon), run against a custom index that we generate (see details below).
 We compare the results against two configured thresholds:
 
 - `deacon_max_host_reads_proportion` — proportion of reads mapping to the host genome
@@ -85,3 +84,9 @@ We compare the results against two configured thresholds:
 Exceeding either threshold is a hard error (`DEACON_ERROR_PROMPT`); a submission with _some_ host
 reads under the threshold gets a warning instead (`DEACON_WARNING_PROMPT`) so it can still be
 accepted while flagging it for review.
+
+## Deacon index
+
+We use a custom deacon index, generated during a manual build action in `loculus/file-processing/build-index.sh`.
+
+It uses deacon's default panhuman-1 index with a complexity filter of c0.8 and additionally filters out all k-mers that are found in consensus sequences on PPX to further avoid accidental flagging of viral genomes.

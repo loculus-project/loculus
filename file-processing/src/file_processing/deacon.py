@@ -80,7 +80,6 @@ def run_deacon_filter(
     return DeaconSummary.from_json(summary_json_path)
 
 
-# TODO: Add links to deacon with correct parameters and index
 DEACON_ERROR_PROMPT = (
     "We cannot accept files with a high proportion of host reads, as they may contain "
     "sensitive human genetic information. Please remove host reads from your data and resubmit."
@@ -97,6 +96,7 @@ def deacon_message(
     maximum: float,
     type: Literal["base pairs", "reads"],
     error: bool,
+    config: Config,
 ) -> str:
     intro = (
         f"Our QC pipeline identified {type} that map to the human genome. "
@@ -109,7 +109,12 @@ def deacon_message(
         f"the maximum allowed {'proportion' if type == 'reads' else 'base pairs'} is {maximum}. "
     )
     prompt = DEACON_ERROR_PROMPT if error else DEACON_WARNING_PROMPT
-    return intro + detail + prompt
+    deacon_details = (
+        "We recommend using the Deacon tool to remove host reads from your data. "
+        f"we run deacon with the following parameters: `deacon filter -a {config.deacon_a} -r {config.deacon_r} --deplete deacon.idx <input_files>`"
+        "You can download the deacon index from the following link: `s3://loculus-public/deacon-index/deacon_index_latest.idx.gz`"
+    )
+    return intro + detail + prompt + deacon_details
 
 
 def process_deacon_run(
@@ -125,6 +130,7 @@ def process_deacon_run(
             config.deacon_max_host_reads_proportion,
             "reads",
             True,
+            config,
         )
         return [
             Annotation(
@@ -140,6 +146,7 @@ def process_deacon_run(
             config.deacon_max_host_bp,
             "base pairs",
             True,
+            config,
         )
         return [
             Annotation(
@@ -160,6 +167,7 @@ def process_deacon_run(
             config.deacon_max_host_reads_proportion,
             "reads",
             False,
+            config,
         )
         warnings.append(
             Annotation(
@@ -175,6 +183,7 @@ def process_deacon_run(
             config.deacon_max_host_bp,
             "base pairs",
             False,
+            config,
         )
         warnings.append(
             Annotation(
