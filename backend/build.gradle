@@ -37,10 +37,13 @@ repositories {
     mavenCentral()
 }
 
-// For now we exclude Jackson 3 and maintain Jackson 2
-// https://spring.io/blog/2025/10/07/introducing-jackson-3-support-in-spring#keep-using-jackson-2-support-temporarily
+
 configurations.all {
+    // For now we exclude Jackson 3 and maintain Jackson 2
+    // https://spring.io/blog/2025/10/07/introducing-jackson-3-support-in-spring#keep-using-jackson-2-support-temporarily
     exclude group: "org.springframework.boot", module: "spring-boot-jackson"
+    // This project uses springmockk for mocking, so Mockito is excluded
+    exclude group: "org.mockito"
 }
 
 dependencies {
@@ -77,9 +80,6 @@ dependencies {
     implementation("org.redundent:kotlin-xml-builder:1.9.3")
     implementation("org.jsoup:jsoup:1.22.2")
 
-    testImplementation("org.springframework.boot:spring-boot-starter-test") {
-        exclude group: "org.mockito"
-    }
     testImplementation "org.springframework.boot:spring-boot-starter-webmvc-test"
     testImplementation platform("io.jsonwebtoken:jjwt-bom:0.13.0")
     testImplementation "io.jsonwebtoken:jjwt-api"
