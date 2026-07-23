@@ -9,6 +9,7 @@ import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/su
 const ORGANISM_NAME = 'Test organism (with files)';
 const ORGANISM_URL_NAME = 'dummy-organism-with-files';
 const RAW_READS = 'raw_reads';
+const RAW_READS_FILES_HEADER = `files.${RAW_READS}`;
 const METADATA_HEADERS = ['submissionId', 'country', 'date'];
 const COUNTRY_1 = 'Norway';
 const COUNTRY_2 = 'Uganda';
@@ -16,6 +17,12 @@ const ID_1 = 'sub1';
 const ID_2 = 'sub2';
 const FILES_SINGLE = { 'testfile.txt': 'This is a test file.' };
 const FILES_DOUBLE = { 'file1.txt': 'Content of file 1.', 'file2.txt': 'Content of file 2.' };
+
+// Tests upload files in subfolders grouped by submissionId
+const filesColumnCell = (submissionId: string, files: Record<string, string>) =>
+    Object.keys(files)
+        .map((name) => `${name}::${submissionId}/${name}`)
+        .join(' ');
 
 test('submit single seq w/ 2 files thru single seq submission form', async ({
     page,
@@ -44,10 +51,13 @@ test('bulk submit 2 seqs with 1 & 2 files respectively', async ({ page, groupId,
     void groupId;
     const submissionPage = new BulkSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
-    await submissionPage.uploadMetadataFile(METADATA_HEADERS, [
-        [ID_1, COUNTRY_1, '2022-12-02'],
-        [ID_2, COUNTRY_2, '2022-12-13'],
-    ]);
+    await submissionPage.uploadMetadataFile(
+        [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
+        [
+            [ID_1, COUNTRY_1, '2022-12-02', filesColumnCell(ID_1, FILES_SINGLE)],
+            [ID_2, COUNTRY_2, '2022-12-13', filesColumnCell(ID_2, FILES_DOUBLE)],
+        ],
+    );
     await submissionPage.uploadExternalFiles(
         RAW_READS,
         { [ID_1]: FILES_SINGLE, [ID_2]: FILES_DOUBLE },
@@ -64,7 +74,10 @@ test('bulk submit 1 seq: discarding and readding a file', async ({ page, groupId
     void groupId;
     const submissionPage = new BulkSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
-    await submissionPage.uploadMetadataFile(METADATA_HEADERS, [[ID_1, COUNTRY_1, '2023-01-01']]);
+    await submissionPage.uploadMetadataFile(
+        [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
+        [[ID_1, COUNTRY_1, '2023-01-01', filesColumnCell(ID_1, FILES_DOUBLE)]],
+    );
     await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_SINGLE }, tmpDir);
     await submissionPage.discardRawReadsFiles();
     await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_DOUBLE }, tmpDir);
@@ -88,7 +101,10 @@ test('bulk submit 1 seq with a 35 MB file', async ({ page, groupId, tmpDir }) =>
 
     const submissionPage = new BulkSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
-    await submissionPage.uploadMetadataFile(METADATA_HEADERS, [[ID_1, COUNTRY_1, '2024-01-01']]);
+    await submissionPage.uploadMetadataFile(
+        [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
+        [[ID_1, COUNTRY_1, '2024-01-01', filesColumnCell(ID_1, LARGE_FILE)]],
+    );
     await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: LARGE_FILE }, tmpDir);
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone();
     const searchPage = await reviewPage.releaseAndGoToReleasedSequences();
