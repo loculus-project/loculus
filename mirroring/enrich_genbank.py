@@ -25,7 +25,7 @@ import zipfile
 
 EUTILS_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 ACCESSION_RE = re.compile(r"\b([A-Za-z]{1,6}_?\d+(?:\.\d+)?)\b")
-MAX_429_RETRIES = 5
+MAX_429_RETRIES = 10
 MAX_RETRY_DELAY_SECONDS = 60
 
 
