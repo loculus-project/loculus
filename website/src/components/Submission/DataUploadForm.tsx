@@ -247,11 +247,11 @@ export const InputModeTabs = ({
             inputMode,
         });
 
-    const tabs: { inputMode: InputMode; label: string }[] =
+    const tabs: { inputMode: InputMode; label: string; preview?: boolean }[] =
         action === 'revise'
             ? [
-                  { inputMode: 'form', label: 'Revise single sequence' },
                   { inputMode: 'bulk', label: 'Upload bulk revisions' },
+                  { inputMode: 'form', label: 'Revise single sequence', preview: true },
               ]
             : [
                   { inputMode: 'bulk', label: 'Upload bulk sequences' },
@@ -260,7 +260,7 @@ export const InputModeTabs = ({
 
     return (
         <div className='flex border-b'>
-            {tabs.map(({ inputMode, label }) => (
+            {tabs.map(({ inputMode, label, preview }) => (
                 <a
                     key={inputMode}
                     className={`py-2 px-4 border-b-2 ${
@@ -271,6 +271,11 @@ export const InputModeTabs = ({
                     href={inputModeUrl(inputMode)}
                 >
                     {label}
+                    {preview === true && (
+                        <span className='ml-2 rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 align-middle'>
+                            Preview
+                        </span>
+                    )}
                 </a>
             ))}
         </div>
