@@ -205,7 +205,9 @@ def main():
     missing = []
     for accession in accessions:
         record = previous.get(accession)
-        if record:
+        # Retry an earlier miss: it may have been caused by a transient Entrez
+        # response or, as in a schema migration, an older parser.
+        if record and not record.get("not_found"):
             records.append(record)
         else:
             missing.append(accession)
