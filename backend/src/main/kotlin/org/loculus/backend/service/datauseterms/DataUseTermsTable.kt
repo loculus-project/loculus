@@ -9,6 +9,7 @@ import org.jetbrains.exposed.v1.datetime.date
 import org.jetbrains.exposed.v1.datetime.datetime
 import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.core.wrapAsExpression
+import org.jetbrains.exposed.v1.jdbc.select
 
 const val DATA_USE_TERMS_TABLE_NAME = "data_use_terms_table"
 

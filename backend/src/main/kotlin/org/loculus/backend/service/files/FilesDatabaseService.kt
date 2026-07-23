@@ -12,6 +12,7 @@ import org.jetbrains.exposed.v1.core.not
 import org.jetbrains.exposed.v1.core.statements.StatementType
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.jdbc.select
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.chunkedForDatabase
 import org.loculus.backend.utils.processInDatabaseSafeChunks

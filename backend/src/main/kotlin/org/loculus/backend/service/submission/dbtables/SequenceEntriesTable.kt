@@ -8,6 +8,7 @@ import org.jetbrains.exposed.v1.core.alias
 import org.jetbrains.exposed.v1.datetime.datetime
 import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.core.wrapAsExpression
+import org.jetbrains.exposed.v1.jdbc.select
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.SubmittedData

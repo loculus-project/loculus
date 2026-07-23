@@ -6,6 +6,7 @@ import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.select
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Organism
 import org.loculus.backend.controller.DEFAULT_ORGANISM

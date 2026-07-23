@@ -23,6 +23,7 @@ import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.jdbc.select
 import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AddSeqSetCitationRequest

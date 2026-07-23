@@ -40,6 +40,7 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.core.vendors.ForUpdateOption.PostgreSQL.ForUpdate
 import org.jetbrains.exposed.v1.core.vendors.ForUpdateOption.PostgreSQL.MODE
+import org.jetbrains.exposed.v1.jdbc.select
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.AccessionVersionSubmittedMetadata
