@@ -82,7 +82,7 @@
         "@types/react": "^18.3.12",
         "@types/react-dom": "^18.3.1",
         "@typescript-eslint/parser": "^8.64.0",
-        "@vitejs/plugin-react": "^5.1.4",
+        "@vitejs/plugin-react": "^6.0.4",
         "astro-eslint-parser": "^1.4.0",
         "eslint": "^9.34.0",
         "eslint-plugin-astro": "^1.7.0",
