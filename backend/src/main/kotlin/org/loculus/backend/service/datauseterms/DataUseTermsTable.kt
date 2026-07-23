@@ -1,14 +1,15 @@
 package org.loculus.backend.service.datauseterms
 
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.Expression
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.alias
-import org.jetbrains.exposed.sql.kotlin.datetime.date
-import org.jetbrains.exposed.sql.kotlin.datetime.datetime
-import org.jetbrains.exposed.sql.max
-import org.jetbrains.exposed.sql.wrapAsExpression
+import org.jetbrains.exposed.v1.core.Expression
+import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.core.alias
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.max
+import org.jetbrains.exposed.v1.core.wrapAsExpression
+import org.jetbrains.exposed.v1.datetime.date
+import org.jetbrains.exposed.v1.datetime.datetime
+import org.jetbrains.exposed.v1.jdbc.select
 
 const val DATA_USE_TERMS_TABLE_NAME = "data_use_terms_table"
 

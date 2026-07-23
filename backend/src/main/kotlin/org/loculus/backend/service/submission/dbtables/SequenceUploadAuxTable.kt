@@ -1,6 +1,6 @@
 package org.loculus.backend.service.submission
 
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.v1.core.Table
 import org.loculus.backend.service.jacksonSerializableJsonb
 
 const val SEQUENCE_UPLOAD_AUX_TABLE_NAME = "sequence_upload_aux_table"

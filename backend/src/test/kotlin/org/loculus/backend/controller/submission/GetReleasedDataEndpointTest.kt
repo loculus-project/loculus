@@ -31,8 +31,8 @@ import org.hamcrest.Matchers.`in`
 import org.hamcrest.Matchers.matchesPattern
 import org.hamcrest.Matchers.not
 import org.hamcrest.Matchers.notNullValue
-import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.batchInsert
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.keycloak.representations.idm.UserRepresentation
@@ -223,7 +223,7 @@ class GetReleasedDataEndpointTest(
 
         responseAfterMoreDataAdded.andExpect(status().isOk)
             .andExpect(header().string(ETAG, notNullValue()))
-            .andExpect(header().string(ETAG, greaterThan(initialEtag)))
+            .andExpect(header().string(ETAG, greaterThan(initialEtag!!)))
 
         val responseBodyMoreData = responseAfterMoreDataAdded
             .expectNdjsonAndGetContent<ReleasedData>()
@@ -261,7 +261,7 @@ class GetReleasedDataEndpointTest(
             ifNoneMatch = initialEtagDefaultOrganism,
         )
             .andExpect(status().isOk)
-            .andExpect(header().string(ETAG, greaterThan(initialEtagDefaultOrganism)))
+            .andExpect(header().string(ETAG, greaterThan(initialEtagDefaultOrganism!!)))
         submissionControllerClient.getReleasedData(organism = OTHER_ORGANISM, ifNoneMatch = initialEtagOtherOrganism)
             .andExpect(status().isNotModified)
     }
@@ -290,7 +290,7 @@ class GetReleasedDataEndpointTest(
 
         submissionControllerClient.getReleasedData(ifNoneMatch = initialEtag)
             .andExpect(status().isOk)
-            .andExpect(header().string(ETAG, greaterThan(initialEtag)))
+            .andExpect(header().string(ETAG, greaterThan(initialEtag!!)))
     }
 
     @Test
@@ -320,7 +320,7 @@ class GetReleasedDataEndpointTest(
             .andExpect(status().isNotModified)
         submissionControllerClient.getReleasedData(organism = OTHER_ORGANISM, ifNoneMatch = initialEtag)
             .andExpect(status().isOk)
-            .andExpect(header().string(ETAG, greaterThan(initialEtag)))
+            .andExpect(header().string(ETAG, greaterThan(initialEtag!!)))
     }
 
     @Test
