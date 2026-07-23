@@ -9,8 +9,10 @@ nuccore and writes fields that Datasets/NCBI Virus may omit.
 from __future__ import print_function
 
 import argparse
+import email.utils
 import io
 import json
+import random
 import re
 import sys
 import time
@@ -23,6 +25,8 @@ import zipfile
 
 EUTILS_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 ACCESSION_RE = re.compile(r"\b([A-Za-z]{1,6}_?\d+(?:\.\d+)?)\b")
+MAX_429_RETRIES = 5
+MAX_RETRY_DELAY_SECONDS = 60
 
 
 def accessions_from_fasta(lines):
@@ -152,6 +156,20 @@ def parse_record(node):
     }
 
 
+def retry_after_seconds(error):
+    """Return the delay requested by an HTTP Retry-After header, if present."""
+    value = error.headers.get("Retry-After")
+    if not value:
+        return None
+    try:
+        return max(0.0, float(value))
+    except ValueError:
+        retry_at = email.utils.parsedate_to_datetime(value)
+        if retry_at is None:
+            return None
+        return max(0.0, retry_at.timestamp() - time.time())
+
+
 def fetch_batch(accessions, email, api_key):
     query = {
         "db": "nuccore",
@@ -164,8 +182,26 @@ def fetch_batch(accessions, email, api_key):
     if api_key:
         query["api_key"] = api_key
     url = EUTILS_URL + "?" + urllib.parse.urlencode(query)
-    with urllib.request.urlopen(url, timeout=90) as response:
-        root = ET.parse(response).getroot()
+    for retry in range(MAX_429_RETRIES + 1):
+        try:
+            with urllib.request.urlopen(url, timeout=90) as response:
+                root = ET.parse(response).getroot()
+            break
+        except urllib.error.HTTPError as error:
+            if error.code != 429 or retry == MAX_429_RETRIES:
+                raise
+            requested_delay = retry_after_seconds(error)
+            exponential_delay = min(2 ** retry, MAX_RETRY_DELAY_SECONDS)
+            delay = max(requested_delay or 0, exponential_delay)
+            # Jitter reduces the chance that parallel mirror jobs retry together.
+            delay = min(delay + random.uniform(0, 1), MAX_RETRY_DELAY_SECONDS)
+            print(
+                "Entrez returned HTTP 429; retrying in {:.1f}s ({}/{})".format(
+                    delay, retry + 1, MAX_429_RETRIES
+                ),
+                file=sys.stderr,
+            )
+            time.sleep(delay)
     records = {}
     for sequence in root.findall("INSDSeq") + root.findall("GBSeq"):
         record = parse_record(sequence)
