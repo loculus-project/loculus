@@ -12,6 +12,7 @@ import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.wrapAsExpression
 import org.loculus.backend.api.AccessionVersionInterface
+import org.loculus.backend.api.EnaDepositionStatus
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.PreprocessingAnnotation
 import org.loculus.backend.api.ProcessedData
@@ -48,6 +49,7 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
     val errorsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("errors").nullable()
     val warningsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("warnings").nullable()
     val pipelineVersionColumn = long("pipeline_version").nullable()
+    val enaDepositionStatusColumn = varchar("ena_deposition_status", 255)
 
     override val primaryKey = PrimaryKey(accessionColumn, versionColumn)
 
@@ -83,4 +85,5 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
     fun groupIsOneOf(groupIds: List<Int>) = groupIdColumn inList groupIds
 
     fun submitterIsOneOf(submitterNames: List<String>) = submitterColumn inList submitterNames
+    fun enDepositionStatusIs(status: EnaDepositionStatus) = enaDepositionStatusColumn eq status.name
 }

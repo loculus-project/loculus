@@ -238,6 +238,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
 
     fun getReleasedData(
         organism: String = DEFAULT_ORGANISM,
+        filterForEnaDeposition: String? = "false",
         compression: String? = null,
         ifNoneMatch: String? = null,
     ): ResultActions = mockMvc.perform(
@@ -252,6 +253,11 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                 when (ifNoneMatch) {
                     null -> it
                     else -> it.header("If-None-Match", ifNoneMatch)
+                }
+            }.also {
+                when (filterForEnaDeposition) {
+                    null -> it
+                    else -> it.param("filterForEnaDeposition", filterForEnaDeposition)
                 }
             },
     )
