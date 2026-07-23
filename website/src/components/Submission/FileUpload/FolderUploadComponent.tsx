@@ -24,6 +24,10 @@ type FileAndName = {
     name: string;
 };
 
+type FileCategoryName = string;
+
+export type FileCategoryStatus = Record<FileCategoryName, string | undefined>;
+
 /**
  * The state that the component is in, right after the user dropped the files.
  * We're awaiting the presigned upload URLs from the backend, to start uploading.
@@ -33,21 +37,23 @@ type AwaitingUrlState = {
     files: Record<SubmissionId, FileAndName[]>;
 };
 
-type SingleFileUpload = Pending | Uploaded | PreviousUpload | Error;
-
 type UploadInProgressState = {
     type: 'uploadInProgress';
-    files: Record<SubmissionId, SingleFileUpload[]>;
+    files: Record<SubmissionId, FileUpload[]>;
 };
 
 type UploadCompleted = {
     type: 'uploadCompleted';
-    files: Record<SubmissionId, (Uploaded | PreviousUpload)[]>;
+    files: Record<SubmissionId, CompletedFileUpload[]>;
 };
 
 type FileUploadState = AwaitingUrlState | UploadInProgressState | UploadCompleted;
 
 type UploadStatus = 'pending' | 'uploaded' | 'previousUpload' | 'error';
+
+type FileUpload = Pending | Uploaded | PreviousUpload | UploadError;
+
+type CompletedFileUpload = Uploaded | PreviousUpload | UploadError;
 
 type Pending = {
     type: 'pending';
@@ -55,7 +61,6 @@ type Pending = {
     name: string;
     size: number;
     fileId: string;
-
     urls: string[];
     uploadedParts: number;
     totalParts: number;
@@ -76,7 +81,7 @@ type PreviousUpload = {
     name: string;
 };
 
-type Error = {
+type UploadError = {
     type: 'error';
     name: string;
     size: number;
@@ -91,10 +96,30 @@ type FolderUploadComponentProps = {
     groupId: number;
     fileMapping: FilesBySubmissionId | undefined;
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
+    setFileCategoryStatus: Dispatch<SetStateAction<FileCategoryStatus>>;
     // Passed when the submissionId is known (e.g. editing/revising an entry) in form mode,
     // where it is used instead of the dummySubmissionId placeholder.
     formSubmissionId?: string;
     onError: (message: string) => void;
+};
+
+const getInitialFileUploadState = (fileCategory: FileCategory, fileMapping: FilesBySubmissionId | undefined) => {
+    if (fileMapping === undefined) return undefined;
+
+    const previousUploadFiles: Record<SubmissionId, PreviousUpload[]> = {};
+    Object.entries(fileMapping).forEach(([submissionId, categories]) => {
+        const fileCategoryFiles = categories[fileCategory.name] ?? [];
+        previousUploadFiles[submissionId] = fileCategoryFiles.map((file) => ({
+            type: 'previousUpload',
+            fileId: file.fileId,
+            name: file.name,
+        }));
+    });
+
+    const hasPreviousFiles = Object.values(previousUploadFiles).some((files) => files.length > 0);
+    if (!hasPreviousFiles) return undefined;
+
+    return { type: 'uploadCompleted', files: previousUploadFiles } as FileUploadState;
 };
 
 export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
@@ -105,28 +130,14 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     groupId,
     fileMapping,
     setFileMapping,
+    setFileCategoryStatus,
     formSubmissionId,
     onError,
 }) => {
     const isClient = useClientFlag();
-    const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(() => {
-        if (fileMapping === undefined) return undefined;
-
-        const previousUploadFiles: Record<SubmissionId, PreviousUpload[]> = {};
-        Object.entries(fileMapping).forEach(([submissionId, categories]) => {
-            const fileCategoryFiles = categories[fileCategory.name] ?? [];
-            previousUploadFiles[submissionId] = fileCategoryFiles.map((file) => ({
-                type: 'previousUpload',
-                fileId: file.fileId,
-                name: file.name,
-            }));
-        });
-
-        const hasPreviousFiles = Object.values(previousUploadFiles).some((files) => files.length > 0);
-        if (!hasPreviousFiles) return undefined;
-
-        return { type: 'uploadCompleted', files: previousUploadFiles };
-    });
+    const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(() =>
+        getInitialFileUploadState(fileCategory, fileMapping),
+    );
     const [isDragging, setIsDragging] = useState(false);
 
     const backendClient = new BackendClient(clientConfig.backendUrl);
@@ -182,7 +193,6 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             (err) => {
                 updateFileState(submissionId, pending.fileId, 'error', err.detail);
                 onError(err.detail);
-                throw new Error(`Upload of file ${pending.fileId} failed: ${err.detail}`);
             },
         );
     }
@@ -253,6 +263,10 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     for (const [submissionId, files] of Object.entries(fileUploadState.files)) {
                         pendingFiles[submissionId] = await requestFileUploads(files);
                     }
+                    setFileCategoryStatus((state) => ({
+                        ...state,
+                        [fileCategory.name]: 'uploadInProgress',
+                    }));
                     setFileUploadState({ type: 'uploadInProgress', files: pendingFiles });
                     void startUploading(pendingFiles);
                 })();
@@ -262,12 +276,16 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 if (
                     Object.values(fileUploadState.files)
                         .flatMap((x) => x)
-                        .every(({ type }) => type === 'uploaded' || type === 'previousUpload')
+                        .every(({ type }) => type === 'uploaded' || type === 'previousUpload' || type === 'error')
                 ) {
+                    setFileCategoryStatus((state) => ({
+                        ...state,
+                        [fileCategory.name]: 'uploadCompleted',
+                    }));
                     setFileUploadState({
                         type: 'uploadCompleted',
-                        files: fileUploadState.files as Record<SubmissionId, (Uploaded | PreviousUpload)[]>,
-                    });
+                        files: fileUploadState.files,
+                    } as UploadCompleted);
                 }
                 break;
             }
@@ -280,7 +298,9 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                             } else {
                                 draft[submissionId] = {};
                             }
-                            draft[submissionId][fileCategory.name] = files;
+                            draft[submissionId][fileCategory.name] = files.filter(
+                                (file) => file.type === 'previousUpload' || file.type === 'uploaded',
+                            );
                         });
                     }),
                 );
@@ -327,7 +347,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         }
     };
 
-    const handleDiscardFile = (submissionId: string, file: SingleFileUpload) => {
+    const handleDiscardFile = (submissionId: string, file: FileUpload) => {
         setFileUploadState((state) => {
             if (state?.type === 'uploadCompleted') {
                 const remainingFiles = state.files[submissionId].filter((f) => f.name !== file.name);
@@ -374,6 +394,10 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         const addAdditionalFiles = async () => {
             const nonCollidingFiles = existingFiles.filter((file) => !uniqueSelectedNames.has(file.name));
             const newPendingFiles = await requestFileUploads(filesArray.map((f) => ({ file: f, name: f.name })));
+            setFileCategoryStatus((state) => ({
+                ...state,
+                [fileCategory.name]: 'uploadInProgress',
+            }));
             setFileUploadState({
                 type: 'uploadInProgress',
                 files: { [submissionId]: [...nonCollidingFiles, ...newPendingFiles] },
@@ -470,7 +494,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                                   </div>
                                   <Button
                                       onClick={() => handleDiscardFile(formSubmissionId ?? DUMMY_SUBMISSION_ID, file)}
-                                      disabled={fileUploadState.type !== 'uploadCompleted'}
+                                      alsoDisabledIf={fileUploadState.type !== 'uploadCompleted'}
                                       data-testid={`discard_${fileCategory.name}_${file.name}`}
                                       variant='outline-neutral'
                                       className='font-normal!'
@@ -506,7 +530,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                         )}
                         <Button
                             onClick={() => document.getElementById(`${fileCategory.name}_add`)?.click()}
-                            disabled={fileUploadState.type !== 'uploadCompleted'}
+                            alsoDisabledIf={fileUploadState.type !== 'uploadCompleted'}
                             data-testid={`add_button_${fileCategory.name}`}
                             variant='outline-neutral'
                             className='font-normal!'
@@ -537,7 +561,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 };
 
 type FileListeItemProps = {
-    file: SingleFileUpload;
+    file: FileUpload;
 };
 
 const FileListItem: FC<FileListeItemProps> = ({ file }) => {
