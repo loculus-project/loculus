@@ -436,20 +436,20 @@ def get_output_metadata(  # noqa: C901, PLR0912, PLR0915
 
         for condition in spec.required_when:
             if (
-                msg := check_required_when_condition(
+                required_when_error := check_required_when_condition(
                     condition, output_field, unprocessed, output_metadata
                 )
             ) is not None:
-                requirement_errors.append(msg)
+                requirement_errors.append(required_when_error)
 
         errors.extend(
             ProcessingAnnotation.from_fields(
                 spec.inputs.values(),
                 [output_field],
                 AnnotationSourceType.METADATA,
-                message=message,
+                message=msg,
             )
-            for message in requirement_errors
+            for msg in requirement_errors
         )
 
     logger.debug(f"Processed {accession_version}: {output_metadata}")
