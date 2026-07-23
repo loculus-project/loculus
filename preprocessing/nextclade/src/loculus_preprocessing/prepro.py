@@ -368,7 +368,7 @@ def check_required_when_fields(  # noqa: C901
     for condition in spec.required_when:
         is_null = null_per_backend(processing_result.datum)
         error_message = None
-        if condition.startswith((PROCESSED_PREFIX, NEXTCLADE_PREFIX)):
+        if condition.startswith(PROCESSED_PREFIX):
             field_name = condition.removeprefix(PROCESSED_PREFIX)
             if is_null and not null_per_backend(output_metadata[field_name]):
                 error_message = (
