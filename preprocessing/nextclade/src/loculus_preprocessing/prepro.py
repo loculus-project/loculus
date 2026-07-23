@@ -447,9 +447,9 @@ def get_output_metadata(  # noqa: C901, PLR0912, PLR0915
                 spec.inputs.values(),
                 [output_field],
                 AnnotationSourceType.METADATA,
-                message=msg,
+                message=message,
             )
-            for msg in requirement_errors
+            for message in requirement_errors
         )
 
     logger.debug(f"Processed {accession_version}: {output_metadata}")
