@@ -20,6 +20,7 @@ import org.loculus.backend.controller.addOrganismToPath
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.jwtForExternalMetadataUpdatePipeline
 import org.loculus.backend.controller.jwtForProcessingPipeline
+import org.loculus.backend.controller.paramIfPresent
 import org.loculus.backend.controller.withAuth
 import org.loculus.backend.utils.Accession
 import org.springframework.http.MediaType
@@ -60,7 +61,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             }
             .param("groupId", groupId.toString())
             .param("dataUseTermsType", dataUseTerm.type.name)
-            .param(
+            .paramIfPresent(
                 "restrictedUntil",
                 when (dataUseTerm) {
                     is DataUseTerms.Restricted -> dataUseTerm.restrictedUntil.toString()
@@ -165,11 +166,11 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
     ): ResultActions = mockMvc.perform(
         get(addOrganismToPath("/get-sequences", organism = organism))
             .withAuth(jwt)
-            .param("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
-            .param("statusesFilter", statusesFilter?.joinToString(",") { it.name })
-            .param("processingResultFilter", processingResultFilter?.joinToString(",") { it.name })
-            .param("page", page?.toString())
-            .param("size", size?.toString()),
+            .paramIfPresent("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
+            .paramIfPresent("statusesFilter", statusesFilter?.joinToString(",") { it.name })
+            .paramIfPresent("processingResultFilter", processingResultFilter?.joinToString(",") { it.name })
+            .paramIfPresent("page", page?.toString())
+            .paramIfPresent("size", size?.toString()),
     )
 
     fun getSequenceEntryToEdit(
@@ -310,10 +311,10 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .also {
                 if (compression != null) it.param("compression", compression)
             }
-            .param("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
-            .param("statusesFilter", statusesFilter?.joinToString(",") { it.name })
-            .param("accessionVersionsFilter", accessionVersionsFilter?.joinToString(","))
-            .param("fields", fields?.joinToString(",")),
+            .paramIfPresent("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
+            .paramIfPresent("statusesFilter", statusesFilter?.joinToString(",") { it.name })
+            .paramIfPresent("accessionVersionsFilter", accessionVersionsFilter?.joinToString(","))
+            .paramIfPresent("fields", fields?.joinToString(",")),
     )
 
     fun getSubmittedData(

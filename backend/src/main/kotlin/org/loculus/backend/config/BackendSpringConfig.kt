@@ -12,7 +12,7 @@ import org.jetbrains.exposed.v1.core.Slf4jSqlDebugLogger
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import org.jetbrains.exposed.v1.spring.boot.autoconfigure.ExposedAutoConfiguration
+import org.jetbrains.exposed.v1.spring.boot4.autoconfigure.ExposedAutoConfiguration
 import org.loculus.backend.controller.LoculusCustomHeaders
 import org.loculus.backend.log.REQUEST_ID_HEADER_DESCRIPTION
 import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
@@ -21,8 +21,8 @@ import org.springdoc.core.customizers.OperationCustomizer
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
-import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
+import org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
