@@ -478,7 +478,7 @@ def get_output_metadata(  # noqa: C901, PLR0912, PLR0914, PLR0915
                 submitted_at = unprocessed.inputMetadata["submittedAt"]
             else:
                 input_data[arg_name] = (  # type: ignore
-                    output_metadata.get(resolved_path)
+                    output_metadata.get(resolved_path)  # type: ignore
                     if get_from_processed
                     else unprocessed.metadata.get(resolved_path)
                 )
