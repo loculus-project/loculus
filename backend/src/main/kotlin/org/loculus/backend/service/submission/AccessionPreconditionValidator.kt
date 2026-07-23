@@ -1,6 +1,7 @@
 package org.loculus.backend.service.submission
 
 import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.select
 import org.loculus.backend.api.AccessionVersion

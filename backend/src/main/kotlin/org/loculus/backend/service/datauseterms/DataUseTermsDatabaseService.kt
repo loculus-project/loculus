@@ -1,5 +1,6 @@
 package org.loculus.backend.service.datauseterms
 
+import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.loculus.backend.api.DataUseTerms
