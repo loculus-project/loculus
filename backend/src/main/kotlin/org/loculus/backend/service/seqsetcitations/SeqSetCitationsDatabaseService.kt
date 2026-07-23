@@ -152,7 +152,6 @@ class SeqSetCitationsDatabaseService(
             .where { SeqSetsTable.seqSetId eq seqSetId and (SeqSetsTable.createdBy eq username) }
             .firstOrNull()
             ?.get(SeqSetsTable.seqSetVersion.max())
-            as Long?
 
         if (maxVersion == null) {
             throw NotFoundException("SeqSet $seqSetId does not exist")
