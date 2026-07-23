@@ -1,5 +1,6 @@
 import argparse
 import graphlib
+import itertools
 import logging
 import os
 from enum import StrEnum
@@ -249,11 +250,7 @@ def generate_argparse_from_model(config_cls: type[BaseModel]) -> argparse.Argume
 
 
 def validate_required_when(config: Config) -> None:
-    """Validate every `required_when` condition in the processing spec.
-
-    Each condition must be either `<field>` (an existing metadata field)
-    or `files.<category>` (a valid FileCategory).
-    """
+    """Validate every `required_when` condition in the processing spec."""
     for output_field, spec in config.processing_spec.items():
         if spec.required and spec.required_when:
             msg = (
@@ -270,14 +267,19 @@ def validate_required_when(config: Config) -> None:
                         f"condition referencing unknown file category '{category}'."
                     )
                     raise ValueError(msg)
-            elif condition not in config.processing_spec:
+                continue
+            field = (
+                condition.removeprefix(PROCESSED_PREFIX)
+                if condition.startswith(PROCESSED_PREFIX)
+                else condition
+            )
+            if field not in config.processing_spec:
                 msg = (
-                    f"invalid configuration: field '{output_field}' has an invalid requiredWhen "
-                    f"condition '{condition}'. Conditions must start with "
-                    f"'{FILES_PREFIX}' or be a valid input field."
+                    f"invalid configuration: field '{output_field}' has a requiredWhen "
+                    f"condition referencing non-existing metadata field '{field}'"
                 )
                 raise ValueError(msg)
-            elif condition == output_field:
+            if field == output_field:
                 msg = (
                     f"invalid configuration: field '{output_field}' lists itself in `requiredWhen`"
                 )
@@ -299,7 +301,7 @@ def get_processing_order(config: Config) -> tuple[str, ...]:
     """
     dag: dict[str, set[str]] = {k: set() for k in config.processing_spec}
     for output_field, spec in config.processing_spec.items():
-        for input in spec.inputs.values():
+        for input in itertools.chain(spec.inputs.values(), spec.required_when):
             if not input.startswith(PROCESSED_PREFIX):
                 continue
             dependency = input.removeprefix(PROCESSED_PREFIX)

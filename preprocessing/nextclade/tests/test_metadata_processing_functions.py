@@ -788,6 +788,7 @@ test_metadata_dependency_test_definitions = [
             "A": "2022-11-01",
             "B": "present",
             "required_when_B": "",
+            "required_when_processed_B": "",
         },
         accession_id="32",
         expected_metadata={
@@ -801,10 +802,17 @@ test_metadata_dependency_test_definitions = [
         },
         expected_errors=build_processing_annotations(
             [
+                # plain `B` checks the input value
                 ProcessingAnnotationHelper(
                     ["required_when_B"],
                     ["required_when_B"],
                     "Metadata field `required_when_B` is required when `B` is provided.",
+                ),
+                # `processed.B` checks the processed value of the same field
+                ProcessingAnnotationHelper(
+                    ["required_when_processed_B"],
+                    ["required_when_processed_B"],
+                    "Metadata field `required_when_processed_B` is required when `B` is provided.",
                 ),
             ]
         ),
@@ -862,8 +870,9 @@ def test_preprocessing_metadata_dependencies(test_case_def: Case):
     ("condition", "match"),
     [
         ("files.not_a_category", "unknown file category"),
-        ("does_not_exist", "has an invalid requiredWhen condition"),
-        ("collection_date", "Conditions must start with"),
+        ("processed.does_not_exist", "non-existing metadata field"),
+        ("processed.field", "lists itself"),
+        ("does_not_exist", "has a requiredWhen condition referencing non-existing metadata field"),
         ("field", "lists itself"),
     ],
 )

@@ -36,7 +36,7 @@
         "requiredWhen": {
           "groups": ["metadata"],
           "type": "array",
-          "description": "Array of conditions under which this metadata field is required. Conditions can be the presence of a file category - specified as files.<file_category>, or another metadata field - specified as <field_name>"
+          "description": "Array of conditions under which this metadata field is required. Conditions can be: the presence of a file category - specified as files.<file_category>; the input value of another metadata field - specified as <field_name>; or the processed value of another metadata field - specified as processed.<field_name>"
         },
         "desired": {
           "groups": ["metadata"],
