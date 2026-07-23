@@ -104,8 +104,6 @@ def get_segment_order(unaligned_sequences: dict[str, str | None]) -> list[str]:
 
 
 def get_address(config: Config, submission_row: SubmissionTableEntry) -> str | None:
-    if not config.is_broker:
-        return None
     try:
         group_details = call_loculus.get_group_info(config, submission_row.seq_metadata["groupId"])
     except Exception as e:
@@ -157,8 +155,6 @@ def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) ->
             value = default or None if not values else ", ".join(values)  # type: ignore
         if function == "reformat_authors":
             value = get_authors(str(value))
-        if not config.is_broker and key == "authors":
-            continue
         assembly_values[key] = value
     return assembly_values
 
@@ -615,7 +611,7 @@ def assembly_table_create(db_engine: Engine, config: Config):
                 study_accession,
                 submission_row,
             )
-            manifest_file = create_manifest(manifest_object, is_broker=config.is_broker)
+            manifest_file = create_manifest(manifest_object)
         except Exception as e:
             logger.error(f"Manifest creation failed for accession {row.accession} with error {e}")
             continue

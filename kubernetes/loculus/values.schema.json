@@ -1856,11 +1856,6 @@
           "description": "Suffix to add to ENA project alias",
           "default": "Loculus"
         },
-        "enaIsBroker": {
-          "type": "boolean",
-          "description": "If ENA broker account is used",
-          "default": false
-        },
         "submitToEnaProduction": {
           "type": "boolean",
           "description": "If true, the ENA submission will be sent to the production ENA server. If false, it will be sent to the test ENA server.",

@@ -1,6 +1,5 @@
 submit_to_ena_prod: false
 db_name: Loculus
-is_broker: true
 unique_project_suffix: Loculus
 backend_url: http://localhost:8079
 keycloak_token_url: http://localhost:8083/realms/loculus/protocol/openid-connect/token

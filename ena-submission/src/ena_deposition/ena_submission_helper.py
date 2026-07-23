@@ -513,7 +513,7 @@ def create_flatfile(
 
 
 def create_manifest(
-    manifest: AssemblyManifest, is_broker: bool = False, dir: str | None = None
+    manifest: AssemblyManifest, dir: str | None = None
 ) -> str:
     """
     Creates a temp manifest file:
@@ -550,16 +550,8 @@ def create_manifest(
         if manifest.run_ref:
             f.write(f"RUN_REF\t{manifest.run_ref}\n")
         if manifest.authors:
-            if not is_broker:
-                logger.error("Cannot set authors field for non broker")
-                msg = "Cannot set authors field for non broker"
-                raise ValueError(msg)
             f.write(f"AUTHORS\t{manifest.authors}\n")
         if manifest.address:
-            if not is_broker:
-                logger.error("Cannot set address field for non broker")
-                msg = "Cannot set address field for non broker"
-                raise ValueError(msg)
             f.write(f"ADDRESS\t{manifest.address}\n")
 
     return filename
