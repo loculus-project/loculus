@@ -2630,6 +2630,10 @@ images:
   backend:
     repository: "ghcr.io/loculus-project/backend"
     pullPolicy: Always
+  deaconIndex:
+    repository: "ghcr.io/loculus-project/deacon-index"
+    tag: "latest"
+    pullPolicy: Always # TODO: revert to IfNotPresent
 silo:
   apiThreadsForHttpConnections: 16
 secrets:
@@ -2695,7 +2699,7 @@ runDevelopmentMainDatabase: true
 runDevelopmentS3: true
 developmentDatabasePersistence: false
 enforceHTTPS: true
-traefikVersion: 2
+traefikVersion: 3
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 

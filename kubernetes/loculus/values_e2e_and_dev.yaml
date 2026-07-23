@@ -10,9 +10,14 @@ createTestAccounts: true
 backendExtraArgs:
   - "--loculus.debug-mode=true"
 disableEnaSubmission: true
-disableFileProcessingService: true
 auth:
   verifyEmail: false
 host: localhost:3000
 siloImport:
   pollIntervalSeconds: 5
+images:
+  deaconIndex:
+    # Small index built from file-processing's unit test fixture (test/fixtures/deacon.idx),
+    # instead of the full production index, so e2e/dev clusters don't need to load a huge
+    # index into memory just to bring up the file-processing pod.
+    tag: "test"

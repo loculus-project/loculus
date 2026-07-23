@@ -1,5 +1,6 @@
 # ruff: noqa: S101
 
+import random
 import shutil
 import time
 from pathlib import Path
@@ -12,6 +13,29 @@ from file_processing.datatypes import FileIdAndNameAndReadUrl
 from file_processing.functions import validate_raw_reads_submission
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
+
+
+def _parse_fastq_records(path: Path) -> list[tuple[str, str]]:
+    lines = path.read_text().splitlines()
+    return [(lines[i + 1], lines[i + 3]) for i in range(0, len(lines), 4)]
+
+
+RANDOM_READ_SEED = 0
+
+
+def _random_read(rng: random.Random, length: int = 150) -> tuple[str, str]:
+    # Random ACGT sequences have a negligible chance of containing a 31-mer
+    # (deacon.idx's k) present in test_small_1.fastq, so they reliably act as
+    # "non-host" reads. Callers must pass an rng seeded with RANDOM_READ_SEED
+    # so this stays true and reproducible across runs.
+    return "".join(rng.choices("ACGT", k=length)), "I" * length
+
+
+def _write_fastq(path: Path, records: list[tuple[str, str]]) -> None:
+    lines = []
+    for i, (seq, qual) in enumerate(records):
+        lines += [f"@read{i}", seq, "+", qual]
+    path.write_text("\n".join(lines) + "\n")
 
 
 @pytest.fixture
@@ -70,17 +94,18 @@ def deacon_index(monkeypatch, deacon_server):
 def test_only_fastq_files_are_allowed(config):
     files = [_file("R1.bam", url="https://example.test/reads")]
     result = validate_raw_reads_submission(config, files)
-    assert (
-        "File format: BAM is not in the list of accepted formats"
-        in result.errors[0].message
-    )
+    assert "File is not in accepted format: FASTQ" in result.errors[0].message
 
 
 @pytest.mark.usefixtures("mock_downstream", "deacon_index")
-def test_host_reads_above_threshold_is_an_error(config):
+def test_host_reads_above_threshold_is_an_error(config, tmp_path):
     # 3/4 reads (75%) are reused verbatim from test_small_1.fastq, so they hit
     # deacon.idx; config's deacon_max_host_reads_proportion is 0.05, so 75% > 5%.
-    reads = FIXTURES_DIR / "reads_above_host_threshold.fastq"
+    host_reads = _parse_fastq_records(FIXTURES_DIR / "test_small_1.fastq")[:3]
+    rng = random.Random(RANDOM_READ_SEED)
+    non_host_read = _random_read(rng)
+    reads = tmp_path / "reads.fastq"
+    _write_fastq(reads, [*host_reads, non_host_read])
     files = [_file("reads.fastq", url=str(reads))]
     result = validate_raw_reads_submission(config, files)
     assert not result.warnings
@@ -89,11 +114,15 @@ def test_host_reads_above_threshold_is_an_error(config):
 
 
 @pytest.mark.usefixtures("mock_downstream", "deacon_index")
-def test_host_reads_at_or_below_threshold_is_a_warning(config):
+def test_host_reads_at_or_below_threshold_is_a_warning(config, tmp_path):
     # 1/20 reads (5%) is reused verbatim from test_small_1.fastq, so it hits
     # deacon.idx; config's deacon_max_host_reads_proportion is 0.05, so this
     # lands exactly at the threshold: not > 0.05, so it's a warning, not an error.
-    reads = FIXTURES_DIR / "reads_below_host_threshold.fastq"
+    host_reads = _parse_fastq_records(FIXTURES_DIR / "test_small_1.fastq")[:1]
+    rng = random.Random(RANDOM_READ_SEED)
+    non_host_reads = [_random_read(rng) for _ in range(19)]
+    reads = tmp_path / "reads.fastq"
+    _write_fastq(reads, [*host_reads, *non_host_reads])
     files = [_file("reads.fastq", url=str(reads))]
     result = validate_raw_reads_submission(config, files)
     assert not result.errors

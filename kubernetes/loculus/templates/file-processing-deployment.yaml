@@ -62,6 +62,6 @@ spec:
             name: loculus-file-processing-config
         - name: deacon-index
           image:
-            reference: ghcr.io/loculus-project/deacon-index:latest
-            pullPolicy: Always # TODO: revert to IfNotPresent
+            reference: "{{ $.Values.images.deaconIndex.repository }}:{{ $.Values.images.deaconIndex.tag }}"
+            pullPolicy: "{{ $.Values.images.deaconIndex.pullPolicy }}"
 {{- end }}

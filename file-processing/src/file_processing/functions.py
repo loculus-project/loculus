@@ -74,7 +74,7 @@ def validate_raw_reads_submission(
             Annotation(
                 fileName=", ".join(file.name for file in files),
                 fileCategory=FileCategory.RAW_READS,
-                message=f"File format: {format_type} is not in the list of accepted formats: {ACCEPTED_FORMATS}. Paired-end FASTQ files must be submitted as separate, de-interleaved files.",
+                message=f"File is not in accepted format: {', '.join(ACCEPTED_FORMATS)}. Paired-end FASTQ files must be submitted as separate, de-interleaved files.",
             )
         )
         return ResponseWithFiles(
