@@ -251,9 +251,6 @@ def generate_argparse_from_model(config_cls: type[BaseModel]) -> argparse.Argume
 
 def validate_required_when(config: Config) -> None:
     """Validate every `required_when` condition in the processing spec.
-
-    Each condition must be either `processed.<field>` (an existing metadata field)
-    or `files.<category>` (a valid FileCategory).
     """
     for output_field, spec in config.processing_spec.items():
         if spec.required and spec.required_when:
@@ -263,21 +260,7 @@ def validate_required_when(config: Config) -> None:
             )
             raise ValueError(msg)
         for condition in spec.required_when:
-            if condition.startswith(PROCESSED_PREFIX):
-                field = condition.removeprefix(PROCESSED_PREFIX)
-                if field not in config.processing_spec:
-                    msg = (
-                        f"invalid configuration: field '{output_field}' has a requiredWhen "
-                        f"condition referencing non-existing metadata field '{field}'"
-                    )
-                    raise ValueError(msg)
-                if field == output_field:
-                    msg = (
-                        f"invalid configuration: field '{output_field}' lists itself "
-                        "in `requiredWhen`"
-                    )
-                    raise ValueError(msg)
-            elif condition.startswith(FILES_PREFIX):
+            if condition.startswith(FILES_PREFIX):
                 category = condition.removeprefix(FILES_PREFIX)
                 if category not in FileCategory:
                     msg = (
@@ -285,11 +268,21 @@ def validate_required_when(config: Config) -> None:
                         f"condition referencing unknown file category '{category}'."
                     )
                     raise ValueError(msg)
-            else:
+                continue
+            field = (
+                condition.removeprefix(PROCESSED_PREFIX)
+                if condition.startswith(PROCESSED_PREFIX)
+                else condition
+            )
+            if field not in config.processing_spec:
                 msg = (
-                    f"invalid configuration: field '{output_field}' has an invalid requiredWhen "
-                    f"condition '{condition}'. Conditions must start with "
-                    f"'{PROCESSED_PREFIX}' or '{FILES_PREFIX}'."
+                    f"invalid configuration: field '{output_field}' has a requiredWhen "
+                    f"condition referencing non-existing metadata field '{field}'"
+                )
+                raise ValueError(msg)
+            if field == output_field:
+                msg = (
+                    f"invalid configuration: field '{output_field}' lists itself in `requiredWhen`"
                 )
                 raise ValueError(msg)
 
