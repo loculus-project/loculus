@@ -18,7 +18,7 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.plus
-import org.jetbrains.exposed.v1.core.Transaction
+import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.core.VarCharColumnType
 import org.jetbrains.exposed.v1.core.alias
 import org.jetbrains.exposed.v1.core.and
@@ -1555,7 +1555,7 @@ class SubmissionDatabaseService(
             .toMap()
 }
 
-private fun Transaction.findNewPreprocessingPipelineVersion(organism: String): Long? {
+private fun JdbcTransaction.findNewPreprocessingPipelineVersion(organism: String): Long? {
     // Maybe we want to refactor this function: https://github.com/loculus-project/loculus/issues/3571
 
     // This query goes into the processed data and finds _any_ processed data that was processed

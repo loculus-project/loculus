@@ -7,7 +7,7 @@ import io.swagger.v3.oas.models.headers.Header
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.parameters.HeaderParameter
 import org.flywaydb.core.Flyway
-import org.jetbrains.exposed.spring.autoconfigure.ExposedAutoConfiguration
+import org.jetbrains.exposed.v1.spring.boot.autoconfigure.ExposedAutoConfiguration
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.core.DatabaseConfig
 import org.jetbrains.exposed.v1.core.Slf4jSqlDebugLogger
