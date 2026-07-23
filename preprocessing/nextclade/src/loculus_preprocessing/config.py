@@ -250,8 +250,7 @@ def generate_argparse_from_model(config_cls: type[BaseModel]) -> argparse.Argume
 
 
 def validate_required_when(config: Config) -> None:
-    """Validate every `required_when` condition in the processing spec.
-    """
+    """Validate every `required_when` condition in the processing spec."""
     for output_field, spec in config.processing_spec.items():
         if spec.required and spec.required_when:
             msg = (
