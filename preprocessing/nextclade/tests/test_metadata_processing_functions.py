@@ -863,7 +863,7 @@ def test_preprocessing_metadata_dependencies(test_case_def: Case):
     [
         ("files.not_a_category", "unknown file category"),
         ("processed.does_not_exist", "non-existing metadata field"),
-        ("collection_date", "Conditions must start with"),
+        ("does_not_exist", "non-existing metadata field"),
         ("processed.field", "lists itself"),
     ],
 )
