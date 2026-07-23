@@ -1,4 +1,5 @@
 import io
+import http.client
 import unittest
 import urllib.error
 from unittest import mock
@@ -46,6 +47,19 @@ class FetchBatchRetryTest(unittest.TestCase):
 
         enrich_genbank.fetch_batch(["AB123.1"], "me@example.test", "api-key")
         sleep.assert_called_once_with(12)
+
+    @mock.patch.object(enrich_genbank.random, "uniform", return_value=0)
+    @mock.patch.object(enrich_genbank.time, "sleep")
+    @mock.patch.object(enrich_genbank.urllib.request, "urlopen")
+    def test_retries_truncated_response(self, urlopen, sleep, _uniform):
+        truncated = mock.MagicMock()
+        truncated.__enter__.return_value.read.side_effect = http.client.IncompleteRead(
+            b"<GBSet>"
+        )
+        urlopen.side_effect = [truncated, io.BytesIO(EMPTY_RESPONSE)]
+
+        self.assertEqual(enrich_genbank.fetch_batch(["AB123.1"], "me@example.test", None), {})
+        sleep.assert_called_once_with(1)
 
     @mock.patch.object(enrich_genbank.time, "sleep")
     @mock.patch.object(enrich_genbank.urllib.request, "urlopen")

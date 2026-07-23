@@ -10,6 +10,7 @@ from __future__ import print_function
 
 import argparse
 import email.utils
+import http.client
 import io
 import json
 import random
@@ -198,6 +199,18 @@ def fetch_batch(accessions, email, api_key):
             print(
                 "Entrez returned HTTP 429; retrying in {:.1f}s ({}/{})".format(
                     delay, retry + 1, MAX_429_RETRIES
+                ),
+                file=sys.stderr,
+            )
+            time.sleep(delay)
+        except http.client.IncompleteRead as error:
+            if retry == MAX_429_RETRIES:
+                raise
+            delay = min(2 ** retry + random.uniform(0, 1), MAX_RETRY_DELAY_SECONDS)
+            print(
+                "Entrez response was truncated after {} bytes; "
+                "retrying in {:.1f}s ({}/{})".format(
+                    len(error.partial), delay, retry + 1, MAX_429_RETRIES
                 ),
                 file=sys.stderr,
             )
