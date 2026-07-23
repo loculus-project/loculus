@@ -227,7 +227,7 @@ def main():
     )
     parser.add_argument("--output", default="-", help="JSON Lines output path (default: stdout)")
     parser.add_argument("--refresh", action="store_true", help="Ignore records in --previous-enrichment")
-    parser.add_argument("--batch-size", type=int, default=100, help="Accessions per EFetch request")
+    parser.add_argument("--batch-size", type=int, default=20, help="Accessions per EFetch request")
     args = parser.parse_args()
 
     if not 1 <= args.batch_size <= 200:
