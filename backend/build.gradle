@@ -2,7 +2,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
-    id 'org.springframework.boot' version '3.5.16'
+    id 'org.springframework.boot' version '4.0.7'
     id 'io.spring.dependency-management' version '1.1.7'
     // If kotlin version bumped, check if gradle version can be bumped as well 
     // Check here: https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin
@@ -37,19 +37,27 @@ repositories {
     mavenCentral()
 }
 
+// For now we exclude Jackson 3 and maintain Jackson 2
+// https://spring.io/blog/2025/10/07/introducing-jackson-3-support-in-spring#keep-using-jackson-2-support-temporarily
+configurations.all {
+    exclude group: "org.springframework.boot", module: "spring-boot-jackson"
+}
+
 dependencies {
-    implementation "org.springframework.boot:spring-boot-starter-web"
-    implementation "org.springframework.boot:spring-boot-starter-aop"
+    implementation "org.springframework.boot:spring-boot-starter-webmvc"
+    implementation "org.springframework.boot:spring-boot-starter-aspectj"
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin"
+    implementation "org.springframework.boot:spring-boot-jackson2" // Jackson 2 compatibility bridge
     implementation "org.jetbrains.kotlin:kotlin-reflect"
     implementation "io.github.microutils:kotlin-logging-jvm:3.0.5"
     implementation "org.postgresql:postgresql"
     implementation "org.apache.commons:commons-csv:1.14.1"
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3"
+    implementation "org.springframework.boot:spring-boot-starter-flyway"
     implementation "org.flywaydb:flyway-database-postgresql" // Version managed by Spring Boot to ensure compatibility
     implementation platform("org.jetbrains.exposed:exposed-bom:1.0.0")
-    implementation "org.jetbrains.exposed:exposed-spring-boot-starter"
+    implementation "org.jetbrains.exposed:exposed-spring-boot4-starter"
     implementation "org.jetbrains.exposed:exposed-jdbc"
     implementation "org.jetbrains.exposed:exposed-json"
     implementation "org.jetbrains.exposed:exposed-kotlin-datetime"
@@ -59,7 +67,7 @@ dependencies {
     implementation("io.minio:minio:9.0.1")
     implementation("software.amazon.awssdk:s3:2.47.1")
 
-    implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+    implementation "org.springframework.boot:spring-boot-starter-security-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
 
     implementation 'org.apache.commons:commons-compress'
@@ -72,6 +80,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude group: "org.mockito"
     }
+    testImplementation "org.springframework.boot:spring-boot-starter-webmvc-test"
     testImplementation platform("io.jsonwebtoken:jjwt-bom:0.13.0")
     testImplementation "io.jsonwebtoken:jjwt-api"
     testImplementation "io.jsonwebtoken:jjwt-impl"
