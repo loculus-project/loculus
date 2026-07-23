@@ -53,6 +53,7 @@ import org.loculus.backend.model.SubmitModel
 import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
+import org.loculus.backend.service.submission.SubmissionMetrics
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.FastaEntry
 import org.loculus.backend.utils.FastaWriter
@@ -79,6 +80,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
+import java.time.Duration
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -87,6 +89,16 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBod
 
 private val log = KotlinLogging.logger { }
 private val SUBMITTED_DATA_DOWNLOAD_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'")
+private const val EXTRACT_UNPROCESSED_DATA_ENDPOINT = "extract-unprocessed-data"
+private const val GET_RELEASED_DATA_ENDPOINT = "get-released-data"
+private const val GET_SUBMITTED_METADATA_ENDPOINT = "get-submitted-metadata"
+private const val GET_SUBMITTED_DATA_ENDPOINT = "get-submitted-data"
+private const val STREAM_UNPROCESSED_DATA_PHASE = "stream-unprocessed-data"
+private const val STREAM_RELEASE_FILE_PHASE = "stream-release-file"
+private const val STREAM_SUBMITTED_METADATA_PHASE = "stream-submitted-metadata"
+private const val STREAM_SUBMITTED_DATA_PHASE = "stream-submitted-data"
+private const val STREAM_RESPONSE_PHASE = "stream-response"
+private val POLLING_ENDPOINTS = setOf(EXTRACT_UNPROCESSED_DATA_ENDPOINT, GET_RELEASED_DATA_ENDPOINT)
 
 const val MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES = 500
 
@@ -104,6 +116,7 @@ open class SubmissionController(
     private val objectMapper: ObjectMapper,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
+    private val submissionMetrics: SubmissionMetrics,
 ) {
     @Operation(description = SUBMIT_DESCRIPTION)
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
@@ -201,8 +214,15 @@ open class SubmissionController(
         @RequestParam pipelineVersion: Long,
         @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
+        val requestStartNanos = System.nanoTime()
         val currentProcessingPipelineVersion = submissionDatabaseService.getCurrentProcessingPipelineVersion(organism)
         if (pipelineVersion < currentProcessingPipelineVersion) {
+            recordPollingRequest(
+                EXTRACT_UNPROCESSED_DATA_ENDPOINT,
+                organism,
+                HttpStatus.UNPROCESSABLE_ENTITY,
+                requestStartNanos,
+            )
             throw UnprocessableEntityException(
                 "The processing pipeline version $pipelineVersion is not accepted " +
                     "anymore. The current pipeline version is $currentProcessingPipelineVersion.",
@@ -211,13 +231,23 @@ open class SubmissionController(
 
         val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag()
         if (ifNoneMatch == lastDatabaseWriteETag) {
+            recordPollingRequest(
+                EXTRACT_UNPROCESSED_DATA_ENDPOINT,
+                organism,
+                HttpStatus.NOT_MODIFIED,
+                requestStartNanos,
+            )
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
         }
 
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
         headers.eTag = lastDatabaseWriteETag
-        val streamBody = streamTransactioned(endpoint = "extract-unprocessed-data", organism = organism) {
+        val streamBody = streamTransactioned(
+            endpoint = EXTRACT_UNPROCESSED_DATA_ENDPOINT,
+            organism = organism,
+            requestStartNanos = requestStartNanos,
+        ) {
             submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism, pipelineVersion)
         }
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
@@ -329,11 +359,18 @@ open class SubmissionController(
             description = "(Optional) Only retrieve all released data if Etag has changed.",
         ) @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
+        val requestStartNanos = System.nanoTime()
         val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
             tableNames = RELEASED_DATA_RELATED_TABLES,
             organism = organism,
         )
         if (ifNoneMatch == lastDatabaseWriteETag) {
+            recordPollingRequest(
+                GET_RELEASED_DATA_ENDPOINT,
+                organism,
+                HttpStatus.NOT_MODIFIED,
+                requestStartNanos,
+            )
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
         }
 
@@ -350,7 +387,12 @@ open class SubmissionController(
         // We just need to make sure the etag used is from before the count
         // Alternatively, we could read once to file while counting and then stream the file
 
-        val streamBody = streamTransactioned(compression, endpoint = "get-released-data", organism = organism) {
+        val streamBody = streamTransactioned(
+            compressionFormat = compression,
+            endpoint = GET_RELEASED_DATA_ENDPOINT,
+            organism = organism,
+            requestStartNanos = requestStartNanos,
+        ) {
             releasedDataModel.getReleasedData(organism)
         }
         return ResponseEntity.ok().headers(headers).body(streamBody)
@@ -470,7 +512,11 @@ open class SubmissionController(
         // We just need to make sure the etag used is from before the count
         // Alternatively, we could read once to file while counting and then stream the file
 
-        val streamBody = streamTransactioned(compression, endpoint = "get-submitted-metadata", organism = organism) {
+        val streamBody = streamTransactioned(
+            compressionFormat = compression,
+            endpoint = GET_SUBMITTED_METADATA_ENDPOINT,
+            organism = organism,
+        ) {
             submissionDatabaseService.streamSubmittedMetadata(
                 authenticatedUser,
                 organism,
@@ -583,6 +629,12 @@ open class SubmissionController(
 
             val duration = System.currentTimeMillis() - startTime
             log.info { "[get-submitted-data] Completed in ${duration}ms" }
+            submissionMetrics.recordReadPhase(
+                GET_SUBMITTED_DATA_ENDPOINT,
+                organism.name,
+                STREAM_SUBMITTED_DATA_PHASE,
+                Duration.ofMillis(duration),
+            )
         }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
@@ -639,6 +691,7 @@ open class SubmissionController(
         compressionFormat: CompressionFormat? = null,
         endpoint: String,
         organism: Organism,
+        requestStartNanos: Long = System.nanoTime(),
         sequenceProvider: () -> Sequence<T>,
     ) = StreamingResponseBody { responseBodyStream ->
         val startTime = System.currentTimeMillis()
@@ -668,9 +721,41 @@ open class SubmissionController(
 
         val duration = System.currentTimeMillis() - startTime
         log.info { "[$endpoint] Streaming response completed in ${duration}ms" }
+        submissionMetrics.recordReadPhase(
+            endpoint,
+            organism.name,
+            readPhaseForEndpoint(endpoint),
+            Duration.ofMillis(duration),
+        )
+        recordPollingRequest(endpoint, organism, HttpStatus.OK, requestStartNanos)
 
         MDC.remove(REQUEST_ID_MDC_KEY)
         MDC.remove(ORGANISM_MDC_KEY)
+    }
+
+    private fun recordPollingRequest(
+        endpoint: String,
+        organism: Organism,
+        status: HttpStatus,
+        requestStartNanos: Long,
+    ) {
+        if (endpoint !in POLLING_ENDPOINTS) {
+            return
+        }
+
+        submissionMetrics.recordPollingRequest(
+            endpoint = endpoint,
+            organism = organism.name,
+            status = status.value().toString(),
+            duration = Duration.ofNanos(System.nanoTime() - requestStartNanos),
+        )
+    }
+
+    private fun readPhaseForEndpoint(endpoint: String) = when (endpoint) {
+        EXTRACT_UNPROCESSED_DATA_ENDPOINT -> STREAM_UNPROCESSED_DATA_PHASE
+        GET_RELEASED_DATA_ENDPOINT -> STREAM_RELEASE_FILE_PHASE
+        GET_SUBMITTED_METADATA_ENDPOINT -> STREAM_SUBMITTED_METADATA_PHASE
+        else -> STREAM_RESPONSE_PHASE
     }
 
     fun parseFileMapping(fileMapping: String?, organism: Organism): SubmissionIdFilesMap? {
