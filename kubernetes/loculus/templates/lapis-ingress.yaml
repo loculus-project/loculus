@@ -1,5 +1,6 @@
-{{- $lapisHost := printf "lapis%s%s" .Values.subdomainSeparator .Values.host }}
-{{- $traefikApiVersion := ternary "traefik.io/v1alpha1" "traefik.containo.us/v1alpha1" (eq (int $.Values.traefikVersion) 3) -}}
+{{- $ingressHosts := $.Values.networking.ingressHosts | default dict }}
+{{- $lapisHost := $ingressHosts.lapis | default (printf "lapis%s%s" .Values.networking.subdomainSeparator (.Values.host | default "")) }}
+{{- $traefikApiVersion := ternary "traefik.io/v1alpha1" "traefik.containo.us/v1alpha1" (eq (int $.Values.networking.traefikVersion) 3) -}}
 {{- $enabledOrganismsResult := (include "loculus.enabledOrganisms" . | fromJson) }}
 {{- $enabledOrganismsList := $enabledOrganismsResult.organisms }}
 {{- $organismKeys := list -}}
@@ -74,7 +75,7 @@ spec:
 # This ingress is only used to redirect from $LAPIS_URL/$ORGANISM_NAME to $LAPIS_URL/$ORGANISM_NAME/
 # We need to do this so we can strip the /$ORGANISM_NAME/ prefix in the main lapis ingress (see #3360)
 {{- $redirectMiddlewareList := list -}}
-{{- if $.Values.enforceHTTPS -}}
+{{- if $.Values.networking.enforceHTTPS -}}
   {{- $redirectMiddlewareList = append $redirectMiddlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- end }}
 {{- $redirectMiddlewareList = append $redirectMiddlewareList (printf "%s-redirect-slash@kubernetescrd" $.Release.Namespace) }}

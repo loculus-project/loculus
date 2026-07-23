@@ -615,12 +615,15 @@ fields:
 {{- end}}
 
 {{- define "loculus.publicRuntimeConfig" }}
-{{- $publicRuntimeConfig := $.Values.public }}
+{{- $publicRuntimeConfig := $.Values.networking.publicHosts | default dict }}
+{{- $ingressHosts := $.Values.networking.ingressHosts | default dict }}
 {{- $lapisUrlTemplate := "" }}
 {{- if $publicRuntimeConfig.lapisUrlTemplate }}
   {{- $lapisUrlTemplate = $publicRuntimeConfig.lapisUrlTemplate }}
+{{- else if $ingressHosts.lapis }}
+  {{- $lapisUrlTemplate = printf "https://%s/%%organism%%" $ingressHosts.lapis }}
 {{- else if eq $.Values.environment "server" }}
-  {{- $lapisUrlTemplate = printf "https://lapis%s%s/%s" $.Values.subdomainSeparator $.Values.host "%organism%" }}
+  {{- $lapisUrlTemplate = printf "https://lapis%s%s/%s" $.Values.networking.subdomainSeparator (.Values.host | default "") "%organism%" }}
 {{- else }}
   {{- $lapisUrlTemplate = printf "http://%s:8080/%%organism%%" $.Values.localHost }}
 {{- end }}
