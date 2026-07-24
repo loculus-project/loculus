@@ -16,6 +16,7 @@ class ImporterConfig:
     hard_refresh_interval: int
     poll_interval: int
     silo_run_timeout: int
+    download_timeout: int
     root_dir: Path
     silo_binary: Path
     preprocessing_config: Path
@@ -56,6 +57,8 @@ class ImporterConfig:
         hard_refresh_interval = int(env.get("HARD_REFRESH_INTERVAL", "3600"))
         poll_interval = int(env.get("SILO_IMPORT_POLL_INTERVAL_SECONDS", "30"))
         silo_run_timeout = int(env.get("SILO_RUN_TIMEOUT_SECONDS", "3600"))
+        # Large released data downloads can take a long time to start.
+        download_timeout = int(env.get("SILO_IMPORT_DOWNLOAD_TIMEOUT_SECONDS", "3600"))
         root_raw = env.get("ROOT_DIR")
         root_dir = Path(root_raw).resolve() if root_raw else Path("/")
         silo_binary = Path(env.get("PATH_TO_SILO_BINARY", "/usr/local/bin/silo"))
@@ -69,6 +72,7 @@ class ImporterConfig:
             hard_refresh_interval=hard_refresh_interval,
             poll_interval=poll_interval,
             silo_run_timeout=silo_run_timeout,
+            download_timeout=download_timeout,
             root_dir=root_dir,
             silo_binary=silo_binary,
             preprocessing_config=preprocessing_config,

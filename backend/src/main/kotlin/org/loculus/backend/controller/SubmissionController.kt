@@ -38,6 +38,7 @@ import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.RELEASED_DATA_SPOOL_ATTRIBUTE
 import org.loculus.backend.controller.LoculusCustomHeaders.X_TOTAL_RECORDS
 import org.loculus.backend.log.ORGANISM_MDC_KEY
 import org.loculus.backend.log.REQUEST_ID_MDC_KEY
@@ -52,6 +53,8 @@ import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.SubmitModel
 import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
+import org.loculus.backend.service.submission.SpooledStream
+import org.loculus.backend.service.submission.StreamSpoolService
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.FastaEntry
@@ -99,6 +102,7 @@ open class SubmissionController(
     private val releasedDataModel: ReleasedDataModel,
     private val submissionDatabaseService: SubmissionDatabaseService,
     private val iteratorStreamer: IteratorStreamer,
+    private val streamSpoolService: StreamSpoolService,
     private val requestIdContext: RequestIdContext,
     private val backendConfig: BackendConfig,
     private val objectMapper: ObjectMapper,
@@ -321,6 +325,17 @@ open class SubmissionController(
         "No database changes since last request " +
             "(Etag in HttpHeaders.IF_NONE_MATCH matches lastDatabaseWriteETag)",
     )
+    @ApiResponse(
+        responseCode = "503",
+        description = "The server cannot create another export yet",
+        headers = [
+            Header(
+                name = "Retry-After",
+                description = "Seconds to wait before retrying",
+                schema = Schema(type = "integer"),
+            ),
+        ],
+    )
     @GetMapping("/get-released-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun getReleasedData(
         @PathVariable @Valid organism: Organism,
@@ -328,6 +343,7 @@ open class SubmissionController(
         @Parameter(
             description = "(Optional) Only retrieve all released data if Etag has changed.",
         ) @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
+        request: HttpServletRequest,
     ): ResponseEntity<StreamingResponseBody> {
         val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
             tableNames = RELEASED_DATA_RELATED_TABLES,
@@ -342,18 +358,21 @@ open class SubmissionController(
         headers.contentType = MediaType.APPLICATION_NDJSON
         compression?.let { headers.add(HttpHeaders.CONTENT_ENCODING, it.compressionName) }
 
-        val totalRecords = submissionDatabaseService.countReleasedSubmissions(organism)
-        headers.add(X_TOTAL_RECORDS, totalRecords.toString())
-        // TODO(https://github.com/loculus-project/loculus/issues/2778)
-        // There's a possibility that the totalRecords change between the count and the actual query
-        // this is not too bad, if the client ends up with a few more records than expected
-        // We just need to make sure the etag used is from before the count
-        // Alternatively, we could read once to file while counting and then stream the file
-
-        val streamBody = streamTransactioned(compression, endpoint = "get-released-data", organism = organism) {
+        // Count while writing so the response header stays exact.
+        val spooled = streamSpoolService.spool(compression, endpoint = "get-released-data") {
             releasedDataModel.getReleasedData(organism)
         }
-        return ResponseEntity.ok().headers(headers).body(streamBody)
+        try {
+            request.setAttribute(RELEASED_DATA_SPOOL_ATTRIBUTE, spooled)
+            headers.add(X_TOTAL_RECORDS, spooled.recordCount.toString())
+            headers.contentLength = spooled.file.length()
+
+            return ResponseEntity.ok().headers(headers)
+                .body(spooledStreamBody(spooled, endpoint = "get-released-data", organism))
+        } catch (error: Throwable) {
+            spooled.close()
+            throw error
+        }
     }
 
     @Operation(description = GET_DATA_TO_EDIT_SEQUENCE_VERSION_DESCRIPTION)
@@ -464,11 +483,6 @@ open class SubmissionController(
             parsedAccessionVersions,
         )
         headers.add(X_TOTAL_RECORDS, totalRecords.toString())
-        // TODO(https://github.com/loculus-project/loculus/issues/2778)
-        // There's a possibility that the totalRecords change between the count and the actual query
-        // this is not too bad, if the client ends up with a few more records than expected
-        // We just need to make sure the etag used is from before the count
-        // Alternatively, we could read once to file while counting and then stream the file
 
         val streamBody = streamTransactioned(compression, endpoint = "get-submitted-metadata", organism = organism) {
             submissionDatabaseService.streamSubmittedMetadata(
@@ -672,6 +686,27 @@ open class SubmissionController(
         MDC.remove(REQUEST_ID_MDC_KEY)
         MDC.remove(ORGANISM_MDC_KEY)
     }
+
+    private fun spooledStreamBody(spooled: SpooledStream, endpoint: String, organism: Organism) =
+        StreamingResponseBody { responseBodyStream ->
+            val startTime = System.currentTimeMillis()
+            try {
+                check(spooled.beginTransfer()) { "The spooled response was closed before transfer started" }
+                MDC.put(REQUEST_ID_MDC_KEY, requestIdContext.requestId)
+                MDC.put(ORGANISM_MDC_KEY, organism.name)
+                spooled.file.inputStream().use { fileStream ->
+                    fileStream.copyTo(responseBodyStream)
+                }
+                log.info { "[$endpoint] Response completed in ${System.currentTimeMillis() - startTime}ms" }
+            } catch (error: Exception) {
+                log.error(error) { "[$endpoint] Response failed after ${System.currentTimeMillis() - startTime}ms" }
+                throw error
+            } finally {
+                spooled.close()
+                MDC.remove(REQUEST_ID_MDC_KEY)
+                MDC.remove(ORGANISM_MDC_KEY)
+            }
+        }
 
     fun parseFileMapping(fileMapping: String?, organism: Organism): SubmissionIdFilesMap? {
         val fileMappingParsed = fileMapping?.let {

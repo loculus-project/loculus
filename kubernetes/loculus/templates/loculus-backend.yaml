@@ -70,6 +70,12 @@ spec:
             - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
             - "--loculus.cleanup.task.reset-stale-in-processing-after-seconds={{- .Values.preprocessingTimeout | default 120 }}"
             - "--loculus.pipeline-version-upgrade-check.interval-seconds={{- .Values.pipelineVersionUpgradeCheckIntervalSeconds | default 10 }}"
+            - "--loculus.stream.spool-dir={{ $.Values.backendStreamSpool.directory }}"
+            - "--loculus.stream.spool-max-total-bytes={{ int64 $.Values.backendStreamSpool.maxTotalBytes }}"
+            - "--loculus.stream.max-concurrent-spools={{ $.Values.backendStreamSpool.maxConcurrentSpools }}"
+            - "--loculus.stream.spool-min-free-bytes={{ int64 $.Values.backendStreamSpool.minFreeBytes }}"
+            - "--loculus.stream.spool-file-ttl-minutes={{ $.Values.backendStreamSpool.fileTtlMinutes }}"
+            - "--loculus.stream.spool-sweep-every-minutes={{ $.Values.backendStreamSpool.sweepEveryMinutes }}"
             - "--loculus.s3.enabled=$(S3_ENABLED)"
             {{- if $.Values.s3.enabled }}
             - "--loculus.s3.gc-enabled=$(S3_GC_ENABLED)"
@@ -166,6 +172,11 @@ spec:
           volumeMounts:
             - name: loculus-backend-config-processed
               mountPath: /config
+            - name: loculus-backend-spool
+              mountPath: {{ $.Values.backendStreamSpool.directory | quote }}
       volumes:
 {{ include "loculus.configVolume" (dict "name" "loculus-backend-config") | nindent 8 }}
+        - name: loculus-backend-spool
+          emptyDir:
+            sizeLimit: {{ $.Values.backendStreamSpool.sizeLimit | quote }}
 {{- end }}

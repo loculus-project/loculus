@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.convert.converter.Converter
 import org.springframework.http.HttpMethod
 import org.springframework.security.access.AccessDeniedException
+import org.springframework.security.config.ObjectPostProcessor
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.core.AuthenticationException
@@ -28,6 +29,7 @@ import org.springframework.security.web.access.AccessDeniedHandler
 import org.springframework.security.web.access.AccessDeniedHandlerImpl
 import org.springframework.security.web.access.DelegatingAccessDeniedHandler
 import org.springframework.security.web.csrf.CsrfException
+import org.springframework.security.web.header.HeaderWriterFilter
 import org.springframework.stereotype.Component
 
 private val log = KotlinLogging.logger { }
@@ -80,6 +82,15 @@ class SecurityConfig {
         httpSecurity: HttpSecurity,
         keycloakAuthoritiesConverter: KeycloakAuthenticationConverter,
     ): SecurityFilterChain = httpSecurity
+        .headers { headers ->
+            headers.addObjectPostProcessor(
+                object : ObjectPostProcessor<HeaderWriterFilter> {
+                    override fun <O : HeaderWriterFilter> postProcess(filter: O): O = filter.apply {
+                        setShouldWriteHeadersEagerly(true)
+                    }
+                },
+            )
+        }
         .authorizeHttpRequests { auth ->
             auth.requestMatchers(
                 "/",

@@ -39,6 +39,12 @@ object BackendSpringProperty {
     const val PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS =
         "loculus.pipeline-version-upgrade-check.interval-seconds"
     const val STREAM_BATCH_SIZE = "loculus.stream.batch-size"
+    const val STREAM_SPOOL_DIR = "loculus.stream.spool-dir"
+    const val STREAM_MAX_CONCURRENT_SPOOLS = "loculus.stream.max-concurrent-spools"
+    const val STREAM_SPOOL_MAX_TOTAL_BYTES = "loculus.stream.spool-max-total-bytes"
+    const val STREAM_SPOOL_MIN_FREE_BYTES = "loculus.stream.spool-min-free-bytes"
+    const val STREAM_SPOOL_FILE_TTL_MINUTES = "loculus.stream.spool-file-ttl-minutes"
+    const val STREAM_SPOOL_SWEEP_EVERY_MINUTES = "loculus.stream.spool-sweep-every-minutes"
     const val DEBUG_MODE = "loculus.debug-mode"
     const val ENABLE_SEQSETS = "loculus.enable-seqsets"
     const val SEQSET_CITATIONS_RUN_EVERY_MINUTES = "loculus.seqset-citations.run-every-minutes"

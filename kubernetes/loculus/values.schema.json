@@ -1819,7 +1819,9 @@
     },
     "getSubmissionListLimitSeconds": {
       "type": "integer",
-      "default": 600
+      "description": "Runtime limit for the ENA submission list job. It covers download and processing.",
+      "default": 10800,
+      "minimum": 3600
     },
     "replicas": {
       "type": "object",
@@ -1948,13 +1950,94 @@
           "description": "Interval in seconds between checking for new data",
           "default": 30,
           "minimum": 1
+        },
+        "downloadTimeoutSeconds": {
+          "type": "integer",
+          "description": "Read timeout for downloading released data in seconds",
+          "default": 3600,
+          "minimum": 1
+        },
+        "progressDeadlineSeconds": {
+          "type": "integer",
+          "description": "SILO rollout deadline in seconds",
+          "default": 10800,
+          "minimum": 1
         }
       },
       "additionalProperties": false,
       "default": {
         "siloTimeoutSeconds": 3600,
         "hardRefreshIntervalSeconds": 3600,
-        "pollIntervalSeconds": 30
+        "pollIntervalSeconds": 30,
+        "downloadTimeoutSeconds": 3600,
+        "progressDeadlineSeconds": 10800
+      }
+    },
+    "backendStreamSpool": {
+      "type": "object",
+      "description": "Storage and limits for backend export files",
+      "properties": {
+        "directory": {
+          "type": "string",
+          "description": "Path mounted for backend export files",
+          "default": "/var/lib/loculus/spool",
+          "pattern": "^/.+"
+        },
+        "sizeLimit": {
+          "type": "string",
+          "description": "Maximum size of the export volume",
+          "default": "20Gi",
+          "minLength": 1
+        },
+        "maxTotalBytes": {
+          "type": "integer",
+          "description": "Maximum bytes used by backend export files. Keep this below the volume size limit.",
+          "default": 19327352832,
+          "minimum": 1
+        },
+        "maxConcurrentSpools": {
+          "type": "integer",
+          "description": "Maximum number of exports prepared at once",
+          "default": 4,
+          "minimum": 1
+        },
+        "minFreeBytes": {
+          "type": "integer",
+          "description": "Free bytes kept available on the export volume",
+          "default": 1073741824,
+          "minimum": 0
+        },
+        "fileTtlMinutes": {
+          "type": "integer",
+          "description": "Age when abandoned export files are removed",
+          "default": 180,
+          "minimum": 1
+        },
+        "sweepEveryMinutes": {
+          "type": "integer",
+          "description": "Interval for removing abandoned export files",
+          "default": 30,
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "directory",
+        "sizeLimit",
+        "maxTotalBytes",
+        "maxConcurrentSpools",
+        "minFreeBytes",
+        "fileTtlMinutes",
+        "sweepEveryMinutes"
+      ],
+      "default": {
+        "directory": "/var/lib/loculus/spool",
+        "sizeLimit": "20Gi",
+        "maxTotalBytes": 19327352832,
+        "maxConcurrentSpools": 4,
+        "minFreeBytes": 1073741824,
+        "fileTtlMinutes": 180,
+        "sweepEveryMinutes": 30
       }
     },
     "gitHubEditLink": {

@@ -6,15 +6,21 @@ import java.io.OutputStream
 
 @Service
 class IteratorStreamer(private val objectMapper: ObjectMapper) {
-    fun <T> streamAsNdjson(sequence: Sequence<T>, outputStream: OutputStream) =
-        streamAsNdjson(sequence.iterator(), outputStream)
+    /** Writes NDJSON, returns the record count, and can skip flushing each record. */
+    fun <T> streamAsNdjson(sequence: Sequence<T>, outputStream: OutputStream, flushPerRecord: Boolean = true): Long =
+        streamAsNdjson(sequence.iterator(), outputStream, flushPerRecord)
 
-    fun <T> streamAsNdjson(iterator: Iterator<T>, outputStream: OutputStream) {
+    fun <T> streamAsNdjson(iterator: Iterator<T>, outputStream: OutputStream, flushPerRecord: Boolean = true): Long {
+        var count = 0L
         iterator.forEach {
             val json = objectMapper.writeValueAsString(it)
             outputStream.write(json.toByteArray())
             outputStream.write('\n'.code)
-            outputStream.flush()
+            if (flushPerRecord) {
+                outputStream.flush()
+            }
+            count++
         }
+        return count
     }
 }

@@ -757,21 +757,6 @@ class SubmissionDatabaseService(
         return result
     }
 
-    // Make sure to keep in sync with streamReleasedSubmissions query
-    fun countReleasedSubmissions(organism: Organism): Long {
-        val startTime = dateProvider.getCurrentInstant()
-        val result = SequenceEntriesView.select(
-            SequenceEntriesView.accessionColumn,
-        ).where {
-            SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
-                organism,
-            )
-        }.count()
-        log.info { "Counting released submissions for $organism took ${durationTillNowInMs(startTime)} ms" }
-        return result
-    }
-
-    // Make sure to keep in sync with countReleasedSubmissions query
     fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> = SequenceEntriesView.join(
         DataUseTermsTable,
         JoinType.LEFT,
