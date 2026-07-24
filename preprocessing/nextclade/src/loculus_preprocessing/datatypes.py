@@ -1,7 +1,10 @@
+import logging
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import StrEnum, unique
 from typing import Any, Final
+
+logger = logging.getLogger(__name__)
 
 AccessionVersion = str
 GeneName = str
@@ -82,9 +85,10 @@ class ProcessingAnnotation:
 
 
 @dataclass
-class FileIdAndName:
+class FileIdAndNameAndReadUrl:
     fileId: str  # noqa: N815
     name: str
+    url: str | None = None
 
 
 @dataclass
@@ -95,7 +99,7 @@ class UnprocessedData:
     submissionId: str  # noqa: N815
     metadata: InputMetadata
     unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
-    files: dict[FileCategory, list[FileIdAndName]] | None
+    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
 
 
 @dataclass
@@ -111,7 +115,7 @@ FunctionArgs = dict[ArgName, ArgValue]
 @dataclass
 class UnprocessedAfterNextclade:
     inputMetadata: InputMetadata  # noqa: N815
-    files: dict[FileCategory, list[FileIdAndName]] | None
+    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
     # Derived metadata produced by Nextclade
     nextcladeMetadata: dict[SequenceName, Any] | None  # noqa: N815
     unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
@@ -127,7 +131,7 @@ class UnprocessedAfterNextclade:
 @dataclass
 class ProcessedData:
     metadata: ProcessedMetadata
-    files: dict[FileCategory, list[FileIdAndName]] | None
+    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
     unalignedNucleotideSequences: dict[SequenceName, Any]  # noqa: N815
     alignedNucleotideSequences: dict[SequenceName, Any]  # noqa: N815
     nucleotideInsertions: dict[SequenceName, Any]  # noqa: N815
@@ -265,3 +269,13 @@ class MoleculeType(StrEnum):
 class Topology(StrEnum):
     LINEAR = "linear"
     CIRCULAR = "circular"
+
+
+def _internal_error_message(message: str) -> str:
+    full = f"Internal Error. {message} Please contact the administrator."
+    logger.error(full)
+    return full
+
+
+def raw_internal_error(message: str) -> RawProcessingResult:
+    return processing_error(_internal_error_message(message))

@@ -144,6 +144,12 @@ resources:
       cpu: "10m"
     limits:
       memory: "3Gi"
+  file-processing:
+    requests:
+      memory: "8Gi"
+      cpu: "10m"
+    limits:
+      memory: "8Gi"
   minio:
     requests:
       memory: "250Mi"

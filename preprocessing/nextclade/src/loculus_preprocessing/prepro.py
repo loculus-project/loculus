@@ -5,8 +5,6 @@ from collections.abc import Sequence
 from tempfile import TemporaryDirectory
 from typing import Any
 
-from loculus_preprocessing.file_processing_functions import process_submitted_files
-
 from .backend import (
     download_diamond_db,
     download_minimizer,
@@ -31,7 +29,7 @@ from .datatypes import (
     AnnotationSource,
     AnnotationSourceType,
     FileCategory,
-    FileIdAndName,
+    FileIdAndNameAndReadUrl,
     GeneName,
     InputData,
     InputMetadata,
@@ -263,6 +261,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     args["is_insdc_ingest_group"] = config.insdc_ingest_group_id == group_id
     args["submittedAt"] = submitted_at
     args["ACCESSION_VERSION"] = accession_version
+    args["taxonomy_service"] = config.taxonomy_service  # type: ignore
 
     try:
         processing_result = ProcessingFunctions.call_function(
@@ -325,7 +324,7 @@ def get_sequence_length(
     return len(sequence) if sequence else 0
 
 
-def get_output_metadata(
+def get_output_metadata(  # noqa: C901, PLR0912, PLR0914, PLR0915
     accession_version: AccessionVersion,
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
     config: Config,
@@ -396,7 +395,7 @@ def get_output_metadata(
                 )
                 submitted_at = unprocessed.inputMetadata["submittedAt"]
             else:
-                input_data[arg_name] = (
+                input_data[arg_name] = (  # type: ignore
                     output_metadata.get(resolved_path)  # type: ignore
                     if get_from_processed
                     else unprocessed.metadata.get(resolved_path)
@@ -536,8 +535,10 @@ def process_single(
     output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
         accession_version, unprocessed, config
     )
-
-    file_errors, file_warnings = process_submitted_files(unprocessed.files or {})
+    if unprocessed.files and any(unprocessed.files.values()):
+        file_errors, file_warnings = config.file_processing_service.process_files(unprocessed.files)
+    else:
+        file_errors, file_warnings = [], []
 
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
@@ -592,7 +593,10 @@ def process_single_unaligned(
         accession_version, unprocessed, config
     )
 
-    file_errors, file_warnings = process_submitted_files(unprocessed.files or {})
+    if unprocessed.files and any(unprocessed.files.values()):
+        file_errors, file_warnings = config.file_processing_service.process_files(unprocessed.files)
+    else:
+        file_errors, file_warnings = [], []
 
     return processed_entry_no_alignment(
         accession_version=accession_version,
@@ -680,7 +684,7 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             upload_embl_file_to_presigned_url(file_content, upload_info.url, upload_info.headers)
             processed_files = submission_data.processed_entry.data.files or {}
             processed_files.setdefault(FileCategory.ANNOTATIONS, []).append(
-                FileIdAndName(fileId=file_id, name=file_name)
+                FileIdAndNameAndReadUrl(fileId=file_id, name=file_name)
             )
             submission_data.processed_entry.data.files = processed_files
         except Exception as e:
@@ -713,6 +717,7 @@ def run(config: Config) -> None:  # noqa: C901
                 msg = "Diamond database URL must be provided for diamond segment classification"
                 raise ValueError(msg)
             download_diamond_db(config, dataset_dir + "/diamond/diamond.dmnd")
+
         total_processed = 0
         etag = None
         last_force_refresh = time.time()

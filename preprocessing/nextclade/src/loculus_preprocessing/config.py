@@ -7,7 +7,7 @@ from types import UnionType
 from typing import Any, get_args
 
 import yaml
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, PrivateAttr, model_validator
 
 from loculus_preprocessing.datatypes import (
     FunctionArgs,
@@ -16,6 +16,10 @@ from loculus_preprocessing.datatypes import (
     MoleculeType,
     SegmentClassificationMethod,
     Topology,
+)
+from loculus_preprocessing.external_services import (
+    FileProcessingService,
+    TaxonomyService,
 )
 
 logger = logging.getLogger(__name__)
@@ -128,6 +132,26 @@ class Config(BaseModel):
     # The 'embl' section of the config contains metadata property names for the EMBL file
     embl: EmblInfoMetadataPropertyNames = Field(default_factory=EmblInfoMetadataPropertyNames)
     insdc_ingest_group_id: int = 1
+
+    # External services
+    taxonomy_service_url: str | None = None
+    _taxonomy_service: TaxonomyService | None = PrivateAttr(default=None)
+    file_processing_service_url: str | None = None
+    _file_processing_service: FileProcessingService | None = PrivateAttr(default=None)
+
+    @property
+    def taxonomy_service(self) -> TaxonomyService:
+        """Lazily constructed, cached for the lifetime of this Config instance."""
+        if self._taxonomy_service is None:
+            self._taxonomy_service = TaxonomyService(self.taxonomy_service_url)
+        return self._taxonomy_service
+
+    @property
+    def file_processing_service(self) -> FileProcessingService:
+        """Lazily constructed, cached for the lifetime of this Config instance."""
+        if self._file_processing_service is None:
+            self._file_processing_service = FileProcessingService(self.file_processing_service_url)
+        return self._file_processing_service
 
     @model_validator(mode="after")
     def finalize(self):

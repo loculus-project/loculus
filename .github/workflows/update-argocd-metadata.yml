@@ -92,6 +92,13 @@ jobs:
           check-name: Build taxonomy-service Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
+      - name: Wait for File Processing Service Docker Image
+        uses: lewagon/wait-on-check-action@v1.8.1
+        with:
+          ref: ${{ github.sha }}
+          check-name: Build file-processing-service Docker Image
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 2
       - name: Wait for Website Docker Image
         uses: nick-fields/retry@v4
         with:
