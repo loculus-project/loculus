@@ -86,6 +86,19 @@ const awaitingApprovalTestData: SequenceEntryStatus = {
     submitter: 'submitter',
 };
 
+const revocationTestData: SequenceEntryStatus = {
+    submissionId: 'custom5',
+    status: processedStatus,
+    processingResult: noIssuesProcessingResult,
+    accession: 'accession5',
+    version: 2,
+    isRevocation: true,
+    dataUseTerms: openDataUseTerms,
+    groupId: 42,
+    submitter: 'submitter',
+    versionComment: 'Withdrawn due to contamination',
+};
+
 const emptyStatusCounts = {
     [receivedStatus]: 0,
     [inProcessingStatus]: 0,
@@ -198,6 +211,17 @@ describe('ReviewPage', () => {
 
         await waitFor(() => {
             expect(getByText(unreleasedSequencesRegex)).toBeDefined();
+        });
+    });
+
+    test('should show the version comment for revocation entries', async () => {
+        mockRequest.backend.getSequences(200, generateGetSequencesResponse([revocationTestData]));
+
+        const { getByText } = renderReviewPage();
+
+        await waitFor(() => {
+            expect(getByText('Version comment')).toBeDefined();
+            expect(getByText(revocationTestData.versionComment!)).toBeDefined();
         });
     });
 
