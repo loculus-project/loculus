@@ -8,6 +8,7 @@ import type { InputField, SubmissionDataTypes } from '../../types/config';
 import { EditableSequences } from '../Edit/EditableSequences';
 import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
 import { SequencesForm } from '../Edit/SequencesForm';
+import { parseSubmissionFileMapping, type SubmissionFileMapping } from './FileUpload/fileMapping';
 
 export type InputMode = 'form' | 'bulk';
 
@@ -39,10 +40,12 @@ export type FileFactory = () => Promise<SequenceData | InputError>;
 type FormOrUploadWrapperProps = {
     inputMode: InputMode;
     setFileFactory: Dispatch<SetStateAction<FileFactory | undefined>>;
+    setSubmissionFileMapping: Dispatch<SetStateAction<SubmissionFileMapping | undefined>>;
     organism: string;
     action: UploadAction;
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
+    onError: (message: string) => void;
 };
 
 /**
@@ -55,10 +58,12 @@ type FormOrUploadWrapperProps = {
 export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     inputMode,
     setFileFactory,
+    setSubmissionFileMapping,
     organism,
     action,
     metadataTemplateFields,
     submissionDataTypes,
+    onError,
 }) => {
     const enableConsensusSequences = submissionDataTypes.consensusSequences;
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.empty());
@@ -70,6 +75,28 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     const [sequenceFile, setSequenceFile] = useState<ProcessedFile | undefined>(undefined);
     // The columnMapping can be null; if null -> don't apply mapping.
     const [columnMapping, setColumnMapping] = useState<ColumnMapping | null>(null);
+
+    useEffect(() => {
+        const controller = new AbortController();
+        void (async () => {
+            if (!metadataFile) {
+                setSubmissionFileMapping(undefined);
+                return;
+            }
+            const text = columnMapping
+                ? await (await columnMapping.applyTo(metadataFile)).text()
+                : await metadataFile.text();
+            if (!controller.signal.aborted) {
+                const submissionFileMapping = parseSubmissionFileMapping(text);
+                if (submissionFileMapping.isOk()) setSubmissionFileMapping(submissionFileMapping.value);
+                else {
+                    setSubmissionFileMapping(undefined);
+                    onError(submissionFileMapping.error.message);
+                }
+            }
+        })();
+        return () => controller.abort();
+    }, [metadataFile, columnMapping]);
 
     useEffect(() => {
         setFileFactory(() => {

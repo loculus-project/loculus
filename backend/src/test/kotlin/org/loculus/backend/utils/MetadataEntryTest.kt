@@ -4,10 +4,13 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.nullValue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.controller.UnprocessableEntityException
 import java.io.ByteArrayInputStream
+import java.util.UUID
 
 class MetadataEntryTest {
     @Test
@@ -171,6 +174,139 @@ class MetadataEntryTest {
         assertThat(exception.message, containsString("duplicate fasta ids"))
         assertThat(exception.message, containsString("seq1"))
     }
+
+    @Test
+    fun `test files columns are parsed and excluded from metadata`() {
+        val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
+        val fileId2 = "223e4567-e89b-12d3-a456-426614174001"
+        val str = """
+            submissionId${'\t'}files.raw_reads${'\t'}Country
+            foo${'\t'}reads_1.fq:$fileId1 reads_2.fq:$fileId2${'\t'}bar
+        """.trimIndent()
+        val entries = metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        assertThat(entries, hasSize(1))
+        assertThat(
+            entries[0].files,
+            equalTo(
+                mapOf(
+                    "raw_reads" to listOf(
+                        FileIdAndName(UUID.fromString(fileId1), "reads_1.fq"),
+                        FileIdAndName(UUID.fromString(fileId2), "reads_2.fq"),
+                    ),
+                ),
+            ),
+        )
+        // The files.* column must not leak into the metadata map.
+        assertThat(entries[0].metadata.containsKey("files.raw_reads"), equalTo(false))
+        assertThat(entries[0].metadata["Country"], equalTo("bar"))
+    }
+
+    @Test
+    fun `test multiple files categories are parsed`() {
+        val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
+        val fileId2 = "223e4567-e89b-12d3-a456-426614174001"
+        val str = """
+            submissionId${'\t'}files.raw_reads${'\t'}files.assemblies${'\t'}Country
+            foo${'\t'}reads.fq:$fileId1${'\t'}asm.fa:$fileId2${'\t'}bar
+        """.trimIndent()
+        val entries = metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        assertThat(entries[0].files!!.keys, equalTo(setOf("raw_reads", "assemblies")))
+        assertThat(
+            entries[0].files!!["raw_reads"],
+            equalTo(listOf(FileIdAndName(UUID.fromString(fileId1), "reads.fq"))),
+        )
+        assertThat(
+            entries[0].files!!["assemblies"],
+            equalTo(listOf(FileIdAndName(UUID.fromString(fileId2), "asm.fa"))),
+        )
+    }
+
+    @Test
+    fun `test blank files cell omits that category`() {
+        val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
+        val str = """
+            submissionId${'\t'}files.raw_reads${'\t'}files.assemblies${'\t'}Country
+            foo${'\t'}reads.fq:$fileId1${'\t'}${'\t'}bar
+        """.trimIndent()
+        val entries = metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        assertThat(entries[0].files!!.keys, equalTo(setOf("raw_reads")))
+    }
+
+    @Test
+    fun `test no files columns yields null files`() {
+        val str = """
+            submissionId${'\t'}Country
+            foo${'\t'}bar
+        """.trimIndent()
+        val entries = metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        assertThat(entries[0].files, nullValue())
+    }
+
+    @Test
+    fun `test files entry missing file ID is rejected`() {
+        val str = """
+            submissionId${'\t'}files.raw_reads${'\t'}Country
+            foo${'\t'}reads_1.fq${'\t'}bar
+        """.trimIndent()
+        val exception = assertThrows<UnprocessableEntityException> {
+            metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        }
+        assertThat(exception.message, containsString("missing a file ID"))
+    }
+
+    @Test
+    fun `test files entry missing file name is rejected`() {
+        val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
+        val str = """
+            submissionId${'\t'}files.raw_reads${'\t'}Country
+            foo${'\t'}:$fileId1${'\t'}bar
+        """.trimIndent()
+        val exception = assertThrows<UnprocessableEntityException> {
+            metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        }
+        assertThat(exception.message, containsString("missing a file name"))
+    }
+
+    @Test
+    fun `test files entry with invalid UUID is rejected`() {
+        val str = """
+            submissionId${'\t'}files.raw_reads${'\t'}Country
+            foo${'\t'}reads_1.fq:not-a-uuid${'\t'}bar
+        """.trimIndent()
+        val exception = assertThrows<UnprocessableEntityException> {
+            metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        }
+        assertThat(exception.message, containsString("invalid file ID"))
+    }
+
+    @Test
+    fun `test duplicate file names within a category are rejected`() {
+        val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
+        val fileId2 = "223e4567-e89b-12d3-a456-426614174001"
+        val str = """
+            submissionId${'\t'}files.raw_reads${'\t'}Country
+            foo${'\t'}reads.fq:$fileId1 reads.fq:$fileId2${'\t'}bar
+        """.trimIndent()
+        val exception = assertThrows<UnprocessableEntityException> {
+            metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        }
+        assertThat(exception.message, containsString("duplicate file names"))
+        assertThat(exception.message, containsString("reads.fq"))
+    }
+
+    @Test
+    fun `test file name containing a colon splits on the last colon`() {
+        val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
+        val str = """
+            submissionId${'\t'}files.raw_reads${'\t'}Country
+            foo${'\t'}weird:name.fq:$fileId1${'\t'}bar
+        """.trimIndent()
+        val entries = metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        assertThat(
+            entries[0].files!!["raw_reads"],
+            equalTo(listOf(FileIdAndName(UUID.fromString(fileId1), "weird:name.fq"))),
+        )
+    }
 }
 
 class RevisionEntryTest {
@@ -303,5 +439,20 @@ class RevisionEntryTest {
         }
         assertThat(exception.message, containsString("duplicate fasta ids"))
         assertThat(exception.message, containsString("seq1"))
+    }
+
+    @Test
+    fun `test revision files column is parsed and excluded from metadata`() {
+        val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
+        val str = """
+            submissionId${'\t'}accession${'\t'}files.raw_reads${'\t'}Country
+            foo${'\t'}ACC123${'\t'}reads.fq:$fileId1${'\t'}bar
+        """.trimIndent()
+        val entries = revisionEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        assertThat(
+            entries[0].files,
+            equalTo(mapOf("raw_reads" to listOf(FileIdAndName(UUID.fromString(fileId1), "reads.fq")))),
+        )
+        assertThat(entries[0].metadata.containsKey("files.raw_reads"), equalTo(false))
     }
 }

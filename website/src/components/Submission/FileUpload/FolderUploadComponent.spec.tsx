@@ -44,23 +44,22 @@ const defaultProps = {
     groupId: 1,
     fileMapping: undefined,
     setFileMapping: mockSetFileMapping,
+    submissionFileMapping: undefined,
     onError: mockOnError,
 };
 
-// In the case of previous uploads, they are keyed by a real submission id, not the dummySubmissionId
-const submissionId = 'SUBMISSION_ID_123';
+// The fileMapping is keyed by category, then by file path. Previous uploads have no upload path,
+// so (within a single entry, where names are unique) they are keyed by and carry a path of their name.
+const fileMappingOf = (files: { fileId: string; name: string }[]) =>
+    new Map([['extraFiles', new Map(files.map((f) => [f.name, { name: f.name, path: f.name, fileId: f.fileId }]))]]);
+
 const defaultPropsWithFiles = {
     ...defaultProps,
     inputMode: 'form' as const,
-    formSubmissionId: submissionId,
-    fileMapping: {
-        [submissionId]: {
-            extraFiles: [
-                { fileId: 'file-1', name: 'file-a.txt' },
-                { fileId: 'file-2', name: 'file-b.txt' },
-            ],
-        },
-    },
+    fileMapping: fileMappingOf([
+        { fileId: 'file-1', name: 'file-a.txt' },
+        { fileId: 'file-2', name: 'file-b.txt' },
+    ]),
 };
 
 describe('FolderUploadComponent', () => {
@@ -209,11 +208,7 @@ describe('FolderUploadComponent', () => {
     it('reverts to the upload folder prompt after discarding the last upload individually', async () => {
         const singleFileProps = {
             ...defaultPropsWithFiles,
-            fileMapping: {
-                [submissionId]: {
-                    extraFiles: [{ fileId: 'file-1', name: 'file-a.txt' }],
-                },
-            },
+            fileMapping: fileMappingOf([{ fileId: 'file-1', name: 'file-a.txt' }]),
         };
         render(<FolderUploadComponent {...singleFileProps} />);
 
@@ -241,7 +236,7 @@ describe('FolderUploadComponent', () => {
             <FolderUploadComponent
                 {...defaultProps}
                 inputMode='form'
-                fileMapping={{ [submissionId]: { extraFiles: [] } }}
+                fileMapping={new Map([['extraFiles', new Map()]])}
             />,
         );
 
@@ -272,19 +267,6 @@ describe('FolderUploadComponent', () => {
         expect(screen.getByText('file-b.txt')).toBeInTheDocument();
     });
 
-    it('rejects additional files containing duplicate file names', async () => {
-        render(<FolderUploadComponent {...defaultPropsWithFiles} />);
-
-        const dup1 = new File(['a'], 'dup.txt', { type: 'text/plain' });
-        const dup2 = new File(['b'], 'dup.txt', { type: 'text/plain' });
-        Object.defineProperty(dup1, 'webkitRelativePath', { value: '', writable: false });
-        Object.defineProperty(dup2, 'webkitRelativePath', { value: '', writable: false });
-        await userEvent.upload(screen.getByTestId('add_extraFiles'), [dup1, dup2]);
-
-        expect(mockOnError).toHaveBeenCalledWith(expect.stringContaining('dup.txt'));
-        expect(mockRequestMultipartUpload).not.toHaveBeenCalled();
-    });
-
     it('confirms before overwriting an existing file with the same name', async () => {
         mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'replacement-id', urls: ['http://test.com/url1'] }]));
 
@@ -300,19 +282,6 @@ describe('FolderUploadComponent', () => {
 
         await userEvent.click(screen.getByRole('button', { name: 'Replace' }));
         await waitFor(() => expect(mockRequestMultipartUpload).toHaveBeenCalled());
-    });
-
-    it('does not show the additional files button in bulk mode', () => {
-        render(
-            <FolderUploadComponent
-                {...defaultProps}
-                inputMode='bulk'
-                fileMapping={{ [submissionId]: { extraFiles: [{ fileId: 'file-1', name: 'file-a.txt' }] } }}
-            />,
-        );
-
-        expect(screen.getByText('file-a.txt')).toBeInTheDocument();
-        expect(screen.queryByTestId('add_button_extraFiles')).not.toBeInTheDocument();
     });
 
     it('disables the additional files button while an upload is in progress', async () => {

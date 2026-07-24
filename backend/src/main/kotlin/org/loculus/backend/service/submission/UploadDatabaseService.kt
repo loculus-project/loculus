@@ -16,6 +16,7 @@ import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
+import org.loculus.backend.api.mergeFileCategories
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
@@ -81,7 +82,7 @@ class UploadDatabaseService(
                 this[submissionIdColumn] = it.submissionId
                 this[fastaIdsColumn] = it.fastaIds?.toList()
                 this[metadataColumn] = it.metadata
-                this[filesColumn] = files?.get(it.submissionId)
+                this[filesColumn] = files?.get(it.submissionId)?.mergeFileCategories(it.files) ?: it.files
                 this[organismColumn] = submittedOrganism.name
                 this[uploadIdColumn] = uploadId
             }
@@ -120,7 +121,7 @@ class UploadDatabaseService(
                     this[submissionIdColumn] = it.submissionId
                     this[fastaIdsColumn] = it.fastaIds?.toList()
                     this[metadataColumn] = it.metadata
-                    this[filesColumn] = files?.get(it.submissionId)
+                    this[filesColumn] = files?.get(it.submissionId)?.mergeFileCategories(it.files) ?: it.files
                     this[organismColumn] = submittedOrganism.name
                     this[uploadIdColumn] = uploadId
                 }
@@ -165,6 +166,15 @@ class UploadDatabaseService(
         )
         .where { uploadIdColumn eq uploadId }
         .map { it[submissionIdColumn] }
+
+    fun getFilesForUpload(uploadId: String): SubmissionIdFilesMap = MetadataUploadAuxTable
+        .select(
+            submissionIdColumn,
+            filesColumn,
+        )
+        .where { uploadIdColumn eq uploadId }
+        .mapNotNull { row -> row[filesColumn]?.let { row[submissionIdColumn] to it } }
+        .toMap()
 
     fun getFastaIdsForMetadata(uploadId: String): List<List<String>> = MetadataUploadAuxTable
         .select(
