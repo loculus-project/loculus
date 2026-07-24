@@ -3,17 +3,13 @@ import type { FC } from 'react';
 import { routes } from '../../routes/routes';
 import type { AdminSeqSetCitation } from '../../types/seqSetCitation';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion';
+import { formatCitationContributors } from '../SeqSetCitations/formatCitationContributors';
 import { Button } from '../common/Button';
 
 interface Props {
     citations: AdminSeqSetCitation[];
     onDelete?: (sourceDOI: string) => void;
 }
-
-const formatContributors = (contributors: AdminSeqSetCitation['source']['contributors']) =>
-    contributors
-        .map((contributor) => [contributor.givenName, contributor.surname].filter((name) => name).join(' '))
-        .join(', ');
 
 export const AdminSeqSetCitationsTable: FC<Props> = ({ citations, onDelete }) => {
     if (citations.length === 0) {
@@ -52,8 +48,11 @@ export const AdminSeqSetCitationsTable: FC<Props> = ({ citations, onDelete }) =>
                                 {citation.source.title}
                             </a>
                             <div className='text-sm text-gray-700'>
-                                {formatContributors(citation.source.contributors)}
+                                {formatCitationContributors(citation.source.contributors)}
                             </div>
+                            {citation.source.journal !== undefined && citation.source.journal !== null && (
+                                <div className='text-sm italic text-gray-700'>{citation.source.journal}</div>
+                            )}
                             <div className='text-xs text-gray-500'>{citation.source.sourceDOI}</div>
                         </td>
                         <td className='border px-2 py-1 align-top text-right'>{citation.source.year}</td>

@@ -12,7 +12,7 @@ dependencies:
   - curl=8.21.0
   - ijson=3.5.1
   - jsonlines=4.0.0
-  - ncbi-datasets-cli=18.32.0
+  - ncbi-datasets-cli=18.33.1
   - nextclade=3.21.2
   - orjsonl=1.0.0
   - pandas=2.3.3

@@ -1,4 +1,4 @@
-# ruff: noqa: S101
+# ruff:file-ignore[assert]
 from __future__ import annotations
 
 import time
@@ -67,7 +67,7 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     monkeypatch.setattr(
         lineage,
         "_download_lineage_file",
-        lambda url, path: path.write_text("lineage: data"),  # noqa: ARG005
+        lambda url, path: path.write_text("lineage: data"),  # ruff:ignore[unused-lambda-argument]
     )
 
     runner = ImporterRunner(config, paths)
@@ -132,7 +132,7 @@ def test_runner_skips_on_hash_match_updates_etag(
     monkeypatch.setattr(
         lineage,
         "_download_lineage_file",
-        lambda url, path: path.write_text("lineage: data"),  # noqa: ARG005
+        lambda url, path: path.write_text("lineage: data"),  # ruff:ignore[unused-lambda-argument]
     )
 
     runner = ImporterRunner(config, paths)
@@ -224,7 +224,7 @@ def host_taxon_setup(
 
     post_calls: list[tuple[str, list[str]]] = []
 
-    def fake_post(url: str, taxa: list[str], prune: bool = False):  # noqa: ARG001
+    def fake_post(url: str, taxa: list[str], prune: bool = False):  # ruff:ignore[unused-function-argument]
         post_calls.append((url, list(taxa)))
         return fake_response
 
