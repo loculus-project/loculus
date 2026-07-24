@@ -143,13 +143,37 @@ describe('modifyParamsForLapisGetRequest (via generateDownloadUrl)', () => {
         expect(params.get('advancedQuery')).toBe('isNull(field1)');
     });
 
-    it('ORs advancedQuery clauses when multiple fields have null values', () => {
+    it('ANDs advancedQuery clauses when multiple fields have null values', () => {
         const params = generate({ field1: [null, 'val1'], field2: [null] }, [
             { name: 'field1', type: 'string' as const },
             { name: 'field2', type: 'string' as const },
         ]);
         expect(params.has('field1')).toBe(false);
         expect(params.has('field2')).toBe(false);
-        expect(params.get('advancedQuery')).toBe("(isNull(field1) OR field1='val1') OR (isNull(field2))");
+        expect(params.get('advancedQuery')).toBe("(isNull(field1) OR field1='val1') AND (isNull(field2))");
+    });
+
+    it('ANDs a multi-field search query with a null field filter into a single advancedQuery', () => {
+        const generator = new DownloadUrlGenerator(organism, lapisUrl, dataUseTermsEnabled);
+        const filter = new FieldFilterSet(
+            new MetadataFilterSchema([{ name: 'field1', type: 'string' as const }], [
+                { name: 'anySearch', displayName: 'Any', fields: ['accessionVersion', 'submissionId'] },
+            ] as never),
+            { field1: [null, 'val1'], anySearch: 'abc' },
+            {},
+            { nucleotideSegmentInfos: [], geneInfos: [] },
+            {
+                isMultiSegmented: false,
+                segmentReferenceGenomes: {},
+                segmentDisplayNames: {},
+                useLapisMultiSegmentedEndpoint: false,
+            },
+        );
+        const params = generator.generateDownloadUrl(filter, metadataDownloadOption).params;
+
+        expect(params.getAll('advancedQuery')).toEqual([
+            "(isNull(field1) OR field1='val1') AND " +
+                "((accessionVersion.regex='(?i)abc' or submissionId.regex='(?i)abc'))",
+        ]);
     });
 });

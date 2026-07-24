@@ -110,38 +110,45 @@ export class DownloadUrlGenerator {
     private modifyParamsForLapisGetRequest(params: [string, string | string[]][]): URLSearchParams {
         const newParams = new URLSearchParams();
 
+        // Each entry is an independent filter, so all clauses have to be combined with AND -
+        // combining them with OR would widen the query and return a superset of the search results.
+        const advancedQueryClauses: string[] = [];
+
         params.forEach(([name, value]) => {
             if (Array.isArray(value)) {
                 const nonNullValues = value.filter((v) => v !== NULL_QUERY_VALUE);
                 if (value.includes(NULL_QUERY_VALUE)) {
-                    const clause = [
-                        `isNull(${name})`,
-                        ...nonNullValues.map((v) => {
-                            const escapedValue = this.escapeLapisQueryValue(v);
-                            return `${name}='${escapedValue}'`;
-                        }),
-                    ].join(' OR ');
-
-                    if (newParams.has(LAPIS_ADVANCED_QUERY_KEY)) {
-                        const existing = `(${String(newParams.get(LAPIS_ADVANCED_QUERY_KEY))}) OR (${clause})`;
-                        newParams.delete(LAPIS_ADVANCED_QUERY_KEY);
-                        newParams.append(LAPIS_ADVANCED_QUERY_KEY, existing);
-                    } else {
-                        newParams.append(LAPIS_ADVANCED_QUERY_KEY, clause);
-                    }
+                    // A GET param cannot express "is null", so the whole field filter has to move
+                    // into the advanced query.
+                    advancedQueryClauses.push(
+                        [
+                            `isNull(${name})`,
+                            ...nonNullValues.map((v) => {
+                                const escapedValue = this.escapeLapisQueryValue(v);
+                                return `${name}='${escapedValue}'`;
+                            }),
+                        ].join(' OR '),
+                    );
                 } else {
                     value.forEach((val) => {
                         newParams.append(name, val);
                     });
                 }
+            } else if (name === LAPIS_ADVANCED_QUERY_KEY) {
+                // e.g. from multi-field searches; must not be appended a second time
+                advancedQueryClauses.push(value);
+            } else if (value === NULL_QUERY_VALUE) {
+                newParams.append(`${name}.isNull`, 'true');
             } else {
-                if (value === NULL_QUERY_VALUE) {
-                    newParams.append(`${name}.isNull`, 'true');
-                } else {
-                    newParams.append(name, value);
-                }
+                newParams.append(name, value);
             }
         });
+
+        if (advancedQueryClauses.length === 1) {
+            newParams.append(LAPIS_ADVANCED_QUERY_KEY, advancedQueryClauses[0]);
+        } else if (advancedQueryClauses.length > 1) {
+            newParams.append(LAPIS_ADVANCED_QUERY_KEY, advancedQueryClauses.map((c) => `(${c})`).join(' AND '));
+        }
 
         return newParams;
     }
