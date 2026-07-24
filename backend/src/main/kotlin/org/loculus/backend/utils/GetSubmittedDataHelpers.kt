@@ -2,6 +2,8 @@ package org.loculus.backend.utils
 
 import org.loculus.backend.api.SubmittedDataDownloadEntry
 import org.loculus.backend.model.ACCESSION_HEADER
+import org.loculus.backend.model.EXISTING_FILES_COLUMN_PREFIX
+import org.loculus.backend.model.EXISTING_FILES_ENTRY_SEPARATOR
 import org.loculus.backend.model.FASTA_IDS_HEADER
 import org.loculus.backend.model.FASTA_IDS_SEPARATOR
 import org.loculus.backend.model.FastaId
@@ -47,27 +49,39 @@ object GetSubmittedDataHelpers {
         fastaIdsByEntry: List<UniqueFastaIdsForEntry>,
         outputStream: java.io.OutputStream,
         isMultiSegmented: Boolean,
+        fileCategories: List<String> = emptyList(),
     ) {
         val metadataKeys = data.flatMapTo(mutableSetOf()) { it.submittedData.metadata.keys }.sorted()
+        val fileColumnHeaders = fileCategories.map { "$EXISTING_FILES_COLUMN_PREFIX$it" }
         val headers = if (isMultiSegmented) {
-            listOf(METADATA_ID_HEADER, ACCESSION_HEADER, FASTA_IDS_HEADER) + metadataKeys
+            listOf(METADATA_ID_HEADER, ACCESSION_HEADER, FASTA_IDS_HEADER) + metadataKeys + fileColumnHeaders
         } else {
-            listOf(METADATA_ID_HEADER, ACCESSION_HEADER) + metadataKeys
+            listOf(METADATA_ID_HEADER, ACCESSION_HEADER) + metadataKeys + fileColumnHeaders
         }
 
         TsvWriter(outputStream, headers).use { writer ->
             for ((index, entry) in data.withIndex()) {
                 val metadataValues = metadataKeys.map { entry.submittedData.metadata[it] ?: "" }
+                val fileValues = fileCategories.map { category ->
+                    formatExistingFilesCell(entry.submittedData.files?.get(category))
+                }
                 val row = if (isMultiSegmented) {
                     val fastaIds = fastaIdsByEntry[index].joinedUniqueFastaIds(FASTA_IDS_SEPARATOR)
-                    listOf(metadataIds[index], entry.accession, fastaIds) + metadataValues
+                    listOf(metadataIds[index], entry.accession, fastaIds) + metadataValues + fileValues
                 } else {
-                    listOf(metadataIds[index], entry.accession) + metadataValues
+                    listOf(metadataIds[index], entry.accession) + metadataValues + fileValues
                 }
                 writer.writeRow(row)
             }
         }
     }
+
+    /**
+     * Render the files of one category as a `|`-separated list of `name:fileId` tokens for the
+     * `existingFiles_<category>` download column. Mirrors [parseExistingFilesCell].
+     */
+    private fun formatExistingFilesCell(files: List<org.loculus.backend.api.FileIdAndName>?): String =
+        files.orEmpty().joinToString(" $EXISTING_FILES_ENTRY_SEPARATOR ") { "${it.name}:${it.fileId}" }
 
     fun writeSequencesFasta(
         data: List<SubmittedDataDownloadEntry>,

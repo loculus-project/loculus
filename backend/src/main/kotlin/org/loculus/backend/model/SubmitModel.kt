@@ -34,6 +34,15 @@ const val FASTA_IDS_HEADER = "fastaIds"
 const val FASTA_IDS_SEPARATOR = " "
 
 const val ACCESSION_HEADER = "accession"
+
+/**
+ * Prefix for the per-category metadata columns that list the files currently attached to an entry, used
+ * when revising to keep/remove existing files. The category name follows the prefix, e.g.
+ * `existingFiles_raw_reads`. Each cell holds a `|`-separated list of `name:fileId` tokens.
+ */
+const val EXISTING_FILES_COLUMN_PREFIX = "existingFiles_"
+const val EXISTING_FILES_ENTRY_SEPARATOR = "|"
+
 private val log = KotlinLogging.logger { }
 
 typealias SubmissionId = String
@@ -110,6 +119,9 @@ class SubmitModel(
             "Processing submission (type: ${submissionParams.uploadType.name}) with uploadId $uploadId"
         }
 
+        // Validate the freshly uploaded files (the `fileMapping` param). Files kept via the
+        // `existingFiles_<category>` metadata columns of a revision are only known after parsing the metadata
+        // into the aux table, so they are validated further down.
         submissionIdFilesMappingPreconditionValidator
             .validateFilenameCharacters(submissionParams.files)
             .validateFilenamesAreUnique(submissionParams.files)
@@ -144,10 +156,26 @@ class SubmitModel(
             )
         }
 
+        // Freshly uploaded files: their submission ids must be present in the metadata and they must belong to the
+        // submission's group (group ownership is only known after association above).
         submissionParams.files?.let { submittedFiles ->
-            val fileSubmissionIds = submittedFiles.keys
-            validateSubmissionIdSetsForFiles(metadataSubmissionIds, fileSubmissionIds)
+            validateSubmissionIdSetsForFiles(metadataSubmissionIds, submittedFiles.keys)
             validateFileGroupOwnership(submittedFiles, submissionParams, uploadId)
+        }
+
+        // For revisions, validate the effective files attached to each entry, i.e. the files kept via the
+        // `existingFiles_<category>` metadata columns merged with the freshly uploaded ones (read back from the aux
+        // table). This also catches references to files that don't exist or belong to another group.
+        if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
+            uploadDatabaseService.getFilesForUpload(uploadId).ifEmpty { null }?.let { mergedFiles ->
+                submissionIdFilesMappingPreconditionValidator
+                    .validateFilenameCharacters(mergedFiles)
+                    .validateFilenamesAreUnique(mergedFiles)
+                    .validateCategoriesMatchSchema(mergedFiles, submissionParams.organism)
+                    .validateMultipartUploads(mergedFiles)
+                    .validateFilesExist(mergedFiles)
+                validateFileGroupOwnership(mergedFiles, submissionParams, uploadId)
+            }
         }
 
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {

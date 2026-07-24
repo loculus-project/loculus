@@ -16,6 +16,7 @@ import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
+import org.loculus.backend.api.mergeFileCategoryFilesMaps
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
@@ -120,7 +121,9 @@ class UploadDatabaseService(
                     this[submissionIdColumn] = it.submissionId
                     this[fastaIdsColumn] = it.fastaIds?.toList()
                     this[metadataColumn] = it.metadata
-                    this[filesColumn] = files?.get(it.submissionId)
+                    // Existing files referenced in the metadata columns are kept, freshly uploaded files
+                    // (the `files` param) override them per (category, file name).
+                    this[filesColumn] = mergeFileCategoryFilesMaps(it.existingFiles, files?.get(it.submissionId))
                     this[organismColumn] = submittedOrganism.name
                     this[uploadIdColumn] = uploadId
                 }
@@ -165,6 +168,21 @@ class UploadDatabaseService(
         )
         .where { uploadIdColumn eq uploadId }
         .map { it[submissionIdColumn] }
+
+    /**
+     * The effective file map per submission for an upload, i.e. the result of merging the files referenced in the
+     * metadata `existingFiles_<category>` columns with the freshly uploaded files. Used to validate the files that
+     * will actually be attached after a revision.
+     */
+    fun getFilesForUpload(uploadId: String): SubmissionIdFilesMap = MetadataUploadAuxTable
+        .select(
+            uploadIdColumn,
+            submissionIdColumn,
+            filesColumn,
+        )
+        .where { uploadIdColumn eq uploadId }
+        .mapNotNull { row -> row[filesColumn]?.let { row[submissionIdColumn] to it } }
+        .toMap()
 
     fun getFastaIdsForMetadata(uploadId: String): List<List<String>> = MetadataUploadAuxTable
         .select(

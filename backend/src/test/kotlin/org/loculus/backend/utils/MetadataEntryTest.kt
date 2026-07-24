@@ -4,10 +4,13 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.nullValue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.controller.UnprocessableEntityException
 import java.io.ByteArrayInputStream
+import java.util.UUID
 
 class MetadataEntryTest {
     @Test
@@ -303,5 +306,82 @@ class RevisionEntryTest {
         }
         assertThat(exception.message, containsString("duplicate fasta ids"))
         assertThat(exception.message, containsString("seq1"))
+    }
+
+    private val fileId1 = UUID.fromString("8d8ac610-566d-4ef0-9c22-186b2a5ed793")
+    private val fileId2 = UUID.fromString("41ad1234-566d-4ef0-9c22-186b2a5ed111")
+
+    @Test
+    fun `existingFiles columns are parsed and excluded from metadata`() {
+        val str = """
+            submissionId${'\t'}accession${'\t'}Country${'\t'}existingFiles_raw_reads${'\t'}existingFiles_logs
+            foo${'\t'}ACC123${'\t'}bar${'\t'}reads_1.fastq:$fileId1 | reads_2.fastq:$fileId2${'\t'}run.log:$fileId1
+        """.trimIndent()
+        val entries = revisionEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+
+        assertThat(entries, hasSize(1))
+        assertThat(entries[0].metadata, equalTo(mapOf("Country" to "bar")))
+        assertThat(
+            entries[0].existingFiles,
+            equalTo(
+                mapOf(
+                    "raw_reads" to listOf(
+                        FileIdAndName(fileId1, "reads_1.fastq"),
+                        FileIdAndName(fileId2, "reads_2.fastq"),
+                    ),
+                    "logs" to listOf(FileIdAndName(fileId1, "run.log")),
+                ),
+            ),
+        )
+    }
+
+    @Test
+    fun `blank existingFiles cell results in no existing files`() {
+        val str = """
+            submissionId${'\t'}accession${'\t'}Country${'\t'}existingFiles_raw_reads
+            foo${'\t'}ACC123${'\t'}bar${'\t'}
+        """.trimIndent()
+        val entries = revisionEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+
+        assertThat(entries[0].existingFiles, nullValue())
+    }
+
+    @Test
+    fun `existingFiles supports file names containing spaces`() {
+        val str = """
+            submissionId${'\t'}accession${'\t'}Country${'\t'}existingFiles_raw_reads
+            foo${'\t'}ACC123${'\t'}bar${'\t'}my reads file.fastq:$fileId1
+        """.trimIndent()
+        val entries = revisionEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+
+        assertThat(
+            entries[0].existingFiles?.get("raw_reads"),
+            equalTo(listOf(FileIdAndName(fileId1, "my reads file.fastq"))),
+        )
+    }
+
+    @Test
+    fun `existingFiles with a malformed file id is rejected`() {
+        val str = """
+            submissionId${'\t'}accession${'\t'}Country${'\t'}existingFiles_raw_reads
+            foo${'\t'}ACC123${'\t'}bar${'\t'}reads_1.fastq:not-a-uuid
+        """.trimIndent()
+        val exception = assertThrows<UnprocessableEntityException> {
+            revisionEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        }
+        assertThat(exception.message, containsString("existingFiles_raw_reads"))
+        assertThat(exception.message, containsString("not a valid file id"))
+    }
+
+    @Test
+    fun `existingFiles with a token missing the file id is rejected`() {
+        val str = """
+            submissionId${'\t'}accession${'\t'}Country${'\t'}existingFiles_raw_reads
+            foo${'\t'}ACC123${'\t'}bar${'\t'}reads_1.fastq
+        """.trimIndent()
+        val exception = assertThrows<UnprocessableEntityException> {
+            revisionEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        }
+        assertThat(exception.message, containsString("Expected format 'name:fileId'"))
     }
 }

@@ -118,9 +118,14 @@ The version will increase by one in respect to the original accession version.
 
 const val REVISED_METADATA_FILE_DESCRIPTION = """
 A TSV (tab separated values) file containing the metadata of the revised data.
-The first row must contain the column names. The column '$METADATA_ID_HEADER' is required and must be unique within the 
+The first row must contain the column names. The column '$METADATA_ID_HEADER' is required and must be unique within the
 provided dataset. It is used to associate metadata to the sequences in the sequences fasta file.
 Additionally, the column 'accession' is required and must match the accession of the original sequence entry.
+For organisms with file submission enabled, optional 'existingFiles_<category>' columns can list the files (as a
+'|'-separated list of 'name:fileId' tokens) that should remain attached to each entry. Files in these columns are kept;
+removing a token removes that file; blanking the cell removes all files of that category. Newly uploaded files provided
+via 'fileMapping' are merged in and take priority over an existing file with the same name and category. These columns
+are included in the download from the 'get-submitted-data' endpoint.
 """
 
 const val SUBMIT_DESCRIPTION = """
