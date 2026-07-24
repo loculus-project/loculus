@@ -149,15 +149,15 @@ test('bulk revise 2 seqs with files', async ({ page, groupId, tmpDir }) => {
 
     // Upload revision metadata (with accession column)
     const revisionMetadata = [
-        [accession1, revId1, COUNTRY_1, '2022-02-01'],
-        [accession2, revId2, COUNTRY_2, '2022-02-02'],
+        [accession1, revId1, COUNTRY_1, '2022-02-01', filesColumnCell(revId1, REVISION_FILES)],
+        [accession2, revId2, COUNTRY_2, '2022-02-02', filesColumnCell(revId2, REVISION_FILES_2)],
     ];
     await page.getByTestId('metadata_file').setInputFiles({
         name: 'revision_metadata.tsv',
         mimeType: 'text/plain',
         buffer: Buffer.from(
             [
-                REVISION_METADATA_HEADERS.join('\t'),
+                [...REVISION_METADATA_HEADERS, RAW_READS_FILES_HEADER].join('\t'),
                 ...revisionMetadata.map((r) => r.join('\t')),
             ].join('\n'),
         ),
