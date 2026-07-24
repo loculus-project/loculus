@@ -101,8 +101,8 @@ class TaxonomyService:
             message = f"Host validation for '{unvalidated_host}' failed with code {response.status_code}: {body.get('detail', '')}"
             return RawProcessingResult(
                 datum=None,
-                warnings=[message] if error_if_failed else [],
-                errors=[message] if not error_if_failed else [],
+                warnings=[message] if not error_if_failed else [],
+                errors=[message] if error_if_failed else [],
             )
         if isinstance(body, list):
             # when querying by scientific name, multiple taxa may be returned: select the most generic one
@@ -141,8 +141,8 @@ class TaxonomyService:
             message = f"Could not map '{tax_id}' to scientific name. Code {response.status_code}: {body.get('detail', '')}"
             return RawProcessingResult(
                 datum=None,
-                warnings=[message] if error_if_failed else [],
-                errors=[message] if not error_if_failed else [],
+                warnings=[message] if not error_if_failed else [],
+                errors=[message] if error_if_failed else [],
             )
 
         scientific_name = body.get("scientific_name")

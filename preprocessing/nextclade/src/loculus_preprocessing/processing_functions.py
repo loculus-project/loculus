@@ -1172,7 +1172,7 @@ class ProcessingFunctions:
             return RawProcessingResult()
 
         taxonomy_service: TaxonomyService = args["taxonomy_service"]  # type: ignore
-        return taxonomy_service.get_tax_id(unvalidated_host, bool(args["is_insdc_ingest_group"]))
+        return taxonomy_service.get_tax_id(unvalidated_host, not bool(args["is_insdc_ingest_group"]))
 
     @staticmethod
     def scientific_name_from_id(
@@ -1186,7 +1186,7 @@ class ProcessingFunctions:
             return RawProcessingResult()
 
         taxonomy_service: TaxonomyService = args["taxonomy_service"]  # type: ignore
-        return taxonomy_service.get_scientific_name(tax_id, bool(args["is_insdc_ingest_group"]))
+        return taxonomy_service.get_scientific_name(tax_id, not bool(args["is_insdc_ingest_group"]))
 
     @staticmethod
     def common_name_from_id(
