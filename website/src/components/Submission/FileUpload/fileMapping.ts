@@ -4,10 +4,10 @@ import Papa from 'papaparse';
 import { SUBMISSION_ID_INPUT_FIELD } from '../../../settings';
 
 // File columns begin with the 'files.' prefix.
-// File entries are space-separated and can have one of the following forms: name, name::path, name::path:fileId
+// File entries are space-separated and can have one of the following forms: name, name::path, name::path:id, name:id.
 export const FILES_HEADER_PREFIX = 'files.';
 export const FILE_ENTRY_SEPARATOR = ' ';
-const FILE_ENTRY_REGEX = /^([^:]+)(?:::([^:]+))?(?::([^:]+))?$/; // TODO: Add name:fileId
+const FILE_ENTRY_REGEX = /^([^:]+)(?:::([^:]+))?(?::([^:]+))?$/;
 
 export type SubmissionFile = {
     name: string;
@@ -53,7 +53,9 @@ export function parseSubmissionFileMapping(text: string): Result<SubmissionFileM
             return err(new Error('Found empty id value within metadata file. Please ensure all rows contain ids.'));
         if (submissionFileMapping.has(submissionId))
             return err(
-                new Error('Found duplicate ids within metadata file. Please ensure all rows contain unique ids.'),
+                new Error(
+                    `Found duplicate ids within metadata file: ${submissionId}. Please ensure all rows contain unique ids.`,
+                ),
             );
 
         const fileMapping: FileMapping = new Map();
@@ -65,11 +67,7 @@ export function parseSubmissionFileMapping(text: string): Result<SubmissionFileM
             if (cell.trim() === '') continue;
 
             if (fileMapping.has(fileCategory))
-                return err(
-                    new Error(
-                        'Found duplicate file category within metadata file. Please ensure all rows contain unique ids.',
-                    ),
-                );
+                return err(new Error(`Found duplicate file category within metadata file: ${fileCategory}`));
 
             const fileEntryResults = cell
                 .split(FILE_ENTRY_SEPARATOR)
@@ -107,7 +105,7 @@ export function mergeFileMappings(
                 if (fileId === undefined)
                     return err(
                         new Error(
-                            `No uploaded file for '${filePath}' in category '${fileCategory}' (entry '${submissionId}').`,
+                            `Missing file for entry ${submissionId}: ${filePath} in the ${fileCategory} category has no uploaded file.`,
                         ),
                     );
                 newCategoryMapping.set(filePath, { ...file, fileId });
