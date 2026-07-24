@@ -5,6 +5,8 @@ from collections.abc import Sequence
 from tempfile import TemporaryDirectory
 from typing import Any
 
+from loculus_preprocessing.external_services import TaxonomyService
+
 from .backend import (
     download_diamond_db,
     download_minimizer,
@@ -260,9 +262,10 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     args["is_insdc_ingest_group"] = config.insdc_ingest_group_id == group_id
     args["submittedAt"] = submitted_at
     args["ACCESSION_VERSION"] = accession_version
+    args["taxonomy_service"] = TaxonomyService(config.taxonomy_service_url)  # type: ignore
 
     try:
-        processing_result = ProcessingFunctions(config=config).call_function(
+        processing_result = ProcessingFunctions.call_function(
             spec.function,
             args,
             input_data,
