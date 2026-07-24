@@ -62,6 +62,7 @@ import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.ProcessingResult.HAS_ERRORS
 import org.loculus.backend.api.ProcessingResult.HAS_WARNINGS
 import org.loculus.backend.api.ProcessingResult.NO_ISSUES
+import org.loculus.backend.api.ReviewCount
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.SequenceEntryVersionToEdit
 import org.loculus.backend.api.Status
@@ -923,6 +924,37 @@ class SubmissionDatabaseService(
             statusCounts = statusCounts,
             processingResultCounts = processingResultCounts,
         )
+    }
+
+    /**
+     * Counts of unreleased sequence entries per (organism, group) across all of the user's groups, powering the
+     * "sequences awaiting review" notification bell. Only groups with at least one unreleased entry are returned.
+     *
+     * Deliberately queries the base [SequenceEntriesTable] (released_at IS NULL) rather than SequenceEntriesView,
+     * so it avoids the join on preprocessed data and stays cheap (backed by a partial index on the same predicate).
+     * The trade-off is that the count also includes entries that are still RECEIVED / IN_PROCESSING, not only those
+     * PROCESSED and awaiting approval. See [ReviewCount] for details.
+     */
+    fun getReviewCounts(authenticatedUser: AuthenticatedUser): List<ReviewCount> {
+        val groupCondition: Op<Boolean> = if (authenticatedUser.isSuperUser) {
+            Op.TRUE
+        } else {
+            SequenceEntriesTable.groupIdColumn inList
+                groupManagementDatabaseService.getGroupIdsOfUser(authenticatedUser)
+        }
+        val countColumn = Count(stringLiteral("*"))
+
+        return SequenceEntriesTable
+            .select(SequenceEntriesTable.organismColumn, SequenceEntriesTable.groupIdColumn, countColumn)
+            .where { SequenceEntriesTable.releasedAtTimestampColumn.isNull() and groupCondition }
+            .groupBy(SequenceEntriesTable.organismColumn, SequenceEntriesTable.groupIdColumn)
+            .map {
+                ReviewCount(
+                    organism = it[SequenceEntriesTable.organismColumn],
+                    groupId = it[SequenceEntriesTable.groupIdColumn],
+                    count = it[countColumn].toInt(),
+                )
+            }
     }
 
     private fun getStatusCounts(organism: Organism, groupCondition: Op<Boolean>): Map<Status, Int> {
