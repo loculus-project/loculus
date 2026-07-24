@@ -700,6 +700,9 @@ test_metadata_dependency_test_definitions = [
             "ncbi_required_collection_date": "2022-11-01",
             "continent": "Asia",
             "A": "2022",
+            "multi_dep": "present",
+            "required_when_input_A": "present",
+            "required_when_processed_A": "present",
         },
         accession_id="18",
         expected_metadata={
@@ -709,6 +712,9 @@ test_metadata_dependency_test_definitions = [
             "continent": "Asia",
             "A": "2022-01-01",
             "depends_on_A": "Asia/LOC_18.1/2022-01-01",
+            "multi_dep": "present",
+            "required_when_input_A": "present",
+            "required_when_processed_A": "present",
         },
         expected_errors=[],
         expected_warnings=build_processing_annotations(
@@ -730,6 +736,9 @@ test_metadata_dependency_test_definitions = [
             "continent": "Asia",
             "A": "2022-11-01",
             "required_when_raw_reads": "",
+            "multi_dep": "present",
+            "required_when_input_A": "present",
+            "required_when_processed_A": "present",
         },
         input_files=RAW_READS_FILES,
         accession_id="30",
@@ -740,6 +749,9 @@ test_metadata_dependency_test_definitions = [
             "continent": "Asia",
             "A": "2022-11-01",
             "depends_on_A": "Asia/LOC_30.1/2022-11-01",
+            "multi_dep": "present",
+            "required_when_input_A": "present",
+            "required_when_processed_A": "present",
         },
         expected_files=RAW_READS_FILES,
         expected_errors=build_processing_annotations(
@@ -762,6 +774,9 @@ test_metadata_dependency_test_definitions = [
             "continent": "Asia",
             "A": "2022-11-01",
             "required_when_raw_reads": "present",
+            "multi_dep": "present",
+            "required_when_input_A": "present",
+            "required_when_processed_A": "present",
         },
         input_files=RAW_READS_FILES,
         accession_id="31",
@@ -773,22 +788,25 @@ test_metadata_dependency_test_definitions = [
             "A": "2022-11-01",
             "depends_on_A": "Asia/LOC_31.1/2022-11-01",
             "required_when_raw_reads": "present",
+            "multi_dep": "present",
+            "required_when_input_A": "present",
+            "required_when_processed_A": "present",
         },
         expected_files=RAW_READS_FILES,
         expected_errors=[],
         expected_warnings=[],
     ),
     Case(
-        name="metadata_field_prerequisite_missing",
+        name="processed_field_prerequisite_missing",
         input_metadata={
-            "submissionId": "metadata_field_prerequisite_missing",
+            "submissionId": "processed_field_prerequisite_missing",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
             "continent": "Asia",
             "A": "2022-11-01",
-            "B": "present",
-            "required_when_B": "",
-            "required_when_processed_B": "",
+            "required_when_processed_A": "",
+            "multi_dep": "present",
+            "required_when_input_A": "present",
         },
         accession_id="32",
         expected_metadata={
@@ -798,21 +816,124 @@ test_metadata_dependency_test_definitions = [
             "continent": "Asia",
             "A": "2022-11-01",
             "depends_on_A": "Asia/LOC_32.1/2022-11-01",
-            "B": "present",
+            "multi_dep": "present",
+            "required_when_input_A": "present",
         },
         expected_errors=build_processing_annotations(
             [
-                # plain `B` checks the input value
                 ProcessingAnnotationHelper(
-                    ["required_when_B"],
-                    ["required_when_B"],
-                    "Metadata field `required_when_B` is required when `B` is provided.",
+                    ["required_when_processed_A"],
+                    ["required_when_processed_A"],
+                    "Metadata field `required_when_processed_A` is required when `A` is provided.",
                 ),
-                # `processed.B` checks the processed value of the same field
+            ]
+        ),
+        expected_warnings=[],
+    ),
+    Case(
+        name="required_when_input_A",
+        input_metadata={
+            "submissionId": "required_when_input_A",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "continent": "Asia",
+            "A": "not_a_date",
+        },
+        accession_id="32",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "Asia/LOC_32.1/2022-11-01",
+            "continent": "Asia",
+            "depends_on_A": "Asia/LOC_32.1",
+            "A": None,
+        },
+        expected_errors=build_processing_annotations(
+            [
                 ProcessingAnnotationHelper(
-                    ["required_when_processed_B"],
-                    ["required_when_processed_B"],
-                    "Metadata field `required_when_processed_B` is required when `B` is provided.",
+                    ["A"],
+                    ["A"],
+                    "Metadata field A: Date format is not recognized.",
+                ),
+                ProcessingAnnotationHelper(
+                    ["required_when_input_A"],
+                    ["required_when_input_A"],
+                    "Metadata field `required_when_input_A` is required when `A` is provided.",
+                ),
+            ]
+        ),
+        expected_warnings=[],
+    ),
+    Case(
+        name="multi_dep_fails_when_one_present",
+        input_metadata={
+            "submissionId": "multi_dep_fails_when_one_present",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "continent": "Asia",
+            "A": "2022-11-01",
+            "required_when_input_A": "present",
+            "required_when_processed_A": "present",
+        },
+        accession_id="32",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "Asia/LOC_32.1/2022-11-01",
+            "continent": "Asia",
+            "A": "2022-11-01",
+            "required_when_input_A": "present",
+            "required_when_processed_A": "present",
+            "depends_on_A": "Asia/LOC_32.1/2022-11-01",
+        },
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["multi_dep"],
+                    ["multi_dep"],
+                    "Metadata field `multi_dep` is required when `A` is provided.",
+                ),
+            ]
+        ),
+        expected_warnings=[],
+    ),
+    Case(
+        name="multi_dep_fails_when_all_present",
+        input_metadata={
+            "submissionId": "multi_dep_fails_when_all_present",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "continent": "Asia",
+            "A": "2022-11-01",
+            "required_when_input_A": "present",
+            "required_when_processed_A": "present",
+            "required_when_raw_reads": "present",
+        },
+        input_files=RAW_READS_FILES,
+        accession_id="32",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "Asia/LOC_32.1/2022-11-01",
+            "continent": "Asia",
+            "A": "2022-11-01",
+            "required_when_input_A": "present",
+            "depends_on_A": "Asia/LOC_32.1/2022-11-01",
+            "required_when_processed_A": "present",
+            "required_when_raw_reads": "present",
+        },
+        expected_files=RAW_READS_FILES,
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["multi_dep"],
+                    ["multi_dep"],
+                    "Metadata field `multi_dep` is required when `A` is provided.",
+                ),
+                ProcessingAnnotationHelper(
+                    ["multi_dep"],
+                    ["multi_dep"],
+                    "Metadata field `multi_dep` is required when `raw_reads` files are provided.",
                 ),
             ]
         ),
@@ -874,13 +995,15 @@ def test_preprocessing_metadata_dependencies(test_case_def: Case):
         ("processed.field", "lists itself"),
         ("does_not_exist", "has a requiredWhen condition referencing non-existing metadata field"),
         ("field", "lists itself"),
+        ("no_input_field", "noInput metadata field"),
     ],
 )
 def test_required_when_validation(condition: str, match: str) -> None:
     with pytest.raises(ValueError, match=match):
         Config(
             processing_spec={
-                "field": ProcessingSpec(inputs={"input": "field"}, required_when=[condition])
+                "field": ProcessingSpec(inputs={"input": "field"}, required_when=[condition]),
+                "no_input_field": ProcessingSpec(inputs={}, no_input=True),
             }
         )
 
