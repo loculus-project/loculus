@@ -60,7 +60,7 @@ export const SubmissionRouteUtils = {
                 return {
                     ...baseRoute,
                     name: 'revise',
-                    inputMode: searchParams.get('inputMode') === 'form' ? 'form' : 'bulk',
+                    inputMode: searchParams.get('inputMode') === 'bulk' ? 'bulk' : 'form',
                     accession: searchParams.get('accession') ?? undefined,
                     version: searchParams.get('version') ?? undefined,
                 };
