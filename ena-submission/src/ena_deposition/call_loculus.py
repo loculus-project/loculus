@@ -1,18 +1,26 @@
 import json
 import logging
 import os
+import shutil
+import tempfile
 import uuid
 from collections.abc import Iterator
 from http import HTTPMethod
 from typing import Any
 
 import orjson
+import orjsonl
 import requests
+from tqdm import tqdm
 
 from .config import Config
 from .loculus_models import Group, GroupDetails
 
 logger = logging.getLogger(__name__)
+
+# Constants for error logging truncation
+MAX_LOG_LINE_LENGTH = 400
+LOG_SNIPPET_LENGTH = 200
 
 
 def backend_url(config: Config) -> str:
@@ -155,6 +163,7 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
 
     request_id = str(uuid.uuid4())
     url = f"{organism_url(config, organism)}/get-released-data"
+    params = {"compression": "zstd"}
 
     headers = {
         "Content-Type": "application/json",
@@ -162,33 +171,52 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
     }
     logger.info(f"Fetching released data from {url} with request id {request_id}")
 
-    with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
-        response.raise_for_status()
-        for line_no, line in enumerate(response.iter_lines(chunk_size=65536), start=1):
-            if not line:
-                continue
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_file_path = os.path.join(temp_dir, "downloaded_data.zst")
 
-            try:
-                full_json = orjson.loads(line)
-            except orjson.JSONDecodeError as e:
-                head = line[:200]
-                tail = line[-200:] if len(line) > 200 else line  # noqa: PLR2004
+        with requests.get(
+            url,
+            headers=headers,
+            params=params,
+            timeout=config.backend_http_timeout_seconds,
+            stream=True,
+        ) as response:
+            response.raise_for_status()
 
-                error_msg = (
-                    f"Invalid NDJSON from {url}\n"
-                    f"request_id={request_id}\n"
-                    f"line={line_no}\n"
-                    f"bytes={len(line)}\n"
-                    f"json_error={e}\n"
-                    f"head={head!r}\n"
-                    f"tail={tail!r}"
-                )
+            # Ensure we get raw bytes to preserve compression
+            response.raw.decode_content = False
 
-                logger.error(error_msg)
-                raise RuntimeError(error_msg) from e
+            with open(temp_file_path, "wb") as f:
+                shutil.copyfileobj(response.raw, f)
 
-            yield {
-                k: v
-                for k, v in full_json.items()
-                if k in {"metadata", "unalignedNucleotideSequences"}
-            }
+        try:
+            wanted_keys = {"metadata", "unalignedNucleotideSequences"}
+            with tqdm(orjsonl.stream(temp_file_path), unit=" records", mininterval=2.0) as pbar:
+                for full_json in pbar:
+                    yield {k: v for k, v in full_json.items() if k in wanted_keys}
+        except orjson.JSONDecodeError as e:
+            line_content = getattr(e, "doc", "")
+            if len(line_content) > MAX_LOG_LINE_LENGTH:
+                if isinstance(line_content, bytes):
+                    line_content = (
+                        line_content[:LOG_SNIPPET_LENGTH]
+                        + b"..."
+                        + line_content[-LOG_SNIPPET_LENGTH:]
+                    )
+                else:
+                    line_content = (
+                        line_content[:LOG_SNIPPET_LENGTH]
+                        + "..."
+                        + line_content[-LOG_SNIPPET_LENGTH:]
+                    )
+
+            error_msg = (
+                f"Invalid NDJSON from {url}\n"
+                f"request_id={request_id}\n"
+                f"line_no={pbar.n + 1}\n"
+                f"json_error={e}\n"
+                f"line={line_content!r}"
+            )
+
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
