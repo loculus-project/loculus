@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from loculus_preprocessing import processing_functions
+from loculus_preprocessing import external_services
 from loculus_preprocessing.config import get_config
 from loculus_preprocessing.datatypes import (
     UnprocessedData,
@@ -17,7 +17,7 @@ HOST_PROCESSING_CONFIG = "tests/host_processing_config.yaml"
 
 @pytest.fixture(autouse=True)
 def clear_taxonomy_caches():
-    processing_functions.taxonomy_cache.clear()
+    external_services.taxonomy_cache.clear()
 
 
 def make_response(status_code, json_data):
@@ -55,7 +55,7 @@ def taxonomy_service_mock(url: str, **kwargs):
     return make_response(404, {"detail": "not found"})
 
 
-@patch.object(processing_functions.taxonomy_cache, "session")
+@patch.object(external_services.taxonomy_cache, "session")
 def test_host_processing_tax_id(mock_session: MagicMock) -> None:
     mock_session.get.side_effect = taxonomy_service_mock
     config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
@@ -81,7 +81,7 @@ def test_host_processing_tax_id(mock_session: MagicMock) -> None:
     assert mock_session.get.call_count == 2
 
 
-@patch.object(processing_functions.taxonomy_cache, "session")
+@patch.object(external_services.taxonomy_cache, "session")
 def test_host_processing_sci_name(mock_session: MagicMock) -> None:
     mock_session.get.side_effect = taxonomy_service_mock
     config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
@@ -107,7 +107,7 @@ def test_host_processing_sci_name(mock_session: MagicMock) -> None:
     assert mock_session.get.call_count == 3
 
 
-@patch.object(processing_functions.taxonomy_cache, "session")
+@patch.object(external_services.taxonomy_cache, "session")
 def test_host_processing_legacy(mock_session: MagicMock) -> None:
     """Preprocessing used to use the hostTaxonId and hostNameScientific
     fields for host validation. We have since switched to using one
@@ -138,7 +138,7 @@ def test_host_processing_legacy(mock_session: MagicMock) -> None:
     assert mock_session.get.call_count == 0
 
 
-@patch.object(processing_functions.taxonomy_cache, "session")
+@patch.object(external_services.taxonomy_cache, "session")
 def test_host_processing_invalid_host_insdc(mock_session: MagicMock) -> None:
     """For an INSDC-ingested sequence with an invalid host, the derived host
     fields (hostTaxonId, hostNameScientific, hostNameCommon) should all be
@@ -165,7 +165,7 @@ def test_host_processing_invalid_host_insdc(mock_session: MagicMock) -> None:
     assert "Host validation for" in result[0].processed_entry.warnings[0].message
 
 
-@patch.object(processing_functions.taxonomy_cache, "session")
+@patch.object(external_services.taxonomy_cache, "session")
 def test_host_processing_invalid_host_direct(mock_session: MagicMock) -> None:
     """When a direct submitter provides an invalid host, the derived host
     fields (hostTaxonId, hostNameScientific, hostNameCommon) should all be

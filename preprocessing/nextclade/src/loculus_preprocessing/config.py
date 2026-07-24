@@ -129,6 +129,9 @@ class Config(BaseModel):
     embl: EmblInfoMetadataPropertyNames = Field(default_factory=EmblInfoMetadataPropertyNames)
     insdc_ingest_group_id: int = 1
 
+    # External services
+    taxonomy_service_url: str | None = None
+
     @model_validator(mode="after")
     def finalize(self):
         if not self.segments:
