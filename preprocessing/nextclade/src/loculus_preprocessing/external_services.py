@@ -1,3 +1,4 @@
+import logging
 import urllib.parse
 from collections import OrderedDict
 
@@ -9,6 +10,8 @@ from loculus_preprocessing.datatypes import (
     RawProcessingResult,
     raw_internal_error,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class RequestCache:
@@ -98,7 +101,9 @@ class TaxonomyService:
                 e=e,
             )
         if response.status_code != requests.codes.ok:
-            message = f"Host validation for '{unvalidated_host}' failed with code {response.status_code}: {body.get('detail', '')}"
+            message = f"Host validation for '{unvalidated_host}' failed."
+            details = f"with code {response.status_code}: {body.get('detail', '')}"
+            logger.error(message + details)
             return RawProcessingResult(
                 datum=None,
                 warnings=[message] if not error_if_failed else [],
@@ -112,9 +117,9 @@ class TaxonomyService:
 
         tax_id = taxon.get("tax_id")
         if tax_id is None:
-            return raw_internal_error(
-                f"Host validation for '{unvalidated_host}' was successful but response json 'tax_id' was missing."
-            )
+            message = f"Host validation for '{unvalidated_host}' was successful but response json 'tax_id' was missing."
+            logger.error(message)
+            return raw_internal_error(message)
         return RawProcessingResult(
             datum=str(tax_id),
         )
@@ -134,7 +139,9 @@ class TaxonomyService:
                 e=e,
             )
         if response.status_code != requests.codes.ok:
-            message = f"Could not map '{tax_id}' to scientific name. Code {response.status_code}: {body.get('detail', '')}"
+            message = f"Could not map '{tax_id}' to scientific name."
+            details = f"Code {response.status_code}: {body.get('detail', '')}"
+            logger.error(message + details)
             return RawProcessingResult(
                 datum=None,
                 warnings=[message] if not error_if_failed else [],
@@ -143,9 +150,9 @@ class TaxonomyService:
 
         scientific_name = body.get("scientific_name")
         if scientific_name is None:
-            return raw_internal_error(
-                f"'{tax_id}' is a valid taxon ID but response json had no 'scientific_name'."
-            )
+            message = f"'{tax_id}' is a valid taxon ID but response json had no 'scientific_name'."
+            logger.error(message)
+            return raw_internal_error(message)
 
         return RawProcessingResult(datum=scientific_name)
 
@@ -164,16 +171,17 @@ class TaxonomyService:
                 e=e,
             )
         if response.status_code != requests.codes.ok:
+            message = f"Could not map '{tax_id}' to common name."
+            details = f"Code {response.status_code}: {body.get('detail', '')}"
+            logger.error(message + details)
             return RawProcessingResult(
-                warnings=[
-                    f"Could not map '{tax_id}' to common name. Code {response.status_code}: {body.get('detail', '')}"
-                ],
+                warnings=[message],
             )
 
         common_name = body.get("common_name")
         if common_name is None:
-            return raw_internal_error(
-                f"Taxonomy service indicated common name was found for hostTaxonId '{tax_id}', but failed to return it."
-            )
+            message = f"Taxonomy service indicated common name was found for hostTaxonId '{tax_id}', but failed to return it."
+            logger.error(message)
+            return raw_internal_error(message)
 
         return RawProcessingResult(datum=common_name)
