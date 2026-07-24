@@ -319,14 +319,14 @@ def get_sequence_length(
 
 def _get_group_id_and_submitted_at(
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
-) -> tuple[int | None, str | None]:
+) -> tuple[int | None, str]:
     if isinstance(unprocessed, UnprocessedAfterNextclade):
         group_id = (
             int(unprocessed.inputMetadata["group_id"])
             if unprocessed.inputMetadata["group_id"]
             else None
         )
-        submitted_at = unprocessed.inputMetadata["submittedAt"]
+        submitted_at = str(unprocessed.inputMetadata["submittedAt"])
     else:
         group_id = unprocessed.group_id
         submitted_at = unprocessed.submittedAt

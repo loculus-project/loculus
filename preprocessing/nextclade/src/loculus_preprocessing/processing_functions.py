@@ -48,7 +48,7 @@ class ProcessingContext:
 
     accession_version: AccessionVersion = ""
     is_insdc_ingest_group: bool = False
-    submitted_at: str | None = None
+    submitted_at: str = ""
     taxonomy_service: TaxonomyService = field(default_factory=lambda: TaxonomyService(None))
 
 
@@ -387,7 +387,7 @@ class ProcessingFunctions:
             release_date = None
 
         try:
-            submitted_at = datetime.fromtimestamp(float(str(context.submitted_at)), tz=pytz.utc)
+            submitted_at = datetime.fromtimestamp(float(context.submitted_at), tz=pytz.utc)
         except Exception:
             return raw_internal_error(
                 "parse_into_ranges did not receive a valid submittedAt date, with input "
