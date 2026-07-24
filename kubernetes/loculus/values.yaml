@@ -1261,8 +1261,6 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: resolve_host_taxon_id
           inputs:
             host: host
-          args:
-            taxonomy_service_url: &taxonomy_service_url http://loculus-taxonomy-service:5000
       - name: hostNameScientific
         displayName: Host name - scientific
         definition: "The scientific name of the host from which the sample was collected."
@@ -1280,8 +1278,6 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: scientific_name_from_id
           inputs:
             hostTaxonId: processed.hostTaxonId
-          args:
-            taxonomy_service_url: *taxonomy_service_url
       - name: hostNameCommon
         displayName: Host name - common
         definition: "The common name of the host from which the sample was collected."
@@ -1299,8 +1295,6 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: common_name_from_id
           inputs:
             hostTaxonId: processed.hostTaxonId
-          args:
-            taxonomy_service_url: *taxonomy_service_url
       - name: isLabHost
         displayName: Is lab host
         definition: "If a laboratory host (e.g. cultured cell line) was used to propagate the sample."
@@ -1539,8 +1533,6 @@ defaultOrganismConfig: &defaultOrganismConfig
       args:
         - "prepro"
       replicas: 1
-      taxonomyServiceArgs: &preprocessingTaxonomyServiceArgs
-        taxonomy_service_url: *taxonomy_service_url
       configFile: &preprocessingConfigFile
         log_level: DEBUG
         batch_size: 100
@@ -1665,7 +1657,7 @@ defaultOrganisms:
               human_readable_pattern: "<any>/<any>/<identifier>/<date>"
         - <<: *hostTaxonIdConfig
           required: true
-          hierarchicalFilter: *taxonomy_service_url
+          hierarchicalFilter: &taxonomy_service_url http://loculus-taxonomy-service:5000
           hierarchicalSearchLabel: "include subtaxa"
           initiallyVisible: true
         - name: lineage
@@ -2709,6 +2701,7 @@ enaDeposition:
 taxonomyService:
   dbVersion: "ncbi_taxonomy_2026-05-01"
   taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
+  taxonomy_service_url: *taxonomy_service_url
 subdomainSeparator: "-"
 replicas:
   website: 1

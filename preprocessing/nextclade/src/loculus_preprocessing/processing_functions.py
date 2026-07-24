@@ -10,17 +10,14 @@ import logging
 import math
 import re
 import unicodedata
-import urllib.parse
-from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
 import dateutil.parser as dateutil
 import pytz
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+
+from loculus_preprocessing.external_services import TaxonomyService
 
 from .datatypes import (
     AnnotationSourceType,
@@ -31,62 +28,13 @@ from .datatypes import (
     ProcessingAnnotation,
     ProcessingResult,
     RawProcessingResult,
+    _internal_error_message,
     processing_error,
+    raw_internal_error,
 )
 
 logger = logging.getLogger(__name__)
 
-
-class RequestCache:
-    """Class for caching requests to external services during preprocessing.
-
-    Keys are the fully formatted URLs that have already been used to make sucessful requests.
-    Values are requests.Response as they were returned by the service.
-    """
-
-    def __init__(self, max_size: int, retries=5) -> None:
-        self.cache: OrderedDict[str, requests.Response] = OrderedDict()
-        self.max_size = max_size
-        self.session = requests.Session()
-        retry = Retry(total=retries, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
-        adapter = HTTPAdapter(max_retries=retry)
-        self.session.mount("http://", adapter)
-        self.session.mount("https://", adapter)
-
-    def get(self, url: str) -> None | requests.Response:
-        if url in self.cache:
-            self.cache.move_to_end(url)
-            return self.cache[url]
-        return None
-
-    def set(self, url: str, response: requests.Response) -> None:
-        self.cache[url] = response
-        self.cache.move_to_end(url)
-
-        if len(self.cache) > self.max_size:
-            self.cache.popitem(last=False)
-
-    def get_or_fetch(self, url: str, timeout: int = 15) -> requests.Response:
-        """See if `url` already exists in the cache and return the cached Response
-        if it does.
-
-        If `url` is not in the cache, make the actual request (with timeout and retries).
-        Add the Response to the cache (if status code in the 200s), and return the Response.
-
-        Since request.get can error, the caller should wrap this in a try/except block and handle errors
-        """
-        response = self.get(url)
-        if response is None:
-            response = self.session.get(url, timeout=timeout)
-            if 200 <= response.status_code < 300:
-                self.set(url, response)
-        return response
-
-    def clear(self) -> None:
-        self.cache.clear()
-
-
-taxonomy_cache = RequestCache(max_size=64)
 options_cache: dict[str, dict[str, str]] = {}
 
 
@@ -201,34 +149,12 @@ def format_authors(authors: str) -> str:
     return "; ".join(loculus_authors).strip()
 
 
-def _internal_error_message(message: str) -> str:
-    full = f"Internal Error. {message} Please contact the administrator."
-    logger.error(full)
-    return full
-
-
-def raw_internal_error(message: str) -> RawProcessingResult:
-    return processing_error(_internal_error_message(message))
-
-
 def regex_error(
     function_name: str, function_arg: str, input_data: InputMetadata, args: FunctionArgs
 ) -> RawProcessingResult:
     return raw_internal_error(
         f"{function_name} did not receive a valid {function_arg}, with input {input_data} and args {args}."
     )
-
-
-def missing_taxonomy_service_error() -> RawProcessingResult:
-    return raw_internal_error("taxonomy_service_url was not configured.")
-
-
-def taxonomy_network_error(
-    subject: str,
-    action: str,
-    e: Exception,
-) -> RawProcessingResult:
-    return raw_internal_error(f"Network error while {action} '{subject}': {e}.")
 
 
 @dataclass
@@ -321,22 +247,26 @@ def derive_date_range_string(lower: datetime, upper: datetime) -> str:
 
 
 class ProcessingFunctions:
-    @classmethod
+    taxonomy_service: TaxonomyService
+
+    def __init__(self, config):
+        self.taxonomy_service = TaxonomyService(config.taxonomy_service_url)
+
     def call_function(
-        cls,
+        self,
         function_name: str,
         args: FunctionArgs,
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
     ) -> ProcessingResult:
-        if not hasattr(cls, function_name):
+        if not hasattr(self, function_name):
             msg = (
                 f"CRITICAL: No processing function matches: {function_name}."
                 "This is a configuration error."
             )
             raise ValueError(msg)
-        func = getattr(cls, function_name)
+        func = getattr(self, function_name)
         try:
             result = func(input_data, output_field, input_fields=input_fields, args=args)
         except Exception as e:
@@ -1074,16 +1004,15 @@ class ProcessingFunctions:
         try:
             for i in range(1, 9):
                 segment = f"seg{i}"
-                extracted_lineages[segment] = ProcessingFunctions.call_function(  # type: ignore
-                    "extract_regex",
+                extracted_lineages[segment] = ProcessingFunctions.extract_regex(  # type: ignore
+                    {"regex_field": references.get(segment, "")},
+                    "output_field",
+                    ["segment_name"],
                     {
                         "pattern": args["pattern"],
                         "uppercase": args["uppercase"],
                         "capture_group": args["capture_group"],
                     },
-                    {"regex_field": references.get(segment, "")},
-                    "output_field",
-                    ["segment_name"],
                 ).datum
             logger.debug(f"Extracted lineages: {extracted_lineages} from references: {references}")
             if not ha_subtype or not na_subtype:
@@ -1224,8 +1153,8 @@ class ProcessingFunctions:
             errors=concat_result.errors,
         )
 
-    @staticmethod
     def resolve_host_taxon_id(
+        self,
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
@@ -1241,124 +1170,39 @@ class ProcessingFunctions:
         return the tax_id of the most generic taxon (i.e., the one that's closest to
         the root of the taxonomy)
         """
-        tax_service = args.get("taxonomy_service_url")
-        if not tax_service:
-            return missing_taxonomy_service_error()
-
         unvalidated_host = input_data.get("host")
         if not unvalidated_host:
             return RawProcessingResult()
 
-        if unvalidated_host.isdigit():
-            url = f"{tax_service}/taxa/{unvalidated_host}"
-        else:
-            query = urllib.parse.urlencode({"scientific_name": unvalidated_host})
-            url = f"{tax_service}/taxa?{query}"
+        return self.taxonomy_service.get_tax_id(
+            unvalidated_host, bool(args["is_insdc_ingest_group"])
+        )
 
-        try:
-            response = taxonomy_cache.get_or_fetch(url)
-            body = response.json()
-        except requests.exceptions.RequestException as e:
-            return taxonomy_network_error(unvalidated_host, "validating", e)
-
-        if response.status_code != requests.codes.ok:
-            # an invalid host organism is a warning for INSDC ingested sequences, but an error for everyone else
-            message = f"Host validation for '{unvalidated_host}' failed with code {response.status_code}: {body.get('detail', '')}"
-            return RawProcessingResult(
-                datum=None,
-                warnings=[message] if args["is_insdc_ingest_group"] else [],
-                errors=[message] if not args["is_insdc_ingest_group"] else [],
-            )
-
-        if isinstance(body, list):
-            # when querying by scientific name, multiple taxa may be returned: select the most generic one
-            taxon = min(body, key=lambda x: x.get("depth", float("inf")))
-        else:
-            taxon = body
-
-        tax_id = taxon.get("tax_id")
-        if tax_id is None:
-            return raw_internal_error(
-                f"Host validation for '{unvalidated_host}' was successful but response json 'tax_id' was missing."
-            )
-
-        return RawProcessingResult(datum=str(tax_id))
-
-    @staticmethod
     def scientific_name_from_id(
+        self,
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
     ) -> RawProcessingResult:
-        tax_service = args.get("taxonomy_service_url")
-        if not tax_service:
-            return missing_taxonomy_service_error()
-
         tax_id: str | None = input_data.get("hostTaxonId")
         if not tax_id:
             return RawProcessingResult()
 
-        url = f"{tax_service}/taxa/{tax_id}"
-        try:
-            response = taxonomy_cache.get_or_fetch(url)
-            body = response.json()
-        except requests.exceptions.RequestException as e:
-            return taxonomy_network_error(tax_id, "validating", e)
+        return self.taxonomy_service.get_scientific_name(tax_id)
 
-        if response.status_code != requests.codes.ok:
-            message = f"Could not map '{tax_id}' to scientific name. Code {response.status_code}: {body.get('detail', '')}"
-            logger.warning(message)
-            return RawProcessingResult(
-                datum=None,
-                warnings=[message] if args["is_insdc_ingest_group"] else [],
-                errors=[message] if not args["is_insdc_ingest_group"] else [],
-            )
-
-        scientific_name = body.get("scientific_name")
-        if scientific_name is None:
-            return raw_internal_error(
-                f"'{tax_id}' is a valid taxon ID but response json had no 'scientific_name'."
-            )
-
-        return RawProcessingResult(datum=scientific_name)
-
-    @staticmethod
     def common_name_from_id(
+        self,
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
     ) -> RawProcessingResult:
-        tax_service = args.get("taxonomy_service_url")
-        if not tax_service:
-            return missing_taxonomy_service_error()
-
         tax_id: str | None = input_data.get("hostTaxonId")
         if not tax_id:
             return RawProcessingResult()
 
-        url = f"{tax_service}/taxa/{tax_id}?find_common_name=true"
-        try:
-            response = taxonomy_cache.get_or_fetch(url)
-            body = response.json()
-        except requests.exceptions.RequestException as e:
-            return taxonomy_network_error(tax_id, "getting common name for", e)
-
-        if response.status_code != requests.codes.ok:
-            return RawProcessingResult(
-                warnings=[
-                    f"Could not map '{tax_id}' to common name. Code {response.status_code}: {body.get('detail', '')}"
-                ],
-            )
-
-        common_name = body.get("common_name")
-        if common_name is None:
-            return raw_internal_error(
-                f"Taxonomy service indicated common name was found for hostTaxonId '{tax_id}', but failed to return it."
-            )
-
-        return RawProcessingResult(datum=common_name)
+        return self.taxonomy_service.get_common_name(tax_id)
 
 
 def single_metadata_annotation(

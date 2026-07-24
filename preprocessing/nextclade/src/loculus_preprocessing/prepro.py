@@ -262,7 +262,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     args["ACCESSION_VERSION"] = accession_version
 
     try:
-        processing_result = ProcessingFunctions.call_function(
+        processing_result = ProcessingFunctions(config=config).call_function(
             spec.function,
             args,
             input_data,
