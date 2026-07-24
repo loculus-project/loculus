@@ -18,7 +18,7 @@ const organism = Astro.params.organism!;
 
 const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
 
-const inputMode: InputMode = Astro.url.searchParams.get('inputMode') === 'form' ? 'form' : 'bulk';
+const inputMode: InputMode = Astro.url.searchParams.get('inputMode') === 'bulk' ? 'bulk' : 'form';
 const accession = Astro.url.searchParams.get('accession') || undefined;
 const version = Astro.url.searchParams.get('version') || undefined;
 

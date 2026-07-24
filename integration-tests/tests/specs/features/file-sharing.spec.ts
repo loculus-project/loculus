@@ -129,7 +129,7 @@ test('bulk revise 2 seqs with files', async ({ page, groupId, tmpDir }) => {
 
     // Step 2: Bulk revise with files
     const revisionPage = new RevisionPage(page);
-    await revisionPage.goto(ORGANISM_URL_NAME, groupId);
+    await revisionPage.goto(ORGANISM_URL_NAME, groupId, 'bulk');
 
     // Upload revision metadata (with accession column)
     const revisionMetadata = [

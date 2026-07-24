@@ -70,7 +70,7 @@ sequenceTest(
 groupTest.describe('Revision page template downloads', () => {
     groupTest('can download revision metadata templates', async ({ page, groupId }) => {
         const revisionPage = new RevisionPage(page);
-        await revisionPage.goto(TEST_ORGANISM, groupId);
+        await revisionPage.goto(TEST_ORGANISM, groupId, 'bulk');
 
         const tsvDownload = await revisionPage.downloadTsvTemplate();
         expect(tsvDownload.suggestedFilename()).toContain('.tsv');
@@ -118,7 +118,7 @@ groupTest.describe('Bulk sequence revision', () => {
         const fastaContent = createFastaContent(revisedSequences);
 
         const revisionPage = new RevisionPage(page);
-        await revisionPage.goto(TEST_ORGANISM, groupId);
+        await revisionPage.goto(TEST_ORGANISM, groupId, 'bulk');
         await revisionPage.uploadMetadataFile('revision_metadata.tsv', revisionMetadata);
         await revisionPage.uploadSequenceFile('revised_sequences.fasta', fastaContent);
         await revisionPage.acceptTerms();
