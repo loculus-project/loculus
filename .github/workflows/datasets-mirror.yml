@@ -44,6 +44,12 @@ jobs:
           host_bucket = %(bucket)s.hel1.your-objectstorage.com
           verbosity = WARNING
           EOF
+      - name: Upload dataset to Object Storage
+        shell: bash -l {0}
+        run: |
+          for file in ${{ inputs.taxon_id }}.zip ${{ inputs.taxon_id }}.tar.zst ; do
+            s3cmd put "${file}" s3://loculus-public/mirror/"${file}"
+          done
       - name: Enrich mirrored accessions from GenBank
         env:
           ENTREZ_API_KEY: ${{ secrets.NCBI_API_KEY }}
@@ -74,12 +80,11 @@ jobs:
             args+=(--api-key "${ENTREZ_API_KEY}")
           fi
           python mirroring/enrich_genbank.py "${args[@]}"
-      - name: Upload to Object Storage
+      - name: Upload enrichment to Object Storage
         shell: bash -l {0}
         run: |
-          for file in ${{ inputs.taxon_id }}.zip ${{ inputs.taxon_id }}.tar.zst ${{ inputs.taxon_id }}.entrez.jsonl ; do
-            s3cmd put "${file}" s3://loculus-public/mirror/"${file}"
-          done
+          file=${{ inputs.taxon_id }}.entrez.jsonl
+          s3cmd put "${file}" s3://loculus-public/mirror/"${file}"
   notify_on_failure:
     needs: download-and-upload
     runs-on: ubuntu-latest
