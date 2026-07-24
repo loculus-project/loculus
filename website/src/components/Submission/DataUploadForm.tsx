@@ -1,7 +1,7 @@
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { DateTime } from 'luxon';
-import { type FormEvent, useState, type Dispatch, type SetStateAction } from 'react';
+import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo } from 'react';
 
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
@@ -29,8 +29,12 @@ import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import {
     applyFileMappings,
-    mergeFileMappings,
+    getFileLinkage,
+    getLinkageError,
+    type FileLinkage,
+    type FileLinkageDetails,
     type FileMapping,
+    type SubmissionFile,
     type SubmissionFileMapping,
 } from './FileUpload/fileMapping.ts';
 
@@ -80,6 +84,14 @@ const InnerDataUploadForm = ({
 
     const [confirmedNoPII, setConfirmedNoPII] = useState(false);
 
+    const fileLinkage = useMemo(
+        () =>
+            inputMode === 'bulk' && submissionFileMapping !== undefined
+                ? getFileLinkage(submissionFileMapping, fileMapping ?? new Map())
+                : undefined,
+        [inputMode, submissionFileMapping, fileMapping],
+    );
+
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
 
@@ -117,12 +129,16 @@ const InnerDataUploadForm = ({
         }
 
         if (extraFilesEnabled && finalSubmissionFileMapping !== undefined) {
-            const merged = mergeFileMappings(finalSubmissionFileMapping, fileMapping ?? new Map());
-            if (merged.isErr()) {
-                onError(merged.error.message);
+            const { resolvedFileMapping, details } = getFileLinkage(
+                finalSubmissionFileMapping,
+                fileMapping ?? new Map(),
+            );
+            const linkageError = getLinkageError(details);
+            if (linkageError !== undefined) {
+                onError(linkageError);
                 return;
             }
-            finalMetadataFile = await applyFileMappings(metadataFile, merged.value);
+            finalMetadataFile = await applyFileMappings(metadataFile, resolvedFileMapping);
         }
 
         const submitSequenceData = () => {
@@ -195,7 +211,7 @@ const InnerDataUploadForm = ({
                             onError={onError}
                             fileMapping={fileMapping}
                             setFileMapping={setFileMapping}
-                            submissionFileMapping={submissionFileMapping}
+                            fileLinkage={fileLinkage}
                         />
                         <hr />
                     </>
@@ -290,6 +306,54 @@ export const InputModeTabs = ({
     );
 };
 
+const FileLinkageStatus = ({ linkageDetails }: { linkageDetails?: FileLinkageDetails }) => {
+    if (linkageDetails === undefined) return null;
+
+    const statuses: { key: string; icon: string; color: string; files: SubmissionFile[]; message: string }[] = [
+        {
+            key: 'linked',
+            icon: '✓',
+            color: 'text-green-500',
+            files: linkageDetails.linked,
+            message: 'uploaded and linked to metadata!',
+        },
+        {
+            key: 'reused',
+            icon: '↺',
+            color: 'text-green-500',
+            files: linkageDetails.reused,
+            message: 'reused from previous uploads.',
+        },
+        {
+            key: 'missing',
+            icon: '⚠',
+            color: 'text-yellow-600',
+            files: linkageDetails.missing,
+            message: 'referenced in metadata but not uploaded.',
+        },
+        {
+            key: 'orphaned',
+            icon: '⚠',
+            color: 'text-yellow-600',
+            files: linkageDetails.orphaned,
+            message: 'uploaded but not referenced in metadata.',
+        },
+    ];
+
+    return (
+        <div className='text-xs text-gray-500 text-center space-y-1'>
+            {statuses
+                .filter((status) => status.files.length > 0)
+                .map((status) => (
+                    <div key={status.key}>
+                        <span className={status.color}>{status.icon}</span>{' '}
+                        {`${status.files.length} ${status.files.length === 1 ? 'file' : 'files'} ${status.message}`}
+                    </div>
+                ))}
+        </div>
+    );
+};
+
 export const ExtraFilesUpload = ({
     accessToken,
     clientConfig,
@@ -298,7 +362,7 @@ export const ExtraFilesUpload = ({
     fileCategories,
     fileMapping,
     setFileMapping,
-    submissionFileMapping,
+    fileLinkage,
     formSubmissionId,
     onError,
 }: {
@@ -309,7 +373,7 @@ export const ExtraFilesUpload = ({
     fileCategories: FileCategory[];
     fileMapping: FileMapping | undefined;
     setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
-    submissionFileMapping?: SubmissionFileMapping | undefined;
+    fileLinkage?: FileLinkage;
     formSubmissionId?: string;
     onError: (message: string) => void;
 }) => {
@@ -325,19 +389,22 @@ export const ExtraFilesUpload = ({
             </div>
             <div className='col-span-2 flex flex-col gap-4'>
                 {fileCategories.map((fileCategory) => (
-                    <FolderUploadComponent
-                        key={fileCategory.name}
-                        fileCategory={fileCategory}
-                        inputMode={inputMode}
-                        accessToken={accessToken}
-                        clientConfig={clientConfig}
-                        groupId={groupId}
-                        onError={onError}
-                        fileMapping={fileMapping}
-                        setFileMapping={setFileMapping}
-                        submissionFileMapping={submissionFileMapping}
-                        formSubmissionId={formSubmissionId}
-                    />
+                    <div className='space-y-2' key={fileCategory.name}>
+                        <FolderUploadComponent
+                            fileCategory={fileCategory}
+                            inputMode={inputMode}
+                            accessToken={accessToken}
+                            clientConfig={clientConfig}
+                            groupId={groupId}
+                            onError={onError}
+                            fileMapping={fileMapping}
+                            setFileMapping={setFileMapping}
+                            formSubmissionId={formSubmissionId}
+                        />
+                        {inputMode === 'bulk' && (
+                            <FileLinkageStatus linkageDetails={fileLinkage?.details.get(fileCategory.name)} />
+                        )}
+                    </div>
                 ))}
             </div>
         </div>

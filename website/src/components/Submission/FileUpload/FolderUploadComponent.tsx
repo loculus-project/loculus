@@ -1,8 +1,8 @@
 import { produce } from 'immer';
-import { useEffect, useMemo, useState, type Dispatch, type FC, type SetStateAction } from 'react';
+import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
 
-import type { FileMapping, SubmissionFileMapping } from './fileMapping';
+import { type FileMapping } from './fileMapping';
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
 import { type FileCategory } from '../../../types/config';
@@ -92,7 +92,6 @@ type FolderUploadComponentProps = {
     groupId: number;
     fileMapping: FileMapping | undefined;
     setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
-    submissionFileMapping: SubmissionFileMapping | undefined;
     // Passed when the submissionId is known (e.g. editing/revising an entry) in form mode,
     // where it is used instead of the dummySubmissionId placeholder.
     formSubmissionId?: string;
@@ -107,7 +106,6 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     groupId,
     fileMapping,
     setFileMapping,
-    submissionFileMapping,
     onError,
 }) => {
     const isClient = useClientFlag();
@@ -126,18 +124,6 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     const [isDragging, setIsDragging] = useState(false);
 
     const backendClient = new BackendClient(clientConfig.backendUrl);
-
-    const submissionFilePaths = useMemo(() => {
-        return submissionFileMapping
-            ? new Set(
-                  Array.from(submissionFileMapping.values()).flatMap((categories) =>
-                      Array.from(categories.get(fileCategory.name)?.values() ?? []).map(
-                          (submissionFile) => submissionFile.path,
-                      ),
-                  ),
-              )
-            : undefined;
-    }, [fileCategory.name, submissionFileMapping]);
 
     function updatePartProgress(fileId: string, uploadedParts: number, totalParts: number) {
         setFileUploadState((state) => {
@@ -445,7 +431,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     {fileUploadState.files.map((file) => (
                         <div key={file.path} className='flex items-center mb-2 gap-2'>
                             <div className='flex-1 min-w-0'>
-                                <FileListItem file={file} filePaths={submissionFilePaths} inputMode={inputMode} />
+                                <FileListItem file={file} />
                             </div>
                             <Button
                                 onClick={() => handleDiscardFile(file.path)}
@@ -505,11 +491,9 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
 type FileListeItemProps = {
     file: SingleFileUpload;
-    filePaths: Set<string> | undefined;
-    inputMode: InputMode;
 };
 
-const FileListItem: FC<FileListeItemProps> = ({ file, filePaths, inputMode }) => {
+const FileListItem: FC<FileListeItemProps> = ({ file }) => {
     const showProgress = file.type === 'pending';
     const percentage = showProgress ? Math.round((file.uploadedParts / file.totalParts) * 100) : 0;
     const folderPath = file.path.split('/').slice(0, -1);
@@ -535,7 +519,6 @@ const FileListItem: FC<FileListeItemProps> = ({ file, filePaths, inputMode }) =>
             </div>
             {/* Status icon */}
             <div className='ml-2 w-5 flex justify-center'>{getStatusIcon(file.type)}</div>
-            <div className='text-xs'>{inputMode === 'bulk' && getLinkageIcon(file, filePaths)}</div>
         </div>
     );
 };
@@ -561,14 +544,6 @@ const getStatusIcon = (status: UploadStatus) => {
         case 'error':
             return <span className='text-red-500 text-xs'>✗</span>;
     }
-};
-
-const getLinkageIcon = (file: SingleFileUpload, filePaths?: Set<string>) => {
-    return filePaths?.has(file.path) ? (
-        <span className='text-green-500'>LINKED</span>
-    ) : (
-        <span className='text-gray-400'>UNLINKED</span>
-    );
 };
 
 /**
