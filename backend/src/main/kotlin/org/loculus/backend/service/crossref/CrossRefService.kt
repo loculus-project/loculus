@@ -167,6 +167,8 @@ class CrossRefService(
                 }
             }
             val journal = citationElement.selectFirst("journal_title")?.text()?.takeIf { it.isNotBlank() }
+                ?: citationElement.takeIf { it.tagName() == "postedcontent_cite" }
+                    ?.selectFirst("institution_name")?.text()?.takeIf { it.isNotBlank() }
 
             SeqSetCitationSource(
                 source = CitationSource(
