@@ -112,10 +112,6 @@ class TaxonomyService:
 
         tax_id = taxon.get("tax_id")
         if tax_id is None:
-            message = (
-                f"Host validation for '{unvalidated_host}' failed with code "
-                f"{response.status_code}: {taxon.get('detail', '')}"
-            )
             return raw_internal_error(
                 f"Host validation for '{unvalidated_host}' was successful but response json 'tax_id' was missing."
             )
