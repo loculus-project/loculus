@@ -1222,7 +1222,9 @@ class ProcessingFunctions:
         if not unvalidated_host:
             return RawProcessingResult()
 
-        return context.taxonomy_service.get_tax_id(unvalidated_host, not context.is_insdc_ingest_group)
+        return context.taxonomy_service.get_tax_id(
+            unvalidated_host, not context.is_insdc_ingest_group
+        )
 
     @staticmethod
     def scientific_name_from_id(
@@ -1236,7 +1238,9 @@ class ProcessingFunctions:
         if not tax_id:
             return RawProcessingResult()
 
-        return context.taxonomy_service.get_scientific_name(tax_id, not context.is_insdc_ingest_group)
+        return context.taxonomy_service.get_scientific_name(
+            tax_id, not context.is_insdc_ingest_group
+        )
 
     @staticmethod
     def common_name_from_id(
