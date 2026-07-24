@@ -1,5 +1,4 @@
 createTestAccounts: true
-traefikVersion: 3
 secrets:
   smtp-password:
     type: sealedsecret

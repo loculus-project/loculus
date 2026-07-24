@@ -37,7 +37,7 @@ class RecordCountValidationError(Exception):
 
 def _md5_file(path: Path) -> str:
     """Compute MD5 hash of a file."""
-    digest = hashlib.md5()  # noqa: S324
+    digest = hashlib.md5()  # ruff:ignore[hashlib-insecure-hash-function]
     with path.open("rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):  # 1MB chunks
             digest.update(chunk)
@@ -106,7 +106,7 @@ def _download_file(
     if etag and etag != "0":
         headers["If-None-Match"] = etag
 
-    try:  # noqa: PLW0717
+    try:  # ruff:ignore[too-many-statements-in-try-clause]
         session = requests.Session()
         session.headers.update(headers)
         response = session.get(url, timeout=timeout, stream=True)
@@ -167,7 +167,7 @@ class DownloadManager:
         data_path = download_dir / DATA_FILENAME
         transformed_path = download_dir / TRANSFORMED_DATA_FILENAME
 
-        try:  # noqa: PLW0717
+        try:  # ruff:ignore[too-many-statements-in-try-clause]
             # Download data from backend
             logger.info("Requesting released data from %s", config.released_data_endpoint)
             response = self.download_func(
@@ -188,7 +188,7 @@ class DownloadManager:
                 raise RuntimeError(msg)
 
             # Check for 304 Not Modified
-            if response.status_code == 304:  # noqa: PLR2004
+            if response.status_code == 304:  # ruff:ignore[magic-value-comparison]
                 logger.info("Backend returned 304 Not Modified; skipping import")
                 safe_remove(download_dir)
                 raise NotModifiedError
