@@ -163,7 +163,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                 fullWidth={false}
             >
                 <p className='mb-4 text-sm text-gray-500'>
-                    The creator is the person who assembled this SeqSet on Loculus. They are not necessarily the
+                    The creator is the person who assembled this SeqSet on {databaseName}. They are not necessarily the
                     originator of the underlying sequence data.
                 </p>
                 <CreatorDetailEntry label='Created by' value={createdByValue} />
