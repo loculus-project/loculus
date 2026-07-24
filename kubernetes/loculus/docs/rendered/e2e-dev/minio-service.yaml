@@ -1,0 +1,16 @@
+# Source: loculus/templates/minio-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-minio-service
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: minio
+  ports:
+    - port: 8084
+      targetPort: 9000
+      protocol: TCP
+      name: http
+---
