@@ -33,6 +33,11 @@
           "type": "boolean",
           "description": "Whether the field is required by backend."
         },
+        "requiredWhen": {
+          "groups": ["metadata"],
+          "type": "array",
+          "description": "Array of conditions under which this metadata field is required. When multiple conditions are provided they are ORed; a submission is rejected if at least one condition is not met. Conditions can be: the presence of a file category - specified as files.<file_category>; the input value of another metadata field - specified as <field_name>; or the processed value of another metadata field - specified as processed.<field_name>"
+        },
         "desired": {
           "groups": ["metadata"],
           "type": "boolean",
@@ -340,6 +345,16 @@
               "type": { "enum": ["int", "float", "number", "date"] }
             },
             "errorMessage": "When rangeOverlapSearch is set, type must be numeric or date ('int', 'float', 'number', or 'date')"
+          }
+        },
+        {
+          "if": {
+            "properties": { "required": { "const": true } },
+            "required": ["required"]
+          },
+          "then": {
+            "not": { "required": ["requiredWhen"] },
+            "errorMessage": "A field with 'required: true' cannot also set 'requiredWhen' (it is already always required)."
           }
         }
       ]

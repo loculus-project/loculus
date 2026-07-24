@@ -15,6 +15,8 @@ from loculus_preprocessing.config import Config, ProcessingSpec, get_config, get
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
     AnnotationSourceType,
+    FileCategory,
+    FileIdAndName,
     FunctionArgs,
     InputMetadata,
     ProcessedEntry,
@@ -685,6 +687,10 @@ not_accepted_authors = [
     "Count4th, EwanMcGregor, Count4th",
 ]
 
+RAW_READS_FILES = {
+    FileCategory.RAW_READS: [FileIdAndName(fileId="file-raw-reads", name="reads.fastq.gz")]
+}
+
 test_metadata_dependency_test_definitions = [
     Case(
         name="metadata_dependency",
@@ -694,6 +700,9 @@ test_metadata_dependency_test_definitions = [
             "ncbi_required_collection_date": "2022-11-01",
             "continent": "Asia",
             "A": "2022",
+            "multi_dep": "present",
+            "required_when_input_A": "present",
+            "required_when_processed_A": "present",
         },
         accession_id="18",
         expected_metadata={
@@ -703,6 +712,9 @@ test_metadata_dependency_test_definitions = [
             "continent": "Asia",
             "A": "2022-01-01",
             "depends_on_A": "Asia/LOC_18.1/2022-01-01",
+            "multi_dep": "present",
+            "required_when_input_A": "present",
+            "required_when_processed_A": "present",
         },
         expected_errors=[],
         expected_warnings=build_processing_annotations(
@@ -715,6 +727,218 @@ test_metadata_dependency_test_definitions = [
             ]
         ),
     ),
+    Case(
+        name="raw_reads_prerequisite_missing",
+        input_metadata={
+            "submissionId": "raw_reads_prerequisite_missing",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "continent": "Asia",
+            "A": "2022-11-01",
+            "required_when_raw_reads": "",
+            "multi_dep": "present",
+            "required_when_input_A": "present",
+            "required_when_processed_A": "present",
+        },
+        input_files=RAW_READS_FILES,
+        accession_id="30",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "Asia/LOC_30.1/2022-11-01",
+            "continent": "Asia",
+            "A": "2022-11-01",
+            "depends_on_A": "Asia/LOC_30.1/2022-11-01",
+            "multi_dep": "present",
+            "required_when_input_A": "present",
+            "required_when_processed_A": "present",
+        },
+        expected_files=RAW_READS_FILES,
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["required_when_raw_reads"],
+                    ["required_when_raw_reads"],
+                    "Metadata field `required_when_raw_reads` is required when `raw_reads` files are provided.",
+                ),
+            ]
+        ),
+        expected_warnings=[],
+    ),
+    Case(
+        name="raw_reads_prerequisite_present",
+        input_metadata={
+            "submissionId": "raw_reads_prerequisite_present",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "continent": "Asia",
+            "A": "2022-11-01",
+            "required_when_raw_reads": "present",
+            "multi_dep": "present",
+            "required_when_input_A": "present",
+            "required_when_processed_A": "present",
+        },
+        input_files=RAW_READS_FILES,
+        accession_id="31",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "Asia/LOC_31.1/2022-11-01",
+            "continent": "Asia",
+            "A": "2022-11-01",
+            "depends_on_A": "Asia/LOC_31.1/2022-11-01",
+            "required_when_raw_reads": "present",
+            "multi_dep": "present",
+            "required_when_input_A": "present",
+            "required_when_processed_A": "present",
+        },
+        expected_files=RAW_READS_FILES,
+        expected_errors=[],
+        expected_warnings=[],
+    ),
+    Case(
+        name="processed_field_prerequisite_missing",
+        input_metadata={
+            "submissionId": "processed_field_prerequisite_missing",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "continent": "Asia",
+            "A": "2022-11-01",
+            "required_when_processed_A": "",
+            "multi_dep": "present",
+            "required_when_input_A": "present",
+        },
+        accession_id="32",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "Asia/LOC_32.1/2022-11-01",
+            "continent": "Asia",
+            "A": "2022-11-01",
+            "depends_on_A": "Asia/LOC_32.1/2022-11-01",
+            "multi_dep": "present",
+            "required_when_input_A": "present",
+        },
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["required_when_processed_A"],
+                    ["required_when_processed_A"],
+                    "Metadata field `required_when_processed_A` is required when `A` is provided.",
+                ),
+            ]
+        ),
+        expected_warnings=[],
+    ),
+    Case(
+        name="required_when_input_A",
+        input_metadata={
+            "submissionId": "required_when_input_A",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "continent": "Asia",
+            "A": "not_a_date",
+        },
+        accession_id="32",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "Asia/LOC_32.1/2022-11-01",
+            "continent": "Asia",
+            "depends_on_A": "Asia/LOC_32.1",
+            "A": None,
+        },
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["A"],
+                    ["A"],
+                    "Metadata field A: Date format is not recognized.",
+                ),
+                ProcessingAnnotationHelper(
+                    ["required_when_input_A"],
+                    ["required_when_input_A"],
+                    "Metadata field `required_when_input_A` is required when `A` is provided.",
+                ),
+            ]
+        ),
+        expected_warnings=[],
+    ),
+    Case(
+        name="multi_dep_fails_when_one_present",
+        input_metadata={
+            "submissionId": "multi_dep_fails_when_one_present",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "continent": "Asia",
+            "A": "2022-11-01",
+            "required_when_input_A": "present",
+            "required_when_processed_A": "present",
+        },
+        accession_id="32",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "Asia/LOC_32.1/2022-11-01",
+            "continent": "Asia",
+            "A": "2022-11-01",
+            "required_when_input_A": "present",
+            "required_when_processed_A": "present",
+            "depends_on_A": "Asia/LOC_32.1/2022-11-01",
+        },
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["multi_dep"],
+                    ["multi_dep"],
+                    "Metadata field `multi_dep` is required when `A` is provided.",
+                ),
+            ]
+        ),
+        expected_warnings=[],
+    ),
+    Case(
+        name="multi_dep_fails_when_all_present",
+        input_metadata={
+            "submissionId": "multi_dep_fails_when_all_present",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "continent": "Asia",
+            "A": "2022-11-01",
+            "required_when_input_A": "present",
+            "required_when_processed_A": "present",
+            "required_when_raw_reads": "present",
+        },
+        input_files=RAW_READS_FILES,
+        accession_id="32",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "Asia/LOC_32.1/2022-11-01",
+            "continent": "Asia",
+            "A": "2022-11-01",
+            "required_when_input_A": "present",
+            "depends_on_A": "Asia/LOC_32.1/2022-11-01",
+            "required_when_processed_A": "present",
+            "required_when_raw_reads": "present",
+        },
+        expected_files=RAW_READS_FILES,
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["multi_dep"],
+                    ["multi_dep"],
+                    "Metadata field `multi_dep` is required when `A` is provided.",
+                ),
+                ProcessingAnnotationHelper(
+                    ["multi_dep"],
+                    ["multi_dep"],
+                    "Metadata field `multi_dep` is required when `raw_reads` files are provided.",
+                ),
+            ]
+        ),
+        expected_warnings=[],
+    ),
 ]
 
 
@@ -723,9 +947,8 @@ def config():
     return get_config(NO_ALIGNMENT_CONFIG, ignore_args=True)
 
 
-@pytest.fixture(scope="module")
-def config_dependency(config: Config):
-    # Add metadata dependency to config, recompute processing order
+def generate_config_with_deps() -> Config:
+    config = get_config(NO_ALIGNMENT_CONFIG, ignore_args=True)
     dependency_fields = get_config(METADATA_DEPENDENCY_CONFIG, ignore_args=True).processing_spec
     config.processing_spec.update(dependency_fields)
     config.processing_order = get_processing_order(config)
@@ -756,20 +979,64 @@ def test_preprocessing(test_case_def: Case, config: Config, factory_custom: Proc
     test_metadata_dependency_test_definitions,
     ids=lambda tc: f"metadata fields with dependencies use processed fields {tc.name}",
 )
-def test_preprocessing_metadata_dependencies(test_case_def: Case, config_dependency: Config):
-    factory_custom = ProcessedEntryFactory(
-        all_metadata_fields=list(config_dependency.processing_spec.keys())
-    )
+def test_preprocessing_metadata_dependencies(test_case_def: Case):
+    config = generate_config_with_deps()
+    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
     test_case = test_case_def.create_test_case(factory_custom)
-    processed_entry = process_single_entry(test_case, config_dependency)
+    processed_entry = process_single_entry(test_case, config)
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
 
-    wrong_order = tuple(
-        ["depends_on_A"] + [i for i in config_dependency.processing_order if i != "depends_on_A"]
+
+@pytest.mark.parametrize(
+    ("condition", "match"),
+    [
+        ("files.not_a_category", "unknown file category"),
+        ("processed.does_not_exist", "non-existing metadata field"),
+        ("processed.field", "lists itself"),
+        ("does_not_exist", "has a requiredWhen condition referencing non-existing metadata field"),
+        ("field", "lists itself"),
+        ("no_input_field", "noInput metadata field"),
+    ],
+)
+def test_required_when_validation(condition: str, match: str) -> None:
+    with pytest.raises(ValueError, match=match):
+        Config(
+            processing_spec={
+                "field": ProcessingSpec(inputs={"input": "field"}, required_when=[condition]),
+                "no_input_field": ProcessingSpec(inputs={}, no_input=True),
+            }
+        )
+
+
+def test_required_when_conflicts_with_required() -> None:
+    with pytest.raises(ValueError, match="both 'required: true' and 'requiredWhen'"):
+        Config(
+            processing_spec={
+                "field": ProcessingSpec(
+                    inputs={"input": "field"}, required=True, required_when=["files.raw_reads"]
+                )
+            }
+        )
+
+
+def test_processing_order() -> None:
+    """`depends_on_A` reads the processed value of `A`, so `A` must be processed first."""
+    config = generate_config_with_deps()
+    test_case = Case(
+        name="processing_order",
+        input_metadata={"continent": "Asia", "A": "2022-11-01"},
+        accession_id="40",
+    ).create_test_case(ProcessedEntryFactory())
+
+    # Correct order includes the processed value of A; the wrong order builds depends_on_A first.
+    correct_order = process_single_entry(test_case, config)
+    assert correct_order.data.metadata["depends_on_A"] == "Asia/LOC_40.1/2022-11-01"
+
+    config.processing_order = tuple(
+        ["depends_on_A"] + [f for f in config.processing_order if f != "depends_on_A"]
     )
-    config_dependency.processing_order = wrong_order
-    processed_entry = process_single_entry(test_case, config_dependency)
-    assert processed_entry.data.metadata != test_case.expected_output.data.metadata
+    wrong_order = process_single_entry(test_case, config)
+    assert wrong_order.data.metadata["depends_on_A"] == "Asia/LOC_40.1"
 
 
 def test_required_field_message_lists_only_user_input_fields() -> None:

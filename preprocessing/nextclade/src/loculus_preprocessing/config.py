@@ -1,5 +1,6 @@
 import argparse
 import graphlib
+import itertools
 import logging
 import os
 from enum import StrEnum
@@ -10,6 +11,7 @@ import yaml
 from pydantic import BaseModel, Field, model_validator
 
 from loculus_preprocessing.datatypes import (
+    FileCategory,
     FunctionArgs,
     FunctionInputs,
     FunctionName,
@@ -23,7 +25,8 @@ logger = logging.getLogger(__name__)
 # Dataclass types for which we can generate CLI arguments
 CLI_TYPES = [str, int, float, bool]
 
-METADATA_DEPENDENCY_PREFIX = "processed."
+PROCESSED_PREFIX = "processed."
+FILES_PREFIX = "files."
 NEXTCLADE_PREFIX = "nextclade."
 ASSIGNED_REFERENCE_PREFIX = "ASSIGNED_REFERENCE"
 INTERNAL_INPUT_PREFIXES = (NEXTCLADE_PREFIX, ASSIGNED_REFERENCE_PREFIX)
@@ -42,6 +45,7 @@ class ProcessingSpec(BaseModel):
     inputs: FunctionInputs
     function: FunctionName = "identity"
     required: bool = False
+    required_when: list[str] = []
     no_input: bool = False
     args: FunctionArgs | None = None
 
@@ -142,6 +146,7 @@ class Config(BaseModel):
         if not self.backend_host:  # Set here so we can use organism
             self.backend_host = f"http://127.0.0.1:8079/{self.organism}"
 
+        validate_required_when(self)
         self.processing_order = get_processing_order(self)
 
         return self
@@ -244,6 +249,49 @@ def generate_argparse_from_model(config_cls: type[BaseModel]) -> argparse.Argume
     return parser
 
 
+def validate_required_when(config: Config) -> None:
+    """Validate every `required_when` condition in the processing spec."""
+    for output_field, spec in config.processing_spec.items():
+        if spec.required and spec.required_when:
+            msg = (
+                f"invalid configuration: field '{output_field}' sets both 'required: true' and "
+                "'requiredWhen'. This is not allowed."
+            )
+            raise ValueError(msg)
+        for condition in spec.required_when:
+            if condition.startswith(FILES_PREFIX):
+                category = condition.removeprefix(FILES_PREFIX)
+                if category not in FileCategory:
+                    msg = (
+                        f"invalid configuration: field '{output_field}' has a requiredWhen "
+                        f"condition referencing unknown file category '{category}'."
+                    )
+                    raise ValueError(msg)
+                continue
+            field = (
+                condition.removeprefix(PROCESSED_PREFIX)
+                if condition.startswith(PROCESSED_PREFIX)
+                else condition
+            )
+            if (referenced_spec := config.processing_spec.get(field)) is None:
+                msg = (
+                    f"invalid configuration: field '{output_field}' has a requiredWhen "
+                    f"condition referencing non-existing metadata field '{field}'"
+                )
+                raise ValueError(msg)
+            if referenced_spec.no_input and not condition.startswith(PROCESSED_PREFIX):
+                msg = (
+                    f"invalid configuration: field '{output_field}' has a requiredWhen "
+                    f"condition referencing the input value of a noInput metadata field '{field}'"
+                )
+                raise ValueError(msg)
+            if field == output_field:
+                msg = (
+                    f"invalid configuration: field '{output_field}' lists itself in `requiredWhen`"
+                )
+                raise ValueError(msg)
+
+
 def get_processing_order(config: Config) -> tuple[str, ...]:
     """Return a valid order for processing metadata fields based on their dependencies.
 
@@ -257,25 +305,30 @@ def get_processing_order(config: Config) -> tuple[str, ...]:
     E.g.: `processed.collection_date` will look for `collection_date` in the processed metadata,
     whereas `collection_date` will use the unprocessed version
     """
-    dag: dict[str, set[str]] = {k: set() for k in config.processing_spec.keys()}
+    dag: dict[str, set[str]] = {k: set() for k in config.processing_spec}
     for output_field, spec in config.processing_spec.items():
-        for input in spec.inputs.values():
-            if not input.startswith(METADATA_DEPENDENCY_PREFIX):
+        for input in itertools.chain(spec.inputs.values(), spec.required_when):
+            if not input.startswith(PROCESSED_PREFIX):
                 continue
-            dependency = input.replace(METADATA_DEPENDENCY_PREFIX, "", 1)
+            dependency = input.removeprefix(PROCESSED_PREFIX)
+
             if dependency not in config.processing_spec:
-                raise ValueError(
-                    f"invalid configuration: metadata field '{output_field}' requested non-existing field '{dependency}' as input"
+                msg = (
+                    f"invalid configuration: metadata field '{output_field}' requested "
+                    f"non-existing field '{dependency}' as input."
                 )
+                raise ValueError(msg)
             dag[output_field].add(dependency)
 
     ts = graphlib.TopologicalSorter(dag)
     try:
         processing_order = tuple(ts.static_order())
     except graphlib.CycleError as e:
-        raise ValueError(
-            f"invalid configuration: computation of metadata processing order resulted in a Cycle error: {e}"
-        ) from e
+        msg = (
+            f"invalid configuration: computation of metadata processing order resulted in a "
+            f"Cycle error: {e}"
+        )
+        raise ValueError(msg) from e
 
     return processing_order
 

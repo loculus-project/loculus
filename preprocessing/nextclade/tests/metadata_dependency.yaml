@@ -8,9 +8,34 @@ processing_spec:
       continent: continent
       A: processed.A
       required_collection_date: ncbi_required_collection_date
+  required_when_processed_A:
+    function: identity
+    inputs:
+      input: required_when_processed_A
+    required_when:
+      - processed.A
+  required_when_input_A:
+    function: identity
+    inputs:
+      input: required_when_input_A
+    required_when:
+      - A
   A:
     args:
       type: date
     function: parse_and_assert_past_date
     inputs:
       date: A
+  required_when_raw_reads:
+    function: identity
+    inputs:
+      input: required_when_raw_reads
+    required_when:
+      - files.raw_reads
+  multi_dep:
+    function: identity
+    inputs:
+      input: multi_dep
+    required_when:
+      - files.raw_reads
+      - processed.A

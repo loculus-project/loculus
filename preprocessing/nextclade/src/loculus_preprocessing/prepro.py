@@ -17,8 +17,9 @@ from .backend import (
 )
 from .config import (
     ASSIGNED_REFERENCE_PREFIX,
-    METADATA_DEPENDENCY_PREFIX,
+    FILES_PREFIX,
     NEXTCLADE_PREFIX,
+    PROCESSED_PREFIX,
     AlignmentRequirement,
     Config,
     ProcessingSpec,
@@ -325,7 +326,7 @@ def get_sequence_length(
     return len(sequence) if sequence else 0
 
 
-def get_output_metadata(
+def get_output_metadata(  # noqa: C901, PLR0912, PLR0915
     accession_version: AccessionVersion,
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
     config: Config,
@@ -371,8 +372,8 @@ def get_output_metadata(
 
         for arg_name, input_path in spec.inputs.items():
             get_from_processed = False
-            if input_path.startswith(METADATA_DEPENDENCY_PREFIX):
-                resolved_path = input_path.replace(METADATA_DEPENDENCY_PREFIX, "", 1)
+            if input_path.startswith(PROCESSED_PREFIX):
+                resolved_path = input_path.removeprefix(PROCESSED_PREFIX)
                 get_from_processed = True
             else:
                 resolved_path = input_path
@@ -419,28 +420,84 @@ def get_output_metadata(
         output_metadata[output_field] = processing_result.datum
         errors.extend(processing_result.errors)
         warnings.extend(processing_result.warnings)
+
         if (
-            null_per_backend(processing_result.datum)
-            and spec.required
-            and group_id != config.insdc_ingest_group_id
+            not null_per_backend(processing_result.datum)
+            or group_id == config.insdc_ingest_group_id
         ):
-            message = f"Metadata field `{output_field}` is required."
-            user_inputs = [field for field in input_fields if config.is_user_input(field)]
-            if any(field != output_field for field in user_inputs):
-                message += (
-                    f" Please provide input metadata field(s): "
-                    f"{', '.join(f'`{field}`' for field in user_inputs)}"
-                )
-            errors.append(
-                ProcessingAnnotation.from_fields(
-                    spec.inputs.values(),
-                    [output_field],
-                    AnnotationSourceType.METADATA,
-                    message=message,
-                )
+            # skip requirement checks when the field has a value, or for INSDC ingested data.
+            continue
+
+        requirement_errors: list[str] = []
+        if spec.required:
+            requirement_errors.append(
+                build_missing_required_msg(output_field, input_fields, config)
             )
+
+        for condition in spec.required_when:
+            if (
+                required_when_error := check_required_when_condition(
+                    condition, output_field, unprocessed, output_metadata
+                )
+            ) is not None:
+                requirement_errors.append(required_when_error)
+
+        errors.extend(
+            ProcessingAnnotation.from_fields(
+                spec.inputs.values(),
+                [output_field],
+                AnnotationSourceType.METADATA,
+                message=msg,
+            )
+            for msg in requirement_errors
+        )
+
     logger.debug(f"Processed {accession_version}: {output_metadata}")
     return output_metadata, errors, warnings
+
+
+def build_missing_required_msg(output_field: str, input_fields: list[str], config: Config):
+    message = f"Metadata field `{output_field}` is required."
+    user_inputs = [field for field in input_fields if config.is_user_input(field)]
+    if any(field != output_field for field in user_inputs):
+        message += (
+            f" Please provide input metadata field(s): "
+            f"{', '.join(f'`{field}`' for field in user_inputs)}"
+        )
+    return message
+
+
+def check_required_when_condition(
+    condition: str,
+    output_field: str,
+    unprocessed: UnprocessedData | UnprocessedAfterNextclade,
+    output_metadata: ProcessedMetadata,
+) -> str | None:
+    input_metadata = (
+        unprocessed.inputMetadata
+        if isinstance(unprocessed, UnprocessedAfterNextclade)
+        else unprocessed.metadata
+    )
+    error_message = None
+    if condition.startswith(FILES_PREFIX):
+        file_category = condition.removeprefix(FILES_PREFIX)
+        if unprocessed.files and unprocessed.files.get(FileCategory(file_category)):
+            error_message = (
+                f"Metadata field `{output_field}` is required when "
+                f"`{file_category}` files are provided."
+            )
+    elif condition.startswith(PROCESSED_PREFIX):
+        field_name = condition.removeprefix(PROCESSED_PREFIX)
+        if not null_per_backend(output_metadata.get(field_name)):
+            error_message = (
+                f"Metadata field `{output_field}` is required when `{field_name}` is provided."
+            )
+    elif not null_per_backend(input_metadata.get(condition)):
+        error_message = (
+            f"Metadata field `{output_field}` is required when `{condition}` is provided."
+        )
+
+    return error_message
 
 
 def alignment_errors_warnings(
