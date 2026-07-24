@@ -385,7 +385,7 @@ def get_output_metadata(  # noqa: PLR0914
         accession_version=accession_version,
         is_insdc_ingest_group=config.insdc_ingest_group_id == group_id,
         submitted_at=submitted_at,
-        taxonomy_service=TaxonomyService(config.taxonomy_service_url),
+        taxonomy_service=config.taxonomy_service,
     )
 
     for output_field in config.processing_order:

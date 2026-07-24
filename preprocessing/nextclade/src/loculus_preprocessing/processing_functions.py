@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 options_cache: dict[str, dict[str, str]] = {}
 
 
-@dataclass
+@dataclass(frozen=True)
 class ProcessingContext:
     """Runtime context that is the same for every processing function call for a given
     accession, as opposed to `FunctionArgs` which holds the literal, per-function arguments
