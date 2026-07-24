@@ -44,12 +44,47 @@ jobs:
           host_bucket = %(bucket)s.hel1.your-objectstorage.com
           verbosity = WARNING
           EOF
-      - name: Upload to Object Storage
+      - name: Upload dataset to Object Storage
         shell: bash -l {0}
         run: |
           for file in ${{ inputs.taxon_id }}.zip ${{ inputs.taxon_id }}.tar.zst ; do
             s3cmd put "${file}" s3://loculus-public/mirror/"${file}"
           done
+      - name: Enrich mirrored accessions from GenBank
+        env:
+          ENTREZ_API_KEY: ${{ secrets.NCBI_API_KEY }}
+          ENTREZ_EMAIL: ${{ vars.ENTREZ_EMAIL }}
+        shell: bash -l {0}
+        run: |
+          set -Eeuo pipefail
+
+          if [[ -z "${ENTREZ_EMAIL}" ]]; then
+            echo "Repository variable ENTREZ_EMAIL must be configured for Entrez enrichment." >&2
+            exit 1
+          fi
+
+          taxon_id="${{ inputs.taxon_id }}"
+          previous="${taxon_id}.entrez.previous.jsonl"
+          enriched="${taxon_id}.entrez.jsonl"
+
+          args=(
+            "${taxon_id}.zip"
+            --email "${ENTREZ_EMAIL}"
+            --output "${enriched}"
+          )
+          if s3cmd info "s3://loculus-public/mirror/${enriched}" >/dev/null 2>&1; then
+            s3cmd get "s3://loculus-public/mirror/${enriched}" "${previous}"
+            args+=(--previous-enrichment "${previous}")
+          fi
+          if [[ -n "${ENTREZ_API_KEY}" ]]; then
+            args+=(--api-key "${ENTREZ_API_KEY}")
+          fi
+          python mirroring/enrich_genbank.py "${args[@]}"
+      - name: Upload enrichment to Object Storage
+        shell: bash -l {0}
+        run: |
+          file=${{ inputs.taxon_id }}.entrez.jsonl
+          s3cmd put "${file}" s3://loculus-public/mirror/"${file}"
   notify_on_failure:
     needs: download-and-upload
     runs-on: ubuntu-latest
