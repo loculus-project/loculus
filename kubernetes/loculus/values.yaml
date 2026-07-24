@@ -83,6 +83,10 @@ lineageSystemDefinitions:
     4: https://raw.githubusercontent.com/loculus-project/loculus/fe3b2974071acc9a25856d650350f8a952040a7c/preprocessing/dummy/lineage-alternative.yaml
   cchfS:
     1: https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-24--07-29-03Z/lineages.yaml
+taxonomyService:
+  dbVersion: "ncbi_taxonomy_2026-05-01"
+  taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
+  taxonomy_service_url: &taxonomy_service_url http://loculus-taxonomy-service:5000
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     submissionDataTypes: &defaultSubmissionDataTypes
@@ -1657,7 +1661,7 @@ defaultOrganisms:
               human_readable_pattern: "<any>/<any>/<identifier>/<date>"
         - <<: *hostTaxonIdConfig
           required: true
-          hierarchicalFilter: &taxonomy_service_url http://loculus-taxonomy-service:5000
+          hierarchicalFilter: *taxonomy_service_url
           hierarchicalSearchLabel: "include subtaxa"
           initiallyVisible: true
         - name: lineage
@@ -2698,10 +2702,6 @@ enaDeposition:
   enaUniqueSuffix: Loculus
   enaIsBroker: False
   enaSuppressedListTestUrl: "https://loculus-project.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt"
-taxonomyService:
-  dbVersion: "ncbi_taxonomy_2026-05-01"
-  taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
-  taxonomy_service_url: *taxonomy_service_url
 subdomainSeparator: "-"
 replicas:
   website: 1
