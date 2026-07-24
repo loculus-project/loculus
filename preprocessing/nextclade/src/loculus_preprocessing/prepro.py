@@ -5,8 +5,6 @@ from collections.abc import Sequence
 from tempfile import TemporaryDirectory
 from typing import Any
 
-from loculus_preprocessing.external_services import FileProcessingService
-
 from .backend import (
     download_diamond_db,
     download_minimizer,
