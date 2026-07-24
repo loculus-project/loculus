@@ -53,11 +53,9 @@ const defaultProps = {
 const fileMappingOf = (files: { fileId: string; name: string }[]) =>
     new Map([['extraFiles', new Map(files.map((f) => [f.name, { name: f.name, path: f.name, fileId: f.fileId }]))]]);
 
-const submissionId = 'SUBMISSION_ID_123';
 const defaultPropsWithFiles = {
     ...defaultProps,
     inputMode: 'form' as const,
-    formSubmissionId: submissionId,
     fileMapping: fileMappingOf([
         { fileId: 'file-1', name: 'file-a.txt' },
         { fileId: 'file-2', name: 'file-b.txt' },

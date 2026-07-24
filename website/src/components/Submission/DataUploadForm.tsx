@@ -363,7 +363,6 @@ export const ExtraFilesUpload = ({
     fileMapping,
     setFileMapping,
     fileLinkage,
-    formSubmissionId,
     onError,
 }: {
     accessToken: string;
@@ -374,7 +373,6 @@ export const ExtraFilesUpload = ({
     fileMapping: FileMapping | undefined;
     setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
     fileLinkage?: FileLinkage;
-    formSubmissionId?: string;
     onError: (message: string) => void;
 }) => {
     return (
@@ -399,7 +397,6 @@ export const ExtraFilesUpload = ({
                             onError={onError}
                             fileMapping={fileMapping}
                             setFileMapping={setFileMapping}
-                            formSubmissionId={formSubmissionId}
                         />
                         {inputMode === 'bulk' && (
                             <FileLinkageStatus linkageDetails={fileLinkage?.details.get(fileCategory.name)} />

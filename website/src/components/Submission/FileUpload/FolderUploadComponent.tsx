@@ -92,9 +92,6 @@ type FolderUploadComponentProps = {
     groupId: number;
     fileMapping: FileMapping | undefined;
     setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
-    // Passed when the submissionId is known (e.g. editing/revising an entry) in form mode,
-    // where it is used instead of the dummySubmissionId placeholder.
-    formSubmissionId?: string;
     onError: (message: string) => void;
 };
 
