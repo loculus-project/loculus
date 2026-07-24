@@ -84,7 +84,7 @@ lineageSystemDefinitions:
   cchfS:
     1: https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-24--07-29-03Z/lineages.yaml
 taxonomyService:
-  dbVersion: "ncbi_taxonomy_2026-05-01"
+  dbVersion: "ncbi_taxonomy_2026-06-01"
   taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
   taxonomy_service_url: &taxonomy_service_url http://loculus-taxonomy-service:5000
 defaultOrganismConfig: &defaultOrganismConfig
