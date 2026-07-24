@@ -1461,7 +1461,7 @@ def test_call_function_converts_raw_errors_to_annotations() -> None:
         "is_insdc_ingest_group": False,
     }
 
-    result = ProcessingFunctions(config=Config()).call_function(
+    result = ProcessingFunctions.call_function(
         "process_options",
         args=args,
         input_data={"input": "NotAnOption"},

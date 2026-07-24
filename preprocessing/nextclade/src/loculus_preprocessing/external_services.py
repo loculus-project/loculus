@@ -1,3 +1,4 @@
+import logging
 import urllib.parse
 from collections import OrderedDict
 from dataclasses import asdict
@@ -16,6 +17,8 @@ from loculus_preprocessing.datatypes import (
     _internal_error_message,
     raw_internal_error,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class RequestCache:
@@ -97,58 +100,66 @@ class TaxonomyService:
             url = f"{self.taxonomy_service_url}/taxa?{query}"
         try:
             response = taxonomy_cache.get_or_fetch(url)
-            response.raise_for_status()
             body = response.json()
-            if isinstance(body, list):
-                # when querying by scientific name, multiple taxa may be returned: select the most generic one
-                taxon = min(body, key=lambda x: x.get("depth", float("inf")))
-            else:
-                taxon = body
-
-            tax_id = taxon.get("tax_id")
-            if tax_id is None:
-                message = (
-                    f"Host validation for '{unvalidated_host}' failed with code "
-                    f"{response.status_code}: {taxon.get('detail', '')}"
-                )
-                return RawProcessingResult(
-                    datum=None,
-                    warnings=[message] if error_if_failed else [],
-                    errors=[message] if not error_if_failed else [],
-                )
-            return RawProcessingResult(
-                datum=str(tax_id),
-            )
         except requests.exceptions.RequestException as e:
             return taxonomy_network_error(
                 subject=f"taxon ID {unvalidated_host}",
                 action="fetching taxon info",
                 e=e,
             )
+        if response.status_code != requests.codes.ok:
+            message = f"Host validation for '{unvalidated_host}' failed."
+            details = f"with code {response.status_code}: {body.get('detail', '')}"
+            logger.error(message + details)
+            return RawProcessingResult(
+                datum=None,
+                warnings=[message] if not error_if_failed else [],
+                errors=[message] if error_if_failed else [],
+            )
+        if isinstance(body, list):
+            # when querying by scientific name, multiple taxa may be returned: select the most generic one
+            taxon = min(body, key=lambda x: x.get("depth", float("inf")))
+        else:
+            taxon = body
 
-    def get_scientific_name(self, tax_id: str) -> RawProcessingResult:
+        tax_id = taxon.get("tax_id")
+        if tax_id is None:
+            message = f"Host validation for '{unvalidated_host}' was successful but response json 'tax_id' was missing."
+            return raw_internal_error(message)
+        return RawProcessingResult(
+            datum=str(tax_id),
+        )
+
+    def get_scientific_name(self, tax_id: str, error_if_failed: bool) -> RawProcessingResult:
         if not self.taxonomy_service_url:
             return missing_taxonomy_service_error()
 
         url = f"{self.taxonomy_service_url}/taxa/{tax_id}"
         try:
             response = taxonomy_cache.get_or_fetch(url)
-            response.raise_for_status()
             body = response.json()
-            scientific_name = body.get("scientific_name")
-            if scientific_name is None:
-                return raw_internal_error(
-                    f"'{tax_id}' is a valid taxon ID but response json had no 'scientific_name'."
-                )
-            return RawProcessingResult(
-                datum=scientific_name,
-            )
         except requests.exceptions.RequestException as e:
             return taxonomy_network_error(
                 subject=f"taxon ID {tax_id}",
                 action="fetching taxon scientific name",
                 e=e,
             )
+        if response.status_code != requests.codes.ok:
+            message = f"Could not map '{tax_id}' to scientific name."
+            details = f"Code {response.status_code}: {body.get('detail', '')}"
+            logger.error(message + details)
+            return RawProcessingResult(
+                datum=None,
+                warnings=[message] if not error_if_failed else [],
+                errors=[message] if error_if_failed else [],
+            )
+
+        scientific_name = body.get("scientific_name")
+        if scientific_name is None:
+            message = f"'{tax_id}' is a valid taxon ID but response json had no 'scientific_name'."
+            return raw_internal_error(message)
+
+        return RawProcessingResult(datum=scientific_name)
 
     def get_common_name(self, tax_id: str) -> RawProcessingResult:
         if not self.taxonomy_service_url:
@@ -157,22 +168,27 @@ class TaxonomyService:
         url = f"{self.taxonomy_service_url}/taxa/{tax_id}?find_common_name=true"
         try:
             response = taxonomy_cache.get_or_fetch(url)
-            response.raise_for_status()
             body = response.json()
-            common_name = body.get("common_name")
-            if common_name is None:
-                return raw_internal_error(
-                    f"'{tax_id}' is a valid taxon ID but response json had no 'common_name'."
-                )
-            return RawProcessingResult(
-                datum=common_name,
-            )
         except requests.exceptions.RequestException as e:
             return taxonomy_network_error(
                 subject=f"taxon ID {tax_id}",
                 action="fetching taxon common name",
                 e=e,
             )
+        if response.status_code != requests.codes.ok:
+            message = f"Could not map '{tax_id}' to common name."
+            details = f"Code {response.status_code}: {body.get('detail', '')}"
+            logger.error(message + details)
+            return RawProcessingResult(
+                warnings=[message],
+            )
+
+        common_name = body.get("common_name")
+        if common_name is None:
+            message = f"Taxonomy service indicated common name was found for hostTaxonId '{tax_id}', but failed to return it."
+            return raw_internal_error(message)
+
+        return RawProcessingResult(datum=common_name)
 
 
 def file_processing_service_error(file_names: str, message: str) -> ProcessingAnnotation:

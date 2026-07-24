@@ -263,9 +263,10 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     args["is_insdc_ingest_group"] = config.insdc_ingest_group_id == group_id
     args["submittedAt"] = submitted_at
     args["ACCESSION_VERSION"] = accession_version
+    args["taxonomy_service"] = config.taxonomy_service  # type: ignore
 
     try:
-        processing_result = ProcessingFunctions(config=config).call_function(
+        processing_result = ProcessingFunctions.call_function(
             spec.function,
             args,
             input_data,
@@ -537,10 +538,7 @@ def process_single(
         accession_version, unprocessed, config
     )
     if unprocessed.files and any(unprocessed.files.values()):
-        file_processing_service = FileProcessingService(
-            file_processing_service_url=config.file_processing_service_url
-        )
-        file_errors, file_warnings = file_processing_service.process_files(unprocessed.files)
+        file_errors, file_warnings = config.file_processing_service.process_files(unprocessed.files)
     else:
         file_errors, file_warnings = [], []
 
@@ -598,10 +596,7 @@ def process_single_unaligned(
     )
 
     if unprocessed.files and any(unprocessed.files.values()):
-        file_processing_service = FileProcessingService(
-            file_processing_service_url=config.file_processing_service_url
-        )
-        file_errors, file_warnings = file_processing_service.process_files(unprocessed.files)
+        file_errors, file_warnings = config.file_processing_service.process_files(unprocessed.files)
     else:
         file_errors, file_warnings = [], []
 

@@ -247,26 +247,22 @@ def derive_date_range_string(lower: datetime, upper: datetime) -> str:
 
 
 class ProcessingFunctions:
-    taxonomy_service: TaxonomyService
-
-    def __init__(self, config):
-        self.taxonomy_service_class = TaxonomyService(config.taxonomy_service_url)
-
+    @classmethod
     def call_function(
-        self,
+        cls,
         function_name: str,
         args: FunctionArgs,
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
     ) -> ProcessingResult:
-        if not hasattr(self, function_name):
+        if not hasattr(cls, function_name):
             msg = (
                 f"CRITICAL: No processing function matches: {function_name}."
                 "This is a configuration error."
             )
             raise ValueError(msg)
-        func = getattr(self, function_name)
+        func = getattr(cls, function_name)
         try:
             result = func(input_data, output_field, input_fields=input_fields, args=args)
         except Exception as e:
@@ -1004,15 +1000,16 @@ class ProcessingFunctions:
         try:
             for i in range(1, 9):
                 segment = f"seg{i}"
-                extracted_lineages[segment] = ProcessingFunctions.extract_regex(  # type: ignore
-                    {"regex_field": references.get(segment, "")},
-                    "output_field",
-                    ["segment_name"],
+                extracted_lineages[segment] = ProcessingFunctions.call_function(  # type: ignore
+                    "extract_regex",
                     {
                         "pattern": args["pattern"],
                         "uppercase": args["uppercase"],
                         "capture_group": args["capture_group"],
                     },
+                    {"regex_field": references.get(segment, "")},
+                    "output_field",
+                    ["segment_name"],
                 ).datum
             logger.debug(f"Extracted lineages: {extracted_lineages} from references: {references}")
             if not ha_subtype or not na_subtype:
@@ -1154,8 +1151,8 @@ class ProcessingFunctions:
             errors=concat_result.errors,
         )
 
+    @staticmethod
     def resolve_host_taxon_id(
-        self,
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
@@ -1175,12 +1172,13 @@ class ProcessingFunctions:
         if not unvalidated_host:
             return RawProcessingResult()
 
-        return self.taxonomy_service_class.get_tax_id(
-            unvalidated_host, bool(args["is_insdc_ingest_group"])
+        taxonomy_service: TaxonomyService = args["taxonomy_service"]  # type: ignore
+        return taxonomy_service.get_tax_id(
+            unvalidated_host, not bool(args["is_insdc_ingest_group"])
         )
 
+    @staticmethod
     def scientific_name_from_id(
-        self,
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
@@ -1190,10 +1188,11 @@ class ProcessingFunctions:
         if not tax_id:
             return RawProcessingResult()
 
-        return self.taxonomy_service_class.get_scientific_name(tax_id)
+        taxonomy_service: TaxonomyService = args["taxonomy_service"]  # type: ignore
+        return taxonomy_service.get_scientific_name(tax_id, not bool(args["is_insdc_ingest_group"]))
 
+    @staticmethod
     def common_name_from_id(
-        self,
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
@@ -1203,7 +1202,8 @@ class ProcessingFunctions:
         if not tax_id:
             return RawProcessingResult()
 
-        return self.taxonomy_service_class.get_common_name(tax_id)
+        taxonomy_service: TaxonomyService = args["taxonomy_service"]  # type: ignore
+        return taxonomy_service.get_common_name(tax_id)
 
 
 def single_metadata_annotation(
