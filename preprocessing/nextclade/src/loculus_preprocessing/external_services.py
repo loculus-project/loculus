@@ -118,7 +118,6 @@ class TaxonomyService:
         tax_id = taxon.get("tax_id")
         if tax_id is None:
             message = f"Host validation for '{unvalidated_host}' was successful but response json 'tax_id' was missing."
-            logger.error(message)
             return raw_internal_error(message)
         return RawProcessingResult(
             datum=str(tax_id),
@@ -151,7 +150,6 @@ class TaxonomyService:
         scientific_name = body.get("scientific_name")
         if scientific_name is None:
             message = f"'{tax_id}' is a valid taxon ID but response json had no 'scientific_name'."
-            logger.error(message)
             return raw_internal_error(message)
 
         return RawProcessingResult(datum=scientific_name)
@@ -181,7 +179,6 @@ class TaxonomyService:
         common_name = body.get("common_name")
         if common_name is None:
             message = f"Taxonomy service indicated common name was found for hostTaxonId '{tax_id}', but failed to return it."
-            logger.error(message)
             return raw_internal_error(message)
 
         return RawProcessingResult(datum=common_name)
