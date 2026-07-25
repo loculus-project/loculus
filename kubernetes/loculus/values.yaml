@@ -88,6 +88,11 @@ defaultOrganismConfig: &defaultOrganismConfig
     submissionDataTypes: &defaultSubmissionDataTypes
       consensusSequences: true
       maxSequencesPerEntry: 1
+      files:
+        enabled: true
+        categories:
+          - name: raw_reads
+            displayName: Raw reads
     loadSequencesAutomatically: true
     earliestReleaseDate:
       enabled: true
@@ -97,6 +102,8 @@ defaultOrganismConfig: &defaultOrganismConfig
     files:
       - name: annotations
         displayName: Annotations
+      - name: raw_reads
+        displayName: Raw reads
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)
