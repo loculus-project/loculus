@@ -62,6 +62,7 @@ from ena_deposition.submission_db_helper import (
     add_to_assembly_table,
     add_to_project_table,
     add_to_sample_table,
+    add_to_submission_table,
     db_init,
     delete_records_in_db,
     find_conditions_in_db,
@@ -678,8 +679,20 @@ class TestFirstPublicUpdate(TestSubmission):
         entry_data = {**test_data["base_entry"], "result": test_data["invalid_result"]}
         entry = config.entry_class(**entry_data)
 
-        # Insert into the database
+        # sample_table/assembly_table rows require a matching submission_table row (FK constraint)
         add_function = test_data["add_function"]
+        if add_function is not add_to_project_table:
+            add_to_submission_table(
+                self.db_engine,
+                SubmissionTableEntry(
+                    accession=entry_data["accession"],
+                    version=entry_data["version"],
+                    organism="test_organism",
+                    group_id=1,
+                ),
+            )
+
+        # Insert into the database
         entity_id = add_function(self.db_engine, entry)
         if entity_id is None:
             msg = f"Failed to add {entity_type.value} entry to the database."
