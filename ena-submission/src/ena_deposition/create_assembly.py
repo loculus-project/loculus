@@ -521,7 +521,7 @@ def assembly_table_create(db_engine: Engine, config: Config):
             ProjectTableEntry.result,
         )
         .join(SampleTableEntry.submission)
-        .join(ProjectTableEntry.submission)
+        .join(SubmissionTableEntry.project)
         .join(AssemblyTableEntry.submission)
         .where(AssemblyTableEntry.status == Status.READY)
     )
