@@ -269,7 +269,7 @@ class SampleTableEntry(Base):
 
     # Same (accession, version) as the submission_table row it was derived from.
     submission: Mapped["SubmissionTableEntry"] = relationship(
-        back_populates="sample", default=None, init=False, repr=False
+        back_populates="sample", init=False, repr=False
     )
 
     @property
@@ -310,7 +310,7 @@ class AssemblyTableEntry(Base):
 
     # Same (accession, version) as the submission_table row it was derived from.
     submission: Mapped["SubmissionTableEntry"] = relationship(
-        back_populates="assembly", default=None, init=False, repr=False
+        back_populates="assembly", init=False, repr=False
     )
 
     @property
