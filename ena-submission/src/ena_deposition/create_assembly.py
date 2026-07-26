@@ -358,7 +358,7 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
             ProjectTableEntry.result,
         )
         .join(SampleTableEntry.submission)
-        .join(ProjectTableEntry.submission)
+        .join(SubmissionTableEntry.project)
         .where(
             SampleTableEntry.accession == submission_row.accession,
             SampleTableEntry.version == version_to_revise,
