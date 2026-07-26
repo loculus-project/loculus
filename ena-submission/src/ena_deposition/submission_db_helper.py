@@ -595,42 +595,26 @@ def add_to_submission_table(engine: Engine, entry: SubmissionTableEntry) -> bool
         return False
 
 
-def is_latest_revision(engine: Engine, seq_key: AccessionVersion) -> bool:
-    """Return True if *seq_key* is the latest of multiple versions for its accession."""
-    if seq_key.version == 1:
-        return False
+@dataclass(frozen=True)
+class RevisionStatus:
+    is_revision: bool
+    is_latest_revision: bool
+    previous_version: int | None
+
+
+def get_revision_status(engine: Engine, seq_key: AccessionVersion) -> RevisionStatus:
+    """Return a RevisionStatus object for *seq_key*."""
     rows = find_conditions_in_db(
         engine,
         SubmissionTableEntry,
         {"accession": seq_key.accession},
     )
     all_versions = sorted(row.version for row in rows)
-    return len(all_versions) > 1 and seq_key.version == all_versions[-1]
-
-
-def is_revision(engine: Engine, seq_key: AccessionVersion) -> bool:
-    """Return True if *seq_key* is a revision of an accession submitted to ENA.
-    Note: a sequence with version > 1 is not necessarily a revision as the first version
-    might not have been submitted to ENA yet."""
-    if seq_key.version == 1:
-        return False
-    rows = find_conditions_in_db(
-        engine,
-        SubmissionTableEntry,
-        {"accession": seq_key.accession},
+    is_rev = len(all_versions) > 1
+    is_latest_rev = len(all_versions) > 1 and seq_key.version == all_versions[-1]
+    prev_version = all_versions[-2] if len(all_versions) > 1 else None
+    return RevisionStatus(
+        is_revision=is_rev,
+        is_latest_revision=is_latest_rev,
+        previous_version=prev_version,
     )
-    all_versions = sorted(row.version for row in rows)
-    return len(all_versions) > 1
-
-
-def previous_version(engine: Engine, seq_key: AccessionVersion) -> int | None:
-    """Return the previous version number for *seq_key*, or None if not a revision."""
-    if not is_revision(engine, seq_key):
-        return None
-    rows = find_conditions_in_db(
-        engine,
-        SubmissionTableEntry,
-        {"accession": seq_key.accession},
-    )
-    all_versions = sorted(row.version for row in rows)
-    return all_versions[-2]

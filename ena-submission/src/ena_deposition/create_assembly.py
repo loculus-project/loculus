@@ -48,9 +48,7 @@ from .submission_db_helper import (
     find_conditions_in_db,
     find_errors_or_stuck_in_db,
     find_waiting_in_db,
-    is_latest_revision,
-    is_revision,
-    previous_version,
+    get_revision_status,
     update_db_where_conditions,
     update_with_retry,
 )
@@ -348,9 +346,10 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
        requires manual revision
     """
     seq_key = submission_row.pkey
-    if not is_latest_revision(db_engine, seq_key):
+    revision_status = get_revision_status(db_engine, seq_key)
+    if not revision_status.is_latest_revision:
         return False
-    version_to_revise = previous_version(db_engine, seq_key)
+    version_to_revise = revision_status.previous_version
     stmt = (
         select(
             SubmissionTableEntry,
@@ -414,7 +413,8 @@ def is_flatfile_data_changed(db_engine: Engine, submission_row: SubmissionTableE
     Check if change in sequence or flatfile metadata has occurred since last version.
     """
     seq_key = submission_row.pkey
-    version_to_revise = previous_version(db_engine, seq_key)
+    revision_status = get_revision_status(db_engine, seq_key)
+    version_to_revise = revision_status.previous_version
     last_version_rows = find_conditions_in_db(
         db_engine,
         SubmissionTableEntry,
@@ -457,7 +457,8 @@ def is_flatfile_data_changed(db_engine: Engine, submission_row: SubmissionTableE
 
 
 def update_assembly_results_with_latest_version(db_engine: Engine, seq_key: AccessionVersion):
-    version_to_revise = previous_version(db_engine, seq_key)
+    revision_status = get_revision_status(db_engine, seq_key)
+    version_to_revise = revision_status.previous_version
     last_version_rows = find_conditions_in_db(
         db_engine,
         AssemblyTableEntry,
@@ -474,16 +475,24 @@ def update_assembly_results_with_latest_version(db_engine: Engine, seq_key: Acce
         f"{seq_key.version} using results from version {version_to_revise} as there was no"
         "change in flatfile data."
     )
-    update_with_retry(
-        db_engine=db_engine,
-        conditions=asdict(seq_key),
-        update_values={
-            "status": Status.SUBMITTED,
-            "result": last_version_rows[0].result,
-        },
-        model_class=AssemblyTableEntry,
-        reraise=False,
-    )
+    with Session(db_engine) as session:
+        try:
+            submission_ = session.get(
+                SubmissionTableEntry,
+                asdict(seq_key),
+            )
+
+            submission_.assembly.status = Status.SUBMITTED
+            submission_.assembly.finished_at = datetime.now(tz=pytz.utc)
+            submission_.assembly.result = last_version_rows[0].result
+            submission_.status_all = StatusAll.SUBMITTED_ALL
+
+            session.commit()
+        except Exception:
+            logger.exception(
+                f"Error while updating submission_table for {seq_key} after successful assembly creation"  # noqa: E501
+            )
+            session.rollback()
 
 
 def get_project_and_sample_results(
@@ -547,7 +556,8 @@ def assembly_table_create(db_engine: Engine, config: Config):
             )
             continue
 
-        if is_revision(db_engine, seq_key):
+        revision_status = get_revision_status(db_engine, seq_key)
+        if revision_status.is_revision:
             logger.debug(f"Entry {seq_key.accession} is a revision, checking if it can be revised")
             if not can_be_revised(config, db_engine, submission):
                 continue

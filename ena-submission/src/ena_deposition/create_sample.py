@@ -36,8 +36,7 @@ from .submission_db_helper import (
     SubmissionTableEntry,
     db_init,
     find_errors_or_stuck_in_db,
-    is_latest_revision,
-    is_revision,
+    get_revision_status,
     update_db_where_conditions,
     update_with_retry,
 )
@@ -183,16 +182,14 @@ def update_with_existing_biosample(db_engine: Engine, row: SubmissionTableEntry,
         return
 
     logger.info("Updating entry with biosampleAccession to state SUBMITTED")
-    update_db_where_conditions(
+    update_successful_submission_status(
         db_engine,
-        model_class=SampleTableEntry,
-        conditions=seq_key,
-        update_values={
-            "accession": row.accession,
-            "version": row.version,
-            "result": {"ena_sample_accession": biosample, "biosample_accession": biosample},
-            "status": Status.SUBMITTED,
-        },
+        seq_key,
+        CreationResult(
+            errors=[],
+            warnings=[],
+            result={"ena_sample_accession": biosample, "biosample_accession": biosample},
+        ),
     )
 
 
@@ -237,6 +234,29 @@ def sync_state_with_submission_table(db_engine: Engine):
             raise
 
 
+def update_successful_submission_status(
+    db_engine: Engine, seq_key, sample_creation_results: CreationResult
+):
+    with Session(db_engine) as session:
+        try:
+            submission_ = session.get(
+                SubmissionTableEntry,
+                asdict(seq_key),
+            )
+
+            submission_.sample.status = Status.SUBMITTED
+            submission_.sample.finished_at = datetime.now(tz=pytz.utc)
+            submission_.sample.result = sample_creation_results.result
+            submission_.status_all = StatusAll.SUBMITTED_SAMPLE
+
+            session.commit()
+        except Exception:
+            logger.exception(
+                f"Error while updating submission_table for {seq_key} after successful sample creation"  # noqa: E501
+            )
+            session.rollback()
+
+
 def sample_table_create(db_engine: Engine, config: Config):
     """
     1. Find all entries in sample_table in state READY
@@ -261,8 +281,8 @@ def sample_table_create(db_engine: Engine, config: Config):
     logger.debug(f"Found {len(ready_to_submit_sample)} entries in sample_table in status READY")
     for sample, submission in ready_to_submit_sample:
         seq_key = sample.pkey
-        is_rev = is_revision(db_engine, seq_key)
-        if is_rev and not is_latest_revision(db_engine, seq_key):
+        revision_status = get_revision_status(db_engine, seq_key)
+        if revision_status.is_revision and not revision_status.is_latest_revision:
             logger.warning(f"Skipping submission for {seq_key} as it is not the latest version.")
             continue
 
@@ -292,30 +312,13 @@ def sample_table_create(db_engine: Engine, config: Config):
             continue
         logger.info(f"Starting sample creation for accession {sample.accession}")
         sample_creation_results: CreationResult = create_ena_sample(
-            config, sample_set, revision=is_rev
+            config, sample_set, revision=revision_status.is_revision
         )
         if sample_creation_results.result:
             logger.info(
                 f"Sample creation succeeded for {seq_key.accession} version {seq_key.version}"
             )
-            with Session(db_engine) as session:
-                try:
-                    submission_ = session.get(
-                        SubmissionTableEntry,
-                        asdict(seq_key),
-                    )
-
-                    submission_.sample.status = Status.SUBMITTED
-                    submission_.sample.finished_at = datetime.now(tz=pytz.utc)
-                    submission_.sample.result = sample_creation_results.result
-                    submission_.status_all = StatusAll.SUBMITTED_SAMPLE
-
-                    session.commit()
-                except Exception:
-                    logger.exception(
-                        f"Error while updating submission_table for {seq_key} after successful sample creation"  # noqa: E501
-                    )
-                    session.rollback()
+            update_successful_submission_status(db_engine, seq_key, sample_creation_results)
         else:
             logger.error(
                 f"Sample creation failed for {seq_key.accession} version {seq_key.version}"
