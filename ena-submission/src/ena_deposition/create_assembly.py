@@ -9,7 +9,8 @@ from datetime import datetime, timedelta
 from typing import Any, Literal, cast
 
 import pytz
-from sqlalchemy import Engine
+from sqlalchemy import Engine, select
+from sqlalchemy.orm import Session
 
 from ena_deposition import call_loculus
 
@@ -283,51 +284,11 @@ def submission_table_start(db_engine: Engine, config: Config) -> None:
         )
 
 
-def submission_table_update(db_engine: Engine) -> None:
-    """
-    1. Find all entries in submission_table in state SUBMITTING_ASSEMBLY
-    2. If (exists an entry in the assembly_table for (accession, version)):
-    a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_ALL
-    3. Else throw Error
-    """
-    conditions = {"status_all": StatusAll.SUBMITTING_ASSEMBLY}
-    submitting_assembly = find_conditions_in_db(
-        db_engine, SubmissionTableEntry, conditions=conditions
-    )
-    if len(submitting_assembly) > 0:
-        logger.debug(
-            f"Found {len(submitting_assembly)} entries in submission_table "
-            f"in status SUBMITTING_ASSEMBLY"
-        )
-    for row in submitting_assembly:
-        seq_key = asdict(row.pkey)
-
-        corresponding_assembly = find_conditions_in_db(
-            db_engine, AssemblyTableEntry, conditions=seq_key
-        )
-        if len(corresponding_assembly) == 1 and corresponding_assembly[0].status == str(
-            Status.SUBMITTED
-        ):
-            update_values = {"status_all": StatusAll.SUBMITTED_ALL}
-            update_db_where_conditions(
-                db_engine,
-                model_class=SubmissionTableEntry,
-                conditions=seq_key,
-                update_values=update_values,
-            )
-        if len(corresponding_assembly) == 0:
-            error_msg = (
-                "Entry in submission_table in status SUBMITTING_ASSEMBLY",
-                " with no corresponding assembly",
-            )
-            raise RuntimeError(error_msg)
-
-
 def update_assembly_error(
     db_engine: Engine,
     error: list[str],
     seq_key: dict[str, Any],
-    update_type: Literal["revision"] | Literal["creation"],
+    update_type: Literal["revision", "creation"],
 ) -> None:
     logger.error(
         f"Assembly {update_type} failed for accession {seq_key['accession']} "
@@ -401,23 +362,25 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
     if not is_latest_revision(db_engine, seq_key):
         return False
     version_to_revise = previous_version(db_engine, seq_key)
-    last_version_rows = find_conditions_in_db(
-        db_engine,
-        SubmissionTableEntry,
-        conditions={"accession": submission_row.accession, "version": version_to_revise},
+    stmt = (
+        select(
+            SubmissionTableEntry,
+            SampleTableEntry.result,
+            ProjectTableEntry.result,
+        )
+        .join(SampleTableEntry.submission)
+        .join(ProjectTableEntry.submission)
+        .where(
+            SampleTableEntry.accession == submission_row.accession,
+            SampleTableEntry.version == version_to_revise,
+        )
     )
-    if len(last_version_rows) == 0:
-        error_msg = f"Last version {version_to_revise} not found in submission_table"
-        raise RuntimeError(error_msg)
 
-    last_version_entry = last_version_rows[0]
+    with Session(db_engine) as session:
+        last_version_entry, previous_sample, previous_study = session.execute(stmt).all()
 
     previous_sample_accession, previous_study_accession = get_project_and_sample_results(
-        db_engine, last_version_entry
-    )
-    logger.debug(
-        f"Previous sample accession: {previous_sample_accession}, "
-        f"previous study accession: {previous_study_accession}"
+        previous_sample, previous_study, seq_key
     )
     if submission_row.seq_metadata.get("biosampleAccession"):
         new_sample_accession = submission_row.seq_metadata["biosampleAccession"]
@@ -535,36 +498,20 @@ def update_assembly_results_with_latest_version(db_engine: Engine, seq_key: Acce
 
 
 def get_project_and_sample_results(
-    db_engine: Engine, submission_row: SubmissionTableEntry
+    sample_result: dict[str, Any] | None,
+    project_result: dict[str, Any] | None,
+    seq_key: AccessionVersion,
 ) -> tuple[str, str]:
-    seq_key = {"accession": submission_row.accession, "version": submission_row.version}
+    sample_accession = sample_result.get("ena_sample_accession") if sample_result else None
+    study_accession = project_result.get("bioproject_accession") if project_result else None
 
-    sample_rows = find_conditions_in_db(db_engine, SampleTableEntry, conditions=seq_key)
-    if len(sample_rows) == 0:
-        error_msg = f"Entry {submission_row.accession} not found in sample_table"
-        raise RuntimeError(error_msg)
-
-    project_rows = find_conditions_in_db(
-        db_engine,
-        ProjectTableEntry,
-        conditions={"project_id": submission_row.project_id},
-    )
-    if len(project_rows) == 0:
-        error_msg = f"Entry {submission_row.accession} not found in project_table"
-        raise RuntimeError(error_msg)
-    sample_accession = (
-        sample_rows[0].result.get("ena_sample_accession") if sample_rows[0].result else None
-    )
-    study_accession = (
-        project_rows[0].result.get("bioproject_accession") if project_rows[0].result else None
-    )
     if not sample_accession or not study_accession:
         error_msg = (
-            f"Missing sample_accession or study_accession for accession {submission_row.accession} "
-            "cannot create manifest"
+            f"Missing sample_accession or study_accession for accession {seq_key.accession} "
+            "cannot create assembly manifest"
         )
         raise RuntimeError(error_msg)
-    return cast(str, sample_accession), cast(str, study_accession)
+    return sample_accession, study_accession
 
 
 def assembly_table_create(db_engine: Engine, config: Config):
@@ -572,39 +519,40 @@ def assembly_table_create(db_engine: Engine, config: Config):
     1. Find all entries in assembly_table in state READY
     2. Create temporary files: chromosome_list_file, embl_file, manifest_file
     3. Update assembly_table to state SUBMITTING (only proceed if update succeeds)
-    4. If (create_ena_assembly succeeds): update state to SUBMITTED with results
+    4. If (create_ena_assembly succeeds): update state to WAITING with results
     3. Else update state to HAS_ERRORS with error messages
 
     If config.test=True: use the test ENA webin-cli endpoint for submission.
     """
-    conditions = {"status": Status.READY}
-    ready_to_submit_assembly = find_conditions_in_db(
-        db_engine, AssemblyTableEntry, conditions=conditions
+    stmt = (
+        select(
+            AssemblyTableEntry,
+            SubmissionTableEntry,
+            SampleTableEntry.result,
+            ProjectTableEntry.result,
+        )
+        .join(SampleTableEntry.submission)
+        .join(ProjectTableEntry.submission)
+        .join(AssemblyTableEntry.submission)
+        .where(AssemblyTableEntry.status == Status.READY)
     )
-    if len(ready_to_submit_assembly) > 0:
-        logger.debug(
-            f"Found {len(ready_to_submit_assembly)} entries in assembly_table in status READY"
-        )
-    for row in ready_to_submit_assembly:
-        seq_key = row.pkey
-        submission_rows = find_conditions_in_db(
-            db_engine, SubmissionTableEntry, conditions=asdict(seq_key)
-        )
-        if len(submission_rows) == 0:
-            error_msg = f"Entry {row.accession} not found in submitting_table"
-            raise RuntimeError(error_msg)
-        submission_row = submission_rows[0]
-        center_name = submission_row.center_name
 
+    with Session(db_engine) as session:
+        ready_to_submit_assembly = session.execute(stmt).all()
+    logger.debug(f"Found {len(ready_to_submit_assembly)} entries in assembly_table in status READY")
+
+    for assembly, submission, sample_result, project_result in ready_to_submit_assembly:
+        seq_key = assembly.pkey
+        center_name = submission.center_name
         sample_accession, study_accession = get_project_and_sample_results(
-            db_engine, submission_row
+            sample_result, project_result, seq_key
         )
 
         if is_revision(db_engine, seq_key):
-            logger.debug(f"Entry {row.accession} is a revision, checking if it can be revised")
-            if not can_be_revised(config, db_engine, submission_row):
+            logger.debug(f"Entry {seq_key.accession} is a revision, checking if it can be revised")
+            if not can_be_revised(config, db_engine, submission):
                 continue
-            if not is_flatfile_data_changed(db_engine, submission_row):
+            if not is_flatfile_data_changed(db_engine, submission):
                 update_assembly_results_with_latest_version(db_engine, seq_key)
                 continue
 
@@ -613,11 +561,13 @@ def assembly_table_create(db_engine: Engine, config: Config):
                 config,
                 sample_accession,
                 study_accession,
-                submission_row,
+                submission,
             )
             manifest_file = create_manifest(manifest_object, is_broker=config.is_broker)
         except Exception as e:
-            logger.error(f"Manifest creation failed for accession {row.accession} with error {e}")
+            logger.error(
+                f"Manifest creation failed for accession {seq_key.accession} with error {e}"
+            )
             continue
 
         update_values: dict[str, Any] = {"status": Status.SUBMITTING}
@@ -634,8 +584,8 @@ def assembly_table_create(db_engine: Engine, config: Config):
                 "not starting submission."
             )
             continue
-        logger.info(f"Starting assembly creation for accession {row.accession}")
-        segment_order = get_segment_order(submission_row.unaligned_nucleotide_sequences)
+        logger.info(f"Starting assembly creation for accession {seq_key.accession}")
+        segment_order = get_segment_order(submission.unaligned_nucleotide_sequences)
 
         # Actual webin-cli command is run here
         assembly_creation_results: CreationResult = create_ena_assembly(
@@ -662,7 +612,7 @@ def assembly_table_create(db_engine: Engine, config: Config):
             update_assembly_error(
                 db_engine,
                 assembly_creation_results.errors,
-                seq_key=asdict(row.pkey),
+                seq_key=asdict(seq_key),
                 update_type="creation",
             )
 
@@ -720,27 +670,42 @@ def assembly_table_update(db_engine: Engine, config: Config, time_threshold: int
             if not (result_contains_gca_accession and result_contains_insdc_accession):
                 if row.result == new_result.result:
                     continue
-                status = Status.WAITING
+                update_db_where_conditions(
+                    db_engine,
+                    model_class=AssemblyTableEntry,
+                    conditions=asdict(seq_key),
+                    update_values={
+                        "result": new_result.result,
+                        "status": Status.WAITING,
+                        "finished_at": datetime.now(tz=pytz.utc),
+                    },
+                )
                 logger.info(
                     f"Assembly partially accessioned by ENA for {seq_key.accession} "
                     f"version {seq_key.version}"
                 )
             else:
-                status = Status.SUBMITTED
                 logger.info(
                     f"Assembly accessioned by ENA for {seq_key.accession} version {seq_key.version}"
                 )
-            update_with_retry(
-                db_engine=db_engine,
-                conditions=asdict(seq_key),
-                update_values={
-                    "status": status,
-                    "result": new_result.result,
-                    "finished_at": datetime.now(tz=pytz.utc),
-                },
-                model_class=AssemblyTableEntry,
-                reraise=False,
-            )
+                with Session(db_engine) as session:
+                    try:
+                        submission_ = session.get(
+                            SubmissionTableEntry,
+                            asdict(seq_key),
+                        )
+
+                        submission_.assembly.status = Status.SUBMITTED
+                        submission_.assembly.finished_at = datetime.now(tz=pytz.utc)
+                        submission_.assembly.result = new_result.result
+                        submission_.status_all = StatusAll.SUBMITTED_ALL
+
+                        session.commit()
+                    except Exception:
+                        logger.exception(
+                            f"Error while updating submission_table for {seq_key} after successful assembly creation"  # noqa: E501
+                        )
+                        session.rollback()
 
 
 def assembly_table_handle_errors(
@@ -821,7 +786,6 @@ def create_assembly(config: Config, stop_event: threading.Event):
             return
         logger.debug("Checking for assemblies to create")
         submission_table_start(db_engine, config)
-        submission_table_update(db_engine)
 
         assembly_table_create(db_engine, config)
         assembly_table_update(db_engine, config, time_threshold=config.min_between_ena_checks)

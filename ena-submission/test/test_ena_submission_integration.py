@@ -36,9 +36,6 @@ from ena_deposition.create_assembly import (
 from ena_deposition.create_assembly import (
     submission_table_start as create_assembly_submission_table_start,
 )
-from ena_deposition.create_assembly import (
-    submission_table_update as create_assembly_submission_table_update,
-)
 from ena_deposition.create_project import (
     project_table_create,
     project_table_handle_errors,
@@ -377,7 +374,6 @@ def _test_successful_assembly_submission(
     # So we can test the rest of the pipeline
     set_db_to_known_erz_accession(db_engine, sequences_to_upload, single_segment=single_segment)
     assembly_table_update(db_engine, config, time_threshold=0)
-    create_assembly_submission_table_update(db_engine)
     if single_segment:
         check_assembly_submission_with_nuc_without_gca(db_engine, sequences_to_upload)
     else:
@@ -392,7 +388,6 @@ def _test_successful_assembly_submission_no_wait(
 
     assert config.test, "Not submitting to dev - stopping"
     assembly_table_create(db_engine, config)
-    create_assembly_submission_table_update(db_engine)
     check_assembly_submission_submitted(db_engine, sequences_to_upload)
 
 
@@ -430,7 +425,6 @@ def _test_successful_sample_submission(
     check_sample_submission_started(db_engine, sequences_to_upload)
 
     sample_table_create(db_engine, config)
-    create_sample_sync_state_with_submission_table(db_engine)
     check_sample_submission_submitted(db_engine, sequences_to_upload)
 
 
@@ -1009,7 +1003,6 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         check_sample_submission_started(self.db_engine, sequences_to_upload)
         create_sample_sync_state_with_submission_table(self.db_engine)
         sample_table_create(self.db_engine, self.config)
-        create_sample_sync_state_with_submission_table(self.db_engine)
         check_sample_submission_submitted(self.db_engine, sequences_to_upload)
         _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
 
