@@ -366,7 +366,7 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
     )
 
     with Session(db_engine) as session:
-        last_version_entry, previous_sample, previous_study = session.execute(stmt).all()
+        last_version_entry, previous_sample, previous_study = session.execute(stmt).one()
 
     previous_sample_accession, previous_study_accession = get_project_and_sample_results(
         previous_sample, previous_study, seq_key
