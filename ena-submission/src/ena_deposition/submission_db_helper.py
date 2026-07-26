@@ -604,7 +604,7 @@ class RevisionStatus:
 
     is_revision: True if *seq_key* is a revision of an accession submitted to ENA.
     is_latest_revision: True if *seq_key* is the latest of multiple versions for its accession
-    previous_version: The version number of the previous version, or None if there is no previous version.
+    previous_version: The previous version number for *seq_key*, or None if not a revision
     """
 
     is_revision: bool
