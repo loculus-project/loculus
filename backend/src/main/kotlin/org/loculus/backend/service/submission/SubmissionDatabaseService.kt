@@ -87,6 +87,7 @@ import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GroupEntity
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
+import org.loculus.backend.service.notification.ReleaseNotificationDatabaseService
 import org.loculus.backend.service.submission.SequenceEntriesTable.accessionColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.groupIdColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.versionColumn
@@ -124,7 +125,10 @@ class SubmissionDatabaseService(
     private val processedDataPostprocessor: ProcessedDataPostprocessor,
     private val auditLogger: AuditLogger,
     private val dateProvider: DateProvider,
+    private val releaseNotificationDatabaseService: ReleaseNotificationDatabaseService,
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
+    @Value("\${${BackendSpringProperty.RELEASE_CONFIRMATION_EMAILS_ENABLED}}")
+    private val releaseConfirmationEmailsEnabled: Boolean,
 ) {
     private var lastPreprocessedDataUpdate: String? = null
 
@@ -706,6 +710,10 @@ class SubmissionDatabaseService(
                 it[releasedAtTimestampColumn] = now
                 it[approverColumn] = authenticatedUser.username
             }
+        }
+
+        if (releaseConfirmationEmailsEnabled) {
+            releaseNotificationDatabaseService.enqueueReleaseNotifications(accessionVersionsToUpdate)
         }
 
         val filesToPublish = this.selectFilesToPublishForAccessionVersions(accessionVersionsToUpdate)
