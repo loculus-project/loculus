@@ -44,7 +44,6 @@ from .submission_db_helper import (
     Status,
     StatusAll,
     SubmissionTableEntry,
-    add_to_assembly_table,
     db_init,
     find_conditions_in_db,
     find_errors_or_stuck_in_db,
