@@ -6,6 +6,8 @@ import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.springframework.stereotype.Service
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
@@ -218,9 +220,16 @@ class S3Service(private val s3Config: S3Config) {
         .serviceConfiguration(createServiceConfiguration())
         .build()
 
-    private fun createCredentialProvider(bucketConfig: S3BucketConfig) = StaticCredentialsProvider.create(
-        AwsBasicCredentials.create(bucketConfig.accessKey, bucketConfig.secretKey),
-    )
+    private fun createCredentialProvider(bucketConfig: S3BucketConfig): AwsCredentialsProvider {
+        val accessKey = bucketConfig.accessKey
+        val secretKey = bucketConfig.secretKey
+        if (accessKey != null && secretKey != null) {
+            return StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey))
+        }
+        // No static credentials configured: fall back to the AWS SDK's default credential chain,
+        // e.g. IAM role credentials from IRSA on EKS.
+        return DefaultCredentialsProvider.create()
+    }
 
     private fun createServiceConfiguration() = S3Configuration.builder()
         .pathStyleAccessEnabled(true)

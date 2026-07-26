@@ -104,13 +104,19 @@ class BackendSpringConfig {
         @Value("\${${BackendSpringProperty.S3_BUCKET_INTERNAL_ENDPOINT}:#{null}}") internalEndpoint: String? = null,
         @Value("\${${BackendSpringProperty.S3_BUCKET_REGION}}") region: String? = null,
         @Value("\${${BackendSpringProperty.S3_BUCKET_BUCKET}}") bucket: String? = null,
-        @Value("\${${BackendSpringProperty.S3_BUCKET_ACCESS_KEY}}") accessKey: String? = null,
-        @Value("\${${BackendSpringProperty.S3_BUCKET_SECRET_KEY}}") secretKey: String? = null,
+        @Value("\${${BackendSpringProperty.S3_BUCKET_ACCESS_KEY}:#{null}}") accessKey: String? = null,
+        @Value("\${${BackendSpringProperty.S3_BUCKET_SECRET_KEY}:#{null}}") secretKey: String? = null,
     ): S3Config {
         if (!enabled) {
             return S3Config(false, null)
         }
-        if (endpoint != null && bucket != null && accessKey != null && secretKey != null) {
+        if ((accessKey == null) != (secretKey == null)) {
+            throw IllegalStateException(
+                "S3 bucket access-key and secret-key must either both be set (static credentials) " +
+                    "or both be omitted (to use IAM role credentials instead, e.g. IRSA on EKS).",
+            )
+        }
+        if (endpoint != null && bucket != null) {
             return S3Config(true, S3BucketConfig(endpoint, internalEndpoint, region, bucket, accessKey, secretKey))
         }
         throw IllegalStateException("S3 bucket configurations are incomplete.")
