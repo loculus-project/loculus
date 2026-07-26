@@ -184,7 +184,7 @@ def update_with_existing_biosample(db_engine: Engine, row: SubmissionTableEntry,
     logger.info("Updating entry with biosampleAccession to state SUBMITTED")
     update_successful_submission_status(
         db_engine,
-        seq_key,
+        row.pkey,
         CreationResult(
             errors=[],
             warnings=[],
