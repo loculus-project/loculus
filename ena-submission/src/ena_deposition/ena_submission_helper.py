@@ -870,13 +870,16 @@ def set_accession_does_not_exist_error(
                 },
             )
         case "RUN_REF":
-            assembly_table_entry = AssemblyTableEntry(
-                **conditions,  # type: ignore
-                status=Status.HAS_ERRORS,
-                errors=[error_text],
-                result={},  # type: ignore
+            succeeded = update_db_where_conditions(
+                db_engine,
+                AssemblyTableEntry,
+                conditions,
+                {
+                    "status": Status.HAS_ERRORS,
+                    "errors": [error_text],
+                    "result": {"run_ref": accession},
+                },
             )
-            succeeded = add_to_assembly_table(db_engine, assembly_table_entry)
 
     if not succeeded:
         logger.warning(f"{accession_type} creation failed and DB update failed.")

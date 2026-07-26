@@ -234,54 +234,44 @@ def create_manifest_object(
     return manifest
 
 
-def submission_table_start(db_engine: Engine, config: Config) -> None:
+def submission_table_start(db_engine: Engine) -> None:
     """
-    1. Find all entries in submission_table in state SUBMITTED_SAMPLE
-    2. If entry has insdcRawReadsAccession, check it exists in ENA, if not set error and continue
-    3. If (exists an entry in the assembly_table for (accession, version)):
-    a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_ALL
-    b.      Else update state to SUBMITTING_ASSEMBLY
-    4. Else create corresponding entry in assembly_table
+    1. Find all entries in submission_table in state SUBMITTED_SAMPLE,
+       create corresponding entry in assembly_table,
+       set status to SUBMITTING_ASSEMBLY in submission_table
     """
-    conditions = {"status_all": StatusAll.SUBMITTED_SAMPLE}
-    ready_to_submit = find_conditions_in_db(db_engine, SubmissionTableEntry, conditions=conditions)
-    logger.debug(
-        f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_SAMPLE"
+    stmt = (
+        select(SubmissionTableEntry)
+        .outerjoin(SubmissionTableEntry.sample)
+        .where(
+            SubmissionTableEntry.status_all == StatusAll.SUBMITTED_SAMPLE,
+            AssemblyTableEntry.accession.is_(None),
+        )
     )
-    for row in ready_to_submit:
-        seq_key = asdict(row.pkey)
+    with Session(db_engine) as session:
+        submissions = session.scalars(stmt).all()
+        logger.debug(
+            f"Found {len(submissions)} entries in submission_table without corresponding assembly_table entry"  # noqa: E501
+        )
 
-        run_ref = row.seq_metadata.get("insdcRawReadsAccession")
-        if run_ref and not accession_exists(run_ref, config):
-            set_accession_does_not_exist_error(
-                conditions=seq_key,
-                accession=run_ref,
-                accession_type="RUN_REF",
-                db_engine=db_engine,
+        created = []
+        for submission in submissions:
+            assembly = AssemblyTableEntry(
+                accession=submission.accession,
+                version=submission.version,
+                started_at=datetime.now(tz=pytz.utc),
             )
-            continue
+            submission.sample = assembly
+            submission.status_all = StatusAll.SUBMITTING_ASSEMBLY
+            created.append(assembly)
 
-        # 1. check if there exists an entry in the assembly_table for seq_key
-        corresponding_assembly = find_conditions_in_db(
-            db_engine, AssemblyTableEntry, conditions=seq_key
-        )
-        status_all = None
-        if len(corresponding_assembly) == 1:
-            if corresponding_assembly[0].status == Status.SUBMITTED:
-                status_all = StatusAll.SUBMITTED_ALL
-            else:
-                status_all = StatusAll.SUBMITTING_ASSEMBLY
-        else:
-            # If not: create assembly_entry, change status to SUBMITTING_ASSEMBLY
-            if not add_to_assembly_table(db_engine, AssemblyTableEntry(**seq_key)):
-                continue
-            status_all = StatusAll.SUBMITTING_ASSEMBLY
-        update_db_where_conditions(
-            db_engine,
-            model_class=SubmissionTableEntry,
-            conditions=seq_key,
-            update_values={"status_all": status_all},
-        )
+        try:
+            session.add_all(created)
+            session.commit()
+        except Exception:
+            logger.exception("Error while syncing assembly_table with submission_table")
+            session.rollback()
+            raise
 
 
 def update_assembly_error(
@@ -548,6 +538,16 @@ def assembly_table_create(db_engine: Engine, config: Config):
             sample_result, project_result, seq_key
         )
 
+        run_ref = submission.seq_metadata.get("insdcRawReadsAccession")
+        if run_ref and not accession_exists(run_ref, config):
+            set_accession_does_not_exist_error(
+                conditions=seq_key,
+                accession=run_ref,
+                accession_type="RUN_REF",
+                db_engine=db_engine,
+            )
+            continue
+
         if is_revision(db_engine, seq_key):
             logger.debug(f"Entry {seq_key.accession} is a revision, checking if it can be revised")
             if not can_be_revised(config, db_engine, submission):
@@ -785,7 +785,7 @@ def create_assembly(config: Config, stop_event: threading.Event):
             logger.warning("create_assembly stopped due to exception in another task")
             return
         logger.debug("Checking for assemblies to create")
-        submission_table_start(db_engine, config)
+        submission_table_start(db_engine)
 
         assembly_table_create(db_engine, config)
         assembly_table_update(db_engine, config, time_threshold=config.min_between_ena_checks)

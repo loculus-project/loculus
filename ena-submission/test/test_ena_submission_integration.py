@@ -108,10 +108,10 @@ def assert_bioproject_accession(
 def delete_all_records(db_engine: Engine) -> None:
     logger.debug("Deleting all records from all deposition tables except flyway")
     for model_class in [
-        SubmissionTableEntry,
         ProjectTableEntry,
         SampleTableEntry,
         AssemblyTableEntry,
+        SubmissionTableEntry,
     ]:
         delete_records_in_db(db_engine, model_class, {})
 
@@ -363,7 +363,7 @@ def _test_successful_assembly_submission(
     sequences_to_upload: dict[str, Any],
     single_segment: bool = False,
 ) -> None:
-    create_assembly_submission_table_start(db_engine, config)
+    create_assembly_submission_table_start(db_engine)
     check_assembly_submission_started(db_engine, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
@@ -383,7 +383,7 @@ def _test_successful_assembly_submission(
 def _test_successful_assembly_submission_no_wait(
     db_engine: Engine, config: Config, sequences_to_upload: dict[str, Any]
 ) -> None:
-    create_assembly_submission_table_start(db_engine, config)
+    create_assembly_submission_table_start(db_engine)
     check_assembly_submission_started(db_engine, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
@@ -398,7 +398,7 @@ def _test_assembly_submission_errored(
     sequences_to_upload: dict[str, Any],
     mock_notify: Mock,
 ) -> None:
-    create_assembly_submission_table_start(db_engine, config)
+    create_assembly_submission_table_start(db_engine)
     check_assembly_submission_started(db_engine, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
