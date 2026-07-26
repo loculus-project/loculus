@@ -597,6 +597,16 @@ def add_to_submission_table(engine: Engine, entry: SubmissionTableEntry) -> bool
 
 @dataclass(frozen=True)
 class RevisionStatus:
+    """
+    Represents the revision status of a sequence in submission_table.
+    Note: a sequence with version > 1 is not necessarily a revision
+    as the first version might not have been submitted to ENA yet.
+
+    is_revision: True if *seq_key* is a revision of an accession submitted to ENA.
+    is_latest_revision: True if *seq_key* is the latest of multiple versions for its accession
+    previous_version: The version number of the previous version, or None if there is no previous version.
+    """
+
     is_revision: bool
     is_latest_revision: bool
     previous_version: int | None
