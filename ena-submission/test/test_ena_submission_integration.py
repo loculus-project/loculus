@@ -107,7 +107,8 @@ def assert_bioproject_accession(
 
 def delete_all_records(db_engine: Engine) -> None:
     logger.debug("Deleting all records from all deposition tables except flyway")
-    # Delete child rows before parents: sample_table/assembly_table -> submission_table -> project_table
+    # Delete child rows before parents:
+    # sample_table/assembly_table -> submission_table -> project_table
     for model_class in [
         SampleTableEntry,
         AssemblyTableEntry,

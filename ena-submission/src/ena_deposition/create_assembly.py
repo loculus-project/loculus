@@ -241,7 +241,7 @@ def submission_table_start(db_engine: Engine) -> None:
     """
     stmt = (
         select(SubmissionTableEntry)
-        .outerjoin(SubmissionTableEntry.sample)
+        .outerjoin(SubmissionTableEntry.assembly)
         .where(
             SubmissionTableEntry.status_all == StatusAll.SUBMITTED_SAMPLE,
             AssemblyTableEntry.accession.is_(None),
@@ -260,7 +260,7 @@ def submission_table_start(db_engine: Engine) -> None:
                 version=submission.version,
                 started_at=datetime.now(tz=pytz.utc),
             )
-            submission.sample = assembly
+            submission.assembly = assembly
             submission.status_all = StatusAll.SUBMITTING_ASSEMBLY
             created.append(assembly)
 
