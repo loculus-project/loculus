@@ -30,6 +30,7 @@ from .ena_types import (
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
+    AccessionVersion,
     SampleTableEntry,
     Status,
     StatusAll,
@@ -171,10 +172,9 @@ def update_with_existing_biosample(db_engine: Engine, row: SubmissionTableEntry,
     biosample = row.seq_metadata["biosampleAccession"]
 
     logger.info("Checking if biosample actually exists and is public")
-    seq_key = asdict(row.pkey)
     if not accession_exists(biosample, config):
         set_accession_does_not_exist_error(
-            conditions=seq_key,
+            conditions=asdict(row.pkey),
             accession=biosample,
             accession_type="BIOSAMPLE",
             db_engine=db_engine,
@@ -182,7 +182,7 @@ def update_with_existing_biosample(db_engine: Engine, row: SubmissionTableEntry,
         return
 
     logger.info("Updating entry with biosampleAccession to state SUBMITTED")
-    update_successful_submission_status(
+    update_successful_sample_submission(
         db_engine,
         row.pkey,
         CreationResult(
@@ -234,9 +234,11 @@ def sync_state_with_submission_table(db_engine: Engine):
             raise
 
 
-def update_successful_submission_status(
-    db_engine: Engine, seq_key, sample_creation_results: CreationResult
+def update_successful_sample_submission(
+    db_engine: Engine, seq_key: AccessionVersion, sample_creation_results: CreationResult
 ):
+    """Update entry in sample_table to state SUBMITTED with results after successful sample creation
+    and update corresponding entry in submission_table to state SUBMITTED_SAMPLE"""
     with Session(db_engine) as session:
         try:
             submission_ = session.get(
@@ -263,7 +265,7 @@ def sample_table_create(db_engine: Engine, config: Config):
     2. Create sample_set_object: use metadata, center_name, organism, and ingest fields
     from submission_table
     3. Update sample_table to state SUBMITTING (only proceed if update succeeds)
-    4. If (create_ena_sample succeeds): update state to SUBMITTED with results
+    4. If (create_ena_sample succeeds): update_successful_sample_submission
     3. Else update state to HAS_ERRORS with error messages
 
     If config.random_alias=True add a timestamp to the alias suffix to allow for multiple
@@ -318,7 +320,7 @@ def sample_table_create(db_engine: Engine, config: Config):
             logger.info(
                 f"Sample creation succeeded for {seq_key.accession} version {seq_key.version}"
             )
-            update_successful_submission_status(db_engine, seq_key, sample_creation_results)
+            update_successful_sample_submission(db_engine, seq_key, sample_creation_results)
         else:
             logger.error(
                 f"Sample creation failed for {seq_key.accession} version {seq_key.version}"

@@ -515,10 +515,13 @@ def get_project_and_sample_results(
 def assembly_table_create(db_engine: Engine, config: Config):
     """
     1. Find all entries in assembly_table in state READY
-    2. Create temporary files: chromosome_list_file, embl_file, manifest_file
-    3. Update assembly_table to state SUBMITTING (only proceed if update succeeds)
-    4. If (create_ena_assembly succeeds): update state to WAITING with results
-    3. Else update state to HAS_ERRORS with error messages
+    2. If revision: check if can be revised, if not continue
+    3. If insdcRawReadsAccession was provided: check accession exists in ENA,
+        if not update to HAS_ERRORS and continue
+    4. Create temporary files: chromosome_list_file, embl_file, manifest_file
+    5. Update assembly_table to state SUBMITTING (only proceed if update succeeds)
+    6. If (create_ena_assembly succeeds): update state to WAITING with results
+       Else update state to HAS_ERRORS with error messages
 
     If config.test=True: use the test ENA webin-cli endpoint for submission.
     """
