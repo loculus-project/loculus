@@ -272,7 +272,7 @@ Once the suborganism is assigned, it runs Nextclade with the correct Nextclade d
     },
     "files": {
       "rawReads": [],
-      "sequencing_logs": []
+      "sequenceLogs": []
     }
   },
   "errors": [...],

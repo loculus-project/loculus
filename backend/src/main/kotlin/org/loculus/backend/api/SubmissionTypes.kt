@@ -199,7 +199,7 @@ data class ProcessedData<SequenceType>(
     )
     val sequenceNameToFastaId: Map<SegmentName, String> = emptyMap(),
     @Schema(
-        example = """{"rawReads": [{"fileId": "s0m3-uUiDd", "name": "data.fastaq"}], "sequencing_logs": []}""",
+        example = """{"rawReads": [{"fileId": "s0m3-uUiDd", "name": "data.fastaq"}], "sequenceLogs": []}""",
         description = "The key is the file category name, the value is a list of files, with ID and name.",
     )
     val files: FileCategoryFilesMap?,
