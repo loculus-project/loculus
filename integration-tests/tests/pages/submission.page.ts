@@ -32,8 +32,8 @@ class SubmissionPage {
         await this.page.getByRole('link', { name: 'Submit Upload new sequences.' }).click();
     }
 
-    async discardRawReadsFiles() {
-        await this.page.getByTestId('discard_raw_reads').click();
+    async discardFiles(fileCategory: string) {
+        await this.page.getByTestId(`discard_${fileCategory}`).click();
         // Confirmation modal appears and the discard button must be clicked
         await this.page.getByRole('button', { name: 'Discard', exact: true }).click();
     }

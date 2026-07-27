@@ -9,6 +9,8 @@ import pytz
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
     AnnotationSourceType,
+    FileCategory,
+    FileIdAndName,
     NucleotideSequence,
     ProcessedData,
     ProcessedEntry,
@@ -77,6 +79,7 @@ class UnprocessedEntryFactory:
         accession_id: str,
         sequences: dict[SegmentName, NucleotideSequence | None],
         group_id: int = 2,
+        files: dict[FileCategory, list[FileIdAndName]] | None = None,
     ) -> UnprocessedEntry:
         return UnprocessedEntry(
             accessionVersion=f"LOC_{accession_id}.1",
@@ -89,6 +92,7 @@ class UnprocessedEntryFactory:
                 group_id=group_id,
                 metadata=metadata_dict,
                 unalignedNucleotideSequences=sequences,
+                files=files,
             ),
         )
 
@@ -130,6 +134,7 @@ class ProcessedEntryFactory:
         errors: list[ProcessingAnnotation] | None = None,
         warnings: list[ProcessingAnnotation] | None = None,
         processed_alignment: ProcessedAlignment | None = None,
+        files: dict[FileCategory, list[FileIdAndName]] | None = None,
     ) -> ProcessedEntry:
         if errors is None:
             errors = []
@@ -147,6 +152,7 @@ class ProcessedEntryFactory:
             version=1,
             data=ProcessedData(
                 metadata=base_metadata_dict,
+                files=files,
                 unalignedNucleotideSequences=processed_alignment.unalignedNucleotideSequences,
                 alignedNucleotideSequences=processed_alignment.alignedNucleotideSequences,
                 nucleotideInsertions=processed_alignment.nucleotideInsertions,
@@ -163,9 +169,11 @@ class ProcessedEntryFactory:
 class Case:
     name: str
     input_metadata: dict[str, str | None] = field(default_factory=dict)
+    input_files: dict[FileCategory, list[FileIdAndName]] | None = None
     input_sequence: dict[str, str | None] = field(default_factory=lambda: {"main": None})
     accession_id: str = "000999"
     expected_metadata: dict[str, ProcessedMetadataValue] = field(default_factory=dict)
+    expected_files: dict[FileCategory, list[FileIdAndName]] | None = None
     expected_errors: list[ProcessingAnnotation] | None = None
     expected_warnings: list[ProcessingAnnotation] | None = None
     expected_processed_alignment: ProcessedAlignment | None = None
@@ -179,6 +187,7 @@ class Case:
             accession_id=self.accession_id,
             sequences=self.input_sequence,
             group_id=self.group_id,
+            files=self.input_files,
         )
         expected_output = factory_custom.create_processed_entry(
             metadata_dict=self.expected_metadata,
@@ -186,6 +195,7 @@ class Case:
             errors=self.expected_errors or [],
             warnings=self.expected_warnings or [],
             processed_alignment=self.expected_processed_alignment,
+            files=self.expected_files,
         )
         return ProcessingTestCase(
             name=self.name, input=unprocessed_entry, expected_output=expected_output
@@ -264,4 +274,9 @@ def verify_processed_entry(
     assert actual.sequenceNameToFastaId == expected.sequenceNameToFastaId, (
         f"{test_name}: sequence name to fasta header map '{actual.sequenceNameToFastaId}' do not "
         f"match expectation '{expected.sequenceNameToFastaId}'."
+    )
+
+    # Check files
+    assert actual.files == expected.files, (
+        f"{test_name}: files '{actual.files}' do not match expectation '{expected.files}'."
     )
