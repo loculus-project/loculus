@@ -33,7 +33,7 @@ class SubmissionPage {
     }
 
     async discardRawReadsFiles() {
-        await this.page.getByTestId('discard_raw_reads').click();
+        await this.page.getByTestId('discard_rawReads').click();
         // Confirmation modal appears and the discard button must be clicked
         await this.page.getByRole('button', { name: 'Discard', exact: true }).click();
     }
@@ -60,7 +60,7 @@ class SubmissionPage {
         void this.page
             .getByRole('button', { name: 'Continue under Open terms' })
             .click({ timeout: 3_000 })
-            .catch(() => {});
+            .catch(() => { });
 
         await this.page.waitForURL('**/review', { timeout: 15_000 });
         return new ReviewPage(this.page);
