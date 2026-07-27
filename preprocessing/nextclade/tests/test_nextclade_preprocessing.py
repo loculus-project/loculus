@@ -26,6 +26,7 @@ from loculus_preprocessing.config import (
 )
 from loculus_preprocessing.datatypes import (
     AnnotationSourceType,
+    FileCategory,
     FileIdAndName,
     SegmentClassificationMethod,
     SubmissionData,
@@ -289,7 +290,7 @@ single_segment_case_definitions = [
         name="with file",
         input_metadata={},
         input_files={
-            "rawReads": [
+            FileCategory.RAW_READS: [
                 FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
                 FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
             ]
@@ -306,7 +307,7 @@ single_segment_case_definitions = [
             "variant": True,
         },
         expected_files={
-            "rawReads": [
+            FileCategory.RAW_READS: [
                 FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
                 FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
             ]
