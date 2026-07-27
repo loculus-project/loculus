@@ -761,7 +761,7 @@ test_metadata_dependency_test_definitions = [
                 ProcessingAnnotationHelper(
                     ["required_when_raw_reads"],
                     ["required_when_raw_reads"],
-                    "Metadata field `required_when_raw_reads` is required when `raw_reads` files are provided.",
+                    "Metadata field `required_when_raw_reads` is required when `rawReads` files are provided.",
                 ),
             ]
         ),
@@ -935,7 +935,7 @@ test_metadata_dependency_test_definitions = [
                 ProcessingAnnotationHelper(
                     ["multi_dep"],
                     ["multi_dep"],
-                    "Metadata field `multi_dep` is required when `raw_reads` files are provided.",
+                    "Metadata field `multi_dep` is required when `rawReads` files are provided.",
                 ),
             ]
         ),
@@ -1015,7 +1015,7 @@ def test_required_when_conflicts_with_required() -> None:
         Config(
             processing_spec={
                 "field": ProcessingSpec(
-                    inputs={"input": "field"}, required=True, required_when=["files.raw_reads"]
+                    inputs={"input": "field"}, required=True, required_when=["files.rawReads"]
                 )
             }
         )

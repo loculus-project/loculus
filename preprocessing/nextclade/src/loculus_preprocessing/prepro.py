@@ -29,6 +29,7 @@ from .datatypes import (
     AminoAcidSequence,
     AnnotationSource,
     AnnotationSourceType,
+    FileCategory,
     FileIdAndName,
     GeneName,
     InputData,

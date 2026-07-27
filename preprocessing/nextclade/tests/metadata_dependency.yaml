@@ -31,11 +31,11 @@ processing_spec:
     inputs:
       input: required_when_raw_reads
     required_when:
-      - files.raw_reads
+      - files.rawReads
   multi_dep:
     function: identity
     inputs:
       input: multi_dep
     required_when:
-      - files.raw_reads
+      - files.rawReads
       - processed.A
