@@ -88,22 +88,22 @@ defaultOrganismConfig: &defaultOrganismConfig
     submissionDataTypes: &defaultSubmissionDataTypes
       consensusSequences: true
       maxSequencesPerEntry: 1
-      files:
-        enabled: false
-        categories: &defaultSubmissionFileCategories
-          - name: rawReads
-            displayName: Raw reads
+      # files:  # uncomment to enable submission of raw reads files
+      #   enabled: true
+        # categories:
+        #   - name: rawReads
+        #     displayName: Raw reads
     loadSequencesAutomatically: true
     earliestReleaseDate:
       enabled: true
       externalFields:
         - ncbiReleaseDate
     richFastaHeaderFields: ["displayName"]
-    files: &defaultOutputFileCategories
+    files:
       - name: annotations
         displayName: Annotations
-      - name: rawReads
-        displayName: Raw reads
+      # - name: rawReads  # uncomment to enable submission of raw reads files
+      #   displayName: Raw reads
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)
@@ -1912,8 +1912,12 @@ defaultOrganisms:
         consensusSequences: false
         files:
           enabled: true
-          categories: *defaultSubmissionFileCategories
-      files: *defaultOutputFileCategories
+          categories:
+            - name: rawReads
+              displayName: Raw reads
+      files:
+        - name: rawReads
+          displayName: Raw reads
       metadata: *dummyMetadata
       website:
         tableColumns:
