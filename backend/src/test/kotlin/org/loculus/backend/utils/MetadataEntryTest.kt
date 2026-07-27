@@ -9,6 +9,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.model.ACCESSION_HEADER
+import org.loculus.backend.model.FASTA_IDS_HEADER
+import org.loculus.backend.model.FASTA_IDS_SEPARATOR
+import org.loculus.backend.model.FILES_HEADER_PREFIX
+import org.loculus.backend.model.FILES_SEPARATOR
+import org.loculus.backend.model.FILE_NAME_ID_SEPARATOR
 import java.io.ByteArrayInputStream
 import java.util.UUID
 
@@ -133,9 +139,10 @@ class MetadataEntryTest {
 
     @Test
     fun `test multiple fasta IDs are accepted without limit`() {
+        val fastaIds = listOf("seq1", "seq2", "seq3").joinToString(FASTA_IDS_SEPARATOR)
         val str = """
-            submissionId${'\t'}fastaIds${'\t'}Country
-            foo${'\t'}seq1 seq2 seq3${'\t'}bar
+            submissionId${'\t'}$FASTA_IDS_HEADER${'\t'}Country
+            foo${'\t'}$fastaIds${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val entries = metadataEntryStreamAsSequence(inputStream).toList()
@@ -146,9 +153,10 @@ class MetadataEntryTest {
 
     @Test
     fun `test multiple duplicate fasta IDs are all reported`() {
+        val fastaIds = listOf("seq1", "seq2", "seq1", "seq2", "seq3").joinToString(FASTA_IDS_SEPARATOR)
         val str = """
-            submissionId${'\t'}fastaIds${'\t'}Country
-            foo${'\t'}seq1 seq2 seq1 seq2 seq3${'\t'}bar
+            submissionId${'\t'}$FASTA_IDS_HEADER${'\t'}Country
+            foo${'\t'}$fastaIds${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val exception = assertThrows<UnprocessableEntityException> {
@@ -163,9 +171,10 @@ class MetadataEntryTest {
 
     @Test
     fun `test duplicate detection works`() {
+        val fastaIds = listOf("seq1", "seq1").joinToString(FASTA_IDS_SEPARATOR)
         val str = """
-            submissionId${'\t'}fastaIds${'\t'}Country
-            foo${'\t'}seq1 seq1${'\t'}bar
+            submissionId${'\t'}$FASTA_IDS_HEADER${'\t'}Country
+            foo${'\t'}$fastaIds${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val exception = assertThrows<UnprocessableEntityException> {
@@ -179,9 +188,13 @@ class MetadataEntryTest {
     fun `test files columns are parsed and excluded from metadata`() {
         val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
         val fileId2 = "223e4567-e89b-12d3-a456-426614174001"
+        val files = listOf(
+            "reads_1.fq$FILE_NAME_ID_SEPARATOR$fileId1",
+            "reads_2.fq$FILE_NAME_ID_SEPARATOR$fileId2",
+        ).joinToString(FILES_SEPARATOR)
         val str = """
-            submissionId${'\t'}files.raw_reads${'\t'}Country
-            foo${'\t'}reads_1.fq:$fileId1 reads_2.fq:$fileId2${'\t'}bar
+            submissionId${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}Country
+            foo${'\t'}$files${'\t'}bar
         """.trimIndent()
         val entries = metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
         assertThat(entries, hasSize(1))
@@ -197,7 +210,7 @@ class MetadataEntryTest {
             ),
         )
         // The files.* column must not leak into the metadata map.
-        assertThat(entries[0].metadata.containsKey("files.raw_reads"), equalTo(false))
+        assertThat(entries[0].metadata.containsKey("${FILES_HEADER_PREFIX}raw_reads"), equalTo(false))
         assertThat(entries[0].metadata["Country"], equalTo("bar"))
     }
 
@@ -206,8 +219,8 @@ class MetadataEntryTest {
         val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
         val fileId2 = "223e4567-e89b-12d3-a456-426614174001"
         val str = """
-            submissionId${'\t'}files.raw_reads${'\t'}files.assemblies${'\t'}Country
-            foo${'\t'}reads.fq:$fileId1${'\t'}asm.fa:$fileId2${'\t'}bar
+            submissionId${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}${FILES_HEADER_PREFIX}assemblies${'\t'}Country
+            foo${'\t'}reads.fq$FILE_NAME_ID_SEPARATOR$fileId1${'\t'}asm.fa$FILE_NAME_ID_SEPARATOR$fileId2${'\t'}bar
         """.trimIndent()
         val entries = metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
         assertThat(entries[0].files!!.keys, equalTo(setOf("raw_reads", "assemblies")))
@@ -225,8 +238,8 @@ class MetadataEntryTest {
     fun `test blank files cell omits that category`() {
         val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
         val str = """
-            submissionId${'\t'}files.raw_reads${'\t'}files.assemblies${'\t'}Country
-            foo${'\t'}reads.fq:$fileId1${'\t'}${'\t'}bar
+            submissionId${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}${FILES_HEADER_PREFIX}assemblies${'\t'}Country
+            foo${'\t'}reads.fq$FILE_NAME_ID_SEPARATOR$fileId1${'\t'}${'\t'}bar
         """.trimIndent()
         val entries = metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
         assertThat(entries[0].files!!.keys, equalTo(setOf("raw_reads")))
@@ -245,7 +258,7 @@ class MetadataEntryTest {
     @Test
     fun `test files entry missing file ID is rejected`() {
         val str = """
-            submissionId${'\t'}files.raw_reads${'\t'}Country
+            submissionId${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}Country
             foo${'\t'}reads_1.fq${'\t'}bar
         """.trimIndent()
         val exception = assertThrows<UnprocessableEntityException> {
@@ -258,8 +271,8 @@ class MetadataEntryTest {
     fun `test files entry missing file name is rejected`() {
         val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
         val str = """
-            submissionId${'\t'}files.raw_reads${'\t'}Country
-            foo${'\t'}:$fileId1${'\t'}bar
+            submissionId${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}Country
+            foo${'\t'}$FILE_NAME_ID_SEPARATOR$fileId1${'\t'}bar
         """.trimIndent()
         val exception = assertThrows<UnprocessableEntityException> {
             metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
@@ -270,8 +283,8 @@ class MetadataEntryTest {
     @Test
     fun `test files entry with invalid UUID is rejected`() {
         val str = """
-            submissionId${'\t'}files.raw_reads${'\t'}Country
-            foo${'\t'}reads_1.fq:not-a-uuid${'\t'}bar
+            submissionId${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}Country
+            foo${'\t'}reads_1.fq${FILE_NAME_ID_SEPARATOR}not-a-uuid${'\t'}bar
         """.trimIndent()
         val exception = assertThrows<UnprocessableEntityException> {
             metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
@@ -283,9 +296,13 @@ class MetadataEntryTest {
     fun `test duplicate file names within a category are rejected`() {
         val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
         val fileId2 = "223e4567-e89b-12d3-a456-426614174001"
+        val files = listOf(
+            "reads.fq$FILE_NAME_ID_SEPARATOR$fileId1",
+            "reads.fq$FILE_NAME_ID_SEPARATOR$fileId2",
+        ).joinToString(FILES_SEPARATOR)
         val str = """
-            submissionId${'\t'}files.raw_reads${'\t'}Country
-            foo${'\t'}reads.fq:$fileId1 reads.fq:$fileId2${'\t'}bar
+            submissionId${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}Country
+            foo${'\t'}$files${'\t'}bar
         """.trimIndent()
         val exception = assertThrows<UnprocessableEntityException> {
             metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
@@ -295,16 +312,16 @@ class MetadataEntryTest {
     }
 
     @Test
-    fun `test file name containing a colon splits on the last colon`() {
+    fun `test file name containing a separator splits on the last separator`() {
         val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
         val str = """
-            submissionId${'\t'}files.raw_reads${'\t'}Country
-            foo${'\t'}weird:name.fq:$fileId1${'\t'}bar
+            submissionId${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}Country
+            foo${'\t'}weird${FILE_NAME_ID_SEPARATOR}name.fq$FILE_NAME_ID_SEPARATOR$fileId1${'\t'}bar
         """.trimIndent()
         val entries = metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
         assertThat(
             entries[0].files!!["raw_reads"],
-            equalTo(listOf(FileIdAndName(UUID.fromString(fileId1), "weird:name.fq"))),
+            equalTo(listOf(FileIdAndName(UUID.fromString(fileId1), "weird${FILE_NAME_ID_SEPARATOR}name.fq"))),
         )
     }
 }
@@ -313,7 +330,7 @@ class RevisionEntryTest {
     @Test
     fun `basic revision TSV test`() {
         val str = """
-            submissionId${'\t'}accession${'\t'}Country
+            submissionId${'\t'}$ACCESSION_HEADER${'\t'}Country
             foo${'\t'}ACC123${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
@@ -373,7 +390,7 @@ class RevisionEntryTest {
     @Test
     fun `test record numbers are included in revision error messages`() {
         val str = """
-            submissionId${'\t'}accession${'\t'}Country
+            submissionId${'\t'}$ACCESSION_HEADER${'\t'}Country
             ${'\t'}ACC123${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
@@ -387,7 +404,7 @@ class RevisionEntryTest {
     @Test
     fun `test record numbers for missing accession in revision`() {
         val str = """
-            submissionId${'\t'}accession${'\t'}Country
+            submissionId${'\t'}$ACCESSION_HEADER${'\t'}Country
             foo${'\t'}${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
@@ -395,14 +412,15 @@ class RevisionEntryTest {
             revisionEntryStreamAsSequence(inputStream).toList()
         }
         assertThat(exception.message, containsString("Record #1"))
-        assertThat(exception.message, containsString("accession"))
+        assertThat(exception.message, containsString(ACCESSION_HEADER))
     }
 
     @Test
     fun `test revision multiple fasta IDs are accepted`() {
+        val fastaIds = listOf("seq1", "seq2", "seq3").joinToString(FASTA_IDS_SEPARATOR)
         val str = """
-            submissionId${'\t'}accession${'\t'}fastaIds${'\t'}Country
-            foo${'\t'}ACC123${'\t'}seq1 seq2 seq3${'\t'}bar
+            submissionId${'\t'}$ACCESSION_HEADER${'\t'}$FASTA_IDS_HEADER${'\t'}Country
+            foo${'\t'}ACC123${'\t'}$fastaIds${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val entries = revisionEntryStreamAsSequence(inputStream).toList()
@@ -413,9 +431,10 @@ class RevisionEntryTest {
 
     @Test
     fun `test revision duplicate fasta IDs are rejected`() {
+        val fastaIds = listOf("seq1", "seq2", "seq1").joinToString(FASTA_IDS_SEPARATOR)
         val str = """
-            submissionId${'\t'}accession${'\t'}fastaIds${'\t'}Country
-            foo${'\t'}ACC123${'\t'}seq1 seq2 seq1${'\t'}bar
+            submissionId${'\t'}$ACCESSION_HEADER${'\t'}$FASTA_IDS_HEADER${'\t'}Country
+            foo${'\t'}ACC123${'\t'}$fastaIds${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val exception = assertThrows<UnprocessableEntityException> {
@@ -429,9 +448,10 @@ class RevisionEntryTest {
 
     @Test
     fun `test revision duplicate detection works`() {
+        val fastaIds = listOf("seq1", "seq1").joinToString(FASTA_IDS_SEPARATOR)
         val str = """
-            submissionId${'\t'}accession${'\t'}fastaIds${'\t'}Country
-            foo${'\t'}ACC123${'\t'}seq1 seq1${'\t'}bar
+            submissionId${'\t'}$ACCESSION_HEADER${'\t'}$FASTA_IDS_HEADER${'\t'}Country
+            foo${'\t'}ACC123${'\t'}$fastaIds${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val exception = assertThrows<UnprocessableEntityException> {
@@ -445,14 +465,14 @@ class RevisionEntryTest {
     fun `test revision files column is parsed and excluded from metadata`() {
         val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
         val str = """
-            submissionId${'\t'}accession${'\t'}files.raw_reads${'\t'}Country
-            foo${'\t'}ACC123${'\t'}reads.fq:$fileId1${'\t'}bar
+            submissionId${'\t'}$ACCESSION_HEADER${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}Country
+            foo${'\t'}ACC123${'\t'}reads.fq$FILE_NAME_ID_SEPARATOR$fileId1${'\t'}bar
         """.trimIndent()
         val entries = revisionEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
         assertThat(
             entries[0].files,
             equalTo(mapOf("raw_reads" to listOf(FileIdAndName(UUID.fromString(fileId1), "reads.fq")))),
         )
-        assertThat(entries[0].metadata.containsKey("files.raw_reads"), equalTo(false))
+        assertThat(entries[0].metadata.containsKey("${FILES_HEADER_PREFIX}raw_reads"), equalTo(false))
     }
 }
