@@ -74,7 +74,7 @@ type PreviousUpload = {
     path: string;
 };
 
-type Error = {
+type FileError = {
     type: 'error';
     name: string;
     path: string;
@@ -82,7 +82,7 @@ type Error = {
     msg: string;
 };
 
-type SingleFileUpload = Pending | Uploaded | PreviousUpload | Error;
+type SingleFileUpload = Pending | Uploaded | PreviousUpload | FileError;
 
 type FolderUploadComponentProps = {
     fileCategory: FileCategory;
@@ -178,15 +178,21 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             () => updateFileState(pending.fileId, 'uploaded'),
             (err) => {
                 updateFileState(pending.fileId, 'error', err.detail);
-                onError(err.detail);
-                throw new Error(`Upload of file ${pending.fileId} failed: ${err.detail}`);
+                throw new Error(err.detail);
             },
         );
     }
 
     async function startUploading(pendingFiles: Pending[]) {
         for (const pending of pendingFiles) {
-            await uploadMultipartFile(pending);
+            try {
+                await uploadMultipartFile(pending);
+            } catch (err) {
+                onError(
+                    `Upload failed for file ${pending.fileId} ${pending.name}: ${err instanceof Error ? err.message : String(err)}`,
+                );
+                return;
+            }
         }
     }
 
@@ -493,19 +499,13 @@ type FileListeItemProps = {
 const FileListItem: FC<FileListeItemProps> = ({ file }) => {
     const showProgress = file.type === 'pending';
     const percentage = showProgress ? Math.round((file.uploadedParts / file.totalParts) * 100) : 0;
-    const folderPath = file.path.split('/').slice(0, -1);
 
     return (
         <div className='flex flex-row'>
             <div className='w-3.5' />
             <LucideFile className='h-4 w-4 text-gray-500 ml-1 mr-1' />
             <div className='flex-1 min-w-0 flex items-center'>
-                {folderPath.length > 0 && (
-                    <>
-                        <span className='text-xs text-gray-400 truncate max-w-[140px]'>{folderPath.join('/')}</span>
-                        <span className='text-xs text-gray-400'>/</span>
-                    </>
-                )}
+                <FolderPath file={file} />
                 <span className='text-xs text-gray-700 truncate max-w-[140px]'>{file.name}</span>
                 <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>
                     ({file.type === 'previousUpload' ? 'uploaded' : formatFileSize(file.size)})
@@ -514,10 +514,15 @@ const FileListItem: FC<FileListeItemProps> = ({ file }) => {
                     {showProgress ? `${percentage}%` : ''}
                 </span>
             </div>
-            {/* Status icon */}
             <div className='ml-2 w-5 flex justify-center'>{getStatusIcon(file.type)}</div>
         </div>
     );
+};
+
+const FolderPath: FC<{ file: SingleFileUpload }> = ({ file }) => {
+    const folderPath = file.path.split('/').slice(0, -1);
+    if (folderPath.length === 0) return null;
+    return <span className='text-xs text-gray-400 truncate max-w-[140px] mr-1'>{folderPath.join(' / ') + ' / '}</span>;
 };
 
 const formatFileSize = (bytes: number): string => {

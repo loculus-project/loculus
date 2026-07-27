@@ -44,7 +44,6 @@ const defaultProps = {
     groupId: 1,
     fileMapping: undefined,
     setFileMapping: mockSetFileMapping,
-    submissionFileMapping: undefined,
     onError: mockOnError,
 };
 
