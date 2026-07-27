@@ -13,5 +13,6 @@ disableEnaSubmission: true
 auth:
   verifyEmail: false
 host: localhost:3000
+insecureCookies: true
 siloImport:
   pollIntervalSeconds: 5
