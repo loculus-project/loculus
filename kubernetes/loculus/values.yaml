@@ -90,9 +90,9 @@ defaultOrganismConfig: &defaultOrganismConfig
       maxSequencesPerEntry: 1
       # files:  # uncomment to enable submission of raw reads files
       #   enabled: true
-        # categories:
-        #   - name: rawReads
-        #     displayName: Raw reads
+      #   categories:
+      #    - name: rawReads
+      #      displayName: Raw reads
     loadSequencesAutomatically: true
     earliestReleaseDate:
       enabled: true
@@ -102,8 +102,8 @@ defaultOrganismConfig: &defaultOrganismConfig
     files:
       - name: annotations
         displayName: Annotations
-      # - name: rawReads  # uncomment to enable submission of raw reads files
-      #   displayName: Raw reads
+        # - name: rawReads  # uncomment to enable submission of raw reads files
+        #   displayName: Raw reads
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)
