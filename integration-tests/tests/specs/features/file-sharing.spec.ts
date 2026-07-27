@@ -66,7 +66,7 @@ test('bulk submit 1 seq: discarding and readding a file', async ({ page, groupId
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
     await submissionPage.uploadMetadataFile(METADATA_HEADERS, [[ID_1, COUNTRY_1, '2023-01-01']]);
     await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_SINGLE }, tmpDir);
-    await submissionPage.discardRawReadsFiles();
+    await submissionPage.discardFiles(RAW_READS);
     await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_DOUBLE }, tmpDir);
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone();
     await reviewPage.checkFilesInReviewDialog(FILES_DOUBLE, Object.keys(FILES_SINGLE));
