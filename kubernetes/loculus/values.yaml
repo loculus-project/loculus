@@ -2642,6 +2642,10 @@ secrets:
     type: autogen
     data:
       backendKeycloakClientSecret: ""
+  website-oidc-cookie-secret:
+    type: autogen
+    data:
+      oidcTransactionCookieSecret: ""
   database:
     type: raw
     data:

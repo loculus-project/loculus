@@ -257,10 +257,13 @@ data:
           "publicClient": true,
           "directAccessGrantsEnabled": true,
           "redirectUris": [
-            "https://{{$.Values.host}}/*",
-            "http://{{$.Values.host}}/*",
-            "http://localhost:3000/*"
-          ]
+            "https://{{$.Values.host}}/auth/callback"{{ if $.Values.insecureCookies }},
+            "http://{{$.Values.host}}/auth/callback",
+            "http://localhost:3000/auth/callback"{{ end }}
+          ],
+          "attributes": {
+            "pkce.code.challenge.method": "S256"
+          }
         },
         {
           "clientId" : "account-console2",

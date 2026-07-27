@@ -20,9 +20,5 @@ type Session = {
 declare namespace App {
     interface Locals {
         session?: Session;
-        authRequest?: {
-            redirectUrl: string;
-            url: string;
-        };
     }
 }

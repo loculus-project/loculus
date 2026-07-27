@@ -6,7 +6,7 @@ import { SandwichMenu } from './SandwichMenu.tsx';
 import { cleanOrganism } from './cleanOrganism';
 import { getWebsiteConfig } from '../../config';
 import { navigationItems } from '../../routes/navigationItems';
-import { getAuthUrl } from '../../utils/getAuthUrl';
+import { getLoginUrl } from '../../utils/getAuthUrl';
 
 interface Props {
     implicitOrganism?: string;
@@ -23,7 +23,7 @@ const siteName = websiteConfig.name;
 
 const isLoggedIn = Astro.locals.session?.isLoggedIn ?? false;
 
-const loginUrl = await getAuthUrl(Astro.url.toString(), Astro);
+const loginUrl = getLoginUrl(Astro.url.toString());
 
 const topNavigationItems = navigationItems.top(isLoggedIn, loginUrl);
 const accessionPrefix = getWebsiteConfig().accessionPrefix;

@@ -7,9 +7,10 @@ import { type BaseClient, type TokenSet } from 'openid-client';
 
 import { getConfiguredOrganisms, getRuntimeConfig, getWebsiteConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
+import { routes } from '../routes/routes.ts';
 import { KeycloakClientManager } from '../utils/KeycloakClientManager.ts';
-import { popAuthRequestCookies } from '../utils/authRequestCookies.ts';
-import { getAuthUrl } from '../utils/getAuthUrl.ts';
+import { authTransactionId, consumeAuthRequest } from '../utils/authRequestCookies.ts';
+import { getLoginUrl } from '../utils/getAuthUrl.ts';
 import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
 export const ACCESS_TOKEN_COOKIE = 'access_token';
@@ -45,18 +46,22 @@ async function getValidTokenAndUserInfoFromCookie(context: APIContext, client: B
 
 async function getValidTokenAndUserInfoFromParams(context: APIContext, client: BaseClient) {
     logger.debug(`Trying to get token and user info from params`);
-    const token = await getTokenFromParams(context, client);
-    if (token !== undefined) {
-        const userInfo = await getUserInfo(token, client);
+    const callbackResult = await getTokenFromParams(context, client);
+    if (callbackResult !== undefined) {
+        const userInfo = await getUserInfo(callbackResult.token, client);
 
         if (userInfo.isErr()) {
-            logger.debug(`Token found in params but could not get user info`);
+            logger.info(`OIDC login rejected: transactionId=${callbackResult.transactionId} reason=userinfo_failed`);
             return undefined;
         }
-        logger.debug(`Token and valid user info found in params`);
+        logger.info(
+            `OIDC login completed: transactionId=${callbackResult.transactionId} ` +
+                `issuer=${client.issuer.metadata.issuer} subject=${userInfo.value.sub}`,
+        );
         return {
-            token,
+            token: callbackResult.token,
             userInfo,
+            returnTo: callbackResult.returnTo,
         };
     }
     return undefined;
@@ -82,20 +87,18 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     const client = await KeycloakClientManager.getClient();
     if (client !== undefined) {
         // Only run this when keycloak up
+        if (context.url.pathname === routes.authCallback()) {
+            const paramResult = await getValidTokenAndUserInfoFromParams(context, client);
+            if (paramResult !== undefined) {
+                logger.debug(`Valid OIDC callback, setting token cookies`);
+                setCookie(context, paramResult.token);
+                return createRedirectWithModifiableHeaders(paramResult.returnTo);
+            }
+        }
+
         const cookieResult = await getValidTokenAndUserInfoFromCookie(context, client);
         token = cookieResult?.token;
         userInfo = cookieResult?.userInfo;
-        if (token === undefined) {
-            const paramResult = await getValidTokenAndUserInfoFromParams(context, client);
-            token = paramResult?.token;
-            userInfo = paramResult?.userInfo;
-
-            if (token !== undefined) {
-                logger.debug(`Token found in params, setting cookie`);
-                setCookie(context, token);
-                return createRedirectWithModifiableHeaders(removeTokenCodeFromSearchParams(context.url));
-            }
-        }
     } else {
         logger.warn(`Keycloak client not available, pretending user logged out`);
     }
@@ -226,24 +229,41 @@ async function getUserInfo(token: TokenCookie, client: BaseClient) {
     });
 }
 
-async function getTokenFromParams(context: APIContext, client: BaseClient): Promise<TokenCookie | undefined> {
+type CallbackResult = {
+    token: TokenCookie;
+    transactionId: string;
+    returnTo: string;
+};
+
+export async function getTokenFromParams(context: APIContext, client: BaseClient): Promise<CallbackResult | undefined> {
     const params = client.callbackParams(context.url.toString());
-    logger.debug(`Keycloak callback params: ${JSON.stringify(params)}`);
     if (params.code !== undefined) {
-        const redirectUri = removeTokenCodeFromSearchParams(context.url);
-        logger.debug(`Keycloak callback redirect uri: ${redirectUri}`);
-        const { state, nonce } = popAuthRequestCookies(context.cookies);
+        const transactionId = authTransactionId(params.state);
+        logger.debug(
+            `OIDC callback received: transactionId=${transactionId} ` +
+                `hasCode=true hasState=${params.state !== undefined}`,
+        );
+        const callbackUrl = new URL(routes.authCallback(), context.url.origin).toString();
+        const authRequest = consumeAuthRequest(context.cookies, params.state);
+        if (authRequest === undefined) {
+            logger.info(`OIDC callback rejected: transactionId=${transactionId} reason=missing_or_expired_transaction`);
+            return undefined;
+        }
+        const { nonce, codeVerifier } = authRequest;
         const tokenSet = await client
-            .callback(redirectUri, params, {
+            .callback(callbackUrl, params, {
+                code_verifier: codeVerifier, // eslint-disable-line @typescript-eslint/naming-convention
                 response_type: 'code', // eslint-disable-line @typescript-eslint/naming-convention
-                state,
+                state: params.state,
                 nonce,
             })
             .catch((error: unknown) => {
-                logger.info(`Keycloak callback error: ${error}`);
+                logger.info(`OIDC callback rejected: transactionId=${transactionId} reason=validation_failed`);
+                logger.debug(`OIDC callback validation error: transactionId=${transactionId} error=${error}`);
                 return undefined;
             });
-        return extractTokenCookieFromTokenSet(tokenSet);
+        const token = extractTokenCookieFromTokenSet(tokenSet);
+        return token === undefined ? undefined : { token, transactionId, returnTo: authRequest.returnTo };
     }
     return undefined;
 }
@@ -283,12 +303,12 @@ const createRedirectWithModifiableHeaders = (url: string) => {
     return new Response(null, { status: redirect.status, headers: redirect.headers });
 };
 
-const redirectToAuth = async (context: APIContext) => {
+const redirectToAuth = (context: APIContext) => {
     const currentUrl = context.url;
     const redirectUrl = removeTokenCodeFromSearchParams(currentUrl);
 
     logger.debug(`Redirecting to auth with redirect url: ${redirectUrl}`);
-    const authUrl = await getAuthUrl(redirectUrl, context);
+    const authUrl = getLoginUrl(redirectUrl);
 
     deleteCookie(context);
     return createRedirectWithModifiableHeaders(authUrl);
@@ -300,6 +320,7 @@ function removeTokenCodeFromSearchParams(url: URL): string {
     newUrl.searchParams.delete('code');
     newUrl.searchParams.delete('session_state');
     newUrl.searchParams.delete('iss');
+    newUrl.searchParams.delete('state');
 
     return newUrl.toString();
 }
