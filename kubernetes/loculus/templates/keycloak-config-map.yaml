@@ -262,7 +262,8 @@ data:
             "http://localhost:3000/auth/callback"{{ end }}
           ],
           "attributes": {
-            "pkce.code.challenge.method": "S256"
+            "pkce.code.challenge.method": "S256",
+            "post.logout.redirect.uris": "https://{{$.Values.host}}/logout{{ if $.Values.insecureCookies }}##http://{{$.Values.host}}/logout##http://localhost:3000/logout{{ end }}"
           }
         },
         {
