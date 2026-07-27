@@ -320,19 +320,15 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         if (e.target.files) {
             if (fileUploadState?.type !== 'uploadCompleted') return;
 
-            // exclude dot files, because files like .DS_Store cause problems otherwise
-            const filesArray = filterDotFiles(Array.from(e.target.files));
-
-            // Reset the input so selecting the same file again re-triggers onChange.
-            e.target.value = '';
-            if (filesArray.length === 0) return;
-
-            const awaiting: Awaiting[] = filesArray.map((f) => ({
+            const awaiting: Awaiting[] = Array.from(e.target.files).map((f) => ({
                 type: 'awaiting',
                 file: f,
                 name: f.name,
                 path: f.name,
             }));
+
+            // Reset the input so the same file can be selected again
+            e.target.value = '';
 
             // Check for collisions with existing files
             const filePaths = new Set(awaiting.map((file) => file.path));
