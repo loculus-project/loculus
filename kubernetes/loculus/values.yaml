@@ -90,7 +90,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       maxSequencesPerEntry: 1
       files:
         enabled: false
-        categories:
+        categories: &defaultSubmissionFileCategories
           - name: rawReads
             displayName: Raw reads
     loadSequencesAutomatically: true
@@ -99,7 +99,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       externalFields:
         - ncbiReleaseDate
     richFastaHeaderFields: ["displayName"]
-    files:
+    files: &defaultOutputFileCategories
       - name: annotations
         displayName: Annotations
       - name: rawReads
@@ -1912,6 +1912,8 @@ defaultOrganisms:
         consensusSequences: false
         files:
           enabled: true
+          categories: *defaultSubmissionFileCategories
+      files: *defaultOutputFileCategories
       metadata: *dummyMetadata
       website:
         tableColumns:
