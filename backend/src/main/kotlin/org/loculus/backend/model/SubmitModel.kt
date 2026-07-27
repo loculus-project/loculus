@@ -35,6 +35,7 @@ const val FASTA_IDS_SEPARATOR = " "
 
 const val FILES_HEADER_PREFIX = "files."
 const val FILES_SEPARATOR = " "
+const val FILE_NAME_ID_SEPARATOR = ":"
 
 const val ACCESSION_HEADER = "accession"
 private val log = KotlinLogging.logger { }

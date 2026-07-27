@@ -12,6 +12,7 @@ import org.loculus.backend.model.FASTA_IDS_HEADER
 import org.loculus.backend.model.FASTA_IDS_SEPARATOR
 import org.loculus.backend.model.FILES_HEADER_PREFIX
 import org.loculus.backend.model.FILES_SEPARATOR
+import org.loculus.backend.model.FILE_NAME_ID_SEPARATOR
 import org.loculus.backend.model.FastaId
 import org.loculus.backend.model.METADATA_ID_HEADER
 import org.loculus.backend.model.METADATA_ID_HEADER_ALTERNATE_FOR_BACKCOMPAT
@@ -125,21 +126,21 @@ private fun extractAndValidateFileIdAndName(
     submissionId: String,
     recordNumber: Int,
 ): FileIdAndName {
-    // We currently still support ':' characters in file names, so take the last occurence.
-    // TODO: Update when file character list is restricted
-    val separatorIndex = token.lastIndexOf(':')
+    val separatorIndex = token.lastIndexOf(FILE_NAME_ID_SEPARATOR)
     if (separatorIndex < 0) {
         throw UnprocessableEntityException(
             "In metadata file: record #$recordNumber with id '$submissionId': " +
-                "file entry '$token' in column '$header' is missing a file ID. Expected format 'fileName:fileId'.",
+                "file entry '$token' in column '$header' is missing a file ID. Expected format 'fileName${FILE_NAME_ID_SEPARATOR}fileId'.",
         )
     }
-    val name = token.substring(0, separatorIndex)
+
+    val fileName = token.substring(0, separatorIndex)
     val fileIdString = token.substring(separatorIndex + 1)
-    if (name.isEmpty()) {
+
+    if (fileName.isEmpty()) {
         throw UnprocessableEntityException(
             "In metadata file: record #$recordNumber with id '$submissionId': " +
-                "file entry '$token' in column '$header' is missing a file name. Expected format 'fileName:fileId'.",
+                "file entry '$token' in column '$header' is missing a file name. Expected format 'fileName${FILE_NAME_ID_SEPARATOR}fileId'.",
         )
     }
 
@@ -153,7 +154,7 @@ private fun extractAndValidateFileIdAndName(
                 "Expected a UUID.",
         )
     }
-    return FileIdAndName(fileId, name)
+    return FileIdAndName(fileId, fileName)
 }
 
 private fun setUpCsvParser(metadataInputStream: InputStream): CSVParser {
