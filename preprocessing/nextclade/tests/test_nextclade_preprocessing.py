@@ -289,7 +289,7 @@ single_segment_case_definitions = [
         name="with file",
         input_metadata={},
         input_files={
-            "raw_reads": [
+            "rawReads": [
                 FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
                 FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
             ]
@@ -306,7 +306,7 @@ single_segment_case_definitions = [
             "variant": True,
         },
         expected_files={
-            "raw_reads": [
+            "rawReads": [
                 FileIdAndName(fileId="file-id-0001", name="reads_R1.fastq"),
                 FileIdAndName(fileId="file-id-0002", name="reads_R2.fastq"),
             ]

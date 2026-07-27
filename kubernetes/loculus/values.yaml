@@ -88,6 +88,11 @@ defaultOrganismConfig: &defaultOrganismConfig
     submissionDataTypes: &defaultSubmissionDataTypes
       consensusSequences: true
       maxSequencesPerEntry: 1
+      files:
+        enabled: false
+        categories:
+          - name: rawReads
+            displayName: Raw reads
     loadSequencesAutomatically: true
     earliestReleaseDate:
       enabled: true
@@ -97,7 +102,7 @@ defaultOrganismConfig: &defaultOrganismConfig
     files:
       - name: annotations
         displayName: Annotations
-      - name: raw_reads
+      - name: rawReads
         displayName: Raw reads
     ### Field list
     ## General fields
@@ -1907,12 +1912,6 @@ defaultOrganisms:
         consensusSequences: false
         files:
           enabled: true
-          categories:
-            - name: raw_reads
-              displayName: Raw reads
-      files:
-        - name: raw_reads
-          displayName: Raw reads
       metadata: *dummyMetadata
       website:
         tableColumns:

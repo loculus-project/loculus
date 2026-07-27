@@ -8,7 +8,7 @@ import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/su
 
 const ORGANISM_NAME = 'Test organism (with files)';
 const ORGANISM_URL_NAME = 'dummy-organism-with-files';
-const RAW_READS = 'raw_reads';
+const RAW_READS = 'rawReads';
 const METADATA_HEADERS = ['submissionId', 'country', 'date'];
 const COUNTRY_1 = 'Norway';
 const COUNTRY_2 = 'Uganda';

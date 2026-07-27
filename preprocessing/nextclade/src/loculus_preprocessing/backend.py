@@ -17,6 +17,7 @@ import requests
 
 from .config import Config
 from .datatypes import (
+    FileCategory,
     FileIdAndName,
     FileUploadInfo,
     ProcessedEntry,
@@ -97,7 +98,9 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
         submitted_files = json_object["data"].get("files")
         file_mapping = (
             {
-                category: [FileIdAndName(fileId=f["fileId"], name=f["name"]) for f in files]
+                FileCategory(category): [
+                    FileIdAndName(fileId=f["fileId"], name=f["name"]) for f in files
+                ]
                 for category, files in submitted_files.items()
             }
             if submitted_files
