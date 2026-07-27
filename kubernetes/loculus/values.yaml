@@ -2644,6 +2644,7 @@ secrets:
       backendKeycloakClientSecret: ""
   website-oidc-cookie-secret:
     type: autogen
+    length: 32
     data:
       oidcTransactionCookieSecret: ""
   database:
