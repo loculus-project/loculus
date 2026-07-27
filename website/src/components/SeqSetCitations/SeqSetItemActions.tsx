@@ -11,7 +11,6 @@ import type { AuthorProfile, SeqSetRecord, SeqSet } from '../../types/seqSetCita
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
-import { CitationTable } from './CitationTable.tsx';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { Button } from '../common/Button';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
@@ -19,7 +18,6 @@ import MdiDelete from '~icons/mdi/delete';
 import MdiDownload from '~icons/mdi/download';
 import MdiInformationOutline from '~icons/mdi/information-outline';
 import MdiPencil from '~icons/mdi/pencil';
-import MdiViewListOutline from '~icons/mdi/view-list-outline';
 
 const logger = getClientLogger('SeqSetItemActions');
 
@@ -56,16 +54,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
 
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [exportModalVisible, setExportModalVisible] = useState(false);
-    const [citationsModalVisible, setCitationsModalVisible] = useState(false);
     const [creatorInfoVisible, setCreatorInfoVisible] = useState(false);
-
-    const {
-        isLoading: isSeqSetCitationsLoading,
-        error: seqSetCitationsError,
-        data: seqSetCitations,
-    } = seqSetCitationClientHooks(clientConfig).useGetSeqSetCitations({
-        params: { seqSetId: seqSet.seqSetId, version: seqSet.seqSetVersion },
-    });
 
     const { mutate: deleteSeqSet } = useDeleteSeqSetAction(
         clientConfig,
@@ -114,14 +103,6 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                     >
                         <MdiInformationOutline className='w-4 h-4' />
                         <span className='hidden sm:block'>More details</span>
-                    </Button>
-                    <Button
-                        variant='outline'
-                        className='flex items-center gap-2'
-                        onClick={() => setCitationsModalVisible(true)}
-                    >
-                        <MdiViewListOutline className='w-4 h-4' />
-                        <span className='hidden sm:block'>View Citations ({seqSetCitations?.length ?? 0})</span>
                     </Button>
                     {isAdminView ? (
                         <Button
@@ -176,27 +157,13 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                 <ExportSeqSet seqSet={seqSet} seqSetRecords={seqSetRecords} databaseName={databaseName} />
             </BaseDialog>
             <BaseDialog
-                isOpen={citationsModalVisible}
-                onClose={() => setCitationsModalVisible(false)}
-                title='SeqSet Citations'
-                fullWidth={false}
-                className='min-h-[60vh]'
-            >
-                <div className='min-w-3xl'></div>
-                <CitationTable
-                    isLoading={isSeqSetCitationsLoading}
-                    error={seqSetCitationsError}
-                    citations={seqSetCitations ?? []}
-                />
-            </BaseDialog>
-            <BaseDialog
                 title='Creator details'
                 isOpen={creatorInfoVisible}
                 onClose={() => setCreatorInfoVisible(false)}
                 fullWidth={false}
             >
                 <p className='mb-4 text-sm text-gray-500'>
-                    The creator is the person who assembled this SeqSet on Loculus. They are not necessarily the
+                    The creator is the person who assembled this SeqSet on {databaseName}. They are not necessarily the
                     originator of the underlying sequence data.
                 </p>
                 <CreatorDetailEntry label='Created by' value={createdByValue} />

@@ -1,7 +1,6 @@
 import logging
 import re
 import threading
-import time
 from dataclasses import asdict
 from datetime import datetime
 
@@ -396,4 +395,6 @@ def create_sample(config: Config, stop_event: threading.Event):
         last_retry_time = sample_table_handle_errors(
             db_engine, config, slack_config, last_retry_time
         )
-        time.sleep(config.time_between_iterations)
+        if stop_event.wait(timeout=config.time_between_iterations):
+            logger.info("create_sample stopped due to exception in another task")
+            return

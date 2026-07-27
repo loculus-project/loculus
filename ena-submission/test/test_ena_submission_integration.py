@@ -78,7 +78,7 @@ from ena_deposition.upload_external_metadata_to_loculus import (
 from sqlalchemy import Engine
 
 CONFIG_FILE = "./test/test_config.yaml"
-INPUT_FILE = "./test/approved_ena_submission_list_test.json"
+INPUT_FILE = "./test/data/approved_ena_submission_list_test.json"
 
 
 logger = logging.getLogger(__name__)
@@ -653,7 +653,6 @@ class TestFirstPublicUpdate(TestSubmission):
         (EntityType.ASSEMBLY, "ena_nucleotide_first_publicly_visible"): NUCLEOTIDE_CONFIG,
         (EntityType.ASSEMBLY, "ncbi_nucleotide_first_publicly_visible"): NUCLEOTIDE_CONFIG,
         (EntityType.ASSEMBLY, "ena_gca_first_publicly_visible"): GCA_CONFIG,
-        (EntityType.ASSEMBLY, "ncbi_gca_first_publicly_visible"): GCA_CONFIG,
     }
 
     @pytest.mark.parametrize(
@@ -1157,6 +1156,7 @@ class TestRevisionWithManifestChangeTests(TestSubmission):
         mock_submit_external_metadata: Mock,
     ) -> None:
         self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
+        self.config.allow_revision_with_manifest_changes = False
         multi_segment_submission(
             self.db_engine, self.config, mock_get_group_info, mock_submit_external_metadata
         )

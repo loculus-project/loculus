@@ -4,7 +4,6 @@
 import json
 import logging
 import threading
-import time
 from typing import Any
 
 import requests
@@ -59,23 +58,15 @@ def trigger_submission_to_ena(
             logger.warning("trigger_submission_to_ena stopped due to exception in another task")
             return
         logger.debug("Checking for new sequences to upload to submission_table")
-        # In a loop get approved sequences uploaded to Github and upload to submission_table
         try:
-            response = requests.get(
-                config.approved_list_url,
-                timeout=60,
-            )
+            response = requests.get(config.approved_list_url, timeout=60)
             response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Failed to retrieve file due to requests exception: {e}")
-            time.sleep(config.min_between_github_requests * 60)
-            continue
-        try:
             sequences_to_upload = response.json()
             upload_sequences(db_engine, sequences_to_upload)
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to retrieve file due to requests exception: {e}")
         except Exception as upload_error:
             logger.error(f"Failed to upload sequences: {upload_error}")
-        finally:
-            time.sleep(
-                config.min_between_github_requests * 60
-            )  # Sleep for x min to not overwhelm github
+        if stop_event.wait(timeout=config.min_between_github_requests * 60):
+            logger.info("trigger_submission_to_ena stopped due to exception in another task")
+            return

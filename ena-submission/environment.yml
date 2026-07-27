@@ -11,7 +11,7 @@ dependencies:
   # Extra dependencies
   - beautifulsoup4=4.14.2
   - click=8.3.0
-  - ena-webin-cli=9.0.1=hdfd78af_1
+  - ena-webin-cli=9.0.3
   - fastapi=0.119.1
   - pydantic=2.12.3
   - jsonlines=4.0.0

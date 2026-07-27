@@ -1190,6 +1190,12 @@ class SubmissionDatabaseService(
                 .validateCategoriesMatchSubmissionSchema(fileMapping, organism)
                 .validateMultipartUploads(fileMapping.fileIds)
                 .validateFilesExist(fileMapping.fileIds)
+            validateFilesBelongToSubmittingGroups(
+                mapOf(
+                    AccessionVersion(editedSequenceEntryData.accession, editedSequenceEntryData.version) to
+                        fileMapping.fileIds,
+                ),
+            )
         }
 
         SequenceEntriesTable.update(
@@ -1266,24 +1272,6 @@ class SubmissionDatabaseService(
             submissionId = selectedSequenceEntry[SequenceEntriesView.submissionIdColumn],
         )
     }
-
-    /**
-     * Returns AccessionVersions submitted by groups that the given user is part of
-     * and that are approved for release.
-     */
-    fun getApprovedUserAccessionVersions(authenticatedUser: AuthenticatedUser): List<AccessionVersion> =
-        SequenceEntriesView.select(
-            SequenceEntriesView.accessionColumn,
-            SequenceEntriesView.versionColumn,
-        )
-            .where(SequenceEntriesView.statusIs(APPROVED_FOR_RELEASE))
-            .groupBy(getGroupCondition(null, authenticatedUser))
-            .map {
-                AccessionVersion(
-                    it[SequenceEntriesView.accessionColumn],
-                    it[SequenceEntriesView.versionColumn],
-                )
-            }
 
     private fun submittedMetadataFilter(
         authenticatedUser: AuthenticatedUser,

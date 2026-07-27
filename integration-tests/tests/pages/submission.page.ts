@@ -39,7 +39,7 @@ class SubmissionPage {
     }
 
     async acceptTerms() {
-        await this.page.getByText('I confirm that the data').click();
+        await this.page.getByText('I confirm that I have the legal right').click();
         await this.page.getByText('I confirm I have not and will').click();
     }
 

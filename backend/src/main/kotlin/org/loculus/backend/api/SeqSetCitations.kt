@@ -90,6 +90,11 @@ data class CitationSource(
         description = "List of contributors to the citation source.",
     )
     val contributors: List<CitationContributor>,
+    @Schema(
+        description = "The journal in which the citation source was published, when applicable.",
+        example = "Journal of Examples",
+    )
+    val journal: String? = null,
 )
 
 data class SeqSetCitationSource(val source: CitationSource, val seqSetDOIs: Set<String> = emptySet())
@@ -115,22 +120,21 @@ data class SeqSetCitingSequence(
 @Schema(description = "A citation of a sequence.")
 data class SequenceCitation(val source: CitationSource, val seqSets: List<SeqSetCitingSequence>)
 
-data class ResponseSeqSet(val seqSetId: String, val seqSetVersion: Long)
+@Schema(description = "A citation of one or more SeqSets, with the SeqSets it references.")
+data class AdminSeqSetCitation(val source: CitationSource, val seqSets: List<SeqSet>, val origin: CitationOrigin)
 
-data class CitedBy(
+@Schema(description = "A request to manually register a publication or other source as citing one or more SeqSets.")
+data class AddSeqSetCitationRequest(
+    val source: CitationSource,
     @Schema(
-        description = "The years in which the SeqSet or sequence was cited.",
+        description = "Accession versions of the SeqSets that this source cites.",
         type = "array",
-        example = "[2000, 2001, 2002]",
+        example = "[\"PP_SS_1.1\"]",
     )
-    val years: MutableList<Long>,
-    @Schema(
-        description = "The number of citations per year.",
-        type = "array",
-        example = "[1, 2, 3]",
-    )
-    val citations: MutableList<Long>,
+    val seqSetAccessionVersions: List<String>,
 )
+
+data class ResponseSeqSet(val seqSetId: String, val seqSetVersion: Long)
 
 data class AuthorProfile(
     val username: String,

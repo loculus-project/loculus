@@ -166,6 +166,7 @@ class CrossRefService(
                     CitationContributor(givenName, surname)
                 }
             }
+            val journal = citationElement.selectFirst("journal_title")?.text()?.takeIf { it.isNotBlank() }
 
             SeqSetCitationSource(
                 source = CitationSource(
@@ -173,6 +174,7 @@ class CrossRefService(
                     title = title,
                     year = year,
                     contributors = contributors,
+                    journal = journal,
                 ),
                 seqSetDOIs = setOf(seqSetDOI),
             )

@@ -203,11 +203,11 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
 
     return (
         <>
-            <Menu as='div' className='ml-2 relative inline-block text-left'>
+            <Menu as='div' className='relative inline-block text-left'>
                 <MenuButton
                     className={buttonClasses({
                         variant: 'outline',
-                        className: 'flex items-center min-w-[100px] justify-between',
+                        className: 'flex items-center min-w-[100px] justify-between whitespace-nowrap',
                     })}
                     onClick={() => setIsOpen(!isOpen)}
                 >

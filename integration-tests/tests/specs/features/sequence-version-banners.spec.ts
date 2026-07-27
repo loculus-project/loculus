@@ -95,7 +95,7 @@ test.describe('Sequence version banners', () => {
         await page.getByRole('cell', { name: 'France' }).click();
         await search.reviseSequence();
         await page.getByLabel('Collection date').fill('2023-06-15');
-        await page.getByRole('button', { name: 'Submit' }).click();
+        await page.getByRole('button', { name: /proceed to Approval/ }).click();
         await page.getByRole('button', { name: 'Confirm' }).click();
         await expect(page.getByText('Review pending submissions')).toBeVisible();
 
@@ -198,7 +198,7 @@ test.describe('Sequence version banners', () => {
         await page.getByRole('cell', { name: 'Spain' }).click();
         await search.reviseSequence();
         await page.getByLabel('Collection date').fill('2023-09-20');
-        await page.getByRole('button', { name: 'Submit' }).click();
+        await page.getByRole('button', { name: /proceed to Approval/ }).click();
         await page.getByRole('button', { name: 'Confirm' }).click();
 
         // Release the revision

@@ -1,3 +1,6 @@
+{{- $websiteConfig := include "loculus.generateWebsiteConfig" . | fromYaml }}
+{{- $organisms := $websiteConfig.organisms }}
+{{- $_ := set $websiteConfig "organisms" (dict) }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -5,7 +8,7 @@ metadata:
   name: loculus-website-config
 data:
   website_config.json: |
-    {{ include "loculus.generateWebsiteConfig" . | fromYaml | toJson }}
+    {{ $websiteConfig | toJson }}
   runtime_config.json: |
     {
         "name" : "{{ $.Values.name }}",
@@ -28,3 +31,13 @@ data:
         },
         "backendKeycloakClientSecret" : "[[backendKeycloakClientSecret]]"
     }
+{{- range $key, $organismConfig := $organisms }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "loculus.websiteOrganismConfigMapName" $key }}
+data:
+  {{ $key }}.json: |
+    {{ $organismConfig | toJson }}
+{{- end }}

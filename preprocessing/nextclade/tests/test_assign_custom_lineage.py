@@ -234,7 +234,7 @@ class TestIsVariant:
         )
         assert result.datum is None
         assert len(result.errors) == 1
-        assert "missing mu argument" in result.errors[0].message
+        assert "missing mu argument" in result.errors[0]
 
     @staticmethod
     def test_non_numeric_inputs_return_error():

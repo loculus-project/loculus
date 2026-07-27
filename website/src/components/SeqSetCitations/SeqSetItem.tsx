@@ -1,8 +1,9 @@
 import MUIPagination from '@mui/material/Pagination';
 import { AxiosError } from 'axios';
-import { type FC, useMemo, useState } from 'react';
+import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
+import CitationList from './CitationList.tsx';
 import { DatePlot, CategoryPlot } from './SeqSetPlots.tsx';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
 import type { AggregateRow } from './getSeqSetStatistics.ts';
@@ -11,12 +12,11 @@ import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ProblemDetail } from '../../types/backend.ts';
 import type { SeqSetGraph } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
+import { type SeqSet, type SeqSetCitation, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { getThemeColor } from '../../utils/getThemeColor';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button.tsx';
-import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MdiDotsGrid from '~icons/mdi/dots-grid';
 import MdiViewGrid from '~icons/mdi/view-grid';
@@ -53,6 +53,7 @@ type SeqSetItemProps = {
     seqSetAccessionVersion: string;
     seqSet: SeqSet;
     seqSetRecords: SeqSetRecord[];
+    seqSetCitations: SeqSetCitation[];
     seqSetGraphs: SeqSetGraph[];
     seqSetGraphsData: Record<string, AggregateRow[]>;
     isAdminView?: boolean;
@@ -66,6 +67,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     seqSetAccessionVersion,
     seqSet,
     seqSetRecords,
+    seqSetCitations,
     seqSetGraphs,
     seqSetGraphsData,
     isAdminView = false,
@@ -75,34 +77,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     const [page, setPage] = useState(1);
     const [wideGraphs, setWideGraphs] = useState(false);
     const sequencesPerPage = 10;
-
-    const {
-        isLoading: isSeqSetCitationsLoading,
-        error: seqSetCitationsError,
-        data: seqSetCitations,
-    } = seqSetCitationClientHooks(clientConfig).useGetSeqSetCitations({
-        params: { seqSetId: seqSet.seqSetId, version: seqSet.seqSetVersion },
-    });
-
-    const totalCitations = useMemo(() => {
-        if (isSeqSetCitationsLoading || seqSetCitationsError) return 0;
-
-        return seqSetCitations.length;
-    }, [isSeqSetCitationsLoading, seqSetCitationsError, seqSetCitations]);
-
-    const citationDates: AggregateRow[] = useMemo(() => {
-        if (isSeqSetCitationsLoading || seqSetCitationsError) return [];
-
-        const citationDatesAggregate = new Map<string, number>();
-        seqSetCitations.forEach((citation) => {
-            const year = String(citation.source.year);
-            citationDatesAggregate.set(year, (citationDatesAggregate.get(year) ?? 0) + 1);
-        });
-        return Array.from(citationDatesAggregate.entries()).map(([year, citations]) => ({
-            value: year,
-            count: citations,
-        }));
-    }, [isSeqSetCitationsLoading, seqSetCitationsError, seqSetCitations]);
 
     const { mutate: createSeqSetDOI } = useCreateSeqSetDOIAction(
         clientConfig,
@@ -182,26 +156,17 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                 <SeqSetSection title='Citations'>
                     <SeqSetSectionEntry label='DOI' value={renderDOI()} />
                     <SeqSetSectionEntry
-                        label='Total citations'
+                        label='Cited in'
                         value={
-                            isSeqSetCitationsLoading ? (
-                                <Spinner size='xs' />
-                            ) : seqSetCitationsError ? (
-                                <span>Failed to load citations.</span>
+                            seqSetCitations.length > 0 ? (
+                                <CitationList
+                                    citations={seqSetCitations}
+                                    maxDisplayedCitations={3}
+                                    modalTitle='SeqSet Citations'
+                                />
                             ) : (
-                                <span>Cited by {totalCitations}</span>
+                                <span>No citations found.</span>
                             )
-                        }
-                    />
-                    <SeqSetSectionEntry
-                        label='Citations over time'
-                        value={
-                            <DatePlot
-                                data={citationDates}
-                                description='Number of times this SeqSet has been cited by a publication'
-                                barColor={barPlotColor}
-                                dateFormat='yyyy'
-                            />
                         }
                     />
                 </SeqSetSection>

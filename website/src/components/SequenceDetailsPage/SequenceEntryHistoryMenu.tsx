@@ -11,13 +11,15 @@ import Arrow from '~icons/ic/sharp-keyboard-arrow-down';
 interface Props {
     sequenceEntryHistory: SequenceEntryHistory;
     accessionVersion: string;
-    setPreviewedSeqId?: (seqId: string | null) => void;
+    handleSelect?: (accessionVersion: string) => void;
+    handleLink?: (accessionVersion: string) => string;
 }
 
 export const SequenceEntryHistoryMenu: React.FC<Props> = ({
     sequenceEntryHistory,
     accessionVersion,
-    setPreviewedSeqId,
+    handleSelect,
+    handleLink,
 }) => {
     const selectedVersion = sequenceEntryHistory.find((version) => version.accessionVersion === accessionVersion);
     return (
@@ -49,10 +51,14 @@ export const SequenceEntryHistoryMenu: React.FC<Props> = ({
                     return (
                         <DropdownMenuItem
                             key={version.accessionVersion}
-                            href={routes.sequenceEntryDetailsPage(version.accessionVersion)}
+                            href={
+                                handleLink
+                                    ? handleLink(version.accessionVersion)
+                                    : routes.sequenceEntryDetailsPage(version.accessionVersion)
+                            }
                             onClick={(e) => {
-                                if (setPreviewedSeqId) {
-                                    setPreviewedSeqId(version.accessionVersion);
+                                if (handleSelect) {
+                                    handleSelect(version.accessionVersion);
                                     e.preventDefault();
                                 }
                             }}

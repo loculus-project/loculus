@@ -555,7 +555,9 @@ const FileListItem: FC<FileListeItemProps> = ({ file }) => {
                 ) : (
                     <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>({formatFileSize(file.size)})</span>
                 )}
-                {showProgress && <span className='text-xs text-blue-500 ml-2'>{percentage}%</span>}
+                <span className='text-xs text-blue-500 ml-2 w-9 shrink-0 text-right whitespace-nowrap'>
+                    {showProgress ? `${percentage}%` : ''}
+                </span>
             </div>
             {/* Status icon */}
             <div className='ml-2 w-5 flex justify-center'>{getStatusIcon(file.type)}</div>

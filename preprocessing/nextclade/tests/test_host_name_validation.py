@@ -6,7 +6,10 @@ import pytest
 
 from loculus_preprocessing import processing_functions
 from loculus_preprocessing.config import get_config
-from loculus_preprocessing.datatypes import UnprocessedData, UnprocessedEntry
+from loculus_preprocessing.datatypes import (
+    UnprocessedData,
+    UnprocessedEntry,
+)
 from loculus_preprocessing.prepro import process_all
 
 HOST_PROCESSING_CONFIG = "tests/host_processing_config.yaml"

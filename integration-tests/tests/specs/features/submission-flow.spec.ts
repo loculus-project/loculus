@@ -32,7 +32,7 @@ test.describe('Submission flow', () => {
         await page.getByTestId('sequence_file').setInputFiles(sequencesFile);
         await page.getByTestId('metadata_file').setInputFiles(metadataFile);
 
-        await page.getByLabel('I confirm that the data').check();
+        await page.getByLabel('I confirm that I have the legal right').check();
         await page.getByLabel('I confirm I have not and will').check();
 
         await page.getByRole('button', { name: 'Upload and proceed to Approval' }).click();

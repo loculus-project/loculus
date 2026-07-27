@@ -13,6 +13,7 @@ import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
 import { type SequenceCitation } from '../../types/seqSetCitation.ts';
+import { parseAccessionVersionFromString } from '../../utils/extractAccessionVersion.ts';
 import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import { Button } from '../common/Button';
@@ -54,6 +55,8 @@ export const SequenceDataUI: FC<Props> = ({
 }: Props) => {
     const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as number;
 
+    const { accession, version } = parseAccessionVersionFromString(accessionVersion);
+
     const isMyGroup = myGroups.some((group) => group.groupId === groupId);
 
     dataUseTermsHistory.sort((a, b) => (a.changeDate > b.changeDate ? -1 : 1));
@@ -90,7 +93,7 @@ export const SequenceDataUI: FC<Props> = ({
                     />
                 </div>
             )}
-            {isMyGroup && accessToken !== undefined && (
+            {isMyGroup && !isRevocation && accessToken !== undefined && (
                 <>
                     <hr className='my-4' />
                     <div className='my-8'>
@@ -113,10 +116,7 @@ export const SequenceDataUI: FC<Props> = ({
                             <Button
                                 as='a'
                                 size='sm'
-                                href={routes.editPage(organism, {
-                                    accession: accessionVersion.split('.')[0],
-                                    version: parseInt(accessionVersion.split('.')[1], 10),
-                                })}
+                                href={routes.revisePage(organism, groupId, 'form', accession, version?.toString())}
                             >
                                 Revise this sequence
                             </Button>

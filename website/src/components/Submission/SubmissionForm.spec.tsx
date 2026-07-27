@@ -116,9 +116,7 @@ describe('SubmitForm', () => {
             await userEvent.click(
                 getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
             );
-            await userEvent.click(
-                getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
-            );
+            await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
             const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
             await userEvent.click(submitButton);
@@ -140,9 +138,7 @@ describe('SubmitForm', () => {
         await userEvent.click(
             getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
         );
-        await userEvent.click(
-            getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
-        );
+        await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
         const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
         await userEvent.click(submitButton);
@@ -166,9 +162,7 @@ describe('SubmitForm', () => {
         await userEvent.click(
             getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
         );
-        await userEvent.click(
-            getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
-        );
+        await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
         const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
         await userEvent.click(submitButton);
@@ -192,9 +186,7 @@ describe('SubmitForm', () => {
         await userEvent.click(
             getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
         );
-        await userEvent.click(
-            getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
-        );
+        await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
         const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
         await userEvent.click(submitButton);
@@ -244,9 +236,7 @@ describe('SubmitForm', () => {
 
         await userEvent.upload(getByLabelText(/Metadata file/i), metadataFile);
         await userEvent.upload(getByLabelText(/Sequence file/i), sequencesFile);
-        await userEvent.click(
-            getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
-        );
+        await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
         const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
         await userEvent.click(submitButton);
@@ -277,9 +267,7 @@ describe('SubmitForm', () => {
         await userEvent.click(
             getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
         );
-        await userEvent.click(
-            getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
-        );
+        await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
         const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
         await userEvent.click(submitButton);
@@ -305,9 +293,7 @@ describe('SubmitForm', () => {
         await userEvent.click(
             getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
         );
-        await userEvent.click(
-            getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
-        );
+        await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
         const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
         await userEvent.click(submitButton);
