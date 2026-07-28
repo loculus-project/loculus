@@ -13,8 +13,9 @@ from file_processing.datatypes import (
     ResponseWithFiles,
 )
 from file_processing.file_validation import (
-    run_validation,
+    validate_file_format,
     validate_file_extensions,
+    validate_file_numbers,
 )
 
 logger = logging.getLogger(__name__)
@@ -88,6 +89,14 @@ def validate_raw_reads_submission(
         return ResponseWithFiles(
             files={FileCategory.RAW_READS: files}, errors=errors, warnings=warnings
         )
+    file_number_errors = validate_file_numbers(
+        format_type, [file.name for file in files]
+    )
+    if file_number_errors:
+        errors.append(file_number_errors)
+        return ResponseWithFiles(
+            files={FileCategory.RAW_READS: files}, errors=errors, warnings=warnings
+        )
 
     with TemporaryDirectory() as tmp_dir:
         local_files = []
@@ -123,7 +132,7 @@ def validate_raw_reads_submission(
             return ResponseWithFiles(
                 files={FileCategory.RAW_READS: files}, errors=errors, warnings=warnings
             )
-        file_format_validation = run_validation(
+        file_format_validation = validate_file_format(
             local_files, format_type, tmp_dir, config.read_validation_timeout_seconds
         )
         if file_format_validation:

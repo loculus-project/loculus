@@ -148,7 +148,25 @@ def validate_file_extensions(
     return format_type, errors
 
 
-def run_validation(
+def validate_file_numbers(
+    format_type: FormatType, files: list[str]
+) -> Annotation | None:
+    if format_type == FormatType.FASTQ and len(files) > 2:
+        return Annotation(
+            fileName=", ".join(file for file in files),
+            fileCategory=FileCategory.RAW_READS,
+            message=f"Too many FASTQ files submitted ({len(files)}). We only allow 1 FASTQ file for single-end reads or 2 FASTQ files for paired-end reads.",
+        )
+    if format_type in {FormatType.BAM, FormatType.CRAM} and len(files) > 1:
+        return Annotation(
+            fileName=", ".join(file for file in files),
+            fileCategory=FileCategory.RAW_READS,
+            message=f"Too many {format_type.value.upper()} files submitted ({len(files)}). We only allow 1 {format_type.value.upper()} file per submission.",
+        )
+    return None
+
+
+def validate_file_format(
     input_files: list[str],
     format_type: FormatType,
     data_dir: str,
