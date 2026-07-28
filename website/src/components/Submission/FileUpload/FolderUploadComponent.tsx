@@ -431,7 +431,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     {fileUploadState.files.map((file) => (
                         <div key={file.path} className='flex items-center mb-2 gap-2'>
                             <div className='flex-1 min-w-0'>
-                                <FileListItem file={file} />
+                                <FileListItem file={file} fileCategory={fileCategory.name} />
                             </div>
                             <Button
                                 onClick={() => handleDiscardFile(file.path)}
@@ -491,9 +491,10 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
 type FileListeItemProps = {
     file: SingleFileUpload;
+    fileCategory: string;
 };
 
-const FileListItem: FC<FileListeItemProps> = ({ file }) => {
+const FileListItem: FC<FileListeItemProps> = ({ file, fileCategory }) => {
     const showProgress = file.type === 'pending';
     const percentage = showProgress ? Math.round((file.uploadedParts / file.totalParts) * 100) : 0;
 
@@ -511,7 +512,9 @@ const FileListItem: FC<FileListeItemProps> = ({ file }) => {
                     {showProgress ? `${percentage}%` : ''}
                 </span>
             </div>
-            <div className='ml-2 w-5 flex justify-center'>{getStatusIcon(file.type)}</div>
+            <div className='ml-2 w-5 flex justify-center' data-testid={`status_${fileCategory}_${file.path}`}>
+                {getStatusIcon(file.type)}
+            </div>
         </div>
     );
 };

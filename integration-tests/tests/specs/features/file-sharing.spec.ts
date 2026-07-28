@@ -8,7 +8,7 @@ import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/su
 
 const ORGANISM_NAME = 'Test organism (with files)';
 const ORGANISM_URL_NAME = 'dummy-organism-with-files';
-const RAW_READS = 'raw_reads';
+const RAW_READS = 'rawReads';
 const RAW_READS_FILES_HEADER = `files.${RAW_READS}`;
 const METADATA_HEADERS = ['submissionId', 'country', 'date'];
 const COUNTRY_1 = 'Norway';
@@ -223,4 +223,69 @@ test('single revise seq with files via edit page', async ({ page, groupId, tmpDi
         `${accessionVersions[0].accession}.${accessionVersions[0].version + 1}`,
         REVISION_FILES,
     );
+});
+
+const FILES_TRIPLE: Record<string, string> = {
+    'file1.txt': 'Content of file 1.',
+    'file2.txt': 'Content of file 2.',
+    'file3.txt': 'Content of file 3.',
+};
+const ADDED_FILE = { 'file4.txt': 'Content of file 4.' };
+const REPLACEMENT_CONTENT = 'Replaced content of file 2.';
+
+test('single revise seq via edit page reuses, replaces, discards and adds files', async ({
+    page,
+    groupId,
+    tmpDir,
+}) => {
+    test.setTimeout(300_000);
+
+    // Step 1: Submit and release a sequence with three files
+    const submissionPage = new SingleSequenceSubmissionPage(page);
+    await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
+    await submissionPage.fillSubmissionFormDummyOrganism({
+        submissionId: 'single-edit-files',
+        country: COUNTRY_1,
+        date: '2023-01-01',
+    });
+    await submissionPage.uploadExternalFiles(RAW_READS, FILES_TRIPLE, tmpDir);
+    const reviewPage = await submissionPage.submitAndWaitForProcessingDone();
+    const searchPage = await reviewPage.releaseAndGoToReleasedSequences();
+
+    // Step 2: Reuse, replace, discard and add a file
+    const [{ accession, version }] = await searchPage.waitForSequencesInSearch(1);
+    const [reusedName, replacedName, discardedName] = Object.keys(FILES_TRIPLE);
+    const [addedName, addedContent] = Object.entries(ADDED_FILE)[0];
+
+    const editPage = new EditPage(page);
+    await editPage.goto(ORGANISM_URL_NAME, accession, version);
+
+    // Reused file
+    await editPage.expectExtraFileUploaded(RAW_READS, reusedName);
+
+    // Replaced file
+    await editPage.addAdditionalFile(RAW_READS, replacedName, REPLACEMENT_CONTENT);
+    await editPage.confirmReplaceFile();
+    await editPage.expectExtraFileUploaded(RAW_READS, replacedName);
+
+    // Discarded file
+    await editPage.discardExtraFile(RAW_READS, discardedName);
+    await editPage.expectExtraFileDiscarded(RAW_READS, discardedName);
+
+    // Added file
+    await editPage.addAdditionalFile(RAW_READS, addedName, addedContent);
+    await editPage.expectExtraFileUploaded(RAW_READS, addedName);
+
+    const reviewPage2 = await editPage.submitChanges();
+    await reviewPage2.waitForZeroProcessing();
+    await reviewPage2.releaseValidSequences();
+
+    // Step 3: The revision serves the reused, replaced and added files, and not the discarded one
+    const searchPage2 = new SearchPage(page);
+    await searchPage2.goToReleasedSequences(ORGANISM_URL_NAME, groupId);
+    await searchPage2.checkFileContentInModal('link', `${accession}.${version + 1}`, {
+        [reusedName]: FILES_TRIPLE[reusedName],
+        [replacedName]: REPLACEMENT_CONTENT,
+        ...ADDED_FILE,
+    });
 });
