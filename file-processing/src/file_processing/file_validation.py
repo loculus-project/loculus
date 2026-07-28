@@ -152,6 +152,8 @@ def validate_file_numbers(
     format_type: FormatType, files: list[str]
 ) -> Annotation | None:
     if format_type == FormatType.FASTQ and len(files) > 2:
+        # ENA's readtools.jar actually allows more than 2 FASTQ files, but it treats every 1+i file as a paired read of the first file.
+        # ENA documents that multi-FASTQs should be submitted using a JSON manifest, which we don't support, so we enforce a stricter limit here.
         return Annotation(
             fileName=", ".join(file for file in files),
             fileCategory=FileCategory.RAW_READS,
