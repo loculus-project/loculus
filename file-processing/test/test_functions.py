@@ -52,7 +52,7 @@ def test_validate_raw_reads_submission_download_stays_within_tmp_dir(monkeypatch
         save_path.write_text("@seq1\nACGT\n+\nIIII\n")
 
     monkeypatch.setattr(functions, "download_file", fake_download_file)
-    monkeypatch.setattr(functions, "run_validation", lambda *a, **k: None)
+    monkeypatch.setattr(functions, "validate_file_format", lambda *a, **k: None)
 
     malicious_file = FileIdAndNameAndReadUrl(
         fileId="id1", name="../../../etc/passwd.fastq", url="http://example.com/f"
