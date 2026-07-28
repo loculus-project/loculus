@@ -33,33 +33,11 @@ class SubmissionMetrics(private val meterRegistry: MeterRegistry) {
             .increment(count.toDouble())
     }
 
-    // Use this for write paths where the start and end happen in different call sites.
-    fun startTimer(): Timer.Sample = Timer.start(meterRegistry)
+    fun <T> timeWritePhase(operation: String, organism: String, phase: String, block: () -> T): T =
+        timePhase(WRITE_PHASE_DURATION_TIMER, operation, organism, phase, block)
 
-    // Records a named phase in mutating submission workflows, e.g. parsing or database writes.
-    fun recordWritePhase(sample: Timer.Sample, endpoint: String, organism: String, phase: String) {
-        sample.stop(
-            Timer.builder(WRITE_PHASE_DURATION_TIMER)
-                .tag(ENDPOINT_TAG, endpoint)
-                .tag(ORGANISM_TAG, organism)
-                .tag(PHASE_TAG, phase)
-                .register(meterRegistry),
-        )
-    }
-
-    // Records a named phase in streaming/read endpoints where duration is measured outside this class.
-    fun recordReadPhase(endpoint: String, organism: String, phase: String, duration: Duration) {
-        if (duration.isNegative) {
-            return
-        }
-
-        Timer.builder(READ_PHASE_DURATION_TIMER)
-            .tag(ENDPOINT_TAG, endpoint)
-            .tag(ORGANISM_TAG, organism)
-            .tag(PHASE_TAG, phase)
-            .register(meterRegistry)
-            .record(duration)
-    }
+    fun <T> timeReadPhase(operation: String, organism: String, phase: String, block: () -> T): T =
+        timePhase(READ_PHASE_DURATION_TIMER, operation, organism, phase, block)
 
     fun recordPollingRequest(endpoint: String, organism: String, status: String, duration: Duration) {
         if (duration.isNegative) {
@@ -72,6 +50,27 @@ class SubmissionMetrics(private val meterRegistry: MeterRegistry) {
             .tag(STATUS_TAG, status)
             .register(meterRegistry)
             .record(duration)
+    }
+
+    private fun <T> timePhase(
+        timerName: String,
+        operation: String,
+        organism: String,
+        phase: String,
+        block: () -> T,
+    ): T {
+        val sample = Timer.start(meterRegistry)
+        return try {
+            block()
+        } finally {
+            sample.stop(
+                Timer.builder(timerName)
+                    .tag(ENDPOINT_TAG, operation)
+                    .tag(ORGANISM_TAG, organism)
+                    .tag(PHASE_TAG, phase)
+                    .register(meterRegistry),
+            )
+        }
     }
 
     private companion object {

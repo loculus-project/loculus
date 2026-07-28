@@ -273,17 +273,12 @@ class SubmissionDatabaseService(
     }
 
     fun updateProcessedData(inputStream: InputStream, organism: Organism, pipelineVersion: Long) {
-        val sample = submissionMetrics.startTimer()
-
-        try {
+        submissionMetrics.timeWritePhase(
+            SUBMIT_PROCESSED_DATA_ENDPOINT,
+            organism.name,
+            STORE_PREPROCESSED_DATA_PHASE,
+        ) {
             updateProcessedDataAndRecordCount(inputStream, organism, pipelineVersion)
-        } finally {
-            submissionMetrics.recordWritePhase(
-                sample,
-                SUBMIT_PROCESSED_DATA_ENDPOINT,
-                organism.name,
-                STORE_PREPROCESSED_DATA_PHASE,
-            )
         }
     }
 
