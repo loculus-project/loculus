@@ -110,14 +110,24 @@ class TaxonomyService:
                 errors=[message] if error_if_failed else [],
             )
         if isinstance(body, list):
-            # when querying by scientific name, multiple taxa may be returned: select the most generic one
+            # when querying by scientific name, multiple taxa may be returned
+            # - we select the most generic one
+            if not body:
+                message = (
+                    f"Host validation for '{unvalidated_host}' was successful "
+                    "but no taxa were returned."
+                )
+                return raw_internal_error(message)
             taxon = min(body, key=lambda x: x.get("depth", float("inf")))
         else:
             taxon = body
 
         tax_id = taxon.get("tax_id")
         if tax_id is None:
-            message = f"Host validation for '{unvalidated_host}' was successful but response json 'tax_id' was missing."
+            message = (
+                f"Host validation for '{unvalidated_host}' was successful "
+                "but response json 'tax_id' was missing."
+            )
             return raw_internal_error(message)
         return RawProcessingResult(
             datum=str(tax_id),
