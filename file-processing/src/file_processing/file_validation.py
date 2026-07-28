@@ -1,7 +1,5 @@
-import gzip
 import logging
 import os
-import re
 import subprocess  # noqa: S404
 from enum import StrEnum
 from pathlib import Path
@@ -24,52 +22,6 @@ ACCEPTED_BAM_EXTENSIONS = {".bam", ".sam"}
 ACCEPTED_CRAM_EXTENSIONS = {".cram"}
 
 ACCEPTED_FORMATS = [FormatType.FASTQ]
-
-# Mirrors readtools' own Illumina/CASAVA read-name pairing detection
-# (uk.ac.ebi.ena.readtools.common.reads.CasavaRead / PairedFastqReadsValidator)
-_CASAVA_18_HEADER = re.compile(r"^(.+)([ \t]+)([0-9]+):([YN]):([0-9]*[02468])($|:.*$)")
-_CASAVA_LIKE_MACHINE_ID = re.compile(
-    r"^[a-zA-Z0-9_-]+:[0-9]+:[a-zA-Z0-9_-]+:[0-9]+:[0-9]+:[0-9-]+:[0-9-]+$"
-)
-_MATE_SUFFIX = re.compile(r"^(.*)[./:_]([1234])$")
-
-
-def _mate_index(header: str) -> str | None:
-    """Best-effort mate number (1, 2, ...) for a FASTQ read header, or None if
-    the header doesn't follow a recognizable paired-read naming convention.
-    """
-    casava_match = _CASAVA_18_HEADER.match(header)
-    if casava_match:
-        return casava_match.group(3)
-    if _CASAVA_LIKE_MACHINE_ID.match(header):
-        return None
-    suffix_match = _MATE_SUFFIX.match(header)
-    return suffix_match.group(2) if suffix_match else None
-
-
-def _open_text(file_path: str):
-    if file_path.endswith(".gz"):
-        return gzip.open(file_path, "rt")
-    return Path(file_path).open()
-
-
-def _mixed_mates(file_path: str) -> str | None:
-    """Return a description of the mate numbers mixed together in a single
-    FASTQ file (e.g. an interleaved file, or one half of a paired submission
-    that wasn't properly de-interleaved), or None if at most one mate is present.
-    """
-    logger.debug(f"Checking for mixed mates in FASTQ file '{file_path}'")
-    mate_indices: set[str] = set()
-    with _open_text(file_path) as f:
-        for line_number, line in enumerate(f):
-            if line_number % 4 != 0:
-                continue
-            index = _mate_index(line.rstrip("\n")[1:])
-            if index is not None:
-                mate_indices.add(index)
-    if len(mate_indices) > 1:
-        return ", ".join(sorted(mate_indices))
-    return None
 
 
 def _parse_validation_error(log_file_path: Path, error_log_path: Path) -> str:
@@ -175,23 +127,6 @@ def validate_file_format(
     data_dir: str,
     timeout_seconds: int = 300,
 ) -> Annotation | None:
-    if format_type == FormatType.FASTQ:
-        for file in input_files:
-            # Readtools handles single interleaved FASTQ files as single non-interleaved FASTQ files.
-            # Paired read checks are not performed and confusing error messages may be produced.
-            # To avoid this we prevent users from submitting interleaved FASTQ files by checking for mixed mate numbers in the file.
-            mixed = _mixed_mates(file)
-            if mixed is not None:
-                message = (
-                    f"File '{Path(file).name}' contains reads from multiple mates "
-                    f"(read numbers: {mixed}). Interleaved FASTQ files are not supported; "
-                    "please submit paired-end reads as separate, de-interleaved files."
-                )
-                logger.error(message)
-                return Annotation(
-                    fileName=Path(file).name,
-                    message=message,
-                )
     args = (
         ["java", "-jar", VALIDATION_JAR_PATH]
         + [file for file in input_files]

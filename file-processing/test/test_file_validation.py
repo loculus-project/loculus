@@ -9,7 +9,6 @@ import pytest
 from file_processing import file_validation
 from file_processing.datatypes import Annotation
 from file_processing.file_validation import (
-    _mixed_mates,
     _parse_validation_error,
     validate_file_format,
     validate_file_extensions,
@@ -118,44 +117,6 @@ TGCATGCATG
 IIIIIIIIII
 """
 
-# readtools' own pairing check only looks at the combined set of mate labels
-# across both files, so two files that are each individually a mix of mate 1
-# and mate 2 reads still pass its check as a valid paired submission.
-BADLY_SPLIT_R1 = """\
-@M1:1:FC:1:1:1:1 1:N:0:AC
-ACGTACGTAC
-+
-IIIIIIIIII
-@M1:1:FC:1:1:2:2 2:N:0:AC
-TGCATGCATG
-+
-IIIIIIIIII
-"""
-
-BADLY_SPLIT_R2 = """\
-@M1:1:FC:1:1:1:1 2:N:0:AC
-TGCATGCATG
-+
-IIIIIIIIII
-@M1:1:FC:1:1:2:2 1:N:0:AC
-ACGTACGTAC
-+
-IIIIIIIIII
-"""
-
-# The trailing ":1" / ":2" here are Illumina X/Y tile coordinates, not mate
-# markers, and must not be mistaken for one.
-MACHINE_ID_HEADERS = """\
-@A00953:544:HMTFHDSX3:2:1101:6768:1
-ACGTACGTAC
-+
-IIIIIIIIII
-@A00953:544:HMTFHDSX3:2:1101:6768:2
-ACGTACGTAC
-+
-IIIIIIIIII
-"""
-
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
@@ -260,30 +221,13 @@ def test_deinterleaved_paired_reads_pass(tmp_path):
 
 
 @pytest.mark.usefixtures("readtools_jar")
-def test_casava_style_interleaved_single_file_is_rejected(tmp_path):
+def test_casava_style_interleaved_single_file_passes(tmp_path):
     """readtools' single-file check only flags byte-identical read names, so
     an interleaved file using Illumina's "1:N:0:..." / "2:N:0:..." read-number
-    convention (unique names) passes readtools but must still be rejected.
+    convention (unique names) passes readtools.
     """
     reads = _write(tmp_path, "interleaved_casava.fastq", CASAVA_INTERLEAVED_SINGLE_FILE)
-    result = validate_file_format([reads], FormatType.FASTQ, str(tmp_path))
-    assert isinstance(result, Annotation)
-    assert "multiple mates" in result.message
-    assert "read numbers: 1, 2" in result.message
-
-
-@pytest.mark.usefixtures("readtools_jar")
-def test_two_files_each_individually_interleaved_is_rejected(tmp_path):
-    """readtools' pairing check only checks that the combined set of mate
-    labels across both files is small; it never checks that each file
-    contains only one mate. Two files that are each a mix of mate 1 and
-    mate 2 reads pass readtools as paired: true, so this must be caught here.
-    """
-    r1 = _write(tmp_path, "R1.fastq", BADLY_SPLIT_R1)
-    r2 = _write(tmp_path, "R2.fastq", BADLY_SPLIT_R2)
-    result = validate_file_format([r1, r2], FormatType.FASTQ, str(tmp_path))
-    assert isinstance(result, Annotation)
-    assert "multiple mates" in result.message
+    assert validate_file_format([reads], FormatType.FASTQ, str(tmp_path)) is None
 
 
 @pytest.mark.usefixtures("readtools_jar")
@@ -292,11 +236,6 @@ def test_gzipped_fastq_is_recognized_and_passes(tmp_path):
     with gzip.open(gz_path, "wt") as f:
         f.write(VALID_SINGLE_END)
     assert validate_file_format([str(gz_path)], FormatType.FASTQ, str(tmp_path)) is None
-
-
-def test_machine_id_headers_are_not_mistaken_for_mate_suffixes(tmp_path):
-    reads = _write(tmp_path, "reads.fastq", MACHINE_ID_HEADERS)
-    assert _mixed_mates(reads) is None
 
 
 def _write_bytes(tmp_path: Path, name: str, data: bytes) -> str:

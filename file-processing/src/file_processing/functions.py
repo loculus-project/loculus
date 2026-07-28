@@ -116,9 +116,13 @@ def validate_raw_reads_submission(
                 continue
             file_name_internal = Path(tmp_dir) / f"{file.fileId}-{safe_name}"
             try:
-                logger.debug(f"Downloading file '{file.name}' from S3 to '{file_name_internal}'")
+                logger.debug(
+                    f"Downloading file '{file.name}' from S3 to '{file_name_internal}'"
+                )
                 download_file(config, file.url, file_name_internal)
-                logger.debug(f"Successfully downloaded file '{file.name}' to '{file_name_internal}'")
+                logger.debug(
+                    f"Successfully downloaded file '{file.name}' to '{file_name_internal}'"
+                )
             except requests.RequestException as e:
                 message = f"Error downloading file '{file.name}' from S3: {e}"
                 logger.error(message)
