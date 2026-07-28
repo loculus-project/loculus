@@ -1,3 +1,4 @@
+import type { Result } from 'neverthrow';
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 
 import type { UploadAction } from './DataUploadForm';
@@ -40,7 +41,7 @@ export type FileFactory = () => Promise<SequenceData | InputError>;
 type FormOrUploadWrapperProps = {
     inputMode: InputMode;
     setFileFactory: Dispatch<SetStateAction<FileFactory | undefined>>;
-    setSubmissionFileMapping: Dispatch<SetStateAction<SubmissionFileMapping | undefined>>;
+    setSubmissionFileMapping: Dispatch<SetStateAction<Result<SubmissionFileMapping, Error> | undefined>>;
     organism: string;
     action: UploadAction;
     metadataTemplateFields: Map<string, InputField[]>;
@@ -88,11 +89,8 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 : await metadataFile.text();
             if (!controller.signal.aborted) {
                 const submissionFileMapping = parseSubmissionFileMapping(text);
-                if (submissionFileMapping.isOk()) setSubmissionFileMapping(submissionFileMapping.value);
-                else {
-                    setSubmissionFileMapping(undefined);
-                    onError(submissionFileMapping.error.message);
-                }
+                setSubmissionFileMapping(submissionFileMapping);
+                if (submissionFileMapping.isErr()) onError(submissionFileMapping.error.message);
             }
         })();
         return () => controller.abort();

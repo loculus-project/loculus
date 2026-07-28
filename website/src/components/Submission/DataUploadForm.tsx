@@ -1,6 +1,7 @@
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { DateTime } from 'luxon';
+import type { Result } from 'neverthrow';
 import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo } from 'react';
 
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
@@ -77,7 +78,9 @@ const InnerDataUploadForm = ({
     const { submit, revise, isPending } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
     const [fileMapping, setFileMapping] = useState<FileMapping<ResolvedSubmissionFile> | undefined>(undefined);
-    const [submissionFileMapping, setSubmissionFileMapping] = useState<SubmissionFileMapping | undefined>(undefined);
+    const [submissionFileMapping, setSubmissionFileMapping] = useState<
+        Result<SubmissionFileMapping, Error> | undefined
+    >(undefined);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
@@ -87,8 +90,8 @@ const InnerDataUploadForm = ({
 
     const fileLinkage = useMemo(
         () =>
-            inputMode === 'bulk' && submissionFileMapping !== undefined
-                ? getFileLinkage(submissionFileMapping, fileMapping)
+            inputMode === 'bulk' && submissionFileMapping?.isOk()
+                ? getFileLinkage(submissionFileMapping.value, fileMapping)
                 : undefined,
         [inputMode, submissionFileMapping, fileMapping],
     );
@@ -125,11 +128,23 @@ const InnerDataUploadForm = ({
         let finalMetadataFile = metadataFile;
 
         if (extraFilesEnabled) {
-            if (submissionId !== undefined && inputMode === 'form' && fileMapping !== undefined) {
-                const finalSubmissionFileMapping = new Map([[submissionId, fileMapping]]);
-                finalMetadataFile = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
-            } else if (submissionFileMapping !== undefined) {
-                const fileLinkage = getFileLinkage(submissionFileMapping, fileMapping);
+            if (inputMode === 'form') {
+                if (fileMapping !== undefined) {
+                    const finalSubmissionFileMapping = new Map([[submissionId!, fileMapping]]);
+                    finalMetadataFile = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
+                }
+            } else {
+                if (submissionFileMapping === undefined) {
+                    onError('Cannot submit: metadata file is still being processed.');
+                    return;
+                }
+
+                if (submissionFileMapping.isErr()) {
+                    onError(submissionFileMapping.error.message);
+                    return;
+                }
+
+                const fileLinkage = getFileLinkage(submissionFileMapping.value, fileMapping);
                 const linkageError = getLinkageErrors(fileLinkage.details);
                 if (linkageError !== undefined) {
                     onError(linkageError);
