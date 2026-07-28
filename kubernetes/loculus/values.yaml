@@ -1906,10 +1906,10 @@ defaultOrganisms:
         files:
           enabled: true
           categories:
-            - name: raw_reads
+            - name: rawReads
               displayName: Raw reads
       files:
-        - name: raw_reads
+        - name: rawReads
           displayName: Raw reads
       metadata: *dummyMetadata
       website:
