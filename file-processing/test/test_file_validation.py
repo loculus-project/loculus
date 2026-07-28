@@ -155,20 +155,30 @@ def _write(tmp_path: Path, name: str, content: str) -> str:
 @pytest.mark.usefixtures("readtools_jar")
 def test_valid_single_end_fastq_passes(tmp_path):
     reads = _write(tmp_path, "reads.fastq", VALID_SINGLE_END)
-    assert validate_file_format({"reads.fastq": reads}, FormatType.FASTQ, str(tmp_path)) is None
+    assert (
+        validate_file_format({"reads.fastq": reads}, FormatType.FASTQ, str(tmp_path))
+        is None
+    )
 
 
 @pytest.mark.usefixtures("readtools_jar")
 def test_valid_paired_end_fastq_passes(tmp_path):
     r1 = _write(tmp_path, "R1.fastq", VALID_R1)
     r2 = _write(tmp_path, "R2.fastq", VALID_R2)
-    assert validate_file_format({"R1.fastq": r1, "R2.fastq": r2}, FormatType.FASTQ, str(tmp_path)) is None
+    assert (
+        validate_file_format(
+            {"R1.fastq": r1, "R2.fastq": r2}, FormatType.FASTQ, str(tmp_path)
+        )
+        is None
+    )
 
 
 @pytest.mark.usefixtures("readtools_jar")
 def test_fasta_style_header_is_rejected(tmp_path):
     reads = _write(tmp_path, "bad_header.fastq", FASTA_STYLE_HEADER)
-    result = validate_file_format({"bad_header.fastq": reads}, FormatType.FASTQ, str(tmp_path))
+    result = validate_file_format(
+        {"bad_header.fastq": reads}, FormatType.FASTQ, str(tmp_path)
+    )
     assert isinstance(result, Annotation)
     assert "must start with @" in result.message
 
@@ -176,7 +186,9 @@ def test_fasta_style_header_is_rejected(tmp_path):
 @pytest.mark.usefixtures("readtools_jar")
 def test_non_iupac_base_is_rejected(tmp_path):
     reads = _write(tmp_path, "bad_base.fastq", NON_IUPAC_BASE)
-    result = validate_file_format({"bad_base.fastq": reads}, FormatType.FASTQ, str(tmp_path))
+    result = validate_file_format(
+        {"bad_base.fastq": reads}, FormatType.FASTQ, str(tmp_path)
+    )
     assert isinstance(result, Annotation)
     assert "IUPAC" in result.message
 
@@ -184,7 +196,9 @@ def test_non_iupac_base_is_rejected(tmp_path):
 @pytest.mark.usefixtures("readtools_jar")
 def test_length_mismatch_is_rejected(tmp_path):
     reads = _write(tmp_path, "bad_length.fastq", LENGTH_MISMATCH)
-    result = validate_file_format({"bad_length.fastq": reads}, FormatType.FASTQ, str(tmp_path))
+    result = validate_file_format(
+        {"bad_length.fastq": reads}, FormatType.FASTQ, str(tmp_path)
+    )
     assert isinstance(result, Annotation)
     assert "same length" in result.message
 
@@ -196,7 +210,9 @@ def test_interleaved_fastq_in_single_file_is_rejected(tmp_path):
     check, even though the file itself is well-formed FASTQ.
     """
     reads = _write(tmp_path, "interleaved.fastq", INTERLEAVED_SAME_NAME)
-    result = validate_file_format({"interleaved.fastq": reads}, FormatType.FASTQ, str(tmp_path))
+    result = validate_file_format(
+        {"interleaved.fastq": reads}, FormatType.FASTQ, str(tmp_path)
+    )
     assert isinstance(result, Annotation)
     assert "Multiple" in result.message
     assert "occurrences of read name" in result.message
@@ -217,7 +233,12 @@ def test_deinterleaved_paired_reads_pass(tmp_path):
         "R2.fastq",
         "@read1\nTGCATGCATG\n+\nIIIIIIIIII\n@read2\nTGCATGCATG\n+\nIIIIIIIIII\n",
     )
-    assert validate_file_format({"R1.fastq": r1, "R2.fastq": r2}, FormatType.FASTQ, str(tmp_path)) is None
+    assert (
+        validate_file_format(
+            {"R1.fastq": r1, "R2.fastq": r2}, FormatType.FASTQ, str(tmp_path)
+        )
+        is None
+    )
 
 
 @pytest.mark.usefixtures("readtools_jar")
@@ -227,7 +248,12 @@ def test_casava_style_interleaved_single_file_passes(tmp_path):
     convention (unique names) passes readtools.
     """
     reads = _write(tmp_path, "interleaved_casava.fastq", CASAVA_INTERLEAVED_SINGLE_FILE)
-    assert validate_file_format({"interleaved_casava.fastq": reads}, FormatType.FASTQ, str(tmp_path)) is None
+    assert (
+        validate_file_format(
+            {"interleaved_casava.fastq": reads}, FormatType.FASTQ, str(tmp_path)
+        )
+        is None
+    )
 
 
 @pytest.mark.usefixtures("readtools_jar")
@@ -235,7 +261,12 @@ def test_gzipped_fastq_is_recognized_and_passes(tmp_path):
     gz_path = tmp_path / "reads.fastq.gz"
     with gzip.open(gz_path, "wt") as f:
         f.write(VALID_SINGLE_END)
-    assert validate_file_format({"reads.fastq.gz": str(gz_path)}, FormatType.FASTQ, str(tmp_path)) is None
+    assert (
+        validate_file_format(
+            {"reads.fastq.gz": str(gz_path)}, FormatType.FASTQ, str(tmp_path)
+        )
+        is None
+    )
 
 
 def _write_bytes(tmp_path: Path, name: str, data: bytes) -> str:
@@ -247,7 +278,9 @@ def _write_bytes(tmp_path: Path, name: str, data: bytes) -> str:
 @pytest.mark.usefixtures("readtools_jar")
 def test_valid_bam_passes(tmp_path):
     bam = _write_bytes(tmp_path, "reads.bam", (FIXTURES_DIR / "valid.bam").read_bytes())
-    assert validate_file_format({"reads.bam": bam}, FormatType.BAM, str(tmp_path)) is None
+    assert (
+        validate_file_format({"reads.bam": bam}, FormatType.BAM, str(tmp_path)) is None
+    )
 
 
 @pytest.mark.usefixtures("readtools_jar")
