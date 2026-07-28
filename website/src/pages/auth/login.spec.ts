@@ -54,6 +54,16 @@ describe('/auth/login', () => {
         expect(mocks.getClient).not.toHaveBeenCalled();
     });
 
+    test('rejects a protocol-relative returnTo destination on another origin', async () => {
+        const response = await GET(
+            contextFor('https://loculus.test/auth/login?returnTo=%2F%2Fattacker.test%2Fafter-login'),
+        );
+
+        expect(response.status).toBe(400);
+        expect(await response.text()).toBe('Invalid returnTo');
+        expect(mocks.getClient).not.toHaveBeenCalled();
+    });
+
     test('redirects to the service-unavailable page when Keycloak is unavailable', async () => {
         mocks.getClient.mockResolvedValue(undefined);
 

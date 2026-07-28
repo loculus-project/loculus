@@ -237,6 +237,12 @@ type CallbackResult = {
 
 export async function getTokenFromParams(context: APIContext, client: BaseClient): Promise<CallbackResult | undefined> {
     const params = client.callbackParams(context.url.toString());
+    if (params.code === undefined && params.error !== undefined) {
+        logger.info(
+            `OIDC callback rejected: transactionId=${authTransactionId(params.state)} ` +
+                `reason=provider_error error=${params.error}`,
+        );
+    }
     if (params.code !== undefined) {
         const transactionId = authTransactionId(params.state);
         logger.debug(

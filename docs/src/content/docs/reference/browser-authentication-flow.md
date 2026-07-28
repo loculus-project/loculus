@@ -65,6 +65,7 @@ The `/auth/callback` endpoint deliberately returns `Authentication callback coul
 Start a new login instead of refreshing or reopening a failed callback URL. Server logs record a non-secret transaction identifier and one of the following reasons:
 
 - `missing_or_expired_transaction`
+- `provider_error`
 - `validation_failed`
 - `userinfo_failed`
 

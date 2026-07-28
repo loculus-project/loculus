@@ -2,6 +2,10 @@ import type { APIContext, AstroCookies } from 'astro';
 import type { BaseClient } from 'openid-client';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+const mocks = vi.hoisted(() => ({
+    loggerInfo: vi.fn(),
+}));
+
 vi.mock('../config.ts', () => ({
     getConfiguredOrganisms: () => [],
     getRuntimeConfig: () => ({
@@ -9,6 +13,15 @@ vi.mock('../config.ts', () => ({
         oidcTransactionCookieSecret: 'test-oidc-transaction-cookie-secret',
     }),
     getWebsiteConfig: () => ({ readOnlyMode: false }),
+}));
+
+vi.mock('../logger.ts', () => ({
+    getInstanceLogger: () => ({
+        debug: vi.fn(),
+        error: vi.fn(),
+        info: mocks.loggerInfo,
+        warn: vi.fn(),
+    }),
 }));
 
 import { getTokenFromParams } from './authMiddleware.ts';
@@ -30,6 +43,7 @@ describe('OIDC callback exchange', () => {
         const searchParams = new URL(url).searchParams;
         return {
             code: searchParams.get('code') ?? undefined,
+            error: searchParams.get('error') ?? undefined,
             state: searchParams.get('state') ?? undefined,
         };
     });
@@ -102,6 +116,21 @@ describe('OIDC callback exchange', () => {
         } as APIContext;
 
         await expect(getTokenFromParams(context, client)).resolves.toBeUndefined();
+        expect(callback).not.toHaveBeenCalled();
+    });
+
+    test('logs an error response returned by the OIDC provider', async () => {
+        const context = {
+            url: new URL('https://loculus.test/auth/callback?error=access_denied&state=expected-state'),
+            cookies,
+        } as APIContext;
+
+        await expect(getTokenFromParams(context, client)).resolves.toBeUndefined();
+        expect(mocks.loggerInfo).toHaveBeenCalledWith(
+            expect.stringMatching(
+                /^OIDC callback rejected: transactionId=[a-f0-9]{12} reason=provider_error error=access_denied$/,
+            ),
+        );
         expect(callback).not.toHaveBeenCalled();
     });
 });
