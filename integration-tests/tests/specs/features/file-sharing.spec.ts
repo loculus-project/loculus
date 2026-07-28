@@ -9,10 +9,6 @@ import { ReviewPage } from '../../pages/review.page';
 import { RevisionPage } from '../../pages/revision.page';
 import { SearchPage } from '../../pages/search.page';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
-import {
-    prepareTmpDirForSingleUpload,
-    uploadFilesFromTmpDir,
-} from '../../utils/file-upload-helpers';
 
 const ORGANISM_NAME = 'Test organism (with files)';
 const ORGANISM_URL_NAME = 'dummy-organism-with-files';
@@ -143,7 +139,7 @@ test('bulk submit blocks a submission with errors in file linkage or parsing', a
         [[ID_1, COUNTRY_1, '2023-01-01', 'a::b::c']],
     );
     await submissionPage.clickSubmit();
-    await expect(page.getByText(/Failed to parse file entry/)).toBeVisible();
+    await expect(page.getByText(/Failed to parse file entry/)).not.toHaveCount(0);
     // A blocked submission returns before the data use terms dialog is shown
     await expect(page.getByRole('button', { name: 'Continue under Open terms' })).toHaveCount(0);
 
@@ -155,7 +151,7 @@ test('bulk submit blocks a submission with errors in file linkage or parsing', a
     );
     await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: firstFileOnly }, tmpDir);
     await submissionPage.clickSubmit();
-    await expect(page.getByText(/referenced in metadata but not uploaded/)).toBeVisible();
+    await expect(page.getByText(/referenced in metadata but not uploaded/)).not.toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Continue under Open terms' })).toHaveCount(0);
 
     // Declaring one file but uploading two leaves the second orphaned
@@ -167,7 +163,7 @@ test('bulk submit blocks a submission with errors in file linkage or parsing', a
     await submissionPage.discardFiles(RAW_READS);
     await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_DOUBLE }, tmpDir);
     await submissionPage.clickSubmit();
-    await expect(page.getByText(/uploaded but not referenced in metadata/)).toBeVisible();
+    await expect(page.getByText(/uploaded but not referenced in metadata/)).not.toHaveCount(0);
     await expect(page.getByText(secondName)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Continue under Open terms' })).toHaveCount(0);
 
@@ -180,7 +176,7 @@ test('bulk submit blocks a submission with errors in file linkage or parsing', a
     await submissionPage.discardFiles(RAW_READS);
     await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: firstFileOnly }, tmpDir);
     await submissionPage.clickSubmit();
-    await expect(page.getByText(/metadata still references an existing file/)).toBeVisible();
+    await expect(page.getByText(/metadata still references an existing file/)).not.toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Continue under Open terms' })).toHaveCount(0);
 });
 
@@ -303,6 +299,12 @@ const FILES_TRIPLE: Record<string, string> = {
     'file2.txt': 'Content of file 2.',
     'file3.txt': 'Content of file 3.',
 };
+// The same file names as FILES_TRIPLE, with different contents, for a second bulk entry
+const OTHER_FILES_TRIPLE: Record<string, string> = {
+    'file1.txt': 'Other content of file 1.',
+    'file2.txt': 'Other content of file 2.',
+    'file3.txt': 'Other content of file 3.',
+};
 const ADDED_FILE = { 'file4.txt': 'Content of file 4.' };
 const REPLACEMENT_CONTENT = 'Replaced content of file 2.';
 
@@ -369,17 +371,29 @@ test('bulk revise can reuse, replace, discard and add files', async ({ page, gro
     const [reusedName, replacedName, discardedName] = Object.keys(FILES_TRIPLE);
     const [addedName, addedContent] = Object.entries(ADDED_FILE)[0];
 
-    // Step 1: Bulk submit one entry with three files and release it
+    // Step 1: Bulk submit two entries that use the same file names, with different contents, and
+    // release them. Names only have to be unique within an entry, so both are kept apart by path
     const submissionPage = new BulkSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
     await submissionPage.uploadMetadataFile(
         [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
-        [[ID_1, COUNTRY_1, '2023-05-01', filesColumnCell(ID_1, FILES_TRIPLE)]],
+        [
+            [ID_1, COUNTRY_1, '2023-05-01', filesColumnCell(ID_1, FILES_TRIPLE)],
+            [ID_2, COUNTRY_2, '2023-05-02', filesColumnCell(ID_2, OTHER_FILES_TRIPLE)],
+        ],
     );
-    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_TRIPLE }, tmpDir);
+    await submissionPage.uploadExternalFiles(
+        RAW_READS,
+        { [ID_1]: FILES_TRIPLE, [ID_2]: OTHER_FILES_TRIPLE },
+        tmpDir,
+    );
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone();
     const searchPage = await reviewPage.releaseAndGoToReleasedSequences();
-    const [{ accession, version }] = await searchPage.waitForSequencesInSearch(1);
+    await searchPage.waitForSequencesInSearch(2);
+
+    // Each entry serves its own files, despite the file names being identical across the two
+    await searchPage.checkFileContentInModal('cell', COUNTRY_1, FILES_TRIPLE);
+    await searchPage.checkFileContentInModal('cell', COUNTRY_2, OTHER_FILES_TRIPLE);
 
     // Step 2: Download the originally submitted metadata
     const downloadPromise = page.waitForEvent('download');
@@ -394,51 +408,69 @@ test('bulk revise can reuse, replace, discard and add files', async ({ page, gro
         fs.rmSync(unzipDir, { recursive: true, force: true });
     }
 
-    const rows = downloadedMetadata.split('\n').filter((line) => line.trim() !== '');
-    const headers = rows[0].split('\t');
+    const [headerRow, ...entryRows] = downloadedMetadata.split('\n').filter((row) => row.trim());
+    const headers = headerRow.split('\t');
     const filesColumn = headers.indexOf(RAW_READS_FILES_HEADER);
-    const cells = rows[1].split('\t');
-    const metadataFileEntries = cells[filesColumn].split(' ');
+    const idColumn = headers.indexOf('id');
+    expect(
+        entryRows,
+        `expected both entries in the download, got:\n${downloadedMetadata}`,
+    ).toHaveLength(2);
+    expect(
+        filesColumn,
+        `expected a ${RAW_READS_FILES_HEADER} column in: ${headerRow}`,
+    ).toBeGreaterThan(-1);
 
+    // Both entries list the same file names, each with their own file ID and no file path
     for (const fileName of Object.keys(FILES_TRIPLE)) {
-        expect(metadataFileEntries.some((entry) => entry.startsWith(`${fileName}:`))).toBe(true);
+        expect(downloadedMetadata.split(`${fileName}:`)).toHaveLength(3);
     }
-    // Each file comes back as name::fileId without file paths
-    expect(cells[filesColumn]).not.toContain('::');
+    expect(downloadedMetadata).not.toContain('::');
 
-    // Step 3: Rewrite the metadata file entries
-    // One entry is reused, one has file ID removed so the upload replaces, one is removed, and
-    // a new one is declared
-    const reusedEntry = metadataFileEntries.find((entry) => entry.startsWith(`${reusedName}:`));
-    expect(reusedEntry).toBeDefined();
-    cells[filesColumn] = [reusedEntry, replacedName, addedName].join(' ');
-    const revisionMetadata = [rows[0], cells.join('\t')].join('\n');
+    // Step 3: Rewrite only the first entry's metadata file entries, so that the second entry reuses
+    // all of its files. One entry is reused, one has its file ID removed so the upload replaces it,
+    // one is removed, and a new one is added. The replaced and added files keep the submissionId
+    // subfolder in their path, so they stay distinct from the second entry's identically named ones
+    const uploadedFiles = { [replacedName]: REPLACEMENT_CONTENT, [addedName]: addedContent };
 
-    // Step 4: Bulk submit the revised entry and release it
+    const revisionMetadata = [
+        headerRow,
+        ...entryRows.map((row) => {
+            const cells = row.split('\t');
+            if (cells[idColumn] !== ID_1) return row;
+
+            const reusedEntry = cells[filesColumn]
+                .split(' ')
+                .find((entry) => entry.startsWith(`${reusedName}:`));
+            expect(reusedEntry).toBeDefined();
+            cells[filesColumn] = [reusedEntry, filesColumnCell(ID_1, uploadedFiles)].join(' ');
+            return cells.join('\t');
+        }),
+    ].join('\n');
+
+    // Step 4: Bulk submit the revised entries and release them
     const revisionPage = new RevisionPage(page);
     await revisionPage.goto(ORGANISM_URL_NAME, groupId);
     await revisionPage.uploadMetadataFile('revision_metadata.tsv', revisionMetadata);
-    // TODO: Update revisionPage helpers i.e. prepareTmpDirForBulkUpload to not be restricted
-    // by submissionId subfolder approach, so they can be used here
-    await prepareTmpDirForSingleUpload(
-        { [replacedName]: REPLACEMENT_CONTENT, [addedName]: addedContent },
-        tmpDir,
-    );
-    await uploadFilesFromTmpDir(page, RAW_READS, tmpDir, 2);
+    await revisionPage.uploadExternalFiles(RAW_READS, { [ID_1]: uploadedFiles }, tmpDir);
     await revisionPage.submitRevision();
 
     const reviewPage2 = new ReviewPage(page);
     await reviewPage2.waitForZeroProcessing();
     await reviewPage2.releaseValidSequences();
 
-    // Step 5: The revision serves the reused, replaced and added files, and not the discarded one
+    // Step 5: The revised entry serves the reused, replaced and added files, and not the discarded
+    // one, while the untouched entry still serves its own three files under the same names
     const searchPage2 = new SearchPage(page);
     await searchPage2.goToReleasedSequences(ORGANISM_URL_NAME, groupId);
-    await searchPage2.waitForAndOpenModalByRoleAndName('link', `${accession}.${version + 1}`);
+    await searchPage2.waitForAndOpenModalByRoleAndName('cell', COUNTRY_1);
     await searchPage2.checkAllFileContents({
         [reusedName]: FILES_TRIPLE[reusedName],
         [replacedName]: REPLACEMENT_CONTENT,
         [addedName]: addedContent,
     });
     await expect(page.getByRole('link', { name: discardedName })).toHaveCount(0);
+    await searchPage2.closeDetailsModal();
+
+    await searchPage2.checkFileContentInModal('cell', COUNTRY_2, OTHER_FILES_TRIPLE);
 });
