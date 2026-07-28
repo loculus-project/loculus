@@ -126,7 +126,7 @@ However, the `preprocessing` field can be customized to take an arbitrary number
 7. `check_regex`: Validate that the input field matches the pattern in `args.pattern`.
 8. `extract_regex`: Extracts a substring from input field using the provided regex `args.pattern` with a `args.capture_group`. For example the pattern `^(?P<segment>[^-]+)-(?P<subtype>[^-]+)$` with capture group `subtype` would extract `HA` from the field `seg1-HA`. Returns an error if the pattern does not match (and internal error if capture group does not exist in pattern). If `arg.uppercase` is added the extracted string will be capitalized.
 
-Additionally, certain functions require external services to be running, we have various functions related to validating host which require a `taxonomyService` to be running, this can be configured in the `values.yaml` as:
+Additionally, certain functions require external services to be running. For example, we have various functions related to validating host which require a `taxonomyService` to be running. This can be configured in the `values.yaml` as:
 
 ```yaml
 taxonomyService:
