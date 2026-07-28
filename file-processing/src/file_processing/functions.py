@@ -100,7 +100,7 @@ def validate_raw_reads_submission(
         )
 
     with TemporaryDirectory() as tmp_dir:
-        local_files = []
+        local_files = {}
         for file in files:
             try:
                 safe_name = _sanitize_file_name(file.name)
@@ -134,7 +134,7 @@ def validate_raw_reads_submission(
                     )
                 )
                 continue
-            local_files.append(str(file_name_internal))
+            local_files[file.name] = str(file_name_internal)
         if errors:
             return ResponseWithFiles(
                 files={FileCategory.RAW_READS: files}, errors=errors, warnings=warnings

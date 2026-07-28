@@ -122,24 +122,24 @@ def validate_file_numbers(
 
 
 def validate_file_format(
-    input_files: list[str],
+    file_name_to_path: dict[str, str],
     format_type: FormatType,
     data_dir: str,
     timeout_seconds: int = 300,
 ) -> Annotation | None:
+    file_names = list(file_name_to_path.keys())
     args = (
         ["java", "-jar", VALIDATION_JAR_PATH]
-        + [file for file in input_files]
+        + [file for file in file_name_to_path.values()]
         + [
             "--format",
             format_type.value,
         ]
     )
-    logger.debug(f"Running validation on '{input_files}': {args}")
-    log_file_path = Path(data_dir) / f"{Path(input_files[0]).name}.validation.log"
-    error_log_path = (
-        Path(data_dir) / f"{Path(input_files[0]).name}.validation.error.log"
-    )
+    logger.debug(f"Running validation on '{file_names}': {args}")
+    first_path = Path(list(file_name_to_path.values())[0])
+    log_file_path = Path(data_dir) / f"{first_path.name}.validation.log"
+    error_log_path = Path(data_dir) / f"{first_path.name}.validation.error.log"
 
     with (
         log_file_path.open("w") as log_file,
@@ -155,19 +155,19 @@ def validate_file_format(
             ).returncode
         except subprocess.TimeoutExpired:
             message = (
-                f"Internal Error: Validation of files '{','.join(input_files)}' timed out after "
+                f"Internal Error: Validation of files '{','.join(file_names)}' timed out after "
                 f"{timeout_seconds} seconds. Please contact the administrator."
             )
             logger.error(message)
             return Annotation(
-                fileName=",".join(input_files),
+                fileName=",".join(file_names),
                 message=message,
             )
     if exit_code != 0:
         message = _parse_validation_error(log_file_path, error_log_path)
         logger.error(message)
         return Annotation(
-            fileName=",".join(input_files),
+            fileName=",".join(file_names),
             message=message,
         )
     return None
