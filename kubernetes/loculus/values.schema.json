@@ -1610,6 +1610,12 @@
       "default": false,
       "description": "If true, disables the taxonomy service deployment."
     },
+    "disableFileProcessingService": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, disables the file processing service deployment."
+    },
     "readOnlyMode": {
       "groups": ["services"],
       "type": "boolean",
@@ -1885,10 +1891,27 @@
         }
       }
     },
+    "fileProcessingService": {
+      "type": "object",
+      "properties": {
+        "file_processing_service_url": {
+          "type": "string",
+          "description": "URL where the file processing service is accessible"
+        },
+        "file_processing_service_timeout_seconds": {
+          "type": "integer",
+          "description": "Timeout in seconds for file processing service requests"
+        },
+        "fileProcessingConfig": {
+          "type": "object",
+          "description": "Configuration for the file processing service"
+        }
+      }
+    },
     "images": {
       "groups": ["general"],
       "type": "object",
-      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website` and `backend.`",
+      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website` and `backend`.",
       "properties": {
         "lapis": { "$ref": "#/definitions/imageSpec" },
         "lapisSilo": { "$ref": "#/definitions/imageSpec" },

@@ -107,10 +107,10 @@ export class ReviewPage {
         await this.confirmDiscardButton().click();
     }
 
-    async waitForZeroProcessing() {
+    async waitForZeroProcessing(timeout = 90000) {
         await expect(this.page.locator('[data-testid="review-page-control-panel"]')).toContainText(
             '0 awaiting processing',
-            { timeout: 90000 },
+            { timeout: timeout },
         );
     }
 
@@ -232,6 +232,16 @@ export class ReviewPage {
         }
 
         return tabNames;
+    }
+
+    async expectFileProcessingError(pattern: RegExp) {
+        await expect(this.page.locator('.text-red-600', { hasText: pattern })).toBeVisible();
+    }
+
+    async expectNoValidSequencesToApprove() {
+        await expect(
+            this.page.getByRole('button', { name: /Approve \d+ valid sequence/ }),
+        ).toBeHidden();
     }
 
     async editFirstSequence() {
