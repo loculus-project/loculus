@@ -89,6 +89,12 @@ export class RevisionPage {
         await expect(this.page.getByTestId('discard_metadata_file')).toBeEnabled();
     }
 
+    async discardFiles(fileCategory: string) {
+        await this.page.getByTestId(`discard_${fileCategory}`).click();
+        // Confirmation modal appears and the discard button must be clicked
+        await this.page.getByRole('button', { name: 'Discard', exact: true }).click();
+    }
+
     /**
      * Accept the data submission terms
      */

@@ -1,10 +1,18 @@
 import { expect } from '@playwright/test';
+import { execSync } from 'child_process';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import { test } from '../../fixtures/tmpdir.fixture';
 import { EditPage } from '../../pages/edit.page';
 import { ReviewPage } from '../../pages/review.page';
 import { RevisionPage } from '../../pages/revision.page';
 import { SearchPage } from '../../pages/search.page';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
+import {
+    prepareTmpDirForSingleUpload,
+    uploadFilesFromTmpDir,
+} from '../../utils/file-upload-helpers';
 
 const ORGANISM_NAME = 'Test organism (with files)';
 const ORGANISM_URL_NAME = 'dummy-organism-with-files';
@@ -16,7 +24,10 @@ const COUNTRY_2 = 'Uganda';
 const ID_1 = 'sub1';
 const ID_2 = 'sub2';
 const FILES_SINGLE = { 'testfile.txt': 'This is a test file.' };
-const FILES_DOUBLE = { 'file1.txt': 'Content of file 1.', 'file2.txt': 'Content of file 2.' };
+const FILES_DOUBLE: Record<string, string> = {
+    'file1.txt': 'Content of file 1.',
+    'file2.txt': 'Content of file 2.',
+};
 
 // Tests upload files in subfolders grouped by submissionId
 const filesColumnCell = (submissionId: string, files: Record<string, string>) =>
@@ -109,6 +120,68 @@ test('bulk submit 1 seq with a 35 MB file', async ({ page, groupId, tmpDir }) =>
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone();
     const searchPage = await reviewPage.releaseAndGoToReleasedSequences();
     await searchPage.checkFileContentInModal('cell', COUNTRY_1, LARGE_FILE);
+});
+
+test('bulk submit blocks a submission with errors in file linkage or parsing', async ({
+    page,
+    groupId,
+    tmpDir,
+}) => {
+    test.setTimeout(180_000);
+    void groupId;
+
+    const [firstName, secondName] = Object.keys(FILES_DOUBLE);
+    const firstFileOnly = { [firstName]: FILES_DOUBLE[firstName] };
+
+    const submissionPage = new BulkSubmissionPage(page);
+    await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
+    await submissionPage.acceptTerms();
+
+    // An entry that matches none of the accepted forms is rejected
+    await submissionPage.uploadMetadataFile(
+        [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
+        [[ID_1, COUNTRY_1, '2023-01-01', 'a::b::c']],
+    );
+    await submissionPage.clickSubmit();
+    await expect(page.getByText(/Failed to parse file entry/)).toBeVisible();
+    // A blocked submission returns before the data use terms dialog is shown
+    await expect(page.getByRole('button', { name: 'Continue under Open terms' })).toHaveCount(0);
+
+    // Declaring two files but uploading one leaves the other missing
+    await submissionPage.discardMetadataFile();
+    await submissionPage.uploadMetadataFile(
+        [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
+        [[ID_1, COUNTRY_1, '2023-01-01', filesColumnCell(ID_1, FILES_DOUBLE)]],
+    );
+    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: firstFileOnly }, tmpDir);
+    await submissionPage.clickSubmit();
+    await expect(page.getByText(/referenced in metadata but not uploaded/)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Continue under Open terms' })).toHaveCount(0);
+
+    // Declaring one file but uploading two leaves the second orphaned
+    await submissionPage.discardMetadataFile();
+    await submissionPage.uploadMetadataFile(
+        [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
+        [[ID_1, COUNTRY_1, '2023-01-01', filesColumnCell(ID_1, firstFileOnly)]],
+    );
+    await submissionPage.discardFiles(RAW_READS);
+    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_DOUBLE }, tmpDir);
+    await submissionPage.clickSubmit();
+    await expect(page.getByText(/uploaded but not referenced in metadata/)).toBeVisible();
+    await expect(page.getByText(secondName)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Continue under Open terms' })).toHaveCount(0);
+
+    // Uploading over a path whose entry already pins a file ID shadows the upload
+    await submissionPage.discardMetadataFile();
+    await submissionPage.uploadMetadataFile(
+        [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
+        [[ID_1, COUNTRY_1, '2023-01-01', `${firstName}::${ID_1}/${firstName}:some-file-id`]],
+    );
+    await submissionPage.discardFiles(RAW_READS);
+    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: firstFileOnly }, tmpDir);
+    await submissionPage.clickSubmit();
+    await expect(page.getByText(/metadata still references an existing file/)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Continue under Open terms' })).toHaveCount(0);
 });
 
 const REVISION_METADATA_HEADERS = ['accession', 'submissionId', 'country', 'date'];
@@ -288,4 +361,84 @@ test('single revise seq via edit page reuses, replaces, discards and adds files'
         [replacedName]: REPLACEMENT_CONTENT,
         ...ADDED_FILE,
     });
+});
+
+test('bulk revise can reuse, replace, discard and add files', async ({ page, groupId, tmpDir }) => {
+    test.setTimeout(300_000);
+
+    const [reusedName, replacedName, discardedName] = Object.keys(FILES_TRIPLE);
+    const [addedName, addedContent] = Object.entries(ADDED_FILE)[0];
+
+    // Step 1: Bulk submit one entry with three files and release it
+    const submissionPage = new BulkSubmissionPage(page);
+    await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
+    await submissionPage.uploadMetadataFile(
+        [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
+        [[ID_1, COUNTRY_1, '2023-05-01', filesColumnCell(ID_1, FILES_TRIPLE)]],
+    );
+    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_TRIPLE }, tmpDir);
+    const reviewPage = await submissionPage.submitAndWaitForProcessingDone();
+    const searchPage = await reviewPage.releaseAndGoToReleasedSequences();
+    const [{ accession, version }] = await searchPage.waitForSequencesInSearch(1);
+
+    // Step 2: Download the originally submitted metadata
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: /Download originally submitted data/ }).click();
+    const download = await downloadPromise;
+    const unzipDir = fs.mkdtempSync(path.join(os.tmpdir(), 'file-sharing-'));
+    let downloadedMetadata: string;
+    try {
+        execSync(`unzip -o "${await download.path()}" -d "${unzipDir}"`);
+        downloadedMetadata = fs.readFileSync(path.join(unzipDir, 'metadata.tsv'), 'utf8');
+    } finally {
+        fs.rmSync(unzipDir, { recursive: true, force: true });
+    }
+
+    const rows = downloadedMetadata.split('\n').filter((line) => line.trim() !== '');
+    const headers = rows[0].split('\t');
+    const filesColumn = headers.indexOf(RAW_READS_FILES_HEADER);
+    const cells = rows[1].split('\t');
+    const metadataFileEntries = cells[filesColumn].split(' ');
+
+    for (const fileName of Object.keys(FILES_TRIPLE)) {
+        expect(metadataFileEntries.some((entry) => entry.startsWith(`${fileName}:`))).toBe(true);
+    }
+    // Each file comes back as name::fileId without file paths
+    expect(cells[filesColumn]).not.toContain('::');
+
+    // Step 3: Rewrite the metadata file entries
+    // One entry is reused, one has file ID removed so the upload replaces, one is removed, and
+    // a new one is declared
+    const reusedEntry = metadataFileEntries.find((entry) => entry.startsWith(`${reusedName}:`));
+    expect(reusedEntry).toBeDefined();
+    cells[filesColumn] = [reusedEntry, replacedName, addedName].join(' ');
+    const revisionMetadata = [rows[0], cells.join('\t')].join('\n');
+
+    // Step 4: Bulk submit the revised entry and release it
+    const revisionPage = new RevisionPage(page);
+    await revisionPage.goto(ORGANISM_URL_NAME, groupId);
+    await revisionPage.uploadMetadataFile('revision_metadata.tsv', revisionMetadata);
+    // TODO: Update revisionPage helpers i.e. prepareTmpDirForBulkUpload to not be restricted
+    // by submissionId subfolder approach, so they can be used here
+    await prepareTmpDirForSingleUpload(
+        { [replacedName]: REPLACEMENT_CONTENT, [addedName]: addedContent },
+        tmpDir,
+    );
+    await uploadFilesFromTmpDir(page, RAW_READS, tmpDir, 2);
+    await revisionPage.submitRevision();
+
+    const reviewPage2 = new ReviewPage(page);
+    await reviewPage2.waitForZeroProcessing();
+    await reviewPage2.releaseValidSequences();
+
+    // Step 5: The revision serves the reused, replaced and added files, and not the discarded one
+    const searchPage2 = new SearchPage(page);
+    await searchPage2.goToReleasedSequences(ORGANISM_URL_NAME, groupId);
+    await searchPage2.waitForAndOpenModalByRoleAndName('link', `${accession}.${version + 1}`);
+    await searchPage2.checkAllFileContents({
+        [reusedName]: FILES_TRIPLE[reusedName],
+        [replacedName]: REPLACEMENT_CONTENT,
+        [addedName]: addedContent,
+    });
+    await expect(page.getByRole('link', { name: discardedName })).toHaveCount(0);
 });
