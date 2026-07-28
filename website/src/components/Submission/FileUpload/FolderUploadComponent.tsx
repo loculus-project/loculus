@@ -294,7 +294,8 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     type: 'awaiting',
                     file: f,
                     name: f.name,
-                    path: getRelativePath(f.webkitRelativePath),
+                    // Assign the path without the parent folder
+                    path: f.webkitRelativePath.split('/').slice(1).join('/'),
                 })),
             });
         }
@@ -564,9 +565,4 @@ const isFilesArrayValid = (files: File[], inputMode: InputMode): string | undefi
             return 'Subdirectories are not supported for individual submissions.';
         }
     }
-};
-
-/* Takes a webkitRelativePath and returns the path without the parent folder. */
-const getRelativePath = (path: string) => {
-    return path.split('/').slice(1).join('/');
 };
