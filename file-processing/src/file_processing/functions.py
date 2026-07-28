@@ -82,6 +82,7 @@ def validate_raw_reads_submission(
     config: Config,
     files: list[FileIdAndNameAndReadUrl],
 ) -> ResponseWithFiles:
+    logger.debug(f"Validating raw reads submission with {len(files)} files")
     warnings: list[Annotation] = []
 
     format_type, errors = validate_file_extensions([file.name for file in files])
@@ -115,7 +116,9 @@ def validate_raw_reads_submission(
                 continue
             file_name_internal = Path(tmp_dir) / f"{file.fileId}-{safe_name}"
             try:
+                logger.debug(f"Downloading file '{file.name}' from S3 to '{file_name_internal}'")
                 download_file(config, file.url, file_name_internal)
+                logger.debug(f"Successfully downloaded file '{file.name}' to '{file_name_internal}'")
             except requests.RequestException as e:
                 message = f"Error downloading file '{file.name}' from S3: {e}"
                 logger.error(message)

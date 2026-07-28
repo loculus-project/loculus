@@ -58,6 +58,7 @@ def _mixed_mates(file_path: str) -> str | None:
     FASTQ file (e.g. an interleaved file, or one half of a paired submission
     that wasn't properly de-interleaved), or None if at most one mate is present.
     """
+    logger.debug(f"Checking for mixed mates in FASTQ file '{file_path}'")
     mate_indices: set[str] = set()
     with _open_text(file_path) as f:
         for line_number, line in enumerate(f):
