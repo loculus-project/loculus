@@ -80,6 +80,9 @@ import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
+import org.loculus.backend.metrics.STORE_PREPROCESSED_DATA_PHASE
+import org.loculus.backend.metrics.SUBMIT_PROCESSED_DATA_ENDPOINT
+import org.loculus.backend.metrics.SubmissionMetrics
 import org.loculus.backend.service.datauseterms.DataUseTermsTable
 import org.loculus.backend.service.files.FileId
 import org.loculus.backend.service.files.FilesDatabaseService
@@ -106,8 +109,6 @@ import java.util.Locale
 import kotlin.time.Instant
 
 private val log = KotlinLogging.logger { }
-private const val SUBMIT_PROCESSED_DATA_ENDPOINT = "submit-processed-data"
-private const val STORE_PREPROCESSED_DATA_PHASE = "store-preprocessed-data"
 
 @Service
 @Transactional

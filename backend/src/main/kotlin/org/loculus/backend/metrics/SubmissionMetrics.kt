@@ -1,8 +1,9 @@
-package org.loculus.backend.service.submission
+package org.loculus.backend.metrics
 
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import java.time.Duration
 
@@ -39,7 +40,13 @@ class SubmissionMetrics(private val meterRegistry: MeterRegistry) {
     fun <T> timeReadPhase(operation: String, organism: String, phase: String, block: () -> T): T =
         timePhase(READ_PHASE_DURATION_TIMER, operation, organism, phase, block)
 
-    fun recordPollingRequest(endpoint: String, organism: String, status: String, duration: Duration) {
+    // Ignores endpoints outside POLLING_ENDPOINTS, so callers can record unconditionally.
+    fun recordPollingRequest(endpoint: String, organism: String, status: HttpStatus, requestStartNanos: Long) {
+        if (endpoint !in POLLING_ENDPOINTS) {
+            return
+        }
+
+        val duration = Duration.ofNanos(System.nanoTime() - requestStartNanos)
         if (duration.isNegative) {
             return
         }
@@ -47,7 +54,7 @@ class SubmissionMetrics(private val meterRegistry: MeterRegistry) {
         Timer.builder(POLLING_REQUEST_DURATION_TIMER)
             .tag(ENDPOINT_TAG, endpoint)
             .tag(ORGANISM_TAG, organism)
-            .tag(STATUS_TAG, status)
+            .tag(STATUS_TAG, status.value().toString())
             .register(meterRegistry)
             .record(duration)
     }

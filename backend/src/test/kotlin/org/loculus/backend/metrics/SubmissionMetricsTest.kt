@@ -1,4 +1,4 @@
-package org.loculus.backend.service.submission
+package org.loculus.backend.metrics
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.junit.jupiter.api.Assertions.assertEquals

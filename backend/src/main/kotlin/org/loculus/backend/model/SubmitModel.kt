@@ -14,10 +14,21 @@ import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.DuplicateKeyException
 import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.metrics.ASSOCIATE_REVISED_DATA_PHASE
+import org.loculus.backend.metrics.CLEANUP_UPLOAD_DATA_PHASE
+import org.loculus.backend.metrics.COPY_TO_AUX_TABLE_PHASE
+import org.loculus.backend.metrics.GENERATE_ACCESSIONS_PHASE
+import org.loculus.backend.metrics.INSERT_SEQUENCE_ENTRIES_PHASE
+import org.loculus.backend.metrics.LOAD_METADATA_SUBMISSION_IDS_PHASE
+import org.loculus.backend.metrics.REVISE_ENDPOINT
+import org.loculus.backend.metrics.SUBMIT_ENDPOINT
+import org.loculus.backend.metrics.SubmissionMetrics
+import org.loculus.backend.metrics.VALIDATE_CONSENSUS_SEQUENCES_PHASE
+import org.loculus.backend.metrics.VALIDATE_FILE_MAPPING_PHASE
+import org.loculus.backend.metrics.VALIDATE_UPLOAD_PHASE
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.service.submission.SubmissionIdFilesMappingPreconditionValidator
-import org.loculus.backend.service.submission.SubmissionMetrics
 import org.loculus.backend.service.submission.UploadDatabaseService
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.FastaReader
@@ -36,17 +47,6 @@ const val FASTA_IDS_SEPARATOR = " "
 
 const val ACCESSION_HEADER = "accession"
 private val log = KotlinLogging.logger { }
-private const val SUBMIT_ENDPOINT = "submit"
-private const val REVISE_ENDPOINT = "revise"
-private const val VALIDATE_UPLOAD_PHASE = "validate-upload"
-private const val COPY_TO_AUX_TABLE_PHASE = "copy-to-aux-table"
-private const val LOAD_METADATA_SUBMISSION_IDS_PHASE = "load-metadata-submission-ids"
-private const val VALIDATE_CONSENSUS_SEQUENCES_PHASE = "validate-consensus-sequences"
-private const val ASSOCIATE_REVISED_DATA_PHASE = "associate-revised-data"
-private const val VALIDATE_FILE_MAPPING_PHASE = "validate-file-mapping"
-private const val GENERATE_ACCESSIONS_PHASE = "generate-accessions"
-private const val INSERT_SEQUENCE_ENTRIES_PHASE = "insert-sequence-entries"
-private const val CLEANUP_UPLOAD_DATA_PHASE = "cleanup-upload-data"
 
 typealias SubmissionId = String
 typealias FastaId = String
