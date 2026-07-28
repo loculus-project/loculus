@@ -129,16 +129,13 @@ const InnerDataUploadForm = ({
         }
 
         if (extraFilesEnabled && finalSubmissionFileMapping !== undefined) {
-            const { resolvedFileMapping, details } = getFileLinkage(
-                finalSubmissionFileMapping,
-                fileMapping ?? new Map(),
-            );
-            const linkageError = getLinkageError(details);
+            const fileLinkage = getFileLinkage(finalSubmissionFileMapping, fileMapping ?? new Map());
+            const linkageError = getLinkageError(fileLinkage.details);
             if (linkageError !== undefined) {
                 onError(linkageError);
                 return;
             }
-            finalMetadataFile = await applyFileMappings(metadataFile, resolvedFileMapping);
+            finalMetadataFile = await applyFileMappings(metadataFile, fileLinkage.submissionFileMapping);
         }
 
         const submitSequenceData = () => {

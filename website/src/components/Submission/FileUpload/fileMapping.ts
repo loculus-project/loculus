@@ -3,42 +3,47 @@ import Papa from 'papaparse';
 
 import { SUBMISSION_ID_INPUT_FIELD } from '../../../settings';
 
-// File columns begin with the 'files.' prefix.
-// File entries are space-separated and can have one of the following forms: name, name::path, name::path:id, name:id.
+// File columns begin with the 'files.' prefix and contain space-separated entries
 export const FILES_HEADER_PREFIX = 'files.';
 export const FILE_ENTRY_SEPARATOR = ' ';
+
+// File entries can have one of the following forms: name, name::path, name::path:id, name:id
 const FILE_ENTRY_REGEX = /^([^:]+)(?:::([^:]+))?(?::([^:]+))?$/;
+
+type SubmissionId = string;
+type FileCategory = string;
+type FilePath = string;
 
 export type SubmissionFile = {
     name: string;
     path: string;
     fileId?: string;
 };
-type SubmissionId = string;
-type FileCategory = string;
-type FilePath = string;
 export type FileMapping = Map<FileCategory, Map<FilePath, SubmissionFile>>;
 export type SubmissionFileMapping = Map<SubmissionId, FileMapping>;
 
-/**
- * Details of file linkage between the files declared within the metadata and the uploaded files.
- * Linkage can fall into one of the four categories below:
- *
- * - Linked:    The metadata contains a fileName(::filePath), and it matches an uploaded file.
- * - Reused:    The metadata contains a fileName:fileId, referencing a pre-existing file (no new files uploaded).
- * - Missing:   The metadata contains a fileName(::filePath), but no file has been uploaded which matches it.
- * - Orphaned:  A new file has been uploaded, but is not pointed to by the metadata. This could be because either
- *              the file path is missing from the metadata entirely, or a matching entry (by the same path) already has a file ID.
- */
+type ResolvedSubmissionFile = SubmissionFile & { fileId: string };
+type ResolvedFileMapping = Map<FileCategory, Map<FilePath, ResolvedSubmissionFile>>;
+type ResolvedSubmissionFileMapping = Map<SubmissionId, ResolvedFileMapping>;
+
+// File linkage details between the files declared within the metadata and the uploaded files
 export type FileLinkageDetails = {
+    // The metadata contains a fileName(::filePath), and it matches an uploaded file
     linked: SubmissionFile[];
+
+    // The metadata contains a fileName:fileId, referencing a pre-existing file (no new files uploaded)
     reused: SubmissionFile[];
+
+    // The metadata contains a fileName(::filePath), but no file has been uploaded which matches it
     missing: SubmissionFile[];
+
+    // A new file has been uploaded, but is not pointed to by the metadata.
+    // Either the file is missing from the metadata, or a metadata entry with the same path already has a file ID
     orphaned: SubmissionFile[];
 };
 
 export type FileLinkage = {
-    resolvedFileMapping: SubmissionFileMapping;
+    submissionFileMapping: ResolvedSubmissionFileMapping;
     details: Map<FileCategory, FileLinkageDetails>;
 };
 
@@ -46,42 +51,48 @@ export function getFileLinkage(
     submissionFileMapping: SubmissionFileMapping,
     folderFileMapping: FileMapping,
 ): FileLinkage {
-    // Construct resolved file mapping
-    // Consists of the submission file mapping (from the metadata), but with file IDs
-    // filled in from the folder uploads - matches are made on file path.
-    const resolvedFileMapping: SubmissionFileMapping = new Map();
+    const resolvedSubmissionFileMapping: ResolvedSubmissionFileMapping = new Map();
 
+    // Populate the resolved submissionFileMapping
+    // This consists of the submissionFileMapping from the metadata,
+    // populated with file IDs from the folder file mapping
     for (const [submissionId, categoryMapping] of submissionFileMapping) {
-        const resolvedCategoryMapping: FileMapping = new Map();
+        const resolvedCategoryMapping: ResolvedFileMapping = new Map();
 
         for (const [category, pathMapping] of categoryMapping) {
-            const resolvedPathMapping = new Map<FilePath, SubmissionFile>();
+            const resolvedPathMapping = new Map<FilePath, ResolvedSubmissionFile>();
 
             for (const [filePath, file] of pathMapping) {
-                const fileId = file.fileId ?? folderFileMapping.get(category)?.get(filePath)?.fileId;
+                // Files between the two mappings are matched on file path
+                const uploadFileId = folderFileMapping.get(category)?.get(filePath)?.fileId;
+
+                // If for a given file path, the metadata already contains a file ID,
+                // then this metadata ID takes precedence over the file ID from the upload
+                const fileId = file.fileId ?? uploadFileId;
+
+                if (fileId === undefined) continue;
+
                 resolvedPathMapping.set(filePath, { ...file, fileId });
             }
             resolvedCategoryMapping.set(category, resolvedPathMapping);
         }
-        resolvedFileMapping.set(submissionId, resolvedCategoryMapping);
+        resolvedSubmissionFileMapping.set(submissionId, resolvedCategoryMapping);
     }
 
-    // Partition linkage details into linked, reused, missing and orphaned files
+    // File categories over both the metadata and upload folders
     const categories = new Set<FileCategory>([
-        ...folderFileMapping.keys(),
         ...[...submissionFileMapping.values()].flatMap((fileMapping) => [...fileMapping.keys()]),
+        ...folderFileMapping.keys(),
     ]);
 
+    // Partition linkage details into linked, reused, missing and orphaned files
     const linkageDetails = new Map<FileCategory, FileLinkageDetails>();
     for (const category of categories) {
         const referencedFileIds = new Set<string>();
 
-        for (const resolvedCategoryMapping of resolvedFileMapping.values()) {
+        for (const resolvedCategoryMapping of resolvedSubmissionFileMapping.values()) {
             const resolvedFiles = resolvedCategoryMapping.get(category)?.values() ?? [];
-
-            for (const file of resolvedFiles) {
-                if (file.fileId !== undefined) referencedFileIds.add(file.fileId);
-            }
+            for (const file of resolvedFiles) referencedFileIds.add(file.fileId);
         }
 
         const linked: SubmissionFile[] = [];
@@ -113,22 +124,34 @@ export function getFileLinkage(
         linkageDetails.set(category, { linked, reused, orphaned, missing });
     }
 
-    return { resolvedFileMapping, details: linkageDetails };
+    return { submissionFileMapping: resolvedSubmissionFileMapping, details: linkageDetails };
 }
 
 export function getLinkageError(details: Map<FileCategory, FileLinkageDetails>): string | undefined {
-    const problems: string[] = [];
-    for (const [category, { missing, orphaned }] of details) {
+    const errors: string[] = [];
+    const getFilePaths = (files: SubmissionFile[]) => files.map((file) => file.path).join(', ');
+
+    for (const [category, { reused, missing, orphaned }] of details) {
+        // An orphan sharing a path with a reused entry is shadowed by that entry's file ID, rather
+        // than missing from the metadata - so it needs the actionable message instead.
+        const reusedPaths = new Set(reused.map((file) => file.path));
+        const shadowed = orphaned.filter((file) => reusedPaths.has(file.path));
+        const unreferenced = orphaned.filter((file) => !reusedPaths.has(file.path));
+
         if (missing.length > 0)
-            problems.push(
-                `The following ${category} files were referenced in metadata but not uploaded: ${missing.map((file) => file.path).join(', ')}.`,
+            errors.push(
+                `The following ${category} files were referenced in metadata but not uploaded: ${getFilePaths(missing)}.`,
             );
-        if (orphaned.length > 0)
-            problems.push(
-                `The following ${category} files were uploaded but not referenced in metadata: ${orphaned.map((file) => file.path).join(', ')}.`,
+        if (unreferenced.length > 0)
+            errors.push(
+                `The following ${category} files were uploaded but not referenced in metadata: ${getFilePaths(unreferenced)}.`,
+            );
+        if (shadowed.length > 0)
+            errors.push(
+                `The following ${category} files were uploaded but the metadata still references an existing file for them: ${getFilePaths(shadowed)}. Remove the file ID from the metadata entry to replace it.`,
             );
     }
-    return problems.length > 0 ? problems.join(' ') : undefined;
+    return errors.length > 0 ? errors.join(' ') : undefined;
 }
 
 function parseFileEntry(entry: string): Result<SubmissionFile, Error> {
@@ -186,8 +209,9 @@ export function parseSubmissionFileMapping(text: string): Result<SubmissionFileM
                 .filter((entry) => entry !== '')
                 .map((entry) => parseFileEntry(entry));
 
-            // Validate each submission has unique file names
+            // Validate each submission has unique file names and paths
             const fileNames = new Set<string>();
+            const filePaths = new Set<string>();
             for (const result of fileEntryResults) {
                 if (result.isErr()) return err(result.error);
 
@@ -198,8 +222,15 @@ export function parseSubmissionFileMapping(text: string): Result<SubmissionFileM
                             `Found duplicate file names for entry ${submissionId} in the ${fileCategory} category: ${file.name}`,
                         ),
                     );
+                if (filePaths.has(file.path))
+                    return err(
+                        new Error(
+                            `Found duplicate file paths for entry ${submissionId} in the ${fileCategory} category: ${file.path}`,
+                        ),
+                    );
 
-                fileNames.add(result.value.name);
+                fileNames.add(file.name);
+                filePaths.add(file.path);
             }
 
             const fileEntries = new Map(
@@ -234,7 +265,8 @@ export async function applyFileMappings(metadataFile: File, merged: SubmissionFi
 
     const newRows = rows.slice(1).map((row) => {
         const submissionId = idIndex >= 0 ? (row[idIndex] ?? '') : '';
-        const newRow = [...row];
+        // Pad to the header, so that rows without files still line up with any appended column.
+        const newRow = Array.from({ length: header.length }, (_, index) => row[index] ?? '');
         for (const { category, index } of fileColumns) {
             const files = merged.get(submissionId)?.get(category);
             if (files === undefined) continue; // leave empty cells as-is
