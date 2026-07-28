@@ -33,20 +33,25 @@ spec:
           startupProbe:
             httpGet:
               path: "/actuator/health/liveness"
-              port: 8079
+              port: {{ .Values.enableServiceMonitor | ternary "management" "http" }}
             periodSeconds: 5
             failureThreshold: 360 # 30 minutes to start
           livenessProbe:
             httpGet:
               path: "/actuator/health/liveness"
-              port: 8079
+              port: {{ .Values.enableServiceMonitor | ternary "management" "http" }}
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: "/actuator/health/readiness"
-              port: 8079
+              port: {{ .Values.enableServiceMonitor | ternary "management" "http" }}
           ports:
-            - containerPort: 8079
+            - name: http
+              containerPort: 8079
+            {{- if .Values.enableServiceMonitor }}
+            - name: management
+              containerPort: 8078
+            {{- end }}
           args:
             - "--loculus.enable-seqsets={{ $.Values.seqSets.enabled }}"
             {{- if $.Values.seqSets.crossRef }}
@@ -84,6 +89,7 @@ spec:
             - "--loculus.s3.bucket.secret-key=$(S3_BUCKET_SECRET_KEY)"
             {{- end }}
             {{- if .Values.enableServiceMonitor }}
+            - "--management.server.port=8078"
             - "--management.endpoint.prometheus.enabled=true"
             - "--management.endpoints.web.exposure.include=health,prometheus"
             {{- end }}
