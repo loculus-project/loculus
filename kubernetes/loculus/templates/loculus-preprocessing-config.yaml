@@ -18,6 +18,12 @@ data:
     {{- if and $.Values.taxonomyService (not $.Values.disableTaxonomyService) }}
     taxonomy_service_url: {{ $.Values.taxonomyService.taxonomy_service_url }}
     {{- end }}
+    {{- if and $.Values.fileProcessingService (not $.Values.disableFileProcessingService) }}
+    file_processing_service_url: {{ $.Values.fileProcessingService.file_processing_service_url }}
+    {{- if hasKey $.Values.fileProcessingService "file_processing_service_timeout_seconds" }}
+    file_processing_service_timeout_seconds: {{ $.Values.fileProcessingService.file_processing_service_timeout_seconds }}
+    {{- end }}
+    {{- end }}
     {{- if and (hasKey $organismConfig.schema "submissionDataTypes") (hasKey $organismConfig.schema.submissionDataTypes "maxSequencesPerEntry") }}
     max_sequences_per_entry: {{ $organismConfig.schema.submissionDataTypes.maxSequencesPerEntry }}
     {{- end }}

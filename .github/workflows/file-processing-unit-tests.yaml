@@ -1,22 +1,22 @@
-name: ena-submission-unit-tests
+name: file-processing-unit-tests
 on:
   # test
   pull_request:
     paths:
-      - "ena-submission/**"
-      - ".github/workflows/ena-submission-unit-tests.yaml"
+      - "file-processing/**"
+      - ".github/workflows/file-processing-unit-tests.yaml"
       - "ruff.toml"
   push:
     branches:
       - main
   workflow_dispatch:
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-ena-submission-unit-tests
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-file-processing-unit-tests
   cancel-in-progress: true
 defaults:
   run:
     shell: micromamba-shell {0}
-    working-directory: ena-submission
+    working-directory: file-processing
 jobs:
   checkFormat:
     name: Check formatting
@@ -26,7 +26,7 @@ jobs:
       - name: Set up micromamba
         uses: mamba-org/setup-micromamba@v3
         with:
-          environment-file: "ena-submission/environment.yml"
+          environment-file: "file-processing/environment.yml"
           micromamba-version: "latest"
           cache-environment: true
       - name: Run ruff format check
@@ -39,7 +39,7 @@ jobs:
       - name: Set up micromamba
         uses: mamba-org/setup-micromamba@v3
         with:
-          environment-file: "ena-submission/environment.yml"
+          environment-file: "file-processing/environment.yml"
           micromamba-version: "latest"
           cache-environment: true
       - name: Run ruff check
@@ -48,21 +48,21 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v7
-      - name: Set up micromamba
-        uses: mamba-org/setup-micromamba@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Build test image
+        uses: docker/build-push-action@v7
         with:
-          environment-file: "ena-submission/environment.yml"
-          micromamba-version: "latest"
-          cache-environment: true
-      - name: Install package
-        run: |
-            uv pip install --system .
+          context: ./file-processing
+          push: false
+          load: true
+          tags: file-processing-service:test
+          cache-from: type=gha,scope=file-processing-service-${{ github.ref }}
+          cache-to: type=gha,mode=max,scope=file-processing-service-${{ github.ref }}
       - name: Run tests
-        run: |
-          # The integration tests are run in a separate workflow
-          # They require postgres to be running
-            pytest \
-            --ignore=./test/test_ena_submission_integration.py \
-            --ignore=./test/test_api.py
+        run: docker run --rm file-processing-service:test pytest

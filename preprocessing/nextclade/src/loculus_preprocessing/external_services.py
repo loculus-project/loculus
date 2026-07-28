@@ -1,13 +1,20 @@
 import logging
 import urllib.parse
 from collections import OrderedDict
+from dataclasses import asdict
 
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from loculus_preprocessing.datatypes import (
+    AnnotationSource,
+    AnnotationSourceType,
+    FileCategory,
+    FileIdAndNameAndReadUrl,
+    ProcessingAnnotation,
     RawProcessingResult,
+    _internal_error_message,
     raw_internal_error,
 )
 
@@ -75,7 +82,7 @@ def taxonomy_network_error(
     return raw_internal_error(f"Network error while {action} '{subject}': {e}.")
 
 
-taxonomy_cache = RequestCache(max_size=1024)
+taxonomy_cache = RequestCache(max_size=64)
 
 
 class TaxonomyService:
@@ -192,3 +199,57 @@ class TaxonomyService:
             return raw_internal_error(message)
 
         return RawProcessingResult(datum=common_name)
+
+
+def file_processing_service_error(file_names: str, message: str) -> ProcessingAnnotation:
+    return ProcessingAnnotation(
+        [AnnotationSource(file_names, AnnotationSourceType.FILE)],
+        [AnnotationSource(file_names, AnnotationSourceType.FILE)],
+        message,
+    )
+
+
+class FileProcessingService:
+    def __init__(self, file_processing_service_url: str | None, timeout_seconds: int = 300):
+        self.file_processing_service_url = file_processing_service_url
+        self.timeout_seconds = timeout_seconds
+
+    def process_files(
+        self, files: dict[FileCategory, list[FileIdAndNameAndReadUrl]]
+    ) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
+        file_names = ", ".join(file.name for file_list in files.values() for file in file_list)
+        if not self.file_processing_service_url:
+            return [
+                file_processing_service_error(
+                    file_names,
+                    _internal_error_message("File processing service URL is not configured."),
+                )
+            ], []
+
+        url = f"{self.file_processing_service_url}/process-files"
+        try:
+            payload = {
+                category.value: [asdict(f) for f in file_list]
+                for category, file_list in files.items()
+            }
+
+            response = requests.post(url, json=payload, timeout=self.timeout_seconds)
+            response.raise_for_status()
+            body = response.json()
+
+            errors = [
+                file_processing_service_error(error["fileName"], error["message"])
+                for error in body.get("errors") or []
+            ]
+            warnings = [
+                file_processing_service_error(warning["fileName"], warning["message"])
+                for warning in body.get("warnings") or []
+            ]
+            return errors, warnings
+        except requests.exceptions.RequestException as e:
+            return [
+                file_processing_service_error(
+                    file_names,
+                    _internal_error_message(f"An error: {e} occurred while processing files."),
+                )
+            ], []
