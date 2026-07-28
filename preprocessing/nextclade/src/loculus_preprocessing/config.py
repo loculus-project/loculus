@@ -134,12 +134,6 @@ class Config(BaseModel):
     taxonomy_service_url: str | None = None
     _taxonomy_service: TaxonomyService | None = PrivateAttr(default=None)
 
-    @property
-    def taxonomy_service(self) -> TaxonomyService:
-        """Lazily constructed, cached for the lifetime of this Config instance."""
-        if self._taxonomy_service is None:
-            self._taxonomy_service = TaxonomyService(self.taxonomy_service_url)
-        return self._taxonomy_service
 
     @model_validator(mode="after")
     def finalize(self):
@@ -155,6 +149,7 @@ class Config(BaseModel):
             self.backend_host = f"http://127.0.0.1:8079/{self.organism}"
 
         self.processing_order = get_processing_order(self)
+        self._taxonomy_service = TaxonomyService(self.taxonomy_service_url)
 
         return self
 
