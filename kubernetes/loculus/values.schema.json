@@ -684,19 +684,6 @@
                 },
                 "description": "Array of Strings. Arguments passed to the preprocessing pipeline."
               },
-              "taxonomyServiceArgs": {
-                "groups": ["preprocessing"],
-                "docsIncludePrefix": false,
-                "type": "object",
-                "description": "Settings to configure the taxonomy service host and port",
-                "properties": {
-                  "taxonomy_service_url": {
-                    "groups": ["preprocessing"],
-                    "type": "string",
-                    "description": "Host and port where the taxonomy service runs"
-                  }
-                }
-              },
               "configFile": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
@@ -1891,6 +1878,10 @@
         "taxonomyDbPath": {
           "type": "string",
           "description": "Path where the taxonomy SQLite database is mounted inside the container"
+        },
+        "taxonomy_service_url": {
+          "type": "string",
+          "description": "URL where the taxonomy service is accessible"
         }
       }
     },

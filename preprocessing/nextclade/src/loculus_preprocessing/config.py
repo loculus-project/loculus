@@ -7,7 +7,7 @@ from types import UnionType
 from typing import Any, get_args
 
 import yaml
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, PrivateAttr, model_validator
 
 from loculus_preprocessing.datatypes import (
     FunctionArgs,
@@ -17,6 +17,7 @@ from loculus_preprocessing.datatypes import (
     SegmentClassificationMethod,
     Topology,
 )
+from loculus_preprocessing.external_services import TaxonomyService
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +130,10 @@ class Config(BaseModel):
     embl: EmblInfoMetadataPropertyNames = Field(default_factory=EmblInfoMetadataPropertyNames)
     insdc_ingest_group_id: int = 1
 
+    # External services
+    taxonomy_service_url: str | None = None
+    _taxonomy_service: TaxonomyService = PrivateAttr(default=TaxonomyService(None))
+
     @model_validator(mode="after")
     def finalize(self):
         if not self.segments:
@@ -143,6 +148,7 @@ class Config(BaseModel):
             self.backend_host = f"http://127.0.0.1:8079/{self.organism}"
 
         self.processing_order = get_processing_order(self)
+        self._taxonomy_service = TaxonomyService(self.taxonomy_service_url)
 
         return self
 

@@ -260,6 +260,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     args["is_insdc_ingest_group"] = config.insdc_ingest_group_id == group_id
     args["submittedAt"] = submitted_at
     args["ACCESSION_VERSION"] = accession_version
+    args["taxonomy_service"] = config._taxonomy_service  # type: ignore
 
     try:
         processing_result = ProcessingFunctions.call_function(
@@ -393,7 +394,7 @@ def get_output_metadata(
                 )
                 submitted_at = unprocessed.inputMetadata["submittedAt"]
             else:
-                input_data[arg_name] = (
+                input_data[arg_name] = (  # type: ignore
                     output_metadata.get(resolved_path)  # type: ignore
                     if get_from_processed
                     else unprocessed.metadata.get(resolved_path)
