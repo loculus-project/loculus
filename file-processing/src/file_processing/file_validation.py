@@ -6,7 +6,7 @@ import subprocess  # noqa: S404
 from enum import StrEnum
 from pathlib import Path
 
-from file_processing.datatypes import Annotation
+from file_processing.datatypes import Annotation, FileCategory
 
 logger = logging.getLogger(__name__)
 
@@ -118,19 +118,42 @@ def determine_format_type(file_names: list[str]) -> FormatType | None:
     return None
 
 
+def validate_file_extensions(
+    files: list[str],
+    accepted_formats: list[FormatType] = ACCEPTED_FORMATS,
+) -> tuple[FormatType | None, list[Annotation]]:
+    errors: list[Annotation] = []
+    for file in files:
+        format = determine_format_type([file])
+        if format not in accepted_formats:
+            errors.append(
+                Annotation(
+                    fileName=file,
+                    fileCategory=FileCategory.RAW_READS,
+                    message=f"File is not in accepted format: {', '.join(accepted_formats)}. Paired-end FASTQ files must be submitted as separate, de-interleaved files.",
+                )
+            )
+    if errors:
+        return None, errors
+
+    format_type = determine_format_type([file for file in files])
+    if not format_type or format_type not in accepted_formats:
+        errors.append(
+            Annotation(
+                fileName=", ".join(file for file in files),
+                fileCategory=FileCategory.RAW_READS,
+                message=f"Input files have mixed or unsupported formats. Please provide files with consistent and supported formats: {accepted_formats}, paired-end FASTQ files must be submitted as separate, de-interleaved files.",
+            )
+        )
+    return format_type, errors
+
+
 def run_validation(
     input_files: list[str],
+    format_type: FormatType,
     data_dir: str,
     timeout_seconds: int = 300,
 ) -> Annotation | None:
-    format_type = determine_format_type(input_files)
-    if format_type is None:
-        message = f"Input files have mixed or unsupported formats. Please provide files with consistent and supported formats: {ACCEPTED_FORMATS}, paired-end FASTQ files must be submitted as separate, de-interleaved files."
-        logger.error(message)
-        return Annotation(
-            fileName=",".join(input_files),
-            message=message,
-        )
     if format_type == FormatType.FASTQ:
         for file in input_files:
             # Readtools handles single interleaved FASTQ files as single non-interleaved FASTQ files.
@@ -148,46 +171,47 @@ def run_validation(
                     fileName=Path(file).name,
                     message=message,
                 )
-    for file in input_files:
-        args = [
-            "java",
-            "-jar",
-            VALIDATION_JAR_PATH,
-            file,
+    args = (
+        ["java", "-jar", VALIDATION_JAR_PATH]
+        + [file for file in input_files]
+        + [
             "--format",
             format_type.value,
         ]
-        logger.debug(f"Running validation on '{file}': {args}")
-        log_file_path = Path(data_dir) / f"{Path(file).name}.validation.log"
-        error_log_path = Path(data_dir) / f"{Path(file).name}.validation.error.log"
+    )
+    logger.debug(f"Running validation on '{input_files}': {args}")
+    log_file_path = Path(data_dir) / f"{Path(input_files[0]).name}.validation.log"
+    error_log_path = (
+        Path(data_dir) / f"{Path(input_files[0]).name}.validation.error.log"
+    )
 
-        with (
-            log_file_path.open("w") as log_file,
-            error_log_path.open("w") as error_log_file,
-        ):
-            try:
-                exit_code = subprocess.run(  # noqa: S603
-                    args,
-                    check=False,
-                    stdout=log_file,
-                    stderr=error_log_file,
-                    timeout=timeout_seconds,
-                ).returncode
-            except subprocess.TimeoutExpired:
-                message = (
-                    f"Internal Error: Validation of file '{Path(file).name}' timed out after "
-                    f"{timeout_seconds} seconds. Please contact the administrator."
-                )
-                logger.error(message)
-                return Annotation(
-                    fileName=Path(file).name,
-                    message=message,
-                )
-        if exit_code != 0:
-            message = _parse_validation_error(log_file_path, error_log_path)
+    with (
+        log_file_path.open("w") as log_file,
+        error_log_path.open("w") as error_log_file,
+    ):
+        try:
+            exit_code = subprocess.run(  # noqa: S603
+                args,
+                check=False,
+                stdout=log_file,
+                stderr=error_log_file,
+                timeout=timeout_seconds,
+            ).returncode
+        except subprocess.TimeoutExpired:
+            message = (
+                f"Internal Error: Validation of files '{','.join(input_files)}' timed out after "
+                f"{timeout_seconds} seconds. Please contact the administrator."
+            )
             logger.error(message)
             return Annotation(
-                fileName=Path(file).name,
+                fileName=",".join(input_files),
                 message=message,
             )
+    if exit_code != 0:
+        message = _parse_validation_error(log_file_path, error_log_path)
+        logger.error(message)
+        return Annotation(
+            fileName=",".join(input_files),
+            message=message,
+        )
     return None
