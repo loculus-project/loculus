@@ -18,7 +18,11 @@ import { getAccessionVersionString, parseAccessionVersionFromString } from '../.
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu.tsx';
 import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
-import { applyFileMappings, type FileMapping } from '../Submission/FileUpload/fileMapping.ts';
+import {
+    applyFileMappings,
+    type FileMapping,
+    type ResolvedSubmissionFile,
+} from '../Submission/FileUpload/fileMapping.ts';
 import { Button } from '../common/Button';
 import ErrorBox from '../common/ErrorBox';
 import { Spinner } from '../common/Spinner';
@@ -64,7 +68,7 @@ const InnerEditPage: FC<EditPageProps> = ({
     );
 
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
-    const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(() => {
+    const [fileMapping, setFileMapping] = useState<FileMapping<ResolvedSubmissionFile> | undefined>(() => {
         const previousFiles = dataToEdit.submittedData.files;
         if (!previousFiles) return undefined;
         return new Map(
@@ -107,9 +111,9 @@ const InnerEditPage: FC<EditPageProps> = ({
             }
 
             let finalMetadataFile = metadataFile;
-            const finalSubmissionFileMapping = new Map([[dataToEdit.submissionId, fileMapping ?? new Map()]]);
 
-            if (extraFilesEnabled) {
+            if (extraFilesEnabled && fileMapping !== undefined) {
+                const finalSubmissionFileMapping = new Map([[dataToEdit.submissionId, fileMapping]]);
                 finalMetadataFile = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
             }
 
@@ -137,7 +141,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                     ? Object.fromEntries(
                           [...fileMapping].map(([category, files]) => [
                               category,
-                              [...files.values()].map((file) => ({ fileId: file.fileId!, name: file.name })),
+                              [...files.values()].map((file) => ({ fileId: file.fileId, name: file.name })),
                           ]),
                       )
                     : null;

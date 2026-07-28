@@ -2,7 +2,7 @@ import { produce } from 'immer';
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
 
-import { type FileMapping } from './fileMapping';
+import { type FileMapping, type ResolvedSubmissionFile } from './fileMapping';
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
 import { type FileCategory } from '../../../types/config';
@@ -90,8 +90,8 @@ type FolderUploadComponentProps = {
     accessToken: string;
     clientConfig: ClientConfig;
     groupId: number;
-    fileMapping: FileMapping | undefined;
-    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
+    fileMapping: FileMapping<ResolvedSubmissionFile> | undefined;
+    setFileMapping: Dispatch<SetStateAction<FileMapping<ResolvedSubmissionFile> | undefined>>;
     onError: (message: string) => void;
 };
 
@@ -112,7 +112,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
         const files: PreviousUpload[] = [...categoryFiles.values()].map((file) => ({
             type: 'previousUpload',
-            fileId: file.fileId!,
+            fileId: file.fileId,
             name: file.name,
             path: file.path,
         }));

@@ -19,12 +19,12 @@ export type SubmissionFile = {
     path: string;
     fileId?: string;
 };
-export type FileMapping = Map<FileCategory, Map<FilePath, SubmissionFile>>;
-export type SubmissionFileMapping = Map<SubmissionId, FileMapping>;
+export type ResolvedSubmissionFile = SubmissionFile & {
+    fileId: string;
+};
 
-type ResolvedSubmissionFile = SubmissionFile & { fileId: string };
-type ResolvedFileMapping = Map<FileCategory, Map<FilePath, ResolvedSubmissionFile>>;
-type ResolvedSubmissionFileMapping = Map<SubmissionId, ResolvedFileMapping>;
+export type FileMapping<T extends SubmissionFile = SubmissionFile> = Map<FileCategory, Map<FilePath, T>>;
+export type SubmissionFileMapping<T extends SubmissionFile = SubmissionFile> = Map<SubmissionId, FileMapping<T>>;
 
 // File linkage details between the files declared within the metadata and the uploaded files
 export type FileLinkageDetails = {
@@ -37,114 +37,157 @@ export type FileLinkageDetails = {
     // The metadata contains a fileName(::filePath), but no file has been uploaded which matches it
     missing: SubmissionFile[];
 
-    // A new file has been uploaded, but is not pointed to by the metadata.
-    // Either the file is missing from the metadata, or a metadata entry with the same path already has a file ID
+    // A new file has been uploaded, but is missing from the metadata
     orphaned: SubmissionFile[];
+
+    // A new file has been uploaded, and the metadata declares its path, but every entry
+    // declaring it has its own file ID, so the upload itself is referenced by nothing
+    shadowed: SubmissionFile[];
+};
+
+type LinkageEntry = {
+    metadataEntries: { submissionId: SubmissionId; file: SubmissionFile }[];
+    uploadFolderEntry?: ResolvedSubmissionFile;
+};
+
+type LinkageMapping = Map<FileCategory, Map<FilePath, LinkageEntry>>;
+
+type ResolvedEntry = {
+    submissionId: SubmissionId;
+    category: FileCategory;
+    path: FilePath;
+    file: ResolvedSubmissionFile;
 };
 
 export type FileLinkage = {
-    submissionFileMapping: ResolvedSubmissionFileMapping;
+    submissionFileMapping: SubmissionFileMapping<ResolvedSubmissionFile>;
     details: Map<FileCategory, FileLinkageDetails>;
 };
 
-export function getFileLinkage(
+function getLinkageMapping(
     submissionFileMapping: SubmissionFileMapping,
-    folderFileMapping: FileMapping,
-): FileLinkage {
-    const resolvedSubmissionFileMapping: ResolvedSubmissionFileMapping = new Map();
+    folderFileMapping: FileMapping<ResolvedSubmissionFile> | undefined,
+): LinkageMapping {
+    const linkageMapping: LinkageMapping = new Map();
 
-    // Populate the resolved submissionFileMapping
-    // This consists of the submissionFileMapping from the metadata,
-    // populated with file IDs from the folder file mapping
+    const getLinkageEntry = (category: FileCategory, path: FilePath): LinkageEntry => {
+        let pathMapping = linkageMapping.get(category);
+        if (pathMapping === undefined) {
+            pathMapping = new Map();
+            linkageMapping.set(category, pathMapping);
+        }
+        let linkageEntry = pathMapping.get(path);
+        if (linkageEntry === undefined) {
+            linkageEntry = { metadataEntries: [] };
+            pathMapping.set(path, linkageEntry);
+        }
+        return linkageEntry;
+    };
+
     for (const [submissionId, categoryMapping] of submissionFileMapping) {
-        const resolvedCategoryMapping: ResolvedFileMapping = new Map();
-
         for (const [category, pathMapping] of categoryMapping) {
-            const resolvedPathMapping = new Map<FilePath, ResolvedSubmissionFile>();
-
-            for (const [filePath, file] of pathMapping) {
-                // Files between the two mappings are matched on file path
-                const uploadFileId = folderFileMapping.get(category)?.get(filePath)?.fileId;
-
-                // If for a given file path, the metadata already contains a file ID,
-                // then this metadata ID takes precedence over the file ID from the upload
-                const fileId = file.fileId ?? uploadFileId;
-
-                if (fileId === undefined) continue;
-
-                resolvedPathMapping.set(filePath, { ...file, fileId });
-            }
-            resolvedCategoryMapping.set(category, resolvedPathMapping);
+            for (const [path, file] of pathMapping)
+                getLinkageEntry(category, path).metadataEntries.push({ submissionId, file });
         }
-        resolvedSubmissionFileMapping.set(submissionId, resolvedCategoryMapping);
     }
 
-    // File categories over both the metadata and upload folders
-    const categories = new Set<FileCategory>([
-        ...[...submissionFileMapping.values()].flatMap((fileMapping) => [...fileMapping.keys()]),
-        ...folderFileMapping.keys(),
-    ]);
-
-    // Partition linkage details into linked, reused, missing and orphaned files
-    const linkageDetails = new Map<FileCategory, FileLinkageDetails>();
-    for (const category of categories) {
-        const referencedFileIds = new Set<string>();
-
-        for (const resolvedCategoryMapping of resolvedSubmissionFileMapping.values()) {
-            const resolvedFiles = resolvedCategoryMapping.get(category)?.values() ?? [];
-            for (const file of resolvedFiles) referencedFileIds.add(file.fileId);
+    if (folderFileMapping !== undefined) {
+        for (const [category, pathMapping] of folderFileMapping) {
+            for (const [path, file] of pathMapping) getLinkageEntry(category, path).uploadFolderEntry = file;
         }
-
-        const linked: SubmissionFile[] = [];
-        const orphaned: SubmissionFile[] = [];
-
-        const folderPathMapping = folderFileMapping.get(category);
-        const folderFiles = folderPathMapping?.values() ?? [];
-
-        for (const file of folderFiles) {
-            if (file.fileId !== undefined && referencedFileIds.has(file.fileId)) linked.push(file);
-            else orphaned.push(file);
-        }
-
-        const reused: SubmissionFile[] = [];
-        const missing: SubmissionFile[] = [];
-
-        for (const fileMapping of submissionFileMapping.values()) {
-            for (const file of fileMapping.get(category)?.values() ?? []) {
-                if (file.fileId !== undefined) {
-                    reused.push(file);
-                } else if (folderPathMapping?.get(file.path) === undefined) {
-                    missing.push(file);
-                } else {
-                    // Entry has no file ID but is present in the folder - it is linked
-                    continue;
-                }
-            }
-        }
-        linkageDetails.set(category, { linked, reused, orphaned, missing });
     }
 
-    return { submissionFileMapping: resolvedSubmissionFileMapping, details: linkageDetails };
+    return linkageMapping;
 }
 
-export function getLinkageError(details: Map<FileCategory, FileLinkageDetails>): string | undefined {
+function getResolvedSubmissionFileMapping(entries: ResolvedEntry[]): SubmissionFileMapping<ResolvedSubmissionFile> {
+    const resolvedSubmissionFileMapping: SubmissionFileMapping<ResolvedSubmissionFile> = new Map();
+
+    for (const { submissionId, category, path, file } of entries) {
+        let categoryMapping = resolvedSubmissionFileMapping.get(submissionId);
+        if (categoryMapping === undefined) {
+            categoryMapping = new Map();
+            resolvedSubmissionFileMapping.set(submissionId, categoryMapping);
+        }
+        let pathMapping = categoryMapping.get(category);
+        if (pathMapping === undefined) {
+            pathMapping = new Map();
+            categoryMapping.set(category, pathMapping);
+        }
+        pathMapping.set(path, file);
+    }
+
+    return resolvedSubmissionFileMapping;
+}
+
+export function getFileLinkage(
+    submissionFileMapping: SubmissionFileMapping,
+    folderFileMapping: FileMapping<ResolvedSubmissionFile> | undefined,
+): FileLinkage {
+    const linkageMapping = getLinkageMapping(submissionFileMapping, folderFileMapping);
+    const linkageDetails = new Map<FileCategory, FileLinkageDetails>();
+    const resolvedEntries: ResolvedEntry[] = [];
+
+    for (const [category, pathMapping] of linkageMapping) {
+        const categoryLinkageDetails: FileLinkageDetails = {
+            linked: [],
+            reused: [],
+            missing: [],
+            orphaned: [],
+            shadowed: [],
+        };
+
+        for (const [path, linkageEntry] of pathMapping) {
+            for (const { submissionId, file } of linkageEntry.metadataEntries) {
+                if (file.fileId !== undefined) {
+                    // A metadata file entry with its own file ID is reusing a pre-existing file
+                    categoryLinkageDetails.reused.push(file);
+                } else if (linkageEntry.uploadFolderEntry === undefined) {
+                    // If the metadata file does not have its own file ID, and there is no upload file entry,
+                    // then the file is missing
+                    categoryLinkageDetails.missing.push(file);
+                }
+
+                // A file ID in the metadata takes precedence over the one from the upload
+                const fileId = file.fileId ?? linkageEntry.uploadFolderEntry?.fileId;
+
+                // Having either means the entry was linked or reused, so it belongs in the resolved mapping
+                if (fileId !== undefined)
+                    resolvedEntries.push({ submissionId, category, path, file: { ...file, fileId } });
+            }
+
+            if (linkageEntry.uploadFolderEntry === undefined) continue;
+
+            if (linkageEntry.metadataEntries.some(({ file }) => file.fileId === undefined)) {
+                // The uploaded file has (at least one) corresponding metadata entry, so is linked
+                categoryLinkageDetails.linked.push(linkageEntry.uploadFolderEntry);
+            } else if (linkageEntry.metadataEntries.length > 0) {
+                // The uploaded file has corresponding metadata entries, but they all have file IDs
+                categoryLinkageDetails.shadowed.push(linkageEntry.uploadFolderEntry);
+            } else {
+                // The uploaded file has no metadata entries
+                categoryLinkageDetails.orphaned.push(linkageEntry.uploadFolderEntry);
+            }
+        }
+
+        linkageDetails.set(category, categoryLinkageDetails);
+    }
+
+    return { submissionFileMapping: getResolvedSubmissionFileMapping(resolvedEntries), details: linkageDetails };
+}
+
+export function getLinkageErrors(details: Map<FileCategory, FileLinkageDetails>): string | undefined {
     const errors: string[] = [];
     const getFilePaths = (files: SubmissionFile[]) => files.map((file) => file.path).join(', ');
 
-    for (const [category, { reused, missing, orphaned }] of details) {
-        // An orphan sharing a path with a reused entry is shadowed by that entry's file ID, rather
-        // than missing from the metadata - so it needs the actionable message instead.
-        const reusedPaths = new Set(reused.map((file) => file.path));
-        const shadowed = orphaned.filter((file) => reusedPaths.has(file.path));
-        const unreferenced = orphaned.filter((file) => !reusedPaths.has(file.path));
-
+    for (const [category, { missing, orphaned, shadowed }] of details) {
         if (missing.length > 0)
             errors.push(
                 `The following ${category} files were referenced in metadata but not uploaded: ${getFilePaths(missing)}.`,
             );
-        if (unreferenced.length > 0)
+        if (orphaned.length > 0)
             errors.push(
-                `The following ${category} files were uploaded but not referenced in metadata: ${getFilePaths(unreferenced)}.`,
+                `The following ${category} files were uploaded but not referenced in metadata: ${getFilePaths(orphaned)}.`,
             );
         if (shadowed.length > 0)
             errors.push(

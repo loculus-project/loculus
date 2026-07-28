@@ -30,10 +30,11 @@ import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import {
     applyFileMappings,
     getFileLinkage,
-    getLinkageError,
+    getLinkageErrors,
     type FileLinkage,
     type FileLinkageDetails,
     type FileMapping,
+    type ResolvedSubmissionFile,
     type SubmissionFile,
     type SubmissionFileMapping,
 } from './FileUpload/fileMapping.ts';
@@ -75,7 +76,7 @@ const InnerDataUploadForm = ({
 
     const { submit, revise, isPending } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
-    const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(undefined);
+    const [fileMapping, setFileMapping] = useState<FileMapping<ResolvedSubmissionFile> | undefined>(undefined);
     const [submissionFileMapping, setSubmissionFileMapping] = useState<SubmissionFileMapping | undefined>(undefined);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
@@ -87,7 +88,7 @@ const InnerDataUploadForm = ({
     const fileLinkage = useMemo(
         () =>
             inputMode === 'bulk' && submissionFileMapping !== undefined
-                ? getFileLinkage(submissionFileMapping, fileMapping ?? new Map())
+                ? getFileLinkage(submissionFileMapping, fileMapping)
                 : undefined,
         [inputMode, submissionFileMapping, fileMapping],
     );
@@ -122,20 +123,20 @@ const InnerDataUploadForm = ({
         }
 
         let finalMetadataFile = metadataFile;
-        let finalSubmissionFileMapping = submissionFileMapping;
 
-        if (submissionId !== undefined && inputMode === 'form') {
-            finalSubmissionFileMapping = new Map([[submissionId, fileMapping ?? new Map()]]);
-        }
-
-        if (extraFilesEnabled && finalSubmissionFileMapping !== undefined) {
-            const fileLinkage = getFileLinkage(finalSubmissionFileMapping, fileMapping ?? new Map());
-            const linkageError = getLinkageError(fileLinkage.details);
-            if (linkageError !== undefined) {
-                onError(linkageError);
-                return;
+        if (extraFilesEnabled) {
+            if (submissionId !== undefined && inputMode === 'form' && fileMapping !== undefined) {
+                const finalSubmissionFileMapping = new Map([[submissionId, fileMapping]]);
+                finalMetadataFile = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
+            } else if (submissionFileMapping !== undefined) {
+                const fileLinkage = getFileLinkage(submissionFileMapping, fileMapping);
+                const linkageError = getLinkageErrors(fileLinkage.details);
+                if (linkageError !== undefined) {
+                    onError(linkageError);
+                    return;
+                }
+                finalMetadataFile = await applyFileMappings(metadataFile, fileLinkage.submissionFileMapping);
             }
-            finalMetadataFile = await applyFileMappings(metadataFile, fileLinkage.submissionFileMapping);
         }
 
         const submitSequenceData = () => {
@@ -329,10 +330,10 @@ const FileLinkageStatus = ({ linkageDetails }: { linkageDetails?: FileLinkageDet
             message: 'referenced in metadata but not uploaded.',
         },
         {
-            key: 'orphaned',
+            key: 'unreferenced',
             icon: '⚠',
             color: 'text-yellow-600',
-            files: linkageDetails.orphaned,
+            files: linkageDetails.orphaned.concat(linkageDetails.shadowed),
             message: 'uploaded but not referenced in metadata.',
         },
     ];
@@ -367,8 +368,8 @@ export const ExtraFilesUpload = ({
     inputMode: InputMode;
     groupId: number;
     fileCategories: FileCategory[];
-    fileMapping: FileMapping | undefined;
-    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
+    fileMapping: FileMapping<ResolvedSubmissionFile> | undefined;
+    setFileMapping: Dispatch<SetStateAction<FileMapping<ResolvedSubmissionFile> | undefined>>;
     fileLinkage?: FileLinkage;
     onError: (message: string) => void;
 }) => {
