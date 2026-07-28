@@ -145,9 +145,9 @@ const InnerDataUploadForm = ({
                 }
 
                 const fileLinkage = getFileLinkage(submissionFileMapping.value, fileMapping);
-                const linkageError = getLinkageErrors(fileLinkage.details);
-                if (linkageError !== undefined) {
-                    onError(linkageError);
+                const linkageErrors = getLinkageErrors(fileLinkage.details);
+                if (linkageErrors !== undefined) {
+                    onError(linkageErrors);
                     return;
                 }
                 finalMetadataFile = await applyFileMappings(metadataFile, fileLinkage.submissionFileMapping);
