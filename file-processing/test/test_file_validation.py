@@ -12,6 +12,8 @@ from file_processing.file_validation import (
     _mixed_mates,
     _parse_validation_error,
     run_validation,
+    validate_file_extensions,
+    FormatType,
 )
 
 VALID_SINGLE_END = """\
@@ -191,20 +193,20 @@ def _write(tmp_path: Path, name: str, content: str) -> str:
 @pytest.mark.usefixtures("readtools_jar")
 def test_valid_single_end_fastq_passes(tmp_path):
     reads = _write(tmp_path, "reads.fastq", VALID_SINGLE_END)
-    assert run_validation([reads], str(tmp_path)) is None
+    assert run_validation([reads], FormatType.FASTQ, str(tmp_path)) is None
 
 
 @pytest.mark.usefixtures("readtools_jar")
 def test_valid_paired_end_fastq_passes(tmp_path):
     r1 = _write(tmp_path, "R1.fastq", VALID_R1)
     r2 = _write(tmp_path, "R2.fastq", VALID_R2)
-    assert run_validation([r1, r2], str(tmp_path)) is None
+    assert run_validation([r1, r2], FormatType.FASTQ, str(tmp_path)) is None
 
 
 @pytest.mark.usefixtures("readtools_jar")
 def test_fasta_style_header_is_rejected(tmp_path):
     reads = _write(tmp_path, "bad_header.fastq", FASTA_STYLE_HEADER)
-    result = run_validation([reads], str(tmp_path))
+    result = run_validation([reads], FormatType.FASTQ, str(tmp_path))
     assert isinstance(result, Annotation)
     assert "must start with @" in result.message
 
@@ -212,7 +214,7 @@ def test_fasta_style_header_is_rejected(tmp_path):
 @pytest.mark.usefixtures("readtools_jar")
 def test_non_iupac_base_is_rejected(tmp_path):
     reads = _write(tmp_path, "bad_base.fastq", NON_IUPAC_BASE)
-    result = run_validation([reads], str(tmp_path))
+    result = run_validation([reads], FormatType.FASTQ, str(tmp_path))
     assert isinstance(result, Annotation)
     assert "IUPAC" in result.message
 
@@ -220,7 +222,7 @@ def test_non_iupac_base_is_rejected(tmp_path):
 @pytest.mark.usefixtures("readtools_jar")
 def test_length_mismatch_is_rejected(tmp_path):
     reads = _write(tmp_path, "bad_length.fastq", LENGTH_MISMATCH)
-    result = run_validation([reads], str(tmp_path))
+    result = run_validation([reads], FormatType.FASTQ, str(tmp_path))
     assert isinstance(result, Annotation)
     assert "same length" in result.message
 
@@ -232,7 +234,7 @@ def test_interleaved_fastq_in_single_file_is_rejected(tmp_path):
     check, even though the file itself is well-formed FASTQ.
     """
     reads = _write(tmp_path, "interleaved.fastq", INTERLEAVED_SAME_NAME)
-    result = run_validation([reads], str(tmp_path))
+    result = run_validation([reads], FormatType.FASTQ, str(tmp_path))
     assert isinstance(result, Annotation)
     assert "Multiple" in result.message
     assert "occurrences of read name" in result.message
@@ -253,7 +255,7 @@ def test_deinterleaved_paired_reads_pass(tmp_path):
         "R2.fastq",
         "@read1\nTGCATGCATG\n+\nIIIIIIIIII\n@read2\nTGCATGCATG\n+\nIIIIIIIIII\n",
     )
-    assert run_validation([r1, r2], str(tmp_path)) is None
+    assert run_validation([r1, r2], FormatType.FASTQ, str(tmp_path)) is None
 
 
 @pytest.mark.usefixtures("readtools_jar")
@@ -263,7 +265,7 @@ def test_casava_style_interleaved_single_file_is_rejected(tmp_path):
     convention (unique names) passes readtools but must still be rejected.
     """
     reads = _write(tmp_path, "interleaved_casava.fastq", CASAVA_INTERLEAVED_SINGLE_FILE)
-    result = run_validation([reads], str(tmp_path))
+    result = run_validation([reads], FormatType.FASTQ, str(tmp_path))
     assert isinstance(result, Annotation)
     assert "multiple mates" in result.message
     assert "read numbers: 1, 2" in result.message
@@ -278,7 +280,7 @@ def test_two_files_each_individually_interleaved_is_rejected(tmp_path):
     """
     r1 = _write(tmp_path, "R1.fastq", BADLY_SPLIT_R1)
     r2 = _write(tmp_path, "R2.fastq", BADLY_SPLIT_R2)
-    result = run_validation([r1, r2], str(tmp_path))
+    result = run_validation([r1, r2], FormatType.FASTQ, str(tmp_path))
     assert isinstance(result, Annotation)
     assert "multiple mates" in result.message
 
@@ -288,7 +290,7 @@ def test_gzipped_fastq_is_recognized_and_passes(tmp_path):
     gz_path = tmp_path / "reads.fastq.gz"
     with gzip.open(gz_path, "wt") as f:
         f.write(VALID_SINGLE_END)
-    assert run_validation([str(gz_path)], str(tmp_path)) is None
+    assert run_validation([str(gz_path)], FormatType.FASTQ, str(tmp_path)) is None
 
 
 def test_machine_id_headers_are_not_mistaken_for_mate_suffixes(tmp_path):
@@ -305,31 +307,16 @@ def _write_bytes(tmp_path: Path, name: str, data: bytes) -> str:
 @pytest.mark.usefixtures("readtools_jar")
 def test_valid_bam_passes(tmp_path):
     bam = _write_bytes(tmp_path, "reads.bam", (FIXTURES_DIR / "valid.bam").read_bytes())
-    assert run_validation([bam], str(tmp_path)) is None
+    assert run_validation([bam], FormatType.BAM, str(tmp_path)) is None
 
 
 @pytest.mark.usefixtures("readtools_jar")
 def test_truncated_bam_is_rejected(tmp_path):
     truncated = (FIXTURES_DIR / "valid.bam").read_bytes()[:40]
     bam = _write_bytes(tmp_path, "truncated.bam", truncated)
-    result = run_validation([bam], str(tmp_path))
+    result = run_validation([bam], FormatType.BAM, str(tmp_path))
     assert isinstance(result, Annotation)
     assert "FileTruncatedException" in result.message
-
-
-def test_unsupported_extension_is_rejected_without_running_jar(tmp_path):
-    reads = _write(tmp_path, "reads.txt", VALID_SINGLE_END)
-    result = run_validation([reads], str(tmp_path))
-    assert isinstance(result, Annotation)
-    assert "unsupported formats" in result.message
-
-
-def test_mixed_formats_are_rejected_without_running_jar(tmp_path):
-    fastq = _write(tmp_path, "reads.fastq", VALID_SINGLE_END)
-    bam = _write(tmp_path, "reads.bam", "not really a bam")
-    result = run_validation([fastq, bam], str(tmp_path))
-    assert isinstance(result, Annotation)
-    assert "mixed or unsupported formats" in result.message
 
 
 def test_parse_validation_error_extracts_detail_after_result_line(tmp_path):
@@ -387,7 +374,22 @@ def test_validation_timeout_is_reported_as_error(tmp_path, monkeypatch):
         raise subprocess.TimeoutExpired(cmd=args, timeout=kwargs["timeout"])
 
     monkeypatch.setattr(file_validation.subprocess, "run", fake_run)
-    result = run_validation([reads], str(tmp_path), timeout_seconds=1)
+    result = run_validation([reads], FormatType.FASTQ, str(tmp_path), timeout_seconds=1)
     assert result is not None
     assert "timed out" in result.message
     assert "1 second" in result.message
+
+
+def test_unsupported_extension_is_rejected_without_running_jar():
+    result = validate_file_extensions(["file.txt"])
+    assert result[0] is None
+    assert "File is not in accepted format" in result[1][0].message
+
+
+def test_mixed_formats_are_rejected_without_running_jar():
+    result = validate_file_extensions(
+        ["reads.fastq", "reads.bam"],
+        accepted_formats=[FormatType.FASTQ, FormatType.BAM],
+    )
+    assert result[0] is None
+    assert "mixed or unsupported formats" in result[1][0].message
