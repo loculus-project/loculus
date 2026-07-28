@@ -132,8 +132,7 @@ class Config(BaseModel):
 
     # External services
     taxonomy_service_url: str | None = None
-    _taxonomy_service: TaxonomyService | None = PrivateAttr(default=None)
-
+    _taxonomy_service: TaxonomyService = PrivateAttr(default=TaxonomyService(None))
 
     @model_validator(mode="after")
     def finalize(self):
