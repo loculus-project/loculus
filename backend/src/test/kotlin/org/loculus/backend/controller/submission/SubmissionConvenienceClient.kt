@@ -379,7 +379,7 @@ class SubmissionConvenienceClient(
                 .andExpect(
                     content().contentType(MediaType.APPLICATION_JSON_VALUE),
                 ),
-        ).processingResultCounts[processingResult]!!.toInt()
+        ).processingResultCounts[processingResult]!!
 
     fun submitEditedData(
         accessions: List<Accession>,
