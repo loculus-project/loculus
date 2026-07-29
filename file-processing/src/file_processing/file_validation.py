@@ -43,7 +43,10 @@ def _parse_validation_error(log_file_path: Path, error_log_path: Path) -> str:
                 return "; ".join(details)
             break
     stderr_content = error_log_path.read_text().strip()
-    return stderr_content or "File validation failed"
+    message = "File validation failed."
+    if stderr_content:
+        message += " " + stderr_content
+    return message
 
 
 def _has_extension(file: str, extensions: set[str]) -> bool:

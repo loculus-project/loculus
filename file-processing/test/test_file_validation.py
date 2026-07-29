@@ -328,7 +328,9 @@ def test_parse_validation_error_falls_back_to_stderr(tmp_path):
     err = tmp_path / "out.err"
     err.write_text("Exception in thread main: OutOfMemoryError\n")
     message = _parse_validation_error(log, err)
-    assert message == "Exception in thread main: OutOfMemoryError"
+    assert (
+        message == "File validation failed. Exception in thread main: OutOfMemoryError"
+    )
 
 
 def test_parse_validation_error_generic_fallback(tmp_path):
@@ -337,7 +339,7 @@ def test_parse_validation_error_generic_fallback(tmp_path):
     err = tmp_path / "out.err"
     err.write_text("")
     message = _parse_validation_error(log, err)
-    assert message == "File validation failed"
+    assert message == "File validation failed."
 
 
 def test_validation_timeout_is_reported_as_error(tmp_path, monkeypatch):
