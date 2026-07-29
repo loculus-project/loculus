@@ -2,7 +2,6 @@
 from dataclasses import dataclass, field
 from unittest import mock
 
-from preprocessing.nextclade.src.loculus_preprocessing.datatypes import FileCategory
 import pytest
 from factory_methods import (
     Case,
@@ -19,6 +18,7 @@ from loculus_preprocessing.config import Config, ProcessingSpec, get_config, get
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
     AnnotationSourceType,
+    FileCategory,
     FileIdAndNameAndReadUrl,
     FunctionArgs,
     InputMetadata,
