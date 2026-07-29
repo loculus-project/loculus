@@ -50,7 +50,9 @@ def process_submitted_files(
     warnings: list[Annotation] = []
     result_files: Files = {}
 
-    logger.debug(f"Processing submitted files for accessionVersion: {file_mapping.accessionVersion}")
+    logger.debug(
+        f"Processing submitted files for accessionVersion: {file_mapping.accessionVersion}"
+    )
     for category, files in file_mapping.files.items():
         if not files:
             # Backend always includes a key with empty list for enabled categories
