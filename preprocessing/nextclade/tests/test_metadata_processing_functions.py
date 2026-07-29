@@ -28,6 +28,7 @@ from loculus_preprocessing.datatypes import (
 )
 from loculus_preprocessing.prepro import process_all
 from loculus_preprocessing.processing_functions import (
+    ProcessingContext,
     ProcessingFunctions,
     format_authors,
     valid_authors,
@@ -1185,8 +1186,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeString",
-                "submittedAt": ts_from_ymd(2022, 12, 15),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2022, 12, 15)),
         ).datum
         == "2021-12"
     ), "dateRangeString: 2021-12 should be returned as is."
@@ -1197,8 +1198,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeLower",
-                "submittedAt": ts_from_ymd(2021, 12, 15),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2021, 12, 15)),
         ).datum
         == "2021-12-01"
     ), "dateRangeLower: 2021-12 should be returned as 2021-12-01."
@@ -1209,8 +1210,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeUpper",
-                "submittedAt": ts_from_ymd(2022, 12, 15),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2022, 12, 15)),
         ).datum
         == "2021-12-31"
     ), "dateRangeUpper: 2021-12 should be returned as 2021-12-31."
@@ -1221,8 +1222,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeUpper",
-                "submittedAt": ts_from_ymd(2021, 12, 15),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2021, 12, 15)),
         ).datum
         == "2021-12-15"
     ), "dateRangeUpper: 2021-12 should be returned as submittedAt time: 2021-12-15."
@@ -1233,8 +1234,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeUpper",
-                "submittedAt": ts_from_ymd(2021, 3, 15),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2021, 3, 15)),
         ).datum
         == "2021-02-28"
     ), "dateRangeUpper: 2021-02 should be returned as 2021-02-28."
@@ -1245,8 +1246,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeUpper",
-                "submittedAt": ts_from_ymd(2021, 12, 15),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2021, 12, 15)),
         ).datum
         == "2021-12-15"
     ), "dateRangeUpper: 2021 should be returned as 2021-12-15."
@@ -1257,8 +1258,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeUpper",
-                "submittedAt": ts_from_ymd(2022, 1, 15),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2022, 1, 15)),
         ).datum
         == "2021-12-31"
     ), "dateRangeUpper: 2021 should be returned as 2021-12-31."
@@ -1269,8 +1270,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeUpper",
-                "submittedAt": ts_from_ymd(2021, 12, 16),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2021, 12, 16)),
         ).datum
         == "2021-12-15"
     ), "dateRangeUpper: 2021-12 with releaseDate 2021-12-15 should be returned as 2021-12-15."
@@ -1281,8 +1282,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeUpper",
-                "submittedAt": ts_from_ymd(2021, 12, 16),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2021, 12, 16)),
         ).datum
         == "2021-12-15"
     ), "dateRangeUpper: empty date with releaseDate 2021-12-15 should be returned as 2021-12-15."
@@ -1293,8 +1294,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeString",
-                "submittedAt": ts_from_ymd(2021, 12, 16),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2021, 12, 16)),
         ).datum
         is None
     ), "dateRangeString: empty date should be returned as None."
@@ -1305,8 +1306,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeString",
-                "submittedAt": ts_from_ymd(2021, 12, 16),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2021, 12, 16)),
         ).datum
         is None
     ), "dateRangeString: invalid date should be returned as None."
@@ -1317,8 +1318,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeLower",
-                "submittedAt": ts_from_ymd(2021, 12, 16),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2021, 12, 16)),
         ).datum
         is None
     ), "dateRangeLower: empty date should be returned as None."
@@ -1329,8 +1330,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeLower",
-                "submittedAt": ts_from_ymd(2022, 1, 1),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2022, 1, 1)),
         ).datum
         == "2021-01-02"
     ), "dateRangeLower: lucene range should return lower bound."
@@ -1341,8 +1342,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeLower",
-                "submittedAt": ts_from_ymd(2022, 1, 1),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2022, 1, 1)),
         ).datum
         == "2021-01-01"
     ), "dateRangeLower: lucene range should return lower bound of leading year."
@@ -1353,8 +1354,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeUpper",
-                "submittedAt": ts_from_ymd(2022, 1, 1),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2022, 1, 1)),
         ).datum
         == "2021-06-30"
     ), "dateRangeUpper: lucene range should return upper bound."
@@ -1365,8 +1366,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeUpper",
-                "submittedAt": ts_from_ymd(2022, 1, 1),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2022, 1, 1)),
         ).datum
         == "2021-12-31"
     ), "dateRangeUpper: lucene range should return upper bound of final date."
@@ -1377,8 +1378,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeString",
-                "submittedAt": ts_from_ymd(2022, 1, 1),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2022, 1, 1)),
         ).datum
         == "2021-05/2021-06"
     ), "dateRangeString: lucene range should be returned in ISO format (compressed to month range)."
@@ -1389,8 +1390,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeString",
-                "submittedAt": ts_from_ymd(2022, 1, 1),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2022, 1, 1)),
         ).datum
         == "2021-01/2021-06"
     ), "dateRangeString: lucene range should be returned in ISO format (compressed to month range)."
@@ -1401,8 +1402,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeLower",
-                "submittedAt": ts_from_ymd(2022, 1, 1),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2022, 1, 1)),
         ).datum
         == "2021-03-05"
     ), "dateRangeLower: ISO range should return lower bound."
@@ -1413,8 +1414,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeLower",
-                "submittedAt": ts_from_ymd(2022, 1, 1),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2022, 1, 1)),
         ).datum
         == "2021-01-01"
     ), "dateRangeLower: ISO range should return lower bound of leading date."
@@ -1425,8 +1426,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeUpper",
-                "submittedAt": ts_from_ymd(2022, 1, 1),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2022, 1, 1)),
         ).datum
         == "2021-06-12"
     ), "dateRangeUpper: ISO range should return upper bound."
@@ -1437,8 +1438,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeUpper",
-                "submittedAt": ts_from_ymd(2022, 1, 1),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2022, 1, 1)),
         ).datum
         == "2021-06-30"
     ), "dateRangeUpper: ISO range should return upper bound of trailing date."
@@ -1449,8 +1450,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeString",
-                "submittedAt": ts_from_ymd(2022, 1, 1),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2022, 1, 1)),
         ).datum
         == "2020-01/2021-06"
     ), "dateRangeString: ISO range should be returned compressed to month range."
@@ -1461,8 +1462,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeString",
-                "submittedAt": ts_from_ymd(2022, 1, 1),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2022, 1, 1)),
         ).errors[0]
         == "Metadata field field_name: Detected date range but could not parse date: 20-01-2020/2021-06-30."
     ), "Invalid date range format errors."
@@ -1473,8 +1474,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeString",
-                "submittedAt": ts_from_ymd(2022, 1, 1),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2022, 1, 1)),
         ).errors[0]
         == "Metadata field field_name:'2022-01-01/2021-06-30' is an invalid date range. Lower bound: 2022-01-01 00:00:00+00:00 is after upper bound: 2021-06-30 00:00:00+00:00."
     ), "Invalid date range format errors."
@@ -1485,8 +1486,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeString",
-                "submittedAt": ts_from_ymd(2022, 6, 15),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2022, 6, 15)),
         ).datum
         == "2021"
     ), "Years are compressed in dateRangeString."
@@ -1497,8 +1498,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeString",
-                "submittedAt": ts_from_ymd(2024, 6, 15),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2024, 6, 15)),
         ).datum
         == "2021/2022"
     ), "Multiple years are compressed in dateRangeString."
@@ -1509,8 +1510,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeString",
-                "submittedAt": ts_from_ymd(2024, 6, 15),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2024, 6, 15)),
         ).datum
         == "2024-02"
     ), "Months are compressed in dateRangeString (also for leap years)."
@@ -1521,8 +1522,8 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeUpper",
-                "submittedAt": ts_from_ymd(2021, 6, 15),
             },
+            ProcessingContext(submitted_at=ts_from_ymd(2021, 6, 15)),
         ).datum
         == "2021-06-15"
     ), "dateRangeUpper: lucene range upper bound should be tightened by submittedAt."
@@ -1543,7 +1544,6 @@ concatenate_cases = [
         input_data={"date": "2021-01-01/2021-12-31", "country": "USA"},
         input_fields=["date", "country"],
         concatenate_args={
-            "ACCESSION_VERSION": "accession.1",
             "order": ["date", "country"],
             "type": ["dateRangeString", "string"],
         },
@@ -1554,7 +1554,6 @@ concatenate_cases = [
         input_data={"someInt": "", "geoLocCountry": "", "sampleCollectionDate": "2025"},
         input_fields=["geoLocCountry", "sampleCollectionDate"],
         concatenate_args={
-            "ACCESSION_VERSION": "accession.1",
             "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
             "type": ["integer", "string", "ACCESSION_VERSION", "date"],
         },
@@ -1565,7 +1564,6 @@ concatenate_cases = [
         input_data={"someInt": "0", "geoLocCountry": "", "sampleCollectionDate": "2025"},
         input_fields=["geoLocCountry", "sampleCollectionDate"],
         concatenate_args={
-            "ACCESSION_VERSION": "accession.1",
             "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
             "type": ["integer", "string", "ACCESSION_VERSION", "date"],
         },
@@ -1576,7 +1574,6 @@ concatenate_cases = [
         input_data={"someInt": "", "geoLocCountry": "", "sampleCollectionDate": ""},
         input_fields=["geoLocCountry", "sampleCollectionDate"],
         concatenate_args={
-            "ACCESSION_VERSION": "accession.1",
             "order": ["someInt", "geoLocCountry", "ACCESSION_VERSION", "sampleCollectionDate"],
             "type": ["integer", "string", "ACCESSION_VERSION", "date"],
             "fallback_value": "unknown",
@@ -1588,7 +1585,6 @@ concatenate_cases = [
         input_data={"someInt": "0", "geoLocCountry": "", "sampleCollectionDate": "2025"},
         input_fields=["geoLocCountry", "sampleCollectionDate"],
         concatenate_args={
-            "ACCESSION_VERSION": "accession.1",
             "order": ["someInt", "geoLocCountry", "sampleCollectionDate"],
             "type": ["integer", "string", "date"],
             "fallback_value": "unknown",
@@ -1605,6 +1601,7 @@ def test_concatenate(case: ConcatenateCase) -> None:
         output_field="displayName",
         input_fields=case.input_fields,
         args=case.concatenate_args,
+        context=ProcessingContext(accession_version="accession.1"),
     )
     assert result.datum == case.expected
 
@@ -1727,8 +1724,6 @@ input_fields = [
     "sampleCollectionDate",
 ]
 base_args: FunctionArgs = {
-    "ACCESSION_VERSION": "accession.1",
-    "is_insdc_ingest_group": False,
     "order": ["nextclade.clade", "geoLocCountry", "IDENTIFIER", "sampleCollectionDate"],
     "type": ["string", "string", "IDENTIFIER", "string"],
     # regex pattern constraints:
@@ -1739,7 +1734,7 @@ base_args: FunctionArgs = {
     "regex_pattern": r"^(?:[^/]+/)?[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$",
     "human_readable_pattern": "<any>/<any>/<identifier>/<date>",
 }
-insdc_args: FunctionArgs = {**base_args, "is_insdc_ingest_group": True}
+insdc_args: FunctionArgs = base_args
 prefix_args: FunctionArgs = {
     **base_args,
     "order": ["ARG:prefix", "geoLocCountry", "IDENTIFIER", "sampleCollectionDate"],
@@ -1765,18 +1760,21 @@ def test_display_name_construction(case: DisplayNameCase) -> None:
         "displayName",
         input_fields,
         base_args | case.extra_args,
+        context=ProcessingContext(accession_version="accession.1", is_insdc_ingest_group=False),
     )
     res_insdc = ProcessingFunctions.build_display_name(
         input_data(),
         "displayName",
         input_fields,
         insdc_args | case.extra_args,
+        context=ProcessingContext(accession_version="accession.1", is_insdc_ingest_group=True),
     )
     res_prefix = ProcessingFunctions.build_display_name(
         input_data(),
         "displayName",
         input_fields,
         prefix_args | case.extra_args,
+        context=ProcessingContext(accession_version="accession.1", is_insdc_ingest_group=False),
     )
 
     assert res.datum == case.expected_regular
@@ -1795,7 +1793,6 @@ def test_call_function_converts_raw_errors_to_annotations() -> None:
     output_field = "myField"
     args: FunctionArgs = {
         "options": ["OptionA", "OptionB"],
-        "is_insdc_ingest_group": False,
     }
 
     result = ProcessingFunctions.call_function(
@@ -1804,6 +1801,7 @@ def test_call_function_converts_raw_errors_to_annotations() -> None:
         input_data={"input": "NotAnOption"},
         output_field=output_field,
         input_fields=input_fields,
+        context=ProcessingContext(is_insdc_ingest_group=False),
     )
 
     assert result.datum is None
