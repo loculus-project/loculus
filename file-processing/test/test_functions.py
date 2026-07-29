@@ -17,7 +17,7 @@ from file_processing.functions import (
 def _config() -> Config:
     return Config(
         log_level="DEBUG",
-        backend_request_timeout_seconds=10,
+        s3_request_timeout_seconds=10,
         read_validation_timeout_seconds=10,
     )
 

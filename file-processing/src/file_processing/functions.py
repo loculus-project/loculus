@@ -34,7 +34,7 @@ def _sanitize_file_name(name: str) -> str:
 
 def download_file(config: Config, url: str, save_path: Path) -> None:
     with requests.get(
-        url, stream=True, timeout=config.backend_request_timeout_seconds
+        url, stream=True, timeout=config.s3_request_timeout_seconds
     ) as response:
         response.raise_for_status()
         with save_path.open("wb") as f:
