@@ -32,13 +32,16 @@ Preprocessing receives original-data from the backend, the backend creates read-
 
 ## What this service does
 
-The file processing service is a small FastAPI app (`file_processing.api`) with a single real
-endpoint, `POST /process-files` (`file_processing.functions.process_submitted_files`).
+The file processing service is a small FastAPI app (`file_processing.api`) with an
+endpoint: `POST /process-files` (`file_processing.functions.process_submitted_files`).
 
-It receives a `Files` payload:
+It receives a `RequestWithFiles` payload:
 
 ```json
-{<FileCategory>: [{fileId: <UUID>, name: <fileName>, url: <fileURL>}]}
+{
+  "files": <FileCategory>: [{fileId: <fileId>, name: <fileName>, url: <fileURL>}],
+  "accessionVersion": <str>
+}
 ```
 
 The service downloads the files and validates their structure. The service responds with a
