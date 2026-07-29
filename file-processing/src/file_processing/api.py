@@ -2,7 +2,7 @@ import logging
 
 import uvicorn
 from fastapi import FastAPI, Response
-from file_processing.datatypes import Files
+from file_processing.datatypes import RequestWithFiles
 from file_processing.functions import process_submitted_files
 
 from .config import Config
@@ -21,7 +21,7 @@ def read_root() -> dict[str, str]:
 
 @app.post("/process-files")
 def post_process_files(
-    payload: Files,
+    payload: RequestWithFiles,
 ) -> Response:
     response_with_files = process_submitted_files(
         config=app.state.config,

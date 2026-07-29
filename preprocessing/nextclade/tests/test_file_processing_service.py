@@ -39,7 +39,7 @@ def test_process_files_without_configured_url_returns_error_without_request() ->
     service = FileProcessingService(file_processing_service_url=None)
 
     with patch("loculus_preprocessing.external_services.requests.post") as mock_post:
-        errors, warnings = service.process_files(make_files())
+        errors, warnings = service.process_files(make_files(), "accession.1")
 
     mock_post.assert_not_called()
     assert warnings == []
@@ -55,15 +55,18 @@ def test_process_files_sends_expected_request(mock_post: MagicMock) -> None:
     mock_post.return_value = make_response(200, {"errors": [], "warnings": []})
     service = FileProcessingService(file_processing_service_url=SERVICE_URL)
 
-    service.process_files(make_files())
+    service.process_files(make_files(), "accession.1")
 
     mock_post.assert_called_once()
     args, kwargs = mock_post.call_args
     assert args[0] == f"{SERVICE_URL}/process-files"
     assert kwargs["timeout"] == service.timeout_seconds
     assert kwargs["json"] == {
-        "rawReads": [{"fileId": "id-1", "name": "reads.fastq", "url": "http://example/id-1"}],
-        "annotations": [{"fileId": "id-2", "name": "annotations.gff", "url": None}],
+        "files": {
+            "rawReads": [{"fileId": "id-1", "name": "reads.fastq", "url": "http://example/id-1"}],
+            "annotations": [{"fileId": "id-2", "name": "annotations.gff", "url": None}],
+        },
+        "accessionVersion": "accession.1",
     }
 
 
@@ -72,7 +75,7 @@ def test_process_files_uses_configured_timeout(mock_post: MagicMock) -> None:
     mock_post.return_value = make_response(200, {"errors": [], "warnings": []})
     service = FileProcessingService(file_processing_service_url=SERVICE_URL, timeout_seconds=45)
 
-    service.process_files(make_files())
+    service.process_files(make_files(), "accession.1")
 
     _, kwargs = mock_post.call_args
     assert kwargs["timeout"] == 45  # noqa: PLR2004
@@ -83,7 +86,7 @@ def test_process_files_success_returns_no_annotations(mock_post: MagicMock) -> N
     mock_post.return_value = make_response(200, {"errors": [], "warnings": []})
     service = FileProcessingService(file_processing_service_url=SERVICE_URL)
 
-    errors, warnings = service.process_files(make_files())
+    errors, warnings = service.process_files(make_files(), "accession.1")
 
     assert errors == []
     assert warnings == []
@@ -100,7 +103,7 @@ def test_process_files_maps_response_errors_and_warnings(mock_post: MagicMock) -
     )
     service = FileProcessingService(file_processing_service_url=SERVICE_URL)
 
-    errors, warnings = service.process_files(make_files())
+    errors, warnings = service.process_files(make_files(), "accession.1")
 
     assert len(errors) == 1
     assert errors[0].message == "invalid checksum"
@@ -120,7 +123,7 @@ def test_process_files_handles_missing_error_and_warning_keys(mock_post: MagicMo
     mock_post.return_value = make_response(200, {})
     service = FileProcessingService(file_processing_service_url=SERVICE_URL)
 
-    errors, warnings = service.process_files(make_files())
+    errors, warnings = service.process_files(make_files(), "accession.1")
 
     assert errors == []
     assert warnings == []
@@ -131,7 +134,7 @@ def test_process_files_http_error_returns_internal_error(mock_post: MagicMock) -
     mock_post.return_value = make_response(500, {"detail": "boom"})
     service = FileProcessingService(file_processing_service_url=SERVICE_URL)
 
-    errors, warnings = service.process_files(make_files())
+    errors, warnings = service.process_files(make_files(), "accession.1")
 
     assert warnings == []
     assert len(errors) == 1
@@ -143,7 +146,7 @@ def test_process_files_network_error_returns_internal_error(mock_post: MagicMock
     mock_post.side_effect = requests.exceptions.ConnectionError("connection refused")
     service = FileProcessingService(file_processing_service_url=SERVICE_URL)
 
-    errors, warnings = service.process_files(make_files())
+    errors, warnings = service.process_files(make_files(), "accession.1")
 
     assert warnings == []
     assert len(errors) == 1

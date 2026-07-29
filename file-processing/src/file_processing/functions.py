@@ -10,6 +10,7 @@ from file_processing.datatypes import (
     FileCategory,
     FileIdAndNameAndReadUrl,
     Files,
+    RequestWithFiles,
     ResponseWithFiles,
 )
 from file_processing.file_validation import (
@@ -43,13 +44,14 @@ def download_file(config: Config, url: str, save_path: Path) -> None:
 
 def process_submitted_files(
     config: Config,
-    file_mapping: Files,
+    file_mapping: RequestWithFiles,
 ) -> ResponseWithFiles:
     errors: list[Annotation] = []
     warnings: list[Annotation] = []
     result_files: Files = {}
 
-    for category, files in file_mapping.items():
+    logger.debug(f"Processing submitted files for accessionVersion: {file_mapping.accessionVersion}")
+    for category, files in file_mapping.files.items():
         if not files:
             # Backend always includes a key with empty list for enabled categories
             result_files[category] = files

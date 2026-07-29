@@ -8,6 +8,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from loculus_preprocessing.datatypes import (
+    AccessionVersion,
     AnnotationSource,
     AnnotationSourceType,
     FileCategory,
@@ -215,7 +216,9 @@ class FileProcessingService:
         self.timeout_seconds = timeout_seconds
 
     def process_files(
-        self, files: dict[FileCategory, list[FileIdAndNameAndReadUrl]]
+        self,
+        files: dict[FileCategory, list[FileIdAndNameAndReadUrl]],
+        accession_version: AccessionVersion,
     ) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
         file_names = ", ".join(file.name for file_list in files.values() for file in file_list)
         if not self.file_processing_service_url:
@@ -229,8 +232,11 @@ class FileProcessingService:
         url = f"{self.file_processing_service_url}/process-files"
         try:
             payload = {
-                category.value: [asdict(f) for f in file_list]
-                for category, file_list in files.items()
+                "files": {
+                    category.value: [asdict(f) for f in file_list]
+                    for category, file_list in files.items()
+                },
+                "accessionVersion": str(accession_version),
             }
 
             response = requests.post(url, json=payload, timeout=self.timeout_seconds)

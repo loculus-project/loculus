@@ -594,7 +594,7 @@ def process_single(
     )
     if unprocessed.files and any(unprocessed.files.values()):
         file_errors, file_warnings = config._file_processing_service.process_files(
-            unprocessed.files
+            unprocessed.files, accession_version=accession_version
         )
     else:
         file_errors, file_warnings = [], []
@@ -654,7 +654,7 @@ def process_single_unaligned(
 
     if unprocessed.files and any(unprocessed.files.values()):
         file_errors, file_warnings = config._file_processing_service.process_files(
-            unprocessed.files
+            unprocessed.files, accession_version=accession_version
         )
     else:
         file_errors, file_warnings = [], []

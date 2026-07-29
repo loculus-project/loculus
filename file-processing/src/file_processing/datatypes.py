@@ -18,6 +18,11 @@ class FileIdAndNameAndReadUrl(BaseModel):
 Files = dict[FileCategory, list[FileIdAndNameAndReadUrl]]
 
 
+class RequestWithFiles(BaseModel):
+    files: Files
+    accessionVersion: str
+
+
 class Annotation(BaseModel):
     fileName: str | None = None  # noqa: N815
     fileCategory: FileCategory = FileCategory.RAW_READS  # noqa: N815
