@@ -503,8 +503,7 @@ const FileListItem: FC<FileListeItemProps> = ({ file, fileCategory }) => {
             <div className='w-3.5' />
             <LucideFile className='h-4 w-4 text-gray-500 ml-1 mr-1' />
             <div className='flex-1 min-w-0 flex items-center'>
-                <FolderPath file={file} />
-                <span className='text-xs text-gray-700 truncate max-w-[140px]'>{file.name}</span>
+                <FilePath file={file} />
                 <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>
                     ({file.type === 'previousUpload' ? 'uploaded' : formatFileSize(file.size)})
                 </span>
@@ -519,10 +518,16 @@ const FileListItem: FC<FileListeItemProps> = ({ file, fileCategory }) => {
     );
 };
 
-const FolderPath: FC<{ file: SingleFileUpload }> = ({ file }) => {
+const FilePath: FC<{ file: SingleFileUpload }> = ({ file }) => {
     const folderPath = file.path.split('/').slice(0, -1);
-    if (folderPath.length === 0) return null;
-    return <span className='text-xs text-gray-400 truncate max-w-[140px] mr-1'>{folderPath.join(' / ') + ' / '}</span>;
+    return (
+        <span title={file.path} className='text-xs flex items-center min-w-0'>
+            {folderPath.length > 0 && (
+                <span className='text-gray-400 truncate max-w-[140px] mr-1'>{folderPath.join(' / ') + ' / '}</span>
+            )}
+            <span className='text-gray-700 truncate max-w-[140px]'>{file.name}</span>
+        </span>
+    );
 };
 
 const formatFileSize = (bytes: number): string => {
