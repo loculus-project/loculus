@@ -2,6 +2,7 @@
 from dataclasses import dataclass, field
 from unittest import mock
 
+from preprocessing.nextclade.src.loculus_preprocessing.datatypes import FileCategory
 import pytest
 from factory_methods import (
     Case,
@@ -959,7 +960,7 @@ file_case_definitions = [
             "authors": "Smith, Anna; Perez, Tom J.",
         },
         input_files={
-            "rawReads": [
+            FileCategory.RAW_READS: [
                 FileIdAndNameAndReadUrl(
                     fileId="file-id-0001",
                     name="reads_R1.fastq",
@@ -980,7 +981,7 @@ file_case_definitions = [
             "authors": "Smith, Anna; Perez, Tom J.",
         },
         expected_files={
-            "rawReads": [
+            FileCategory.RAW_READS: [
                 FileIdAndNameAndReadUrl(
                     fileId="file-id-0001",
                     name="reads_R1.fastq",
