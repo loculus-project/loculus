@@ -275,30 +275,7 @@ def validate_required_when(config: Config) -> None:
                     raise ValueError(msg)
                 continue
 
-            if condition.startswith(PROCESSED_PREFIX):
-                field = condition.removeprefix(PROCESSED_PREFIX)
-                not_exist_msg = (
-                    f"invalid configuration: field '{output_field}' has a requiredWhen "
-                    f"condition referencing non-existing metadata field '{field}'"
-                )
-            else:
-                field = condition
-                not_exist_msg = (
-                    f"invalid configuration: field '{output_field}' has a requiredWhen "
-                    f"condition referencing non-existing input field '{field}'"
-                )
-
-            if (referenced_spec := config.processing_spec.get(field)) is None:
-                raise ValueError(not_exist_msg)
-
-            if referenced_spec.no_input and not condition.startswith(PROCESSED_PREFIX):
-                msg = (
-                    f"invalid configuration: field '{output_field}' has a requiredWhen "
-                    f"condition referencing the input value of noInput metadata field '{field}'"
-                )
-                raise ValueError(msg)
-
-            if field == output_field:
+            if condition.removeprefix(PROCESSED_PREFIX) == output_field:
                 msg = (
                     f"invalid configuration: field '{output_field}' lists itself in `requiredWhen`"
                 )
