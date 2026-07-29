@@ -8,6 +8,7 @@ import org.loculus.backend.model.FASTA_IDS_HEADER
 import org.loculus.backend.model.FASTA_IDS_SEPARATOR
 import org.loculus.backend.model.FILES_HEADER_PREFIX
 import org.loculus.backend.model.FILES_SEPARATOR
+import org.loculus.backend.model.FILE_NAME_ID_SEPARATOR
 import org.loculus.backend.model.FastaId
 import org.loculus.backend.model.METADATA_ID_HEADER
 import kotlin.collections.component1
@@ -25,7 +26,7 @@ data class UniqueFastaIdsForEntry(val uniqueFastaIdByOriginalFastaId: Map<FastaI
 }
 
 private fun formatFilesCell(files: List<FileIdAndName>?): String =
-    files.orEmpty().joinToString(FILES_SEPARATOR) { "${it.name}:${it.fileId}" }
+    files.orEmpty().joinToString(FILES_SEPARATOR) { "${it.name}$FILE_NAME_ID_SEPARATOR${it.fileId}" }
 
 object GetSubmittedDataHelpers {
 
