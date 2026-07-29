@@ -2,6 +2,10 @@ from enum import StrEnum, unique
 
 from pydantic import BaseModel
 
+FileId = str
+FileName = str
+FileUrl = str
+
 
 @unique
 class FileCategory(StrEnum):
@@ -10,9 +14,9 @@ class FileCategory(StrEnum):
 
 
 class FileIdAndNameAndReadUrl(BaseModel):
-    fileId: str  # noqa: N815
-    name: str
-    url: str
+    fileId: FileId
+    name: FileName
+    url: FileUrl
 
 
 Files = dict[FileCategory, list[FileIdAndNameAndReadUrl]]
@@ -29,7 +33,7 @@ class Annotation(BaseModel):
     message: str
 
 
-class ResponseWithFiles(BaseModel):
+class ValidationResult(BaseModel):
     files: Files
     errors: list[Annotation] | None = None
     warnings: list[Annotation] | None = None
