@@ -691,7 +691,11 @@ not_accepted_authors = [
 ]
 
 RAW_READS_FILES = {
-    FileCategory.RAW_READS: [FileIdAndName(fileId="file-raw-reads", name="reads.fastq.gz")]
+    FileCategory.RAW_READS: [
+        FileIdAndNameAndReadUrl(
+            fileId="file-raw-reads", name="reads.fastq.gz", url="http://example.com/reads.fastq.gz"
+        )
+    ]
 }
 
 test_metadata_dependency_test_definitions = [
@@ -1022,7 +1026,11 @@ def test_preprocessing_metadata_dependencies(test_case_def: Case):
     config = generate_config_with_deps()
     factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
     test_case = test_case_def.create_test_case(factory_custom)
-    processed_entry = process_single_entry(test_case, config)
+    with mock.patch(
+        "loculus_preprocessing.external_services.FileProcessingService.process_files",
+        return_value=([], []),
+    ):
+        processed_entry = process_single_entry(test_case, config)
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
 
 
