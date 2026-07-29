@@ -14,10 +14,16 @@ import {
 const ORGANISM_NAME = 'Ebola Sudan';
 const ORGANISM_URL_NAME = 'ebola-sudan';
 const RAW_READS = 'rawReads';
-const METADATA_HEADERS = ['submissionId', 'geoLocCountry', 'sampleCollectionDate'];
+const METADATA_HEADERS = [
+    'submissionId',
+    'geoLocCountry',
+    'sampleCollectionDate',
+    'sequencingInstrument',
+];
 const AUTHOR_AFFILIATIONS = 'Test Institute';
 const COUNTRY_1 = 'Norway';
 const COUNTRY_2 = 'Uganda';
+const SEQUENCING_INSTRUMENT = 'Illumina MiSeq';
 const ID_1 = 'sub1';
 const ID_2 = 'sub2';
 const FILES_SINGLE = { 'testfile.fastq': EBOLA_SUDAN_SMALL_FASTQ(1) };
@@ -40,6 +46,7 @@ test('submit single seq w/ 2 FASTQ files thru single seq submission form', async
         collectionCountry: COUNTRY_1,
         collectionDate: '2023-10-15',
         authorAffiliations: AUTHOR_AFFILIATIONS,
+        sequencingInstrument: SEQUENCING_INSTRUMENT,
     });
     await submissionPage.fillSequenceData({ main: EBOLA_SUDAN_SHORT_SEQUENCE });
     await submissionPage.uploadExternalFiles(RAW_READS, FILES_DOUBLE, tmpDir);
@@ -64,6 +71,7 @@ test('reject non-FASTQ raw_reads file with a format-validation error', async ({
         collectionCountry: COUNTRY_1,
         collectionDate: '2023-11-01',
         authorAffiliations: AUTHOR_AFFILIATIONS,
+        sequencingInstrument: SEQUENCING_INSTRUMENT,
     });
     await submissionPage.fillSequenceData({ main: EBOLA_SUDAN_SHORT_SEQUENCE });
     await submissionPage.uploadExternalFiles(
@@ -86,8 +94,8 @@ test('bulk submit 2 seqs with 1 & 2 FASTQ files respectively', async ({
     const submissionPage = new BulkSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
     await submissionPage.uploadMetadataFile(METADATA_HEADERS, [
-        [ID_1, COUNTRY_1, '2022-12-02'],
-        [ID_2, COUNTRY_2, '2022-12-13'],
+        [ID_1, COUNTRY_1, '2022-12-02', SEQUENCING_INSTRUMENT],
+        [ID_2, COUNTRY_2, '2022-12-13', SEQUENCING_INSTRUMENT],
     ]);
     await submissionPage.uploadSequencesFile({
         [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE,
@@ -113,7 +121,9 @@ test('bulk submit 1 seq: discarding and reading a FASTQ file', async ({
     void groupId;
     const submissionPage = new BulkSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
-    await submissionPage.uploadMetadataFile(METADATA_HEADERS, [[ID_1, COUNTRY_1, '2023-01-01']]);
+    await submissionPage.uploadMetadataFile(METADATA_HEADERS, [
+        [ID_1, COUNTRY_1, '2023-01-01', SEQUENCING_INSTRUMENT],
+    ]);
     await submissionPage.uploadSequencesFile({ [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE });
     await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_SINGLE }, tmpDir);
     await submissionPage.discardFiles(RAW_READS);
@@ -141,7 +151,9 @@ test('bulk submit 1 seq with a 35 MB FASTQ file', async ({ page, groupId, tmpDir
 
     const submissionPage = new BulkSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
-    await submissionPage.uploadMetadataFile(METADATA_HEADERS, [[ID_1, COUNTRY_1, '2024-01-01']]);
+    await submissionPage.uploadMetadataFile(METADATA_HEADERS, [
+        [ID_1, COUNTRY_1, '2024-01-01', SEQUENCING_INSTRUMENT],
+    ]);
     await submissionPage.uploadSequencesFile({ [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE });
     await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: LARGE_FILE }, tmpDir);
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone(240_000);
@@ -171,8 +183,8 @@ test('bulk revise 2 seqs with files', async ({ page, groupId, tmpDir }) => {
     const submissionPage = new BulkSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
     await submissionPage.uploadMetadataFile(METADATA_HEADERS, [
-        [id1, COUNTRY_1, '2022-01-01'],
-        [id2, COUNTRY_2, '2022-01-02'],
+        [id1, COUNTRY_1, '2022-01-01', SEQUENCING_INSTRUMENT],
+        [id2, COUNTRY_2, '2022-01-02', SEQUENCING_INSTRUMENT],
     ]);
     await submissionPage.uploadSequencesFile({
         [id1]: EBOLA_SUDAN_SHORT_SEQUENCE,
@@ -196,8 +208,8 @@ test('bulk revise 2 seqs with files', async ({ page, groupId, tmpDir }) => {
 
     // Upload revision metadata (with accession column)
     const revisionMetadata = [
-        [accession1, revId1, COUNTRY_1, '2022-02-01'],
-        [accession2, revId2, COUNTRY_2, '2022-02-02'],
+        [accession1, revId1, COUNTRY_1, '2022-02-01', SEQUENCING_INSTRUMENT],
+        [accession2, revId2, COUNTRY_2, '2022-02-02', SEQUENCING_INSTRUMENT],
     ];
     await page.getByTestId('metadata_file').setInputFiles({
         name: 'revision_metadata.tsv',
@@ -251,6 +263,7 @@ test('single revise seq with files via edit page', async ({ page, groupId, tmpDi
         collectionCountry: COUNTRY_1,
         collectionDate: '2023-01-01',
         authorAffiliations: AUTHOR_AFFILIATIONS,
+        sequencingInstrument: SEQUENCING_INSTRUMENT,
     });
     await submissionPage.fillSequenceData({ main: EBOLA_SUDAN_SHORT_SEQUENCE });
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone(180_000);
