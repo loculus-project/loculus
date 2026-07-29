@@ -799,7 +799,7 @@ test_metadata_dependency_test_definitions = [
                 ProcessingAnnotationHelper(
                     ["required_when_processed_A"],
                     ["required_when_processed_A"],
-                    "Metadata field `required_when_processed_A` is required when `A` is provided.",
+                    "Metadata field `required_when_processed_A` is required when `A` exists.",
                 ),
             ]
         ),
@@ -866,7 +866,7 @@ test_metadata_dependency_test_definitions = [
                 ProcessingAnnotationHelper(
                     ["multi_dep"],
                     ["multi_dep"],
-                    "Metadata field `multi_dep` is required when `A` is provided.",
+                    "Metadata field `multi_dep` is required when `A` exists.",
                 ),
             ]
         ),
@@ -903,7 +903,7 @@ test_metadata_dependency_test_definitions = [
                 ProcessingAnnotationHelper(
                     ["multi_dep"],
                     ["multi_dep"],
-                    "Metadata field `multi_dep` is required when `A` is provided.",
+                    "Metadata field `multi_dep` is required when `A` exists.",
                 ),
                 ProcessingAnnotationHelper(
                     ["multi_dep"],

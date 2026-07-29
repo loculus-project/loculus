@@ -489,7 +489,7 @@ def check_required_when_condition(
         field_name = condition.removeprefix(PROCESSED_PREFIX)
         if not null_per_backend(output_metadata.get(field_name)):
             error_message = (
-                f"Metadata field `{output_field}` is required when `{field_name}` is provided."
+                f"Metadata field `{output_field}` is required when `{field_name}` exists."
             )
     elif not null_per_backend(input_metadata.get(condition)):
         error_message = (
