@@ -166,6 +166,7 @@ const REVISION_METADATA_HEADERS = [
     'submissionId',
     'geoLocCountry',
     'sampleCollectionDate',
+    'sequencingInstrument',
 ];
 const REVISION_FILES = { 'revised_file.fastq': EBOLA_SUDAN_MEDIUM_FASTQ(1) };
 const REVISION_FILES_2 = { 'another_file.fastq': EBOLA_SUDAN_MEDIUM_FASTQ(2) };
