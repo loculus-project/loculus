@@ -1586,6 +1586,12 @@
       "default": false,
       "description": "If true, disables the backend API deployment."
     },
+    "enableServiceMonitor": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, exposes backend metrics through a cluster-internal management service and deploys a Prometheus Operator ServiceMonitor. First install kube-prometheus-stack with the release name `kube-prometheus-stack`, for example: `helm upgrade --install kube-prometheus-stack oci://ghcr.io/prometheus-community/charts/kube-prometheus-stack --namespace monitoring --create-namespace`."
+    },
     "disablePreprocessing": {
       "groups": ["services"],
       "type": "boolean",

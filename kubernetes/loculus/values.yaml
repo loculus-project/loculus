@@ -2703,6 +2703,8 @@ enaDeposition:
   enaIsBroker: False
   enaSuppressedListTestUrl: "https://loculus-project.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt"
 subdomainSeparator: "-"
+enableServiceMonitor: false
+
 replicas:
   website: 1
   backend: 1
