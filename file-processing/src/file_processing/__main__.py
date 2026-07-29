@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 def run(config_file: str):
     logging.basicConfig(
-        encoding="utf-8",
         level=logging.INFO,
         format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
         datefmt="%H:%M:%S",

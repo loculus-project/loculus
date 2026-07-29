@@ -32,7 +32,9 @@ def _config() -> Config:
     ],
 )
 def test_sanitize_file_name_strips_directory_components(name):
-    sanitized = _sanitize_file_name(name)
+    sanitized, annotations = _sanitize_file_name(name)
+    assert annotations is None
+    assert sanitized is not None
     assert "/" not in sanitized
     assert "\\" not in sanitized
     assert ".." not in Path(sanitized).parts
@@ -40,8 +42,8 @@ def test_sanitize_file_name_strips_directory_components(name):
 
 @pytest.mark.parametrize("name", ["", ".", "..", "   "])
 def test_sanitize_file_name_rejects_empty_or_dot_names(name):
-    with pytest.raises(ValueError):
-        _sanitize_file_name(name)
+    sanitized, annotations = _sanitize_file_name(name)
+    assert annotations is not None
 
 
 def test_validate_raw_reads_submission_download_stays_within_tmp_dir(monkeypatch):
@@ -52,7 +54,7 @@ def test_validate_raw_reads_submission_download_stays_within_tmp_dir(monkeypatch
         save_path.write_text("@seq1\nACGT\n+\nIIII\n")
 
     monkeypatch.setattr(functions, "download_file", fake_download_file)
-    monkeypatch.setattr(functions, "validate_file_format", lambda *a, **k: None)
+    monkeypatch.setattr(functions, "validate_with_readtools", lambda *a, **k: None)
 
     malicious_file = FileIdAndNameAndReadUrl(
         fileId="id1", name="../../../etc/passwd.fastq", url="http://example.com/f"

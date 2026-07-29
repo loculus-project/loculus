@@ -1011,7 +1011,7 @@ def test_files_passed_through(
     test_case = test_case_def.create_test_case(factory_custom)
     with mock.patch(
         "loculus_preprocessing.external_services.FileProcessingService.process_files",
-        return_value=([], []),
+        return_value=[],
     ):
         processed_entry = process_single_entry(test_case, config)
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
@@ -1028,7 +1028,7 @@ def test_preprocessing_metadata_dependencies(test_case_def: Case):
     test_case = test_case_def.create_test_case(factory_custom)
     with mock.patch(
         "loculus_preprocessing.external_services.FileProcessingService.process_files",
-        return_value=([], []),
+        return_value=[],
     ):
         processed_entry = process_single_entry(test_case, config)
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)

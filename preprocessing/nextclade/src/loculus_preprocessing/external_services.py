@@ -219,7 +219,7 @@ class FileProcessingService:
         self,
         files: dict[FileCategory, list[FileIdAndNameAndReadUrl]],
         accession_version: AccessionVersion,
-    ) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
+    ) -> list[ProcessingAnnotation]:
         file_names = ", ".join(file.name for file_list in files.values() for file in file_list)
         if not self.file_processing_service_url:
             return [
@@ -227,7 +227,7 @@ class FileProcessingService:
                     file_names,
                     _internal_error_message("File processing service URL is not configured."),
                 )
-            ], []
+            ]
 
         url = f"{self.file_processing_service_url}/process-files"
         try:
@@ -243,19 +243,14 @@ class FileProcessingService:
             response.raise_for_status()
             body = response.json()
 
-            errors = [
+            return [
                 file_processing_service_error(error["fileName"], error["message"])
                 for error in body.get("errors") or []
             ]
-            warnings = [
-                file_processing_service_error(warning["fileName"], warning["message"])
-                for warning in body.get("warnings") or []
-            ]
-            return errors, warnings
         except requests.exceptions.RequestException as e:
             return [
                 file_processing_service_error(
                     file_names,
                     _internal_error_message(f"An error: {e} occurred while processing files."),
                 )
-            ], []
+            ]

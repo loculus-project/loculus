@@ -592,12 +592,12 @@ def process_single(
     output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
         accession_version, unprocessed, config
     )
+
+    file_errors = []
     if unprocessed.files and any(unprocessed.files.values()):
-        file_errors, file_warnings = config._file_processing_service.process_files(
+        file_errors = config._file_processing_service.process_files(
             unprocessed.files, accession_version=accession_version
         )
-    else:
-        file_errors, file_warnings = [], []
 
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
@@ -622,9 +622,7 @@ def process_single(
                 + file_errors
             )
         ),
-        warnings=list(
-            set(unprocessed.warnings + alignment_warnings + metadata_warnings + file_warnings)
-        ),
+        warnings=list(set(unprocessed.warnings + alignment_warnings + metadata_warnings)),
     )
 
     return SubmissionData(
@@ -652,12 +650,11 @@ def process_single_unaligned(
         accession_version, unprocessed, config
     )
 
+    file_errors = []
     if unprocessed.files and any(unprocessed.files.values()):
-        file_errors, file_warnings = config._file_processing_service.process_files(
+        file_errors = config._file_processing_service.process_files(
             unprocessed.files, accession_version=accession_version
         )
-    else:
-        file_errors, file_warnings = [], []
 
     return processed_entry_no_alignment(
         accession_version=accession_version,
@@ -666,7 +663,7 @@ def process_single_unaligned(
         errors=list(
             set(iupac_errors + metadata_errors + segment_assignment.alert.errors + file_errors)
         ),
-        warnings=list(set(metadata_warnings + file_warnings)),
+        warnings=list(set(metadata_warnings)),
         sequenceNameToFastaId=segment_assignment.sequenceNameToFastaId,
     )
 

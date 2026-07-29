@@ -20,7 +20,7 @@ def read_root() -> dict[str, str]:
 
 
 @app.post("/process-files")
-def post_process_files(
+def process_files(
     payload: RequestWithFiles,
 ) -> Response:
     response_with_files = process_submitted_files(
