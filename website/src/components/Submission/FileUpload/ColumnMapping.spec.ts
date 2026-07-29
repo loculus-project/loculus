@@ -113,4 +113,20 @@ describe('ColumnMapping', () => {
 
         expect(remappedContent).toBe('location\tdate\n' + '"U\nS\nA"\t2023-01-01\n' + 'Canada\t2023-01-02');
     });
+
+    it('should pass through existingFiles_<category> columns even when unmapped', async () => {
+        const sourceColumns = ['loc', 'existingFiles_raw_reads'];
+        const inputFields = [{ name: 'location', displayName: 'Location' }];
+        const mapping = ColumnMapping.fromColumns(sourceColumns, inputFields).updateWith('loc', 'location');
+
+        const tsvContent =
+            'loc\texistingFiles_raw_reads\n' + 'USA\treads_1.fastq:abc | reads_2.fastq:def\n' + 'Canada\t\n';
+
+        const remappedFile = await mapping.applyTo(new RawFile(new File([tsvContent], 'input.tsv')));
+        const remappedContent = await remappedFile.text();
+
+        expect(remappedContent).toBe(
+            'location\texistingFiles_raw_reads\n' + 'USA\treads_1.fastq:abc | reads_2.fastq:def\n' + 'Canada\t',
+        );
+    });
 });

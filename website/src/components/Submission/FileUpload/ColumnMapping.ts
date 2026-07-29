@@ -4,6 +4,13 @@ import { type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
 import stringSimilarity from '../../../utils/stringSimilarity';
 
+/**
+ * Prefix of the per-category columns (`existingFiles_<category>`) that list the files currently attached to an entry
+ * when revising. They are not regular metadata fields: the backend parses them directly, so they must survive column
+ * mapping untouched rather than be dropped as unmapped columns.
+ */
+export const EXISTING_FILES_COLUMN_PREFIX = 'existingFiles_';
+
 export class ColumnMapping {
     private constructor(private readonly map: ReadonlyMap<string, string | null>) {}
 
@@ -97,10 +104,20 @@ export class ColumnMapping {
         const headersInFile = inputRows.splice(0, 1)[0];
         const headers: string[] = [];
         const indices: number[] = [];
+        const mappedSourceColumns = new Set<string>();
         this.entries().forEach(([sourceCol, targetCol]) => {
             if (targetCol === null) return;
+            mappedSourceColumns.add(sourceCol);
             headers.push(targetCol);
             indices.push(headersInFile.findIndex((sourceHeader) => sourceHeader === sourceCol));
+        });
+        // Pass through any `existingFiles_<category>` columns unchanged so they reach the backend, which parses
+        // them to determine which previously-uploaded files to keep on a revision.
+        headersInFile.forEach((sourceHeader, sourceIndex) => {
+            if (sourceHeader.startsWith(EXISTING_FILES_COLUMN_PREFIX) && !mappedSourceColumns.has(sourceHeader)) {
+                headers.push(sourceHeader);
+                indices.push(sourceIndex);
+            }
         });
         const newRows = inputRows.map((row) => indices.map((i) => row[i]));
         const newFileContent = Papa.unparse([headers, ...newRows], { delimiter: '\t', newline: '\n' });

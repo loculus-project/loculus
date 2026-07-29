@@ -176,6 +176,8 @@ class GetSubmittedDataEndpointTest(
 
         assertThat(header[0], `is`("id"))
         assertThat(header[1], `is`("accession"))
+        // Files are disabled for the default organism, so no existingFiles_<category> columns are added.
+        assertThat(header.none { it.startsWith("existingFiles_") }, `is`(true))
 
         val firstDataRow = lines[1].split("\t")
         assertThat(firstDataRow[0], `is`(SubmitFiles.DefaultFiles.submissionIds[0]))

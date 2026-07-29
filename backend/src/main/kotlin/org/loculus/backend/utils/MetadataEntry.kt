@@ -4,8 +4,12 @@ import org.apache.commons.csv.CSVException
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.apache.commons.csv.CSVRecord
+import org.loculus.backend.api.FileCategoryFilesMap
+import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.model.ACCESSION_HEADER
+import org.loculus.backend.model.EXISTING_FILES_COLUMN_PREFIX
+import org.loculus.backend.model.EXISTING_FILES_ENTRY_SEPARATOR
 import org.loculus.backend.model.FASTA_IDS_HEADER
 import org.loculus.backend.model.FASTA_IDS_SEPARATOR
 import org.loculus.backend.model.FastaId
@@ -14,6 +18,7 @@ import org.loculus.backend.model.METADATA_ID_HEADER_ALTERNATE_FOR_BACKCOMPAT
 import org.loculus.backend.model.SubmissionId
 import java.io.InputStream
 import java.io.InputStreamReader
+import java.util.UUID
 
 data class MetadataEntry(
     val submissionId: SubmissionId,
@@ -76,6 +81,59 @@ fun extractAndValidateFastaIds(record: CSVRecord, submissionId: String, recordNu
             setOf(submissionId)
         }
     }
+}
+
+/**
+ * Build a [FileCategoryFilesMap] from the `existingFiles_<category>` columns of a record (used when revising to
+ * keep/remove the files attached to an entry). Returns null when no such columns are present or all are empty.
+ */
+fun extractExistingFiles(record: CSVRecord, recordNumber: Int): FileCategoryFilesMap? {
+    val fileColumns = record.parser.headerNames.filter { it.startsWith(EXISTING_FILES_COLUMN_PREFIX) }
+    if (fileColumns.isEmpty()) {
+        return null
+    }
+
+    val map = fileColumns.associate { header ->
+        val category = header.removePrefix(EXISTING_FILES_COLUMN_PREFIX)
+        category to parseExistingFilesCell(record[header], category, recordNumber)
+    }.filterValues { it.isNotEmpty() }
+
+    return map.ifEmpty { null }
+}
+
+/**
+ * Parse a single `existingFiles_<category>` cell into a list of files. The cell is a `|`-separated list of
+ * `name:fileId` tokens, e.g. `reads_1.fastq:8d8ac610-... | reads_2.fastq:41ewsa-...`. The file id is a UUID
+ * (which never contains a colon), so each token is split on its last colon.
+ */
+fun parseExistingFilesCell(cell: String?, category: String, recordNumber: Int): List<FileIdAndName> {
+    if (cell.isNullOrBlank()) {
+        return emptyList()
+    }
+    val columnName = "$EXISTING_FILES_COLUMN_PREFIX$category"
+    return cell.split(EXISTING_FILES_ENTRY_SEPARATOR)
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .map { token ->
+            val separatorIndex = token.lastIndexOf(':')
+            if (separatorIndex <= 0 || separatorIndex == token.length - 1) {
+                throw UnprocessableEntityException(
+                    "In metadata file: record #$recordNumber, column '$columnName': could not parse file " +
+                        "reference '$token'. Expected format 'name:fileId'.",
+                )
+            }
+            val name = token.substring(0, separatorIndex)
+            val fileIdString = token.substring(separatorIndex + 1)
+            val fileId = try {
+                UUID.fromString(fileIdString)
+            } catch (e: IllegalArgumentException) {
+                throw UnprocessableEntityException(
+                    "In metadata file: record #$recordNumber, column '$columnName': '$fileIdString' is not a " +
+                        "valid file id. Full reference: '$token'.",
+                )
+            }
+            FileIdAndName(fileId, name)
+        }
 }
 
 private fun setUpCsvParser(metadataInputStream: InputStream): CSVParser {
@@ -156,6 +214,7 @@ data class RevisionEntry(
     val accession: Accession,
     val metadata: Map<String, String>,
     val fastaIds: Set<FastaId>? = null,
+    val existingFiles: FileCategoryFilesMap? = null,
 )
 
 fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<RevisionEntry> {
@@ -180,13 +239,16 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
 
                 val fastaIds = extractAndValidateFastaIds(record, submissionId, recordNumber)
 
+                val existingFiles = extractExistingFiles(record, recordNumber)
+
                 val metadata = record.toMap().filterKeys {
                     it != submissionIdHeader && it != ACCESSION_HEADER &&
-                        it != FASTA_IDS_HEADER
+                        it != FASTA_IDS_HEADER &&
+                        !it.startsWith(EXISTING_FILES_COLUMN_PREFIX)
                 }
                 validateMetadataNotEmpty(metadata, submissionId, recordNumber)
 
-                yield(RevisionEntry(submissionId, accession, metadata, fastaIds))
+                yield(RevisionEntry(submissionId, accession, metadata, fastaIds, existingFiles))
             }
         } catch (e: java.io.UncheckedIOException) {
             throwWithCsvExceptionUnwrapped(e)
