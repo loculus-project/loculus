@@ -28,7 +28,8 @@ from .datatypes import (
     AminoAcidSequence,
     AnnotationSource,
     AnnotationSourceType,
-    FileIdAndName,
+    FileCategory,
+    FileIdAndNameAndReadUrl,
     GeneName,
     InputData,
     InputMetadata,
@@ -323,7 +324,7 @@ def get_sequence_length(
     return len(sequence) if sequence else 0
 
 
-def get_output_metadata(
+def get_output_metadata(  # noqa: C901, PLR0912, PLR0914, PLR0915
     accession_version: AccessionVersion,
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
     config: Config,
@@ -534,6 +535,12 @@ def process_single(
     output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
         accession_version, unprocessed, config
     )
+    if unprocessed.files and any(unprocessed.files.values()):
+        file_errors, file_warnings = config._file_processing_service.process_files(
+            unprocessed.files
+        )
+    else:
+        file_errors, file_warnings = [], []
 
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
@@ -555,9 +562,12 @@ def process_single(
                 + max_seq_errors
                 + alignment_errors
                 + metadata_errors
+                + file_errors
             )
         ),
-        warnings=list(set(unprocessed.warnings + alignment_warnings + metadata_warnings)),
+        warnings=list(
+            set(unprocessed.warnings + alignment_warnings + metadata_warnings + file_warnings)
+        ),
     )
 
     return SubmissionData(
@@ -585,12 +595,21 @@ def process_single_unaligned(
         accession_version, unprocessed, config
     )
 
+    if unprocessed.files and any(unprocessed.files.values()):
+        file_errors, file_warnings = config._file_processing_service.process_files(
+            unprocessed.files
+        )
+    else:
+        file_errors, file_warnings = [], []
+
     return processed_entry_no_alignment(
         accession_version=accession_version,
         unprocessed=unprocessed,
         output_metadata=output_metadata,
-        errors=list(set(iupac_errors + metadata_errors + segment_assignment.alert.errors)),
-        warnings=list(set(metadata_warnings)),
+        errors=list(
+            set(iupac_errors + metadata_errors + segment_assignment.alert.errors + file_errors)
+        ),
+        warnings=list(set(metadata_warnings + file_warnings)),
         sequenceNameToFastaId=segment_assignment.sequenceNameToFastaId,
     )
 
@@ -668,8 +687,8 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             file_id = upload_info.fileId
             upload_embl_file_to_presigned_url(file_content, upload_info.url, upload_info.headers)
             processed_files = submission_data.processed_entry.data.files or {}
-            processed_files.setdefault("annotations", []).append(
-                FileIdAndName(fileId=file_id, name=file_name)
+            processed_files.setdefault(FileCategory.ANNOTATIONS, []).append(
+                FileIdAndNameAndReadUrl(fileId=file_id, name=file_name)
             )
             submission_data.processed_entry.data.files = processed_files
         except Exception as e:
@@ -702,6 +721,7 @@ def run(config: Config) -> None:  # noqa: C901
                 msg = "Diamond database URL must be provided for diamond segment classification"
                 raise ValueError(msg)
             download_diamond_db(config, dataset_dir + "/diamond/diamond.dmnd")
+
         total_processed = 0
         etag = None
         last_force_refresh = time.time()

@@ -26,15 +26,21 @@ ProcessedMetadata = dict[str, ProcessedMetadataValue]
 InputMetadataValue = str | None
 InputMetadata = dict[str, InputMetadataValue]
 FastaId = str
-FileCategory = str
 
 ProcessingAnnotationAlignment: Final = "alignment"
+
+
+@unique
+class FileCategory(StrEnum):
+    RAW_READS = "rawReads"
+    ANNOTATIONS = "annotations"
 
 
 @unique
 class AnnotationSourceType(StrEnum):
     METADATA = "Metadata"
     NUCLEOTIDE_SEQUENCE = "NucleotideSequence"
+    FILE = "File"
 
 
 @dataclass(frozen=True)
@@ -79,9 +85,10 @@ class ProcessingAnnotation:
 
 
 @dataclass
-class FileIdAndName:
+class FileIdAndNameAndReadUrl:
     fileId: str  # noqa: N815
     name: str
+    url: str | None = None
 
 
 @dataclass
@@ -92,7 +99,7 @@ class UnprocessedData:
     submissionId: str  # noqa: N815
     metadata: InputMetadata
     unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
-    files: dict[FileCategory, list[FileIdAndName]] | None
+    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
 
 
 @dataclass
@@ -108,7 +115,7 @@ FunctionArgs = dict[ArgName, ArgValue]
 @dataclass
 class UnprocessedAfterNextclade:
     inputMetadata: InputMetadata  # noqa: N815
-    files: dict[FileCategory, list[FileIdAndName]] | None
+    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
     # Derived metadata produced by Nextclade
     nextcladeMetadata: dict[SequenceName, Any] | None  # noqa: N815
     unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
@@ -124,7 +131,7 @@ class UnprocessedAfterNextclade:
 @dataclass
 class ProcessedData:
     metadata: ProcessedMetadata
-    files: dict[FileCategory, list[FileIdAndName]] | None
+    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
     unalignedNucleotideSequences: dict[SequenceName, Any]  # noqa: N815
     alignedNucleotideSequences: dict[SequenceName, Any]  # noqa: N815
     nucleotideInsertions: dict[SequenceName, Any]  # noqa: N815

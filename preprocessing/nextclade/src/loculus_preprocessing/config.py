@@ -17,7 +17,10 @@ from loculus_preprocessing.datatypes import (
     SegmentClassificationMethod,
     Topology,
 )
-from loculus_preprocessing.external_services import TaxonomyService
+from loculus_preprocessing.external_services import (
+    FileProcessingService,
+    TaxonomyService,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -133,6 +136,11 @@ class Config(BaseModel):
     # External services
     taxonomy_service_url: str | None = None
     _taxonomy_service: TaxonomyService = PrivateAttr(default=TaxonomyService(None))
+    file_processing_service_url: str | None = None
+    file_processing_service_timeout_seconds: int = 300
+    _file_processing_service: FileProcessingService = PrivateAttr(
+        default=FileProcessingService(None, 300)
+    )
 
     @model_validator(mode="after")
     def finalize(self):
@@ -146,6 +154,11 @@ class Config(BaseModel):
 
         if not self.backend_host:  # Set here so we can use organism
             self.backend_host = f"http://127.0.0.1:8079/{self.organism}"
+
+        self._taxonomy_service = TaxonomyService(self.taxonomy_service_url)
+        self._file_processing_service = FileProcessingService(
+            self.file_processing_service_url, self.file_processing_service_timeout_seconds
+        )
 
         self.processing_order = get_processing_order(self)
         self._taxonomy_service = TaxonomyService(self.taxonomy_service_url)

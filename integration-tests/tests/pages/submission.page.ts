@@ -66,10 +66,10 @@ class SubmissionPage {
         return new ReviewPage(this.page);
     }
 
-    async submitAndWaitForProcessingDone(): Promise<ReviewPage> {
+    async submitAndWaitForProcessingDone(timeout = 90000): Promise<ReviewPage> {
         await this.acceptTerms();
         const reviewPage = await this.submitSequence();
-        await reviewPage.waitForZeroProcessing();
+        await reviewPage.waitForZeroProcessing(timeout);
         return reviewPage;
     }
 }
