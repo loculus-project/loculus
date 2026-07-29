@@ -394,7 +394,7 @@ export const ExtraFilesUpload = ({
                 <h2 className='font-medium text-lg'>Extra files</h2>
                 <p className='text-gray-500 text-sm'>
                     {inputMode === 'bulk'
-                        ? 'Upload a folder of files for your sequences. Each file must be referenced by its name in the matching files.<category> column of your metadata.'
+                        ? 'Upload a folder of files for your sequences. Each file must be referenced by its name in the corresponding file category column of your metadata.'
                         : 'Upload a folder of files for this sequence'}
                 </p>
             </div>
