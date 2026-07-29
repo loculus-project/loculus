@@ -385,7 +385,7 @@ test('bulk revise can reuse, replace, discard and add files', async ({ page, gro
     );
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone();
     const searchPage = await reviewPage.releaseAndGoToReleasedSequences();
-    await searchPage.waitForSequencesInSearch(2);
+    const releasedEntries = await searchPage.waitForSequencesInSearch(2);
 
     // Each entry serves its own files, despite the file names being identical across the two
     await searchPage.checkFileContentInModal('cell', COUNTRY_1, FILES_TRIPLE);
@@ -459,7 +459,13 @@ test('bulk revise can reuse, replace, discard and add files', async ({ page, gro
     // one, while the untouched entry still serves its own three files under the same names
     const searchPage2 = new SearchPage(page);
     await searchPage2.goToReleasedSequences(ORGANISM_URL_NAME, groupId);
-    await searchPage2.waitForAndOpenModalByRoleAndName('cell', COUNTRY_1);
+
+    // Both entries were revised, so wait for the new versions to be indexed before reading files
+    for (const { accession, version } of releasedEntries) {
+        await searchPage2.waitForAccessionVersionInSearch(accession, version + 1);
+    }
+
+    await searchPage2.openModalByRoleAndName('cell', COUNTRY_1);
     await searchPage2.checkAllFileContents({
         [reusedName]: FILES_TRIPLE[reusedName],
         [replacedName]: REPLACEMENT_CONTENT,
