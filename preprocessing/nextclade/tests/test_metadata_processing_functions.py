@@ -1,5 +1,6 @@
 # ruff: noqa: S101
 from dataclasses import dataclass, field
+from unittest import mock
 
 import pytest
 from factory_methods import (
@@ -17,8 +18,7 @@ from loculus_preprocessing.config import Config, ProcessingSpec, get_config, get
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
     AnnotationSourceType,
-    FileCategory,
-    FileIdAndName,
+    FileIdAndNameAndReadUrl,
     FunctionArgs,
     InputMetadata,
     ProcessedEntry,
@@ -946,6 +946,69 @@ def process_single_entry(
 def test_preprocessing(test_case_def: Case, config: Config, factory_custom: ProcessedEntryFactory):
     test_case = test_case_def.create_test_case(factory_custom)
     processed_entry = process_single_entry(test_case, config)
+    verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
+
+
+file_case_definitions = [
+    Case(
+        name="with file",
+        input_metadata={
+            "submissionId": "with_file",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "authors": "Smith, Anna; Perez, Tom J.",
+        },
+        input_files={
+            "rawReads": [
+                FileIdAndNameAndReadUrl(
+                    fileId="file-id-0001",
+                    name="reads_R1.fastq",
+                    url="https://example.com/reads_R1.fastq",
+                ),
+                FileIdAndNameAndReadUrl(
+                    fileId="file-id-0002",
+                    name="reads_R2.fastq",
+                    url="https://example.com/reads_R2.fastq",
+                ),
+            ]
+        },
+        accession_id="1",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_1.1/2022-11-01",
+            "authors": "Smith, Anna; Perez, Tom J.",
+        },
+        expected_files={
+            "rawReads": [
+                FileIdAndNameAndReadUrl(
+                    fileId="file-id-0001",
+                    name="reads_R1.fastq",
+                    url="https://example.com/reads_R1.fastq",
+                ),
+                FileIdAndNameAndReadUrl(
+                    fileId="file-id-0002",
+                    name="reads_R2.fastq",
+                    url="https://example.com/reads_R2.fastq",
+                ),
+            ]
+        },
+        expected_errors=[],
+        expected_warnings=[],
+    ),
+]
+
+
+@pytest.mark.parametrize("test_case_def", file_case_definitions, ids=lambda tc: tc.name)
+def test_files_passed_through(
+    test_case_def: Case, config: Config, factory_custom: ProcessedEntryFactory
+):
+    test_case = test_case_def.create_test_case(factory_custom)
+    with mock.patch(
+        "loculus_preprocessing.external_services.FileProcessingService.process_files",
+        return_value=([], []),
+    ):
+        processed_entry = process_single_entry(test_case, config)
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
 
 
