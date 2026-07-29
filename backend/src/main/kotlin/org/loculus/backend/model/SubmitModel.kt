@@ -14,6 +14,18 @@ import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.DuplicateKeyException
 import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.metrics.ASSOCIATE_REVISED_DATA_PHASE
+import org.loculus.backend.metrics.CLEANUP_UPLOAD_DATA_PHASE
+import org.loculus.backend.metrics.COPY_TO_AUX_TABLE_PHASE
+import org.loculus.backend.metrics.GENERATE_ACCESSIONS_PHASE
+import org.loculus.backend.metrics.INSERT_SEQUENCE_ENTRIES_PHASE
+import org.loculus.backend.metrics.LOAD_METADATA_SUBMISSION_IDS_PHASE
+import org.loculus.backend.metrics.REVISE_ENDPOINT
+import org.loculus.backend.metrics.SUBMIT_ENDPOINT
+import org.loculus.backend.metrics.SubmissionMetrics
+import org.loculus.backend.metrics.VALIDATE_CONSENSUS_SEQUENCES_PHASE
+import org.loculus.backend.metrics.VALIDATE_FILE_MAPPING_PHASE
+import org.loculus.backend.metrics.VALIDATE_UPLOAD_PHASE
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.service.submission.SubmissionIdFilesMappingPreconditionValidator
@@ -89,6 +101,7 @@ class SubmitModel(
     private val submissionIdFilesMappingPreconditionValidator: SubmissionIdFilesMappingPreconditionValidator,
     private val dateProvider: DateProvider,
     private val backendConfig: BackendConfig,
+    private val submissionMetrics: SubmissionMetrics,
 ) {
 
     companion object AcceptedFileTypes {
@@ -109,70 +122,102 @@ class SubmitModel(
         uploadId: String,
         submissionParams: SubmissionParams,
         batchSize: Int = 1000,
-    ): List<SubmissionIdMapping> = try {
-        log.info {
-            "Processing submission (type: ${submissionParams.uploadType.name}) with uploadId $uploadId"
-        }
+    ): List<SubmissionIdMapping> {
+        val endpoint = submissionParams.uploadType.metricEndpoint()
+        val organism = submissionParams.organism.name
 
-        submissionIdFilesMappingPreconditionValidator
-            .validateFilenameCharacters(submissionParams.files)
-            .validateFilenamesAreUnique(submissionParams.files)
-            .validateCategoriesMatchSchema(submissionParams.files, submissionParams.organism)
-            .validateMultipartUploads(submissionParams.files)
-            .validateFilesExist(submissionParams.files)
-
-        insertDataIntoAux(
-            uploadId,
-            submissionParams,
-            batchSize,
-        )
-
-        val metadataSubmissionIds = uploadDatabaseService.getMetadataUploadSubmissionIds(uploadId).toSet()
-        if (requiresConsensusSequenceFile(submissionParams.organism)) {
-            log.debug { "Validating submission with uploadId $uploadId" }
-            val metadataFastaIds = uploadDatabaseService.getFastaIdsForMetadata(uploadId).flatten()
-            val metadataFastaIdsSet = metadataFastaIds.toSet()
-            if (metadataFastaIdsSet.size < metadataFastaIds.size) {
-                throw UnprocessableEntityException("Metadata file contains duplicate fastaIds.")
+        try {
+            log.info {
+                "Processing submission (type: ${submissionParams.uploadType.name}) with uploadId $uploadId"
             }
-            val sequenceFastaIds = uploadDatabaseService.getSequenceUploadSubmissionIds(uploadId).toSet()
-            validateSubmissionIdSetsForConsensusSequences(metadataFastaIdsSet, sequenceFastaIds)
-        }
 
-        if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
-            log.info { "Associating uploaded sequence data with existing sequence entries with uploadId $uploadId" }
-            uploadDatabaseService.associateRevisedDataWithExistingSequenceEntries(
-                uploadId,
-                submissionParams.organism,
-                submissionParams.authenticatedUser,
+            submissionMetrics.timeWritePhase(endpoint, organism, VALIDATE_UPLOAD_PHASE) {
+                submissionIdFilesMappingPreconditionValidator
+                    .validateFilenameCharacters(submissionParams.files)
+                    .validateFilenamesAreUnique(submissionParams.files)
+                    .validateCategoriesMatchSchema(submissionParams.files, submissionParams.organism)
+                    .validateMultipartUploads(submissionParams.files)
+                    .validateFilesExist(submissionParams.files)
+            }
+
+            submissionMetrics.timeWritePhase(endpoint, organism, COPY_TO_AUX_TABLE_PHASE) {
+                insertDataIntoAux(
+                    uploadId,
+                    submissionParams,
+                    batchSize,
+                )
+            }
+
+            val metadataSubmissionIds =
+                submissionMetrics.timeWritePhase(endpoint, organism, LOAD_METADATA_SUBMISSION_IDS_PHASE) {
+                    uploadDatabaseService.getMetadataUploadSubmissionIds(uploadId).toSet()
+                }
+            if (requiresConsensusSequenceFile(submissionParams.organism)) {
+                submissionMetrics.timeWritePhase(endpoint, organism, VALIDATE_CONSENSUS_SEQUENCES_PHASE) {
+                    log.debug { "Validating submission with uploadId $uploadId" }
+                    val metadataFastaIds = uploadDatabaseService.getFastaIdsForMetadata(uploadId).flatten()
+                    val metadataFastaIdsSet = metadataFastaIds.toSet()
+                    if (metadataFastaIdsSet.size < metadataFastaIds.size) {
+                        throw UnprocessableEntityException("Metadata file contains duplicate fastaIds.")
+                    }
+                    val sequenceFastaIds = uploadDatabaseService.getSequenceUploadSubmissionIds(uploadId).toSet()
+                    validateSubmissionIdSetsForConsensusSequences(metadataFastaIdsSet, sequenceFastaIds)
+                }
+            }
+
+            if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
+                submissionMetrics.timeWritePhase(endpoint, organism, ASSOCIATE_REVISED_DATA_PHASE) {
+                    log.info {
+                        "Associating uploaded sequence data with existing sequence entries with uploadId $uploadId"
+                    }
+                    uploadDatabaseService.associateRevisedDataWithExistingSequenceEntries(
+                        uploadId,
+                        submissionParams.organism,
+                        submissionParams.authenticatedUser,
+                    )
+                }
+            }
+
+            submissionMetrics.timeWritePhase(endpoint, organism, VALIDATE_FILE_MAPPING_PHASE) {
+                // File mappings in submissionParams can contain submission Ids not present in the metadata
+                // This is implicitly validated for the file mappings within the metadata column
+                // TODO: This can be removed once file mappings JSON support is removed
+                submissionParams.files?.let { validateSubmissionIdSetsForFiles(metadataSubmissionIds, it.keys) }
+
+                val files = uploadDatabaseService.getFilesForUpload(uploadId)
+                if (files.isNotEmpty()) {
+                    submissionIdFilesMappingPreconditionValidator
+                        .validateFilenameCharacters(files)
+                        .validateFilenamesAreUnique(files)
+                        .validateCategoriesMatchSchema(files, submissionParams.organism)
+                        .validateMultipartUploads(files)
+                        .validateFilesExist(files)
+                    validateFileGroupOwnership(files, submissionParams, uploadId)
+                }
+            }
+
+            if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
+                submissionMetrics.timeWritePhase(endpoint, organism, GENERATE_ACCESSIONS_PHASE) {
+                    log.info { "Generating new accessions for uploaded sequence data with uploadId $uploadId" }
+                    uploadDatabaseService.generateNewAccessionsForOriginalUpload(uploadId)
+                }
+            }
+
+            log.debug { "Persisting submission with uploadId $uploadId" }
+            val submissionIdMappings =
+                submissionMetrics.timeWritePhase(endpoint, organism, INSERT_SEQUENCE_ENTRIES_PHASE) {
+                    uploadDatabaseService.mapAndCopy(uploadId, submissionParams)
+                }
+            submissionMetrics.recordUploadedSequences(
+                organism = organism,
+                count = submissionIdMappings.size,
             )
+            return submissionIdMappings
+        } finally {
+            submissionMetrics.timeWritePhase(endpoint, organism, CLEANUP_UPLOAD_DATA_PHASE) {
+                uploadDatabaseService.deleteUploadData(uploadId)
+            }
         }
-
-        // File mappings in submissionParams can contain submission Ids not present in the metadata
-        // This is implicitly validated for the file mappings within the metadata column
-        // TODO: This can be removed once file mappings JSON support is removed
-        submissionParams.files?.let { validateSubmissionIdSetsForFiles(metadataSubmissionIds, it.keys) }
-
-        val files = uploadDatabaseService.getFilesForUpload(uploadId)
-        if (files.isNotEmpty()) {
-            submissionIdFilesMappingPreconditionValidator
-                .validateFilenameCharacters(files)
-                .validateFilenamesAreUnique(files)
-                .validateCategoriesMatchSchema(files, submissionParams.organism)
-                .validateMultipartUploads(files)
-                .validateFilesExist(files)
-            validateFileGroupOwnership(files, submissionParams, uploadId)
-        }
-
-        if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
-            log.info { "Generating new accessions for uploaded sequence data with uploadId $uploadId" }
-            uploadDatabaseService.generateNewAccessionsForOriginalUpload(uploadId)
-        }
-
-        log.debug { "Persisting submission with uploadId $uploadId" }
-        uploadDatabaseService.mapAndCopy(uploadId, submissionParams)
-    } finally {
-        uploadDatabaseService.deleteUploadData(uploadId)
     }
 
     /**
@@ -432,4 +477,9 @@ class SubmitModel(
         .schema
         .submissionDataTypes
         .consensusSequences
+
+    private fun UploadType.metricEndpoint() = when (this) {
+        UploadType.ORIGINAL -> SUBMIT_ENDPOINT
+        UploadType.REVISION -> REVISE_ENDPOINT
+    }
 }

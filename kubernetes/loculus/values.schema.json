@@ -684,19 +684,6 @@
                 },
                 "description": "Array of Strings. Arguments passed to the preprocessing pipeline."
               },
-              "taxonomyServiceArgs": {
-                "groups": ["preprocessing"],
-                "docsIncludePrefix": false,
-                "type": "object",
-                "description": "Settings to configure the taxonomy service host and port",
-                "properties": {
-                  "taxonomy_service_url": {
-                    "groups": ["preprocessing"],
-                    "type": "string",
-                    "description": "Host and port where the taxonomy service runs"
-                  }
-                }
-              },
               "configFile": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
@@ -1599,6 +1586,12 @@
       "default": false,
       "description": "If true, disables the backend API deployment."
     },
+    "enableServiceMonitor": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, exposes backend metrics through a cluster-internal management service and deploys a Prometheus Operator ServiceMonitor. First install kube-prometheus-stack with the release name `kube-prometheus-stack`, for example: `helm upgrade --install kube-prometheus-stack oci://ghcr.io/prometheus-community/charts/kube-prometheus-stack --namespace monitoring --create-namespace`."
+    },
     "disablePreprocessing": {
       "groups": ["services"],
       "type": "boolean",
@@ -1891,6 +1884,10 @@
         "taxonomyDbPath": {
           "type": "string",
           "description": "Path where the taxonomy SQLite database is mounted inside the container"
+        },
+        "taxonomy_service_url": {
+          "type": "string",
+          "description": "URL where the taxonomy service is accessible"
         }
       }
     },
