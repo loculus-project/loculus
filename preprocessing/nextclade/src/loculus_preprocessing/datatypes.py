@@ -26,9 +26,14 @@ ProcessedMetadata = dict[str, ProcessedMetadataValue]
 InputMetadataValue = str | None
 InputMetadata = dict[str, InputMetadataValue]
 FastaId = str
-FileCategory = str
 
 ProcessingAnnotationAlignment: Final = "alignment"
+
+
+@unique
+class FileCategory(StrEnum):
+    RAW_READS = "rawReads"
+    ANNOTATIONS = "annotations"
 
 
 @unique
