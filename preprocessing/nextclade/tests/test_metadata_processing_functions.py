@@ -705,7 +705,9 @@ test_metadata_dependency_test_definitions = [
             "multi_dep": "present",
             "required_when_input_A": "present",
             "required_when_processed_A": "present",
+            "required_when_raw_reads": "present",
         },
+        input_files=RAW_READS_FILES,
         accession_id="18",
         expected_metadata={
             "name_required": "name",
@@ -717,7 +719,9 @@ test_metadata_dependency_test_definitions = [
             "multi_dep": "present",
             "required_when_input_A": "present",
             "required_when_processed_A": "present",
+            "required_when_raw_reads": "present",
         },
+        expected_files=RAW_READS_FILES,
         expected_errors=[],
         expected_warnings=build_processing_annotations(
             [
@@ -765,37 +769,6 @@ test_metadata_dependency_test_definitions = [
                 ),
             ]
         ),
-        expected_warnings=[],
-    ),
-    Case(
-        name="raw_reads_prerequisite_present",
-        input_metadata={
-            "submissionId": "raw_reads_prerequisite_present",
-            "name_required": "name",
-            "ncbi_required_collection_date": "2022-11-01",
-            "continent": "Asia",
-            "A": "2022-11-01",
-            "required_when_raw_reads": "present",
-            "multi_dep": "present",
-            "required_when_input_A": "present",
-            "required_when_processed_A": "present",
-        },
-        input_files=RAW_READS_FILES,
-        accession_id="31",
-        expected_metadata={
-            "name_required": "name",
-            "required_collection_date": "2022-11-01",
-            "concatenated_string": "Asia/LOC_31.1/2022-11-01",
-            "continent": "Asia",
-            "A": "2022-11-01",
-            "depends_on_A": "Asia/LOC_31.1/2022-11-01",
-            "required_when_raw_reads": "present",
-            "multi_dep": "present",
-            "required_when_input_A": "present",
-            "required_when_processed_A": "present",
-        },
-        expected_files=RAW_READS_FILES,
-        expected_errors=[],
         expected_warnings=[],
     ),
     Case(
