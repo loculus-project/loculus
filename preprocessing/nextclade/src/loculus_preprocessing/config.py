@@ -301,7 +301,7 @@ def validate_required_when(config: Config) -> None:
 def get_processing_order(config: Config) -> tuple[str, ...]:
     """Return a valid order for processing metadata fields based on their dependencies.
 
-    Dependencies are derived from input fields in `config.processing_spec`.
+    Dependencies are derived from input fields and requiredWhen fields in `config.processing_spec`.
 
     A DAG is constructed and topologically sorted to ensure each field is processed after the
     fields it depends on.
@@ -321,7 +321,7 @@ def get_processing_order(config: Config) -> tuple[str, ...]:
             if dependency not in config.processing_spec:
                 msg = (
                     f"invalid configuration: metadata field '{output_field}' requested "
-                    f"non-existing field '{dependency}' as input."
+                    f"non-existing field '{dependency}' as input or as a requiredWhen condition."
                 )
                 raise ValueError(msg)
             dag[output_field].add(dependency)

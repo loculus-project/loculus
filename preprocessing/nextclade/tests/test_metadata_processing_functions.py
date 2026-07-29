@@ -695,7 +695,7 @@ RAW_READS_FILES = {
 
 test_metadata_dependency_test_definitions = [
     Case(
-        name="metadata_dependency",
+        name="metadata_dependencies_all_present",
         input_metadata={
             "submissionId": "metadata_dependency",
             "name_required": "name",
@@ -867,7 +867,7 @@ test_metadata_dependency_test_definitions = [
         expected_warnings=[],
     ),
     Case(
-        name="multi_dep_fails_when_one_present",
+        name="missing_multi_dep_fails_when_one_requiredWhen_condition_present",
         input_metadata={
             "submissionId": "multi_dep_fails_when_one_present",
             "name_required": "name",
@@ -900,7 +900,7 @@ test_metadata_dependency_test_definitions = [
         expected_warnings=[],
     ),
     Case(
-        name="multi_dep_fails_when_all_present",
+        name="missing_multi_dep_fails_when_all_requiredWhen_condition_present",
         input_metadata={
             "submissionId": "multi_dep_fails_when_all_present",
             "name_required": "name",
