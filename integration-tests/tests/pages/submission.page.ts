@@ -203,10 +203,6 @@ export class BulkSubmissionPage extends SubmissionPage {
         });
     }
 
-    async discardMetadataFile() {
-        await this.page.getByTestId('discard_metadata_file').click();
-    }
-
     async uploadSequencesFile(sequenceData: Record<string, string>) {
         const fastaContent = Object.entries(sequenceData)
             .map(([id, sequence]) => `>${id}\n${sequence}`)

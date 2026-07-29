@@ -26,6 +26,7 @@ const FILES_DOUBLE: Record<string, string> = {
 };
 
 // Tests upload files in subfolders grouped by submissionId
+// TODO: Update integration tests to move away from submission Id subfolders
 const filesColumnCell = (submissionId: string, files: Record<string, string>) =>
     Object.keys(files)
         .map((name) => `${name}::${submissionId}/${name}`)
@@ -126,58 +127,53 @@ test('bulk submit blocks a submission with errors in file linkage or parsing', a
     test.setTimeout(180_000);
     void groupId;
 
-    const [firstName, secondName] = Object.keys(FILES_DOUBLE);
-    const firstFileOnly = { [firstName]: FILES_DOUBLE[firstName] };
+    const [file1Name, file2Name] = Object.keys(FILES_DOUBLE);
+    const file1 = { [file1Name]: FILES_DOUBLE[file1Name] };
+
+    const linkageErrors = [
+        {
+            metadataFileEntries: 'a::b::c',
+            uploadedFiles: undefined,
+            error: 'Failed to parse file entry',
+        },
+        {
+            metadataFileEntries: filesColumnCell(ID_1, FILES_DOUBLE),
+            uploadedFiles: file1,
+            error: `referenced in metadata but not uploaded: ${ID_1}/${file2Name}`,
+        },
+        {
+            metadataFileEntries: filesColumnCell(ID_1, file1),
+            uploadedFiles: FILES_DOUBLE,
+            error: `uploaded but not referenced in metadata: ${ID_1}/${file2Name}`,
+        },
+        {
+            metadataFileEntries: `${file1Name}::${ID_1}/${file1Name}:some-file-id`,
+            uploadedFiles: file1,
+            error: `uploaded but the metadata still references an existing file for them: ${ID_1}/${file1Name}`,
+        },
+    ];
 
     const submissionPage = new BulkSubmissionPage(page);
-    await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
-    await submissionPage.acceptTerms();
+    for (const { metadataFileEntries, uploadedFiles, error } of linkageErrors) {
+        await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
+        await submissionPage.acceptTerms();
+        await submissionPage.uploadMetadataFile(
+            [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
+            [[ID_1, COUNTRY_1, '2023-01-01', metadataFileEntries]],
+        );
+        if (uploadedFiles !== undefined) {
+            await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: uploadedFiles }, tmpDir);
+        }
+        await submissionPage.clickSubmit();
 
-    // An entry that matches none of the accepted forms is rejected
-    await submissionPage.uploadMetadataFile(
-        [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
-        [[ID_1, COUNTRY_1, '2023-01-01', 'a::b::c']],
-    );
-    await submissionPage.clickSubmit();
-    await expect(page.getByText(/Failed to parse file entry/)).not.toHaveCount(0);
-    // A blocked submission returns before the data use terms dialog is shown
-    await expect(page.getByRole('button', { name: 'Continue under Open terms' })).toHaveCount(0);
-
-    // Declaring two files but uploading one leaves the other missing
-    await submissionPage.discardMetadataFile();
-    await submissionPage.uploadMetadataFile(
-        [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
-        [[ID_1, COUNTRY_1, '2023-01-01', filesColumnCell(ID_1, FILES_DOUBLE)]],
-    );
-    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: firstFileOnly }, tmpDir);
-    await submissionPage.clickSubmit();
-    await expect(page.getByText(/referenced in metadata but not uploaded/)).not.toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Continue under Open terms' })).toHaveCount(0);
-
-    // Declaring one file but uploading two leaves the second orphaned
-    await submissionPage.discardMetadataFile();
-    await submissionPage.uploadMetadataFile(
-        [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
-        [[ID_1, COUNTRY_1, '2023-01-01', filesColumnCell(ID_1, firstFileOnly)]],
-    );
-    await submissionPage.discardFiles(RAW_READS);
-    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_DOUBLE }, tmpDir);
-    await submissionPage.clickSubmit();
-    await expect(page.getByText(/uploaded but not referenced in metadata/)).not.toHaveCount(0);
-    await expect(page.getByText(secondName)).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Continue under Open terms' })).toHaveCount(0);
-
-    // Uploading over a path whose entry already pins a file ID shadows the upload
-    await submissionPage.discardMetadataFile();
-    await submissionPage.uploadMetadataFile(
-        [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
-        [[ID_1, COUNTRY_1, '2023-01-01', `${firstName}::${ID_1}/${firstName}:some-file-id`]],
-    );
-    await submissionPage.discardFiles(RAW_READS);
-    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: firstFileOnly }, tmpDir);
-    await submissionPage.clickSubmit();
-    await expect(page.getByText(/metadata still references an existing file/)).not.toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Continue under Open terms' })).toHaveCount(0);
+        // Multiple toasts can be shown at the same time
+        // For example, the parse error appears on metadata file load, as well as on handle submit
+        await expect(page.getByText(error).first()).toBeVisible();
+        // A blocked submission returns before the data use terms dialog is shown
+        await expect(page.getByRole('button', { name: 'Continue under Open terms' })).toHaveCount(
+            0,
+        );
+    }
 });
 
 const REVISION_METADATA_HEADERS = ['accession', 'submissionId', 'country', 'date'];
@@ -408,7 +404,7 @@ test('bulk revise can reuse, replace, discard and add files', async ({ page, gro
         fs.rmSync(unzipDir, { recursive: true, force: true });
     }
 
-    const [headerRow, ...entryRows] = downloadedMetadata.split('\n').filter((row) => row.trim());
+    const [headerRow, ...entryRows] = downloadedMetadata.split(/\r?\n/).filter((row) => row.trim());
     const headers = headerRow.split('\t');
     const filesColumn = headers.indexOf(RAW_READS_FILES_HEADER);
     const idColumn = headers.indexOf('id');
