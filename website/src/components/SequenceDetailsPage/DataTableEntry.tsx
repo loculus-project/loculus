@@ -16,8 +16,11 @@ const DataTableComponent: React.FC<Props> = ({ data, dataUseTermsHistory, refere
     return (
         <>
             {type.kind === 'metadata' && (
-                <div className='text-sm grid my-1' style={{ gridTemplateColumns: '200px 1fr' }}>
-                    <div className='font-medium text-gray-900 break-inside-avoid pr-4'>{label}</div>
+                <div
+                    className='text-sm grid py-1 border-b border-gray-100 last:border-b-0'
+                    style={{ gridTemplateColumns: '200px 1fr' }}
+                >
+                    <div className='font-normal text-gray-700 break-inside-avoid pr-4'>{label}</div>
                     <DataTableEntryValue
                         data={data}
                         dataUseTermsHistory={dataUseTermsHistory}
@@ -28,7 +31,7 @@ const DataTableComponent: React.FC<Props> = ({ data, dataUseTermsHistory, refere
 
             {type.kind === 'mutation' && (
                 <div className='text-sm my-1'>
-                    <div className='font-medium text-gray-900 break-inside-avoid py-2'>{label}</div>
+                    <div className='font-normal text-gray-700 break-inside-avoid py-2'>{label}</div>
                     <DataTableEntryValue
                         data={data}
                         dataUseTermsHistory={dataUseTermsHistory}
