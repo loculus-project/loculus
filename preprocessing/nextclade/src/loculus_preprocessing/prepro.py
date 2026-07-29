@@ -479,8 +479,8 @@ def check_required_when_condition(
     )
     error_message = None
     if condition.startswith(FILES_PREFIX):
-        file_category = condition.removeprefix(FILES_PREFIX)
-        if unprocessed.files and unprocessed.files.get(FileCategory(file_category)):
+        file_category = FileCategory(condition.removeprefix(FILES_PREFIX))
+        if unprocessed.files and unprocessed.files.get(file_category):
             error_message = (
                 f"Metadata field `{output_field}` is required when "
                 f"`{file_category}` files are provided."

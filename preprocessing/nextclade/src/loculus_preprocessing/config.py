@@ -270,27 +270,34 @@ def validate_required_when(config: Config) -> None:
                 if category not in FileCategory:
                     msg = (
                         f"invalid configuration: field '{output_field}' has a requiredWhen "
-                        f"condition referencing unknown file category '{category}'."
+                        f"condition referencing non-existing file category '{category}'."
                     )
                     raise ValueError(msg)
                 continue
-            field = (
-                condition.removeprefix(PROCESSED_PREFIX)
-                if condition.startswith(PROCESSED_PREFIX)
-                else condition
-            )
-            if (referenced_spec := config.processing_spec.get(field)) is None:
-                msg = (
+
+            if condition.startswith(PROCESSED_PREFIX):
+                field = condition.removeprefix(PROCESSED_PREFIX)
+                not_exist_msg = (
                     f"invalid configuration: field '{output_field}' has a requiredWhen "
                     f"condition referencing non-existing metadata field '{field}'"
                 )
-                raise ValueError(msg)
+            else:
+                field = condition
+                not_exist_msg = (
+                    f"invalid configuration: field '{output_field}' has a requiredWhen "
+                    f"condition referencing non-existing input field '{field}'"
+                )
+
+            if (referenced_spec := config.processing_spec.get(field)) is None:
+                raise ValueError(not_exist_msg)
+
             if referenced_spec.no_input and not condition.startswith(PROCESSED_PREFIX):
                 msg = (
                     f"invalid configuration: field '{output_field}' has a requiredWhen "
-                    f"condition referencing the input value of a noInput metadata field '{field}'"
+                    f"condition referencing the input value of noInput metadata field '{field}'"
                 )
                 raise ValueError(msg)
+
             if field == output_field:
                 msg = (
                     f"invalid configuration: field '{output_field}' lists itself in `requiredWhen`"
