@@ -153,7 +153,10 @@ def validate_with_readtools(
             timeout=timeout_seconds,
         )
     except subprocess.TimeoutExpired:
-        message = f"Validation of files '{','.join(file_names)}' timed out after {timeout_seconds}s."
+        message = (
+            f"Validation of files '{','.join(file_names)}' "
+            f"timed out after {timeout_seconds} seconds."
+        )
         logger.error(message)
         raise ProcessingFailure(message) from None
     except subprocess.CalledProcessError as error:
