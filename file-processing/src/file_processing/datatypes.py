@@ -28,7 +28,7 @@ class RequestWithFiles(BaseModel):
 
 
 class Annotation(BaseModel):
-    fileName: str | None = None  # noqa: N815
+    fileNames: list[FileName]
     fileCategory: FileCategory = FileCategory.RAW_READS  # noqa: N815
     message: str
 

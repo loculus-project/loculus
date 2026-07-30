@@ -38,7 +38,7 @@ def download_file(
         message = f"Error downloading file '{file.name}' from S3: {e}"
         logger.error(message)
         return Annotation(
-            fileName=file.name,
+            fileNames=[file.name],
             fileCategory=FileCategory.RAW_READS,
             message=message,
         )
@@ -72,7 +72,7 @@ def process_submitted_files(
                 logger.warning(message)
                 errors.append(
                     Annotation(
-                        fileName=category,
+                        fileNames=[],
                         fileCategory=category,
                         message=f"Internal error: {message} Please contact the administrator.",
                     )

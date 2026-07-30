@@ -81,7 +81,7 @@ def validate_file_extensions(
         if file_format not in accepted_formats:
             errors.append(
                 Annotation(
-                    fileName=file_name,
+                    fileNames=[file_name],
                     fileCategory=FileCategory.RAW_READS,
                     message=f"File is not in accepted format: {', '.join(accepted_formats)}. Paired-end FASTQ files must be submitted as separate, de-interleaved files.",
                 )
@@ -93,7 +93,7 @@ def validate_file_extensions(
     if not file_format or file_format not in accepted_formats:
         errors.append(
             Annotation(
-                fileName=", ".join(file_names),
+                fileNames=file_names,
                 fileCategory=FileCategory.RAW_READS,
                 message=f"Input files have mixed or unsupported formats. Please provide files with consistent and supported formats: {accepted_formats}, paired-end FASTQ files must be submitted as separate, de-interleaved files.",
             )
@@ -109,13 +109,13 @@ def validate_file_numbers(
         # ENA's readtools.jar actually allows more than 2 FASTQ files, but it treats every 1+i file as a paired read of the first file.
         # ENA documents that multi-FASTQs should be submitted using a JSON manifest, which we don't support, so we enforce a stricter limit here.
         return Annotation(
-            fileName=", ".join(file_names),
+            fileNames=file_names,
             fileCategory=FileCategory.RAW_READS,
             message=f"Too many FASTQ files submitted ({len(file_names)}). We only allow 1 FASTQ file for single-end reads or 2 FASTQ files for paired-end reads.",
         )
     if file_format in {FileFormat.BAM, FileFormat.CRAM} and len(file_names) > 1:
         return Annotation(
-            fileName=", ".join(file_names),
+            fileNames=file_names,
             fileCategory=FileCategory.RAW_READS,
             message=f"Too many {file_format.value.upper()} files submitted ({len(file_names)}). We only allow 1 {file_format.value.upper()} file per submission.",
         )
@@ -153,7 +153,7 @@ def validate_with_readtools(
         )
         logger.error(message)
         return Annotation(
-            fileName=",".join(file_names),
+            fileNames=file_names,
             message=message,
         )
     except subprocess.CalledProcessError as error:
@@ -163,7 +163,7 @@ def validate_with_readtools(
         )
         logger.error(validation_error)
         return Annotation(
-            fileName=",".join(file_names),
+            fileNames=file_names,
             message=validation_error,
         )
     return None

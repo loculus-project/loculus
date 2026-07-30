@@ -1,9 +1,9 @@
 import logging
 import urllib.parse
 from collections import OrderedDict
-from dataclasses import asdict
 
 import requests
+from pydantic import BaseModel, ValidationError
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -202,12 +202,30 @@ class TaxonomyService:
         return RawProcessingResult(datum=common_name)
 
 
-def file_processing_service_error(file_names: str, message: str) -> ProcessingAnnotation:
+def file_processing_service_error(file_names: list[str], message: str) -> ProcessingAnnotation:
     return ProcessingAnnotation(
-        [AnnotationSource(file_names, AnnotationSourceType.FILE)],
-        [AnnotationSource(file_names, AnnotationSourceType.FILE)],
+        [AnnotationSource(", ".join(file_names), AnnotationSourceType.FILE)],
+        [AnnotationSource(", ".join(file_names), AnnotationSourceType.FILE)],
         message,
     )
+
+
+FileName = str
+
+
+class FileProcessingRequest(BaseModel):
+    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]]
+    accessionVersion: str  # noqa: N815
+
+
+class Annotation(BaseModel):
+    fileNames: list[FileName]  # noqa: N815
+    fileCategory: FileCategory = FileCategory.RAW_READS  # noqa: N815
+    message: str
+
+
+class FileProcessingResponse(BaseModel):
+    errors: list[Annotation] | None = None
 
 
 class FileProcessingService:
@@ -220,7 +238,7 @@ class FileProcessingService:
         files: dict[FileCategory, list[FileIdAndNameAndReadUrl]],
         accession_version: AccessionVersion,
     ) -> list[ProcessingAnnotation]:
-        file_names = ", ".join(file.name for file_list in files.values() for file in file_list)
+        file_names = [file.name for file_list in files.values() for file in file_list]
         if not self.file_processing_service_url:
             return [
                 file_processing_service_error(
@@ -231,23 +249,28 @@ class FileProcessingService:
 
         url = f"{self.file_processing_service_url}/process-files"
         try:
-            payload = {
-                "files": {
-                    category.value: [asdict(f) for f in file_list]
+            payload = FileProcessingRequest(
+                files={
+                    category: [
+                        FileIdAndNameAndReadUrl(fileId=f.fileId, name=f.name, url=f.url)
+                        for f in file_list
+                    ]
                     for category, file_list in files.items()
                 },
-                "accessionVersion": str(accession_version),
-            }
+                accessionVersion=str(accession_version),
+            )
 
-            response = requests.post(url, json=payload, timeout=self.timeout_seconds)
+            response = requests.post(
+                url, json=payload.model_dump(mode="json"), timeout=self.timeout_seconds
+            )
             response.raise_for_status()
-            body = response.json()
+            body = FileProcessingResponse.model_validate(response.json())
 
             return [
-                file_processing_service_error(error["fileName"], error["message"])
-                for error in body.get("errors") or []
+                file_processing_service_error(error.fileNames, error.message)
+                for error in body.errors or []
             ]
-        except requests.exceptions.RequestException as e:
+        except (requests.exceptions.RequestException, ValidationError) as e:
             return [
                 file_processing_service_error(
                     file_names,

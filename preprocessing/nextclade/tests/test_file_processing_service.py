@@ -95,7 +95,7 @@ def test_process_files_maps_response_errors(mock_post: MagicMock) -> None:
     mock_post.return_value = make_response(
         200,
         {
-            "errors": [{"fileName": "reads.fastq", "message": "invalid checksum"}],
+            "errors": [{"fileNames": ["reads.fastq"], "message": "invalid checksum"}],
         },
     )
     service = FileProcessingService(file_processing_service_url=SERVICE_URL)
