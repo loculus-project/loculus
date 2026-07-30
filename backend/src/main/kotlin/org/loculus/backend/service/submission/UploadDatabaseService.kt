@@ -352,14 +352,47 @@ class UploadDatabaseService(
             "Generated ${submissionIdToAccessionMap.size} new accessions for original upload with UploadId $uploadId:"
         }
 
-        submissionIdToAccessionMap.forEach { (submissionId, accession) ->
-            MetadataUploadAuxTable.update(
-                where = {
-                    (submissionIdColumn eq submissionId) and (uploadIdColumn eq uploadId)
-                },
-            ) {
-                it[accessionColumn] = accession
-                it[versionColumn] = 1
+        transaction {
+            submissionIdToAccessionMap.processInDatabaseSafeChunks { chunk ->
+                val values = chunk.joinToString(", ") { "(?, ?)" }
+                val updateSql = """
+                    UPDATE metadata_upload_aux_table AS metadata
+                    SET
+                        accession = generated.accession,
+                        version = 1
+                    FROM (VALUES $values) AS generated(submission_id, accession)
+                    WHERE
+                        metadata.upload_id = ?
+                        AND metadata.submission_id = generated.submission_id
+                    RETURNING metadata.submission_id
+                """.trimIndent()
+                val stringColumnType = VarCharColumnType()
+                val arguments = chunk.flatMap { (submissionId, accession) ->
+                    listOf(
+                        Pair(stringColumnType, submissionId),
+                        Pair(stringColumnType, accession),
+                    )
+                } + Pair(stringColumnType, uploadId)
+
+                val updatedSubmissionIds = exec(
+                    updateSql,
+                    arguments,
+                    explicitStatementType = StatementType.SELECT,
+                ) { resultSet ->
+                    val result = mutableSetOf<SubmissionId>()
+                    while (resultSet.next()) {
+                        result += resultSet.getString("submission_id")
+                    }
+                    result
+                } ?: emptySet()
+                val expectedSubmissionIds = chunk.mapTo(mutableSetOf()) { it.first }
+
+                if (updatedSubmissionIds != expectedSubmissionIds) {
+                    throw IllegalStateException(
+                        "Expected to assign ${expectedSubmissionIds.size} accessions for upload $uploadId, " +
+                            "but updated ${updatedSubmissionIds.size}.",
+                    )
+                }
             }
         }
     }
