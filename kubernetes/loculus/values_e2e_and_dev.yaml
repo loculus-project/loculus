@@ -9,7 +9,7 @@ secrets:
 createTestAccounts: true
 backendExtraArgs:
   - "--loculus.debug-mode=true"
-disableFileProcessingService: false
+disableRawReadsProcessingService: false
 disableEnaSubmission: true
 auth:
   verifyEmail: false

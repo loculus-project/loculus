@@ -1,4 +1,4 @@
-from file_processing.datatypes import Annotation
+from raw_reads_processing.datatypes import Annotation
 
 
 class InvalidSubmission(Exception):

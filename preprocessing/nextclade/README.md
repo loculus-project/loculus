@@ -229,12 +229,12 @@ Note that adding the `perSegment` field will mean that for a multi-segmented org
 
 When `create_embl_file` is enabled in the preprocessing config, preprocessing will generate an EMBL flatfile with CDS annotations for the processed sequence and upload the file to a presigned URL requested from the backend. This features requires `files` to be enabled in the `values.yaml`.
 
-Additionally, when input files are enabled, preprocessing will receive them in the response from the backend and is configured to forward them to the `file-processing` service for further validation and processing. Therefore, the file-processing-service must be enabled in the `values.yaml` in order to use this feature.
+Additionally, when input files of category RAW_READS are enabled, preprocessing will receive them in the response from the backend and is configured to forward them to the `raw-reads-processing` service for further validation and processing. Therefore, the raw-reads-processing-service must be enabled in the `values.yaml` in order to use this feature.
 
 ```yaml
-disableFileProcessingService: false
-fileProcessingService:
-  file_processing_service_url: http://loculus-file-processing:5000
+disableRawReadsProcessingService: false
+rawReadsProcessingService:
+  raw_reads_processing_service_url: http://loculus-raw-reads-processing:5000
 defaultOrganisms:
   organism1:
     schema:

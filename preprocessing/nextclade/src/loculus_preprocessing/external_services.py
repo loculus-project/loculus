@@ -222,10 +222,10 @@ class FileProcessingResponse(BaseModel):
 class FileProcessingService:
     def __init__(
         self,
-        file_processing_service_url: str | None,
+        raw_reads_processing_service_url: str | None,
         timeout_seconds: int = 300,
     ):
-        self.base_url = file_processing_service_url
+        self.raw_reads_processing_service_url = raw_reads_processing_service_url
         self.timeout_seconds = timeout_seconds
 
     def process_files(  # noqa: PLR0911
@@ -245,15 +245,17 @@ class FileProcessingService:
 
         file_names = [file.name for file_list in files.values() for file in file_list]
 
-        if not self.base_url:
-            return [self._annotation(file_names, "File processing service URL is not configured.")]
+        if not self.raw_reads_processing_service_url:
+            return [
+                self._annotation(file_names, "Raw reads processing service URL is not configured.")
+            ]
 
         payload = FileProcessingRequest(
             files=files[FileCategory.RAW_READS], accessionVersion=str(accession_version)
         )
         try:
             response = requests.post(
-                f"{self.base_url}/process-files",
+                f"{self.raw_reads_processing_service_url}/process-files",
                 json=payload.model_dump(mode="json"),
                 timeout=self.timeout_seconds,
             )
@@ -265,17 +267,20 @@ class FileProcessingService:
                     detail = response.json().get("detail", response.text)
                 except ValueError:
                     detail = response.text
-                return [self._annotation(file_names, f"File processing service failed: {detail}")]
-            return [self._annotation(file_names, f"File processing service failed: {error}")]
+                return [
+                    self._annotation(file_names, f"Raw reads processing service failed: {detail}")
+                ]
+            return [self._annotation(file_names, f"Raw reads processing service failed: {error}")]
         except requests.exceptions.RequestException as error:
-            return [self._annotation(file_names, f"File processing request failed: {error}")]
+            return [self._annotation(file_names, f"Raw reads processing request failed: {error}")]
 
         try:
             result = FileProcessingResponse.model_validate(response.json())
         except ValidationError as error:
             return [
                 self._annotation(
-                    file_names, f"File processing service returned an invalid response: {error}"
+                    file_names,
+                    f"Raw reads processing service returned an invalid response: {error}",
                 )
             ]
 

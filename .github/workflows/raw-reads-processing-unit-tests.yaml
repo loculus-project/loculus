@@ -1,22 +1,22 @@
-name: file-processing-unit-tests
+name: raw-reads-processing-unit-tests
 on:
   # test
   pull_request:
     paths:
-      - "file-processing/**"
-      - ".github/workflows/file-processing-unit-tests.yaml"
+      - "raw-reads-processing/**"
+      - ".github/workflows/raw-reads-processing-unit-tests.yaml"
       - "ruff.toml"
   push:
     branches:
       - main
   workflow_dispatch:
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-file-processing-unit-tests
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-raw-reads-processing-unit-tests
   cancel-in-progress: true
 defaults:
   run:
     shell: micromamba-shell {0}
-    working-directory: file-processing
+    working-directory: raw-reads-processing
 jobs:
   checkFormat:
     name: Check formatting
@@ -26,7 +26,7 @@ jobs:
       - name: Set up micromamba
         uses: mamba-org/setup-micromamba@v3
         with:
-          environment-file: "file-processing/environment.yml"
+          environment-file: "raw-reads-processing/environment.yml"
           micromamba-version: "latest"
           cache-environment: true
       - name: Run ruff format check
@@ -39,7 +39,7 @@ jobs:
       - name: Set up micromamba
         uses: mamba-org/setup-micromamba@v3
         with:
-          environment-file: "file-processing/environment.yml"
+          environment-file: "raw-reads-processing/environment.yml"
           micromamba-version: "latest"
           cache-environment: true
       - name: Run ruff check
@@ -58,11 +58,11 @@ jobs:
       - name: Build test image
         uses: docker/build-push-action@v7
         with:
-          context: ./file-processing
+          context: ./raw-reads-processing
           push: false
           load: true
-          tags: file-processing-service:test
-          cache-from: type=gha,scope=file-processing-service-${{ github.ref }}
-          cache-to: type=gha,mode=max,scope=file-processing-service-${{ github.ref }}
+          tags: raw-reads-processing-service:test
+          cache-from: type=gha,scope=raw-reads-processing-service-${{ github.ref }}
+          cache-to: type=gha,mode=max,scope=raw-reads-processing-service-${{ github.ref }}
       - name: Run tests
-        run: docker run --rm file-processing-service:test pytest
+        run: docker run --rm raw-reads-processing-service:test pytest

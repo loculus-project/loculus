@@ -1,4 +1,4 @@
-name: file-processing-service-image
+name: raw-reads-processing-service-image
 on:
   pull_request:
   push:
@@ -19,16 +19,16 @@ on:
         default: false
         required: false
 env:
-  DOCKER_IMAGE_NAME: ghcr.io/loculus-project/file-processing-service
+  DOCKER_IMAGE_NAME: ghcr.io/loculus-project/raw-reads-processing-service
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
   BUILD_ARM: ${{ github.event.inputs.build_arm || inputs.build_arm || github.ref == 'refs/heads/main' }}
   sha: ${{ github.event.pull_request.head.sha || github.sha }}
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-file-processing-service-${{github.event.inputs.build_arm}}
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-raw-reads-processing-service-${{github.event.inputs.build_arm}}
   cancel-in-progress: true
 jobs:
-  file-processing-service-image:
-    name: Build file-processing-service Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
+  raw-reads-processing-service-image:
+    name: Build raw-reads-processing-service Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -43,7 +43,7 @@ jobs:
       - name: Generate files hash
         id: files-hash
         run: |
-          DIR_HASH=$(echo -n ${{ hashFiles('file-processing/**', '.github/workflows/file-processing-service-image.yaml') }})
+          DIR_HASH=$(echo -n ${{ hashFiles('raw-reads-processing/**', '.github/workflows/raw-reads-processing-service-image.yaml') }})
           echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM == 'true' && '-arm' || '' }}" >> $GITHUB_ENV
       - name: Setup Docker metadata
         id: dockerMetadata
@@ -73,11 +73,11 @@ jobs:
         if: env.CACHE_HIT == 'false'
         uses: docker/build-push-action@v7
         with:
-          context: ./file-processing
+          context: ./raw-reads-processing
           push: true
           tags: ${{ steps.dockerMetadata.outputs.tags }}
-          cache-from: type=gha,scope=file-processing-service-${{ github.ref }}
-          cache-to: type=gha,mode=max,scope=file-processing-service-${{ github.ref }}
+          cache-from: type=gha,scope=raw-reads-processing-service-${{ github.ref }}
+          cache-to: type=gha,mode=max,scope=raw-reads-processing-service-${{ github.ref }}
           platforms: ${{ env.BUILD_ARM == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
       - name: Retag and push existing image if cache hit
         if: env.CACHE_HIT == 'true'

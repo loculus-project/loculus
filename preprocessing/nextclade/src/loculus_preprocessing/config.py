@@ -140,8 +140,8 @@ class Config(BaseModel):
     # External services
     taxonomy_service_url: str | None = None
     _taxonomy_service: TaxonomyService = PrivateAttr(default=TaxonomyService(None))
-    file_processing_service_url: str | None = None
-    file_processing_service_timeout_seconds: int = 300
+    raw_reads_processing_service_url: str | None = None
+    raw_reads_processing_service_timeout_seconds: int = 300
     _file_processing_service: FileProcessingService = PrivateAttr(
         default=FileProcessingService(None, 300)
     )
@@ -161,7 +161,7 @@ class Config(BaseModel):
 
         self._taxonomy_service = TaxonomyService(self.taxonomy_service_url)
         self._file_processing_service = FileProcessingService(
-            self.file_processing_service_url, self.file_processing_service_timeout_seconds
+            self.raw_reads_processing_service_url, self.raw_reads_processing_service_timeout_seconds
         )
 
         validate_required_when(self)

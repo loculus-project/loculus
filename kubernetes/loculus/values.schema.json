@@ -1631,11 +1631,11 @@
       "default": false,
       "description": "If true, disables the taxonomy service deployment."
     },
-    "disableFileProcessingService": {
+    "disableRawReadsProcessingService": {
       "groups": ["services"],
       "type": "boolean",
       "default": false,
-      "description": "If true, disables the file processing service deployment."
+      "description": "If true, disables the raw reads processing service deployment."
     },
     "readOnlyMode": {
       "groups": ["services"],
@@ -1912,20 +1912,20 @@
         }
       }
     },
-    "fileProcessingService": {
+    "rawReadsProcessingService": {
       "type": "object",
       "properties": {
-        "file_processing_service_url": {
+        "raw_reads_processing_service_url": {
           "type": "string",
-          "description": "URL where the file processing service is accessible"
+          "description": "URL where the raw reads processing service is accessible"
         },
-        "file_processing_service_timeout_seconds": {
+        "raw_reads_processing_service_timeout_seconds": {
           "type": "integer",
-          "description": "Timeout in seconds for file processing service requests"
+          "description": "Timeout in seconds for raw reads processing service requests"
         },
-        "fileProcessingConfig": {
+        "rawReadsProcessingConfig": {
           "type": "object",
-          "description": "Configuration for the file processing service"
+          "description": "Configuration for the raw reads processing service"
         }
       }
     },

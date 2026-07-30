@@ -1,4 +1,4 @@
-name: loculus-file-processing
+name: loculus-raw-reads-processing
 channels:
   - conda-forge
   - bioconda

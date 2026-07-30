@@ -2,10 +2,10 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from file_processing import api
-from file_processing.config import Config
-from file_processing.datatypes import Annotation
-from file_processing.errors import InvalidSubmission, ProcessingFailure
+from raw_reads_processing import api
+from raw_reads_processing.config import Config
+from raw_reads_processing.datatypes import Annotation
+from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
 
 VALID_PAYLOAD = {
     "files": [

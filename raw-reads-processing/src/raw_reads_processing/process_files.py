@@ -2,17 +2,17 @@ import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from file_processing.errors import ProcessingFailure
+from raw_reads_processing.errors import ProcessingFailure
 import requests
 
-from file_processing.config import Config
-from file_processing.datatypes import (
+from raw_reads_processing.config import Config
+from raw_reads_processing.datatypes import (
     Annotation,
     FileIdAndNameAndReadUrl,
     FileName,
     RequestWithFiles,
 )
-from file_processing.file_format_validation import (
+from raw_reads_processing.file_format_validation import (
     validate_file_extensions,
     validate_file_numbers,
     validate_with_readtools,

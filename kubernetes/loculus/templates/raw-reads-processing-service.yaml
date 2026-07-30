@@ -1,13 +1,13 @@
-{{- if not .Values.disableFileProcessingService }}
+{{- if not .Values.disableRawReadsProcessingService }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: loculus-file-processing
+  name: loculus-raw-reads-processing
 spec:
   {{- template "loculus.serviceType" . }}
   selector:
     app: loculus
-    component: loculus-file-processing
+    component: loculus-raw-reads-processing
   ports:
     - port: 5000
       targetPort: 5000

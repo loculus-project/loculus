@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from file_processing import file_format_validation
-from file_processing.errors import InvalidSubmission, ProcessingFailure
-from file_processing.file_format_validation import (
+from raw_reads_processing import file_format_validation
+from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
+from raw_reads_processing.file_format_validation import (
     FileFormat,
     _parse_validation_error,
     validate_file_extensions,

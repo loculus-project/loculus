@@ -1,4 +1,4 @@
-# File Processing Service
+# Raw Reads Processing Service
 
 ## Local development
 
@@ -6,7 +6,7 @@ Create an activate the micromamba environment using:
 
 ``sh
 micromamba create -f environment.yml
-micromamba activate loculus-file-processing
+micromamba activate loculus-raw-reads-processing
 pip install -e .
 ```
 
@@ -19,26 +19,26 @@ curl -L -o readtools.jar \
 
 ## How to configure the service
 
-Preprocessing is currently configured to send files to the `fileProcessingService` and requires the `values.yaml` to contain:
+Preprocessing is currently configured to send raw read files to the `rawReadsProcessingService` and requires the `values.yaml` to contain:
 
 ```yaml
-disableFileProcessingService: false
-fileProcessingService:
-  file_processing_service_url: http://loculus-file-processing:5000
+disableRawReadsProcessingService: false
+rawReadsProcessingService:
+  raw_reads_processing_service_url: http://loculus-raw-reads-processing:5000
 ```
 
-Preprocessing receives original-data from the backend, the backend creates read-only presigned file URLs and the preprocessing service sends these on to the file-processing service.
+Preprocessing receives original-data from the backend, the backend creates read-only presigned file URLs and the preprocessing service sends these on to the raw-reads-processing service.
 
 ## What this service does
 
-The file processing service is a small FastAPI app (`file_processing.api`) with one endpoint:
-`POST /process-files` (`file_processing.functions.process_submitted_files`).
+The raw reads processing service is a small FastAPI app (`raw_reads_processing.api`) with one endpoint:
+`POST /process-files` (`raw_reads_processing.functions.process_submitted_files`).
 
 It receives a `RequestWithFiles` payload:
 
 ```json
 {
-  "files": <FileCategory>: [{fileId: <fileId>, name: <fileName>, url: <fileURL>}],
+  "files": [{fileId: <fileId>, name: <fileName>, url: <fileURL>}],
   "accessionVersion": <str>
 }
 ```
@@ -47,14 +47,13 @@ The service downloads the files and validates their structure. The service respo
 
 ```json
 {
-  "errors": [{fileName: <fileName>, fileCategory: <fileCategory>, message: <str>}],
+  "errors": [{fileName: <fileName>, message: <str>}],
 }
 ```
 
-Only the `RAW_READS` FileCategory is currently handled. Raw reads submissions go through
-`validate_raw_reads_submission`, which checks:
+Raw reads submissions go through `validate_raw_reads_submission`, which checks:
 
-1. **Format validation** (`file_processing.file_format_validation`) — is the submission well-formed FASTQ?
+1. **Format validation** (`raw_reads_processing.file_format_validation`) — is the submission well-formed FASTQ?
 
 ## Raw reads format validation
 

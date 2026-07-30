@@ -1,23 +1,23 @@
 import logging
 
-from file_processing.errors import InvalidSubmission, ProcessingFailure
+from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
 import uvicorn
 from fastapi import FastAPI, HTTPException
-from file_processing.datatypes import RequestWithFiles, ValidationResult
-from file_processing.process_files import validate_raw_reads_submission
+from raw_reads_processing.datatypes import RequestWithFiles, ValidationResult
+from raw_reads_processing.process_files import validate_raw_reads_submission
 
 from .config import Config
 
 logger = logging.getLogger()
 
 app = FastAPI(
-    title="File Processing Service", description="Loculus file processing API"
+    title="Raw Reads Processing Service", description="Loculus raw reads processing API"
 )
 
 
 @app.get("/")
 def read_root() -> dict[str, str]:
-    return {"message": "File Processing Service is running"}
+    return {"message": "Raw Reads Processing Service is running"}
 
 
 @app.post("/process-files")
@@ -44,7 +44,7 @@ def start_api(config: Config):
     init_app(config)
     host = config.file_service_host or "127.0.0.1"
     port = config.file_service_port or 5000
-    logger.info(f"Starting file processing service API on port {port}")
+    logger.info(f"Starting raw reads processing service API on port {port}")
 
     uvicorn_config = uvicorn.Config(
         app, host=host, port=port, log_level="info", workers=1
