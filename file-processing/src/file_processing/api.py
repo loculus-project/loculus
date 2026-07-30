@@ -1,8 +1,8 @@
 import logging
 
 import uvicorn
-from fastapi import FastAPI, Response
-from file_processing.datatypes import RequestWithFiles
+from fastapi import FastAPI
+from file_processing.datatypes import RequestWithFiles, ValidationResult
 from file_processing.functions import process_submitted_files
 
 from .config import Config
@@ -22,14 +22,10 @@ def read_root() -> dict[str, str]:
 @app.post("/process-files")
 def process_files(
     payload: RequestWithFiles,
-) -> Response:
-    response_with_files = process_submitted_files(
+) -> ValidationResult:
+    return process_submitted_files(
         config=app.state.config,
         file_mapping=payload,
-    )
-
-    return Response(
-        content=response_with_files.model_dump_json(), media_type="application/json"
     )
 
 
