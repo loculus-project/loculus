@@ -1,0 +1,8 @@
+*
+!*/
+!**/summary.json
+!**/pg-stat-statements.tsv
+!**/stages.tsv
+!**/resources.tsv
+!**/source.patch
+!.gitignore
