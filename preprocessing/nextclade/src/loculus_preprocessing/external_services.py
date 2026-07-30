@@ -247,7 +247,6 @@ class FileProcessingService:
                 timeout=self.timeout_seconds,
             )
             response.raise_for_status()
-            result = FileProcessingResponse.model_validate(response.json())
         except requests.exceptions.HTTPError as error:
             response = error.response
             if response is not None and response.status_code >= 500:  # noqa: PLR2004
@@ -259,6 +258,9 @@ class FileProcessingService:
             return [self._annotation(file_names, f"File processing service failed: {error}")]
         except requests.exceptions.RequestException as error:
             return [self._annotation(file_names, f"File processing request failed: {error}")]
+
+        try:
+            result = FileProcessingResponse.model_validate(response.json())
         except ValidationError as error:
             return [
                 self._annotation(

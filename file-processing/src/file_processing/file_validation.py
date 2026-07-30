@@ -75,7 +75,6 @@ def validate_file_extensions(
         raise InvalidSubmission(
             error=Annotation(
                 fileNames=file_names,
-                fileCategory=FileCategory.RAW_READS,
                 message=f"Input files have mixed formats. Please provide files with consistent and supported formats: {accepted_formats}, paired-end FASTQ files must be submitted as separate, de-interleaved files.",
             )
         )
@@ -84,7 +83,6 @@ def validate_file_extensions(
         raise InvalidSubmission(
             error=Annotation(
                 fileNames=file_names,
-                fileCategory=FileCategory.RAW_READS,
                 message=f"File is not in accepted format: {', '.join(accepted_formats)}. Paired-end FASTQ files must be submitted as separate, de-interleaved files.",
             )
         )
@@ -99,7 +97,6 @@ def validate_file_numbers(file_format: FileFormat, file_names: list[FileName]) -
         raise InvalidSubmission(
             error=Annotation(
                 fileNames=file_names,
-                fileCategory=FileCategory.RAW_READS,
                 message=f"Too many FASTQ files submitted ({len(file_names)}). We only allow 1 FASTQ file for single-end reads or 2 FASTQ files for paired-end reads.",
             )
         )
@@ -107,7 +104,6 @@ def validate_file_numbers(file_format: FileFormat, file_names: list[FileName]) -
         raise InvalidSubmission(
             error=Annotation(
                 fileNames=file_names,
-                fileCategory=FileCategory.RAW_READS,
                 message=f"Too many {file_format.value.upper()} files submitted ({len(file_names)}). We only allow 1 {file_format.value.upper()} file per submission.",
             )
         )
