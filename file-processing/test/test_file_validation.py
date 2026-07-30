@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from file_processing import file_validation
-from file_processing.datatypes import Annotation
+from file_processing.errors import InvalidSubmission, ProcessingFailure
 from file_processing.file_validation import (
     FileFormat,
     _parse_validation_error,
@@ -176,29 +176,25 @@ def test_valid_paired_end_fastq_passes(tmp_path):
 @pytest.mark.usefixtures("readtools_jar")
 def test_fasta_style_header_is_rejected(tmp_path):
     reads = _write(tmp_path, "bad_header.fastq", FASTA_STYLE_HEADER)
-    result = validate_with_readtools(
-        {"bad_header.fastq": Path(reads)}, FileFormat.FASTQ
-    )
-    assert isinstance(result, Annotation)
-    assert "must start with @" in result.message
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_with_readtools({"bad_header.fastq": Path(reads)}, FileFormat.FASTQ)
+    assert "must start with @" in exc_info.value.error.message
 
 
 @pytest.mark.usefixtures("readtools_jar")
 def test_non_iupac_base_is_rejected(tmp_path):
     reads = _write(tmp_path, "bad_base.fastq", NON_IUPAC_BASE)
-    result = validate_with_readtools({"bad_base.fastq": Path(reads)}, FileFormat.FASTQ)
-    assert isinstance(result, Annotation)
-    assert "IUPAC" in result.message
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_with_readtools({"bad_base.fastq": Path(reads)}, FileFormat.FASTQ)
+    assert "IUPAC" in exc_info.value.error.message
 
 
 @pytest.mark.usefixtures("readtools_jar")
 def test_length_mismatch_is_rejected(tmp_path):
     reads = _write(tmp_path, "bad_length.fastq", LENGTH_MISMATCH)
-    result = validate_with_readtools(
-        {"bad_length.fastq": Path(reads)}, FileFormat.FASTQ
-    )
-    assert isinstance(result, Annotation)
-    assert "same length" in result.message
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_with_readtools({"bad_length.fastq": Path(reads)}, FileFormat.FASTQ)
+    assert "same length" in exc_info.value.error.message
 
 
 @pytest.mark.usefixtures("readtools_jar")
@@ -208,12 +204,10 @@ def test_interleaved_fastq_in_single_file_is_rejected(tmp_path):
     check, even though the file itself is well-formed FASTQ.
     """
     reads = _write(tmp_path, "interleaved.fastq", INTERLEAVED_SAME_NAME)
-    result = validate_with_readtools(
-        {"interleaved.fastq": Path(reads)}, FileFormat.FASTQ
-    )
-    assert isinstance(result, Annotation)
-    assert "Multiple" in result.message
-    assert "occurrences of read name" in result.message
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_with_readtools({"interleaved.fastq": Path(reads)}, FileFormat.FASTQ)
+    assert "Multiple" in exc_info.value.error.message
+    assert "occurrences of read name" in exc_info.value.error.message
 
 
 @pytest.mark.usefixtures("readtools_jar")
@@ -281,9 +275,9 @@ def test_valid_bam_passes(tmp_path):
 def test_truncated_bam_is_rejected(tmp_path):
     truncated = (FIXTURES_DIR / "valid.bam").read_bytes()[:40]
     bam = _write_bytes(tmp_path, "truncated.bam", truncated)
-    result = validate_with_readtools({"truncated.bam": Path(bam)}, FileFormat.BAM)
-    assert isinstance(result, Annotation)
-    assert "FileTruncatedException" in result.message
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_with_readtools({"truncated.bam": Path(bam)}, FileFormat.BAM)
+    assert "FileTruncatedException" in exc_info.value.error.message
 
 
 def test_parse_validation_error_extracts_detail_after_result_line():
@@ -335,42 +329,42 @@ def test_validation_timeout_is_reported_as_error(tmp_path, monkeypatch):
         raise subprocess.TimeoutExpired(cmd=args, timeout=kwargs["timeout"])
 
     monkeypatch.setattr(file_validation.subprocess, "run", fake_run)
-    result = validate_with_readtools(
-        {"reads.fastq": Path(reads)}, FileFormat.FASTQ, timeout_seconds=1
-    )
-    assert result is not None
-    assert "timed out" in result.message
-    assert "1 second" in result.message
+    with pytest.raises(ProcessingFailure) as exc_info:
+        validate_with_readtools(
+            {"reads.fastq": Path(reads)}, FileFormat.FASTQ, timeout_seconds=1
+        )
+    assert "timed out" in str(exc_info.value)
+    assert "1 second" in str(exc_info.value)
 
 
 def test_unsupported_extension_is_rejected():
-    result = validate_file_extensions(["file.txt"])
-    assert result[0] is None
-    assert "File is not in accepted format" in result[1][0].message
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_file_extensions(["file.txt"])
+    assert "File is not in accepted format" in exc_info.value.error.message
 
 
 def test_mixed_formats_are_rejected_():
-    result = validate_file_extensions(
-        ["reads.fastq", "reads.bam"],
-        accepted_formats=[FileFormat.FASTQ, FileFormat.BAM],
-    )
-    assert result[0] is None
-    assert "mixed or unsupported formats" in result[1][0].message
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_file_extensions(
+            ["reads.fastq", "reads.bam"],
+            accepted_formats=[FileFormat.FASTQ, FileFormat.BAM],
+        )
+    assert "mixed formats" in exc_info.value.error.message
 
 
 def test_too_many_fastq_files_are_rejected():
-    result = validate_file_numbers(
-        FileFormat.FASTQ,
-        ["reads1.fastq", "reads2.fastq", "reads3.fastq"],
-    )
-    assert isinstance(result, Annotation)
-    assert "Too many FASTQ files" in result.message
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_file_numbers(
+            FileFormat.FASTQ,
+            ["reads1.fastq", "reads2.fastq", "reads3.fastq"],
+        )
+    assert "Too many FASTQ files" in exc_info.value.error.message
 
 
 def test_too_many_bam_files_are_rejected():
-    result = validate_file_numbers(
-        FileFormat.BAM,
-        ["reads1.bam", "reads2.bam"],
-    )
-    assert isinstance(result, Annotation)
-    assert "Too many BAM files" in result.message
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_file_numbers(
+            FileFormat.BAM,
+            ["reads1.bam", "reads2.bam"],
+        )
+    assert "Too many BAM files" in exc_info.value.error.message

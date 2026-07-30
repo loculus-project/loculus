@@ -1,7 +1,8 @@
 import logging
 
+from file_processing.errors import InvalidSubmission, ProcessingFailure
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from file_processing.datatypes import RequestWithFiles, ValidationResult
 from file_processing.functions import process_submitted_files
 
@@ -23,11 +24,16 @@ def read_root() -> dict[str, str]:
 def process_files(
     payload: RequestWithFiles,
 ) -> ValidationResult:
-    return process_submitted_files(
-        config=app.state.config,
-        file_mapping=payload,
-    )
-
+    try:
+        process_submitted_files(
+            config=app.state.config,
+            file_mapping=payload,
+        )
+    except InvalidSubmission as e:
+        return ValidationResult(errors=[e.error])
+    except ProcessingFailure as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+    return ValidationResult()
 
 def init_app(config: Config):
     app.state.config = config

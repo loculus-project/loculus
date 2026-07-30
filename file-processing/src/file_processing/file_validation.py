@@ -5,6 +5,7 @@ from enum import StrEnum
 from pathlib import Path
 
 from file_processing.datatypes import Annotation, FileCategory, FileName
+from file_processing.errors import InvalidSubmission, ProcessingFailure
 
 logger = logging.getLogger(__name__)
 
@@ -51,21 +52,15 @@ def _has_extension(file: str, extensions: set[str]) -> bool:
     return any(file.lower().endswith(extension) for extension in extensions)
 
 
-def determine_file_format(file_names: list[str]) -> FileFormat | None:
+def determine_file_format(file_name: str) -> FileFormat | None:
     """Determine the shared format of a set of raw reads files from their
-    names alone (no download required), or None if they're mixed/unsupported.
+    names alone (no download required).
     """
-    if file_names and all(
-        _has_extension(f, ACCEPTED_FASTQ_EXTENSIONS) for f in file_names
-    ):
+    if file_name and _has_extension(file_name, ACCEPTED_FASTQ_EXTENSIONS):
         return FileFormat.FASTQ
-    if file_names and all(
-        _has_extension(f, ACCEPTED_BAM_EXTENSIONS) for f in file_names
-    ):
+    if file_name and _has_extension(file_name, ACCEPTED_BAM_EXTENSIONS):
         return FileFormat.BAM
-    if file_names and all(
-        _has_extension(f, ACCEPTED_CRAM_EXTENSIONS) for f in file_names
-    ):
+    if file_name and _has_extension(file_name, ACCEPTED_CRAM_EXTENSIONS):
         return FileFormat.CRAM
     return None
 
@@ -73,51 +68,48 @@ def determine_file_format(file_names: list[str]) -> FileFormat | None:
 def validate_file_extensions(
     file_names: list[FileName],
     accepted_formats: list[FileFormat] = ACCEPTED_FORMATS,
-) -> tuple[FileFormat | None, list[Annotation]]:
+) -> FileFormat:
     """Validate that all files have extensions consistent with the accepted formats."""
-    errors: list[Annotation] = []
-    for file_name in file_names:
-        file_format = determine_file_format([file_name])
-        if file_format not in accepted_formats:
-            errors.append(
-                Annotation(
-                    fileNames=[file_name],
-                    fileCategory=FileCategory.RAW_READS,
-                    message=f"File is not in accepted format: {', '.join(accepted_formats)}. Paired-end FASTQ files must be submitted as separate, de-interleaved files.",
-                )
-            )
-    if errors:
-        return None, errors
-
-    file_format = determine_file_format(file_names)
-    if not file_format or file_format not in accepted_formats:
-        errors.append(
-            Annotation(
+    file_formats = {determine_file_format(file_name) for file_name in file_names}
+    if len(file_formats) > 1:
+        raise InvalidSubmission(
+            error=Annotation(
                 fileNames=file_names,
                 fileCategory=FileCategory.RAW_READS,
-                message=f"Input files have mixed or unsupported formats. Please provide files with consistent and supported formats: {accepted_formats}, paired-end FASTQ files must be submitted as separate, de-interleaved files.",
+                message=f"Input files have mixed formats. Please provide files with consistent and supported formats: {accepted_formats}, paired-end FASTQ files must be submitted as separate, de-interleaved files.",
             )
         )
-    return file_format, errors
+    file_format = file_formats.pop()
+    if file_format not in accepted_formats or file_format is None:
+        raise InvalidSubmission(
+            error=Annotation(
+                fileNames=file_names,
+                fileCategory=FileCategory.RAW_READS,
+                message=f"File is not in accepted format: {', '.join(accepted_formats)}. Paired-end FASTQ files must be submitted as separate, de-interleaved files.",
+            )
+        )
+    return file_format
 
 
-def validate_file_numbers(
-    file_format: FileFormat, file_names: list[FileName]
-) -> Annotation | None:
+def validate_file_numbers(file_format: FileFormat, file_names: list[FileName]) -> None:
     """Validate the number of files submitted conforms to the expected number for the given file format."""
     if file_format == FileFormat.FASTQ and len(file_names) > 2:
         # ENA's readtools.jar actually allows more than 2 FASTQ files, but it treats every 1+i file as a paired read of the first file.
         # ENA documents that multi-FASTQs should be submitted using a JSON manifest, which we don't support, so we enforce a stricter limit here.
-        return Annotation(
-            fileNames=file_names,
-            fileCategory=FileCategory.RAW_READS,
-            message=f"Too many FASTQ files submitted ({len(file_names)}). We only allow 1 FASTQ file for single-end reads or 2 FASTQ files for paired-end reads.",
+        raise InvalidSubmission(
+            error=Annotation(
+                fileNames=file_names,
+                fileCategory=FileCategory.RAW_READS,
+                message=f"Too many FASTQ files submitted ({len(file_names)}). We only allow 1 FASTQ file for single-end reads or 2 FASTQ files for paired-end reads.",
+            )
         )
     if file_format in {FileFormat.BAM, FileFormat.CRAM} and len(file_names) > 1:
-        return Annotation(
-            fileNames=file_names,
-            fileCategory=FileCategory.RAW_READS,
-            message=f"Too many {file_format.value.upper()} files submitted ({len(file_names)}). We only allow 1 {file_format.value.upper()} file per submission.",
+        raise InvalidSubmission(
+            error=Annotation(
+                fileNames=file_names,
+                fileCategory=FileCategory.RAW_READS,
+                message=f"Too many {file_format.value.upper()} files submitted ({len(file_names)}). We only allow 1 {file_format.value.upper()} file per submission.",
+            )
         )
     return None
 
@@ -126,7 +118,7 @@ def validate_with_readtools(
     file_name_to_path: dict[FileName, Path],
     format_type: FileFormat,
     timeout_seconds: int = 300,
-) -> Annotation | None:
+) -> None:
     file_names = list(file_name_to_path.keys())
     args = (
         ["java", "-jar", VALIDATION_JAR_PATH]
@@ -147,23 +139,19 @@ def validate_with_readtools(
             timeout=timeout_seconds,
         )
     except subprocess.TimeoutExpired:
-        message = (
-            f"Internal Error: Validation of files '{','.join(file_names)}' timed out after "
-            f"{timeout_seconds} seconds. Please contact the administrator."
-        )
+        message = f"Validation of files '{','.join(file_names)}' timed out after {timeout_seconds} seconds."
         logger.error(message)
-        return Annotation(
-            fileNames=file_names,
-            message=message,
-        )
+        raise ProcessingFailure(message)
     except subprocess.CalledProcessError as error:
         validation_error = _parse_validation_error(
             stdout=error.stdout,
             stderr=error.stderr,
         )
         logger.error(validation_error)
-        return Annotation(
-            fileNames=file_names,
-            message=validation_error,
+        raise InvalidSubmission(
+            error=Annotation(
+                fileNames=file_names,
+                message=validation_error,
+            )
         )
     return None

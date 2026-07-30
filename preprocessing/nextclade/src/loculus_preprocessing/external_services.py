@@ -3,7 +3,7 @@ import urllib.parse
 from collections import OrderedDict
 
 import requests
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, Field, ValidationError
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -202,14 +202,6 @@ class TaxonomyService:
         return RawProcessingResult(datum=common_name)
 
 
-def file_processing_service_error(file_names: list[str], message: str) -> ProcessingAnnotation:
-    return ProcessingAnnotation(
-        [AnnotationSource(", ".join(file_names), AnnotationSourceType.FILE)],
-        [AnnotationSource(", ".join(file_names), AnnotationSourceType.FILE)],
-        message,
-    )
-
-
 FileName = str
 
 
@@ -225,12 +217,16 @@ class Annotation(BaseModel):
 
 
 class FileProcessingResponse(BaseModel):
-    errors: list[Annotation] | None = None
+    errors: list[Annotation] = Field(default_factory=list)
 
 
 class FileProcessingService:
-    def __init__(self, file_processing_service_url: str | None, timeout_seconds: int = 300):
-        self.file_processing_service_url = file_processing_service_url
+    def __init__(
+        self,
+        file_processing_service_url: str | None,
+        timeout_seconds: int = 300,
+    ):
+        self.base_url = file_processing_service_url
         self.timeout_seconds = timeout_seconds
 
     def process_files(
@@ -239,41 +235,40 @@ class FileProcessingService:
         accession_version: AccessionVersion,
     ) -> list[ProcessingAnnotation]:
         file_names = [file.name for file_list in files.values() for file in file_list]
-        if not self.file_processing_service_url:
-            return [
-                file_processing_service_error(
-                    file_names,
-                    _internal_error_message("File processing service URL is not configured."),
-                )
-            ]
 
-        url = f"{self.file_processing_service_url}/process-files"
+        if not self.base_url:
+            return [self._annotation(file_names, "File processing service URL is not configured.")]
+
+        payload = FileProcessingRequest(files=files, accessionVersion=str(accession_version))
         try:
-            payload = FileProcessingRequest(
-                files={
-                    category: [
-                        FileIdAndNameAndReadUrl(fileId=f.fileId, name=f.name, url=f.url)
-                        for f in file_list
-                    ]
-                    for category, file_list in files.items()
-                },
-                accessionVersion=str(accession_version),
-            )
-
             response = requests.post(
-                url, json=payload.model_dump(mode="json"), timeout=self.timeout_seconds
+                f"{self.base_url}/process-files",
+                json=payload.model_dump(mode="json"),
+                timeout=self.timeout_seconds,
             )
             response.raise_for_status()
-            body = FileProcessingResponse.model_validate(response.json())
-
+            result = FileProcessingResponse.model_validate(response.json())
+        except requests.exceptions.HTTPError as error:
+            response = error.response
+            if response is not None and response.status_code >= 500:  # noqa: PLR2004
+                try:
+                    detail = response.json().get("detail", response.text)
+                except ValueError:
+                    detail = response.text
+                return [self._annotation(file_names, f"File processing service failed: {detail}")]
+            return [self._annotation(file_names, f"File processing service failed: {error}")]
+        except requests.exceptions.RequestException as error:
+            return [self._annotation(file_names, f"File processing request failed: {error}")]
+        except ValidationError as error:
             return [
-                file_processing_service_error(error.fileNames, error.message)
-                for error in body.errors or []
-            ]
-        except (requests.exceptions.RequestException, ValidationError) as e:
-            return [
-                file_processing_service_error(
-                    file_names,
-                    _internal_error_message(f"An error: {e} occurred while processing files."),
+                self._annotation(
+                    file_names, f"File processing service returned an invalid response: {error}"
                 )
             ]
+
+        return [self._annotation(error.fileNames, error.message) for error in result.errors]
+
+    @staticmethod
+    def _annotation(file_names: list[str], message: str) -> ProcessingAnnotation:
+        source = AnnotationSource(", ".join(file_names), AnnotationSourceType.FILE)
+        return ProcessingAnnotation([source], [source], _internal_error_message(message))

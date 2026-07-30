@@ -30,7 +30,7 @@ def make_files() -> dict[FileCategory, list[FileIdAndNameAndReadUrl]]:
             FileIdAndNameAndReadUrl(fileId="id-1", name="reads.fastq", url="http://example/id-1")
         ],
         FileCategory.ANNOTATIONS: [
-            FileIdAndNameAndReadUrl(fileId="id-2", name="annotations.gff", url=None)
+            FileIdAndNameAndReadUrl(fileId="id-2", name="annotations.gff", url="http://example/id-2")
         ],
     }
 
@@ -63,7 +63,7 @@ def test_process_files_sends_expected_request(mock_post: MagicMock) -> None:
     assert kwargs["json"] == {
         "files": {
             "rawReads": [{"fileId": "id-1", "name": "reads.fastq", "url": "http://example/id-1"}],
-            "annotations": [{"fileId": "id-2", "name": "annotations.gff", "url": None}],
+            "annotations": [{"fileId": "id-2", "name": "annotations.gff", "url": "http://example/id-2"}],
         },
         "accessionVersion": "accession.1",
     }
@@ -120,8 +120,20 @@ def test_process_files_handles_missing_error_keys(mock_post: MagicMock) -> None:
 
 
 @patch("loculus_preprocessing.external_services.requests.post")
-def test_process_files_http_error_returns_internal_error(mock_post: MagicMock) -> None:
+def test_process_files_500_error_wraps_detail_as_internal_error(mock_post: MagicMock) -> None:
     mock_post.return_value = make_response(500, {"detail": "boom"})
+    service = FileProcessingService(file_processing_service_url=SERVICE_URL)
+
+    errors = service.process_files(make_files(), "accession.1")
+
+    assert len(errors) == 1
+    assert "Internal Error" in errors[0].message
+    assert "boom" in errors[0].message
+
+
+@patch("loculus_preprocessing.external_services.requests.post")
+def test_process_files_4xx_error_returns_generic_internal_error(mock_post: MagicMock) -> None:
+    mock_post.return_value = make_response(400, {"detail": "bad request"})
     service = FileProcessingService(file_processing_service_url=SERVICE_URL)
 
     errors = service.process_files(make_files(), "accession.1")

@@ -1,6 +1,6 @@
 from enum import StrEnum, unique
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 FileId = str
 FileName = str
@@ -34,4 +34,4 @@ class Annotation(BaseModel):
 
 
 class ValidationResult(BaseModel):
-    errors: list[Annotation] | None = None
+    errors: list[Annotation] = Field(default_factory=list)
