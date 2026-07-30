@@ -71,11 +71,16 @@ def validate_file_extensions(
 ) -> FileFormat:
     """Validate that all files have extensions consistent with the accepted formats."""
     file_formats = {determine_file_format(file_name) for file_name in file_names}
+    paired_end_info = "Paired-end FASTQ files must be submitted as separate, de-interleaved files."
     if len(file_formats) > 1:
         raise InvalidSubmission(
             error=Annotation(
                 fileNames=file_names,
-                message=f"Input files have mixed formats. Please provide files with consistent and supported formats: {accepted_formats}, paired-end FASTQ files must be submitted as separate, de-interleaved files.",
+                message=(
+                    "Input files have mixed formats. Please provide files with consistent and "
+                    f"supported formats: {', '.join(accepted_formats)} "
+                    f"{paired_end_info}"
+                ),
             )
         )
     file_format = file_formats.pop()
@@ -83,31 +88,42 @@ def validate_file_extensions(
         raise InvalidSubmission(
             error=Annotation(
                 fileNames=file_names,
-                message=f"File is not in accepted format: {', '.join(accepted_formats)}. Paired-end FASTQ files must be submitted as separate, de-interleaved files.",
+                message=(
+                    f"File is not in accepted format: {', '.join(accepted_formats)}. "
+                    f"{paired_end_info}"
+                ),
             )
         )
     return file_format
 
 
 def validate_file_numbers(file_format: FileFormat, file_names: list[FileName]) -> None:
-    """Validate the number of files submitted conforms to the expected number for the given file format."""
-    if file_format == FileFormat.FASTQ and len(file_names) > 2:
-        # ENA's readtools.jar actually allows more than 2 FASTQ files, but it treats every 1+i file as a paired read of the first file.
-        # ENA documents that multi-FASTQs should be submitted using a JSON manifest, which we don't support, so we enforce a stricter limit here.
+    """Validate the number of files submitted conforms to
+    the expected number for the given file format."""
+    if file_format == FileFormat.FASTQ and len(file_names) > 2:  # noqa: PLR2004
+        # ENA's readtools.jar actually allows more than 2 FASTQ files,
+        # but it treats every 1+i file as a paired read of the first file.
+        # ENA documents that multi-FASTQs should be submitted using a JSON manifest,
+        # which we don't support, so we enforce a stricter limit here.
         raise InvalidSubmission(
             error=Annotation(
                 fileNames=file_names,
-                message=f"Too many FASTQ files submitted ({len(file_names)}). We only allow 1 FASTQ file for single-end reads or 2 FASTQ files for paired-end reads.",
+                message=(
+                    f"Too many FASTQ files submitted ({len(file_names)}). We only allow"
+                    " 1 FASTQ file for single-end reads or 2 FASTQ files for paired-end reads."
+                ),
             )
         )
     if file_format in {FileFormat.BAM, FileFormat.CRAM} and len(file_names) > 1:
         raise InvalidSubmission(
             error=Annotation(
                 fileNames=file_names,
-                message=f"Too many {file_format.value.upper()} files submitted ({len(file_names)}). We only allow 1 {file_format.value.upper()} file per submission.",
+                message=(
+                    f"Too many {file_format.value.upper()} files submitted ({len(file_names)})."
+                    f" We only allow 1 {file_format.value.upper()} file per submission."
+                ),
             )
         )
-    return None
 
 
 def validate_with_readtools(
@@ -135,9 +151,11 @@ def validate_with_readtools(
             timeout=timeout_seconds,
         )
     except subprocess.TimeoutExpired:
-        message = f"Validation of files '{','.join(file_names)}' timed out after {timeout_seconds} seconds."
+        message = (
+            f"Validation of files '{','.join(file_names)}' timed out after {timeout_seconds}s."
+        )
         logger.error(message)
-        raise ProcessingFailure(message)
+        raise ProcessingFailure(message) from None
     except subprocess.CalledProcessError as error:
         validation_error = _parse_validation_error(
             stdout=error.stdout,
@@ -149,5 +167,4 @@ def validate_with_readtools(
                 fileNames=file_names,
                 message=validation_error,
             )
-        )
-    return None
+        ) from error

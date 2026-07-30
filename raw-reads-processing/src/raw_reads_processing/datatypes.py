@@ -6,18 +6,18 @@ FileUrl = str
 
 
 class FileIdAndNameAndReadUrl(BaseModel):
-    fileId: FileId
+    fileId: FileId  # noqa: N815
     name: FileName
     url: FileUrl
 
 
 class RequestWithFiles(BaseModel):
     files: list[FileIdAndNameAndReadUrl]
-    accessionVersion: str
+    accessionVersion: str  # noqa: N815
 
 
 class Annotation(BaseModel):
-    fileNames: list[FileName]
+    fileNames: list[FileName]  # noqa: N815
     message: str
 
 

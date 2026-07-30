@@ -2,9 +2,7 @@ import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from raw_reads_processing.errors import ProcessingFailure
 import requests
-
 from raw_reads_processing.config import Config
 from raw_reads_processing.datatypes import (
     Annotation,
@@ -12,6 +10,7 @@ from raw_reads_processing.datatypes import (
     FileName,
     RequestWithFiles,
 )
+from raw_reads_processing.errors import ProcessingFailure
 from raw_reads_processing.file_format_validation import (
     validate_file_extensions,
     validate_file_numbers,
@@ -35,7 +34,7 @@ def download_file(
     except requests.RequestException as e:
         message = f"Error downloading file '{file.name}' from S3: {e}"
         logger.error(message)
-        raise ProcessingFailure(message)
+        raise ProcessingFailure(message) from e
     logger.debug(f"Successfully downloaded file '{file.name}' to '{save_path}'")
 
 
@@ -45,7 +44,8 @@ def validate_raw_reads_submission(
 ) -> None:
     files = request_with_files.files
     logger.debug(
-        f"Validating raw reads submission for accession version {request_with_files.accessionVersion}"
+        "Validating raw reads submission for "
+        f"accessionVersion: {request_with_files.accessionVersion}"
     )
 
     file_format = validate_file_extensions([file.name for file in files])
@@ -58,8 +58,4 @@ def validate_raw_reads_submission(
             download_file(config, file, downloaded_file_path)
             local_files[file.name] = downloaded_file_path
 
-        validate_with_readtools(
-            local_files, file_format, config.read_validation_timeout_seconds
-        )
-
-    return None
+        validate_with_readtools(local_files, file_format, config.read_validation_timeout_seconds)
