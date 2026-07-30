@@ -24,21 +24,6 @@ from file_processing.file_validation import (
 logger = logging.getLogger(__name__)
 
 
-def _sanitize_file_name(name: str) -> tuple[str | None, Annotation | None]:
-    """Strip any directory components from a user-submitted file name so it
-    cannot be used to write outside of the intended download directory
-    (e.g. via '..' segments or absolute paths).
-    """
-    candidate = re.split(r"[\\/]", name)[-1].strip()
-    if not candidate or candidate in {".", ".."}:
-        return None, Annotation(
-            fileName=name,
-            fileCategory=FileCategory.RAW_READS,
-            message=f"Invalid or unsafe file name: {name!r}",
-        )
-    return candidate, None
-
-
 def download_file(
     config: Config, file: FileIdAndNameAndReadUrl, save_path: Path
 ) -> Annotation | None:
@@ -119,12 +104,7 @@ def validate_raw_reads_submission(
     with TemporaryDirectory() as tmp_dir:
         local_files: dict[FileName, Path] = {}
         for file in files:
-            safe_name, sanitize_error = _sanitize_file_name(file.name)
-            if sanitize_error:
-                errors.append(sanitize_error)
-                continue
-
-            downloaded_file = Path(tmp_dir) / f"{file.fileId}-{safe_name}"
+            downloaded_file = Path(tmp_dir) / f"{file.fileId}"
             download_error = download_file(config, file, downloaded_file)
             if download_error:
                 errors.append(download_error)
