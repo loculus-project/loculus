@@ -423,6 +423,7 @@ enum class ProcessingResult {
 }
 
 enum class PreprocessingStatus {
+    UNPROCESSED,
     IN_PROCESSING,
     PROCESSED,
 }
