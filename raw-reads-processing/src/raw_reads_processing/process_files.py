@@ -58,4 +58,6 @@ def validate_raw_reads_submission(
             download_file(config, file, downloaded_file_path)
             local_files[file.name] = downloaded_file_path
 
-        validate_with_readtools(local_files, file_format, config.read_validation_timeout_seconds)
+        validate_with_readtools(
+            local_files, file_format, config.read_validation_timeout_seconds
+        )

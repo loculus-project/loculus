@@ -71,7 +71,9 @@ def validate_file_extensions(
 ) -> FileFormat:
     """Validate that all files have extensions consistent with the accepted formats."""
     file_formats = {determine_file_format(file_name) for file_name in file_names}
-    paired_end_info = "Paired-end FASTQ files must be submitted as separate, de-interleaved files."
+    paired_end_info = (
+        "Paired-end FASTQ files must be submitted as separate, de-interleaved files."
+    )
     if len(file_formats) > 1:
         raise InvalidSubmission(
             error=Annotation(
@@ -151,9 +153,7 @@ def validate_with_readtools(
             timeout=timeout_seconds,
         )
     except subprocess.TimeoutExpired:
-        message = (
-            f"Validation of files '{','.join(file_names)}' timed out after {timeout_seconds}s."
-        )
+        message = f"Validation of files '{','.join(file_names)}' timed out after {timeout_seconds}s."
         logger.error(message)
         raise ProcessingFailure(message) from None
     except subprocess.CalledProcessError as error:
