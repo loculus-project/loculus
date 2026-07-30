@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from file_processing import file_validation
+from file_processing import file_format_validation
 from file_processing.errors import InvalidSubmission, ProcessingFailure
-from file_processing.file_validation import (
+from file_processing.file_format_validation import (
     FileFormat,
     _parse_validation_error,
     validate_file_extensions,
@@ -144,7 +144,7 @@ def readtools_jar(monkeypatch):
         pytest.skip(
             "readtools jar not found; set READTOOLS_JAR to its path to run this test"
         )
-    monkeypatch.setattr(file_validation, "VALIDATION_JAR_PATH", jar_path)
+    monkeypatch.setattr(file_format_validation, "VALIDATION_JAR_PATH", jar_path)
 
 
 def _write(tmp_path: Path, name: str, content: str) -> str:
@@ -328,7 +328,7 @@ def test_validation_timeout_is_reported_as_error(tmp_path, monkeypatch):
     def fake_run(args, **kwargs):
         raise subprocess.TimeoutExpired(cmd=args, timeout=kwargs["timeout"])
 
-    monkeypatch.setattr(file_validation.subprocess, "run", fake_run)
+    monkeypatch.setattr(file_format_validation.subprocess, "run", fake_run)
     with pytest.raises(ProcessingFailure) as exc_info:
         validate_with_readtools(
             {"reads.fastq": Path(reads)}, FileFormat.FASTQ, timeout_seconds=1

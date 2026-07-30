@@ -12,7 +12,7 @@ from file_processing.datatypes import (
     FileName,
     RequestWithFiles,
 )
-from file_processing.file_validation import (
+from file_processing.file_format_validation import (
     validate_file_extensions,
     validate_file_numbers,
     validate_with_readtools,

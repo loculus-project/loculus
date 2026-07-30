@@ -54,7 +54,7 @@ The service downloads the files and validates their structure. The service respo
 Only the `RAW_READS` FileCategory is currently handled. Raw reads submissions go through
 `validate_raw_reads_submission`, which checks:
 
-1. **Format validation** (`file_processing.file_validation`) — is the submission well-formed FASTQ?
+1. **Format validation** (`file_processing.file_format_validation`) — is the submission well-formed FASTQ?
 
 ## Raw reads format validation
 

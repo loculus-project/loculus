@@ -4,7 +4,7 @@ from file_processing.errors import InvalidSubmission, ProcessingFailure
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from file_processing.datatypes import RequestWithFiles, ValidationResult
-from file_processing.functions import validate_raw_reads_submission
+from file_processing.process_files import validate_raw_reads_submission
 
 from .config import Config
 
