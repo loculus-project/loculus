@@ -279,9 +279,16 @@ class FileProcessingService:
                 )
             ]
 
-        return [self._annotation(error.fileNames, error.message) for error in result.errors]
+        return [
+            self._annotation(error.fileNames, error.message, internal_error=False)
+            for error in result.errors
+        ]
 
     @staticmethod
-    def _annotation(file_names: list[str], message: str) -> ProcessingAnnotation:
+    def _annotation(
+        file_names: list[str], message: str, internal_error: bool = True
+    ) -> ProcessingAnnotation:
         source = AnnotationSource(", ".join(file_names), AnnotationSourceType.FILE)
+        if not internal_error:
+            return ProcessingAnnotation([source], [source], message)
         return ProcessingAnnotation([source], [source], _internal_error_message(message))

@@ -29,11 +29,6 @@ def make_files() -> dict[FileCategory, list[FileIdAndNameAndReadUrl]]:
         FileCategory.RAW_READS: [
             FileIdAndNameAndReadUrl(fileId="id-1", name="reads.fastq", url="http://example/id-1")
         ],
-        FileCategory.ANNOTATIONS: [
-            FileIdAndNameAndReadUrl(
-                fileId="id-2", name="annotations.gff", url="http://example/id-2"
-            )
-        ],
     }
 
 
@@ -47,7 +42,7 @@ def test_process_files_without_configured_url_returns_error_without_request() ->
     assert len(errors) == 1
     assert "File processing service URL is not configured." in errors[0].message
     assert errors[0].unprocessedFields == (
-        AnnotationSource("reads.fastq, annotations.gff", AnnotationSourceType.FILE),
+        AnnotationSource("reads.fastq", AnnotationSourceType.FILE),
     )
 
 
@@ -63,12 +58,7 @@ def test_process_files_sends_expected_request(mock_post: MagicMock) -> None:
     assert args[0] == f"{SERVICE_URL}/process-files"
     assert kwargs["timeout"] == service.timeout_seconds
     assert kwargs["json"] == {
-        "files": {
-            "rawReads": [{"fileId": "id-1", "name": "reads.fastq", "url": "http://example/id-1"}],
-            "annotations": [
-                {"fileId": "id-2", "name": "annotations.gff", "url": "http://example/id-2"}
-            ],
-        },
+        "files": [{"fileId": "id-1", "name": "reads.fastq", "url": "http://example/id-1"}],
         "accessionVersion": "accession.1",
     }
 
@@ -143,7 +133,7 @@ def test_process_files_4xx_error_returns_generic_internal_error(mock_post: Magic
     errors = service.process_files(make_files(), "accession.1")
 
     assert len(errors) == 1
-    assert "occurred while processing files" in errors[0].message
+    assert "Internal Error. File processing service failed" in errors[0].message
 
 
 @patch("loculus_preprocessing.external_services.requests.post")
@@ -156,5 +146,5 @@ def test_process_files_network_error_returns_internal_error(mock_post: MagicMock
     assert len(errors) == 1
     assert "connection refused" in errors[0].message
     assert errors[0].unprocessedFields == (
-        AnnotationSource("reads.fastq, annotations.gff", AnnotationSourceType.FILE),
+        AnnotationSource("reads.fastq", AnnotationSourceType.FILE),
     )
