@@ -30,7 +30,9 @@ def make_files() -> dict[FileCategory, list[FileIdAndNameAndReadUrl]]:
             FileIdAndNameAndReadUrl(fileId="id-1", name="reads.fastq", url="http://example/id-1")
         ],
         FileCategory.ANNOTATIONS: [
-            FileIdAndNameAndReadUrl(fileId="id-2", name="annotations.gff", url="http://example/id-2")
+            FileIdAndNameAndReadUrl(
+                fileId="id-2", name="annotations.gff", url="http://example/id-2"
+            )
         ],
     }
 
@@ -63,7 +65,9 @@ def test_process_files_sends_expected_request(mock_post: MagicMock) -> None:
     assert kwargs["json"] == {
         "files": {
             "rawReads": [{"fileId": "id-1", "name": "reads.fastq", "url": "http://example/id-1"}],
-            "annotations": [{"fileId": "id-2", "name": "annotations.gff", "url": "http://example/id-2"}],
+            "annotations": [
+                {"fileId": "id-2", "name": "annotations.gff", "url": "http://example/id-2"}
+            ],
         },
         "accessionVersion": "accession.1",
     }

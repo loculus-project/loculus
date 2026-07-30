@@ -35,6 +35,7 @@ def process_files(
         raise HTTPException(status_code=500, detail=str(e)) from e
     return ValidationResult()
 
+
 def init_app(config: Config):
     app.state.config = config
 

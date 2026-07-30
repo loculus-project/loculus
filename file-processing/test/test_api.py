@@ -10,7 +10,11 @@ from file_processing.errors import InvalidSubmission, ProcessingFailure
 VALID_PAYLOAD = {
     "files": {
         "rawReads": [
-            {"fileId": "1", "name": "reads.fastq", "url": "http://example.com/reads.fastq"}
+            {
+                "fileId": "1",
+                "name": "reads.fastq",
+                "url": "http://example.com/reads.fastq",
+            }
         ]
     },
     "accessionVersion": "LOC_0001.1",
