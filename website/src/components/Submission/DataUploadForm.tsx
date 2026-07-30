@@ -30,10 +30,10 @@ import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import {
     applyFileMappings,
-    getFileLinkage,
+    resolveFileMappings,
     getLinkageErrors,
+    type CategoryLinkage,
     type FileLinkage,
-    type FileLinkageDetails,
     type FileMapping,
     type ResolvedSubmissionFile,
     type SubmissionFile,
@@ -91,7 +91,7 @@ const InnerDataUploadForm = ({
     const fileLinkage = useMemo(
         () =>
             inputMode === 'bulk' && submissionFileMapping?.isOk()
-                ? getFileLinkage(submissionFileMapping.value, fileMapping)
+                ? resolveFileMappings(submissionFileMapping.value, fileMapping).fileLinkage
                 : undefined,
         [inputMode, submissionFileMapping, fileMapping],
     );
@@ -131,7 +131,12 @@ const InnerDataUploadForm = ({
             if (inputMode === 'form') {
                 if (fileMapping !== undefined) {
                     const finalSubmissionFileMapping = new Map([[submissionId!, fileMapping]]);
-                    finalMetadataFile = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
+                    const finalMetadataFileResult = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
+                    if (finalMetadataFileResult.isErr()) {
+                        onError(finalMetadataFileResult.error.message);
+                        return;
+                    }
+                    finalMetadataFile = finalMetadataFileResult.value;
                 }
             } else {
                 if (submissionFileMapping === undefined) {
@@ -144,13 +149,21 @@ const InnerDataUploadForm = ({
                     return;
                 }
 
-                const fileLinkage = getFileLinkage(submissionFileMapping.value, fileMapping);
-                const linkageErrors = getLinkageErrors(fileLinkage.details);
+                const { submissionFileMapping: resolvedSubmissionFileMapping, fileLinkage } = resolveFileMappings(
+                    submissionFileMapping.value,
+                    fileMapping,
+                );
+                const linkageErrors = getLinkageErrors(fileLinkage);
                 if (linkageErrors !== undefined) {
                     onError(linkageErrors);
                     return;
                 }
-                finalMetadataFile = await applyFileMappings(metadataFile, fileLinkage.submissionFileMapping);
+                const finalMetadataFileResult = await applyFileMappings(metadataFile, resolvedSubmissionFileMapping);
+                if (finalMetadataFileResult.isErr()) {
+                    onError(finalMetadataFileResult.error.message);
+                    return;
+                }
+                finalMetadataFile = finalMetadataFileResult.value;
             }
         }
 
@@ -319,36 +332,36 @@ export const InputModeTabs = ({
     );
 };
 
-const FileLinkageStatus = ({ linkageDetails }: { linkageDetails?: FileLinkageDetails }) => {
-    if (linkageDetails === undefined) return null;
+const CategoryLinkageStatus = ({ categoryLinkage }: { categoryLinkage: CategoryLinkage | undefined }) => {
+    if (categoryLinkage === undefined) return null;
 
     const statuses: { key: string; icon: string; color: string; files: SubmissionFile[]; message: string }[] = [
         {
             key: 'linked',
             icon: '✓',
             color: 'text-green-500',
-            files: linkageDetails.linked,
+            files: categoryLinkage.linked,
             message: 'uploaded and linked to metadata!',
         },
         {
             key: 'reused',
             icon: '↺',
             color: 'text-green-500',
-            files: linkageDetails.reused,
+            files: categoryLinkage.reused,
             message: 'reused from previous uploads.',
         },
         {
             key: 'missing',
             icon: '⚠',
             color: 'text-yellow-600',
-            files: linkageDetails.missing,
+            files: categoryLinkage.missing,
             message: 'referenced in metadata but not uploaded.',
         },
         {
             key: 'unreferenced',
             icon: '⚠',
             color: 'text-yellow-600',
-            files: linkageDetails.orphaned.concat(linkageDetails.shadowed),
+            files: categoryLinkage.orphaned.concat(categoryLinkage.shadowed),
             message: 'uploaded but not referenced in metadata.',
         },
     ];
@@ -412,7 +425,7 @@ export const ExtraFilesUpload = ({
                             setFileMapping={setFileMapping}
                         />
                         {inputMode === 'bulk' && (
-                            <FileLinkageStatus linkageDetails={fileLinkage?.details.get(fileCategory.name)} />
+                            <CategoryLinkageStatus categoryLinkage={fileLinkage?.get(fileCategory.name)} />
                         )}
                     </div>
                 ))}

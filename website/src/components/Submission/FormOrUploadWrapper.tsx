@@ -88,7 +88,10 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 ? await (await columnMapping.applyTo(metadataFile)).text()
                 : await metadataFile.text();
             if (!controller.signal.aborted) {
-                const submissionFileMapping = parseSubmissionFileMapping(text);
+                const submissionFileMapping = parseSubmissionFileMapping(
+                    text,
+                    submissionDataTypes.files?.categories?.map((c) => c.name) ?? [],
+                );
                 setSubmissionFileMapping(submissionFileMapping);
                 if (submissionFileMapping.isErr()) onError(submissionFileMapping.error.message);
             }

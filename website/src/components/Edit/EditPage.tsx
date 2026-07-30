@@ -114,7 +114,12 @@ const InnerEditPage: FC<EditPageProps> = ({
 
             if (extraFilesEnabled && fileMapping !== undefined) {
                 const finalSubmissionFileMapping = new Map([[dataToEdit.submissionId, fileMapping]]);
-                finalMetadataFile = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
+                const finalMetadataFileResult = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
+                if (finalMetadataFileResult.isErr()) {
+                    toast.error(finalMetadataFileResult.error.message, { position: 'top-center', autoClose: false });
+                    return;
+                }
+                finalMetadataFile = finalMetadataFileResult.value;
             }
 
             if (!submissionDataTypes.consensusSequences) {

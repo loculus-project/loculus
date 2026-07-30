@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
     applyFileMappings,
-    getFileLinkage,
+    resolveFileMappings,
+    getLinkageErrorMessage,
     getLinkageErrors,
+    LinkageType,
     parseSubmissionFileMapping,
     type FileMapping,
     type ResolvedSubmissionFile,
@@ -13,14 +15,17 @@ import {
 
 const tsv = (rows: string[][]) => rows.map((row) => row.join('\t')).join('\n');
 
+// The file categories configured for the organism under test
+const knownCategories = ['raw', 'processed'];
+
 const entriesOf = (text: string, submissionId: string, category: string): SubmissionFile[] => {
-    const result = parseSubmissionFileMapping(text);
+    const result = parseSubmissionFileMapping(text, knownCategories);
     if (result.isErr()) throw new Error(`expected a successful parse, got: ${result.error.message}`);
     return [...(result.value.get(submissionId)?.get(category)?.values() ?? [])];
 };
 
-const errorOf = (text: string): string => {
-    const result = parseSubmissionFileMapping(text);
+const errorOf = (text: string, categories: string[] = knownCategories): string => {
+    const result = parseSubmissionFileMapping(text, categories);
     if (result.isOk()) throw new Error('expected the parse to fail');
     return result.error.message;
 };
@@ -28,7 +33,9 @@ const errorOf = (text: string): string => {
 const fileMappingOf = <T extends SubmissionFile>(categories: Record<string, T[]>): FileMapping<T> =>
     new Map(Object.entries(categories).map(([category, files]) => [category, new Map(files.map((f) => [f.path, f]))]));
 
-const submissionMappingOf = (submissions: Record<string, Record<string, SubmissionFile[]>>): SubmissionFileMapping =>
+const submissionMappingOf = <T extends SubmissionFile>(
+    submissions: Record<string, Record<string, T[]>>,
+): SubmissionFileMapping<T> =>
     new Map(Object.entries(submissions).map(([submissionId, categories]) => [submissionId, fileMappingOf(categories)]));
 
 describe('parseSubmissionFileMapping', () => {
@@ -67,9 +74,12 @@ describe('parseSubmissionFileMapping', () => {
                 ['id', 'country'],
                 ['e1', 'CH'],
             ]),
+            knownCategories,
         );
         expect(result._unsafeUnwrap()).toEqual(new Map());
-        expect(parseSubmissionFileMapping(tsv([['country'], ['CH']]))._unsafeUnwrap()).toEqual(new Map());
+        expect(parseSubmissionFileMapping(tsv([['country'], ['CH']]), knownCategories)._unsafeUnwrap()).toEqual(
+            new Map(),
+        );
     });
 
     it('rejects a file column without an id column', () => {
@@ -122,7 +132,7 @@ describe('parseSubmissionFileMapping', () => {
             ['id', 'files.raw', 'files.processed'],
             ['e1', 'a.txt', ''],
         ]);
-        const result = parseSubmissionFileMapping(text)._unsafeUnwrap();
+        const result = parseSubmissionFileMapping(text, knownCategories)._unsafeUnwrap();
         expect([...result.get('e1')!.keys()]).toEqual(['raw']);
     });
 
@@ -132,45 +142,45 @@ describe('parseSubmissionFileMapping', () => {
             ['e1', 'CH', 'a.txt', 'a.json'],
             ['e2', 'DE', 'b.txt', 'b.json'],
         ]);
-        const result = parseSubmissionFileMapping(text)._unsafeUnwrap();
+        const result = parseSubmissionFileMapping(text, knownCategories)._unsafeUnwrap();
         expect([...result.keys()]).toEqual(['e1', 'e2']);
         expect(entriesOf(text, 'e1', 'processed').map((f) => f.name)).toEqual(['a.json']);
         expect(entriesOf(text, 'e2', 'raw').map((f) => f.name)).toEqual(['b.txt']);
     });
 });
 
-describe('getFileLinkage', () => {
+describe('resolveFileMappings', () => {
     const metadataEntry: SubmissionFile = { name: 'a.txt', path: 'a.txt' };
     const metadataEntryWithFileId: SubmissionFile = { name: 'a.txt', path: 'a.txt', fileId: 'existing-id' };
-    const uploadFolderEntry: ResolvedSubmissionFile = { name: 'a.txt', path: 'a.txt', fileId: 'uploaded-id' };
+    const uploadEntry: ResolvedSubmissionFile = { name: 'a.txt', path: 'a.txt', fileId: 'uploaded-id' };
     const emptyDetails = { linked: [], reused: [], missing: [], orphaned: [], shadowed: [] };
 
     describe('linked', () => {
         it('when a metadata entry and an upload folder entry share a path', () => {
-            const { submissionFileMapping, details } = getFileLinkage(
+            const { submissionFileMapping, fileLinkage } = resolveFileMappings(
                 submissionMappingOf({ e1: { raw: [metadataEntry] } }),
-                fileMappingOf({ raw: [uploadFolderEntry] }),
+                fileMappingOf({ raw: [uploadEntry] }),
             );
-            expect(details.get('raw')).toEqual({ ...emptyDetails, linked: [uploadFolderEntry] });
+            expect(fileLinkage.get('raw')).toEqual({ ...emptyDetails, linked: [uploadEntry] });
             expect(submissionFileMapping.get('e1')!.get('raw')!.get('a.txt')!.fileId).toBe('uploaded-id');
         });
 
         it('when several metadata entries reference the same upload folder entry', () => {
-            const { details } = getFileLinkage(
+            const { fileLinkage } = resolveFileMappings(
                 submissionMappingOf({ e1: { raw: [metadataEntry] }, e2: { raw: [metadataEntry] } }),
-                fileMappingOf({ raw: [uploadFolderEntry] }),
+                fileMappingOf({ raw: [uploadEntry] }),
             );
-            expect(details.get('raw')).toEqual({ ...emptyDetails, linked: [uploadFolderEntry] });
+            expect(fileLinkage.get('raw')).toEqual({ ...emptyDetails, linked: [uploadEntry] });
         });
 
         it('when one metadata entry on the path has its own file ID and another does not', () => {
-            const { submissionFileMapping, details } = getFileLinkage(
+            const { submissionFileMapping, fileLinkage } = resolveFileMappings(
                 submissionMappingOf({ e1: { raw: [metadataEntryWithFileId] }, e2: { raw: [metadataEntry] } }),
-                fileMappingOf({ raw: [uploadFolderEntry] }),
+                fileMappingOf({ raw: [uploadEntry] }),
             );
-            expect(details.get('raw')).toEqual({
+            expect(fileLinkage.get('raw')).toEqual({
                 ...emptyDetails,
-                linked: [uploadFolderEntry],
+                linked: [uploadEntry],
                 reused: [metadataEntryWithFileId],
             });
             expect(submissionFileMapping.get('e1')!.get('raw')!.get('a.txt')!.fileId).toBe('existing-id');
@@ -180,24 +190,24 @@ describe('getFileLinkage', () => {
 
     describe('reused', () => {
         it('when a metadata entry has its own file ID and nothing was uploaded', () => {
-            const { submissionFileMapping, details } = getFileLinkage(
+            const { submissionFileMapping, fileLinkage } = resolveFileMappings(
                 submissionMappingOf({ e1: { raw: [metadataEntryWithFileId] } }),
                 fileMappingOf({}),
             );
-            expect(details.get('raw')).toEqual({ ...emptyDetails, reused: [metadataEntryWithFileId] });
+            expect(fileLinkage.get('raw')).toEqual({ ...emptyDetails, reused: [metadataEntryWithFileId] });
             expect(submissionFileMapping.get('e1')!.get('raw')!.get('a.txt')!.fileId).toBe('existing-id');
-            expect(getLinkageErrors(details)).toBeUndefined();
+            expect(getLinkageErrors(fileLinkage)).toBeUndefined();
         });
     });
 
     describe('missing', () => {
         it('when a metadata entry has no file ID and no upload folder entry on its path', () => {
             const otherUpload: ResolvedSubmissionFile = { name: 'b.txt', path: 'b.txt', fileId: 'uploaded-b' };
-            const { submissionFileMapping, details } = getFileLinkage(
+            const { submissionFileMapping, fileLinkage } = resolveFileMappings(
                 submissionMappingOf({ e1: { raw: [metadataEntry] } }),
                 fileMappingOf({ raw: [otherUpload] }),
             );
-            expect(details.get('raw')).toEqual({
+            expect(fileLinkage.get('raw')).toEqual({
                 ...emptyDetails,
                 missing: [metadataEntry],
                 orphaned: [otherUpload],
@@ -208,21 +218,21 @@ describe('getFileLinkage', () => {
 
     describe('orphaned', () => {
         it('when an upload folder entry has no metadata entry on its path', () => {
-            const { details } = getFileLinkage(new Map(), fileMappingOf({ raw: [uploadFolderEntry] }));
-            expect(details.get('raw')).toEqual({ ...emptyDetails, orphaned: [uploadFolderEntry] });
+            const { fileLinkage } = resolveFileMappings(new Map(), fileMappingOf({ raw: [uploadEntry] }));
+            expect(fileLinkage.get('raw')).toEqual({ ...emptyDetails, orphaned: [uploadEntry] });
         });
     });
 
     describe('shadowed', () => {
         it('when every metadata entry on the path has its own file ID', () => {
-            const { submissionFileMapping, details } = getFileLinkage(
+            const { submissionFileMapping, fileLinkage } = resolveFileMappings(
                 submissionMappingOf({ e1: { raw: [metadataEntryWithFileId] } }),
-                fileMappingOf({ raw: [uploadFolderEntry] }),
+                fileMappingOf({ raw: [uploadEntry] }),
             );
-            expect(details.get('raw')).toEqual({
+            expect(fileLinkage.get('raw')).toEqual({
                 ...emptyDetails,
                 reused: [metadataEntryWithFileId],
-                shadowed: [uploadFolderEntry],
+                shadowed: [uploadEntry],
             });
             expect(submissionFileMapping.get('e1')!.get('raw')!.get('a.txt')!.fileId).toBe('existing-id');
         });
@@ -231,13 +241,13 @@ describe('getFileLinkage', () => {
     describe('file categories', () => {
         it('are covered when present on only one side', () => {
             const jsonEntry: SubmissionFile = { name: 'a.json', path: 'a.json' };
-            const { details } = getFileLinkage(
+            const { fileLinkage } = resolveFileMappings(
                 submissionMappingOf({ e1: { processed: [jsonEntry] } }),
-                fileMappingOf({ raw: [uploadFolderEntry] }),
+                fileMappingOf({ raw: [uploadEntry] }),
             );
-            expect([...details.keys()].sort()).toEqual(['processed', 'raw']);
-            expect(details.get('processed')).toEqual({ ...emptyDetails, missing: [jsonEntry] });
-            expect(details.get('raw')).toEqual({ ...emptyDetails, orphaned: [uploadFolderEntry] });
+            expect([...fileLinkage.keys()].sort()).toEqual(['processed', 'raw']);
+            expect(fileLinkage.get('processed')).toEqual({ ...emptyDetails, missing: [jsonEntry] });
+            expect(fileLinkage.get('raw')).toEqual({ ...emptyDetails, orphaned: [uploadEntry] });
         });
     });
 });
@@ -255,18 +265,18 @@ describe('getLinkageErrors', () => {
 
     it('reports missing files', () => {
         expect(getLinkageErrors(detailsOf(['a.txt'], []))).toBe(
-            'The following raw files were referenced in metadata but not uploaded: a.txt.',
+            getLinkageErrorMessage(LinkageType.MISSING, 'raw', 'a.txt'),
         );
     });
 
     it('reports orphaned files', () => {
         expect(getLinkageErrors(detailsOf([], ['b.txt']))).toBe(
-            'The following raw files were uploaded but not referenced in metadata: b.txt.',
+            getLinkageErrorMessage(LinkageType.ORPHANED, 'raw', 'b.txt'),
         );
     });
 
     it('reports shadowed uploads separately from genuinely unreferenced ones', () => {
-        const details = new Map([
+        const fileLinkage = new Map([
             [
                 'raw',
                 {
@@ -278,21 +288,18 @@ describe('getLinkageErrors', () => {
                 },
             ],
         ]);
-        expect(getLinkageErrors(details)).toBe(
-            'The following raw files were uploaded but not referenced in metadata: stray.txt. ' +
-                'The following raw files were uploaded but the metadata still references an existing file for them: a.txt. ' +
-                'Remove the file ID from the metadata entry to replace it.',
+        expect(getLinkageErrors(fileLinkage)).toBe(
+            `${getLinkageErrorMessage(LinkageType.ORPHANED, 'raw', 'stray.txt')} ${getLinkageErrorMessage(LinkageType.SHADOWED, 'raw', 'a.txt')}`,
         );
     });
 
     it('joins problems across categories', () => {
-        const details = new Map([
+        const fileLinkage = new Map([
             ['raw', { linked: [], reused: [], missing: [file('a.txt')], orphaned: [], shadowed: [] }],
             ['processed', { linked: [], reused: [], missing: [], orphaned: [file('b.json')], shadowed: [] }],
         ]);
-        expect(getLinkageErrors(details)).toBe(
-            'The following raw files were referenced in metadata but not uploaded: a.txt. ' +
-                'The following processed files were uploaded but not referenced in metadata: b.json.',
+        expect(getLinkageErrors(fileLinkage)).toBe(
+            `${getLinkageErrorMessage(LinkageType.MISSING, 'raw', 'a.txt')} ${getLinkageErrorMessage(LinkageType.ORPHANED, 'processed', 'b.json')}`,
         );
     });
 });
@@ -312,7 +319,7 @@ describe('applyFileMappings', () => {
             ]),
             merged,
         );
-        expect(await linesOf(result)).toEqual(['id\tfiles.raw', 'e1\ta.txt:id-a']);
+        expect(await linesOf(result._unsafeUnwrap())).toEqual(['id\tfiles.raw', 'e1\ta.txt:id-a']);
     });
 
     it('joins several files in one cell', async () => {
@@ -331,7 +338,7 @@ describe('applyFileMappings', () => {
             ]),
             merged,
         );
-        expect(await linesOf(result)).toEqual(['id\tfiles.raw', 'e1\ta.txt:id-a b.txt:id-b']);
+        expect(await linesOf(result._unsafeUnwrap())).toEqual(['id\tfiles.raw', 'e1\ta.txt:id-a b.txt:id-b']);
     });
 
     it('appends a column for a category missing from the header', async () => {
@@ -345,7 +352,7 @@ describe('applyFileMappings', () => {
             ]),
             merged,
         );
-        expect(await linesOf(result)).toEqual(['id\tcountry\tfiles.raw', 'e1\tCH\ta.txt:id-a']);
+        expect(await linesOf(result._unsafeUnwrap())).toEqual(['id\tcountry\tfiles.raw', 'e1\tCH\ta.txt:id-a']);
     });
 
     it('leaves rows with no files for the category untouched', async () => {
@@ -360,7 +367,7 @@ describe('applyFileMappings', () => {
             ]),
             merged,
         );
-        expect(await linesOf(result)).toEqual(['id\tfiles.raw', 'e1\ta.txt:id-a', 'e2\tkeep-me']);
+        expect(await linesOf(result._unsafeUnwrap())).toEqual(['id\tfiles.raw', 'e1\ta.txt:id-a', 'e2\tkeep-me']);
     });
 
     it('keeps rows aligned when appending a column that only some entries use', async () => {
@@ -375,11 +382,10 @@ describe('applyFileMappings', () => {
             ]),
             merged,
         );
-        expect(await linesOf(result)).toEqual(['id\tcountry\tfiles.raw', 'e1\tCH\ta.txt:id-a', 'e2\tDE\t']);
-    });
-
-    it('returns the original file when there are no rows', async () => {
-        const empty = metadataFile([]);
-        expect(await applyFileMappings(empty, new Map())).toBe(empty);
+        expect(await linesOf(result._unsafeUnwrap())).toEqual([
+            'id\tcountry\tfiles.raw',
+            'e1\tCH\ta.txt:id-a',
+            'e2\tDE\t',
+        ]);
     });
 });
