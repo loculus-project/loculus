@@ -1,0 +1,127 @@
+environment: server
+host: performance.covid.staging.genspectrum.org
+name: Loculus
+createTestAccounts: true
+disableWebsite: false
+disableIngest: true
+disableEnaSubmission: true
+disableTaxonomyService: true
+developmentDatabasePersistence: false
+
+public:
+  websiteUrl: https://performance.covid.staging.genspectrum.org
+  backendUrl: https://api.performance.covid.staging.genspectrum.org/backend
+  lapisUrlTemplate: https://api.performance.covid.staging.genspectrum.org/%organism%
+  keycloakUrl: https://auth.performance.covid.staging.genspectrum.org
+
+defaultOrganisms:
+  sars-cov-2:
+    schema:
+      organismName: "SARS-CoV-2 benchmark"
+      image: "/favicon.svg"
+      submissionDataTypes:
+        consensusSequences: true
+        maxSequencesPerEntry: 1
+      metadata:
+        - name: sampleCollectionDate
+          type: date
+          displayName: Collection date
+          initiallyVisible: true
+          preprocessing:
+            function: parse_and_assert_past_date
+            inputs:
+              date: sampleCollectionDate
+        - name: geoLocCountry
+          type: string
+          displayName: Country
+          initiallyVisible: true
+          generateIndex: true
+          autocomplete: true
+        - name: geoLocAdmin1
+          type: string
+          displayName: Admin1
+          initiallyVisible: true
+          generateIndex: true
+          autocomplete: true
+        - name: host
+          type: string
+          displayName: Host
+          initiallyVisible: true
+          autocomplete: true
+        - name: clade
+          type: string
+          displayName: Nextstrain clade
+          isSequenceFilter: true
+          initiallyVisible: true
+          generateIndex: true
+          autocomplete: true
+          noInput: true
+          preprocessing:
+            inputs:
+              input: nextclade.clade
+      website:
+        tableColumns:
+          - geoLocCountry
+          - sampleCollectionDate
+          - clade
+        defaultOrderBy: sampleCollectionDate
+        defaultOrder: descending
+    preprocessing:
+      - version: 1
+        image: ghcr.io/loculus-project/preprocessing-nextclade
+        args:
+          - "prepro"
+        configFile:
+          log_level: INFO
+          batch_size: 100
+          nextclade_dataset_server: https://data.clades.nextstrain.org/v3
+          segments:
+            - name: main
+              references:
+                - name: singleReference
+                  nextclade_dataset_name: nextstrain/sars-cov-2/wuhan-hu-1/orfs
+                  nextclade_dataset_tag: "2026-06-16--14-30-45Z"
+                  genes:
+                    - E
+                    - M
+                    - "N"
+                    - ORF1a
+                    - ORF1b
+                    - ORF3a
+                    - ORF6
+                    - ORF7a
+                    - ORF7b
+                    - ORF8
+                    - ORF9b
+                    - S
+    referenceGenomes:
+      - name: main
+        references:
+          - name: singleReference
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
+            insdcAccessionFull: MN908947.3
+            genes:
+              - name: E
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/E.fasta]]"
+              - name: M
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/M.fasta]]"
+              - name: "N"
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/N.fasta]]"
+              - name: ORF1a
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF1a.fasta]]"
+              - name: ORF1b
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF1b.fasta]]"
+              - name: ORF3a
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF3a.fasta]]"
+              - name: ORF6
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF6.fasta]]"
+              - name: ORF7a
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF7a.fasta]]"
+              - name: ORF7b
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF7b.fasta]]"
+              - name: ORF8
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF8.fasta]]"
+              - name: ORF9b
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF9b.fasta]]"
+              - name: S
+                sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/S.fasta]]"
