@@ -116,6 +116,8 @@ class SubmissionConvenienceClient(
         val submit = client.submit(
             if (isMultiSegmented) {
                 DefaultFiles.multiSegmentedMetadataFile
+            } else if (fileMapping != null) {
+                DefaultFiles.metadataFile.withFileMapping(fileMapping)
             } else {
                 DefaultFiles.metadataFile
             },
@@ -130,7 +132,6 @@ class SubmissionConvenienceClient(
             groupId = groupIdToSubmitFor,
             dataUseTerm = dataUseTerms,
             jwt = jwt,
-            fileMapping = fileMapping,
         )
 
         return SubmissionResult(

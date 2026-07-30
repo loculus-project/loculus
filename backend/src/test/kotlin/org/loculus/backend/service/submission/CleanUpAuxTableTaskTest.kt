@@ -49,7 +49,6 @@ class CleanUpAuxTableTaskTest(
             submittedOrganism = Organism("organism"),
             uploadedMetadataBatch = listOf(MetadataEntry("submission id", mapOf("key" to "value"))),
             uploadedAt = oneHourOld,
-            null,
         )
         val uploadIdOld = "upload id old"
         val oneDayOld = now.minus(
@@ -64,7 +63,6 @@ class CleanUpAuxTableTaskTest(
             submittedOrganism = Organism("organism"),
             uploadedMetadataBatch = listOf(MetadataEntry("submission id", mapOf("key" to "value"))),
             uploadedAt = oneDayOld,
-            null,
         )
 
         transaction {

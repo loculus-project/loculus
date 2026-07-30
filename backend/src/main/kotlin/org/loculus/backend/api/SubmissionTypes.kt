@@ -478,8 +478,3 @@ fun FileCategoryFilesMap.getDuplicateFileNames(category: FileCategory): Set<Stri
 
     return nameCounts.filterValues { it > 1 }.keys
 }
-
-fun FileCategoryFilesMap.mergeFileCategories(override: FileCategoryFilesMap?): FileCategoryFilesMap {
-    if (override == null) return this
-    return this + override
-}
