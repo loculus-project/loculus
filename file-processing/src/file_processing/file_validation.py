@@ -4,7 +4,7 @@ import subprocess  # noqa: S404
 from enum import StrEnum
 from pathlib import Path
 
-from file_processing.datatypes import Annotation, FileCategory, FileName
+from file_processing.datatypes import Annotation, FileName
 from file_processing.errors import InvalidSubmission, ProcessingFailure
 
 logger = logging.getLogger(__name__)
