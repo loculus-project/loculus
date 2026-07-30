@@ -206,13 +206,12 @@ FileName = str
 
 
 class FileProcessingRequest(BaseModel):
-    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]]
+    files: list[FileIdAndNameAndReadUrl]
     accessionVersion: str  # noqa: N815
 
 
 class Annotation(BaseModel):
     fileNames: list[FileName]  # noqa: N815
-    fileCategory: FileCategory = FileCategory.RAW_READS  # noqa: N815
     message: str
 
 
@@ -229,17 +228,29 @@ class FileProcessingService:
         self.base_url = file_processing_service_url
         self.timeout_seconds = timeout_seconds
 
-    def process_files(
+    def process_files(  # noqa: PLR0911
         self,
         files: dict[FileCategory, list[FileIdAndNameAndReadUrl]],
         accession_version: AccessionVersion,
     ) -> list[ProcessingAnnotation]:
+        for category, file_list in files.items():
+            if not file_list:
+                continue
+            if category != FileCategory.RAW_READS:
+                message = (
+                    f"File category '{category}' is enabled but not supported by preprocessing."
+                )
+                logger.warning(message)
+                return [self._annotation([file.name for file in file_list], message)]
+
         file_names = [file.name for file_list in files.values() for file in file_list]
 
         if not self.base_url:
             return [self._annotation(file_names, "File processing service URL is not configured.")]
 
-        payload = FileProcessingRequest(files=files, accessionVersion=str(accession_version))
+        payload = FileProcessingRequest(
+            files=files[FileCategory.RAW_READS], accessionVersion=str(accession_version)
+        )
         try:
             response = requests.post(
                 f"{self.base_url}/process-files",

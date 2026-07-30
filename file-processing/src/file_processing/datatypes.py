@@ -1,16 +1,8 @@
-from enum import StrEnum, unique
-
 from pydantic import BaseModel, Field
 
 FileId = str
 FileName = str
 FileUrl = str
-
-
-@unique
-class FileCategory(StrEnum):
-    RAW_READS = "rawReads"
-    ANNOTATIONS = "annotations"
 
 
 class FileIdAndNameAndReadUrl(BaseModel):
@@ -19,17 +11,13 @@ class FileIdAndNameAndReadUrl(BaseModel):
     url: FileUrl
 
 
-Files = dict[FileCategory, list[FileIdAndNameAndReadUrl]]
-
-
 class RequestWithFiles(BaseModel):
-    files: Files
+    files: list[FileIdAndNameAndReadUrl]
     accessionVersion: str
 
 
 class Annotation(BaseModel):
     fileNames: list[FileName]
-    fileCategory: FileCategory = FileCategory.RAW_READS  # noqa: N815
     message: str
 
 

@@ -8,7 +8,6 @@ import requests
 from file_processing.config import Config
 from file_processing.datatypes import (
     Annotation,
-    FileCategory,
     FileIdAndNameAndReadUrl,
     FileName,
     RequestWithFiles,
@@ -40,38 +39,14 @@ def download_file(
     logger.debug(f"Successfully downloaded file '{file.name}' to '{save_path}'")
 
 
-def process_submitted_files(
-    config: Config,
-    file_mapping: RequestWithFiles,
-) -> None:
-    logger.debug(
-        f"Processing submitted files for accessionVersion: {file_mapping.accessionVersion}"
-    )
-    for category, files in file_mapping.files.items():
-        if not files:
-            # Backend always includes a key with empty list for enabled categories
-            continue
-        match category:
-            case FileCategory.RAW_READS:
-                validate_raw_reads_submission(
-                    config,
-                    files,
-                )
-            case _:
-                message = f"File category '{category}' is enabled but not supported by preprocessing."
-                logger.warning(message)
-                raise ProcessingFailure(
-                    message,
-                )
-
-    return None
-
-
 def validate_raw_reads_submission(
     config: Config,
-    files: list[FileIdAndNameAndReadUrl],
+    request_with_files: RequestWithFiles,
 ) -> None:
-    logger.debug(f"Validating raw reads submission with {len(files)} files")
+    files = request_with_files.files
+    logger.debug(
+        f"Validating raw reads submission for accession version {request_with_files.accessionVersion}"
+    )
 
     file_format = validate_file_extensions([file.name for file in files])
     validate_file_numbers(file_format, [file.name for file in files])

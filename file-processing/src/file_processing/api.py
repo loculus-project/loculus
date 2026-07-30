@@ -4,7 +4,7 @@ from file_processing.errors import InvalidSubmission, ProcessingFailure
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from file_processing.datatypes import RequestWithFiles, ValidationResult
-from file_processing.functions import process_submitted_files
+from file_processing.functions import validate_raw_reads_submission
 
 from .config import Config
 
@@ -25,9 +25,9 @@ def process_files(
     payload: RequestWithFiles,
 ) -> ValidationResult:
     try:
-        process_submitted_files(
+        validate_raw_reads_submission(
             config=app.state.config,
-            file_mapping=payload,
+            request_with_files=payload,
         )
     except InvalidSubmission as e:
         return ValidationResult(errors=[e.error])
