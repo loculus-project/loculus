@@ -33,7 +33,7 @@ def make_files() -> dict[FileCategory, list[FileIdAndNameAndReadUrl]]:
 
 
 def test_process_files_without_configured_url_returns_error_without_request() -> None:
-    service = rawReadsProcessingService(raw_reads_processing_service_url=None)
+    service = FileProcessingService(raw_reads_processing_service_url=None)
 
     with patch("loculus_preprocessing.external_services.requests.post") as mock_post:
         errors = service.process_files(make_files(), "accession.1")
@@ -49,7 +49,7 @@ def test_process_files_without_configured_url_returns_error_without_request() ->
 @patch("loculus_preprocessing.external_services.requests.post")
 def test_process_files_sends_expected_request(mock_post: MagicMock) -> None:
     mock_post.return_value = make_response(200, {"errors": []})
-    service = rawReadsProcessingService(raw_reads_processing_service_url=SERVICE_URL)
+    service = FileProcessingService(raw_reads_processing_service_url=SERVICE_URL)
 
     service.process_files(make_files(), "accession.1")
 
@@ -66,7 +66,9 @@ def test_process_files_sends_expected_request(mock_post: MagicMock) -> None:
 @patch("loculus_preprocessing.external_services.requests.post")
 def test_process_files_uses_configured_timeout(mock_post: MagicMock) -> None:
     mock_post.return_value = make_response(200, {"errors": []})
-    service = rawReadsProcessingService(raw_reads_processing_service_url=SERVICE_URL, timeout_seconds=45)
+    service = FileProcessingService(
+        raw_reads_processing_service_url=SERVICE_URL, timeout_seconds=45
+    )
 
     service.process_files(make_files(), "accession.1")
 
@@ -77,7 +79,7 @@ def test_process_files_uses_configured_timeout(mock_post: MagicMock) -> None:
 @patch("loculus_preprocessing.external_services.requests.post")
 def test_process_files_success_returns_no_annotations(mock_post: MagicMock) -> None:
     mock_post.return_value = make_response(200, {"errors": []})
-    service = rawReadsProcessingService(raw_reads_processing_service_url=SERVICE_URL)
+    service = FileProcessingService(raw_reads_processing_service_url=SERVICE_URL)
 
     errors = service.process_files(make_files(), "accession.1")
 
@@ -92,7 +94,7 @@ def test_process_files_maps_response_errors(mock_post: MagicMock) -> None:
             "errors": [{"fileNames": ["reads.fastq"], "message": "invalid checksum"}],
         },
     )
-    service = rawReadsProcessingService(raw_reads_processing_service_url=SERVICE_URL)
+    service = FileProcessingService(raw_reads_processing_service_url=SERVICE_URL)
 
     errors = service.process_files(make_files(), "accession.1")
 
@@ -106,7 +108,7 @@ def test_process_files_maps_response_errors(mock_post: MagicMock) -> None:
 @patch("loculus_preprocessing.external_services.requests.post")
 def test_process_files_handles_missing_error_keys(mock_post: MagicMock) -> None:
     mock_post.return_value = make_response(200, {})
-    service = rawReadsProcessingService(raw_reads_processing_service_url=SERVICE_URL)
+    service = FileProcessingService(raw_reads_processing_service_url=SERVICE_URL)
 
     errors = service.process_files(make_files(), "accession.1")
 
@@ -116,7 +118,7 @@ def test_process_files_handles_missing_error_keys(mock_post: MagicMock) -> None:
 @patch("loculus_preprocessing.external_services.requests.post")
 def test_process_files_500_error_wraps_detail_as_internal_error(mock_post: MagicMock) -> None:
     mock_post.return_value = make_response(500, {"detail": "boom"})
-    service = rawReadsProcessingService(raw_reads_processing_service_url=SERVICE_URL)
+    service = FileProcessingService(raw_reads_processing_service_url=SERVICE_URL)
 
     errors = service.process_files(make_files(), "accession.1")
 
@@ -128,7 +130,7 @@ def test_process_files_500_error_wraps_detail_as_internal_error(mock_post: Magic
 @patch("loculus_preprocessing.external_services.requests.post")
 def test_process_files_4xx_error_returns_generic_internal_error(mock_post: MagicMock) -> None:
     mock_post.return_value = make_response(400, {"detail": "bad request"})
-    service = rawReadsProcessingService(raw_reads_processing_service_url=SERVICE_URL)
+    service = FileProcessingService(raw_reads_processing_service_url=SERVICE_URL)
 
     errors = service.process_files(make_files(), "accession.1")
 
@@ -139,7 +141,7 @@ def test_process_files_4xx_error_returns_generic_internal_error(mock_post: Magic
 @patch("loculus_preprocessing.external_services.requests.post")
 def test_process_files_network_error_returns_internal_error(mock_post: MagicMock) -> None:
     mock_post.side_effect = requests.exceptions.ConnectionError("connection refused")
-    service = rawReadsProcessingService(raw_reads_processing_service_url=SERVICE_URL)
+    service = FileProcessingService(raw_reads_processing_service_url=SERVICE_URL)
 
     errors = service.process_files(make_files(), "accession.1")
 
