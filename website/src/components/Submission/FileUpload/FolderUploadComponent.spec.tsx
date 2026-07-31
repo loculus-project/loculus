@@ -84,7 +84,7 @@ describe('FolderUploadComponent', () => {
     describe('folder upload', () => {
         it('renders upload folder button', () => {
             render(<FolderUploadComponent {...defaultProps} />);
-            expect(screen.getByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).toBeInTheDocument();
+            expect(screen.getByText('Upload folder')).toBeInTheDocument();
             expect(screen.getByTestId('folder-up-icon')).toBeInTheDocument();
         });
 
@@ -295,9 +295,7 @@ describe('FolderUploadComponent', () => {
             render(<FolderUploadComponent {...singleFileProps} />);
 
             await userEvent.click(screen.getByTestId('discard_extraFiles_file-a.txt'));
-            await waitFor(() =>
-                expect(screen.getByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).toBeInTheDocument(),
-            );
+            await waitFor(() => expect(screen.getByText('Upload folder')).toBeInTheDocument());
             expect(screen.queryByText('file-a.txt')).not.toBeInTheDocument();
             expect(latestReportedMapping(singleFileProps.fileMapping)!.has('extraFiles')).toBe(false);
         });
@@ -410,9 +408,7 @@ describe('FolderUploadComponent', () => {
             await waitFor(() => expect(screen.getByText(/are you sure you want to discard/i)).toBeInTheDocument());
 
             await userEvent.click(screen.getByRole('button', { name: /^Discard$/ }));
-            await waitFor(() =>
-                expect(screen.getByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).toBeInTheDocument(),
-            );
+            await waitFor(() => expect(screen.getByText('Upload folder')).toBeInTheDocument());
             expect(latestReportedMapping(defaultPropsWithFiles.fileMapping)!.has('extraFiles')).toBe(false);
         });
 
@@ -453,9 +449,7 @@ describe('FolderUploadComponent', () => {
             await userEvent.click(screen.getByTestId('discard_extraFiles'));
             await waitFor(() => expect(screen.getByText(/are you sure you want to discard/i)).toBeInTheDocument());
             await userEvent.click(screen.getByRole('button', { name: /^Discard$/ }));
-            await waitFor(() =>
-                expect(screen.getByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).toBeInTheDocument(),
-            );
+            await waitFor(() => expect(screen.getByText('Upload folder')).toBeInTheDocument());
         });
     });
 });
