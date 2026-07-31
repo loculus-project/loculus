@@ -490,7 +490,7 @@ class ManifestFieldsDiffTests(unittest.TestCase):
         submission_row.seq_metadata = {
             **submission_row.seq_metadata,
             "sequencingInstrument": "Nanopore",
-            "depthOfCoverage": ""
+            "depthOfCoverage": "",
         }
 
         differing_fields = manifest_fields_diff(
