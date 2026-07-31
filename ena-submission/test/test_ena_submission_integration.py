@@ -1078,12 +1078,26 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
 
 
 class TestRevisionAssemblyModificationTests(TestSubmission):
+    @pytest.mark.parametrize(
+        ("modify_assembly", "modify_manifest"),
+        [
+            pytest.param(True, False, id="assembly_field_changed"),
+            pytest.param(False, True, id="manifest_only_changed"),
+        ],
+    )
     @patch(
         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-    def test_revise(self, mock_get_group_info: Mock, mock_submit_external_metadata: Mock) -> None:
+    def test_revise(
+        self,
+        mock_get_group_info: Mock,
+        mock_submit_external_metadata: Mock,
+        modify_assembly: bool,
+        modify_manifest: bool,
+    ) -> None:
         self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
+        self.config.allow_revision_with_manifest_changes = True
         multi_segment_submission(
             self.db_engine, self.config, mock_get_group_info, mock_submit_external_metadata
         )
@@ -1091,7 +1105,9 @@ class TestRevisionAssemblyModificationTests(TestSubmission):
         # get data
         mock_get_group_info.return_value = TEST_GROUP
         mock_submit_external_metadata.return_value = mock_requests_post()
-        sequences_to_upload = get_revisions()
+        sequences_to_upload = get_revisions(
+            modify_assembly=modify_assembly, modify_manifest=modify_manifest
+        )
 
         # upload sequences
         upload_sequences(self.db_engine, sequences_to_upload)
