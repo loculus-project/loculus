@@ -560,7 +560,7 @@ def resolve_manifest_field(
     if field_details.function == "reformat_authors":
         value = get_authors(values[0] or "")
     else:
-        value = ", ".join(str(v) for v in values if v is not None) or None
+        value = ", ".join(str(v) for v in values if v) or None
 
     if value is not None:
         return value
