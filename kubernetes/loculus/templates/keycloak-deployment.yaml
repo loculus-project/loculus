@@ -24,8 +24,9 @@ spec:
     spec:
      {{- include "possiblePriorityClassName" . | nindent 6 }}
       {{- include "loculus.podScheduling" . | nindent 6 }}
+      {{- include "loculus.podSecurityContext" (list "keycloak" .Values) | nindent 6 }}
       initContainers:
-{{- include "loculus.configProcessor" (dict "name" "keycloak-config" "dockerTag" $dockerTag "imagePullPolicy" .Values.imagePullPolicy) | nindent 8 }}
+{{- include "loculus.configProcessor" (dict "name" "keycloak-config" "dockerTag" $dockerTag "imagePullPolicy" .Values.imagePullPolicy "Values" .Values) | nindent 8 }}
         - name: keycloak-theme-prep
           resources:
             requests:
@@ -34,6 +35,7 @@ spec:
             limits:
               cpu: 500m
               memory: 256Mi
+          {{- include "loculus.containerSecurityContext" (list "keycloak" $.Values) | nindent 10 }}
           image: "ghcr.io/loculus-project/keycloakify:{{ $dockerTag }}"
           volumeMounts:
             - name: theme-volume
@@ -43,6 +45,7 @@ spec:
           # TODO #1221
           image: quay.io/keycloak/keycloak:23.0
           {{- include "loculus.resources" (list "keycloak" $.Values) | nindent 10 }}
+          {{- include "loculus.containerSecurityContext" (list "keycloak" $.Values) | nindent 10 }}
           env:
             - name: REGISTRATION_TERMS_MESSAGE
               value: {{ $.Values.registrationTermsMessage }}
