@@ -9,7 +9,19 @@ from enum import StrEnum
 from typing import Any, Final
 
 import pytz
-from sqlalchemy import Engine, Enum, create_engine, delete, func, make_url, or_, select, update
+from sqlalchemy import (
+    Engine,
+    Enum,
+    ForeignKey,
+    ForeignKeyConstraint,
+    create_engine,
+    delete,
+    func,
+    make_url,
+    or_,
+    select,
+    update,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -17,6 +29,7 @@ from sqlalchemy.orm import (
     MappedAsDataclass,
     Session,
     mapped_column,
+    relationship,
 )
 from tenacity import (
     Retrying,
@@ -144,7 +157,7 @@ class SubmissionTableEntry(Base):
     seq_metadata: Mapped[dict[str, Any]] = mapped_column("metadata", JSONB, default_factory=dict)
     errors: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
     warnings: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
-    status_all: Mapped[Status] = mapped_column(
+    status_all: Mapped[StatusAll] = mapped_column(
         Enum(StatusAll, native_enum=False),  # Store enum as string in DB table.
         default=StatusAll.READY_TO_SUBMIT,
     )
@@ -157,7 +170,32 @@ class SubmissionTableEntry(Base):
     external_metadata: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(
         JSONB, default=None
     )
-    project_id: Mapped[int | None] = mapped_column(default=None)
+    project_id: Mapped[int | None] = mapped_column(
+        ForeignKey("ena_deposition_schema.project_table.project_id"), default=None
+    )
+
+    # Relationships (not part of the dataclass constructor; populated by the ORM).
+    project: Mapped["ProjectTableEntry | None"] = relationship(
+        back_populates="submissions",
+        default=None,
+        init=False,
+        repr=False,
+        uselist=False,
+    )
+    sample: Mapped["SampleTableEntry | None"] = relationship(
+        back_populates="submission",
+        default=None,
+        init=False,
+        repr=False,
+        uselist=False,
+    )
+    assembly: Mapped["AssemblyTableEntry | None"] = relationship(
+        back_populates="submission",
+        default=None,
+        init=False,
+        repr=False,
+        uselist=False,
+    )
 
     @property
     def pkey(self) -> AccessionVersion:
@@ -189,6 +227,12 @@ class ProjectTableEntry(Base):
     ena_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
     ncbi_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
 
+    # One project can have many submission_table rows pointing at it
+    # (group_id, organism) -> project_id, one row per accession/version.
+    submissions: Mapped[list["SubmissionTableEntry"]] = relationship(
+        back_populates="project", default_factory=list, init=False, repr=False
+    )
+
     @property
     def pkey(self) -> ProjectId:
         return ProjectId(project_id=self.project_id)
@@ -198,7 +242,16 @@ class SampleTableEntry(Base):
     """Maps to sample_table. Primary key: (accession, version)."""
 
     __tablename__ = "sample_table"
-    __table_args__: typing.ClassVar[dict[str, Any]] = {"schema": "ena_deposition_schema"}
+    __table_args__: typing.ClassVar[tuple[ForeignKeyConstraint, dict[str, Any]]] = (
+        ForeignKeyConstraint(
+            ["accession", "version"],
+            [
+                "ena_deposition_schema.submission_table.accession",
+                "ena_deposition_schema.submission_table.version",
+            ],
+        ),
+        {"schema": "ena_deposition_schema"},
+    )
 
     accession: Mapped[str] = mapped_column(primary_key=True)
     version: Mapped[int] = mapped_column(primary_key=True)
@@ -214,6 +267,11 @@ class SampleTableEntry(Base):
     ena_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
     ncbi_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
 
+    # Same (accession, version) as the submission_table row it was derived from.
+    submission: Mapped["SubmissionTableEntry"] = relationship(
+        back_populates="sample", init=False, repr=False
+    )
+
     @property
     def pkey(self) -> AccessionVersion:
         return AccessionVersion(accession=self.accession, version=self.version)
@@ -223,7 +281,16 @@ class AssemblyTableEntry(Base):
     """Maps to assembly_table. Primary key: (accession, version)."""
 
     __tablename__ = "assembly_table"
-    __table_args__: typing.ClassVar[dict[str, Any]] = {"schema": "ena_deposition_schema"}
+    __table_args__: typing.ClassVar[tuple[ForeignKeyConstraint, dict[str, Any]]] = (
+        ForeignKeyConstraint(
+            ["accession", "version"],
+            [
+                "ena_deposition_schema.submission_table.accession",
+                "ena_deposition_schema.submission_table.version",
+            ],
+        ),
+        {"schema": "ena_deposition_schema"},
+    )
 
     accession: Mapped[str] = mapped_column(primary_key=True)
     version: Mapped[int] = mapped_column(primary_key=True)
@@ -240,6 +307,11 @@ class AssemblyTableEntry(Base):
     ncbi_nucleotide_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
     ena_gca_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
     ncbi_gca_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
+
+    # Same (accession, version) as the submission_table row it was derived from.
+    submission: Mapped["SubmissionTableEntry"] = relationship(
+        back_populates="assembly", init=False, repr=False
+    )
 
     @property
     def pkey(self) -> AccessionVersion:
@@ -523,42 +595,36 @@ def add_to_submission_table(engine: Engine, entry: SubmissionTableEntry) -> bool
         return False
 
 
-def is_latest_revision(engine: Engine, seq_key: AccessionVersion) -> bool:
-    """Return True if *seq_key* is the latest of multiple versions for its accession."""
-    if seq_key.version == 1:
-        return False
+@dataclass(frozen=True)
+class RevisionStatus:
+    """
+    Represents the revision status of a sequence in submission_table.
+    Note: a sequence with version > 1 is not necessarily a revision
+    as the first version might not have been submitted to ENA yet.
+
+    is_revision: True if *seq_key* is a revision of an accession submitted to ENA.
+    is_latest_revision: True if *seq_key* is the latest of multiple versions for its accession
+    previous_version: The previous version number for *seq_key*, or None if not a revision
+    """
+
+    is_revision: bool
+    is_latest_revision: bool
+    previous_version: int | None
+
+
+def get_revision_status(engine: Engine, seq_key: AccessionVersion) -> RevisionStatus:
+    """Return a RevisionStatus object for *seq_key*."""
     rows = find_conditions_in_db(
         engine,
         SubmissionTableEntry,
         {"accession": seq_key.accession},
     )
     all_versions = sorted(row.version for row in rows)
-    return len(all_versions) > 1 and seq_key.version == all_versions[-1]
-
-
-def is_revision(engine: Engine, seq_key: AccessionVersion) -> bool:
-    """Return True if *seq_key* is a revision of an accession submitted to ENA.
-    Note: a sequence with version > 1 is not necessarily a revision as the first version
-    might not have been submitted to ENA yet."""
-    if seq_key.version == 1:
-        return False
-    rows = find_conditions_in_db(
-        engine,
-        SubmissionTableEntry,
-        {"accession": seq_key.accession},
+    is_rev = len(all_versions) > 1
+    is_latest_rev = len(all_versions) > 1 and seq_key.version == all_versions[-1]
+    prev_version = all_versions[-2] if len(all_versions) > 1 else None
+    return RevisionStatus(
+        is_revision=is_rev,
+        is_latest_revision=is_latest_rev,
+        previous_version=prev_version,
     )
-    all_versions = sorted(row.version for row in rows)
-    return len(all_versions) > 1
-
-
-def previous_version(engine: Engine, seq_key: AccessionVersion) -> int | None:
-    """Return the previous version number for *seq_key*, or None if not a revision."""
-    if not is_revision(engine, seq_key):
-        return None
-    rows = find_conditions_in_db(
-        engine,
-        SubmissionTableEntry,
-        {"accession": seq_key.accession},
-    )
-    all_versions = sorted(row.version for row in rows)
-    return all_versions[-2]

@@ -55,7 +55,6 @@ from .submission_db_helper import (
     ProjectTableEntry,
     SampleTableEntry,
     Status,
-    add_to_assembly_table,
     update_db_where_conditions,
     update_with_retry,
 )
@@ -839,7 +838,7 @@ def accession_exists(
 def set_accession_does_not_exist_error(
     conditions: dict[str, Any],
     accession: str,
-    accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"] | Literal["RUN_REF"],
+    accession_type: Literal["BIOPROJECT", "BIOSAMPLE", "RUN_REF"],
     db_engine: Engine,
 ):
     error_text = f"Accession {accession} of type {accession_type} does not exist in ENA."
@@ -870,13 +869,16 @@ def set_accession_does_not_exist_error(
                 },
             )
         case "RUN_REF":
-            assembly_table_entry = AssemblyTableEntry(
-                **conditions,  # type: ignore
-                status=Status.HAS_ERRORS,
-                errors=[error_text],
-                result={},  # type: ignore
+            succeeded = update_db_where_conditions(
+                db_engine,
+                AssemblyTableEntry,
+                conditions,
+                {
+                    "status": Status.HAS_ERRORS,
+                    "errors": [error_text],
+                    "result": {"run_ref": accession},
+                },
             )
-            succeeded = add_to_assembly_table(db_engine, assembly_table_entry)
 
     if not succeeded:
         logger.warning(f"{accession_type} creation failed and DB update failed.")

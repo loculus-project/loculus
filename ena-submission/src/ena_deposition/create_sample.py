@@ -5,7 +5,8 @@ from dataclasses import asdict
 from datetime import datetime
 
 import pytz
-from sqlalchemy import Engine
+from sqlalchemy import Engine, select
+from sqlalchemy.orm import Session
 
 from .config import Config, MetadataMapping
 from .ena_submission_helper import (
@@ -29,16 +30,14 @@ from .ena_types import (
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
+    AccessionVersion,
     SampleTableEntry,
     Status,
     StatusAll,
     SubmissionTableEntry,
-    add_to_sample_table,
     db_init,
-    find_conditions_in_db,
     find_errors_or_stuck_in_db,
-    is_latest_revision,
-    is_revision,
+    get_revision_status,
     update_db_where_conditions,
     update_with_retry,
 )
@@ -173,10 +172,9 @@ def update_with_existing_biosample(db_engine: Engine, row: SubmissionTableEntry,
     biosample = row.seq_metadata["biosampleAccession"]
 
     logger.info("Checking if biosample actually exists and is public")
-    seq_key = asdict(row.pkey)
     if not accession_exists(biosample, config):
         set_accession_does_not_exist_error(
-            conditions=seq_key,
+            conditions=asdict(row.pkey),
             accession=biosample,
             accession_type="BIOSAMPLE",
             db_engine=db_engine,
@@ -184,72 +182,81 @@ def update_with_existing_biosample(db_engine: Engine, row: SubmissionTableEntry,
         return
 
     logger.info("Updating entry with biosampleAccession to state SUBMITTED")
-    update_db_where_conditions(
+    update_successful_sample_submission(
         db_engine,
-        model_class=SampleTableEntry,
-        conditions=seq_key,
-        update_values={
-            "accession": row.accession,
-            "version": row.version,
-            "result": {"ena_sample_accession": biosample, "biosample_accession": biosample},
-            "status": Status.SUBMITTED,
-        },
+        row.pkey,
+        CreationResult(
+            errors=[],
+            warnings=[],
+            result={"ena_sample_accession": biosample, "biosample_accession": biosample},
+        ),
     )
 
 
 def sync_state_with_submission_table(db_engine: Engine):
     """
     1. Find all entries in submission_table in state SUBMITTED_PROJECT
-    2. If (exists an entry in the sample_table for (accession, version)):
-    a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_SAMPLE
-    3. If (exists "biosampleAccession" in "metadata"):
-        create entry in sample_table, update state to SUBMITTED_SAMPLE
-    4. Else create corresponding entry in sample_table
+    where no corresponding entry exists in sample_table (by accession and version)
+    2. If (exists "biosampleAccession" in "metadata") add to result in new sample_table entry
     """
-    # Check submission_table for newly added sequences
-    conditions = {"status_all": StatusAll.SUBMITTED_PROJECT}
-    ready_to_submit = find_conditions_in_db(db_engine, SubmissionTableEntry, conditions=conditions)
-    logger.debug(
-        f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_PROJECT"
+    stmt = (
+        select(SubmissionTableEntry)
+        .outerjoin(SubmissionTableEntry.sample)
+        .where(
+            SubmissionTableEntry.status_all == StatusAll.SUBMITTED_PROJECT,
+            SampleTableEntry.accession.is_(None),
+        )
     )
-    for row in ready_to_submit:
-        seq_key = asdict(row.pkey)
+    with Session(db_engine) as session:
+        submissions = session.scalars(stmt).all()
 
-        # 1. check if there exists an entry in the sample table for seq_key
-        corresponding_sample = find_conditions_in_db(
-            db_engine, SampleTableEntry, conditions=seq_key
-        )
-        if len(corresponding_sample) == 1 and corresponding_sample[0].status == str(
-            Status.SUBMITTED
-        ):
-            update_db_where_conditions(
-                db_engine,
-                model_class=SubmissionTableEntry,
-                conditions=seq_key,
-                update_values={"status_all": StatusAll.SUBMITTED_SAMPLE},
+        created = []
+        for submission in submissions:
+            sample = SampleTableEntry(
+                accession=submission.accession,
+                version=submission.version,
+                started_at=datetime.now(tz=pytz.utc),
+                result=(
+                    {"biosample_accession": biosample}
+                    if (biosample := submission.seq_metadata.get("biosampleAccession"))
+                    else None
+                ),
             )
-            continue
-        if len(corresponding_sample) == 1:
-            logger.debug(
-                f"Entry for {seq_key} already exists in sample_table with status "
-                f"{corresponding_sample[0].status}, not updating submission_table status."
+            submission.sample = sample
+            created.append(sample)
+
+        try:
+            session.add_all(created)
+            session.commit()
+        except Exception:
+            logger.exception("Error while syncing sample_table with submission_table")
+            session.rollback()
+            raise
+
+
+def update_successful_sample_submission(
+    db_engine: Engine, seq_key: AccessionVersion, sample_creation_results: CreationResult
+):
+    """Update entry in sample_table to state SUBMITTED with results after successful sample creation
+    and update corresponding entry in submission_table to state SUBMITTED_SAMPLE"""
+    with Session(db_engine) as session:
+        try:
+            submission_ = session.get(
+                SubmissionTableEntry,
+                asdict(seq_key),
             )
-            continue
-        if len(corresponding_sample) > 1:
-            logger.error(
-                f"Multiple entries found in sample_table for {seq_key}, not updating "
-                "submission_table status or adding to sample_table."
+
+            submission_.sample.status = Status.SUBMITTED
+            submission_.sample.finished_at = datetime.now(tz=pytz.utc)
+            submission_.sample.result = sample_creation_results.result
+            submission_.status_all = StatusAll.SUBMITTED_SAMPLE
+
+            session.commit()
+        except Exception:
+            logger.exception(
+                f"Error while updating submission_table for {seq_key} after successful sample creation"  # noqa: E501
             )
-            continue
-        biosample = None
-        if row and row.seq_metadata.get("biosampleAccession"):
-            biosample = row.seq_metadata["biosampleAccession"]
-        add_to_sample_table(
-            db_engine,
-            SampleTableEntry(
-                **seq_key, result={"biosample_accession": biosample} if biosample else None
-            ),
-        )
+            session.rollback()
 
 
 def sample_table_create(db_engine: Engine, config: Config):
@@ -258,36 +265,36 @@ def sample_table_create(db_engine: Engine, config: Config):
     2. Create sample_set_object: use metadata, center_name, organism, and ingest fields
     from submission_table
     3. Update sample_table to state SUBMITTING (only proceed if update succeeds)
-    4. If (create_ena_sample succeeds): update state to SUBMITTED with results
+    4. If (create_ena_sample succeeds): update_successful_sample_submission
     3. Else update state to HAS_ERRORS with error messages
 
     If config.random_alias=True add a timestamp to the alias suffix to allow for multiple
     submissions of the same sample for testing.
     """
-    conditions = {"status": Status.READY}
-    ready_to_submit_sample = find_conditions_in_db(
-        db_engine, SampleTableEntry, conditions=conditions
+    stmt = (
+        select(SampleTableEntry, SubmissionTableEntry)
+        .join(SampleTableEntry.submission)
+        .where(SampleTableEntry.status == Status.READY)
     )
+
+    with Session(db_engine) as session:
+        ready_to_submit_sample = session.execute(stmt).all()
+
     logger.debug(f"Found {len(ready_to_submit_sample)} entries in sample_table in status READY")
-    for row in ready_to_submit_sample:
-        seq_key = row.pkey
-        is_rev = is_revision(db_engine, seq_key)
-        if is_rev and not is_latest_revision(db_engine, seq_key):
+    for sample, submission in ready_to_submit_sample:
+        seq_key = sample.pkey
+        revision_status = get_revision_status(db_engine, seq_key)
+        if revision_status.is_revision and not revision_status.is_latest_revision:
             logger.warning(f"Skipping submission for {seq_key} as it is not the latest version.")
             continue
 
         logger.info(f"Processing sample_table entry for {seq_key}")
-        sample_data_in_submission_table = find_conditions_in_db(
-            db_engine, SubmissionTableEntry, conditions=asdict(seq_key)
-        )
 
-        if row.result and row.result.get("biosample_accession"):
-            update_with_existing_biosample(db_engine, sample_data_in_submission_table[0], config)
+        if sample.result and sample.result.get("biosample_accession"):
+            update_with_existing_biosample(db_engine, submission, config)
             continue
 
-        sample_set = construct_sample_set_object(
-            config, sample_data_in_submission_table[0], row, config.random_alias
-        )
+        sample_set = construct_sample_set_object(config, submission, sample, config.random_alias)
         update_values = {
             "status": Status.SUBMITTING,
             "started_at": datetime.now(tz=pytz.utc),
@@ -305,34 +312,29 @@ def sample_table_create(db_engine: Engine, config: Config):
                 "- not starting submission."
             )
             continue
-        logger.info(f"Starting sample creation for accession {row.accession}")
+        logger.info(f"Starting sample creation for accession {sample.accession}")
         sample_creation_results: CreationResult = create_ena_sample(
-            config, sample_set, revision=is_rev
+            config, sample_set, revision=revision_status.is_revision
         )
         if sample_creation_results.result:
-            update_values = {
-                "status": Status.SUBMITTED,
-                "result": sample_creation_results.result,
-                "finished_at": datetime.now(tz=pytz.utc),
-            }
             logger.info(
                 f"Sample creation succeeded for {seq_key.accession} version {seq_key.version}"
             )
+            update_successful_sample_submission(db_engine, seq_key, sample_creation_results)
         else:
-            update_values = {
-                "status": Status.HAS_ERRORS,
-                "errors": sample_creation_results.errors,
-                "started_at": datetime.now(tz=pytz.utc),
-            }
             logger.error(
                 f"Sample creation failed for {seq_key.accession} version {seq_key.version}"
             )
-        update_with_retry(
-            db_engine=db_engine,
-            conditions=asdict(seq_key),
-            update_values=update_values,
-            model_class=SampleTableEntry,
-        )
+            update_with_retry(
+                db_engine=db_engine,
+                conditions=asdict(seq_key),
+                update_values={
+                    "status": Status.HAS_ERRORS,
+                    "errors": sample_creation_results.errors,
+                    "started_at": datetime.now(tz=pytz.utc),
+                },
+                model_class=SampleTableEntry,
+            )
 
 
 def sample_table_handle_errors(
@@ -391,7 +393,6 @@ def create_sample(config: Config, stop_event: threading.Event):
         sync_state_with_submission_table(db_engine)
 
         sample_table_create(db_engine, config)
-        sync_state_with_submission_table(db_engine)  # update submission_table state after creation
         last_retry_time = sample_table_handle_errors(
             db_engine, config, slack_config, last_retry_time
         )

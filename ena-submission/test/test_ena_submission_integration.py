@@ -36,9 +36,6 @@ from ena_deposition.create_assembly import (
 from ena_deposition.create_assembly import (
     submission_table_start as create_assembly_submission_table_start,
 )
-from ena_deposition.create_assembly import (
-    submission_table_update as create_assembly_submission_table_update,
-)
 from ena_deposition.create_project import (
     project_table_create,
     project_table_handle_errors,
@@ -65,6 +62,7 @@ from ena_deposition.submission_db_helper import (
     add_to_assembly_table,
     add_to_project_table,
     add_to_sample_table,
+    add_to_submission_table,
     db_init,
     delete_records_in_db,
     find_conditions_in_db,
@@ -110,11 +108,13 @@ def assert_bioproject_accession(
 
 def delete_all_records(db_engine: Engine) -> None:
     logger.debug("Deleting all records from all deposition tables except flyway")
+    # Delete child rows before parents:
+    # sample_table/assembly_table -> submission_table -> project_table
     for model_class in [
-        SubmissionTableEntry,
-        ProjectTableEntry,
         SampleTableEntry,
         AssemblyTableEntry,
+        SubmissionTableEntry,
+        ProjectTableEntry,
     ]:
         delete_records_in_db(db_engine, model_class, {})
 
@@ -366,7 +366,7 @@ def _test_successful_assembly_submission(
     sequences_to_upload: dict[str, Any],
     single_segment: bool = False,
 ) -> None:
-    create_assembly_submission_table_start(db_engine, config)
+    create_assembly_submission_table_start(db_engine)
     check_assembly_submission_started(db_engine, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
@@ -377,7 +377,6 @@ def _test_successful_assembly_submission(
     # So we can test the rest of the pipeline
     set_db_to_known_erz_accession(db_engine, sequences_to_upload, single_segment=single_segment)
     assembly_table_update(db_engine, config, time_threshold=0)
-    create_assembly_submission_table_update(db_engine)
     if single_segment:
         check_assembly_submission_with_nuc_without_gca(db_engine, sequences_to_upload)
     else:
@@ -387,12 +386,11 @@ def _test_successful_assembly_submission(
 def _test_successful_assembly_submission_no_wait(
     db_engine: Engine, config: Config, sequences_to_upload: dict[str, Any]
 ) -> None:
-    create_assembly_submission_table_start(db_engine, config)
+    create_assembly_submission_table_start(db_engine)
     check_assembly_submission_started(db_engine, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
     assembly_table_create(db_engine, config)
-    create_assembly_submission_table_update(db_engine)
     check_assembly_submission_submitted(db_engine, sequences_to_upload)
 
 
@@ -403,7 +401,7 @@ def _test_assembly_submission_errored(
     sequences_to_upload: dict[str, Any],
     mock_notify: Mock,
 ) -> None:
-    create_assembly_submission_table_start(db_engine, config)
+    create_assembly_submission_table_start(db_engine)
     check_assembly_submission_started(db_engine, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
@@ -430,7 +428,6 @@ def _test_successful_sample_submission(
     check_sample_submission_started(db_engine, sequences_to_upload)
 
     sample_table_create(db_engine, config)
-    create_sample_sync_state_with_submission_table(db_engine)
     check_sample_submission_submitted(db_engine, sequences_to_upload)
 
 
@@ -682,8 +679,20 @@ class TestFirstPublicUpdate(TestSubmission):
         entry_data = {**test_data["base_entry"], "result": test_data["invalid_result"]}
         entry = config.entry_class(**entry_data)
 
-        # Insert into the database
+        # sample_table/assembly_table rows require a matching submission_table row (FK constraint)
         add_function = test_data["add_function"]
+        if add_function is not add_to_project_table:
+            add_to_submission_table(
+                self.db_engine,
+                SubmissionTableEntry(
+                    accession=entry_data["accession"],
+                    version=entry_data["version"],
+                    organism="test_organism",
+                    group_id=1,
+                ),
+            )
+
+        # Insert into the database
         entity_id = add_function(self.db_engine, entry)
         if entity_id is None:
             msg = f"Failed to add {entity_type.value} entry to the database."
@@ -1009,7 +1018,6 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         check_sample_submission_started(self.db_engine, sequences_to_upload)
         create_sample_sync_state_with_submission_table(self.db_engine)
         sample_table_create(self.db_engine, self.config)
-        create_sample_sync_state_with_submission_table(self.db_engine)
         check_sample_submission_submitted(self.db_engine, sequences_to_upload)
         _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
 
