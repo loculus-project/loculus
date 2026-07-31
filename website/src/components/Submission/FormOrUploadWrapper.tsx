@@ -78,7 +78,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     const [columnMapping, setColumnMapping] = useState<ColumnMapping | null>(null);
 
     useEffect(() => {
-        const controller = new AbortController();
+        const state = { cancelled: false };
         void (async () => {
             if (!metadataFile) {
                 setSubmissionFileMapping(undefined);
@@ -88,7 +88,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 ? await (await columnMapping.applyTo(metadataFile)).text()
                 : await metadataFile.text();
 
-            if (controller.signal.aborted) return;
+            if (state.cancelled) return;
 
             const submissionFileMapping = parseSubmissionFileMapping(
                 text,
@@ -97,7 +97,9 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
             setSubmissionFileMapping(submissionFileMapping);
             if (submissionFileMapping.isErr()) onError(submissionFileMapping.error.message);
         })();
-        return () => controller.abort();
+        return () => {
+            state.cancelled = true;
+        };
     }, [metadataFile, columnMapping]);
 
     useEffect(() => {
