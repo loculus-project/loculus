@@ -4,7 +4,7 @@
 
 Create an activate the micromamba environment using:
 
-``sh
+```sh
 micromamba create -f environment.yml
 micromamba activate loculus-raw-reads-processing
 pip install -e .
@@ -32,7 +32,7 @@ Preprocessing receives original-data from the backend, the backend creates read-
 ## What this service does
 
 The raw reads processing service is a small FastAPI app (`raw_reads_processing.api`) with one endpoint:
-`POST /process-files` (`raw_reads_processing.functions.process_submitted_files`).
+`POST /process-files` (`raw_reads_processing.functions.validate_raw_reads_submission`).
 
 It receives a `RequestWithFiles` payload:
 
@@ -47,7 +47,7 @@ The service downloads the files and validates their structure. The service respo
 
 ```json
 {
-  "errors": [{fileName: <fileName>, message: <str>}],
+  "errors": [{fileNames: [<fileName>, ...], message: <str>}],
 }
 ```
 
