@@ -1063,6 +1063,36 @@
       },
       "required": ["repository", "pullPolicy"],
       "additionalProperties": false
+    },
+    "securityContextValue": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "securityContextSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "default": { "$ref": "#/definitions/securityContextValue" },
+        "website": { "$ref": "#/definitions/securityContextValue" },
+        "docs": { "$ref": "#/definitions/securityContextValue" },
+        "taxonomy-service": { "$ref": "#/definitions/securityContextValue" },
+        "ena-submission": { "$ref": "#/definitions/securityContextValue" },
+        "ena-submission-list-cronjob": {
+          "$ref": "#/definitions/securityContextValue"
+        },
+        "ingest": { "$ref": "#/definitions/securityContextValue" },
+        "ingest-trigger": { "$ref": "#/definitions/securityContextValue" },
+        "keycloak": { "$ref": "#/definitions/securityContextValue" },
+        "silo": { "$ref": "#/definitions/securityContextValue" },
+        "lapis": { "$ref": "#/definitions/securityContextValue" },
+        "silo-importer": { "$ref": "#/definitions/securityContextValue" },
+        "backend": { "$ref": "#/definitions/securityContextValue" },
+        "preprocessing": { "$ref": "#/definitions/securityContextValue" },
+        "minio": { "$ref": "#/definitions/securityContextValue" },
+        "keycloak-database": { "$ref": "#/definitions/securityContextValue" },
+        "database": { "$ref": "#/definitions/securityContextValue" },
+        "config-processor": { "$ref": "#/definitions/securityContextValue" }
+      }
     }
   },
   "type": "object",
@@ -2014,6 +2044,14 @@
           "additionalProperties": false
         }
       }
+    },
+    "podSecurityContext": {
+      "$ref": "#/definitions/securityContextSpec",
+      "description": "Pod-level security context values keyed by component name. See https://kubernetes.io/docs/tasks/configure-pod-container/security-context/."
+    },
+    "containerSecurityContext": {
+      "$ref": "#/definitions/securityContextSpec",
+      "description": "Container-level security context values keyed by component name. See https://kubernetes.io/docs/tasks/configure-pod-container/security-context/."
     },
     "secrets": {
       "description": "TODO"
