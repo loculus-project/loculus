@@ -41,8 +41,6 @@ from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
     AccessionVersion,
     AssemblyTableEntry,
-    ProjectTableEntry,
-    SampleTableEntry,
     Status,
     StatusAll,
     SubmissionTableEntry,
