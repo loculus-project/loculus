@@ -83,7 +83,7 @@ def taxonomy_network_error(
     return raw_internal_error(f"Network error while {action} '{subject}': {e}.")
 
 
-taxonomy_cache = RequestCache(max_size=64)
+taxonomy_cache = RequestCache(max_size=1024)
 
 
 class TaxonomyService:
