@@ -1631,6 +1631,12 @@
       "default": false,
       "description": "If true, disables the taxonomy service deployment."
     },
+    "disableRawReadsProcessingService": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, disables the raw reads processing service deployment."
+    },
     "readOnlyMode": {
       "groups": ["services"],
       "type": "boolean",
@@ -1906,10 +1912,27 @@
         }
       }
     },
+    "rawReadsProcessingService": {
+      "type": "object",
+      "properties": {
+        "raw_reads_processing_service_url": {
+          "type": "string",
+          "description": "URL where the raw reads processing service is accessible"
+        },
+        "raw_reads_processing_service_timeout_seconds": {
+          "type": "integer",
+          "description": "Timeout in seconds for raw reads processing service requests"
+        },
+        "rawReadsProcessingConfig": {
+          "type": "object",
+          "description": "Configuration for the raw reads processing service"
+        }
+      }
+    },
     "images": {
       "groups": ["general"],
       "type": "object",
-      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website` and `backend.`",
+      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website` and `backend`.",
       "properties": {
         "lapis": { "$ref": "#/definitions/imageSpec" },
         "lapisSilo": { "$ref": "#/definitions/imageSpec" },
