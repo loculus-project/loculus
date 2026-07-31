@@ -422,7 +422,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             <h3 className='text-sm font-medium'>{fileCategory.displayName ?? fileCategory.name}</h3>
             {fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
                 <div
-                    className={`flex flex-col items-center justify-center flex-1 py-2 px-4 border rounded-lg ${fileUploadState !== undefined ? 'border-hidden' : isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}
+                    className={`flex flex-col items-center justify-center flex-1 py-6 px-4 border rounded-lg ${fileUploadState !== undefined ? 'border-hidden' : isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}
                     onDragEnter={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -448,7 +448,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     }}
                 >
                     <LucideFolderUp
-                        className={`mx-auto mt-4 mb-2 h-12 w-12 text-gray-300`}
+                        className='mx-auto mb-2 h-12 w-12 text-gray-300'
                         aria-hidden='true'
                         data-testid='folder-up-icon'
                     />
