@@ -52,6 +52,7 @@ from .submission_db_helper import (
     find_errors_or_stuck_in_db,
     find_waiting_in_db,
     get_last_entry,
+    get_project_and_sample_results,
     is_latest_revision,
     is_revision,
     previous_version,
@@ -448,39 +449,6 @@ def update_assembly_results_with_latest_version(db_engine: Engine, seq_key: Acce
         model_class=AssemblyTableEntry,
         reraise=False,
     )
-
-
-def get_project_and_sample_results(
-    db_engine: Engine, submission_row: SubmissionTableEntry
-) -> tuple[str, str]:
-    seq_key = {"accession": submission_row.accession, "version": submission_row.version}
-
-    sample_rows = find_conditions_in_db(db_engine, SampleTableEntry, conditions=seq_key)
-    if len(sample_rows) == 0:
-        error_msg = f"Entry {submission_row.accession} not found in sample_table"
-        raise RuntimeError(error_msg)
-
-    project_rows = find_conditions_in_db(
-        db_engine,
-        ProjectTableEntry,
-        conditions={"project_id": submission_row.project_id},
-    )
-    if len(project_rows) == 0:
-        error_msg = f"Entry {submission_row.accession} not found in project_table"
-        raise RuntimeError(error_msg)
-    sample_accession = (
-        sample_rows[0].result.get("ena_sample_accession") if sample_rows[0].result else None
-    )
-    study_accession = (
-        project_rows[0].result.get("bioproject_accession") if project_rows[0].result else None
-    )
-    if not sample_accession or not study_accession:
-        error_msg = (
-            f"Missing sample_accession or study_accession for accession {submission_row.accession} "
-            "cannot create manifest"
-        )
-        raise RuntimeError(error_msg)
-    return cast(str, sample_accession), cast(str, study_accession)
 
 
 def assembly_table_create(db_engine: Engine, config: Config):
