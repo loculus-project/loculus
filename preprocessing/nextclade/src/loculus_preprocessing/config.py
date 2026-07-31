@@ -141,9 +141,9 @@ class Config(BaseModel):
     taxonomy_service_url: str | None = None
     _taxonomy_service: TaxonomyService = PrivateAttr(default=TaxonomyService(None))
     raw_reads_processing_service_url: str | None = None
-    raw_reads_processing_service_timeout_seconds: int = 300
+    raw_reads_processing_service_timeout_seconds: int = 600
     _file_processing_service: FileProcessingService = PrivateAttr(
-        default=FileProcessingService(None, 300)
+        default=FileProcessingService(None, 600)
     )
 
     @model_validator(mode="after")
