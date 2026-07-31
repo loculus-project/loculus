@@ -577,6 +577,13 @@ def process_single(
     config: Config,
 ) -> SubmissionData:
     """Process a single sequence per config"""
+    # process files first as S3 read URLs have a limited lifetime
+    file_errors = []
+    if unprocessed.files and any(unprocessed.files.values()):
+        file_errors = config._file_processing_service.process_files(
+            unprocessed.files, accession_version=accession_version
+        )
+
     iupac_errors = errors_if_non_iupac(unprocessed.unalignedNucleotideSequences)
 
     max_seq_errors = error_on_excess_sequences(
@@ -592,12 +599,6 @@ def process_single(
     output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
         accession_version, unprocessed, config
     )
-
-    file_errors = []
-    if unprocessed.files and any(unprocessed.files.values()):
-        file_errors = config._file_processing_service.process_files(
-            unprocessed.files, accession_version=accession_version
-        )
 
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
@@ -639,6 +640,13 @@ def process_single_unaligned(
     config: Config,
 ) -> SubmissionData:
     """Process a single sequence per config"""
+    # process files first as S3 read URLs have a limited lifetime
+    file_errors = []
+    if unprocessed.files and any(unprocessed.files.values()):
+        file_errors = config._file_processing_service.process_files(
+            unprocessed.files, accession_version=accession_version
+        )
+
     segment_assignment = assign_segment_using_header(
         input_unaligned_sequences=unprocessed.unalignedNucleotideSequences,
         config=config,
@@ -649,12 +657,6 @@ def process_single_unaligned(
     output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
         accession_version, unprocessed, config
     )
-
-    file_errors = []
-    if unprocessed.files and any(unprocessed.files.values()):
-        file_errors = config._file_processing_service.process_files(
-            unprocessed.files, accession_version=accession_version
-        )
 
     return processed_entry_no_alignment(
         accession_version=accession_version,
