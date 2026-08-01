@@ -8,6 +8,7 @@ class Config(BaseModel):
     log_level: str
     s3_request_timeout_seconds: int
     read_validation_timeout_seconds: int
+    deacon_filter_timeout_seconds: int
     file_service_host: str | None = None
     file_service_port: int | None = None
 

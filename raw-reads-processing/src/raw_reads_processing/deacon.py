@@ -6,7 +6,7 @@ from typing_extensions import Literal
 
 from raw_reads_processing.config import Config
 from raw_reads_processing.datatypes import Annotation, DeaconSummary, FileName
-from raw_reads_processing.errors import InvalidSubmission
+from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
 
 logger = logging.getLogger(__name__)
 
@@ -72,12 +72,16 @@ def run_deacon_filter(
     )
 
     exit_code = subprocess.run(  # noqa: S603
-        args, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        args,
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        timeout=config.deacon_filter_timeout_seconds,
     ).returncode
     if exit_code != 0:
         message = f"Deacon filter failed with exit code {exit_code}"
         logger.error(message)
-        raise Exception(message)
+        raise ProcessingFailure(message)
     return DeaconSummary.from_json(summary_json_path)
 
 

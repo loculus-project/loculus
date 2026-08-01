@@ -20,6 +20,7 @@ def _config() -> Config:
         log_level="DEBUG",
         s3_request_timeout_seconds=10,
         read_validation_timeout_seconds=10,
+        deacon_filter_timeout_seconds=10,
         deacon_max_host_reads_proportion=0.05,
         deacon_max_host_bp=1000,
     )
