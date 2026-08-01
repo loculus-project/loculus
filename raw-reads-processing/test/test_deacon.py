@@ -92,6 +92,7 @@ def deacon_index(monkeypatch, deacon_server):
         deacon_module, "DEACON_INDEX_PATH", str(FIXTURES_DIR / "deacon.idx")
     )
 
+
 @pytest.mark.usefixtures("mock_downstream", "deacon_index")
 def test_host_reads_above_threshold_is_an_error(tmp_path):
     # 3/4 reads (75%) are reused verbatim from test_small_1.fastq, so they hit
