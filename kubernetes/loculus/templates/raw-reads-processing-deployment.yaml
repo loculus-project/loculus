@@ -53,8 +53,15 @@ spec:
             - name: loculus-raw-reads-processing-config-volume
               mountPath: /config/config.yaml
               subPath: config.yaml
+            - name: deacon-index
+              mountPath: /data
+              readOnly: true
       volumes:
         - name: loculus-raw-reads-processing-config-volume
           configMap:
             name: loculus-raw-reads-processing-config
+        - name: deacon-index
+          image:
+            reference: "{{ $.Values.images.deaconIndex.repository }}:{{ $.Values.images.deaconIndex.tag }}"
+            pullPolicy: "{{ $.Values.images.deaconIndex.pullPolicy }}"
 {{- end }}
