@@ -22,6 +22,7 @@ import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.service.GenerateAccessionFromNumberService
 import org.loculus.backend.service.datauseterms.DataUseTermsDatabaseService
+import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.accessionColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.fastaIdsColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.filesColumn
@@ -58,6 +59,7 @@ class UploadDatabaseService(
     private val compressor: CompressionService,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val dataUseTermsDatabaseService: DataUseTermsDatabaseService,
+    private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val generateAccessionFromNumberService: GenerateAccessionFromNumberService,
     private val auditLogger: AuditLogger,
 ) {
@@ -256,11 +258,15 @@ class UploadDatabaseService(
 
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
             log.debug { "Setting data use terms for submission $uploadId to ${submissionParams.dataUseTerms}" }
-            val accessions = insertionResult.map { it.accession }
-            dataUseTermsDatabaseService.setNewDataUseTerms(
+            groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(
+                submissionParams.groupId,
                 submissionParams.authenticatedUser,
-                accessions,
-                submissionParams.dataUseTerms,
+            )
+            dataUseTermsDatabaseService.setInitialDataUseTerms(
+                authenticatedUser = submissionParams.authenticatedUser,
+                uploadId = uploadId,
+                expectedCount = insertionResult.size,
+                newDataUseTerms = submissionParams.dataUseTerms,
             )
         }
 
