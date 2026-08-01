@@ -64,7 +64,7 @@ def mock_downstream(monkeypatch):
     monkeypatch.setattr(
         process_files,
         "download_file",
-        lambda config, url, save_path: save_path.write_bytes(Path(url).read_bytes()),
+        lambda config, file, save_path: save_path.write_bytes(Path(file.url).read_bytes()),
     )
     monkeypatch.setattr(process_files, "validate_with_readtools", lambda *a, **k: None)
 
