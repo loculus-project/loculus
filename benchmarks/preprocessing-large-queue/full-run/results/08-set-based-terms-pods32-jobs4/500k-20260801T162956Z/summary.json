@@ -1,0 +1,172 @@
+{
+  "result": "COMPLETE",
+  "quality": "VALID",
+  "source": {
+    "id": "b31bda4-6c0737cdb20f",
+    "commit": "b31bda4703571683c0565f4e27840368180732d9",
+    "worktree_hash": "6c0737cdb20f89752578555ff8fa6dd01879de60e7b3506558b5e95c30097eaa",
+    "support_sha": "fb21c7a"
+  },
+  "started_utc": "2026-08-01T16:29:55Z",
+  "finished_utc": "2026-08-01T17:10:46Z",
+  "host": "performance.covid.staging.genspectrum.org",
+  "records": 500000,
+  "input": {
+    "fasta": {
+      "path": "500/500_covid.fasta.zst",
+      "sha256": "2ea74b70c33826881cc3428fcd1596e401642c3dcfb4eae7cb90b86c08f4cbd7"
+    },
+    "metadata": {
+      "path": "500/500_covid.tsv.zst",
+      "sha256": "7f5339189b4a3f7bfac91d79039644b2dbb4a2653359986fcba962be60a52903"
+    },
+    "expected_errors": 497
+  },
+  "configuration": {
+    "backend_replicas": 1,
+    "preprocessing_replicas": 32,
+    "nextclade_jobs": 4,
+    "other_loculus_pods": 0,
+    "memory_limits": {
+      "backend": "3Gi",
+      "database": "2Gi"
+    },
+    "preprocessing_config_sha256": "101783b94cfb8fc19eeb19c6f98d92c96b18fc108c75673eb5b63adf690603c7",
+    "nextclade_dataset": {
+      "tag": "2026-06-16--14-30-45Z",
+      "pathogen_json_sha256": "0d074ed44d1a7285edc2ce9495ab02e5ea5e7bb4b2e704382fae093105542b37",
+      "reference_fasta_sha256": "394b9500b9f80a847f5fe8d30e47022400d8e1bface56721b75367acd3c5b69c"
+    }
+  },
+  "upload": {
+    "seconds": 349.708589,
+    "rows_per_second": 1429.7618523747497
+  },
+  "at_upload_complete": {
+    "processed": 0,
+    "remaining": 500000,
+    "queued": 496800,
+    "active": 3200
+  },
+  "queue_drain": {
+    "seconds": 890,
+    "records": 500000,
+    "rows_per_second": 561.7977528089888
+  },
+  "to_processed": {
+    "seconds": 1240,
+    "processed_ok": 499503,
+    "processed_error": 497,
+    "effective_rows_per_second": 403.2258064516129
+  },
+  "publication": {
+    "approval_seconds": 251,
+    "approved": 499503,
+    "lapis_seconds": 761,
+    "lapis_count": 499503
+  },
+  "evidence": {
+    "resource_samples": 76,
+    "memory_samples": 76,
+    "backend_status_samples": 76,
+    "preprocessing_status_samples": 76
+  },
+  "setup_seconds": 158,
+  "workload_seconds": 2292,
+  "command_seconds": 2451,
+  "backend_memory": {
+    "peak_mib": 1503,
+    "samples": 76
+  },
+  "preprocessing": {
+    "replicas": 32,
+    "ready_min": 32
+  },
+  "restarts": {
+    "backend_start": 0,
+    "backend_end": 0,
+    "backend_delta": 0,
+    "preprocessing_start": 0,
+    "preprocessing_end": 0,
+    "preprocessing_delta": 0
+  },
+  "database_operations": [
+    {
+      "phase": "upload",
+      "operation": "queue_claim",
+      "calls": 11036,
+      "total_exec_time_ms": 34665.281,
+      "rows": 511035
+    },
+    {
+      "phase": "upload",
+      "operation": "tracker",
+      "calls": 1000084,
+      "total_exec_time_ms": 17550.947,
+      "rows": 1000084
+    },
+    {
+      "phase": "upload",
+      "operation": "accession_assignment",
+      "calls": 50,
+      "total_exec_time_ms": 12828.897,
+      "rows": 500000
+    },
+    {
+      "phase": "upload",
+      "operation": "data_use_terms",
+      "calls": 1,
+      "total_exec_time_ms": 3010.93,
+      "rows": 1
+    },
+    {
+      "phase": "upload",
+      "operation": "result_store",
+      "calls": 36,
+      "total_exec_time_ms": 263.495,
+      "rows": 3000
+    },
+    {
+      "phase": "queue_drain",
+      "operation": "result_store",
+      "calls": 4983,
+      "total_exec_time_ms": 88910.883,
+      "rows": 496800
+    },
+    {
+      "phase": "queue_drain",
+      "operation": "queue_claim",
+      "calls": 6301,
+      "total_exec_time_ms": 21465.201,
+      "rows": 6301
+    },
+    {
+      "phase": "queue_drain",
+      "operation": "tracker",
+      "calls": 4968,
+      "total_exec_time_ms": 920.898,
+      "rows": 4968
+    },
+    {
+      "phase": "publication",
+      "operation": "result_store",
+      "calls": 17,
+      "total_exec_time_ms": 6098.028,
+      "rows": 0
+    },
+    {
+      "phase": "publication",
+      "operation": "queue_claim",
+      "calls": 32128,
+      "total_exec_time_ms": 1009.396,
+      "rows": 32128
+    },
+    {
+      "phase": "publication",
+      "operation": "tracker",
+      "calls": 500,
+      "total_exec_time_ms": 95.68,
+      "rows": 500
+    }
+  ]
+}
