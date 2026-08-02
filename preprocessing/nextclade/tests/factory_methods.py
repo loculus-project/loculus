@@ -32,12 +32,18 @@ from loculus_preprocessing.nextclade_annotation import GffAttributes, NextcladeA
 # Default ProcessingContext for tests that don't care about its contents (no INSDC
 # ingest group, no submittedAt). Tests that do care about specific field(s) should use
 # `dataclasses.replace(DEFAULT_TEST_CONTEXT, ...)`.
+# Arbitrary values, the backend is mocked in tests
+TEST_PROCESSING_ATTEMPT_ID = "00000000-0000-0000-0000-000000000001"
+TEST_LEASE_UNTIL = 4_102_444_800
+
 DEFAULT_TEST_CONTEXT = ProcessingContext(
     accession_version="accession.1",
     group_id=2,
     insdc_ingest_group_id=1,
     submitted_at="",
     submission_id="test_submission_id",
+    processing_attempt_id=TEST_PROCESSING_ATTEMPT_ID,
+    lease_until=TEST_LEASE_UNTIL,
 )
 
 # Default ExternalServices for tests that don't care about its contents (no taxonomy
@@ -173,6 +179,7 @@ class ProcessedEntryFactory:
         return ProcessedEntry(
             accession=accession,
             version=1,
+            processingAttemptId=TEST_PROCESSING_ATTEMPT_ID,
             data=ProcessedData(
                 metadata=base_metadata_dict,
                 files=files,
@@ -247,6 +254,10 @@ def verify_processed_entry(
         f"{test_name}: processed entry accessionVersion "
         f"{processed_entry.accession}.{processed_entry.version} "
         f"does not match expected output {expected_output.accession}.{expected_output.version}."
+    )
+    assert processed_entry.processingAttemptId == expected_output.processingAttemptId, (
+        f"{test_name}: processing attempt id {processed_entry.processingAttemptId} "
+        f"does not match expected output {expected_output.processingAttemptId}."
     )
 
     # Check errors

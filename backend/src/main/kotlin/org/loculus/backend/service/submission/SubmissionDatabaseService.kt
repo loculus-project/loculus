@@ -6,10 +6,12 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.minus
+import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.v1.core.ArrayColumnType
 import org.jetbrains.exposed.v1.core.Count
+import org.jetbrains.exposed.v1.core.IntegerColumnType
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.LongColumnType
 import org.jetbrains.exposed.v1.core.Op
@@ -23,28 +25,64 @@ import org.jetbrains.exposed.v1.core.booleanParam
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.java.UUIDColumnType
 import org.jetbrains.exposed.v1.core.less
+import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.core.not
-import org.jetbrains.exposed.v1.core.notExists
 import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.core.plus
 import org.jetbrains.exposed.v1.core.statements.StatementType
 import org.jetbrains.exposed.v1.core.stringLiteral
 import org.jetbrains.exposed.v1.core.stringParam
-import org.jetbrains.exposed.v1.core.vendors.ForUpdateOption.PostgreSQL.ForUpdate
-import org.jetbrains.exposed.v1.core.vendors.ForUpdateOption.PostgreSQL.MODE
 import org.jetbrains.exposed.v1.datetime.KotlinLocalDateTimeColumnType
 import org.jetbrains.exposed.v1.datetime.dateTimeParam
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.insertIgnore
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.json.extract
+import org.loculus.backend.types.AccessionVersion
+import org.loculus.backend.types.AccessionVersionInterface
+import org.loculus.backend.types.AccessionVersionSubmittedMetadata
+import org.loculus.backend.types.ApproveDataScope
+import org.loculus.backend.types.DataUseTerms
+import org.loculus.backend.types.DataUseTermsType
+import org.loculus.backend.types.DeleteSequenceScope
+import org.loculus.backend.types.EditedSequenceEntryData
+import org.loculus.backend.types.ExternalSubmittedData
+import org.loculus.backend.types.FileCategory
+import org.loculus.backend.types.FileIdAndMaybeReleasedAt
+import org.loculus.backend.types.FileIdAndNameAndReadUrl
+import org.loculus.backend.types.GeneticSequence
+import org.loculus.backend.types.GetSequenceResponse
+import org.loculus.backend.types.Organism
+import org.loculus.backend.types.PreprocessingAnnotation
+import org.loculus.backend.types.PreprocessingStatus.IN_PROCESSING
+import org.loculus.backend.types.PreprocessingStatus.PROCESSED
+import org.loculus.backend.types.PreprocessingStatus.UNPROCESSED
+import org.loculus.backend.types.ProcessedData
+import org.loculus.backend.types.ProcessingResult
+import org.loculus.backend.types.ProcessingResult.HAS_ERRORS
+import org.loculus.backend.types.ProcessingResult.HAS_WARNINGS
+import org.loculus.backend.types.ProcessingResult.NO_ISSUES
+import org.loculus.backend.types.SequenceEntryStatus
+import org.loculus.backend.types.SequenceEntryVersionToEdit
+import org.loculus.backend.types.Status
+import org.loculus.backend.types.Status.APPROVED_FOR_RELEASE
+import org.loculus.backend.types.SubmissionIdMapping
+import org.loculus.backend.types.SubmittedContentWithFileUrls
+import org.loculus.backend.types.SubmittedData
+import org.loculus.backend.types.SubmittedDataDownloadEntry
+import org.loculus.backend.types.SubmittedProcessedData
+import org.loculus.backend.types.UnprocessedData
+import org.loculus.backend.api.fileIds
+import org.loculus.backend.api.getFileId
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BackendSpringProperty
@@ -68,41 +106,9 @@ import org.loculus.backend.service.submission.SequenceEntriesTable.groupIdColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.versionColumn
 import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
 import org.loculus.backend.service.submission.dbtables.ExternalMetadataTable
-import org.loculus.backend.types.AccessionVersion
-import org.loculus.backend.types.AccessionVersionInterface
-import org.loculus.backend.types.AccessionVersionSubmittedMetadata
-import org.loculus.backend.types.ApproveDataScope
-import org.loculus.backend.types.DataUseTerms
-import org.loculus.backend.types.DataUseTermsType
-import org.loculus.backend.types.DeleteSequenceScope
-import org.loculus.backend.types.EditedSequenceEntryData
-import org.loculus.backend.types.ExternalSubmittedData
-import org.loculus.backend.types.FileCategory
-import org.loculus.backend.types.FileIdAndMaybeReleasedAt
-import org.loculus.backend.types.FileIdAndNameAndReadUrl
-import org.loculus.backend.types.GeneticSequence
-import org.loculus.backend.types.GetSequenceResponse
-import org.loculus.backend.types.Organism
-import org.loculus.backend.types.PreprocessingAnnotation
-import org.loculus.backend.types.PreprocessingStatus.IN_PROCESSING
-import org.loculus.backend.types.PreprocessingStatus.PROCESSED
-import org.loculus.backend.types.ProcessedData
-import org.loculus.backend.types.ProcessingResult
-import org.loculus.backend.types.ProcessingResult.HAS_ERRORS
-import org.loculus.backend.types.ProcessingResult.HAS_WARNINGS
-import org.loculus.backend.types.ProcessingResult.NO_ISSUES
-import org.loculus.backend.types.SequenceEntryStatus
-import org.loculus.backend.types.SequenceEntryVersionToEdit
-import org.loculus.backend.types.Status
-import org.loculus.backend.types.Status.APPROVED_FOR_RELEASE
-import org.loculus.backend.types.SubmissionIdMapping
-import org.loculus.backend.types.SubmittedContentWithFileUrls
-import org.loculus.backend.types.SubmittedData
-import org.loculus.backend.types.SubmittedDataDownloadEntry
-import org.loculus.backend.types.SubmittedProcessedData
-import org.loculus.backend.types.UnprocessedData
 import org.loculus.backend.types.fileIds
 import org.loculus.backend.types.getFileId
+import org.loculus.backend.service.submission.dbtables.PreprocessingQueueVersionsTable
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.Version
@@ -114,6 +120,7 @@ import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.util.Locale
+import java.util.UUID
 import kotlin.time.Instant
 
 private val log = KotlinLogging.logger { }
@@ -139,6 +146,7 @@ class SubmissionDatabaseService(
     private val submissionMetrics: SubmissionMetrics,
     // A whole batch is serialized in memory before it is stored, so raising this multiplies peak heap.
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
+    @Value("\${${BackendSpringProperty.STALE_AFTER_SECONDS}}") private val processingLeaseDurationSeconds: Long,
 ) {
     private var lastPreprocessedDataUpdate: String? = null
 
@@ -174,15 +182,88 @@ class SubmissionDatabaseService(
             .associate { it[table.organismColumn] to it[table.versionColumn] }
     }
 
+    // The first caller of a pipeline version populates its queue.
+    private fun initializePreprocessingQueue(organism: Organism, pipelineVersion: Long) {
+        val queueVersions = PreprocessingQueueVersionsTable
+        val isRegistered = !queueVersions
+            .selectAll()
+            .where {
+                (queueVersions.organismColumn eq organism.name) and
+                    (queueVersions.pipelineVersionColumn eq pipelineVersion)
+            }
+            .empty()
+        if (isRegistered) {
+            return
+        }
+
+        // Blocks concurrent inserts, so every entry is either seen by the backfill or queued by the trigger.
+        TransactionManager.current().exec("LOCK TABLE sequence_entries IN SHARE ROW EXCLUSIVE MODE")
+        val currentPipelineVersion = getCurrentProcessingPipelineVersion(organism)
+        if (pipelineVersion < currentPipelineVersion) {
+            throw UnprocessableEntityException(
+                "The processing pipeline version $pipelineVersion is not accepted anymore. " +
+                    "The current pipeline version is $currentPipelineVersion.",
+            )
+        }
+        val registered = queueVersions.insertIgnore {
+            it[organismColumn] = organism.name
+            it[pipelineVersionColumn] = pipelineVersion
+            it[initializedAtColumn] = dateProvider.getCurrentDateTime()
+        }.insertedCount == 1
+        if (!registered) {
+            return
+        }
+
+        TransactionManager.current().exec(
+            """
+            INSERT INTO $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME (
+                accession, version, pipeline_version, organism, processing_status
+            )
+            SELECT accession, version, ?, organism, '${UNPROCESSED.name}'
+            FROM sequence_entries
+            WHERE organism = ? AND NOT is_revocation
+            ON CONFLICT (accession, version, pipeline_version) DO NOTHING
+            """.trimIndent(),
+            args = listOf(
+                LongColumnType() to pipelineVersion,
+                VarCharColumnType() to organism.name,
+            ),
+            explicitStatementType = StatementType.INSERT,
+        )
+    }
+
     private fun fetchUnprocessedEntriesAndUpdateToInProcessing(
         organism: Organism,
         numberOfSequenceEntries: Int,
         pipelineVersion: Long,
     ): Sequence<UnprocessedData> {
+        initializePreprocessingQueue(organism, pipelineVersion)
+
         val table = SequenceEntriesTable
         val preprocessing = SequenceEntriesPreprocessedDataTable
+        // One attempt id per request. Results must be submitted with it.
+        val processingAttemptId = UUID.randomUUID()
+        val claimedAt = dateProvider.getCurrentInstant()
+        val leaseUntil = claimedAt.plus(processingLeaseDurationSeconds, DateTimeUnit.SECOND, DateProvider.timeZone)
 
-        return table
+        val claimedCount = claimPreprocessingJobs(
+            organism,
+            pipelineVersion,
+            numberOfSequenceEntries,
+            processingAttemptId,
+            claimedAt.toLocalDateTime(DateProvider.timeZone),
+            leaseUntil.toLocalDateTime(DateProvider.timeZone),
+        )
+        log.info { "Claimed $claimedCount entries for processing attempt $processingAttemptId" }
+        if (claimedCount == 0) {
+            return emptySequence()
+        }
+
+        return preprocessing
+            .join(table, JoinType.INNER) {
+                (preprocessing.accessionColumn eq table.accessionColumn) and
+                    (preprocessing.versionColumn eq table.versionColumn)
+            }
             .select(
                 table.accessionColumn,
                 table.versionColumn,
@@ -192,108 +273,89 @@ class SubmissionDatabaseService(
                 table.groupIdColumn,
                 table.submittedAtTimestampColumn,
             )
-            .where {
-                table.organismIs(organism) and
-                    not(table.isRevocationColumn) and
-                    notExists(
-                        preprocessing.selectAll().where {
-                            (table.accessionColumn eq preprocessing.accessionColumn) and
-                                (table.versionColumn eq preprocessing.versionColumn) and
-                                (preprocessing.pipelineVersionColumn eq pipelineVersion)
-                        },
-                    )
-            }
+            .where { preprocessing.processingAttemptIdColumn eq processingAttemptId }
             .orderBy(table.accessionColumn)
-            .limit(numberOfSequenceEntries)
-            .forUpdate(ForUpdate(mode = MODE.SKIP_LOCKED))
             .fetchSize(streamBatchSize)
             .asSequence()
-            .chunked(streamBatchSize)
-            .map { chunk ->
-                val chunkOfUnprocessedData = chunk.map {
-                    val submittedData = compressionService.decompressSequencesInSubmittedData(
-                        it[table.submittedDataColumn]!!,
-                    )
-                    val submittedDataWithFileUrls = SubmittedContentWithFileUrls(
-                        submittedData.metadata,
-                        submittedData.unalignedNucleotideSequences,
-                        submittedData.files?.let {
-                            it.mapValues {
-                                it.value.map { f ->
-                                    val presignedUrl = s3Service.createUrlToReadPrivateFile(f.fileId)
-                                    FileIdAndNameAndReadUrl(f.fileId, f.name, presignedUrl)
-                                }
+            .map {
+                val submittedData = compressionService.decompressSequencesInSubmittedData(
+                    it[table.submittedDataColumn]!!,
+                )
+                val submittedDataWithFileUrls = SubmittedContentWithFileUrls(
+                    submittedData.metadata,
+                    submittedData.unalignedNucleotideSequences,
+                    submittedData.files?.let {
+                        it.mapValues {
+                            it.value.map { f ->
+                                val presignedUrl = s3Service.createUrlToReadPrivateFile(f.fileId)
+                                FileIdAndNameAndReadUrl(f.fileId, f.name, presignedUrl)
                             }
-                        },
-                    )
-                    UnprocessedData(
-                        accession = it[table.accessionColumn],
-                        version = it[table.versionColumn],
-                        data = submittedDataWithFileUrls,
-                        submissionId = it[table.submissionIdColumn],
-                        submitter = it[table.submitterColumn],
-                        groupId = it[table.groupIdColumn],
-                        submittedAt = it[table.submittedAtTimestampColumn].toTimestamp(),
-                    )
-                }
-                updateStatusToProcessing(chunkOfUnprocessedData, pipelineVersion)
+                        }
+                    },
+                )
+                UnprocessedData(
+                    accession = it[table.accessionColumn],
+                    version = it[table.versionColumn],
+                    processingAttemptId = processingAttemptId,
+                    leaseUntil = leaseUntil.epochSeconds,
+                    data = submittedDataWithFileUrls,
+                    submissionId = it[table.submissionIdColumn],
+                    submitter = it[table.submitterColumn],
+                    groupId = it[table.groupIdColumn],
+                    submittedAt = it[table.submittedAtTimestampColumn].toTimestamp(),
+                )
             }
-            .flatten()
     }
 
-    private fun updateStatusToProcessing(
-        sequenceEntries: List<UnprocessedData>,
+    // Claims the queue head in one statement. Rows held by other workers are skipped.
+    private fun claimPreprocessingJobs(
+        organism: Organism,
         pipelineVersion: Long,
-    ): List<UnprocessedData> {
-        log.info { "updating status to processing. Number of sequence entries: ${sequenceEntries.size}" }
-
-        if (sequenceEntries.isEmpty()) {
-            return emptyList()
-        }
-
-        // One statement per batch, so the per statement tracker trigger fires once per batch
-        // rather than once per claimed entry. RETURNING reports exactly the rows this claim
-        // inserted, so entries another pipeline already holds are simply absent.
+        numberOfSequenceEntries: Int,
+        processingAttemptId: UUID,
+        claimedAt: LocalDateTime,
+        leaseUntil: LocalDateTime,
+    ): Int {
         val sql = """
-            INSERT INTO $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME (
-                accession,
-                version,
-                pipeline_version,
-                processing_status,
-                started_processing_at
+            WITH candidates AS (
+                SELECT accession, version, pipeline_version
+                FROM $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME
+                WHERE organism = ?
+                  AND pipeline_version = ?
+                  AND processing_status = '${UNPROCESSED.name}'
+                ORDER BY accession, version
+                LIMIT ?
+                FOR UPDATE SKIP LOCKED
+            ),
+            claimed AS (
+                UPDATE $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME queue
+                SET processing_status = '${IN_PROCESSING.name}',
+                    processing_attempt_id = ?,
+                    started_processing_at = ?,
+                    lease_until = ?
+                FROM candidates
+                WHERE queue.accession = candidates.accession
+                  AND queue.version = candidates.version
+                  AND queue.pipeline_version = candidates.pipeline_version
+                RETURNING queue.accession
             )
-            SELECT claimed.accession, claimed.version, ?::bigint, '${IN_PROCESSING.name}', ?::timestamp
-            FROM unnest(?::text[], ?::bigint[]) AS claimed(accession, version)
-            ON CONFLICT (accession, version, pipeline_version) DO NOTHING
-            RETURNING accession, version
+            SELECT COUNT(*) AS claimed_count FROM claimed
         """.trimIndent()
 
-        val claimedKeys = TransactionManager.current().exec(
+        return TransactionManager.current().exec(
             sql,
             args = listOf(
+                VarCharColumnType() to organism.name,
                 LongColumnType() to pipelineVersion,
-                KotlinLocalDateTimeColumnType() to dateProvider.getCurrentDateTime(),
-                ArrayColumnType<String, List<String>>(TextColumnType()) to sequenceEntries.map { it.accession },
-                ArrayColumnType<Long, List<Long>>(LongColumnType()) to sequenceEntries.map { it.version },
+                IntegerColumnType() to numberOfSequenceEntries,
+                UUIDColumnType() to processingAttemptId,
+                KotlinLocalDateTimeColumnType() to claimedAt,
+                KotlinLocalDateTimeColumnType() to leaseUntil,
             ),
-            // SELECT so that Exposed runs executeQuery and the RETURNING rows can be read.
             explicitStatementType = StatementType.SELECT,
         ) { resultSet ->
-            buildSet {
-                while (resultSet.next()) {
-                    add(AccessionVersion(resultSet.getString("accession"), resultSet.getLong("version")))
-                }
-            }
-        }.orEmpty()
-
-        if (claimedKeys.size < sequenceEntries.size) {
-            val skippedCount = sequenceEntries.size - claimedKeys.size
-            log.warn {
-                "$skippedCount entries were already claimed by another pipeline and will be skipped."
-            }
-        }
-
-        return sequenceEntries.filter { AccessionVersion(it.accession, it.version) in claimedKeys }
+            if (resultSet.next()) resultSet.getInt("claimed_count") else 0
+        } ?: 0
     }
 
     fun updateProcessedData(inputStream: InputStream, organism: Organism, pipelineVersion: Long) {
@@ -329,7 +391,7 @@ class SubmissionDatabaseService(
                     prepareProcessedResultForStorage(it, organism)
                 }
                 rejectDuplicates(storedResults, seenAccessionVersions)
-                storeProcessedResults(storedResults, pipelineVersion)
+                storeProcessedResults(storedResults, organism, pipelineVersion)
 
                 submittedProcessedDataBatch.forEach { submittedProcessedData ->
                     processedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
@@ -532,9 +594,13 @@ class SubmissionDatabaseService(
      * Stores a whole batch of results in one statement. Writing them one by one made every
      * record fire the per statement tracker trigger, and all workers then queued on the single
      * row of table_update_tracker. One statement per batch means that trigger now fires once per
-     * batch, and it keeps deriving the organism from sequence_entries itself.
+     * batch. A result is only stored for the attempt that holds the lease.
      */
-    private fun storeProcessedResults(storedResults: List<StoredProcessedResult>, pipelineVersion: Long) {
+    private fun storeProcessedResults(
+        storedResults: List<StoredProcessedResult>,
+        organism: Organism,
+        pipelineVersion: Long,
+    ) {
         if (storedResults.isEmpty()) {
             return
         }
@@ -545,13 +611,17 @@ class SubmissionDatabaseService(
                 processed_data = submitted.processed_data::jsonb,
                 errors = submitted.errors::jsonb,
                 warnings = submitted.warnings::jsonb,
-                finished_processing_at = ?::timestamp
-            FROM unnest(?::text[], ?::bigint[], ?::text[], ?::text[], ?::text[])
-                AS submitted(accession, version, processed_data, errors, warnings)
+                finished_processing_at = ?::timestamp,
+                processing_attempt_id = NULL,
+                lease_until = NULL
+            FROM unnest(?::text[], ?::bigint[], ?::uuid[], ?::text[], ?::text[], ?::text[])
+                AS submitted(accession, version, processing_attempt_id, processed_data, errors, warnings)
             WHERE preprocessed.accession = submitted.accession
               AND preprocessed.version = submitted.version
               AND preprocessed.pipeline_version = ?::bigint
+              AND preprocessed.organism = ?
               AND preprocessed.processing_status = '${IN_PROCESSING.name}'
+              AND preprocessed.processing_attempt_id = submitted.processing_attempt_id
             RETURNING preprocessed.accession, preprocessed.version
         """.trimIndent()
 
@@ -563,10 +633,12 @@ class SubmissionDatabaseService(
                 KotlinLocalDateTimeColumnType() to dateProvider.getCurrentDateTime(),
                 textArrayColumnType to storedResults.map { it.submitted.accession },
                 longArrayColumnType to storedResults.map { it.submitted.version },
+                textArrayColumnType to storedResults.map { it.submitted.processingAttemptId.toString() },
                 textArrayColumnType to storedResults.map { serialize(it.processedData) },
                 textArrayColumnType to storedResults.map { serialize(it.errors) },
                 textArrayColumnType to storedResults.map { serialize(it.warnings) },
                 LongColumnType() to pipelineVersion,
+                VarCharColumnType() to organism.name,
             ),
             // SELECT so that Exposed runs executeQuery and the RETURNING rows can be read.
             explicitStatementType = StatementType.SELECT,
@@ -582,7 +654,7 @@ class SubmissionDatabaseService(
             AccessionVersion(it.submitted.accession, it.submitted.version) !in updated
         }
         if (failedResult != null) {
-            throwInsertFailedException(failedResult.submitted, pipelineVersion)
+            throwInsertFailedException(failedResult.submitted, organism, pipelineVersion)
         }
     }
 
@@ -674,30 +746,48 @@ class SubmissionDatabaseService(
         }
     }
 
-    private fun throwInsertFailedException(submittedProcessedData: SubmittedProcessedData, pipelineVersion: Long) {
+    private fun throwInsertFailedException(
+        submittedProcessedData: SubmittedProcessedData,
+        organism: Organism,
+        pipelineVersion: Long,
+    ) {
         val preprocessing = SequenceEntriesPreprocessedDataTable
-        val selectedSequenceEntries = preprocessing
+        val rows = preprocessing
             .select(
-                preprocessing.accessionColumn,
-                preprocessing.versionColumn,
                 preprocessing.processingStatusColumn,
                 preprocessing.pipelineVersionColumn,
+                preprocessing.organismColumn,
+                preprocessing.processingAttemptIdColumn,
             )
             .where { preprocessing.accessionVersionEquals(submittedProcessedData) }
+            .toList()
 
         val accessionVersion = submittedProcessedData.displayAccessionVersion()
-        if (selectedSequenceEntries.all {
-                it[preprocessing.processingStatusColumn] != IN_PROCESSING.name
-            }
-        ) {
+        if (rows.none { it[preprocessing.processingStatusColumn] == IN_PROCESSING.name }) {
             throw UnprocessableEntityException(
                 "Accession version $accessionVersion does not exist or is not awaiting any processing results",
             )
         }
-        if (selectedSequenceEntries.all { it[preprocessing.pipelineVersionColumn] != pipelineVersion }) {
+        val rowsOfVersion = rows.filter { it[preprocessing.pipelineVersionColumn] == pipelineVersion }
+        if (rowsOfVersion.none { it[preprocessing.processingStatusColumn] == IN_PROCESSING.name }) {
             throw UnprocessableEntityException(
                 "Accession version $accessionVersion is not awaiting processing results of version " +
                     "$pipelineVersion (anymore)",
+            )
+        }
+        if (rowsOfVersion.none { it[preprocessing.organismColumn] == organism.name }) {
+            throw UnprocessableEntityException(
+                "Accession version $accessionVersion is not awaiting processing results for " +
+                    "organism ${organism.name}",
+            )
+        }
+        if (rowsOfVersion.none {
+                it[preprocessing.processingAttemptIdColumn] == submittedProcessedData.processingAttemptId
+            }
+        ) {
+            throw UnprocessableEntityException(
+                "Processing attempt ${submittedProcessedData.processingAttemptId} does not own " +
+                    "accession version $accessionVersion",
             )
         }
         throw IllegalStateException(
@@ -1320,9 +1410,8 @@ class SubmissionDatabaseService(
             it[archiveOfSubmittedDataColumn] = compressedEditedSequenceEntryData
         }
 
-        SequenceEntriesPreprocessedDataTable.deleteWhere {
-            accessionVersionEquals(editedSequenceEntryData)
-        }
+        // The row is the queue entry, so it is reset rather than deleted.
+        returnToQueue(SequenceEntriesPreprocessedDataTable.accessionVersionEquals(editedSequenceEntryData))
 
         auditLogger.log(
             authenticatedUser.username,
@@ -1541,29 +1630,27 @@ class SubmissionDatabaseService(
             }
     }
 
-    fun cleanUpStaleSequencesInProcessing(timeToStaleInSeconds: Long) {
-        val staleDateTime = dateProvider.getCurrentInstant()
-            .minus(timeToStaleInSeconds, DateTimeUnit.SECOND, DateProvider.timeZone)
-            .toLocalDateTime(DateProvider.timeZone)
+    // Expired leases return to the queue. A late result of the old attempt is rejected on submit.
+    fun cleanUpStaleSequencesInProcessing() {
+        val numberRequeued = returnToQueue(
+            SequenceEntriesPreprocessedDataTable.statusIs(IN_PROCESSING) and
+                (SequenceEntriesPreprocessedDataTable.leaseUntilColumn lessEq dateProvider.getCurrentDateTime()),
+        )
+        log.info { "Returned $numberRequeued stale preprocessing jobs to the queue" }
+    }
 
-        // Check if there are any stale sequences before attempting to delete
-        val staleSequencesExist = SequenceEntriesPreprocessedDataTable
-            .selectAll()
-            .where {
-                SequenceEntriesPreprocessedDataTable.statusIs(IN_PROCESSING) and
-                    (SequenceEntriesPreprocessedDataTable.startedProcessingAtColumn.less(staleDateTime))
-            }
-            .limit(1)
-            .count() > 0
-
-        if (staleSequencesExist) {
-            val numberDeleted = SequenceEntriesPreprocessedDataTable.deleteWhere {
-                statusIs(IN_PROCESSING) and startedProcessingAtColumn.less(staleDateTime)
-            }
-            log.info { "Cleaned up $numberDeleted stale sequences in processing" }
-        } else {
-            log.info { "No stale sequences found for cleanup" }
-        }
+    // Shared reset for expired leases and edits.
+    private fun returnToQueue(condition: Op<Boolean>) = SequenceEntriesPreprocessedDataTable.update(
+        where = { condition },
+    ) {
+        it[processingStatusColumn] = UNPROCESSED.name
+        it[processingAttemptIdColumn] = null
+        it[leaseUntilColumn] = null
+        it[startedProcessingAtColumn] = null
+        it[finishedProcessingAtColumn] = null
+        it[processedDataColumn] = null
+        it[errorsColumn] = null
+        it[warningsColumn] = null
     }
 
     fun useNewerProcessingPipelineIfPossible(): Map<String, Long?> {
@@ -1584,11 +1671,12 @@ class SubmissionDatabaseService(
             return emptyMap()
         }
 
-        lastPreprocessedDataUpdate = latestUpdate
-
-        return SequenceEntriesTable.distinctOrganisms().associateWith { organismName ->
+        val newVersions = SequenceEntriesTable.distinctOrganisms().associateWith { organismName ->
             useNewerProcessingPipelineIfPossible(organismName)
         }
+        // Set after the loop, so a failed run is retried.
+        lastPreprocessedDataUpdate = latestUpdate
+        return newVersions
     }
 
     /**
@@ -1598,13 +1686,7 @@ class SubmissionDatabaseService(
     fun cleanUpOutdatedPreprocessingData(organism: String, earliestVersionToKeep: Long) {
         val sql = """
         DELETE FROM sequence_entries_preprocessed_data
-        WHERE pipeline_version < ? AND 
-        (accession, version) IN (
-            SELECT sep.accession, sep.version
-            FROM sequence_entries_preprocessed_data sep
-            JOIN sequence_entries se ON sep.accession = se.accession AND sep.version = se.version
-            WHERE se.organism = ?
-        )
+        WHERE pipeline_version < ? AND organism = ?
         """.trimIndent()
         transaction {
             exec(
@@ -1633,11 +1715,16 @@ class SubmissionDatabaseService(
 
             if (pipelineNeedsUpdate) {
                 log.info { "Updating current processing pipeline to newer version: $newVersion" }
+                // Blocks inserts, so nothing is queued for the version retired below.
+                exec("LOCK TABLE sequence_entries IN SHARE ROW EXCLUSIVE MODE")
                 CurrentProcessingPipelineTable.updatePipelineVersion(
                     organismName,
                     newVersion,
                     dateProvider.getCurrentDateTime(),
                 )
+                PreprocessingQueueVersionsTable.deleteWhere {
+                    (organismColumn eq organismName) and (pipelineVersionColumn less newVersion)
+                }
             }
 
             val logMessage = "Started using results from new processing pipeline: version $newVersion"
