@@ -51,7 +51,6 @@ Returns a stream of NDJSON and sets the status of each accession version to 'IN_
 """
 const val EXTRACT_UNPROCESSED_DATA_RESPONSE_DESCRIPTION = """
 Sequence data as input for the preprocessing pipeline.
-The schema is to be understood per line of the NDJSON stream.
 """
 
 const val EXTRACT_UNPROCESSED_DATA_ERROR_RESPONSE = """

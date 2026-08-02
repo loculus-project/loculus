@@ -13,6 +13,8 @@ from loculus_preprocessing.datatypes import (
 from loculus_preprocessing.prepro import process_all
 
 HOST_PROCESSING_CONFIG = "tests/host_processing_config.yaml"
+TEST_PROCESSING_ATTEMPT_ID = "00000000-0000-0000-0000-000000000001"
+TEST_LEASE_UNTIL = 4_102_444_800
 
 
 @pytest.fixture(autouse=True)
@@ -30,6 +32,8 @@ def make_response(status_code, json_data):
 def make_entry(metadata: dict, group_id: int) -> UnprocessedEntry:
     return UnprocessedEntry(
         accessionVersion="LOC_01.1",
+        processingAttemptId=TEST_PROCESSING_ATTEMPT_ID,
+        leaseUntil=TEST_LEASE_UNTIL,
         data=UnprocessedData(
             submitter="test_submitter",
             submissionId="test_submission_id",

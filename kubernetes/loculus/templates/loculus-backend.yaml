@@ -9,6 +9,8 @@ metadata:
     argocd.argoproj.io/sync-options: Replace=true
 spec:
   replicas: {{$.Values.replicas.backend}}
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: loculus

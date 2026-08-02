@@ -18,10 +18,12 @@ import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.controller.DUMMY_ORGANISM_MAIN_SEQUENCE
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
+import java.util.UUID
 
 const val MAIN_SEGMENT = "main"
 const val SOME_LONG_GENE = "someLongGene"
 const val SOME_SHORT_GENE = "someShortGene"
+val TEST_PROCESSING_ATTEMPT_ID: UUID = UUID(0, 0)
 
 val defaultProcessedData = ProcessedData(
     metadata = mapOf(
@@ -126,6 +128,7 @@ val defaultProcessedDataWithoutSequences = ProcessedData<GeneticSequence>(
 private val defaultSuccessfulSubmittedData = SubmittedProcessedData(
     accession = "If a test result shows this, processed data was not prepared correctly.",
     version = 1,
+    processingAttemptId = TEST_PROCESSING_ATTEMPT_ID,
     data = defaultProcessedData,
     errors = null,
     warnings = null,

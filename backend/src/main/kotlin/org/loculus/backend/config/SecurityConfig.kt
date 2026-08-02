@@ -44,6 +44,7 @@ class SecurityConfig {
 
     private val endpointsForPreprocessingPipeline = arrayOf(
         "/*/extract-unprocessed-data",
+        "/*/renew-processing-lease",
         "/*/submit-processed-data",
     )
 

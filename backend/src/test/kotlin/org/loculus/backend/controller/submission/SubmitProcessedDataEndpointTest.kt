@@ -284,6 +284,22 @@ class SubmitProcessedDataEndpointTest(
     }
 
     @Test
+    fun `GIVEN a mixed batch contains an outdated attempt THEN the whole batch is rolled back`() {
+        val claims = prepareExtractedSequencesInDatabase(numberOfSequenceEntries = 2)
+        val validResult = PreparedProcessedData.successfullyProcessed(claims[0].accession)
+            .copy(processingAttemptId = claims[0].processingAttemptId)
+        val outdatedResult = PreparedProcessedData.successfullyProcessed(claims[1].accession)
+            .copy(processingAttemptId = UUID.randomUUID())
+
+        submissionControllerClient.submitProcessedData(validResult, outdatedResult)
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("\$.detail", containsString("does not own accession version")))
+
+        convenienceClient.getSequenceEntry(claims[0]).assertStatusIs(Status.IN_PROCESSING)
+        convenienceClient.getSequenceEntry(claims[1]).assertStatusIs(Status.IN_PROCESSING)
+    }
+
+    @Test
     fun `WHEN I submit data for a non-existent accession version THEN refuses update with unprocessable entity`() {
         val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
 
