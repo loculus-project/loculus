@@ -22,6 +22,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.lessEq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
+import org.jetbrains.exposed.sql.TextColumnType
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.UUIDColumnType
 import org.jetbrains.exposed.sql.VarCharColumnType
@@ -59,6 +60,7 @@ import org.loculus.backend.api.FileIdAndNameAndReadUrl
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
+import org.loculus.backend.api.PreprocessingAnnotation
 import org.loculus.backend.api.PreprocessingStatus.IN_PROCESSING
 import org.loculus.backend.api.PreprocessingStatus.PROCESSED
 import org.loculus.backend.api.PreprocessingStatus.UNPROCESSED
@@ -95,6 +97,7 @@ import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GroupEntity
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
+import org.loculus.backend.service.serialize
 import org.loculus.backend.service.submission.SequenceEntriesTable.accessionColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.groupIdColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.versionColumn
@@ -116,6 +119,7 @@ import java.util.UUID
 import kotlin.time.Instant
 
 private val log = KotlinLogging.logger { }
+private const val STORED_RESULT_PARAMETERS_PER_ROW = 6
 
 @Service
 @Transactional
@@ -416,19 +420,24 @@ class SubmissionDatabaseService(
                 )
                 validateFilesBelongToSubmittingGroups(filesToValidate)
 
-                submittedProcessedDataBatch.forEach { submittedProcessedData ->
-                    val processingResult = submittedProcessedData.processingResult()
+                val storedResults = submittedProcessedDataBatch.map {
+                    prepareProcessedResultForStorage(it, organism)
+                }
+                updateProcessedDataBatch(
+                    storedResults,
+                    organism,
+                    pipelineVersion,
+                    resultSubmissionStartedAt,
+                )
 
-                    insertProcessedData(
-                        submittedProcessedData,
-                        organism,
-                        pipelineVersion,
-                        resultSubmissionStartedAt,
-                    )
+                submittedProcessedDataBatch.forEach { submittedProcessedData ->
                     processedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
-                    processingResultCounts.merge(processingResult, 1, Int::plus)
+                    processingResultCounts.merge(submittedProcessedData.processingResult(), 1, Int::plus)
                 }
             }
+        }
+        if (processedAccessionVersions.isNotEmpty()) {
+            markPreprocessedDataUpdated(organism, pipelineVersion)
         }
 
         if (processedFiles.isNotEmpty()) {
@@ -577,12 +586,17 @@ class SubmissionDatabaseService(
         }
     }
 
-    private fun insertProcessedData(
+    private data class StoredProcessedResult(
+        val submitted: SubmittedProcessedData,
+        val processedData: ProcessedData<CompressedSequence>,
+        val errors: List<PreprocessingAnnotation>,
+        val warnings: List<PreprocessingAnnotation>,
+    )
+
+    private fun prepareProcessedResultForStorage(
         submittedProcessedData: SubmittedProcessedData,
         organism: Organism,
-        pipelineVersion: Long,
-        resultSubmissionStartedAt: LocalDateTime,
-    ) {
+    ): StoredProcessedResult {
         val submittedErrors = submittedProcessedData.errors.orEmpty()
         val submittedWarnings = submittedProcessedData.warnings.orEmpty()
         val processedData = when {
@@ -590,36 +604,154 @@ class SubmissionDatabaseService(
             else -> submittedProcessedData.data // No need to validate if there are errors, can't be released anyway
         }
 
-        val table = SequenceEntriesPreprocessedDataTable
-        val numberInserted =
-            table.update(
-                where = {
-                    table.accessionVersionEquals(submittedProcessedData) and
-                        table.statusIs(IN_PROCESSING) and
-                        (table.pipelineVersionColumn eq pipelineVersion) and
-                        (table.organismColumn eq organism.name) and
-                        (table.processingAttemptIdColumn eq submittedProcessedData.processingAttemptId) and
-                        (table.leaseUntilColumn greater resultSubmissionStartedAt)
-                },
-            ) {
-                it[processingStatusColumn] = PROCESSED.name
-                it[processedDataColumn] =
-                    processedDataPostprocessor.prepareForStorage(processedData, organism)
-                it[errorsColumn] = submittedErrors
-                it[warningsColumn] = submittedWarnings
-                it[finishedProcessingAtColumn] = dateProvider.getCurrentDateTime()
-                it[processingAttemptIdColumn] = null
-                it[leaseUntilColumn] = null
-            }
+        return StoredProcessedResult(
+            submitted = submittedProcessedData,
+            processedData = processedDataPostprocessor.prepareForStorage(processedData, organism),
+            errors = submittedErrors,
+            warnings = submittedWarnings,
+        )
+    }
 
-        if (numberInserted != 1) {
+    private fun updateProcessedDataBatch(
+        storedResults: List<StoredProcessedResult>,
+        organism: Organism,
+        pipelineVersion: Long,
+        resultSubmissionStartedAt: LocalDateTime,
+    ) {
+        if (storedResults.isEmpty()) {
+            return
+        }
+
+        val finishedAt = dateProvider.getCurrentDateTime()
+        val duplicate = storedResults
+            .groupBy { AccessionVersion(it.submitted.accession, it.submitted.version) }
+            .entries
+            .firstOrNull { it.value.size > 1 }
+        if (duplicate != null) {
+            throw BadRequestException(
+                "Processed result batch contains duplicate accession version " +
+                    duplicate.key.displayAccessionVersion(),
+            )
+        }
+
+        val maximumRowsPerStatement =
+            (org.loculus.backend.utils.DatabaseConstants.POSTGRESQL_PARAMETER_LIMIT - 10) /
+                STORED_RESULT_PARAMETERS_PER_ROW
+        storedResults.chunked(maximumRowsPerStatement).forEach { chunk ->
+            updateProcessedDataChunk(
+                chunk,
+                organism,
+                pipelineVersion,
+                finishedAt,
+                resultSubmissionStartedAt,
+            )
+        }
+    }
+
+    private fun updateProcessedDataChunk(
+        storedResults: List<StoredProcessedResult>,
+        organism: Organism,
+        pipelineVersion: Long,
+        finishedAt: LocalDateTime,
+        resultSubmissionStartedAt: LocalDateTime,
+    ) {
+        val values = storedResults.joinToString(", ") {
+            "(?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), CAST(? AS jsonb))"
+        }
+        val sql = """
+            WITH submitted (
+                accession,
+                version,
+                processing_attempt_id,
+                processed_data,
+                errors,
+                warnings
+            ) AS (
+                VALUES $values
+            ),
+            updated AS (
+                UPDATE sequence_entries_preprocessed_data AS queue
+                SET processing_status = 'PROCESSED',
+                    processed_data = submitted.processed_data,
+                    errors = submitted.errors,
+                    warnings = submitted.warnings,
+                    finished_processing_at = ?,
+                    processing_attempt_id = NULL,
+                    lease_until = NULL
+                FROM submitted
+                WHERE queue.accession = submitted.accession
+                  AND queue.version = submitted.version
+                  AND queue.pipeline_version = ?
+                  AND queue.organism = ?
+                  AND queue.processing_status = 'IN_PROCESSING'
+                  AND queue.processing_attempt_id = submitted.processing_attempt_id
+                  AND queue.lease_until > ?
+                RETURNING queue.accession, queue.version
+            )
+            SELECT accession, version
+            FROM updated
+        """.trimIndent()
+        val textColumnType = TextColumnType()
+        val arguments = storedResults.flatMap { storedResult ->
+            listOf(
+                VarCharColumnType() to storedResult.submitted.accession,
+                LongColumnType() to storedResult.submitted.version,
+                UUIDColumnType() to storedResult.submitted.processingAttemptId,
+                textColumnType to serialize(storedResult.processedData),
+                textColumnType to serialize(storedResult.errors),
+                textColumnType to serialize(storedResult.warnings),
+            )
+        } + listOf(
+            KotlinLocalDateTimeColumnType() to finishedAt,
+            LongColumnType() to pipelineVersion,
+            VarCharColumnType() to organism.name,
+            KotlinLocalDateTimeColumnType() to resultSubmissionStartedAt,
+        )
+
+        val updated = TransactionManager.current().exec(
+            sql,
+            args = arguments,
+            explicitStatementType = StatementType.SELECT,
+        ) { resultSet ->
+            buildSet {
+                while (resultSet.next()) {
+                    add(AccessionVersion(resultSet.getString("accession"), resultSet.getLong("version")))
+                }
+            }
+        }.orEmpty()
+
+        val failedResult = storedResults.firstOrNull {
+            AccessionVersion(it.submitted.accession, it.submitted.version) !in updated
+        }
+        if (failedResult != null) {
             throwInsertFailedException(
-                submittedProcessedData,
+                failedResult.submitted,
                 organism,
                 pipelineVersion,
                 resultSubmissionStartedAt,
             )
         }
+    }
+
+    private fun markPreprocessedDataUpdated(organism: Organism, pipelineVersion: Long) {
+        TransactionManager.current().exec(
+            """
+            INSERT INTO table_update_tracker (
+                table_name,
+                organism,
+                pipeline_version,
+                last_time_updated
+            )
+            VALUES (?, ?, ?, timezone('UTC', CURRENT_TIMESTAMP))
+            ON CONFLICT (table_name, organism, pipeline_version)
+            DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP)
+            """.trimIndent(),
+            args = listOf(
+                TextColumnType() to SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME,
+                TextColumnType() to organism.name,
+                LongColumnType() to pipelineVersion,
+            ),
+        )
     }
 
     /**
