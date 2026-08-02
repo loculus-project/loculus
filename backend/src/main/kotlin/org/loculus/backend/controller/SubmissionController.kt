@@ -184,19 +184,6 @@ open class SubmissionController(
                 schema = Schema(implementation = UnprocessedData::class),
             ),
         ],
-        headers = [
-            Header(
-                name = "eTag",
-                description = "Last database write Etag",
-                schema = Schema(type = "integer"),
-            ),
-        ],
-    )
-    @ApiResponse(
-        responseCode = "304",
-        description =
-        "No database changes since last request " +
-            "(Etag in HttpHeaders.IF_NONE_MATCH matches lastDatabaseWriteETag)",
     )
     @ApiResponse(responseCode = "422", description = EXTRACT_UNPROCESSED_DATA_ERROR_RESPONSE)
     @PostMapping("/extract-unprocessed-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
@@ -207,7 +194,6 @@ open class SubmissionController(
             message = "You can extract at max $MAX_EXTRACTED_SEQUENCE_ENTRIES sequence entries at once.",
         ) numberOfSequenceEntries: Int,
         @RequestParam pipelineVersion: Long,
-        @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
         val requestStartNanos = System.nanoTime()
         val currentProcessingPipelineVersion = submissionDatabaseService.getCurrentProcessingPipelineVersion(organism)
@@ -224,20 +210,8 @@ open class SubmissionController(
             )
         }
 
-        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag()
-        if (ifNoneMatch == lastDatabaseWriteETag) {
-            submissionMetrics.recordPollingRequest(
-                EXTRACT_UNPROCESSED_DATA_ENDPOINT,
-                organism.name,
-                HttpStatus.NOT_MODIFIED,
-                requestStartNanos,
-            )
-            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
-        }
-
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
-        headers.eTag = lastDatabaseWriteETag
         val streamBody = streamTransactioned(
             endpoint = EXTRACT_UNPROCESSED_DATA_ENDPOINT,
             organism = organism,
@@ -275,7 +249,11 @@ open class SubmissionController(
         @PathVariable @Valid organism: Organism,
         @RequestParam pipelineVersion: Long,
         request: HttpServletRequest,
-    ) = submissionDatabaseService.updateProcessedData(request.inputStream, organism, pipelineVersion)
+    ) = submissionDatabaseService.updateProcessedData(
+        request.inputStream,
+        organism,
+        pipelineVersion,
+    )
 
     @Operation(
         description = SUBMIT_EXTERNAL_METADATA_DESCRIPTION,

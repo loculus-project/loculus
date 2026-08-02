@@ -26,6 +26,7 @@ ProcessedMetadata = dict[str, ProcessedMetadataValue]
 InputMetadataValue = str | None
 InputMetadata = dict[str, InputMetadataValue]
 FastaId = str
+ProcessingAttemptId = str
 
 ProcessingAnnotationAlignment: Final = "alignment"
 
@@ -105,6 +106,8 @@ class UnprocessedData:
 @dataclass
 class UnprocessedEntry:
     accessionVersion: AccessionVersion  # {accession}.{version}  # noqa: N815
+    processingAttemptId: ProcessingAttemptId  # noqa: N815
+    leaseUntil: int  # noqa: N815
     data: UnprocessedData
 
 
@@ -158,6 +161,7 @@ Alerts = dict[AccessionVersion, Alert]
 class ProcessedEntry:
     accession: str
     version: int
+    processingAttemptId: ProcessingAttemptId  # noqa: N815
     data: ProcessedData
     errors: list[ProcessingAnnotation] = field(default_factory=list)
     warnings: list[ProcessingAnnotation] = field(default_factory=list)

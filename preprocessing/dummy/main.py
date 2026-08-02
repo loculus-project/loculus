@@ -87,28 +87,24 @@ class ProcessingAnnotation:
 class Sequence:
     accession: int
     version: int
+    processingAttemptId: str  # noqa: N815
     data: dict
     errors: list[ProcessingAnnotation] = field(default_factory=list)
     warnings: list[ProcessingAnnotation] = field(default_factory=list)
 
 
-def fetch_unprocessed_sequences(etag: str | None, n: int) -> tuple[str | None, list[Sequence]]:
+def fetch_unprocessed_sequences(n: int) -> list[Sequence]:
     url = backendHost + "/extract-unprocessed-data"
     params = {"numberOfSequenceEntries": n, "pipelineVersion": pipeline_version}
-    headers = {
-        "Authorization": "Bearer " + get_jwt(),
-        **({"If-None-Match": etag} if etag else {}),
-    }
+    headers = {"Authorization": "Bearer " + get_jwt()}
     response = requests.post(url, data=params, headers=headers)
     match response.status_code:
         case 200:
-            return response.headers.get("ETag"), parse_ndjson(response.text)
-        case 304:
-            return etag, []
+            return parse_ndjson(response.text)
         case 422:
             logging.debug(f"{response.text}. Sleeping for a while.")
             time.sleep(60 * 10)
-            return None, []
+            return []
         case _:
             raise Exception(
                 f"Fetching unprocessed data failed. Status code: {response.status_code}",
@@ -123,7 +119,12 @@ def parse_ndjson(ndjson_data: str) -> list[Sequence]:
         if json_str:
             json_object = json.loads(json_str)
             entries.append(
-                Sequence(json_object["accession"], json_object["version"], json_object["data"])
+                Sequence(
+                    accession=json_object["accession"],
+                    version=json_object["version"],
+                    processingAttemptId=json_object["processingAttemptId"],
+                    data=json_object["data"],
+                )
             )
     return entries
 
@@ -166,9 +167,10 @@ def process(unprocessed: list[Sequence]) -> list[Sequence]:
             data["sequenceNameToFastaId"] = {"main": submissionId}
 
         updated_sequence = Sequence(
-            sequence.accession,
-            sequence.version,
-            data,
+            accession=sequence.accession,
+            version=sequence.version,
+            processingAttemptId=sequence.processingAttemptId,
+            data=data,
         )
 
         disable_randomly = randomWarnError and random.choice([True, True, False])
@@ -264,8 +266,6 @@ def get_jwt():
 def main():
     total_processed = 0
     locally_processed = 0
-    etag = None
-    last_force_refresh = time.time()
 
     if watch_mode:
         logging.debug("Started in watch mode - waiting 10 seconds before fetching data.")
@@ -275,11 +275,7 @@ def main():
     sequences_to_fetch = max_sequences if max_sequences and max_sequences < args.batchSize else args.batchSize
 
     while True:
-        if last_force_refresh + 3600 < time.time():
-            etag = None
-            last_force_refresh = time.time()
-
-        etag, unprocessed = fetch_unprocessed_sequences(etag, sequences_to_fetch)
+        unprocessed = fetch_unprocessed_sequences(sequences_to_fetch)
         if len(unprocessed) == 0:
             if watch_mode:
                 logging.debug(f"Processed {locally_processed} sequences. Sleeping for 2 seconds.")
@@ -287,7 +283,6 @@ def main():
                 locally_processed = 0
                 continue
             break
-        etag = None
         processed = process(unprocessed)
         submit_processed_sequences(processed)
         total_processed += len(processed)

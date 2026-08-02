@@ -4,6 +4,8 @@ from unittest import mock
 
 import pytest
 from factory_methods import (
+    TEST_LEASE_UNTIL,
+    TEST_PROCESSING_ATTEMPT_ID,
     Case,
     ProcessedEntryFactory,
     ProcessingAnnotationHelper,
@@ -1128,6 +1130,8 @@ def test_preprocessing_without_consensus_sequences(config: Config) -> None:
     sequence_name = "entry without sequences"
     sequence_entry_data = UnprocessedEntry(
         accessionVersion="LOC_01.1",
+        processingAttemptId=TEST_PROCESSING_ATTEMPT_ID,
+        leaseUntil=TEST_LEASE_UNTIL,
         data=UnprocessedData(
             submitter="test_submitter",
             submissionId="test_submission_id",

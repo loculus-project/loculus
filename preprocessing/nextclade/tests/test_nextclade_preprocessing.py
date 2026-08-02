@@ -8,6 +8,8 @@ import pytest
 from Bio import SeqIO
 from Bio.Seq import Seq
 from factory_methods import (
+    TEST_LEASE_UNTIL,
+    TEST_PROCESSING_ATTEMPT_ID,
     Case,
     ProcessedAlignment,
     ProcessedEntryFactory,
@@ -1275,6 +1277,8 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
 
     bad_entry = UnprocessedEntry(
         accessionVersion="LOC_01.1",
+        processingAttemptId=TEST_PROCESSING_ATTEMPT_ID,
+        leaseUntil=TEST_LEASE_UNTIL,
         data=UnprocessedData(
             group_id=2,
             submitter="test_submitter",
@@ -1291,6 +1295,8 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
 
     good_entry = UnprocessedEntry(
         accessionVersion="LOC_02.1",
+        processingAttemptId=TEST_PROCESSING_ATTEMPT_ID,
+        leaseUntil=TEST_LEASE_UNTIL,
         data=UnprocessedData(
             group_id=2,
             submitter="test_submitter",
@@ -1324,6 +1330,8 @@ def test_preprocessing_without_metadata() -> None:
     config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
     sequence_entry_data = UnprocessedEntry(
         accessionVersion="LOC_01.1",
+        processingAttemptId=TEST_PROCESSING_ATTEMPT_ID,
+        leaseUntil=TEST_LEASE_UNTIL,
         data=UnprocessedData(
             group_id=2,
             submitter="test_submitter",
@@ -1448,6 +1456,8 @@ def test_create_flatfile():
     config.create_embl_file = True
     sequence_entry_data = UnprocessedEntry(
         accessionVersion="LOC_01.1",
+        processingAttemptId=TEST_PROCESSING_ATTEMPT_ID,
+        leaseUntil=TEST_LEASE_UNTIL,
         data=UnprocessedData(
             submitter="test_submitter",
             group_id=2,
