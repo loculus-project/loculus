@@ -14,6 +14,7 @@ import org.loculus.backend.model.FASTA_IDS_HEADER
 import org.loculus.backend.model.FASTA_IDS_SEPARATOR
 import org.loculus.backend.model.FILES_HEADER_PREFIX
 import org.loculus.backend.model.FILES_SEPARATOR
+import org.loculus.backend.model.FILE_ID_LENGTH
 import org.loculus.backend.model.FILE_NAME_ID_SEPARATOR
 import java.io.ByteArrayInputStream
 import java.util.UUID
@@ -290,6 +291,19 @@ class MetadataEntryTest {
             metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
         }
         assertThat(exception.message, containsString("invalid file ID"))
+    }
+
+    @Test
+    fun `test files entry with UUID of non-standard length is rejected`() {
+        val str = """
+            submissionId${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}Country
+            foo${'\t'}reads_1.fq${FILE_NAME_ID_SEPARATOR}1-2-3-4-5${'\t'}bar
+        """.trimIndent()
+        val exception = assertThrows<UnprocessableEntityException> {
+            metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        }
+        assertThat(exception.message, containsString("invalid file ID"))
+        assertThat(exception.message, containsString("Expected a UUID of length $FILE_ID_LENGTH"))
     }
 
     @Test
