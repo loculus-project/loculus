@@ -127,9 +127,7 @@ function getResolvedSubmissionFileMapping(entries: ResolvedEntry[]): SubmissionF
         const categoryMapping: Map<FileCategory, ResolvedSubmissionFile[]> = mapping.get(submissionId) ?? new Map();
         const files: ResolvedSubmissionFile[] = categoryMapping.get(category) ?? [];
 
-        files.push({
-            ...file,
-        });
+        files.push(file);
 
         categoryMapping.set(category, files);
         mapping.set(submissionId, categoryMapping);
@@ -450,7 +448,7 @@ export async function applyFileMappings(
             const files = resolvedSubmissionFileMapping.get(submissionId)?.get(category);
             if (files === undefined) continue;
 
-            updatedRow[index] = [...files.values()]
+            updatedRow[index] = files
                 .map((file) => `${file.name}${FILE_NAME_ID_SEPARATOR}${file.fileId}`)
                 .join(FILES_SEPARATOR);
         }

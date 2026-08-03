@@ -155,7 +155,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         const categoryFiles = fileMapping?.get(fileCategory.name);
         if (categoryFiles === undefined || categoryFiles.length === 0) return undefined;
 
-        const files: PreviousUpload[] = [...categoryFiles.values()].map((file) => ({
+        const files: PreviousUpload[] = categoryFiles.map((file) => ({
             type: 'previousUpload',
             fileId: file.fileId,
             name: file.name,
