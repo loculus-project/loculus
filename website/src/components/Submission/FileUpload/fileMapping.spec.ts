@@ -30,8 +30,6 @@ const errorOf = (text: string, categories: string[] = knownCategories): string =
     return result.error.message;
 };
 
-// Folder-upload fixtures are keyed by path, mirroring what FolderUploadComponent produces; a path's
-// value is just its file ID, since a name is always derivable from the path itself.
 const fileMappingOf = (categories: Record<string, UploadedFile[]>): FileMapping =>
     new Map(
         Object.entries(categories).map(([category, files]) => [
@@ -40,7 +38,6 @@ const fileMappingOf = (categories: Record<string, UploadedFile[]>): FileMapping 
         ]),
     );
 
-// Metadata fixtures are keyed by name, since that's a file entry's declared identity.
 const submissionMappingOf = <T extends SubmissionFile>(
     submissions: Record<string, Record<string, T[]>>,
 ): SubmissionFileMapping<T> =>
