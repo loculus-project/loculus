@@ -35,16 +35,13 @@ export type UploadedFile = {
 };
 
 /**
- * Files uploaded via the folder upload component, keyed by path. Paths are unique within an upload,
- * since re-adding a file at the same path replaces the existing one. Every uploaded file already has
- * a file ID, and doesn't need its own name stored alongside it: a name is only ever the last segment
- * of its path.
+ * Files uploaded via the folder upload component, keyed by path. Paths are unique within an upload.
+ * Every uploaded file has a file ID.
  */
 export type FileMapping = Map<FileCategory, Map<FilePath, FileId>>;
 
 /**
- * Files declared per submission in the metadata, keyed by name. A name is the declared identity of a
- * file entry; its path (defaulting to the name) is only used to look up a matching upload.
+ * Files declared per submission in the metadata, keyed by name.
  */
 export type SubmissionFileMapping<T extends SubmissionFile = SubmissionFile> = Map<
     SubmissionId,
