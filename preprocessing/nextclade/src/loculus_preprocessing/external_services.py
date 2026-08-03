@@ -3,11 +3,19 @@ import urllib.parse
 from collections import OrderedDict
 
 import requests
+from pydantic import BaseModel, Field, ValidationError
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from loculus_preprocessing.datatypes import (
+    AccessionVersion,
+    AnnotationSource,
+    AnnotationSourceType,
+    FileCategory,
+    FileIdAndNameAndReadUrl,
+    ProcessingAnnotation,
     RawProcessingResult,
+    _internal_error_message,
     raw_internal_error,
 )
 
@@ -192,3 +200,100 @@ class TaxonomyService:
             return raw_internal_error(message)
 
         return RawProcessingResult(datum=common_name)
+
+
+FileName = str
+
+
+class FileProcessingRequest(BaseModel):
+    files: list[FileIdAndNameAndReadUrl]
+    accessionVersion: str  # noqa: N815
+
+
+class Annotation(BaseModel):
+    fileNames: list[FileName]  # noqa: N815
+    message: str
+
+
+class FileProcessingResponse(BaseModel):
+    errors: list[Annotation] = Field(default_factory=list)
+
+
+class FileProcessingService:
+    def __init__(
+        self,
+        raw_reads_processing_service_url: str | None,
+        timeout_seconds: int = 300,
+    ):
+        self.raw_reads_processing_service_url = raw_reads_processing_service_url
+        self.timeout_seconds = timeout_seconds
+
+    def process_files(  # noqa: PLR0911
+        self,
+        files: dict[FileCategory, list[FileIdAndNameAndReadUrl]],
+        accession_version: AccessionVersion,
+    ) -> list[ProcessingAnnotation]:
+        for category, file_list in files.items():
+            if not file_list:
+                continue
+            if category != FileCategory.RAW_READS:
+                message = (
+                    f"File category '{category}' is enabled but not supported by preprocessing."
+                )
+                logger.warning(message)
+                return [self._annotation([file.name for file in file_list], message)]
+
+        file_names = [file.name for file_list in files.values() for file in file_list]
+
+        if not self.raw_reads_processing_service_url:
+            return [
+                self._annotation(file_names, "Raw reads processing service URL is not configured.")
+            ]
+
+        payload = FileProcessingRequest(
+            files=files[FileCategory.RAW_READS], accessionVersion=str(accession_version)
+        )
+        try:
+            response = requests.post(
+                f"{self.raw_reads_processing_service_url}/process-files",
+                json=payload.model_dump(mode="json"),
+                timeout=self.timeout_seconds,
+            )
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as error:
+            response = error.response
+            if response is not None and response.status_code >= 500:  # noqa: PLR2004
+                try:
+                    detail = response.json().get("detail", response.text)
+                except ValueError:
+                    detail = response.text
+                return [
+                    self._annotation(file_names, f"Raw reads processing service failed: {detail}")
+                ]
+            return [self._annotation(file_names, f"Raw reads processing service failed: {error}")]
+        except requests.exceptions.RequestException as error:
+            return [self._annotation(file_names, f"Raw reads processing request failed: {error}")]
+
+        try:
+            result = FileProcessingResponse.model_validate(response.json())
+        except ValidationError as error:
+            return [
+                self._annotation(
+                    file_names,
+                    f"Raw reads processing service returned an invalid response: {error}",
+                )
+            ]
+
+        return [
+            self._annotation(error.fileNames, error.message, internal_error=False)
+            for error in result.errors
+        ]
+
+    @staticmethod
+    def _annotation(
+        file_names: list[str], message: str, internal_error: bool = True
+    ) -> ProcessingAnnotation:
+        source = AnnotationSource(", ".join(file_names), AnnotationSourceType.FILE)
+        if not internal_error:
+            return ProcessingAnnotation([source], [source], message)
+        return ProcessingAnnotation([source], [source], _internal_error_message(message))

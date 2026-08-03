@@ -70,10 +70,10 @@ class SubmissionPage {
         return new ReviewPage(this.page);
     }
 
-    async submitAndWaitForProcessingDone(): Promise<ReviewPage> {
+    async submitAndWaitForProcessingDone(timeout = 90000): Promise<ReviewPage> {
         await this.acceptTerms();
         const reviewPage = await this.submitSequence();
-        await reviewPage.waitForZeroProcessing();
+        await reviewPage.waitForZeroProcessing(timeout);
         return reviewPage;
     }
 }
@@ -91,17 +91,22 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         collectionCountry,
         collectionDate,
         authorAffiliations,
+        sequencingInstrument,
     }: {
         submissionId: string;
         collectionCountry: string;
         collectionDate: string;
         authorAffiliations: string;
+        sequencingInstrument?: string;
     }) {
         await this.page.getByLabel('ID', { exact: true }).fill(submissionId);
         await this.page.getByLabel('Collection country').fill(collectionCountry);
         await this.page.getByLabel('Collection country').blur();
         await this.page.getByLabel('Collection date').fill(collectionDate);
         await this.page.getByLabel('Author affiliations').fill(authorAffiliations);
+        if (sequencingInstrument) {
+            await this.page.getByLabel('Sequencing instrument').fill(sequencingInstrument);
+        }
     }
 
     async fillSubmissionFormDummyOrganism({

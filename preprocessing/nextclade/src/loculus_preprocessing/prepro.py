@@ -30,7 +30,7 @@ from .datatypes import (
     AnnotationSource,
     AnnotationSourceType,
     FileCategory,
-    FileIdAndName,
+    FileIdAndNameAndReadUrl,
     GeneName,
     InputData,
     InputMetadata,
@@ -325,7 +325,7 @@ def get_sequence_length(
     return len(sequence) if sequence else 0
 
 
-def get_output_metadata(  # noqa: C901, PLR0912, PLR0915
+def get_output_metadata(  # noqa: C901, PLR0912, PLR0914, PLR0915
     accession_version: AccessionVersion,
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
     config: Config,
@@ -577,6 +577,13 @@ def process_single(
     config: Config,
 ) -> SubmissionData:
     """Process a single sequence per config"""
+    # process files first as S3 read URLs have a limited lifetime
+    file_errors = []
+    if unprocessed.files and any(unprocessed.files.values()):
+        file_errors = config._file_processing_service.process_files(
+            unprocessed.files, accession_version=accession_version
+        )
+
     iupac_errors = errors_if_non_iupac(unprocessed.unalignedNucleotideSequences)
 
     max_seq_errors = error_on_excess_sequences(
@@ -613,6 +620,7 @@ def process_single(
                 + max_seq_errors
                 + alignment_errors
                 + metadata_errors
+                + file_errors
             )
         ),
         warnings=list(set(unprocessed.warnings + alignment_warnings + metadata_warnings)),
@@ -632,6 +640,13 @@ def process_single_unaligned(
     config: Config,
 ) -> SubmissionData:
     """Process a single sequence per config"""
+    # process files first as S3 read URLs have a limited lifetime
+    file_errors = []
+    if unprocessed.files and any(unprocessed.files.values()):
+        file_errors = config._file_processing_service.process_files(
+            unprocessed.files, accession_version=accession_version
+        )
+
     segment_assignment = assign_segment_using_header(
         input_unaligned_sequences=unprocessed.unalignedNucleotideSequences,
         config=config,
@@ -647,7 +662,9 @@ def process_single_unaligned(
         accession_version=accession_version,
         unprocessed=unprocessed,
         output_metadata=output_metadata,
-        errors=list(set(iupac_errors + metadata_errors + segment_assignment.alert.errors)),
+        errors=list(
+            set(iupac_errors + metadata_errors + segment_assignment.alert.errors + file_errors)
+        ),
         warnings=list(set(metadata_warnings)),
         sequenceNameToFastaId=segment_assignment.sequenceNameToFastaId,
     )
@@ -727,7 +744,7 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             upload_embl_file_to_presigned_url(file_content, upload_info.url, upload_info.headers)
             processed_files = submission_data.processed_entry.data.files or {}
             processed_files.setdefault(FileCategory.ANNOTATIONS, []).append(
-                FileIdAndName(fileId=file_id, name=file_name)
+                FileIdAndNameAndReadUrl(fileId=file_id, name=file_name)
             )
             submission_data.processed_entry.data.files = processed_files
         except Exception as e:
@@ -760,6 +777,7 @@ def run(config: Config) -> None:  # noqa: C901
                 msg = "Diamond database URL must be provided for diamond segment classification"
                 raise ValueError(msg)
             download_diamond_db(config, dataset_dir + "/diamond/diamond.dmnd")
+
         total_processed = 0
         etag = None
         last_force_refresh = time.time()
