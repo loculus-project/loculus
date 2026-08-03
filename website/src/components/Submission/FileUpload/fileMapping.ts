@@ -1,18 +1,15 @@
 import { type Result, ok, err } from 'neverthrow';
 import Papa from 'papaparse';
 
-import { SUBMISSION_ID_INPUT_FIELD } from '../../../settings';
+import { FILES_HEADER_PREFIX, SUBMISSION_ID_INPUT_FIELD } from '../../../settings';
 
 const ID_COLUMNS = [SUBMISSION_ID_INPUT_FIELD, 'submissionId'];
 
-// File columns begin with the 'files.' prefix and contain space-separated entries
-export const FILES_HEADER_PREFIX = 'files.';
+// File entries are space-separated, and can have one of the following forms:
+const FILE_ENTRY_FORMS = ['name', 'name::path', 'name:fileId'];
 const FILES_SEPARATOR = ' ';
 const FILE_NAME_ID_SEPARATOR = ':';
-
-// File entries can have one of the following forms:
-const FILE_ENTRY_FORMS = ['name', 'name::path', 'name::path:fileId', 'name:fileId'];
-const FILE_ENTRY_REGEX = /^([^:]+)(?:::([^:]+))?(?::([^:]+))?$/;
+const FILE_ENTRY_REGEX = /^([^:]+)(?:::([^:]+)|:([^:]+))?$/;
 
 export type SubmissionFile = {
     name: string;

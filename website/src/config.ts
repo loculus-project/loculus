@@ -3,7 +3,7 @@ import path from 'path';
 
 import type { z, ZodError } from 'zod';
 
-import { ACCESSION_FIELD, FASTA_IDS_FIELD, SUBMISSION_ID_INPUT_FIELD } from './settings.ts';
+import { ACCESSION_FIELD, FASTA_IDS_FIELD, FILES_HEADER_PREFIX, SUBMISSION_ID_INPUT_FIELD } from './settings.ts';
 import {
     type InputField,
     type InstanceConfig,
@@ -184,21 +184,6 @@ export function getSchema(organism: string): Schema {
     return getConfig(organism).schema;
 }
 
-export function getMetadataTemplateFields(
-    organism: string,
-    action: 'submit' | 'revise',
-): Map<string, string | undefined> {
-    const schema = getConfig(organism).schema;
-    const baseFields: string[] = schema.metadataTemplate ?? schema.inputFields.map((field) => field.name);
-    const submissionIdInputFields = getSubmissionIdInputFields(schema).map((field) => field.name);
-    const extraFields = action === 'submit' ? submissionIdInputFields : [ACCESSION_FIELD, ...submissionIdInputFields];
-    const allFields = [...extraFields, ...baseFields];
-    const fieldsToDisplaynames = new Map<string, string | undefined>(
-        allFields.map((field) => [field, schema.metadata.find((metadata) => metadata.name === field)?.displayName]),
-    );
-    return fieldsToDisplaynames;
-}
-
 /**
  * An {@link InputField} as it should appear in the downloadable submission template, tagged with
  * whether it is one of the fields enabled by default (a "template field") and with the field's
@@ -210,7 +195,8 @@ export type TemplateInputField = InputField & { isTemplateField: boolean; metada
 /**
  * Returns every submittable input field for the template download, in column order:
  * submission-detail fields first, then the default-enabled "template" fields
- * (`schema.metadataTemplate`, or all input fields if unset), then the remaining opt-in fields.
+ * (`schema.metadataTemplate`, or all input fields if unset), then the files columns
+ * (if file submission is enabled), then the remaining opt-in fields.
  * Fields enabled by default are tagged with `isTemplateField: true`.
  */
 export function getOrderedTemplateInputFields(organism: string, action: 'submit' | 'revise'): TemplateInputField[] {
@@ -219,6 +205,7 @@ export function getOrderedTemplateInputFields(organism: string, action: 'submit'
     const submissionIdInputFields = getSubmissionIdInputFields(schema);
     const accessionFields = action === 'revise' ? [getAccessionInputField()] : [];
     const requiredInternalFields = [...accessionFields, ...submissionIdInputFields];
+    const fileCategoryFields = getFileCategoryInputFields(schema);
 
     const requiredInternalFieldNames = new Set(requiredInternalFields.map((field) => field.name));
     const nonInternalInputFields = schema.inputFields.filter((field) => !requiredInternalFieldNames.has(field.name));
@@ -232,10 +219,15 @@ export function getOrderedTemplateInputFields(organism: string, action: 'submit'
 
     // Required internal fields (submissionId/fastaIds, plus accession on revise) always lead the columns.
     const orderedRequiredFields = requiredInternalFields.map((field) => decorate(field, true));
+    const orderedFileCategoryFields = fileCategoryFields.map((field) => decorate(field, true));
 
     // Without an explicit template, every input field is enabled by default.
     if (schema.metadataTemplate === undefined) {
-        return [...orderedRequiredFields, ...nonInternalInputFields.map((field) => decorate(field, true))];
+        return [
+            ...orderedRequiredFields,
+            ...nonInternalInputFields.map((field) => decorate(field, true)),
+            ...orderedFileCategoryFields,
+        ];
     }
 
     // With a template, the listed fields are enabled (in template order) and the rest become opt-in.
@@ -249,8 +241,21 @@ export function getOrderedTemplateInputFields(organism: string, action: 'submit'
     return [
         ...orderedRequiredFields,
         ...templateFields.map((field) => decorate(field, true)),
+        ...orderedFileCategoryFields,
         ...restFields.map((field) => decorate(field, false)),
     ];
+}
+
+function getFileCategoryInputFields(schema: Schema): InputField[] {
+    const files = schema.submissionDataTypes.files;
+    if (files?.enabled !== true) return [];
+
+    return (files.categories ?? []).map((category) => ({
+        name: `${FILES_HEADER_PREFIX}${category.name}`,
+        displayName: category.displayName,
+        definition: `The ${(category.displayName ?? category.name).toLowerCase()} files associated with this submission. Entries must be space separated, and each entry must have a file name; this is the name as it will appear on the website. If the desired name differs from the uploaded file's name, or the uploaded folder uses subdirectories, then each entry will also require a file path (formatted \`name::path\`).  If a previously uploaded file is being reused, then the entry must instead have a file ID (formatted \`name:fileId\`).`,
+        example: `fileName fileName::filePath fileName:fileId`,
+    }));
 }
 
 function getAccessionInputField(): InputField {
@@ -277,6 +282,7 @@ export function getSubmissionIdInputFields(schema: Schema): InputField[] {
 export function getGroupedInputFields(
     organism: string,
     action: 'submit' | 'revise',
+    inputMode: 'form' | 'bulk',
     excludeDuplicates: boolean = false,
 ): Map<string, InputField[]> {
     const schema = getConfig(organism).schema;
@@ -316,6 +322,9 @@ export function getGroupedInputFields(
 
         groups.get(header)!.push({ ...field });
     });
+
+    const fileCategoryFields = inputMode === 'bulk' ? getFileCategoryInputFields(schema) : [];
+    if (fileCategoryFields.length > 0) groups.set('Files', fileCategoryFields);
 
     return groups;
 }

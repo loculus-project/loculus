@@ -3,7 +3,7 @@ import ExcelJS from 'exceljs';
 
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import type { UploadAction } from '../../../../components/Submission/DataUploadForm.tsx';
-import { getMetadataTemplateFields, getOrderedTemplateInputFields, type TemplateInputField } from '../../../../config';
+import { getOrderedTemplateInputFields, type TemplateInputField } from '../../../../config';
 import { DATA_SHEET_NAME, GUIDANCE_SHEET_NAME, LISTS_SHEET_NAME } from '../../../../utils/metadataTemplateSheets';
 
 export type TemplateFileType = 'tsv' | 'xlsx';
@@ -57,7 +57,10 @@ export const GET: APIRoute = async ({ params, request }) => {
 };
 
 function createTsvTemplate(organism: string, action: UploadAction): ArrayBuffer {
-    const columnNames = Array.from(getMetadataTemplateFields(organism, action).keys());
+    // Only default template fields are included in the TSV template
+    const columnNames = getOrderedTemplateInputFields(organism, action)
+        .filter((field) => field.isTemplateField)
+        .map((field) => field.name);
     const content = columnNames.join('\t') + '\n';
     return new TextEncoder().encode(content).buffer;
 }

@@ -42,14 +42,21 @@ describe('parseSubmissionFileMapping', () => {
     it('parses every accepted file entry form', () => {
         const text = tsv([
             ['id', 'files.raw'],
-            ['e1', 'a.txt b.txt::sub/b.txt c.txt::sub/c.txt:id-c d.txt:id-d'],
+            ['e1', 'a.txt b.txt::sub/b.txt c.txt:id-c'],
         ]);
         expect(entriesOf(text, 'e1', 'raw')).toEqual([
             { name: 'a.txt', path: 'a.txt', fileId: undefined },
             { name: 'b.txt', path: 'sub/b.txt', fileId: undefined },
-            { name: 'c.txt', path: 'sub/c.txt', fileId: 'id-c' },
-            { name: 'd.txt', path: 'd.txt', fileId: 'id-d' },
+            { name: 'c.txt', path: 'c.txt', fileId: 'id-c' },
         ]);
+    });
+
+    it('rejects an entry with both a path and a file id', () => {
+        const text = tsv([
+            ['id', 'files.raw'],
+            ['e1', 'a.txt::sub/a.txt:id-a'],
+        ]);
+        expect(errorOf(text)).toContain('Failed to parse file entry');
     });
 
     it('ignores extra whitespace between entries', () => {
