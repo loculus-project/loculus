@@ -74,7 +74,7 @@ const InnerEditPage: FC<EditPageProps> = ({
         return new Map(
             Object.entries(previousFiles).map(([category, files]) => [
                 category,
-                new Map(files.map((file) => [file.name, { name: file.name, path: file.name, fileId: file.fileId }])),
+                files.map((file) => ({ name: file.name, path: file.name, fileId: file.fileId })),
             ]),
         );
     });

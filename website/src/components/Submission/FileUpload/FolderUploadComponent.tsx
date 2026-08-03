@@ -153,7 +153,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 }) => {
     const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(() => {
         const categoryFiles = fileMapping?.get(fileCategory.name);
-        if (categoryFiles === undefined || categoryFiles.size === 0) return undefined;
+        if (categoryFiles === undefined || categoryFiles.length === 0) return undefined;
 
         const files: PreviousUpload[] = [...categoryFiles.values()].map((file) => ({
             type: 'previousUpload',
@@ -304,16 +304,11 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     const newMapping = new Map(currentMapping);
                     newMapping.set(
                         fileCategory.name,
-                        new Map(
-                            fileUploadState.files.map((file) => [
-                                file.path,
-                                {
-                                    name: file.name,
-                                    path: file.path,
-                                    fileId: file.fileId,
-                                },
-                            ]),
-                        ),
+                        fileUploadState.files.map((file) => ({
+                            name: file.name,
+                            path: file.path,
+                            fileId: file.fileId,
+                        })),
                     );
                     return newMapping;
                 });

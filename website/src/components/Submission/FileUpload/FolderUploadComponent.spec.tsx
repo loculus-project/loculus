@@ -48,10 +48,10 @@ const defaultProps = {
     onError: mockOnError,
 };
 
-// The fileMapping is keyed by category, then by file path. Previous uploads have no upload path,
-// so (within a single entry, where names are unique) they are keyed by and carry a path of their name.
+// The fileMapping is keyed by category, then a list of files. Previous uploads have no upload path,
+// so (within a single entry, where names are unique) they carry a path equal to their name.
 const fileMappingOf = (files: { fileId: string; name: string }[]) =>
-    new Map([['extraFiles', new Map(files.map((f) => [f.name, { name: f.name, path: f.name, fileId: f.fileId }]))]]);
+    new Map([['extraFiles', files.map((f) => ({ name: f.name, path: f.name, fileId: f.fileId }))]]);
 
 const defaultPropsWithFiles = {
     ...defaultProps,
@@ -93,7 +93,7 @@ describe('FolderUploadComponent', () => {
                 <FolderUploadComponent
                     {...defaultProps}
                     inputMode='form'
-                    fileMapping={new Map([['extraFiles', new Map()]])}
+                    fileMapping={new Map([['extraFiles', []]])}
                 />,
             );
 

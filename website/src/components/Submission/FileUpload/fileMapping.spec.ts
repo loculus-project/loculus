@@ -31,12 +31,23 @@ const errorOf = (text: string, categories: string[] = knownCategories): string =
 };
 
 const fileMappingOf = <T extends SubmissionFile>(categories: Record<string, T[]>): FileMapping<T> =>
-    new Map(Object.entries(categories).map(([category, files]) => [category, new Map(files.map((f) => [f.path, f]))]));
+    new Map(Object.entries(categories));
 
 const submissionMappingOf = <T extends SubmissionFile>(
     submissions: Record<string, Record<string, T[]>>,
 ): SubmissionFileMapping<T> =>
     new Map(Object.entries(submissions).map(([submissionId, categories]) => [submissionId, fileMappingOf(categories)]));
+
+const resolvedFileIdOf = (
+    submissionFileMapping: SubmissionFileMapping<ResolvedSubmissionFile>,
+    submissionId: string,
+    category: string,
+    path: string,
+): string | undefined =>
+    submissionFileMapping
+        .get(submissionId)
+        ?.get(category)
+        ?.find((f) => f.path === path)?.fileId;
 
 describe('parseSubmissionFileMapping', () => {
     it('parses every accepted file entry form', () => {
@@ -169,7 +180,7 @@ describe('resolveFileMappings', () => {
                 fileMappingOf({ raw: [uploadEntry] }),
             );
             expect(fileLinkage.get('raw')).toEqual({ ...emptyDetails, linked: [uploadEntry] });
-            expect(submissionFileMapping.get('e1')!.get('raw')!.get('a.txt')!.fileId).toBe('uploaded-id');
+            expect(resolvedFileIdOf(submissionFileMapping, 'e1', 'raw', 'a.txt')).toBe('uploaded-id');
         });
 
         it('when several metadata entries reference the same upload folder entry', () => {
@@ -190,8 +201,8 @@ describe('resolveFileMappings', () => {
                 linked: [uploadEntry],
                 reused: [metadataEntryWithFileId],
             });
-            expect(submissionFileMapping.get('e1')!.get('raw')!.get('a.txt')!.fileId).toBe('existing-id');
-            expect(submissionFileMapping.get('e2')!.get('raw')!.get('a.txt')!.fileId).toBe('uploaded-id');
+            expect(resolvedFileIdOf(submissionFileMapping, 'e1', 'raw', 'a.txt')).toBe('existing-id');
+            expect(resolvedFileIdOf(submissionFileMapping, 'e2', 'raw', 'a.txt')).toBe('uploaded-id');
         });
     });
 
@@ -202,7 +213,7 @@ describe('resolveFileMappings', () => {
                 fileMappingOf({}),
             );
             expect(fileLinkage.get('raw')).toEqual({ ...emptyDetails, reused: [metadataEntryWithFileId] });
-            expect(submissionFileMapping.get('e1')!.get('raw')!.get('a.txt')!.fileId).toBe('existing-id');
+            expect(resolvedFileIdOf(submissionFileMapping, 'e1', 'raw', 'a.txt')).toBe('existing-id');
             expect(getLinkageErrors(fileLinkage)).toBeUndefined();
         });
     });
@@ -241,7 +252,7 @@ describe('resolveFileMappings', () => {
                 reused: [metadataEntryWithFileId],
                 shadowed: [uploadEntry],
             });
-            expect(submissionFileMapping.get('e1')!.get('raw')!.get('a.txt')!.fileId).toBe('existing-id');
+            expect(resolvedFileIdOf(submissionFileMapping, 'e1', 'raw', 'a.txt')).toBe('existing-id');
         });
     });
 

@@ -24,7 +24,7 @@ type SubmissionId = string;
 type FileCategory = string;
 type FilePath = string;
 
-export type FileMapping<T extends SubmissionFile = SubmissionFile> = Map<FileCategory, Map<FilePath, T>>;
+export type FileMapping<T extends SubmissionFile = SubmissionFile> = Map<FileCategory, T[]>;
 export type SubmissionFileMapping<T extends SubmissionFile = SubmissionFile> = Map<SubmissionId, FileMapping<T>>;
 
 /**
@@ -88,15 +88,16 @@ function getLinkageMapping(
     };
 
     for (const [submissionId, categoryMapping] of submissionFileMapping) {
-        for (const [category, pathMapping] of categoryMapping) {
-            for (const [path, file] of pathMapping)
-                getOrCreateLinkageEntry(category, path).metadataEntries.push({ submissionId, file });
+        for (const [category, files] of categoryMapping) {
+            for (const file of files) {
+                getOrCreateLinkageEntry(category, file.path).metadataEntries.push({ submissionId, file });
+            }
         }
     }
 
     if (fileMapping !== undefined) {
-        for (const [category, pathMapping] of fileMapping) {
-            for (const [path, file] of pathMapping) getOrCreateLinkageEntry(category, path).uploadEntry = file;
+        for (const [category, files] of fileMapping) {
+            for (const file of files) getOrCreateLinkageEntry(category, file.path).uploadEntry = file;
         }
     }
 
@@ -120,29 +121,21 @@ type ResolvedEntry = {
  * @returns A mapping of submission IDs to file categories and paths, containing the resolved files which are linked or reused.
  */
 function getResolvedSubmissionFileMapping(entries: ResolvedEntry[]): SubmissionFileMapping<ResolvedSubmissionFile> {
-    const resolvedSubmissionFileMapping: SubmissionFileMapping<ResolvedSubmissionFile> = new Map();
+    const mapping: SubmissionFileMapping<ResolvedSubmissionFile> = new Map();
 
-    const getOrCreateMapping = (
-        submissionId: SubmissionId,
-        category: FileCategory,
-    ): Map<FilePath, ResolvedSubmissionFile> => {
-        let categoryMapping = resolvedSubmissionFileMapping.get(submissionId);
-        if (categoryMapping === undefined) {
-            categoryMapping = new Map();
-            resolvedSubmissionFileMapping.set(submissionId, categoryMapping);
-        }
-        let pathMapping = categoryMapping.get(category);
-        if (pathMapping === undefined) {
-            pathMapping = new Map();
-            categoryMapping.set(category, pathMapping);
-        }
-        return pathMapping;
-    };
+    for (const { submissionId, category, file } of entries) {
+        const categoryMapping: Map<FileCategory, ResolvedSubmissionFile[]> = mapping.get(submissionId) ?? new Map();
+        const files: ResolvedSubmissionFile[] = categoryMapping.get(category) ?? [];
 
-    for (const { submissionId, category, path, file } of entries)
-        getOrCreateMapping(submissionId, category).set(path, file);
+        files.push({
+            ...file,
+        });
 
-    return resolvedSubmissionFileMapping;
+        categoryMapping.set(category, files);
+        mapping.set(submissionId, categoryMapping);
+    }
+
+    return mapping;
 }
 
 export type CategoryLinkage = {
@@ -153,6 +146,16 @@ export type CategoryLinkage = {
     [LinkageType.SHADOWED]: SubmissionFile[];
 };
 
+export function initializeCategoryLinkage(): CategoryLinkage {
+    return {
+        [LinkageType.LINKED]: [],
+        [LinkageType.REUSED]: [],
+        [LinkageType.MISSING]: [],
+        [LinkageType.ORPHANED]: [],
+        [LinkageType.SHADOWED]: [],
+    };
+}
+
 /**
  * A mapping of file categories to the linkage details within that category.
  */
@@ -160,7 +163,7 @@ export type FileLinkage = Map<FileCategory, CategoryLinkage>;
 
 /**
  * Determines how each declared and uploaded file is linked, and produces a resolved submission file mapping from the valid entries.
- * @param submissionFileMapping The mapping of submission IDs to file categories and paths, as declared in the metadata.
+ * @param submissionFileMapping The mapping of submission IDs to file categories, names and paths, as declared in the metadata.
  * @param fileMapping The mapping of file categories and paths to uploaded files.
  * @returns The resolved submission file mapping, and the file linkage details for each file category.
  */
@@ -176,13 +179,7 @@ export function resolveFileMappings(
     const resolvedEntries: ResolvedEntry[] = [];
 
     for (const [category, pathMapping] of linkageMapping) {
-        const categoryLinkage: CategoryLinkage = {
-            linked: [],
-            reused: [],
-            missing: [],
-            orphaned: [],
-            shadowed: [],
-        };
+        const categoryLinkage: CategoryLinkage = initializeCategoryLinkage();
 
         for (const [path, linkageEntry] of pathMapping) {
             for (const { submissionId, file } of linkageEntry.metadataEntries) {
@@ -375,7 +372,8 @@ export function parseSubmissionFileMapping(
             // Check for parsing errors in the file entries and
             // validate the submission has unique file names and paths
             const fileNames = new Set<string>();
-            const fileEntries = new Map<FilePath, SubmissionFile>();
+            const filePaths = new Set<string>();
+            const fileEntries: SubmissionFile[] = [];
             for (const fileEntryResult of fileEntryResults) {
                 if (fileEntryResult.isErr()) return err(fileEntryResult.error);
                 const file = fileEntryResult.value;
@@ -386,14 +384,15 @@ export function parseSubmissionFileMapping(
                             `Found duplicate file names for entry ${submissionId} in the ${category} category: ${file.name}.`,
                         ),
                     );
-                if (fileEntries.has(file.path))
+                if (filePaths.has(file.path))
                     return err(
                         new Error(
                             `Found duplicate file paths for entry ${submissionId} in the ${category} category: ${file.path}.`,
                         ),
                     );
                 fileNames.add(file.name);
-                fileEntries.set(file.path, file);
+                filePaths.add(file.path);
+                fileEntries.push(file);
             }
             fileMapping.set(category, fileEntries);
         }
