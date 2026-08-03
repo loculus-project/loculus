@@ -8,7 +8,6 @@ import {
     LinkageType,
     parseSubmissionFileMapping,
     type FileMapping,
-    type ResolvedSubmissionFile,
     type SubmissionFile,
     type SubmissionFileMapping,
     type UploadedFile,
@@ -31,9 +30,6 @@ const errorOf = (text: string, categories: string[] = knownCategories): string =
     return result.error.message;
 };
 
-const mapOf = <T extends SubmissionFile>(files: T[], keyFn: (file: T) => string): Map<string, T> =>
-    new Map(files.map((file) => [keyFn(file), file]));
-
 // Folder-upload fixtures are keyed by path, mirroring what FolderUploadComponent produces; a path's
 // value is just its file ID, since a name is always derivable from the path itself.
 const fileMappingOf = (categories: Record<string, UploadedFile[]>): FileMapping =>
@@ -52,19 +48,13 @@ const submissionMappingOf = <T extends SubmissionFile>(
         Object.entries(submissions).map(([submissionId, categories]) => [
             submissionId,
             new Map(
-                Object.entries(categories).map(([category, files]) => [category, mapOf(files, (file) => file.name)]),
+                Object.entries(categories).map(([category, files]) => [
+                    category,
+                    new Map(files.map((file) => [file.name, file])),
+                ]),
             ),
         ]),
     );
-
-const resolvedFileIdOf = (
-    submissionFileMapping: SubmissionFileMapping<ResolvedSubmissionFile>,
-    submissionId: string,
-    category: string,
-    path: string,
-): string | undefined =>
-    [...(submissionFileMapping.get(submissionId)?.get(category)?.values() ?? [])].find((file) => file.path === path)
-        ?.fileId;
 
 describe('parseSubmissionFileMapping', () => {
     it('parses every accepted file entry form', () => {
@@ -200,7 +190,7 @@ describe('resolveFileMappings', () => {
                 fileMappingOf({ raw: [uploadEntry] }),
             );
             expect(fileLinkage.get('raw')).toEqual({ ...emptyDetails, linked: [uploadEntry] });
-            expect(resolvedFileIdOf(submissionFileMapping, 'e1', 'raw', 'a.txt')).toBe('uploaded-id');
+            expect(submissionFileMapping.get('e1')!.get('raw')!.get('a.txt')!.fileId).toBe('uploaded-id');
         });
 
         it('when several metadata entries reference the same upload folder entry', () => {
@@ -221,8 +211,8 @@ describe('resolveFileMappings', () => {
                 linked: [uploadEntry],
                 reused: [metadataEntryWithFileId],
             });
-            expect(resolvedFileIdOf(submissionFileMapping, 'e1', 'raw', 'a.txt')).toBe('existing-id');
-            expect(resolvedFileIdOf(submissionFileMapping, 'e2', 'raw', 'a.txt')).toBe('uploaded-id');
+            expect(submissionFileMapping.get('e1')!.get('raw')!.get('a.txt')!.fileId).toBe('existing-id');
+            expect(submissionFileMapping.get('e2')!.get('raw')!.get('a.txt')!.fileId).toBe('uploaded-id');
         });
     });
 
@@ -233,7 +223,7 @@ describe('resolveFileMappings', () => {
                 fileMappingOf({}),
             );
             expect(fileLinkage.get('raw')).toEqual({ ...emptyDetails, reused: [metadataEntryWithFileId] });
-            expect(resolvedFileIdOf(submissionFileMapping, 'e1', 'raw', 'a.txt')).toBe('existing-id');
+            expect(submissionFileMapping.get('e1')!.get('raw')!.get('a.txt')!.fileId).toBe('existing-id');
             expect(getLinkageErrors(fileLinkage)).toBeUndefined();
         });
     });
@@ -272,7 +262,7 @@ describe('resolveFileMappings', () => {
                 reused: [metadataEntryWithFileId],
                 shadowed: [uploadEntry],
             });
-            expect(resolvedFileIdOf(submissionFileMapping, 'e1', 'raw', 'a.txt')).toBe('existing-id');
+            expect(submissionFileMapping.get('e1')!.get('raw')!.get('a.txt')!.fileId).toBe('existing-id');
         });
     });
 
