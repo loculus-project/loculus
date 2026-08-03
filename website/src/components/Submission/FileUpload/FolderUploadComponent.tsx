@@ -2,7 +2,7 @@ import { produce } from 'immer';
 import React, { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
 
-import { type FileMapping, type ResolvedSubmissionFile } from './fileMapping';
+import { type FileMapping } from './fileMapping';
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
 import { type FileCategory } from '../../../types/config';
@@ -90,8 +90,8 @@ type FolderUploadComponentProps = {
     accessToken: string;
     clientConfig: ClientConfig;
     groupId: number;
-    fileMapping: FileMapping<ResolvedSubmissionFile> | undefined;
-    setFileMapping: Dispatch<SetStateAction<FileMapping<ResolvedSubmissionFile> | undefined>>;
+    fileMapping: FileMapping | undefined;
+    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
     onError: (message: string) => void;
 };
 
@@ -153,13 +153,13 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 }) => {
     const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(() => {
         const categoryFiles = fileMapping?.get(fileCategory.name);
-        if (categoryFiles === undefined || categoryFiles.length === 0) return undefined;
+        if (categoryFiles === undefined || categoryFiles.size === 0) return undefined;
 
-        const files: PreviousUpload[] = categoryFiles.map((file) => ({
+        const files: PreviousUpload[] = [...categoryFiles.entries()].map(([path, fileId]) => ({
             type: 'previousUpload',
-            fileId: file.fileId,
-            name: file.name,
-            path: file.path,
+            fileId,
+            name: path.split('/').pop() ?? path,
+            path,
         }));
         return { type: 'uploadCompleted', files };
     });
@@ -304,11 +304,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     const newMapping = new Map(currentMapping);
                     newMapping.set(
                         fileCategory.name,
-                        fileUploadState.files.map((file) => ({
-                            name: file.name,
-                            path: file.path,
-                            fileId: file.fileId,
-                        })),
+                        new Map(fileUploadState.files.map((file) => [file.path, file.fileId])),
                     );
                     return newMapping;
                 });
