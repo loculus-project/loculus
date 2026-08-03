@@ -111,7 +111,6 @@ function getLinkageMapping(
 type ResolvedEntry = {
     submissionId: SubmissionId;
     category: FileCategory;
-    path: FilePath;
     file: ResolvedSubmissionFile;
 };
 
@@ -179,7 +178,7 @@ export function resolveFileMappings(
     for (const [category, pathMapping] of linkageMapping) {
         const categoryLinkage: CategoryLinkage = initializeCategoryLinkage();
 
-        for (const [path, linkageEntry] of pathMapping) {
+        for (const linkageEntry of pathMapping.values()) {
             for (const { submissionId, file } of linkageEntry.metadataEntries) {
                 if (file.fileId !== undefined) {
                     // A metadata file entry with its own file ID is reusing a pre-existing file
@@ -195,8 +194,7 @@ export function resolveFileMappings(
 
                 // A file ID from either metadata or upload resolves the entry
                 // Shadowed uploads are reported separately and block submission
-                if (fileId !== undefined)
-                    resolvedEntries.push({ submissionId, category, path, file: { ...file, fileId } });
+                if (fileId !== undefined) resolvedEntries.push({ submissionId, category, file: { ...file, fileId } });
             }
 
             if (linkageEntry.uploadEntry === undefined) continue;
