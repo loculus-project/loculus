@@ -32,7 +32,7 @@ const SEQUENCING_INSTRUMENT = 'Illumina MiSeq';
 const ID_1 = 'sub1';
 const ID_2 = 'sub2';
 const FILES_SINGLE = { 'testfile.fastq': EBOLA_SUDAN_SMALL_FASTQ(1) };
-const FILES_DOUBLE = {
+const FILES_DOUBLE: Record<string, string> = {
     'file1.fastq': EBOLA_SUDAN_SMALL_FASTQ(1),
     'file2.fastq': EBOLA_SUDAN_SMALL_FASTQ(2),
 };
@@ -108,8 +108,20 @@ test('bulk submit 2 seqs with 1 & 2 FASTQ files respectively', async ({
     await submissionPage.uploadMetadataFile(
         [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
         [
-            [ID_1, COUNTRY_1, '2022-12-02', SEQUENCING_INSTRUMENT, filesColumnCell(ID_1, FILES_SINGLE)],
-            [ID_2, COUNTRY_2, '2022-12-13', SEQUENCING_INSTRUMENT, filesColumnCell(ID_2, FILES_DOUBLE)],
+            [
+                ID_1,
+                COUNTRY_1,
+                '2022-12-02',
+                SEQUENCING_INSTRUMENT,
+                filesColumnCell(ID_1, FILES_SINGLE),
+            ],
+            [
+                ID_2,
+                COUNTRY_2,
+                '2022-12-13',
+                SEQUENCING_INSTRUMENT,
+                filesColumnCell(ID_2, FILES_DOUBLE),
+            ],
         ],
     );
     await submissionPage.uploadSequencesFile({
@@ -138,7 +150,15 @@ test('bulk submit 1 seq: discarding and reading a FASTQ file', async ({
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
     await submissionPage.uploadMetadataFile(
         [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
-        [[ID_1, COUNTRY_1, '2023-01-01', SEQUENCING_INSTRUMENT, filesColumnCell(ID_1, FILES_DOUBLE)]],
+        [
+            [
+                ID_1,
+                COUNTRY_1,
+                '2023-01-01',
+                SEQUENCING_INSTRUMENT,
+                filesColumnCell(ID_1, FILES_DOUBLE),
+            ],
+        ],
     );
     await submissionPage.uploadSequencesFile({ [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE });
     await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_SINGLE }, tmpDir);
@@ -283,8 +303,22 @@ test('bulk revise 2 seqs with files', async ({ page, groupId, tmpDir }) => {
 
     // Upload revision metadata (with accession column)
     const revisionMetadata = [
-        [accession1, revId1, COUNTRY_1, '2022-02-01', SEQUENCING_INSTRUMENT, filesColumnCell(revId1, REVISION_FILES)],
-        [accession2, revId2, COUNTRY_2, '2022-02-02', SEQUENCING_INSTRUMENT, filesColumnCell(revId2, REVISION_FILES_2)],
+        [
+            accession1,
+            revId1,
+            COUNTRY_1,
+            '2022-02-01',
+            SEQUENCING_INSTRUMENT,
+            filesColumnCell(revId1, REVISION_FILES),
+        ],
+        [
+            accession2,
+            revId2,
+            COUNTRY_2,
+            '2022-02-02',
+            SEQUENCING_INSTRUMENT,
+            filesColumnCell(revId2, REVISION_FILES_2),
+        ],
     ];
     await page.getByTestId('metadata_file').setInputFiles({
         name: 'revision_metadata.tsv',
