@@ -181,12 +181,6 @@ export function resolveFileMappings(
 
             for (const file of files.values()) {
                 switch (file.type) {
-                    case 'reusedFile': {
-                        categoryLinkage.reused.push(file);
-                        shadowedPaths.add(file.name);
-                        resolvedEntries.push({ submissionId, category, file });
-                        break;
-                    }
                     case 'declaredFile': {
                         const uploadFileId = uploads?.get(file.path);
 
@@ -198,10 +192,16 @@ export function resolveFileMappings(
                                 fileId: uploadFileId,
                             };
 
-                            linkedPaths.add(file.path);
                             categoryLinkage.linked.push(linkedFile);
+                            linkedPaths.add(file.path);
                             resolvedEntries.push({ submissionId, category, file: linkedFile });
                         } else categoryLinkage.missing.push(file);
+                        break;
+                    }
+                    case 'reusedFile': {
+                        categoryLinkage.reused.push(file);
+                        shadowedPaths.add(file.name);
+                        resolvedEntries.push({ submissionId, category, file });
                         break;
                     }
                 }
