@@ -445,9 +445,9 @@ export async function applyFileMappings(
     const rows = parsed.data.slice(1);
 
     // Ensure a column exists for every category present in the resolved mapping
-    const categories = new Set<string>();
-    for (const fileMapping of resolvedSubmissionFileMapping.values())
-        for (const category of fileMapping.keys()) categories.add(category);
+    const categories = new Set(
+        [...resolvedSubmissionFileMapping.values()].flatMap((fileMapping) => [...fileMapping.keys()]),
+    );
     for (const category of categories) {
         const name = `${FILES_HEADER_PREFIX}${category}`;
         if (!columnNames.includes(name)) columns.push({ name, index: columns.length });
