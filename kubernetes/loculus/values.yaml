@@ -1073,7 +1073,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           # ena-webin-cli -context reads -fields
           # ena-webin-cli=9.0.3
           # Last checked: 09.06.2026
-          # Fields listed in INSTRUMENT
+          # Fields listed in INSTRUMENT (excluding `unspecified`)
           - name: "454 GS"
           - name: "454 GS 20"
           - name: "454 GS FLX"
