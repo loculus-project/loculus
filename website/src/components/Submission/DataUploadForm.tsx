@@ -32,12 +32,13 @@ import {
     applyFileMappings,
     resolveFileMappings,
     getLinkageErrors,
+    toSingleSubmissionFileMapping,
     type CategoryLinkage,
     type FileLinkage,
     type FileMapping,
-    type ResolvedSubmissionFile,
     type SubmissionFile,
     type SubmissionFileMapping,
+    type UploadedFile,
 } from './FileUpload/fileMapping.ts';
 
 export type UploadAction = 'submit' | 'revise';
@@ -77,7 +78,7 @@ const InnerDataUploadForm = ({
 
     const { submit, revise, isPending } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
-    const [fileMapping, setFileMapping] = useState<FileMapping<ResolvedSubmissionFile> | undefined>(undefined);
+    const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(undefined);
     const [submissionFileMapping, setSubmissionFileMapping] = useState<
         Result<SubmissionFileMapping, Error> | undefined
     >(undefined);
@@ -130,7 +131,7 @@ const InnerDataUploadForm = ({
         if (extraFilesEnabled) {
             if (inputMode === 'form') {
                 if (fileMapping !== undefined) {
-                    const finalSubmissionFileMapping = new Map([[submissionId!, fileMapping]]);
+                    const finalSubmissionFileMapping = toSingleSubmissionFileMapping(submissionId!, fileMapping);
                     const finalMetadataFileResult = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
                     if (finalMetadataFileResult.isErr()) {
                         onError(finalMetadataFileResult.error.message);
@@ -335,7 +336,13 @@ export const InputModeTabs = ({
 const CategoryLinkageStatus = ({ categoryLinkage }: { categoryLinkage: CategoryLinkage | undefined }) => {
     if (categoryLinkage === undefined) return null;
 
-    const statuses: { key: string; icon: string; color: string; files: SubmissionFile[]; message: string }[] = [
+    const statuses: {
+        key: string;
+        icon: string;
+        color: string;
+        files: (SubmissionFile | UploadedFile)[];
+        message: string;
+    }[] = [
         {
             key: 'linked',
             icon: '✓',
@@ -396,8 +403,8 @@ export const ExtraFilesUpload = ({
     inputMode: InputMode;
     groupId: number;
     fileCategories: FileCategory[];
-    fileMapping: FileMapping<ResolvedSubmissionFile> | undefined;
-    setFileMapping: Dispatch<SetStateAction<FileMapping<ResolvedSubmissionFile> | undefined>>;
+    fileMapping: FileMapping | undefined;
+    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
     fileLinkage?: FileLinkage;
     onError: (message: string) => void;
 }) => {

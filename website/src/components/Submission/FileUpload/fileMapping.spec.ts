@@ -8,9 +8,9 @@ import {
     LinkageType,
     parseSubmissionFileMapping,
     type FileMapping,
-    type ResolvedSubmissionFile,
     type SubmissionFile,
     type SubmissionFileMapping,
+    type UploadedFile,
 } from './fileMapping';
 
 const tsv = (rows: string[][]) => rows.map((row) => row.join('\t')).join('\n');
@@ -30,13 +30,28 @@ const errorOf = (text: string, categories: string[] = knownCategories): string =
     return result.error.message;
 };
 
-const fileMappingOf = <T extends SubmissionFile>(categories: Record<string, T[]>): FileMapping<T> =>
-    new Map(Object.entries(categories).map(([category, files]) => [category, new Map(files.map((f) => [f.path, f]))]));
+const fileMappingOf = (categories: Record<string, UploadedFile[]>): FileMapping =>
+    new Map(
+        Object.entries(categories).map(([category, files]) => [
+            category,
+            new Map(files.map((f) => [f.path, f.fileId])),
+        ]),
+    );
 
 const submissionMappingOf = <T extends SubmissionFile>(
     submissions: Record<string, Record<string, T[]>>,
 ): SubmissionFileMapping<T> =>
-    new Map(Object.entries(submissions).map(([submissionId, categories]) => [submissionId, fileMappingOf(categories)]));
+    new Map(
+        Object.entries(submissions).map(([submissionId, categories]) => [
+            submissionId,
+            new Map(
+                Object.entries(categories).map(([category, files]) => [
+                    category,
+                    new Map(files.map((file) => [file.name, file])),
+                ]),
+            ),
+        ]),
+    );
 
 describe('parseSubmissionFileMapping', () => {
     it('parses every accepted file entry form', () => {
@@ -126,12 +141,15 @@ describe('parseSubmissionFileMapping', () => {
         expect(errorOf(text)).toContain('Found duplicate file names for entry e1 in the raw category: a.txt');
     });
 
-    it('rejects duplicate file paths within one entry', () => {
+    it('allows two different names to share the same explicit path', () => {
         const text = tsv([
             ['id', 'files.raw'],
             ['e1', 'a.txt::x b.txt::x'],
         ]);
-        expect(errorOf(text)).toContain('Found duplicate file paths for entry e1 in the raw category: x');
+        expect(entriesOf(text, 'e1', 'raw')).toEqual([
+            { name: 'a.txt', path: 'x', fileId: undefined },
+            { name: 'b.txt', path: 'x', fileId: undefined },
+        ]);
     });
 
     it('omits the category entirely for an empty cell', () => {
@@ -159,7 +177,7 @@ describe('parseSubmissionFileMapping', () => {
 describe('resolveFileMappings', () => {
     const metadataEntry: SubmissionFile = { name: 'a.txt', path: 'a.txt' };
     const metadataEntryWithFileId: SubmissionFile = { name: 'a.txt', path: 'a.txt', fileId: 'existing-id' };
-    const uploadEntry: ResolvedSubmissionFile = { name: 'a.txt', path: 'a.txt', fileId: 'uploaded-id' };
+    const uploadEntry: UploadedFile = { path: 'a.txt', fileId: 'uploaded-id' };
     const emptyDetails = { linked: [], reused: [], missing: [], orphaned: [], shadowed: [] };
 
     describe('linked', () => {
@@ -209,7 +227,7 @@ describe('resolveFileMappings', () => {
 
     describe('missing', () => {
         it('when a metadata entry has no file ID and no upload folder entry on its path', () => {
-            const otherUpload: ResolvedSubmissionFile = { name: 'b.txt', path: 'b.txt', fileId: 'uploaded-b' };
+            const otherUpload: UploadedFile = { path: 'b.txt', fileId: 'uploaded-b' };
             const { submissionFileMapping, fileLinkage } = resolveFileMappings(
                 submissionMappingOf({ e1: { raw: [metadataEntry] } }),
                 fileMappingOf({ raw: [otherUpload] }),
@@ -231,7 +249,7 @@ describe('resolveFileMappings', () => {
     });
 
     describe('shadowed', () => {
-        it('when every metadata entry on the path has its own file ID', () => {
+        it('when every metadata entry on the path has its own file ID, so none of them claim the upload', () => {
             const { submissionFileMapping, fileLinkage } = resolveFileMappings(
                 submissionMappingOf({ e1: { raw: [metadataEntryWithFileId] } }),
                 fileMappingOf({ raw: [uploadEntry] }),
@@ -261,9 +279,13 @@ describe('resolveFileMappings', () => {
 
 describe('getLinkageErrors', () => {
     const file = (path: string): SubmissionFile => ({ name: path, path });
+    const upload = (path: string): UploadedFile => ({ path, fileId: `id-${path}` });
     const detailsOf = (missing: string[], orphaned: string[]) =>
         new Map([
-            ['raw', { linked: [], reused: [], missing: missing.map(file), orphaned: orphaned.map(file), shadowed: [] }],
+            [
+                'raw',
+                { linked: [], reused: [], missing: missing.map(file), orphaned: orphaned.map(upload), shadowed: [] },
+            ],
         ]);
 
     it('returns undefined when nothing is missing or orphaned', () => {
@@ -290,8 +312,8 @@ describe('getLinkageErrors', () => {
                     linked: [],
                     reused: [file('a.txt')],
                     missing: [],
-                    orphaned: [file('stray.txt')],
-                    shadowed: [file('a.txt')],
+                    orphaned: [upload('stray.txt')],
+                    shadowed: [upload('a.txt')],
                 },
             ],
         ]);
@@ -300,10 +322,17 @@ describe('getLinkageErrors', () => {
         );
     });
 
+    it('ignores linked and reused files', () => {
+        const fileLinkage = new Map([
+            ['raw', { linked: [upload('a.txt')], reused: [file('b.txt')], missing: [], orphaned: [], shadowed: [] }],
+        ]);
+        expect(getLinkageErrors(fileLinkage)).toBeUndefined();
+    });
+
     it('joins problems across categories', () => {
         const fileLinkage = new Map([
             ['raw', { linked: [], reused: [], missing: [file('a.txt')], orphaned: [], shadowed: [] }],
-            ['processed', { linked: [], reused: [], missing: [], orphaned: [file('b.json')], shadowed: [] }],
+            ['processed', { linked: [], reused: [], missing: [], orphaned: [upload('b.json')], shadowed: [] }],
         ]);
         expect(getLinkageErrors(fileLinkage)).toBe(
             `${getLinkageErrorMessage(LinkageType.MISSING, 'raw', 'a.txt')} ${getLinkageErrorMessage(LinkageType.ORPHANED, 'processed', 'b.json')}`,

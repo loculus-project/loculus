@@ -2,7 +2,7 @@ import { produce } from 'immer';
 import React, { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
 
-import { type FileMapping, type ResolvedSubmissionFile } from './fileMapping';
+import { type FileMapping } from './fileMapping';
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
 import { type FileCategory } from '../../../types/config';
@@ -41,14 +41,12 @@ type UploadStatus = 'pending' | 'uploaded' | 'previousUpload' | 'error';
 type Awaiting = {
     type: 'awaiting';
     file: File;
-    name: string;
     path: string;
 };
 
 type Pending = {
     type: 'pending';
     file: File;
-    name: string;
     path: string;
     size: number;
     fileId: string;
@@ -62,7 +60,6 @@ type Pending = {
 type Uploaded = {
     type: 'uploaded';
     fileId: string;
-    name: string;
     path: string;
     size: number;
 };
@@ -70,13 +67,11 @@ type Uploaded = {
 type PreviousUpload = {
     type: 'previousUpload';
     fileId: string;
-    name: string;
     path: string;
 };
 
 type FileError = {
     type: 'error';
-    name: string;
     path: string;
     size: number;
     msg: string;
@@ -90,8 +85,8 @@ type FolderUploadComponentProps = {
     accessToken: string;
     clientConfig: ClientConfig;
     groupId: number;
-    fileMapping: FileMapping<ResolvedSubmissionFile> | undefined;
-    setFileMapping: Dispatch<SetStateAction<FileMapping<ResolvedSubmissionFile> | undefined>>;
+    fileMapping: FileMapping | undefined;
+    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
     onError: (message: string) => void;
 };
 
@@ -155,11 +150,10 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         const categoryFiles = fileMapping?.get(fileCategory.name);
         if (categoryFiles === undefined || categoryFiles.size === 0) return undefined;
 
-        const files: PreviousUpload[] = [...categoryFiles.values()].map((file) => ({
+        const files: PreviousUpload[] = [...categoryFiles.entries()].map(([path, fileId]) => ({
             type: 'previousUpload',
-            fileId: file.fileId,
-            name: file.name,
-            path: file.path,
+            fileId,
+            path,
         }));
         return { type: 'uploadCompleted', files };
     });
@@ -189,11 +183,10 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     draft.files = draft.files.map((file) => {
                         if (file.type === 'pending' && file.fileId === fileId) {
                             if (newStatus === 'uploaded') {
-                                return { type: 'uploaded', fileId, name: file.name, path: file.path, size: file.size };
+                                return { type: 'uploaded', fileId, path: file.path, size: file.size };
                             } else {
                                 return {
                                     type: 'error',
-                                    name: file.name,
                                     path: file.path,
                                     size: file.size,
                                     msg: errorMsg!,
@@ -234,7 +227,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 await uploadMultipartFile(pending);
             } catch (err) {
                 onError(
-                    `Upload failed for file ${pending.fileId} ${pending.name}: ${err instanceof Error ? err.message : String(err)}`,
+                    `Upload failed for file ${pending.fileId} ${pending.path}: ${err instanceof Error ? err.message : String(err)}`,
                 );
                 return;
             }
@@ -251,7 +244,6 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     pendingFiles.push({
                         type: 'pending',
                         file: file.file,
-                        name: file.name,
                         path: file.path,
                         size: file.file.size,
                         fileId: data[0].fileId,
@@ -304,16 +296,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     const newMapping = new Map(currentMapping);
                     newMapping.set(
                         fileCategory.name,
-                        new Map(
-                            fileUploadState.files.map((file) => [
-                                file.path,
-                                {
-                                    name: file.name,
-                                    path: file.path,
-                                    fileId: file.fileId,
-                                },
-                            ]),
-                        ),
+                        new Map(fileUploadState.files.map((file) => [file.path, file.fileId])),
                     );
                     return newMapping;
                 });
@@ -338,7 +321,6 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 files: filesArray.map((f) => ({
                     type: 'awaiting',
                     file: f,
-                    name: f.name,
                     // Assign the path without the parent folder
                     path: f.webkitRelativePath.split('/').slice(1).join('/'),
                 })),
@@ -367,7 +349,6 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             const awaiting: Awaiting[] = Array.from(e.target.files).map((f) => ({
                 type: 'awaiting',
                 file: f,
-                name: f.name,
                 path: f.name,
             }));
 
@@ -409,7 +390,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 displayConfirmationDialog({
                     dialogText:
                         'The following file(s) already exist and will be replaced: ' +
-                        collisions.map((file) => file.name).join(', '),
+                        collisions.map((file) => file.path).join(', '),
                     confirmButtonText: 'Replace',
                     onConfirmation: addFiles,
                 });
@@ -566,12 +547,13 @@ const FileListItem: FC<FileListeItemProps> = ({ file, fileCategory }) => {
 
 const FilePath: FC<{ file: SingleFileUpload }> = ({ file }) => {
     const folderPath = file.path.split('/').slice(0, -1);
+    const fileName = file.path.split('/').slice(-1)[0];
     return (
         <span title={file.path} className='text-xs flex items-center min-w-0'>
             {folderPath.length > 0 && (
                 <span className='text-gray-400 truncate max-w-[140px] mr-1'>{folderPath.join(' / ') + ' / '}</span>
             )}
-            <span className='text-gray-700 truncate max-w-[140px]'>{file.name}</span>
+            <span className='text-gray-700 truncate max-w-[140px]'>{fileName}</span>
         </span>
     );
 };
