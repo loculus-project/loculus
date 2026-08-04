@@ -11,9 +11,6 @@ localHost: localhost
 robotsNoindexHeader: false
 seqSets:
   enabled: true
-  crossRef:
-    DOIPrefix: "placeholder"
-    endpoint: "https://test.crossref.org"
   fieldsToDisplay:
     - field: "geoLocCountry"
       displayName: "Country"
@@ -40,6 +37,7 @@ disablePreprocessing: false
 disableIngest: false
 disableEnaSubmission: true
 disableTaxonomyService: false
+disableRawReadsProcessingService: true
 readOnlyMode: false
 website:
   websiteConfig:
@@ -66,6 +64,10 @@ fileSharing:
   outputFileUrlType: backend
 s3:
   enabled: true
+  gcInitialDelayMinutes: 15
+  gcEnabled: false
+  gcFrequencyMinutes: 1440
+  gcOrphanRetentionPeriodMinutes: 10080
   bucket:
     region: us-east-1
     bucket: loculus-preview-private
@@ -82,6 +84,10 @@ lineageSystemDefinitions:
     4: https://raw.githubusercontent.com/loculus-project/loculus/fe3b2974071acc9a25856d650350f8a952040a7c/preprocessing/dummy/lineage-alternative.yaml
   cchfS:
     1: https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-24--07-29-03Z/lineages.yaml
+taxonomyService:
+  dbVersion: "ncbi_taxonomy_2026-06-01"
+  taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
+  taxonomy_service_url: &taxonomy_service_url http://loculus-taxonomy-service:5000
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     submissionDataTypes: &defaultSubmissionDataTypes
@@ -1057,6 +1063,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sequencing
         desired: true
         orderOnDetailsPage: 2080
+        requiredWhen:
+          - files.rawReads
       - name: sequencingProtocol
         ontology_id: GENEPIO:0001454
         definition: The protocol used to generate the sequence.
@@ -1260,8 +1268,6 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: resolve_host_taxon_id
           inputs:
             host: host
-          args:
-            taxonomy_service_url: &taxonomy_service_url http://loculus-taxonomy-service:5000
       - name: hostNameScientific
         displayName: Host name - scientific
         definition: "The scientific name of the host from which the sample was collected."
@@ -1279,8 +1285,6 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: scientific_name_from_id
           inputs:
             hostTaxonId: processed.hostTaxonId
-          args:
-            taxonomy_service_url: *taxonomy_service_url
       - name: hostNameCommon
         displayName: Host name - common
         definition: "The common name of the host from which the sample was collected."
@@ -1298,8 +1302,6 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: common_name_from_id
           inputs:
             hostTaxonId: processed.hostTaxonId
-          args:
-            taxonomy_service_url: *taxonomy_service_url
       - name: isLabHost
         displayName: Is lab host
         definition: "If a laboratory host (e.g. cultured cell line) was used to propagate the sample."
@@ -1538,8 +1540,6 @@ defaultOrganismConfig: &defaultOrganismConfig
       args:
         - "prepro"
       replicas: 1
-      taxonomyServiceArgs: &preprocessingTaxonomyServiceArgs
-        taxonomy_service_url: *taxonomy_service_url
       configFile: &preprocessingConfigFile
         log_level: DEBUG
         batch_size: 100
@@ -1552,6 +1552,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
+    configFile:
+      muted_hashes_url: "https://pathoplexus.github.io/curation_data/muted_hashes/muted_hashes.tsv"
 defaultOrganisms:
   ebola-sudan:
     <<: *defaultOrganismConfig
@@ -1659,6 +1661,7 @@ defaultOrganisms:
               # - Last field is a date in format YYYY, YYYY-MM, or YYYY-MM-DD
               # - Identifier is the second to last field (extracted through named capture group)
               regex_pattern: '^(?:[^/]+/)?[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$'
+              human_readable_pattern: "<any>/<any>/<identifier>/<date>"
         - <<: *hostTaxonIdConfig
           required: true
           hierarchicalFilter: *taxonomy_service_url
@@ -1902,10 +1905,10 @@ defaultOrganisms:
         files:
           enabled: true
           categories:
-            - name: raw_reads
+            - name: rawReads
               displayName: Raw reads
       files:
-        - name: raw_reads
+        - name: rawReads
           displayName: Raw reads
       metadata: *dummyMetadata
       website:
@@ -2446,7 +2449,7 @@ defaultOrganisms:
           segment_classification_method: "minimizer"
           # TODO(https://github.com/loculus-project/loculus/issues/5673): switch creation on when multi-path is supported
           create_embl_file: false
-          minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
+          minimizer_url: "https://alejandra-gonzalezsanchez.github.io/loculus-evs/evs_minimizer-index.json"
           segments:
             - name: main
               references:
@@ -2502,109 +2505,109 @@ defaultOrganisms:
       - name: main
         references:
           - name: CV-A16
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/reference-cva16.fasta]]"
+            sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/reference-cva16.fasta]]"
             insdcAccessionFull: U05876.1
             genes:
               - name: VP4
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP4-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/VP4-cva16.fasta]]"
               - name: VP2
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP2-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/VP2-cva16.fasta]]"
               - name: VP3
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP3-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/VP3-cva16.fasta]]"
               - name: VP1
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP1-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/VP1-cva16.fasta]]"
               - name: 2A
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2A-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/2A-cva16.fasta]]"
               - name: 2B
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2B-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/2B-cva16.fasta]]"
               - name: 2C
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2C-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/2C-cva16.fasta]]"
               - name: 3A
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3A-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/3A-cva16.fasta]]"
               - name: 3B
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3B-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/3B-cva16.fasta]]"
               - name: 3C
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3C-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/3C-cva16.fasta]]"
               - name: 3D
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3D-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/3D-cva16.fasta]]"
           - name: CV-A10
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/reference-cva10.fasta]]"
+            sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/reference-cva10.fasta]]"
             insdcAccessionFull: AY421767.1
             genes:
               - name: VP4
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP4-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/VP4-cva10.fasta]]"
               - name: VP2
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP2-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/VP2-cva10.fasta]]"
               - name: VP3
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP3-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/VP3-cva10.fasta]]"
               - name: VP1
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP1-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/VP1-cva10.fasta]]"
               - name: 2A
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2A-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/2A-cva10.fasta]]"
               - name: 2B
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2B-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/2B-cva10.fasta]]"
               - name: 2C
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2C-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/2C-cva10.fasta]]"
               - name: 3A
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3A-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/3A-cva10.fasta]]"
               - name: 3B
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3B-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/3B-cva10.fasta]]"
               - name: 3C
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3C-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/3C-cva10.fasta]]"
               - name: 3D
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3D-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/3D-cva10.fasta]]"
           - name: EV-A71
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/reference-eva71.fasta]]"
+            sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/reference-eva71.fasta]]"
             insdcAccessionFull: U22521.1
             genes:
               - name: VP4
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP4-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/VP4-eva71.fasta]]"
               - name: VP2
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP2-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/VP2-eva71.fasta]]"
               - name: VP3
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP3-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/VP3-eva71.fasta]]"
               - name: VP1
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP1-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/VP1-eva71.fasta]]"
               - name: 2A
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2A-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/2A-eva71.fasta]]"
               - name: 2B
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2B-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/2B-eva71.fasta]]"
               - name: 2C
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2C-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/2C-eva71.fasta]]"
               - name: 3A
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3A-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/3A-eva71.fasta]]"
               - name: 3B
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3B-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/3B-eva71.fasta]]"
               - name: 3C
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3C-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/3C-eva71.fasta]]"
               - name: 3D
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3D-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/3D-eva71.fasta]]"
           - name: EV-D68
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/reference-evd68.fasta]]"
+            sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/reference-evd68.fasta]]"
             insdcAccessionFull: AY426531.1
             genes:
               - name: VP4
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP4-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/VP4-evd68.fasta]]"
               - name: VP2
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP2-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/VP2-evd68.fasta]]"
               - name: VP3
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP3-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/VP3-evd68.fasta]]"
               - name: VP1
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP1-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/VP1-evd68.fasta]]"
               - name: 2A
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2A-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/2A-evd68.fasta]]"
               - name: 2B
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2B-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/2B-evd68.fasta]]"
               - name: 2C
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2C-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/2C-evd68.fasta]]"
               - name: 3A
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3A-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/3A-evd68.fasta]]"
               - name: 3B
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3B-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/3B-evd68.fasta]]"
               - name: 3C
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3C-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/3C-evd68.fasta]]"
               - name: 3D
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3D-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/3D-evd68.fasta]]"
 auth:
   verifyEmail: false
   resetPasswordAllowed: true
@@ -2652,11 +2655,6 @@ secrets:
       username: "postgres"
       password: "unsecure"
       port: "5432"
-  crossref:
-    type: raw
-    data:
-      username: "dummy"
-      password: "dummy"
   service-accounts:
     type: autogen
     data:
@@ -2705,6 +2703,7 @@ enaDeposition:
   enaUniqueSuffix: Loculus
   enaIsBroker: False
   enaSuppressedListTestUrl: "https://loculus-project.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt"
+
 taxonomyService:
   dbVersion: "ncbi_taxonomy_2026-05-01"
   taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
@@ -2712,7 +2711,11 @@ taxonomyService:
 networking:
   subdomainSeparator: "-"
   enforceHTTPS: true
-  traefikVersion: 2
+  traefikVersion: 3
+rawReadsProcessingService:
+  raw_reads_processing_service_url: http://loculus-raw-reads-processing:5000
+subdomainSeparator: "-"
+enableServiceMonitor: false
 
 replicas:
   website: 1

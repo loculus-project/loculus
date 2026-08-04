@@ -28,15 +28,15 @@ const BUTTON_CLASS =
 
         <div class='mb-10'>
             <p class='mt-4 mb-4'>
-                There is a
+                There is a{' '}
                 <a
                     href='https://swagger.io/tools/swagger-ui/'
                     class='underline text-primary-900 hover:text-primary-800 hover:no-underline'
                 >
                     Swagger UI
-                </a>
+                </a>{' '}
                 for documentation and direct interaction with the APIs. For more tips on how to use the API, it is recommended
-                to start with the
+                to start with the{' '}
                 <a
                     href={authenticationApiDocsUrl}
                     class='underline text-primary-900 hover:text-primary-800 hover:no-underline'
@@ -51,7 +51,7 @@ const BUTTON_CLASS =
             {
                 dataUseTermsAreEnabled() && (
                     <p class='mt-4 mb-4'>
-                        By using our API you agree to our
+                        By using our API you agree to our{' '}
                         <a
                             href={routes.datauseTermsPage()}
                             class='underline text-primary-900 hover:text-primary-800 hover:no-underline'
@@ -73,7 +73,7 @@ const BUTTON_CLASS =
                 View backend API documentation
             </a>
             <div class='mt-8'>
-                <span class='font-medium'>URL of backend server:</span>
+                <span class='font-medium'>URL of backend server: </span>
                 <code>{clientConfig.backendUrl}</code>
             </div>
         </div>
@@ -109,7 +109,7 @@ const BUTTON_CLASS =
                 We use the open source software <a href='https://www.keycloak.org/'>Keycloak</a> for authentication.
             </div>
             <div class='mt-2'>
-                <span class='font-medium'>URL of Keycloak server:</span>
+                <span class='font-medium'>URL of Keycloak server: </span>
                 <code>{keycloakUrl}</code>
             </div>
         </div>

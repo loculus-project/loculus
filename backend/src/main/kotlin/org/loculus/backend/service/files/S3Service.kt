@@ -14,6 +14,7 @@ import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadRequest
 import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload
 import software.amazon.awssdk.services.s3.model.CompletedPart
 import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
@@ -45,6 +46,7 @@ class S3Service(private val s3Config: S3Config) {
         val putObjectRequest = PutObjectRequest.builder()
             .bucket(config.bucket)
             .key(getFileIdPath(fileId))
+            .ifNoneMatch("*") // prevent accidental overwrites of URL contents by blocking more than one write
             .build()
         val presignRequest = PutObjectPresignRequest.builder()
             .putObjectRequest(putObjectRequest)
@@ -176,6 +178,18 @@ class S3Service(private val s3Config: S3Config) {
         Unit
     }
 
+    fun deleteFile(fileId: FileId) = s3ErrorMapping {
+        val config = getS3BucketConfig()
+        s3Client.deleteObject(
+            DeleteObjectRequest
+                .builder()
+                .bucket(config.bucket)
+                .key(getFileIdPath(fileId))
+                .build(),
+        )
+        Unit
+    }
+
     private fun assertIsEnabled() {
         if (!s3Config.enabled) {
             throw IllegalStateException("S3 is not enabled")
@@ -256,6 +270,11 @@ fun <T> s3ErrorMapping(block: () -> T): T {
             "InvalidPartOrder" -> UnprocessableEntityException(
                 "The list of parts was not in ascending order. The parts list must be specified in order " +
                     "by part number.",
+            )
+
+            "NoSuchKey" -> UnprocessableEntityException(
+                "NoSuchKey: The referenced file does not exist in storage. Uploaded files that are not " +
+                    "referenced by a submission for too long are cleaned up automatically.",
             )
 
             else -> RuntimeException("Unexpected S3 error: ${e.awsErrorDetails().errorCode()}")

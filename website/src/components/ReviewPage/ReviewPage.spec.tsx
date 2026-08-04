@@ -183,18 +183,18 @@ describe('ReviewPage', () => {
 
         await waitFor(() => {
             expect(getByText((text) => text.includes('Discard 1 sequence with errors'))).toBeDefined();
-            expect(getByText((text) => text.includes('Release 1 valid sequence'))).toBeDefined();
+            expect(getByText((text) => text.includes('Approve 1 valid sequence'))).toBeDefined();
         });
 
         mockRequest.backend.getSequences(200, generateGetSequencesResponse([]));
 
-        await userEvent.click(getByText((text) => text.includes('Release 1 valid sequence')));
+        await userEvent.click(getByText((text) => text.includes('Approve 1 valid sequence')));
 
         await waitFor(() => {
-            expect(getByText('Release')).toBeDefined();
+            expect(getByText('Approve')).toBeDefined();
         });
 
-        await userEvent.click(getByText('Release'));
+        await userEvent.click(getByText('Approve'));
 
         await waitFor(() => {
             expect(getByText(unreleasedSequencesRegex)).toBeDefined();

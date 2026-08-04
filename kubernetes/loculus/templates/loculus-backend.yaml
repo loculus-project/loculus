@@ -33,20 +33,25 @@ spec:
           startupProbe:
             httpGet:
               path: "/actuator/health/liveness"
-              port: 8079
+              port: {{ .Values.enableServiceMonitor | ternary "management" "http" }}
             periodSeconds: 5
             failureThreshold: 360 # 30 minutes to start
           livenessProbe:
             httpGet:
               path: "/actuator/health/liveness"
-              port: 8079
+              port: {{ .Values.enableServiceMonitor | ternary "management" "http" }}
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: "/actuator/health/readiness"
-              port: 8079
+              port: {{ .Values.enableServiceMonitor | ternary "management" "http" }}
           ports:
-            - containerPort: 8079
+            - name: http
+              containerPort: 8079
+            {{- if .Values.enableServiceMonitor }}
+            - name: management
+              containerPort: 8078
+            {{- end }}
           args:
             - "--loculus.enable-seqsets={{ $.Values.seqSets.enabled }}"
             {{- if $.Values.seqSets.crossRef }}
@@ -57,7 +62,7 @@ spec:
             - "--crossref.database-name=$(CROSSREF_DATABASE_NAME)"
             - "--crossref.email=$(CROSSREF_EMAIL)"
             - "--crossref.organization=$(CROSSREF_ORGANIZATION)"
-            - "--crossref.host-url=$(CROSSREF_HOST_URL)"
+            - "--crossref.write-enabled=$(CROSSREF_WRITE_ENABLED)"
             {{- end }}
             - "--keycloak.password=$(BACKEND_KEYCLOAK_PASSWORD)"
             - "--keycloak.realm=loculus"
@@ -72,12 +77,21 @@ spec:
             - "--loculus.pipeline-version-upgrade-check.interval-seconds={{- .Values.pipelineVersionUpgradeCheckIntervalSeconds | default 10 }}"
             - "--loculus.s3.enabled=$(S3_ENABLED)"
             {{- if $.Values.s3.enabled }}
+            - "--loculus.s3.gc-enabled=$(S3_GC_ENABLED)"
+            - "--loculus.s3.gc-orphan-retention-period-minutes=$(S3_GC_ORPHAN_RETENTION_PERIOD_MINUTES)"
+            - "--loculus.s3.gc-initial-delay-minutes=$(S3_GC_INITIAL_DELAY_MINUTES)"
+            - "--loculus.s3.gc-frequency-minutes=$(S3_GC_FREQUENCY_MINUTES)"
             - "--loculus.s3.bucket.endpoint=$(S3_BUCKET_ENDPOINT)"
             - "--loculus.s3.bucket.internal-endpoint=$(S3_BUCKET_INTERNAL_ENDPOINT)"
             - "--loculus.s3.bucket.region=$(S3_BUCKET_REGION)"
             - "--loculus.s3.bucket.bucket=$(S3_BUCKET_BUCKET)"
             - "--loculus.s3.bucket.access-key=$(S3_BUCKET_ACCESS_KEY)"
             - "--loculus.s3.bucket.secret-key=$(S3_BUCKET_SECRET_KEY)"
+            {{- end }}
+            {{- if .Values.enableServiceMonitor }}
+            - "--management.server.port=8078"
+            - "--management.endpoint.prometheus.enabled=true"
+            - "--management.endpoints.web.exposure.include=health,prometheus"
             {{- end }}
             {{- if .Values.backendExtraArgs }}
               {{- .Values.backendExtraArgs | toYaml | nindent 12 }}
@@ -106,8 +120,8 @@ spec:
               value: {{$.Values.seqSets.crossRef.email | quote }}
             - name: CROSSREF_ORGANIZATION
               value: {{$.Values.seqSets.crossRef.organization | quote }}
-            - name: CROSSREF_HOST_URL
-              value: {{$.Values.seqSets.crossRef.hostUrl | quote }}
+            - name: CROSSREF_WRITE_ENABLED
+              value: {{$.Values.seqSets.crossRef.writeEnabled | quote }}
            {{- end }}
             - name: BACKEND_KEYCLOAK_PASSWORD
               valueFrom:
@@ -132,6 +146,14 @@ spec:
             - name: S3_ENABLED
               value: {{$.Values.s3.enabled | quote }}
             {{- if $.Values.s3.enabled }}
+            - name: S3_GC_ENABLED
+              value: {{$.Values.s3.gcEnabled | quote }}
+            - name: S3_GC_INITIAL_DELAY_MINUTES
+              value: {{$.Values.s3.gcInitialDelayMinutes | quote }}
+            - name: S3_GC_FREQUENCY_MINUTES
+              value: {{$.Values.s3.gcFrequencyMinutes | quote }}
+            - name: S3_GC_ORPHAN_RETENTION_PERIOD_MINUTES
+              value: {{$.Values.s3.gcOrphanRetentionPeriodMinutes | quote }}
             - name: S3_BUCKET_ENDPOINT
               value: {{ include "loculus.s3Url" . | quote }}
             - name: S3_BUCKET_INTERNAL_ENDPOINT

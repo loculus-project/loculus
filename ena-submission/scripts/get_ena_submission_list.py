@@ -111,6 +111,17 @@ def assign_ena_organism(
     raise ValueError(error_msg)
 
 
+def update_entry(
+    entry: dict[str, Any], config: Config, ena_organisms: list[ENAOrganism]
+) -> dict[str, Any]:
+    entry["organism"] = assign_ena_organism(entry, ena_organisms)
+
+    for field, fallback_field in config.metadata_fallback_fields.items():
+        if not entry["metadata"].get(field):
+            entry["metadata"][field] = entry["metadata"].get(fallback_field)
+    return entry
+
+
 def filter_for_submission(
     config: Config,
     db_engine: Engine,
@@ -129,6 +140,7 @@ def filter_for_submission(
           from doing so)
         - the latest version is not a revocation entry
           (if it is, we send a separate notification)
+          Additionally, update the entry with any missing or fallback fields.
     """
     entries_to_submit: dict[Accession, dict[str, Any]] = {}
     entries_with_external_metadata: set[Accession] = set()
@@ -161,16 +173,16 @@ def filter_for_submission(
         if version_already_to_submit >= accession_version.version:
             continue
 
-        entry["organism"] = assign_ena_organism(entry, ena_organisms)
+        updated_entry = update_entry(entry, config, ena_organisms)
 
         ena_specific_metadata_fields = [
-            value.name for value in config.enaOrganisms[entry["organism"]].externalMetadata
+            value.name for value in config.enaOrganisms[updated_entry["organism"]].externalMetadata
         ]
 
         ena_specific_metadata = [
-            f"{field}:{entry['metadata'][field]}"
+            f"{field}:{updated_entry['metadata'][field]}"
             for field in ena_specific_metadata_fields
-            if entry["metadata"].get(field)
+            if updated_entry["metadata"].get(field)
         ]
         if ena_specific_metadata:
             logger.warning(
@@ -187,8 +199,8 @@ def filter_for_submission(
             logger.debug(f"Skipping suppressed accession: {accession_version}")
             entries_with_external_metadata.discard(accession_version.accession)
             continue
-        entries_to_submit[accession_version.accession] = entry
-        if entry["metadata"].get("isRevocation", False):
+        entries_to_submit[accession_version.accession] = updated_entry
+        if updated_entry["metadata"].get("isRevocation", False):
             logger.debug(f"Found revoked sequence: {accession_version}")
             revoked_entries.add(accession_version.accession)
             entries_with_external_metadata.discard(accession_version.accession)

@@ -15,7 +15,7 @@ type DownloadButtonProps = {
     onClick?: () => void;
 };
 
-export const CopyUrlButton: FC<{ url: string }> = ({ url }) => {
+const CopyUrlButton: FC<{ url: string }> = ({ url }) => {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = () => {

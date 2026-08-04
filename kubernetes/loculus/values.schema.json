@@ -33,6 +33,11 @@
           "type": "boolean",
           "description": "Whether the field is required by backend."
         },
+        "requiredWhen": {
+          "groups": ["metadata"],
+          "type": "array",
+          "description": "Array of conditions under which this metadata field is required. When multiple conditions are provided they are ORed; a submission is rejected if at least one condition is not met. Conditions can be: the presence of a file category - specified as files.<file_category>; the input value of another metadata field - specified as <field_name>; or the processed value of another metadata field - specified as processed.<field_name>"
+        },
         "desired": {
           "groups": ["metadata"],
           "type": "boolean",
@@ -341,6 +346,16 @@
             },
             "errorMessage": "When rangeOverlapSearch is set, type must be numeric or date ('int', 'float', 'number', or 'date')"
           }
+        },
+        {
+          "if": {
+            "properties": { "required": { "const": true } },
+            "required": ["required"]
+          },
+          "then": {
+            "not": { "required": ["requiredWhen"] },
+            "errorMessage": "A field with 'required: true' cannot also set 'requiredWhen' (it is already always required)."
+          }
         }
       ]
     },
@@ -416,7 +431,7 @@
                           "name": {
                             "groups": ["schema"],
                             "type": "string",
-                            "description": "The name of the file category, e.g. 'raw_reads'."
+                            "description": "The name of the file category, e.g. 'rawReads'."
                           },
                           "displayName": {
                             "groups": ["schema"],
@@ -684,19 +699,6 @@
                 },
                 "description": "Array of Strings. Arguments passed to the preprocessing pipeline."
               },
-              "taxonomyServiceArgs": {
-                "groups": ["preprocessing"],
-                "docsIncludePrefix": false,
-                "type": "object",
-                "description": "Settings to configure the taxonomy service host and port",
-                "properties": {
-                  "taxonomy_service_url": {
-                    "groups": ["preprocessing"],
-                    "type": "string",
-                    "description": "Host and port where the taxonomy service runs"
-                  }
-                }
-              },
               "configFile": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
@@ -902,6 +904,12 @@
                     }
                   },
                   "required": ["method"]
+                },
+                "muted_hashes_url": {
+                  "groups": ["ingest"],
+                  "docsIncludePrefix": false,
+                  "type": "string",
+                  "description": "URL to a TSV file mapping accessions to hashes that should not trigger a revision."
                 },
                 "grouping_override_url": {
                   "groups": ["ingest"],
@@ -1253,7 +1261,7 @@
         },
         "crossRef": {
           "groups": ["general"],
-          "type": "object",
+          "type": ["object", "null"],
           "additionalProperties": false,
           "description": "Configuration for CrossRef integration. Set to `null` to disable CrossRef integration (you can still use SeqSets without CrossRef DOIs).",
           "properties": {
@@ -1283,10 +1291,11 @@
               "type": "string",
               "description": "The organization name for CrossRef"
             },
-            "hostUrl": {
+            "writeEnabled": {
               "groups": ["general"],
-              "type": "string",
-              "description": "The host URL for CrossRef callbacks"
+              "type": "boolean",
+              "default": false,
+              "description": "Enable/disable Crossref write functionality, such as generating DOIs"
             }
           }
         },
@@ -1479,7 +1488,7 @@
           "groups": ["general"],
           "type": "integer",
           "enum": [2, 3],
-          "default": 2,
+          "default": 3,
           "description": "Traefik major version for CRD API group. Use 2 for traefik.containo.us/v1alpha1 (Traefik v2) or 3 for traefik.io/v1alpha1 (Traefik v3)."
         }
       }
@@ -1661,6 +1670,12 @@
       "default": false,
       "description": "If true, disables the backend API deployment."
     },
+    "enableServiceMonitor": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, exposes backend metrics through a cluster-internal management service and deploys a Prometheus Operator ServiceMonitor. First install kube-prometheus-stack with the release name `kube-prometheus-stack`, for example: `helm upgrade --install kube-prometheus-stack oci://ghcr.io/prometheus-community/charts/kube-prometheus-stack --namespace monitoring --create-namespace`."
+    },
     "disablePreprocessing": {
       "groups": ["services"],
       "type": "boolean",
@@ -1684,6 +1699,12 @@
       "type": "boolean",
       "default": false,
       "description": "If true, disables the taxonomy service deployment."
+    },
+    "disableRawReadsProcessingService": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, disables the raw reads processing service deployment."
     },
     "readOnlyMode": {
       "groups": ["services"],
@@ -1794,6 +1815,30 @@
           "type": "boolean",
           "default": false,
           "description": "Whether to enable S3. S3 is needed for the file sharing feature."
+        },
+        "gcEnabled": {
+          "groups": ["s3"],
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the S3 garbage collection task in the backend should delete orphan files (if true) or just output a log with orphan files (if false)."
+        },
+        "gcFrequencyMinutes": {
+          "groups": ["s3"],
+          "type": "integer",
+          "default": 1440,
+          "description": "Frequency in minutes at which the backend runs the S3 garbage collection task."
+        },
+        "gcInitialDelayMinutes": {
+          "groups": ["s3"],
+          "type": "integer",
+          "default": 15,
+          "description": "How many minutes it takes before the first garbage collection task runs after the backend starts."
+        },
+        "gcOrphanRetentionPeriodMinutes": {
+          "groups": ["s3"],
+          "type": "integer",
+          "default": 10080,
+          "description": "Files uploaded to S3 but never attached to a sequence entry are garbage-collected after this many minutes."
         },
         "bucket": {
           "type": "object",
@@ -1913,13 +1958,34 @@
         "taxonomyDbPath": {
           "type": "string",
           "description": "Path where the taxonomy SQLite database is mounted inside the container"
+        },
+        "taxonomy_service_url": {
+          "type": "string",
+          "description": "URL where the taxonomy service is accessible"
+        }
+      }
+    },
+    "rawReadsProcessingService": {
+      "type": "object",
+      "properties": {
+        "raw_reads_processing_service_url": {
+          "type": "string",
+          "description": "URL where the raw reads processing service is accessible"
+        },
+        "raw_reads_processing_service_timeout_seconds": {
+          "type": "integer",
+          "description": "Timeout in seconds for raw reads processing service requests"
+        },
+        "rawReadsProcessingConfig": {
+          "type": "object",
+          "description": "Configuration for the raw reads processing service"
         }
       }
     },
     "images": {
       "groups": ["general"],
       "type": "object",
-      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website` and `backend.`",
+      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website` and `backend`.",
       "properties": {
         "lapis": { "$ref": "#/definitions/imageSpec" },
         "lapisSilo": { "$ref": "#/definitions/imageSpec" },

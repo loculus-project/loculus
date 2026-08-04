@@ -1285,6 +1285,7 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
                 "ebola-sudan": sequence_with_mutation("ebola-sudan"),
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
+            files=None,
         ),
     )
 
@@ -1299,6 +1300,7 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
             unalignedNucleotideSequences={
                 "ebola-sudan": sequence_with_mutation("ebola-sudan"),
             },
+            files=None,
         ),
     )
 
@@ -1332,6 +1334,7 @@ def test_preprocessing_without_metadata() -> None:
                 "ebola-sudan": sequence_with_mutation("ebola-sudan"),
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
+            files=None,
         ),
     )
 
@@ -1405,7 +1408,10 @@ def test_process_phenotype_values():
     assert process_phenotype_values('[{"name": "NAI","cds": "NA","value": 0.0}]', {}).datum is None
     invalid = process_phenotype_values("Malformed JSON", {"name": "NAI"})
     assert invalid.datum is None
-    assert "Was unable to process phenotype values" in invalid.errors[0].message
+    assert (
+        "Internal Error. Phenotype value processing failed: invalid syntax"
+        in invalid.errors[0].message
+    )
 
 
 def test_reformat_authors_from_loculus_to_embl_style():
@@ -1455,6 +1461,7 @@ def test_create_flatfile():
                 "authors": "Smith, Doe A;",
             },
             unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
+            files=None,
         ),
     )
 
@@ -1523,7 +1530,7 @@ multi_reference_cases = [
                 ProcessingAnnotationHelper(
                     ["ASSIGNED_REFERENCE"],
                     ["subtype"],
-                    "Metadata field `subtype` is required. Please provide input metadata field(s): `ASSIGNED_REFERENCE`",
+                    "Metadata field `subtype` is required.",
                 ),
             ]
         ),
@@ -1653,7 +1660,7 @@ multi_segment_multi_reference_cases = [
                 ProcessingAnnotationHelper(
                     ["ASSIGNED_REFERENCE"],
                     ["subtype_S"],
-                    "Metadata field `subtype_S` is required. Please provide input metadata field(s): `ASSIGNED_REFERENCE`",
+                    "Metadata field `subtype_S` is required.",
                 ),
             ]
         ),

@@ -495,6 +495,18 @@ Note For CRAM files ENA will validate that the reference sequence exists
     -password YYYYYY
   ```
 
+You will get a response with the run and experiment accessions, e.g.:
+
+```
+INFO : Submission(s) validated successfully.
+INFO : Connecting to FTP server : webin2.ebi.ac.uk
+INFO : Uploading file: run/ERR17356121.part_001.fastq.gz
+INFO : Uploading file: run/ERR17356121.part_002.fastq.gz
+INFO : Files have been uploaded to webin2.ebi.ac.uk. 
+INFO : The submission has been completed successfully. The following experiment accession was assigned to the submission: ERX16796961
+INFO : The submission has been completed successfully. The following run accession was assigned to the submission: ERR17408527
+```
+
 ### Programmatic submission
 
 There is also a way to submit using XMLs and curl (see https://ena-docs.readthedocs.io/en/latest/submit/reads/programmatic.html), however this requires registering each run and experiment object individually via curl and additionally pre-uploading the files to our webin account, so it seems easier to use the webin-cli.

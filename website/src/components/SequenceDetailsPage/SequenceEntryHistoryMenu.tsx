@@ -11,13 +11,15 @@ import Arrow from '~icons/ic/sharp-keyboard-arrow-down';
 interface Props {
     sequenceEntryHistory: SequenceEntryHistory;
     accessionVersion: string;
-    setPreviewedSeqId?: (seqId: string | null) => void;
+    handleSelect?: (accessionVersion: string) => void;
+    handleLink?: (accessionVersion: string) => string;
 }
 
 export const SequenceEntryHistoryMenu: React.FC<Props> = ({
     sequenceEntryHistory,
     accessionVersion,
-    setPreviewedSeqId,
+    handleSelect,
+    handleLink,
 }) => {
     const selectedVersion = sequenceEntryHistory.find((version) => version.accessionVersion === accessionVersion);
     return (
@@ -28,7 +30,14 @@ export const SequenceEntryHistoryMenu: React.FC<Props> = ({
                 trigger={
                     <label
                         tabIndex={0}
-                        className={buttonClasses({ size: 'sm', variant: 'outline', className: 'py-1' })}
+                        // Kept black (rather than the primary `outline` variant) to match the
+                        // dark control icons it sits next to in SeqPreviewModal.
+                        className={buttonClasses({
+                            size: 'sm',
+                            variant: 'unstyled',
+                            className:
+                                'py-1 bg-transparent border-base-content text-base-content hover:bg-base-content hover:text-base-100',
+                        })}
                     >
                         <span className='text-sm'>
                             {selectedVersion === undefined ? 'All versions' : `Version ${selectedVersion.version}`}
@@ -42,10 +51,14 @@ export const SequenceEntryHistoryMenu: React.FC<Props> = ({
                     return (
                         <DropdownMenuItem
                             key={version.accessionVersion}
-                            href={routes.sequenceEntryDetailsPage(version.accessionVersion)}
+                            href={
+                                handleLink
+                                    ? handleLink(version.accessionVersion)
+                                    : routes.sequenceEntryDetailsPage(version.accessionVersion)
+                            }
                             onClick={(e) => {
-                                if (setPreviewedSeqId) {
-                                    setPreviewedSeqId(version.accessionVersion);
+                                if (handleSelect) {
+                                    handleSelect(version.accessionVersion);
                                     e.preventDefault();
                                 }
                             }}
@@ -61,7 +74,7 @@ export const SequenceEntryHistoryMenu: React.FC<Props> = ({
                     href={routes.sequenceEntryVersionsPage(accessionVersion)}
                     className='border-t border-base-300 mt-1 pt-2 rounded-none'
                 >
-                    All versions
+                    Compare versions
                 </DropdownMenuItem>
             </DropdownMenu>
             <div className='sm:hidden inline-block mr-2'>

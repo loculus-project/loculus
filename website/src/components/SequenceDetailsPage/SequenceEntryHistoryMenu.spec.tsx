@@ -16,17 +16,18 @@ describe('SequenceEntryHistoryMenu', () => {
     };
 
     const historyRevised: SequenceEntryHistory = [
-        { ...baseEntry, accessionVersion: 'FOO.1', versionStatus: 'REVISED', isRevocation: false },
-        { ...baseEntry, accessionVersion: 'FOO.2', versionStatus: 'LATEST_VERSION', isRevocation: false },
+        { ...baseEntry, accessionVersion: 'FOO.1', versionStatus: 'REVISED', isRevocation: false, version: 1 },
+        { ...baseEntry, accessionVersion: 'FOO.2', versionStatus: 'LATEST_VERSION', isRevocation: false, version: 2 },
     ];
 
     test('latest version is labeled correctly', async () => {
         render(<SequenceEntryHistoryMenu sequenceEntryHistory={historyRevised} accessionVersion='FOO.2' />);
-        const button = screen.getByText('All versions');
+        const button = screen.getByText('Version 2');
         await userEvent.hover(button);
 
         expect(screen.getByRole('link', { name: 'FOO.1 Previous version' })).toBeVisible();
         expect(screen.getByRole('link', { name: 'FOO.2 Latest version' })).toBeVisible();
+        expect(screen.getByRole('link', { name: 'Compare versions' })).toBeVisible();
     });
 
     const historyRevoke: SequenceEntryHistory = [

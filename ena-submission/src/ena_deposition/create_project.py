@@ -1,6 +1,5 @@
 import logging
 import threading
-import time
 from dataclasses import asdict
 from datetime import datetime
 
@@ -248,7 +247,7 @@ def project_table_create(
     )
     logger.debug(f"Found {len(ready_to_submit_project)} entries in project_table in status READY")
     for row in ready_to_submit_project:
-        group_key = {"group_id": row.group_id, "organism": row.organism}
+        project_key = {"project_id": row.project_id}
 
         try:
             group_info = call_loculus.get_group_info(config, row.group_id)
@@ -271,7 +270,7 @@ def project_table_create(
         number_rows_updated = update_db_where_conditions(
             db_engine,
             model_class=ProjectTableEntry,
-            conditions=group_key,
+            conditions=project_key,
             update_values=update_values,
         )
         if number_rows_updated != 1:
@@ -284,7 +283,7 @@ def project_table_create(
             )
             continue
         logger.info(
-            f"Starting Project creation for group_id {row.group_id} organism {row.organism}"
+            f"Starting Project creation for project_key {row.project_id} organism {row.organism}"
         )
         # Actual HTTP request to ENA happens here
         project_creation_results: CreationResult = create_ena_project(config, project_set)
@@ -295,7 +294,8 @@ def project_table_create(
                 "finished_at": datetime.now(tz=pytz.utc),
             }
             logger.info(
-                f"Project creation succeeded for group_id {row.group_id} organism {row.organism}"
+                f"Project creation succeeded for project_key {row.project_id} "
+                f"organism {row.organism}"
             )
         else:
             update_values = {
@@ -304,11 +304,11 @@ def project_table_create(
                 "started_at": datetime.now(tz=pytz.utc),
             }
             logger.error(
-                f"Project creation failed for group_id {row.group_id} organism {row.organism}"
+                f"Project creation failed for project_key {row.project_id} organism {row.organism}"
             )
         update_with_retry(
             db_engine=db_engine,
-            conditions=group_key,
+            conditions=project_key,
             update_values=update_values,
             model_class=ProjectTableEntry,
         )
@@ -375,4 +375,6 @@ def create_project(config: Config, stop_event: threading.Event):
         last_retry_time = project_table_handle_errors(
             db_engine, config, slack_config, last_retry_time
         )
-        time.sleep(config.time_between_iterations)
+        if stop_event.wait(timeout=config.time_between_iterations):
+            logger.info("create_project stopped due to exception in another task")
+            return

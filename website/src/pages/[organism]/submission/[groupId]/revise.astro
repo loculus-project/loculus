@@ -1,5 +1,6 @@
 ---
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
+import type { InputMode } from '../../../../components/Submission/FormOrUploadWrapper';
 import { RevisionForm } from '../../../../components/Submission/RevisionForm';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
 import {
@@ -14,13 +15,17 @@ import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 
 const instanceName = getWebsiteConfig().name;
 const organism = Astro.params.organism!;
+
 const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
 
+const inputMode: InputMode = Astro.url.searchParams.get('inputMode') === 'form' ? 'form' : 'bulk';
+const accession = Astro.url.searchParams.get('accession') || undefined;
+const version = Astro.url.searchParams.get('version') || undefined;
+
 if (!cleanedOrganism) {
-    return {
-        statusCode: 404,
-        body: 'Organism not found',
-    };
+    // undefined renders the configured Astro 404 page
+    // Note - this check is currently unused as middleware exists to check the organism, but useful for type-checking
+    return new Response(undefined, { status: 404 });
 }
 const schema = getSchema(cleanedOrganism.key);
 const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'revise', true);
@@ -30,7 +35,7 @@ const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.s
 const clientConfig = getRuntimeConfig().public;
 ---
 
-<SubmissionPageWrapper title='Revise sequences' groupsResult={groupsResult}>
+<SubmissionPageWrapper title='Revise sequences' disablePageTitle={true} groupsResult={groupsResult}>
     {
         groupsResult.match(
             ({ currentGroup: group }) => (
@@ -41,8 +46,11 @@ const clientConfig = getRuntimeConfig().public;
                     metadataTemplateFields={groupedInputFields}
                     clientConfig={clientConfig}
                     group={group}
+                    inputMode={inputMode}
                     submissionDataTypes={schema.submissionDataTypes}
                     dataUseTermsEnabled={dataUseTermsAreEnabled()}
+                    accession={accession}
+                    version={version}
                     client:load
                 />
             ),

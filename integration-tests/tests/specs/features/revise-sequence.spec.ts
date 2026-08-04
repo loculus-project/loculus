@@ -47,7 +47,7 @@ sequenceTest(
             buffer: Buffer.from('>S description\n' + CCHF_S_SEGMENT_FULL_SEQUENCE),
         });
 
-        await page.getByRole('button', { name: 'Submit' }).click();
+        await page.getByRole('button', { name: /proceed to Approval/ }).click();
         await page.getByRole('button', { name: 'Confirm' }).click();
 
         const reviewPage = new ReviewPage(page);
@@ -60,7 +60,7 @@ sequenceTest(
 
         expect(tabs).toContain('S (unaligned)');
         await reviewPage.switchSequenceTab('S (unaligned)');
-        const actual = removeWhitespaces(await reviewPage.getSequenceContent());
+        const actual = removeWhitespaces((await reviewPage.getSequenceContent()) ?? '');
         expect(actual).toBe(CCHF_S_SEGMENT_FULL_SEQUENCE);
 
         await reviewPage.closeSequencesDialog();
@@ -130,4 +130,43 @@ groupTest.describe('Bulk sequence revision', () => {
         const overview = await reviewPage.getReviewPageOverview();
         expect(overview.total).toBeGreaterThanOrEqual(SEQUENCES_TO_REVISE);
     });
+});
+
+sequenceTest.describe('Individual sequence revision via accession search', () => {
+    sequenceTest(
+        'finds a released sequence by accession and rejects invalid input',
+        async ({ page, releasedSequence, groupId }) => {
+            void releasedSequence;
+            sequenceTest.setTimeout(200_000);
+
+            // Reach the group's released sequences to read the released accession (as in the flow above),
+            // which also ensures it is indexed in search before we look it up on the form.
+            const searchPage = new SearchPage(page);
+            await searchPage.cchf();
+            const navigation = new NavigationPage(page);
+            await navigation.clickSubmitSequences();
+            await page.getByRole('link', { name: "View View your group's" }).click();
+            const [{ accession }] = await searchPage.waitForSequencesInSearch(
+                1,
+                SEARCH_INDEXING_TIMEOUT,
+            );
+
+            const revisionPage = new RevisionPage(page);
+            await revisionPage.goto('cchf', groupId, 'form');
+
+            // Unversioned accession resolves to the latest version and loads the form
+            await revisionPage.searchAccessionVersion(accession);
+            await revisionPage.expectRevisionFormLoaded(accession);
+
+            // A non-numeric version is rejected
+            await revisionPage.searchAccessionVersion(`${accession}.A`);
+            await revisionPage.expectInvalidAccessionFormatError();
+            await revisionPage.expectRevisionFormNotLoaded();
+
+            // An unknown accession is rejected
+            await revisionPage.searchAccessionVersion('LOC_NONEXISTENT');
+            await revisionPage.expectAccessionNotFoundError();
+            await revisionPage.expectRevisionFormNotLoaded();
+        },
+    );
 });

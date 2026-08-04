@@ -153,22 +153,30 @@ export class SearchPage {
         await this.getSequenceRows().filter({ hasText: accessionVersion }).click();
     }
 
-    async reviseSequence() {
-        // Sometimes clicking revise button doesn't register, so let's wait for sequence viewer to be visible first
-        // See #5447
+    /**
+     * Clicks a control (button/link) in the "Sequence management" panel of the details view.
+     *
+     * The panel re-renders as sequence data loads, which can cause a click to be silently dropped:
+     * React delegates events to the island root and can't resolve a handler for a DOM node that was
+     * just re-rendered out from under the click. Waiting for the sequence viewer to render first
+     * ensures the panel has settled before we click. See #5447.
+     */
+    private async clickSettledManagementControl(control: Locator) {
         await expect(this.page.getByTestId('fixed-length-text-viewer')).toBeVisible();
+        await expect(control).toBeVisible();
+        await control.click();
+    }
 
+    async reviseSequence() {
         const reviseButton = this.page.getByRole('link', { name: 'Revise this sequence' });
-        await expect(reviseButton).toBeVisible();
-        await reviseButton.click();
+        await this.clickSettledManagementControl(reviseButton);
         await expect(this.page.getByText(/^Create new revision from LOC_\w+\.\d+$/)).toBeVisible();
         return new EditPage(this.page);
     }
 
     async revokeSequence(revocationReason: string = 'Test revocation') {
         const revokeButton = this.page.getByRole('button', { name: 'Revoke this sequence' });
-        await expect(revokeButton).toBeVisible();
-        await revokeButton.click();
+        await this.clickSettledManagementControl(revokeButton);
 
         await expect(
             this.page.getByText('Are you sure you want to revoke this sequence?'),

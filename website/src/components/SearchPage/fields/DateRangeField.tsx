@@ -40,68 +40,60 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
     const upperFromField = getField('upper', 'From');
     const upperToField = getField('upper', 'To');
 
+    const lowerFromDefined = lowerFromField.name in fieldValues;
+    const lowerToDefined = lowerToField.name in fieldValues;
+    const upperFromDefined = upperFromField.name in fieldValues;
+    const upperToDefined = upperToField.name in fieldValues;
+
     const [strictMode, setStrictMode] = useState(
-        isStrictMode(
-            lowerFromField.name in fieldValues,
-            lowerToField.name in fieldValues,
-            upperFromField.name in fieldValues,
-            upperToField.name in fieldValues,
-        ),
+        isStrictMode(lowerFromDefined, lowerToDefined, upperFromDefined, upperToDefined),
     );
+
+    // Only re-derive strictMode when at least one bound is defined, otherwise toggling strictness
+    // with no dates entered would feed back into isStrictMode and snap the checkbox back to `true`.
+    useEffect(() => {
+        if (lowerFromDefined || lowerToDefined || upperFromDefined || upperToDefined) {
+            setStrictMode(isStrictMode(lowerFromDefined, lowerToDefined, upperFromDefined, upperToDefined));
+        }
+    }, [lowerFromDefined, lowerToDefined, upperFromDefined, upperToDefined]);
 
     const lowerField = strictMode ? lowerFromField : upperFromField;
     const upperField = strictMode ? upperToField : lowerToField;
 
-    // Extract single values from fieldValues (date ranges should never be arrays)
+    // Derive displayed values directly from `fieldValues` (the single source of truth) instead of
+    // mirroring into local state — a local copy synced both ways with the lagging `fieldValues`
+    // would let a stale value overwrite a freshly typed one, making the field bounce while typing.
     const getFieldValue = (fieldName: string): string => {
         return validateSingleValue(fieldValues[fieldName], fieldName);
     };
 
-    const [lowerValue, setLowerValue] = useState(getFieldValue(lowerField.name));
-    const [upperValue, setUpperValue] = useState(getFieldValue(upperField.name));
+    const lowerValue = getFieldValue(lowerField.name);
+    const upperValue = getFieldValue(upperField.name);
 
-    useEffect(() => {
-        const lowerFromDefined = lowerFromField.name in fieldValues;
-        const lowerToDefined = lowerToField.name in fieldValues;
-        const upperFromDefined = upperFromField.name in fieldValues;
-        const upperToDefined = upperToField.name in fieldValues;
-        // Only re-derive strictMode from fieldValues when at least one bound is actually defined.
-        // When the user toggles strictness without having entered any dates the other effect
-        // below clears all four fields, which would otherwise feed back into isStrictMode and
-        // collapse strictMode back to its default `true` — making the checkbox appear stuck on.
-        if (lowerFromDefined || lowerToDefined || upperFromDefined || upperToDefined) {
-            setStrictMode(isStrictMode(lowerFromDefined, lowerToDefined, upperFromDefined, upperToDefined));
-        }
-        setLowerValue(validateSingleValue(fieldValues[lowerField.name], lowerField.name));
-        setUpperValue(validateSingleValue(fieldValues[upperField.name], upperField.name));
-    }, [field, fieldValues]);
-
-    useEffect(() => {
-        if (strictMode) {
+    // Write into the underlying fields for the given mode, clearing the other mode's fields. Only
+    // called from user interaction, never an effect, so there is no feedback loop.
+    const commit = (strict: boolean, newLowerValue: string, newUpperValue: string) => {
+        if (strict) {
             setSomeFieldValues(
-                [lowerFromField.name, lowerValue],
-                [upperToField.name, upperValue],
+                [lowerFromField.name, newLowerValue],
+                [upperToField.name, newUpperValue],
                 [upperFromField.name, null],
                 [lowerToField.name, null],
             );
         } else {
             setSomeFieldValues(
-                [upperFromField.name, lowerValue],
-                [lowerToField.name, upperValue],
+                [upperFromField.name, newLowerValue],
+                [lowerToField.name, newUpperValue],
                 [lowerFromField.name, null],
                 [upperToField.name, null],
             );
         }
-    }, [
-        strictMode,
-        lowerValue,
-        upperValue,
-        lowerFromField,
-        lowerToField,
-        upperFromField,
-        upperToField,
-        setSomeFieldValues,
-    ]);
+    };
+
+    const handleStrictToggle = (strict: boolean) => {
+        setStrictMode(strict);
+        commit(strict, lowerValue, upperValue);
+    };
 
     return (
         <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
@@ -128,7 +120,7 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
                         outline
                         className='checked:border-gray-300'
                         checked={strictMode}
-                        onChange={(event) => setStrictMode(event.target.checked)}
+                        onChange={(event) => handleStrictToggle(event.target.checked)}
                     />
                 </label>
             </div>
@@ -141,9 +133,7 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
                 }}
                 fieldValue={lowerValue}
                 setSomeFieldValues={([_, value]) => {
-                    // DateField passes a single tuple [fieldName, value]
-                    const validatedValue = validateSingleValue(value, `${field.name}-from`);
-                    setLowerValue(validatedValue);
+                    commit(strictMode, validateSingleValue(value, `${field.name}-from`), upperValue);
                 }}
             />
             <DateField
@@ -154,9 +144,7 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
                 }}
                 fieldValue={upperValue}
                 setSomeFieldValues={([_, value]) => {
-                    // DateField passes a single tuple [fieldName, value]
-                    const validatedValue = validateSingleValue(value, `${field.name}-to`);
-                    setUpperValue(validatedValue);
+                    commit(strictMode, lowerValue, validateSingleValue(value, `${field.name}-to`));
                 }}
             />
         </div>

@@ -31,7 +31,10 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
     fun setup() {
         every { accessionPreconditionValidator.validate(any()) } returns Unit
         every { crossRefService.doiPrefix } returns MOCK_DOI_PREFIX
-        every { crossRefService.isActive } returns false
+        every { crossRefService.isActive } returns true
+        every { crossRefService.isWriteEnabled } returns true
+        every { crossRefService.generateCrossRefXML(any()) } returns "<doi_batch/>"
+        every { crossRefService.postCrossRefXML(any()) } returns "Crossref API response"
     }
 
     @ParameterizedTest
@@ -120,6 +123,36 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$[0].seqSetDOI").isString)
+    }
+
+    @Test
+    fun `WHEN calling create seqSet DOI while write is disabled THEN returns forbidden`() {
+        every { crossRefService.isWriteEnabled } returns false
+
+        val seqSetResult = client.createSeqSet()
+            .andExpect(status().isOk)
+            .andReturn()
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
+
+        client.createSeqSetDOI(seqSetId)
+            .andExpect(status().isForbidden)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("\$.detail", containsString("not write-enabled")))
+    }
+
+    @Test
+    fun `WHEN calling create seqSet DOI while crossref is inactive THEN returns forbidden`() {
+        every { crossRefService.isActive } returns false
+
+        val seqSetResult = client.createSeqSet()
+            .andExpect(status().isOk)
+            .andReturn()
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
+
+        client.createSeqSetDOI(seqSetId)
+            .andExpect(status().isForbidden)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("\$.detail", containsString("not active")))
     }
 
     @Test

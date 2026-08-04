@@ -10,6 +10,7 @@ import {
     restrictedDataUseTermsOption,
     type DataUseTerms,
 } from '../../types/backend.ts';
+import { utcToday } from '../../utils/utcDates.ts';
 import { Button } from '../common/Button';
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
@@ -80,7 +81,7 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
                     onChange={() => setSelectedOption(openDataUseTermsOption)}
                     type='radio'
                     checked={selectedOption === openDataUseTermsOption}
-                    className='h-4 w-4 p-2 border-gray-300 text-primary-600 focus:ring-primary-600 inline-block'
+                    className='h-4 w-4 p-2 text-primary-600 border-gray-300 checked:border-primary-600 focus:ring-primary-600 inline-block'
                 />
                 <label htmlFor='data-use-open' className='ml-2 h-4 p-2 text-sm font-medium leading-6 text-gray-900'>
                     <Unlocked className='h-4 w-4 inline-block mr-2 -mt-1' />
@@ -102,7 +103,7 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
                     onChange={() => setSelectedOption(restrictedDataUseTermsOption)}
                     type='radio'
                     checked={selectedOption === restrictedDataUseTermsOption}
-                    className='h-4 w-4 border-gray-300 text-primary-600 focus:ring-primary-600 inline-block'
+                    className='h-4 w-4 p-2 text-primary-600 border-gray-300 checked:border-primary-600 focus:ring-primary-600 inline-block'
                 />
                 <label
                     htmlFor='data-use-restricted'
@@ -129,7 +130,7 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
                             defaultValue={selectedDate.toJSDate()}
                             showClearButton={false}
                             showTodayButton={false}
-                            minDate={new Date()}
+                            minDate={utcToday().toJSDate()}
                             maxDate={maxRestrictedUntil.toJSDate()}
                             theme={datePickerTheme}
                             onChange={(date: Date | null) => {

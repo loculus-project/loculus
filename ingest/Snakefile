@@ -50,6 +50,7 @@ DOWNLOADED_GROUPS_JSON = (
 CALCULATED_GROUPS_JSON = (
     "results/calculated_groups.json" if GROUPING_OVERRIDE_URL else "results/groups.json"
 )
+MUTED_HASHES_URL = config.get("muted_hashes_url", False)
 
 
 if SEGMENTED:
@@ -519,6 +520,20 @@ if GROUPS_OVERRIDE_JSON:
             """
 
 
+if MUTED_HASHES_URL:
+
+    rule download_muted_hashes:
+        """Download the tsv file of hashes that should not trigger a revision"""
+        output:
+            results="results/muted_hashes.tsv",
+        params:
+            url=MUTED_HASHES_URL,
+        shell:
+            """
+            curl --fail --silent --show-error --retry 3 -L -o {output.results} "{params.url}"
+            """
+
+
 rule heuristic_group_segments:
     """Group segments based on heuristic, join with previous groups if available"""
     input:
@@ -640,12 +655,20 @@ rule get_previous_submissions:
         """
 
 
+compare_hashes_input = {
+    "script": "scripts/compare_hashes.py",
+    "config": "results/config.yaml",
+    "old_hashes": "results/previous_submissions.ndjson",
+    "metadata": prepped_metadata(),
+}
+
+if MUTED_HASHES_URL:
+    compare_hashes_input["muted_hashes"] = "results/muted_hashes.tsv"
+
+
 rule compare_hashes:
     input:
-        script="scripts/compare_hashes.py",
-        config="results/config.yaml",
-        old_hashes="results/previous_submissions.ndjson",
-        metadata=prepped_metadata(),
+        **compare_hashes_input,
     output:
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",
@@ -656,11 +679,15 @@ rule compare_hashes:
     params:
         log_level=LOG_LEVEL,
         subsample_fraction=config.get("subsample_fraction", 1.0),
+        muted_hashes=(
+            "--muted-hashes results/muted_hashes.tsv" if MUTED_HASHES_URL else ""
+        ),
     shell:
         """
         python {input.script} \
             --config-file {input.config} \
             --old-hashes {input.old_hashes} \
+            {params.muted_hashes} \
             --metadata {input.metadata} \
             --to-submit {output.to_submit} \
             --to-revise {output.to_revise} \

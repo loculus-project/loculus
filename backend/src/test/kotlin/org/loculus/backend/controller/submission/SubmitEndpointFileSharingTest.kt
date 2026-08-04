@@ -47,7 +47,7 @@ class SubmitEndpointFileSharingTest(
     @Test
     fun `GIVEN a valid request with a valid File ID THEN the request is valid`() {
         val fileIdAndUrl = filesClient.requestUploads(groupId).andGetFileIdsAndUrls()[0]
-        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT)
+        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT, fileIdAndUrl.headers)
 
         submissionControllerClient.submit(
             DefaultFiles.metadataFile,
@@ -69,7 +69,7 @@ class SubmitEndpointFileSharingTest(
     @Test
     fun `GIVEN a non-existing submission ID is given in submit THEN the request is not valid`() {
         val fileIdAndUrl = filesClient.requestUploads(groupId).andGetFileIdsAndUrls()[0]
-        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT)
+        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT, fileIdAndUrl.headers)
 
         submissionControllerClient.submit(
             DefaultFiles.metadataFile,
@@ -135,7 +135,7 @@ class SubmitEndpointFileSharingTest(
             groupId = otherGroupId,
             jwt = jwtForAlternativeUser,
         ).andGetFileIdsAndUrls()[0]
-        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT)
+        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT, fileIdAndUrl.headers)
 
         submissionControllerClient.submit(
             DefaultFiles.metadataFile,

@@ -18,11 +18,16 @@ data class FileIdAndWriteUrl(
         example = "https://dummyendpoint.com/dummybucket/files/2ea137d0-8773-4e0a-a9aa-5591de12ff23?" +
             "X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=dummyaccesskey%2F20250330%2F" +
             "dummyregion%2Fs3%2Faws4_request&X-Amz-Date=20250330T184050Z&X-Amz-Expires=1800" +
-            "&X-Amz-SignedHeaders=host" +
+            "&X-Amz-SignedHeaders=host%3Bif-none-match" +
             "&X-Amz-Signature=9717e8d8c8242d0d266f816c665d78b1d842de5286fb59e37329f090e9bb0b9e",
     )
     @JsonProperty("url")
     val presignedWriteUrl: String,
+    @Schema(
+        description = "HTTP headers that must be included when making the PUT request to the presigned URL.",
+        example = "{\"If-None-Match\": \"*\"}",
+    )
+    val headers: Map<String, String> = mapOf("If-None-Match" to "*"),
 )
 
 data class FileIdAndMultipartWriteUrl(

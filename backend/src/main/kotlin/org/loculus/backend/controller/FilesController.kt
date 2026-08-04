@@ -107,8 +107,12 @@ class FilesController(
         summary = "Request S3 pre-signed URLs for file uploads",
         description =
         "Requests S3 pre-signed URLs to upload files. The endpoint returns a list of file IDs and URLs. " +
-            "The URLs should be used to upload the files. Afterwards, the file IDs can be used in the " +
-            "`fileMapping` in the /submit endpoint.",
+            "The URLs should be used to upload the files via HTTP PUT, including all headers listed in the " +
+            "`headers` field of each response entry. Afterwards, the file IDs can be used in the " +
+            "`fileMapping` in the /submit endpoint. " +
+            "Note: the presigned URL includes an `If-None-Match: *` condition to prevent accidental " +
+            "overwrites. If the file ID has already been uploaded to, S3 will return HTTP 412 " +
+            "(Precondition Failed) - this means the file already exists and cannot be overwritten.",
     )
     @ApiResponse(responseCode = "200", description = "Successfully generated pre-signed upload URLs")
     @ApiResponse(responseCode = "400", description = "Invalid request parameters")

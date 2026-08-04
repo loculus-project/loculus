@@ -1,11 +1,14 @@
 package org.loculus.backend.service.submission
 
 import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.service.scheduler.TaskLock
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.util.concurrent.TimeUnit
 
 private val log = mu.KotlinLogging.logger {}
+
+const val USE_NEWER_PROCESSING_PIPELINE_VERSION_TASK_NAME = "use-newer-processing-pipeline-version"
 
 @Component
 class UseNewerProcessingPipelineVersionTask(private val submissionDatabaseService: SubmissionDatabaseService) {
@@ -17,6 +20,10 @@ class UseNewerProcessingPipelineVersionTask(private val submissionDatabaseServic
             "\${${BackendSpringProperty.PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS}}, 600)}",
         fixedDelayString = "\${${BackendSpringProperty.PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS}}",
         timeUnit = TimeUnit.SECONDS,
+    )
+    @TaskLock(
+        name = USE_NEWER_PROCESSING_PIPELINE_VERSION_TASK_NAME,
+        intervalString = "\${${BackendSpringProperty.PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS}}",
     )
     fun task() {
         log.info { "Checking for newer preprocessing pipeline versions" }

@@ -50,7 +50,7 @@ class GetReleasedDataFileSharingEndpointTest(
             jwt = jwtForDefaultUser,
             numberFiles = 2,
         ).andGetFileIdsAndUrls()
-        fileIdsAndUrls.forEach { convenienceClient.uploadFile(it.presignedWriteUrl, "File") }
+        fileIdsAndUrls.forEach { convenienceClient.uploadFile(it.presignedWriteUrl, "File", it.headers) }
         val fileIds = fileIdsAndUrls.map { it.fileId }
 
         convenienceClient.extractUnprocessedData(pipelineVersion = 1)

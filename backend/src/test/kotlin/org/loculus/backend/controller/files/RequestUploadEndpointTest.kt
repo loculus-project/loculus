@@ -74,17 +74,46 @@ class RequestUploadEndpointTest(
             .andReturn()
             .response
             .contentAsString
-        val url = objectMapper.readTree(responseContent)
-            .get(0)
-            .get("url")
-            .textValue()
+        val uploadInfo = objectMapper.readTree(responseContent).get(0)
+        val url = uploadInfo.get("url").textValue()
+        val headers = uploadInfo.get("headers").fields().asSequence()
+            .associate { it.key to it.value.textValue() }
 
         val content = "test content".toByteArray()
         val request = HttpPut(url)
         request.entity = ByteArrayEntity(content, ContentType.TEXT_PLAIN)
+        headers.forEach { (key, value) -> request.addHeader(key, value) }
         val httpClient = HttpClients.createDefault()
         val response = httpClient.execute(request)
         Assertions.assertEquals(200, response.statusLine.statusCode)
+    }
+
+    @Test
+    fun `GIVEN a presigned URL has been used to upload THEN a second upload to the same URL fails`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+        val responseContent = client.requestUploads(groupId, 1)
+            .andExpect(status().isOk)
+            .andReturn()
+            .response
+            .contentAsString
+        val uploadInfo = objectMapper.readTree(responseContent).get(0)
+        val url = uploadInfo.get("url").textValue()
+        val headers = uploadInfo.get("headers").fields().asSequence()
+            .associate { it.key to it.value.textValue() }
+
+        val httpClient = HttpClients.createDefault()
+
+        val firstRequest = HttpPut(url)
+        firstRequest.entity = ByteArrayEntity("first content".toByteArray(), ContentType.TEXT_PLAIN)
+        headers.forEach { (key, value) -> firstRequest.addHeader(key, value) }
+        val firstResponse = httpClient.execute(firstRequest)
+        Assertions.assertEquals(200, firstResponse.statusLine.statusCode)
+
+        val secondRequest = HttpPut(url)
+        secondRequest.entity = ByteArrayEntity("second content".toByteArray(), ContentType.TEXT_PLAIN)
+        headers.forEach { (key, value) -> secondRequest.addHeader(key, value) }
+        val secondResponse = httpClient.execute(secondRequest)
+        Assertions.assertEquals(412, secondResponse.statusLine.statusCode)
     }
 
     @Test

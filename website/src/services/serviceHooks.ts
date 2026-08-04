@@ -1,3 +1,4 @@
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { Zodios } from '@zodios/core';
 import { ZodiosHooks, type ZodiosHooksInstance } from '@zodios/react';
 import { isAxiosError } from 'axios';
@@ -5,8 +6,16 @@ import { isAxiosError } from 'axios';
 import { backendApi } from './backendApi.ts';
 import { lapisApi } from './lapisApi.ts';
 import { seqSetCitationApi } from './seqSetCitationApi.ts';
+import {
+    ACCESSION_FIELD,
+    ACCESSION_VERSION_FIELD,
+    IS_REVOCATION_FIELD,
+    SUBMITTED_AT_FIELD,
+    VERSION_FIELD,
+    VERSION_STATUS_FIELD,
+} from '../settings.ts';
 import { problemDetail } from '../types/backend.ts';
-import type { SequenceRequest } from '../types/lapis.ts';
+import { sequenceEntryHistory, type SequenceEntryHistory, type SequenceRequest } from '../types/lapis.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { fastaEntries } from '../utils/parseFasta.ts';
 import { isAlignedSequence, isUnalignedSequence, type SequenceType } from '../utils/sequenceTypeHelpers.ts';
@@ -118,4 +127,35 @@ function selectSequenceHook(
 
 export function seqSetCitationClientHooks(clientConfig: ClientConfig) {
     return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, seqSetCitationApi));
+}
+
+export function useSequenceEntryHistory(
+    lapisUrl: string,
+    accession: string | undefined,
+): UseQueryResult<SequenceEntryHistory, Error> {
+    return useQuery({
+        queryKey: ['sequence-entry-history', lapisUrl, accession],
+        queryFn: async (): Promise<SequenceEntryHistory> => {
+            const client = new Zodios(lapisUrl, lapisApi, { transform: false });
+
+            // @ts-expect-error Zod issue: https://github.com/colinhacks/zod/issues/3136
+            const response = await client.details({
+                accession: accession!,
+                fields: [
+                    ACCESSION_VERSION_FIELD,
+                    ACCESSION_FIELD,
+                    VERSION_FIELD,
+                    VERSION_STATUS_FIELD,
+                    IS_REVOCATION_FIELD,
+                    SUBMITTED_AT_FIELD,
+                ],
+                orderBy: [{ field: VERSION_FIELD, type: 'ascending' }],
+            });
+
+            const parseResult = sequenceEntryHistory.safeParse(response.data);
+            if (!parseResult.success) throw new Error('Unexpected sequence entry history format');
+            return parseResult.data;
+        },
+        enabled: accession !== undefined,
+    });
 }

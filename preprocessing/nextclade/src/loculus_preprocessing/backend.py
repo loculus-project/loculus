@@ -17,6 +17,8 @@ import requests
 
 from .config import Config
 from .datatypes import (
+    FileCategory,
+    FileIdAndNameAndReadUrl,
     FileUploadInfo,
     ProcessedEntry,
     UnprocessedData,
@@ -93,6 +95,18 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
             key: trim_ns(value) if value else None
             for key, value in unaligned_nucleotide_sequences.items()
         }
+        submitted_files = json_object["data"].get("files")
+        file_mapping = (
+            {
+                FileCategory(category): [
+                    FileIdAndNameAndReadUrl(fileId=f["fileId"], name=f["name"], url=f.get("url"))
+                    for f in files
+                ]
+                for category, files in submitted_files.items()
+            }
+            if submitted_files
+            else None
+        )
         unprocessed_data = UnprocessedData(
             submitter=json_object["submitter"],
             group_id=json_object["groupId"],
@@ -102,6 +116,7 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
             unalignedNucleotideSequences=trimmed_unaligned_nucleotide_sequences
             if unaligned_nucleotide_sequences
             else {},
+            files=file_mapping,
         )
         entry = UnprocessedEntry(
             accessionVersion=f"{json_object['accession']}.{json_object['version']}",
@@ -222,8 +237,12 @@ def request_upload(group_id: int, number_of_files: int, config: Config) -> Seque
     return [FileUploadInfo(**item) for item in response.json()]
 
 
-def upload_embl_file_to_presigned_url(content: str, url: str) -> None:
+def upload_embl_file_to_presigned_url(
+    content: str, url: str, extra_headers: dict | None = None
+) -> None:
     headers = {"Content-Type": "chemical/x-embl-dl-nucleotide"}
+    if extra_headers:
+        headers.update(extra_headers)
     r = requests.put(url, data=content.encode("utf-8"), headers=headers, timeout=60)
     if not r.ok:
         msg = f"Upload failed: {r.status_code}, {r.text}"

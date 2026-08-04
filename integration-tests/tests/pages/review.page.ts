@@ -26,12 +26,12 @@ export class ReviewPage {
     private sequenceTabs = () => this.page.getByRole('tab');
 
     public readonly approveAllButton = () =>
-        this.page.getByRole('button', { name: 'Release', exact: false });
+        this.page.getByRole('button', { name: 'Approve', exact: false });
     public readonly discardOpenMenuButton = () =>
         this.page.getByRole('button', { name: 'Discard sequences', exact: false });
     public readonly discardAllButton = () => this.page.getByText('Discard all', { exact: false });
     public readonly confirmReleaseButton = () =>
-        this.page.getByRole('button', { name: 'Release', exact: true });
+        this.page.getByRole('button', { name: 'Approve', exact: true });
     public readonly confirmDiscardButton = () =>
         this.page.getByRole('button', { name: 'Discard', exact: true });
 
@@ -107,10 +107,10 @@ export class ReviewPage {
         await this.confirmDiscardButton().click();
     }
 
-    async waitForZeroProcessing() {
+    async waitForZeroProcessing(timeout = 90000) {
         await expect(this.page.locator('[data-testid="review-page-control-panel"]')).toContainText(
             '0 awaiting processing',
-            { timeout: 90000 },
+            { timeout: timeout },
         );
     }
 
@@ -146,9 +146,9 @@ export class ReviewPage {
     }
 
     async releaseValidSequences() {
-        await this.page.getByRole('button', { name: /Release \d+ valid sequence/ }).click();
-        await this.page.getByRole('button', { name: 'Release', exact: true }).click();
-        await expect(this.page.getByText('released successfully')).toBeVisible();
+        await this.page.getByRole('button', { name: /Approve \d+ valid sequence/ }).click();
+        await this.page.getByRole('button', { name: 'Approve', exact: true }).click();
+        await expect(this.page.getByText(/(Sequence|have been) approved/)).toBeVisible();
     }
 
     async goToReleasedSequences(): Promise<SearchPage> {
@@ -232,6 +232,16 @@ export class ReviewPage {
         }
 
         return tabNames;
+    }
+
+    async expectFileProcessingError(pattern: RegExp) {
+        await expect(this.page.locator('.text-red-600', { hasText: pattern })).toBeVisible();
+    }
+
+    async expectNoValidSequencesToApprove() {
+        await expect(
+            this.page.getByRole('button', { name: /Approve \d+ valid sequence/ }),
+        ).toBeHidden();
     }
 
     async editFirstSequence() {

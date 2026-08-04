@@ -30,11 +30,11 @@ import Note from '~icons/fluent/note-24-filled';
 import QuestionMark from '~icons/fluent/tag-question-mark-24-filled';
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
+import FormkitSubmit from '~icons/formkit/submit';
 import EmptyCircle from '~icons/grommet-icons/empty-circle';
 import Files from '~icons/lucide/files';
 import RiDna from '~icons/mdi/dna';
 import TickOutline from '~icons/mdi/tick-outline';
-import WpfPaperPlane from '~icons/wpf/paper-plane';
 
 type ReviewCardProps = {
     sequenceEntryStatus: SequenceEntryStatus;
@@ -205,15 +205,15 @@ const ButtonBar: FC<ButtonBarProps> = ({
                     key={'approve-button-' + sequenceEntryStatus.accession}
                     disabled={!approvable}
                 >
-                    <WpfPaperPlane />
+                    <FormkitSubmit />
                 </Button>
                 <CustomTooltip
                     id={'approve-tooltip' + sequenceEntryStatus.accession}
                     content={
                         approvable
-                            ? 'Release this sequence entry'
+                            ? 'Approve this sequence entry'
                             : sequenceEntryStatus.processingResult === errorsProcessingResult
-                              ? 'You need to fix the errors before releasing this sequence entry'
+                              ? 'You need to fix the errors before approving this sequence entry'
                               : 'Still awaiting preprocessing'
                     }
                 />
@@ -301,7 +301,7 @@ const Errors: FC<ErrorsProps> = ({ errors, accession, metadataDisplayNames }) =>
                             </p>
                             <CustomTooltip
                                 id={'error-tooltip-' + accession + '-' + uniqueKey}
-                                content='You must fix this error before releasing this sequence entry'
+                                content='You must fix this error before approving this sequence entry'
                             />
                         </div>
                     );

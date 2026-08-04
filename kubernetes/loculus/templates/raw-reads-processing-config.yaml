@@ -1,0 +1,10 @@
+{{- if not .Values.disableRawReadsProcessingService }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-raw-reads-processing-config
+data:
+  config.yaml: |
+    {{ .Values.rawReadsProcessingService.rawReadsProcessingConfig | default dict | toYaml | nindent 4 }}
+{{- end }}

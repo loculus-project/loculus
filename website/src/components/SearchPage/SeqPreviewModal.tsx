@@ -81,6 +81,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                 <SequencesBanner
                     sequenceEntryHistory={data.sequenceEntryHistory}
                     accessionVersion={data.accessionVersion}
+                    setPreviewedSeqId={setPreviewedSeqId}
                 />
             )}
 
@@ -111,7 +112,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                     <SequenceEntryHistoryMenu
                         sequenceEntryHistory={data.sequenceEntryHistory}
                         accessionVersion={seqId}
-                        setPreviewedSeqId={setPreviewedSeqId}
+                        handleSelect={setPreviewedSeqId}
                     />
                 )}
                 <Button

@@ -7,11 +7,13 @@ import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
+import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
@@ -21,6 +23,7 @@ import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.files.FilesClient
 import org.loculus.backend.controller.files.andGetFileIds
+import org.loculus.backend.controller.files.andGetFileIdsAndUrls
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
@@ -298,7 +301,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     @Test
     fun `WHEN submitting a file ID with no file uploaded THEN an error is returned`() {
         val groupId = groupManagementClient.createNewGroup().andGetGroupId()
-        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED, groupId = groupId).map { it.accession }
         val fileId = filesClient.requestUploads(groupId).andGetFileIds()[0]
 
         val editedData = EditedSequenceEntryData(
@@ -320,6 +323,75 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
                 jsonPath("\$.detail", containsString("No file uploaded for file ID")),
+            )
+    }
+
+    @Test
+    fun `WHEN submitting edited data with a file owned by the same group THEN it succeeds`() {
+        // Submission and files owned by group
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+        val accessionVersion = AccessionVersion(
+            convenienceClient.prepareDataTo(Status.PROCESSED, groupId = groupId).first().accession,
+            1,
+        )
+        val fileIdAndUrl = filesClient.requestUploads(groupId = groupId).andGetFileIdsAndUrls()[0]
+        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT, fileIdAndUrl.headers)
+
+        val editedData = EditedSequenceEntryData(
+            accession = accessionVersion.accession,
+            version = accessionVersion.version,
+            data = SubmittedData(
+                metadata = emptyMap(),
+                unalignedNucleotideSequences = emptyMap(),
+                files = mapOf("myFileCategory" to listOf(FileIdAndName(fileIdAndUrl.fileId, "foo.txt"))),
+            ),
+        )
+
+        client.submitEditedSequenceEntryVersion(editedData)
+            .andExpect(status().isNoContent)
+
+        convenienceClient.getSequenceEntry(accession = accessionVersion.accession, version = accessionVersion.version)
+            .assertStatusIs(Status.RECEIVED)
+    }
+
+    @Test
+    fun `WHEN submitting a file ID owned by another group THEN an error is returned`() {
+        // Submission owned by group
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+        val accessionVersion = AccessionVersion(
+            convenienceClient.prepareDataTo(Status.PROCESSED, groupId = groupId).first().accession,
+            1,
+        )
+
+        // File owned by another group
+        val otherGroupId = groupManagementClient.createNewGroup().andGetGroupId()
+        val otherGroupFileIdAndUrl = filesClient.requestUploads(groupId = otherGroupId).andGetFileIdsAndUrls()[0]
+        convenienceClient.uploadFile(
+            otherGroupFileIdAndUrl.presignedWriteUrl,
+            DEFAULT_SIMPLE_FILE_CONTENT,
+            otherGroupFileIdAndUrl.headers,
+        )
+
+        val editedData = EditedSequenceEntryData(
+            accession = accessionVersion.accession,
+            version = accessionVersion.version,
+            data = SubmittedData(
+                metadata = emptyMap(),
+                unalignedNucleotideSequences = emptyMap(),
+                files = mapOf("myFileCategory" to listOf(FileIdAndName(otherGroupFileIdAndUrl.fileId, "foo.txt"))),
+            ),
+        )
+
+        client.submitEditedSequenceEntryVersion(editedData)
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                    containsString(
+                        "Accession version ${accessionVersion.displayAccessionVersion()} belongs to " +
+                            "group $groupId but the attached file ${otherGroupFileIdAndUrl.fileId} belongs to the group $otherGroupId.",
+                    ),
+                ),
             )
     }
 

@@ -32,3 +32,6 @@ select = [
 ]
 ignore = ["ISC001"]
 preview = true
+
+[lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]

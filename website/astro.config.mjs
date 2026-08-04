@@ -10,6 +10,12 @@ import flowbiteReact from 'flowbite-react/plugin/astro';
 export default defineConfig({
     output: 'server',
     integrations: [react(), mdx(), flowbiteReact()],
+    security: {
+        // Allow any forwarded host/proto (required for ingress-terminated deployments with dynamic hostnames).
+        // This intentionally disables Astro's host allowlist hardening; rely on network-level controls (ClusterIP + ingress).
+        // See https://docs.astro.build/en/reference/configuration-reference/#security and https://github.com/withastro/astro/issues/15713
+        allowedDomains: [{}],
+    },
     adapter: node({
         mode: 'standalone',
     }),
@@ -21,6 +27,12 @@ export default defineConfig({
         optimizeDeps: {
             exclude: ['fsevents', 'msw/node', 'msw', 'chromium-bidi'],
         },
+        // Required after upgrading Astro to v7. Astro v7 and msw v2.15 use different versions of this package.
+        // The msw version was being hoisted, but then removed for prod builds as msw is a dev dependency.
+        // This led to a build failure as the cookie package could not be found - including it in the server bundle fixes that.
+        // This was an issue for this package specifically, as it is a transitive dependency used by Astro in the built dist/.
+        // For more information, see https://github.com/loculus-project/loculus/issues/6945#issuecomment-5036776254
+        ssr: { noExternal: ['cookie'] },
         plugins: [tailwindcss(), Icons({ compiler: 'jsx', jsx: 'react' })],
     },
 });

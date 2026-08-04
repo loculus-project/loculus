@@ -137,6 +137,15 @@ export function getLatestAccessionVersion(
     return clonedSequenceEntryHistory.sort((a, b) => b.version - a.version)[0];
 }
 
+export function getLatestAccessionVersionForRevision(
+    sequenceEntryHistory: SequenceEntryHistory,
+): SequenceEntryHistoryEntry | undefined {
+    if (sequenceEntryHistory.length === 0) {
+        return undefined;
+    }
+    return sequenceEntryHistory.filter((entry) => !entry.isRevocation).sort((a, b) => b.version - a.version)[0];
+}
+
 export enum FileType {
     TSV = 'tsv',
     FASTA = 'fa',

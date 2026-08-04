@@ -122,7 +122,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, dat
                                 data-testid='json-radio'
                                 checked={selectedDownload === 0}
                                 type='radio'
-                                className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+                                className='h-4 w-4 p-2 text-primary-600 border-gray-300 checked:border-primary-600 focus:ring-primary-600 inline-block'
                                 onChange={() => setSelectedDownload(0)}
                             />
                             <label
@@ -138,7 +138,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, dat
                                 data-testid='tsv-radio'
                                 type='radio'
                                 checked={selectedDownload === 1}
-                                className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+                                className='h-4 w-4 p-2 text-primary-600 border-gray-300 checked:border-primary-600 focus:ring-primary-600 inline-block'
                                 onChange={() => setSelectedDownload(1)}
                             />
                             <label
@@ -150,7 +150,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, dat
                         </div>
                     </div>
                     <div className='pb-8 pt-4'>
-                        <Button variant='neutral' onClick={downloadSeqSet} disabled={isDownloading}>
+                        <Button variant='primary' onClick={downloadSeqSet} disabled={isDownloading}>
                             Download
                         </Button>
                     </div>
@@ -163,7 +163,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, dat
                             checked={selectedCitation === 0}
                             type='radio'
                             name='inline-radio-group'
-                            className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+                            className='h-4 w-4 p-2 text-primary-600 border-gray-300 checked:border-primary-600 focus:ring-primary-600 inline-block'
                             onChange={() => setSelectedCitation(0)}
                         />
                         <label
@@ -179,7 +179,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, dat
                             type='radio'
                             checked={selectedCitation === 1}
                             name='inline-radio-group'
-                            className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+                            className='h-4 w-4 p-2 text-primary-600 border-gray-300 checked:border-primary-600 focus:ring-primary-600 inline-block'
                             onChange={() => setSelectedCitation(1)}
                         />
                         <label
@@ -195,7 +195,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, dat
                             type='radio'
                             checked={selectedCitation === 2}
                             name='inline-radio-group'
-                            className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+                            className='h-4 w-4 p-2 text-primary-600 border-gray-300 checked:border-primary-600 focus:ring-primary-600 inline-block'
                             onChange={() => setSelectedCitation(2)}
                         />
                         <label
@@ -218,7 +218,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, dat
                     />
                 </div>
                 <div className='pb-8'>
-                    <Button variant='neutral' onClick={() => void copyToClipboard()} disabled={isDownloading}>
+                    <Button variant='primary' onClick={() => void copyToClipboard()} disabled={isDownloading}>
                         Copy to clipboard
                     </Button>
                 </div>

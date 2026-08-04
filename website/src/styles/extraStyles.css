@@ -1,0 +1,13 @@
+/*
+ * Extension point for deployment-specific markdown / prose styling.
+ *
+ * `mdcontainer.css` imports this file, so any rules added here apply wherever
+ * the shared `.mdContainer` prose styling is rendered (docs, about, news and
+ * the homepage FAQ). In stock Loculus it is intentionally empty: downstream
+ * overlays (e.g. Pathoplexus) replace this single file to add instance-specific
+ * styling -- such as a homepage FAQ card grid -- without having to fork the
+ * whole of `mdcontainer.css`.
+ *
+ * If your override uses Tailwind's `@apply`, start the file with
+ * `@reference './base.css';`.
+ */

@@ -64,7 +64,7 @@ jobs:
       - name: Collect Workflow Telemetry
         uses: ycfreeman/workflow-telemetry-action@cad169ff11f718319d5468b0a67a238db000ef3f
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install k3d
         run: |
           for i in {1..5}; do
@@ -85,18 +85,18 @@ jobs:
             --for-e2e \
             --enablePreprocessing \
             --use-localhost-ip
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: ./integration-tests/.nvmrc
       - name: Cache .npm
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('integration-tests/**/package-lock.json') }}
       - name: Install dependencies
         run: cd integration-tests && npm ci
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.13'
       - name: Install uv

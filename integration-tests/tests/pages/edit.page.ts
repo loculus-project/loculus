@@ -30,7 +30,7 @@ export class EditPage {
     }
 
     async submitChanges() {
-        await this.page.getByRole('button', { name: 'Submit' }).click();
+        await this.page.getByRole('button', { name: /proceed to Approval/ }).click();
         await expect(this.page.getByText('Do you really want to submit?')).toBeVisible();
         await this.page.getByRole('button', { name: 'Confirm' }).click();
         await this.page.waitForURL('**/review', { timeout: 15_000 });

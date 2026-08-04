@@ -7,11 +7,13 @@ import { type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 import { DEFAULT_AA_MUTATION_DETAILS_HEADER, DEFAULT_NUC_MUTATION_DETAILS_HEADER } from '../../types/config';
 import { type ReferenceAccession, type ReferenceGenomesInfo } from '../../types/referencesGenomes';
+import type { SequenceCitation } from '../../types/seqSetCitation';
 import { deduplicateSemicolonSeparated } from '../../utils/deduplicateSemicolonSeparated';
 import {
     getInsdcAccessionsFromSegmentReferences,
     type SegmentReferenceSelections,
 } from '../../utils/sequenceTypeHelpers';
+import CitationList from '../SeqSetCitations/CitationList';
 import AkarInfo from '~icons/ri/information-line';
 
 interface Props {
@@ -19,6 +21,7 @@ interface Props {
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     referenceGenomesInfo: ReferenceGenomesInfo;
     segmentReferences?: SegmentReferenceSelections;
+    sequenceCitations?: SequenceCitation[];
 }
 
 const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) => {
@@ -42,6 +45,7 @@ const DataTableComponent: React.FC<Props> = ({
     dataUseTermsHistory,
     referenceGenomesInfo,
     segmentReferences,
+    sequenceCitations,
 }) => {
     const references = getInsdcAccessionsFromSegmentReferences(referenceGenomesInfo, segmentReferences);
     const hasReferenceAccession = references.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
@@ -58,6 +62,8 @@ const DataTableComponent: React.FC<Props> = ({
     const mutationSections = dataTableData.table.filter(
         ({ header }) => header === DEFAULT_NUC_MUTATION_DETAILS_HEADER || header === DEFAULT_AA_MUTATION_DETAILS_HEADER,
     );
+    const hasSequenceCitations = sequenceCitations !== undefined && sequenceCitations.length > 0;
+
     return (
         <div>
             {dataTableData.topmatter.sequenceDisplayName !== undefined && (
@@ -78,7 +84,7 @@ const DataTableComponent: React.FC<Props> = ({
                 </div>
             )}
 
-            {generalSections.length > 0 && (
+            {(generalSections.length > 0 || hasSequenceCitations) && (
                 <div
                     className='grid gap-x-6'
                     style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100vw, 32rem), 1fr))' }}
@@ -100,6 +106,20 @@ const DataTableComponent: React.FC<Props> = ({
                             </div>
                         </div>
                     ))}
+                    {hasSequenceCitations && (
+                        <div className='p-4 pl-0'>
+                            <div className='flex flex-row'>
+                                <h1 className='py-2 text-lg font-semibold border-b mr-2'>Cited in</h1>
+                            </div>
+                            <div className='mt-4'>
+                                <CitationList
+                                    citations={sequenceCitations}
+                                    maxDisplayedCitations={3}
+                                    modalTitle='Sequence Citations'
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 

@@ -80,6 +80,9 @@ import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
+import org.loculus.backend.metrics.STORE_PREPROCESSED_DATA_PHASE
+import org.loculus.backend.metrics.SUBMIT_PROCESSED_DATA_ENDPOINT
+import org.loculus.backend.metrics.SubmissionMetrics
 import org.loculus.backend.service.datauseterms.DataUseTermsTable
 import org.loculus.backend.service.files.FileId
 import org.loculus.backend.service.files.FilesDatabaseService
@@ -124,6 +127,7 @@ class SubmissionDatabaseService(
     private val processedDataPostprocessor: ProcessedDataPostprocessor,
     private val auditLogger: AuditLogger,
     private val dateProvider: DateProvider,
+    private val submissionMetrics: SubmissionMetrics,
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
 ) {
     private var lastPreprocessedDataUpdate: String? = null
@@ -270,35 +274,41 @@ class SubmissionDatabaseService(
     }
 
     fun updateProcessedData(inputStream: InputStream, organism: Organism, pipelineVersion: Long) {
+        submissionMetrics.timeWritePhase(
+            SUBMIT_PROCESSED_DATA_ENDPOINT,
+            organism.name,
+            STORE_PREPROCESSED_DATA_PHASE,
+        ) {
+            updateProcessedDataAndRecordCount(inputStream, organism, pipelineVersion)
+        }
+    }
+
+    private fun updateProcessedDataAndRecordCount(inputStream: InputStream, organism: Organism, pipelineVersion: Long) {
         log.info { "updating processed data" }
-        val reader = BufferedReader(InputStreamReader(inputStream))
 
         val processedAccessionVersions = mutableListOf<String>()
         val processedFiles = mutableMapOf<AccessionVersion, Set<FileId>>()
         val processingResultCounts = mutableMapOf<ProcessingResult, Int>()
-        reader.lineSequence().forEach { line ->
-            val submittedProcessedData = try {
-                objectMapper.readValue<SubmittedProcessedData>(line)
-            } catch (e: JacksonException) {
-                throw BadRequestException("Failed to deserialize NDJSON line: ${e.message}", e)
-            }
-            submittedProcessedData.data.files?.let { fileMapping ->
-                fileMappingPreconditionValidator
-                    .validateFilenameCharacters(fileMapping)
-                    .validateFilenamesAreUnique(fileMapping)
-                    .validateCategoriesMatchOutputSchema(fileMapping, organism)
-                    .validateMultipartUploads(fileMapping.fileIds)
-                    .validateFilesExist(fileMapping.fileIds)
-                val accessionVersion =
-                    AccessionVersion(submittedProcessedData.accession, submittedProcessedData.version)
-                processedFiles[accessionVersion] = fileMapping.fileIds
-            }
+        BufferedReader(InputStreamReader(inputStream)).use { reader ->
+            // Process the NDJSON stream in chunks so DB lookups are batched without buffering the whole request.
+            reader.lineSequence().chunked(streamBatchSize).forEach { lines ->
+                val submittedProcessedDataBatch = lines.map { parseSubmittedProcessedDataLine(it) }
 
-            val processingResult = submittedProcessedData.processingResult()
+                val filesToValidate = validateFileMappingsAndCollectFileIds(
+                    submittedProcessedDataBatch,
+                    organism,
+                    processedFiles,
+                )
+                validateFilesBelongToSubmittingGroups(filesToValidate)
 
-            insertProcessedData(submittedProcessedData, organism, pipelineVersion)
-            processedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
-            processingResultCounts.merge(processingResult, 1, Int::plus)
+                submittedProcessedDataBatch.forEach { submittedProcessedData ->
+                    val processingResult = submittedProcessedData.processingResult()
+
+                    insertProcessedData(submittedProcessedData, organism, pipelineVersion)
+                    processedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
+                    processingResultCounts.merge(processingResult, 1, Int::plus)
+                }
+            }
         }
 
         if (processedFiles.isNotEmpty()) {
@@ -327,6 +337,47 @@ class SubmissionDatabaseService(
                 "Processing result counts: " +
                 processingResultCounts.entries.joinToString { "${it.key}=${it.value}" },
         )
+
+        submissionMetrics.recordProcessedSequencesStored(
+            organism = organism.name,
+            count = processedAccessionVersions.size,
+        )
+    }
+
+    private fun parseSubmittedProcessedDataLine(line: String) = try {
+        objectMapper.readValue<SubmittedProcessedData>(line)
+    } catch (e: JacksonException) {
+        throw BadRequestException("Failed to deserialize NDJSON line: ${e.message}", e)
+    }
+
+    private fun validateFileMappingsAndCollectFileIds(
+        submittedProcessedDataBatch: List<SubmittedProcessedData>,
+        organism: Organism,
+        processedFiles: MutableMap<AccessionVersion, Set<FileId>>,
+    ): Map<AccessionVersion, Set<FileId>> {
+        val filesByAccessionVersion = mutableMapOf<AccessionVersion, Set<FileId>>()
+        val allFileIds = mutableSetOf<FileId>()
+
+        submittedProcessedDataBatch.forEach { submittedProcessedData ->
+            submittedProcessedData.data.files?.let { fileMapping ->
+                fileMappingPreconditionValidator
+                    .validateFilenameCharacters(fileMapping)
+                    .validateFilenamesAreUnique(fileMapping)
+                    .validateCategoriesMatchOutputSchema(fileMapping, organism)
+
+                val accessionVersion =
+                    AccessionVersion(submittedProcessedData.accession, submittedProcessedData.version)
+                processedFiles[accessionVersion] = fileMapping.fileIds
+                filesByAccessionVersion[accessionVersion] = fileMapping.fileIds
+                allFileIds.addAll(fileMapping.fileIds)
+            }
+        }
+
+        fileMappingPreconditionValidator
+            .validateMultipartUploads(allFileIds)
+            .validateFilesExist(allFileIds)
+
+        return filesByAccessionVersion
     }
 
     fun updateExternalMetadata(inputStream: InputStream, organism: Organism, externalMetadataUpdater: String) {
@@ -477,7 +528,6 @@ class SubmissionDatabaseService(
         organism: Organism,
     ) = try {
         throwIfIsSubmissionForWrongOrganism(submittedProcessedData, organism)
-        validateFilesBelongToSubmittingGroup(submittedProcessedData)
         val processedData = makeSequencesUpperCase(submittedProcessedData.data)
         processedSequenceEntryValidatorFactory.create(organism).validate(processedData)
     } catch (validationException: ProcessingValidationException) {
@@ -560,27 +610,32 @@ class SubmissionDatabaseService(
         )
     }
 
-    private fun validateFilesBelongToSubmittingGroup(submittedProcessedData: SubmittedProcessedData) {
-        // TODO(#3951): This implementation is very inefficient as it makes two requests to the database for
-        //  each sequence entry.
-        if (submittedProcessedData.data.files == null) {
+    private fun validateFilesBelongToSubmittingGroups(filesByAccessionVersion: Map<AccessionVersion, Set<FileId>>) {
+        if (filesByAccessionVersion.isEmpty()) {
             return
         }
-        val sequenceEntryGroup = SequenceEntriesTable
-            .select(groupIdColumn)
-            .where {
-                (accessionColumn eq submittedProcessedData.accession) and
-                    (versionColumn eq submittedProcessedData.version)
+
+        // Files referenced by processed data may become public after release, so they must belong to the sequence group.
+        // Load ownership for the whole chunk to avoid one sequence query and one file query per entry.
+        val sequenceEntryGroups = SequenceEntriesTable
+            .select(accessionColumn, versionColumn, groupIdColumn)
+            .where { SequenceEntriesTable.accessionVersionIsIn(filesByAccessionVersion.keys.toList()) }
+            .associate {
+                AccessionVersion(it[accessionColumn], it[versionColumn]) to it[groupIdColumn]
             }
-            .single()[groupIdColumn]
-        val fileIds = submittedProcessedData.data.files.flatMap { it.value.map { it.fileId } }.toSet()
-        val fileGroups = filesDatabaseService.getGroupIds(fileIds)
-        fileGroups.forEach { (fileId, fileGroup) ->
-            if (fileGroup != sequenceEntryGroup) {
-                throw UnprocessableEntityException(
-                    "Accession version ${submittedProcessedData.displayAccessionVersion()} belongs to " +
-                        "group $sequenceEntryGroup but the attached file $fileId belongs to the group $fileGroup.",
-                )
+        val fileGroups = filesDatabaseService.getGroupIds(filesByAccessionVersion.values.flatten().toSet())
+
+        filesByAccessionVersion.forEach { (accessionVersion, fileIds) ->
+            // Missing accession/version errors are handled later by insertProcessedData.
+            val sequenceEntryGroup = sequenceEntryGroups[accessionVersion] ?: return@forEach
+            fileIds.forEach { fileId ->
+                val fileGroup = fileGroups[fileId]
+                if (fileGroup != sequenceEntryGroup) {
+                    throw UnprocessableEntityException(
+                        "Accession version ${accessionVersion.displayAccessionVersion()} belongs to " +
+                            "group $sequenceEntryGroup but the attached file $fileId belongs to the group $fileGroup.",
+                    )
+                }
             }
         }
     }
@@ -1131,6 +1186,12 @@ class SubmissionDatabaseService(
                 .validateCategoriesMatchSubmissionSchema(fileMapping, organism)
                 .validateMultipartUploads(fileMapping.fileIds)
                 .validateFilesExist(fileMapping.fileIds)
+            validateFilesBelongToSubmittingGroups(
+                mapOf(
+                    AccessionVersion(editedSequenceEntryData.accession, editedSequenceEntryData.version) to
+                        fileMapping.fileIds,
+                ),
+            )
         }
 
         SequenceEntriesTable.update(
@@ -1207,24 +1268,6 @@ class SubmissionDatabaseService(
             submissionId = selectedSequenceEntry[SequenceEntriesView.submissionIdColumn],
         )
     }
-
-    /**
-     * Returns AccessionVersions submitted by groups that the given user is part of
-     * and that are approved for release.
-     */
-    fun getApprovedUserAccessionVersions(authenticatedUser: AuthenticatedUser): List<AccessionVersion> =
-        SequenceEntriesView.select(
-            SequenceEntriesView.accessionColumn,
-            SequenceEntriesView.versionColumn,
-        )
-            .where(SequenceEntriesView.statusIs(APPROVED_FOR_RELEASE))
-            .groupBy(getGroupCondition(null, authenticatedUser))
-            .map {
-                AccessionVersion(
-                    it[SequenceEntriesView.accessionColumn],
-                    it[SequenceEntriesView.versionColumn],
-                )
-            }
 
     private fun submittedMetadataFilter(
         authenticatedUser: AuthenticatedUser,
