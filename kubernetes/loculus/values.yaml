@@ -1056,7 +1056,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         orderOnDetailsPage: 2060
       - name: sequencingInstrument
         ontology_id: GENEPIO:0001452
-        definition: The model of the sequencing instrument used.
+        definition: The model of the sequencing instrument used. (required when raw reads file are provided)
         guidance: Select the sequencing instrument from the pick list.
         example: MinION
         displayName: Sequencing instrument
@@ -1175,13 +1175,15 @@ defaultOrganismConfig: &defaultOrganismConfig
         orderOnDetailsPage: 2100
       - name: sequencingAssayType
         ontology_id: GENEPIO:0100997
-        definition: The overarching sequencing technique that was used to determine the sequence of a biomaterial, also called library strategy in the INSDC.
-        guidance: 'Example Guidance: Provide the name of the DNA or RNA sequencing technology used in your study. If unsure refer to the protocol documentation, or provide a null value.'
+        definition: The overarching sequencing technique that was used to determine the sequence of a biomaterial, also called library strategy in the INSDC. (required when raw reads file are provided)
+        guidance: Select the sequencing technology from the pick list.
         desired: true
         example: WGS
         displayName: Sequencing assay type
         header: Sequencing
         orderOnDetailsPage: 2130
+        requiredWhen:
+          - files.rawReads
         preprocessing:
           function: process_options
           inputs:
