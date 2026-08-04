@@ -109,21 +109,6 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         }
     }
 
-    async fillSubmissionFormDummyOrganism({
-        submissionId,
-        country,
-        date,
-    }: {
-        submissionId: string;
-        country: string;
-        date: string;
-    }) {
-        await this.page.getByLabel('ID', { exact: true }).fill(submissionId);
-        await this.page.getByLabel('Country').fill(country);
-        await this.page.getByLabel('Country').blur();
-        await this.page.getByLabel('Date').fill(date);
-    }
-
     async fillSequenceData(sequenceData: Record<string, string>) {
         for (const [key, value] of Object.entries(sequenceData)) {
             await this.page.getByLabel(new RegExp('Add a segment', 'i')).setInputFiles({

@@ -238,7 +238,7 @@ test('bulk submit blocks a submission with errors in file linkage or parsing', a
         await submissionPage.acceptTerms();
         await submissionPage.uploadMetadataFile(
             [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
-            [[ID_1, COUNTRY_1, '2023-01-01', metadataFileEntries]],
+            [[ID_1, COUNTRY_1, '2023-01-01', SEQUENCING_INSTRUMENT, metadataFileEntries]],
         );
         if (uploadedFiles !== undefined) {
             await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: uploadedFiles }, tmpDir);
@@ -427,10 +427,12 @@ test('single revise seq via edit page reuses, replaces, discards and adds files'
     // Step 1: Submit and release a sequence with three files
     const submissionPage = new SingleSequenceSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
-    await submissionPage.fillSubmissionFormDummyOrganism({
-        submissionId: 'single-edit-files',
-        country: COUNTRY_1,
-        date: '2023-01-01',
+    await submissionPage.fillSubmissionForm({
+        submissionId: ID_1,
+        collectionCountry: COUNTRY_1,
+        collectionDate: '2023-10-15',
+        authorAffiliations: AUTHOR_AFFILIATIONS,
+        sequencingInstrument: SEQUENCING_INSTRUMENT,
     });
     await submissionPage.uploadExternalFiles(RAW_READS, FILES_TRIPLE, tmpDir);
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone();
@@ -487,8 +489,20 @@ test('bulk revise can reuse, replace, discard and add files', async ({ page, gro
     await submissionPage.uploadMetadataFile(
         [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
         [
-            [ID_1, COUNTRY_1, '2023-05-01', filesColumnCell(ID_1, FILES_TRIPLE)],
-            [ID_2, COUNTRY_2, '2023-05-02', filesColumnCell(ID_2, OTHER_FILES_TRIPLE)],
+            [
+                ID_1,
+                COUNTRY_1,
+                '2023-05-01',
+                SEQUENCING_INSTRUMENT,
+                filesColumnCell(ID_1, FILES_TRIPLE),
+            ],
+            [
+                ID_2,
+                COUNTRY_2,
+                '2023-05-02',
+                SEQUENCING_INSTRUMENT,
+                filesColumnCell(ID_2, OTHER_FILES_TRIPLE),
+            ],
         ],
     );
     await submissionPage.uploadExternalFiles(
@@ -541,7 +555,6 @@ test('bulk revise can reuse, replace, discard and add files', async ({ page, gro
     // one is removed, and a new one is added. The replaced and added files keep the submissionId
     // subfolder in their path, so they stay distinct from the second entry's identically named ones
     const uploadedFiles = { [replacedName]: REPLACEMENT_CONTENT, [addedName]: addedContent };
-
     const revisionMetadata = [
         headerRow,
         ...entryRows.map((row) => {
