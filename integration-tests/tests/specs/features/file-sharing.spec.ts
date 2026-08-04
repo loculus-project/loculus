@@ -580,6 +580,10 @@ test('bulk revise can reuse, replace, discard and add files', async ({ page, gro
     const revisionPage = new RevisionPage(page);
     await revisionPage.goto(ORGANISM_URL_NAME, groupId);
     await revisionPage.uploadMetadataFile('revision_metadata.tsv', revisionMetadata);
+    await revisionPage.uploadSequenceFile(
+        'revised_sequences.fasta',
+        [ID_1, ID_2].map((id) => `>${id}\n${EBOLA_SUDAN_SHORT_SEQUENCE}`).join('\n'),
+    );
     await revisionPage.uploadExternalFiles(RAW_READS, uploadedFiles, tmpDir);
     await revisionPage.submitRevision();
 
