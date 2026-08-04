@@ -32,13 +32,11 @@ import {
     applyFileMappings,
     resolveFileMappings,
     getLinkageErrors,
-    toSingleSubmissionFileMapping,
+    getSingleSubmissionFileMapping,
     type CategoryLinkage,
     type FileLinkage,
     type FileMapping,
-    type SubmissionFile,
     type SubmissionFileMapping,
-    type UploadedFile,
 } from './FileUpload/fileMapping.ts';
 
 export type UploadAction = 'submit' | 'revise';
@@ -131,7 +129,7 @@ const InnerDataUploadForm = ({
         if (extraFilesEnabled) {
             if (inputMode === 'form') {
                 if (fileMapping !== undefined) {
-                    const finalSubmissionFileMapping = toSingleSubmissionFileMapping(submissionId!, fileMapping);
+                    const finalSubmissionFileMapping = getSingleSubmissionFileMapping(submissionId!, fileMapping);
                     const finalMetadataFileResult = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
                     if (finalMetadataFileResult.isErr()) {
                         onError(finalMetadataFileResult.error.message);
@@ -334,57 +332,58 @@ export const InputModeTabs = ({
 };
 
 const CategoryLinkageStatus = ({ categoryLinkage }: { categoryLinkage: CategoryLinkage | undefined }) => {
-    if (categoryLinkage === undefined) return null;
-
     const statuses: {
         key: string;
         icon: string;
         color: string;
-        files: (SubmissionFile | UploadedFile)[];
+        count: number;
         message: string;
-    }[] = [
-        {
-            key: 'linked',
-            icon: '✓',
-            color: 'text-green-500',
-            files: categoryLinkage.linked,
-            message: 'uploaded and linked to metadata!',
-        },
-        {
-            key: 'reused',
-            icon: '↺',
-            color: 'text-green-500',
-            files: categoryLinkage.reused,
-            message: 'reused from previous uploads.',
-        },
-        {
-            key: 'missing',
-            icon: '⚠',
-            color: 'text-yellow-600',
-            files: categoryLinkage.missing,
-            message: 'referenced in metadata but not uploaded.',
-        },
-        {
-            key: 'unreferenced',
-            icon: '⚠',
-            color: 'text-yellow-600',
-            files: categoryLinkage.orphaned.concat(categoryLinkage.shadowed),
-            message: 'uploaded but not referenced in metadata.',
-        },
-    ];
+    }[] = useMemo(() => {
+        if (categoryLinkage === undefined) return [];
+        return [
+            {
+                key: 'linked',
+                icon: '✓',
+                color: 'text-green-500',
+                count: Array.from(new Set(categoryLinkage.linked.map((file) => file.path))).length,
+                message: 'uploaded and linked to metadata!',
+            },
+            {
+                key: 'reused',
+                icon: '↺',
+                color: 'text-green-500',
+                count: categoryLinkage.reused.length,
+                message: 'reused from previous uploads.',
+            },
+            {
+                key: 'missing',
+                icon: '⚠',
+                color: 'text-yellow-600',
+                count: categoryLinkage.missing.length,
+                message: 'referenced in metadata but not uploaded.',
+            },
+            {
+                key: 'unreferenced',
+                icon: '⚠',
+                color: 'text-yellow-600',
+                count: categoryLinkage.orphaned.concat(categoryLinkage.shadowed).length,
+                message: 'uploaded but not referenced in metadata.',
+            },
+        ];
+    }, [categoryLinkage]);
 
-    return (
+    return categoryLinkage ? (
         <div className='text-xs text-gray-500 text-center space-y-1'>
             {statuses
-                .filter((status) => status.files.length > 0)
+                .filter((status) => status.count > 0)
                 .map((status) => (
                     <div key={status.key}>
                         <span className={status.color}>{status.icon}</span>{' '}
-                        {`${status.files.length} ${status.files.length === 1 ? 'file' : 'files'} ${status.message}`}
+                        {`${status.count} ${status.count === 1 ? 'file' : 'files'} ${status.message}`}
                     </div>
                 ))}
         </div>
-    );
+    ) : null;
 };
 
 export const ExtraFilesUpload = ({

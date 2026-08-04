@@ -17,28 +17,39 @@ type FilePath = string;
 type FileName = string;
 type FileId = string;
 
-/*
- * A file declared in the metadata.
- * Declared metadata files must have a name - if a path is not provided, the name is used as the path.
- * Declared metadata files may have a file ID, meaning a pre-existing file is being reused.
- */
-export type SubmissionFile = {
+type DeclaredFile = {
+    type: 'declaredFile';
     name: string;
     path: string;
-    fileId?: string;
 };
+
+type ReusedFile = {
+    type: 'reusedFile';
+    name: string;
+    fileId: string;
+};
+
+/*
+ * A submission file in the metadata.
+ * Submission files can be either declared or reused.
+ */
+export type SubmissionFile = DeclaredFile | ReusedFile;
 
 /*
  * A file uploaded by the folder upload component.
- * Uploaded files must have a path, corresponding to their folder upload path,
- * as well as a file ID for the uploaded file.
+ * Uploaded files must have their folder upload path as well as a file ID for the uploaded file.
  */
-export type UploadedFile = {
-    path: FilePath;
-    fileId: FileId;
+type UploadedFile = {
+    type: 'uploadedFile';
+    path: string;
+    fileId: string;
 };
 
-type ResolvedSubmissionFile = {
+/*
+ * A declared file linked with an uploaded file.
+ */
+type LinkedFile = {
+    type: 'linkedFile';
     name: string;
     path: string;
     fileId: string;
@@ -51,7 +62,13 @@ type ResolvedSubmissionFile = {
 type ResolvedEntry = {
     submissionId: SubmissionId;
     category: FileCategory;
-    file: ResolvedSubmissionFile;
+    file: LinkedFile | ReusedFile;
+};
+
+type ResolvedFile = {
+    type: 'resolvedFile';
+    name: string;
+    fileId: string;
 };
 
 /**
@@ -63,10 +80,7 @@ export type FileMapping = Map<FileCategory, Map<FilePath, FileId>>;
 /**
  * Files declared per submission in the metadata, keyed by name.
  */
-export type SubmissionFileMapping<T extends SubmissionFile = SubmissionFile> = Map<
-    SubmissionId,
-    Map<FileCategory, Map<FileName, T>>
->;
+export type SubmissionFileMapping<T = SubmissionFile> = Map<SubmissionId, Map<FileCategory, Map<FileName, T>>>;
 
 /**
  * Types of file linkage between the files declared within the metadata and the uploaded files.
@@ -89,9 +103,9 @@ export enum LinkageType {
 }
 
 export type CategoryLinkage = {
-    [LinkageType.LINKED]: UploadedFile[];
-    [LinkageType.REUSED]: SubmissionFile[];
-    [LinkageType.MISSING]: SubmissionFile[];
+    [LinkageType.LINKED]: LinkedFile[];
+    [LinkageType.REUSED]: ReusedFile[];
+    [LinkageType.MISSING]: DeclaredFile[];
     [LinkageType.ORPHANED]: UploadedFile[];
     [LinkageType.SHADOWED]: UploadedFile[];
 };
@@ -116,15 +130,14 @@ export type FileLinkage = Map<FileCategory, CategoryLinkage>;
  * @param entries The entries containing the submission ID, file category, and resolved file.
  * @returns A mapping of submission IDs to file categories, containing the resolved files which are linked or reused.
  */
-function getResolvedSubmissionFileMapping(entries: ResolvedEntry[]): SubmissionFileMapping<ResolvedSubmissionFile> {
-    const mapping: SubmissionFileMapping<ResolvedSubmissionFile> = new Map();
+function getResolvedFileMapping(entries: ResolvedEntry[]): SubmissionFileMapping<ResolvedFile> {
+    const mapping: SubmissionFileMapping<ResolvedFile> = new Map();
 
     for (const { submissionId, category, file } of entries) {
-        const categoryMapping: Map<FileCategory, Map<FileName, ResolvedSubmissionFile>> = mapping.get(submissionId) ??
-        new Map();
-        const files: Map<FileName, ResolvedSubmissionFile> = categoryMapping.get(category) ?? new Map();
+        const categoryMapping: Map<FileCategory, Map<FileName, ResolvedFile>> = mapping.get(submissionId) ?? new Map();
+        const files: Map<FileName, ResolvedFile> = categoryMapping.get(category) ?? new Map();
 
-        files.set(file.name, file);
+        files.set(file.name, { type: 'resolvedFile', name: file.name, fileId: file.fileId });
 
         categoryMapping.set(category, files);
         mapping.set(submissionId, categoryMapping);
@@ -143,7 +156,7 @@ export function resolveFileMappings(
     submissionFileMapping: SubmissionFileMapping,
     fileMapping: FileMapping | undefined,
 ): {
-    submissionFileMapping: SubmissionFileMapping<ResolvedSubmissionFile>;
+    submissionFileMapping: SubmissionFileMapping<ResolvedFile>;
     fileLinkage: FileLinkage;
 } {
     const fileLinkage: FileLinkage = new Map();
@@ -158,9 +171,8 @@ export function resolveFileMappings(
     for (const category of categories) {
         const categoryLinkage = initialiseCategoryLinkage();
         const uploads = fileMapping?.get(category);
-        // Paths claimed by a metadata entry without its own file ID, so the upload is genuinely linked.
-        const claimedPaths = new Set<FilePath>();
-        // Paths referenced by a metadata entry which has its own file ID instead, so the upload is shadowed.
+
+        const linkedPaths = new Set<FilePath>();
         const shadowedPaths = new Set<FilePath>();
 
         for (const [submissionId, categoryMapping] of submissionFileMapping) {
@@ -168,39 +180,46 @@ export function resolveFileMappings(
             if (files === undefined) continue;
 
             for (const file of files.values()) {
-                if (file.fileId !== undefined) {
-                    // A metadata file entry with its own file ID is reusing a pre-existing file,
-                    // and does not need to be linked against any upload.
-                    categoryLinkage.reused.push(file);
-                    shadowedPaths.add(file.path);
-                    resolvedEntries.push({ submissionId, category, file: { ...file, fileId: file.fileId } });
-                    continue;
-                }
+                switch (file.type) {
+                    case 'reusedFile': {
+                        categoryLinkage.reused.push(file);
+                        shadowedPaths.add(file.name);
+                        resolvedEntries.push({ submissionId, category, file });
+                        break;
+                    }
+                    case 'declaredFile': {
+                        const uploadFileId = uploads?.get(file.path);
 
-                const fileId = uploads?.get(file.path);
-                if (fileId === undefined) {
-                    categoryLinkage.missing.push(file);
-                    continue;
-                }
+                        if (uploadFileId !== undefined) {
+                            const linkedFile: LinkedFile = {
+                                type: 'linkedFile',
+                                name: file.name,
+                                path: file.path,
+                                fileId: uploadFileId,
+                            };
 
-                claimedPaths.add(file.path);
-                resolvedEntries.push({ submissionId, category, file: { ...file, fileId } });
+                            linkedPaths.add(file.path);
+                            categoryLinkage.linked.push(linkedFile);
+                            resolvedEntries.push({ submissionId, category, file: linkedFile });
+                        } else categoryLinkage.missing.push(file);
+                        break;
+                    }
+                }
             }
         }
 
         if (uploads !== undefined) {
             for (const [path, fileId] of uploads) {
-                if (claimedPaths.has(path)) categoryLinkage.linked.push({ path, fileId });
-                else if (shadowedPaths.has(path)) categoryLinkage.shadowed.push({ path, fileId });
-                else categoryLinkage.orphaned.push({ path, fileId });
+                if (linkedPaths.has(path)) continue;
+                else if (shadowedPaths.has(path)) categoryLinkage.shadowed.push({ type: 'uploadedFile', path, fileId });
+                else categoryLinkage.orphaned.push({ type: 'uploadedFile', path, fileId });
             }
         }
-
         fileLinkage.set(category, categoryLinkage);
     }
 
-    const resolvedSubmissionFileMapping = getResolvedSubmissionFileMapping(resolvedEntries);
-    return { submissionFileMapping: resolvedSubmissionFileMapping, fileLinkage };
+    const mapping = getResolvedFileMapping(resolvedEntries);
+    return { submissionFileMapping: mapping, fileLinkage };
 }
 
 /**
@@ -212,17 +231,17 @@ export function resolveFileMappings(
  * @param fileMapping The mapping of file categories and paths to uploaded files.
  * @returns A resolved submission file mapping containing only the given submission.
  */
-export function toSingleSubmissionFileMapping(
+export function getSingleSubmissionFileMapping(
     submissionId: SubmissionId,
     fileMapping: FileMapping,
-): SubmissionFileMapping<ResolvedSubmissionFile> {
+): SubmissionFileMapping<ResolvedFile> {
     return new Map([
         [
             submissionId,
             new Map(
                 [...fileMapping].map(([category, files]) => [
                     category,
-                    new Map([...files].map(([path, fileId]) => [path, { name: path, path, fileId }])),
+                    new Map([...files].map(([path, fileId]) => [path, { type: 'resolvedFile', name: path, fileId }])),
                 ]),
             ),
         ],
@@ -276,7 +295,7 @@ export function getLinkageErrors(fileLinkage: FileLinkage): string | undefined {
  * @param entry The file entry, in one of the accepted `FILE_ENTRY_FORMS`.
  * @returns The parsed file, or an error if the entry matches none of the accepted forms.
  */
-function parseFileEntry(entry: string): Result<SubmissionFile, Error> {
+function parseMetadataFileEntry(entry: string): Result<SubmissionFile, Error> {
     const match = FILE_ENTRY_REGEX.exec(entry.trim());
     if (!match)
         return err(
@@ -285,7 +304,12 @@ function parseFileEntry(entry: string): Result<SubmissionFile, Error> {
             ),
         );
     const [, name, path, fileId] = match;
-    return ok({ name, path: !path ? name : path, fileId });
+
+    if (!fileId) {
+        return ok({ type: 'declaredFile', name, path: !path ? name : path });
+    } else {
+        return ok({ type: 'reusedFile', name, fileId });
+    }
 }
 
 /**
@@ -374,7 +398,7 @@ export function parseSubmissionFileMapping(
                 .split(FILES_SEPARATOR)
                 .map((entry) => entry.trim())
                 .filter((entry) => entry !== '')
-                .map((entry) => parseFileEntry(entry));
+                .map((entry) => parseMetadataFileEntry(entry));
 
             // Check for parsing errors in the file entries and validate the submission has unique file names
             const fileEntries = new Map<FileName, SubmissionFile>();
@@ -407,14 +431,14 @@ export function parseSubmissionFileMapping(
  */
 export async function applyFileMappings(
     metadataFile: File,
-    resolvedSubmissionFileMapping: SubmissionFileMapping<ResolvedSubmissionFile>,
+    resolvedSubmissionFileMapping: SubmissionFileMapping<ResolvedFile>,
 ): Promise<Result<File, Error>> {
+    // If there are no resolved file entries, return the original file
+    if (resolvedSubmissionFileMapping.size === 0) return ok(metadataFile);
+
     const text = await metadataFile.text();
     const parsed = Papa.parse<string[]>(text, { delimiter: '\t', skipEmptyLines: true });
     if (parsed.data.length === 0) return err(new Error('Please provide a non-empty metadata file.'));
-
-    // If there are no resolved file entries, return the original file
-    if (resolvedSubmissionFileMapping.size === 0) return ok(metadataFile);
 
     const columnNames = parsed.data[0];
     const columns = columnNames.map((column, index) => ({ name: column, index }));
