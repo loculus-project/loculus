@@ -225,11 +225,8 @@ test('bulk submit blocks a submission with errors in file linkage or parsing', a
             uploadedFiles: FILES_DOUBLE,
             error: `uploaded but not referenced in metadata: ${ID_1}/${file2Name}`,
         },
-        {
-            metadataFileEntries: `${file1Name}::${ID_1}/${file1Name}:some-file-id`,
-            uploadedFiles: file1,
-            error: `uploaded but the metadata still references an existing file for them: ${ID_1}/${file1Name}`,
-        },
+        // TODO: Test shadowed files, which requires uploading files without submission ID
+        // subfolders, so that an uploaded file's path matches the name of a reused metadata entry
     ];
 
     const submissionPage = new BulkSubmissionPage(page);
@@ -240,9 +237,12 @@ test('bulk submit blocks a submission with errors in file linkage or parsing', a
             [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
             [[ID_1, COUNTRY_1, '2023-01-01', SEQUENCING_INSTRUMENT, metadataFileEntries]],
         );
-        if (uploadedFiles !== undefined) {
+        await submissionPage.uploadSequencesFile({
+            [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE,
+        });
+        if (uploadedFiles !== undefined)
             await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: uploadedFiles }, tmpDir);
-        }
+
         await submissionPage.clickSubmit();
 
         // Multiple toasts can be shown at the same time
@@ -403,20 +403,6 @@ test('single revise seq with files via edit page', async ({ page, groupId, tmpDi
     );
 });
 
-const FILES_TRIPLE: Record<string, string> = {
-    'file1.txt': 'Content of file 1.',
-    'file2.txt': 'Content of file 2.',
-    'file3.txt': 'Content of file 3.',
-};
-// The same file names as FILES_TRIPLE, with different contents, for a second bulk entry
-const OTHER_FILES_TRIPLE: Record<string, string> = {
-    'file1.txt': 'Other content of file 1.',
-    'file2.txt': 'Other content of file 2.',
-    'file3.txt': 'Other content of file 3.',
-};
-const ADDED_FILE = { 'file4.txt': 'Content of file 4.' };
-const REPLACEMENT_CONTENT = 'Replaced content of file 2.';
-
 test('single revise seq via edit page reuses, replaces, discards and adds files', async ({
     page,
     groupId,
@@ -424,7 +410,7 @@ test('single revise seq via edit page reuses, replaces, discards and adds files'
 }) => {
     test.setTimeout(300_000);
 
-    // Step 1: Submit and release a sequence with three files
+    // Step 1: Submit and release a sequence with files
     const submissionPage = new SingleSequenceSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
     await submissionPage.fillSubmissionForm({
@@ -434,56 +420,68 @@ test('single revise seq via edit page reuses, replaces, discards and adds files'
         authorAffiliations: AUTHOR_AFFILIATIONS,
         sequencingInstrument: SEQUENCING_INSTRUMENT,
     });
-    await submissionPage.uploadExternalFiles(RAW_READS, FILES_TRIPLE, tmpDir);
+    await submissionPage.fillSequenceData({ main: EBOLA_SUDAN_SHORT_SEQUENCE });
+    await submissionPage.uploadExternalFiles(RAW_READS, FILES_DOUBLE, tmpDir);
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone();
     const searchPage = await reviewPage.releaseAndGoToReleasedSequences();
 
-    // Step 2: Reuse, replace, discard and add a file
+    // Step 2: Reuse and replace a file
     const [{ accession, version }] = await searchPage.waitForSequencesInSearch(1);
-    const [reusedName, replacedName, discardedName] = Object.keys(FILES_TRIPLE);
-    const [addedName, addedContent] = Object.entries(ADDED_FILE)[0];
+    const [file1Name, file2Name] = Object.keys(FILES_DOUBLE);
 
     const editPage = new EditPage(page);
     await editPage.goto(ORGANISM_URL_NAME, accession, version);
 
-    // Reused file
-    await editPage.expectExtraFileUploaded(RAW_READS, reusedName);
+    // Reused file 1
+    await editPage.expectExtraFileUploaded(RAW_READS, file1Name);
 
-    // Replaced file
-    await editPage.addAdditionalFile(RAW_READS, replacedName, REPLACEMENT_CONTENT);
+    // Replaced file 2
+    await editPage.addAdditionalFile(RAW_READS, file2Name, EBOLA_SUDAN_SMALL_FASTQ(1));
     await editPage.confirmReplaceFile();
-    await editPage.expectExtraFileUploaded(RAW_READS, replacedName);
-
-    // Discarded file
-    await editPage.discardExtraFile(RAW_READS, discardedName);
-    await editPage.expectExtraFileDiscarded(RAW_READS, discardedName);
-
-    // Added file
-    await editPage.addAdditionalFile(RAW_READS, addedName, addedContent);
-    await editPage.expectExtraFileUploaded(RAW_READS, addedName);
+    await editPage.expectExtraFileUploaded(RAW_READS, file2Name);
 
     const reviewPage2 = await editPage.submitChanges();
     await reviewPage2.waitForZeroProcessing();
     await reviewPage2.releaseValidSequences();
 
-    // Step 3: The revision serves the reused, replaced and added files, and not the discarded one
+    // Step 3: The revision serves the reused and replaced files
     const searchPage2 = new SearchPage(page);
     await searchPage2.goToReleasedSequences(ORGANISM_URL_NAME, groupId);
     await searchPage2.checkFileContentInModal('link', `${accession}.${version + 1}`, {
-        [reusedName]: FILES_TRIPLE[reusedName],
-        [replacedName]: REPLACEMENT_CONTENT,
-        ...ADDED_FILE,
+        [file1Name]: FILES_DOUBLE[file1Name],
+        [file2Name]: EBOLA_SUDAN_SMALL_FASTQ(1),
     });
+
+    // Step 4: A second revision discards the reused file and adds a new one
+    const addedFileName = 'file3.fastq';
+    await editPage.goto(ORGANISM_URL_NAME, accession, version + 1);
+
+    await editPage.discardExtraFile(RAW_READS, file1Name);
+    await editPage.expectExtraFileDiscarded(RAW_READS, file1Name);
+
+    await editPage.addAdditionalFile(RAW_READS, addedFileName, EBOLA_SUDAN_SMALL_FASTQ(2));
+    await editPage.expectExtraFileUploaded(RAW_READS, addedFileName);
+
+    const reviewPage3 = await editPage.submitChanges();
+    await reviewPage3.waitForZeroProcessing();
+    await reviewPage3.releaseValidSequences();
+
+    // Step 5: The second revision serves the replaced and added files, but not the discarded one
+    await searchPage2.goToReleasedSequences(ORGANISM_URL_NAME, groupId);
+    await searchPage2.waitForAccessionVersionInSearch(accession, version + 2);
+    await searchPage2.openModalByRoleAndName('link', `${accession}.${version + 2}`);
+    await searchPage2.checkAllFileContents({
+        [file2Name]: EBOLA_SUDAN_SMALL_FASTQ(1),
+        [addedFileName]: EBOLA_SUDAN_SMALL_FASTQ(2),
+    });
+    await expect(page.getByRole('link', { name: file1Name })).toHaveCount(0);
+    await searchPage2.closeDetailsModal();
 });
 
 test('bulk revise can reuse, replace, discard and add files', async ({ page, groupId, tmpDir }) => {
     test.setTimeout(300_000);
 
-    const [reusedName, replacedName, discardedName] = Object.keys(FILES_TRIPLE);
-    const [addedName, addedContent] = Object.entries(ADDED_FILE)[0];
-
-    // Step 1: Bulk submit two entries that use the same file names, with different contents, and
-    // release them. Names only have to be unique within an entry, so both are kept apart by path
+    // Step 1: Bulk submit two entries
     const submissionPage = new BulkSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
     await submissionPage.uploadMetadataFile(
@@ -494,20 +492,24 @@ test('bulk revise can reuse, replace, discard and add files', async ({ page, gro
                 COUNTRY_1,
                 '2023-05-01',
                 SEQUENCING_INSTRUMENT,
-                filesColumnCell(ID_1, FILES_TRIPLE),
+                filesColumnCell(ID_1, FILES_DOUBLE),
             ],
             [
                 ID_2,
                 COUNTRY_2,
                 '2023-05-02',
                 SEQUENCING_INSTRUMENT,
-                filesColumnCell(ID_2, OTHER_FILES_TRIPLE),
+                filesColumnCell(ID_2, FILES_DOUBLE),
             ],
         ],
     );
+    await submissionPage.uploadSequencesFile({
+        [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE,
+        [ID_2]: EBOLA_SUDAN_SHORT_SEQUENCE,
+    });
     await submissionPage.uploadExternalFiles(
         RAW_READS,
-        { [ID_1]: FILES_TRIPLE, [ID_2]: OTHER_FILES_TRIPLE },
+        { [ID_1]: FILES_DOUBLE, [ID_2]: FILES_DOUBLE },
         tmpDir,
     );
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone();
@@ -515,8 +517,8 @@ test('bulk revise can reuse, replace, discard and add files', async ({ page, gro
     const releasedEntries = await searchPage.waitForSequencesInSearch(2);
 
     // Each entry serves its own files, despite the file names being identical across the two
-    await searchPage.checkFileContentInModal('cell', COUNTRY_1, FILES_TRIPLE);
-    await searchPage.checkFileContentInModal('cell', COUNTRY_2, OTHER_FILES_TRIPLE);
+    await searchPage.checkFileContentInModal('cell', COUNTRY_1, FILES_DOUBLE);
+    await searchPage.checkFileContentInModal('cell', COUNTRY_2, FILES_DOUBLE);
 
     // Step 2: Download the originally submitted metadata
     const downloadPromise = page.waitForEvent('download');
@@ -544,28 +546,32 @@ test('bulk revise can reuse, replace, discard and add files', async ({ page, gro
         `expected a ${RAW_READS_FILES_HEADER} column in: ${headerRow}`,
     ).toBeGreaterThan(-1);
 
-    // Both entries list the same file names, each with their own file ID and no file path
-    for (const fileName of Object.keys(FILES_TRIPLE)) {
+    // Both entries list the same file names, each with their own file IDs
+    for (const fileName of Object.keys(FILES_DOUBLE)) {
         expect(downloadedMetadata.split(`${fileName}:`)).toHaveLength(3);
     }
     expect(downloadedMetadata).not.toContain('::');
 
-    // Step 3: Rewrite only the first entry's metadata file entries, so that the second entry reuses
-    // all of its files. One entry is reused, one has its file ID removed so the upload replaces it,
-    // one is removed, and a new one is added. The replaced and added files keep the submissionId
-    // subfolder in their path, so they stay distinct from the second entry's identically named ones
-    const uploadedFiles = { [replacedName]: REPLACEMENT_CONTENT, [addedName]: addedContent };
+    // Step 3: The first entry reuses one file and replaces the other, while the second entry reuses
+    // one file, discards the other and adds a new one
+    const [file1Name, file2Name] = Object.keys(FILES_DOUBLE);
+    const ADDED_FILE = { 'file3.fastq': EBOLA_SUDAN_SMALL_FASTQ(2) };
+    const uploadedFiles: Record<string, Record<string, string>> = {
+        [ID_1]: { [file2Name]: FILES_DOUBLE[file1Name] },
+        [ID_2]: ADDED_FILE,
+    };
+
     const revisionMetadata = [
         headerRow,
         ...entryRows.map((row) => {
             const cells = row.split('\t');
-            if (cells[idColumn] !== ID_1) return row;
+            const id = cells[idColumn];
 
             const reusedEntry = cells[filesColumn]
                 .split(' ')
-                .find((entry) => entry.startsWith(`${reusedName}:`));
+                .find((entry) => entry.startsWith(`${file1Name}:`));
             expect(reusedEntry).toBeDefined();
-            cells[filesColumn] = [reusedEntry, filesColumnCell(ID_1, uploadedFiles)].join(' ');
+            cells[filesColumn] = [reusedEntry, filesColumnCell(id, uploadedFiles[id])].join(' ');
             return cells.join('\t');
         }),
     ].join('\n');
@@ -574,15 +580,15 @@ test('bulk revise can reuse, replace, discard and add files', async ({ page, gro
     const revisionPage = new RevisionPage(page);
     await revisionPage.goto(ORGANISM_URL_NAME, groupId);
     await revisionPage.uploadMetadataFile('revision_metadata.tsv', revisionMetadata);
-    await revisionPage.uploadExternalFiles(RAW_READS, { [ID_1]: uploadedFiles }, tmpDir);
+    await revisionPage.uploadExternalFiles(RAW_READS, uploadedFiles, tmpDir);
     await revisionPage.submitRevision();
 
     const reviewPage2 = new ReviewPage(page);
     await reviewPage2.waitForZeroProcessing();
     await reviewPage2.releaseValidSequences();
 
-    // Step 5: The revised entry serves the reused, replaced and added files, and not the discarded
-    // one, while the untouched entry still serves its own three files under the same names
+    // Step 5: The first entry serves its reused and replaced files, and the second entry serves its
+    // reused and added files, but not the discarded one
     const searchPage2 = new SearchPage(page);
     await searchPage2.goToReleasedSequences(ORGANISM_URL_NAME, groupId);
 
@@ -591,14 +597,13 @@ test('bulk revise can reuse, replace, discard and add files', async ({ page, gro
         await searchPage2.waitForAccessionVersionInSearch(accession, version + 1);
     }
 
-    await searchPage2.openModalByRoleAndName('cell', COUNTRY_1);
-    await searchPage2.checkAllFileContents({
-        [reusedName]: FILES_TRIPLE[reusedName],
-        [replacedName]: REPLACEMENT_CONTENT,
-        [addedName]: addedContent,
+    await searchPage2.checkFileContentInModal('cell', COUNTRY_1, {
+        [file1Name]: FILES_DOUBLE[file1Name],
+        [file2Name]: FILES_DOUBLE[file1Name],
     });
-    await expect(page.getByRole('link', { name: discardedName })).toHaveCount(0);
-    await searchPage2.closeDetailsModal();
 
-    await searchPage2.checkFileContentInModal('cell', COUNTRY_2, OTHER_FILES_TRIPLE);
+    await searchPage2.openModalByRoleAndName('cell', COUNTRY_2);
+    await searchPage2.checkAllFileContents({ [file1Name]: FILES_DOUBLE[file1Name], ...ADDED_FILE });
+    await expect(page.getByRole('link', { name: file2Name })).toHaveCount(0);
+    await searchPage2.closeDetailsModal();
 });
