@@ -20,7 +20,7 @@ import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHi
 import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
 import {
     applyFileMappings,
-    toSingleSubmissionFileMapping,
+    getSingleSubmissionFileMapping,
     type FileMapping,
 } from '../Submission/FileUpload/fileMapping.ts';
 import { Button } from '../common/Button';
@@ -113,7 +113,7 @@ const InnerEditPage: FC<EditPageProps> = ({
             let finalMetadataFile = metadataFile;
 
             if (extraFilesEnabled && fileMapping !== undefined) {
-                const finalSubmissionFileMapping = toSingleSubmissionFileMapping(dataToEdit.submissionId, fileMapping);
+                const finalSubmissionFileMapping = getSingleSubmissionFileMapping(dataToEdit.submissionId, fileMapping);
                 const finalMetadataFileResult = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
                 if (finalMetadataFileResult.isErr()) {
                     toast.error(finalMetadataFileResult.error.message, { position: 'top-center', autoClose: false });
