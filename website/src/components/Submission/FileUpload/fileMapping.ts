@@ -11,27 +11,47 @@ const FILES_SEPARATOR = ' ';
 const FILE_NAME_ID_SEPARATOR = ':';
 const FILE_ENTRY_REGEX = /^([^:]+)(?:::([^:]+)|:([^:]+))?$/;
 
-export type SubmissionFile = {
-    name: string;
-    path: string;
-    fileId?: string;
-};
-export type ResolvedSubmissionFile = SubmissionFile & {
-    fileId: string;
-};
-
 type SubmissionId = string;
 type FileCategory = string;
 type FilePath = string;
 type FileName = string;
 type FileId = string;
 
-/**
- * A file uploaded via the folder upload component, identified by its path.
+/*
+ * A file declared in the metadata.
+ * Declared metadata files must have a name - if a path is not provided, the name is used as the path.
+ * Declared metadata files may have a file ID, meaning a pre-existing file is being reused.
+ */
+export type SubmissionFile = {
+    name: string;
+    path: string;
+    fileId?: string;
+};
+
+/*
+ * A file uploaded by the folder upload component.
+ * Uploaded files must have a path, corresponding to their folder upload path,
+ * as well as a file ID for the uploaded file.
  */
 export type UploadedFile = {
     path: FilePath;
     fileId: FileId;
+};
+
+type ResolvedSubmissionFile = {
+    name: string;
+    path: string;
+    fileId: string;
+};
+
+/**
+ * An entry containing the submission ID, file category, and resolved file.
+ * Used to build a resolved submission file mapping, which contains the file IDs for all files which are linked or reused.
+ */
+type ResolvedEntry = {
+    submissionId: SubmissionId;
+    category: FileCategory;
+    file: ResolvedSubmissionFile;
 };
 
 /**
@@ -76,7 +96,7 @@ export type CategoryLinkage = {
     [LinkageType.SHADOWED]: UploadedFile[];
 };
 
-export function initializeCategoryLinkage(): CategoryLinkage {
+function initialiseCategoryLinkage(): CategoryLinkage {
     return {
         [LinkageType.LINKED]: [],
         [LinkageType.REUSED]: [],
@@ -90,16 +110,6 @@ export function initializeCategoryLinkage(): CategoryLinkage {
  * A mapping of file categories to the linkage details within that category.
  */
 export type FileLinkage = Map<FileCategory, CategoryLinkage>;
-
-/**
- * An entry containing the submission ID, file category, and resolved file.
- * Used to build a resolved submission file mapping, which contains the file IDs for all files which are linked or reused.
- */
-type ResolvedEntry = {
-    submissionId: SubmissionId;
-    category: FileCategory;
-    file: ResolvedSubmissionFile;
-};
 
 /**
  * Returns a mapping of submission IDs to file categories, containing the resolved files which are linked or reused.
@@ -146,7 +156,7 @@ export function resolveFileMappings(
     if (fileMapping !== undefined) for (const category of fileMapping.keys()) categories.add(category);
 
     for (const category of categories) {
-        const categoryLinkage = initializeCategoryLinkage();
+        const categoryLinkage = initialiseCategoryLinkage();
         const uploads = fileMapping?.get(category);
         // Paths claimed by a metadata entry without its own file ID, so the upload is genuinely linked.
         const claimedPaths = new Set<FilePath>();
