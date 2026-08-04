@@ -85,7 +85,7 @@ jobs:
             --for-e2e \
             --enablePreprocessing \
             --use-localhost-ip
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: ./integration-tests/.nvmrc
       - name: Cache .npm
@@ -96,7 +96,7 @@ jobs:
       - name: Install dependencies
         run: cd integration-tests && npm ci
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.13'
       - name: Install uv

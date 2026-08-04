@@ -1,7 +1,10 @@
+import logging
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import StrEnum, unique
 from typing import Any, Final
+
+logger = logging.getLogger(__name__)
 
 AccessionVersion = str
 GeneName = str
@@ -28,9 +31,16 @@ ProcessingAnnotationAlignment: Final = "alignment"
 
 
 @unique
+class FileCategory(StrEnum):
+    RAW_READS = "rawReads"
+    ANNOTATIONS = "annotations"
+
+
+@unique
 class AnnotationSourceType(StrEnum):
     METADATA = "Metadata"
     NUCLEOTIDE_SEQUENCE = "NucleotideSequence"
+    FILE = "File"
 
 
 @dataclass(frozen=True)
@@ -75,6 +85,13 @@ class ProcessingAnnotation:
 
 
 @dataclass
+class FileIdAndNameAndReadUrl:
+    fileId: str  # noqa: N815
+    name: str
+    url: str | None = None
+
+
+@dataclass
 class UnprocessedData:
     submitter: str
     group_id: int
@@ -82,6 +99,7 @@ class UnprocessedData:
     submissionId: str  # noqa: N815
     metadata: InputMetadata
     unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
+    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
 
 
 @dataclass
@@ -97,6 +115,7 @@ FunctionArgs = dict[ArgName, ArgValue]
 @dataclass
 class UnprocessedAfterNextclade:
     inputMetadata: InputMetadata  # noqa: N815
+    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
     # Derived metadata produced by Nextclade
     nextcladeMetadata: dict[SequenceName, Any] | None  # noqa: N815
     unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
@@ -110,21 +129,15 @@ class UnprocessedAfterNextclade:
 
 
 @dataclass
-class FileIdAndName:
-    fileId: str  # noqa: N815
-    name: str
-
-
-@dataclass
 class ProcessedData:
     metadata: ProcessedMetadata
+    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
     unalignedNucleotideSequences: dict[SequenceName, Any]  # noqa: N815
     alignedNucleotideSequences: dict[SequenceName, Any]  # noqa: N815
     nucleotideInsertions: dict[SequenceName, Any]  # noqa: N815
     alignedAminoAcidSequences: dict[GeneName, Any]  # noqa: N815
     aminoAcidInsertions: dict[GeneName, Any]  # noqa: N815
     sequenceNameToFastaId: dict[SequenceName, FastaId]  # noqa: N815
-    files: dict[str, list[FileIdAndName]] | None = None
 
 
 @dataclass
@@ -256,3 +269,13 @@ class MoleculeType(StrEnum):
 class Topology(StrEnum):
     LINEAR = "linear"
     CIRCULAR = "circular"
+
+
+def _internal_error_message(message: str) -> str:
+    full = f"Internal Error. {message} Please contact the administrator."
+    logger.error(full)
+    return full
+
+
+def raw_internal_error(message: str) -> RawProcessingResult:
+    return processing_error(_internal_error_message(message))

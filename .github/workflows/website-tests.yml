@@ -22,7 +22,7 @@ jobs:
         working-directory: ./website
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: ./website/.nvmrc
       - uses: actions/cache@v6
@@ -42,7 +42,7 @@ jobs:
         working-directory: ./website
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: ./website/.nvmrc
       - name: Cache .npm

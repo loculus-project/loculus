@@ -115,7 +115,7 @@ def make_curl_runner(responses: list[MockHttpResponse]) -> Callable[[list[str]],
             raise AssertionError(msg)
 
         header_lines = [
-            f"HTTP/1.1 {response.status} {'OK' if response.status == 200 else 'Not Modified'}"  # noqa: PLR2004
+            f"HTTP/1.1 {response.status} {'OK' if response.status == 200 else 'Not Modified'}"  # ruff:ignore[magic-value-comparison]
         ]
         for key, value in (response.headers or {}).items():
             header_lines.append(f"{key}: {value}")
@@ -133,10 +133,10 @@ def make_mock_download_func(responses: list[MockHttpResponse]):
     responses_copy = list(responses)
 
     def mock_download(
-        url: str,  # noqa: ARG001
+        url: str,  # ruff:ignore[unused-function-argument]
         output_path: Path,
-        etag: str | None = None,  # noqa: ARG001
-        timeout: int = 300,  # noqa: ARG001
+        etag: str | None = None,  # ruff:ignore[unused-function-argument]
+        timeout: int = 300,  # ruff:ignore[unused-function-argument]
     ) -> HttpResponse:
         if not responses_copy:
             msg = "No fake HTTP responses remaining"

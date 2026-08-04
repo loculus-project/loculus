@@ -1,3 +1,4 @@
+enableServiceMonitor: true
 createTestAccounts: true
 secrets:
   smtp-password:
@@ -43,6 +44,7 @@ secrets:
 previewDocs: true
 robotsNoindexHeader: true
 disableEnaSubmission: false
+disableRawReadsProcessingService: false
 additionalHeadHTML: '<script defer data-domain="loculus.org" src="https://plausible.io/js/script.js"></script>'
 ingest:
   ncbiGatewayUrl: "https://ncbi-temp-proxy.api.taxonium.org/datasets/v2"
@@ -156,3 +158,23 @@ defaultResources:
   limits:
     memory: "1Gi"
     cpu: "20m"
+defaultOrganisms:
+  ebola-sudan: &fileSharingOrganismDefaults
+    schema:
+      submissionDataTypes:
+        files:
+          enabled: true
+          categories:
+            - name: rawReads
+              displayName: Raw reads
+      files:
+        - name: annotations
+          displayName: Annotations
+        - name: rawReads
+          displayName: Raw reads
+  west-nile: *fileSharingOrganismDefaults
+  dummy-organism: *fileSharingOrganismDefaults
+  not-aligned-organism: *fileSharingOrganismDefaults
+  cchf: *fileSharingOrganismDefaults
+  cchf-multi-ref: *fileSharingOrganismDefaults
+  enteroviruses: *fileSharingOrganismDefaults

@@ -1,6 +1,6 @@
 import logging
 import shlex
-import subprocess  # noqa: S404
+import subprocess  # ruff:ignore[suspicious-subprocess-import]
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ def transform_data_format(data_path, transformed_path):
     )
 
     try:
-        subprocess.run(  # noqa: S602
+        subprocess.run(  # ruff:ignore[subprocess-popen-with-shell-equals-true]
             cmd,
             shell=True,
             check=True,

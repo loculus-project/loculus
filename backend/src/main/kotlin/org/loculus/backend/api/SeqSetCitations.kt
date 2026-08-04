@@ -90,6 +90,11 @@ data class CitationSource(
         description = "List of contributors to the citation source.",
     )
     val contributors: List<CitationContributor>,
+    @Schema(
+        description = "The journal in which the citation source was published, when applicable.",
+        example = "Journal of Examples",
+    )
+    val journal: String? = null,
 )
 
 data class SeqSetCitationSource(val source: CitationSource, val seqSetDOIs: Set<String> = emptySet())

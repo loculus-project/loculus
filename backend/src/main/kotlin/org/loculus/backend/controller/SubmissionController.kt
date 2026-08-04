@@ -43,6 +43,13 @@ import org.loculus.backend.controller.LoculusCustomHeaders.X_TOTAL_RECORDS
 import org.loculus.backend.log.ORGANISM_MDC_KEY
 import org.loculus.backend.log.REQUEST_ID_MDC_KEY
 import org.loculus.backend.log.RequestIdContext
+import org.loculus.backend.metrics.EXTRACT_UNPROCESSED_DATA_ENDPOINT
+import org.loculus.backend.metrics.GET_RELEASED_DATA_ENDPOINT
+import org.loculus.backend.metrics.GET_SUBMITTED_DATA_ENDPOINT
+import org.loculus.backend.metrics.GET_SUBMITTED_METADATA_ENDPOINT
+import org.loculus.backend.metrics.STREAM_SUBMITTED_DATA_PHASE
+import org.loculus.backend.metrics.SubmissionMetrics
+import org.loculus.backend.metrics.readPhaseForEndpoint
 import org.loculus.backend.model.ACCESSION_HEADER
 import org.loculus.backend.model.FASTA_IDS_HEADER
 import org.loculus.backend.model.FASTA_IDS_SEPARATOR
@@ -108,6 +115,7 @@ open class SubmissionController(
     private val objectMapper: ObjectMapper,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
+    private val submissionMetrics: SubmissionMetrics,
 ) {
     @Operation(description = SUBMIT_DESCRIPTION)
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
@@ -205,8 +213,15 @@ open class SubmissionController(
         @RequestParam pipelineVersion: Long,
         @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
+        val requestStartNanos = System.nanoTime()
         val currentProcessingPipelineVersion = submissionDatabaseService.getCurrentProcessingPipelineVersion(organism)
         if (pipelineVersion < currentProcessingPipelineVersion) {
+            submissionMetrics.recordPollingRequest(
+                EXTRACT_UNPROCESSED_DATA_ENDPOINT,
+                organism.name,
+                HttpStatus.UNPROCESSABLE_ENTITY,
+                requestStartNanos,
+            )
             throw UnprocessableEntityException(
                 "The processing pipeline version $pipelineVersion is not accepted " +
                     "anymore. The current pipeline version is $currentProcessingPipelineVersion.",
@@ -215,13 +230,23 @@ open class SubmissionController(
 
         val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag()
         if (ifNoneMatch == lastDatabaseWriteETag) {
+            submissionMetrics.recordPollingRequest(
+                EXTRACT_UNPROCESSED_DATA_ENDPOINT,
+                organism.name,
+                HttpStatus.NOT_MODIFIED,
+                requestStartNanos,
+            )
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
         }
 
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
         headers.eTag = lastDatabaseWriteETag
-        val streamBody = streamTransactioned(endpoint = "extract-unprocessed-data", organism = organism) {
+        val streamBody = streamTransactioned(
+            endpoint = EXTRACT_UNPROCESSED_DATA_ENDPOINT,
+            organism = organism,
+            requestStartNanos = requestStartNanos,
+        ) {
             submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism, pipelineVersion)
         }
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
@@ -345,11 +370,18 @@ open class SubmissionController(
         ) @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
         request: HttpServletRequest,
     ): ResponseEntity<StreamingResponseBody> {
+        val requestStartNanos = System.nanoTime()
         val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
             tableNames = RELEASED_DATA_RELATED_TABLES,
             organism = organism,
         )
         if (ifNoneMatch == lastDatabaseWriteETag) {
+            submissionMetrics.recordPollingRequest(
+                GET_RELEASED_DATA_ENDPOINT,
+                organism.name,
+                HttpStatus.NOT_MODIFIED,
+                requestStartNanos,
+            )
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
         }
 
@@ -359,8 +391,17 @@ open class SubmissionController(
         compression?.let { headers.add(HttpHeaders.CONTENT_ENCODING, it.compressionName) }
 
         // Count while writing so the response header stays exact.
-        val spooled = streamSpoolService.spool(compression, endpoint = "get-released-data") {
-            releasedDataModel.getReleasedData(organism)
+        // The read phase is the spool build: the database query drains into the spool file before
+        // the first byte reaches the client, which is what resolves
+        // https://github.com/loculus-project/loculus/issues/2778
+        val spooled = submissionMetrics.timeReadPhase(
+            GET_RELEASED_DATA_ENDPOINT,
+            organism.name,
+            readPhaseForEndpoint(GET_RELEASED_DATA_ENDPOINT),
+        ) {
+            streamSpoolService.spool(compression, endpoint = GET_RELEASED_DATA_ENDPOINT) {
+                releasedDataModel.getReleasedData(organism)
+            }
         }
         try {
             request.setAttribute(RELEASED_DATA_SPOOL_ATTRIBUTE, spooled)
@@ -368,7 +409,14 @@ open class SubmissionController(
             headers.contentLength = spooled.file.length()
 
             return ResponseEntity.ok().headers(headers)
-                .body(spooledStreamBody(spooled, endpoint = "get-released-data", organism))
+                .body(
+                    spooledStreamBody(
+                        spooled,
+                        endpoint = GET_RELEASED_DATA_ENDPOINT,
+                        organism = organism,
+                        requestStartNanos = requestStartNanos,
+                    ),
+                )
         } catch (error: Throwable) {
             spooled.close()
             throw error
@@ -484,7 +532,11 @@ open class SubmissionController(
         )
         headers.add(X_TOTAL_RECORDS, totalRecords.toString())
 
-        val streamBody = streamTransactioned(compression, endpoint = "get-submitted-metadata", organism = organism) {
+        val streamBody = streamTransactioned(
+            compressionFormat = compression,
+            endpoint = GET_SUBMITTED_METADATA_ENDPOINT,
+            organism = organism,
+        ) {
             submissionDatabaseService.streamSubmittedMetadata(
                 authenticatedUser,
                 organism,
@@ -548,55 +600,62 @@ open class SubmissionController(
             MDC.put(ORGANISM_MDC_KEY, organism.name)
 
             try {
-                java.util.zip.ZipOutputStream(responseBodyStream).use { zipOut ->
-                    transaction {
-                        val data = submissionDatabaseService.streamSubmittedDataDownload(
-                            organism,
-                            body.groupId,
-                            body.accessionsFilter,
-                        ).toList()
+                submissionMetrics.timeReadPhase(
+                    GET_SUBMITTED_DATA_ENDPOINT,
+                    organism.name,
+                    STREAM_SUBMITTED_DATA_PHASE,
+                ) {
+                    try {
+                        java.util.zip.ZipOutputStream(responseBodyStream).use { zipOut ->
+                            transaction {
+                                val data = submissionDatabaseService.streamSubmittedDataDownload(
+                                    organism,
+                                    body.groupId,
+                                    body.accessionsFilter,
+                                ).toList()
 
-                        // metadataIds: the unique metadata ids in the same order as the original submission ids.
-                        // uniqueFastaIdsByEntry: per entry (in the same order), a map from the original FASTA id to
-                        // the unique FASTA id used in the download.
-                        val metadataIds = makeUniqueIds(data.map { it.submissionId })
-                        val uniqueFastaIdsByEntry =
-                            GetSubmittedDataHelpers.uniqueFastaIdsByEntry(data, isMultiSegmented)
+                                // metadataIds: unique ids in the same order as the original submission ids.
+                                // uniqueFastaIdsByEntry: per entry, maps the original to the unique FASTA id.
+                                val metadataIds = makeUniqueIds(data.map { it.submissionId })
+                                val uniqueFastaIdsByEntry =
+                                    GetSubmittedDataHelpers.uniqueFastaIdsByEntry(data, isMultiSegmented)
 
-                        zipOut.putNextEntry(java.util.zip.ZipEntry("metadata.tsv"))
-                        GetSubmittedDataHelpers.writeMetadataTsv(
-                            data,
-                            metadataIds,
-                            uniqueFastaIdsByEntry,
-                            zipOut,
-                            isMultiSegmented,
-                        )
-                        zipOut.closeEntry()
+                                zipOut.putNextEntry(java.util.zip.ZipEntry("metadata.tsv"))
+                                GetSubmittedDataHelpers.writeMetadataTsv(
+                                    data,
+                                    metadataIds,
+                                    uniqueFastaIdsByEntry,
+                                    zipOut,
+                                    isMultiSegmented,
+                                )
+                                zipOut.closeEntry()
 
-                        if (hasConsensusSequences) {
-                            zipOut.putNextEntry(java.util.zip.ZipEntry("sequences.fasta"))
-                            GetSubmittedDataHelpers.writeSequencesFasta(
-                                data,
-                                metadataIds,
-                                uniqueFastaIdsByEntry,
-                                zipOut,
-                                isMultiSegmented,
-                            )
-                            zipOut.closeEntry()
+                                if (hasConsensusSequences) {
+                                    zipOut.putNextEntry(java.util.zip.ZipEntry("sequences.fasta"))
+                                    GetSubmittedDataHelpers.writeSequencesFasta(
+                                        data,
+                                        metadataIds,
+                                        uniqueFastaIdsByEntry,
+                                        zipOut,
+                                        isMultiSegmented,
+                                    )
+                                    zipOut.closeEntry()
+                                }
+                            }
                         }
+                    } catch (e: Exception) {
+                        val duration = System.currentTimeMillis() - startTime
+                        log.error(e) { "[get-submitted-data] Error after ${duration}ms: $e" }
+                        throw e
                     }
                 }
-            } catch (e: Exception) {
+
                 val duration = System.currentTimeMillis() - startTime
-                log.error(e) { "[get-submitted-data] Error after ${duration}ms: $e" }
-                throw e
+                log.info { "[get-submitted-data] Completed in ${duration}ms" }
             } finally {
                 MDC.remove(REQUEST_ID_MDC_KEY)
                 MDC.remove(ORGANISM_MDC_KEY)
             }
-
-            val duration = System.currentTimeMillis() - startTime
-            log.info { "[get-submitted-data] Completed in ${duration}ms" }
         }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
@@ -653,60 +712,75 @@ open class SubmissionController(
         compressionFormat: CompressionFormat? = null,
         endpoint: String,
         organism: Organism,
+        requestStartNanos: Long = System.nanoTime(),
         sequenceProvider: () -> Sequence<T>,
     ) = StreamingResponseBody { responseBodyStream ->
         val startTime = System.currentTimeMillis()
         MDC.put(REQUEST_ID_MDC_KEY, requestIdContext.requestId)
         MDC.put(ORGANISM_MDC_KEY, organism.name)
 
-        val outputStream = when (compressionFormat) {
-            CompressionFormat.ZSTD -> ZstdCompressorOutputStream(responseBodyStream)
-            null -> responseBodyStream
-        }
+        try {
+            submissionMetrics.timeReadPhase(endpoint, organism.name, readPhaseForEndpoint(endpoint)) {
+                val outputStream = when (compressionFormat) {
+                    CompressionFormat.ZSTD -> ZstdCompressorOutputStream(responseBodyStream)
+                    null -> responseBodyStream
+                }
 
-        outputStream.use { stream ->
-            transaction {
-                try {
-                    iteratorStreamer.streamAsNdjson(sequenceProvider(), stream)
-                } catch (e: Exception) {
-                    val duration = System.currentTimeMillis() - startTime
-                    log.error(e) {
-                        "[$endpoint] An unexpected error occurred while streaming after ${duration}ms, aborting the stream: $e"
+                outputStream.use { stream ->
+                    transaction {
+                        try {
+                            iteratorStreamer.streamAsNdjson(sequenceProvider(), stream)
+                        } catch (e: Exception) {
+                            val duration = System.currentTimeMillis() - startTime
+                            log.error(e) {
+                                "[$endpoint] An unexpected error occurred while streaming after " +
+                                    "${duration}ms, aborting the stream: $e"
+                            }
+                            stream.write(
+                                (
+                                    "An unexpected error occurred while streaming, aborting the stream: " +
+                                        "${e.message}"
+                                    ).toByteArray(),
+                            )
+                        }
                     }
-                    stream.write(
-                        "An unexpected error occurred while streaming, aborting the stream: ${e.message}".toByteArray(),
-                    )
                 }
             }
+
+            val duration = System.currentTimeMillis() - startTime
+            log.info { "[$endpoint] Streaming response completed in ${duration}ms" }
+            submissionMetrics.recordPollingRequest(endpoint, organism.name, HttpStatus.OK, requestStartNanos)
+        } finally {
+            MDC.remove(REQUEST_ID_MDC_KEY)
+            MDC.remove(ORGANISM_MDC_KEY)
         }
-
-        val duration = System.currentTimeMillis() - startTime
-        log.info { "[$endpoint] Streaming response completed in ${duration}ms" }
-
-        MDC.remove(REQUEST_ID_MDC_KEY)
-        MDC.remove(ORGANISM_MDC_KEY)
     }
 
-    private fun spooledStreamBody(spooled: SpooledStream, endpoint: String, organism: Organism) =
-        StreamingResponseBody { responseBodyStream ->
-            val startTime = System.currentTimeMillis()
-            try {
-                check(spooled.beginTransfer()) { "The spooled response was closed before transfer started" }
-                MDC.put(REQUEST_ID_MDC_KEY, requestIdContext.requestId)
-                MDC.put(ORGANISM_MDC_KEY, organism.name)
-                spooled.file.inputStream().use { fileStream ->
-                    fileStream.copyTo(responseBodyStream)
-                }
-                log.info { "[$endpoint] Response completed in ${System.currentTimeMillis() - startTime}ms" }
-            } catch (error: Exception) {
-                log.error(error) { "[$endpoint] Response failed after ${System.currentTimeMillis() - startTime}ms" }
-                throw error
-            } finally {
-                spooled.close()
-                MDC.remove(REQUEST_ID_MDC_KEY)
-                MDC.remove(ORGANISM_MDC_KEY)
+    private fun spooledStreamBody(
+        spooled: SpooledStream,
+        endpoint: String,
+        organism: Organism,
+        requestStartNanos: Long = System.nanoTime(),
+    ) = StreamingResponseBody { responseBodyStream ->
+        val startTime = System.currentTimeMillis()
+        try {
+            check(spooled.beginTransfer()) { "The spooled response was closed before transfer started" }
+            MDC.put(REQUEST_ID_MDC_KEY, requestIdContext.requestId)
+            MDC.put(ORGANISM_MDC_KEY, organism.name)
+            spooled.file.inputStream().use { fileStream ->
+                fileStream.copyTo(responseBodyStream)
             }
+            log.info { "[$endpoint] Response completed in ${System.currentTimeMillis() - startTime}ms" }
+            submissionMetrics.recordPollingRequest(endpoint, organism.name, HttpStatus.OK, requestStartNanos)
+        } catch (error: Exception) {
+            log.error(error) { "[$endpoint] Response failed after ${System.currentTimeMillis() - startTime}ms" }
+            throw error
+        } finally {
+            spooled.close()
+            MDC.remove(REQUEST_ID_MDC_KEY)
+            MDC.remove(ORGANISM_MDC_KEY)
         }
+    }
 
     fun parseFileMapping(fileMapping: String?, organism: Organism): SubmissionIdFilesMap? {
         val fileMappingParsed = fileMapping?.let {

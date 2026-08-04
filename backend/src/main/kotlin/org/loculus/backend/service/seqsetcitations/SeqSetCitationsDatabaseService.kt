@@ -407,6 +407,7 @@ class SeqSetCitationsDatabaseService(
                 this[SeqSetCitationSourceTable.title] = it.source.title
                 this[SeqSetCitationSourceTable.year] = it.source.year
                 this[SeqSetCitationSourceTable.contributors] = it.source.contributors
+                this[SeqSetCitationSourceTable.journal] = it.source.journal
             }
             .flatMap { result ->
                 val citationSourceId = result[SeqSetCitationSourceTable.citationSourceId]
@@ -456,6 +457,7 @@ class SeqSetCitationsDatabaseService(
                         it[SeqSetCitationSourceTable.title],
                         it[SeqSetCitationSourceTable.year],
                         it[SeqSetCitationSourceTable.contributors],
+                        it[SeqSetCitationSourceTable.journal],
                     ),
                 )
             }
@@ -494,6 +496,7 @@ class SeqSetCitationsDatabaseService(
                         title = first[SeqSetCitationSourceTable.title],
                         year = first[SeqSetCitationSourceTable.year],
                         contributors = first[SeqSetCitationSourceTable.contributors],
+                        journal = first[SeqSetCitationSourceTable.journal],
                     ),
                     seqSets = rows.map {
                         SeqSetCitingSequence(
@@ -529,6 +532,7 @@ class SeqSetCitationsDatabaseService(
                         title = first[SeqSetCitationSourceTable.title],
                         year = first[SeqSetCitationSourceTable.year],
                         contributors = first[SeqSetCitationSourceTable.contributors],
+                        journal = first[SeqSetCitationSourceTable.journal],
                     ),
                     seqSets = rows.map { it.toSeqSet() },
                     origin = first[SeqSetCitationSourceTable.origin],
@@ -584,6 +588,7 @@ class SeqSetCitationsDatabaseService(
                 this[SeqSetCitationSourceTable.title] = it.title
                 this[SeqSetCitationSourceTable.year] = it.year
                 this[SeqSetCitationSourceTable.contributors] = it.contributors
+                this[SeqSetCitationSourceTable.journal] = it.journal
             }
             .single()[SeqSetCitationSourceTable.citationSourceId]
 

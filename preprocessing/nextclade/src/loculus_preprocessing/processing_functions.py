@@ -10,17 +10,14 @@ import logging
 import math
 import re
 import unicodedata
-import urllib.parse
-from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
 import dateutil.parser as dateutil
 import pytz
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+
+from loculus_preprocessing.external_services import TaxonomyService
 
 from .datatypes import (
     AnnotationSourceType,
@@ -31,62 +28,13 @@ from .datatypes import (
     ProcessingAnnotation,
     ProcessingResult,
     RawProcessingResult,
+    _internal_error_message,
     processing_error,
+    raw_internal_error,
 )
 
 logger = logging.getLogger(__name__)
 
-
-class RequestCache:
-    """Class for caching requests to external services during preprocessing.
-
-    Keys are the fully formatted URLs that have already been used to make sucessful requests.
-    Values are requests.Response as they were returned by the service.
-    """
-
-    def __init__(self, max_size: int, retries=5) -> None:
-        self.cache: OrderedDict[str, requests.Response] = OrderedDict()
-        self.max_size = max_size
-        self.session = requests.Session()
-        retry = Retry(total=retries, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
-        adapter = HTTPAdapter(max_retries=retry)
-        self.session.mount("http://", adapter)
-        self.session.mount("https://", adapter)
-
-    def get(self, url: str) -> None | requests.Response:
-        if url in self.cache:
-            self.cache.move_to_end(url)
-            return self.cache[url]
-        return None
-
-    def set(self, url: str, response: requests.Response) -> None:
-        self.cache[url] = response
-        self.cache.move_to_end(url)
-
-        if len(self.cache) > self.max_size:
-            self.cache.popitem(last=False)
-
-    def get_or_fetch(self, url: str, timeout: int = 15) -> requests.Response:
-        """See if `url` already exists in the cache and return the cached Response
-        if it does.
-
-        If `url` is not in the cache, make the actual request (with timeout and retries).
-        Add the Response to the cache (if status code in the 200s), and return the Response.
-
-        Since request.get can error, the caller should wrap this in a try/except block and handle errors
-        """
-        response = self.get(url)
-        if response is None:
-            response = self.session.get(url, timeout=timeout)
-            if 200 <= response.status_code < 300:
-                self.set(url, response)
-        return response
-
-    def clear(self) -> None:
-        self.cache.clear()
-
-
-taxonomy_cache = RequestCache(max_size=64)
 options_cache: dict[str, dict[str, str]] = {}
 
 
@@ -201,34 +149,12 @@ def format_authors(authors: str) -> str:
     return "; ".join(loculus_authors).strip()
 
 
-def _internal_error_message(message: str) -> str:
-    full = f"Internal Error. {message} Please contact the administrator."
-    logger.error(full)
-    return full
-
-
-def raw_internal_error(message: str) -> RawProcessingResult:
-    return processing_error(_internal_error_message(message))
-
-
 def regex_error(
     function_name: str, function_arg: str, input_data: InputMetadata, args: FunctionArgs
 ) -> RawProcessingResult:
     return raw_internal_error(
         f"{function_name} did not receive a valid {function_arg}, with input {input_data} and args {args}."
     )
-
-
-def missing_taxonomy_service_error() -> RawProcessingResult:
-    return raw_internal_error("taxonomy_service_url was not configured.")
-
-
-def taxonomy_network_error(
-    subject: str,
-    action: str,
-    e: Exception,
-) -> RawProcessingResult:
-    return raw_internal_error(f"Network error while {action} '{subject}': {e}.")
 
 
 @dataclass
@@ -1114,31 +1040,33 @@ class ProcessingFunctions:
         return RawProcessingResult()
 
     @staticmethod
-    def build_display_name(  # noqa: C901
+    def build_display_name(
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
     ) -> RawProcessingResult:
-        """Builds a displayName from input_fields. The identifier field in the displayName is based on
-        specimenCollectorSampleId or - if it is not set - submissionId.
+        """Builds a displayName from input_fields. The identifier field in the displayName is based
+        on specimenCollectorSampleId or - if it is not set - submissionId (direct submissions only).
 
         This method wraps ProcessingFunctions.concatenate(). Thus, it has the same required input
         args, as well as adding some additional checks and requirements:
             - submissionId and specimenCollectorSampleId must be in the input_data
             - IDENTIFIER keyword must be in args['order'] and args['type']
-            - if the IDENTIFIER is in an unrecognized format, it will be replaced with the ACCESSION_VERSION
-            - if fallback_value is not in args, { 'fallback_value': 'unknown' } is added to the args before passing
-              them on to concatenate()
-            - for sequences ingested from INSDC, we do not try to parse the IDENTIFIER field using regex. We
-              will use the Isolate Name as IDENTIFIER field if it contains no slashes or spaces (otherwise we fall back to
-              ACCESSION_VERSION)
+            - the IDENTIFIER is resolved by trying specimenCollectorSampleId first, then
+              submissionId; if neither yields a usable value it is replaced with ACCESSION_VERSION
+            - if fallback_value is not in args, { 'fallback_value': 'unknown' } is added to the args
+              before passing them on to concatenate()
+            - for sequences ingested from INSDC, we do not try to parse the IDENTIFIER field using
+              regex. We will use the Isolate Name as IDENTIFIER field if it contains no slashes or
+              spaces (otherwise we fall back to ACCESSION_VERSION)
+            - if regex_pattern is provided, human_readable_pattern must also be provided. It is a
+              submitter-friendly rendering of the pattern to show in error messages
+              (e.g. '<any>/<any>/<identifier>/<date>')
         """
         collector_id = input_data.get("specimenCollectorSampleId", None)
         submission_id = input_data.get("submissionId", None)
         warnings: list[str] = []
-        if submission_id is None:
-            return raw_internal_error("'submissionId' must not be None for build_display_name().")
 
         order = args.get("order")
         field_types = args.get("type")
@@ -1153,54 +1081,51 @@ class ProcessingFunctions:
             )
 
         regex_pattern = args.get("regex_pattern")
-        if (
-            regex_pattern is not None
-            and "identifier" not in re.compile(str(regex_pattern)).groupindex
-        ):
+        regex_pattern = str(regex_pattern) if regex_pattern is not None else None
+        if regex_pattern is not None and "identifier" not in re.compile(regex_pattern).groupindex:
             return raw_internal_error(
                 "If provided, 'regex_pattern' must contain a named capture group called 'identifier'."
+            )
+
+        human_readable_pattern = args.get("human_readable_pattern")
+        human_readable_pattern = (
+            str(human_readable_pattern) if human_readable_pattern is not None else None
+        )
+        if regex_pattern is not None and human_readable_pattern is None:
+            return raw_internal_error(
+                "If 'regex_pattern' is provided, 'human_readable_pattern' must also be provided."
             )
 
         concatenate_order = order.copy()
         concatenate_field_types = field_types.copy()
 
+        insdc_ingested = bool(args["is_insdc_ingest_group"])
+
+        # Try to parse the specimenCollectorSampleId first
+        identifier = parse_identifier_string(collector_id, insdc_ingested, regex_pattern)
+        if identifier is None and not insdc_ingested:
+            # For direct submissions only: try to parse the submissionId
+            # Don't do this for ingested since there the submissionId is just the
+            # (concatenation of) nuccore accession(s) of the sequence(s)
+            identifier = parse_identifier_string(submission_id, insdc_ingested, regex_pattern)
+
         def replace_identifier(values, replacement):
             return [replacement if v == "IDENTIFIER" else v for v in values]
 
-        identifier: ProcessedMetadataValue = collector_id or submission_id
-        if not isinstance(identifier, str):
-            identifier = None
-        elif args["is_insdc_ingest_group"]:
-            # For INSDC ingested sequence: use ID as is unless it contains ' ' or '/'
-            # If it does: fall back to ACCESSION_VERSION
-            if " " in identifier or "/" in identifier:
-                identifier = None
-        elif "/" in identifier:
-            # For direct submissions with "/": try to extract ID field using regex
-            if regex_pattern is None:
-                identifier = None
-            else:
-                extract_result = ProcessingFunctions.extract_regex(
-                    input_data={"regex_field": identifier},
-                    output_field="IDENTIFIER",
-                    input_fields=[],
-                    args={"pattern": regex_pattern, "capture_group": "identifier"},
+        if identifier is not None:
+            # We were able to parse an IDENTIFIER, treat it as a string
+            concatenate_field_types = replace_identifier(field_types, "string")
+            input_data["IDENTIFIER"] = identifier
+        else:
+            # Unable to parse specimenCollectorSampleId and submissionID, use ACCESSION_VERSION
+            if not insdc_ingested and regex_pattern is not None:
+                warnings.append(
+                    f"specimenCollectorSampleId and submissionId could not be parsed, using "
+                    f"ACCESSION_VERSION in displayName instead. To include your own identifier, "
+                    f"remove whitespace and '/' characters or use the format '{human_readable_pattern}' and we will parse the `identifier` from the submission."
                 )
-                if extract_result.datum is None:
-                    # regex extraction of ID field failed, fall back to ACCESSION_VERSION
-                    warnings.append(
-                        f"identifier string '{identifier}' could not be parsed, using ACCESSION_VERSION in displayName instead"
-                    )
-                identifier = extract_result.datum
-
-        if identifier is None:
-            # Use ACCESSION_VERSION instead of IDENTIFIER
             concatenate_order = replace_identifier(order, "ACCESSION_VERSION")
             concatenate_field_types = replace_identifier(field_types, "ACCESSION_VERSION")
-        else:
-            # Keep IDENTIFIER but treat it as string
-            concatenate_field_types = replace_identifier(field_types, "string")
-            input_data["IDENTIFIER"] = str(identifier)
 
         new_args = args.copy()
         new_args.update(
@@ -1242,48 +1167,14 @@ class ProcessingFunctions:
         return the tax_id of the most generic taxon (i.e., the one that's closest to
         the root of the taxonomy)
         """
-        tax_service = args.get("taxonomy_service_url")
-        if not tax_service:
-            return missing_taxonomy_service_error()
-
         unvalidated_host = input_data.get("host")
         if not unvalidated_host:
             return RawProcessingResult()
 
-        if unvalidated_host.isdigit():
-            url = f"{tax_service}/taxa/{unvalidated_host}"
-        else:
-            query = urllib.parse.urlencode({"scientific_name": unvalidated_host})
-            url = f"{tax_service}/taxa?{query}"
-
-        try:
-            response = taxonomy_cache.get_or_fetch(url)
-            body = response.json()
-        except requests.exceptions.RequestException as e:
-            return taxonomy_network_error(unvalidated_host, "validating", e)
-
-        if response.status_code != requests.codes.ok:
-            # an invalid host organism is a warning for INSDC ingested sequences, but an error for everyone else
-            message = f"Host validation for '{unvalidated_host}' failed with code {response.status_code}: {body.get('detail', '')}"
-            return RawProcessingResult(
-                datum=None,
-                warnings=[message] if args["is_insdc_ingest_group"] else [],
-                errors=[message] if not args["is_insdc_ingest_group"] else [],
-            )
-
-        if isinstance(body, list):
-            # when querying by scientific name, multiple taxa may be returned: select the most generic one
-            taxon = min(body, key=lambda x: x.get("depth", float("inf")))
-        else:
-            taxon = body
-
-        tax_id = taxon.get("tax_id")
-        if tax_id is None:
-            return raw_internal_error(
-                f"Host validation for '{unvalidated_host}' was successful but response json 'tax_id' was missing."
-            )
-
-        return RawProcessingResult(datum=str(tax_id))
+        taxonomy_service: TaxonomyService = args["taxonomy_service"]  # type: ignore
+        return taxonomy_service.get_tax_id(
+            unvalidated_host, not bool(args["is_insdc_ingest_group"])
+        )
 
     @staticmethod
     def scientific_name_from_id(
@@ -1292,37 +1183,12 @@ class ProcessingFunctions:
         input_fields: list[str],
         args: FunctionArgs,
     ) -> RawProcessingResult:
-        tax_service = args.get("taxonomy_service_url")
-        if not tax_service:
-            return missing_taxonomy_service_error()
-
         tax_id: str | None = input_data.get("hostTaxonId")
         if not tax_id:
             return RawProcessingResult()
 
-        url = f"{tax_service}/taxa/{tax_id}"
-        try:
-            response = taxonomy_cache.get_or_fetch(url)
-            body = response.json()
-        except requests.exceptions.RequestException as e:
-            return taxonomy_network_error(tax_id, "validating", e)
-
-        if response.status_code != requests.codes.ok:
-            message = f"Could not map '{tax_id}' to scientific name. Code {response.status_code}: {body.get('detail', '')}"
-            logger.warning(message)
-            return RawProcessingResult(
-                datum=None,
-                warnings=[message] if args["is_insdc_ingest_group"] else [],
-                errors=[message] if not args["is_insdc_ingest_group"] else [],
-            )
-
-        scientific_name = body.get("scientific_name")
-        if scientific_name is None:
-            return raw_internal_error(
-                f"'{tax_id}' is a valid taxon ID but response json had no 'scientific_name'."
-            )
-
-        return RawProcessingResult(datum=scientific_name)
+        taxonomy_service: TaxonomyService = args["taxonomy_service"]  # type: ignore
+        return taxonomy_service.get_scientific_name(tax_id, not bool(args["is_insdc_ingest_group"]))
 
     @staticmethod
     def common_name_from_id(
@@ -1331,35 +1197,12 @@ class ProcessingFunctions:
         input_fields: list[str],
         args: FunctionArgs,
     ) -> RawProcessingResult:
-        tax_service = args.get("taxonomy_service_url")
-        if not tax_service:
-            return missing_taxonomy_service_error()
-
         tax_id: str | None = input_data.get("hostTaxonId")
         if not tax_id:
             return RawProcessingResult()
 
-        url = f"{tax_service}/taxa/{tax_id}?find_common_name=true"
-        try:
-            response = taxonomy_cache.get_or_fetch(url)
-            body = response.json()
-        except requests.exceptions.RequestException as e:
-            return taxonomy_network_error(tax_id, "getting common name for", e)
-
-        if response.status_code != requests.codes.ok:
-            return RawProcessingResult(
-                warnings=[
-                    f"Could not map '{tax_id}' to common name. Code {response.status_code}: {body.get('detail', '')}"
-                ],
-            )
-
-        common_name = body.get("common_name")
-        if common_name is None:
-            return raw_internal_error(
-                f"Taxonomy service indicated common name was found for hostTaxonId '{tax_id}', but failed to return it."
-            )
-
-        return RawProcessingResult(datum=common_name)
+        taxonomy_service: TaxonomyService = args["taxonomy_service"]  # type: ignore
+        return taxonomy_service.get_common_name(tax_id)
 
 
 def single_metadata_annotation(
@@ -1575,6 +1418,37 @@ def process_phenotype_values(input: str | None, args: FunctionArgs | None) -> In
             ),
         )
     return InputData(datum=None)
+
+
+def parse_identifier_string(
+    input: ProcessedMetadataValue, insdc_ingested: bool, regex_pattern: str | None = None
+) -> str | None:
+    """Return an IDENTIFIER string to use in the displayName or None if `input` cannot be used
+    as an identifier.
+    """
+    if not isinstance(input, str) or not input.strip():
+        return None
+    has_forbidden_char = any(c.isspace() for c in input) or "/" in input
+
+    if insdc_ingested:
+        # For INSDC ingested sequences: use the value as-is unless it contains whitespace or '/'
+        # Don't attempt to parse these as the format on INSDC isolate names is very inconsistent
+        return None if has_forbidden_char else input
+
+    if not has_forbidden_char:
+        # Direct submission without forbidden_char: use the value as-is, no regex parsing
+        return input
+
+    # Direct submission containing forbidden_char: attempt regex extraction of identifier field
+    if regex_pattern is None:
+        return None
+    extract_result = ProcessingFunctions.extract_regex(
+        input_data={"regex_field": input},
+        output_field="IDENTIFIER",
+        input_fields=[],
+        args={"pattern": regex_pattern, "capture_group": "identifier"},
+    )
+    return None if extract_result.datum is None else str(extract_result.datum)
 
 
 def trim_ns(sequence: str) -> str:
