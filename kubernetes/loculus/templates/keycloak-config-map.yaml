@@ -255,9 +255,14 @@ data:
           "enabled": true,
           "publicClient": true,
           "directAccessGrantsEnabled": true,
-          {{- /* both schemes, so a deployment with enforceHTTPS=false keeps working */}}
-          {{- $website := include "loculus.websiteUrl" . | trimPrefix "https://" | trimPrefix "http://" }}
-          "redirectUris": {{ list (printf "https://%s/*" $website) (printf "http://%s/*" $website) "http://localhost:3000/*" | uniq | toJson }}
+          {{- $websiteUrl := include "loculus.websiteUrl" . }}
+          {{- $redirectUris := list (printf "%s/*" $websiteUrl) }}
+          {{- /* only accept a plaintext redirect where the deployment actually serves plain HTTP:
+                 with HTTPS enforced, an http:// redirect URI is a machine-in-the-middle handle on the auth code */}}
+          {{- if not $.Values.networking.enforceHTTPS }}
+            {{- $redirectUris = append $redirectUris (printf "http://%s/*" ($websiteUrl | trimPrefix "https://" | trimPrefix "http://")) }}
+          {{- end }}
+          "redirectUris": {{ append $redirectUris "http://localhost:3000/*" | uniq | toJson }}
         },
         {
           "clientId" : "account-console2",
