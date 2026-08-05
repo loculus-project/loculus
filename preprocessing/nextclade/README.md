@@ -24,7 +24,7 @@ This preprocessing pipeline has been developed by the Loculus team. It requests 
    mamba env create -n loculus-nextclade -f environment.yml
    ```
 
-   or 
+   or
 
    ```sh
    micromamba create -f environment.yml
@@ -90,10 +90,11 @@ Additionally, the `--keep-tmp-dir` is useful for debugging issues. The results o
 ## Sequence Assignment/Classification for Sequences with Multiple Segments and/or Multiple References
 
 The preprocessing pipeline is configured to take entries with multiple nucleotide sequences and classify which segment/reference each sequence best aligns to - it returns the identity of each sequence with a sequence name to fastaId map `sequenceNameToFastaId`. This can also be used to identify which reference a sequence best aligns to in the case that multiple references exist. The `sequenceName` uses the segment-reference structure expected by the backend (and query engine):
- - For an organisms without multiple references the `sequenceName` in the name of the segment (the segment name `main` is used for the single segment edge case).
- - For single-segmented, multi-reference organisms the `sequenceName` is the name of the reference.
- - For multi-segment, multi-reference organisms the `sequenceName` is the `{segmentName}-{referenceName}`.
- 
+
+- For an organisms without multiple references the `sequenceName` in the name of the segment (the segment name `main` is used for the single segment edge case).
+- For single-segmented, multi-reference organisms the `sequenceName` is the name of the reference.
+- For multi-segment, multi-reference organisms the `sequenceName` is the `{segmentName}-{referenceName}`.
+
 Currently the prepro pipeline is configured to only accept one copy of each segment in a submission entry. The classification of sequences to the sequence they best align to can be done using three different algorithms, which algorithm is used is determined by the `segment_classification_method` config field. (Additionally for non-alignment configurations segment classification can be performed by parsing the fastaId):
 
 - `ALIGN`: uses [nextclade run](https://docs.nextstrain.org/projects/nextclade/en/stable/user/nextclade-cli/reference.html#nextclade-run) to align sequences. The algorithm uses the alignment score to classify the sequence. To use this method a nextclade server and dataset must be configured.
@@ -126,7 +127,7 @@ However, the `preprocessing` field can be customized to take an arbitrary number
 7. `check_regex`: Validate that the input field matches the pattern in `args.pattern`.
 8. `extract_regex`: Extracts a substring from input field using the provided regex `args.pattern` with a `args.capture_group`. For example the pattern `^(?P<segment>[^-]+)-(?P<subtype>[^-]+)$` with capture group `subtype` would extract `HA` from the field `seg1-HA`. Returns an error if the pattern does not match (and internal error if capture group does not exist in pattern). If `arg.uppercase` is added the extracted string will be capitalized.
 
-Additionally, certain functions require external services to be running. For example, we have various functions related to validating host which require a `taxonomyService` to be running. This can be configured in the `values.yaml` as:
+Additionally, certain functions require external services to be running. We have various functions related to validating host which require a `taxonomyService` to be running, this can be configured in the `values.yaml` as:
 
 ```yaml
 taxonomyService:
@@ -134,11 +135,10 @@ taxonomyService:
   taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
   taxonomy_service_url: http://loculus-taxonomy-service:5000
 ```
+
 9. `resolve_host_taxon_id`: Validates that a host taxon ID or scientific name exists in the NCBI taxonomy, returning the taxon ID if validation is successful. Requires an input field called `host` (entries ingested from the INSDC do not error).
 10. `scientific_name_from_id`: Returns a scientific name for a taxon given a taxon ID `hostTaxonId` as input (entries ingested from the INSDC do not error).
 11. `common_name_from_id`: Returns a common name for a taxon given a taxon ID `hostTaxonId` as input (entries ingested from the INSDC do not error).
-
-
 
 Using these functions in your `values.yaml` will look like:
 
@@ -220,15 +220,40 @@ Metadata fields that are created from the results of the nextclade analysis requ
   perSegment: true
   displayName: Total SNPs
   preprocessing:
-    inputs: {input: nextclade.totalSubstitutions}
+    inputs: { input: nextclade.totalSubstitutions }
 ```
+
 Note that adding the `perSegment` field will mean that for a multi-segmented organism, preprocessing will create a `totalSnps_<segment>` field for each segment containing the nextclade results of that specific segment. In general, all nextclade metadata fields should be `perSegment`.
+
+## Processing Files
+
+When `create_embl_file` is enabled in the preprocessing config, preprocessing will generate an EMBL flatfile with CDS annotations for the processed sequence and upload the file to a presigned URL requested from the backend. This features requires `files` to be enabled in the `values.yaml`.
+
+Additionally, when input files of category RAW_READS are enabled, preprocessing will receive them in the response from the backend and is configured to forward them to the `raw-reads-processing` service for further validation and processing. Therefore, the raw-reads-processing-service must be enabled in the `values.yaml` in order to use this feature.
+
+```yaml
+disableRawReadsProcessingService: false
+rawReadsProcessingService:
+  raw_reads_processing_service_url: http://loculus-raw-reads-processing:5000
+defaultOrganisms:
+  organism1:
+    schema:
+      submissionDataTypes:
+        files:
+          enabled: true
+          categories:
+            - name: rawReads
+              displayName: Raw reads
+      files:
+        - name: rawReads
+          displayName: Raw reads
+```
 
 ## Deployment
 
 It is possible to run multiple preprocessing pipelines at once, ideally these will be labeled as different versions and point to different `dockerTags` (dockerTags can specify a commit).
 
-If you choose to run multiple preprocessing pipelines with the same version, they will be additionally numbered by their instance, e.g. `loculus-preprocessing-west-nile-v1-0-ff798759b` and `loculus-preprocessing-west-nile-v1-1-ff798759b`. 
+If you choose to run multiple preprocessing pipelines with the same version, they will be additionally numbered by their instance, e.g. `loculus-preprocessing-west-nile-v1-0-ff798759b` and `loculus-preprocessing-west-nile-v1-1-ff798759b`.
 
 To add multiple preprocessing pipelines alter the preprocessing section of the `values.yaml` as follows:
 

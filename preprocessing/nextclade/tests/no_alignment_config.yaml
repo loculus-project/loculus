@@ -2,6 +2,7 @@ batch_size: 100
 genes: []
 log_level: DEBUG
 organism: test-not-aligned-organism
+raw_reads_processing_service_url: "http://localhost:5000"
 processing_spec:
   continent:
     args:

@@ -33,6 +33,11 @@
           "type": "boolean",
           "description": "Whether the field is required by backend."
         },
+        "requiredWhen": {
+          "groups": ["metadata"],
+          "type": "array",
+          "description": "Array of conditions under which this metadata field is required. When multiple conditions are provided they are ORed; a submission is rejected if at least one condition is not met. Conditions can be: the presence of a file category - specified as files.<file_category>; the input value of another metadata field - specified as <field_name>; or the processed value of another metadata field - specified as processed.<field_name>"
+        },
         "desired": {
           "groups": ["metadata"],
           "type": "boolean",
@@ -340,6 +345,16 @@
               "type": { "enum": ["int", "float", "number", "date"] }
             },
             "errorMessage": "When rangeOverlapSearch is set, type must be numeric or date ('int', 'float', 'number', or 'date')"
+          }
+        },
+        {
+          "if": {
+            "properties": { "required": { "const": true } },
+            "required": ["required"]
+          },
+          "then": {
+            "not": { "required": ["requiredWhen"] },
+            "errorMessage": "A field with 'required: true' cannot also set 'requiredWhen' (it is already always required)."
           }
         }
       ]
@@ -1839,6 +1854,12 @@
       "default": false,
       "description": "If true, disables the backend API deployment."
     },
+    "enableServiceMonitor": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, exposes backend metrics through a cluster-internal management service and deploys a Prometheus Operator ServiceMonitor. First install kube-prometheus-stack with the release name `kube-prometheus-stack`, for example: `helm upgrade --install kube-prometheus-stack oci://ghcr.io/prometheus-community/charts/kube-prometheus-stack --namespace monitoring --create-namespace`."
+    },
     "disablePreprocessing": {
       "groups": ["services"],
       "type": "boolean",
@@ -1862,6 +1883,12 @@
       "type": "boolean",
       "default": false,
       "description": "If true, disables the taxonomy service deployment."
+    },
+    "disableRawReadsProcessingService": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, disables the raw reads processing service deployment."
     },
     "readOnlyMode": {
       "groups": ["services"],
@@ -2138,10 +2165,27 @@
         }
       }
     },
+    "rawReadsProcessingService": {
+      "type": "object",
+      "properties": {
+        "raw_reads_processing_service_url": {
+          "type": "string",
+          "description": "URL where the raw reads processing service is accessible"
+        },
+        "raw_reads_processing_service_timeout_seconds": {
+          "type": "integer",
+          "description": "Timeout in seconds for raw reads processing service requests"
+        },
+        "rawReadsProcessingConfig": {
+          "type": "object",
+          "description": "Configuration for the raw reads processing service"
+        }
+      }
+    },
     "images": {
       "groups": ["general"],
       "type": "object",
-      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website` and `backend.`",
+      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website` and `backend`.",
       "properties": {
         "lapis": { "$ref": "#/definitions/imageSpec" },
         "lapisSilo": { "$ref": "#/definitions/imageSpec" },

@@ -1,0 +1,4 @@
+log_level: DEBUG
+s3_request_timeout_seconds: 300
+read_validation_timeout_seconds: 300
+file_service_host: "0.0.0.0"

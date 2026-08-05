@@ -42,6 +42,7 @@ disablePreprocessing: false
 disableIngest: false
 disableEnaSubmission: true
 disableTaxonomyService: false
+disableRawReadsProcessingService: true
 readOnlyMode: false
 website:
   websiteConfig:
@@ -1067,6 +1068,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sequencing
         desired: true
         orderOnDetailsPage: 2080
+        requiredWhen:
+          - files.rawReads
       - name: sequencingProtocol
         ontology_id: GENEPIO:0001454
         definition: The protocol used to generate the sequence.
@@ -2707,7 +2710,11 @@ enaDeposition:
   enaUniqueSuffix: Loculus
   enaIsBroker: False
   enaSuppressedListTestUrl: "https://loculus-project.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt"
+rawReadsProcessingService:
+  raw_reads_processing_service_url: http://loculus-raw-reads-processing:5000
 subdomainSeparator: "-"
+enableServiceMonitor: false
+
 replicas:
   website: 1
   backend: 1
