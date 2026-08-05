@@ -1393,24 +1393,24 @@
     "networking": {
       "groups": ["general"],
       "type": "object",
-      "description": "Network configuration, in three layers. (1) host and subdomainSeparator define the naming convention every public URL is derived from. (2) networking.publicHosts overrides the public URL of an individual service; these URLs are what the applications advertise (website links, OAuth redirects, LAPIS URLs handed to clients). (3) The hostname of each public URL is also the hostname of that service's Ingress rule; networking.ingressHosts overrides that hostname alone, for the rare case where cluster routing must differ from the public URL. Inheritance only ever runs convention -> publicHosts -> ingressHosts: setting ingressHosts never changes an advertised URL. All of this applies to environment=server; in a local environment the URLs default to localHost with per-service ports and no Ingress hostnames are rendered.",
+      "description": "Network configuration, in three layers. (1) host and subdomainSeparator define the naming convention every public URL is derived from. (2) networking.publicHosts overrides the public URL of an individual service; these URLs are what the applications advertise (website links, OAuth redirects, LAPIS URLs handed to clients). (3) The hostname of the website, backend, Keycloak and LAPIS public URLs is also the hostname of that service's Ingress rule; networking.ingressHosts overrides that hostname alone, for the rare case where cluster routing must differ from the public URL. Inheritance only ever runs convention -> publicHosts -> ingressHosts: setting ingressHosts never changes an advertised URL. The convention and the Ingress hostnames apply to environment=server; in a local environment the public URLs default to localHost with per-service ports instead, and the website, backend, Keycloak and MinIO Ingress rules are not rendered at all.",
       "additionalProperties": false,
       "properties": {
         "host": {
           "groups": ["general"],
           "type": "string",
-          "description": "Base domain of the deployment (server environment only). It is the website's hostname, and the base from which every other service's default URL is derived as https://<service><subdomainSeparator><host> - e.g. backend-myhost.com, authentication-myhost.com, lapis-myhost.com. Set this and nothing else for the standard layout. A www. alias for the website is added automatically when the website still sits on this host."
+          "description": "Base domain of the deployment. In the server environment it is the website's hostname and the base from which every other service's default URL is derived as https://<service><subdomainSeparator><host> - e.g. backend-myhost.com, authentication-myhost.com, lapis-myhost.com; it is also used for the docs-preview hostname in any environment. Set this and nothing else for the standard layout. A www. alias for the website is added automatically, unless the website has been moved off this host or this host already starts with www."
         },
         "subdomainSeparator": {
           "groups": ["general"],
           "type": "string",
           "default": "-",
-          "description": "Separator between the service prefix and host when deriving default hostnames. Common values are '-' (backend-myhost.com) or '.' (backend.myhost.com)."
+          "description": "Separator between the service prefix and networking.host when deriving default hostnames in the server environment. Common values are '-' (backend-myhost.com) or '.' (backend.myhost.com)."
         },
         "publicHosts": {
           "groups": ["general"],
           "type": "object",
-          "description": "Per-service overrides for the public URLs the applications advertise. Leave a key unset to use the derived default https://<service><subdomainSeparator><host>. A URL set here also becomes the hostname of that service's Ingress rule (unless networking.ingressHosts overrides it), so overriding a URL alone is enough for a working deployment. In the server environment the URL must not contain a path - the Ingress routes a whole hostname at / - and rendering fails if it does.",
+          "description": "Per-service overrides for the public URLs the applications advertise. Leave a key unset to use the derived default: https://<host> for the website and https://<service><subdomainSeparator><host> for the others in the server environment, or http://<localHost>:<port> in a local environment. A URL set here also becomes the hostname of that service's Ingress rule (unless networking.ingressHosts overrides it), so overriding a URL alone is enough for a working deployment. In the server environment the URL must not contain a path, because the Ingress routes a whole hostname at / - rendering fails if it does. The only exception is lapisUrlTemplate, whose trailing /%organism% segment the LAPIS Ingress does route.",
           "additionalProperties": false,
           "properties": {
             "backendUrl": {
@@ -1423,7 +1423,7 @@
               "groups": ["general"],
               "type": "string",
               "default": "",
-              "description": "Public URL of the website; also the base for the Keycloak redirect URIs. Defaults to https://<host>, so only set it when the website is not simply https://<host> - a non-HTTPS deployment, a non-default port, or a website domain unrelated to the other services. Setting it suppresses the automatic www. alias. Example: https://loculus.x.y.com"
+              "description": "Public URL of the website; also the base for the Keycloak redirect URIs. Defaults to https://<host>, so only set it when the website is not simply that - a non-HTTPS deployment, or a website domain unrelated to the other services. Setting it suppresses the automatic www. alias, since a certificate for www.<override> would usually have no DNS record. Example: https://loculus.x.y.com"
             },
             "keycloakUrl": {
               "groups": ["general"],
@@ -1449,22 +1449,22 @@
             "website": {
               "groups": ["general"],
               "type": "string",
-              "description": "Hostname for the website Ingress rule. Defaults to the hostname of networking.publicHosts.websiteUrl."
+              "description": "Hostname for the website Ingress rule. Defaults to the hostname of the resolved website URL - networking.publicHosts.websiteUrl if set, otherwise the convention-derived default."
             },
             "backend": {
               "groups": ["general"],
               "type": "string",
-              "description": "Hostname for the backend Ingress rule. Defaults to the hostname of networking.publicHosts.backendUrl."
+              "description": "Hostname for the backend Ingress rule. Defaults to the hostname of the resolved backend URL - networking.publicHosts.backendUrl if set, otherwise the convention-derived default."
             },
             "keycloak": {
               "groups": ["general"],
               "type": "string",
-              "description": "Hostname for the keycloak Ingress rule. Defaults to the hostname of networking.publicHosts.keycloakUrl."
+              "description": "Hostname for the Keycloak Ingress rule. Defaults to the hostname of the resolved Keycloak URL - networking.publicHosts.keycloakUrl if set, otherwise the convention-derived default."
             },
             "lapis": {
               "groups": ["general"],
               "type": "string",
-              "description": "Hostname for the lapis Ingress rule. Defaults to the hostname of networking.publicHosts.lapisUrlTemplate."
+              "description": "Hostname for the LAPIS Ingress rule. Defaults to the hostname of the resolved LAPIS URL - networking.publicHosts.lapisUrlTemplate if set, otherwise the convention-derived default."
             }
           }
         },
@@ -1472,7 +1472,7 @@
           "groups": ["general"],
           "type": "boolean",
           "default": true,
-          "description": "If true, attaches a middleware redirecting HTTP to HTTPS on all Ingress rules. When false, Keycloak additionally accepts the plaintext http:// variant of the website URL as a redirect URI."
+          "description": "If true, attaches an HTTP-to-HTTPS redirect middleware to the website, backend, Keycloak and development MinIO Ingress rules, and to the LAPIS trailing-slash redirect Ingress; note that the main LAPIS Ingress does not get it, so plain-HTTP LAPIS requests are served rather than redirected. When false, Keycloak additionally accepts the plaintext http:// variant of the website URL as a redirect URI."
         },
         "traefikVersion": {
           "groups": ["general"],

@@ -95,11 +95,17 @@
 {{- end -}}
 
 {{/* In the server environment the Ingress rules route a whole hostname at path /, so a public URL
-     that carries a path prefix cannot be served. Fail loudly instead of silently dropping the path. */}}
+     that carries a path prefix cannot be served. Fail loudly instead of silently dropping the path.
+     lapisUrlTemplate is the one exception: the LAPIS Ingress does route /%organism%/ and strips that
+     prefix (see lapis-ingress.yaml), so exactly that one trailing segment is allowed - for that key
+     only, and only as the whole path. */}}
 {{- define "loculus.assertPublicHostsRoutable" -}}
 {{- if eq $.Values.environment "server" -}}
   {{- range $key, $url := ($.Values.networking.publicHosts | default dict) -}}
-    {{- $rest := $url | trimPrefix "https://" | trimPrefix "http://" | trimSuffix "/" | trimSuffix "/%organism%" -}}
+    {{- $rest := $url | trimPrefix "https://" | trimPrefix "http://" | trimSuffix "/" -}}
+    {{- if eq $key "lapisUrlTemplate" -}}
+      {{- $rest = $rest | trimSuffix "/%organism%" -}}
+    {{- end -}}
     {{- if contains "/" $rest -}}
       {{- fail (printf "networking.publicHosts.%s = %q has a path prefix, which is not supported in the server environment: the Ingress routes the whole hostname at /. Use a URL without a path, or run environment=local behind your own reverse proxy." $key $url) -}}
     {{- end -}}
