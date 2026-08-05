@@ -7,9 +7,12 @@ podScheduling:
   tolerations: []
   affinity: {}
 
-# Optional pod-level securityContext per component.
+# Optional pod-level securityContext. Supports a `default` entry applied to all workloads, 
+# plus per-component overrides (e.g. backend, silo, keycloak). A component-specific entry 
+# fully replaces `default`. To change a single field for one component, specify the 
+# complete security context for it.
 podSecurityContext: {}
-# Optional container-level securityContext per component.
+# Optional container-level securityContext. Same structure and override behavior as podSecurityContext above.
 containerSecurityContext: {}
 
 localHost: localhost
