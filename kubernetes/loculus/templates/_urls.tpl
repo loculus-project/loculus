@@ -78,6 +78,9 @@
 {{- define "loculus.lapisUrlTemplate" -}}
 {{- $publicRuntimeConfig := $.Values.networking.publicHosts | default dict }}
   {{- if $publicRuntimeConfig.lapisUrlTemplate -}}
+    {{- if not (contains "%organism%" $publicRuntimeConfig.lapisUrlTemplate) -}}
+      {{- fail (printf "networking.publicHosts.lapisUrlTemplate = %q must contain the %%organism%% placeholder, otherwise every organism is advertised at the same LAPIS URL." $publicRuntimeConfig.lapisUrlTemplate) -}}
+    {{- end -}}
     {{- $publicRuntimeConfig.lapisUrlTemplate -}}
   {{- else if eq $.Values.environment "server" -}}
     {{- printf "https://lapis%s%s/%%organism%%" $.Values.networking.subdomainSeparator $.Values.networking.host -}}

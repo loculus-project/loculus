@@ -1435,6 +1435,7 @@
               "groups": ["general"],
               "type": "string",
               "default": "",
+              "pattern": "^$|%organism%",
               "description": "Public URL template for the LAPIS instances; must contain `%organism%` as a placeholder, and in the server environment `/%organism%` must be the only path segment. Defaults to https://lapis<subdomainSeparator><host>/%organism%. Example: https://pathogen-api.loculus.x.y.com/%organism%"
             }
           }
@@ -1442,7 +1443,7 @@
         "ingressHosts": {
           "groups": ["general"],
           "type": "object",
-          "description": "Per-service overrides for the hostname in a service's Ingress rule. Each key defaults to the hostname of the corresponding networking.publicHosts URL, which is almost always what you want; override only when the hostname routed inside the cluster must differ from the public URL, e.g. behind a CDN or an external reverse proxy that terminates the public name. An override here changes routing only - the URLs the applications advertise are unaffected. Only services with a networking.publicHosts URL can be overridden here; the development MinIO and docs-preview Ingress hostnames are always s3/docs<subdomainSeparator><host>.",
+          "description": "Per-service overrides for the hostname in a service's Ingress rule. Each key defaults to the hostname of that service's public URL - whether that URL comes from networking.publicHosts or from the host/subdomainSeparator convention - which is almost always what you want; override only when the hostname routed inside the cluster must differ from the public URL, e.g. behind a CDN or an external reverse proxy that terminates the public name. An override here changes routing only: the URLs the applications advertise are unaffected, and setting networking.publicHosts is not a prerequisite. Overrides exist for the four services listed below; the development MinIO and docs-preview Ingress hostnames are always s3/docs<subdomainSeparator><host>.",
           "additionalProperties": false,
           "properties": {
             "website": {
