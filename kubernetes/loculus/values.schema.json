@@ -259,90 +259,60 @@
         },
         {
           "if": {
-            "properties": {
-              "generateIndex": {
-                "const": true
-              }
-            },
+            "properties": { "generateIndex": { "const": true } },
             "required": ["generateIndex"]
           },
           "then": {
             "properties": {
-              "type": {
-                "enum": ["string", "authors"]
-              }
+              "type": { "enum": ["string", "authors"] }
             },
             "errorMessage": "When generateIndex is true, type must be 'string' or 'authors'"
           }
         },
         {
           "if": {
-            "properties": {
-              "autocomplete": {
-                "const": true
-              }
-            },
+            "properties": { "autocomplete": { "const": true } },
             "required": ["autocomplete"]
           },
           "then": {
             "properties": {
-              "type": {
-                "enum": ["string", "authors", "int", "float", "number", "boolean"]
-              }
+              "type": { "enum": ["string", "authors", "int", "float", "number", "boolean"] }
             },
             "errorMessage": "When autocomplete is true, type must be 'string', 'authors', 'int', 'float', 'number', or 'boolean'"
           }
         },
         {
           "if": {
-            "properties": {
-              "enableSubstringSearch": {
-                "const": true
-              }
-            },
+            "properties": { "enableSubstringSearch": { "const": true } },
             "required": ["enableSubstringSearch"]
           },
           "then": {
             "properties": {
-              "type": {
-                "enum": ["string", "authors"]
-              }
+              "type": { "enum": ["string", "authors"] }
             },
             "errorMessage": "When enableSubstringSearch is true, type must be 'string' or 'authors'"
           }
         },
         {
           "if": {
-            "properties": {
-              "lineageSystem": {
-                "type": "string"
-              }
-            },
+            "properties": { "lineageSystem": { "type": "string" } },
             "required": ["lineageSystem"]
           },
           "then": {
             "properties": {
-              "type": {
-                "enum": ["string", "authors"]
-              }
+              "type": { "enum": ["string", "authors"] }
             },
             "errorMessage": "When lineageSystem is set, type must be 'string' or 'authors'"
           }
         },
         {
           "if": {
-            "properties": {
-              "hierarchicalFilter": {
-                "type": "string"
-              }
-            },
+            "properties": { "hierarchicalFilter": { "type": "string" } },
             "required": ["hierarchicalFilter"]
           },
           "then": {
             "properties": {
-              "type": {
-                "enum": ["string", "authors"]
-              }
+              "type": { "enum": ["string", "authors"] }
             },
             "errorMessage": "When hierarchicalFilter is set, type must be 'string' or 'authors'"
           }
@@ -355,53 +325,35 @@
         },
         {
           "if": {
-            "properties": {
-              "rangeSearch": {
-                "const": true
-              }
-            },
+            "properties": { "rangeSearch": { "const": true } },
             "required": ["rangeSearch"]
           },
           "then": {
             "properties": {
-              "type": {
-                "enum": ["int", "float", "number", "date"]
-              }
+              "type": { "enum": ["int", "float", "number", "date"] }
             },
             "errorMessage": "When rangeSearch is true, type must be numeric or date ('int', 'float', 'number', or 'date')"
           }
         },
         {
           "if": {
-            "properties": {
-              "rangeOverlapSearch": {
-                "type": "object"
-              }
-            },
+            "properties": { "rangeOverlapSearch": { "type": "object" } },
             "required": ["rangeOverlapSearch"]
           },
           "then": {
             "properties": {
-              "type": {
-                "enum": ["int", "float", "number", "date"]
-              }
+              "type": { "enum": ["int", "float", "number", "date"] }
             },
             "errorMessage": "When rangeOverlapSearch is set, type must be numeric or date ('int', 'float', 'number', or 'date')"
           }
         },
         {
           "if": {
-            "properties": {
-              "required": {
-                "const": true
-              }
-            },
+            "properties": { "required": { "const": true } },
             "required": ["required"]
           },
           "then": {
-            "not": {
-              "required": ["requiredWhen"]
-            },
+            "not": { "required": ["requiredWhen"] },
             "errorMessage": "A field with 'required: true' cannot also set 'requiredWhen' (it is already always required)."
           }
         }
@@ -529,18 +481,14 @@
               "docsIncludePrefix": false,
               "type": "array",
               "description": "Array of [Metadata fields (type)](#metadata-type) associated with the organism.",
-              "items": {
-                "$ref": "#/definitions/metadata"
-              }
+              "items": { "$ref": "#/definitions/metadata" }
             },
             "metadataAdd": {
               "groups": ["schema"],
               "docsIncludePrefix": false,
               "type": "array",
               "description": "Array of [Metadata fields (type)](#metadata-type) associated with the organism, in addtion to the fields in `metadata`.",
-              "items": {
-                "$ref": "#/definitions/metadata"
-              }
+              "items": { "$ref": "#/definitions/metadata" }
             },
             "metadataTemplate": {
               "groups": ["schema"],
@@ -596,9 +544,7 @@
                   },
                   "onlyForReferences": {
                     "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    },
+                    "additionalProperties": { "type": "string" },
                     "description": "Optional filter: maps segment name to reference name. When specified, this linkOut is only shown in the tool dropdown when the user has selected a matching reference (or no reference) for each listed segment. Use this to avoid showing reference-specific Nextclade datasets for the wrong reference in multi-reference organisms. Example: {main: CV-A16} or {M: MH396653}."
                   },
                   "category": {
@@ -1097,23 +1043,15 @@
         "requests": {
           "type": "object",
           "properties": {
-            "memory": {
-              "type": "string"
-            },
-            "cpu": {
-              "type": "string"
-            }
+            "memory": { "type": "string" },
+            "cpu": { "type": "string" }
           }
         },
         "limits": {
           "type": "object",
           "properties": {
-            "memory": {
-              "type": "string"
-            },
-            "cpu": {
-              "type": "string"
-            }
+            "memory": { "type": "string" },
+            "cpu": { "type": "string" }
           }
         }
       }
@@ -1232,9 +1170,7 @@
           "type": "object",
           "description": "Kubernetes nodeSelector for scheduling pods on specific nodes. Labels must match node labels. Example: { 'workload-type': 'loculuspool' }",
           "default": {},
-          "additionalProperties": {
-            "type": "string"
-          }
+          "additionalProperties": { "type": "string" }
         },
         "tolerations": {
           "type": "array",
@@ -1766,9 +1702,7 @@
       "type": "object",
       "description": "An object where the keys are the organism IDs and values are an [Organism (type)](#organism-type)",
       "patternProperties": {
-        "^[a-z0-9-]+$": {
-          "$ref": "#/definitions/organism"
-        }
+        "^[a-z0-9-]+$": { "$ref": "#/definitions/organism" }
       }
     },
     "defaultOrganismConfig": {
@@ -1777,9 +1711,7 @@
     "defaultOrganisms": {
       "type": "object",
       "patternProperties": {
-        "^[a-z0-9-]+$": {
-          "$ref": "#/definitions/organism"
-        }
+        "^[a-z0-9-]+$": { "$ref": "#/definitions/organism" }
       }
     },
     "lineageSystemDefinitions": {
@@ -1923,16 +1855,12 @@
           "oneOf": [
             {
               "properties": {
-                "enabled": {
-                  "const": false
-                }
+                "enabled": { "const": false }
               }
             },
             {
               "properties": {
-                "enabled": {
-                  "const": true
-                }
+                "enabled": { "const": true }
               },
               "required": ["bucket"]
             }
@@ -2044,21 +1972,11 @@
       "type": "object",
       "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website` and `backend`.",
       "properties": {
-        "lapis": {
-          "$ref": "#/definitions/imageSpec"
-        },
-        "lapisSilo": {
-          "$ref": "#/definitions/imageSpec"
-        },
-        "loculusSilo": {
-          "$ref": "#/definitions/imageSpec"
-        },
-        "website": {
-          "$ref": "#/definitions/imageSpec"
-        },
-        "backend": {
-          "$ref": "#/definitions/imageSpec"
-        }
+        "lapis": { "$ref": "#/definitions/imageSpec" },
+        "lapisSilo": { "$ref": "#/definitions/imageSpec" },
+        "loculusSilo": { "$ref": "#/definitions/imageSpec" },
+        "website": { "$ref": "#/definitions/imageSpec" },
+        "backend": { "$ref": "#/definitions/imageSpec" }
       },
       "additionalProperties": false
     },
@@ -2123,24 +2041,16 @@
         "requests": {
           "type": "object",
           "properties": {
-            "memory": {
-              "type": "string"
-            },
-            "cpu": {
-              "type": "string"
-            }
+            "memory": { "type": "string" },
+            "cpu": { "type": "string" }
           },
           "additionalProperties": false
         },
         "limits": {
           "type": "object",
           "properties": {
-            "memory": {
-              "type": "string"
-            },
-            "cpu": {
-              "type": "string"
-            }
+            "memory": { "type": "string" },
+            "cpu": { "type": "string" }
           },
           "additionalProperties": false
         }
@@ -2150,75 +2060,35 @@
     "resources": {
       "type": "object",
       "properties": {
-        "website": {
-          "$ref": "#/definitions/resourceSpec"
-        },
-        "docs": {
-          "$ref": "#/definitions/resourceSpec"
-        },
-        "ena-submission": {
-          "$ref": "#/definitions/resourceSpec"
-        },
-        "ena-submission-list-cronjob": {
-          "$ref": "#/definitions/resourceSpec"
-        },
-        "ingest": {
-          "$ref": "#/definitions/resourceSpec"
-        },
-        "keycloak": {
-          "$ref": "#/definitions/resourceSpec"
-        },
-        "silo": {
-          "$ref": "#/definitions/resourceSpec"
-        },
-        "lapis": {
-          "$ref": "#/definitions/resourceSpec"
-        },
-        "silo-importer": {
-          "$ref": "#/definitions/resourceSpec"
-        },
-        "backend": {
-          "$ref": "#/definitions/resourceSpec"
-        },
-        "preprocessing": {
-          "$ref": "#/definitions/resourceSpec"
-        },
+        "website": { "$ref": "#/definitions/resourceSpec" },
+        "docs": { "$ref": "#/definitions/resourceSpec" },
+        "ena-submission": { "$ref": "#/definitions/resourceSpec" },
+        "ena-submission-list-cronjob": { "$ref": "#/definitions/resourceSpec" },
+        "ingest": { "$ref": "#/definitions/resourceSpec" },
+        "keycloak": { "$ref": "#/definitions/resourceSpec" },
+        "silo": { "$ref": "#/definitions/resourceSpec" },
+        "lapis": { "$ref": "#/definitions/resourceSpec" },
+        "silo-importer": { "$ref": "#/definitions/resourceSpec" },
+        "backend": { "$ref": "#/definitions/resourceSpec" },
+        "preprocessing": { "$ref": "#/definitions/resourceSpec" },
         "organismSpecific": {
           "type": "object",
           "patternProperties": {
             ".*": {
               "type": "object",
               "properties": {
-                "website": {
-                  "$ref": "#/definitions/resourceSpec"
-                },
-                "ena-submission": {
-                  "$ref": "#/definitions/resourceSpec"
-                },
+                "website": { "$ref": "#/definitions/resourceSpec" },
+                "ena-submission": { "$ref": "#/definitions/resourceSpec" },
                 "ena-submission-list-cronjob": {
                   "$ref": "#/definitions/resourceSpec"
                 },
-                "ingest": {
-                  "$ref": "#/definitions/resourceSpec"
-                },
-                "keycloak": {
-                  "$ref": "#/definitions/resourceSpec"
-                },
-                "silo": {
-                  "$ref": "#/definitions/resourceSpec"
-                },
-                "lapis": {
-                  "$ref": "#/definitions/resourceSpec"
-                },
-                "silo-importer": {
-                  "$ref": "#/definitions/resourceSpec"
-                },
-                "backend": {
-                  "$ref": "#/definitions/resourceSpec"
-                },
-                "preprocessing": {
-                  "$ref": "#/definitions/resourceSpec"
-                }
+                "ingest": { "$ref": "#/definitions/resourceSpec" },
+                "keycloak": { "$ref": "#/definitions/resourceSpec" },
+                "silo": { "$ref": "#/definitions/resourceSpec" },
+                "lapis": { "$ref": "#/definitions/resourceSpec" },
+                "silo-importer": { "$ref": "#/definitions/resourceSpec" },
+                "backend": { "$ref": "#/definitions/resourceSpec" },
+                "preprocessing": { "$ref": "#/definitions/resourceSpec" }
               },
               "additionalProperties": false
             }
