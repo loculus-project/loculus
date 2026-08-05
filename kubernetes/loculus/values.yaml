@@ -1063,6 +1063,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sequencing
         desired: true
         orderOnDetailsPage: 2080
+        autocomplete: true
+        initiallyVisible: true
         requiredWhen:
           - files.rawReads
         preprocessing:
@@ -1181,6 +1183,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Sequencing assay type
         header: Sequencing
         orderOnDetailsPage: 2130
+        autocomplete: true
+        initiallyVisible: true
         preprocessing:
           function: process_options
           inputs:
