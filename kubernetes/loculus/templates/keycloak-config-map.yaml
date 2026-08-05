@@ -255,10 +255,9 @@ data:
           "enabled": true,
           "publicClient": true,
           "directAccessGrantsEnabled": true,
-          "redirectUris": [
-            "{{ include "loculus.websiteUrl" . }}/*",
-            "http://localhost:3000/*"
-          ]
+          {{- /* both schemes, so a deployment with enforceHTTPS=false keeps working */}}
+          {{- $website := include "loculus.websiteUrl" . | trimPrefix "https://" | trimPrefix "http://" }}
+          "redirectUris": {{ list (printf "https://%s/*" $website) (printf "http://%s/*" $website) "http://localhost:3000/*" | uniq | toJson }}
         },
         {
           "clientId" : "account-console2",
