@@ -1399,7 +1399,7 @@
         "host": {
           "groups": ["general"],
           "type": "string",
-          "description": "Base domain of the deployment (server environment only). It is the website's hostname, and the base from which every other service's default URL is derived as https://<service><subdomainSeparator><host> \u2014 e.g. backend-myhost.com, authentication-myhost.com, lapis-myhost.com. Set this and nothing else for the standard layout. A www. alias for the website is added automatically when the website still sits on this host."
+          "description": "Base domain of the deployment (server environment only). It is the website's hostname, and the base from which every other service's default URL is derived as https://<service><subdomainSeparator><host> - e.g. backend-myhost.com, authentication-myhost.com, lapis-myhost.com. Set this and nothing else for the standard layout. A www. alias for the website is added automatically when the website still sits on this host."
         },
         "subdomainSeparator": {
           "groups": ["general"],
@@ -1410,7 +1410,7 @@
         "publicHosts": {
           "groups": ["general"],
           "type": "object",
-          "description": "Per-service overrides for the public URLs the applications advertise. Leave a key unset to use the derived default https://<service><subdomainSeparator><host>. A URL set here also becomes the hostname of that service's Ingress rule (unless networking.ingressHosts overrides it), so overriding a URL alone is enough for a working deployment. In the server environment the URL must not contain a path \u2014 the Ingress routes a whole hostname at / \u2014 and rendering fails if it does.",
+          "description": "Per-service overrides for the public URLs the applications advertise. Leave a key unset to use the derived default https://<service><subdomainSeparator><host>. A URL set here also becomes the hostname of that service's Ingress rule (unless networking.ingressHosts overrides it), so overriding a URL alone is enough for a working deployment. In the server environment the URL must not contain a path - the Ingress routes a whole hostname at / - and rendering fails if it does.",
           "additionalProperties": false,
           "properties": {
             "backendUrl": {
@@ -1423,7 +1423,7 @@
               "groups": ["general"],
               "type": "string",
               "default": "",
-              "description": "Public URL of the website; also the base for the Keycloak redirect URIs. Defaults to https://<host>, so only set it when the website is not simply https://<host> \u2014 a non-HTTPS deployment, a non-default port, or a website domain unrelated to the other services. Setting it suppresses the automatic www. alias. Example: https://loculus.x.y.com"
+              "description": "Public URL of the website; also the base for the Keycloak redirect URIs. Defaults to https://<host>, so only set it when the website is not simply https://<host> - a non-HTTPS deployment, a non-default port, or a website domain unrelated to the other services. Setting it suppresses the automatic www. alias. Example: https://loculus.x.y.com"
             },
             "keycloakUrl": {
               "groups": ["general"],
@@ -1442,22 +1442,26 @@
         "ingressHosts": {
           "groups": ["general"],
           "type": "object",
-          "description": "Per-service overrides for the hostname in a service's Ingress rule. Each key defaults to the hostname of the corresponding networking.publicHosts URL, which is almost always what you want; override only when the hostname routed inside the cluster must differ from the public URL, e.g. behind a CDN or an external reverse proxy that terminates the public name. An override here changes routing only \u2014 the URLs the applications advertise are unaffected. Only services with a networking.publicHosts URL can be overridden here; the development MinIO and docs-preview Ingress hostnames are always s3/docs<subdomainSeparator><host>.",
+          "description": "Per-service overrides for the hostname in a service's Ingress rule. Each key defaults to the hostname of the corresponding networking.publicHosts URL, which is almost always what you want; override only when the hostname routed inside the cluster must differ from the public URL, e.g. behind a CDN or an external reverse proxy that terminates the public name. An override here changes routing only - the URLs the applications advertise are unaffected. Only services with a networking.publicHosts URL can be overridden here; the development MinIO and docs-preview Ingress hostnames are always s3/docs<subdomainSeparator><host>.",
           "additionalProperties": false,
           "properties": {
             "website": {
+              "groups": ["general"],
               "type": "string",
               "description": "Hostname for the website Ingress rule. Defaults to the hostname of networking.publicHosts.websiteUrl."
             },
             "backend": {
+              "groups": ["general"],
               "type": "string",
               "description": "Hostname for the backend Ingress rule. Defaults to the hostname of networking.publicHosts.backendUrl."
             },
             "keycloak": {
+              "groups": ["general"],
               "type": "string",
               "description": "Hostname for the keycloak Ingress rule. Defaults to the hostname of networking.publicHosts.keycloakUrl."
             },
             "lapis": {
+              "groups": ["general"],
               "type": "string",
               "description": "Hostname for the lapis Ingress rule. Defaults to the hostname of networking.publicHosts.lapisUrlTemplate."
             }
