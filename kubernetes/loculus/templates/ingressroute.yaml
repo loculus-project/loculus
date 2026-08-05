@@ -47,16 +47,11 @@ spec:
     permanent: true
 ---
 {{- if eq $.Values.environment "server" }}
-{{- $ingressHosts := $.Values.networking.ingressHosts | default dict }}
-{{- $websiteHostOverride := $ingressHosts.website }}
-{{- $websiteHost := $websiteHostOverride | default ($.Values.host | default "") }}
-{{- $wwwHost := "" }}
-{{- if and (not $websiteHostOverride) (not (hasPrefix "www." $websiteHost)) }}
-  {{- $wwwHost = printf "www.%s" $websiteHost }}
-{{- end }}
-{{- $backendHost := $ingressHosts.backend | default (printf "backend%s%s" $.Values.networking.subdomainSeparator $.Values.host) }}
-{{- $keycloakHost := $ingressHosts.keycloak | default (printf "authentication%s%s" $.Values.networking.subdomainSeparator $.Values.host) }}
-{{- $minioHost := $ingressHosts.minio | default (printf "s3%s%s" $.Values.networking.subdomainSeparator $.Values.host) }}
+{{- $websiteHost := include "loculus.ingressHost" (include "loculus.websiteUrl" .) }}
+{{- $wwwHost := ternary (printf "www.%s" $websiteHost) "" (eq $websiteHost $.Values.host) }}
+{{- $backendHost := include "loculus.ingressHost" (include "loculus.backendUrl" .) }}
+{{- $keycloakHost := include "loculus.ingressHost" (include "loculus.keycloakUrl" .) }}
+{{- $minioHost := include "loculus.ingressHost" (include "loculus.s3Url" .) }}
 {{- $middlewareList := list (printf "%s-compression-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- if $.Values.networking.enforceHTTPS }}
 {{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}

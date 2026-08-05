@@ -1,10 +1,7 @@
 {{- define "loculus.backendUrl" -}}
 {{- $publicRuntimeConfig := $.Values.networking.publicHosts | default dict }}
-{{- $ingressHosts := $.Values.networking.ingressHosts | default dict }}
   {{- if $publicRuntimeConfig.backendUrl }}
     {{- $publicRuntimeConfig.backendUrl -}}
-  {{- else if $ingressHosts.backend -}}
-    {{- printf "https://%s" $ingressHosts.backend -}}
   {{- else if eq $.Values.environment "server" -}}
     {{- (printf "https://backend%s%s" $.Values.networking.subdomainSeparator $.Values.host) -}}
   {{- else -}}
@@ -14,11 +11,8 @@
 
 {{- define "loculus.websiteUrl" -}}
 {{- $publicRuntimeConfig := $.Values.networking.publicHosts | default dict }}
-{{- $ingressHosts := $.Values.networking.ingressHosts | default dict }}
   {{- if $publicRuntimeConfig.websiteUrl }}
     {{- $publicRuntimeConfig.websiteUrl -}}
-  {{- else if $ingressHosts.website -}}
-    {{- printf "https://%s" $ingressHosts.website -}}
   {{- else if eq $.Values.environment "server" -}}
     {{- (printf "https://%s" $.Values.host) -}}
   {{- else -}}
@@ -28,10 +22,7 @@
 
 {{- define "loculus.s3Url" -}}
   {{- if $.Values.runDevelopmentS3 }}
-    {{- $ingressHosts := $.Values.networking.ingressHosts | default dict }}
-    {{- if $ingressHosts.minio -}}
-        {{- printf "https://%s" $ingressHosts.minio -}}
-    {{- else if eq $.Values.environment "server" -}}
+    {{- if eq $.Values.environment "server" -}}
         {{- (printf "https://s3%s%s" $.Values.networking.subdomainSeparator $.Values.host) -}}
     {{- else -}}
         {{- printf "http://%s:8084" $.Values.localHost -}}
@@ -51,11 +42,8 @@
 
 {{- define "loculus.keycloakUrl" -}}
 {{- $publicRuntimeConfig := $.Values.networking.publicHosts | default dict }}
-{{- $ingressHosts := $.Values.networking.ingressHosts | default dict }}
   {{- if $publicRuntimeConfig.keycloakUrl }}
     {{- $publicRuntimeConfig.keycloakUrl -}}
-  {{- else if $ingressHosts.keycloak -}}
-    {{- printf "https://%s" $ingressHosts.keycloak -}}
   {{- else if eq $.Values.environment "server" -}}
     {{- (printf "https://authentication%s%s" $.Values.networking.subdomainSeparator $.Values.host) -}}
   {{- else -}}
@@ -85,3 +73,20 @@
 {{- define "loculus.lapisServiceName"}}
 {{- printf "loculus-lapis-service-%s" . }}
 {{- end }}
+
+{{/* Public URL template for LAPIS, with %organism% placeholder */}}
+{{- define "loculus.lapisUrlTemplate" -}}
+{{- $publicRuntimeConfig := $.Values.networking.publicHosts | default dict }}
+  {{- if $publicRuntimeConfig.lapisUrlTemplate -}}
+    {{- $publicRuntimeConfig.lapisUrlTemplate -}}
+  {{- else if eq $.Values.environment "server" -}}
+    {{- printf "https://lapis%s%s/%%organism%%" $.Values.networking.subdomainSeparator $.Values.host -}}
+  {{- else -}}
+    {{- printf "http://%s:8080/%%organism%%" $.Values.localHost -}}
+  {{- end -}}
+{{- end -}}
+
+{{/* Hostname of a public URL, for use in Ingress rules */}}
+{{- define "loculus.ingressHost" -}}
+{{- . | trimPrefix "https://" | trimPrefix "http://" | splitList "/" | first | splitList ":" | first -}}
+{{- end -}}
