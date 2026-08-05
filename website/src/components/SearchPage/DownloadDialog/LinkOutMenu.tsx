@@ -219,6 +219,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                  * `anchor` positions the panel with floating-ui, which keeps it inside the viewport:
                  * it prefers right-alignment under the button, but shifts/flips and caps its size when
                  * there isn't enough room - without it the panel hangs off-screen on narrow viewports.
+                 * Prevents: https://github.com/loculus-project/loculus/issues/6988
                  */}
                 <MenuItems
                     anchor={{ to: 'bottom end', gap: 8, padding: 8 }}
