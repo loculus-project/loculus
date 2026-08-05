@@ -54,7 +54,7 @@ spec:
 {{- $wwwHost := ternary (printf "www.%s" $websiteHost) "" (and (eq $websiteHost $.Values.networking.host) (not (hasPrefix "www." $websiteHost))) }}
 {{- $backendHost := $ingressHosts.backend | default (include "loculus.ingressHost" (include "loculus.backendUrl" .)) }}
 {{- $keycloakHost := $ingressHosts.keycloak | default (include "loculus.ingressHost" (include "loculus.keycloakUrl" .)) }}
-{{- $minioHost := $ingressHosts.minio | default (include "loculus.ingressHost" (include "loculus.s3Url" .)) }}
+{{- $minioHost := include "loculus.ingressHost" (include "loculus.s3Url" .) }}
 {{- $middlewareList := list (printf "%s-compression-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- if $.Values.networking.enforceHTTPS }}
 {{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
@@ -71,7 +71,9 @@ spec:
 {{ $middlewareListForKeycloak = append $middlewareListForKeycloak (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
 {{ end }}
 
+{{ if $wwwHost }}
 {{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-redirect-www-middleware@kubernetescrd" $.Release.Namespace) }}
+{{ end }}
 
 apiVersion: networking.k8s.io/v1
 kind: Ingress

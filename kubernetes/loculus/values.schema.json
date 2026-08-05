@@ -1506,7 +1506,7 @@
         "ingressHosts": {
           "groups": ["general"],
           "type": "object",
-          "description": "Per-service overrides for the hostname in a service's Ingress rule. Each key defaults to the hostname of the corresponding networking.publicHosts URL, which is almost always what you want; override only when the hostname routed inside the cluster must differ from the public URL, e.g. behind a CDN or an external reverse proxy that terminates the public name. An override here changes routing only \u2014 the URLs the applications advertise are unaffected.",
+          "description": "Per-service overrides for the hostname in a service's Ingress rule. Each key defaults to the hostname of the corresponding networking.publicHosts URL, which is almost always what you want; override only when the hostname routed inside the cluster must differ from the public URL, e.g. behind a CDN or an external reverse proxy that terminates the public name. An override here changes routing only \u2014 the URLs the applications advertise are unaffected. Only services with a networking.publicHosts URL can be overridden here; the development MinIO and docs-preview Ingress hostnames are always s3/docs<subdomainSeparator><host>.",
           "additionalProperties": false,
           "properties": {
             "website": {
@@ -1524,14 +1524,6 @@
             "lapis": {
               "type": "string",
               "description": "Hostname for the lapis Ingress rule. Defaults to the hostname of networking.publicHosts.lapisUrlTemplate."
-            },
-            "minio": {
-              "type": "string",
-              "description": "Hostname for the Ingress rule of the development MinIO (only rendered with runDevelopmentS3). Defaults to s3<subdomainSeparator><host>."
-            },
-            "docs": {
-              "type": "string",
-              "description": "Hostname for the docs preview Ingress rule (only rendered with previewDocs). Defaults to docs<subdomainSeparator><host>."
             }
           }
         },
