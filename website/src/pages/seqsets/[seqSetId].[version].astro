@@ -21,6 +21,8 @@ const seqSetId = Astro.params.seqSetId!;
 const version = Astro.params.version!;
 const username = session?.user?.username;
 const seqSetAccessionVersion = `${seqSetId}.${version}`;
+// Canonical absolute URL of this SeqSet version, used in citations when there is no DOI yet.
+const seqSetUrl = new URL(routes.seqSetPage(seqSetAccessionVersion), Astro.url).href;
 
 // Create organism key to display name mapping
 const organismDisplayNames = Object.fromEntries(
@@ -125,6 +127,8 @@ const secondaryErrors = (
                     seqSetCitations={seqSetCitations}
                     seqSetGraphs={seqSetGraphs}
                     seqSetGraphsData={seqSetGraphsData}
+                    seqSetUrl={seqSetUrl}
+                    databaseName={websiteConfig.name}
                     isAdminView={seqSetResponse.value.createdBy === username}
                     fieldsToDisplay={websiteConfig.seqSetsFieldsToDisplay}
                     organismDisplayNames={organismDisplayNames}

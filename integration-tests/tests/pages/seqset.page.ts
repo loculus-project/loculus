@@ -78,7 +78,18 @@ export class SeqSetPage {
         await expect(this.page.getByText('Version', { exact: true })).toBeVisible();
         await expect(this.page.getByText('Size', { exact: true })).toBeVisible();
         await expect(this.page.getByText('Accession', { exact: true })).toBeVisible();
+        await this.expectCitationFormatsOnPage(name);
         await this.expectCreatorDetailsInModal();
+    }
+
+    /** The citation formats live directly on the page, not behind the export modal. */
+    async expectCitationFormatsOnPage(name: string) {
+        await expect(this.page.getByRole('heading', { name: 'How to cite' })).toBeVisible();
+        const citationText = this.page.getByTestId('citation-text');
+        await expect(citationText).toContainText(`SeqSet: ${name}`);
+        await this.page.getByRole('tab', { name: 'BibTeX' }).click();
+        await expect(citationText).toContainText('@dataset{');
+        await this.page.getByRole('tab', { name: 'APA' }).click();
     }
 
     async expectCreatorDetailsInModal() {
