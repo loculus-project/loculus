@@ -215,7 +215,15 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                     <IwwaArrowDown className='ml-2 h-5 w-5' aria-hidden='true' />
                 </MenuButton>
 
-                <MenuItems className='absolute right-0 mt-2 w-64  origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden'>
+                {/*
+                 * `anchor` positions the panel with floating-ui, which keeps it inside the viewport:
+                 * it prefers right-alignment under the button, but shifts/flips and caps its size when
+                 * there isn't enough room - without it the panel hangs off-screen on narrow viewports.
+                 */}
+                <MenuItems
+                    anchor={{ to: 'bottom end', gap: 8, padding: 8 }}
+                    className='z-50 w-64 rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden'
+                >
                     <div className='py-1'>
                         <div className='px-4 py-2 text-sm text-gray-500'>
                             Analyze {sequenceCount !== undefined ? formatNumberWithDefaultLocale(sequenceCount) : '...'}{' '}
