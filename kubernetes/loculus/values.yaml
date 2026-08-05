@@ -2695,6 +2695,7 @@ runDevelopmentMainDatabase: true
 runDevelopmentS3: true
 developmentDatabasePersistence: false
 networking:
+  host: "helm-url-flex-simplified.loculus.org" # TODO: REVERT before merge
   subdomainSeparator: "-"
   enforceHTTPS: true
   traefikVersion: 3
