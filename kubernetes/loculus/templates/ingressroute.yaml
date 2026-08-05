@@ -49,7 +49,8 @@ spec:
 {{- if eq $.Values.environment "server" }}
 {{- $ingressHosts := $.Values.networking.ingressHosts | default dict }}
 {{- $websiteHost := $ingressHosts.website | default (include "loculus.ingressHost" (include "loculus.websiteUrl" .)) }}
-{{- $wwwHost := ternary (printf "www.%s" $websiteHost) "" (eq $websiteHost $.Values.host) }}
+{{- /* only serve the www. alias for the plain default host: a cert for www.<override> would likely have no DNS */}}
+{{- $wwwHost := ternary (printf "www.%s" $websiteHost) "" (and (eq $websiteHost $.Values.host) (not (hasPrefix "www." $websiteHost))) }}
 {{- $backendHost := $ingressHosts.backend | default (include "loculus.ingressHost" (include "loculus.backendUrl" .)) }}
 {{- $keycloakHost := $ingressHosts.keycloak | default (include "loculus.ingressHost" (include "loculus.keycloakUrl" .)) }}
 {{- $minioHost := $ingressHosts.minio | default (include "loculus.ingressHost" (include "loculus.s3Url" .)) }}
