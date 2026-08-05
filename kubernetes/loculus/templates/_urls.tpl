@@ -3,7 +3,7 @@
   {{- if $publicRuntimeConfig.backendUrl }}
     {{- $publicRuntimeConfig.backendUrl -}}
   {{- else if eq $.Values.environment "server" -}}
-    {{- (printf "https://backend%s%s" $.Values.networking.subdomainSeparator $.Values.host) -}}
+    {{- (printf "https://backend%s%s" $.Values.networking.subdomainSeparator $.Values.networking.host) -}}
   {{- else -}}
     {{- printf "http://%s:8079" $.Values.localHost -}}
   {{- end -}}
@@ -14,7 +14,7 @@
   {{- if $publicRuntimeConfig.websiteUrl }}
     {{- $publicRuntimeConfig.websiteUrl -}}
   {{- else if eq $.Values.environment "server" -}}
-    {{- (printf "https://%s" $.Values.host) -}}
+    {{- (printf "https://%s" $.Values.networking.host) -}}
   {{- else -}}
     {{- printf "http://%s:3000" $.Values.localHost -}}
   {{- end -}}
@@ -23,7 +23,7 @@
 {{- define "loculus.s3Url" -}}
   {{- if $.Values.runDevelopmentS3 }}
     {{- if eq $.Values.environment "server" -}}
-        {{- (printf "https://s3%s%s" $.Values.networking.subdomainSeparator $.Values.host) -}}
+        {{- (printf "https://s3%s%s" $.Values.networking.subdomainSeparator $.Values.networking.host) -}}
     {{- else -}}
         {{- printf "http://%s:8084" $.Values.localHost -}}
     {{- end -}}
@@ -45,7 +45,7 @@
   {{- if $publicRuntimeConfig.keycloakUrl }}
     {{- $publicRuntimeConfig.keycloakUrl -}}
   {{- else if eq $.Values.environment "server" -}}
-    {{- (printf "https://authentication%s%s" $.Values.networking.subdomainSeparator $.Values.host) -}}
+    {{- (printf "https://authentication%s%s" $.Values.networking.subdomainSeparator $.Values.networking.host) -}}
   {{- else -}}
     {{- printf "http://%s:8083" $.Values.localHost -}}
   {{- end -}}
@@ -80,7 +80,7 @@
   {{- if $publicRuntimeConfig.lapisUrlTemplate -}}
     {{- $publicRuntimeConfig.lapisUrlTemplate -}}
   {{- else if eq $.Values.environment "server" -}}
-    {{- printf "https://lapis%s%s/%%organism%%" $.Values.networking.subdomainSeparator $.Values.host -}}
+    {{- printf "https://lapis%s%s/%%organism%%" $.Values.networking.subdomainSeparator $.Values.networking.host -}}
   {{- else -}}
     {{- printf "http://%s:8080/%%organism%%" $.Values.localHost -}}
   {{- end -}}
@@ -89,4 +89,17 @@
 {{/* Hostname of a public URL, for use in Ingress rules */}}
 {{- define "loculus.ingressHost" -}}
 {{- . | trimPrefix "https://" | trimPrefix "http://" | splitList "/" | first | splitList ":" | first -}}
+{{- end -}}
+
+{{/* In the server environment the Ingress rules route a whole hostname at path /, so a public URL
+     that carries a path prefix cannot be served. Fail loudly instead of silently dropping the path. */}}
+{{- define "loculus.assertPublicHostsRoutable" -}}
+{{- if eq $.Values.environment "server" -}}
+  {{- range $key, $url := ($.Values.networking.publicHosts | default dict) -}}
+    {{- $rest := $url | trimPrefix "https://" | trimPrefix "http://" | trimSuffix "/" | trimSuffix "/%organism%" -}}
+    {{- if contains "/" $rest -}}
+      {{- fail (printf "networking.publicHosts.%s = %q has a path prefix, which is not supported in the server environment: the Ingress routes the whole hostname at /. Use a URL without a path, or run environment=local behind your own reverse proxy." $key $url) -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
 {{- end -}}

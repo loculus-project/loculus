@@ -259,60 +259,90 @@
         },
         {
           "if": {
-            "properties": { "generateIndex": { "const": true } },
+            "properties": {
+              "generateIndex": {
+                "const": true
+              }
+            },
             "required": ["generateIndex"]
           },
           "then": {
             "properties": {
-              "type": { "enum": ["string", "authors"] }
+              "type": {
+                "enum": ["string", "authors"]
+              }
             },
             "errorMessage": "When generateIndex is true, type must be 'string' or 'authors'"
           }
         },
         {
           "if": {
-            "properties": { "autocomplete": { "const": true } },
+            "properties": {
+              "autocomplete": {
+                "const": true
+              }
+            },
             "required": ["autocomplete"]
           },
           "then": {
             "properties": {
-              "type": { "enum": ["string", "authors", "int", "float", "number", "boolean"] }
+              "type": {
+                "enum": ["string", "authors", "int", "float", "number", "boolean"]
+              }
             },
             "errorMessage": "When autocomplete is true, type must be 'string', 'authors', 'int', 'float', 'number', or 'boolean'"
           }
         },
         {
           "if": {
-            "properties": { "enableSubstringSearch": { "const": true } },
+            "properties": {
+              "enableSubstringSearch": {
+                "const": true
+              }
+            },
             "required": ["enableSubstringSearch"]
           },
           "then": {
             "properties": {
-              "type": { "enum": ["string", "authors"] }
+              "type": {
+                "enum": ["string", "authors"]
+              }
             },
             "errorMessage": "When enableSubstringSearch is true, type must be 'string' or 'authors'"
           }
         },
         {
           "if": {
-            "properties": { "lineageSystem": { "type": "string" } },
+            "properties": {
+              "lineageSystem": {
+                "type": "string"
+              }
+            },
             "required": ["lineageSystem"]
           },
           "then": {
             "properties": {
-              "type": { "enum": ["string", "authors"] }
+              "type": {
+                "enum": ["string", "authors"]
+              }
             },
             "errorMessage": "When lineageSystem is set, type must be 'string' or 'authors'"
           }
         },
         {
           "if": {
-            "properties": { "hierarchicalFilter": { "type": "string" } },
+            "properties": {
+              "hierarchicalFilter": {
+                "type": "string"
+              }
+            },
             "required": ["hierarchicalFilter"]
           },
           "then": {
             "properties": {
-              "type": { "enum": ["string", "authors"] }
+              "type": {
+                "enum": ["string", "authors"]
+              }
             },
             "errorMessage": "When hierarchicalFilter is set, type must be 'string' or 'authors'"
           }
@@ -325,35 +355,53 @@
         },
         {
           "if": {
-            "properties": { "rangeSearch": { "const": true } },
+            "properties": {
+              "rangeSearch": {
+                "const": true
+              }
+            },
             "required": ["rangeSearch"]
           },
           "then": {
             "properties": {
-              "type": { "enum": ["int", "float", "number", "date"] }
+              "type": {
+                "enum": ["int", "float", "number", "date"]
+              }
             },
             "errorMessage": "When rangeSearch is true, type must be numeric or date ('int', 'float', 'number', or 'date')"
           }
         },
         {
           "if": {
-            "properties": { "rangeOverlapSearch": { "type": "object" } },
+            "properties": {
+              "rangeOverlapSearch": {
+                "type": "object"
+              }
+            },
             "required": ["rangeOverlapSearch"]
           },
           "then": {
             "properties": {
-              "type": { "enum": ["int", "float", "number", "date"] }
+              "type": {
+                "enum": ["int", "float", "number", "date"]
+              }
             },
             "errorMessage": "When rangeOverlapSearch is set, type must be numeric or date ('int', 'float', 'number', or 'date')"
           }
         },
         {
           "if": {
-            "properties": { "required": { "const": true } },
+            "properties": {
+              "required": {
+                "const": true
+              }
+            },
             "required": ["required"]
           },
           "then": {
-            "not": { "required": ["requiredWhen"] },
+            "not": {
+              "required": ["requiredWhen"]
+            },
             "errorMessage": "A field with 'required: true' cannot also set 'requiredWhen' (it is already always required)."
           }
         }
@@ -481,14 +529,18 @@
               "docsIncludePrefix": false,
               "type": "array",
               "description": "Array of [Metadata fields (type)](#metadata-type) associated with the organism.",
-              "items": { "$ref": "#/definitions/metadata" }
+              "items": {
+                "$ref": "#/definitions/metadata"
+              }
             },
             "metadataAdd": {
               "groups": ["schema"],
               "docsIncludePrefix": false,
               "type": "array",
               "description": "Array of [Metadata fields (type)](#metadata-type) associated with the organism, in addtion to the fields in `metadata`.",
-              "items": { "$ref": "#/definitions/metadata" }
+              "items": {
+                "$ref": "#/definitions/metadata"
+              }
             },
             "metadataTemplate": {
               "groups": ["schema"],
@@ -544,7 +596,9 @@
                   },
                   "onlyForReferences": {
                     "type": "object",
-                    "additionalProperties": { "type": "string" },
+                    "additionalProperties": {
+                      "type": "string"
+                    },
                     "description": "Optional filter: maps segment name to reference name. When specified, this linkOut is only shown in the tool dropdown when the user has selected a matching reference (or no reference) for each listed segment. Use this to avoid showing reference-specific Nextclade datasets for the wrong reference in multi-reference organisms. Example: {main: CV-A16} or {M: MH396653}."
                   },
                   "category": {
@@ -1043,15 +1097,23 @@
         "requests": {
           "type": "object",
           "properties": {
-            "memory": { "type": "string" },
-            "cpu": { "type": "string" }
+            "memory": {
+              "type": "string"
+            },
+            "cpu": {
+              "type": "string"
+            }
           }
         },
         "limits": {
           "type": "object",
           "properties": {
-            "memory": { "type": "string" },
-            "cpu": { "type": "string" }
+            "memory": {
+              "type": "string"
+            },
+            "cpu": {
+              "type": "string"
+            }
           }
         }
       }
@@ -1170,7 +1232,9 @@
           "type": "object",
           "description": "Kubernetes nodeSelector for scheduling pods on specific nodes. Labels must match node labels. Example: { 'workload-type': 'loculuspool' }",
           "default": {},
-          "additionalProperties": { "type": "string" }
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "tolerations": {
           "type": "array",
@@ -1198,11 +1262,6 @@
       "type": "string",
       "default": "localhost",
       "description": "Host string used for local development"
-    },
-    "host": {
-      "groups": ["general"],
-      "type": "string",
-      "description": "Hostname where Loculus will be accessible"
     },
     "bannerMessage": {
       "groups": ["general"],
@@ -1398,84 +1457,89 @@
     "networking": {
       "groups": ["general"],
       "type": "object",
-      "description": "Network configuration. publicHosts sets the URLs advertised by the applications (redirects, callbacks, ...) and their hostnames are used in the Ingress rules; ingressHosts can override individual Ingress hostnames.",
+      "description": "Network configuration, in three layers. (1) host and subdomainSeparator define the naming convention every public URL is derived from. (2) networking.publicHosts overrides the public URL of an individual service; these URLs are what the applications advertise (website links, OAuth redirects, LAPIS URLs handed to clients). (3) The hostname of each public URL is also the hostname of that service's Ingress rule; networking.ingressHosts overrides that hostname alone, for the rare case where cluster routing must differ from the public URL. Inheritance only ever runs convention -> publicHosts -> ingressHosts: setting ingressHosts never changes an advertised URL. All of this applies to environment=server; in a local environment the URLs default to localHost with per-service ports and no Ingress hostnames are rendered.",
       "additionalProperties": false,
       "properties": {
+        "host": {
+          "groups": ["general"],
+          "type": "string",
+          "description": "Base domain of the deployment (server environment only). It is the website's hostname, and the base from which every other service's default URL is derived as https://<service><subdomainSeparator><host> \u2014 e.g. backend-myhost.com, authentication-myhost.com, lapis-myhost.com. Set this and nothing else for the standard layout. A www. alias for the website is added automatically when the website still sits on this host."
+        },
+        "subdomainSeparator": {
+          "groups": ["general"],
+          "type": "string",
+          "default": "-",
+          "description": "Separator between the service prefix and host when deriving default hostnames. Common values are '-' (backend-myhost.com) or '.' (backend.myhost.com)."
+        },
         "publicHosts": {
           "groups": ["general"],
           "type": "object",
-          "description": "Public URLs advertised by the application for redirects and callbacks. Overrides the default computed URLs. If not set, the URLs are computed from .Values.host and .Values.networking.subdomainSeparator. These URLs also determine the hostnames used in the Ingress rules, unless overridden per service via networking.ingressHosts.",
+          "description": "Per-service overrides for the public URLs the applications advertise. Leave a key unset to use the derived default https://<service><subdomainSeparator><host>. A URL set here also becomes the hostname of that service's Ingress rule (unless networking.ingressHosts overrides it), so overriding a URL alone is enough for a working deployment. In the server environment the URL must not contain a path \u2014 the Ingress routes a whole hostname at / \u2014 and rendering fails if it does.",
           "additionalProperties": false,
           "properties": {
             "backendUrl": {
               "groups": ["general"],
               "type": "string",
               "default": "",
-              "description": "Override the URL where the Loculus backend is publicly available. Example: https://api.loculus.x.y.com"
+              "description": "Public URL of the Loculus backend. Defaults to https://backend<subdomainSeparator><host>. Example: https://api.loculus.x.y.com"
             },
             "websiteUrl": {
               "groups": ["general"],
               "type": "string",
               "default": "",
-              "description": "Override the URL where the website is publicly available. Example: https://loculus.x.y.com"
+              "description": "Public URL of the website; also the base for the Keycloak redirect URIs. Defaults to https://<host>, so only set it when the website is not simply https://<host> \u2014 a non-HTTPS deployment, a non-default port, or a website domain unrelated to the other services. Setting it suppresses the automatic www. alias. Example: https://loculus.x.y.com"
             },
             "keycloakUrl": {
               "groups": ["general"],
               "type": "string",
               "default": "",
-              "description": "Override the URL where Keycloak is publicly available. Example: https://auth.loculus.x.y.com"
+              "description": "Public URL of Keycloak. Defaults to https://authentication<subdomainSeparator><host>. Example: https://auth.loculus.x.y.com"
             },
             "lapisUrlTemplate": {
               "groups": ["general"],
               "type": "string",
               "default": "",
-              "description": "Override the URL template for LAPIS instances. Must contain `%organism%` as a placeholder. Example: https://pathogen-api.loculus.x.y.com/%organism%"
+              "description": "Public URL template for the LAPIS instances; must contain `%organism%` as a placeholder, and in the server environment `/%organism%` must be the only path segment. Defaults to https://lapis<subdomainSeparator><host>/%organism%. Example: https://pathogen-api.loculus.x.y.com/%organism%"
             }
           }
         },
         "ingressHosts": {
           "groups": ["general"],
           "type": "object",
-          "description": "Escape hatch to override the hostname used in an individual service's Ingress rule, for the rare case where the hostname routed inside the cluster differs from the public URL (e.g. a CDN or reverse proxy in front). Each key defaults to the hostname of the corresponding networking.publicHosts URL.",
+          "description": "Per-service overrides for the hostname in a service's Ingress rule. Each key defaults to the hostname of the corresponding networking.publicHosts URL, which is almost always what you want; override only when the hostname routed inside the cluster must differ from the public URL, e.g. behind a CDN or an external reverse proxy that terminates the public name. An override here changes routing only \u2014 the URLs the applications advertise are unaffected.",
           "additionalProperties": false,
           "properties": {
             "website": {
               "type": "string",
-              "description": "Override hostname for the website Ingress. Defaults to the hostname of publicHosts.websiteUrl."
+              "description": "Hostname for the website Ingress rule. Defaults to the hostname of networking.publicHosts.websiteUrl."
             },
             "backend": {
               "type": "string",
-              "description": "Override hostname for the backend Ingress. Defaults to the hostname of publicHosts.backendUrl."
+              "description": "Hostname for the backend Ingress rule. Defaults to the hostname of networking.publicHosts.backendUrl."
             },
             "keycloak": {
               "type": "string",
-              "description": "Override hostname for the Keycloak Ingress. Defaults to the hostname of publicHosts.keycloakUrl."
+              "description": "Hostname for the keycloak Ingress rule. Defaults to the hostname of networking.publicHosts.keycloakUrl."
             },
             "lapis": {
               "type": "string",
-              "description": "Override hostname for the LAPIS Ingress. Defaults to the hostname of publicHosts.lapisUrlTemplate."
+              "description": "Hostname for the lapis Ingress rule. Defaults to the hostname of networking.publicHosts.lapisUrlTemplate."
             },
             "minio": {
               "type": "string",
-              "description": "Override hostname for the development MinIO Ingress. Defaults to s3<subdomainSeparator><host>."
+              "description": "Hostname for the Ingress rule of the development MinIO (only rendered with runDevelopmentS3). Defaults to s3<subdomainSeparator><host>."
             },
             "docs": {
               "type": "string",
-              "description": "Override hostname for the docs preview Ingress. Defaults to docs<subdomainSeparator><host>."
+              "description": "Hostname for the docs preview Ingress rule (only rendered with previewDocs). Defaults to docs<subdomainSeparator><host>."
             }
           }
-        },
-        "subdomainSeparator": {
-          "groups": ["general"],
-          "type": "string",
-          "default": "-",
-          "description": "Separator inserted between the subdomain prefix and the host when constructing default ingress hostnames. Used with .Values.host to form hostnames like backend<separator>myhost.com. Common values are '-' (for backend-myhost.com) or '.' (for backend.myhost.com)."
         },
         "enforceHTTPS": {
           "groups": ["general"],
           "type": "boolean",
           "default": true,
-          "description": "If true, adds a redirect middleware that redirects HTTP to HTTPS on all ingresses."
+          "description": "If true, attaches a middleware redirecting HTTP to HTTPS on all Ingress rules. When false, Keycloak additionally accepts the plaintext http:// variant of the website URL as a redirect URI."
         },
         "traefikVersion": {
           "groups": ["general"],
@@ -1710,7 +1774,9 @@
       "type": "object",
       "description": "An object where the keys are the organism IDs and values are an [Organism (type)](#organism-type)",
       "patternProperties": {
-        "^[a-z0-9-]+$": { "$ref": "#/definitions/organism" }
+        "^[a-z0-9-]+$": {
+          "$ref": "#/definitions/organism"
+        }
       }
     },
     "defaultOrganismConfig": {
@@ -1719,7 +1785,9 @@
     "defaultOrganisms": {
       "type": "object",
       "patternProperties": {
-        "^[a-z0-9-]+$": { "$ref": "#/definitions/organism" }
+        "^[a-z0-9-]+$": {
+          "$ref": "#/definitions/organism"
+        }
       }
     },
     "lineageSystemDefinitions": {
@@ -1863,12 +1931,16 @@
           "oneOf": [
             {
               "properties": {
-                "enabled": { "const": false }
+                "enabled": {
+                  "const": false
+                }
               }
             },
             {
               "properties": {
-                "enabled": { "const": true }
+                "enabled": {
+                  "const": true
+                }
               },
               "required": ["bucket"]
             }
@@ -1980,11 +2052,21 @@
       "type": "object",
       "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website` and `backend`.",
       "properties": {
-        "lapis": { "$ref": "#/definitions/imageSpec" },
-        "lapisSilo": { "$ref": "#/definitions/imageSpec" },
-        "loculusSilo": { "$ref": "#/definitions/imageSpec" },
-        "website": { "$ref": "#/definitions/imageSpec" },
-        "backend": { "$ref": "#/definitions/imageSpec" }
+        "lapis": {
+          "$ref": "#/definitions/imageSpec"
+        },
+        "lapisSilo": {
+          "$ref": "#/definitions/imageSpec"
+        },
+        "loculusSilo": {
+          "$ref": "#/definitions/imageSpec"
+        },
+        "website": {
+          "$ref": "#/definitions/imageSpec"
+        },
+        "backend": {
+          "$ref": "#/definitions/imageSpec"
+        }
       },
       "additionalProperties": false
     },
@@ -2049,16 +2131,24 @@
         "requests": {
           "type": "object",
           "properties": {
-            "memory": { "type": "string" },
-            "cpu": { "type": "string" }
+            "memory": {
+              "type": "string"
+            },
+            "cpu": {
+              "type": "string"
+            }
           },
           "additionalProperties": false
         },
         "limits": {
           "type": "object",
           "properties": {
-            "memory": { "type": "string" },
-            "cpu": { "type": "string" }
+            "memory": {
+              "type": "string"
+            },
+            "cpu": {
+              "type": "string"
+            }
           },
           "additionalProperties": false
         }
@@ -2068,35 +2158,75 @@
     "resources": {
       "type": "object",
       "properties": {
-        "website": { "$ref": "#/definitions/resourceSpec" },
-        "docs": { "$ref": "#/definitions/resourceSpec" },
-        "ena-submission": { "$ref": "#/definitions/resourceSpec" },
-        "ena-submission-list-cronjob": { "$ref": "#/definitions/resourceSpec" },
-        "ingest": { "$ref": "#/definitions/resourceSpec" },
-        "keycloak": { "$ref": "#/definitions/resourceSpec" },
-        "silo": { "$ref": "#/definitions/resourceSpec" },
-        "lapis": { "$ref": "#/definitions/resourceSpec" },
-        "silo-importer": { "$ref": "#/definitions/resourceSpec" },
-        "backend": { "$ref": "#/definitions/resourceSpec" },
-        "preprocessing": { "$ref": "#/definitions/resourceSpec" },
+        "website": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "docs": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "ena-submission": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "ena-submission-list-cronjob": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "ingest": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "keycloak": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "silo": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "lapis": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "silo-importer": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "backend": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "preprocessing": {
+          "$ref": "#/definitions/resourceSpec"
+        },
         "organismSpecific": {
           "type": "object",
           "patternProperties": {
             ".*": {
               "type": "object",
               "properties": {
-                "website": { "$ref": "#/definitions/resourceSpec" },
-                "ena-submission": { "$ref": "#/definitions/resourceSpec" },
+                "website": {
+                  "$ref": "#/definitions/resourceSpec"
+                },
+                "ena-submission": {
+                  "$ref": "#/definitions/resourceSpec"
+                },
                 "ena-submission-list-cronjob": {
                   "$ref": "#/definitions/resourceSpec"
                 },
-                "ingest": { "$ref": "#/definitions/resourceSpec" },
-                "keycloak": { "$ref": "#/definitions/resourceSpec" },
-                "silo": { "$ref": "#/definitions/resourceSpec" },
-                "lapis": { "$ref": "#/definitions/resourceSpec" },
-                "silo-importer": { "$ref": "#/definitions/resourceSpec" },
-                "backend": { "$ref": "#/definitions/resourceSpec" },
-                "preprocessing": { "$ref": "#/definitions/resourceSpec" }
+                "ingest": {
+                  "$ref": "#/definitions/resourceSpec"
+                },
+                "keycloak": {
+                  "$ref": "#/definitions/resourceSpec"
+                },
+                "silo": {
+                  "$ref": "#/definitions/resourceSpec"
+                },
+                "lapis": {
+                  "$ref": "#/definitions/resourceSpec"
+                },
+                "silo-importer": {
+                  "$ref": "#/definitions/resourceSpec"
+                },
+                "backend": {
+                  "$ref": "#/definitions/resourceSpec"
+                },
+                "preprocessing": {
+                  "$ref": "#/definitions/resourceSpec"
+                }
               },
               "additionalProperties": false
             }
