@@ -65,6 +65,9 @@ type ResolvedEntry = {
     file: LinkedFile | ReusedFile;
 };
 
+/**
+ * A linked or reused file with name and file ID, ready for submission.
+ */
 type ResolvedFile = {
     type: 'resolvedFile';
     name: string;
