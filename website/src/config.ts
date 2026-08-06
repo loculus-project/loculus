@@ -184,14 +184,6 @@ export function getSchema(organism: string): Schema {
     return getConfig(organism).schema;
 }
 
-/**
- * An {@link InputField} as it should appear in the downloadable submission template, tagged with
- * whether it is one of the fields enabled by default (a "template field") and with the field's
- * metadata `type` (used e.g. to format date columns). Default-enabled fields are ordered before the
- * remaining, opt-in fields.
- */
-export type TemplateInputField = InputField & { isTemplateField: boolean; metadataType?: MetadataType };
-
 export function getMetadataTemplateFields(
     organism: string,
     action: 'submit' | 'revise',
@@ -207,6 +199,14 @@ export function getMetadataTemplateFields(
     for (const field of getFileCategoryInputFields(schema)) fieldsToDisplaynames.set(field.name, field.displayName);
     return fieldsToDisplaynames;
 }
+
+/**
+ * An {@link InputField} as it should appear in the downloadable submission template, tagged with
+ * whether it is one of the fields enabled by default (a "template field") and with the field's
+ * metadata `type` (used e.g. to format date columns). Default-enabled fields are ordered before the
+ * remaining, opt-in fields.
+ */
+export type TemplateInputField = InputField & { isTemplateField: boolean; metadataType?: MetadataType };
 
 /**
  * Returns every submittable input field for the template download, in column order:
