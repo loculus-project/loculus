@@ -34,6 +34,11 @@ const restFields: TemplateInputField[] = [
 const orderedFields = [...submissionDetailFields, ...templateFields, ...restFields];
 
 vi.mock('../../../../config', () => ({
+    getMetadataTemplateFields: () =>
+        new Map<string, string | undefined>([
+            ['submissionId', undefined],
+            ['date', 'Collection date'],
+        ]),
     getOrderedTemplateInputFields: (organism: string) => {
         if (organism === 'test-organism') {
             return orderedFields;
@@ -80,7 +85,7 @@ describe('submission template API route', () => {
             'attachment; filename="Test_Organism_metadata_template.tsv"',
         );
         const text = await response.text();
-        expect(text).toBe('submissionId\tdate\tcountry\n');
+        expect(text).toBe('submissionId\tdate\n');
     });
 
     test('XLSX template has Data, Guidance and hidden _lists sheets, with Data first', async () => {
