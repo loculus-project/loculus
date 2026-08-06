@@ -115,7 +115,7 @@ describe('FolderUploadComponent', () => {
             });
 
             await userEvent.upload(input, file);
-            await waitFor(() => expect(screen.getByText('test.txt')).toBeInTheDocument());
+            await waitFor(() => expect(screen.getByTitle('submission1/test.txt')).toBeInTheDocument());
         });
 
         it('shows progress during multipart upload', async () => {
