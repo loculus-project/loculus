@@ -37,11 +37,11 @@ const FILES_DOUBLE: Record<string, string> = {
     'file2.fastq': EBOLA_SUDAN_SMALL_FASTQ(2),
 };
 
-// Tests upload files in subfolders grouped by submissionId
-// TODO: Update integration tests to move away from submission Id subfolders
-const filesColumnCell = (submissionId: string, files: Record<string, string>) =>
-    Object.keys(files)
-        .map((name) => `${name}::${submissionId}/${name}`)
+// File cells can be formatted either as a list of file names,
+// Or file names with file paths under a subfolder
+const filesColumnCell = (fileNames: string[], subfolder?: string) =>
+    fileNames
+        .map((name) => name + (subfolder !== undefined ? `::${subfolder}/${name}` : ''))
         .join(' ');
 
 test('submit single seq w/ 2 FASTQ files thru single seq submission form', async ({
@@ -113,14 +113,14 @@ test('bulk submit 2 seqs with 1 & 2 FASTQ files respectively', async ({
                 COUNTRY_1,
                 '2022-12-02',
                 SEQUENCING_INSTRUMENT,
-                filesColumnCell(ID_1, FILES_SINGLE),
+                filesColumnCell(Object.keys(FILES_SINGLE), ID_1),
             ],
             [
                 ID_2,
                 COUNTRY_2,
                 '2022-12-13',
                 SEQUENCING_INSTRUMENT,
-                filesColumnCell(ID_2, FILES_DOUBLE),
+                filesColumnCell(Object.keys(FILES_DOUBLE), ID_2),
             ],
         ],
     );
@@ -156,7 +156,7 @@ test('bulk submit 1 seq: discarding and reading a FASTQ file', async ({
                 COUNTRY_1,
                 '2023-01-01',
                 SEQUENCING_INSTRUMENT,
-                filesColumnCell(ID_1, FILES_DOUBLE),
+                filesColumnCell(Object.keys(FILES_DOUBLE), ID_1),
             ],
         ],
     );
@@ -189,7 +189,15 @@ test('bulk submit 1 seq with a 35 MB FASTQ file', async ({ page, groupId, tmpDir
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
     await submissionPage.uploadMetadataFile(
         [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
-        [[ID_1, COUNTRY_1, '2024-01-01', SEQUENCING_INSTRUMENT, filesColumnCell(ID_1, LARGE_FILE)]],
+        [
+            [
+                ID_1,
+                COUNTRY_1,
+                '2024-01-01',
+                SEQUENCING_INSTRUMENT,
+                filesColumnCell(Object.keys(LARGE_FILE), ID_1),
+            ],
+        ],
     );
     await submissionPage.uploadSequencesFile({ [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE });
     await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: LARGE_FILE }, tmpDir);
@@ -216,12 +224,12 @@ test('bulk submit blocks a submission with errors in file linkage or parsing', a
             error: 'Failed to parse file entry',
         },
         {
-            metadataFileEntries: filesColumnCell(ID_1, FILES_DOUBLE),
+            metadataFileEntries: filesColumnCell(Object.keys(FILES_DOUBLE), ID_1),
             uploadedFiles: file1,
             error: `referenced in metadata but not uploaded: ${ID_1}/${file2Name}`,
         },
         {
-            metadataFileEntries: filesColumnCell(ID_1, file1),
+            metadataFileEntries: filesColumnCell(Object.keys(file1), ID_1),
             uploadedFiles: FILES_DOUBLE,
             error: `uploaded but not referenced in metadata: ${ID_1}/${file2Name}`,
         },
@@ -309,7 +317,7 @@ test('bulk revise 2 seqs with files', async ({ page, groupId, tmpDir }) => {
             COUNTRY_1,
             '2022-02-01',
             SEQUENCING_INSTRUMENT,
-            filesColumnCell(revId1, REVISION_FILES),
+            filesColumnCell(Object.keys(REVISION_FILES), revId1),
         ],
         [
             accession2,
@@ -317,7 +325,7 @@ test('bulk revise 2 seqs with files', async ({ page, groupId, tmpDir }) => {
             COUNTRY_2,
             '2022-02-02',
             SEQUENCING_INSTRUMENT,
-            filesColumnCell(revId2, REVISION_FILES_2),
+            filesColumnCell(Object.keys(REVISION_FILES_2), revId2),
         ],
     ];
     await page.getByTestId('metadata_file').setInputFiles({
@@ -492,14 +500,14 @@ test('bulk revise can reuse, replace, discard and add files', async ({ page, gro
                 COUNTRY_1,
                 '2023-05-01',
                 SEQUENCING_INSTRUMENT,
-                filesColumnCell(ID_1, FILES_DOUBLE),
+                filesColumnCell(Object.keys(FILES_DOUBLE), ID_1),
             ],
             [
                 ID_2,
                 COUNTRY_2,
                 '2023-05-02',
                 SEQUENCING_INSTRUMENT,
-                filesColumnCell(ID_2, FILES_DOUBLE),
+                filesColumnCell(Object.keys(FILES_DOUBLE), ID_2),
             ],
         ],
     );
@@ -552,28 +560,41 @@ test('bulk revise can reuse, replace, discard and add files', async ({ page, gro
     }
     expect(downloadedMetadata).not.toContain('::');
 
-    // Step 3: The first entry reuses one file and replaces the other, while the second entry reuses
-    // one file, discards the other and adds a new one
+    // Step 3: The first entry reuses one file and replaces the other
+    // The second entry reuses one file, discards the other and adds a new one
     const [file1Name, file2Name] = Object.keys(FILES_DOUBLE);
+    const REPLACED_FILE = { [file2Name]: EBOLA_SUDAN_SMALL_FASTQ(3) };
     const ADDED_FILE = { 'file3.fastq': EBOLA_SUDAN_SMALL_FASTQ(2) };
-    const uploadedFiles: Record<string, Record<string, string>> = {
-        [ID_1]: { [file2Name]: FILES_DOUBLE[file1Name] },
-        [ID_2]: ADDED_FILE,
+    const uploadedFiles: Record<string, string | Record<string, string>> = {
+        // First entry replaces an existing file, uploaded in its submission ID subfolder
+        [ID_1]: REPLACED_FILE,
+        // Second entry adds a new file, uploaded without a subfolder
+        ...ADDED_FILE,
+    };
+
+    // Keep the entry's reused file, and declares the newly uploaded files alongside it
+    const reviseEntry = (id: string, reusedFileName: string, newFilesCell: string) => {
+        const row = entryRows.find((entryRow) => entryRow.split('\t')[idColumn] === id);
+        if (row === undefined)
+            throw new Error(`expected an entry for ${id} in:\n${downloadedMetadata}`);
+
+        const cells = row.split('\t');
+        const reusedEntry = cells[filesColumn]
+            .split(' ')
+            .find((entry) => entry.startsWith(`${reusedFileName}:`));
+        expect(
+            reusedEntry,
+            `expected a ${reusedFileName} entry for ${id} in: ${cells[filesColumn]}`,
+        ).toBeDefined();
+
+        cells[filesColumn] = [reusedEntry, newFilesCell].join(' ');
+        return cells.join('\t');
     };
 
     const revisionMetadata = [
         headerRow,
-        ...entryRows.map((row) => {
-            const cells = row.split('\t');
-            const id = cells[idColumn];
-
-            const reusedEntry = cells[filesColumn]
-                .split(' ')
-                .find((entry) => entry.startsWith(`${file1Name}:`));
-            expect(reusedEntry).toBeDefined();
-            cells[filesColumn] = [reusedEntry, filesColumnCell(id, uploadedFiles[id])].join(' ');
-            return cells.join('\t');
-        }),
+        reviseEntry(ID_1, file1Name, filesColumnCell(Object.keys(REPLACED_FILE), ID_1)),
+        reviseEntry(ID_2, file1Name, filesColumnCell(Object.keys(ADDED_FILE))),
     ].join('\n');
 
     // Step 4: Bulk submit the revised entries and release them
