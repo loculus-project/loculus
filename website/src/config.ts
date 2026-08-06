@@ -192,6 +192,22 @@ export function getSchema(organism: string): Schema {
  */
 export type TemplateInputField = InputField & { isTemplateField: boolean; metadataType?: MetadataType };
 
+export function getMetadataTemplateFields(
+    organism: string,
+    action: 'submit' | 'revise',
+): Map<string, string | undefined> {
+    const schema = getConfig(organism).schema;
+    const baseFields: string[] = schema.metadataTemplate ?? schema.inputFields.map((field) => field.name);
+    const submissionIdInputFields = getSubmissionIdInputFields(schema).map((field) => field.name);
+    const extraFields = action === 'submit' ? submissionIdInputFields : [ACCESSION_FIELD, ...submissionIdInputFields];
+    const allFields = [...extraFields, ...baseFields];
+    const fieldsToDisplaynames = new Map<string, string | undefined>(
+        allFields.map((field) => [field, schema.metadata.find((metadata) => metadata.name === field)?.displayName]),
+    );
+    for (const field of getFileCategoryInputFields(schema)) fieldsToDisplaynames.set(field.name, field.displayName);
+    return fieldsToDisplaynames;
+}
+
 /**
  * Returns every submittable input field for the template download, in column order:
  * submission-detail fields first, then the default-enabled "template" fields
