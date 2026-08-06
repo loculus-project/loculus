@@ -92,7 +92,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
 
             const submissionFileMapping = parseSubmissionFileMapping(
                 text,
-                submissionDataTypes.files?.categories?.map((c) => c.name) ?? [],
+                submissionDataTypes.files?.categories?.map((category) => category.name) ?? [],
             );
             setSubmissionFileMapping(submissionFileMapping);
             if (submissionFileMapping.isErr()) onError(submissionFileMapping.error.message);
@@ -113,7 +113,12 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                             return { type: 'error', errorMessage: 'Please specify an ID.' };
                         }
                         const fastaIds = enableConsensusSequences ? editableSequences.getFastaIds() : undefined;
-                        const metadataFile = editableMetadata.getMetadataTsv(undefined, undefined, fastaIds);
+                        const metadataFile = editableMetadata.getMetadataTsv(
+                            undefined,
+                            undefined,
+                            fastaIds,
+                            submissionDataTypes.files?.categories,
+                        );
                         if (!metadataFile) {
                             return { type: 'error', errorMessage: 'Please specify metadata.' };
                         }
