@@ -142,15 +142,14 @@ const InnerEditPage: FC<EditPageProps> = ({
                 sequenceFile,
             });
         } else {
-            const fileMappingForEdit =
-                extraFilesEnabled && fileMapping !== undefined
-                    ? Object.fromEntries(
-                          [...fileMapping].map(([category, files]) => [
-                              category,
-                              [...files.entries()].map(([path, fileId]) => ({ fileId, name: path })),
-                          ]),
-                      )
-                    : null;
+            let fileMappingForEdit = null;
+            if (extraFilesEnabled && fileMapping !== undefined)
+                fileMappingForEdit = Object.fromEntries(
+                    [...fileMapping].map(([category, files]) => [
+                        category,
+                        [...files.entries()].map(([path, fileId]) => ({ fileId, name: path })),
+                    ]),
+                );
             submitEdit({
                 accession: dataToEdit.accession,
                 version: dataToEdit.version,
