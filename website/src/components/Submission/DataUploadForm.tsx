@@ -345,6 +345,8 @@ const CategoryLinkageStatus = ({ categoryLinkage }: { categoryLinkage: CategoryL
                 key: 'linked',
                 icon: '✓',
                 color: 'text-green-500',
+                // Multiple metadata entries can reference the same file,
+                // so we want to count the number of unique files that are linked to metadata
                 count: Array.from(new Set(categoryLinkage.linked.map((file) => file.path))).length,
                 message: 'uploaded and linked to metadata!',
             },
