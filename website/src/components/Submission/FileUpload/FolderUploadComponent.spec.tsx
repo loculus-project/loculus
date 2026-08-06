@@ -97,7 +97,7 @@ describe('FolderUploadComponent', () => {
                 />,
             );
 
-            expect(screen.getByTestId('extraFiles')).toBeInTheDocument();
+expect(screen.getByText('Upload folder')).toBeInTheDocument();     expect(screen.getByTestId('extraFiles')).toBeInTheDocument();
             expect(screen.queryByTestId('discard_extraFiles')).not.toBeInTheDocument();
         });
 
