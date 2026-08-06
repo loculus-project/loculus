@@ -459,11 +459,7 @@ export async function applyFileMappings(
         .find((category) => !fileColumnsMap.has(category));
 
     if (missingCategory !== undefined)
-        return err(
-            new Error(
-                `Missing ${missingCategory} column. Please ensure this is included in the uploaded metadata file.`,
-            ),
-        );
+        return err(new Error(`Encountered unknown category ${missingCategory} not present in metadata.`));
 
     // Update the rows with file columns containing resolved file entries
     const updatedRows = rows.map((row) => {

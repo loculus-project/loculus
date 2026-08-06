@@ -104,6 +104,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                 dataToEdit.submissionId,
                 dataToEdit.accession,
                 fastaIds,
+                submissionDataTypes.files?.categories,
             );
             if (metadataFile === undefined) {
                 toast.error('Please enter metadata.', { position: 'top-center', autoClose: false });
