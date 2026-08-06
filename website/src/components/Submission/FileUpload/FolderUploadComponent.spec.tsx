@@ -50,15 +50,15 @@ const defaultProps = {
 
 // The fileMapping is keyed by category, then by file path, to its file ID. Previous uploads have no
 // upload path, so (within a single entry, where names are unique) they are keyed by their name.
-const fileMappingOf = (files: { fileId: string; name: string }[]) =>
-    new Map([['extraFiles', new Map(files.map((f) => [f.name, f.fileId]))]]);
+const fileMappingOf = (files: { fileId: string; path: string }[]) =>
+    new Map([['extraFiles', new Map(files.map((f) => [f.path, f.fileId]))]]);
 
 const defaultPropsWithFiles = {
     ...defaultProps,
     inputMode: 'form' as const,
     fileMapping: fileMappingOf([
-        { fileId: 'file-1', name: 'file-a.txt' },
-        { fileId: 'file-2', name: 'file-b.txt' },
+        { fileId: 'file-1', path: 'file-a.txt' },
+        { fileId: 'file-2', path: 'file-b.txt' },
     ]),
 };
 
@@ -289,7 +289,7 @@ describe('FolderUploadComponent', () => {
         it('reverts to the upload folder prompt and removes the category from the file mapping after discarding the last upload', async () => {
             const singleFileProps = {
                 ...defaultPropsWithFiles,
-                fileMapping: fileMappingOf([{ fileId: 'file-1', name: 'file-a.txt' }]),
+                fileMapping: fileMappingOf([{ fileId: 'file-1', path: 'file-a.txt' }]),
             };
             render(<FolderUploadComponent {...singleFileProps} />);
 
