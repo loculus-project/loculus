@@ -624,7 +624,7 @@ test('bulk revise can reuse, replace, discard and add files', async ({ page, gro
 
     await searchPage2.checkFileContentInModal('cell', COUNTRY_1, {
         [file1Name]: FILES_DOUBLE[file1Name],
-        [file2Name]: FILES_DOUBLE[file1Name],
+        ...REPLACED_FILE,
     });
 
     await searchPage2.openModalByRoleAndName('cell', COUNTRY_2);
