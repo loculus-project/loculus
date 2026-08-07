@@ -5,7 +5,7 @@ import { type FormEvent, useState, type Dispatch, type SetStateAction } from 're
 
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
-import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
+import { FolderUploadComponent, type FileCategoryStatus } from './FileUpload/FolderUploadComponent.tsx';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { backendApi } from '../../services/backendApi.ts';
@@ -17,7 +17,7 @@ import {
     restrictedDataUseTermsOption,
     type FilesBySubmissionId,
 } from '../../types/backend.ts';
-import type { FileCategory, InputField } from '../../types/config.ts';
+import { type FileCategory, type InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
@@ -67,6 +67,14 @@ const InnerDataUploadForm = ({
     const { submit, revise, isPending } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
     const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(undefined);
+    const [fileCategoryStatus, setFileCategoryStatus] = useState<FileCategoryStatus>(() => {
+        const status: FileCategoryStatus = {};
+        (submissionDataTypes.files?.categories ?? []).forEach((category) => {
+            status[category.name] = undefined;
+        });
+        return status;
+    });
+    const isFileUploadsPending = Object.values(fileCategoryStatus).some((status) => status === 'uploadInProgress');
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
@@ -100,6 +108,11 @@ const InnerDataUploadForm = ({
 
         if (dataUseTermsEnabled && !agreedToINSDCUploadTerms) {
             onError('Please tick the box to agree that you will not independently submit these sequences to INSDC');
+            return;
+        }
+
+        if (isFileUploadsPending) {
+            onError('Please wait for files to finish uploading before proceeding to Approval.');
             return;
         }
 
@@ -179,6 +192,7 @@ const InnerDataUploadForm = ({
                             onError={onError}
                             fileMapping={fileMapping}
                             setFileMapping={setFileMapping}
+                            setFileCategoryStatus={setFileCategoryStatus}
                         />
                         <hr />
                     </>
@@ -281,6 +295,7 @@ export const ExtraFilesUpload = ({
     fileCategories,
     fileMapping,
     setFileMapping,
+    setFileCategoryStatus,
     formSubmissionId,
     onError,
 }: {
@@ -291,6 +306,7 @@ export const ExtraFilesUpload = ({
     fileCategories: FileCategory[];
     fileMapping: FilesBySubmissionId | undefined;
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
+    setFileCategoryStatus: Dispatch<SetStateAction<FileCategoryStatus>>;
     formSubmissionId?: string;
     onError: (message: string) => void;
 }) => {
@@ -316,6 +332,7 @@ export const ExtraFilesUpload = ({
                         onError={onError}
                         fileMapping={fileMapping}
                         setFileMapping={setFileMapping}
+                        setFileCategoryStatus={setFileCategoryStatus}
                         formSubmissionId={formSubmissionId}
                     />
                 ))}
