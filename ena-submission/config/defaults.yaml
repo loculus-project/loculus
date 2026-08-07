@@ -29,7 +29,7 @@ min_between_publicness_checks: 720
 log_level: DEBUG
 metadata_fallback_fields:
   specimenCollectorSampleId: submissionId
-manifest_fields_mapping:
+assembly_manifest_fields_mapping:
   authors:
     loculus_fields: [authors]
     function: reformat_authors
@@ -41,8 +41,7 @@ manifest_fields_mapping:
     default: "Unknown"
   coverage:
     loculus_fields: [depthOfCoverage]
-    type: int
-    default: 1
+    default: "1"
   run_ref:
     loculus_fields: [insdcRawReadsAccession]
 #ena_checklist: ERC000033 - do not use until all fields are mapped to ENA accepted options

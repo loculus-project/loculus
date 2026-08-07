@@ -21,9 +21,12 @@ from .ena_submission_helper import (
     create_ena_assembly,
     create_flatfile,
     create_manifest,
-    get_authors,
     get_description,
     get_ena_analysis_process,
+    linked_accession_diff,
+    manifest_fields_diff,
+    resolve_manifest_field,
+    resolve_required_manifest_field,
     retry_failed_submissions_for_matching_errors,
     set_accession_does_not_exist_error,
 )
@@ -38,8 +41,6 @@ from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
     AccessionVersion,
     AssemblyTableEntry,
-    ProjectTableEntry,
-    SampleTableEntry,
     Status,
     StatusAll,
     SubmissionTableEntry,
@@ -48,6 +49,8 @@ from .submission_db_helper import (
     find_conditions_in_db,
     find_errors_or_stuck_in_db,
     find_waiting_in_db,
+    get_last_entry,
+    get_project_and_sample_results,
     is_latest_revision,
     is_revision,
     previous_version,
@@ -103,66 +106,6 @@ def get_segment_order(unaligned_sequences: dict[str, str | None]) -> list[str]:
     return sorted(segment_order)
 
 
-def get_address(config: Config, submission_row: SubmissionTableEntry) -> str | None:
-    if not config.is_broker:
-        return None
-    try:
-        group_details = call_loculus.get_group_info(config, submission_row.seq_metadata["groupId"])
-    except Exception as e:
-        logger.error(
-            f"Failed to fetch group info for groupId={submission_row.seq_metadata['groupId']}\n"
-            f"{traceback.format_exc()}"
-        )
-        msg = (
-            "Failed to fetch group info from Loculus for group: "
-            f"{submission_row.seq_metadata['groupId']}, {e}"
-        )
-        raise RuntimeError(msg) from e
-    address = group_details.address
-    address_list = [
-        submission_row.center_name,  # corresponds to Loculus' "Institution" group field
-        address.city,
-        address.state,
-        address.country,
-    ]
-    address_string = ", ".join([x for x in address_list if x])
-    logger.debug("Created address from group_info")
-    return address_string
-
-
-def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) -> dict[str, str]:
-    assembly_values = {}
-    for key in config.manifest_fields_mapping:
-        default = config.manifest_fields_mapping[key].default
-        loculus_fields = config.manifest_fields_mapping[key].loculus_fields
-        type = config.manifest_fields_mapping[key].type
-        function = config.manifest_fields_mapping[key].function
-        if type == "int":
-            if len(loculus_fields) != 1:
-                msg = (
-                    "Only one loculus field allowed for int type but found: len(loculus_fields): "
-                    f"{len(loculus_fields)} for key: {key}. Fields: {loculus_fields}."
-                )
-                raise ValueError(msg)
-            try:
-                value = str(int(metadata.get(loculus_fields[0])))  # type: ignore
-            except TypeError:
-                value = default  # type: ignore
-        else:
-            values = [
-                metadata.get(loculus_field)
-                for loculus_field in loculus_fields
-                if metadata.get(loculus_field)
-            ]
-            value = default or None if not values else ", ".join(values)  # type: ignore
-        if function == "reformat_authors":
-            value = get_authors(str(value))
-        if not config.is_broker and key == "authors":
-            continue
-        assembly_values[key] = value
-    return assembly_values
-
-
 def make_assembly_name(accession: str, version: int) -> str:
     """
     Create a unique assembly name based on accession, version and timestamp.
@@ -210,7 +153,7 @@ def create_manifest_object(
 
     flat_file = create_flatfile(config, metadata, ena_organism, unaligned_nucleotide_sequences, dir)
 
-    assembly_values = get_assembly_values_in_metadata(config, metadata)
+    assembly_manifest_fields_mapping = config.assembly_manifest_fields_mapping
 
     try:
         manifest = AssemblyManifest(
@@ -221,8 +164,26 @@ def create_manifest_object(
             chromosome_list=chromosome_list_file,
             description=get_description(config, metadata),
             moleculetype=ena_organism.molecule_type,
-            **assembly_values,  # type: ignore
-            address=get_address(config, submission_row),
+            platform=resolve_required_manifest_field(
+                assembly_manifest_fields_mapping["platform"], metadata
+            ),
+            program=resolve_required_manifest_field(
+                assembly_manifest_fields_mapping["program"], metadata
+            ),
+            coverage=resolve_required_manifest_field(
+                assembly_manifest_fields_mapping["coverage"], metadata
+            ),
+            authors=resolve_manifest_field(assembly_manifest_fields_mapping["authors"], metadata)
+            if config.is_broker
+            else None,
+            run_ref=resolve_manifest_field(assembly_manifest_fields_mapping["run_ref"], metadata),
+            address=call_loculus.get_address(
+                config,
+                submission_row.center_name,  # type: ignore
+                submission_row.seq_metadata["groupId"],
+            )
+            if config.is_broker
+            else None,
         )
     except Exception as e:
         # log traceback for better debugging
@@ -351,27 +312,9 @@ def manifest_fields_changed(
     submission_row: SubmissionTableEntry,
     last_version_entry: SubmissionTableEntry,
 ) -> bool:
-    differing_fields = {}
-    for mapping in config.manifest_fields_mapping.values():
-        loculus_field_names = mapping.loculus_fields
-        for loculus_field_name in loculus_field_names:
-            last_entry = last_version_entry.seq_metadata.get(loculus_field_name)
-            new_entry = submission_row.seq_metadata.get(loculus_field_name)
-            if loculus_field_name == "authors":
-                try:
-                    last_entry = get_authors(last_entry) if last_entry else last_entry
-                    new_entry = get_authors(new_entry) if new_entry else new_entry
-                except Exception as e:
-                    logger.error(
-                        f"Error formatting authors field for comparison: {e}. "
-                        f"Traceback: {traceback.format_exc()}"
-                    )
-                    differing_fields[loculus_field_name] = (
-                        f"Last: {last_entry}, New: {new_entry}, Error reformatting: {e}"
-                    )
-                    continue
-            if last_entry != new_entry:
-                differing_fields[loculus_field_name] = f"Last: {last_entry}, New: {new_entry}, "
+    differing_fields = manifest_fields_diff(
+        config.assembly_manifest_fields_mapping, submission_row, last_version_entry
+    )
     if differing_fields:
         error = (
             "Assembly cannot be revised because metadata fields in manifest would change from "
@@ -400,17 +343,7 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
     seq_key = submission_row.pkey
     if not is_latest_revision(db_engine, seq_key):
         return False
-    version_to_revise = previous_version(db_engine, seq_key)
-    last_version_rows = find_conditions_in_db(
-        db_engine,
-        SubmissionTableEntry,
-        conditions={"accession": submission_row.accession, "version": version_to_revise},
-    )
-    if len(last_version_rows) == 0:
-        error_msg = f"Last version {version_to_revise} not found in submission_table"
-        raise RuntimeError(error_msg)
-
-    last_version_entry = last_version_rows[0]
+    last_version_entry = get_last_entry(db_engine, seq_key)
 
     previous_sample_accession, previous_study_accession = get_project_and_sample_results(
         db_engine, last_version_entry
@@ -419,36 +352,19 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
         f"Previous sample accession: {previous_sample_accession}, "
         f"previous study accession: {previous_study_accession}"
     )
-    if submission_row.seq_metadata.get("biosampleAccession"):
-        new_sample_accession = submission_row.seq_metadata["biosampleAccession"]
-        if previous_sample_accession != new_sample_accession:
-            error = (
-                "Assembly cannot be revised because biosampleAccession in new version: "
-                f"{new_sample_accession} differs from last version: {previous_sample_accession}"
-            )
-            logger.error(error)
-            update_assembly_error(
-                db_engine,
-                [error],
-                seq_key=asdict(submission_row.pkey),
-                update_type="revision",
-            )
-            return False
-    if submission_row.seq_metadata.get("bioprojectAccession"):
-        new_project_accession = submission_row.seq_metadata["bioprojectAccession"]
-        if new_project_accession != previous_study_accession:
-            error = (
-                "Assembly cannot be revised because bioprojectAccession in new version: "
-                f"{new_project_accession} differs from last version: {previous_study_accession}"
-            )
-            logger.error(error)
-            update_assembly_error(
-                db_engine,
-                [error],
-                seq_key=asdict(submission_row.pkey),
-                update_type="revision",
-            )
-            return False
+    linked_accession_mismatches = linked_accession_diff(
+        submission_row, previous_sample_accession, previous_study_accession
+    )
+    if linked_accession_mismatches:
+        error = (
+            "Assembly cannot be revised because linked accessions in new version differ from "
+            f"last version: {json.dumps(linked_accession_mismatches)}"
+        )
+        logger.error(error)
+        update_assembly_error(
+            db_engine, [error], seq_key=asdict(submission_row.pkey), update_type="revision"
+        )
+        return False
     if config.allow_revision_with_manifest_changes:
         logger.debug(
             "allow_revision_with_manifest_changes=True, skipping manifest field comparison"
@@ -457,27 +373,19 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
     return not manifest_fields_changed(config, db_engine, submission_row, last_version_entry)
 
 
-def is_flatfile_data_changed(db_engine: Engine, submission_row: SubmissionTableEntry) -> bool:
+def has_assembly_data_changed(
+    config: Config, db_engine: Engine, submission_row: SubmissionTableEntry
+) -> bool:
     """
-    Check if change in sequence or flatfile metadata has occurred since last version.
+    Check if there have been changes in the: sequence, flatfile or manifest
+    (if config.allow_revision_with_manifest_changes is true) metadata since last version.
     """
-    seq_key = submission_row.pkey
-    version_to_revise = previous_version(db_engine, seq_key)
-    last_version_rows = find_conditions_in_db(
-        db_engine,
-        SubmissionTableEntry,
-        conditions={"accession": seq_key.accession, "version": version_to_revise},
-    )
-    if len(last_version_rows) == 0:
-        error_msg = f"Last version {version_to_revise} not found in submission_table"
-        raise RuntimeError(error_msg)
-
-    last_entry = last_version_rows[0]
+    last_entry = get_last_entry(db_engine, submission_row.pkey)
 
     if submission_row.unaligned_nucleotide_sequences != last_entry.unaligned_nucleotide_sequences:
         logger.debug(
-            f"Unaligned nucleotide sequences have changed for {seq_key.accession}, "
-            f"from {version_to_revise} to {seq_key.version} - should be revised"
+            f"Unaligned nucleotide sequences have changed for {submission_row.accession}, "
+            f"from {last_entry.version} to {submission_row.version} - should be revised"
             "(Metadata maybe also changed.)"
         )
         return True
@@ -497,8 +405,16 @@ def is_flatfile_data_changed(db_engine: Engine, submission_row: SubmissionTableE
                 f"for {submission_row.accession}. (Maybe other fields changed as well)"
             )
             return True
+    if config.allow_revision_with_manifest_changes and manifest_fields_diff(
+        config.assembly_manifest_fields_mapping, submission_row, last_entry
+    ):
+        logger.debug(
+            f"Manifest fields have changed for {submission_row.accession}, "
+            f"from {last_entry.version} to {submission_row.version} - should be revised"
+        )
+        return True
     logger.debug(
-        f"No changes detected for {submission_row.accession} from version {version_to_revise} "
+        f"No changes detected for {submission_row.accession} from version {last_entry.version} "
         f"to {submission_row.version}"
     )
     return False
@@ -532,39 +448,6 @@ def update_assembly_results_with_latest_version(db_engine: Engine, seq_key: Acce
         model_class=AssemblyTableEntry,
         reraise=False,
     )
-
-
-def get_project_and_sample_results(
-    db_engine: Engine, submission_row: SubmissionTableEntry
-) -> tuple[str, str]:
-    seq_key = {"accession": submission_row.accession, "version": submission_row.version}
-
-    sample_rows = find_conditions_in_db(db_engine, SampleTableEntry, conditions=seq_key)
-    if len(sample_rows) == 0:
-        error_msg = f"Entry {submission_row.accession} not found in sample_table"
-        raise RuntimeError(error_msg)
-
-    project_rows = find_conditions_in_db(
-        db_engine,
-        ProjectTableEntry,
-        conditions={"project_id": submission_row.project_id},
-    )
-    if len(project_rows) == 0:
-        error_msg = f"Entry {submission_row.accession} not found in project_table"
-        raise RuntimeError(error_msg)
-    sample_accession = (
-        sample_rows[0].result.get("ena_sample_accession") if sample_rows[0].result else None
-    )
-    study_accession = (
-        project_rows[0].result.get("bioproject_accession") if project_rows[0].result else None
-    )
-    if not sample_accession or not study_accession:
-        error_msg = (
-            f"Missing sample_accession or study_accession for accession {submission_row.accession} "
-            "cannot create manifest"
-        )
-        raise RuntimeError(error_msg)
-    return cast(str, sample_accession), cast(str, study_accession)
 
 
 def assembly_table_create(db_engine: Engine, config: Config):
@@ -604,7 +487,8 @@ def assembly_table_create(db_engine: Engine, config: Config):
             logger.debug(f"Entry {row.accession} is a revision, checking if it can be revised")
             if not can_be_revised(config, db_engine, submission_row):
                 continue
-            if not is_flatfile_data_changed(db_engine, submission_row):
+            if not has_assembly_data_changed(config, db_engine, submission_row):
+                # Do not revise assembly if there are no changes
                 update_assembly_results_with_latest_version(db_engine, seq_key)
                 continue
 
