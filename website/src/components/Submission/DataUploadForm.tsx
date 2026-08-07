@@ -247,28 +247,32 @@ export const InputModeTabs = ({
             inputMode,
         });
 
+    const tabs: { inputMode: InputMode; label: string }[] =
+        action === 'revise'
+            ? [
+                  { inputMode: 'form', label: 'Revise single sequence' },
+                  { inputMode: 'bulk', label: 'Upload bulk revisions' },
+              ]
+            : [
+                  { inputMode: 'bulk', label: 'Upload bulk sequences' },
+                  { inputMode: 'form', label: 'Submit individual sequence entry using a form' },
+              ];
+
     return (
         <div className='flex border-b'>
-            <a
-                className={`py-2 px-4 border-b-2 ${
-                    currentInputMode === 'bulk'
-                        ? 'border-primary-600 text-primary-600'
-                        : 'border-transparent text-gray-500'
-                } hover:text-primary-600`}
-                href={inputModeUrl('bulk')}
-            >
-                Upload bulk sequences
-            </a>
-            <a
-                className={`py-2 px-4 border-b-2 ${
-                    currentInputMode === 'form'
-                        ? 'border-primary-600 text-primary-600'
-                        : 'border-transparent text-gray-500'
-                } hover:text-primary-600`}
-                href={inputModeUrl('form')}
-            >
-                {`${action === 'submit' ? 'Submit' : 'Revise'} individual sequence entry using a form`}
-            </a>
+            {tabs.map(({ inputMode, label }) => (
+                <a
+                    key={inputMode}
+                    className={`py-2 px-4 border-b-2 ${
+                        currentInputMode === inputMode
+                            ? 'border-primary-600 text-primary-600'
+                            : 'border-transparent text-gray-500'
+                    } hover:text-primary-600`}
+                    href={inputModeUrl(inputMode)}
+                >
+                    {label}
+                </a>
+            ))}
         </div>
     );
 };
