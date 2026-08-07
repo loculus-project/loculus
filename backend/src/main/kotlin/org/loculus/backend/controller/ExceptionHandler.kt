@@ -116,10 +116,16 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
     fun handleServiceUnavailableException(e: ServiceUnavailableException): ResponseEntity<ProblemDetail> {
         log.info { "Caught service unavailable exception: ${e.message}" }
 
-        return responseEntity(
-            HttpStatus.SERVICE_UNAVAILABLE,
-            e.message,
-        )
+        val response = ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+        e.retryAfterSeconds?.let { response.header(HttpHeaders.RETRY_AFTER, it.toString()) }
+        return response
+            .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .body(
+                ProblemDetail.forStatusAndDetail(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    e.message ?: HttpStatus.SERVICE_UNAVAILABLE.reasonPhrase,
+                ),
+            )
     }
 
     private fun responseEntity(httpStatus: HttpStatus, detail: String?): ResponseEntity<ProblemDetail> =
@@ -171,4 +177,4 @@ class NotFoundException(message: String) : RuntimeException(message)
 class ProcessingValidationException(message: String) : RuntimeException(message)
 class DuplicateKeyException(message: String) : RuntimeException(message)
 class ConflictException(message: String) : RuntimeException(message)
-class ServiceUnavailableException(message: String) : RuntimeException(message)
+class ServiceUnavailableException(message: String, val retryAfterSeconds: Long? = null) : RuntimeException(message)

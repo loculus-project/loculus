@@ -35,6 +35,7 @@ def make_config(
         hard_refresh_interval=hard_refresh_interval,
         poll_interval=1,
         silo_run_timeout=silo_run_timeout,
+        download_timeout=5,
         root_dir=tmp_path,
         silo_binary=tmp_path / "silo",
         preprocessing_config=tmp_path / "config.yaml",

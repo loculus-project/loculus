@@ -84,7 +84,10 @@ inline fun <reified T> ResultActions.expectNdjsonAndGetContent(): List<T> {
 }
 
 fun awaitResponse(result: MvcResult): String {
-    result.getAsyncResult()
+    val asyncResult = result.getAsyncResult()
+    if (asyncResult is Throwable) {
+        throw asyncResult
+    }
 
     return result.response.contentAsString
 }

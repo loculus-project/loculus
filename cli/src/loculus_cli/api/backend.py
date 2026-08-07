@@ -15,6 +15,13 @@ from .models import (
     UnprocessedData,
 )
 
+DEFAULT_HTTP_TIMEOUT_SECONDS = 30.0
+RELEASED_DATA_READ_TIMEOUT_SECONDS = 3600.0
+RELEASED_DATA_TIMEOUT = httpx.Timeout(
+    DEFAULT_HTTP_TIMEOUT_SECONDS,
+    read=RELEASED_DATA_READ_TIMEOUT_SECONDS,
+)
+
 
 class BackendClient:
     """Client for Loculus backend API."""
@@ -24,7 +31,7 @@ class BackendClient:
         self.auth_client = auth_client
         self.client = httpx.Client(
             base_url=instance_config.backend_url,
-            timeout=30.0,
+            timeout=DEFAULT_HTTP_TIMEOUT_SECONDS,
             follow_redirects=True,
         )
 
@@ -198,7 +205,11 @@ class BackendClient:
         }
 
         try:
-            response = self.client.get(f"/{organism}/get-released-data", params=params)
+            response = self.client.get(
+                f"/{organism}/get-released-data",
+                params=params,
+                timeout=RELEASED_DATA_TIMEOUT,
+            )
             response.raise_for_status()
             return response.content
         except httpx.HTTPStatusError as e:

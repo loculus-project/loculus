@@ -12,10 +12,10 @@ kind: Deployment
 metadata:
   name: loculus-silo-{{ $key }}
   annotations:
-    # Force replace when run a) with dev db and b) without persistence to ensure silo prepro fails loudly
+    # Recreate SILO for disposable databases so import failures stay visible.
     argocd.argoproj.io/sync-options: Replace=true{{ if (and (not $.Values.developmentDatabasePersistence) $.Values.runDevelopmentMainDatabase) }},Force=true{{ end }}
 spec:
-  progressDeadlineSeconds: 1200  # 20 minute timeout to allow for long silo imports e.g. mpox
+  progressDeadlineSeconds: {{ $.Values.siloImport.progressDeadlineSeconds }}
   replicas: 1
   selector:
     matchLabels:
@@ -106,6 +106,8 @@ spec:
               value: {{ $.Values.siloImport.hardRefreshIntervalSeconds | quote }}
             - name: SILO_IMPORT_POLL_INTERVAL_SECONDS
               value: {{ $.Values.siloImport.pollIntervalSeconds | quote }}
+            - name: SILO_IMPORT_DOWNLOAD_TIMEOUT_SECONDS
+              value: {{ $.Values.siloImport.downloadTimeoutSeconds | quote }}
             - name: PATH_TO_SILO_BINARY
               value: "/usr/local/bin/silo"
             - name: PREPROCESSING_CONFIG
