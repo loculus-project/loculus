@@ -66,7 +66,6 @@ interface SubmissionParams {
     val authenticatedUser: AuthenticatedUser
     val metadataFile: MultipartFile
     val sequenceFile: MultipartFile?
-    val files: SubmissionIdFilesMap?
     val uploadType: UploadType
 
     data class OriginalSubmissionParams(
@@ -74,7 +73,6 @@ interface SubmissionParams {
         override val authenticatedUser: AuthenticatedUser,
         override val metadataFile: MultipartFile,
         override val sequenceFile: MultipartFile?,
-        override val files: SubmissionIdFilesMap?,
         val groupId: Int,
         val dataUseTerms: DataUseTerms,
     ) : SubmissionParams {
@@ -86,7 +84,6 @@ interface SubmissionParams {
         override val authenticatedUser: AuthenticatedUser,
         override val metadataFile: MultipartFile,
         override val sequenceFile: MultipartFile?,
-        override val files: SubmissionIdFilesMap?,
     ) : SubmissionParams {
         override val uploadType: UploadType = UploadType.REVISION
     }
@@ -134,15 +131,6 @@ class SubmitModel(
                 "Processing submission (type: ${submissionParams.uploadType.name}) with uploadId $uploadId"
             }
 
-            submissionMetrics.timeWritePhase(endpoint, organism, VALIDATE_UPLOAD_PHASE) {
-                submissionIdFilesMappingPreconditionValidator
-                    .validateFilenameCharacters(submissionParams.files)
-                    .validateFilenamesAreUnique(submissionParams.files)
-                    .validateCategoriesMatchSchema(submissionParams.files, submissionParams.organism)
-                    .validateMultipartUploads(submissionParams.files)
-                    .validateFilesExist(submissionParams.files)
-            }
-
             submissionMetrics.timeWritePhase(endpoint, organism, COPY_TO_AUX_TABLE_PHASE) {
                 insertDataIntoAux(
                     uploadId,
@@ -182,11 +170,6 @@ class SubmitModel(
             }
 
             submissionMetrics.timeWritePhase(endpoint, organism, VALIDATE_FILE_MAPPING_PHASE) {
-                // File mappings in submissionParams can contain submission Ids not present in the metadata
-                // This is implicitly validated for the file mappings within the metadata column
-                // TODO: This can be removed once file mappings JSON support is removed
-                submissionParams.files?.let { validateSubmissionIdSetsForFiles(metadataSubmissionIds, it.keys) }
-
                 val files = uploadDatabaseService.getFilesForUpload(uploadId)
                 if (files.isNotEmpty()) {
                     submissionIdFilesMappingPreconditionValidator
@@ -332,7 +315,6 @@ class SubmitModel(
                                 submittedOrganism = submissionParams.organism,
                                 uploadedMetadataBatch = batch,
                                 uploadedAt = now,
-                                files = submissionParams.files,
                             )
                         }
                 }
@@ -347,7 +329,6 @@ class SubmitModel(
                                 submittedOrganism = submissionParams.organism,
                                 uploadedRevisedMetadataBatch = batch,
                                 uploadedAt = now,
-                                files = submissionParams.files,
                             )
                         }
                 }
@@ -428,16 +409,6 @@ class SubmitModel(
                 ""
             }
             throw UnprocessableEntityException(metadataNotPresentErrorText + sequenceNotPresentErrorText)
-        }
-    }
-
-    private fun validateSubmissionIdSetsForFiles(metadataKeysSet: Set<SubmissionId>, filesKeysSet: Set<SubmissionId>) {
-        val filesKeysNotInMetadata = filesKeysSet.subtract(metadataKeysSet)
-        if (filesKeysNotInMetadata.isNotEmpty()) {
-            throw UnprocessableEntityException(
-                "File upload contains ${filesKeysNotInMetadata.size} submissionIds that are not present in the " +
-                    "metadata file: " + filesKeysNotInMetadata.toList().joinToString(limit = 10) { "'$it'" },
-            )
         }
     }
 

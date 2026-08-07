@@ -169,21 +169,24 @@ class SubmitEndpointTest(
     }
 
     @Test
-    fun `GIVEN submission with file mapping THEN returns an error`() {
+    fun `GIVEN submission with file mapping for organism without file support THEN returns an error`() {
         submissionControllerClient.submit(
-            DefaultFiles.metadataFile,
+            DefaultFiles.multiSegmentedMetadataFile.withFileMapping(
+                mapOf("custom0" to mapOf("bar" to listOf(FileIdAndName(UUID.randomUUID(), "baz")))),
+            ),
             DefaultFiles.sequencesFileMultiSegmented,
             organism = OTHER_ORGANISM,
             groupId = groupId,
-            fileMapping = mapOf("foo" to mapOf("bar" to listOf(FileIdAndName(UUID.randomUUID(), "baz")))),
         )
-            .andExpect(status().isBadRequest)
+            .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
                 ).value(
-                    "the otherOrganism organism does not support file submission.",
+                    containsString(
+                        "The category bar is not part of the configured submission categories for otherOrganism.",
+                    ),
                 ),
             )
     }

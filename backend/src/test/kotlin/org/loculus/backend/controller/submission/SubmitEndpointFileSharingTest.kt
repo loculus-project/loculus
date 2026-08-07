@@ -50,13 +50,12 @@ class SubmitEndpointFileSharingTest(
         convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT, fileIdAndUrl.headers)
 
         submissionControllerClient.submit(
-            DefaultFiles.metadataFile,
+            DefaultFiles.metadataFile.withFileMapping(
+                mapOf("custom0" to mapOf("myFileCategory" to listOf(FileIdAndName(fileIdAndUrl.fileId, "foo.txt")))),
+            ),
             DefaultFiles.sequencesFile,
             organism = DEFAULT_ORGANISM,
             groupId = groupId,
-            fileMapping = mapOf(
-                "custom0" to mapOf("myFileCategory" to listOf(FileIdAndName(fileIdAndUrl.fileId, "foo.txt"))),
-            ),
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
@@ -67,52 +66,16 @@ class SubmitEndpointFileSharingTest(
     }
 
     @Test
-    fun `GIVEN a non-existing submission ID is given in submit THEN the request is not valid`() {
-        val fileIdAndUrl = filesClient.requestUploads(groupId).andGetFileIdsAndUrls()[0]
-        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT, fileIdAndUrl.headers)
-
-        submissionControllerClient.submit(
-            DefaultFiles.metadataFile,
-            DefaultFiles.sequencesFile,
-            organism = DEFAULT_ORGANISM,
-            groupId = groupId,
-            fileMapping = mapOf(
-                "foobar" to
-                    mapOf(
-                        "myFileCategory" to listOf(
-                            FileIdAndName(fileIdAndUrl.fileId, "foo.txt"),
-                        ),
-                    ),
-            ),
-        )
-            .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
-            .andExpect(
-                jsonPath(
-                    "\$.detail",
-                ).value(
-                    "File upload contains 1 submissionIds that are not present in the metadata file: 'foobar'",
-                ),
-            )
-    }
-
-    @Test
     fun `GIVEN a non-existing file ID is given in submit THEN the request is not valid`() {
         val randomId = UUID.randomUUID()
 
         submissionControllerClient.submit(
-            DefaultFiles.metadataFile,
+            DefaultFiles.metadataFile.withFileMapping(
+                mapOf("custom0" to mapOf("myFileCategory" to listOf(FileIdAndName(randomId, "bar.txt")))),
+            ),
             DefaultFiles.sequencesFile,
             organism = DEFAULT_ORGANISM,
             groupId = groupId,
-            fileMapping = mapOf(
-                "custom0" to
-                    mapOf(
-                        "myFileCategory" to listOf(
-                            FileIdAndName(randomId, "bar.txt"),
-                        ),
-                    ),
-            ),
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
@@ -138,14 +101,12 @@ class SubmitEndpointFileSharingTest(
         convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT, fileIdAndUrl.headers)
 
         submissionControllerClient.submit(
-            DefaultFiles.metadataFile,
+            DefaultFiles.metadataFile.withFileMapping(
+                mapOf("custom0" to mapOf("myFileCategory" to listOf(FileIdAndName(fileIdAndUrl.fileId, "foo.txt")))),
+            ),
             DefaultFiles.sequencesFile,
             organism = DEFAULT_ORGANISM,
             groupId = groupId,
-            fileMapping = mapOf(
-                "custom0" to
-                    mapOf("myFileCategory" to listOf(FileIdAndName(fileIdAndUrl.fileId, "foo.txt"))),
-            ),
         )
             .andExpect(status().isBadRequest())
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
@@ -161,24 +122,29 @@ class SubmitEndpointFileSharingTest(
         val fileIds = filesClient.requestUploads(groupId, 2).andGetFileIds()
 
         submissionControllerClient.submit(
-            DefaultFiles.metadataFile,
+            DefaultFiles.metadataFile.withFileMapping(
+                mapOf(
+                    "custom0" to mapOf(
+                        "myFileCategory" to listOf(
+                            FileIdAndName(fileIds[0], "foo.txt"),
+                            FileIdAndName(fileIds[1], "foo.txt"),
+                        ),
+                    ),
+                ),
+            ),
             DefaultFiles.sequencesFile,
             organism = DEFAULT_ORGANISM,
             groupId = groupId,
-            fileMapping = mapOf(
-                "custom0" to
-                    mapOf(
-                        "myFileCategory" to
-                            listOf(FileIdAndName(fileIds[0], "foo.txt"), FileIdAndName(fileIds[1], "foo.txt")),
-                    ),
-            ),
         )
             .andExpect(status().isUnprocessableEntity())
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                ).value("The files in category myFileCategory contain duplicate file names: foo.txt"),
+                ).value(
+                    "In metadata file: record #1 with id 'custom0': found duplicate file names in column " +
+                        "'files.myFileCategory': foo.txt",
+                ),
             )
     }
 
@@ -187,17 +153,12 @@ class SubmitEndpointFileSharingTest(
         val fileIds = filesClient.requestUploads(groupId).andGetFileIds()
 
         submissionControllerClient.submit(
-            DefaultFiles.metadataFile,
+            DefaultFiles.metadataFile.withFileMapping(
+                mapOf("custom0" to mapOf("unknownCategory" to listOf(FileIdAndName(fileIds[0], "foo.txt")))),
+            ),
             DefaultFiles.sequencesFile,
             organism = DEFAULT_ORGANISM,
             groupId = groupId,
-            fileMapping = mapOf(
-                "custom0" to
-                    mapOf(
-                        "unknownCategory" to
-                            listOf(FileIdAndName(fileIds[0], "foo.txt")),
-                    ),
-            ),
         )
             .andExpect(status().isUnprocessableEntity())
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
@@ -217,17 +178,12 @@ class SubmitEndpointFileSharingTest(
         val fileIds = filesClient.requestUploads(groupId).andGetFileIds()
 
         submissionControllerClient.submit(
-            DefaultFiles.metadataFile,
+            DefaultFiles.metadataFile.withFileMapping(
+                mapOf("custom0" to mapOf("myFileCategory" to listOf(FileIdAndName(fileIds[0], "foo.txt")))),
+            ),
             DefaultFiles.sequencesFile,
             organism = DEFAULT_ORGANISM,
             groupId = groupId,
-            fileMapping = mapOf(
-                "custom0" to
-                    mapOf(
-                        "myFileCategory" to
-                            listOf(FileIdAndName(fileIds[0], "foo.txt")),
-                    ),
-            ),
         )
             .andExpect(status().isUnprocessableEntity())
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
