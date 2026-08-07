@@ -94,7 +94,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                         onClick={() => setExportModalVisible(true)}
                     >
                         <MdiDownload className='w-4 h-4' />
-                        <span className='hidden sm:block'>Export / Cite</span>
+                        <span className='hidden sm:block'>Export</span>
                     </Button>
                     <Button
                         variant='outline'
@@ -154,7 +154,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                 className='min-h-[60vh]'
             >
                 <div className='min-w-[1000px]'></div>
-                <ExportSeqSet seqSet={seqSet} seqSetRecords={seqSetRecords} databaseName={databaseName} />
+                <ExportSeqSet seqSet={seqSet} seqSetRecords={seqSetRecords} />
             </BaseDialog>
             <BaseDialog
                 title='Creator details'

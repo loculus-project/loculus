@@ -4,6 +4,7 @@ import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import CitationList from './CitationList.tsx';
+import { CiteSeqSet } from './CiteSeqSet.tsx';
 import { DatePlot, CategoryPlot } from './SeqSetPlots.tsx';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
 import type { AggregateRow } from './getSeqSetStatistics.ts';
@@ -56,6 +57,9 @@ type SeqSetItemProps = {
     seqSetCitations: SeqSetCitation[];
     seqSetGraphs: SeqSetGraph[];
     seqSetGraphsData: Record<string, AggregateRow[]>;
+    /** Absolute URL of this SeqSet page, used in citations when the SeqSet has no DOI yet. */
+    seqSetUrl: string;
+    databaseName: string;
     isAdminView?: boolean;
     fieldsToDisplay?: { field: string; displayName: string }[];
     organismDisplayNames?: Record<string, string>;
@@ -70,6 +74,8 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     seqSetCitations,
     seqSetGraphs,
     seqSetGraphsData,
+    seqSetUrl,
+    databaseName,
     isAdminView = false,
     fieldsToDisplay,
     organismDisplayNames,
@@ -171,6 +177,12 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                     />
                 </SeqSetSection>
             </div>
+            <SeqSetSectionSeparator />
+            <SeqSetSection title='How to cite'>
+                <div className='max-w-3xl'>
+                    <CiteSeqSet seqSet={seqSet} databaseName={databaseName} seqSetUrl={seqSetUrl} />
+                </div>
+            </SeqSetSection>
             <SeqSetSectionSeparator />
             <SeqSetSection
                 title='Statistics'
