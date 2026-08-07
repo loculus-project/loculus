@@ -20,8 +20,8 @@ import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHi
 import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
 import {
     applyFileMappings,
+    getSingleSubmissionFileMapping,
     type FileMapping,
-    type ResolvedSubmissionFile,
 } from '../Submission/FileUpload/fileMapping.ts';
 import { Button } from '../common/Button';
 import ErrorBox from '../common/ErrorBox';
@@ -68,13 +68,13 @@ const InnerEditPage: FC<EditPageProps> = ({
     );
 
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
-    const [fileMapping, setFileMapping] = useState<FileMapping<ResolvedSubmissionFile> | undefined>(() => {
+    const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(() => {
         const previousFiles = dataToEdit.submittedData.files;
         if (!previousFiles) return undefined;
         return new Map(
             Object.entries(previousFiles).map(([category, files]) => [
                 category,
-                new Map(files.map((file) => [file.name, { name: file.name, path: file.name, fileId: file.fileId }])),
+                new Map(files.map((file) => [file.name, file.fileId])),
             ]),
         );
     });
@@ -104,6 +104,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                 dataToEdit.submissionId,
                 dataToEdit.accession,
                 fastaIds,
+                submissionDataTypes.files?.categories,
             );
             if (metadataFile === undefined) {
                 toast.error('Please enter metadata.', { position: 'top-center', autoClose: false });
@@ -113,8 +114,13 @@ const InnerEditPage: FC<EditPageProps> = ({
             let finalMetadataFile = metadataFile;
 
             if (extraFilesEnabled && fileMapping !== undefined) {
-                const finalSubmissionFileMapping = new Map([[dataToEdit.submissionId, fileMapping]]);
-                finalMetadataFile = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
+                const finalSubmissionFileMapping = getSingleSubmissionFileMapping(dataToEdit.submissionId, fileMapping);
+                const finalMetadataFileResult = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
+                if (finalMetadataFileResult.isErr()) {
+                    toast.error(finalMetadataFileResult.error.message, { position: 'top-center', autoClose: false });
+                    return;
+                }
+                finalMetadataFile = finalMetadataFileResult.value;
             }
 
             if (!submissionDataTypes.consensusSequences) {
@@ -136,15 +142,14 @@ const InnerEditPage: FC<EditPageProps> = ({
                 sequenceFile,
             });
         } else {
-            const fileMappingForEdit =
-                extraFilesEnabled && fileMapping !== undefined
-                    ? Object.fromEntries(
-                          [...fileMapping].map(([category, files]) => [
-                              category,
-                              [...files.values()].map((file) => ({ fileId: file.fileId, name: file.name })),
-                          ]),
-                      )
-                    : null;
+            let fileMappingForEdit = null;
+            if (extraFilesEnabled && fileMapping !== undefined)
+                fileMappingForEdit = Object.fromEntries(
+                    [...fileMapping].map(([category, files]) => [
+                        category,
+                        [...files.entries()].map(([path, fileId]) => ({ fileId, name: path })),
+                    ]),
+                );
             submitEdit({
                 accession: dataToEdit.accession,
                 version: dataToEdit.version,

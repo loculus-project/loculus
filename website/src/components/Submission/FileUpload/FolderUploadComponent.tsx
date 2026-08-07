@@ -1,8 +1,8 @@
 import { produce } from 'immer';
-import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
+import React, { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
 
-import { type FileMapping, type ResolvedSubmissionFile } from './fileMapping';
+import { type FileMapping } from './fileMapping';
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
 import { type FileCategory } from '../../../types/config';
@@ -41,14 +41,12 @@ type UploadStatus = 'pending' | 'uploaded' | 'previousUpload' | 'error';
 type Awaiting = {
     type: 'awaiting';
     file: File;
-    name: string;
     path: string;
 };
 
 type Pending = {
     type: 'pending';
     file: File;
-    name: string;
     path: string;
     size: number;
     fileId: string;
@@ -62,7 +60,6 @@ type Pending = {
 type Uploaded = {
     type: 'uploaded';
     fileId: string;
-    name: string;
     path: string;
     size: number;
 };
@@ -70,13 +67,11 @@ type Uploaded = {
 type PreviousUpload = {
     type: 'previousUpload';
     fileId: string;
-    name: string;
     path: string;
 };
 
 type FileError = {
     type: 'error';
-    name: string;
     path: string;
     size: number;
     msg: string;
@@ -90,9 +85,55 @@ type FolderUploadComponentProps = {
     accessToken: string;
     clientConfig: ClientConfig;
     groupId: number;
-    fileMapping: FileMapping<ResolvedSubmissionFile> | undefined;
-    setFileMapping: Dispatch<SetStateAction<FileMapping<ResolvedSubmissionFile> | undefined>>;
+    fileMapping: FileMapping | undefined;
+    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
     onError: (message: string) => void;
+};
+
+const FileInput = ({
+    id,
+    label,
+    onChange,
+    isDirectory,
+    children,
+}: {
+    id: string;
+    label: string;
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    isDirectory?: boolean;
+    children?: React.ReactNode;
+}) => {
+    const isClient = useClientFlag();
+    const fileInput = isClient && (
+        <input
+            id={id}
+            name={id}
+            type='file'
+            className='sr-only'
+            aria-label={label}
+            data-testid={id}
+            onChange={onChange}
+            /* The webkitdirectory attribute enables folder selection */
+            {...(isDirectory ? { webkitdirectory: '', directory: '' } : {})}
+            multiple
+        />
+    );
+
+    return children ? (
+        <label className='inline cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-hidden focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
+            <span
+                onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById(id)?.click();
+                }}
+            >
+                {children}
+            </span>
+            {fileInput}
+        </label>
+    ) : (
+        fileInput
+    );
 };
 
 export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
@@ -105,16 +146,14 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     setFileMapping,
     onError,
 }) => {
-    const isClient = useClientFlag();
     const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(() => {
         const categoryFiles = fileMapping?.get(fileCategory.name);
         if (categoryFiles === undefined || categoryFiles.size === 0) return undefined;
 
-        const files: PreviousUpload[] = [...categoryFiles.values()].map((file) => ({
+        const files: PreviousUpload[] = [...categoryFiles.entries()].map(([path, fileId]) => ({
             type: 'previousUpload',
-            fileId: file.fileId,
-            name: file.name,
-            path: file.path,
+            fileId,
+            path,
         }));
         return { type: 'uploadCompleted', files };
     });
@@ -144,11 +183,10 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     draft.files = draft.files.map((file) => {
                         if (file.type === 'pending' && file.fileId === fileId) {
                             if (newStatus === 'uploaded') {
-                                return { type: 'uploaded', fileId, name: file.name, path: file.path, size: file.size };
+                                return { type: 'uploaded', fileId, path: file.path, size: file.size };
                             } else {
                                 return {
                                     type: 'error',
-                                    name: file.name,
                                     path: file.path,
                                     size: file.size,
                                     msg: errorMsg!,
@@ -189,7 +227,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 await uploadMultipartFile(pending);
             } catch (err) {
                 onError(
-                    `Upload failed for file ${pending.fileId} ${pending.name}: ${err instanceof Error ? err.message : String(err)}`,
+                    `Upload failed for file ${pending.fileId} ${pending.path}: ${err instanceof Error ? err.message : String(err)}`,
                 );
                 return;
             }
@@ -206,7 +244,6 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     pendingFiles.push({
                         type: 'pending',
                         file: file.file,
-                        name: file.name,
                         path: file.path,
                         size: file.file.size,
                         fileId: data[0].fileId,
@@ -259,16 +296,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     const newMapping = new Map(currentMapping);
                     newMapping.set(
                         fileCategory.name,
-                        new Map(
-                            fileUploadState.files.map((file) => [
-                                file.path,
-                                {
-                                    name: file.name,
-                                    path: file.path,
-                                    fileId: file.fileId,
-                                },
-                            ]),
-                        ),
+                        new Map(fileUploadState.files.map((file) => [file.path, file.fileId])),
                     );
                     return newMapping;
                 });
@@ -293,7 +321,6 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 files: filesArray.map((f) => ({
                     type: 'awaiting',
                     file: f,
-                    name: f.name,
                     // Assign the path without the parent folder
                     path: f.webkitRelativePath.split('/').slice(1).join('/'),
                 })),
@@ -317,26 +344,38 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
     const handleDiscardAllFiles = () => setFileUploadState(undefined);
 
-    const handleAddAdditionalFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            if (fileUploadState?.type !== 'uploadCompleted') return;
-
             const awaiting: Awaiting[] = Array.from(e.target.files).map((f) => ({
                 type: 'awaiting',
                 file: f,
-                name: f.name,
                 path: f.name,
             }));
 
             // Reset the input so the same file can be selected again
             e.target.value = '';
 
+            // If the state is undefined, set it to the new awaiting files
+            if (fileUploadState === undefined) {
+                setFileUploadState({
+                    type: 'awaitingUrls',
+                    files: awaiting,
+                });
+                return;
+            }
+
+            // If an upload is already in progress or we're awaiting URLs, we don't want to add new files to the state
+            if (fileUploadState.type === 'uploadInProgress' || fileUploadState.type === 'awaitingUrls') {
+                onError('Cannot add files while an upload is in progress.');
+                return;
+            }
+
             // Check for collisions with existing files
             const filePaths = new Set(awaiting.map((file) => file.path));
             const collisions = fileUploadState.files.filter((file) => filePaths.has(file.path));
 
             // Updates the state of file uploads and triggers the upload of the new files
-            const addAdditionalFiles = async () => {
+            const addFiles = async () => {
                 const existingFiles = fileUploadState.files.filter((file) => !filePaths.has(file.path));
                 const pendingFiles = await requestFileUploads(awaiting);
                 setFileUploadState({
@@ -351,140 +390,128 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 displayConfirmationDialog({
                     dialogText:
                         'The following file(s) already exist and will be replaced: ' +
-                        collisions.map((file) => file.name).join(', '),
+                        collisions.map((file) => file.path).join(', '),
                     confirmButtonText: 'Replace',
-                    onConfirmation: addAdditionalFiles,
+                    onConfirmation: addFiles,
                 });
-            } else void addAdditionalFiles();
+            } else void addFiles();
         }
     };
 
-    return fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
-        <div
-            className={`flex flex-col items-center justify-center flex-1 py-2 px-4 border rounded-lg ${fileUploadState !== undefined ? 'border-hidden' : isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}
-            onDragEnter={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsDragging(true);
-            }}
-            onDragOver={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsDragging(true);
-            }}
-            onDragLeave={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsDragging(false);
-            }}
-            onDrop={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsDragging(false);
-                toast.info(
-                    'Sorry, drag and drop is not currently supported but you can select an entire folder to upload by clicking the Upload folder button.',
-                );
-            }}
-        >
-            <LucideFolderUp
-                className={`mx-auto mt-4 mb-2 h-12 w-12 text-gray-300`}
-                aria-hidden='true'
-                data-testid='folder-up-icon'
-            />
-            <div>
-                {fileUploadState === undefined ? (
-                    <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-hidden focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
-                        <span
-                            onClick={(e) => {
-                                e.preventDefault();
-                                document.getElementById(fileCategory.name)?.click();
-                            }}
-                        >
-                            Upload folder: {fileCategory.displayName ?? fileCategory.name}
-                        </span>
-                        {isClient && (
-                            <input
-                                id={fileCategory.name}
-                                name={fileCategory.name}
-                                type='file'
-                                className='sr-only'
-                                aria-label={`Upload ${fileCategory.displayName ?? fileCategory.name}`}
-                                data-testid={fileCategory.name}
-                                onChange={handleFolderSelect}
-                                /* The webkitdirectory attribute enables folder selection */
-                                {...{ webkitdirectory: '', directory: '' }}
-                                multiple
-                            />
-                        )}
-                    </label>
-                ) : (
-                    <p>Preparing upload ...</p>
-                )}
-            </div>
-            <p className='text-sm pt-2 leading-5 text-gray-600'>Upload an entire folder of files</p>
-        </div>
-    ) : (
-        <div className='flex flex-col text-left px-4 py-3'>
-            <div className='flex justify-between items-center mb-3'>
-                <div>
-                    <h3 className='text-sm font-medium'>{fileCategory.displayName ?? fileCategory.name}</h3>
-                    {fileUploadState.files.map((file) => (
-                        <div key={file.path} className='flex items-center mb-2 gap-2'>
-                            <div className='flex-1 min-w-0'>
-                                <FileListItem file={file} fileCategory={fileCategory.name} />
-                            </div>
-                            <Button
-                                onClick={() => handleDiscardFile(file.path)}
-                                alsoDisabledIf={fileUploadState.type !== 'uploadCompleted'}
-                                data-testid={`discard_${fileCategory.name}_${file.path}`}
-                                variant='outline-neutral'
-                                className='font-normal!'
-                                size='sm'
-                            >
-                                Discard file
-                            </Button>
-                        </div>
-                    ))}
-                </div>
-            </div>
-            <div className='grid gap-2 w-full grid-cols-2'>
-                {isClient && (
-                    <input
-                        id={`${fileCategory.name}_add`}
-                        type='file'
-                        className='sr-only'
-                        aria-label={`Add files to ${fileCategory.displayName ?? fileCategory.name}`}
-                        data-testid={`add_${fileCategory.name}`}
-                        onChange={handleAddAdditionalFiles}
-                        multiple
+    return (
+        <div className='flex flex-col gap-2 w-full'>
+            <h3 className='text-sm font-medium'>{fileCategory.displayName ?? fileCategory.name}</h3>
+            {fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
+                <div
+                    className={`flex flex-col items-center justify-center flex-1 py-6 px-4 border rounded-lg ${fileUploadState !== undefined ? 'border-hidden' : isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}
+                    onDragEnter={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsDragging(true);
+                    }}
+                    onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsDragging(true);
+                    }}
+                    onDragLeave={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsDragging(false);
+                    }}
+                    onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsDragging(false);
+                        toast.info(
+                            'Sorry, drag and drop is not currently supported but you can select an entire folder to upload by clicking the Upload folder button.',
+                        );
+                    }}
+                >
+                    <LucideFolderUp
+                        className='mx-auto mb-2 h-12 w-12 text-gray-300'
+                        aria-hidden='true'
+                        data-testid='folder-up-icon'
                     />
-                )}
-                <Button
-                    onClick={() => document.getElementById(`${fileCategory.name}_add`)?.click()}
-                    alsoDisabledIf={fileUploadState.type !== 'uploadCompleted'}
-                    data-testid={`add_button_${fileCategory.name}`}
-                    variant='outline-neutral'
-                    className='font-normal!'
-                    size='sm'
-                >
-                    Add additional files
-                </Button>
-                <Button
-                    onClick={() =>
-                        displayConfirmationDialog({
-                            dialogText: 'Are you sure you want to discard all files?',
-                            confirmButtonText: 'Discard',
-                            onConfirmation: handleDiscardAllFiles,
-                        })
-                    }
-                    data-testid={`discard_${fileCategory.name}`}
-                    variant='outline-neutral'
-                    className='font-normal!'
-                    size='sm'
-                >
-                    Discard all files
-                </Button>
-            </div>
+                    {fileUploadState === undefined ? (
+                        <div className='flex gap-2'>
+                            <FileInput
+                                id={fileCategory.name}
+                                label={`Upload ${fileCategory.displayName ?? fileCategory.name}`}
+                                onChange={handleFolderSelect}
+                                isDirectory
+                            >
+                                Upload folder
+                            </FileInput>
+                            <span className='text-gray-600'>or</span>
+                            <FileInput
+                                id={`add_${fileCategory.name}`}
+                                label={`Add files to ${fileCategory.displayName ?? fileCategory.name}`}
+                                onChange={handleFileSelect}
+                            >
+                                Upload files
+                            </FileInput>
+                        </div>
+                    ) : (
+                        <p>Preparing upload ...</p>
+                    )}
+                    <p className='text-sm pt-2 leading-5 text-gray-600'>Select a folder, or choose individual files</p>
+                </div>
+            ) : (
+                <div className='flex flex-col text-left px-4 py-3'>
+                    <div className='justify-between items-center mb-3'>
+                        {fileUploadState.files.map((file) => (
+                            <div key={file.path} className='flex items-center mb-2 gap-2'>
+                                <div className='flex-1 min-w-0'>
+                                    <FileListItem file={file} fileCategory={fileCategory.name} />
+                                </div>
+                                <Button
+                                    onClick={() => handleDiscardFile(file.path)}
+                                    alsoDisabledIf={fileUploadState.type !== 'uploadCompleted'}
+                                    data-testid={`discard_${fileCategory.name}_${file.path}`}
+                                    variant='outline-neutral'
+                                    className='font-normal!'
+                                    size='sm'
+                                >
+                                    Discard file
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                    <div className='grid gap-2 w-full grid-cols-2'>
+                        <FileInput
+                            id={`add_${fileCategory.name}`}
+                            label={`Add files to ${fileCategory.displayName ?? fileCategory.name}`}
+                            onChange={handleFileSelect}
+                        />
+                        <Button
+                            onClick={() => document.getElementById(`add_${fileCategory.name}`)?.click()}
+                            alsoDisabledIf={fileUploadState.type !== 'uploadCompleted'}
+                            data-testid={`add_button_${fileCategory.name}`}
+                            variant='outline-neutral'
+                            className='font-normal!'
+                            size='sm'
+                        >
+                            Add additional files
+                        </Button>
+                        <Button
+                            onClick={() =>
+                                displayConfirmationDialog({
+                                    dialogText: 'Are you sure you want to discard all files?',
+                                    confirmButtonText: 'Discard',
+                                    onConfirmation: handleDiscardAllFiles,
+                                })
+                            }
+                            data-testid={`discard_${fileCategory.name}`}
+                            variant='outline-neutral'
+                            className='font-normal!'
+                            size='sm'
+                        >
+                            Discard all files
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -520,12 +547,13 @@ const FileListItem: FC<FileListeItemProps> = ({ file, fileCategory }) => {
 
 const FilePath: FC<{ file: SingleFileUpload }> = ({ file }) => {
     const folderPath = file.path.split('/').slice(0, -1);
+    const fileName = file.path.split('/').slice(-1)[0];
     return (
         <span title={file.path} className='text-xs flex items-center min-w-0'>
             {folderPath.length > 0 && (
                 <span className='text-gray-400 truncate max-w-[140px] mr-1'>{folderPath.join(' / ') + ' / '}</span>
             )}
-            <span className='text-gray-700 truncate max-w-[140px]'>{file.name}</span>
+            <span className='text-gray-700 truncate max-w-[140px]'>{fileName}</span>
         </span>
     );
 };

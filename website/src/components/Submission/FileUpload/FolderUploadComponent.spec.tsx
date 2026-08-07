@@ -48,17 +48,17 @@ const defaultProps = {
     onError: mockOnError,
 };
 
-// The fileMapping is keyed by category, then by file path. Previous uploads have no upload path,
-// so (within a single entry, where names are unique) they are keyed by and carry a path of their name.
-const fileMappingOf = (files: { fileId: string; name: string }[]) =>
-    new Map([['extraFiles', new Map(files.map((f) => [f.name, { name: f.name, path: f.name, fileId: f.fileId }]))]]);
+// The fileMapping is keyed by category, then by file path, to its file ID. Previous uploads have no
+// upload path, so (within a single entry, where names are unique) they are keyed by their name.
+const fileMappingOf = (files: { fileId: string; path: string }[]) =>
+    new Map([['extraFiles', new Map(files.map((f) => [f.path, f.fileId]))]]);
 
 const defaultPropsWithFiles = {
     ...defaultProps,
     inputMode: 'form' as const,
     fileMapping: fileMappingOf([
-        { fileId: 'file-1', name: 'file-a.txt' },
-        { fileId: 'file-2', name: 'file-b.txt' },
+        { fileId: 'file-1', path: 'file-a.txt' },
+        { fileId: 'file-2', path: 'file-b.txt' },
     ]),
 };
 
@@ -84,7 +84,7 @@ describe('FolderUploadComponent', () => {
     describe('folder upload', () => {
         it('renders upload folder button', () => {
             render(<FolderUploadComponent {...defaultProps} />);
-            expect(screen.getByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).toBeInTheDocument();
+            expect(screen.getByText('Upload folder')).toBeInTheDocument();
             expect(screen.getByTestId('folder-up-icon')).toBeInTheDocument();
         });
 
@@ -97,6 +97,7 @@ describe('FolderUploadComponent', () => {
                 />,
             );
 
+            expect(screen.getByText('Upload folder')).toBeInTheDocument();
             expect(screen.getByTestId('extraFiles')).toBeInTheDocument();
             expect(screen.queryByTestId('discard_extraFiles')).not.toBeInTheDocument();
         });
@@ -114,7 +115,7 @@ describe('FolderUploadComponent', () => {
             });
 
             await userEvent.upload(input, file);
-            await waitFor(() => expect(screen.getByText('test.txt')).toBeInTheDocument());
+            await waitFor(() => expect(screen.getByTitle('submission1/test.txt')).toBeInTheDocument());
         });
 
         it('shows progress during multipart upload', async () => {
@@ -257,9 +258,7 @@ describe('FolderUploadComponent', () => {
             expect(screen.getByText('file-b.txt')).toBeInTheDocument();
 
             const mapping = latestReportedMapping(defaultPropsWithFiles.fileMapping);
-            expect([...mapping!.get('extraFiles')!.values()]).toEqual([
-                { name: 'file-b.txt', path: 'file-b.txt', fileId: 'file-2' },
-            ]);
+            expect([...mapping!.get('extraFiles')!.entries()]).toEqual([['file-b.txt', 'file-2']]);
         });
 
         it('files are discarded by path, not by name', async () => {
@@ -282,22 +281,20 @@ describe('FolderUploadComponent', () => {
             await waitFor(() => expect(screen.getAllByText('a.txt')).toHaveLength(1));
             expect(screen.getByText('sub2 /')).toBeInTheDocument();
             expect(screen.queryByText('sub1 /')).not.toBeInTheDocument();
-            expect([...latestReportedMapping(undefined)!.get('extraFiles')!.values()]).toEqual([
-                { name: 'a.txt', path: 'sub2/a.txt', fileId: 'file-2' },
+            expect([...latestReportedMapping(undefined)!.get('extraFiles')!.entries()]).toEqual([
+                ['sub2/a.txt', 'file-2'],
             ]);
         });
 
         it('reverts to the upload folder prompt and removes the category from the file mapping after discarding the last upload', async () => {
             const singleFileProps = {
                 ...defaultPropsWithFiles,
-                fileMapping: fileMappingOf([{ fileId: 'file-1', name: 'file-a.txt' }]),
+                fileMapping: fileMappingOf([{ fileId: 'file-1', path: 'file-a.txt' }]),
             };
             render(<FolderUploadComponent {...singleFileProps} />);
 
             await userEvent.click(screen.getByTestId('discard_extraFiles_file-a.txt'));
-            await waitFor(() =>
-                expect(screen.getByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).toBeInTheDocument(),
-            );
+            await waitFor(() => expect(screen.getByText('Upload folder')).toBeInTheDocument());
             expect(screen.queryByText('file-a.txt')).not.toBeInTheDocument();
             expect(latestReportedMapping(singleFileProps.fileMapping)!.has('extraFiles')).toBe(false);
         });
@@ -360,9 +357,9 @@ describe('FolderUploadComponent', () => {
             expect(screen.getAllByText('(uploaded)')).toHaveLength(1);
 
             const categoryFiles = latestReportedMapping(defaultPropsWithFiles.fileMapping)!.get('extraFiles')!;
-            expect([...categoryFiles.values()]).toEqual([
-                { name: 'file-b.txt', path: 'file-b.txt', fileId: 'file-2' },
-                { name: 'file-a.txt', path: 'file-a.txt', fileId: 'replacement-id' },
+            expect([...categoryFiles.entries()]).toEqual([
+                ['file-b.txt', 'file-2'],
+                ['file-a.txt', 'replacement-id'],
             ]);
         });
 
@@ -410,9 +407,7 @@ describe('FolderUploadComponent', () => {
             await waitFor(() => expect(screen.getByText(/are you sure you want to discard/i)).toBeInTheDocument());
 
             await userEvent.click(screen.getByRole('button', { name: /^Discard$/ }));
-            await waitFor(() =>
-                expect(screen.getByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).toBeInTheDocument(),
-            );
+            await waitFor(() => expect(screen.getByText('Upload folder')).toBeInTheDocument());
             expect(latestReportedMapping(defaultPropsWithFiles.fileMapping)!.has('extraFiles')).toBe(false);
         });
 
@@ -453,9 +448,7 @@ describe('FolderUploadComponent', () => {
             await userEvent.click(screen.getByTestId('discard_extraFiles'));
             await waitFor(() => expect(screen.getByText(/are you sure you want to discard/i)).toBeInTheDocument());
             await userEvent.click(screen.getByRole('button', { name: /^Discard$/ }));
-            await waitFor(() =>
-                expect(screen.getByText(`Upload folder: ${defaultProps.fileCategory.displayName}`)).toBeInTheDocument(),
-            );
+            await waitFor(() => expect(screen.getByText('Upload folder')).toBeInTheDocument());
         });
     });
 });

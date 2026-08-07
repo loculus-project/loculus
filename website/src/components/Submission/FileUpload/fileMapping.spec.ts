@@ -2,63 +2,115 @@ import { describe, expect, it } from 'vitest';
 
 import {
     applyFileMappings,
-    getFileLinkage,
+    resolveFileMappings,
+    getLinkageErrorMessage,
     getLinkageErrors,
+    LinkageType,
     parseSubmissionFileMapping,
+    type FileLinkage,
     type FileMapping,
-    type ResolvedSubmissionFile,
     type SubmissionFile,
     type SubmissionFileMapping,
 } from './fileMapping';
+import { FILES_HEADER_PREFIX } from '../../../settings';
+
+const RAW_READS = 'rawReads';
+const RAW_READS_COLUMN = `${FILES_HEADER_PREFIX}${RAW_READS}`;
+const OTHER_FILES = 'otherFiles';
+const OTHER_FILES_COLUMN = `${FILES_HEADER_PREFIX}${OTHER_FILES}`;
+const FILE_CATEGORIES = [RAW_READS, OTHER_FILES];
 
 const tsv = (rows: string[][]) => rows.map((row) => row.join('\t')).join('\n');
+const declaredFile = (name: string, path: string = name) => ({ type: 'declaredFile' as const, name, path });
+const reusedFile = (name: string, fileId: string) => ({ type: 'reusedFile' as const, name, fileId });
+const uploadedFile = (path: string, fileId: string) => ({ type: 'uploadedFile' as const, path, fileId });
+const linkedFile = (name: string, path: string, fileId: string) => ({
+    type: 'linkedFile' as const,
+    name,
+    path,
+    fileId,
+});
+const resolvedFile = (name: string, fileId: string) => ({ type: 'resolvedFile' as const, name, fileId });
 
-const entriesOf = (text: string, submissionId: string, category: string): SubmissionFile[] => {
-    const result = parseSubmissionFileMapping(text);
+const entriesOf = (text: string, submissionId: string, category: string) => {
+    const result = parseSubmissionFileMapping(text, FILE_CATEGORIES);
     if (result.isErr()) throw new Error(`expected a successful parse, got: ${result.error.message}`);
     return [...(result.value.get(submissionId)?.get(category)?.values() ?? [])];
 };
 
-const errorOf = (text: string): string => {
-    const result = parseSubmissionFileMapping(text);
+const errorOf = (text: string, categories: string[] = FILE_CATEGORIES): string => {
+    const result = parseSubmissionFileMapping(text, categories);
     if (result.isOk()) throw new Error('expected the parse to fail');
     return result.error.message;
 };
 
-const fileMappingOf = <T extends SubmissionFile>(categories: Record<string, T[]>): FileMapping<T> =>
-    new Map(Object.entries(categories).map(([category, files]) => [category, new Map(files.map((f) => [f.path, f]))]));
+const fileMappingOf = (categories: Record<string, { path: string; fileId: string }[]>): FileMapping =>
+    new Map(
+        Object.entries(categories).map(([category, files]) => [
+            category,
+            new Map(files.map((f) => [f.path, f.fileId])),
+        ]),
+    );
 
 const submissionMappingOf = (submissions: Record<string, Record<string, SubmissionFile[]>>): SubmissionFileMapping =>
-    new Map(Object.entries(submissions).map(([submissionId, categories]) => [submissionId, fileMappingOf(categories)]));
+    new Map(
+        Object.entries(submissions).map(([submissionId, categories]) => [
+            submissionId,
+            new Map(
+                Object.entries(categories).map(([category, files]) => [
+                    category,
+                    new Map(files.map((file) => [file.name, file])),
+                ]),
+            ),
+        ]),
+    );
+
+const resolvedMappingOf = (submissions: Record<string, Record<string, { name: string; fileId: string }[]>>) =>
+    new Map(
+        Object.entries(submissions).map(([submissionId, categories]) => [
+            submissionId,
+            new Map(
+                Object.entries(categories).map(([category, files]) => [
+                    category,
+                    new Map(files.map((file) => [file.name, resolvedFile(file.name, file.fileId)])),
+                ]),
+            ),
+        ]),
+    );
 
 describe('parseSubmissionFileMapping', () => {
     it('parses every accepted file entry form', () => {
         const text = tsv([
-            ['id', 'files.raw'],
-            ['e1', 'a.txt b.txt::sub/b.txt c.txt::sub/c.txt:id-c d.txt:id-d'],
+            ['id', RAW_READS_COLUMN],
+            ['e1', 'a.txt b.txt::sub/b.txt c.txt:id-c'],
         ]);
-        expect(entriesOf(text, 'e1', 'raw')).toEqual([
-            { name: 'a.txt', path: 'a.txt', fileId: undefined },
-            { name: 'b.txt', path: 'sub/b.txt', fileId: undefined },
-            { name: 'c.txt', path: 'sub/c.txt', fileId: 'id-c' },
-            { name: 'd.txt', path: 'd.txt', fileId: 'id-d' },
+        expect(entriesOf(text, 'e1', RAW_READS)).toEqual([
+            declaredFile('a.txt'),
+            declaredFile('b.txt', 'sub/b.txt'),
+            reusedFile('c.txt', 'id-c'),
         ]);
+    });
+
+    it('rejects entries that do not match any accepted form', () => {
+        const tsvs = [
+            tsv([
+                ['id', RAW_READS_COLUMN],
+                ['e1', 'a::b::c'],
+            ]),
+            tsv([
+                ['id', RAW_READS_COLUMN],
+                ['e1', 'a.txt::sub/a.txt:id-a'],
+            ]),
+        ];
+        for (const t of tsvs) expect(errorOf(t)).toContain('Failed to parse file entry');
     });
 
     it('ignores extra whitespace between entries', () => {
         const text = tsv([
-            ['id', 'files.raw'],
+            ['id', RAW_READS_COLUMN],
             ['e1', '  a.txt   b.txt  '],
         ]);
-        expect(entriesOf(text, 'e1', 'raw').map((f) => f.name)).toEqual(['a.txt', 'b.txt']);
-    });
-
-    it('rejects an entry that does not match any accepted form', () => {
-        const text = tsv([
-            ['id', 'files.raw'],
-            ['e1', 'a::b::c'],
-        ]);
-        expect(errorOf(text)).toContain('Failed to parse file entry');
+        expect(entriesOf(text, 'e1', RAW_READS).map((f) => f.name)).toEqual(['a.txt', 'b.txt']);
     });
 
     it('returns an empty mapping when there are no file columns', () => {
@@ -67,26 +119,29 @@ describe('parseSubmissionFileMapping', () => {
                 ['id', 'country'],
                 ['e1', 'CH'],
             ]),
+            FILE_CATEGORIES,
         );
         expect(result._unsafeUnwrap()).toEqual(new Map());
-        expect(parseSubmissionFileMapping(tsv([['country'], ['CH']]))._unsafeUnwrap()).toEqual(new Map());
+        expect(parseSubmissionFileMapping(tsv([['country'], ['CH']]), FILE_CATEGORIES)._unsafeUnwrap()).toEqual(
+            new Map(),
+        );
     });
 
     it('rejects a file column without an id column', () => {
-        expect(errorOf(tsv([['files.raw'], ['a.txt']]))).toContain('Missing id column');
+        expect(errorOf(tsv([[RAW_READS_COLUMN], ['a.txt']]))).toContain('Missing id column');
     });
 
     it.each(['id', 'submissionId'])('accepts %s as the id column', (idColumn) => {
         const text = tsv([
-            [idColumn, 'files.raw'],
+            [idColumn, RAW_READS_COLUMN],
             ['e1', 'a.txt'],
         ]);
-        expect(entriesOf(text, 'e1', 'raw').map((f) => f.name)).toEqual(['a.txt']);
+        expect(entriesOf(text, 'e1', RAW_READS).map((f) => f.name)).toEqual(['a.txt']);
     });
 
     it('rejects an empty id value', () => {
         const text = tsv([
-            ['id', 'files.raw'],
+            ['id', RAW_READS_COLUMN],
             ['', 'a.txt'],
         ]);
         expect(errorOf(text)).toContain('Found empty id value');
@@ -94,7 +149,7 @@ describe('parseSubmissionFileMapping', () => {
 
     it('rejects duplicate ids', () => {
         const text = tsv([
-            ['id', 'files.raw'],
+            ['id', RAW_READS_COLUMN],
             ['e1', 'a.txt'],
             ['e1', 'b.txt'],
         ]);
@@ -103,101 +158,106 @@ describe('parseSubmissionFileMapping', () => {
 
     it('rejects duplicate file names within one entry', () => {
         const text = tsv([
-            ['id', 'files.raw'],
+            ['id', RAW_READS_COLUMN],
             ['e1', 'a.txt::one/a.txt a.txt::two/a.txt'],
         ]);
-        expect(errorOf(text)).toContain('Found duplicate file names for entry e1 in the raw category: a.txt');
+        expect(errorOf(text)).toContain(`Found duplicate file names for entry e1 in the ${RAW_READS} category: a.txt`);
     });
 
-    it('rejects duplicate file paths within one entry', () => {
+    it('allows two different names to share the same explicit path', () => {
         const text = tsv([
-            ['id', 'files.raw'],
+            ['id', RAW_READS_COLUMN],
             ['e1', 'a.txt::x b.txt::x'],
         ]);
-        expect(errorOf(text)).toContain('Found duplicate file paths for entry e1 in the raw category: x');
+        expect(entriesOf(text, 'e1', RAW_READS)).toEqual([declaredFile('a.txt', 'x'), declaredFile('b.txt', 'x')]);
     });
 
     it('omits the category entirely for an empty cell', () => {
         const text = tsv([
-            ['id', 'files.raw', 'files.processed'],
+            ['id', RAW_READS_COLUMN, OTHER_FILES_COLUMN],
             ['e1', 'a.txt', ''],
         ]);
-        const result = parseSubmissionFileMapping(text)._unsafeUnwrap();
-        expect([...result.get('e1')!.keys()]).toEqual(['raw']);
+        const result = parseSubmissionFileMapping(text, FILE_CATEGORIES)._unsafeUnwrap();
+        expect([...result.get('e1')!.keys()]).toEqual([RAW_READS]);
     });
 
     it('parses several categories across several entries', () => {
         const text = tsv([
-            ['id', 'country', 'files.raw', 'files.processed'],
+            ['id', 'country', RAW_READS_COLUMN, OTHER_FILES_COLUMN],
             ['e1', 'CH', 'a.txt', 'a.json'],
             ['e2', 'DE', 'b.txt', 'b.json'],
         ]);
-        const result = parseSubmissionFileMapping(text)._unsafeUnwrap();
+        const result = parseSubmissionFileMapping(text, FILE_CATEGORIES)._unsafeUnwrap();
         expect([...result.keys()]).toEqual(['e1', 'e2']);
-        expect(entriesOf(text, 'e1', 'processed').map((f) => f.name)).toEqual(['a.json']);
-        expect(entriesOf(text, 'e2', 'raw').map((f) => f.name)).toEqual(['b.txt']);
+        expect(entriesOf(text, 'e1', OTHER_FILES).map((f) => f.name)).toEqual(['a.json']);
+        expect(entriesOf(text, 'e2', RAW_READS).map((f) => f.name)).toEqual(['b.txt']);
     });
 });
 
-describe('getFileLinkage', () => {
-    const metadataEntry: SubmissionFile = { name: 'a.txt', path: 'a.txt' };
-    const metadataEntryWithFileId: SubmissionFile = { name: 'a.txt', path: 'a.txt', fileId: 'existing-id' };
-    const uploadFolderEntry: ResolvedSubmissionFile = { name: 'a.txt', path: 'a.txt', fileId: 'uploaded-id' };
+describe('resolveFileMappings', () => {
+    const metadataEntry = declaredFile('a.txt');
+    const metadataEntryWithFileId = reusedFile('a.txt', 'existing-id');
+    const uploadEntry = uploadedFile('a.txt', 'uploaded-id');
+    const linkedEntry = linkedFile('a.txt', 'a.txt', 'uploaded-id');
     const emptyDetails = { linked: [], reused: [], missing: [], orphaned: [], shadowed: [] };
 
     describe('linked', () => {
-        it('when a metadata entry and an upload folder entry share a path', () => {
-            const { submissionFileMapping, details } = getFileLinkage(
-                submissionMappingOf({ e1: { raw: [metadataEntry] } }),
-                fileMappingOf({ raw: [uploadFolderEntry] }),
+        it('when a metadata entry references an uploaded file', () => {
+            const { submissionFileMapping, fileLinkage } = resolveFileMappings(
+                submissionMappingOf({ e1: { [RAW_READS]: [metadataEntry] } }),
+                fileMappingOf({ [RAW_READS]: [uploadEntry] }),
             );
-            expect(details.get('raw')).toEqual({ ...emptyDetails, linked: [uploadFolderEntry] });
-            expect(submissionFileMapping.get('e1')!.get('raw')!.get('a.txt')!.fileId).toBe('uploaded-id');
+            expect(fileLinkage.get(RAW_READS)).toEqual({ ...emptyDetails, linked: [linkedEntry] });
+            expect(submissionFileMapping.get('e1')!.get(RAW_READS)!.get('a.txt')!.fileId).toBe('uploaded-id');
         });
 
-        it('when several metadata entries reference the same upload folder entry', () => {
-            const { details } = getFileLinkage(
-                submissionMappingOf({ e1: { raw: [metadataEntry] }, e2: { raw: [metadataEntry] } }),
-                fileMappingOf({ raw: [uploadFolderEntry] }),
+        it('when several metadata entries reference the same uploaded file', () => {
+            const { fileLinkage } = resolveFileMappings(
+                submissionMappingOf({ e1: { [RAW_READS]: [metadataEntry] }, e2: { [RAW_READS]: [metadataEntry] } }),
+                fileMappingOf({ [RAW_READS]: [uploadEntry] }),
             );
-            expect(details.get('raw')).toEqual({ ...emptyDetails, linked: [uploadFolderEntry] });
+            // Every metadata entry claiming the upload is listed, so the upload appears once per entry
+            expect(fileLinkage.get(RAW_READS)).toEqual({ ...emptyDetails, linked: [linkedEntry, linkedEntry] });
         });
 
-        it('when one metadata entry on the path has its own file ID and another does not', () => {
-            const { submissionFileMapping, details } = getFileLinkage(
-                submissionMappingOf({ e1: { raw: [metadataEntryWithFileId] }, e2: { raw: [metadataEntry] } }),
-                fileMappingOf({ raw: [uploadFolderEntry] }),
+        it('when one metadata entry has its own file ID but another references the uploaded file', () => {
+            const { submissionFileMapping, fileLinkage } = resolveFileMappings(
+                submissionMappingOf({
+                    e1: { [RAW_READS]: [metadataEntryWithFileId] },
+                    e2: { [RAW_READS]: [metadataEntry] },
+                }),
+                fileMappingOf({ [RAW_READS]: [uploadEntry] }),
             );
-            expect(details.get('raw')).toEqual({
+            expect(fileLinkage.get(RAW_READS)).toEqual({
                 ...emptyDetails,
-                linked: [uploadFolderEntry],
+                linked: [linkedEntry],
                 reused: [metadataEntryWithFileId],
             });
-            expect(submissionFileMapping.get('e1')!.get('raw')!.get('a.txt')!.fileId).toBe('existing-id');
-            expect(submissionFileMapping.get('e2')!.get('raw')!.get('a.txt')!.fileId).toBe('uploaded-id');
+            expect(submissionFileMapping.get('e1')!.get(RAW_READS)!.get('a.txt')!.fileId).toBe('existing-id');
+            expect(submissionFileMapping.get('e2')!.get(RAW_READS)!.get('a.txt')!.fileId).toBe('uploaded-id');
         });
     });
 
     describe('reused', () => {
-        it('when a metadata entry has its own file ID and nothing was uploaded', () => {
-            const { submissionFileMapping, details } = getFileLinkage(
-                submissionMappingOf({ e1: { raw: [metadataEntryWithFileId] } }),
+        it('when a metadata entry has its own file ID', () => {
+            const { submissionFileMapping, fileLinkage } = resolveFileMappings(
+                submissionMappingOf({ e1: { [RAW_READS]: [metadataEntryWithFileId] } }),
                 fileMappingOf({}),
             );
-            expect(details.get('raw')).toEqual({ ...emptyDetails, reused: [metadataEntryWithFileId] });
-            expect(submissionFileMapping.get('e1')!.get('raw')!.get('a.txt')!.fileId).toBe('existing-id');
-            expect(getLinkageErrors(details)).toBeUndefined();
+            expect(fileLinkage.get(RAW_READS)).toEqual({ ...emptyDetails, reused: [metadataEntryWithFileId] });
+            expect(submissionFileMapping.get('e1')!.get(RAW_READS)!.get('a.txt')!.fileId).toBe('existing-id');
+            expect(getLinkageErrors(fileLinkage)).toBeUndefined();
         });
     });
 
     describe('missing', () => {
-        it('when a metadata entry has no file ID and no upload folder entry on its path', () => {
-            const otherUpload: ResolvedSubmissionFile = { name: 'b.txt', path: 'b.txt', fileId: 'uploaded-b' };
-            const { submissionFileMapping, details } = getFileLinkage(
-                submissionMappingOf({ e1: { raw: [metadataEntry] } }),
-                fileMappingOf({ raw: [otherUpload] }),
+        it('when a metadata entry has no file ID and no uploaded file', () => {
+            const otherUpload = uploadedFile('b.txt', 'uploaded-b');
+            const { submissionFileMapping, fileLinkage } = resolveFileMappings(
+                submissionMappingOf({ e1: { [RAW_READS]: [metadataEntry] } }),
+                fileMappingOf({ [RAW_READS]: [otherUpload] }),
             );
-            expect(details.get('raw')).toEqual({
+            expect(fileLinkage.get(RAW_READS)).toEqual({
                 ...emptyDetails,
                 missing: [metadataEntry],
                 orphaned: [otherUpload],
@@ -207,92 +267,52 @@ describe('getFileLinkage', () => {
     });
 
     describe('orphaned', () => {
-        it('when an upload folder entry has no metadata entry on its path', () => {
-            const { details } = getFileLinkage(new Map(), fileMappingOf({ raw: [uploadFolderEntry] }));
-            expect(details.get('raw')).toEqual({ ...emptyDetails, orphaned: [uploadFolderEntry] });
+        it('when an uploaded file has no corresponding metadata entry', () => {
+            const { fileLinkage } = resolveFileMappings(new Map(), fileMappingOf({ [RAW_READS]: [uploadEntry] }));
+            expect(fileLinkage.get(RAW_READS)).toEqual({ ...emptyDetails, orphaned: [uploadEntry] });
         });
     });
 
     describe('shadowed', () => {
-        it('when every metadata entry on the path has its own file ID', () => {
-            const { submissionFileMapping, details } = getFileLinkage(
-                submissionMappingOf({ e1: { raw: [metadataEntryWithFileId] } }),
-                fileMappingOf({ raw: [uploadFolderEntry] }),
+        it('when every metadata entry on the path has its own file ID, so none of them claim the upload', () => {
+            const { submissionFileMapping, fileLinkage } = resolveFileMappings(
+                submissionMappingOf({ e1: { [RAW_READS]: [metadataEntryWithFileId] } }),
+                fileMappingOf({ [RAW_READS]: [uploadEntry] }),
             );
-            expect(details.get('raw')).toEqual({
+            expect(fileLinkage.get(RAW_READS)).toEqual({
                 ...emptyDetails,
                 reused: [metadataEntryWithFileId],
-                shadowed: [uploadFolderEntry],
+                shadowed: [uploadEntry],
             });
-            expect(submissionFileMapping.get('e1')!.get('raw')!.get('a.txt')!.fileId).toBe('existing-id');
+            expect(submissionFileMapping.get('e1')!.get(RAW_READS)!.get('a.txt')!.fileId).toBe('existing-id');
         });
     });
 
     describe('file categories', () => {
         it('are covered when present on only one side', () => {
-            const jsonEntry: SubmissionFile = { name: 'a.json', path: 'a.json' };
-            const { details } = getFileLinkage(
-                submissionMappingOf({ e1: { processed: [jsonEntry] } }),
-                fileMappingOf({ raw: [uploadFolderEntry] }),
+            const jsonEntry = declaredFile('a.json');
+            const { fileLinkage } = resolveFileMappings(
+                submissionMappingOf({ e1: { [OTHER_FILES]: [jsonEntry] } }),
+                fileMappingOf({ [RAW_READS]: [uploadEntry] }),
             );
-            expect([...details.keys()].sort()).toEqual(['processed', 'raw']);
-            expect(details.get('processed')).toEqual({ ...emptyDetails, missing: [jsonEntry] });
-            expect(details.get('raw')).toEqual({ ...emptyDetails, orphaned: [uploadFolderEntry] });
+            expect([...fileLinkage.keys()].sort()).toEqual([OTHER_FILES, RAW_READS]);
+            expect(fileLinkage.get(OTHER_FILES)).toEqual({ ...emptyDetails, missing: [jsonEntry] });
+            expect(fileLinkage.get(RAW_READS)).toEqual({ ...emptyDetails, orphaned: [uploadEntry] });
         });
     });
 });
 
 describe('getLinkageErrors', () => {
-    const file = (path: string): SubmissionFile => ({ name: path, path });
-    const detailsOf = (missing: string[], orphaned: string[]) =>
-        new Map([
-            ['raw', { linked: [], reused: [], missing: missing.map(file), orphaned: orphaned.map(file), shadowed: [] }],
-        ]);
-
-    it('returns undefined when nothing is missing or orphaned', () => {
-        expect(getLinkageErrors(detailsOf([], []))).toBeUndefined();
-    });
-
-    it('reports missing files', () => {
-        expect(getLinkageErrors(detailsOf(['a.txt'], []))).toBe(
-            'The following raw files were referenced in metadata but not uploaded: a.txt.',
-        );
-    });
-
-    it('reports orphaned files', () => {
-        expect(getLinkageErrors(detailsOf([], ['b.txt']))).toBe(
-            'The following raw files were uploaded but not referenced in metadata: b.txt.',
-        );
-    });
-
-    it('reports shadowed uploads separately from genuinely unreferenced ones', () => {
-        const details = new Map([
+    it('displays problems across categories', () => {
+        const fileLinkage: FileLinkage = new Map([
+            [RAW_READS, { linked: [], reused: [], missing: [declaredFile('a.txt')], orphaned: [], shadowed: [] }],
             [
-                'raw',
-                {
-                    linked: [],
-                    reused: [file('a.txt')],
-                    missing: [],
-                    orphaned: [file('stray.txt')],
-                    shadowed: [file('a.txt')],
-                },
+                OTHER_FILES,
+                { linked: [], reused: [], missing: [], orphaned: [uploadedFile('b.json', '123')], shadowed: [] },
             ],
         ]);
-        expect(getLinkageErrors(details)).toBe(
-            'The following raw files were uploaded but not referenced in metadata: stray.txt. ' +
-                'The following raw files were uploaded but the metadata still references an existing file for them: a.txt. ' +
-                'Remove the file ID from the metadata entry to replace it.',
-        );
-    });
-
-    it('joins problems across categories', () => {
-        const details = new Map([
-            ['raw', { linked: [], reused: [], missing: [file('a.txt')], orphaned: [], shadowed: [] }],
-            ['processed', { linked: [], reused: [], missing: [], orphaned: [file('b.json')], shadowed: [] }],
-        ]);
-        expect(getLinkageErrors(details)).toBe(
-            'The following raw files were referenced in metadata but not uploaded: a.txt. ' +
-                'The following processed files were uploaded but not referenced in metadata: b.json.',
+        expect(getLinkageErrors(fileLinkage)).toBe(
+            `${getLinkageErrorMessage(LinkageType.MISSING, RAW_READS, 'a.txt')} ${getLinkageErrorMessage(LinkageType.ORPHANED, OTHER_FILES, 'b.json')}`,
         );
     });
 });
@@ -302,84 +322,33 @@ describe('applyFileMappings', () => {
     const linesOf = async (file: File) => (await file.text()).split('\n');
 
     it('writes name:fileId into an existing file column', async () => {
-        const merged = submissionMappingOf({
-            e1: { raw: [{ name: 'a.txt', path: 'a.txt', fileId: 'id-a' }] },
-        });
+        const merged = resolvedMappingOf({ e1: { [RAW_READS]: [{ name: 'a.txt', fileId: 'id-a' }] } });
         const result = await applyFileMappings(
             metadataFile([
-                ['id', 'files.raw'],
+                ['id', RAW_READS_COLUMN],
                 ['e1', 'a.txt'],
             ]),
             merged,
         );
-        expect(await linesOf(result)).toEqual(['id\tfiles.raw', 'e1\ta.txt:id-a']);
+        expect(await linesOf(result._unsafeUnwrap())).toEqual([`id\t${RAW_READS_COLUMN}`, 'e1\ta.txt:id-a']);
     });
 
     it('joins several files in one cell', async () => {
-        const merged = submissionMappingOf({
+        const merged = resolvedMappingOf({
             e1: {
-                raw: [
-                    { name: 'a.txt', path: 'a.txt', fileId: 'id-a' },
-                    { name: 'b.txt', path: 'sub/b.txt', fileId: 'id-b' },
+                [RAW_READS]: [
+                    { name: 'a.txt', fileId: 'id-a' },
+                    { name: 'b.txt', fileId: 'id-b' },
                 ],
             },
         });
         const result = await applyFileMappings(
             metadataFile([
-                ['id', 'files.raw'],
+                ['id', RAW_READS_COLUMN],
                 ['e1', ''],
             ]),
             merged,
         );
-        expect(await linesOf(result)).toEqual(['id\tfiles.raw', 'e1\ta.txt:id-a b.txt:id-b']);
-    });
-
-    it('appends a column for a category missing from the header', async () => {
-        const merged = submissionMappingOf({
-            e1: { raw: [{ name: 'a.txt', path: 'a.txt', fileId: 'id-a' }] },
-        });
-        const result = await applyFileMappings(
-            metadataFile([
-                ['id', 'country'],
-                ['e1', 'CH'],
-            ]),
-            merged,
-        );
-        expect(await linesOf(result)).toEqual(['id\tcountry\tfiles.raw', 'e1\tCH\ta.txt:id-a']);
-    });
-
-    it('leaves rows with no files for the category untouched', async () => {
-        const merged = submissionMappingOf({
-            e1: { raw: [{ name: 'a.txt', path: 'a.txt', fileId: 'id-a' }] },
-        });
-        const result = await applyFileMappings(
-            metadataFile([
-                ['id', 'files.raw'],
-                ['e1', ''],
-                ['e2', 'keep-me'],
-            ]),
-            merged,
-        );
-        expect(await linesOf(result)).toEqual(['id\tfiles.raw', 'e1\ta.txt:id-a', 'e2\tkeep-me']);
-    });
-
-    it('keeps rows aligned when appending a column that only some entries use', async () => {
-        const merged = submissionMappingOf({
-            e1: { raw: [{ name: 'a.txt', path: 'a.txt', fileId: 'id-a' }] },
-        });
-        const result = await applyFileMappings(
-            metadataFile([
-                ['id', 'country'],
-                ['e1', 'CH'],
-                ['e2', 'DE'],
-            ]),
-            merged,
-        );
-        expect(await linesOf(result)).toEqual(['id\tcountry\tfiles.raw', 'e1\tCH\ta.txt:id-a', 'e2\tDE\t']);
-    });
-
-    it('returns the original file when there are no rows', async () => {
-        const empty = metadataFile([]);
-        expect(await applyFileMappings(empty, new Map())).toBe(empty);
+        expect(await linesOf(result._unsafeUnwrap())).toEqual([`id\t${RAW_READS_COLUMN}`, 'e1\ta.txt:id-a b.txt:id-b']);
     });
 });

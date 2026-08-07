@@ -78,7 +78,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     const [columnMapping, setColumnMapping] = useState<ColumnMapping | null>(null);
 
     useEffect(() => {
-        const controller = new AbortController();
+        const state = { cancelled: false };
         void (async () => {
             if (!metadataFile) {
                 setSubmissionFileMapping(undefined);
@@ -87,13 +87,19 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
             const text = columnMapping
                 ? await (await columnMapping.applyTo(metadataFile)).text()
                 : await metadataFile.text();
-            if (!controller.signal.aborted) {
-                const submissionFileMapping = parseSubmissionFileMapping(text);
-                setSubmissionFileMapping(submissionFileMapping);
-                if (submissionFileMapping.isErr()) onError(submissionFileMapping.error.message);
-            }
+
+            if (state.cancelled) return;
+
+            const submissionFileMapping = parseSubmissionFileMapping(
+                text,
+                submissionDataTypes.files?.categories?.map((category) => category.name) ?? [],
+            );
+            setSubmissionFileMapping(submissionFileMapping);
+            if (submissionFileMapping.isErr()) onError(submissionFileMapping.error.message);
         })();
-        return () => controller.abort();
+        return () => {
+            state.cancelled = true;
+        };
     }, [metadataFile, columnMapping]);
 
     useEffect(() => {
@@ -107,7 +113,12 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                             return { type: 'error', errorMessage: 'Please specify an ID.' };
                         }
                         const fastaIds = enableConsensusSequences ? editableSequences.getFastaIds() : undefined;
-                        const metadataFile = editableMetadata.getMetadataTsv(undefined, undefined, fastaIds);
+                        const metadataFile = editableMetadata.getMetadataTsv(
+                            undefined,
+                            undefined,
+                            fastaIds,
+                            submissionDataTypes.files?.categories,
+                        );
                         if (!metadataFile) {
                             return { type: 'error', errorMessage: 'Please specify metadata.' };
                         }

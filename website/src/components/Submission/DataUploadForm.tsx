@@ -30,13 +30,12 @@ import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import {
     applyFileMappings,
-    getFileLinkage,
+    resolveFileMappings,
     getLinkageErrors,
+    getSingleSubmissionFileMapping,
+    type CategoryLinkage,
     type FileLinkage,
-    type FileLinkageDetails,
     type FileMapping,
-    type ResolvedSubmissionFile,
-    type SubmissionFile,
     type SubmissionFileMapping,
 } from './FileUpload/fileMapping.ts';
 
@@ -77,7 +76,7 @@ const InnerDataUploadForm = ({
 
     const { submit, revise, isPending } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
-    const [fileMapping, setFileMapping] = useState<FileMapping<ResolvedSubmissionFile> | undefined>(undefined);
+    const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(undefined);
     const [submissionFileMapping, setSubmissionFileMapping] = useState<
         Result<SubmissionFileMapping, Error> | undefined
     >(undefined);
@@ -91,7 +90,7 @@ const InnerDataUploadForm = ({
     const fileLinkage = useMemo(
         () =>
             inputMode === 'bulk' && submissionFileMapping?.isOk()
-                ? getFileLinkage(submissionFileMapping.value, fileMapping)
+                ? resolveFileMappings(submissionFileMapping.value, fileMapping).fileLinkage
                 : undefined,
         [inputMode, submissionFileMapping, fileMapping],
     );
@@ -130,8 +129,13 @@ const InnerDataUploadForm = ({
         if (extraFilesEnabled) {
             if (inputMode === 'form') {
                 if (fileMapping !== undefined) {
-                    const finalSubmissionFileMapping = new Map([[submissionId!, fileMapping]]);
-                    finalMetadataFile = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
+                    const finalSubmissionFileMapping = getSingleSubmissionFileMapping(submissionId!, fileMapping);
+                    const finalMetadataFileResult = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
+                    if (finalMetadataFileResult.isErr()) {
+                        onError(finalMetadataFileResult.error.message);
+                        return;
+                    }
+                    finalMetadataFile = finalMetadataFileResult.value;
                 }
             } else {
                 if (submissionFileMapping === undefined) {
@@ -144,13 +148,21 @@ const InnerDataUploadForm = ({
                     return;
                 }
 
-                const fileLinkage = getFileLinkage(submissionFileMapping.value, fileMapping);
-                const linkageErrors = getLinkageErrors(fileLinkage.details);
+                const { submissionFileMapping: resolvedSubmissionFileMapping, fileLinkage } = resolveFileMappings(
+                    submissionFileMapping.value,
+                    fileMapping,
+                );
+                const linkageErrors = getLinkageErrors(fileLinkage);
                 if (linkageErrors !== undefined) {
                     onError(linkageErrors);
                     return;
                 }
-                finalMetadataFile = await applyFileMappings(metadataFile, fileLinkage.submissionFileMapping);
+                const finalMetadataFileResult = await applyFileMappings(metadataFile, resolvedSubmissionFileMapping);
+                if (finalMetadataFileResult.isErr()) {
+                    onError(finalMetadataFileResult.error.message);
+                    return;
+                }
+                finalMetadataFile = finalMetadataFileResult.value;
             }
         }
 
@@ -319,52 +331,61 @@ export const InputModeTabs = ({
     );
 };
 
-const FileLinkageStatus = ({ linkageDetails }: { linkageDetails?: FileLinkageDetails }) => {
-    if (linkageDetails === undefined) return null;
+const CategoryLinkageStatus = ({ categoryLinkage }: { categoryLinkage: CategoryLinkage | undefined }) => {
+    const statuses: {
+        key: string;
+        icon: string;
+        color: string;
+        count: number;
+        message: string;
+    }[] = useMemo(() => {
+        if (categoryLinkage === undefined) return [];
+        return [
+            {
+                key: 'linked',
+                icon: '✓',
+                color: 'text-green-500',
+                // Multiple metadata entries can reference the same file,
+                // so we want to count the number of unique files that are linked to metadata
+                count: Array.from(new Set(categoryLinkage.linked.map((file) => file.path))).length,
+                message: 'uploaded and linked to metadata!',
+            },
+            {
+                key: 'reused',
+                icon: '↺',
+                color: 'text-green-500',
+                count: categoryLinkage.reused.length,
+                message: 'reused from previous uploads.',
+            },
+            {
+                key: 'missing',
+                icon: '⚠',
+                color: 'text-yellow-600',
+                count: categoryLinkage.missing.length,
+                message: 'referenced in metadata but not uploaded.',
+            },
+            {
+                key: 'unreferenced',
+                icon: '⚠',
+                color: 'text-yellow-600',
+                count: categoryLinkage.orphaned.concat(categoryLinkage.shadowed).length,
+                message: 'uploaded but not referenced in metadata.',
+            },
+        ];
+    }, [categoryLinkage]);
 
-    const statuses: { key: string; icon: string; color: string; files: SubmissionFile[]; message: string }[] = [
-        {
-            key: 'linked',
-            icon: '✓',
-            color: 'text-green-500',
-            files: linkageDetails.linked,
-            message: 'uploaded and linked to metadata!',
-        },
-        {
-            key: 'reused',
-            icon: '↺',
-            color: 'text-green-500',
-            files: linkageDetails.reused,
-            message: 'reused from previous uploads.',
-        },
-        {
-            key: 'missing',
-            icon: '⚠',
-            color: 'text-yellow-600',
-            files: linkageDetails.missing,
-            message: 'referenced in metadata but not uploaded.',
-        },
-        {
-            key: 'unreferenced',
-            icon: '⚠',
-            color: 'text-yellow-600',
-            files: linkageDetails.orphaned.concat(linkageDetails.shadowed),
-            message: 'uploaded but not referenced in metadata.',
-        },
-    ];
-
-    return (
+    return categoryLinkage ? (
         <div className='text-xs text-gray-500 text-center space-y-1'>
             {statuses
-                .filter((status) => status.files.length > 0)
+                .filter((status) => status.count > 0)
                 .map((status) => (
                     <div key={status.key}>
                         <span className={status.color}>{status.icon}</span>{' '}
-                        {`${status.files.length} ${status.files.length === 1 ? 'file' : 'files'} ${status.message}`}
+                        {`${status.count} ${status.count === 1 ? 'file' : 'files'} ${status.message}`}
                     </div>
                 ))}
         </div>
-    );
+    ) : null;
 };
 
 export const ExtraFilesUpload = ({
@@ -383,8 +404,8 @@ export const ExtraFilesUpload = ({
     inputMode: InputMode;
     groupId: number;
     fileCategories: FileCategory[];
-    fileMapping: FileMapping<ResolvedSubmissionFile> | undefined;
-    setFileMapping: Dispatch<SetStateAction<FileMapping<ResolvedSubmissionFile> | undefined>>;
+    fileMapping: FileMapping | undefined;
+    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
     fileLinkage?: FileLinkage;
     onError: (message: string) => void;
 }) => {
@@ -412,7 +433,7 @@ export const ExtraFilesUpload = ({
                             setFileMapping={setFileMapping}
                         />
                         {inputMode === 'bulk' && (
-                            <FileLinkageStatus linkageDetails={fileLinkage?.details.get(fileCategory.name)} />
+                            <CategoryLinkageStatus categoryLinkage={fileLinkage?.get(fileCategory.name)} />
                         )}
                     </div>
                 ))}

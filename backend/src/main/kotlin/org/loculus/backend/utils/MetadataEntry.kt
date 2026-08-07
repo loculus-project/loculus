@@ -12,6 +12,7 @@ import org.loculus.backend.model.FASTA_IDS_HEADER
 import org.loculus.backend.model.FASTA_IDS_SEPARATOR
 import org.loculus.backend.model.FILES_HEADER_PREFIX
 import org.loculus.backend.model.FILES_SEPARATOR
+import org.loculus.backend.model.FILE_ID_LENGTH
 import org.loculus.backend.model.FILE_NAME_ID_SEPARATOR
 import org.loculus.backend.model.FastaId
 import org.loculus.backend.model.METADATA_ID_HEADER
@@ -154,6 +155,15 @@ private fun extractAndValidateFileIdAndName(
                 "Expected a UUID.",
         )
     }
+
+    if (fileIdString.length != FILE_ID_LENGTH) {
+        throw UnprocessableEntityException(
+            "In metadata file: record #$recordNumber with id '$submissionId': " +
+                "file entry '$token' in column '$header' has an invalid file ID '$fileIdString'. " +
+                "Expected a UUID of length $FILE_ID_LENGTH but received a UUID of length ${fileIdString.length}.",
+        )
+    }
+
     return FileIdAndName(fileId, fileName)
 }
 

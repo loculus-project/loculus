@@ -109,7 +109,7 @@ class FilesController(
         "Requests S3 pre-signed URLs to upload files. The endpoint returns a list of file IDs and URLs. " +
             "The URLs should be used to upload the files via HTTP PUT, including all headers listed in the " +
             "`headers` field of each response entry. Afterwards, the file IDs can be attached to the metadata " +
-            "in the `files.<fileCategory>` column, each entry should consist of a space-separated list of files" +
+            "in the `files.<fileCategory>` column, each entry should consist of a space-separated list of files " +
             "associated with the entry, supplied as <fileName>:<fileId>. " +
             "Note: the presigned URL includes an `If-None-Match: *` condition to prevent accidental " +
             "overwrites. If the file ID has already been uploaded to, S3 will return HTTP 412 " +
