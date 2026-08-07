@@ -11,6 +11,7 @@ import {
     editedSequenceEntryData,
     getSequencesResponse,
     problemDetail,
+    reviewCountsResponse,
     revocationRequest,
     sequenceEntryToEdit,
     submissionIdMapping,
@@ -146,6 +147,15 @@ const getSequencesEndpoint = makeEndpoint({
     errors: [notAuthorizedError, { status: 404, schema: problemDetail }],
 });
 
+const getReviewCountsEndpoint = makeEndpoint({
+    method: 'get',
+    path: '/my/review-counts',
+    alias: 'getReviewCounts',
+    parameters: [authorizationHeader],
+    response: reviewCountsResponse,
+    errors: [notAuthorizedError],
+});
+
 const approveProcessedDataEndpoint = makeEndpoint({
     method: 'post',
     path: withOrganismPathSegment('/approve-processed-data'),
@@ -260,6 +270,7 @@ export const backendApi = makeApi([
     revokeSequencesEndpoint,
     submitReviewedSequenceEndpoint,
     getSequencesEndpoint,
+    getReviewCountsEndpoint,
     approveProcessedDataEndpoint,
     deleteSequencesEndpoint,
     extractUnprocessedDataEndpoint,

@@ -1,11 +1,13 @@
 ---
 import AccessionSearchBox from './AccessionSearchBox.tsx';
 import { NavigationTab } from './NavigationTab.tsx';
+import { NotificationBell } from './NotificationBell.tsx';
 import { OrganismNavigation } from './OrganismNavigation.tsx';
 import { SandwichMenu } from './SandwichMenu.tsx';
 import { cleanOrganism } from './cleanOrganism';
-import { getWebsiteConfig } from '../../config';
+import { getRuntimeConfig, getWebsiteConfig } from '../../config';
 import { navigationItems } from '../../routes/navigationItems';
+import { getAccessToken } from '../../utils/getAccessToken';
 import { getAuthUrl } from '../../utils/getAuthUrl';
 
 interface Props {
@@ -27,6 +29,10 @@ const loginUrl = await getAuthUrl(Astro.url.toString());
 
 const topNavigationItems = navigationItems.top(isLoggedIn, loginUrl);
 const accessionPrefix = getWebsiteConfig().accessionPrefix;
+
+// Only rendered when logged in, so the bell does not cause layout shift for logged-out visitors.
+const accessToken = getAccessToken(Astro.locals.session);
+const clientConfig = getRuntimeConfig().public;
 ---
 
 <div class='flex justify-end relative'>
@@ -49,6 +55,16 @@ const accessionPrefix = getWebsiteConfig().accessionPrefix;
             }
         </div>
         <AccessionSearchBox client:load accessionPrefix={accessionPrefix} />
+        {
+            isLoggedIn && accessToken !== undefined && (
+                <NotificationBell
+                    client:load
+                    accessToken={accessToken}
+                    clientConfig={clientConfig}
+                    knownOrganisms={knownOrganisms}
+                />
+            )
+        }
     </div>
 
     <div class='lg:hidden flex items-center pb-3'>
