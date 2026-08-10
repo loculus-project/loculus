@@ -33,9 +33,8 @@ export class AuthPage {
 
         await this.page.getByLabel('University / Organisation').fill(account.organization);
 
-        await expect(async () => {
-            await this.page.getByLabel('I agree').check();
-        }).toPass({ timeout: 10_000 });
+        await this.page.getByText('I agree', { exact: true }).click();
+        await expect(this.page.getByRole('button', { name: 'Register' })).toBeEnabled();
 
         await this.page.getByRole('button', { name: 'Register' }).click();
     }
