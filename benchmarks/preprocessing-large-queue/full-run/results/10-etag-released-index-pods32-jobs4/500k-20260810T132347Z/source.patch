@@ -1,0 +1,238 @@
+diff --git a/backend/Dockerfile b/backend/Dockerfile
+index 1f2f226f5..edf1a37ee 100644
+--- a/backend/Dockerfile
++++ b/backend/Dockerfile
+@@ -1,4 +1,4 @@
+-FROM eclipse-temurin:25-jre-alpine
++FROM eclipse-temurin:25-jre-alpine@sha256:28db6fdf60e38945e43d840c0333aeaec66c15943070104f7586fd3c9d1665b0
+ 
+ WORKDIR /app
+ 
+diff --git a/backend/src/main/kotlin/org/loculus/backend/model/ReleasedDataModel.kt b/backend/src/main/kotlin/org/loculus/backend/model/ReleasedDataModel.kt
+index 9a8a9cd23..877b1af9c 100644
+--- a/backend/src/main/kotlin/org/loculus/backend/model/ReleasedDataModel.kt
++++ b/backend/src/main/kotlin/org/loculus/backend/model/ReleasedDataModel.kt
+@@ -23,11 +23,8 @@ import org.loculus.backend.config.FileUrlType
+ import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
+ import org.loculus.backend.service.files.S3Service
+ import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
+-import org.loculus.backend.service.submission.METADATA_UPLOAD_AUX_TABLE_NAME
+ import org.loculus.backend.service.submission.RawProcessedData
+-import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME
+ import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_TABLE_NAME
+-import org.loculus.backend.service.submission.SEQUENCE_UPLOAD_AUX_TABLE_NAME
+ import org.loculus.backend.service.submission.SubmissionDatabaseService
+ import org.loculus.backend.service.submission.UpdateTrackerTable
+ import org.loculus.backend.service.submission.dbtables.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
+@@ -45,13 +42,20 @@ import java.nio.charset.StandardCharsets
+ 
+ private val log = KotlinLogging.logger { }
+ 
++// sequence_entries_preprocessed_data is deliberately absent: the view only serves
++// preprocessed rows at the current pipeline version, and no write path can change
++// such a row for an already released entry. Preprocessed data becomes visible in
++// released data either through approval (bumps sequence_entries) or through a
++// pipeline-version promotion (bumps current_processing_pipeline), both of which are
++// tracked here. Including the table made every result-storage write during
++// preprocessing invalidate the ETag, forcing SILO to re-scan released data on each
++// poll while a large batch was still being processed.
+ val RELEASED_DATA_RELATED_TABLES: List<String> =
+     listOf(
+         CURRENT_PROCESSING_PIPELINE_TABLE_NAME,
+         EXTERNAL_METADATA_TABLE_NAME,
+         GROUPS_TABLE_NAME,
+         SEQUENCE_ENTRIES_TABLE_NAME,
+-        SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME,
+         DATA_USE_TERMS_TABLE_NAME,
+     )
+ 
+@@ -94,12 +98,12 @@ open class ReleasedDataModel(
+      * Returns the ETag for the last relevant database write, as the most recent
+      * `last_time_updated` in the update tracker.
+      *
+-     * When [organism] and/or [pipelineVersion] are given, the lookup is scoped to
+-     * the rows that affect that organism's released data at that pipeline version:
+-     * table-wide writes (tagged with NULL organism / pipeline_version) are always
+-     * included, plus the organism- and pipeline-specific preprocessed-data rows.
+-     * This means preprocessing of one organism (or of a not-yet-current pipeline
+-     * version) no longer invalidates the ETag of other organisms.
++     * When [organism] is given, the lookup is scoped to the rows that affect that
++     * organism's released data: table-wide writes (tagged with NULL organism /
++     * pipeline_version) are always included, plus the organism-specific rows, and
++     * rows tagged with a pipeline version count only for the organism's current
++     * one. This means writes for one organism (or for a not-yet-current pipeline
++     * version) do not invalidate the ETag of other organisms.
+      */
+     @Transactional(readOnly = true)
+     open fun getLastDatabaseWriteETag(tableNames: List<String>? = null, organism: Organism? = null): String {
+diff --git a/backend/src/main/kotlin/org/loculus/backend/service/submission/SubmissionDatabaseService.kt b/backend/src/main/kotlin/org/loculus/backend/service/submission/SubmissionDatabaseService.kt
+index 0cebebacf..63291e464 100644
+--- a/backend/src/main/kotlin/org/loculus/backend/service/submission/SubmissionDatabaseService.kt
++++ b/backend/src/main/kotlin/org/loculus/backend/service/submission/SubmissionDatabaseService.kt
+@@ -72,7 +72,6 @@ import org.loculus.backend.api.ProcessingResult.NO_ISSUES
+ import org.loculus.backend.api.SequenceEntryStatus
+ import org.loculus.backend.api.SequenceEntryVersionToEdit
+ import org.loculus.backend.api.Status
+-import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
+ import org.loculus.backend.api.SubmissionIdMapping
+ import org.loculus.backend.api.SubmittedContentWithFileUrls
+ import org.loculus.backend.api.SubmittedData
+@@ -1073,7 +1072,7 @@ class SubmissionDatabaseService(
+         val result = SequenceEntriesView
+             .select(SequenceEntriesView.accessionColumn, maxVersionExpression)
+             .where {
+-                SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
++                SequenceEntriesView.isReleased and SequenceEntriesView.organismIs(
+                     organism,
+                 )
+             }
+@@ -1089,7 +1088,7 @@ class SubmissionDatabaseService(
+ 
+         val result = SequenceEntriesView.select(SequenceEntriesView.accessionColumn, maxVersionExpression)
+             .where {
+-                SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and
++                SequenceEntriesView.isReleased and
+                     (SequenceEntriesView.isRevocationColumn eq true) and
+                     SequenceEntriesView.organismIs(organism)
+             }
+@@ -1105,7 +1104,7 @@ class SubmissionDatabaseService(
+         val result = SequenceEntriesView.select(
+             SequenceEntriesView.accessionColumn,
+         ).where {
+-            SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
++            SequenceEntriesView.isReleased and SequenceEntriesView.organismIs(
+                 organism,
+             )
+         }.count()
+@@ -1138,7 +1137,7 @@ class SubmissionDatabaseService(
+             DataUseTermsTable.changeDateColumn,
+         )
+         .where {
+-            SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
++            SequenceEntriesView.isReleased and SequenceEntriesView.organismIs(
+                 organism,
+             )
+         }
+@@ -1707,7 +1706,7 @@ class SubmissionDatabaseService(
+ 
+         return SequenceEntriesView.organismIs(organism) and
+             (SequenceEntriesView.groupIdColumn eq groupId) and
+-            SequenceEntriesView.statusIs(APPROVED_FOR_RELEASE) and
++            SequenceEntriesView.isReleased and
+             SequenceEntriesView.isMaxVersion and
+             (SequenceEntriesView.isRevocationColumn eq false) and
+             accessionsCondition
+diff --git a/backend/src/main/kotlin/org/loculus/backend/service/submission/dbtables/SequenceEntriesView.kt b/backend/src/main/kotlin/org/loculus/backend/service/submission/dbtables/SequenceEntriesView.kt
+index 26f2a61f4..384894c87 100644
+--- a/backend/src/main/kotlin/org/loculus/backend/service/submission/dbtables/SequenceEntriesView.kt
++++ b/backend/src/main/kotlin/org/loculus/backend/service/submission/dbtables/SequenceEntriesView.kt
+@@ -4,6 +4,7 @@ import org.jetbrains.exposed.sql.Expression
+ import org.jetbrains.exposed.sql.Op
+ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+ import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
++import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNotNull
+ import org.jetbrains.exposed.sql.Table
+ import org.jetbrains.exposed.sql.alias
+ import org.jetbrains.exposed.sql.and
+@@ -74,6 +75,12 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
+ 
+     fun statusIs(status: Status) = statusColumn eq status.name
+ 
++    // Equivalent to statusIs(APPROVED_FOR_RELEASE) — the view's status CASE maps
++    // released_at IS NOT NULL to APPROVED_FOR_RELEASE unconditionally — but filters
++    // on the base column, so Postgres can serve it from the partial index on
++    // sequence_entries (V1.39) instead of computing the status for every row.
++    val isReleased = releasedAtTimestampColumn.isNotNull()
++
+     fun statusIsOneOf(statuses: List<Status>) = statusColumn inList statuses.map { it.name }
+ 
+     fun accessionVersionEquals(accessionVersion: AccessionVersionInterface) =
+diff --git a/backend/src/main/resources/db/migration/V1.39__index_released_sequence_entries.sql b/backend/src/main/resources/db/migration/V1.39__index_released_sequence_entries.sql
+new file mode 100644
+index 000000000..70ca474e3
+--- /dev/null
++++ b/backend/src/main/resources/db/migration/V1.39__index_released_sequence_entries.sql
+@@ -0,0 +1,10 @@
++-- Queries for released data (SILO polling, approval scope resolution, released
++-- downloads) used to filter on sequence_entries_view.status, which is a CASE
++-- expression computed per row — Postgres cannot serve it from an index, so every
++-- such query paid a full scan of sequence_entries even when nothing was released
++-- yet. The backend now filters those queries on released_at IS NOT NULL directly
++-- (equivalent by the view definition: released_at IS NOT NULL is the first,
++-- unconditional branch of the status CASE), which this partial index serves.
++CREATE INDEX sequence_entries_released_idx
++    ON sequence_entries (organism, accession, version)
++    WHERE released_at IS NOT NULL;
+diff --git a/backend/src/test/kotlin/org/loculus/backend/controller/submission/GetReleasedDataEndpointTest.kt b/backend/src/test/kotlin/org/loculus/backend/controller/submission/GetReleasedDataEndpointTest.kt
+index d4a680655..a861122f9 100644
+--- a/backend/src/test/kotlin/org/loculus/backend/controller/submission/GetReleasedDataEndpointTest.kt
++++ b/backend/src/test/kotlin/org/loculus/backend/controller/submission/GetReleasedDataEndpointTest.kt
+@@ -301,9 +301,12 @@ class GetReleasedDataEndpointTest(
+ 
+         val initialEtag = submissionControllerClient.getReleasedData(organism = DEFAULT_ORGANISM)
+             .andReturn().response.getHeader(ETAG)
++        val initialEtagOtherOrganism = submissionControllerClient.getReleasedData(organism = OTHER_ORGANISM)
++            .andReturn().response.getHeader(ETAG)
+ 
+-        // A newer pipeline version reprocesses the OTHER organism. This only writes preprocessed data
+-        // tagged with the other organism, so it must not invalidate the default organism's etag.
++        // A newer pipeline version reprocesses the OTHER organism. Stored processing results only
++        // become visible in released data once that pipeline version is promoted, so no etag may
++        // be invalidated yet.
+         convenienceClient.extractUnprocessedData(organism = OTHER_ORGANISM, pipelineVersion = 2)
+         convenienceClient.submitProcessedData(
+             otherAccessionVersions.map {
+@@ -318,7 +321,42 @@ class GetReleasedDataEndpointTest(
+ 
+         submissionControllerClient.getReleasedData(organism = DEFAULT_ORGANISM, ifNoneMatch = initialEtag)
+             .andExpect(status().isNotModified)
+-        submissionControllerClient.getReleasedData(organism = OTHER_ORGANISM, ifNoneMatch = initialEtag)
++        submissionControllerClient.getReleasedData(organism = OTHER_ORGANISM, ifNoneMatch = initialEtagOtherOrganism)
++            .andExpect(status().isNotModified)
++
++        // Promoting the newer pipeline version changes the other organism's released data
++        // (and therefore its etag), but still not the default organism's.
++        submissionDatabaseService.useNewerProcessingPipelineIfPossible()
++
++        submissionControllerClient.getReleasedData(organism = DEFAULT_ORGANISM, ifNoneMatch = initialEtag)
++            .andExpect(status().isNotModified)
++        submissionControllerClient.getReleasedData(organism = OTHER_ORGANISM, ifNoneMatch = initialEtagOtherOrganism)
++            .andExpect(status().isOk)
++            .andExpect(header().string(ETAG, greaterThan(initialEtagOtherOrganism)))
++    }
++
++    @Test
++    fun `GIVEN processing results stored for unreleased entries THEN etag is unchanged until approval`() {
++        val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
++
++        val initialEtag = submissionControllerClient.getReleasedData().andReturn().response.getHeader(ETAG)
++
++        // Storing processing results for entries that are not yet released cannot change released
++        // data, so it must not invalidate the etag — otherwise SILO re-scans released data on
++        // every poll while a large submission is still being processed.
++        convenienceClient.submitProcessedData(
++            accessionVersions.map {
++                PreparedProcessedData.successfullyProcessed(accession = it.accession, version = it.version)
++            },
++        )
++
++        submissionControllerClient.getReleasedData(ifNoneMatch = initialEtag)
++            .andExpect(status().isNotModified)
++
++        // Approval releases the entries and must invalidate the etag.
++        convenienceClient.approveProcessedSequenceEntries(accessionVersions)
++
++        submissionControllerClient.getReleasedData(ifNoneMatch = initialEtag)
+             .andExpect(status().isOk)
+             .andExpect(header().string(ETAG, greaterThan(initialEtag)))
+     }
+diff --git a/preprocessing/nextclade/Dockerfile b/preprocessing/nextclade/Dockerfile
+index e3629d0e9..c6dc5966c 100644
+--- a/preprocessing/nextclade/Dockerfile
++++ b/preprocessing/nextclade/Dockerfile
+@@ -1,4 +1,4 @@
+-FROM mambaorg/micromamba:2.8.1-ubuntu24.04
++FROM mambaorg/micromamba:2.8.1-ubuntu24.04@sha256:03db99fe842d9b132f7b1bbbfbabaa8e73759ec5311c420ccdb7febf6eb1eba0
+ 
+ COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yml /tmp/env.yaml
+ COPY --chown=$MAMBA_USER:$MAMBA_USER .mambarc /tmp/.mambarc
