@@ -38,7 +38,7 @@ import {
     type FileMapping,
     type SubmissionFileMapping,
 } from './FileUpload/fileMapping.ts';
-import type { FileUploadState } from './FileUpload/fileUpload.ts';
+import { validateFileUploadStates, type FileUploadState } from './FileUpload/fileUpload.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -126,8 +126,9 @@ const InnerDataUploadForm = ({
             return;
         }
 
-        if (Array.from(fileUploadStates.values()).some((state) => state.type !== 'uploadCompleted')) {
-            onError('Please wait for all files to finish uploading before submitting.');
+        const fileUploadStateResult = validateFileUploadStates(fileUploadStates);
+        if (fileUploadStateResult.isErr()) {
+            onError(fileUploadStateResult.error.message);
             return;
         }
 

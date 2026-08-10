@@ -23,7 +23,11 @@ import {
     getSingleSubmissionFileMapping,
     type FileMapping,
 } from '../Submission/FileUpload/fileMapping.ts';
-import { getPreviousFileUploadState, type FileUploadState } from '../Submission/FileUpload/fileUpload.ts';
+import {
+    getInitialFileUploadStates,
+    validateFileUploadStates,
+    type FileUploadState,
+} from '../Submission/FileUpload/fileUpload.ts';
 import { Button } from '../common/Button';
 import ErrorBox from '../common/ErrorBox';
 import { Spinner } from '../common/Spinner';
@@ -70,7 +74,7 @@ const InnerEditPage: FC<EditPageProps> = ({
 
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
     const [fileUploadStates, setFileUploadStates] = useState<Map<string, FileUploadState>>(
-        dataToEdit.submittedData.files ? getPreviousFileUploadState(dataToEdit.submittedData.files) : new Map(),
+        dataToEdit.submittedData.files ? getInitialFileUploadStates(dataToEdit.submittedData.files) : new Map(),
     );
     const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(undefined);
 
@@ -158,11 +162,9 @@ const InnerEditPage: FC<EditPageProps> = ({
     };
 
     const handleSubmit = () => {
-        if (Array.from(fileUploadStates.values()).some((state) => state.type !== 'uploadCompleted')) {
-            toast.error('Please wait for all files to finish uploading before submitting.', {
-                position: 'top-center',
-                autoClose: false,
-            });
+        const fileUploadStateResult = validateFileUploadStates(fileUploadStates);
+        if (fileUploadStateResult.isErr()) {
+            toast.error(fileUploadStateResult.error.message, { position: 'top-center', autoClose: false });
             return;
         }
 

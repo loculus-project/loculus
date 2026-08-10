@@ -64,7 +64,7 @@ type UploadCompleted = {
 
 export type FileUploadState = AwaitingUrlState | UploadInProgressState | UploadCompleted;
 
-export const getPreviousFileUploadState = (files: FilesByCategory) =>
+export const getInitialFileUploadStates = (files: FilesByCategory): Map<string, FileUploadState> =>
     new Map(
         Object.entries(files)
             .filter(([_, files]) => files.length > 0)
@@ -78,3 +78,10 @@ export const getPreviousFileUploadState = (files: FilesByCategory) =>
                 },
             ]),
     );
+
+export const validateFileUploadStates = (fileUploadStates: Map<string, FileUploadState>): Result<void, Error> => {
+    if (Array.from(fileUploadStates.values()).some((state) => state.type !== 'uploadCompleted'))
+        return err(new Error('Please wait for all files to finish uploading before submitting.'));
+
+    return ok();
+};
