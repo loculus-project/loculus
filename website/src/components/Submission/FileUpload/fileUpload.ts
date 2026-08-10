@@ -1,3 +1,5 @@
+import { err, ok, Result } from 'neverthrow';
+
 import type { FilesByCategory } from '../../../types/backend';
 
 export type Awaiting = {
