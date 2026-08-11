@@ -73,7 +73,7 @@ const InnerEditPage: FC<EditPageProps> = ({
     );
 
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
-    const [fileUploadStates, setFileUploadStates] = useState<Map<string, FileUploadState>>(
+    const [fileUploadStates, setFileUploadStates] = useState<Map<string, FileUploadState>>(() =>
         dataToEdit.submittedData.files ? getInitialFileUploadStates(dataToEdit.submittedData.files) : new Map(),
     );
     const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(undefined);
