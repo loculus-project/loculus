@@ -50,6 +50,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-webmvc"
     implementation "org.springframework.boot:spring-boot-starter-aspectj"
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    runtimeOnly    "io.micrometer:micrometer-registry-prometheus"
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin"
     implementation "org.springframework.boot:spring-boot-jackson2" // Jackson 2 compatibility bridge
     implementation "org.jetbrains.kotlin:kotlin-reflect"
