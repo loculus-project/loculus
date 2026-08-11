@@ -15,8 +15,9 @@ from .backend import (
 )
 from .config import (
     ASSIGNED_REFERENCE_PREFIX,
-    METADATA_DEPENDENCY_PREFIX,
+    FILES_PREFIX,
     NEXTCLADE_PREFIX,
+    PROCESSED_PREFIX,
     AlignmentRequirement,
     Config,
     ProcessingSpec,
@@ -28,7 +29,8 @@ from .datatypes import (
     AminoAcidSequence,
     AnnotationSource,
     AnnotationSourceType,
-    FileIdAndName,
+    FileCategory,
+    FileIdAndNameAndReadUrl,
     GeneName,
     InputData,
     InputMetadata,
@@ -260,6 +262,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     args["is_insdc_ingest_group"] = config.insdc_ingest_group_id == group_id
     args["submittedAt"] = submitted_at
     args["ACCESSION_VERSION"] = accession_version
+    args["taxonomy_service"] = config._taxonomy_service  # type: ignore
 
     try:
         processing_result = ProcessingFunctions.call_function(
@@ -297,6 +300,7 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
             version=version_from_str(accession_version),
             data=ProcessedData(
                 metadata=output_metadata,
+                files=unprocessed.files,
                 unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
                 alignedNucleotideSequences=aligned_nucleotide_sequences,
                 nucleotideInsertions=nucleotide_insertions,
@@ -321,7 +325,7 @@ def get_sequence_length(
     return len(sequence) if sequence else 0
 
 
-def get_output_metadata(
+def get_output_metadata(  # noqa: C901, PLR0912, PLR0914, PLR0915
     accession_version: AccessionVersion,
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
     config: Config,
@@ -367,8 +371,8 @@ def get_output_metadata(
 
         for arg_name, input_path in spec.inputs.items():
             get_from_processed = False
-            if input_path.startswith(METADATA_DEPENDENCY_PREFIX):
-                resolved_path = input_path.replace(METADATA_DEPENDENCY_PREFIX, "", 1)
+            if input_path.startswith(PROCESSED_PREFIX):
+                resolved_path = input_path.removeprefix(PROCESSED_PREFIX)
                 get_from_processed = True
             else:
                 resolved_path = input_path
@@ -392,7 +396,7 @@ def get_output_metadata(
                 )
                 submitted_at = unprocessed.inputMetadata["submittedAt"]
             else:
-                input_data[arg_name] = (
+                input_data[arg_name] = (  # type: ignore
                     output_metadata.get(resolved_path)  # type: ignore
                     if get_from_processed
                     else unprocessed.metadata.get(resolved_path)
@@ -415,28 +419,84 @@ def get_output_metadata(
         output_metadata[output_field] = processing_result.datum
         errors.extend(processing_result.errors)
         warnings.extend(processing_result.warnings)
+
         if (
-            null_per_backend(processing_result.datum)
-            and spec.required
-            and group_id != config.insdc_ingest_group_id
+            not null_per_backend(processing_result.datum)
+            or group_id == config.insdc_ingest_group_id
         ):
-            message = f"Metadata field `{output_field}` is required."
-            user_inputs = [field for field in input_fields if config.is_user_input(field)]
-            if any(field != output_field for field in user_inputs):
-                message += (
-                    f" Please provide input metadata field(s): "
-                    f"{', '.join(f'`{field}`' for field in user_inputs)}"
-                )
-            errors.append(
-                ProcessingAnnotation.from_fields(
-                    spec.inputs.values(),
-                    [output_field],
-                    AnnotationSourceType.METADATA,
-                    message=message,
-                )
+            # skip requirement checks when the field has a value, or for INSDC ingested data.
+            continue
+
+        requirement_errors: list[str] = []
+        if spec.required:
+            requirement_errors.append(
+                build_missing_required_msg(output_field, input_fields, config)
             )
+
+        for condition in spec.required_when:
+            if (
+                required_when_error := check_required_when_condition(
+                    condition, output_field, unprocessed, output_metadata
+                )
+            ) is not None:
+                requirement_errors.append(required_when_error)
+
+        errors.extend(
+            ProcessingAnnotation.from_fields(
+                spec.inputs.values(),
+                [output_field],
+                AnnotationSourceType.METADATA,
+                message=msg,
+            )
+            for msg in requirement_errors
+        )
+
     logger.debug(f"Processed {accession_version}: {output_metadata}")
     return output_metadata, errors, warnings
+
+
+def build_missing_required_msg(output_field: str, input_fields: list[str], config: Config):
+    message = f"Metadata field `{output_field}` is required."
+    user_inputs = [field for field in input_fields if config.is_user_input(field)]
+    if any(field != output_field for field in user_inputs):
+        message += (
+            f" Please provide input metadata field(s): "
+            f"{', '.join(f'`{field}`' for field in user_inputs)}"
+        )
+    return message
+
+
+def check_required_when_condition(
+    condition: str,
+    output_field: str,
+    unprocessed: UnprocessedData | UnprocessedAfterNextclade,
+    output_metadata: ProcessedMetadata,
+) -> str | None:
+    input_metadata = (
+        unprocessed.inputMetadata
+        if isinstance(unprocessed, UnprocessedAfterNextclade)
+        else unprocessed.metadata
+    )
+    error_message = None
+    if condition.startswith(FILES_PREFIX):
+        file_category = FileCategory(condition.removeprefix(FILES_PREFIX))
+        if unprocessed.files and unprocessed.files.get(file_category):
+            error_message = (
+                f"Metadata field `{output_field}` is required when "
+                f"`{file_category}` files are provided."
+            )
+    elif condition.startswith(PROCESSED_PREFIX):
+        field_name = condition.removeprefix(PROCESSED_PREFIX)
+        if not null_per_backend(output_metadata.get(field_name)):
+            error_message = (
+                f"Metadata field `{output_field}` is required when `{field_name}` exists."
+            )
+    elif not null_per_backend(input_metadata.get(condition)):
+        error_message = (
+            f"Metadata field `{output_field}` is required when `{condition}` is provided."
+        )
+
+    return error_message
 
 
 def alignment_errors_warnings(
@@ -517,6 +577,13 @@ def process_single(
     config: Config,
 ) -> SubmissionData:
     """Process a single sequence per config"""
+    # process files first as S3 read URLs have a limited lifetime
+    file_errors = []
+    if unprocessed.files and any(unprocessed.files.values()):
+        file_errors = config._file_processing_service.process_files(
+            unprocessed.files, accession_version=accession_version
+        )
+
     iupac_errors = errors_if_non_iupac(unprocessed.unalignedNucleotideSequences)
 
     max_seq_errors = error_on_excess_sequences(
@@ -538,6 +605,7 @@ def process_single(
         version=version_from_str(accession_version),
         data=ProcessedData(
             metadata=output_metadata,
+            files=unprocessed.files,
             unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
             alignedNucleotideSequences=unprocessed.alignedNucleotideSequences,
             nucleotideInsertions=unprocessed.nucleotideInsertions,
@@ -552,6 +620,7 @@ def process_single(
                 + max_seq_errors
                 + alignment_errors
                 + metadata_errors
+                + file_errors
             )
         ),
         warnings=list(set(unprocessed.warnings + alignment_warnings + metadata_warnings)),
@@ -571,6 +640,13 @@ def process_single_unaligned(
     config: Config,
 ) -> SubmissionData:
     """Process a single sequence per config"""
+    # process files first as S3 read URLs have a limited lifetime
+    file_errors = []
+    if unprocessed.files and any(unprocessed.files.values()):
+        file_errors = config._file_processing_service.process_files(
+            unprocessed.files, accession_version=accession_version
+        )
+
     segment_assignment = assign_segment_using_header(
         input_unaligned_sequences=unprocessed.unalignedNucleotideSequences,
         config=config,
@@ -586,7 +662,9 @@ def process_single_unaligned(
         accession_version=accession_version,
         unprocessed=unprocessed,
         output_metadata=output_metadata,
-        errors=list(set(iupac_errors + metadata_errors + segment_assignment.alert.errors)),
+        errors=list(
+            set(iupac_errors + metadata_errors + segment_assignment.alert.errors + file_errors)
+        ),
         warnings=list(set(metadata_warnings)),
         sequenceNameToFastaId=segment_assignment.sequenceNameToFastaId,
     )
@@ -599,6 +677,7 @@ def processed_entry_with_errors(id) -> SubmissionData:
             version=version_from_str(id),
             data=ProcessedData(
                 metadata=dict[str, ProcessedMetadataValue](),
+                files=None,
                 unalignedNucleotideSequences=defaultdict(dict[str, Any]),
                 alignedNucleotideSequences=defaultdict(dict[str, Any]),
                 nucleotideInsertions=defaultdict(dict[str, Any]),
@@ -663,9 +742,11 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             upload_info = request_upload(submission_data.group_id, 1, config)[0]
             file_id = upload_info.fileId
             upload_embl_file_to_presigned_url(file_content, upload_info.url, upload_info.headers)
-            submission_data.processed_entry.data.files = {
-                "annotations": [FileIdAndName(fileId=file_id, name=file_name)]
-            }
+            processed_files = submission_data.processed_entry.data.files or {}
+            processed_files.setdefault(FileCategory.ANNOTATIONS, []).append(
+                FileIdAndNameAndReadUrl(fileId=file_id, name=file_name)
+            )
+            submission_data.processed_entry.data.files = processed_files
         except Exception as e:
             logger.error("Error creating or uploading EMBL file: %s", e)
             submission_data.processed_entry.errors.append(
@@ -696,6 +777,7 @@ def run(config: Config) -> None:  # noqa: C901
                 msg = "Diamond database URL must be provided for diamond segment classification"
                 raise ValueError(msg)
             download_diamond_db(config, dataset_dir + "/diamond/diamond.dmnd")
+
         total_processed = 0
         etag = None
         last_force_refresh = time.time()

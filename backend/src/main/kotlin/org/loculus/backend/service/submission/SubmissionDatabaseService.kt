@@ -82,6 +82,9 @@ import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
+import org.loculus.backend.metrics.STORE_PREPROCESSED_DATA_PHASE
+import org.loculus.backend.metrics.SUBMIT_PROCESSED_DATA_ENDPOINT
+import org.loculus.backend.metrics.SubmissionMetrics
 import org.loculus.backend.service.datauseterms.DataUseTermsTable
 import org.loculus.backend.service.files.FileId
 import org.loculus.backend.service.files.FilesDatabaseService
@@ -126,6 +129,7 @@ class SubmissionDatabaseService(
     private val processedDataPostprocessor: ProcessedDataPostprocessor,
     private val auditLogger: AuditLogger,
     private val dateProvider: DateProvider,
+    private val submissionMetrics: SubmissionMetrics,
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
 ) {
     private var lastPreprocessedDataUpdate: String? = null
@@ -272,6 +276,16 @@ class SubmissionDatabaseService(
     }
 
     fun updateProcessedData(inputStream: InputStream, organism: Organism, pipelineVersion: Long) {
+        submissionMetrics.timeWritePhase(
+            SUBMIT_PROCESSED_DATA_ENDPOINT,
+            organism.name,
+            STORE_PREPROCESSED_DATA_PHASE,
+        ) {
+            updateProcessedDataAndRecordCount(inputStream, organism, pipelineVersion)
+        }
+    }
+
+    private fun updateProcessedDataAndRecordCount(inputStream: InputStream, organism: Organism, pipelineVersion: Long) {
         log.info { "updating processed data" }
 
         val processedAccessionVersions = mutableListOf<String>()
@@ -324,6 +338,11 @@ class SubmissionDatabaseService(
                 processedAccessionVersions.joinToString() +
                 "Processing result counts: " +
                 processingResultCounts.entries.joinToString { "${it.key}=${it.value}" },
+        )
+
+        submissionMetrics.recordProcessedSequencesStored(
+            organism = organism.name,
+            count = processedAccessionVersions.size,
         )
     }
 

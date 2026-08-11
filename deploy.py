@@ -34,10 +34,7 @@ HELM_RELEASE_NAME = "preview"
 HELM_CHART_DIR = ROOT_DIR / "kubernetes" / "loculus"
 WEBSITE_ORGANISM_CONFIGMAP_PREFIX = "loculus-web-org-config-"
 
-# By default, uses K3s v1.31: https://hub.docker.com/r/rancher/k3s/tags?name=v1.31
-# K3s v1.31 is the latest version which installs Traefik v2 (Traefik v3 is not yet supported by Loculus)
-# Also see: https://docs.k3s.io/upgrades#version-specific-caveats
-DEFAULT_K3S_IMAGE = "rancher/k3s:v1.31.14-k3s1"
+DEFAULT_K3S_IMAGE = "rancher/k3s:v1.35.6-k3s1"
 
 WEBSITE_PORT_MAPPING = "-p 127.0.0.1:3000:30081@agent:0"
 BACKEND_PORT_MAPPING = "-p 127.0.0.1:8079:30082@agent:0"
