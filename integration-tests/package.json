@@ -13,13 +13,13 @@
         "@playwright/test": "^1.62.1",
         "@types/node": "^26.1.2",
         "@types/papaparse": "^5.5.2",
-        "@typescript-eslint/eslint-plugin": "^8.65.0",
-        "@typescript-eslint/parser": "^8.65.0",
+        "@typescript-eslint/eslint-plugin": "^8.66.0",
+        "@typescript-eslint/parser": "^8.66.0",
         "eslint": "^10.8.0",
         "eslint-plugin-unicorn": "^72.0.0",
         "papaparse": "^5.5.4",
         "prettier": "^3.9.6",
-        "typescript-eslint": "^8.65.0",
+        "typescript-eslint": "^8.66.0",
         "uuid": "^14.0.1"
     }
 }
