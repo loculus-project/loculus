@@ -119,7 +119,7 @@ class KeycloakAuthenticationConverter(val authoritiesConverter: KeycloakAuthorit
     override fun convert(jwt: Jwt): JwtAuthenticationToken = JwtAuthenticationToken(
         jwt,
         authoritiesConverter.convert(jwt),
-        jwt.getClaimAsString(StandardClaimNames.PREFERRED_USERNAME),
+        jwt.getClaimAsString(StandardClaimNames.PREFERRED_USERNAME)!!,
     )
 }
 
