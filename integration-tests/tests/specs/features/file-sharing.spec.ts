@@ -28,8 +28,8 @@ const ID_1 = 'sub1';
 const ID_2 = 'sub2';
 const FILES_SINGLE = { 'testfile.fastq': EBOLA_SUDAN_SMALL_FASTQ(1) };
 const FILES_DOUBLE = {
-    'file1.fastq': EBOLA_SUDAN_SMALL_FASTQ(1),
-    'file2.fastq': EBOLA_SUDAN_SMALL_FASTQ(2),
+    'file 1.fastq': EBOLA_SUDAN_SMALL_FASTQ(1),
+    'file 2.fastq': EBOLA_SUDAN_SMALL_FASTQ(2),
 };
 
 test('submit single seq w/ 2 FASTQ files thru single seq submission form', async ({
