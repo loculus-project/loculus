@@ -30,7 +30,7 @@ spec:
   restartPolicy: Never
   initContainers:
     - name: version-check
-      image: busybox
+      image: {{ include "loculus.image" (dict "name" "busybox" "defaultRepository" "busybox" "values" $Values) }}
       {{- include "loculus.resources" (list "ingest-init" $Values) | nindent 6 }}
       command: ['sh', '-c', '
         CONFIG_VERSION=$(grep "verify_loculus_version_is:" /package/config/config.yaml | sed "s/verify_loculus_version_is: //;");
@@ -49,7 +49,7 @@ spec:
           mountPath: /package/config/config.yaml
           subPath: config.yaml
     - name: wait-for-no-other-ingest
-      image: alpine/kubectl:1.36.0
+      image: {{ include "loculus.image" (dict "name" "kubectl" "defaultRepository" "alpine/kubectl" "defaultTag" "1.36.0" "values" $Values) }}
       command:
         - sh
         - -c
