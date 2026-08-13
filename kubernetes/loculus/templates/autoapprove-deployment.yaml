@@ -28,7 +28,7 @@ spec:
       containers:
         - name: autoapprove
           image: ghcr.io/loculus-project/ingest:{{ $dockerTag }}
-          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          imagePullPolicy: {{ $.Values.imagePullPolicy }}
           {{- include "loculus.resources" (list "ingest" .Values) | nindent 10 }}
           env:
             - name: KEYCLOAK_INGEST_PASSWORD

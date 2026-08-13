@@ -25,8 +25,8 @@ spec:
       {{- include "loculus.podScheduling" $ | nindent 6 }}
       containers:
         - name: raw-reads-processing
-          image: "ghcr.io/loculus-project/raw-reads-processing-service:{{ $dockerTag }}"
-          imagePullPolicy: {{ $.Values.imagePullPolicy }}
+          image: {{ include "loculus.image" (dict "name" "rawReadsProcessing" "defaultRepository" "ghcr.io/loculus-project/raw-reads-processing-service" "values" $.Values) }}
+          imagePullPolicy: {{ $.Values.images.rawReadsProcessing.pullPolicy | default $.Values.imagePullPolicy }}
           {{- include "loculus.resources" (list "raw-reads-processing" $.Values) | nindent 10 }}
           args:
             - raw_reads_processing

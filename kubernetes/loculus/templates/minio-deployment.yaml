@@ -48,7 +48,7 @@ spec:
             name: minio-policies
       containers:
         - name: minio
-          image: minio/minio:latest
+          image: {{ include "loculus.image" (dict "name" "minio" "defaultRepository" "minio/minio" "defaultTag" "latest" "values" $.Values) }}
           {{- include "loculus.resources" (list "minio" $.Values) | nindent 10 }}
           args: ["server", "/data"]
           ports:

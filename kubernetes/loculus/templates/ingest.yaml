@@ -147,7 +147,7 @@ spec:
       serviceAccountName: loculus-ingest-trigger
       containers:
         - name: trigger
-          image: alpine/kubectl:1.36.0
+          image: {{ include "loculus.image" (dict "name" "kubectl" "defaultRepository" "alpine/kubectl" "defaultTag" "1.36.0" "values" $.Values) }}
           command:
             - sh
             - -c

@@ -25,8 +25,8 @@ spec:
       {{- include "loculus.podScheduling" . | nindent 6 }}
       containers:
         - name: docs
-          image: "ghcr.io/loculus-project/docs:{{ $dockerTag }}"
-          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          image: {{ include "loculus.image" (dict "name" "docs" "defaultRepository" "ghcr.io/loculus-project/docs" "values" $.Values) }}
+          imagePullPolicy: {{ $.Values.images.docs.pullPolicy | default $.Values.imagePullPolicy }}
           {{- include "loculus.resources" (list "docs" .Values) | nindent 10 }}
           ports:
             - containerPort: 8080
