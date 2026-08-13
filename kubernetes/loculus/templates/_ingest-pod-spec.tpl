@@ -30,7 +30,7 @@ spec:
   restartPolicy: Never
   initContainers:
     - name: version-check
-      image: {{ include "loculus.image" (dict "name" "busybox" "defaultRepository" "busybox" "values" $Values) }}
+      image: {{ include "loculus.image" (dict "name" "busybox" "defaultRepository" "busybox" "defaultTag" "latest" "values" $Values) }}
       {{- include "loculus.resources" (list "ingest-init" $Values) | nindent 6 }}
       command: ['sh', '-c', '
         CONFIG_VERSION=$(grep "verify_loculus_version_is:" /package/config/config.yaml | sed "s/verify_loculus_version_is: //;");
