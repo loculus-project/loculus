@@ -53,7 +53,7 @@ spec:
       containers:
         - name: ena-submission
           image: {{ include "loculus.image" (dict "name" "enaSubmission" "defaultRepository" "ghcr.io/loculus-project/ena-submission" "values" $.Values) }}
-          imagePullPolicy: {{ $.Values.images.enaSubmission.pullPolicy | default $.Values.imagePullPolicy }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "enaSubmission" "values" $.Values) }}
           {{- include "loculus.resources" (list "ena-submission" $.Values) | nindent 10 }}
           env:
             - name: EXTERNAL_METADATA_UPDATER_PASSWORD
@@ -148,7 +148,7 @@ spec:
           containers:
             - name: ena-submission
               image: {{ include "loculus.image" (dict "name" "enaSubmission" "defaultRepository" "ghcr.io/loculus-project/ena-submission" "values" $.Values) }}
-              imagePullPolicy: {{ $.Values.images.enaSubmission.pullPolicy | default $.Values.imagePullPolicy }}
+              imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "enaSubmission" "values" $.Values) }}
               {{- include "loculus.resources" (list "ena-submission-list-cronjob" $.Values) | nindent 14 }}
               env:
                 - name: EXTERNAL_METADATA_UPDATER_PASSWORD

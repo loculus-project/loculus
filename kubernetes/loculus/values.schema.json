@@ -1937,6 +1937,7 @@
         "loculusSilo": { "$ref": "#/definitions/imageSpec" },
         "website": { "$ref": "#/definitions/imageSpec" },
         "backend": { "$ref": "#/definitions/imageSpec" },
+        "autoapprove": { "$ref": "#/definitions/imageSpec" },
         "configProcessor": { "$ref": "#/definitions/imageSpec" },
         "docs": { "$ref": "#/definitions/imageSpec" },
         "enaSubmission": { "$ref": "#/definitions/imageSpec" },

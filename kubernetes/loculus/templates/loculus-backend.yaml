@@ -28,7 +28,7 @@ spec:
       containers:
         - name: backend
           image: {{ include "loculus.image" (dict "name" "backend" "defaultRepository" "ghcr.io/loculus-project/backend" "values" $.Values) }}
-          imagePullPolicy: {{ $.Values.images.backend.pullPolicy | default $.Values.imagePullPolicy }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "backend" "values" $.Values) }}
           {{- include "loculus.resources" (list "backend" $.Values) | nindent 10 }}
           startupProbe:
             httpGet:

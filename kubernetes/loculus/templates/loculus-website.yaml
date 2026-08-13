@@ -28,7 +28,7 @@ spec:
       containers:
         - name: website
           image: {{ include "loculus.image" (dict "name" "website" "defaultRepository" "ghcr.io/loculus-project/website" "values" $.Values) }}
-          imagePullPolicy: {{ $.Values.images.website.pullPolicy | default $.Values.imagePullPolicy }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "website" "values" $.Values) }}
           {{- include "loculus.resources" (list "website" .Values) | nindent 10 }}
           ports:
             - containerPort: 3000

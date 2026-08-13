@@ -26,7 +26,7 @@ spec:
       containers:
         - name: docs
           image: {{ include "loculus.image" (dict "name" "docs" "defaultRepository" "ghcr.io/loculus-project/docs" "values" $.Values) }}
-          imagePullPolicy: {{ $.Values.images.docs.pullPolicy | default $.Values.imagePullPolicy }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "docs" "values" $.Values) }}
           {{- include "loculus.resources" (list "docs" .Values) | nindent 10 }}
           ports:
             - containerPort: 8080

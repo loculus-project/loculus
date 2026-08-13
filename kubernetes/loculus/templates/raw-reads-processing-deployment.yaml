@@ -26,7 +26,7 @@ spec:
       containers:
         - name: raw-reads-processing
           image: {{ include "loculus.image" (dict "name" "rawReadsProcessing" "defaultRepository" "ghcr.io/loculus-project/raw-reads-processing-service" "values" $.Values) }}
-          imagePullPolicy: {{ $.Values.images.rawReadsProcessing.pullPolicy | default $.Values.imagePullPolicy }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "rawReadsProcessing" "values" $.Values) }}
           {{- include "loculus.resources" (list "raw-reads-processing" $.Values) | nindent 10 }}
           args:
             - raw_reads_processing

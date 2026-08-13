@@ -42,7 +42,7 @@ spec:
       containers:
         - name: taxonomy-service
           image: {{ include "loculus.image" (dict "name" "taxonomyService" "defaultRepository" "ghcr.io/loculus-project/taxonomy-service" "values" $.Values) }}
-          imagePullPolicy: {{ $.Values.images.taxonomyService.pullPolicy | default $.Values.imagePullPolicy }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "taxonomyService" "values" $.Values) }}
           {{- include "loculus.resources" (list "taxonomy-service" $.Values) | nindent 10 }}
           args:
             - taxonomy_service

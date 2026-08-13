@@ -30,7 +30,7 @@ spec:
       containers:
         - name: lapis
           image: {{ include "loculus.image" (dict "name" "lapis" "defaultRepository" "ghcr.io/genspectrum/lapis" "values" $.Values) }}
-          imagePullPolicy: {{ $.Values.images.lapis.pullPolicy | default $.Values.imagePullPolicy }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "lapis" "values" $.Values) }}
           {{- include "loculus.resources" (list "lapis" $.Values $key) | nindent 10 }}
           ports:
             - containerPort: 8080

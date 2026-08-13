@@ -37,7 +37,7 @@ spec:
         - name: silo
           image: {{ include "loculus.image" (dict "name" "loculusSilo" "defaultRepository" "ghcr.io/loculus-project/loculus-silo" "values" $.Values) }}
           command: ["/usr/local/bin/silo"]
-          imagePullPolicy: {{ $.Values.images.loculusSilo.pullPolicy | default $.Values.imagePullPolicy }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "loculusSilo" "values" $.Values) }}
           {{- include "loculus.resources" (list "silo" $.Values $key) | nindent 10 }}
           env:
             - name: SPDLOG_LEVEL
@@ -75,7 +75,7 @@ spec:
             timeoutSeconds: 5
         - name: silo-importer
           image: {{ include "loculus.image" (dict "name" "loculusSilo" "defaultRepository" "ghcr.io/loculus-project/loculus-silo" "values" $.Values) }}
-          imagePullPolicy: {{ $.Values.images.loculusSilo.pullPolicy | default $.Values.imagePullPolicy }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "loculusSilo" "values" $.Values) }}
           {{- include "loculus.resources" (list "silo-importer" $.Values) | nindent 10 }}
           env:
             - name: BACKEND_BASE_URL
