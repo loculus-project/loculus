@@ -1076,7 +1076,6 @@
           "description": "The pull policy to use. Always: always pull the image. IfNotPresent: pull if not present locally. Never: never pull, use local image only."
         }
       },
-      "required": ["repository", "pullPolicy"],
       "additionalProperties": false
     }
   },
@@ -1932,13 +1931,25 @@
     "images": {
       "groups": ["general"],
       "type": "object",
-      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website` and `backend`.",
+      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for each of the containers used by Loculus, including third-party images.",
       "properties": {
         "lapis": { "$ref": "#/definitions/imageSpec" },
-        "lapisSilo": { "$ref": "#/definitions/imageSpec" },
         "loculusSilo": { "$ref": "#/definitions/imageSpec" },
         "website": { "$ref": "#/definitions/imageSpec" },
-        "backend": { "$ref": "#/definitions/imageSpec" }
+        "backend": { "$ref": "#/definitions/imageSpec" },
+        "configProcessor": { "$ref": "#/definitions/imageSpec" },
+        "docs": { "$ref": "#/definitions/imageSpec" },
+        "enaSubmission": { "$ref": "#/definitions/imageSpec" },
+        "enaSubmissionFlyway": { "$ref": "#/definitions/imageSpec" },
+        "keycloakify": { "$ref": "#/definitions/imageSpec" },
+        "taxonomyService": { "$ref": "#/definitions/imageSpec" },
+        "rawReadsProcessing": { "$ref": "#/definitions/imageSpec" },
+        "keycloak": { "$ref": "#/definitions/imageSpec" },
+        "postgres": { "$ref": "#/definitions/imageSpec" },
+        "minio": { "$ref": "#/definitions/imageSpec" },
+        "alpine": { "$ref": "#/definitions/imageSpec" },
+        "busybox": { "$ref": "#/definitions/imageSpec" },
+        "kubectl": { "$ref": "#/definitions/imageSpec" }
       },
       "additionalProperties": false
     },
