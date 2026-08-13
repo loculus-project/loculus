@@ -119,7 +119,9 @@ class KeycloakAuthenticationConverter(val authoritiesConverter: KeycloakAuthorit
     override fun convert(jwt: Jwt): JwtAuthenticationToken = JwtAuthenticationToken(
         jwt,
         authoritiesConverter.convert(jwt),
-        jwt.getClaimAsString(StandardClaimNames.PREFERRED_USERNAME)!!,
+        requireNotNull(jwt.getClaimAsString(StandardClaimNames.PREFERRED_USERNAME)) {
+            "JWT missing preferred_username claim"
+        },
     )
 }
 
