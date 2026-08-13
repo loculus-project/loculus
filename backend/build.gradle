@@ -41,6 +41,7 @@ repositories {
 configurations.all {
     // For now we exclude Jackson 3 and maintain Jackson 2
     // https://spring.io/blog/2025/10/07/introducing-jackson-3-support-in-spring#keep-using-jackson-2-support-temporarily
+    // TODO: https://github.com/loculus-project/loculus/issues/5753
     exclude group: "org.springframework.boot", module: "spring-boot-jackson"
     // This project uses springmockk for mocking, so Mockito is excluded
     exclude group: "org.mockito"
