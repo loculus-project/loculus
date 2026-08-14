@@ -1,4 +1,4 @@
-import { getRuntimeConfig } from '../config';
+import { BACKEND_KEYCLOAK_CLIENT_SECRET } from 'astro:env/server';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 const clientMetadata = {
@@ -9,13 +9,8 @@ const clientMetadata = {
 /* eslint-enable @typescript-eslint/naming-convention */
 
 export const getClientMetadata = () => {
-    return { ...clientMetadata, client_secret: getClientSecret() }; // eslint-disable-line @typescript-eslint/naming-convention
-};
-
-const getClientSecret = () => {
-    const configDir = import.meta.env.CONFIG_DIR;
-    if (typeof configDir !== 'string' || configDir === '') {
-        return 'dummySecret';
-    }
-    return getRuntimeConfig().backendKeycloakClientSecret;
+    return {
+        ...clientMetadata,
+        client_secret: BACKEND_KEYCLOAK_CLIENT_SECRET, // eslint-disable-line @typescript-eslint/naming-convention
+    };
 };

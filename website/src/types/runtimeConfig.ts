@@ -19,8 +19,6 @@ export const serverConfig = serviceUrls.merge(
 export const runtimeConfig = z.object({
     public: serviceUrls,
     serverSide: serverConfig,
-    backendKeycloakClientSecret: z.string().min(5),
-    oidcTransactionCookieSecret: z.string().min(32),
     insecureCookies: z.boolean(),
 });
 

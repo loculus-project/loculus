@@ -30,6 +30,17 @@ spec:
           image: "{{ $.Values.images.website.repository }}:{{ $.Values.images.website.tag | default $dockerTag }}"
           imagePullPolicy: "{{ $.Values.images.website.pullPolicy | default $.Values.imagePullPolicy }}"
           {{- include "loculus.resources" (list "website" .Values) | nindent 10 }}
+          env:
+            - name: BACKEND_KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: backend-keycloak-client-secret
+                  key: backendKeycloakClientSecret
+            - name: OIDC_TRANSACTION_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: website-oidc-cookie-secret
+                  key: oidcTransactionCookieSecret
           ports:
             - containerPort: 3000
           volumeMounts:

@@ -42,18 +42,6 @@
         secretKeyRef:
           name: service-accounts
           key: backendUserPassword
-    - name: LOCULUSSUB_backendKeycloakClientSecret
-      valueFrom:
-        secretKeyRef:
-          name: backend-keycloak-client-secret
-          key: backendKeycloakClientSecret
-    {{- if eq .name "loculus-website-config" }}
-    - name: LOCULUSSUB_oidcTransactionCookieSecret
-      valueFrom:
-        secretKeyRef:
-          name: website-oidc-cookie-secret
-          key: oidcTransactionCookieSecret
-    {{- end }}
     - name: LOCULUSSUB_orcidSecret
       valueFrom:
         secretKeyRef:
