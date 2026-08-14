@@ -30,7 +30,7 @@ jobs:
           micromamba-version: "latest"
           cache-environment: true
       - name: Run ruff format check
-        run: ruff check . --fix --diff
+        run: ruff format --diff .
   lint:
     name: Lint code
     runs-on: ubuntu-latest

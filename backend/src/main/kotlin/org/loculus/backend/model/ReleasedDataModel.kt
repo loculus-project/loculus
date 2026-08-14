@@ -40,7 +40,7 @@ import org.loculus.backend.utils.toTimestamp
 import org.loculus.backend.utils.toUtcDateString
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.net.URLEncoder
+import org.springframework.web.util.UriUtils.encodePathSegment
 import java.nio.charset.StandardCharsets
 
 private val log = KotlinLogging.logger { }
@@ -232,7 +232,7 @@ open class ReleasedDataModel(
         filesMap: FileCategoryFilesMap,
     ): Map<FileCategory, List<FileIdAndNameAndReadUrl>> = filesMap.mapValues { (category, fileIdandName) ->
         fileIdandName.map { (fileId, name) ->
-            val encoded = URLEncoder.encode(name, StandardCharsets.UTF_8)
+            val encoded = encodePathSegment(name, StandardCharsets.UTF_8)
             val url = when (backendConfig.fileSharing.outputFileUrlType) {
                 FileUrlType.WEBSITE -> "${backendConfig.websiteUrl}/seq/$accession.$version/$category/$encoded"
                 FileUrlType.BACKEND -> "${backendConfig.backendUrl}/files/get/$accession/$version/$category/$encoded"

@@ -9,6 +9,7 @@ secrets:
 createTestAccounts: true
 backendExtraArgs:
   - "--loculus.debug-mode=true"
+disableRawReadsProcessingService: false
 disableEnaSubmission: true
 auth:
   verifyEmail: false
@@ -16,3 +17,23 @@ host: localhost:3000
 insecureCookies: true
 siloImport:
   pollIntervalSeconds: 5
+defaultOrganisms:
+  ebola-sudan: &fileSharingOrganismDefaults
+    schema:
+      submissionDataTypes:
+        files:
+          enabled: true
+          categories:
+            - name: rawReads
+              displayName: Raw reads
+      files:
+        - name: annotations
+          displayName: Annotations
+        - name: rawReads
+          displayName: Raw reads
+  west-nile: *fileSharingOrganismDefaults
+  dummy-organism: *fileSharingOrganismDefaults
+  not-aligned-organism: *fileSharingOrganismDefaults
+  cchf: *fileSharingOrganismDefaults
+  cchf-multi-ref: *fileSharingOrganismDefaults
+  enteroviruses: *fileSharingOrganismDefaults
