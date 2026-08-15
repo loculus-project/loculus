@@ -4,6 +4,7 @@ import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNotNull
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
@@ -73,6 +74,12 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
         .fold(Op.FALSE as Op<Boolean>) { acc, result -> acc or processingResultIs(result) }
 
     fun statusIs(status: Status) = statusColumn eq status.name
+
+    // Equivalent to statusIs(APPROVED_FOR_RELEASE) — the view's status CASE maps
+    // released_at IS NOT NULL to APPROVED_FOR_RELEASE unconditionally — but filters
+    // on the base column, so Postgres can serve it from the partial index on
+    // sequence_entries (V1.39) instead of computing the status for every row.
+    val isReleased = releasedAtTimestampColumn.isNotNull()
 
     fun statusIsOneOf(statuses: List<Status>) = statusColumn inList statuses.map { it.name }
 

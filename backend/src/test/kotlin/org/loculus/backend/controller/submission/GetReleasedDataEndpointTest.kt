@@ -301,9 +301,12 @@ class GetReleasedDataEndpointTest(
 
         val initialEtag = submissionControllerClient.getReleasedData(organism = DEFAULT_ORGANISM)
             .andReturn().response.getHeader(ETAG)
+        val initialEtagOtherOrganism = submissionControllerClient.getReleasedData(organism = OTHER_ORGANISM)
+            .andReturn().response.getHeader(ETAG)
 
-        // A newer pipeline version reprocesses the OTHER organism. This only writes preprocessed data
-        // tagged with the other organism, so it must not invalidate the default organism's etag.
+        // A newer pipeline version reprocesses the OTHER organism. Stored processing results only
+        // become visible in released data once that pipeline version is promoted, so no etag may
+        // be invalidated yet.
         convenienceClient.extractUnprocessedData(organism = OTHER_ORGANISM, pipelineVersion = 2)
         convenienceClient.submitProcessedData(
             otherAccessionVersions.map {
@@ -318,7 +321,42 @@ class GetReleasedDataEndpointTest(
 
         submissionControllerClient.getReleasedData(organism = DEFAULT_ORGANISM, ifNoneMatch = initialEtag)
             .andExpect(status().isNotModified)
-        submissionControllerClient.getReleasedData(organism = OTHER_ORGANISM, ifNoneMatch = initialEtag)
+        submissionControllerClient.getReleasedData(organism = OTHER_ORGANISM, ifNoneMatch = initialEtagOtherOrganism)
+            .andExpect(status().isNotModified)
+
+        // Promoting the newer pipeline version changes the other organism's released data
+        // (and therefore its etag), but still not the default organism's.
+        submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+
+        submissionControllerClient.getReleasedData(organism = DEFAULT_ORGANISM, ifNoneMatch = initialEtag)
+            .andExpect(status().isNotModified)
+        submissionControllerClient.getReleasedData(organism = OTHER_ORGANISM, ifNoneMatch = initialEtagOtherOrganism)
+            .andExpect(status().isOk)
+            .andExpect(header().string(ETAG, greaterThan(initialEtagOtherOrganism)))
+    }
+
+    @Test
+    fun `GIVEN processing results stored for unreleased entries THEN etag is unchanged until approval`() {
+        val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
+
+        val initialEtag = submissionControllerClient.getReleasedData().andReturn().response.getHeader(ETAG)
+
+        // Storing processing results for entries that are not yet released cannot change released
+        // data, so it must not invalidate the etag — otherwise SILO re-scans released data on
+        // every poll while a large submission is still being processed.
+        convenienceClient.submitProcessedData(
+            accessionVersions.map {
+                PreparedProcessedData.successfullyProcessed(accession = it.accession, version = it.version)
+            },
+        )
+
+        submissionControllerClient.getReleasedData(ifNoneMatch = initialEtag)
+            .andExpect(status().isNotModified)
+
+        // Approval releases the entries and must invalidate the etag.
+        convenienceClient.approveProcessedSequenceEntries(accessionVersions)
+
+        submissionControllerClient.getReleasedData(ifNoneMatch = initialEtag)
             .andExpect(status().isOk)
             .andExpect(header().string(ETAG, greaterThan(initialEtag)))
     }

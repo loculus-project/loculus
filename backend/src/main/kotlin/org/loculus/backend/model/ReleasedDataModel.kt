@@ -23,11 +23,8 @@ import org.loculus.backend.config.FileUrlType
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
-import org.loculus.backend.service.submission.METADATA_UPLOAD_AUX_TABLE_NAME
 import org.loculus.backend.service.submission.RawProcessedData
-import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME
 import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_TABLE_NAME
-import org.loculus.backend.service.submission.SEQUENCE_UPLOAD_AUX_TABLE_NAME
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.service.submission.UpdateTrackerTable
 import org.loculus.backend.service.submission.dbtables.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
@@ -45,13 +42,20 @@ import java.nio.charset.StandardCharsets
 
 private val log = KotlinLogging.logger { }
 
+// sequence_entries_preprocessed_data is deliberately absent: the view only serves
+// preprocessed rows at the current pipeline version, and no write path can change
+// such a row for an already released entry. Preprocessed data becomes visible in
+// released data either through approval (bumps sequence_entries) or through a
+// pipeline-version promotion (bumps current_processing_pipeline), both of which are
+// tracked here. Including the table made every result-storage write during
+// preprocessing invalidate the ETag, forcing SILO to re-scan released data on each
+// poll while a large batch was still being processed.
 val RELEASED_DATA_RELATED_TABLES: List<String> =
     listOf(
         CURRENT_PROCESSING_PIPELINE_TABLE_NAME,
         EXTERNAL_METADATA_TABLE_NAME,
         GROUPS_TABLE_NAME,
         SEQUENCE_ENTRIES_TABLE_NAME,
-        SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME,
         DATA_USE_TERMS_TABLE_NAME,
     )
 
@@ -94,12 +98,12 @@ open class ReleasedDataModel(
      * Returns the ETag for the last relevant database write, as the most recent
      * `last_time_updated` in the update tracker.
      *
-     * When [organism] and/or [pipelineVersion] are given, the lookup is scoped to
-     * the rows that affect that organism's released data at that pipeline version:
-     * table-wide writes (tagged with NULL organism / pipeline_version) are always
-     * included, plus the organism- and pipeline-specific preprocessed-data rows.
-     * This means preprocessing of one organism (or of a not-yet-current pipeline
-     * version) no longer invalidates the ETag of other organisms.
+     * When [organism] is given, the lookup is scoped to the rows that affect that
+     * organism's released data: table-wide writes (tagged with NULL organism /
+     * pipeline_version) are always included, plus the organism-specific rows, and
+     * rows tagged with a pipeline version count only for the organism's current
+     * one. This means writes for one organism (or for a not-yet-current pipeline
+     * version) do not invalidate the ETag of other organisms.
      */
     @Transactional(readOnly = true)
     open fun getLastDatabaseWriteETag(tableNames: List<String>? = null, organism: Organism? = null): String {

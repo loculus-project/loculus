@@ -65,7 +65,6 @@ import org.loculus.backend.api.ProcessingResult.NO_ISSUES
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.SequenceEntryVersionToEdit
 import org.loculus.backend.api.Status
-import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedContentWithFileUrls
 import org.loculus.backend.api.SubmittedData
@@ -750,7 +749,7 @@ class SubmissionDatabaseService(
         val result = SequenceEntriesView
             .select(SequenceEntriesView.accessionColumn, maxVersionExpression)
             .where {
-                SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
+                SequenceEntriesView.isReleased and SequenceEntriesView.organismIs(
                     organism,
                 )
             }
@@ -766,7 +765,7 @@ class SubmissionDatabaseService(
 
         val result = SequenceEntriesView.select(SequenceEntriesView.accessionColumn, maxVersionExpression)
             .where {
-                SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and
+                SequenceEntriesView.isReleased and
                     (SequenceEntriesView.isRevocationColumn eq true) and
                     SequenceEntriesView.organismIs(organism)
             }
@@ -782,7 +781,7 @@ class SubmissionDatabaseService(
         val result = SequenceEntriesView.select(
             SequenceEntriesView.accessionColumn,
         ).where {
-            SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
+            SequenceEntriesView.isReleased and SequenceEntriesView.organismIs(
                 organism,
             )
         }.count()
@@ -815,7 +814,7 @@ class SubmissionDatabaseService(
             DataUseTermsTable.changeDateColumn,
         )
         .where {
-            SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
+            SequenceEntriesView.isReleased and SequenceEntriesView.organismIs(
                 organism,
             )
         }
@@ -1373,7 +1372,7 @@ class SubmissionDatabaseService(
 
         return SequenceEntriesView.organismIs(organism) and
             (SequenceEntriesView.groupIdColumn eq groupId) and
-            SequenceEntriesView.statusIs(APPROVED_FOR_RELEASE) and
+            SequenceEntriesView.isReleased and
             SequenceEntriesView.isMaxVersion and
             (SequenceEntriesView.isRevocationColumn eq false) and
             accessionsCondition
