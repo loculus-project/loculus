@@ -16,11 +16,14 @@ object SequenceEntriesPreprocessedDataTable : Table(SEQUENCE_ENTRIES_PREPROCESSE
     val accessionColumn = varchar("accession", 255)
     val versionColumn = long("version")
     val pipelineVersionColumn = long("pipeline_version")
+    val organismColumn = varchar("organism", 255)
     val processedDataColumn =
         jacksonSerializableJsonb<ProcessedData<CompressedSequence>>("processed_data").nullable()
     val errorsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("errors").nullable()
     val warningsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("warnings").nullable()
     val processingStatusColumn = varchar("processing_status", 255)
+    val processingAttemptIdColumn = uuid("processing_attempt_id").nullable()
+    val leaseUntilColumn = datetime("lease_until").nullable()
     val startedProcessingAtColumn = datetime("started_processing_at").nullable()
     val finishedProcessingAtColumn = datetime("finished_processing_at").nullable()
 

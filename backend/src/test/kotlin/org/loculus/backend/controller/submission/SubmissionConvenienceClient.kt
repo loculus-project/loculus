@@ -300,8 +300,12 @@ class SubmissionConvenienceClient(
         numberOfSequenceEntries: Int = DefaultFiles.NUMBER_OF_SEQUENCES,
         organism: String = DEFAULT_ORGANISM,
         pipelineVersion: Long = DEFAULT_PIPELINE_VERSION,
-    ) = client.extractUnprocessedData(numberOfSequenceEntries, organism, pipelineVersion)
-        .expectNdjsonAndGetContent<UnprocessedData>()
+    ): List<UnprocessedData> {
+        val claimedData = client.extractUnprocessedData(numberOfSequenceEntries, organism, pipelineVersion)
+            .expectNdjsonAndGetContent<UnprocessedData>()
+        client.rememberProcessingAttempts(claimedData, organism, pipelineVersion)
+        return claimedData
+    }
 
     fun getSequenceEntries(
         username: String = DEFAULT_USER_NAME,

@@ -60,7 +60,10 @@ import java.net.http.HttpResponse
 import java.util.UUID
 
 @EndpointTest(
-    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
+    properties = [
+        "${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG",
+        "${BackendSpringProperty.STREAM_BATCH_SIZE}=2",
+    ],
 )
 class SubmitProcessedDataEndpointTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
@@ -280,6 +283,29 @@ class SubmitProcessedDataEndpointTest(
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1).assertStatusIs(
             Status.IN_PROCESSING,
+        )
+    }
+
+    @Test
+    fun `GIVEN a mixed batch contains an outdated attempt THEN the whole batch is rolled back`() {
+        val claims = prepareExtractedSequencesInDatabase(numberOfSequenceEntries = 3)
+        val firstValidResult = PreparedProcessedData.successfullyProcessed(claims[0].accession)
+            .copy(processingAttemptId = claims[0].processingAttemptId)
+        val secondValidResult = PreparedProcessedData.successfullyProcessed(claims[1].accession)
+            .copy(processingAttemptId = claims[1].processingAttemptId)
+        val outdatedResult = PreparedProcessedData.successfullyProcessed(claims[2].accession)
+            .copy(processingAttemptId = UUID.randomUUID())
+
+        submissionControllerClient.submitProcessedData(firstValidResult, secondValidResult, outdatedResult)
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("\$.detail", containsString("does not own accession version")))
+
+        claims.forEach {
+            convenienceClient.getSequenceEntry(it).assertStatusIs(Status.IN_PROCESSING)
+        }
+        assertThat(
+            submissionDatabaseService.useNewerProcessingPipelineIfPossible().isEmpty(),
+            `is`(true),
         )
     }
 

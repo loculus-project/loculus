@@ -23,6 +23,6 @@ class CleanUpStaleSequencesInProcessingTask(
     )
     fun task() {
         log.info { "Cleaning up stale sequences in processing, timeToStaleInSeconds: $timeToStaleInSeconds" }
-        submissionDatabaseService.cleanUpStaleSequencesInProcessing(timeToStaleInSeconds)
+        submissionDatabaseService.cleanUpStaleSequencesInProcessing()
     }
 }

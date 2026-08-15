@@ -16,6 +16,7 @@ import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.core.convert.converter.Converter
 import org.springframework.stereotype.Component
+import java.util.UUID
 
 data class Accessions(val accessions: List<Accession>)
 
@@ -120,6 +121,8 @@ data class AccessionVersionsFilterWithApprovalScope(
 data class SubmittedProcessedData(
     override val accession: Accession,
     override val version: Version,
+    @Schema(description = "ID returned when this accession version was claimed")
+    val processingAttemptId: UUID,
     val data: ProcessedData<GeneticSequence>,
     @Schema(description = "The processing failed due to these errors.")
     val errors: List<PreprocessingAnnotation>? = null,
@@ -314,6 +317,10 @@ data class EditedSequenceEntryData(
 data class UnprocessedData(
     @Schema(example = "LOC_000S01D") override val accession: Accession,
     @Schema(example = "1") override val version: Version,
+    @Schema(description = "Identifies this claim. Processing results must use the same ID.")
+    val processingAttemptId: UUID,
+    @Schema(example = "1720305313", description = "Unix timestamp in seconds when this claim expires")
+    val leaseUntil: Long,
     val data: SubmittedContentWithFileUrls<GeneticSequence>,
     @Schema(description = "The submission id that was used in the upload to link metadata and sequences")
     val submissionId: String,
@@ -423,6 +430,7 @@ enum class ProcessingResult {
 }
 
 enum class PreprocessingStatus {
+    UNPROCESSED,
     IN_PROCESSING,
     PROCESSED,
 }

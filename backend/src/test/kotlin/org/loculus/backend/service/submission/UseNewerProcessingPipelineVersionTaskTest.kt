@@ -15,8 +15,10 @@ import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.submission.PreparedProcessedData
 import org.loculus.backend.controller.submission.SubmissionControllerClient
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
+import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.service.scheduler.TASK_LOCK_TABLE_NAME
 import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
+import org.loculus.backend.service.submission.dbtables.PreprocessingQueueVersionsTable
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -91,7 +93,6 @@ class UseNewerProcessingPipelineVersionTaskTest(
             CurrentProcessingPipelineTable.selectAll().count()
         }
 
-        // update DEFAULT_ORGANISM to V2
         val accessionVersions = convenienceClient.submitDefaultFiles().submissionIdMappings
         val processedData = accessionVersions.map {
             PreparedProcessedData.successfullyProcessed(it.accession, it.version)
@@ -101,7 +102,6 @@ class UseNewerProcessingPipelineVersionTaskTest(
         useNewerProcessingPipelineVersionTask.task()
 
         val rowCountAfterV2 = transaction {
-            // simulate a DB init by calling this function
             CurrentProcessingPipelineTable.setV1ForOrganismsIfNotExist(
                 listOf(DEFAULT_ORGANISM, OTHER_ORGANISM, ORGANISM_WITHOUT_CONSENSUS_SEQUENCES),
                 dateProvider.getCurrentDateTime(),
@@ -121,20 +121,19 @@ class UseNewerProcessingPipelineVersionTaskTest(
             PreparedProcessedData.successfullyProcessed(it.accession, it.version)
         }
         convenienceClient.extractUnprocessedData(pipelineVersion = 1)
+        val beforeSubmittingResults = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 1)
 
         val firstCall = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
         val secondCall = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
 
+        assertThat(beforeSubmittingResults.isEmpty(), `is`(true))
         assertThat(firstCall.keys, `is`(setOf(DEFAULT_ORGANISM)))
         assertThat(secondCall.isEmpty(), `is`(true))
     }
 
     @Test
-    fun `GIVEN multiple pipeline versions exist WHEN the version is bumped THEN old data is deleted`() {
-        // ... but only for that organism!
-
-        // create data for OTHER_ORGANISM - so we can check later that it doesn't get deleted
+    fun `GIVEN multiple pipeline versions WHEN the version changes THEN old queue is deactivated`() {
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(
             organism = OTHER_ORGANISM,
         )
@@ -153,7 +152,6 @@ class UseNewerProcessingPipelineVersionTaskTest(
         useNewerProcessingPipelineVersionTask.task()
 
         transaction {
-            // check that nothing got deleted yet
             assertThat(getExistingPipelineVersions(DEFAULT_ORGANISM), `is`(listOf(1L, 2L)))
             assertThat(getExistingPipelineVersions(OTHER_ORGANISM), `is`(listOf(1L)))
         }
@@ -166,16 +164,31 @@ class UseNewerProcessingPipelineVersionTaskTest(
         assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(3L))
 
         transaction {
-            // check that v1 for DEFAULT_ORGANISM is deleted, but not for OTHER_ORGANISM
             assertThat(getExistingPipelineVersions(DEFAULT_ORGANISM), `is`(listOf(2L, 3L)))
             assertThat(getExistingPipelineVersions(OTHER_ORGANISM), `is`(listOf(1L)))
+            assertThat(getActivePipelineVersions(DEFAULT_ORGANISM), `is`(listOf(3L)))
+            assertThat(getActivePipelineVersions(OTHER_ORGANISM), `is`(listOf(1L)))
+        }
+
+        val oldQueueSize = transaction { getQueueSize(DEFAULT_ORGANISM, 2) }
+        val currentQueueSize = transaction { getQueueSize(DEFAULT_ORGANISM, 3) }
+        convenienceClient.submitDefaultFiles()
+
+        transaction {
+            assertThat(getQueueSize(DEFAULT_ORGANISM, 2), `is`(oldQueueSize))
+            assertThat(
+                getQueueSize(DEFAULT_ORGANISM, 3),
+                `is`(currentQueueSize + DefaultFiles.NUMBER_OF_SEQUENCES),
+            )
+        }
+
+        submissionControllerClient.extractUnprocessedData(1, pipelineVersion = 2)
+            .andExpect(status().isUnprocessableEntity)
+        transaction {
+            assertThat(getActivePipelineVersions(DEFAULT_ORGANISM), `is`(listOf(3L)))
         }
     }
 
-    /**
-     * Returns an ordered list of pipeline versions for which data exists in the
-     * SequenceEntriesPreprocessedDataTable table.
-     */
     private fun getExistingPipelineVersions(organism: String) = SequenceEntriesPreprocessedDataTable
         .join(SequenceEntriesTable, joinType = JoinType.INNER) {
             (SequenceEntriesPreprocessedDataTable.accessionColumn eq SequenceEntriesTable.accessionColumn) and
@@ -186,4 +199,18 @@ class UseNewerProcessingPipelineVersionTaskTest(
         .orderBy(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
         .groupBy(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
         .map { it[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn] }
+
+    private fun getActivePipelineVersions(organism: String) = PreprocessingQueueVersionsTable
+        .select(PreprocessingQueueVersionsTable.pipelineVersionColumn)
+        .where { PreprocessingQueueVersionsTable.organismColumn eq organism }
+        .orderBy(PreprocessingQueueVersionsTable.pipelineVersionColumn)
+        .map { it[PreprocessingQueueVersionsTable.pipelineVersionColumn] }
+
+    private fun getQueueSize(organism: String, pipelineVersion: Long) = SequenceEntriesPreprocessedDataTable
+        .select(SequenceEntriesPreprocessedDataTable.accessionColumn)
+        .where {
+            (SequenceEntriesPreprocessedDataTable.organismColumn eq organism) and
+                (SequenceEntriesPreprocessedDataTable.pipelineVersionColumn eq pipelineVersion)
+        }
+        .count()
 }

@@ -120,15 +120,15 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
         )
         entry = UnprocessedEntry(
             accessionVersion=f"{json_object['accession']}.{json_object['version']}",
+            processingAttemptId=json_object["processingAttemptId"],
+            leaseUntil=json_object["leaseUntil"],
             data=unprocessed_data,
         )
         entries.append(entry)
     return entries
 
 
-def fetch_unprocessed_sequences(
-    etag: str | None, config: Config
-) -> tuple[str | None, Sequence[UnprocessedEntry] | None]:
+def fetch_unprocessed_sequences(config: Config) -> Sequence[UnprocessedEntry] | None:
     request_id = str(uuid.uuid4())
     n = config.batch_size
     url = config.backend_host.rstrip("/") + "/extract-unprocessed-data"
@@ -137,9 +137,7 @@ def fetch_unprocessed_sequences(
     headers = {
         "Authorization": "Bearer " + get_jwt(config),
         "x-request-id": request_id,
-        **({"If-None-Match": etag} if etag else {}),
     }
-    logger.debug(f"[{request_id}] Requesting data with ETag: {etag}")
     response = requests.post(
         url, data=params, headers=headers, timeout=config.backend_request_timeout_seconds
     )
@@ -148,20 +146,18 @@ def fetch_unprocessed_sequences(
         f"request id: {response.headers.get('x-request-id')}"
     )
     match response.status_code:
-        case HTTPStatus.NOT_MODIFIED:
-            return etag, None
         case HTTPStatus.OK:
             try:
                 parsed_ndjson = parse_ndjson(response.text)
             except ValueError as e:
                 logger.error(f"[{request_id}] {e}")
                 time.sleep(10 * 1)
-                return None, None
-            return response.headers["ETag"], parsed_ndjson
+                return None
+            return parsed_ndjson
         case HTTPStatus.UNPROCESSABLE_ENTITY:
             logger.debug(f"[{request_id}] {response.text}.\nSleeping for a while.")
             time.sleep(60 * 1)
-            return None, None
+            return None
         case _:
             msg = f"[{request_id}] Fetching unprocessed data failed. Status code: {response.status_code}"
             raise Exception(

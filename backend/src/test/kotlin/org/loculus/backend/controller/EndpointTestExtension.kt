@@ -30,6 +30,7 @@ import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_PREPROCESSED_DATA
 import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_TABLE_NAME
 import org.loculus.backend.service.submission.SEQUENCE_UPLOAD_AUX_TABLE_NAME
 import org.loculus.backend.service.submission.dbtables.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
+import org.loculus.backend.service.submission.dbtables.PREPROCESSING_QUEUE_VERSIONS_TABLE_NAME
 import org.loculus.backend.testutil.TestEnvironment
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -238,6 +239,7 @@ private fun clearDatabaseStatement(): String = """
             $METADATA_UPLOAD_AUX_TABLE_NAME,
             $SEQUENCE_UPLOAD_AUX_TABLE_NAME,
             $DATA_USE_TERMS_TABLE_NAME,
+            $PREPROCESSING_QUEUE_VERSIONS_TABLE_NAME,
             $CURRENT_PROCESSING_PIPELINE_TABLE_NAME,
             $FILES_TABLE_NAME,
             external_metadata,

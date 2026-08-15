@@ -42,6 +42,7 @@ from .datatypes import (
     ProcessedMetadataValue,
     ProcessingAnnotation,
     ProcessingAnnotationAlignment,
+    ProcessingAttemptId,
     ProcessingResult,
     SegmentClassificationMethod,
     SegmentName,
@@ -281,6 +282,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
 
 def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
     accession_version: AccessionVersion,
+    processing_attempt_id: ProcessingAttemptId,
     unprocessed: UnprocessedData,
     output_metadata: ProcessedMetadata,
     errors: list[ProcessingAnnotation],
@@ -298,6 +300,7 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
         processed_entry=ProcessedEntry(
             accession=accession_from_str(accession_version),
             version=version_from_str(accession_version),
+            processingAttemptId=processing_attempt_id,
             data=ProcessedData(
                 metadata=output_metadata,
                 files=unprocessed.files,
@@ -573,6 +576,7 @@ def unpack_annotations(config, nextclade_metadata: dict[str, Any] | None) -> dic
 
 def process_single(
     accession_version: AccessionVersion,
+    processing_attempt_id: ProcessingAttemptId,
     unprocessed: UnprocessedAfterNextclade,
     config: Config,
 ) -> SubmissionData:
@@ -603,6 +607,7 @@ def process_single(
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
         version=version_from_str(accession_version),
+        processingAttemptId=processing_attempt_id,
         data=ProcessedData(
             metadata=output_metadata,
             files=unprocessed.files,
@@ -636,6 +641,7 @@ def process_single(
 
 def process_single_unaligned(
     accession_version: AccessionVersion,
+    processing_attempt_id: ProcessingAttemptId,
     unprocessed: UnprocessedData,
     config: Config,
 ) -> SubmissionData:
@@ -660,6 +666,7 @@ def process_single_unaligned(
 
     return processed_entry_no_alignment(
         accession_version=accession_version,
+        processing_attempt_id=processing_attempt_id,
         unprocessed=unprocessed,
         output_metadata=output_metadata,
         errors=list(
@@ -670,11 +677,15 @@ def process_single_unaligned(
     )
 
 
-def processed_entry_with_errors(id) -> SubmissionData:
+def processed_entry_with_errors(
+    accession_version: AccessionVersion,
+    processing_attempt_id: ProcessingAttemptId,
+) -> SubmissionData:
     return SubmissionData(
         processed_entry=ProcessedEntry(
-            accession=accession_from_str(id),
-            version=version_from_str(id),
+            accession=accession_from_str(accession_version),
+            version=version_from_str(accession_version),
+            processingAttemptId=processing_attempt_id,
             data=ProcessedData(
                 metadata=dict[str, ProcessedMetadataValue](),
                 files=None,
@@ -690,7 +701,8 @@ def processed_entry_with_errors(id) -> SubmissionData:
                     "unknown",
                     AnnotationSourceType.METADATA,
                     message=(
-                        f"Failed to process submission with id: {id} - please review your "
+                        f"Failed to process submission with id: {accession_version} - "
+                        "please review your "
                         "submission or reach out to an administrator if this error persists."
                     ),
                 ),
@@ -705,25 +717,35 @@ def process_all(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> Sequence[SubmissionData]:
     processed_results = []
+    processing_attempt_ids = {
+        entry.accessionVersion: entry.processingAttemptId for entry in unprocessed
+    }
     logger.debug(f"Processing {len(unprocessed)} unprocessed sequences")
     if config.alignment_requirement != AlignmentRequirement.NONE:
         nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
         for id, result in nextclade_results.items():
+            processing_attempt_id = processing_attempt_ids[id]
             try:
-                processed_single = process_single(id, result, config)
+                processed_single = process_single(id, processing_attempt_id, result, config)
             except Exception as e:
                 logger.error(f"Processing failed for {id} with error: {e}")
-                processed_single = processed_entry_with_errors(id)
+                processed_single = processed_entry_with_errors(id, processing_attempt_id)
             processed_results.append(processed_single)
     else:
         for entry in unprocessed:
             try:
                 processed_single = process_single_unaligned(
-                    entry.accessionVersion, entry.data, config
+                    entry.accessionVersion,
+                    entry.processingAttemptId,
+                    entry.data,
+                    config,
                 )
             except Exception as e:
                 logger.error(f"Processing failed for {entry.accessionVersion} with error: {e}")
-                processed_single = processed_entry_with_errors(entry.accessionVersion)
+                processed_single = processed_entry_with_errors(
+                    entry.accessionVersion,
+                    entry.processingAttemptId,
+                )
             processed_results.append(processed_single)
 
     return processed_results
@@ -763,7 +785,7 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             )
 
 
-def run(config: Config) -> None:  # noqa: C901
+def run(config: Config) -> None:
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
         if config.alignment_requirement != AlignmentRequirement.NONE:
             download_nextclade_dataset(dataset_dir, config)
@@ -779,23 +801,13 @@ def run(config: Config) -> None:  # noqa: C901
             download_diamond_db(config, dataset_dir + "/diamond/diamond.dmnd")
 
         total_processed = 0
-        etag = None
-        last_force_refresh = time.time()
         while True:
             logger.debug("Fetching unprocessed sequences")
-            # Reset etag every hour just in case
-            if last_force_refresh + 3600 < time.time():
-                etag = None
-                last_force_refresh = time.time()
-            etag, unprocessed = fetch_unprocessed_sequences(etag, config)
+            unprocessed = fetch_unprocessed_sequences(config)
             if not unprocessed:
-                # sleep 1 sec and try again
                 logger.debug("No unprocessed sequences found. Sleeping for 1 second.")
                 time.sleep(1)
                 continue
-            # Don't use etag if we just got data
-            # preprocessing only asks for 100 sequences to process at a time, so there might be more
-            etag = None
             try:
                 processed = process_all(unprocessed, dataset_dir, config)
             except Exception as e:
