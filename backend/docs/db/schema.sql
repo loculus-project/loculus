@@ -4,8 +4,8 @@
 
 \restrict dummy
 
--- Dumped from database version 15.18 (Debian 15.18-1.pgdg13+1)
--- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
+-- Dumped from database version 15.19 (Debian 15.19-1.pgdg13+2)
+-- Dumped by pg_dump version 16.15 (Debian 16.15-1.pgdg13+2)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -38,6 +38,40 @@ $$;
 
 
 ALTER FUNCTION public.create_update_trigger_for_table(table_name text) OWNER TO postgres;
+
+--
+-- Name: enqueue_new_sequence_entries_for_preprocessing(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.enqueue_new_sequence_entries_for_preprocessing() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    INSERT INTO sequence_entries_preprocessed_data (
+        accession,
+        version,
+        pipeline_version,
+        organism,
+        processing_status
+    )
+    SELECT
+        new_rows.accession,
+        new_rows.version,
+        qv.pipeline_version,
+        new_rows.organism,
+        'UNPROCESSED'
+    FROM new_rows
+    JOIN preprocessing_queue_versions qv
+      ON qv.organism = new_rows.organism
+    WHERE NOT new_rows.is_revocation
+    ON CONFLICT (accession, version, pipeline_version) DO NOTHING;
+
+    RETURN NULL;
+END;
+$$;
+
+
+ALTER FUNCTION public.enqueue_new_sequence_entries_for_preprocessing() OWNER TO postgres;
 
 --
 -- Name: jsonb_concat(jsonb, jsonb); Type: FUNCTION; Schema: public; Owner: postgres
@@ -125,14 +159,23 @@ CREATE FUNCTION public.update_preprocessed_data_tracker() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
-    SELECT TG_TABLE_NAME, se.organism, cr.pipeline_version, timezone('UTC', CURRENT_TIMESTAMP)
-    FROM changed_rows cr
-    JOIN sequence_entries se
-      ON se.accession = cr.accession AND se.version = cr.version
-    GROUP BY se.organism, cr.pipeline_version
+    INSERT INTO table_update_tracker (
+        table_name,
+        organism,
+        pipeline_version,
+        last_time_updated
+    )
+    SELECT
+        TG_TABLE_NAME,
+        changed_rows.organism,
+        changed_rows.pipeline_version,
+        timezone('UTC', CURRENT_TIMESTAMP)
+    FROM changed_rows
+    WHERE changed_rows.processing_status = 'PROCESSED'
+    GROUP BY changed_rows.organism, changed_rows.pipeline_version
     ON CONFLICT (table_name, organism, pipeline_version)
     DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+
     RETURN NULL;
 END;
 $$;
@@ -424,6 +467,19 @@ CREATE TABLE public.metadata_upload_aux_table (
 ALTER TABLE public.metadata_upload_aux_table OWNER TO postgres;
 
 --
+-- Name: preprocessing_queue_versions; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.preprocessing_queue_versions (
+    organism text NOT NULL,
+    pipeline_version bigint NOT NULL,
+    initialized_at timestamp without time zone DEFAULT timezone('UTC'::text, CURRENT_TIMESTAMP) NOT NULL
+);
+
+
+ALTER TABLE public.preprocessing_queue_versions OWNER TO postgres;
+
+--
 -- Name: seqset_citation_source; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -609,8 +665,13 @@ CREATE TABLE public.sequence_entries_preprocessed_data (
     errors jsonb,
     warnings jsonb,
     processing_status text NOT NULL,
-    started_processing_at timestamp without time zone NOT NULL,
-    finished_processing_at timestamp without time zone
+    started_processing_at timestamp without time zone,
+    finished_processing_at timestamp without time zone,
+    organism text NOT NULL,
+    processing_attempt_id uuid,
+    lease_until timestamp without time zone,
+    CONSTRAINT sequence_entries_preprocessed_data_ownership_check CHECK ((((processing_status = 'IN_PROCESSING'::text) AND (processing_attempt_id IS NOT NULL) AND (lease_until IS NOT NULL)) OR ((processing_status = ANY (ARRAY['UNPROCESSED'::text, 'PROCESSED'::text])) AND (processing_attempt_id IS NULL) AND (lease_until IS NULL)))),
+    CONSTRAINT sequence_entries_preprocessed_data_status_check CHECK ((processing_status = ANY (ARRAY['UNPROCESSED'::text, 'IN_PROCESSING'::text, 'PROCESSED'::text])))
 );
 
 
@@ -869,6 +930,14 @@ ALTER TABLE ONLY public.metadata_upload_aux_table
 
 
 --
+-- Name: preprocessing_queue_versions preprocessing_queue_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.preprocessing_queue_versions
+    ADD CONSTRAINT preprocessing_queue_versions_pkey PRIMARY KEY (organism, pipeline_version);
+
+
+--
 -- Name: seqset_citation_source seqset_citation_source_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -994,6 +1063,27 @@ CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING b
 
 
 --
+-- Name: sepd_processing_attempt_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX sepd_processing_attempt_idx ON public.sequence_entries_preprocessed_data USING btree (processing_attempt_id) WHERE (processing_attempt_id IS NOT NULL);
+
+
+--
+-- Name: sepd_stale_lease_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX sepd_stale_lease_idx ON public.sequence_entries_preprocessed_data USING btree (lease_until) WHERE ((processing_status = 'IN_PROCESSING'::text) AND (lease_until IS NOT NULL));
+
+
+--
+-- Name: sepd_unprocessed_claim_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX sepd_unprocessed_claim_idx ON public.sequence_entries_preprocessed_data USING btree (organism, pipeline_version, accession, version) WHERE (processing_status = 'UNPROCESSED'::text);
+
+
+--
 -- Name: sequence_entries_organism_covering_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1033,6 +1123,13 @@ CREATE INDEX sequence_entries_submitter_idx ON public.sequence_entries USING btr
 --
 
 CREATE INDEX user_groups_table_user_name_idx ON public.user_groups_table USING btree (user_name);
+
+
+--
+-- Name: sequence_entries enqueue_new_sequence_entries_for_preprocessing; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER enqueue_new_sequence_entries_for_preprocessing AFTER INSERT ON public.sequence_entries REFERENCING NEW TABLE AS new_rows FOR EACH STATEMENT EXECUTE FUNCTION public.enqueue_new_sequence_entries_for_preprocessing();
 
 
 --
@@ -1127,13 +1224,6 @@ CREATE TRIGGER update_tracker_trigger_ins AFTER INSERT ON public.sequence_entrie
 
 
 --
--- Name: sequence_entries_preprocessed_data update_tracker_trigger_ins; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER update_tracker_trigger_ins AFTER INSERT ON public.sequence_entries_preprocessed_data REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_preprocessed_data_tracker();
-
-
---
 -- Name: current_processing_pipeline update_tracker_trigger_upd; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -1159,13 +1249,6 @@ CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.external_metada
 --
 
 CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.sequence_entries REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_sequence_entries_tracker();
-
-
---
--- Name: sequence_entries_preprocessed_data update_tracker_trigger_upd; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.sequence_entries_preprocessed_data REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_preprocessed_data_tracker();
 
 
 --
