@@ -1,15 +1,17 @@
 import { type FC } from 'react';
 
 import { type SequenceEntryToEdit } from '../../types/backend.ts';
+import type { FileCategory } from '../../types/config.ts';
 import { Button } from '../common/Button';
 
 type FilesDialogProps = {
     isOpen: boolean;
     onClose: () => void;
     dataToView: SequenceEntryToEdit | undefined;
+    fileCategories?: FileCategory[];
 };
 
-export const FilesDialog: FC<FilesDialogProps> = ({ isOpen, onClose, dataToView }) => {
+export const FilesDialog: FC<FilesDialogProps> = ({ isOpen, onClose, dataToView, fileCategories }) => {
     if (!isOpen || !dataToView) return null;
 
     return (
@@ -25,7 +27,9 @@ export const FilesDialog: FC<FilesDialogProps> = ({ isOpen, onClose, dataToView 
                 <div>
                     {Object.entries(dataToView.processedData.files ?? {}).map(([category, files]) => (
                         <div key={category} className='mb-4'>
-                            <h3 className='font-medium'>{category}</h3>
+                            <h3 className='font-medium'>
+                                {fileCategories?.find((c) => c.name === category)?.displayName ?? category}
+                            </h3>
                             <ul className='list-disc pl-5 space-y-1'>
                                 {files.map((file) => (
                                     <li key={file.fileId}>

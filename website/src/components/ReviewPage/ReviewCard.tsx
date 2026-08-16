@@ -16,6 +16,7 @@ import {
     errorsProcessingResult,
     warningsProcessingResult,
 } from '../../types/backend.ts';
+import type { FileCategory } from '../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { CustomTooltip } from '../../utils/CustomTooltip.tsx';
@@ -45,7 +46,7 @@ type ReviewCardProps = {
     clientConfig: ClientConfig;
     organism: string;
     accessToken: string;
-    filesEnabled: boolean;
+    outputFileCategories?: FileCategory[];
     referenceGenomesInfo: ReferenceGenomesInfo;
 };
 
@@ -58,12 +59,13 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     clientConfig,
     organism,
     accessToken,
-    filesEnabled,
+    outputFileCategories,
     referenceGenomesInfo,
 }) => {
     const [isSequencesDialogOpen, setSequencesDialogOpen] = useState(false);
     const [isFilesDialogOpen, setFilesDialogOpen] = useState(false);
     const { isLoading, data } = useGetMetadataAndAnnotations(organism, clientConfig, accessToken, sequenceEntryStatus);
+    const filesEnabled = outputFileCategories !== undefined && outputFileCategories.length > 0;
     const hasFiles = Object.entries(data?.processedData.files ?? {}).length > 0;
 
     const notProcessed = sequenceEntryStatus.status !== processedStatus;
@@ -126,7 +128,12 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                 dataToView={data}
                 referenceGenomesInfo={referenceGenomesInfo}
             />
-            <FilesDialog isOpen={isFilesDialogOpen} onClose={() => setFilesDialogOpen(false)} dataToView={data} />
+            <FilesDialog
+                isOpen={isFilesDialogOpen}
+                onClose={() => setFilesDialogOpen(false)}
+                dataToView={data}
+                fileCategories={outputFileCategories}
+            />
         </div>
     );
 };
