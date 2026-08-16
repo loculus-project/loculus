@@ -189,8 +189,11 @@ class SubmitModel(
 
                 val files = uploadDatabaseService.getFilesForUpload(uploadId)
                 if (files.isNotEmpty()) {
-                    if (!backendConfig.getInstanceConfig(submissionParams.organism).schema.submissionDataTypes.files.enabled) {
-                        throw BadRequestException("the ${organism} organism does not support file submission.")
+                    if (!backendConfig.getInstanceConfig(
+                            submissionParams.organism,
+                        ).schema.submissionDataTypes.files.enabled
+                    ) {
+                        throw BadRequestException("the $organism organism does not support file submission.")
                     }
                     submissionIdFilesMappingPreconditionValidator
                         .validateFilenameCharacters(files)
