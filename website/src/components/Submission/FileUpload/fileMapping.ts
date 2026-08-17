@@ -315,25 +315,52 @@ function parseMetadataFileEntry(entry: string): Result<SubmissionFile, Error> {
     }
 }
 
-/**
- * Returns a map of file categories to file columns of the metadata file.
- * @param columns The columns of the metadata file.
- * @returns A map of file categories to file columns of the metadata file.
- */
-const getFileColumnsMap = (columns: { name: string; index: number }[]) =>
-    new Map(
-        columns
-            .filter(({ name }) => name.startsWith(FILES_HEADER_PREFIX))
-            .map(({ name, index }) => [name.slice(FILES_HEADER_PREFIX.length), { name, index }]),
-    );
+type MetadataColumn = { name: string; index: number };
+type FileColumn = MetadataColumn & { category: FileCategory };
+type ParsedMetadata = { columns: MetadataColumn[]; rows: string[][] };
 
 /**
- * Returns the first column of a metadata file which contains submission IDs, or undefined if none exist.
+ * Returns the file columns of the metadata file.
  * @param columns The columns of the metadata file.
- * @returns An object containing the column name and index, or undefined if no ID column exists.
+ * @returns The file columns, each with their file category.
  */
-const getIdColumn = (columns: { name: string; index: number }[]) =>
-    columns.find(({ name }) => ID_COLUMNS.includes(name));
+const getFileColumns = (columns: MetadataColumn[]): FileColumn[] =>
+    columns
+        .filter((column) => column.name.startsWith(FILES_HEADER_PREFIX))
+        .map((column) => ({
+            name: column.name,
+            index: column.index,
+            category: column.name.slice(FILES_HEADER_PREFIX.length),
+        }));
+
+/**
+ * Returns the first ID column of the metadata file.
+ * @param columns The columns of the metadata file.
+ * @returns The first ID column, or an error if this is not found.
+ */
+const getIdColumn = (columns: MetadataColumn[]): Result<MetadataColumn, Error> => {
+    const idColumn = columns.find(({ name }) => ID_COLUMNS.includes(name));
+
+    if (idColumn === undefined)
+        return err(new Error('Missing id column. Please ensure this is included in the uploaded metadata file.'));
+
+    return ok(idColumn);
+};
+
+/**
+ * Parses the TSV text of a metadata file into its columns and rows.
+ * @param text The text of the metadata file.
+ * @returns The columns and the rows, or an error if the file is empty.
+ */
+const parseMetadataText = (text: string): Result<ParsedMetadata, Error> => {
+    const parsed = Papa.parse<string[]>(text, { delimiter: '\t', skipEmptyLines: true });
+    if (parsed.data.length === 0) return err(new Error('Please provide a non-empty metadata file.'));
+
+    const columns = parsed.data[0].map((column, index) => ({ name: column, index }));
+    const rows = parsed.data.slice(1);
+
+    return ok({ columns, rows });
+};
 
 /**
  * Reads the file entries declared in the file columns of a metadata file, validating that submission IDs are
@@ -345,36 +372,35 @@ export function parseSubmissionFileMapping(
     text: string,
     categories: FileCategory[],
 ): Result<SubmissionFileMapping, Error> {
-    const parsed = Papa.parse<string[]>(text, { delimiter: '\t', skipEmptyLines: true });
-    if (parsed.data.length === 0) return err(new Error('Please provide a non-empty metadata file.'));
+    const parsedMetadataResult = parseMetadataText(text);
+    if (parsedMetadataResult.isErr()) return err(parsedMetadataResult.error);
+    const { columns, rows } = parsedMetadataResult.value;
 
-    const columns = parsed.data[0].map((column, index) => ({ name: column, index }));
-    const rows = parsed.data.slice(1);
-
-    // Get file categories in the metadata file
-    const fileColumnsMap = getFileColumnsMap(columns);
-    if (fileColumnsMap.size === 0) return ok(new Map());
-    const fileCategories = Array.from(fileColumnsMap.keys());
+    // Get file columns from the metadata
+    const fileColumns = getFileColumns(columns);
+    if (fileColumns.length === 0) return ok(new Map());
 
     // Validate file categories declared in the metadata
-    const unknownCategories = new Set(fileCategories.filter((category) => !categories.includes(category)));
-    if (unknownCategories.size > 0)
+    const fileCategories = fileColumns.map((column) => column.category);
+    const unknownCategories = fileCategories.filter((category) => !categories.includes(category));
+    if (unknownCategories.length > 0)
         return err(
-            new Error(`Found unknown file categories within metadata file: ${[...unknownCategories].join(', ')}.`),
+            new Error(
+                `Found unknown file categories within metadata file: ${[...new Set(unknownCategories)].join(', ')}.`,
+            ),
+        );
+    const duplicateCategories = fileCategories.filter((category, index) => fileCategories.indexOf(category) !== index);
+    if (duplicateCategories.length > 0)
+        return err(
+            new Error(
+                `Found duplicate file categories within metadata file: ${[...new Set(duplicateCategories)].join(', ')}.`,
+            ),
         );
 
-    const duplicateCategories = new Set(
-        fileCategories.filter((category, index) => fileCategories.indexOf(category) !== index),
-    );
-    if (duplicateCategories.size > 0)
-        return err(
-            new Error(`Found duplicate file categories within metadata file: ${[...duplicateCategories].join(', ')}.`),
-        );
-
-    // Validate ID column exists
-    const idColumn = getIdColumn(columns);
-    if (idColumn === undefined)
-        return err(new Error('Missing id column. Please ensure this is included in the uploaded metadata file.'));
+    // Get ID column from the metadata
+    const idColumnResult = getIdColumn(columns);
+    if (idColumnResult.isErr()) return err(idColumnResult.error);
+    const idColumn = idColumnResult.value;
 
     // Build a mapping of submission IDs to file categories and names
     const submissionFileMapping: SubmissionFileMapping = new Map();
@@ -392,7 +418,7 @@ export function parseSubmissionFileMapping(
 
         // Build a mapping of file categories to file names and entries for the submission
         const categoryMapping = new Map<FileCategory, Map<FileName, SubmissionFile>>();
-        for (const [category, column] of fileColumnsMap) {
+        for (const column of fileColumns) {
             // Skip empty cells
             const cell = row[column.index] ?? '';
             if (cell.trim() === '') continue;
@@ -413,12 +439,12 @@ export function parseSubmissionFileMapping(
                 if (fileEntries.has(file.name))
                     return err(
                         new Error(
-                            `Found duplicate file names for entry ${submissionId} in the ${category} category: ${file.name}.`,
+                            `Found duplicate file names for entry ${submissionId} in the ${column.category} category: ${file.name}.`,
                         ),
                     );
                 fileEntries.set(file.name, file);
             }
-            categoryMapping.set(category, fileEntries);
+            categoryMapping.set(column.category, fileEntries);
         }
         submissionFileMapping.set(submissionId, categoryMapping);
     }
@@ -441,25 +467,26 @@ export async function applyFileMappings(
     if (resolvedSubmissionFileMapping.size === 0) return ok(metadataFile);
 
     const text = await metadataFile.text();
-    const parsed = Papa.parse<string[]>(text, { delimiter: '\t', skipEmptyLines: true });
-    if (parsed.data.length === 0) return err(new Error('Please provide a non-empty metadata file.'));
 
-    const columns = parsed.data[0].map((column, index) => ({ name: column, index }));
-    const fileColumnsMap = getFileColumnsMap(columns);
-    const rows = parsed.data.slice(1);
+    const parsedMetadataResult = parseMetadataText(text);
+    if (parsedMetadataResult.isErr()) return err(parsedMetadataResult.error);
+    const { columns, rows } = parsedMetadataResult.value;
 
-    // Validate ID column exists
-    const idColumn = getIdColumn(columns);
-    if (idColumn === undefined)
-        return err(new Error('Missing id column. Please ensure this is included in the uploaded metadata file.'));
+    // Get file columns from the metadata
+    const fileColumns = getFileColumns(columns);
 
     // Validate a column exists for every category in the resolved mapping
     const missingCategory = [...resolvedSubmissionFileMapping.values()]
         .flatMap((fileMapping) => [...fileMapping.keys()])
-        .find((category) => !fileColumnsMap.has(category));
+        .find((category) => !fileColumns.some((column) => column.category === category));
 
     if (missingCategory !== undefined)
         return err(new Error(`Encountered unknown category ${missingCategory} not present in metadata.`));
+
+    // Get ID column from the metadata
+    const idColumnResult = getIdColumn(columns);
+    if (idColumnResult.isErr()) return err(idColumnResult.error);
+    const idColumn = idColumnResult.value;
 
     // Update the rows with file columns containing resolved file entries
     const updatedRows = rows.map((row) => {
@@ -468,8 +495,8 @@ export async function applyFileMappings(
         if (fileMapping === undefined) return row;
 
         const updatedRow = [...row];
-        for (const [category, column] of fileColumnsMap) {
-            const files = fileMapping.get(category);
+        for (const column of fileColumns) {
+            const files = fileMapping.get(column.category);
             if (files === undefined) continue;
 
             updatedRow[column.index] = [...files.values()]
