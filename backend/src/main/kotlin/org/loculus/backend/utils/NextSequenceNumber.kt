@@ -1,7 +1,7 @@
 package org.loculus.backend.utils
 
-import org.jetbrains.exposed.sql.IntegerColumnType
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.IntegerColumnType
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 fun getNextSequenceNumber(sequenceName: String): Long = getNextSequenceNumbers(sequenceName, 1)[0]
 
