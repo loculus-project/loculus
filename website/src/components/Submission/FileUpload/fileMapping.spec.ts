@@ -1,3 +1,4 @@
+import { type Result } from 'neverthrow';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -32,10 +33,14 @@ const linkedFile = (name: string, path: string, fileId: string) => ({
 });
 const resolvedFile = (name: string, fileId: string) => ({ type: 'resolvedFile' as const, name, fileId });
 
+const valueOf = <T>(result: Result<T, Error>): T => {
+    if (result.isErr()) throw new Error(`expected a success, got: ${result.error.message}`);
+    return result.value;
+};
+
 const entriesOf = (text: string, submissionId: string, category: string) => {
-    const result = parseSubmissionFileMapping(text, FILE_CATEGORIES);
-    if (result.isErr()) throw new Error(`expected a successful parse, got: ${result.error.message}`);
-    return [...(result.value.get(submissionId)?.get(category)?.values() ?? [])];
+    const mapping = valueOf(parseSubmissionFileMapping(text, FILE_CATEGORIES));
+    return [...(mapping.get(submissionId)?.get(category)?.values() ?? [])];
 };
 
 const errorOf = (text: string, categories: string[] = FILE_CATEGORIES): string => {
@@ -121,10 +126,8 @@ describe('parseSubmissionFileMapping', () => {
             ]),
             FILE_CATEGORIES,
         );
-        expect(result._unsafeUnwrap()).toEqual(new Map());
-        expect(parseSubmissionFileMapping(tsv([['country'], ['CH']]), FILE_CATEGORIES)._unsafeUnwrap()).toEqual(
-            new Map(),
-        );
+        expect(valueOf(result)).toEqual(new Map());
+        expect(valueOf(parseSubmissionFileMapping(tsv([['country'], ['CH']]), FILE_CATEGORIES))).toEqual(new Map());
     });
 
     it('rejects a file column without an id column', () => {
@@ -156,6 +159,14 @@ describe('parseSubmissionFileMapping', () => {
         expect(errorOf(text)).toContain('Found duplicate ids within metadata file: e1');
     });
 
+    it('rejects duplicate file categories', () => {
+        const text = tsv([
+            ['id', RAW_READS_COLUMN, RAW_READS_COLUMN],
+            ['e1', 'a.txt', 'b.txt'],
+        ]);
+        expect(errorOf(text)).toContain(`Found duplicate file categories within metadata file: ${RAW_READS}`);
+    });
+
     it('rejects duplicate file names within one entry', () => {
         const text = tsv([
             ['id', RAW_READS_COLUMN],
@@ -177,7 +188,7 @@ describe('parseSubmissionFileMapping', () => {
             ['id', RAW_READS_COLUMN, OTHER_FILES_COLUMN],
             ['e1', 'a.txt', ''],
         ]);
-        const result = parseSubmissionFileMapping(text, FILE_CATEGORIES)._unsafeUnwrap();
+        const result = valueOf(parseSubmissionFileMapping(text, FILE_CATEGORIES));
         expect([...result.get('e1')!.keys()]).toEqual([RAW_READS]);
     });
 
@@ -187,7 +198,7 @@ describe('parseSubmissionFileMapping', () => {
             ['e1', 'CH', 'a.txt', 'a.json'],
             ['e2', 'DE', 'b.txt', 'b.json'],
         ]);
-        const result = parseSubmissionFileMapping(text, FILE_CATEGORIES)._unsafeUnwrap();
+        const result = valueOf(parseSubmissionFileMapping(text, FILE_CATEGORIES));
         expect([...result.keys()]).toEqual(['e1', 'e2']);
         expect(entriesOf(text, 'e1', OTHER_FILES).map((f) => f.name)).toEqual(['a.json']);
         expect(entriesOf(text, 'e2', RAW_READS).map((f) => f.name)).toEqual(['b.txt']);
@@ -330,7 +341,7 @@ describe('applyFileMappings', () => {
             ]),
             merged,
         );
-        expect(await linesOf(result._unsafeUnwrap())).toEqual([`id\t${RAW_READS_COLUMN}`, 'e1\ta.txt:id-a']);
+        expect(await linesOf(valueOf(result))).toEqual([`id\t${RAW_READS_COLUMN}`, 'e1\ta.txt:id-a']);
     });
 
     it('joins several files in one cell', async () => {
@@ -349,6 +360,6 @@ describe('applyFileMappings', () => {
             ]),
             merged,
         );
-        expect(await linesOf(result._unsafeUnwrap())).toEqual([`id\t${RAW_READS_COLUMN}`, 'e1\ta.txt:id-a b.txt:id-b']);
+        expect(await linesOf(valueOf(result))).toEqual([`id\t${RAW_READS_COLUMN}`, 'e1\ta.txt:id-a b.txt:id-b']);
     });
 });
