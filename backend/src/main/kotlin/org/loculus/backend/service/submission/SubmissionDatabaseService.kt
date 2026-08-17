@@ -40,6 +40,7 @@ import org.jetbrains.exposed.sql.not
 import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.StatementType
+import org.jetbrains.exposed.sql.statements.UpdateBuilder
 import org.jetbrains.exposed.sql.stringLiteral
 import org.jetbrains.exposed.sql.stringParam
 import org.jetbrains.exposed.sql.transactions.TransactionManager
@@ -192,7 +193,7 @@ class SubmissionDatabaseService(
             .plus(processingLeaseDurationSeconds, DateTimeUnit.SECOND, DateProvider.timeZone)
             .toLocalDateTime(DateProvider.timeZone)
 
-        val claimedCount = claimPreprocessingJobs(
+        claimPreprocessingJobs(
             organism,
             pipelineVersion,
             numberOfSequenceEntries,
@@ -200,9 +201,6 @@ class SubmissionDatabaseService(
             claimedAt,
             leaseUntil,
         )
-        if (claimedCount == 0) {
-            return emptySequence()
-        }
 
         return preprocessing
             .join(
@@ -338,7 +336,7 @@ class SubmissionDatabaseService(
         processingAttemptId: UUID,
         claimedAt: LocalDateTime,
         leaseUntil: LocalDateTime,
-    ): Int {
+    ) {
         val sql = """
             WITH candidates AS (
                 SELECT accession, version, pipeline_version
@@ -349,25 +347,20 @@ class SubmissionDatabaseService(
                 ORDER BY accession, version
                 LIMIT ?
                 FOR UPDATE SKIP LOCKED
-            ),
-            claimed AS (
-                UPDATE sequence_entries_preprocessed_data queue
-                SET processing_status = 'IN_PROCESSING',
-                    processing_attempt_id = ?,
-                    started_processing_at = ?,
-                    lease_until = ?,
-                    finished_processing_at = NULL
-                FROM candidates
-                WHERE queue.accession = candidates.accession
-                  AND queue.version = candidates.version
-                  AND queue.pipeline_version = candidates.pipeline_version
-                RETURNING queue.accession
             )
-            SELECT COUNT(*) AS claimed_count
-            FROM claimed
+            UPDATE sequence_entries_preprocessed_data queue
+            SET processing_status = 'IN_PROCESSING',
+                processing_attempt_id = ?,
+                started_processing_at = ?,
+                lease_until = ?,
+                finished_processing_at = NULL
+            FROM candidates
+            WHERE queue.accession = candidates.accession
+              AND queue.version = candidates.version
+              AND queue.pipeline_version = candidates.pipeline_version
         """.trimIndent()
 
-        return TransactionManager.current().exec(
+        TransactionManager.current().exec(
             sql,
             args = listOf(
                 VarCharColumnType() to organism.name,
@@ -377,14 +370,8 @@ class SubmissionDatabaseService(
                 KotlinLocalDateTimeColumnType() to claimedAt,
                 KotlinLocalDateTimeColumnType() to leaseUntil,
             ),
-            explicitStatementType = StatementType.SELECT,
-        ) { resultSet ->
-            if (resultSet.next()) {
-                resultSet.getInt("claimed_count")
-            } else {
-                0
-            }
-        } ?: 0
+            explicitStatementType = StatementType.UPDATE,
+        )
     }
 
     fun updateProcessedData(inputStream: InputStream, organism: Organism, pipelineVersion: Long) {
@@ -444,11 +431,9 @@ class SubmissionDatabaseService(
             val releasedEntries = getReleasedAt(processedFiles.keys.toList())
                 .filter { it.value != null }
                 .keys
-            val releasedFiles = mutableSetOf<FileId>()
             for (entry in releasedEntries) {
                 for (fileId in processedFiles[entry]!!) {
                     s3Service.setFileToPublic(fileId)
-                    releasedFiles.add(fileId)
                 }
             }
         }
@@ -860,41 +845,45 @@ class SubmissionDatabaseService(
                 preprocessing.leaseUntilColumn,
             )
             .where { preprocessing.accessionVersionEquals(submittedProcessedData) }
+            .toList()
 
         val accessionVersion = submittedProcessedData.displayAccessionVersion()
-        if (selectedSequenceEntries.all {
-                it[preprocessing.processingStatusColumn] != IN_PROCESSING.name
-            }
-        ) {
+        val inProcessing = selectedSequenceEntries.filter {
+            it[preprocessing.processingStatusColumn] == IN_PROCESSING.name
+        }
+        if (inProcessing.isEmpty()) {
             throw UnprocessableEntityException(
                 "Accession version $accessionVersion does not exist or is not awaiting any processing results",
             )
         }
-        if (selectedSequenceEntries.all { it[preprocessing.pipelineVersionColumn] != pipelineVersion }) {
+        val forPipelineVersion = inProcessing.filter {
+            it[preprocessing.pipelineVersionColumn] == pipelineVersion
+        }
+        if (forPipelineVersion.isEmpty()) {
             throw UnprocessableEntityException(
                 "Accession version $accessionVersion is not awaiting processing results of version " +
                     "$pipelineVersion (anymore)",
             )
         }
-        if (selectedSequenceEntries.all { it[preprocessing.organismColumn] != organism.name }) {
+        val forOrganism = forPipelineVersion.filter {
+            it[preprocessing.organismColumn] == organism.name
+        }
+        if (forOrganism.isEmpty()) {
             throw UnprocessableEntityException(
                 "Accession version $accessionVersion is not awaiting processing results for organism ${organism.name}",
             )
         }
-        if (selectedSequenceEntries.all {
-                it[preprocessing.processingAttemptIdColumn] != submittedProcessedData.processingAttemptId
-            }
-        ) {
+        val ownedClaim = forOrganism.firstOrNull {
+            it[preprocessing.processingAttemptIdColumn] == submittedProcessedData.processingAttemptId
+        }
+        if (ownedClaim == null) {
             throw UnprocessableEntityException(
                 "Processing attempt ${submittedProcessedData.processingAttemptId} does not own " +
                     "accession version $accessionVersion",
             )
         }
-        if (selectedSequenceEntries.all {
-                it[preprocessing.leaseUntilColumn] == null ||
-                    it[preprocessing.leaseUntilColumn]!! <= resultSubmissionStartedAt
-            }
-        ) {
+        val leaseUntil = ownedClaim[preprocessing.leaseUntilColumn]
+        if (leaseUntil == null || leaseUntil <= resultSubmissionStartedAt) {
             throw UnprocessableEntityException(
                 "Processing attempt ${submittedProcessedData.processingAttemptId} for accession version " +
                     "$accessionVersion has expired",
@@ -1503,14 +1492,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesPreprocessedDataTable.accessionVersionEquals(editedSequenceEntryData)
             },
         ) {
-            it[processingStatusColumn] = UNPROCESSED.name
-            it[processingAttemptIdColumn] = null
-            it[leaseUntilColumn] = null
-            it[startedProcessingAtColumn] = null
-            it[finishedProcessingAtColumn] = null
-            it[processedDataColumn] = null
-            it[errorsColumn] = null
-            it[warningsColumn] = null
+            it.resetToUnprocessed()
         }
 
         auditLogger.log(
@@ -1739,14 +1721,7 @@ class SubmissionDatabaseService(
                     (table.leaseUntilColumn lessEq now)
             },
         ) {
-            it[processingStatusColumn] = UNPROCESSED.name
-            it[processingAttemptIdColumn] = null
-            it[leaseUntilColumn] = null
-            it[startedProcessingAtColumn] = null
-            it[finishedProcessingAtColumn] = null
-            it[processedDataColumn] = null
-            it[errorsColumn] = null
-            it[warningsColumn] = null
+            it.resetToUnprocessed()
         }
 
         if (numberRequeued > 0) {
@@ -1867,6 +1842,17 @@ class SubmissionDatabaseService(
                     }
             }
             .toMap()
+}
+
+private fun UpdateBuilder<*>.resetToUnprocessed() {
+    this[SequenceEntriesPreprocessedDataTable.processingStatusColumn] = UNPROCESSED.name
+    this[SequenceEntriesPreprocessedDataTable.processingAttemptIdColumn] = null
+    this[SequenceEntriesPreprocessedDataTable.leaseUntilColumn] = null
+    this[SequenceEntriesPreprocessedDataTable.startedProcessingAtColumn] = null
+    this[SequenceEntriesPreprocessedDataTable.finishedProcessingAtColumn] = null
+    this[SequenceEntriesPreprocessedDataTable.processedDataColumn] = null
+    this[SequenceEntriesPreprocessedDataTable.errorsColumn] = null
+    this[SequenceEntriesPreprocessedDataTable.warningsColumn] = null
 }
 
 private fun Transaction.findNewPreprocessingPipelineVersion(organism: String): Long? {
