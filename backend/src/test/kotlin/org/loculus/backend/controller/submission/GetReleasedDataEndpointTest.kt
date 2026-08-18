@@ -213,7 +213,7 @@ class GetReleasedDataEndpointTest(
             ifNoneMatch = initialEtag,
         )
         responseNoNewData.andExpect(status().isNotModified)
-            .andExpect(header().doesNotExist(ETAG))
+            .andExpect(header().string(ETAG, initialEtag!!))
 
         prepareRevokedAndRevocationAndRevisedVersions()
 
