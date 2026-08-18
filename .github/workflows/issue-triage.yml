@@ -27,8 +27,6 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
-          model: claude-sonnet-4-5-20250929
-
           prompt: |
             You're an issue triage assistant for the Loculus project. Your tasks are to:
             1. Analyze the issue and apply appropriate component labels
@@ -86,6 +84,7 @@ jobs:
 
           claude_args: |
             --allowedTools "Bash(gh issue:*),Bash(gh label list)"
+            --model claude-sonnet-4-5-20250929
 
   label-pr:
     if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
@@ -107,8 +106,6 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-
-          model: claude-sonnet-4-5-20250929
 
           prompt: |
             You're a PR triage assistant for the Loculus project. Your tasks are to:
@@ -170,3 +167,4 @@ jobs:
 
           claude_args: |
             --allowedTools "Bash(gh pr:*),Bash(gh issue list:*),Bash(gh label list)"
+            --model claude-sonnet-4-5-20250929
