@@ -366,7 +366,7 @@ open class SubmissionController(
                 HttpStatus.NOT_MODIFIED,
                 requestStartNanos,
             )
-            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(lastDatabaseWriteETag).build()
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(lastDatabaseWriteETagWithDate).build()
         }
 
         val headers = HttpHeaders()
