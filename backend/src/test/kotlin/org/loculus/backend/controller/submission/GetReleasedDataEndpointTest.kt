@@ -652,7 +652,7 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
     }
 
     @Test
-    fun `GIVEN sequence entry with expired restricted data use terms THEN returns open data use terms`() {
+    fun `GIVEN sequence entry with expired restricted data use terms THEN returns open terms and new etag`() {
         every { dateProvider.getCurrentInstant() } answers { callOriginal() }
 
         val threeMonthsFromNow = dateMonthsFromNow(3)
@@ -664,11 +664,21 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
 
         assertAccessionVersionIsRestrictedUntil(accessionVersion, threeMonthsFromNow)
 
+        val etagWhileRestricted = submissionControllerClient.getReleasedData()
+            .andReturn().response.getHeader(ETAG)
+        submissionControllerClient.getReleasedData(ifNoneMatch = etagWhileRestricted)
+            .andExpect(status().isNotModified)
+
         val threeMonthsAndADayFromNow = LocalDateTime(
             date = dateMonthsFromNow(3).plus(1, DateTimeUnit.DAY),
             time = LocalTime.fromSecondOfDay(0),
         ).toInstant(DateProvider.timeZone)
         every { dateProvider.getCurrentInstant() } answers { threeMonthsAndADayFromNow }
+
+        // The restriction lapsing is not a database write, so the etag has to change on the date alone.
+        submissionControllerClient.getReleasedData(ifNoneMatch = etagWhileRestricted)
+            .andExpect(status().isOk)
+            .andExpect(header().string(ETAG, greaterThan(etagWhileRestricted)))
 
         assertAccessionVersionIsOpen(accessionVersion)
     }
