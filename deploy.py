@@ -172,6 +172,26 @@ def main():
         )
 
 
+# Traefik proxies LAPIS and logs why it failed a request (e.g. a 502) at DEBUG only,
+# with its access log off, so by default CI artifacts hold no record of such failures.
+# Keys are for traefik chart 40.1.x as shipped by k3s; chart 41+ renamed them to
+# log/accessLog. Applies to the local k3d cluster only, never to server deployments.
+TRAEFIK_LOGGING_CONFIG = """
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    logs:
+      general:
+        level: DEBUG
+      access:
+        enabled: true
+"""
+
+
 def handle_cluster():
     if args.delete:
         print(f"Deleting cluster '{CLUSTER_NAME}'.")
@@ -194,6 +214,8 @@ def handle_cluster():
             command += f" --image {args.k3s_image}"
 
         run_command([command], shell=True)
+
+    run_command(["kubectl", "apply", "-f", "-"], input=TRAEFIK_LOGGING_CONFIG, text=True)
 
     install_secret_generator()
     while not is_traefik_running():
