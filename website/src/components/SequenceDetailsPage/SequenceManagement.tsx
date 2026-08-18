@@ -43,9 +43,7 @@ export const SequenceManagement: FC<Props> = ({
 
     const isMyGroup = myGroups.some((group) => group.groupId === groupId);
 
-    if (!isMyGroup || accessToken === undefined) {
-        return null;
-    }
+    if (!isMyGroup || accessToken === undefined) return null;
 
     const ownHistoryEntry = sequenceEntryHistory?.find((entry) => entry.accessionVersion === accessionVersion);
     const isLatestVersion = ownHistoryEntry?.versionStatus === versionStatuses.latestVersion;
