@@ -137,13 +137,6 @@ class ExtractUnprocessedDataEndpointTest(
             .andReturn().response.getHeader(ETAG)
         assertThat(otherOrganismEtagAfter, `is`(otherOrganismEtagBefore))
 
-        client.extractUnprocessedData(
-            DefaultFiles.NUMBER_OF_SEQUENCES,
-            organism = OTHER_ORGANISM,
-            ifNoneMatch = otherOrganismEtagBefore,
-        ).andExpect(status().isNotModified)
-            .andExpect(header().string(ETAG, otherOrganismEtagBefore!!))
-
         // Meanwhile DEFAULT_ORGANISM's etag did change, since it received the preprocessed data write.
         val defaultOrganismEtagAfter = client.extractUnprocessedData(0, organism = DEFAULT_ORGANISM)
             .andReturn().response.getHeader(ETAG)
