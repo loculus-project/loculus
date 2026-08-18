@@ -12,6 +12,9 @@ export const test = base.extend({
                     'ERR_INCOMPLETE_CHUNKED_ENCODING',
                     "Response to preflight request doesn't pass access control check", // LAPIS sometimes hangs up preflight requests for unknown reasons
                     'has been externalized for browser compatibility.',
+                    // LAPIS/SILO briefly 502s (via traefik) when SILO picks up new data
+                    // https://github.com/GenSpectrum/LAPIS/issues/1699
+                    'Failed to load resource: the server responded with a status of 502 (Bad Gateway)',
                 ];
 
                 const isHarmless = harmlessMessages.some((harmless) =>
