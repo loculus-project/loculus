@@ -95,17 +95,18 @@ open class ReleasedDataModel(
     }
 
     /**
-     * Returns the timestamp of the last relevant database write, for use in ETags, taken from the
-     * most recent `last_time_updated` in the update tracker.
+     * Returns the ETag for the last relevant database write, as the most recent
+     * `last_time_updated` in the update tracker.
      *
-     * When [organism] is given, the lookup is scoped to the rows that affect that organism's
-     * released data at its current pipeline version:
+     * When [organism] and/or [pipelineVersion] are given, the lookup is scoped to
+     * the rows that affect that organism's released data at that pipeline version:
      * table-wide writes (tagged with NULL organism / pipeline_version) are always
      * included, plus the organism- and pipeline-specific preprocessed-data rows.
      * This means preprocessing of one organism (or of a not-yet-current pipeline
      * version) no longer invalidates the ETag of other organisms.
      */
-    private fun getLastDatabaseWrite(tableNames: List<String>? = null, organism: Organism? = null): String {
+    @Transactional(readOnly = true)
+    open fun getLastDatabaseWriteETag(tableNames: List<String>? = null, organism: Organism? = null): String {
         val pipelineVersion = organism?.let {
             submissionDatabaseService.getCurrentProcessingPipelineVersion(it)
         }
@@ -128,23 +129,8 @@ open class ReleasedDataModel(
             // Replace not strictly necessary but does no harm and a) shows UTC, b) simplifies silo import script logic
             ?.replace(" ", "Z")
             ?: ""
-        return lastUpdateTime
+        return "\"$lastUpdateTime\"" // ETag must be enclosed in double quotes
     }
-
-    /** ETag for the last relevant database write. */
-    @Transactional(readOnly = true)
-    open fun getLastDatabaseWriteETag(tableNames: List<String>? = null, organism: Organism? = null): String =
-        "\"${getLastDatabaseWrite(tableNames, organism)}\"" // ETag must be enclosed in double quotes
-
-    /**
-     * Same as [getLastDatabaseWriteETag], but also includes the current date.
-     * Useful because RESTRICTED entries can lapse to OPEN with no database write, so an ETag based on write
-     * timestamps alone would keep serving 304s past the `restrictedUntil` date.
-     */
-    @Transactional(readOnly = true)
-    open fun getLastDatabaseWriteETagWithDate(tableNames: List<String>? = null, organism: Organism? = null): String =
-        // ETag must be enclosed in double quotes
-        "\"${getLastDatabaseWrite(tableNames, organism)}|${dateProvider.getCurrentDate()}\""
 
     private fun conditionalMetadata(condition: Boolean, values: () -> MetadataMap): MetadataMap =
         if (condition) values() else emptyMap()
