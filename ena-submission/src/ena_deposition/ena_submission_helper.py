@@ -217,7 +217,7 @@ def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
             [
                 "".join(name[0] + "." for name in hyphen_name.split() if name)
                 for hyphen_name in first_names.split("-")
-                if hyphen_name
+                if hyphen_name.strip()
             ]
         )
         ena_authors.append(f"{last_names} {initials}".strip())
