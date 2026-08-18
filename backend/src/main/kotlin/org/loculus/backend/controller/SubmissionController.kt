@@ -336,7 +336,7 @@ open class SubmissionController(
             Header(
                 name = "eTag",
                 description = "Last database write Etag, combined with the current date",
-                schema = Schema(type = "integer"),
+                schema = Schema(type = "string"),
             ),
         ],
     )
