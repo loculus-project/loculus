@@ -108,7 +108,8 @@ Revoke existing sequence entry.
 Creates a new revocation version and stages it for confirmation. 
 If successfully, this returns the accessions, versions and status of the revocation versions.
 If any of the given sequence entries do not exist, or do not have the latest version in status 'APPROVED_FOR_RELEASE', 
-or the given user has no right to the sequence entry, this will return an error and roll back the whole transaction.
+or the latest version is itself a revocation, or the given user has no right to the sequence entry, 
+this will return an error and roll back the whole transaction.
 """
 
 const val REVISE_RESPONSE_DESCRIPTION = """
