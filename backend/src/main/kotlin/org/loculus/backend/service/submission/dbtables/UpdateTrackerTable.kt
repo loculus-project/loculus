@@ -1,6 +1,6 @@
 package org.loculus.backend.service.submission
 
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.v1.core.Table
 
 const val UPDATE_TRACKER_TABLE_NAME = "table_update_tracker"
 

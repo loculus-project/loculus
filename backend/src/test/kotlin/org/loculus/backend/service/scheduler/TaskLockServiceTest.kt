@@ -3,8 +3,8 @@ package org.loculus.backend.service.scheduler
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.notNullValue
-import org.jetbrains.exposed.sql.TextColumnType
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.TextColumnType
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.Test
 import org.loculus.backend.controller.EndpointTest
 import org.springframework.beans.factory.annotation.Autowired
