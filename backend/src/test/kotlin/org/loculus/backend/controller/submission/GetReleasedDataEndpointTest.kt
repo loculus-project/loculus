@@ -213,7 +213,7 @@ class GetReleasedDataEndpointTest(
             ifNoneMatch = initialEtag,
         )
         responseNoNewData.andExpect(status().isNotModified)
-            .andExpect(header().string(ETAG, initialEtag!!))
+            .andExpect(header().doesNotExist(ETAG))
 
         prepareRevokedAndRevocationAndRevisedVersions()
 
@@ -223,7 +223,7 @@ class GetReleasedDataEndpointTest(
 
         responseAfterMoreDataAdded.andExpect(status().isOk)
             .andExpect(header().string(ETAG, notNullValue()))
-            .andExpect(header().string(ETAG, greaterThan(initialEtag)))
+            .andExpect(header().string(ETAG, greaterThan(initialEtag!!)))
 
         val responseBodyMoreData = responseAfterMoreDataAdded
             .expectNdjsonAndGetContent<ReleasedData>()

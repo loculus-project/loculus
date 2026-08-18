@@ -224,7 +224,7 @@ open class SubmissionController(
             )
         }
 
-        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(organism = organism)
+        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag()
         if (ifNoneMatch == lastDatabaseWriteETag) {
             submissionMetrics.recordPollingRequest(
                 EXTRACT_UNPROCESSED_DATA_ENDPOINT,
@@ -232,7 +232,7 @@ open class SubmissionController(
                 HttpStatus.NOT_MODIFIED,
                 requestStartNanos,
             )
-            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(lastDatabaseWriteETag).build()
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
         }
 
         val headers = HttpHeaders()
@@ -366,7 +366,7 @@ open class SubmissionController(
                 HttpStatus.NOT_MODIFIED,
                 requestStartNanos,
             )
-            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(lastDatabaseWriteETag).build()
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
         }
 
         val headers = HttpHeaders()
