@@ -283,8 +283,12 @@ class AssemblyCreationTests(unittest.TestCase):
         self.assertEqual(result_apostrophe, desired_result_apostrophe)
 
         # Test with hyphenated first names, also with spaces around hyphens
-        authors_with_hyphenated_names = "Smith, John-Doe; Roe, Jane - Marie; Parker, Anne- Marie Beth"
-        result_hyphenated = reformat_authors_from_loculus_to_embl_style(authors_with_hyphenated_names)
+        authors_with_hyphenated_names = (
+            "Smith, John-Doe; Roe, Jane - Marie; Parker, Anne- Marie Beth"
+        )
+        result_hyphenated = reformat_authors_from_loculus_to_embl_style(
+            authors_with_hyphenated_names
+        )
         desired_result_hyphenated = "Smith J.-D., Roe J.-M., Parker A.-M.B.;"
         self.assertEqual(result_hyphenated, desired_result_hyphenated)
 
