@@ -30,7 +30,7 @@ interface Props {
     sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
     referenceGenomesInfo: ReferenceGenomesInfo;
     sequenceCitations?: SequenceCitation[];
-    sequenceEntryHistory?: SequenceEntryHistory;
+    sequenceEntryHistory: SequenceEntryHistory;
     isRevocation?: boolean;
     onRevokeSuccess?: () => void;
 }

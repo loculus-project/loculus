@@ -17,7 +17,7 @@ interface Props {
     organism: string;
     accessionVersion: string;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    sequenceEntryHistory?: SequenceEntryHistory;
+    sequenceEntryHistory: SequenceEntryHistory;
     clientConfig: ClientConfig;
     myGroups: Group[];
     accessToken: string | undefined;
@@ -45,8 +45,9 @@ export const SequenceManagement: FC<Props> = ({
 
     if (!isMyGroup || accessToken === undefined) return null;
 
-    const ownHistoryEntry = sequenceEntryHistory?.find((entry) => entry.accessionVersion === accessionVersion);
-    const isLatestVersion = ownHistoryEntry?.versionStatus === versionStatuses.latestVersion;
+    const isLatestVersion =
+        sequenceEntryHistory.find((entry) => entry.accessionVersion === accessionVersion)?.versionStatus ===
+        versionStatuses.latestVersion;
 
     // Display nothing for previous revocations
     if (isRevocation && !isLatestVersion) return null;
