@@ -224,7 +224,7 @@ open class SubmissionController(
             )
         }
 
-        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag()
+        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(organism=organism)
         if (ifNoneMatch == lastDatabaseWriteETag) {
             submissionMetrics.recordPollingRequest(
                 EXTRACT_UNPROCESSED_DATA_ENDPOINT,
