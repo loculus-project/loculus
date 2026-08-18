@@ -1,0 +1,23 @@
+{{- $traefikApiVersion := ternary "traefik.io/v1alpha1" "traefik.containo.us/v1alpha1" (eq (int $.Values.traefikVersion) 3) -}}
+{{/*
+Traefik keeps idle upstream connections in a pool for `idleConnTimeout` (default 90s, inherited
+from Go's http.DefaultTransport). Our backends close idle keep-alive connections much sooner
+(Node/Astro and uvicorn: 5s, Tomcat: 20s). When traefik dispatches a request onto a pooled
+connection at the instant the backend closes it, Go reports io.EOF and traefik answers 502 --
+and Go only replays bodyless GET/HEAD/OPTIONS/TRACE, so POSTs (every LAPIS query) are not
+retried. Retiring pooled connections before any backend can close them removes the race.
+*/}}
+{{- define "loculus.serversTransportRef" -}}
+{{ .Release.Namespace }}-short-idle-conn-timeout@kubernetescrd
+{{- end }}
+apiVersion: {{ $traefikApiVersion }}
+kind: ServersTransport
+metadata:
+  name: short-idle-conn-timeout
+spec:
+  # Unlike forwardingTimeouts, this is not defaulted when a ServersTransport is attached: Go reads
+  # 0 as DefaultMaxIdleConnsPerHost (2), which would shrink the pool from traefik's own default.
+  maxIdleConnsPerHost: 200
+  forwardingTimeouts:
+    # Must stay below the shortest backend keep-alive timeout in the stack (5s).
+    idleConnTimeout: "3s"
