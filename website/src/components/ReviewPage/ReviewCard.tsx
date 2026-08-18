@@ -128,12 +128,14 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                 dataToView={data}
                 referenceGenomesInfo={referenceGenomesInfo}
             />
-            <FilesDialog
-                isOpen={isFilesDialogOpen}
-                onClose={() => setFilesDialogOpen(false)}
-                dataToView={data}
-                fileCategories={outputFileCategories}
-            />
+            {filesEnabled && (
+                <FilesDialog
+                    isOpen={isFilesDialogOpen}
+                    onClose={() => setFilesDialogOpen(false)}
+                    dataToView={data}
+                    fileCategories={outputFileCategories}
+                />
+            )}
         </div>
     );
 };
