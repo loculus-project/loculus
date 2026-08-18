@@ -665,7 +665,7 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
         assertAccessionVersionIsRestrictedUntil(accessionVersion, threeMonthsFromNow)
 
         val etagWhileRestricted = submissionControllerClient.getReleasedData()
-            .andReturn().response.getHeader(ETAG)
+            .andReturn().response.getHeader(ETAG)!!
         submissionControllerClient.getReleasedData(ifNoneMatch = etagWhileRestricted)
             .andExpect(status().isNotModified)
 
