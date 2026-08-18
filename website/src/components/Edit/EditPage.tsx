@@ -144,7 +144,7 @@ const InnerEditPage: FC<EditPageProps> = ({
     const latestVersionForRevision = sequenceEntryHistory
         ? getLatestAccessionVersionForRevision(sequenceEntryHistory)?.version
         : undefined;
-    const latestVersionIsRevocation = sequenceEntryHistory
+    const isLatestVersionRevocation = sequenceEntryHistory
         ? getLatestAccessionVersion(sequenceEntryHistory)?.isRevocation === true
         : false;
     const revisePageRoute = (accession: string, version: number | undefined) => {
@@ -169,7 +169,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                     />
                 )}
             </div>
-            {isCreatingRevision && latestVersionIsRevocation && (
+            {isCreatingRevision && isLatestVersionRevocation && (
                 <ErrorBox title='The latest entry for this sequence is revoked.' level='warning' className='mb-2'>
                     <p className='mt-2'>By revising, you will be undoing the revocation.</p>
                 </ErrorBox>

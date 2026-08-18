@@ -50,14 +50,11 @@ export const SequenceManagement: FC<Props> = ({
     const ownHistoryEntry = sequenceEntryHistory?.find((entry) => entry.accessionVersion === accessionVersion);
     const isLatestVersion = ownHistoryEntry?.versionStatus === versionStatuses.latestVersion;
 
-    // A revocation entry cannot be revised or revoked itself; the revocation is undone by
-    // revising the latest entry that is not a revocation.
-    if (isRevocation && !isLatestVersion) {
-        return null;
-    }
+    // Display nothing for previous revocations
+    if (isRevocation && !isLatestVersion) return null;
 
-    const currentDataUseTerms = [...dataUseTermsHistory].sort((a, b) => (a.changeDate > b.changeDate ? -1 : 1))[0]
-        .dataUseTerms;
+    dataUseTermsHistory.sort((a, b) => (a.changeDate > b.changeDate ? -1 : 1));
+    const currentDataUseTerms = dataUseTermsHistory[0].dataUseTerms;
 
     const dataUseTerms = tableData.find((entry) => entry.name === DATA_USE_TERMS_FIELD);
     const isRestricted = dataUseTerms?.value.toString().toUpperCase() === 'RESTRICTED';
@@ -83,7 +80,7 @@ export const SequenceManagement: FC<Props> = ({
                                 <EditDataUseTermsButton
                                     clientConfig={clientConfig}
                                     accessToken={accessToken}
-                                    accessionVersion={[accession]}
+                                    accessionVersion={[accessionVersion.split('.')[0]]}
                                     dataUseTerms={currentDataUseTerms as RestrictedDataUseTerms}
                                 />
                             )}
@@ -98,7 +95,7 @@ export const SequenceManagement: FC<Props> = ({
                             <RevokeButton
                                 organism={organism}
                                 clientConfig={clientConfig}
-                                accessionVersion={accession}
+                                accessionVersion={accessionVersion.split('.')[0]}
                                 accessToken={accessToken}
                                 groupId={groupId}
                                 onRevokeSuccess={onRevokeSuccess}
