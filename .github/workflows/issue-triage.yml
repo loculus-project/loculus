@@ -167,4 +167,4 @@ jobs:
 
           claude_args: |
             --allowedTools "Bash(gh pr:*),Bash(gh issue list:*),Bash(gh label list)"
-            --model claude-sonnet-4-5-20250929
+            --model sonnet
