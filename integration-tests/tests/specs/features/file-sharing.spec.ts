@@ -1,8 +1,8 @@
 import { expect } from '@playwright/test';
 import { execSync } from 'child_process';
-import fs from 'fs';
+import fs, { readFileSync } from 'fs';
 import os from 'os';
-import path from 'path';
+import path, { join } from 'path';
 import { test } from '../../fixtures/tmpdir.fixture';
 import { EditPage } from '../../pages/edit.page';
 import { ReviewPage } from '../../pages/review.page';
