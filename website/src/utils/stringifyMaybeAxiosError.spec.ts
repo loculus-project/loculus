@@ -63,6 +63,11 @@ describe('stringifyMaybeAxiosError', () => {
         expect(stringifyMaybeAxiosError(error)).toBe('Network Error; no response received');
     });
 
+    test('never renders "undefined" when the thrown value is not an error at all', () => {
+        expect(stringifyMaybeAxiosError(undefined)).toBe('An unknown error occurred');
+        expect(stringifyMaybeAxiosError(null)).toBe('An unknown error occurred');
+    });
+
     test('returns the message of a plain error without surrounding quotes', () => {
         const result = stringifyMaybeAxiosError(new Error('something went wrong'));
 
