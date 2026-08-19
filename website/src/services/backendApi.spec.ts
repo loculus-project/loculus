@@ -49,6 +49,26 @@ describe('problemDetail', () => {
 });
 
 describe('backendApi error declarations', () => {
+    // zodios matches an error response against the endpoint's declared `errors` by status code.
+    // An endpoint with no `status: 'default'` entry silently fails to match anything it did not
+    // enumerate, so `isErrorFromAlias` returns false and the caller loses the backend's message —
+    // regardless of the schema. `submitReviewedSequence` declared 401 only and hit exactly that.
+    test('every endpoint declares a catch-all error response', () => {
+        // Deliberately typed loosely: zodios' types claim `alias` and `errors` are always present,
+        // but this test exists to catch an endpoint added without them.
+        const endpoints = backendApi as readonly {
+            alias?: string;
+            path: string;
+            errors?: readonly { status: number | 'default' }[];
+        }[];
+
+        const missing = endpoints
+            .filter((endpoint) => !(endpoint.errors ?? []).some((error) => error.status === 'default'))
+            .map((endpoint) => endpoint.alias ?? endpoint.path);
+
+        expect(missing).toEqual([]);
+    });
+
     test('recognises a backend error from revise', () => {
         expect(isErrorFromAlias(backendApi, 'revise', axiosErrorForUrl('/west-nile/revise'))).toBe(true);
     });
