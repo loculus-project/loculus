@@ -13,7 +13,7 @@ jobs:
       contents: read
       packages: write
     outputs:
-      index_zipped: ${{ steps.set-filenames.outputs.index_zipped }}
+      index: ${{ steps.set-filenames.outputs.index }}
       oci_tag: ${{ steps.set-filenames.outputs.oci_tag }}
 
     steps:
@@ -24,14 +24,12 @@ jobs:
         id: set-filenames
         run: |
           DATE_TAG="$(date +'%Y-%m-%d-%H-%M')"
-          VERSIONED_NAME="deacon_index_${DATE_TAG}.idx"
-          ZIPPED_NAME="${VERSIONED_NAME}.gz"
+          INDEX_VERSIONED="deacon_index_${DATE_TAG}.idx"
 
-          echo "INDEX_VERSIONED=${VERSIONED_NAME}" >> $GITHUB_ENV
-          echo "INDEX_ZIPPED=${ZIPPED_NAME}" >> $GITHUB_ENV
-          echo "INDEX_LATEST=deacon_index_latest.idx.gz" >> $GITHUB_ENV
+          echo "INDEX_VERSIONED=${INDEX_VERSIONED}" >> $GITHUB_ENV
+          echo "INDEX_LATEST=deacon_index_latest.idx" >> $GITHUB_ENV
           echo "DATE_TAG=${DATE_TAG}" >> $GITHUB_ENV
-          echo "index_zipped=${ZIPPED_NAME}" >> $GITHUB_OUTPUT
+          echo "index=${INDEX_VERSIONED}" >> $GITHUB_OUTPUT
           echo "oci_tag=${DATE_TAG}" >> $GITHUB_OUTPUT
 
       - uses: mamba-org/setup-micromamba@v3
@@ -90,13 +88,12 @@ jobs:
           verbosity = WARNING
           EOF
 
-      - name: Compress and upload deacon index
+      - name: Upload deacon index
         shell: bash -l {0}
         run: |
-          gzip -9 "${INDEX_VERSIONED}"
-          s3cmd put "${INDEX_ZIPPED}" s3://loculus-public/deacon-index/"${INDEX_ZIPPED}"
+          s3cmd put "${INDEX_VERSIONED}" s3://loculus-public/deacon-index/"${INDEX_VERSIONED}"
 
-          s3cmd cp s3://loculus-public/deacon-index/"${INDEX_ZIPPED}" \
+          s3cmd cp s3://loculus-public/deacon-index/"${INDEX_VERSIONED}" \
             s3://loculus-public/deacon-index/"${INDEX_LATEST}"
 
   notify_on_success:
@@ -109,7 +106,7 @@ jobs:
           SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
         run: |
           curl -X POST -H 'Content-type: application/json' --data '{
-            "text": "✅ Successfully built and uploaded Deacon index ${{ needs.build-and-upload.outputs.index_zipped }} (also published as ghcr.io/loculus-project/deacon-index:${{ needs.build-and-upload.outputs.oci_tag }} / :latest): ${{ github.repository }}\n🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
+            "text": "✅ Successfully built and uploaded Deacon index ${{ needs.build-and-upload.outputs.index }} (also published as ghcr.io/loculus-project/deacon-index:${{ needs.build-and-upload.outputs.oci_tag }} / :latest): ${{ github.repository }}\n🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
           }' $SLACK_HOOK
 
   notify_on_failure:
