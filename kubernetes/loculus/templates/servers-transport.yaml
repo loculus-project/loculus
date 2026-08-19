@@ -6,10 +6,13 @@ from Go's http.DefaultTransport). Our backends close idle keep-alive connections
 connection at the instant the backend closes it, Go reports io.EOF and traefik answers 502 --
 and Go only replays bodyless GET/HEAD/OPTIONS/TRACE, so POSTs (every LAPIS query) are not
 retried. Retiring pooled connections before any backend can close them removes the race.
+
+Naming a ServersTransport *replaces* traefik's static-config serversTransport for these routers
+rather than merging with it. Everything we proxy is plain HTTP and nothing in this repo sets a
+static serversTransport, so only maxIdleConnsPerHost matters today -- but rootCAs,
+insecureSkipVerify, disableHTTP2 or responseHeaderTimeout set there in future would silently
+stop applying to every ingress carrying this annotation.
 */}}
-{{- define "loculus.serversTransportRef" -}}
-{{ .Release.Namespace }}-short-idle-conn-timeout@kubernetescrd
-{{- end }}
 apiVersion: {{ $traefikApiVersion }}
 kind: ServersTransport
 metadata:
