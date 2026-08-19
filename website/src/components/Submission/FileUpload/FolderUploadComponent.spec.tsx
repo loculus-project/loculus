@@ -330,7 +330,7 @@ describe('FolderUploadComponent', () => {
             ]);
         });
 
-        it('reverts to the upload folder prompt and removes the category from the file mapping after discarding the last upload', async () => {
+        it('reverts to the upload folder prompt and clears the file mapping after discarding the last upload', async () => {
             const singleFileProps = {
                 ...defaultPropsWithFiles,
                 fileMapping: fileMappingOf([{ fileId: 'file-1', path: 'file-a.txt' }]),
@@ -340,7 +340,7 @@ describe('FolderUploadComponent', () => {
             await userEvent.click(screen.getByTestId('discard_extraFiles_file-a.txt'));
             await waitFor(() => expect(screen.getByText('Upload folder')).toBeInTheDocument());
             expect(screen.queryByText('file-a.txt')).not.toBeInTheDocument();
-            expect(latestReportedMapping(singleFileProps.fileMapping)!.has('extraFiles')).toBe(false);
+            expect(latestReportedMapping(singleFileProps.fileMapping)).toBeUndefined();
         });
 
         it('disables the individual discard buttons while an upload is in progress', async () => {
@@ -452,7 +452,21 @@ describe('FolderUploadComponent', () => {
 
             await userEvent.click(screen.getByRole('button', { name: /^Discard$/ }));
             await waitFor(() => expect(screen.getByText('Upload folder')).toBeInTheDocument());
-            expect(latestReportedMapping(defaultPropsWithFiles.fileMapping)!.has('extraFiles')).toBe(false);
+            expect(latestReportedMapping(defaultPropsWithFiles.fileMapping)).toBeUndefined();
+        });
+
+        it('removes only its own category when the file mapping holds several', async () => {
+            const otherCategoryFiles = new Map([['other-file.txt', 'file-3']]);
+            const fileMapping = new Map([...defaultPropsWithFiles.fileMapping, ['otherFiles', otherCategoryFiles]]);
+            render(<FolderUploadComponent {...defaultPropsWithFiles} fileMapping={fileMapping} />);
+
+            await userEvent.click(screen.getByTestId('discard_extraFiles'));
+            await userEvent.click(screen.getByRole('button', { name: /^Discard$/ }));
+            await waitFor(() => expect(screen.getByText('Upload folder')).toBeInTheDocument());
+
+            const mapping = latestReportedMapping(fileMapping);
+            expect(mapping!.has('extraFiles')).toBe(false);
+            expect(mapping!.get('otherFiles')).toBe(otherCategoryFiles);
         });
 
         it('keeps the files when discarding all files is cancelled', async () => {
