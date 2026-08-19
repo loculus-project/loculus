@@ -107,40 +107,40 @@ def deacon_message() -> str:
     return intro + prompt
 
 
+def log_deacon_summary(deacon_summary: DeaconSummary, config: Config) -> None:
+    reads_ok = deacon_summary.seqs_out_proportion <= cast(
+        float, config.deacon_max_host_reads_proportion
+    )
+    bp_ok = deacon_summary.bp_out <= cast(int, config.deacon_max_host_bp)
+    status = "passed" if reads_ok and bp_ok else "failed"
+
+    logger.info(
+        f"Deacon filter {status} in {deacon_summary.time:.2f}s: "
+        f"reads {deacon_summary.seqs_out}/{deacon_summary.seqs_in} "
+        f"({deacon_summary.seqs_out_proportion:.2%}, "
+        f"threshold {config.deacon_max_host_reads_proportion:.2%}) "
+        f"[{'OK' if reads_ok else 'EXCEEDED'}], "
+        f"bp {deacon_summary.bp_out}/{deacon_summary.bp_in} "
+        f"({deacon_summary.bp_out_proportion:.2%}, "
+        f"threshold {config.deacon_max_host_bp} bp) "
+        f"[{'OK' if bp_ok else 'EXCEEDED'}] mapped to the human genome."
+    )
+
+
 def validate_with_deacon(files: dict[FileName, Path], data_dir: str, config: Config):
     deacon_summary = run_deacon_filter(
         files,
         data_dir=data_dir,
         config=config,
     )
+    log_deacon_summary(deacon_summary, config)
+
     if deacon_summary.seqs_out_proportion > cast(
         float, config.deacon_max_host_reads_proportion
-    ):
-        logger.info(
-            f"Deacon filter failed: {deacon_summary.seqs_out_proportion:.2%} of reads "
-            f"map to the human genome, which exceeds the threshold of "
-            f"{config.deacon_max_host_reads_proportion:.2%}."
-        )
+    ) or deacon_summary.bp_out > cast(int, config.deacon_max_host_bp):
         raise InvalidSubmission(
             Annotation(
                 fileNames=list(files.keys()),
                 message=deacon_message(),
             )
         )
-
-    if deacon_summary.bp_out > cast(int, config.deacon_max_host_bp):
-        logger.info(
-            f"Deacon filter failed: {deacon_summary.bp_out} base pairs map to the human genome, "
-            f"which exceeds the threshold of {config.deacon_max_host_bp}."
-        )
-        raise InvalidSubmission(
-            Annotation(
-                fileNames=list(files.keys()),
-                message=deacon_message(),
-            )
-        )
-    logger.info(
-        f"Deacon filter passed: {deacon_summary.seqs_out_proportion:.2%} of reads and "
-        f"{deacon_summary.bp_out} base pairs map to the human genome, which is below the thresholds "
-        f"of {config.deacon_max_host_reads_proportion:.2%} and {config.deacon_max_host_bp} base pairs, respectively."
-    )
