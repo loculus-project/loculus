@@ -9,7 +9,7 @@ import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
-import { type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
+import { type FilesByCategory, type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
 import { type InputField, type SubmissionDataTypes } from '../../types/config.ts';
 import { getLatestAccessionVersionForRevision, type SequenceEntryHistory } from '../../types/lapis.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -142,7 +142,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                 sequenceFile,
             });
         } else {
-            let fileMappingForEdit = null;
+            let fileMappingForEdit: FilesByCategory | null = null;
             if (extraFilesEnabled && fileMapping !== undefined)
                 fileMappingForEdit = Object.fromEntries(
                     [...fileMapping].map(([category, files]) => [
