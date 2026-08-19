@@ -71,16 +71,24 @@ def run_deacon_filter(
         f"Running Deacon filter on '{', '.join(str(f) for f in file_name_to_path.keys())}': {args}"
     )
 
-    exit_code = subprocess.run(  # noqa: S603
-        args,
-        check=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        timeout=config.deacon_filter_timeout_seconds,
-    ).returncode
-    if exit_code != 0:
-        message = f"Deacon filter failed with exit code {exit_code}"
+    try:
+        subprocess.run(  # noqa: S603
+            args,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=config.deacon_filter_timeout_seconds,
+        )
+    except subprocess.TimeoutExpired:
+        message = (
+            f"Validation of files '{','.join(str(f) for f in file_name_to_path.values())}' "
+            f"timed out after {config.deacon_filter_timeout_seconds} seconds."
+        )
         logger.error(message)
+        raise ProcessingFailure(message) from None
+    except subprocess.CalledProcessError as error:
+        message = f"Deacon filter failed with exit code {error.returncode}."
+        logger.error(message + f"stdout: {error.stdout}, stderr: {error.stderr}")
         raise ProcessingFailure(message)
     return DeaconSummary.from_json(summary_json_path)
 
