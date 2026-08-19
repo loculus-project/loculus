@@ -115,6 +115,11 @@ def validate_with_deacon(files: dict[FileName, Path], data_dir: str, config: Con
     if deacon_summary.seqs_out_proportion > cast(
         float, config.deacon_max_host_reads_proportion
     ):
+        logger.info(
+            f"Deacon filter failed: {deacon_summary.seqs_out_proportion:.2%} of reads "
+            f"map to the human genome, which exceeds the threshold of "
+            f"{config.deacon_max_host_reads_proportion:.2%}."
+        )
         raise InvalidSubmission(
             Annotation(
                 fileNames=list(files.keys()),
@@ -123,9 +128,18 @@ def validate_with_deacon(files: dict[FileName, Path], data_dir: str, config: Con
         )
 
     if deacon_summary.bp_out > cast(int, config.deacon_max_host_bp):
+        logger.info(
+            f"Deacon filter failed: {deacon_summary.bp_out} base pairs map to the human genome, "
+            f"which exceeds the threshold of {config.deacon_max_host_bp}."
+        )
         raise InvalidSubmission(
             Annotation(
                 fileNames=list(files.keys()),
                 message=deacon_message(),
             )
         )
+    logger.info(
+        f"Deacon filter passed: {deacon_summary.seqs_out_proportion:.2%} of reads and "
+        f"{deacon_summary.bp_out} base pairs map to the human genome, which is below the thresholds "
+        f"of {config.deacon_max_host_reads_proportion:.2%} and {config.deacon_max_host_bp} base pairs, respectively."
+    )
