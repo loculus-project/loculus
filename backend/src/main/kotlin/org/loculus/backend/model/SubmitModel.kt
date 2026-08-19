@@ -360,9 +360,8 @@ class SubmitModel(
             }
         } catch (e: ExposedSQLException) {
             if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
-                throw DuplicateKeyException(
-                    "Metadata file contains at least one duplicate submissionId: ${e.cause?.cause}",
-                )
+                log.warn(e) { "Duplicate submissionId in metadata file for uploadId $uploadId" }
+                throw DuplicateKeyException("Metadata file contains at least one duplicate submissionId")
             }
             throw e
         }
@@ -381,9 +380,8 @@ class SubmitModel(
                 )
             } catch (e: ExposedSQLException) {
                 if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
-                    throw DuplicateKeyException(
-                        "Sequence file contains at least one duplicate submissionId: ${e.cause?.cause}",
-                    )
+                    log.warn(e) { "Duplicate submissionId in sequence file for uploadId $uploadId" }
+                    throw DuplicateKeyException("Sequence file contains at least one duplicate submissionId")
                 }
                 throw e
             }
