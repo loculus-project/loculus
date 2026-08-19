@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - main
+      - deacon-service
     paths:
       - "raw-reads-processing/test/fixtures/deacon.idx"
       - ".github/workflows/deacon-index-test-image.yml"
