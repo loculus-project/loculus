@@ -377,8 +377,10 @@ def has_assembly_data_changed(
     config: Config, db_engine: Engine, submission_row: SubmissionTableEntry
 ) -> bool:
     """
-    Check if there have been changes in the: sequence, flatfile or manifest
-    (if config.allow_revision_with_manifest_changes is true) metadata since last version.
+    Check if there have been changes since last version in: 
+    - sequence
+    - flatfile
+    - manifest metadata (iff config.allow_revision_with_manifest_changes==True)
     """
     last_entry = get_last_entry(db_engine, submission_row.pkey)
 
