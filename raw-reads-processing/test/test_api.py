@@ -1,4 +1,6 @@
 # ruff: noqa: S101
+from unittest.mock import Mock
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -29,7 +31,8 @@ def client():
             deacon_filter_timeout_seconds=10,
             deacon_max_host_reads_proportion=0.05,
             deacon_max_host_bp=1000,
-        )
+        ),
+        deacon_process=Mock(poll=Mock(return_value=None)),
     )
     return TestClient(api.app)
 
@@ -74,3 +77,17 @@ def test_processing_failure_is_returned_as_internal_server_error(client, monkeyp
 
     assert response.status_code == 500
     assert response.json() == {"detail": "readtools jar not found"}
+
+
+def test_health_is_ok_while_deacon_process_is_alive(client):
+    response = client.get("/health")
+
+    assert response.status_code == 200
+
+
+def test_health_is_unavailable_once_deacon_process_has_exited(client):
+    api.app.state.deacon_process.poll.return_value = 1  # exit code of the dead process
+
+    response = client.get("/health")
+
+    assert response.status_code == 503

@@ -79,6 +79,7 @@ def run_deacon_filter(
             text=True,
             timeout=config.deacon_filter_timeout_seconds,
         )
+        return DeaconSummary.from_json(summary_json_path)
     except subprocess.TimeoutExpired:
         message = (
             f"Validation of files '{','.join(str(f) for f in file_name_to_path.values())}' "
@@ -88,10 +89,9 @@ def run_deacon_filter(
         raise ProcessingFailure(message) from None
     except subprocess.CalledProcessError as error:
         # TODO: send a slack notification to alert the team that deacon is failing
-        message = f"Deacon filter failed with exit code {error.returncode}. stdout: {error.stdout}, stderr: {error.stderr}"
-        logger.error(message)
-        raise RuntimeError(message) from error
-    return DeaconSummary.from_json(summary_json_path)
+        message = f"Deacon filter failed with exit code {error.returncode}."
+        logger.error(message + f" stdout: {error.stdout} stderr: {error.stderr}")
+        raise ProcessingFailure(message) from error
 
 
 # TODO: Add a link to the documentation for removing host reads

@@ -25,10 +25,10 @@ def run(config_file: str):
 
     logger.info("Preparing deacon index and starting deacon server...")
     prepare_deacon_index()
-    start_deacon_server()
+    deacon_process = start_deacon_server()
 
     logger.info("Starting API...")
-    start_api(config)
+    start_api(config, deacon_process)
 
 
 if __name__ == "__main__":

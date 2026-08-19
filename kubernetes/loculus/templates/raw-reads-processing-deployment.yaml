@@ -39,13 +39,13 @@ spec:
             failureThreshold: 60
           livenessProbe:
             httpGet:
-              path: /
+              path: /health
               port: 5000
             periodSeconds: 10
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /
+              path: /health
               port: 5000
             periodSeconds: 10
             failureThreshold: 3
