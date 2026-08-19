@@ -15,7 +15,7 @@ DEACON_INDEX_PATH = "/data/deacon.idx"
 def prepare_deacon_index() -> None:
     if not Path(DEACON_INDEX_PATH).is_file():
         raise RuntimeError(
-            f"Deacon index not found at '{DEACON_INDEX_PATH}'. Please ensure the deacon index is mounted as an OCI image volume."
+            f"Deacon index not found at '{DEACON_INDEX_PATH}'. Please ensure the deacon index is mounted at the correct path."
         )
 
 
