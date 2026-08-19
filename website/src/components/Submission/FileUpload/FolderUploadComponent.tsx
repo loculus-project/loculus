@@ -266,7 +266,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 if (currentMapping === undefined) return undefined;
                 const newMapping = new Map(currentMapping);
                 newMapping.delete(fileCategory.name);
-                return newMapping;
+                return newMapping.size === 0 ? undefined : newMapping;
             });
             return;
         }
