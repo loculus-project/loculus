@@ -1,6 +1,5 @@
 # ruff: noqa: S101
 
-import random
 import shutil
 import time
 from pathlib import Path
@@ -34,15 +33,8 @@ def _parse_fastq_records(path: Path) -> list[tuple[str, str]]:
     return [(lines[i + 1], lines[i + 3]) for i in range(0, len(lines), 4)]
 
 
-RANDOM_READ_SEED = 0
-
-
-def _random_read(rng: random.Random, length: int = 150) -> tuple[str, str]:
-    # Random ACGT sequences have a negligible chance of containing a 31-mer
-    # (deacon.idx's k) present in test_small_1.fastq, so they reliably act as
-    # "non-host" reads. Callers must pass an rng seeded with RANDOM_READ_SEED
-    # so this stays true and reproducible across runs.
-    return "".join(rng.choices("ACGT", k=length)), "I" * length
+def _random_read(length: int = 150) -> tuple[str, str]:
+    return "A" * length, "I" * length
 
 
 def _write_fastq(path: Path, records: list[tuple[str, str]]) -> None:
@@ -101,8 +93,7 @@ def test_host_reads_above_threshold_is_an_error(tmp_path):
     # 3/4 reads (75%) are reused verbatim from test_small_1.fastq, so they hit
     # deacon.idx; config's deacon_max_host_reads_proportion is 0.05, so 75% > 5%.
     host_reads = _parse_fastq_records(FIXTURES_DIR / "test_small_1.fastq")[:3]
-    rng = random.Random(RANDOM_READ_SEED)
-    non_host_read = _random_read(rng)
+    non_host_read = _random_read()
     reads = tmp_path / "reads.fastq"
     _write_fastq(reads, [*host_reads, non_host_read])
     files = RequestWithFiles(
@@ -120,8 +111,7 @@ def test_host_reads_at_or_below_threshold_passes(tmp_path):
     # deacon.idx; config's deacon_max_host_reads_proportion is 0.05, so this
     # lands exactly at the threshold: not > 0.05, so no error should be raised.
     host_reads = _parse_fastq_records(FIXTURES_DIR / "test_small_1.fastq")[:1]
-    rng = random.Random(RANDOM_READ_SEED)
-    non_host_reads = [_random_read(rng) for _ in range(19)]
+    non_host_reads = [_random_read() for _ in range(19)]
     reads = tmp_path / "reads.fastq"
     _write_fastq(reads, [*host_reads, *non_host_reads])
     files = RequestWithFiles(
