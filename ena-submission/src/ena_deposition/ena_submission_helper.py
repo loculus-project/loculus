@@ -196,7 +196,7 @@ def authors_to_ascii(authors: str) -> str:
     return "; ".join(formatted_author_list)
 
 
-def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
+def reformat_authors_from_loculus_to_embl_style(authors: str) -> str | None:
     """This function reformats the Loculus authors string to the format expected by ENA
     Loculus format: `Doe, John A.; Roe, Jane Britt C.`
     EMBL expected: `Doe J.A., Roe J.B.C.;`
@@ -214,7 +214,10 @@ def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
         last_names, first_names = author.split(",")[0].strip(), author.split(",")[1].strip()
         initials = "".join([name[0] + "." for name in first_names.split() if name])
         ena_authors.append(f"{last_names} {initials}".strip())
-    return authors_to_ascii(", ".join(ena_authors)) + ";"
+    ascii_authors = authors_to_ascii(", ".join(ena_authors))
+    if not ascii_authors:
+        return None
+    return ascii_authors + ";"
 
 
 def create_ena_project(config: Config, project_set: ProjectSet) -> CreationResult:
@@ -414,15 +417,15 @@ def get_description(config: Config, metadata: dict[str, str]) -> str:
     )
 
 
-def get_authors(authors: str) -> str:
+def get_authors(authors: str) -> str | None:
     try:
-        authors = reformat_authors_from_loculus_to_embl_style(authors)
+        formatted_authors = reformat_authors_from_loculus_to_embl_style(authors)
         logger.debug("Reformatted authors")
     except Exception as err:
         msg = f"Was unable to format authors: {authors} as ENA expects"
         logger.error(msg)
         raise ValueError(msg) from err
-    return authors
+    return formatted_authors
 
 
 def get_country(metadata: dict[str, str]) -> str:
