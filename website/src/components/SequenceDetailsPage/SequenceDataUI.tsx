@@ -4,25 +4,34 @@ import DataTable from './DataTable';
 import { SequenceManagement } from './SequenceManagement.tsx';
 import { SequencesContainer } from './SequencesDisplay/SequencesContainer.tsx';
 import { getDataTableData } from './getDataTableData';
-import { type TableDataEntry } from './types';
+import { type SequenceData } from './types';
 import { getGitHubReportUrl } from '../../config.ts';
-import { DATA_USE_TERMS_FIELD } from '../../settings.ts';
-import { type DataUseTermsHistoryEntry, type Group } from '../../types/backend';
+import {
+    ACCESSION_VERSION_FIELD,
+    SUBMITTED_AT_FIELD,
+    RELEASED_AT_FIELD,
+    IS_REVOCATION_FIELD,
+    ACCESSION_FIELD,
+    VERSION_COMMENT_FIELD,
+    VERSION_STATUS_FIELD,
+    SUBMITTER_FIELD,
+    GROUP_NAME_FIELD,
+    VERSION_FIELD,
+    GROUP_ID_FIELD,
+    DATA_USE_TERMS_FIELD,
+} from '../../settings';
+import { type Group } from '../../types/backend';
 import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
-import { type SequenceEntryHistory } from '../../types/lapis';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
 import { type SequenceCitation } from '../../types/seqSetCitation.ts';
-import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
 import { Button } from '../common/Button';
 import RestrictedUseWarning from '../common/RestrictedUseWarning';
 
 interface Props {
-    tableData: TableDataEntry[];
+    sequenceData: SequenceData;
     organism: string;
-    segmentReferences?: SegmentReferenceSelections;
     accessionVersion: string;
-    dataUseTermsHistory: DataUseTermsHistoryEntry[];
     schema: Schema;
     clientConfig: ClientConfig;
     myGroups: Group[];
@@ -30,17 +39,28 @@ interface Props {
     sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
     referenceGenomesInfo: ReferenceGenomesInfo;
     sequenceCitations?: SequenceCitation[];
-    sequenceEntryHistory: SequenceEntryHistory;
-    isRevocation?: boolean;
     onRevokeSuccess?: () => void;
 }
 
+const revocationVersionFields = [
+    ACCESSION_VERSION_FIELD,
+    ACCESSION_FIELD,
+    IS_REVOCATION_FIELD,
+    RELEASED_AT_FIELD,
+    VERSION_COMMENT_FIELD,
+    VERSION_STATUS_FIELD,
+    SUBMITTED_AT_FIELD,
+    SUBMITTER_FIELD,
+    VERSION_FIELD,
+    GROUP_NAME_FIELD,
+    GROUP_ID_FIELD,
+    DATA_USE_TERMS_FIELD,
+];
+
 export const SequenceDataUI: FC<Props> = ({
-    tableData,
+    sequenceData,
     organism,
-    segmentReferences,
     accessionVersion,
-    dataUseTermsHistory,
     schema,
     clientConfig,
     myGroups,
@@ -48,10 +68,10 @@ export const SequenceDataUI: FC<Props> = ({
     sequenceFlaggingConfig,
     referenceGenomesInfo,
     sequenceCitations,
-    sequenceEntryHistory,
-    isRevocation,
     onRevokeSuccess,
 }: Props) => {
+    const { tableData, dataUseTermsHistory, segmentReferences, sequenceEntryHistory, isRevocation } = sequenceData;
+
     dataUseTermsHistory.sort((a, b) => (a.changeDate > b.changeDate ? -1 : 1));
 
     const dataUseTerms = tableData.find((entry) => entry.name === DATA_USE_TERMS_FIELD);
@@ -59,19 +79,23 @@ export const SequenceDataUI: FC<Props> = ({
 
     const loadSequencesAutomatically = schema.loadSequencesAutomatically === true;
 
-    const dataTableData = getDataTableData(tableData);
+    const relevantData = isRevocation
+        ? tableData.filter((entry) => revocationVersionFields.includes(entry.name))
+        : tableData;
+
+    const dataTableData = getDataTableData(relevantData);
 
     const reportUrl = getGitHubReportUrl(sequenceFlaggingConfig, organism, accessionVersion);
 
     return (
         <>
-            {isRestricted && <RestrictedUseWarning />}
+            {isRestricted && !isRevocation && <RestrictedUseWarning />}
             <DataTable
                 dataTableData={dataTableData}
                 segmentReferences={segmentReferences}
                 dataUseTermsHistory={dataUseTermsHistory}
                 referenceGenomesInfo={referenceGenomesInfo}
-                sequenceCitations={sequenceCitations}
+                sequenceCitations={isRevocation ? undefined : sequenceCitations}
             />
             {schema.submissionDataTypes.consensusSequences && !isRevocation && (
                 <div className='mt-10'>

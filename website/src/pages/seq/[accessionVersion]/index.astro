@@ -1,9 +1,7 @@
 ---
 import { findOrganismAndData } from './findOrganismAndData';
 import { SequenceDetailsTableResultType } from './getSequenceDetailsTableData';
-import RevocationEntryDataTable from '../../../components/SequenceDetailsPage/RevocationEntryDataTable.astro';
 import { SequenceDataUI } from '../../../components/SequenceDetailsPage/SequenceDataUI.tsx';
-import { SequenceManagement } from '../../../components/SequenceDetailsPage/SequenceManagement.tsx';
 import SequencesBanner from '../../../components/SequenceDetailsPage/SequencesBanner.tsx';
 import SequencesDataTableTitle from '../../../components/SequenceDetailsPage/SequencesDataTableTitle.astro';
 import ErrorBox from '../../../components/common/ErrorBox.tsx';
@@ -91,44 +89,20 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
                             }
                         />
                         {result.type === SequenceDetailsTableResultType.TABLE_DATA &&
-                            (result.isRevocation ? (
-                                <>
-                                    <RevocationEntryDataTable
-                                        tableData={result.tableData}
-                                        dataUseTermsHistory={result.dataUseTermsHistory}
-                                        referenceGenomesInfo={getReferenceGenomes(organism)}
-                                        segmentReferences={result.segmentReferences}
-                                    />
-                                    <SequenceManagement
-                                        tableData={result.tableData}
-                                        organism={organism}
-                                        accessionVersion={accessionVersion}
-                                        dataUseTermsHistory={result.dataUseTermsHistory}
-                                        sequenceEntryHistory={result.sequenceEntryHistory}
-                                        clientConfig={clientConfig}
-                                        myGroups={myGroups}
-                                        accessToken={accessToken}
-                                        isRevocation
-                                    />
-                                </>
-                            ) : (
-                                <SequenceDataUI
-                                    tableData={result.tableData}
-                                    organism={organism}
-                                    segmentReferences={result.segmentReferences}
-                                    referenceGenomesInfo={getReferenceGenomes(organism)}
-                                    accessionVersion={accessionVersion}
-                                    dataUseTermsHistory={result.dataUseTermsHistory}
-                                    sequenceEntryHistory={result.sequenceEntryHistory}
-                                    schema={getSchema(organism)}
-                                    clientConfig={clientConfig}
-                                    myGroups={myGroups}
-                                    accessToken={accessToken}
-                                    sequenceFlaggingConfig={showDownloadAndReport ? sequenceFlaggingConfig : undefined}
-                                    sequenceCitations={sequenceCitations}
-                                    client:load
-                                />
-                            ))}
+                            <SequenceDataUI
+                                sequenceData={result}
+                                organism={organism}
+                                referenceGenomesInfo={getReferenceGenomes(organism)}
+                                accessionVersion={accessionVersion}
+                                schema={getSchema(organism)}
+                                clientConfig={clientConfig}
+                                myGroups={myGroups}
+                                accessToken={accessToken}
+                                sequenceFlaggingConfig={showDownloadAndReport ? sequenceFlaggingConfig : undefined}
+                                sequenceCitations={sequenceCitations}
+                                client:load
+                            />
+                            }
                     </>
                 );
             },
