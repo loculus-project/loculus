@@ -79,6 +79,13 @@ We compare the results against two configured thresholds:
 
 Exceeding either threshold is a hard error (`DEACON_ERROR_PROMPT`).
 
+The index is expected at `/data/deacon.idx` by default; set `DEACON_INDEX_PATH` to point at a
+different location, e.g. for local development:
+
+```sh
+DEACON_INDEX_PATH=./deacon.idx
+```
+
 ## Deacon index
 
 We use a custom deacon index from https://objectstorage.uk-london-1.oraclecloud.com/n/lrbvkel2wjot/b/human-genome-bucket/o/deacon/misc/panhuman-1.k31w15c8.idx.

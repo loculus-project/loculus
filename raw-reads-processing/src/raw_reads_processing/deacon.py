@@ -1,4 +1,5 @@
 import logging
+import os
 import subprocess  # noqa: S404
 from pathlib import Path
 from typing import cast
@@ -9,7 +10,7 @@ from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
 
 logger = logging.getLogger(__name__)
 
-DEACON_INDEX_PATH = "/data/deacon.idx"
+DEACON_INDEX_PATH = os.environ.get("DEACON_INDEX_PATH", "/data/deacon.idx")
 
 
 def prepare_deacon_index() -> None:
