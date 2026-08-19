@@ -4,7 +4,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { test } from '../../fixtures/tmpdir.fixture';
-import { join } from 'path';
 import { EditPage } from '../../pages/edit.page';
 import { ReviewPage } from '../../pages/review.page';
 import { RevisionPage } from '../../pages/revision.page';
@@ -104,8 +103,10 @@ test('reject FASTQ raw_reads file with human host reads with a deacon validation
 }) => {
     test.setTimeout(200_000);
     void groupId;
-    const testFilesDir = join(__dirname, '../../test-data');
-    const contaminatedReads = join(testFilesDir, 'contaminated_reads.fastq');
+    const contaminatedReads = readFileSync(
+        join(__dirname, '../../test-data/contaminated.fastq'),
+        'utf-8',
+    );
     const submissionPage = new SingleSequenceSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
     await submissionPage.fillSubmissionForm({
