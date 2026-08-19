@@ -91,10 +91,6 @@ export const SequenceManagement: FC<Props> = ({
                             >
                                 Revise this sequence
                             </Button>
-                            {/* Revoking always targets the latest version of an accession, not the
-                                version being displayed, so hide the button whenever the latest
-                                version is already a revocation. */}
-                            {!isLatestVersionRevocation(sequenceEntryHistory) && (
                                 <RevokeButton
                                     organism={organism}
                                     clientConfig={clientConfig}
