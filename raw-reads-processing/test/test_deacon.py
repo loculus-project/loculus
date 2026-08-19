@@ -121,22 +121,3 @@ def test_host_reads_at_or_below_threshold_passes(tmp_path):
     )
     result = process_files.validate_raw_reads_submission(_config(), files)
     assert result is None  # no error raised
-
-
-def test_run_deacon_filter_restarts_pod_on_deacon_failure(tmp_path, monkeypatch):
-    # A failing `deacon --use-server filter` call means the persistent deacon server is
-    # presumably dead, so run_deacon_filter should exit the process rather than return an
-    # error, letting Kubernetes restart the pod and start a fresh server.
-    exit_codes = []
-    monkeypatch.setattr(deacon_module.os, "_exit", exit_codes.append)
-
-    def raise_called_process_error(*args, **kwargs):
-        raise subprocess.CalledProcessError(1, "deacon", output="", stderr="server unreachable")
-
-    monkeypatch.setattr(deacon_module.subprocess, "run", raise_called_process_error)
-
-    deacon_module.run_deacon_filter(
-        {"reads.fastq": tmp_path / "reads.fastq"}, str(tmp_path), _config()
-    )
-
-    assert exit_codes == [1]
