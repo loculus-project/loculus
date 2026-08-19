@@ -172,7 +172,7 @@ def main():
         )
 
 
-# Enable access log and raise log level to DEBUG to get more insights into failures in CI
+# Enable traefik access log and raise log level to DEBUG to get more insights into failures in CI
 TRAEFIK_LOGGING_CONFIG = """
 apiVersion: helm.cattle.io/v1
 kind: HelmChartConfig
