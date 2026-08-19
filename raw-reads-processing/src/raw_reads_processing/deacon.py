@@ -101,10 +101,8 @@ DEACON_ERROR_PROMPT = (
 )
 
 
-def deacon_message(
-    type: Literal["base pairs", "reads"],
-) -> str:
-    intro = f"Our QC pipeline identified {type} that map to the human genome. "
+def deacon_message() -> str:
+    intro = "Our QC pipeline identified reads that map to the human genome. "
     prompt = DEACON_ERROR_PROMPT
     return intro + prompt
 
@@ -118,23 +116,17 @@ def validate_with_deacon(files: dict[FileName, Path], data_dir: str, config: Con
     if deacon_summary.seqs_out_proportion > cast(
         float, config.deacon_max_host_reads_proportion
     ):
-        message = deacon_message(
-            "reads",
-        )
         raise InvalidSubmission(
             Annotation(
                 fileNames=list(files.keys()),
-                message=message,
+                message=deacon_message(),
             )
         )
 
     if deacon_summary.bp_out > cast(int, config.deacon_max_host_bp):
-        message = deacon_message(
-            "base pairs",
-        )
         raise InvalidSubmission(
             Annotation(
                 fileNames=list(files.keys()),
-                message=message,
+                message=deacon_message(),
             )
         )
