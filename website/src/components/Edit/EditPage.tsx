@@ -74,6 +74,8 @@ const InnerEditPage: FC<EditPageProps> = ({
         return new Map(
             Object.entries(previousFiles).map(([category, files]) => [
                 category,
+                // Subfolders are not allowed for form submissions/revisions,
+                // so here file name and path are equivalent
                 new Map(files.map((file) => [file.name, file.fileId])),
             ]),
         );
