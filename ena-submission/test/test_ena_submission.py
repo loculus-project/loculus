@@ -89,7 +89,6 @@ def mock_config():
     }
     config.ena_checklist = "ERC000033"
     config.set_alias_suffix = None
-    config.is_broker = True
     config.ena_submission_url = "https://test.url"
     config.ena_reports_service_url = "https://test.url"
     config.ena_submission_password = "test_password"  # noqa: S105
@@ -354,7 +353,7 @@ class AssemblyCreationTests(unittest.TestCase):
             study_accession,
             sample_data_in_submission_table(),
         )
-        manifest_file_name = create_manifest(manifest, is_broker=True)
+        manifest_file_name = create_manifest(manifest)
         data = {}
         with open(manifest_file_name, encoding="utf-8") as gz:
             reader = csv.reader(gz, delimiter="\t")
