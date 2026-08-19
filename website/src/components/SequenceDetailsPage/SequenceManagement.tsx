@@ -91,6 +91,7 @@ export const SequenceManagement: FC<Props> = ({
                             >
                                 Revise this sequence
                             </Button>
+                            {!isLatestVersionRevocation(sequenceEntryHistory) && (
                                 <RevokeButton
                                     organism={organism}
                                     clientConfig={clientConfig}
