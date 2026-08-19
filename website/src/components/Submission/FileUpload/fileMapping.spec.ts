@@ -38,6 +38,11 @@ const valueOf = <T>(result: Result<T, Error>): T => {
     return result.value;
 };
 
+const errorMessageOf = <T>(result: Result<T, Error>): string => {
+    if (result.isOk()) throw new Error('expected a failure, got a success');
+    return result.error.message;
+};
+
 const entriesOf = (text: string, submissionId: string, category: string) => {
     const mapping = valueOf(parseSubmissionFileMapping(text, FILE_CATEGORIES));
     return [...(mapping.get(submissionId)?.get(category)?.values() ?? [])];
@@ -369,5 +374,17 @@ describe('applyFileMappings', () => {
             merged,
         );
         expect(await linesOf(valueOf(result))).toEqual([`id\t${RAW_READS_COLUMN}`, 'e1\ta.txt:id-a b.txt:id-b']);
+    });
+
+    it('rejects a category in the file mapping which has no column in the metadata', async () => {
+        const merged = resolvedMappingOf({ e1: { [RAW_READS]: [{ name: 'a.txt', fileId: 'id-a' }] } });
+        const result = await applyFileMappings(
+            metadataFile([
+                ['id', 'country'],
+                ['e1', 'CH'],
+            ]),
+            merged,
+        );
+        expect(errorMessageOf(result)).toContain(`Encountered unknown category ${RAW_READS} not present in metadata`);
     });
 });
