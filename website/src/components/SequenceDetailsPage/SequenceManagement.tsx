@@ -5,7 +5,7 @@ import { type TableDataEntry } from './types';
 import { routes } from '../../routes/routes';
 import { DATA_USE_TERMS_FIELD } from '../../settings.ts';
 import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
-import { getLatestAccessionVersion, type SequenceEntryHistory, versionStatuses } from '../../types/lapis';
+import { isLatestVersionRevocation, type SequenceEntryHistory, versionStatuses } from '../../types/lapis';
 import { type ClientConfig } from '../../types/runtimeConfig';
 import { parseAccessionVersionFromString } from '../../utils/extractAccessionVersion.ts';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
@@ -52,10 +52,6 @@ export const SequenceManagement: FC<Props> = ({
     // Display nothing for previous revocations
     if (isRevocation && !isLatestVersion) return null;
 
-    // Revoking always targets the latest version of an accession, not the version being displayed,
-    // so the revoke button must be hidden whenever the latest version is already a revocation.
-    const latestVersionIsRevocation = getLatestAccessionVersion(sequenceEntryHistory)?.isRevocation === true;
-
     dataUseTermsHistory.sort((a, b) => (a.changeDate > b.changeDate ? -1 : 1));
     const currentDataUseTerms = dataUseTermsHistory[0].dataUseTerms;
 
@@ -95,7 +91,10 @@ export const SequenceManagement: FC<Props> = ({
                             >
                                 Revise this sequence
                             </Button>
-                            {!latestVersionIsRevocation && (
+                            {/* Revoking always targets the latest version of an accession, not the
+                                version being displayed, so hide the button whenever the latest
+                                version is already a revocation. */}
+                            {!isLatestVersionRevocation(sequenceEntryHistory) && (
                                 <RevokeButton
                                     organism={organism}
                                     clientConfig={clientConfig}
