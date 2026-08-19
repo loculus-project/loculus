@@ -59,6 +59,28 @@ jobs:
                - Verify README updates for new features
                - Check API documentation accuracy
 
+            6. **Rationale and simplicity**
+               Read the PR description (`gh pr view --json title,body`) before reviewing the diff.
+
+               - Does the description explain *why* the change is being made - the problem it
+                 solves or what it enables - and not merely restate what the diff does?
+                 If it does, say nothing about it.
+                 If it does not, ask for it in the top-level review comment (not inline),
+                 in one sentence.
+               - For large changes only - one that introduces a new abstraction, module or
+                 dependency, changes a database schema or an API contract, or is a substantial
+                 rewrite - also check whether the description says which alternatives were
+                 considered and why this approach was chosen. Do not ask this of small or
+                 routine changes; for those the why alone is enough.
+               - Given the stated why, is there a materially simpler way to achieve it?
+                 Only raise this when you can name a concrete, specific alternative
+                 (e.g. "an existing helper X already does this", "this could be a config
+                 value instead of a new class", "the abstraction has a single caller").
+                 Do not raise vague "this could be simpler" concerns, and do not propose a
+                 simplification that drops behaviour the change needs.
+               - If the why is unclear, ask for it rather than guessing at the intent and
+                 then criticising the PR for not matching a goal you invented.
+
             Provide detailed feedback using inline comments for specific issues.
             Use top-level comments for general observations or praise.
 
