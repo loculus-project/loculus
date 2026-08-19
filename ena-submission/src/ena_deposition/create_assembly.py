@@ -501,7 +501,14 @@ def assembly_table_create(db_engine: Engine, config: Config):
             )
             manifest_file = create_manifest(manifest_object, is_broker=config.is_broker)
         except Exception as e:
-            logger.error(f"Manifest creation failed for accession {row.accession} with error {e}")
+            error_msg = f"Manifest creation failed for accession {row.accession} with error {e}"
+            logger.error(error_msg)
+            update_assembly_error(
+                db_engine,
+                [error_msg],
+                seq_key=asdict(row.pkey),
+                update_type="creation",
+            )
             continue
 
         update_values: dict[str, Any] = {"status": Status.SUBMITTING}
