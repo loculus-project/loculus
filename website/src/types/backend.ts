@@ -279,8 +279,11 @@ export const submitFiles = uploadFiles.merge(
     }),
 );
 
+// Mirrors Spring's ProblemDetail as the backend actually serializes it: Jackson omits
+// `type` (it stays at the default `about:blank`) and omits `instance` when it is not set,
+// so both must be optional or every backend error fails to parse.
 export const problemDetail = z.object({
-    type: z.string(),
+    type: z.string().optional(),
     title: z.string(),
     status: z.number(),
     detail: z.string(),
