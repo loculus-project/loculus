@@ -172,10 +172,7 @@ def main():
         )
 
 
-# Traefik proxies LAPIS and logs why it failed a request (e.g. a 502) at DEBUG only,
-# with its access log off, so by default CI artifacts hold no record of such failures.
-# Keys are for traefik chart 40.1.x as shipped by k3s; chart 41+ renamed them to
-# log/accessLog. Applies to the local k3d cluster only, never to server deployments.
+# Enable access log and raise log level to DEBUG to get more insights into failures in CI
 TRAEFIK_LOGGING_CONFIG = """
 apiVersion: helm.cattle.io/v1
 kind: HelmChartConfig
