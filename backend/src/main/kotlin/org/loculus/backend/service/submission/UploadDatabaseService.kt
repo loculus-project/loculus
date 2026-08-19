@@ -348,10 +348,6 @@ class UploadDatabaseService(
 
         log.info { "Generated ${nextAccessions.size} new accessions for original upload with UploadId $uploadId" }
 
-        // Assign all accessions in one statement rather than one UPDATE per sequence. The two arrays
-        // are bound as single parameters, so the statement is the same shape for any upload size and
-        // there is no parameter limit to chunk around. Exposed has no DSL for updating many rows to
-        // many different values, hence raw SQL, as in associateRevisedDataWithExistingSequenceEntries.
         val updateSql = """
             UPDATE metadata_upload_aux_table AS m
             SET
