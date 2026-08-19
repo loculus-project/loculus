@@ -118,7 +118,7 @@ def test_host_reads_above_threshold_is_an_error(tmp_path):
 def test_host_reads_at_or_below_threshold_passes(tmp_path):
     # 1/20 reads (5%) is reused verbatim from test_small_1.fastq, so it hits
     # deacon.idx; config's deacon_max_host_reads_proportion is 0.05, so this
-    # lands exactly at the threshold: not > 0.05, so it's a warning, not an error.
+    # lands exactly at the threshold: not > 0.05, so no error should be raised.
     host_reads = _parse_fastq_records(FIXTURES_DIR / "test_small_1.fastq")[:1]
     rng = random.Random(RANDOM_READ_SEED)
     non_host_reads = [_random_read(rng) for _ in range(19)]

@@ -54,7 +54,7 @@ The service downloads the files and validates their structure. The service respo
 Raw reads submissions go through `validate_raw_reads_submission`, which checks:
 
 1. **Format validation** (`raw_reads_processing.file_format_validation`) — is the submission well-formed FASTQ?
-2. **Human Host Contamination** (raw_reads_processing.deacon`) - run deacon to confirm that the submission does not contain human reads (thresholds and parameters used by deacon are defined below).
+2. **Human Host Contamination** (`raw_reads_processing.deacon`) - run deacon to confirm that the submission does not contain human reads (thresholds and parameters used by deacon are defined below).
 
 ## Raw reads format validation
 
@@ -68,7 +68,7 @@ truly duplicate read names within a single file:
 ```sh
 READTOOLS_JAR=readtools.jar java -jar readtools.jar read1.fastq [read2.fastq] --format FASTQ
 ```
-## Host decontamination (deacon)
+## Validate sequences have been dehosted (deacon)
 
 Files that pass format validation are screened for human host reads with
 [deacon](https://github.com/bede/deacon), run against a custom index that we generate (see details below).
@@ -83,4 +83,4 @@ Exceeding either threshold is a hard error (`DEACON_ERROR_PROMPT`).
 
 We use a custom deacon index from https://objectstorage.uk-london-1.oraclecloud.com/n/lrbvkel2wjot/b/human-genome-bucket/o/deacon/misc/panhuman-1.k31w15c8.idx.
 
-It uses deacon's default panhuman-1 index (which excludes k-mers occurring in refSeq virus sequences) with a complexity filter of c0.8.
+It uses deacon's default panhuman-1.k31w15c8 index (which excludes k-mers occurring in refSeq virus sequences) with a complexity filter of kdust 0.8.
