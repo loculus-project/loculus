@@ -12,8 +12,8 @@ import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { type FilesBySubmissionId, type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
 import { type InputField, type SubmissionDataTypes } from '../../types/config.ts';
 import {
-    getLatestAccessionVersion,
     getLatestAccessionVersionForRevision,
+    isLatestVersionRevocation,
     type SequenceEntryHistory,
 } from '../../types/lapis.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -144,9 +144,6 @@ const InnerEditPage: FC<EditPageProps> = ({
     const latestVersionForRevision = sequenceEntryHistory
         ? getLatestAccessionVersionForRevision(sequenceEntryHistory)?.version
         : undefined;
-    const isLatestVersionRevocation = sequenceEntryHistory
-        ? getLatestAccessionVersion(sequenceEntryHistory)?.isRevocation === true
-        : false;
     const revisePageRoute = (accession: string, version: number | undefined) => {
         return routes.revisePage(organism, dataToEdit.groupId, 'form', accession, version?.toString());
     };
@@ -169,7 +166,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                     />
                 )}
             </div>
-            {isCreatingRevision && isLatestVersionRevocation && (
+            {isCreatingRevision && isLatestVersionRevocation(sequenceEntryHistory) && (
                 <ErrorBox title='The latest entry for this sequence is revoked.' level='warning' className='mb-2'>
                     <p className='mt-2'>By revising, you will be undoing the revocation.</p>
                 </ErrorBox>

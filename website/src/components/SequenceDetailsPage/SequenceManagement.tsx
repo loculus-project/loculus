@@ -5,7 +5,7 @@ import { type TableDataEntry } from './types';
 import { routes } from '../../routes/routes';
 import { DATA_USE_TERMS_FIELD } from '../../settings.ts';
 import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
-import { type SequenceEntryHistory, versionStatuses } from '../../types/lapis';
+import { isLatestVersionRevocation, type SequenceEntryHistory, versionStatuses } from '../../types/lapis';
 import { type ClientConfig } from '../../types/runtimeConfig';
 import { parseAccessionVersionFromString } from '../../utils/extractAccessionVersion.ts';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
@@ -91,14 +91,16 @@ export const SequenceManagement: FC<Props> = ({
                             >
                                 Revise this sequence
                             </Button>
-                            <RevokeButton
-                                organism={organism}
-                                clientConfig={clientConfig}
-                                accessionVersion={accessionVersion.split('.')[0]}
-                                accessToken={accessToken}
-                                groupId={groupId}
-                                onRevokeSuccess={onRevokeSuccess}
-                            />
+                            {!isLatestVersionRevocation(sequenceEntryHistory) && (
+                                <RevokeButton
+                                    organism={organism}
+                                    clientConfig={clientConfig}
+                                    accessionVersion={accessionVersion.split('.')[0]}
+                                    accessToken={accessToken}
+                                    groupId={groupId}
+                                    onRevokeSuccess={onRevokeSuccess}
+                                />
+                            )}
                         </>
                     )}
                 </div>
