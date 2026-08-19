@@ -326,6 +326,21 @@ class MetadataEntryTest {
     }
 
     @Test
+    fun `test duplicate files columns for the same category are rejected`() {
+        val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
+        val fileId2 = "223e4567-e89b-12d3-a456-426614174001"
+        val str = """
+            submissionId${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}Country
+            foo${'\t'}reads_1.fq$FILE_NAME_ID_SEPARATOR$fileId1${'\t'}reads_2.fq$FILE_NAME_ID_SEPARATOR$fileId2${'\t'}bar
+        """.trimIndent()
+        val exception = assertThrows<UnprocessableEntityException> {
+            metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        }
+        assertThat(exception.message, containsString("duplicate file headers"))
+        assertThat(exception.message, containsString("${FILES_HEADER_PREFIX}raw_reads"))
+    }
+
+    @Test
     fun `test file name containing a separator splits on the last separator`() {
         val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
         val str = """

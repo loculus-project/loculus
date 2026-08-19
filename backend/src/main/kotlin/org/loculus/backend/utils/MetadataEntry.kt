@@ -53,6 +53,19 @@ fun findAndValidateSubmissionIdHeader(headerNames: List<String>): String {
     return submissionIdHeaders.first()
 }
 
+fun findAndValidateFileHeaders(headerNames: List<String>): List<String> {
+    val fileHeaders = headerNames.filter { it.startsWith(FILES_HEADER_PREFIX) }
+
+    val duplicateFileHeaders = fileHeaders.groupingBy { it }.eachCount().filter { it.value > 1 }.keys
+    if (duplicateFileHeaders.isNotEmpty()) {
+        throw UnprocessableEntityException(
+            "In metadata file: found duplicate file headers: " + duplicateFileHeaders.joinToString(", "),
+        )
+    }
+
+    return fileHeaders
+}
+
 fun extractAndValidateFastaIds(record: CSVRecord, submissionId: String, recordNumber: Int): Set<FastaId> {
     val headerNames = record.parser.headerNames
     return when (headerNames.contains(FASTA_IDS_HEADER)) {
@@ -91,12 +104,12 @@ fun extractAndValidateFastaIds(record: CSVRecord, submissionId: String, recordNu
  * Each cell is a space-separated list of `fileName:fileId` pairs, e.g. `reads_1.fq:<uuid> reads_2.fq:<uuid>`.
  * Returns `null` if the metadata file has no `files.*` columns at all. Categories with a blank cell are omitted.
  */
-fun extractAndValidateFiles(record: CSVRecord, submissionId: String, recordNumber: Int): FileCategoryFilesMap? {
-    val fileHeaders = record.parser.headerNames.filter { it.startsWith(FILES_HEADER_PREFIX) }
-    if (fileHeaders.isEmpty()) {
-        return null
-    }
-
+fun extractAndValidateFiles(
+    record: CSVRecord,
+    submissionId: String,
+    recordNumber: Int,
+    fileHeaders: List<String>,
+): FileCategoryFilesMap? {
     return fileHeaders.mapNotNull { header ->
         val cellValue = record[header]
         if (cellValue.isNullOrEmpty()) {
@@ -150,6 +163,7 @@ private fun extractAndValidateFileIdAndName(
     }
 
     // TODO: Update when moving away from UUIDs to more user-friendly file IDs
+    // Issue: https://github.com/loculus-project/loculus/issues/6907
     val fileId = try {
         UUID.fromString(fileIdString)
     } catch (e: IllegalArgumentException) {
@@ -219,6 +233,7 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
 
     val headerNames = csvParser.headerNames
     val submissionIdHeader = findAndValidateSubmissionIdHeader(headerNames)
+    val fileHeaders = findAndValidateFileHeaders(headerNames)
 
     return sequence {
         try {
@@ -228,7 +243,7 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
                 val submissionId = getValueAndValidateNoWhitespace(record, submissionIdHeader, recordNumber)
 
                 val fastaIds = extractAndValidateFastaIds(record, submissionId, recordNumber)
-                val files = extractAndValidateFiles(record, submissionId, recordNumber)
+                val files = extractAndValidateFiles(record, submissionId, recordNumber, fileHeaders)
 
                 val metadata = record.toMap().filterKeys {
                     it != submissionIdHeader &&
@@ -259,6 +274,7 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
 
     val headerNames = csvParser.headerNames
     val submissionIdHeader = findAndValidateSubmissionIdHeader(headerNames)
+    val fileHeaders = findAndValidateFileHeaders(headerNames)
 
     if (!headerNames.contains(ACCESSION_HEADER)) {
         throw UnprocessableEntityException(
@@ -275,7 +291,7 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
                 val accession = getValueAndValidateNoWhitespace(record, ACCESSION_HEADER, recordNumber)
 
                 val fastaIds = extractAndValidateFastaIds(record, submissionId, recordNumber)
-                val files = extractAndValidateFiles(record, submissionId, recordNumber)
+                val files = extractAndValidateFiles(record, submissionId, recordNumber, fileHeaders)
 
                 val metadata = record.toMap().filterKeys {
                     it != submissionIdHeader && it != ACCESSION_HEADER &&
