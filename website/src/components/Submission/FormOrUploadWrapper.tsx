@@ -66,6 +66,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     submissionDataTypes,
     onError,
 }) => {
+    const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
     const enableConsensusSequences = submissionDataTypes.consensusSequences;
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.empty());
     const [editableSequences, setEditableSequences] = useState(
@@ -78,6 +79,8 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     const [columnMapping, setColumnMapping] = useState<ColumnMapping | null>(null);
 
     useEffect(() => {
+        if (!extraFilesEnabled) return;
+
         const state = { cancelled: false };
         void (async () => {
             if (!metadataFile) {
@@ -100,7 +103,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
         return () => {
             state.cancelled = true;
         };
-    }, [metadataFile, columnMapping]);
+    }, [metadataFile, columnMapping, extraFilesEnabled]);
 
     useEffect(() => {
         setFileFactory(() => {
