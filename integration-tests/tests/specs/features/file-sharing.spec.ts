@@ -216,6 +216,7 @@ test('bulk submit blocks a submission with errors in file linkage or parsing', a
 
     const [file1Name, file2Name] = Object.keys(FILES_DOUBLE);
     const file1 = { [file1Name]: FILES_DOUBLE[file1Name] };
+    const reusedFileId = '123e4567-e89b-12d3-a456-426614174000';
 
     const linkageErrors = [
         {
@@ -225,16 +226,21 @@ test('bulk submit blocks a submission with errors in file linkage or parsing', a
         },
         {
             metadataFileEntries: filesColumnCell(Object.keys(FILES_DOUBLE), ID_1),
-            uploadedFiles: file1,
+            uploadedFiles: { [ID_1]: file1 },
             error: `referenced in metadata but not uploaded: ${ID_1}/${file2Name}`,
         },
         {
             metadataFileEntries: filesColumnCell(Object.keys(file1), ID_1),
-            uploadedFiles: FILES_DOUBLE,
+            uploadedFiles: { [ID_1]: FILES_DOUBLE },
             error: `uploaded but not referenced in metadata: ${ID_1}/${file2Name}`,
         },
-        // TODO: Test shadowed files, which requires uploading files without submission ID
-        // subfolders, so that an uploaded file's path matches the name of a reused metadata entry
+        {
+            // Uploaded without a submission ID subfolder, so the uploaded file's path matches
+            // the name of a metadata entry which already references an existing file
+            metadataFileEntries: `${file1Name}:${reusedFileId}`,
+            uploadedFiles: file1,
+            error: `uploaded but the metadata still references an existing file for them: ${file1Name}`,
+        },
     ];
 
     const submissionPage = new BulkSubmissionPage(page);
@@ -249,7 +255,7 @@ test('bulk submit blocks a submission with errors in file linkage or parsing', a
             [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE,
         });
         if (uploadedFiles !== undefined)
-            await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: uploadedFiles }, tmpDir);
+            await submissionPage.uploadExternalFiles(RAW_READS, uploadedFiles, tmpDir);
 
         await submissionPage.clickSubmit();
 
