@@ -23,7 +23,7 @@ jobs:
       - name: Set versioned filenames
         id: set-filenames
         run: |
-          DATE_TAG="$(date +'%Y-%m-%d')"
+          DATE_TAG="$(date +'%Y-%m-%d-%H-%M')"
           VERSIONED_NAME="deacon_index_${DATE_TAG}.idx"
           ZIPPED_NAME="${VERSIONED_NAME}.gz"
 
