@@ -239,6 +239,50 @@ describe('FolderUploadComponent', () => {
         });
     });
 
+    describe('rejects whitespace', () => {
+        it('rejects a folder upload containing a file name with whitespace', async () => {
+            render(<FolderUploadComponent {...defaultProps} />);
+
+            const file = new File(['content'], 'my reads.fastq', { type: 'text/plain' });
+            Object.defineProperty(file, 'webkitRelativePath', {
+                value: 'folder/submission1/my reads.fastq',
+                writable: false,
+            });
+
+            await userEvent.upload(screen.getByTestId('extraFiles'), file);
+
+            expect(mockOnError).toHaveBeenCalledWith('File names cannot contain whitespace.');
+            expect(mockRequestMultipartUpload).not.toHaveBeenCalled();
+        });
+
+        it('rejects a folder upload containing a folder name with whitespace', async () => {
+            render(<FolderUploadComponent {...defaultProps} />);
+
+            const file = new File(['content'], 'reads.fastq', { type: 'text/plain' });
+            Object.defineProperty(file, 'webkitRelativePath', {
+                value: 'folder/submission 1/reads.fastq',
+                writable: false,
+            });
+
+            await userEvent.upload(screen.getByTestId('extraFiles'), file);
+
+            expect(mockOnError).toHaveBeenCalledWith('Folder names cannot contain whitespace.');
+            expect(mockRequestMultipartUpload).not.toHaveBeenCalled();
+        });
+
+        it('rejects individually selected files with whitespace in their names', async () => {
+            render(<FolderUploadComponent {...defaultProps} />);
+
+            const file = new File(['content'], 'my reads.fastq', { type: 'text/plain' });
+            Object.defineProperty(file, 'webkitRelativePath', { value: '', writable: false });
+
+            await userEvent.upload(screen.getByTestId('add_extraFiles'), file);
+
+            expect(mockOnError).toHaveBeenCalledWith('File names cannot contain whitespace.');
+            expect(mockRequestMultipartUpload).not.toHaveBeenCalled();
+        });
+    });
+
     describe('previous uploads', () => {
         it('renders previous uploads with an "uploaded" label', () => {
             render(<FolderUploadComponent {...defaultPropsWithFiles} />);

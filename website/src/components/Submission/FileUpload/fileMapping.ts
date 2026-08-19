@@ -296,10 +296,17 @@ export function getLinkageErrors(fileLinkage: FileLinkage): string | undefined {
 /**
  * Parses a single file entry from a metadata file column, defaulting the path to the file name when absent.
  * @param entry The file entry, in one of the accepted `FILE_ENTRY_FORMS`.
- * @returns The parsed file, or an error if the entry matches none of the accepted forms.
+ * @returns The parsed file, or an error if the entry contains whitespace or matches none of the accepted forms.
  */
 function parseMetadataFileEntry(entry: string): Result<SubmissionFile, Error> {
-    const match = FILE_ENTRY_REGEX.exec(entry.trim());
+    const trimmedEntry = entry.trim();
+
+    if (/\s/.test(trimmedEntry))
+        return err(
+            new Error(`Failed to parse file entry '${trimmedEntry}'. File names and paths may not contain whitespace.`),
+        );
+
+    const match = FILE_ENTRY_REGEX.exec(trimmedEntry);
     if (!match)
         return err(
             new Error(

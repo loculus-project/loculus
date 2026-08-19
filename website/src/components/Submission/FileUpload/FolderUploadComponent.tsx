@@ -310,6 +310,9 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             // exclude dot files, because files like .DS_Store cause problems otherwise
             const filesArray = filterDotFiles(Array.from(e.target.files));
 
+            // Reset the input so the same folder can be selected again
+            e.target.value = '';
+
             const error = isFilesArrayValid(filesArray, inputMode);
             if (error) {
                 onError(error);
@@ -346,14 +349,22 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            const awaiting: Awaiting[] = Array.from(e.target.files).map((f) => ({
+            const filesArray = Array.from(e.target.files);
+
+            // Reset the input so the same file can be selected again
+            e.target.value = '';
+
+            const error = isFilesArrayValid(filesArray, inputMode);
+            if (error) {
+                onError(error);
+                return;
+            }
+
+            const awaiting: Awaiting[] = filesArray.map((f) => ({
                 type: 'awaiting',
                 file: f,
                 path: f.name,
             }));
-
-            // Reset the input so the same file can be selected again
-            e.target.value = '';
 
             // If the state is undefined, set it to the new awaiting files
             if (fileUploadState === undefined) {
@@ -601,4 +612,9 @@ const isFilesArrayValid = (files: File[], inputMode: InputMode): string | undefi
             return 'Subdirectories are not supported for individual submissions.';
         }
     }
+    const fileNames = files.map((f) => f.name);
+    const folderNames = files.flatMap((f) => f.webkitRelativePath.split('/').slice(1, -1));
+
+    if (fileNames.some((n) => /\s/.test(n))) return 'File names cannot contain whitespace.';
+    if (folderNames.some((p) => /\s/.test(p))) return 'Folder names cannot contain whitespace.';
 };

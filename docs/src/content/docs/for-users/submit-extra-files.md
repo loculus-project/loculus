@@ -16,6 +16,9 @@ If files are uploaded successfully, there will be a green checkmark:
 
 For bulk submission, you need to upload a folder with one subfolder per submission ID.
 
+Neither the file names nor the subfolder names may contain whitespace, since the metadata file refers to them in
+space-separated lists.
+
 ## API
 
 To submit files via the API, it's a two step process.
@@ -175,5 +178,6 @@ The filenames may contain any UTF-8 characters except:
 
 - Forbidden characters: `< > : " / \ | ? *`
 - ASCII control characters (character codes 0-31)
+- Whitespace characters
 
 Filenames may not be empty or contain more than 255 characters.

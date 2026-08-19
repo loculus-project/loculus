@@ -131,7 +131,9 @@ private fun extractAndValidateFileIdAndName(
     if (separatorIndex < 0) {
         throw UnprocessableEntityException(
             "In metadata file: record #$recordNumber with id '$submissionId': " +
-                "file entry '$token' in column '$header' is missing a file ID. Expected format 'fileName${FILE_NAME_ID_SEPARATOR}fileId'.",
+                "file entry '$token' in column '$header' is missing a file ID. " +
+                "Expected format 'fileName${FILE_NAME_ID_SEPARATOR}fileId'. " +
+                "Please also ensure file names do not contain whitespace.",
         )
     }
 
@@ -141,7 +143,9 @@ private fun extractAndValidateFileIdAndName(
     if (fileName.isEmpty()) {
         throw UnprocessableEntityException(
             "In metadata file: record #$recordNumber with id '$submissionId': " +
-                "file entry '$token' in column '$header' is missing a file name. Expected format 'fileName${FILE_NAME_ID_SEPARATOR}fileId'.",
+                "file entry '$token' in column '$header' is missing a file name. " +
+                "Expected format 'fileName${FILE_NAME_ID_SEPARATOR}fileId'. " +
+                "Please also ensure file names do not contain whitespace.",
         )
     }
 

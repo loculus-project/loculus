@@ -118,6 +118,14 @@ describe('parseSubmissionFileMapping', () => {
         expect(entriesOf(text, 'e1', RAW_READS).map((f) => f.name)).toEqual(['a.txt', 'b.txt']);
     });
 
+    it('rejects entries containing whitespace', () => {
+        const text = tsv([
+            ['id', RAW_READS_COLUMN],
+            ['e1', 'my\vreads.fastq'],
+        ]);
+        expect(errorOf(text)).toContain('may not contain whitespace');
+    });
+
     it('returns an empty mapping when there are no file columns', () => {
         const result = parseSubmissionFileMapping(
             tsv([
