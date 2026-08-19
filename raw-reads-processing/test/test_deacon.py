@@ -1,7 +1,6 @@
 # ruff: noqa: S101
 
 import shutil
-import subprocess
 import time
 from pathlib import Path
 
