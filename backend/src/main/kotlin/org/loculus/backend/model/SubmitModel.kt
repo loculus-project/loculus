@@ -45,6 +45,13 @@ const val METADATA_ID_HEADER_ALTERNATE_FOR_BACKCOMPAT = "submissionId"
 const val FASTA_IDS_HEADER = "fastaIds"
 const val FASTA_IDS_SEPARATOR = " "
 
+const val FILES_HEADER_PREFIX = "files."
+const val FILES_SEPARATOR = " "
+const val FILE_NAME_ID_SEPARATOR = ":"
+
+// File IDs are currently validated to be UUIDs of standard length
+const val FILE_ID_LENGTH = 36
+
 const val ACCESSION_HEADER = "accession"
 private val log = KotlinLogging.logger { }
 
@@ -174,11 +181,27 @@ class SubmitModel(
                 }
             }
 
-            submissionParams.files?.let { submittedFiles ->
-                submissionMetrics.timeWritePhase(endpoint, organism, VALIDATE_FILE_MAPPING_PHASE) {
-                    val fileSubmissionIds = submittedFiles.keys
-                    validateSubmissionIdSetsForFiles(metadataSubmissionIds, fileSubmissionIds)
-                    validateFileGroupOwnership(submittedFiles, submissionParams, uploadId)
+            submissionMetrics.timeWritePhase(endpoint, organism, VALIDATE_FILE_MAPPING_PHASE) {
+                // File mappings in submissionParams can contain submission Ids not present in the metadata
+                // This is implicitly validated for the file mappings within the metadata column
+                // TODO: This can be removed once file mappings JSON support is removed
+                submissionParams.files?.let { validateSubmissionIdSetsForFiles(metadataSubmissionIds, it.keys) }
+
+                val files = uploadDatabaseService.getFilesForUpload(uploadId)
+                if (files.isNotEmpty()) {
+                    if (!backendConfig.getInstanceConfig(
+                            submissionParams.organism,
+                        ).schema.submissionDataTypes.files.enabled
+                    ) {
+                        throw BadRequestException("the $organism organism does not support file submission.")
+                    }
+                    submissionIdFilesMappingPreconditionValidator
+                        .validateFilenameCharacters(files)
+                        .validateFilenamesAreUnique(files)
+                        .validateCategoriesMatchSchema(files, submissionParams.organism)
+                        .validateMultipartUploads(files)
+                        .validateFilesExist(files)
+                    validateFileGroupOwnership(files, submissionParams, uploadId)
                 }
             }
 
