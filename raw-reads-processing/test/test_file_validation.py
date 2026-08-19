@@ -287,7 +287,7 @@ def test_parse_validation_error_extracts_detail_after_result_line():
     )
     assert (
         message
-        == "File validation failed at readtools. Sequence header must start with @: >seq1 at line 1 in fastq"
+        == "File validation failed while running ENA readtools. Sequence header must start with @: >seq1 at line 1 in fastq"
     )
 
 
@@ -303,7 +303,7 @@ def test_parse_validation_error_handles_qualified_result_line():
     )
     assert (
         message
-        == "File validation failed at readtools. htsjdk.samtools.FileTruncatedException: Premature end of file: data stream"
+        == "File validation failed while running ENA readtools. htsjdk.samtools.FileTruncatedException: Premature end of file: data stream"
     )
 
 
@@ -313,13 +313,13 @@ def test_parse_validation_error_falls_back_to_stderr():
     )
     assert (
         message
-        == "File validation failed at readtools: Exception in thread main: OutOfMemoryErr..."
+        == "File validation failed while running ENA readtools with error: Exception in thread main: OutOfMemoryErr..."
     )
 
 
 def test_parse_validation_error_generic_fallback():
     message = _parse_validation_error("", "")
-    assert message == "File validation failed at readtools."
+    assert message == "File validation failed while running ENA readtools."
 
 
 def test_validation_timeout_is_reported_as_error(tmp_path, monkeypatch):
