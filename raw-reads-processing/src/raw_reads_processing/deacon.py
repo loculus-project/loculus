@@ -87,9 +87,10 @@ def run_deacon_filter(
         logger.error(message)
         raise ProcessingFailure(message) from None
     except subprocess.CalledProcessError as error:
-        message = f"Deacon filter failed with exit code {error.returncode}."
-        logger.error(message + f"stdout: {error.stdout}, stderr: {error.stderr}")
-        raise ProcessingFailure(message)
+        # TODO: send a slack notification to alert the team that deacon is failing
+        message = f"Deacon filter failed with exit code {error.returncode}. stdout: {error.stdout}, stderr: {error.stderr}"
+        logger.error(message)
+        raise RuntimeError(message) from error
     return DeaconSummary.from_json(summary_json_path)
 
 
