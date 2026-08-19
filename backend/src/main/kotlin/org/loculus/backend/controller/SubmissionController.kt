@@ -224,7 +224,7 @@ open class SubmissionController(
             )
         }
 
-        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag()
+        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(organism = organism)
         if (ifNoneMatch == lastDatabaseWriteETag) {
             submissionMetrics.recordPollingRequest(
                 EXTRACT_UNPROCESSED_DATA_ENDPOINT,
@@ -232,7 +232,7 @@ open class SubmissionController(
                 HttpStatus.NOT_MODIFIED,
                 requestStartNanos,
             )
-            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(lastDatabaseWriteETag).build()
         }
 
         val headers = HttpHeaders()
@@ -335,16 +335,16 @@ open class SubmissionController(
             ),
             Header(
                 name = "eTag",
-                description = "Last database write Etag",
-                schema = Schema(type = "integer"),
+                description = "Last database write Etag, combined with the current date",
+                schema = Schema(type = "string"),
             ),
         ],
     )
     @ApiResponse(
         responseCode = "304",
         description =
-        "No database changes since last request " +
-            "(Etag in HttpHeaders.IF_NONE_MATCH matches lastDatabaseWriteETag)",
+        "No database changes since last request, and the date has not changed " +
+            "(Etag in HttpHeaders.IF_NONE_MATCH matches lastDatabaseWriteETagWithDate)",
     )
     @GetMapping("/get-released-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun getReleasedData(
@@ -355,22 +355,22 @@ open class SubmissionController(
         ) @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
         val requestStartNanos = System.nanoTime()
-        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
+        val lastDatabaseWriteETagWithDate = releasedDataModel.getLastDatabaseWriteETagWithDate(
             tableNames = RELEASED_DATA_RELATED_TABLES,
             organism = organism,
         )
-        if (ifNoneMatch == lastDatabaseWriteETag) {
+        if (ifNoneMatch == lastDatabaseWriteETagWithDate) {
             submissionMetrics.recordPollingRequest(
                 GET_RELEASED_DATA_ENDPOINT,
                 organism.name,
                 HttpStatus.NOT_MODIFIED,
                 requestStartNanos,
             )
-            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(lastDatabaseWriteETagWithDate).build()
         }
 
         val headers = HttpHeaders()
-        headers.eTag = lastDatabaseWriteETag
+        headers.eTag = lastDatabaseWriteETagWithDate
         headers.contentType = MediaType.APPLICATION_NDJSON
         compression?.let { headers.add(HttpHeaders.CONTENT_ENCODING, it.compressionName) }
 
