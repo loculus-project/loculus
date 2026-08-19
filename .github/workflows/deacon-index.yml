@@ -2,9 +2,6 @@ name: Create and Upload Custom Deacon Index
 
 on:
   workflow_dispatch: # Only manual trigger for now, since this is a rare operation
-  push:
-    branches:
-      - deacon-service
 
 env:
   DEACON_INDEX_IMAGE: ghcr.io/loculus-project/deacon-index
