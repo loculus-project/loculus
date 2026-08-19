@@ -1,10 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { Result } from 'neverthrow';
 import { useState } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 
 import { FormOrUploadWrapper, type FileFactory, type InputError, type SequenceData } from './FormOrUploadWrapper';
 import { SUBMISSION_ID_INPUT_FIELD } from '../../settings';
+import type { SubmissionFileMapping } from './FileUpload/fileMapping';
 import type { InputField } from '../../types/config';
 import { Button } from '../common/Button';
 
@@ -206,6 +208,43 @@ describe('FormOrUploadWrapper', () => {
             expect(tsvRows.length).toBe(2);
             expect(tsvRows[0]).toBe('id\tcollectionCountry');
             expect(tsvRows[1]).toBe('foo\t"Foo\tBar"');
+        });
+    });
+
+    describe('Bulk upload', () => {
+        test('reports an error when the metadata file cannot be read', async () => {
+            const setSubmissionFileMapping = vi.fn();
+            const onError = vi.fn();
+
+            render(
+                <FormOrUploadWrapper
+                    inputMode='bulk'
+                    action='submit'
+                    organism='foo'
+                    setFileFactory={vi.fn()}
+                    metadataTemplateFields={DUMMY_METADATA_TEMPLATE_FIELDS}
+                    submissionDataTypes={{
+                        consensusSequences: false,
+                        maxSequencesPerEntry: 1,
+                        files: { enabled: true, categories: [{ name: 'rawReads' }] },
+                    }}
+                    setSubmissionFileMapping={setSubmissionFileMapping}
+                    onError={onError}
+                />,
+            );
+
+            // Not a valid gzip stream - decompression throws when the file is read.
+            const corruptGzip = new File([new Uint8Array([1, 2, 3, 4, 5])], 'metadata.tsv.gz');
+            await userEvent.upload(screen.getByTestId('metadata_file'), corruptGzip);
+
+            await waitFor(() => expect(onError).toHaveBeenCalled());
+            expect(onError.mock.calls.at(-1)![0]).toContain('Failed to read metadata file metadata.tsv.gz');
+
+            // The mapping must not stay `undefined`, otherwise submitting only ever reports
+            // 'Cannot submit: metadata file is still being processed.'
+            const lastMapping = setSubmissionFileMapping.mock.calls.at(-1)![0] as Result<SubmissionFileMapping, Error>;
+            expect(lastMapping).toBeDefined();
+            expect(lastMapping.isErr()).toBe(true);
         });
     });
 });
