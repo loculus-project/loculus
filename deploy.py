@@ -173,6 +173,7 @@ def main():
 
 
 # Enable traefik access log and raise log level to DEBUG to get more insights into failures in CI
+# This resource is how k3s/k3d-bundled traefik is configured 
 TRAEFIK_LOGGING_CONFIG = """
 apiVersion: helm.cattle.io/v1
 kind: HelmChartConfig
