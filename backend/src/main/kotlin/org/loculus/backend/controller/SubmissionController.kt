@@ -568,6 +568,11 @@ open class SubmissionController(
         val instanceConfig = backendConfig.getInstanceConfig(organism)
         val hasConsensusSequences = instanceConfig.schema.submissionDataTypes.consensusSequences
         val isMultiSegmented = instanceConfig.referenceGenome.nucleotideSequences.size > 1
+        val fileCategories = if (instanceConfig.schema.submissionDataTypes.files.enabled) {
+            instanceConfig.schema.submissionDataTypes.files.categories
+        } else {
+            emptyList()
+        }
 
         val streamBody = StreamingResponseBody { responseBodyStream ->
             val startTime = System.currentTimeMillis()
@@ -602,6 +607,7 @@ open class SubmissionController(
                                     uniqueFastaIdsByEntry,
                                     zipOut,
                                     isMultiSegmented,
+                                    fileCategories,
                                 )
                                 zipOut.closeEntry()
 

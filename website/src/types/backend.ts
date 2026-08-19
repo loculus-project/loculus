@@ -184,6 +184,7 @@ const filesByCategory = z.record(
         }),
     ),
 );
+export type FilesByCategory = z.infer<typeof filesByCategory>;
 
 export const filesBySubmissionId = z.record(filesByCategory);
 export type FilesBySubmissionId = z.infer<typeof filesBySubmissionId>;
