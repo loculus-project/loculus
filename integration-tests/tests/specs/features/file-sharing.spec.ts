@@ -1,8 +1,8 @@
 import { expect } from '@playwright/test';
 import { execSync } from 'child_process';
-import fs from 'fs';
+import fs, { readFileSync } from 'fs';
 import os from 'os';
-import path from 'path';
+import path, { join } from 'path';
 import { test } from '../../fixtures/tmpdir.fixture';
 import { EditPage } from '../../pages/edit.page';
 import { ReviewPage } from '../../pages/review.page';
@@ -93,6 +93,37 @@ test('reject non-FASTQ raw_reads file with a format-validation error', async ({
     );
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone(180_000);
     await reviewPage.expectFileProcessingError(/This is not a FASTQ file./i);
+    await reviewPage.expectNoValidSequencesToApprove();
+});
+
+test('reject FASTQ raw_reads file with human host reads with a deacon validation error', async ({
+    page,
+    groupId,
+    tmpDir,
+}) => {
+    test.setTimeout(200_000);
+    void groupId;
+    const contaminatedReads = readFileSync(
+        join(__dirname, '../../test-data/contaminated.fastq'),
+        'utf-8',
+    );
+    const submissionPage = new SingleSequenceSubmissionPage(page);
+    await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
+    await submissionPage.fillSubmissionForm({
+        submissionId: 'host-contaminated',
+        collectionCountry: COUNTRY_1,
+        collectionDate: '2023-11-02',
+        authorAffiliations: AUTHOR_AFFILIATIONS,
+        sequencingInstrument: SEQUENCING_INSTRUMENT,
+    });
+    await submissionPage.fillSequenceData({ main: EBOLA_SUDAN_SHORT_SEQUENCE });
+    await submissionPage.uploadExternalFiles(
+        RAW_READS,
+        { 'reads.fastq': contaminatedReads },
+        tmpDir,
+    );
+    const reviewPage = await submissionPage.submitAndWaitForProcessingDone(180_000);
+    await reviewPage.expectFileProcessingError(/high proportion of human reads/i);
     await reviewPage.expectNoValidSequencesToApprove();
 });
 
