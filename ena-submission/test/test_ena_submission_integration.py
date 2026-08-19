@@ -466,7 +466,7 @@ def get_revisions(modify_manifest: bool = False, modify_assembly: bool = True) -
             else:
                 new_value["metadata"]["hostAge"] = "revised host age"
             if modify_manifest:
-                new_value["metadata"]["authors"] = "Author, Revised;"
+                new_value["metadata"]["sequencingInstrument"] = "Helicos HeliScope"
             revised_sequences[accession_version] = new_value
         return revised_sequences
 
