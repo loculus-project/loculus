@@ -2,7 +2,6 @@ import logging
 import subprocess  # noqa: S404
 from pathlib import Path
 from typing import cast
-from typing_extensions import Literal
 
 from raw_reads_processing.config import Config
 from raw_reads_processing.datatypes import Annotation, DeaconSummary, FileName
