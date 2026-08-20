@@ -1,4 +1,4 @@
-{{- $traefikApiVersion := ternary "traefik.io/v1alpha1" "traefik.containo.us/v1alpha1" (eq (int $.Values.traefikVersion) 3) -}}
+{{- $traefikApiVersion := ternary "traefik.io/v1alpha1" "traefik.containo.us/v1alpha1" (ne (int $.Values.traefikVersion) 2) -}}
 {{/*
 Traefik's default 90s idle keep-alive outlives our backends' (Tomcat 20s, Node/uvicorn 5s), so it
 reuses connections they are closing -> 502 Bad Gateway.
