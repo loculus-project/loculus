@@ -4,6 +4,7 @@ import DataTable from './DataTable';
 import { RevokeButton } from './RevokeButton';
 import { SequencesContainer } from './SequencesDisplay/SequencesContainer.tsx';
 import { getDataTableData } from './getDataTableData';
+import { filterToRevocationRelevantFields } from './revocationEntryFields';
 import { type TableDataEntry } from './types';
 import { getGitHubReportUrl } from '../../config.ts';
 import { routes } from '../../routes/routes';
@@ -67,7 +68,9 @@ export const SequenceDataUI: FC<Props> = ({
 
     const loadSequencesAutomatically = schema.loadSequencesAutomatically === true;
 
-    const dataTableData = getDataTableData(tableData);
+    const dataTableData = getDataTableData(
+        isRevocation === true ? filterToRevocationRelevantFields(tableData) : tableData,
+    );
 
     const reportUrl = getGitHubReportUrl(sequenceFlaggingConfig, organism, accessionVersion);
 
