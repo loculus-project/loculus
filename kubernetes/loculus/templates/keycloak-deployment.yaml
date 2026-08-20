@@ -25,7 +25,7 @@ spec:
      {{- include "possiblePriorityClassName" . | nindent 6 }}
       {{- include "loculus.podScheduling" . | nindent 6 }}
       initContainers:
-{{- include "loculus.configProcessor" (dict "name" "keycloak-config" "dockerTag" $dockerTag "values" $.Values) | nindent 8 }}
+{{- include "loculus.configProcessor" (dict "name" "keycloak-config" "values" $.Values) | nindent 8 }}
         - name: keycloak-theme-prep
           resources:
             requests:

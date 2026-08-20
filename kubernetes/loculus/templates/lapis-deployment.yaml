@@ -1,5 +1,3 @@
-{{- $dockerTag := include "loculus.dockerTag" .Values }}
-
 {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
 {{- $organismContent := $item.contents }}
@@ -26,7 +24,7 @@ spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       {{- include "loculus.podScheduling" $ | nindent 6 }}
       initContainers:
-        {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag "values" $.Values) | nindent 8 }}
+        {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "values" $.Values) | nindent 8 }}
       containers:
         - name: lapis
           image: {{ include "loculus.image" (dict "name" "lapis" "defaultRepository" "ghcr.io/genspectrum/lapis" "values" $.Values) }}

@@ -32,7 +32,7 @@ spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       {{- include "loculus.podScheduling" $ | nindent 6 }}
       initContainers:
-        {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag "values" $.Values) | nindent 8 }}
+        {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "values" $.Values) | nindent 8 }}
       containers:
         - name: silo
           image: {{ include "loculus.image" (dict "name" "loculusSilo" "defaultRepository" "ghcr.io/loculus-project/loculus-silo" "values" $.Values) }}

@@ -1,4 +1,3 @@
-{{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- if not .Values.disableBackend }}
 ---
 apiVersion: apps/v1
@@ -24,7 +23,7 @@ spec:
       {{- include "possiblePriorityClassName" . | nindent 6 }}
       {{- include "loculus.podScheduling" . | nindent 6 }}
       initContainers:
-{{- include "loculus.configProcessor" (dict "name" "loculus-backend-config" "dockerTag" $dockerTag "values" $.Values) | nindent 8 }}
+{{- include "loculus.configProcessor" (dict "name" "loculus-backend-config" "values" $.Values) | nindent 8 }}
       containers:
         - name: backend
           image: {{ include "loculus.image" (dict "name" "backend" "defaultRepository" "ghcr.io/loculus-project/backend" "values" $.Values) }}
