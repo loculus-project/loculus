@@ -17,7 +17,6 @@ import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
-import org.loculus.backend.api.mergeFileCategories
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
@@ -73,7 +72,6 @@ class UploadDatabaseService(
         submittedOrganism: Organism,
         uploadedMetadataBatch: List<MetadataEntry>,
         uploadedAt: LocalDateTime,
-        files: SubmissionIdFilesMap?,
     ) {
         uploadedMetadataBatch.chunked(METADATA_BATCH_SIZE).forEach { batch ->
             MetadataUploadAuxTable.batchInsert(batch) {
@@ -83,7 +81,7 @@ class UploadDatabaseService(
                 this[submissionIdColumn] = it.submissionId
                 this[fastaIdsColumn] = it.fastaIds?.toList()
                 this[metadataColumn] = it.metadata
-                this[filesColumn] = files?.get(it.submissionId)?.mergeFileCategories(it.files) ?: it.files
+                this[filesColumn] = it.files
                 this[organismColumn] = submittedOrganism.name
                 this[uploadIdColumn] = uploadId
             }
@@ -111,7 +109,6 @@ class UploadDatabaseService(
         submittedOrganism: Organism,
         uploadedRevisedMetadataBatch: List<RevisionEntry>,
         uploadedAt: LocalDateTime,
-        files: SubmissionIdFilesMap?,
     ) {
         try {
             uploadedRevisedMetadataBatch.chunked(METADATA_BATCH_SIZE).forEach { batch ->
@@ -122,7 +119,7 @@ class UploadDatabaseService(
                     this[submissionIdColumn] = it.submissionId
                     this[fastaIdsColumn] = it.fastaIds?.toList()
                     this[metadataColumn] = it.metadata
-                    this[filesColumn] = files?.get(it.submissionId)?.mergeFileCategories(it.files) ?: it.files
+                    this[filesColumn] = it.files
                     this[organismColumn] = submittedOrganism.name
                     this[uploadIdColumn] = uploadId
                 }
@@ -159,14 +156,6 @@ class UploadDatabaseService(
             SEQUENCE_INSERT_COLUMNS,
         )
     }
-
-    fun getMetadataUploadSubmissionIds(uploadId: String): List<SubmissionId> = MetadataUploadAuxTable
-        .select(
-            uploadIdColumn,
-            submissionIdColumn,
-        )
-        .where { uploadIdColumn eq uploadId }
-        .map { it[submissionIdColumn] }
 
     fun getFilesForUpload(uploadId: String): SubmissionIdFilesMap = MetadataUploadAuxTable
         .select(
