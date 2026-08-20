@@ -31,7 +31,17 @@ export const METADATA_FILE_KIND: FileKind<ProcessedFile> = {
         const dataExtension = isCompressed ? fileNameParts[fileNameParts.length - 2] : extension;
         const compressionExtension = isCompressed ? extension : null;
         if (dataExtension === 'tsv' && !isCompressed) return ok(new RawFile(file));
-        if (dataExtension === 'tsv' && isCompressed) return ok(new CompressedFile(file));
+        if (dataExtension === 'tsv' && isCompressed) {
+            if (compressionExtension === 'xz') {
+                return err(
+                    new Error(
+                        'LZMA compression (.xz files) is not supported with TSV files yet. ' +
+                            'Please use a different compression format for TSV files.',
+                    ),
+                );
+            }
+            return ok(new CompressedFile(file));
+        }
         if (dataExtension === 'xlsx' || dataExtension === 'xls') {
             if (isCompressed && compressionExtension === 'xz') {
                 return err(

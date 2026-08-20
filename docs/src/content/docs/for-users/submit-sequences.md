@@ -87,4 +87,4 @@ As with the website, data will now be processed, and you will have to approve yo
 
 ### Compressing files
 
-For both sequence and metadata files, compression is supported. The supported formats are: `zip`, `gz` (gzip), `zst` (ZStandard) and `xz` (LZMA). (Note that Excel file uploads with `xz` compression are currently not supported.)
+For both sequence and metadata files, compression is supported. The supported formats are: `zip`, `gz` (gzip) and `zst` (ZStandard). `xz` (LZMA) is additionally supported for sequence files. Metadata files with `xz` compression are currently not supported when submitting through the website.
