@@ -38,6 +38,7 @@ import {
     type FileMapping,
     type SubmissionFileMapping,
 } from './FileUpload/fileMapping.ts';
+import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -415,8 +416,13 @@ export const ExtraFilesUpload = ({
                 <h2 className='font-medium text-lg'>Extra files</h2>
                 <p className='text-gray-500 text-sm'>
                     {inputMode === 'bulk'
-                        ? 'Upload a folder of files for your sequences. Each file must be referenced by its name in the corresponding file category column of your metadata.'
-                        : 'Upload a folder of files for this sequence'}
+                        ? 'Upload a folder of files or individual files for your sequences. Each file must be referenced by its name in the corresponding file category column of your metadata.'
+                        : 'Upload a folder of files or individual files for this sequence.'}{' '}
+                    For more information please refer to the{' '}
+                    <a href={extraFilesUploadDocsUrl} className='text-primary-600 hover:underline'>
+                        extra files documentation
+                    </a>
+                    .
                 </p>
             </div>
             <div className='col-span-2 flex flex-col gap-4'>
