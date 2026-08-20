@@ -1933,25 +1933,82 @@
       "type": "object",
       "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for each of the containers used by Loculus, including third-party images.",
       "properties": {
-        "lapis": { "$ref": "#/definitions/imageSpec" },
-        "loculusSilo": { "$ref": "#/definitions/imageSpec" },
-        "website": { "$ref": "#/definitions/imageSpec" },
-        "backend": { "$ref": "#/definitions/imageSpec" },
-        "autoapprove": { "$ref": "#/definitions/imageSpec" },
-        "configProcessor": { "$ref": "#/definitions/imageSpec" },
-        "docs": { "$ref": "#/definitions/imageSpec" },
-        "enaSubmission": { "$ref": "#/definitions/imageSpec" },
-        "enaSubmissionFlyway": { "$ref": "#/definitions/imageSpec" },
-        "keycloakify": { "$ref": "#/definitions/imageSpec" },
-        "taxonomyService": { "$ref": "#/definitions/imageSpec" },
-        "rawReadsProcessing": { "$ref": "#/definitions/imageSpec" },
-        "keycloak": { "$ref": "#/definitions/imageSpec" },
-        "postgres": { "$ref": "#/definitions/imageSpec" },
-        "minio": { "$ref": "#/definitions/imageSpec" },
-        "alpine": { "$ref": "#/definitions/imageSpec" },
-        "busybox": { "$ref": "#/definitions/imageSpec" },
-        "kubectl": { "$ref": "#/definitions/imageSpec" },
-        "deaconIndex": { "$ref": "#/definitions/imageSpec" }
+        "lapis": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the Lapis image. Defaults to `ghcr.io/genspectrum/lapis:0.8.0`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "loculusSilo": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the Loculus SILO image. Defaults to `ghcr.io/loculus-project/loculus-silo:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "website": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the website image. Defaults to `ghcr.io/loculus-project/website:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "backend": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the backend image. Defaults to `ghcr.io/loculus-project/backend:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "deaconIndex": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the deacon-index image. Defaults to `ghcr.io/loculus-project/deacon-index:latest`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "autoapprove": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the autoapprove image. Defaults to `ghcr.io/loculus-project/ingest:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "configProcessor": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the config-processor image. Defaults to `ghcr.io/loculus-project/config-processor:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "docs": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the docs preview image. Defaults to `ghcr.io/loculus-project/docs:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "enaSubmission": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the ENA submission image. Defaults to `ghcr.io/loculus-project/ena-submission:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "enaSubmissionFlyway": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the ENA submission Flyway image. Defaults to `ghcr.io/loculus-project/ena-submission-flyway:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "keycloakify": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the Keycloak theme preparation image. Defaults to `ghcr.io/loculus-project/keycloakify:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "taxonomyService": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the taxonomy-service image. Defaults to `ghcr.io/loculus-project/taxonomy-service:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "rawReadsProcessing": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the raw-reads-processing image. Defaults to `ghcr.io/loculus-project/raw-reads-processing-service:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "keycloak": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the Keycloak image. Defaults to `quay.io/keycloak/keycloak:23.0`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "postgres": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the Postgres stand-in images. Defaults to `postgres:15.12`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "minio": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the MinIO image. Defaults to `minio/minio:latest`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "alpine": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the Alpine helper image. Defaults to `alpine:3`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "busybox": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the BusyBox helper image. Defaults to `busybox:latest`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "kubectl": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the kubectl helper image. Defaults to `alpine/kubectl:1.36.0`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        }
       },
       "additionalProperties": false
     },
