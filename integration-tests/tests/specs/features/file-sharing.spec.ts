@@ -170,6 +170,35 @@ test('bulk submit 2 seqs with 1 & 2 FASTQ files respectively', async ({
     await searchPage.checkFileContentInModal('cell', COUNTRY_2, FILES_DOUBLE);
 });
 
+test('bulk submit 1 seq with files declared in a compressed metadata file', async ({
+    page,
+    groupId,
+    tmpDir,
+}) => {
+    test.setTimeout(240_000);
+    void groupId;
+    const submissionPage = new BulkSubmissionPage(page);
+    const isGzipped = true;
+    await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
+    await submissionPage.uploadMetadataFile(
+        [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
+        [
+            [
+                ID_1,
+                COUNTRY_1,
+                '2022-12-02',
+                SEQUENCING_INSTRUMENT,
+                filesColumnCell(Object.keys(FILES_SINGLE), ID_1),
+            ],
+        ],
+        isGzipped,
+    );
+    await submissionPage.uploadSequencesFile({ [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE });
+    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_SINGLE }, tmpDir);
+    const reviewPage = await submissionPage.submitAndWaitForProcessingDone(180_000);
+    await reviewPage.checkFilesInReviewDialog(FILES_SINGLE);
+});
+
 test('bulk submit 1 seq: discarding and reading a FASTQ file', async ({
     page,
     groupId,

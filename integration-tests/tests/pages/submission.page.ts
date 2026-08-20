@@ -1,4 +1,5 @@
 import { Page } from '@playwright/test';
+import { gzipSync } from 'zlib';
 import { ReviewPage } from './review.page';
 import Papa from 'papaparse';
 import { NavigationPage } from './navigation.page';
@@ -179,17 +180,18 @@ export class BulkSubmissionPage extends SubmissionPage {
      * Content is provided as list(s) of strings, and will be formatted into a TSV file.
      * @param headers The header row cells in the TSV file. The column headers need to be valid input field names.
      * @param rows A list of rows. For each row, a value for each column must be given.
+     * @param gzipped Whether to gzip the TSV and upload it as `metadata.tsv.gz`.
      */
-    async uploadMetadataFile(headers: string[], rows: (string | number)[][]) {
+    async uploadMetadataFile(headers: string[], rows: (string | number)[][], gzipped = false) {
         const tsvContent = Papa.unparse([headers, ...rows], {
             delimiter: '\t',
             newline: '\n',
         });
 
         await this.page.getByTestId('metadata_file').setInputFiles({
-            name: 'metadata.tsv',
-            mimeType: 'text/plain',
-            buffer: Buffer.from(tsvContent),
+            name: gzipped ? 'metadata.tsv.gz' : 'metadata.tsv',
+            mimeType: gzipped ? 'application/gzip' : 'text/plain',
+            buffer: gzipped ? gzipSync(Buffer.from(tsvContent)) : Buffer.from(tsvContent),
         });
     }
 
