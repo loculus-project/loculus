@@ -49,11 +49,7 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
-data class SubmissionResult(
-    val submissionIdMappings: List<SubmissionIdMapping>,
-    val groupId: Int,
-    val submissionIdFilesMap: SubmissionIdFilesMap?,
-)
+data class SubmissionResult(val submissionIdMappings: List<SubmissionIdMapping>, val groupId: Int)
 
 class SubmissionConvenienceClient(
     private val groupManagementClient: GroupManagementControllerClient,
@@ -116,6 +112,8 @@ class SubmissionConvenienceClient(
         val submit = client.submit(
             if (isMultiSegmented) {
                 DefaultFiles.multiSegmentedMetadataFile
+            } else if (fileMapping != null) {
+                DefaultFiles.metadataFile.withFileMapping(fileMapping)
             } else {
                 DefaultFiles.metadataFile
             },
@@ -130,13 +128,11 @@ class SubmissionConvenienceClient(
             groupId = groupIdToSubmitFor,
             dataUseTerm = dataUseTerms,
             jwt = jwt,
-            fileMapping = fileMapping,
         )
 
         return SubmissionResult(
             submissionIdMappings = deserializeJsonResponse(submit),
             groupId = groupIdToSubmitFor,
-            submissionIdFilesMap = fileMapping,
         )
     }
 

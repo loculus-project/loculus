@@ -186,9 +186,6 @@ const filesByCategory = z.record(
 );
 export type FilesByCategory = z.infer<typeof filesByCategory>;
 
-export const filesBySubmissionId = z.record(filesByCategory);
-export type FilesBySubmissionId = z.infer<typeof filesBySubmissionId>;
-
 export const editedSequenceEntryData = accessionVersion.merge(
     z.object({
         data: z.object({
@@ -268,9 +265,7 @@ export const mapErrorsAndWarnings = (
 export const uploadFiles = z.object({
     metadataFile: z.instanceof(File),
     sequenceFile: z.instanceof(File).optional(),
-    fileMapping: filesBySubmissionId.optional(),
 });
-export type UploadFiles = z.infer<typeof uploadFiles>;
 
 export const submitFiles = uploadFiles.merge(
     z.object({
