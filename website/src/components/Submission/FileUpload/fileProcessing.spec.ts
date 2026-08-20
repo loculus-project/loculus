@@ -66,6 +66,14 @@ describe('fileProcessing', () => {
         10000,
     );
 
+    test('LZMA compressed TSV file cannot be processed', async () => {
+        const file = new File(['dummy'], 'testfile.tsv.xz');
+        const processingResult = await METADATA_FILE_KIND.processRawFile(file);
+
+        expect(processingResult.isErr()).toBeTruthy();
+        expect(processingResult._unsafeUnwrapErr().message).toContain('LZMA compression');
+    });
+
     test('LZMA compressed excel file cannot be processed', async () => {
         const file = await loadTestFile('testfile_different_formats.xlsx.xz');
         const processingResult = await METADATA_FILE_KIND.processRawFile(file);
