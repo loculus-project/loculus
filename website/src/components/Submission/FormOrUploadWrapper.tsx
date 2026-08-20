@@ -138,12 +138,19 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                         };
                     }
                     case 'bulk': {
-                        let mFile = metadataFile?.inner();
-                        if (metadataFile !== undefined && columnMapping !== null) {
-                            mFile = await columnMapping.applyTo(metadataFile);
-                        }
-                        if (mFile === undefined) {
+                        if (metadataFile === undefined) {
                             return { type: 'error', errorMessage: 'Please specify a metadata file.' };
+                        }
+
+                        let mFile: File;
+                        if (columnMapping !== null) {
+                            mFile = await columnMapping.applyTo(metadataFile);
+                        } else if (extraFilesEnabled) {
+                            // Ensure the metadata file is decompressed so that any file mappings
+                            // can be applied correctly
+                            mFile = new File([await metadataFile.text()], 'metadata.tsv');
+                        } else {
+                            mFile = metadataFile.inner();
                         }
 
                         const sFile = sequenceFile?.inner();
