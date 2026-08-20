@@ -12,6 +12,6 @@ kind: ServersTransport
 metadata:
   name: short-idle-conn-timeout
 spec:
-  maxIdleConnsPerHost: 200 # not defaulted here; 0 would mean Go's DefaultMaxIdleConnsPerHost (2)
+  maxIdleConnsPerHost: 200 # matches traefik defaults
   forwardingTimeouts:
     idleConnTimeout: "3s" # must stay below the shortest backend keep-alive (5s)
