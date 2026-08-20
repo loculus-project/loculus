@@ -15,6 +15,7 @@ import { getLatestAccessionVersionForRevision, type SequenceEntryHistory } from 
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString, parseAccessionVersionFromString } from '../../utils/extractAccessionVersion.ts';
+import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu.tsx';
 import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
@@ -41,7 +42,11 @@ type EditPageProps = {
 const logger = getClientLogger('EditPage');
 
 /**
- * Extracts the detail field from a backend error response
+ * Extracts the detail field from a backend error response.
+ *
+ * The fallback must not be `JSON.stringify(error)`: AxiosError has a custom `toJSON()` that
+ * strips `response`, so stringifying it dumps the request config at the user instead of the
+ * backend's message (see issue #7103).
  */
 function getErrorDetail(error: unknown): string {
     if (
@@ -50,7 +55,7 @@ function getErrorDetail(error: unknown): string {
     ) {
         return error.response.data.detail;
     }
-    return JSON.stringify(error);
+    return stringifyMaybeAxiosError(error);
 }
 
 const InnerEditPage: FC<EditPageProps> = ({

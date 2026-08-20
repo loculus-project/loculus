@@ -275,8 +275,12 @@ export const submitFiles = uploadFiles.merge(
     }),
 );
 
+// Mirrors RFC 9457 (Problem Details for HTTP APIs), which the backend follows: every member
+// is optional, and an absent `type` "is assumed to be `about:blank`" (RFC 9457 section 3.1.1).
+// Spring omits `type` for exactly that reason, and omits `instance` when it is not set, so
+// requiring either of them makes every backend error fail to parse.
 export const problemDetail = z.object({
-    type: z.string(),
+    type: z.string().default('about:blank'),
     title: z.string(),
     status: z.number(),
     detail: z.string(),
