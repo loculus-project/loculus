@@ -148,6 +148,7 @@ spec:
       containers:
         - name: trigger
           image: {{ include "loculus.image" (dict "name" "kubectl" "defaultRepository" "alpine/kubectl" "defaultTag" "1.36.0" "values" $.Values) }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "kubectl" "values" $.Values) }}
           command:
             - sh
             - -c

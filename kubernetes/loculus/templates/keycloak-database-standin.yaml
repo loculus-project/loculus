@@ -28,6 +28,7 @@ spec:
       containers:
         - name: loculus-keycloak-database
           image: {{ include "loculus.image" (dict "name" "postgres" "defaultRepository" "postgres" "defaultTag" "15.12" "values" $.Values) }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "postgres" "values" $.Values) }}
           resources:
             requests:
               memory: "30Mi"

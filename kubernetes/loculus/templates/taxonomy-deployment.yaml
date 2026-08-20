@@ -26,6 +26,7 @@ spec:
       initContainers:
         - name: download-taxonomy-db
           image: {{ include "loculus.image" (dict "name" "alpine" "defaultRepository" "alpine" "defaultTag" "3" "values" $.Values) }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "alpine" "values" $.Values) }}
           command: ["sh", "-c"]
           args:
             - |

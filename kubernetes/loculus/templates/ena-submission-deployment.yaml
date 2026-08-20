@@ -26,6 +26,7 @@ spec:
       initContainers:
         - name: ena-submission-flyway
           image: {{ include "loculus.image" (dict "name" "enaSubmissionFlyway" "defaultRepository" "ghcr.io/loculus-project/ena-submission-flyway" "values" $.Values) }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "enaSubmissionFlyway" "values" $.Values) }}
           resources:
             requests:
               cpu: 100m

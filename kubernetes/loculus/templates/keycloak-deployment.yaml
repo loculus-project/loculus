@@ -35,6 +35,7 @@ spec:
               cpu: 500m
               memory: 256Mi
           image: {{ include "loculus.image" (dict "name" "keycloakify" "defaultRepository" "ghcr.io/loculus-project/keycloakify" "values" $.Values) }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "keycloakify" "values" $.Values) }}
           volumeMounts:
             - name: theme-volume
               mountPath: /destination
@@ -42,6 +43,7 @@ spec:
         - name: keycloak
           # TODO #1221
           image: {{ include "loculus.image" (dict "name" "keycloak" "defaultRepository" "quay.io/keycloak/keycloak" "defaultTag" "23.0" "values" $.Values) }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "keycloak" "values" $.Values) }}
           {{- include "loculus.resources" (list "keycloak" $.Values) | nindent 10 }}
           env:
             - name: REGISTRATION_TERMS_MESSAGE

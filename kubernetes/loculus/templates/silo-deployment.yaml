@@ -1,4 +1,3 @@
-{{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/token" }}
 
 {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
