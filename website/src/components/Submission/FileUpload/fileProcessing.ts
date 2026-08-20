@@ -200,7 +200,15 @@ async function decompress(
 }
 
 export class CompressedFile extends RawFile {
+    private decompressed: Promise<string> | undefined;
+
     async text(): Promise<string> {
+        // The file is decompressed once, and subsequent calls return decompressed text
+        this.decompressed ??= this.decompressText();
+        return this.decompressed;
+    }
+
+    private async decompressText(): Promise<string> {
         const fileNameSegments = this.inner().name.split('.');
         const compressionType = fileNameSegments[fileNameSegments.length - 1].toLowerCase();
 
