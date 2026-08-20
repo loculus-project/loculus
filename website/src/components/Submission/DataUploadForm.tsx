@@ -419,7 +419,7 @@ export const ExtraFilesUpload = ({
                         ? 'Upload a folder of files or individual files for your sequences. Each file must be referenced by its name in the corresponding file category column of your metadata.'
                         : 'Upload a folder of files or individual files for this sequence.'}{' '}
                     For more information please refer to the{' '}
-                    <a href={extraFilesUploadDocsUrl} className='text-primary-600 hover:underline'>
+                    <a href={extraFilesUploadDocsUrl} target='_blank' className='text-primary-600 hover:underline'>
                         extra files documentation
                     </a>
                     .
@@ -525,7 +525,7 @@ const Acknowledgement = ({
                     <p className='block text-sm'>
                         Your data will be available on {instanceName}, under the selected data use terms. Data with open
                         data use terms will additionally be made publicly available through the{' '}
-                        <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
+                        <a href='https://www.insdc.org/' target='_blank' className='text-primary-600 hover:underline'>
                             INSDC
                         </a>{' '}
                         databases (ENA, DDBJ, NCBI).
@@ -563,6 +563,7 @@ const Acknowledgement = ({
                                     INSDC.{' '}
                                     <a
                                         href='/docs/concepts/insdc-submission'
+                                        target='_blank'
                                         className='text-primary-600 hover:underline'
                                     >
                                         Find out more.
