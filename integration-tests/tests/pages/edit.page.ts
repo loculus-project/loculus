@@ -46,4 +46,29 @@ export class EditPage {
         const fileCount = Object.keys(fileContents).length;
         await uploadFilesFromTmpDir(this.page, fileId, tmpDir, fileCount);
     }
+
+    async addAdditionalFile(fileCategory: string, fileName: string, content: string) {
+        await this.page.getByTestId(`add_${fileCategory}`).setInputFiles({
+            name: fileName,
+            mimeType: 'text/plain',
+            buffer: Buffer.from(content),
+        });
+    }
+
+    async confirmReplaceFile() {
+        await expect(this.page.getByText(/already exist and will be replaced/)).toBeVisible();
+        await this.page.getByRole('button', { name: 'Replace' }).click();
+    }
+
+    async discardExtraFile(fileCategory: string, fileName: string) {
+        await this.page.getByTestId(`discard_${fileCategory}_${fileName}`).click();
+    }
+
+    async expectExtraFileUploaded(fileCategory: string, fileName: string) {
+        await expect(this.page.getByTestId(`status_${fileCategory}_${fileName}`)).toHaveText('✓');
+    }
+
+    async expectExtraFileDiscarded(fileCategory: string, fileName: string) {
+        await expect(this.page.getByTestId(`discard_${fileCategory}_${fileName}`)).toHaveCount(0);
+    }
 }

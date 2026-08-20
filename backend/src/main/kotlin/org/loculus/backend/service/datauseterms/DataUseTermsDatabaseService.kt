@@ -1,7 +1,8 @@
 package org.loculus.backend.service.datauseterms
 
-import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.batchInsert
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsHistoryEntry
 import org.loculus.backend.api.DataUseTermsType

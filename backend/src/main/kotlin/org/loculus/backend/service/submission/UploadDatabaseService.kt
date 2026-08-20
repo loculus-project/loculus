@@ -2,20 +2,22 @@ package org.loculus.backend.service.submission
 
 import kotlinx.datetime.LocalDateTime
 import mu.KotlinLogging
-import org.jetbrains.exposed.exceptions.ExposedSQLException
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
-import org.jetbrains.exposed.sql.VarCharColumnType
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.statements.StatementType
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.v1.core.VarCharColumnType
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.less
+import org.jetbrains.exposed.v1.core.statements.StatementType
+import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
+import org.jetbrains.exposed.v1.jdbc.batchInsert
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
+import org.loculus.backend.api.mergeFileCategories
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
@@ -81,7 +83,7 @@ class UploadDatabaseService(
                 this[submissionIdColumn] = it.submissionId
                 this[fastaIdsColumn] = it.fastaIds?.toList()
                 this[metadataColumn] = it.metadata
-                this[filesColumn] = files?.get(it.submissionId)
+                this[filesColumn] = files?.get(it.submissionId)?.mergeFileCategories(it.files) ?: it.files
                 this[organismColumn] = submittedOrganism.name
                 this[uploadIdColumn] = uploadId
             }
@@ -120,7 +122,7 @@ class UploadDatabaseService(
                     this[submissionIdColumn] = it.submissionId
                     this[fastaIdsColumn] = it.fastaIds?.toList()
                     this[metadataColumn] = it.metadata
-                    this[filesColumn] = files?.get(it.submissionId)
+                    this[filesColumn] = files?.get(it.submissionId)?.mergeFileCategories(it.files) ?: it.files
                     this[organismColumn] = submittedOrganism.name
                     this[uploadIdColumn] = uploadId
                 }
@@ -165,6 +167,15 @@ class UploadDatabaseService(
         )
         .where { uploadIdColumn eq uploadId }
         .map { it[submissionIdColumn] }
+
+    fun getFilesForUpload(uploadId: String): SubmissionIdFilesMap = MetadataUploadAuxTable
+        .select(
+            submissionIdColumn,
+            filesColumn,
+        )
+        .where { uploadIdColumn eq uploadId }
+        .mapNotNull { row -> row[filesColumn]?.let { row[submissionIdColumn] to it } }
+        .toMap()
 
     fun getFastaIdsForMetadata(uploadId: String): List<List<String>> = MetadataUploadAuxTable
         .select(

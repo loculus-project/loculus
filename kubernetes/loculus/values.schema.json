@@ -1950,7 +1950,8 @@
         "minio": { "$ref": "#/definitions/imageSpec" },
         "alpine": { "$ref": "#/definitions/imageSpec" },
         "busybox": { "$ref": "#/definitions/imageSpec" },
-        "kubectl": { "$ref": "#/definitions/imageSpec" }
+        "kubectl": { "$ref": "#/definitions/imageSpec" },
+        "deaconIndex": { "$ref": "#/definitions/imageSpec" }
       },
       "additionalProperties": false
     },
