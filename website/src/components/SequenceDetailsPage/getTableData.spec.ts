@@ -399,6 +399,24 @@ describe('getTableData', () => {
         }
     });
 
+    test('should not return mutation data for revocation entries', async () => {
+        mockRequest.lapis.details(200, { info, data: [toLapisEntry({ dummyField: 'dummyValue' }, true)] });
+        mockRequest.lapis.nucleotideMutations(200, { info, data: nucleotideMutations });
+        mockRequest.lapis.aminoAcidMutations(200, { info, data: aminoAcidMutations });
+        mockRequest.lapis.nucleotideInsertions(200, { info, data: nucleotideInsertions });
+        mockRequest.lapis.aminoAcidInsertions(200, { info, data: aminoAcidInsertions });
+
+        const result = await getTableData(
+            accessionVersion,
+            schema,
+            SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+            lapisClient,
+        );
+
+        const data = result._unsafeUnwrap().data;
+        expect(data.filter((entry) => entry.type.kind === 'mutation')).toStrictEqual([]);
+    });
+
     test('should not return mutation data when allowSubmissionOfConsensusSequences = false', async () => {
         mockRequest.lapis.nucleotideMutations(200, { info, data: nucleotideMutations });
         mockRequest.lapis.aminoAcidMutations(200, { info, data: aminoAcidMutations });
