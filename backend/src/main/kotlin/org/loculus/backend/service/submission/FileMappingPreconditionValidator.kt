@@ -135,6 +135,7 @@ class FileMappingPreconditionValidator(
      * - ASCII control characters (code 0-31)
      * - /\:*"?<>| and NUL: forbidden in NTFS (for Windows) and FAT32
      * - More than 255 characters: ext4 and NTFS only allow 255 bytes
+     * - Whitespace characters are forbidden
      *
      * References:
      * - https://en.wikipedia.org/wiki/Comparison_of_file_systems#Limits
@@ -161,6 +162,11 @@ class FileMappingPreconditionValidator(
             throw UnprocessableEntityException(
                 "Invalid filename '$filename' in category '$category': Filenames may not contain " +
                     "ASCII control characters 0-31.",
+            )
+        }
+        if (filename.any { it.isWhitespace() }) {
+            throw UnprocessableEntityException(
+                "Invalid filename '$filename' in category '$category': Filenames may not contain whitespace.",
             )
         }
     }

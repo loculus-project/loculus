@@ -72,7 +72,6 @@ class UploadDatabaseService(
         submittedOrganism: Organism,
         uploadedMetadataBatch: List<MetadataEntry>,
         uploadedAt: LocalDateTime,
-        files: SubmissionIdFilesMap?,
     ) {
         uploadedMetadataBatch.chunked(METADATA_BATCH_SIZE).forEach { batch ->
             MetadataUploadAuxTable.batchInsert(batch) {
@@ -82,7 +81,7 @@ class UploadDatabaseService(
                 this[submissionIdColumn] = it.submissionId
                 this[fastaIdsColumn] = it.fastaIds?.toList()
                 this[metadataColumn] = it.metadata
-                this[filesColumn] = files?.get(it.submissionId)
+                this[filesColumn] = it.files
                 this[organismColumn] = submittedOrganism.name
                 this[uploadIdColumn] = uploadId
             }
@@ -110,7 +109,6 @@ class UploadDatabaseService(
         submittedOrganism: Organism,
         uploadedRevisedMetadataBatch: List<RevisionEntry>,
         uploadedAt: LocalDateTime,
-        files: SubmissionIdFilesMap?,
     ) {
         try {
             uploadedRevisedMetadataBatch.chunked(METADATA_BATCH_SIZE).forEach { batch ->
@@ -121,7 +119,7 @@ class UploadDatabaseService(
                     this[submissionIdColumn] = it.submissionId
                     this[fastaIdsColumn] = it.fastaIds?.toList()
                     this[metadataColumn] = it.metadata
-                    this[filesColumn] = files?.get(it.submissionId)
+                    this[filesColumn] = it.files
                     this[organismColumn] = submittedOrganism.name
                     this[uploadIdColumn] = uploadId
                 }
@@ -159,13 +157,14 @@ class UploadDatabaseService(
         )
     }
 
-    fun getMetadataUploadSubmissionIds(uploadId: String): List<SubmissionId> = MetadataUploadAuxTable
+    fun getFilesForUpload(uploadId: String): SubmissionIdFilesMap = MetadataUploadAuxTable
         .select(
-            uploadIdColumn,
             submissionIdColumn,
+            filesColumn,
         )
         .where { uploadIdColumn eq uploadId }
-        .map { it[submissionIdColumn] }
+        .mapNotNull { row -> row[filesColumn]?.let { row[submissionIdColumn] to it } }
+        .toMap()
 
     fun getFastaIdsForMetadata(uploadId: String): List<List<String>> = MetadataUploadAuxTable
         .select(

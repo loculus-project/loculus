@@ -28,7 +28,7 @@ if (!cleanedOrganism) {
     return new Response(undefined, { status: 404 });
 }
 const schema = getSchema(cleanedOrganism.key);
-const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'revise', true);
+const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'revise', inputMode, true);
 
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 

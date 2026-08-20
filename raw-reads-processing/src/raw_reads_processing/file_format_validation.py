@@ -38,12 +38,12 @@ def _parse_validation_error(stdout: str, stderr: str) -> str:
 
     if marker_pos == -1:
         if stderr:
-            return f"File validation failed at readtools: {stderr.strip()[:40]}..."
-        return "File validation failed at readtools."
+            return f"File validation failed while running ENA readtools with error: {stderr.strip()[:40]}..."
+        return "File validation failed while running ENA readtools."
 
     details = stdout[marker_pos:].partition("\n")[2]
     details = "; ".join(filter(None, map(str.strip, details.splitlines())))
-    return f"File validation failed at readtools. {details}".rstrip()
+    return f"File validation failed while running ENA readtools. {details}".rstrip()
 
 
 def _has_extension(file: str, extensions: set[str]) -> bool:
