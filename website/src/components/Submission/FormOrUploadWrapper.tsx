@@ -143,14 +143,23 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                         }
 
                         let mFile: File;
-                        if (columnMapping !== null) {
-                            mFile = await columnMapping.applyTo(metadataFile);
-                        } else if (extraFilesEnabled) {
-                            // Ensure the metadata file is decompressed so that any file mappings
-                            // can be applied correctly
-                            mFile = new File([await metadataFile.text()], 'metadata.tsv');
-                        } else {
-                            mFile = metadataFile.inner();
+                        try {
+                            if (columnMapping !== null) {
+                                mFile = await columnMapping.applyTo(metadataFile);
+                            } else if (extraFilesEnabled) {
+                                // Ensure the metadata file is decompressed so that any file mappings
+                                // can be applied correctly
+                                mFile = new File([await metadataFile.text()], 'metadata.tsv');
+                            } else {
+                                mFile = metadataFile.inner();
+                            }
+                        } catch (error) {
+                            return {
+                                type: 'error',
+                                errorMessage: `Could not read ${metadataFile.handle().name}: ${
+                                    error instanceof Error ? error.message : String(error)
+                                }`,
+                            };
                         }
 
                         const sFile = sequenceFile?.inner();
