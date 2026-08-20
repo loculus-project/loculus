@@ -519,7 +519,7 @@ Revisions to a study or sample should be submitted the same way as original sequ
 
 ## 2. [Revising Assemblies](https://ena-docs.readthedocs.io/en/latest/update/assembly.html)
 
-It appears that all fields that were explicitly set via the manifest must be updated via an email. This includes changes to any field that is in the `manifest_fields_mapping` field of the default.yaml. Additionally, study and sample reference must stay the same and chromosome names cannot be changed (but new ones can be added).
+Study and sample accessions must stay the same in a revision and chromosome names cannot be changed (but new ones can be added). In the past, all metadata fields that were set via the manifest had to be revised via an email. ENA has now informed us we can revise these fields in a normal automated revision but we have had issues with it, so we have a `allow_revision_with_manifest_changes` flag which can enable/disable automated manifest revisions.
 However, unlike the alias a NEW `ASSEMBLYNAME` is required (cannot be the same as the assemblyname of the previous version).
 
 Currently we automate revision of studies and assemblies, if a manifest update is required the pipeline will not update the assembly but set the state of assembly submission to `HAS_ERRORS` and document the reason for the errors in the database. We will then receive a slack notification and will have to manually send an email to ENA to update the manifest.

@@ -213,7 +213,7 @@ class GetReleasedDataEndpointTest(
             ifNoneMatch = initialEtag,
         )
         responseNoNewData.andExpect(status().isNotModified)
-            .andExpect(header().doesNotExist(ETAG))
+            .andExpect(header().string(ETAG, initialEtag!!))
 
         prepareRevokedAndRevocationAndRevisedVersions()
 
@@ -223,7 +223,7 @@ class GetReleasedDataEndpointTest(
 
         responseAfterMoreDataAdded.andExpect(status().isOk)
             .andExpect(header().string(ETAG, notNullValue()))
-            .andExpect(header().string(ETAG, greaterThan(initialEtag!!)))
+            .andExpect(header().string(ETAG, greaterThan(initialEtag)))
 
         val responseBodyMoreData = responseAfterMoreDataAdded
             .expectNdjsonAndGetContent<ReleasedData>()
@@ -652,7 +652,7 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
     }
 
     @Test
-    fun `GIVEN sequence entry with expired restricted data use terms THEN returns open data use terms`() {
+    fun `GIVEN sequence entry with expired restricted data use terms THEN returns open terms and new etag`() {
         every { dateProvider.getCurrentInstant() } answers { callOriginal() }
 
         val threeMonthsFromNow = dateMonthsFromNow(3)
@@ -664,11 +664,21 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
 
         assertAccessionVersionIsRestrictedUntil(accessionVersion, threeMonthsFromNow)
 
+        val etagWhileRestricted = submissionControllerClient.getReleasedData()
+            .andReturn().response.getHeader(ETAG)!!
+        submissionControllerClient.getReleasedData(ifNoneMatch = etagWhileRestricted)
+            .andExpect(status().isNotModified)
+
         val threeMonthsAndADayFromNow = LocalDateTime(
             date = dateMonthsFromNow(3).plus(1, DateTimeUnit.DAY),
             time = LocalTime.fromSecondOfDay(0),
         ).toInstant(DateProvider.timeZone)
         every { dateProvider.getCurrentInstant() } answers { threeMonthsAndADayFromNow }
+
+        // The restriction lapsing is not a database write, so the etag has to change on the date alone.
+        submissionControllerClient.getReleasedData(ifNoneMatch = etagWhileRestricted)
+            .andExpect(status().isOk)
+            .andExpect(header().string(ETAG, greaterThan(etagWhileRestricted)))
 
         assertAccessionVersionIsOpen(accessionVersion)
     }

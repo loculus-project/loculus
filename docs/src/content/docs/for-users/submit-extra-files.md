@@ -16,6 +16,9 @@ If files are uploaded successfully, there will be a green checkmark:
 
 For bulk submission, you need to upload a folder with one subfolder per submission ID.
 
+Neither the file names nor the subfolder names may contain whitespace, since the metadata file refers to them in
+space-separated lists.
+
 ## API
 
 To submit files via the API, it's a two step process.
@@ -154,22 +157,20 @@ you can proceed to attach the file ID to your submission as described in the nex
 ### Attach file IDs to submission
 
 Now, you can follow the regular steps for [sequence submission](../submit-sequences/), calling the `/<organism>/submit` endpoint.
-But you add another parameter to the curl call:
+Files are attached by adding a `files.<fileCategory>` column to the metadata TSV file for each file category you want to submit files for.
 
-```bash
-  -F 'fileMapping=<mapping JSON>'
+The `fileCategory` needs to be a predefined category which is organism specific, e.g. a column named `files.rawReads`.
+
+The cell value for a given submission ID is a space-separated list of `fileName:fileId` pairs, e.g.:
+
+```
+files.rawReads
+reads_1.fq:8D8AC610-566D-4EF0-9C22-186B2A5ED793 reads_2.fq:2ea137d0-8773-4e0a-a9aa-5591de12ff23
 ```
 
-And the `mapping JSON` has this structure:
-
-```json
-{submissionID: {<fileCategory>: [{fileId: <fileId>, name: <fileName>}]}}
-```
-
-- The `submissionID` links the file mapping to the sequence.
-- The `fileCategory` needs to be a predefined category which is organism specific.
 - The `fileId` is the ID received in the previous step, which identifies the actual file.
 - The `fileName` can be chosen freely, but depending on configuration it might become an identifier for the file later on.
+- Cells may be left empty for submission IDs that don't have files in that category.
 
 ## Filename restrictions
 
@@ -177,5 +178,6 @@ The filenames may contain any UTF-8 characters except:
 
 - Forbidden characters: `< > : " / \ | ? *`
 - ASCII control characters (character codes 0-31)
+- Whitespace characters
 
 Filenames may not be empty or contain more than 255 characters.
