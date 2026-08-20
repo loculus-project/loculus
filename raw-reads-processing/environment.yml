@@ -12,4 +12,5 @@ dependencies:
   - uv=0.10.9
   - uvicorn=0.41.0
   - pyyaml=6.0.3
+  - deacon=0.17.0
   - openjdk=21

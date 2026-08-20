@@ -21,6 +21,7 @@ import {
     type SequenceEntryStatus,
     warningsProcessingResult,
 } from '../../types/backend.ts';
+import type { FileCategory } from '../../types/config.ts';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
@@ -45,7 +46,7 @@ type ReviewPageProps = {
     group: Group;
     accessToken: string;
     metadataDisplayNames: Map<string, string>;
-    filesEnabled: boolean;
+    outputFileCategories?: FileCategory[];
     referenceGenomesInfo: ReferenceGenomesInfo;
 };
 
@@ -84,7 +85,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
     group,
     accessToken,
     metadataDisplayNames,
-    filesEnabled,
+    outputFileCategories,
     referenceGenomesInfo,
 }) => {
     const [pageQuery, setPageQuery] = useState<PageQuery>({ pageOneIndexed: 1, size: pageSizeOptions[2] });
@@ -383,7 +384,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                             clientConfig={clientConfig}
                             organism={organism}
                             accessToken={accessToken}
-                            filesEnabled={filesEnabled}
+                            outputFileCategories={outputFileCategories}
                             referenceGenomesInfo={referenceGenomesInfo}
                         />
                     </div>

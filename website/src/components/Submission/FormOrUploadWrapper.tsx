@@ -1,3 +1,4 @@
+import type { Result } from 'neverthrow';
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 
 import type { UploadAction } from './DataUploadForm';
@@ -8,6 +9,7 @@ import type { InputField, SubmissionDataTypes } from '../../types/config';
 import { EditableSequences } from '../Edit/EditableSequences';
 import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
 import { SequencesForm } from '../Edit/SequencesForm';
+import { parseSubmissionFileMapping, type SubmissionFileMapping } from './FileUpload/fileMapping';
 
 export type InputMode = 'form' | 'bulk';
 
@@ -39,10 +41,12 @@ export type FileFactory = () => Promise<SequenceData | InputError>;
 type FormOrUploadWrapperProps = {
     inputMode: InputMode;
     setFileFactory: Dispatch<SetStateAction<FileFactory | undefined>>;
+    setSubmissionFileMapping: Dispatch<SetStateAction<Result<SubmissionFileMapping, Error> | undefined>>;
     organism: string;
     action: UploadAction;
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
+    onError: (message: string) => void;
 };
 
 /**
@@ -55,11 +59,14 @@ type FormOrUploadWrapperProps = {
 export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     inputMode,
     setFileFactory,
+    setSubmissionFileMapping,
     organism,
     action,
     metadataTemplateFields,
     submissionDataTypes,
+    onError,
 }) => {
+    const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
     const enableConsensusSequences = submissionDataTypes.consensusSequences;
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.empty());
     const [editableSequences, setEditableSequences] = useState(
@@ -72,6 +79,33 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     const [columnMapping, setColumnMapping] = useState<ColumnMapping | null>(null);
 
     useEffect(() => {
+        if (!extraFilesEnabled) return;
+
+        const state = { cancelled: false };
+        void (async () => {
+            if (!metadataFile) {
+                setSubmissionFileMapping(undefined);
+                return;
+            }
+            const text = columnMapping
+                ? await (await columnMapping.applyTo(metadataFile)).text()
+                : await metadataFile.text();
+
+            if (state.cancelled) return;
+
+            const submissionFileMapping = parseSubmissionFileMapping(
+                text,
+                submissionDataTypes.files?.categories?.map((category) => category.name) ?? [],
+            );
+            setSubmissionFileMapping(submissionFileMapping);
+            if (submissionFileMapping.isErr()) onError(submissionFileMapping.error.message);
+        })();
+        return () => {
+            state.cancelled = true;
+        };
+    }, [metadataFile, columnMapping, extraFilesEnabled]);
+
+    useEffect(() => {
         setFileFactory(() => {
             // Returns a function that the parent component can call to get the files needed for submission
             return async (): Promise<SequenceData | InputError> => {
@@ -82,7 +116,12 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                             return { type: 'error', errorMessage: 'Please specify an ID.' };
                         }
                         const fastaIds = enableConsensusSequences ? editableSequences.getFastaIds() : undefined;
-                        const metadataFile = editableMetadata.getMetadataTsv(undefined, undefined, fastaIds);
+                        const metadataFile = editableMetadata.getMetadataTsv(
+                            undefined,
+                            undefined,
+                            fastaIds,
+                            submissionDataTypes.files?.categories,
+                        );
                         if (!metadataFile) {
                             return { type: 'error', errorMessage: 'Please specify metadata.' };
                         }

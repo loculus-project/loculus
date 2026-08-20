@@ -8,8 +8,12 @@ import com.fasterxml.jackson.databind.node.LongNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import mu.KotlinLogging
-import org.jetbrains.exposed.sql.andWhere
-import org.jetbrains.exposed.sql.or
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.isNull
+import org.jetbrains.exposed.v1.core.or
+import org.jetbrains.exposed.v1.jdbc.andWhere
+import org.jetbrains.exposed.v1.jdbc.select
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.FileCategory
 import org.loculus.backend.api.FileCategoryFilesMap
@@ -40,7 +44,7 @@ import org.loculus.backend.utils.toTimestamp
 import org.loculus.backend.utils.toUtcDateString
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.net.URLEncoder
+import org.springframework.web.util.UriUtils.encodePathSegment
 import java.nio.charset.StandardCharsets
 
 private val log = KotlinLogging.logger { }
@@ -91,18 +95,17 @@ open class ReleasedDataModel(
     }
 
     /**
-     * Returns the ETag for the last relevant database write, as the most recent
-     * `last_time_updated` in the update tracker.
+     * Returns the timestamp of the last relevant database write, for use in ETags, taken from the
+     * most recent `last_time_updated` in the update tracker.
      *
-     * When [organism] and/or [pipelineVersion] are given, the lookup is scoped to
-     * the rows that affect that organism's released data at that pipeline version:
+     * When [organism] is given, the lookup is scoped to the rows that affect that organism's
+     * released data at its current pipeline version:
      * table-wide writes (tagged with NULL organism / pipeline_version) are always
      * included, plus the organism- and pipeline-specific preprocessed-data rows.
      * This means preprocessing of one organism (or of a not-yet-current pipeline
      * version) no longer invalidates the ETag of other organisms.
      */
-    @Transactional(readOnly = true)
-    open fun getLastDatabaseWriteETag(tableNames: List<String>? = null, organism: Organism? = null): String {
+    private fun getLastDatabaseWrite(tableNames: List<String>? = null, organism: Organism? = null): String {
         val pipelineVersion = organism?.let {
             submissionDatabaseService.getCurrentProcessingPipelineVersion(it)
         }
@@ -125,8 +128,23 @@ open class ReleasedDataModel(
             // Replace not strictly necessary but does no harm and a) shows UTC, b) simplifies silo import script logic
             ?.replace(" ", "Z")
             ?: ""
-        return "\"$lastUpdateTime\"" // ETag must be enclosed in double quotes
+        return lastUpdateTime
     }
+
+    /** ETag for the last relevant database write. */
+    @Transactional(readOnly = true)
+    open fun getLastDatabaseWriteETag(tableNames: List<String>? = null, organism: Organism? = null): String =
+        "\"${getLastDatabaseWrite(tableNames, organism)}\"" // ETag must be enclosed in double quotes
+
+    /**
+     * Same as [getLastDatabaseWriteETag], but also includes the current date.
+     * Useful because RESTRICTED entries can lapse to OPEN with no database write, so an ETag based on write
+     * timestamps alone would keep serving 304s past the `restrictedUntil` date.
+     */
+    @Transactional(readOnly = true)
+    open fun getLastDatabaseWriteETagWithDate(tableNames: List<String>? = null, organism: Organism? = null): String =
+        // ETag must be enclosed in double quotes
+        "\"${getLastDatabaseWrite(tableNames, organism)}|${dateProvider.getCurrentDate()}\""
 
     private fun conditionalMetadata(condition: Boolean, values: () -> MetadataMap): MetadataMap =
         if (condition) values() else emptyMap()
@@ -232,7 +250,7 @@ open class ReleasedDataModel(
         filesMap: FileCategoryFilesMap,
     ): Map<FileCategory, List<FileIdAndNameAndReadUrl>> = filesMap.mapValues { (category, fileIdandName) ->
         fileIdandName.map { (fileId, name) ->
-            val encoded = URLEncoder.encode(name, StandardCharsets.UTF_8)
+            val encoded = encodePathSegment(name, StandardCharsets.UTF_8)
             val url = when (backendConfig.fileSharing.outputFileUrlType) {
                 FileUrlType.WEBSITE -> "${backendConfig.websiteUrl}/seq/$accession.$version/$category/$encoded"
                 FileUrlType.BACKEND -> "${backendConfig.backendUrl}/files/get/$accession/$version/$category/$encoded"
