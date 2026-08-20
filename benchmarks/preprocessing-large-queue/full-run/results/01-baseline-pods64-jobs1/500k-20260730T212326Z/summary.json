@@ -1,0 +1,209 @@
+{
+  "result": "COMPLETE",
+  "quality": "DEGRADED",
+  "source": {
+    "id": "491107f-852581e76884",
+    "commit": "491107f04c90699b7a93b0252d14a9435c27780d",
+    "worktree_hash": "852581e768842b1cae6fc643e621cd1d0417f9bacb483f3164b6f44f0abada1a",
+    "support_sha": "fb21c7a"
+  },
+  "started_utc": "2026-07-30T21:23:25Z",
+  "finished_utc": "2026-07-30T23:33:12Z",
+  "host": "performance.covid.staging.genspectrum.org",
+  "records": 500000,
+  "input": {
+    "fasta": {
+      "path": "500/500_covid.fasta.zst",
+      "sha256": "2ea74b70c33826881cc3428fcd1596e401642c3dcfb4eae7cb90b86c08f4cbd7"
+    },
+    "metadata": {
+      "path": "500/500_covid.tsv.zst",
+      "sha256": "7f5339189b4a3f7bfac91d79039644b2dbb4a2653359986fcba962be60a52903"
+    }
+  },
+  "configuration": {
+    "backend_replicas": 1,
+    "preprocessing_replicas": 64,
+    "paused_background_deployments": 25,
+    "upload_timeout_seconds": 14400,
+    "process_timeout_seconds": 14400,
+    "lapis_timeout_seconds": 3600,
+    "poll_interval_seconds": 60,
+    "lapis_poll_interval_seconds": 10,
+    "sample_interval_seconds": 30,
+    "dataset_ready_timeout_seconds": 1200,
+    "service_ready_timeout_seconds": 1200,
+    "preprocessing_config_sha256": "ae3839e9d71bee54414ca949f7750cf4a30c448bef099b58b5e4ba037049bdb9",
+    "nextclade_dataset": {
+      "tag": "2026-06-16--14-30-45Z",
+      "pathogen_json_sha256": "0d074ed44d1a7285edc2ce9495ab02e5ea5e7bb4b2e704382fae093105542b37",
+      "reference_fasta_sha256": "394b9500b9f80a847f5fe8d30e47022400d8e1bface56721b75367acd3c5b69c"
+    }
+  },
+  "upload": {
+    "seconds": 4350.625167,
+    "rows_per_second": 114.9260119654891
+  },
+  "at_upload_complete": {
+    "processed": 0,
+    "remaining": 500000,
+    "queued": 498700,
+    "active": 1300
+  },
+  "queue_drain": {
+    "seconds": 2228,
+    "records": 500000,
+    "rows_per_second": 224.4165170556553
+  },
+  "to_processed": {
+    "seconds": 6579,
+    "effective_rows_per_second": 75.99939200486396,
+    "completion_detection_delay_seconds": 32,
+    "processed_ok": 499503,
+    "processed_error": 497,
+    "max_allowed_errors": 5000
+  },
+  "publication": {
+    "seconds": 1028,
+    "approval_seconds": 246,
+    "approved": 499503,
+    "lapis_seconds": 782,
+    "lapis_count": 499503
+  },
+  "evidence": {
+    "resource_samples": 252,
+    "memory_samples": 252,
+    "backend_status_samples": 252,
+    "preprocessing_status_samples": 252,
+    "stage_samples": 38,
+    "expected_resource_samples": 255,
+    "last_sample_gap_seconds": 19
+  },
+  "setup_seconds": 144,
+  "workload_seconds": 7642,
+  "command_seconds": 7787,
+  "backend_memory": {
+    "peak_mib": 2387,
+    "upload_peak_mib": 1198,
+    "queue_drain_peak_mib": 2387,
+    "publication_peak_mib": 1455,
+    "samples": 252,
+    "phase_samples": {
+      "upload": 144,
+      "queue_drain": 74,
+      "publication": 34
+    }
+  },
+  "preprocessing": {
+    "replicas": 64,
+    "ready_min": 51
+  },
+  "restarts": {
+    "backend_start": 0,
+    "backend_end": 0,
+    "backend_delta": 0,
+    "preprocessing_start": 0,
+    "preprocessing_end": 101,
+    "preprocessing_delta": 101
+  },
+  "database_operations": [
+    {
+      "phase": "upload",
+      "operation": "tracker",
+      "calls": 2006904,
+      "total_exec_time_ms": 3770477.96,
+      "rows": 2006004
+    },
+    {
+      "phase": "upload",
+      "operation": "data_use_terms",
+      "calls": 500000,
+      "total_exec_time_ms": 1906953.083,
+      "rows": 500000
+    },
+    {
+      "phase": "upload",
+      "operation": "accession_assignment",
+      "calls": 500000,
+      "total_exec_time_ms": 1873450.283,
+      "rows": 500000
+    },
+    {
+      "phase": "upload",
+      "operation": "queue_claim_total",
+      "calls": null,
+      "total_exec_time_ms": 86236.856,
+      "rows": null
+    },
+    {
+      "phase": "upload",
+      "operation": "queue_claim_atomic",
+      "calls": 20656,
+      "total_exec_time_ms": 75814.516,
+      "rows": 6900
+    },
+    {
+      "phase": "upload",
+      "operation": "queue_claim_insert",
+      "calls": 6900,
+      "total_exec_time_ms": 10422.34,
+      "rows": 6000
+    },
+    {
+      "phase": "queue-drain",
+      "operation": "queue_claim_total",
+      "calls": null,
+      "total_exec_time_ms": 12715116.303,
+      "rows": null
+    },
+    {
+      "phase": "queue-drain",
+      "operation": "tracker",
+      "calls": 1492600,
+      "total_exec_time_ms": 11728507.622,
+      "rows": 993900
+    },
+    {
+      "phase": "queue-drain",
+      "operation": "queue_claim_atomic",
+      "calls": 10014,
+      "total_exec_time_ms": 7456097.262,
+      "rows": 992600
+    },
+    {
+      "phase": "queue-drain",
+      "operation": "result_store",
+      "calls": 500000,
+      "total_exec_time_ms": 6594223.229,
+      "rows": 500000
+    },
+    {
+      "phase": "queue-drain",
+      "operation": "queue_claim_insert",
+      "calls": 992600,
+      "total_exec_time_ms": 5259019.041,
+      "rows": 493900
+    },
+    {
+      "phase": "publication",
+      "operation": "queue_claim_atomic",
+      "calls": 306,
+      "total_exec_time_ms": 1248742.315,
+      "rows": 0
+    },
+    {
+      "phase": "publication",
+      "operation": "queue_claim_total",
+      "calls": null,
+      "total_exec_time_ms": 1248742.315,
+      "rows": null
+    },
+    {
+      "phase": "publication",
+      "operation": "tracker",
+      "calls": 501,
+      "total_exec_time_ms": 102.86,
+      "rows": 501
+    }
+  ]
+}
