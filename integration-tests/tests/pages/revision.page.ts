@@ -89,6 +89,12 @@ export class RevisionPage {
         await expect(this.page.getByTestId('discard_metadata_file')).toBeEnabled();
     }
 
+    async discardFiles(fileCategory: string) {
+        await this.page.getByTestId(`discard_${fileCategory}`).click();
+        // Confirmation modal appears and the discard button must be clicked
+        await this.page.getByRole('button', { name: 'Discard', exact: true }).click();
+    }
+
     /**
      * Accept the data submission terms
      */
@@ -137,12 +143,12 @@ export class RevisionPage {
 
     async uploadExternalFiles(
         fileId: string,
-        fileContents: Record<string, Record<string, string>>,
+        fileContents: Record<string, string | Record<string, string>>,
         tmpDir: string,
     ) {
         await prepareTmpDirForBulkUpload(fileContents, tmpDir);
         const fileCount = Object.values(fileContents).reduce(
-            (total, files) => total + Object.keys(files).length,
+            (total, files) => total + (typeof files === 'string' ? 1 : Object.keys(files).length),
             0,
         );
         await uploadFilesFromTmpDir(this.page, fileId, tmpDir, fileCount);

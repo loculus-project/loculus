@@ -349,16 +349,17 @@ class ReviseEndpointTest(
         convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT, fileIdAndUrl.headers)
 
         client.reviseSequenceEntries(
-            DefaultFiles.getRevisedMetadataFile(accessions),
-            DefaultFiles.sequencesFile,
-            fileMapping = mapOf(
-                "custom0" to
-                    mapOf(
-                        "myFileCategory" to listOf(
-                            FileIdAndName(fileIdAndUrl.fileId, "foo.txt"),
+            DefaultFiles.getRevisedMetadataFile(accessions).withFileMapping(
+                mapOf(
+                    "custom0" to
+                        mapOf(
+                            "myFileCategory" to listOf(
+                                FileIdAndName(fileIdAndUrl.fileId, "foo.txt"),
+                            ),
                         ),
-                    ),
+                ),
             ),
+            DefaultFiles.sequencesFile,
         )
             .andExpect(status().isOk)
     }
@@ -371,25 +372,29 @@ class ReviseEndpointTest(
             .map { it.accession }
 
         client.reviseSequenceEntries(
-            DefaultFiles.getRevisedMetadataFile(accessions),
-            DefaultFiles.sequencesFile,
-            fileMapping = mapOf(
-                "foo" to
-                    mapOf(
-                        "myFileCategory" to
-                            listOf(
-                                FileIdAndName(UUID.randomUUID(), "foo.txt"),
-                                FileIdAndName(UUID.randomUUID(), "foo.txt"),
-                            ),
-                    ),
+            DefaultFiles.getRevisedMetadataFile(accessions).withFileMapping(
+                mapOf(
+                    "custom0" to
+                        mapOf(
+                            "myFileCategory" to
+                                listOf(
+                                    FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                                    FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                                ),
+                        ),
+                ),
             ),
+            DefaultFiles.sequencesFile,
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                ).value("The files in category myFileCategory contain duplicate file names: foo.txt"),
+                ).value(
+                    "In metadata file: record #1 with id 'custom0': found duplicate file names in column " +
+                        "'files.myFileCategory': foo.txt",
+                ),
             )
     }
 
@@ -401,17 +406,18 @@ class ReviseEndpointTest(
             .map { it.accession }
 
         client.reviseSequenceEntries(
-            DefaultFiles.getRevisedMetadataFile(accessions),
-            DefaultFiles.sequencesFile,
-            fileMapping = mapOf(
-                "foo" to
-                    mapOf(
-                        "unknownCategory" to
-                            listOf(
-                                FileIdAndName(UUID.randomUUID(), "foo.txt"),
-                            ),
-                    ),
+            DefaultFiles.getRevisedMetadataFile(accessions).withFileMapping(
+                mapOf(
+                    "custom0" to
+                        mapOf(
+                            "unknownCategory" to
+                                listOf(
+                                    FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                                ),
+                        ),
+                ),
             ),
+            DefaultFiles.sequencesFile,
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
@@ -437,17 +443,18 @@ class ReviseEndpointTest(
             .map { it.accession }
 
         client.reviseSequenceEntries(
-            DefaultFiles.getRevisedMetadataFile(accessions),
-            DefaultFiles.sequencesFile,
-            fileMapping = mapOf(
-                "foo" to
-                    mapOf(
-                        "myFileCategory" to
-                            listOf(
-                                FileIdAndName(fileId, "foo.txt"),
-                            ),
-                    ),
+            DefaultFiles.getRevisedMetadataFile(accessions).withFileMapping(
+                mapOf(
+                    "custom0" to
+                        mapOf(
+                            "myFileCategory" to
+                                listOf(
+                                    FileIdAndName(fileId, "foo.txt"),
+                                ),
+                        ),
+                ),
             ),
+            DefaultFiles.sequencesFile,
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
@@ -499,17 +506,18 @@ class ReviseEndpointTest(
         filesClient.completeMultipartUploads(listOf(FileIdAndEtags(fileIdAndUrls.fileId, listOf(etag1, etag2))))
 
         client.reviseSequenceEntries(
-            DefaultFiles.getRevisedMetadataFile(accessions),
-            DefaultFiles.sequencesFile,
-            fileMapping = mapOf(
-                "custom0" to
-                    mapOf(
-                        "myFileCategory" to
-                            listOf(
-                                FileIdAndName(fileIdAndUrls.fileId, "foo.txt"),
-                            ),
-                    ),
+            DefaultFiles.getRevisedMetadataFile(accessions).withFileMapping(
+                mapOf(
+                    "custom0" to
+                        mapOf(
+                            "myFileCategory" to
+                                listOf(
+                                    FileIdAndName(fileIdAndUrls.fileId, "foo.txt"),
+                                ),
+                        ),
+                ),
             ),
+            DefaultFiles.sequencesFile,
         )
             .andExpect(status().isOk)
     }

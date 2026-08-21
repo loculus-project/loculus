@@ -49,11 +49,15 @@ class SubmissionPage {
         await this.page.click(restrictedSelector);
     }
 
-    // TODO #5357: improve this function by passing in whether we accepted open terms to simplify and also test modal appearance/absence
-    async submitSequence(): Promise<ReviewPage> {
+    async clickSubmit() {
         await this.page
             .getByRole('button', { name: 'Upload and proceed to Approval' })
             .click({ timeout: 10_000 });
+    }
+
+    // TODO #5357: improve this function by passing in whether we accepted open terms to simplify and also test modal appearance/absence
+    async submitSequence(): Promise<ReviewPage> {
+        await this.clickSubmit();
 
         // 'Continue under Open terms' only shows if we are submitting under open terms - but we don't know in this function
         // Void because we're waiting for the review page anyway, so no need to wait for this specifically
@@ -66,10 +70,10 @@ class SubmissionPage {
         return new ReviewPage(this.page);
     }
 
-    async submitAndWaitForProcessingDone(): Promise<ReviewPage> {
+    async submitAndWaitForProcessingDone(timeout = 90000): Promise<ReviewPage> {
         await this.acceptTerms();
         const reviewPage = await this.submitSequence();
-        await reviewPage.waitForZeroProcessing();
+        await reviewPage.waitForZeroProcessing(timeout);
         return reviewPage;
     }
 }
@@ -87,32 +91,22 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         collectionCountry,
         collectionDate,
         authorAffiliations,
+        sequencingInstrument,
     }: {
         submissionId: string;
         collectionCountry: string;
         collectionDate: string;
         authorAffiliations: string;
+        sequencingInstrument?: string;
     }) {
         await this.page.getByLabel('ID', { exact: true }).fill(submissionId);
         await this.page.getByLabel('Collection country').fill(collectionCountry);
         await this.page.getByLabel('Collection country').blur();
         await this.page.getByLabel('Collection date').fill(collectionDate);
         await this.page.getByLabel('Author affiliations').fill(authorAffiliations);
-    }
-
-    async fillSubmissionFormDummyOrganism({
-        submissionId,
-        country,
-        date,
-    }: {
-        submissionId: string;
-        country: string;
-        date: string;
-    }) {
-        await this.page.getByLabel('ID', { exact: true }).fill(submissionId);
-        await this.page.getByLabel('Country').fill(country);
-        await this.page.getByLabel('Country').blur();
-        await this.page.getByLabel('Date').fill(date);
+        if (sequencingInstrument) {
+            await this.page.getByLabel('Sequencing instrument').fill(sequencingInstrument);
+        }
     }
 
     async fillSequenceData(sequenceData: Record<string, string>) {
@@ -213,12 +207,12 @@ export class BulkSubmissionPage extends SubmissionPage {
 
     async uploadExternalFiles(
         fileId: string,
-        fileContents: Record<string, Record<string, string>>,
+        fileContents: Record<string, string | Record<string, string>>,
         tmpDir: string,
     ) {
         await prepareTmpDirForBulkUpload(fileContents, tmpDir);
         const fileCount = Object.values(fileContents).reduce(
-            (total, files) => total + Object.keys(files).length,
+            (total, files) => total + (typeof files === 'string' ? 1 : Object.keys(files).length),
             0,
         );
         await uploadFilesFromTmpDir(this.page, fileId, tmpDir, fileCount);

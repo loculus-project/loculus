@@ -24,7 +24,11 @@ export const sequenceEntryProcessingResultNames = z.union([
 ]);
 export type SequenceEntryProcessingResultNames = z.infer<typeof sequenceEntryProcessingResultNames>;
 
-const processingAnnotationSourceType = z.union([z.literal('Metadata'), z.literal('NucleotideSequence')]);
+const processingAnnotationSourceType = z.union([
+    z.literal('Metadata'),
+    z.literal('NucleotideSequence'),
+    z.literal('File'),
+]);
 export type ProcessingAnnotationSourceType = z.infer<typeof processingAnnotationSourceType>;
 
 const processingAnnotation = z.object({
@@ -180,9 +184,7 @@ const filesByCategory = z.record(
         }),
     ),
 );
-
-export const filesBySubmissionId = z.record(filesByCategory);
-export type FilesBySubmissionId = z.infer<typeof filesBySubmissionId>;
+export type FilesByCategory = z.infer<typeof filesByCategory>;
 
 export const editedSequenceEntryData = accessionVersion.merge(
     z.object({
@@ -263,9 +265,7 @@ export const mapErrorsAndWarnings = (
 export const uploadFiles = z.object({
     metadataFile: z.instanceof(File),
     sequenceFile: z.instanceof(File).optional(),
-    fileMapping: filesBySubmissionId.optional(),
 });
-export type UploadFiles = z.infer<typeof uploadFiles>;
 
 export const submitFiles = uploadFiles.merge(
     z.object({
