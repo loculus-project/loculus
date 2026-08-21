@@ -42,8 +42,7 @@ jobs:
       - name: Create deacon index
         shell: bash -l {0}
         run: |
-          curl -fL https://objectstorage.uk-london-1.oraclecloud.com/n/lrbvkel2wjot/b/human-genome-bucket/o/deacon/misc/panhuman-1.k31w15c8.idx -o "${INDEX_VERSIONED}"
-          ls -lh "${INDEX_VERSIONED}"
+          python3 ./raw-reads-processing/build-index.py -o "${INDEX_VERSIONED}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
