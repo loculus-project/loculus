@@ -1,14 +1,17 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { err, ok } from 'neverthrow';
+import { useEffect, useState, type ComponentProps } from 'react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { FolderUploadComponent } from './FolderUploadComponent';
 import { type FileMapping } from './fileMapping';
+import { type FileUploadState } from './fileUpload';
 import * as multipartUpload from '../../../utils/multipartUpload';
 
 const mockRequestMultipartUpload = vi.fn();
 const mockCompleteMultipartUpload = vi.fn();
+const mockOnError = vi.fn();
 
 vi.mock('../../../services/backendClient', () => {
     return {
@@ -31,8 +34,28 @@ vi.mock('../../../utils/multipartUpload', async () => {
     };
 });
 
-const mockSetFileMapping = vi.fn();
-const mockOnError = vi.fn();
+const FolderUploadComponentWithState = ({
+    initialState,
+    initialMapping,
+    onMapping,
+    ...props
+}: Omit<ComponentProps<typeof FolderUploadComponent>, 'fileUploadState' | 'setFileUploadState' | 'setFileMapping'> & {
+    initialState?: FileUploadState;
+    initialMapping?: FileMapping;
+    onMapping?: (mapping: FileMapping | undefined) => void;
+}) => {
+    const [fileUploadState, setFileUploadState] = useState(initialState);
+    const [mapping, setMapping] = useState<FileMapping | undefined>(initialMapping);
+    useEffect(() => onMapping?.(mapping), [mapping, onMapping]);
+    return (
+        <FolderUploadComponent
+            {...props}
+            fileUploadState={fileUploadState}
+            setFileUploadState={setFileUploadState}
+            setFileMapping={setMapping}
+        />
+    );
+};
 
 const defaultProps = {
     fileCategory: {
@@ -43,35 +66,27 @@ const defaultProps = {
     accessToken: 'test-token',
     clientConfig: { backendUrl: 'http://test-backend', lapisUrls: {} },
     groupId: 1,
-    fileMapping: undefined,
-    setFileMapping: mockSetFileMapping,
     onError: mockOnError,
 };
 
-// The fileMapping is keyed by category, then by file path, to its file ID. Previous uploads have no
-// upload path, so (within a single entry, where names are unique) they are keyed by their name.
-const fileMappingOf = (files: { fileId: string; path: string }[]) =>
-    new Map([['extraFiles', new Map(files.map((f) => [f.path, f.fileId]))]]);
+const previousUploadsState = (files: { fileId: string; path: string }[]): FileUploadState => ({
+    type: 'uploadCompleted',
+    files: files.map(({ fileId, path }) => ({ type: 'previousUpload', fileId, path })),
+});
+
+const previousUploads = [
+    { fileId: 'file-1', path: 'file-a.txt' },
+    { fileId: 'file-2', path: 'file-b.txt' },
+];
 
 const defaultPropsWithFiles = {
     ...defaultProps,
     inputMode: 'form' as const,
-    fileMapping: fileMappingOf([
-        { fileId: 'file-1', path: 'file-a.txt' },
-        { fileId: 'file-2', path: 'file-b.txt' },
-    ]),
+    initialState: previousUploadsState(previousUploads),
 };
 
-/**
- * The component reports its files by passing an updater to `setFileMapping`, so apply the most
- * recent updater to the mapping it was given to see the mapping the parent would end up with.
- */
-const latestReportedMapping = (currentMapping: FileMapping | undefined): FileMapping | undefined => {
-    const updater = mockSetFileMapping.mock.lastCall?.[0] as (
-        mapping: FileMapping | undefined,
-    ) => FileMapping | undefined;
-    return updater(currentMapping);
-};
+// The mapping is keyed by category, then by file path, to its file ID.
+const mappingOf = (files: [path: string, fileId: string][]) => new Map([['extraFiles', new Map(files)]]);
 
 describe('FolderUploadComponent', () => {
     beforeEach(() => {
@@ -83,19 +98,13 @@ describe('FolderUploadComponent', () => {
 
     describe('folder upload', () => {
         it('renders upload folder button', () => {
-            render(<FolderUploadComponent {...defaultProps} />);
+            render(<FolderUploadComponentWithState {...defaultProps} />);
             expect(screen.getByText('Upload folder')).toBeInTheDocument();
             expect(screen.getByTestId('folder-up-icon')).toBeInTheDocument();
         });
 
-        it('renders upload folder button when the mapping has no files for the category', () => {
-            render(
-                <FolderUploadComponent
-                    {...defaultProps}
-                    inputMode='form'
-                    fileMapping={new Map([['extraFiles', new Map()]])}
-                />,
-            );
+        it('renders upload folder button when there is no upload state for the category', () => {
+            render(<FolderUploadComponentWithState {...defaultProps} inputMode='form' />);
 
             expect(screen.getByText('Upload folder')).toBeInTheDocument();
             expect(screen.getByTestId('extraFiles')).toBeInTheDocument();
@@ -105,7 +114,7 @@ describe('FolderUploadComponent', () => {
         it('displays files after selection', async () => {
             mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'file-1', urls: ['http://test.com/url1'] }]));
 
-            render(<FolderUploadComponent {...defaultProps} />);
+            render(<FolderUploadComponentWithState {...defaultProps} />);
 
             const input = screen.getByTestId('extraFiles');
             const file = new File(['content'], 'test.txt', { type: 'text/plain' });
@@ -136,7 +145,7 @@ describe('FolderUploadComponent', () => {
                 return '"etag"';
             });
 
-            render(<FolderUploadComponent {...defaultProps} />);
+            render(<FolderUploadComponentWithState {...defaultProps} />);
 
             const input = screen.getByTestId('extraFiles');
             const file = new File(['x'.repeat(20_000_000)], 'large.txt', { type: 'text/plain' });
@@ -160,7 +169,7 @@ describe('FolderUploadComponent', () => {
                 ]),
             );
 
-            render(<FolderUploadComponent {...defaultProps} />);
+            render(<FolderUploadComponentWithState {...defaultProps} />);
 
             const input = screen.getByTestId('extraFiles');
             const file = new File(['x'.repeat(30_000_000)], 'large.txt', { type: 'text/plain' });
@@ -180,7 +189,7 @@ describe('FolderUploadComponent', () => {
             );
             vi.mocked(multipartUpload.uploadPart).mockResolvedValueOnce('"etag1"').mockResolvedValueOnce('"etag2"');
 
-            render(<FolderUploadComponent {...defaultProps} />);
+            render(<FolderUploadComponentWithState {...defaultProps} />);
 
             const input = screen.getByTestId('extraFiles');
             const file = new File(['x'.repeat(20_000_000)], 'test.txt', { type: 'text/plain' });
@@ -200,7 +209,7 @@ describe('FolderUploadComponent', () => {
         it('shows success state after upload completes', async () => {
             mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'file-1', urls: ['http://test.com/url1'] }]));
 
-            render(<FolderUploadComponent {...defaultProps} />);
+            render(<FolderUploadComponentWithState {...defaultProps} />);
 
             const input = screen.getByTestId('extraFiles');
             const file = new File(['content'], 'test.txt', { type: 'text/plain' });
@@ -216,7 +225,7 @@ describe('FolderUploadComponent', () => {
         it('filters out dot files', async () => {
             mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'file-1', urls: ['http://test.com/url1'] }]));
 
-            render(<FolderUploadComponent {...defaultProps} />);
+            render(<FolderUploadComponentWithState {...defaultProps} />);
 
             const input = screen.getByTestId('extraFiles');
             const validFile = new File(['content'], 'test.txt', { type: 'text/plain' });
@@ -241,7 +250,7 @@ describe('FolderUploadComponent', () => {
 
     describe('rejects whitespace', () => {
         it('rejects a folder upload containing a file name with whitespace', async () => {
-            render(<FolderUploadComponent {...defaultProps} />);
+            render(<FolderUploadComponentWithState {...defaultProps} />);
 
             const file = new File(['content'], 'my reads.fastq', { type: 'text/plain' });
             Object.defineProperty(file, 'webkitRelativePath', {
@@ -256,7 +265,7 @@ describe('FolderUploadComponent', () => {
         });
 
         it('rejects a folder upload containing a folder name with whitespace', async () => {
-            render(<FolderUploadComponent {...defaultProps} />);
+            render(<FolderUploadComponentWithState {...defaultProps} />);
 
             const file = new File(['content'], 'reads.fastq', { type: 'text/plain' });
             Object.defineProperty(file, 'webkitRelativePath', {
@@ -271,7 +280,7 @@ describe('FolderUploadComponent', () => {
         });
 
         it('rejects individually selected files with whitespace in their names', async () => {
-            render(<FolderUploadComponent {...defaultProps} />);
+            render(<FolderUploadComponentWithState {...defaultProps} />);
 
             const file = new File(['content'], 'my reads.fastq', { type: 'text/plain' });
             Object.defineProperty(file, 'webkitRelativePath', { value: '', writable: false });
@@ -285,7 +294,7 @@ describe('FolderUploadComponent', () => {
 
     describe('previous uploads', () => {
         it('renders previous uploads with an "uploaded" label', () => {
-            render(<FolderUploadComponent {...defaultPropsWithFiles} />);
+            render(<FolderUploadComponentWithState {...defaultPropsWithFiles} />);
 
             expect(screen.getByText('file-a.txt')).toBeInTheDocument();
             expect(screen.getByText('file-b.txt')).toBeInTheDocument();
@@ -295,14 +304,14 @@ describe('FolderUploadComponent', () => {
 
     describe('discarding individual files', () => {
         it('files can be discarded and removed from the file mapping', async () => {
-            render(<FolderUploadComponent {...defaultPropsWithFiles} />);
+            const onMapping = vi.fn();
+            render(<FolderUploadComponentWithState {...defaultPropsWithFiles} onMapping={onMapping} />);
 
             await userEvent.click(screen.getByTestId('discard_extraFiles_file-a.txt'));
             await waitFor(() => expect(screen.queryByText('file-a.txt')).not.toBeInTheDocument());
             expect(screen.getByText('file-b.txt')).toBeInTheDocument();
 
-            const mapping = latestReportedMapping(defaultPropsWithFiles.fileMapping);
-            expect([...mapping!.get('extraFiles')!.entries()]).toEqual([['file-b.txt', 'file-2']]);
+            expect(onMapping).toHaveBeenLastCalledWith(mappingOf([['file-b.txt', 'file-2']]));
         });
 
         it('files are discarded by path, not by name', async () => {
@@ -310,7 +319,8 @@ describe('FolderUploadComponent', () => {
                 .mockReturnValueOnce(ok([{ fileId: 'file-1', urls: ['http://test.com/url1'] }]))
                 .mockReturnValueOnce(ok([{ fileId: 'file-2', urls: ['http://test.com/url2'] }]));
 
-            render(<FolderUploadComponent {...defaultProps} />);
+            const onMapping = vi.fn();
+            render(<FolderUploadComponentWithState {...defaultProps} onMapping={onMapping} />);
 
             const firstFile = new File(['content'], 'a.txt', { type: 'text/plain' });
             Object.defineProperty(firstFile, 'webkitRelativePath', { value: 'folder/sub1/a.txt', writable: false });
@@ -325,22 +335,24 @@ describe('FolderUploadComponent', () => {
             await waitFor(() => expect(screen.getAllByText('a.txt')).toHaveLength(1));
             expect(screen.getByText('sub2 /')).toBeInTheDocument();
             expect(screen.queryByText('sub1 /')).not.toBeInTheDocument();
-            expect([...latestReportedMapping(undefined)!.get('extraFiles')!.entries()]).toEqual([
-                ['sub2/a.txt', 'file-2'],
-            ]);
+            expect(onMapping).toHaveBeenLastCalledWith(mappingOf([['sub2/a.txt', 'file-2']]));
         });
 
         it('reverts to the upload folder prompt and clears the file mapping after discarding the last upload', async () => {
-            const singleFileProps = {
-                ...defaultPropsWithFiles,
-                fileMapping: fileMappingOf([{ fileId: 'file-1', path: 'file-a.txt' }]),
-            };
-            render(<FolderUploadComponent {...singleFileProps} />);
+            const singleFile = { fileId: 'file-1', path: 'file-a.txt' };
+            const onMapping = vi.fn();
+            render(
+                <FolderUploadComponentWithState
+                    {...defaultPropsWithFiles}
+                    initialState={previousUploadsState([singleFile])}
+                    onMapping={onMapping}
+                />,
+            );
 
             await userEvent.click(screen.getByTestId('discard_extraFiles_file-a.txt'));
             await waitFor(() => expect(screen.getByText('Upload folder')).toBeInTheDocument());
             expect(screen.queryByText('file-a.txt')).not.toBeInTheDocument();
-            expect(latestReportedMapping(singleFileProps.fileMapping)).toBeUndefined();
+            expect(onMapping).toHaveBeenLastCalledWith(undefined);
         });
 
         it('disables the individual discard buttons while an upload is in progress', async () => {
@@ -348,7 +360,7 @@ describe('FolderUploadComponent', () => {
             // Keep the upload pending so the component stays in the uploadInProgress state.
             vi.mocked(multipartUpload.uploadPart).mockReturnValue(new Promise(() => {}));
 
-            render(<FolderUploadComponent {...defaultPropsWithFiles} />);
+            render(<FolderUploadComponentWithState {...defaultPropsWithFiles} />);
 
             const file = new File(['content'], 'added.txt', { type: 'text/plain' });
             Object.defineProperty(file, 'webkitRelativePath', { value: '', writable: false });
@@ -361,7 +373,7 @@ describe('FolderUploadComponent', () => {
         it('keeps existing files when adding additional ones', async () => {
             mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'added-id', urls: ['http://test.com/url1'] }]));
 
-            render(<FolderUploadComponent {...defaultPropsWithFiles} />);
+            render(<FolderUploadComponentWithState {...defaultPropsWithFiles} />);
 
             const file = new File(['content'], 'added.txt', { type: 'text/plain' });
             Object.defineProperty(file, 'webkitRelativePath', { value: '', writable: false });
@@ -382,7 +394,8 @@ describe('FolderUploadComponent', () => {
                 ok([{ fileId: 'replacement-id', urls: ['http://test.com/url1'] }]),
             );
 
-            render(<FolderUploadComponent {...defaultPropsWithFiles} />);
+            const onMapping = vi.fn();
+            render(<FolderUploadComponentWithState {...defaultPropsWithFiles} onMapping={onMapping} />);
 
             const file = new File(['content'], 'file-a.txt', { type: 'text/plain' });
             Object.defineProperty(file, 'webkitRelativePath', { value: '', writable: false });
@@ -400,11 +413,12 @@ describe('FolderUploadComponent', () => {
             expect(screen.getAllByText('file-a.txt')).toHaveLength(1);
             expect(screen.getAllByText('(uploaded)')).toHaveLength(1);
 
-            const categoryFiles = latestReportedMapping(defaultPropsWithFiles.fileMapping)!.get('extraFiles')!;
-            expect([...categoryFiles.entries()]).toEqual([
-                ['file-b.txt', 'file-2'],
-                ['file-a.txt', 'replacement-id'],
-            ]);
+            expect(onMapping).toHaveBeenLastCalledWith(
+                mappingOf([
+                    ['file-b.txt', 'file-2'],
+                    ['file-a.txt', 'replacement-id'],
+                ]),
+            );
         });
 
         it('leaves the existing files alone when the overwrite is cancelled', async () => {
@@ -412,7 +426,7 @@ describe('FolderUploadComponent', () => {
                 ok([{ fileId: 'replacement-id', urls: ['http://test.com/url1'] }]),
             );
 
-            render(<FolderUploadComponent {...defaultPropsWithFiles} />);
+            render(<FolderUploadComponentWithState {...defaultPropsWithFiles} />);
 
             const file = new File(['content'], 'file-a.txt', { type: 'text/plain' });
             Object.defineProperty(file, 'webkitRelativePath', { value: '', writable: false });
@@ -434,7 +448,7 @@ describe('FolderUploadComponent', () => {
             // Keep the upload pending so the component stays in the uploadInProgress state.
             vi.mocked(multipartUpload.uploadPart).mockReturnValue(new Promise(() => {}));
 
-            render(<FolderUploadComponent {...defaultPropsWithFiles} />);
+            render(<FolderUploadComponentWithState {...defaultPropsWithFiles} />);
 
             const file = new File(['content'], 'added.txt', { type: 'text/plain' });
             Object.defineProperty(file, 'webkitRelativePath', { value: '', writable: false });
@@ -445,32 +459,37 @@ describe('FolderUploadComponent', () => {
 
     describe('discarding all files', () => {
         it('shows a dialog before discarding all files and discards after confirmation', async () => {
-            render(<FolderUploadComponent {...defaultPropsWithFiles} />);
+            const onMapping = vi.fn();
+            render(<FolderUploadComponentWithState {...defaultPropsWithFiles} onMapping={onMapping} />);
 
             await userEvent.click(screen.getByTestId('discard_extraFiles'));
             await waitFor(() => expect(screen.getByText(/are you sure you want to discard/i)).toBeInTheDocument());
 
             await userEvent.click(screen.getByRole('button', { name: /^Discard$/ }));
             await waitFor(() => expect(screen.getByText('Upload folder')).toBeInTheDocument());
-            expect(latestReportedMapping(defaultPropsWithFiles.fileMapping)).toBeUndefined();
+            expect(onMapping).toHaveBeenLastCalledWith(undefined);
         });
 
         it('removes only its own category when the file mapping holds several', async () => {
             const otherCategoryFiles = new Map([['other-file.txt', 'file-3']]);
-            const fileMapping = new Map([...defaultPropsWithFiles.fileMapping, ['otherFiles', otherCategoryFiles]]);
-            render(<FolderUploadComponent {...defaultPropsWithFiles} fileMapping={fileMapping} />);
+            const onMapping = vi.fn();
+            render(
+                <FolderUploadComponentWithState
+                    {...defaultPropsWithFiles}
+                    initialMapping={new Map([['otherFiles', otherCategoryFiles]])}
+                    onMapping={onMapping}
+                />,
+            );
 
             await userEvent.click(screen.getByTestId('discard_extraFiles'));
             await userEvent.click(screen.getByRole('button', { name: /^Discard$/ }));
             await waitFor(() => expect(screen.getByText('Upload folder')).toBeInTheDocument());
 
-            const mapping = latestReportedMapping(fileMapping);
-            expect(mapping!.has('extraFiles')).toBe(false);
-            expect(mapping!.get('otherFiles')).toBe(otherCategoryFiles);
+            expect(onMapping).toHaveBeenLastCalledWith(new Map([['otherFiles', otherCategoryFiles]]));
         });
 
         it('keeps the files when discarding all files is cancelled', async () => {
-            render(<FolderUploadComponent {...defaultPropsWithFiles} />);
+            render(<FolderUploadComponentWithState {...defaultPropsWithFiles} />);
 
             await userEvent.click(screen.getByTestId('discard_extraFiles'));
             await waitFor(() => expect(screen.getByText(/are you sure you want to discard/i)).toBeInTheDocument());
@@ -487,7 +506,7 @@ describe('FolderUploadComponent', () => {
             mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'failed-id', urls: ['http://test.com/url1'] }]));
             mockCompleteMultipartUpload.mockReturnValue(err({ detail: 'Could not complete upload' }));
 
-            render(<FolderUploadComponent {...defaultProps} />);
+            render(<FolderUploadComponentWithState {...defaultProps} />);
 
             const input = screen.getByTestId('extraFiles');
             const file = new File(['content'], 'test.txt', { type: 'text/plain' });
@@ -495,7 +514,7 @@ describe('FolderUploadComponent', () => {
 
             await userEvent.upload(input, file);
             await waitFor(() => expect(screen.getByText('✗')).toBeInTheDocument());
-            expect(mockOnError).toHaveBeenCalledWith(expect.stringContaining('Could not complete upload'));
+            expect(defaultProps.onError).toHaveBeenCalledWith(expect.stringContaining('Could not complete upload'));
 
             // A failed file never reaches 'uploaded', so the component stays in the in-progress state
             // and only the discard-all button remains usable.
