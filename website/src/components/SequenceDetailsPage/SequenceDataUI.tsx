@@ -1,24 +1,21 @@
 import type { FC } from 'react';
 
 import DataTable from './DataTable';
-import { RevokeButton } from './RevokeButton';
+import { SequenceManagement } from './SequenceManagement.tsx';
 import { SequencesContainer } from './SequencesDisplay/SequencesContainer.tsx';
 import { getDataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { getGitHubReportUrl } from '../../config.ts';
-import { routes } from '../../routes/routes';
 import { DATA_USE_TERMS_FIELD } from '../../settings.ts';
-import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
+import { type DataUseTermsHistoryEntry, type Group } from '../../types/backend';
 import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
+import { type SequenceEntryHistory } from '../../types/lapis';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
 import { type SequenceCitation } from '../../types/seqSetCitation.ts';
-import { parseAccessionVersionFromString } from '../../utils/extractAccessionVersion.ts';
 import type { SegmentReferenceSelections } from '../../utils/sequenceTypeHelpers.ts';
-import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import { Button } from '../common/Button';
 import RestrictedUseWarning from '../common/RestrictedUseWarning';
-import MdiEye from '~icons/mdi/eye';
 
 interface Props {
     tableData: TableDataEntry[];
@@ -33,6 +30,7 @@ interface Props {
     sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
     referenceGenomesInfo: ReferenceGenomesInfo;
     sequenceCitations?: SequenceCitation[];
+    sequenceEntryHistory: SequenceEntryHistory;
     isRevocation?: boolean;
     onRevokeSuccess?: () => void;
 }
@@ -50,17 +48,11 @@ export const SequenceDataUI: FC<Props> = ({
     sequenceFlaggingConfig,
     referenceGenomesInfo,
     sequenceCitations,
+    sequenceEntryHistory,
     isRevocation,
     onRevokeSuccess,
 }: Props) => {
-    const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as number;
-
-    const { accession, version } = parseAccessionVersionFromString(accessionVersion);
-
-    const isMyGroup = myGroups.some((group) => group.groupId === groupId);
-
     dataUseTermsHistory.sort((a, b) => (a.changeDate > b.changeDate ? -1 : 1));
-    const currentDataUseTerms = dataUseTermsHistory[0].dataUseTerms;
 
     const dataUseTerms = tableData.find((entry) => entry.name === DATA_USE_TERMS_FIELD);
     const isRestricted = dataUseTerms?.value.toString().toUpperCase() === 'RESTRICTED';
@@ -93,45 +85,18 @@ export const SequenceDataUI: FC<Props> = ({
                     />
                 </div>
             )}
-            {isMyGroup && !isRevocation && accessToken !== undefined && (
-                <>
-                    <hr className='my-4' />
-                    <div className='my-8'>
-                        <h2 className='text-xl font-bold mb-3'>Sequence management</h2>
-                        <div className='text-sm text-gray-400 mb-4 block'>
-                            <MdiEye className='w-6 h-6 inline-block mr-2' />
-                            Only visible to group members
-                        </div>
-
-                        <div className='flex flex-wrap gap-3'>
-                            {isRestricted && (
-                                <EditDataUseTermsButton
-                                    clientConfig={clientConfig}
-                                    accessToken={accessToken}
-                                    accessionVersion={[accessionVersion.split('.')[0]]}
-                                    dataUseTerms={currentDataUseTerms as RestrictedDataUseTerms}
-                                />
-                            )}
-
-                            <Button
-                                as='a'
-                                size='sm'
-                                href={routes.revisePage(organism, groupId, 'form', accession, version?.toString())}
-                            >
-                                Revise this sequence
-                            </Button>
-                            <RevokeButton
-                                organism={organism}
-                                clientConfig={clientConfig}
-                                accessionVersion={accessionVersion.split('.')[0]}
-                                accessToken={accessToken}
-                                groupId={groupId}
-                                onRevokeSuccess={onRevokeSuccess}
-                            />
-                        </div>
-                    </div>
-                </>
-            )}
+            <SequenceManagement
+                tableData={tableData}
+                organism={organism}
+                accessionVersion={accessionVersion}
+                dataUseTermsHistory={dataUseTermsHistory}
+                sequenceEntryHistory={sequenceEntryHistory}
+                clientConfig={clientConfig}
+                myGroups={myGroups}
+                accessToken={accessToken}
+                isRevocation={isRevocation}
+                onRevokeSuccess={onRevokeSuccess}
+            />
             {reportUrl !== undefined && (
                 <>
                     <hr className='my-4' />
