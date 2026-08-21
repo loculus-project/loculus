@@ -3,6 +3,15 @@ import React, { useEffect, useState, type Dispatch, type FC, type SetStateAction
 import { toast } from 'react-toastify';
 
 import { type FileMapping } from './fileMapping';
+import type {
+    Awaiting,
+    FileUploadState,
+    Pending,
+    PreviousUpload,
+    SingleFileUpload,
+    Uploaded,
+    UploadStatus,
+} from './fileUpload';
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
 import { type FileCategory } from '../../../types/config';
@@ -15,77 +24,14 @@ import LucideFile from '~icons/lucide/file';
 import LucideFolderUp from '~icons/lucide/folder-up';
 import LucideLoader from '~icons/lucide/loader';
 
-/**
- * The state that the component is in, right after the user dropped the files.
- * We're awaiting the presigned upload URLs from the backend, to start uploading.
- */
-type AwaitingUrlState = {
-    type: 'awaitingUrls';
-    files: Awaiting[];
-};
-
-type UploadInProgressState = {
-    type: 'uploadInProgress';
-    files: SingleFileUpload[];
-};
-
-type UploadCompleted = {
-    type: 'uploadCompleted';
-    files: (Uploaded | PreviousUpload)[];
-};
-
-type FileUploadState = AwaitingUrlState | UploadInProgressState | UploadCompleted;
-
-type UploadStatus = 'pending' | 'uploaded' | 'previousUpload' | 'error';
-
-type Awaiting = {
-    type: 'awaiting';
-    file: File;
-    path: string;
-};
-
-type Pending = {
-    type: 'pending';
-    file: File;
-    path: string;
-    size: number;
-    fileId: string;
-    urls: string[];
-    uploadedParts: number;
-    totalParts: number;
-    partSize: number;
-    etags?: string[];
-};
-
-type Uploaded = {
-    type: 'uploaded';
-    fileId: string;
-    path: string;
-    size: number;
-};
-
-type PreviousUpload = {
-    type: 'previousUpload';
-    fileId: string;
-    path: string;
-};
-
-type FileError = {
-    type: 'error';
-    path: string;
-    size: number;
-    msg: string;
-};
-
-type SingleFileUpload = Pending | Uploaded | PreviousUpload | FileError;
-
 type FolderUploadComponentProps = {
     fileCategory: FileCategory;
     inputMode: InputMode;
     accessToken: string;
     clientConfig: ClientConfig;
     groupId: number;
-    fileMapping: FileMapping | undefined;
+    fileUploadState: FileUploadState | undefined;
+    setFileUploadState: Dispatch<SetStateAction<FileUploadState | undefined>>;
     setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
     onError: (message: string) => void;
 };
@@ -142,21 +88,11 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     accessToken,
     clientConfig,
     groupId,
-    fileMapping,
+    fileUploadState,
+    setFileUploadState,
     setFileMapping,
     onError,
 }) => {
-    const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(() => {
-        const categoryFiles = fileMapping?.get(fileCategory.name);
-        if (categoryFiles === undefined || categoryFiles.size === 0) return undefined;
-
-        const files: PreviousUpload[] = [...categoryFiles.entries()].map(([path, fileId]) => ({
-            type: 'previousUpload',
-            fileId,
-            path,
-        }));
-        return { type: 'uploadCompleted', files };
-    });
     const [isDragging, setIsDragging] = useState(false);
 
     const backendClient = new BackendClient(clientConfig.backendUrl);

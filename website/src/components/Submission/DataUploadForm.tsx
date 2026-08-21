@@ -39,6 +39,7 @@ import {
     type SubmissionFileMapping,
 } from './FileUpload/fileMapping.ts';
 import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
+import { validateFileUploadStates, type FileUploadState } from './FileUpload/fileUpload.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -77,6 +78,7 @@ const InnerDataUploadForm = ({
 
     const { submit, revise, isPending } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
+    const [fileUploadStates, setFileUploadStates] = useState<Map<string, FileUploadState>>(new Map());
     const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(undefined);
     const [submissionFileMapping, setSubmissionFileMapping] = useState<
         Result<SubmissionFileMapping, Error> | undefined
@@ -122,6 +124,12 @@ const InnerDataUploadForm = ({
 
         if (dataUseTermsEnabled && !agreedToINSDCUploadTerms) {
             onError('Please tick the box to agree that you will not independently submit these sequences to INSDC');
+            return;
+        }
+
+        const fileUploadStateResult = validateFileUploadStates(fileUploadStates);
+        if (fileUploadStateResult.isErr()) {
+            onError(fileUploadStateResult.error.message);
             return;
         }
 
@@ -235,7 +243,8 @@ const InnerDataUploadForm = ({
                             clientConfig={clientConfig}
                             groupId={group.groupId}
                             onError={onError}
-                            fileMapping={fileMapping}
+                            fileUploadStates={fileUploadStates}
+                            setFileUploadStates={setFileUploadStates}
                             setFileMapping={setFileMapping}
                             fileLinkage={fileLinkage}
                         />
@@ -395,7 +404,8 @@ export const ExtraFilesUpload = ({
     inputMode,
     groupId,
     fileCategories,
-    fileMapping,
+    fileUploadStates,
+    setFileUploadStates,
     setFileMapping,
     fileLinkage,
     onError,
@@ -405,11 +415,23 @@ export const ExtraFilesUpload = ({
     inputMode: InputMode;
     groupId: number;
     fileCategories: FileCategory[];
-    fileMapping: FileMapping | undefined;
+    fileUploadStates: Map<string, FileUploadState>;
+    setFileUploadStates: Dispatch<SetStateAction<Map<string, FileUploadState>>>;
     setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
     fileLinkage?: FileLinkage;
     onError: (message: string) => void;
 }) => {
+    const setCategoryFileUploadState =
+        (category: string): Dispatch<SetStateAction<FileUploadState | undefined>> =>
+        (update) =>
+            setFileUploadStates((prev) => {
+                const next = typeof update === 'function' ? update(prev.get(category)) : update;
+                const map = new Map(prev);
+                if (next === undefined) map.delete(category);
+                else map.set(category, next);
+                return map;
+            });
+
     return (
         <div className='grid sm:grid-cols-3 gap-x-16 gap-y-4'>
             <div>
@@ -435,7 +457,8 @@ export const ExtraFilesUpload = ({
                             clientConfig={clientConfig}
                             groupId={groupId}
                             onError={onError}
-                            fileMapping={fileMapping}
+                            fileUploadState={fileUploadStates.get(fileCategory.name)}
+                            setFileUploadState={setCategoryFileUploadState(fileCategory.name)}
                             setFileMapping={setFileMapping}
                         />
                         {inputMode === 'bulk' && (
