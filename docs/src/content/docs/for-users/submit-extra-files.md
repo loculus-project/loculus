@@ -6,18 +6,17 @@ If the administrator has enabled the file sharing feature for an organism, you c
 
 ## Website
 
-On the website submission form, there is an input field to upload files into.
+On the website submission form, there is an input field to upload files into. You can choose to either upload individual files or select an entire folder of files to upload.
 
 ![The extra files component](../../../assets/ExtraFilesComponent.png)
 
-If files are uploaded successfully, there will be a green checkmark:
+Extra files should be associated to their corresponding consensus sequence via the `files.<category>` metadata field, where `<category>` is the type of extra files you're uploading (e.g., `rawReads`) . This field should contain a space-separated list of file names indicating which files belong to which sequence.
+
+If files are uploaded and linked to their respective sequences successfully, there will be a checkmark:
 
 ![The extra files component](../../../assets/ExtraFilesUploaded.png)
 
-For bulk submission, you need to upload a folder with one subfolder per submission ID.
-
-Neither the file names nor the subfolder names may contain whitespace, since the metadata file refers to them in
-space-separated lists.
+_**Note: since the `files.<category>` metadata fields refers to files in space-separated lists, file names may not contain whitespace.**_
 
 ## API
 
