@@ -24,7 +24,7 @@ import {
     type FileMapping,
 } from '../Submission/FileUpload/fileMapping.ts';
 import {
-    getInitialFileUploadStates,
+    getPreviousFileUploadStates,
     validateFileUploadStates,
     type FileUploadState,
 } from '../Submission/FileUpload/fileUpload.ts';
@@ -74,7 +74,7 @@ const InnerEditPage: FC<EditPageProps> = ({
 
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
     const [fileUploadStates, setFileUploadStates] = useState<Map<string, FileUploadState>>(() =>
-        dataToEdit.submittedData.files ? getInitialFileUploadStates(dataToEdit.submittedData.files) : new Map(),
+        dataToEdit.submittedData.files ? getPreviousFileUploadStates(dataToEdit.submittedData.files) : new Map(),
     );
     const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(undefined);
 

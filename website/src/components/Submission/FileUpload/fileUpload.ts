@@ -31,6 +31,9 @@ export type Uploaded = {
 export type PreviousUpload = {
     type: 'previousUpload';
     fileId: string;
+    // Previous uploads only appear for form submissions/revisions
+    // where we have a single folder of uniquely named files.
+    // Therefore, name and path are equivalent
     path: string;
 };
 
@@ -66,7 +69,7 @@ type UploadCompleted = {
 
 export type FileUploadState = AwaitingUrlState | UploadInProgressState | UploadCompleted;
 
-export const getInitialFileUploadStates = (files: FilesByCategory): Map<string, FileUploadState> =>
+export const getPreviousFileUploadStates = (files: FilesByCategory): Map<string, FileUploadState> =>
     new Map(
         Object.entries(files)
             .filter(([_, files]) => files.length > 0)
@@ -74,8 +77,9 @@ export const getInitialFileUploadStates = (files: FilesByCategory): Map<string, 
                 category,
                 {
                     type: 'uploadCompleted',
-                    // Subfolders are not allowed for form submissions/revisions,
-                    // so here file name and path are equivalent
+                    // Previous uploads only appear for form submissions/revisions
+                    // where we have a single folder of uniquely named files.
+                    // Therefore, name and path are equivalent
                     files: files.map((f) => ({ type: 'previousUpload', fileId: f.fileId, path: f.name })),
                 },
             ]),
