@@ -1017,7 +1017,7 @@ class SubmissionDatabaseService(
             thatAccessionsExist(accessions)
                 .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
                 .andThatSequenceEntriesAreInStates(listOf(Status.APPROVED_FOR_RELEASE))
-                .andThatSequenceEntriesAreNotRevocations()
+                .andThatLatestVersionsAreNotRevocations()
                 .andThatOrganismIs(organism)
         }
 
