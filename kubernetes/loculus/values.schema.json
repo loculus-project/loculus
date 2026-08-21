@@ -821,6 +821,14 @@
                     "docsIncludePrefix": false,
                     "type": "integer",
                     "description": "Timeout in seconds for requests to the backend server for data to process"
+                  },
+                  "nextclade_jobs": {
+                    "groups": ["nextcladePipelineConfigFile"],
+                    "docsIncludePrefix": false,
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 1,
+                    "description": "Number of parallel jobs used by each Nextclade run."
                   }
                 }
               }
