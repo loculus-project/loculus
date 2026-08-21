@@ -7,6 +7,7 @@ import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo }
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
+import { validateFileUploadStates, type FileUploadState } from './FileUpload/fileUpload.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { backendApi } from '../../services/backendApi.ts';
@@ -39,7 +40,6 @@ import {
     type SubmissionFileMapping,
 } from './FileUpload/fileMapping.ts';
 import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
-import { validateFileUploadStates, type FileUploadState } from './FileUpload/fileUpload.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
