@@ -88,6 +88,6 @@ DEACON_INDEX_PATH=./deacon.idx
 
 ## Deacon index
 
-We use a custom deacon index from https://objectstorage.uk-london-1.oraclecloud.com/n/lrbvkel2wjot/b/human-genome-bucket/o/deacon/misc/panhuman-1.k31w15c8.idx.
+We use a custom deacon index, generated during a manual build action in `loculus/raw-reads-processing/build-index.py`, based on https://objectstorage.uk-london-1.oraclecloud.com/n/lrbvkel2wjot/b/human-genome-bucket/o/deacon/misc/panhuman-1.k31w15c8.idx.
 
-It uses deacon's default panhuman-1.k31w15c8 index (which excludes k-mers occurring in refSeq virus sequences) with a complexity filter of kdust 0.8.
+It uses deacon's default panhuman-1.k31w15c8 index (which excludes k-mers occurring in refSeq virus sequences) with a complexity filter of kdust 0.8 and additionally filters out all k-mers that are found in high-quality consensus sequences on PPX to further avoid accidental flagging of viral genomes.
