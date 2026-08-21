@@ -485,7 +485,11 @@ const FileListItem: FC<FileListeItemProps> = ({ file, fileCategory }) => {
                     {showProgress ? `${percentage}%` : ''}
                 </span>
             </div>
-            <div className='ml-2 w-5 flex justify-center' data-testid={`status_${fileCategory}_${file.path}`}>
+            <div
+                className='ml-2 w-5 flex justify-center'
+                data-testid={`status_${fileCategory}_${file.path}`}
+                data-upload-status={file.type}
+            >
                 {getStatusIcon(file.type)}
             </div>
         </div>

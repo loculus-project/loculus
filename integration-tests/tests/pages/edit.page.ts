@@ -64,8 +64,24 @@ export class EditPage {
         await this.page.getByTestId(`discard_${fileCategory}_${fileName}`).click();
     }
 
+    /**
+     * Waits for a file to have been uploaded *in this session*. Asserting on the '✓' icon is not
+     * enough: a file carried over from the previous version renders the same icon, so replacing a
+     * file leaves the old row satisfying the assertion while the new upload is still in flight.
+     */
     async expectExtraFileUploaded(fileCategory: string, fileName: string) {
-        await expect(this.page.getByTestId(`status_${fileCategory}_${fileName}`)).toHaveText('✓');
+        await expect(this.page.getByTestId(`status_${fileCategory}_${fileName}`)).toHaveAttribute(
+            'data-upload-status',
+            'uploaded',
+        );
+    }
+
+    /** Waits for a file to be present as a reused upload from the previous version. */
+    async expectExtraFileReused(fileCategory: string, fileName: string) {
+        await expect(this.page.getByTestId(`status_${fileCategory}_${fileName}`)).toHaveAttribute(
+            'data-upload-status',
+            'previousUpload',
+        );
     }
 
     async expectExtraFileDiscarded(fileCategory: string, fileName: string) {

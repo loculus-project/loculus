@@ -232,26 +232,25 @@ describe('SubmitForm', () => {
     });
 
     test('should allow submission only after agreeing to terms of INSDC submission', async () => {
-        const { getByRole, getByLabelText } = renderSubmissionForm();
+        const { getByRole, getByLabelText, getByTestId } = renderSubmissionForm();
 
         await userEvent.upload(getByLabelText(/Metadata file/i), metadataFile);
         await userEvent.upload(getByLabelText(/Sequence file/i), sequencesFile);
         await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
+        // The button is disabled up front, and says why, rather than accepting the click and
+        // answering with a toast.
         const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
-        await userEvent.click(submitButton);
-        await waitFor(() => {
-            expect(toast.error).toHaveBeenCalledWith(
-                expect.stringContaining(
-                    'Please tick the box to agree that you will not independently submit these sequences to INSDC',
-                ),
-                { position: 'top-center', autoClose: false },
-            );
-        });
+        expect(submitButton).toBeDisabled();
+        expect(getByTestId('submit-blocked-reason')).toHaveTextContent(
+            'Please tick the box to agree that you will not independently submit these sequences to INSDC',
+        );
 
         await userEvent.click(
             getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
         );
+
+        expect(submitButton).toBeEnabled();
     });
 
     test('instance name should be present in the submission form', () => {

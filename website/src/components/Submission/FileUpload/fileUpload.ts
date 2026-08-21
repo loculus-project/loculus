@@ -85,9 +85,18 @@ export const getPreviousFileUploadStates = (files: FilesByCategory): Map<string,
             ]),
     );
 
+/**
+ * Whether any file category still has an upload in flight. Submission must not proceed while
+ * this is true: the file mapping is only updated once a category reaches 'uploadCompleted', so
+ * submitting earlier would reference stale (or missing) file ids.
+ */
+export const hasUploadsInProgress = (fileUploadStates: Map<string, FileUploadState>): boolean =>
+    Array.from(fileUploadStates.values()).some((state) => state.type !== 'uploadCompleted');
+
+export const uploadsInProgressMessage = 'Please wait for all files to finish uploading.';
+
 export const validateFileUploadStates = (fileUploadStates: Map<string, FileUploadState>): Result<void, Error> => {
-    if (Array.from(fileUploadStates.values()).some((state) => state.type !== 'uploadCompleted'))
-        return err(new Error('Please wait for all files to finish uploading before submitting.'));
+    if (hasUploadsInProgress(fileUploadStates)) return err(new Error(uploadsInProgressMessage));
 
     return ok();
 };

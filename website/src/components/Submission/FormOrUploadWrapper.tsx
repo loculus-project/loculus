@@ -38,10 +38,18 @@ export type InputError = {
  */
 export type FileFactory = () => Promise<SequenceData | InputError>;
 
+/**
+ * The state of parsing the file mapping out of the uploaded metadata file (bulk mode only):
+ * `undefined` when no metadata file has been provided yet, `'processing'` while it is being
+ * parsed, and a {@link Result} once parsing has finished. Distinguishing the first two lets the
+ * submit button explain *why* it is disabled.
+ */
+export type SubmissionFileMappingState = Result<SubmissionFileMapping, Error> | 'processing' | undefined;
+
 type FormOrUploadWrapperProps = {
     inputMode: InputMode;
     setFileFactory: Dispatch<SetStateAction<FileFactory | undefined>>;
-    setSubmissionFileMapping: Dispatch<SetStateAction<Result<SubmissionFileMapping, Error> | undefined>>;
+    setSubmissionFileMapping: Dispatch<SetStateAction<SubmissionFileMappingState>>;
     organism: string;
     action: UploadAction;
     metadataTemplateFields: Map<string, InputField[]>;
@@ -87,6 +95,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 setSubmissionFileMapping(undefined);
                 return;
             }
+            setSubmissionFileMapping('processing');
             const text = columnMapping
                 ? await (await columnMapping.applyTo(metadataFile)).text()
                 : await metadataFile.text();

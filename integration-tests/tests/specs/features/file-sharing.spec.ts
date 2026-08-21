@@ -288,12 +288,13 @@ test('bulk submit blocks a submission with errors in file linkage or parsing', a
         if (uploadedFiles !== undefined)
             await submissionPage.uploadExternalFiles(RAW_READS, uploadedFiles, tmpDir);
 
-        await submissionPage.clickSubmit();
-
-        // Multiple toasts can be shown at the same time
-        // For example, the parse error appears on metadata file load, as well as on handle submit
-        await expect(page.getByText(error).first()).toBeVisible();
-        // A blocked submission returns before the data use terms dialog is shown
+        // The submission is blocked before it can be attempted: the submit button is disabled and
+        // names the problem, rather than accepting the click and answering with a toast.
+        await expect(page.getByTestId('submit-blocked-reason')).toContainText(error);
+        await expect(
+            page.getByRole('button', { name: 'Upload and proceed to Approval' }),
+        ).toBeDisabled();
+        // A blocked submission never reaches the data use terms dialog
         await expect(page.getByRole('button', { name: 'Continue under Open terms' })).toHaveCount(
             0,
         );
@@ -478,7 +479,7 @@ test('single revise seq via edit page reuses, replaces, discards and adds files'
     await editPage.goto(ORGANISM_URL_NAME, accession, version);
 
     // Reused file 1
-    await editPage.expectExtraFileUploaded(RAW_READS, file1Name);
+    await editPage.expectExtraFileReused(RAW_READS, file1Name);
 
     // Replaced file 2
     await editPage.addAdditionalFile(RAW_READS, file2Name, EBOLA_SUDAN_SMALL_FASTQ(1));
