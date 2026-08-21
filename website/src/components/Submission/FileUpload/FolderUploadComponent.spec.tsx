@@ -372,7 +372,8 @@ describe('FolderUploadComponent', () => {
             mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'failed-id', urls: ['http://test.com/url1'] }]));
             mockCompleteMultipartUpload.mockReturnValue(err({ detail: 'Could not complete upload' }));
 
-            render(<FolderUploadComponentWithState {...defaultProps} />);
+            const onMapping = vi.fn();
+            render(<FolderUploadComponentWithState {...defaultProps} onMapping={onMapping} />);
 
             const file = new File(['content'], 'test.txt', { type: 'text/plain' });
             Object.defineProperty(file, 'webkitRelativePath', { value: 'folder/test.txt', writable: false });
@@ -382,7 +383,7 @@ describe('FolderUploadComponent', () => {
             expect(defaultProps.onError).toHaveBeenCalledWith(expect.stringContaining('Could not complete upload'));
 
             // The failed file has no file ID to submit, so it is left out of the mapping.
-            expect(categoryFileEntries()).toEqual([]);
+            expect(onMapping).toHaveBeenLastCalledWith(mappingOf([]));
 
             await userEvent.click(screen.getByTestId('discard_extraFiles_test.txt'));
             await waitFor(() => expect(screen.getByText('Upload folder')).toBeInTheDocument());
