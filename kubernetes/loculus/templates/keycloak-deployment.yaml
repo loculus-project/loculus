@@ -22,7 +22,7 @@ spec:
         app: loculus
         component: keycloak
     spec:
-     {{- include "possiblePriorityClassName" . | nindent 6 }}
+      {{- include "possiblePriorityClassName" . | nindent 6 }}
       {{- include "loculus.podScheduling" . | nindent 6 }}
       {{- include "loculus.podSecurityContext" (list "keycloak" .Values) | nindent 6 }}
       initContainers:
