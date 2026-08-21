@@ -367,6 +367,28 @@ describe('FolderUploadComponent', () => {
             await userEvent.upload(screen.getByTestId('add_extraFiles'), file);
             await waitFor(() => expect(screen.getByTestId('discard_extraFiles_file-a.txt')).toBeDisabled());
         });
+
+        it('files with errors can be discarded', async () => {
+            mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'failed-id', urls: ['http://test.com/url1'] }]));
+            mockCompleteMultipartUpload.mockReturnValue(err({ detail: 'Could not complete upload' }));
+
+            const onMapping = vi.fn();
+            render(<FolderUploadComponentWithState {...defaultProps} onMapping={onMapping} />);
+
+            const file = new File(['content'], 'test.txt', { type: 'text/plain' });
+            Object.defineProperty(file, 'webkitRelativePath', { value: 'folder/test.txt', writable: false });
+
+            await userEvent.upload(screen.getByTestId('extraFiles'), file);
+            await waitFor(() => expect(screen.getByText('✗')).toBeInTheDocument());
+            expect(defaultProps.onError).toHaveBeenCalledWith(expect.stringContaining('Could not complete upload'));
+
+            // The failed file has no file ID to submit, so it is left out of the mapping.
+            expect(onMapping).toHaveBeenLastCalledWith(mappingOf([]));
+
+            await userEvent.click(screen.getByTestId('discard_extraFiles_test.txt'));
+            await waitFor(() => expect(screen.getByText('Upload folder')).toBeInTheDocument());
+            expect(screen.queryByText('test.txt')).not.toBeInTheDocument();
+        });
     });
 
     describe('adding additional files', () => {
@@ -502,30 +524,18 @@ describe('FolderUploadComponent', () => {
             expect(screen.getByText('file-b.txt')).toBeInTheDocument();
         });
 
-        it('discard all files is not disabled during upload or file upload failure', async () => {
-            mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'failed-id', urls: ['http://test.com/url1'] }]));
-            mockCompleteMultipartUpload.mockReturnValue(err({ detail: 'Could not complete upload' }));
+        it('does not disable the discard all files button while an upload is in progress', async () => {
+            mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'added-id', urls: ['http://test.com/url1'] }]));
+            // Keep the upload pending so the component stays in the uploadInProgress state.
+            vi.mocked(multipartUpload.uploadPart).mockReturnValue(new Promise(() => {}));
 
-            render(<FolderUploadComponentWithState {...defaultProps} />);
+            render(<FolderUploadComponentWithState {...defaultPropsWithFiles} />);
 
-            const input = screen.getByTestId('extraFiles');
-            const file = new File(['content'], 'test.txt', { type: 'text/plain' });
-            Object.defineProperty(file, 'webkitRelativePath', { value: 'folder/test.txt', writable: false });
-
-            await userEvent.upload(input, file);
-            await waitFor(() => expect(screen.getByText('✗')).toBeInTheDocument());
-            expect(defaultProps.onError).toHaveBeenCalledWith(expect.stringContaining('Could not complete upload'));
-
-            // A failed file never reaches 'uploaded', so the component stays in the in-progress state
-            // and only the discard-all button remains usable.
-            expect(screen.getByTestId('add_button_extraFiles')).toBeDisabled();
-            expect(screen.getByTestId('discard_extraFiles_test.txt')).toBeDisabled();
+            const file = new File(['content'], 'added.txt', { type: 'text/plain' });
+            Object.defineProperty(file, 'webkitRelativePath', { value: '', writable: false });
+            await userEvent.upload(screen.getByTestId('add_extraFiles'), file);
+            await waitFor(() => expect(screen.getByTestId('add_button_extraFiles')).toBeDisabled());
             expect(screen.getByTestId('discard_extraFiles')).toBeEnabled();
-
-            await userEvent.click(screen.getByTestId('discard_extraFiles'));
-            await waitFor(() => expect(screen.getByText(/are you sure you want to discard/i)).toBeInTheDocument());
-            await userEvent.click(screen.getByRole('button', { name: /^Discard$/ }));
-            await waitFor(() => expect(screen.getByText('Upload folder')).toBeInTheDocument());
         });
     });
 });

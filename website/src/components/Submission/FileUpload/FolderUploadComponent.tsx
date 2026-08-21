@@ -3,15 +3,7 @@ import React, { useEffect, useState, type Dispatch, type FC, type SetStateAction
 import { toast } from 'react-toastify';
 
 import { type FileMapping } from './fileMapping';
-import type {
-    Awaiting,
-    FileUploadState,
-    Pending,
-    PreviousUpload,
-    SingleFileUpload,
-    Uploaded,
-    UploadStatus,
-} from './fileUpload';
+import type { Awaiting, FileUploadState, Pending, SingleFileUpload, UploadStatus } from './fileUpload';
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
 import { type FileCategory } from '../../../types/config';
@@ -152,7 +144,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             () => updateFileState(pending.fileId, 'uploaded'),
             (err) => {
                 updateFileState(pending.fileId, 'error', err.detail);
-                throw new Error(err.detail);
+                onError(`Upload failed for file ${pending.fileId} ${pending.path}: ${err.detail}`);
             },
         );
     }
@@ -162,10 +154,9 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             try {
                 await uploadMultipartFile(pending);
             } catch (err) {
-                onError(
-                    `Upload failed for file ${pending.fileId} ${pending.path}: ${err instanceof Error ? err.message : String(err)}`,
-                );
-                return;
+                const errorMessage = err instanceof Error ? err.message : String(err);
+                updateFileState(pending.fileId, 'error', errorMessage);
+                onError(`Upload failed for file ${pending.fileId} ${pending.path}: ${errorMessage}`);
             }
         }
     }
@@ -219,10 +210,14 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 break;
             }
             case 'uploadInProgress': {
-                if (fileUploadState.files.every(({ type }) => type === 'uploaded' || type === 'previousUpload')) {
+                const completedFiles = fileUploadState.files.filter(
+                    (file) => file.type === 'uploaded' || file.type === 'previousUpload' || file.type === 'error',
+                );
+
+                if (completedFiles.length === fileUploadState.files.length) {
                     setFileUploadState({
                         type: 'uploadCompleted',
-                        files: fileUploadState.files as (Uploaded | PreviousUpload)[],
+                        files: completedFiles,
                     });
                 }
                 break;
@@ -232,7 +227,11 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     const newMapping = new Map(currentMapping);
                     newMapping.set(
                         fileCategory.name,
-                        new Map(fileUploadState.files.map((file) => [file.path, file.fileId])),
+                        new Map(
+                            fileUploadState.files
+                                .filter((file) => file.type === 'uploaded' || file.type === 'previousUpload')
+                                .map((file) => [file.path, file.fileId]),
+                        ),
                     );
                     return newMapping;
                 });
@@ -414,7 +413,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                                 </div>
                                 <Button
                                     onClick={() => handleDiscardFile(file.path)}
-                                    alsoDisabledIf={fileUploadState.type !== 'uploadCompleted'}
+                                    alsoDisabledIf={fileUploadState.type === 'uploadInProgress'}
                                     data-testid={`discard_${fileCategory.name}_${file.path}`}
                                     variant='outline-neutral'
                                     className='font-normal!'
@@ -433,7 +432,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                         />
                         <Button
                             onClick={() => document.getElementById(`add_${fileCategory.name}`)?.click()}
-                            alsoDisabledIf={fileUploadState.type !== 'uploadCompleted'}
+                            alsoDisabledIf={fileUploadState.type === 'uploadInProgress'}
                             data-testid={`add_button_${fileCategory.name}`}
                             variant='outline-neutral'
                             className='font-normal!'
