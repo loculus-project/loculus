@@ -1289,21 +1289,18 @@
         "docs": { "$ref": "#/definitions/podSecurityContextValue" },
         "taxonomy-service": { "$ref": "#/definitions/podSecurityContextValue" },
         "ena-submission": { "$ref": "#/definitions/podSecurityContextValue" },
-        "ena-submission-list-cronjob": {
-          "$ref": "#/definitions/podSecurityContextValue"
-        },
+        "ena-submission-list-cronjob": { "$ref": "#/definitions/podSecurityContextValue" },
         "ingest": { "$ref": "#/definitions/podSecurityContextValue" },
         "ingest-trigger": { "$ref": "#/definitions/podSecurityContextValue" },
         "keycloak": { "$ref": "#/definitions/podSecurityContextValue" },
         "silo": { "$ref": "#/definitions/podSecurityContextValue" },
         "lapis": { "$ref": "#/definitions/podSecurityContextValue" },
-        "silo-importer": { "$ref": "#/definitions/podSecurityContextValue" },
         "backend": { "$ref": "#/definitions/podSecurityContextValue" },
         "preprocessing": { "$ref": "#/definitions/podSecurityContextValue" },
         "minio": { "$ref": "#/definitions/podSecurityContextValue" },
         "keycloak-database": { "$ref": "#/definitions/podSecurityContextValue" },
         "database": { "$ref": "#/definitions/podSecurityContextValue" },
-        "config-processor": { "$ref": "#/definitions/podSecurityContextValue" }
+        "raw-reads-processing": { "$ref": "#/definitions/podSecurityContextValue" }
       }
     },
     "containerSecurityContextSpec": {
@@ -1314,17 +1311,20 @@
         "website": { "$ref": "#/definitions/containerSecurityContextValue" },
         "docs": { "$ref": "#/definitions/containerSecurityContextValue" },
         "taxonomy-service": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "download-taxonomy-db": { "$ref": "#/definitions/containerSecurityContextValue" },
         "ena-submission": { "$ref": "#/definitions/containerSecurityContextValue" },
-        "ena-submission-list-cronjob": {
-          "$ref": "#/definitions/containerSecurityContextValue"
-        },
+        "ena-submission-flyway": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "ena-submission-list-cronjob": { "$ref": "#/definitions/containerSecurityContextValue" },
         "ingest": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "ingest-init": { "$ref": "#/definitions/containerSecurityContextValue" },
         "ingest-trigger": { "$ref": "#/definitions/containerSecurityContextValue" },
         "keycloak": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "keycloak-theme-prep": { "$ref": "#/definitions/containerSecurityContextValue" },
         "silo": { "$ref": "#/definitions/containerSecurityContextValue" },
         "lapis": { "$ref": "#/definitions/containerSecurityContextValue" },
         "silo-importer": { "$ref": "#/definitions/containerSecurityContextValue" },
         "backend": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "raw-reads-processing": { "$ref": "#/definitions/containerSecurityContextValue" },
         "preprocessing": { "$ref": "#/definitions/containerSecurityContextValue" },
         "minio": { "$ref": "#/definitions/containerSecurityContextValue" },
         "keycloak-database": { "$ref": "#/definitions/containerSecurityContextValue" },
@@ -2314,12 +2314,16 @@
       }
     },
     "podSecurityContext": {
+      "groups": ["general"],
+      "type": "object",
       "$ref": "#/definitions/podSecurityContextSpec",
-      "description": "Pod-level security context values keyed by component name. See https://kubernetes.io/docs/tasks/configure-pod-container/security-context/."
+      "description": "Pod-level security context values keyed by workload name. See https://kubernetes.io/docs/tasks/configure-pod-container/security-context/."
     },
     "containerSecurityContext": {
+      "groups": ["general"],
+      "type": "object",
       "$ref": "#/definitions/containerSecurityContextSpec",
-      "description": "Container-level security context values keyed by component name. See https://kubernetes.io/docs/tasks/configure-pod-container/security-context/."
+      "description": "Container-level security context values keyed by workload or container name. Init containers with dedicated keys can be configured independently. See https://kubernetes.io/docs/tasks/configure-pod-container/security-context/."
     },
     "secrets": {
       "description": "TODO"

@@ -33,7 +33,7 @@ spec:
     - name: version-check
       image: busybox
       {{- include "loculus.resources" (list "ingest-init" $Values) | nindent 6 }}
-      {{- include "loculus.containerSecurityContext" (list "ingest" $Values) | nindent 6 }}
+      {{- include "loculus.containerSecurityContext" (list "ingest-init" $Values) | nindent 6 }}
       command: ['sh', '-c', '
         CONFIG_VERSION=$(grep "verify_loculus_version_is:" /package/config/config.yaml | sed "s/verify_loculus_version_is: //;");
         DOCKER_TAG="{{ $dockerTag }}";
@@ -52,7 +52,7 @@ spec:
           subPath: config.yaml
     - name: wait-for-no-other-ingest
       image: alpine/kubectl:1.36.0
-      {{- include "loculus.containerSecurityContext" (list "ingest" $Values) | nindent 6 }}
+      {{- include "loculus.containerSecurityContext" (list "ingest-init" $Values) | nindent 6 }}
       command:
         - sh
         - -c

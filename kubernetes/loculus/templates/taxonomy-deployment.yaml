@@ -27,7 +27,7 @@ spec:
       initContainers:
         - name: download-taxonomy-db
           image: alpine:3
-          {{- include "loculus.containerSecurityContext" (list "taxonomy-service" $.Values) | nindent 10 }}
+          {{- include "loculus.containerSecurityContext" (list "download-taxonomy-db" $.Values) | nindent 10 }}
           command: ["sh", "-c"]
           args:
             - |

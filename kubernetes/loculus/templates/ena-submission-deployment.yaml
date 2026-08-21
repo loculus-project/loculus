@@ -34,7 +34,7 @@ spec:
             limits:
               cpu: 500m
               memory: 256Mi
-          {{- include "loculus.containerSecurityContext" (list "ena-submission" $.Values) | nindent 10 }}
+          {{- include "loculus.containerSecurityContext" (list "ena-submission-flyway" $.Values) | nindent 10 }}
           command: ['flyway', 'migrate']
           env:
             - name: FLYWAY_URL

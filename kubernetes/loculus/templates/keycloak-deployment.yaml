@@ -35,7 +35,7 @@ spec:
             limits:
               cpu: 500m
               memory: 256Mi
-          {{- include "loculus.containerSecurityContext" (list "keycloak" $.Values) | nindent 10 }}
+          {{- include "loculus.containerSecurityContext" (list "keycloak-theme-prep" $.Values) | nindent 10 }}
           image: "ghcr.io/loculus-project/keycloakify:{{ $dockerTag }}"
           volumeMounts:
             - name: theme-volume
