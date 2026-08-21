@@ -11,6 +11,7 @@ import argparse
 import csv
 import logging
 import subprocess  # noqa: S404
+import sys
 import tempfile
 import urllib.parse
 from pathlib import Path
@@ -21,6 +22,8 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+csv.field_size_limit(sys.maxsize)
 
 PATHOPLEXUS_URL = "https://pathoplexus.org"
 LAPIS_URL = "https://lapis.pathoplexus.org"
