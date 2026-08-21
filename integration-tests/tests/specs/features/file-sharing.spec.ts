@@ -478,7 +478,7 @@ test('single revise seq via edit page reuses, replaces, discards and adds files'
     await editPage.goto(ORGANISM_URL_NAME, accession, version);
 
     // Reused file 1
-    await editPage.expectExtraFileUploaded(RAW_READS, file1Name);
+    await editPage.expectExtraFileReused(RAW_READS, file1Name);
 
     // Replaced file 2
     await editPage.addAdditionalFile(RAW_READS, file2Name, EBOLA_SUDAN_SMALL_FASTQ(1));

@@ -1,10 +1,14 @@
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { DateTime } from 'luxon';
-import type { Result } from 'neverthrow';
 import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo } from 'react';
 
-import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
+import {
+    type FileFactory,
+    FormOrUploadWrapper,
+    type InputMode,
+    type SubmissionFileMappingState,
+} from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
@@ -36,9 +40,13 @@ import {
     type CategoryLinkage,
     type FileLinkage,
     type FileMapping,
-    type SubmissionFileMapping,
 } from './FileUpload/fileMapping.ts';
-import { validateFileUploadStates, type FileUploadState } from './FileUpload/fileUpload.ts';
+import {
+    hasUploadsInProgress,
+    uploadsInProgressMessage,
+    validateFileUploadStates,
+    type FileUploadState,
+} from './FileUpload/fileUpload.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -79,9 +87,7 @@ const InnerDataUploadForm = ({
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
     const [fileUploadStates, setFileUploadStates] = useState<Map<string, FileUploadState>>(new Map());
     const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(undefined);
-    const [submissionFileMapping, setSubmissionFileMapping] = useState<
-        Result<SubmissionFileMapping, Error> | undefined
-    >(undefined);
+    const [submissionFileMapping, setSubmissionFileMapping] = useState<SubmissionFileMappingState>(undefined);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
@@ -91,11 +97,38 @@ const InnerDataUploadForm = ({
 
     const fileLinkage = useMemo(
         () =>
-            inputMode === 'bulk' && submissionFileMapping?.isOk()
+            inputMode === 'bulk' &&
+            submissionFileMapping !== undefined &&
+            submissionFileMapping !== 'processing' &&
+            submissionFileMapping.isOk()
                 ? resolveFileMappings(submissionFileMapping.value, fileMapping).fileLinkage
                 : undefined,
         [inputMode, submissionFileMapping, fileMapping],
     );
+
+    /**
+     * The reasons the user cannot submit yet, in the order they should be resolved. Everything
+     * here is derived from state we already hold, so the submit button can be disabled *before*
+     * it is clicked and the reason shown next to it -- rather than letting the user click and
+     * then answering with a toast. Checks that can only run at submit time (anything behind
+     * `fileFactory()`, or applying the file mapping) stay in `handleSubmit` below.
+     */
+    const submitBlockers: string[] = [];
+    if (hasUploadsInProgress(fileUploadStates)) submitBlockers.push(uploadsInProgressMessage);
+    if (extraFilesEnabled && inputMode === 'bulk') {
+        if (submissionFileMapping === undefined) submitBlockers.push('Please provide a metadata file.');
+        else if (submissionFileMapping === 'processing')
+            submitBlockers.push('Please wait for the metadata file to finish processing.');
+        else if (submissionFileMapping.isErr()) submitBlockers.push(submissionFileMapping.error.message);
+    }
+    if (dataUseTermsEnabled && !confirmedNoPII)
+        submitBlockers.push(
+            'Please confirm the data you submitted does not include restricted or personally identifiable information.',
+        );
+    if (dataUseTermsEnabled && !agreedToINSDCUploadTerms)
+        submitBlockers.push(
+            'Please tick the box to agree that you will not independently submit these sequences to INSDC',
+        );
 
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
@@ -146,7 +179,7 @@ const InnerDataUploadForm = ({
                     finalMetadataFile = finalMetadataFileResult.value;
                 }
             } else {
-                if (submissionFileMapping === undefined) {
+                if (submissionFileMapping === undefined || submissionFileMapping === 'processing') {
                     onError('Cannot submit: metadata file is still being processed.');
                     return;
                 }
@@ -274,13 +307,18 @@ const InnerDataUploadForm = ({
                         <hr />
                     </>
                 )}
-                <div className='flex justify-end gap-x-6'>
+                <div className='flex justify-end items-center gap-x-6'>
+                    {submitBlockers.length > 0 && (
+                        <p className='text-sm text-gray-600 text-right' data-testid='submit-blocked-reason'>
+                            {submitBlockers[0]}
+                        </p>
+                    )}
                     <Button
                         name='submit'
                         type='submit'
                         className='rounded-md py-2 text-sm font-semibold shadow-xs focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
                         onClick={(e) => void handleSubmit(e)}
-                        alsoDisabledIf={isPending}
+                        alsoDisabledIf={isPending || submitBlockers.length > 0}
                     >
                         <div className={`absolute ml-1.5 inline-flex ${isPending ? 'visible' : 'invisible'}`}>
                             <Spinner size='sm' />

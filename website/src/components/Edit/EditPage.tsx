@@ -25,6 +25,8 @@ import {
 } from '../Submission/FileUpload/fileMapping.ts';
 import {
     getPreviousFileUploadStates,
+    hasUploadsInProgress,
+    uploadsInProgressMessage,
     validateFileUploadStates,
     type FileUploadState,
 } from '../Submission/FileUpload/fileUpload.ts';
@@ -161,6 +163,10 @@ const InnerEditPage: FC<EditPageProps> = ({
         }
     };
 
+    // Disable submission while uploads are in flight, and say so next to the button, rather than
+    // letting the user click and answering with a toast. `handleSubmit` re-checks as a safety net.
+    const uploadsInProgress = hasUploadsInProgress(fileUploadStates);
+
     const handleSubmit = () => {
         const fileUploadStateResult = validateFileUploadStates(fileUploadStates);
         if (fileUploadStateResult.isErr()) {
@@ -253,8 +259,17 @@ const InnerEditPage: FC<EditPageProps> = ({
                     />
                 </div>
             )}
-            <div className={isCreatingRevision ? 'flex justify-end gap-x-6' : 'flex items-center gap-4 mt-4'}>
-                <Button variant='primary' onClick={handleSubmit} disabled={isPending}>
+            <div
+                className={
+                    isCreatingRevision ? 'flex justify-end items-center gap-x-6' : 'flex items-center gap-4 mt-4'
+                }
+            >
+                {uploadsInProgress && (
+                    <p className='text-sm text-gray-600' data-testid='submit-blocked-reason'>
+                        {uploadsInProgressMessage}
+                    </p>
+                )}
+                <Button variant='primary' onClick={handleSubmit} disabled={isPending || uploadsInProgress}>
                     {isPending && <Spinner size='sm' className='mr-2' />}
                     {isCreatingRevision ? 'Upload and proceed to Approval' : 'Submit edits and proceed to Approval'}
                 </Button>
