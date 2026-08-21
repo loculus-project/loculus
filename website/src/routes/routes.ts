@@ -47,7 +47,7 @@ export const routes = {
     revisePage: (
         organism: string,
         groupId: number,
-        inputMode: InputMode = 'bulk',
+        inputMode: InputMode = 'form',
         accession?: string,
         version?: string,
     ) => SubmissionRouteUtils.toUrl({ name: 'revise', organism, groupId, inputMode, accession, version }),
