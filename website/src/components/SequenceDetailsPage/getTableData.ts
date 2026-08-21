@@ -225,8 +225,6 @@ function toTableData(
             orderOnDetailsPage: metadata.orderOnDetailsPage,
         }));
 
-    // Revocation versions carry no sequence data, so the mutation/insertion sections would
-    // always render empty. Omit them entirely.
     if (config.submissionDataTypes.consensusSequences && !isRevocationEntry(details)) {
         const mutations = mutationDetails(
             nucleotideMutations,
