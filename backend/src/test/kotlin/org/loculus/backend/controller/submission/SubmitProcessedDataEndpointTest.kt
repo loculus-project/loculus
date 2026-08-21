@@ -96,6 +96,21 @@ class SubmitProcessedDataEndpointTest(
     }
 
     @Test
+    fun `WHEN I submit the same accession version twice in one request THEN returns bad request`() {
+        val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.successfullyProcessed(accession = accessions.first()),
+            PreparedProcessedData.successfullyProcessed(accession = accessions.first()),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("\$.detail").value(containsString("duplicate accession version")))
+
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
+            .assertStatusIs(Status.IN_PROCESSING)
+    }
+
+    @Test
     fun `WHEN I submit successfully preprocessed data THEN the sequence entry is in status processed`() {
         val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
 
