@@ -28,7 +28,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           java-version: "21"
-          distribution: "adopt"
+          distribution: "temurin"
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
       - name: Run tests
@@ -44,7 +44,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           java-version: "21"
-          distribution: "adopt"
+          distribution: "temurin"
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
       - name: Check Format And Lint
