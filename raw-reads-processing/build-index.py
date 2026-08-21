@@ -17,7 +17,9 @@ from pathlib import Path
 
 import requests
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 PATHOPLEXUS_URL = "https://pathoplexus.org"
@@ -34,7 +36,9 @@ REQUEST_TIMEOUT_SECONDS = 300
 
 
 def fetch_loculus_info() -> dict:
-    response = requests.get(f"{PATHOPLEXUS_URL}/loculus-info", timeout=REQUEST_TIMEOUT_SECONDS)
+    response = requests.get(
+        f"{PATHOPLEXUS_URL}/loculus-info", timeout=REQUEST_TIMEOUT_SECONDS
+    )
     response.raise_for_status()
     return response.json()
 
@@ -65,7 +69,9 @@ def download_organism_fasta(organism: str, dest: Path, tmp_dir: Path) -> None:
 
 
 def download_base_index(dest: Path) -> None:
-    with requests.get(BASE_INDEX_URL, stream=True, timeout=REQUEST_TIMEOUT_SECONDS) as response:
+    with requests.get(
+        BASE_INDEX_URL, stream=True, timeout=REQUEST_TIMEOUT_SECONDS
+    ) as response:
         response.raise_for_status()
         with dest.open("wb") as f:
             for chunk in response.iter_content(chunk_size=1024 * 1024):
@@ -79,7 +85,9 @@ def parse_dataset_params(url: str) -> tuple[str, str]:
     return dataset_name, dataset_server
 
 
-def run_nextclade(fasta_path: Path, dataset_name: str, dataset_server: str, out_dir: Path) -> None:
+def run_nextclade(
+    fasta_path: Path, dataset_name: str, dataset_server: str, out_dir: Path
+) -> None:
     args = [
         "nextclade",
         "run",
@@ -109,7 +117,9 @@ def good_sequence_indices(tsv_path: Path) -> set[str]:
         }
 
 
-def filter_fasta_by_index(fasta_path: Path, good_indices: set[str], combined_fasta: Path) -> None:
+def filter_fasta_by_index(
+    fasta_path: Path, good_indices: set[str], combined_fasta: Path
+) -> None:
     """Append only the FASTA records at `good_indices` to combined_fasta."""
     dropped = 0
     with fasta_path.open() as src, combined_fasta.open("a") as dst:
@@ -127,7 +137,9 @@ def filter_fasta_by_index(fasta_path: Path, good_indices: set[str], combined_fas
     logger.info("Dropped %d sequences from %s", dropped, fasta_path.name)
 
 
-def run_deacon_index_diff(temp_index: Path, combined_fasta: Path, output_path: Path) -> None:
+def run_deacon_index_diff(
+    temp_index: Path, combined_fasta: Path, output_path: Path
+) -> None:
     args = [
         "deacon",
         "index",
@@ -178,7 +190,9 @@ def build_index(output_path: Path) -> None:
 
                 logger.info("Filtering FASTA for good sequences...")
                 good_indices = good_sequence_indices(tmp_dir / "nextclade.tsv")
-                logger.info("Found %d good sequences for %s", len(good_indices), organism)
+                logger.info(
+                    "Found %d good sequences for %s", len(good_indices), organism
+                )
                 filter_fasta_by_index(organism_fasta, good_indices, combined_fasta)
 
         run_deacon_index_diff(temp_index, combined_fasta, output_path)
