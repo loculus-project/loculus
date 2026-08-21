@@ -67,6 +67,7 @@ class AccessionPreconditionValidator(
                 SequenceEntriesView.statusColumn,
                 SequenceEntriesView.organismColumn,
                 SequenceEntriesView.errorsColumn,
+                SequenceEntriesView.isRevocationColumn,
             )
             .where { SequenceEntriesView.accessionVersionIsIn(accessionVersions) },
         groupManagementPreconditionValidator = groupManagementPreconditionValidator,
@@ -103,6 +104,7 @@ class AccessionPreconditionValidator(
                 SequenceEntriesView.statusColumn,
                 SequenceEntriesView.organismColumn,
                 SequenceEntriesView.errorsColumn,
+                SequenceEntriesView.isRevocationColumn,
             )
             .where {
                 (SequenceEntriesView.accessionColumn inList accessions) and SequenceEntriesView.isMaxVersion
@@ -164,6 +166,21 @@ class AccessionPreconditionValidator(
                 throw UnprocessableEntityException(
                     "Accession versions have errors: " +
                         sequenceEntriesWithErrors.map {
+                            "${it[SequenceEntriesView.accessionColumn]}.${it[SequenceEntriesView.versionColumn]}"
+                        }.joinToString(", "),
+                )
+            }
+            return this
+        }
+
+        fun andThatLatestVersionsAreNotRevocations(): CommonPreconditions {
+            val revocationEntries = sequenceEntries
+                .filter { it[SequenceEntriesView.isRevocationColumn] }
+
+            if (revocationEntries.isNotEmpty()) {
+                throw UnprocessableEntityException(
+                    "Accession versions are revocations and cannot be revoked again: " +
+                        revocationEntries.map {
                             "${it[SequenceEntriesView.accessionColumn]}.${it[SequenceEntriesView.versionColumn]}"
                         }.joinToString(", "),
                 )
