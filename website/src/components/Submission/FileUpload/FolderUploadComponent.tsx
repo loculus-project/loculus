@@ -324,6 +324,10 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             // Updates the state of file uploads and triggers the upload of the new files
             const addFiles = async () => {
                 const existingFiles = fileUploadState.files.filter((file) => !filePaths.has(file.path));
+                // Show the newly selected files straight away. Without this, a file being replaced
+                // keeps rendering its previous upload -- complete with tick -- for as long as the
+                // request for upload urls takes, claiming an upload that has not happened yet.
+                setFileUploadState({ type: 'uploadInProgress', files: [...existingFiles, ...awaiting] });
                 const pendingFiles = await requestFileUploads(awaiting);
                 setFileUploadState({
                     type: 'uploadInProgress',
@@ -479,7 +483,7 @@ const FileListItem: FC<FileListeItemProps> = ({ file, fileCategory }) => {
             <div className='flex-1 min-w-0 flex items-center'>
                 <FilePath file={file} />
                 <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>
-                    ({file.type === 'previousUpload' ? 'uploaded' : formatFileSize(file.size)})
+                    ({file.type === 'previousUpload' ? 'uploaded' : formatFileSize(fileSizeOf(file))})
                 </span>
                 <span className='text-xs text-blue-500 ml-2 w-9 shrink-0 text-right whitespace-nowrap'>
                     {showProgress ? `${percentage}%` : ''}
@@ -491,6 +495,9 @@ const FileListItem: FC<FileListeItemProps> = ({ file, fileCategory }) => {
         </div>
     );
 };
+
+const fileSizeOf = (file: Exclude<SingleFileUpload, PreviousUpload>) =>
+    file.type === 'awaiting' ? file.file.size : file.size;
 
 const FilePath: FC<{ file: SingleFileUpload }> = ({ file }) => {
     const folderPath = file.path.split('/').slice(0, -1);
@@ -518,6 +525,7 @@ const formatFileSize = (bytes: number): string => {
 // Determine status icon for file upload
 const getStatusIcon = (status: UploadStatus) => {
     switch (status) {
+        case 'awaiting':
         case 'pending':
             return <LucideLoader className='animate-spin h-3 w-3 text-blue-500' />;
         case 'previousUpload':

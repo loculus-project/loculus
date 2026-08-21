@@ -44,9 +44,9 @@ type FileError = {
     msg: string;
 };
 
-export type SingleFileUpload = Pending | Uploaded | PreviousUpload | FileError;
+export type SingleFileUpload = Awaiting | Pending | Uploaded | PreviousUpload | FileError;
 
-export type UploadStatus = 'pending' | 'uploaded' | 'previousUpload' | 'error';
+export type UploadStatus = 'awaiting' | 'pending' | 'uploaded' | 'previousUpload' | 'error';
 
 /**
  * The state that the component is in, right after the user dropped the files.
