@@ -7,12 +7,12 @@ help us keep Loculus and its users safe.
 
 Please report suspected vulnerabilities through
 [GitHub's private vulnerability reporting form](https://github.com/loculus-project/loculus/security/advisories/new).
-If the form is unavailable to you, contact a
-[Loculus team member](https://loculus.org/#team) and ask to establish a private
-channel for your report.
+If the form is unavailable to you, email the Loculus team at
+[team-developers-aaaakcy2dclnasj3rubi6oztym@loculus.slack.com](mailto:team-developers-aaaakcy2dclnasj3rubi6oztym@loculus.slack.com)
+and ask to establish a private channel for your report.
 
 Do not include vulnerability details in a public GitHub issue, discussion, pull
-request, or initial public message to a team member.
+request, or your initial email to us.
 
 Please include as much of the following information as possible:
 
@@ -39,6 +39,10 @@ towards a versioning system. Security fixes are applied to the `main` branch;
 older revisions are not separately maintained. Operators should deploy a recent
 revision and update promptly when a security fix is published.
 
+If you operate a Loculus instance, please contact us at
+[team-developers-aaaakcy2dclnasj3rubi6oztym@loculus.slack.com](mailto:team-developers-aaaakcy2dclnasj3rubi6oztym@loculus.slack.com)
+so that we can keep you informed about security updates.
+
 ## Scope
 
 This policy covers security vulnerabilities in the currently maintained Loculus
@@ -50,23 +54,6 @@ Loculus instance, contact that instance's operator. A vulnerability in Loculus
 itself should be reported to us using the private reporting form above, even if you
 first observed it on a third-party instance.
 
-## Out of scope
-
-The following are generally out of scope:
-
-- Vulnerabilities that have already been reported or are already known to us
-- Vulnerabilities in unsupported or outdated versions that have been fixed in a
-  maintained version
-- Vulnerabilities in an upstream dependency that have already been reported to the
-  upstream maintainer and do not introduce a Loculus-specific vulnerability
-- Issues in software, services, infrastructure, or protocols that are not under
-  the Loculus project's control
-- Attacks that require physical access to a user's device
-- Self-XSS
-- Missing security hardening or best-practice recommendations without a
-  demonstrable security impact
-- Errors in sequence data or metadata that do not have a security impact
-
 ## Research guidelines
 
 When investigating a potential vulnerability:
@@ -75,8 +62,8 @@ When investigating a potential vulnerability:
   from the relevant instance operator and account owner
 - Make a good-faith effort to avoid privacy violations, unauthorized data access
   or modification, and interruption or degradation of services
-- Do not perform denial-of-service testing, spam, social engineering (including
-  phishing), or physical attacks
+- Do not perform denial-of-service testing, spam, or physical attacks
+- Do not conduct social-engineering attacks, including phishing
 - Stop testing and report the issue if you encounter data that you are not
   authorized to access
 
