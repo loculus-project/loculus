@@ -173,10 +173,6 @@ class AccessionPreconditionValidator(
             return this
         }
 
-        /**
-         * Rejects entries whose selected version is a revocation. Reached via [thatAccessionsExist],
-         * the selected version is the latest version of each accession.
-         */
         fun andThatLatestVersionsAreNotRevocations(): CommonPreconditions {
             val revocationEntries = sequenceEntries
                 .filter { it[SequenceEntriesView.isRevocationColumn] }
