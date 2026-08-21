@@ -122,6 +122,8 @@ const InnerDataUploadForm = ({
             submitBlockers.push('Please wait for the metadata file to finish processing.');
         else if (submissionFileMapping.isErr()) submitBlockers.push(submissionFileMapping.error.message);
     }
+    const linkageErrors = fileLinkage !== undefined ? getLinkageErrors(fileLinkage) : undefined;
+    if (linkageErrors !== undefined) submitBlockers.push(linkageErrors);
     if (dataUseTermsEnabled && !confirmedNoPII)
         submitBlockers.push(
             'Please confirm the data you submitted does not include restricted or personally identifiable information.',
@@ -308,16 +310,17 @@ const InnerDataUploadForm = ({
                         <hr />
                     </>
                 )}
-                <div className='flex justify-end items-center gap-x-6'>
+                <div className='flex flex-col items-end gap-y-2'>
                     {submitBlockers.length > 0 && (
-                        <p className='text-sm text-gray-600 text-right' data-testid='submit-blocked-reason'>
+                        <p className='text-sm text-red-600 text-right' data-testid='submit-blocked-reason'>
                             {submitBlockers[0]}
                         </p>
                     )}
                     <Button
                         name='submit'
                         type='submit'
-                        className='rounded-md py-2 text-sm font-semibold shadow-xs focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
+                        variant='primary'
+                        className='shadow-xs focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2'
                         onClick={(e) => void handleSubmit(e)}
                         alsoDisabledIf={isPending || submitBlockers.length > 0}
                     >

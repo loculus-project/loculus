@@ -259,16 +259,15 @@ const InnerEditPage: FC<EditPageProps> = ({
                     />
                 </div>
             )}
-            <div
-                className={
-                    isCreatingRevision ? 'flex justify-end items-center gap-x-6' : 'flex items-center gap-4 mt-4'
-                }
-            >
-                {uploadsInProgress && (
-                    <p className='text-sm text-gray-600' data-testid='submit-blocked-reason'>
-                        {uploadsInProgressMessage}
-                    </p>
-                )}
+            {uploadsInProgress && (
+                <p
+                    className={`text-sm text-red-600 mt-4 ${isCreatingRevision ? 'text-right' : ''}`}
+                    data-testid='submit-blocked-reason'
+                >
+                    {uploadsInProgressMessage}
+                </p>
+            )}
+            <div className={isCreatingRevision ? 'flex justify-end gap-x-6' : 'flex items-center gap-4 mt-4'}>
                 <Button variant='primary' onClick={handleSubmit} disabled={isPending || uploadsInProgress}>
                     {isPending && <Spinner size='sm' className='mr-2' />}
                     {isCreatingRevision ? 'Upload and proceed to Approval' : 'Submit edits and proceed to Approval'}
