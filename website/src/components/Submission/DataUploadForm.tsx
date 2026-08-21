@@ -11,7 +11,12 @@ import {
 } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
-import { validateFileUploadStates, type FileUploadState } from './FileUpload/fileUpload.ts';
+import {
+    hasUploadsInProgress,
+    uploadsInProgressMessage,
+    validateFileUploadStates,
+    type FileUploadState,
+} from './FileUpload/fileUpload.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { backendApi } from '../../services/backendApi.ts';
@@ -43,13 +48,6 @@ import {
     type FileMapping,
 } from './FileUpload/fileMapping.ts';
 import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
-import {
-    hasUploadsInProgress,
-    uploadsInProgressMessage,
-    validateFileUploadStates,
-    type FileUploadState,
-} from './FileUpload/fileUpload.ts';
-
 
 export type UploadAction = 'submit' | 'revise';
 
