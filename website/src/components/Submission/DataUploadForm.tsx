@@ -420,7 +420,7 @@ export const ExtraFilesUpload = ({
     fileLinkage?: FileLinkage;
     onError: (message: string) => void;
 }) => {
-    const setStateForCategory =
+    const setCategoryFileUploadState =
         (category: string): Dispatch<SetStateAction<FileUploadState | undefined>> =>
         (update) =>
             setFileUploadStates((prev) => {
@@ -452,7 +452,7 @@ export const ExtraFilesUpload = ({
                             groupId={groupId}
                             onError={onError}
                             fileUploadState={fileUploadStates.get(fileCategory.name)}
-                            setFileUploadState={setStateForCategory(fileCategory.name)}
+                            setFileUploadState={setCategoryFileUploadState(fileCategory.name)}
                             setFileMapping={setFileMapping}
                         />
                         {inputMode === 'bulk' && (

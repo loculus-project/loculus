@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { err, ok } from 'neverthrow';
-import { useState, type ComponentProps } from 'react';
+import { useEffect, useState, type ComponentProps } from 'react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { FolderUploadComponent } from './FolderUploadComponent';
@@ -34,19 +34,19 @@ vi.mock('../../../utils/multipartUpload', async () => {
     };
 });
 
-let fileMapping: FileMapping | undefined;
-
 const FolderUploadComponentWithState = ({
     initialState,
     initialMapping,
+    onMapping,
     ...props
 }: Omit<ComponentProps<typeof FolderUploadComponent>, 'fileUploadState' | 'setFileUploadState' | 'setFileMapping'> & {
     initialState?: FileUploadState;
     initialMapping?: FileMapping;
+    onMapping?: (mapping: FileMapping | undefined) => void;
 }) => {
     const [fileUploadState, setFileUploadState] = useState(initialState);
     const [mapping, setMapping] = useState<FileMapping | undefined>(initialMapping);
-    fileMapping = mapping;
+    useEffect(() => onMapping?.(mapping), [mapping, onMapping]);
     return (
         <FolderUploadComponent
             {...props}
@@ -86,12 +86,11 @@ const defaultPropsWithFiles = {
 };
 
 // The mapping is keyed by category, then by file path, to its file ID.
-const categoryFileEntries = () => [...fileMapping!.get('extraFiles')!.entries()];
+const mappingOf = (files: [path: string, fileId: string][]) => new Map([['extraFiles', new Map(files)]]);
 
 describe('FolderUploadComponent', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        fileMapping = undefined;
         mockRequestMultipartUpload.mockReturnValue(ok([]));
         mockCompleteMultipartUpload.mockReturnValue(ok(undefined));
         vi.mocked(multipartUpload.uploadPart).mockResolvedValue('"etag"');
@@ -305,13 +304,14 @@ describe('FolderUploadComponent', () => {
 
     describe('discarding individual files', () => {
         it('files can be discarded and removed from the file mapping', async () => {
-            render(<FolderUploadComponentWithState {...defaultPropsWithFiles} />);
+            const onMapping = vi.fn();
+            render(<FolderUploadComponentWithState {...defaultPropsWithFiles} onMapping={onMapping} />);
 
             await userEvent.click(screen.getByTestId('discard_extraFiles_file-a.txt'));
             await waitFor(() => expect(screen.queryByText('file-a.txt')).not.toBeInTheDocument());
             expect(screen.getByText('file-b.txt')).toBeInTheDocument();
 
-            expect(categoryFileEntries()).toEqual([['file-b.txt', 'file-2']]);
+            expect(onMapping).toHaveBeenLastCalledWith(mappingOf([['file-b.txt', 'file-2']]));
         });
 
         it('files are discarded by path, not by name', async () => {
@@ -319,7 +319,8 @@ describe('FolderUploadComponent', () => {
                 .mockReturnValueOnce(ok([{ fileId: 'file-1', urls: ['http://test.com/url1'] }]))
                 .mockReturnValueOnce(ok([{ fileId: 'file-2', urls: ['http://test.com/url2'] }]));
 
-            render(<FolderUploadComponentWithState {...defaultProps} />);
+            const onMapping = vi.fn();
+            render(<FolderUploadComponentWithState {...defaultProps} onMapping={onMapping} />);
 
             const firstFile = new File(['content'], 'a.txt', { type: 'text/plain' });
             Object.defineProperty(firstFile, 'webkitRelativePath', { value: 'folder/sub1/a.txt', writable: false });
@@ -334,22 +335,24 @@ describe('FolderUploadComponent', () => {
             await waitFor(() => expect(screen.getAllByText('a.txt')).toHaveLength(1));
             expect(screen.getByText('sub2 /')).toBeInTheDocument();
             expect(screen.queryByText('sub1 /')).not.toBeInTheDocument();
-            expect(categoryFileEntries()).toEqual([['sub2/a.txt', 'file-2']]);
+            expect(onMapping).toHaveBeenLastCalledWith(mappingOf([['sub2/a.txt', 'file-2']]));
         });
 
         it('reverts to the upload folder prompt and clears the file mapping after discarding the last upload', async () => {
             const singleFile = { fileId: 'file-1', path: 'file-a.txt' };
+            const onMapping = vi.fn();
             render(
                 <FolderUploadComponentWithState
                     {...defaultPropsWithFiles}
                     initialState={previousUploadsState([singleFile])}
+                    onMapping={onMapping}
                 />,
             );
 
             await userEvent.click(screen.getByTestId('discard_extraFiles_file-a.txt'));
             await waitFor(() => expect(screen.getByText('Upload folder')).toBeInTheDocument());
             expect(screen.queryByText('file-a.txt')).not.toBeInTheDocument();
-            expect(fileMapping).toBeUndefined();
+            expect(onMapping).toHaveBeenLastCalledWith(undefined);
         });
 
         it('disables the individual discard buttons while an upload is in progress', async () => {
@@ -391,7 +394,8 @@ describe('FolderUploadComponent', () => {
                 ok([{ fileId: 'replacement-id', urls: ['http://test.com/url1'] }]),
             );
 
-            render(<FolderUploadComponentWithState {...defaultPropsWithFiles} />);
+            const onMapping = vi.fn();
+            render(<FolderUploadComponentWithState {...defaultPropsWithFiles} onMapping={onMapping} />);
 
             const file = new File(['content'], 'file-a.txt', { type: 'text/plain' });
             Object.defineProperty(file, 'webkitRelativePath', { value: '', writable: false });
@@ -409,10 +413,12 @@ describe('FolderUploadComponent', () => {
             expect(screen.getAllByText('file-a.txt')).toHaveLength(1);
             expect(screen.getAllByText('(uploaded)')).toHaveLength(1);
 
-            expect(categoryFileEntries()).toEqual([
-                ['file-b.txt', 'file-2'],
-                ['file-a.txt', 'replacement-id'],
-            ]);
+            expect(onMapping).toHaveBeenLastCalledWith(
+                mappingOf([
+                    ['file-b.txt', 'file-2'],
+                    ['file-a.txt', 'replacement-id'],
+                ]),
+            );
         });
 
         it('leaves the existing files alone when the overwrite is cancelled', async () => {
@@ -453,22 +459,25 @@ describe('FolderUploadComponent', () => {
 
     describe('discarding all files', () => {
         it('shows a dialog before discarding all files and discards after confirmation', async () => {
-            render(<FolderUploadComponentWithState {...defaultPropsWithFiles} />);
+            const onMapping = vi.fn();
+            render(<FolderUploadComponentWithState {...defaultPropsWithFiles} onMapping={onMapping} />);
 
             await userEvent.click(screen.getByTestId('discard_extraFiles'));
             await waitFor(() => expect(screen.getByText(/are you sure you want to discard/i)).toBeInTheDocument());
 
             await userEvent.click(screen.getByRole('button', { name: /^Discard$/ }));
             await waitFor(() => expect(screen.getByText('Upload folder')).toBeInTheDocument());
-            expect(fileMapping).toBeUndefined();
+            expect(onMapping).toHaveBeenLastCalledWith(undefined);
         });
 
         it('removes only its own category when the file mapping holds several', async () => {
             const otherCategoryFiles = new Map([['other-file.txt', 'file-3']]);
+            const onMapping = vi.fn();
             render(
                 <FolderUploadComponentWithState
                     {...defaultPropsWithFiles}
                     initialMapping={new Map([['otherFiles', otherCategoryFiles]])}
+                    onMapping={onMapping}
                 />,
             );
 
@@ -476,8 +485,7 @@ describe('FolderUploadComponent', () => {
             await userEvent.click(screen.getByRole('button', { name: /^Discard$/ }));
             await waitFor(() => expect(screen.getByText('Upload folder')).toBeInTheDocument());
 
-            expect(fileMapping!.has('extraFiles')).toBe(false);
-            expect(fileMapping!.get('otherFiles')).toBe(otherCategoryFiles);
+            expect(onMapping).toHaveBeenLastCalledWith(new Map([['otherFiles', otherCategoryFiles]]));
         });
 
         it('keeps the files when discarding all files is cancelled', async () => {
