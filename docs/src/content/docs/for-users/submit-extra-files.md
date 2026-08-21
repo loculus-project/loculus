@@ -10,7 +10,7 @@ On the website submission form, there is an input field to upload files into. Yo
 
 ![The extra files component](../../../assets/ExtraFilesComponent.png)
 
-Extra files should be associated to their corresponding consensus sequence via the `files.<category>` metadata field, where `<category>` is the type of extra files you're uploading (e.g., `rawReads`) . This field should contain a space-separated list of file names indicating which files belong to which sequence. 
+Extra files should be associated to their corresponding consensus sequence via the `files.<category>` metadata field, where `<category>` is the type of extra files you're uploading (e.g., `rawReads`) . This field should contain a space-separated list of file names indicating which files belong to which sequence.
 
 If files are uploaded and linked to their respective sequences successfully, there will be a checkmark:
 
