@@ -81,7 +81,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           java-version: "21"
-          distribution: "adopt"
+          distribution: "temurin"
       - name: Setup Gradle
         if: env.CACHE_HIT == 'false'
         uses: gradle/actions/setup-gradle@v6
