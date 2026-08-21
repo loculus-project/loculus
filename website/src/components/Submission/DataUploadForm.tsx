@@ -7,6 +7,7 @@ import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo }
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
+import { validateFileUploadStates, type FileUploadState } from './FileUpload/fileUpload.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { backendApi } from '../../services/backendApi.ts';
@@ -38,7 +39,7 @@ import {
     type FileMapping,
     type SubmissionFileMapping,
 } from './FileUpload/fileMapping.ts';
-import { validateFileUploadStates, type FileUploadState } from './FileUpload/fileUpload.ts';
+import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -437,8 +438,13 @@ export const ExtraFilesUpload = ({
                 <h2 className='font-medium text-lg'>Extra files</h2>
                 <p className='text-gray-500 text-sm'>
                     {inputMode === 'bulk'
-                        ? 'Upload a folder of files for your sequences. Each file must be referenced by its name in the corresponding file category column of your metadata.'
-                        : 'Upload a folder of files for this sequence'}
+                        ? 'Upload a folder of files or individual files for your sequences. Each file must be referenced by its name in the corresponding file category column of your metadata.'
+                        : 'Upload a folder of files or individual files for this sequence.'}{' '}
+                    For more information please refer to the{' '}
+                    <a href={extraFilesUploadDocsUrl} target='_blank' className='text-primary-600 hover:underline'>
+                        extra files documentation
+                    </a>
+                    .
                 </p>
             </div>
             <div className='col-span-2 flex flex-col gap-4'>
@@ -542,7 +548,7 @@ const Acknowledgement = ({
                     <p className='block text-sm'>
                         Your data will be available on {instanceName}, under the selected data use terms. Data with open
                         data use terms will additionally be made publicly available through the{' '}
-                        <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
+                        <a href='https://www.insdc.org/' target='_blank' className='text-primary-600 hover:underline'>
                             INSDC
                         </a>{' '}
                         databases (ENA, DDBJ, NCBI).
@@ -580,6 +586,7 @@ const Acknowledgement = ({
                                     INSDC.{' '}
                                     <a
                                         href='/docs/concepts/insdc-submission'
+                                        target='_blank'
                                         className='text-primary-600 hover:underline'
                                     >
                                         Find out more.
