@@ -96,7 +96,7 @@ class SubmitProcessedDataEndpointTest(
     }
 
     @Test
-    fun `WHEN I submit the same accession version twice in one batch THEN returns bad request`() {
+    fun `WHEN I submit the same accession version twice in one request THEN returns bad request`() {
         val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
 
         submissionControllerClient.submitProcessedData(

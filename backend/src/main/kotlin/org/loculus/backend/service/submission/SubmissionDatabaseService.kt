@@ -252,14 +252,14 @@ class SubmissionDatabaseService(
         // rather than once per claimed entry. RETURNING reports exactly the rows this claim
         // inserted, so entries another pipeline already holds are simply absent.
         val sql = """
-            INSERT INTO sequence_entries_preprocessed_data (
+            INSERT INTO $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME (
                 accession,
                 version,
                 pipeline_version,
                 processing_status,
                 started_processing_at
             )
-            SELECT claimed.accession, claimed.version, ?, 'IN_PROCESSING', ?
+            SELECT claimed.accession, claimed.version, ?::bigint, '${IN_PROCESSING.name}', ?::timestamp
             FROM unnest(?::text[], ?::bigint[]) AS claimed(accession, version)
             ON CONFLICT (accession, version, pipeline_version) DO NOTHING
             RETURNING accession, version
@@ -273,6 +273,7 @@ class SubmissionDatabaseService(
                 ArrayColumnType<String, List<String>>(TextColumnType()) to sequenceEntries.map { it.accession },
                 ArrayColumnType<Long, List<Long>>(LongColumnType()) to sequenceEntries.map { it.version },
             ),
+            // SELECT so that Exposed runs executeQuery and the RETURNING rows can be read.
             explicitStatementType = StatementType.SELECT,
         ) { resultSet ->
             buildSet {
@@ -306,6 +307,7 @@ class SubmissionDatabaseService(
         log.info { "updating processed data" }
 
         val processedAccessionVersions = mutableListOf<String>()
+        val seenAccessionVersions = mutableSetOf<AccessionVersion>()
         val processedFiles = mutableMapOf<AccessionVersion, Set<FileId>>()
         val processingResultCounts = mutableMapOf<ProcessingResult, Int>()
         BufferedReader(InputStreamReader(inputStream)).use { reader ->
@@ -323,6 +325,7 @@ class SubmissionDatabaseService(
                 val storedResults = submittedProcessedDataBatch.map {
                     prepareProcessedResultForStorage(it, organism)
                 }
+                rejectDuplicates(storedResults, seenAccessionVersions)
                 storeProcessedResults(storedResults, pipelineVersion)
 
                 submittedProcessedDataBatch.forEach { submittedProcessedData ->
@@ -505,6 +508,23 @@ class SubmissionDatabaseService(
     }
 
     /**
+     * One statement per batch updates a repeated accession version only once, and from an
+     * arbitrary one of the duplicates. [seen] spans the whole request, so a duplicate is
+     * rejected the same way wherever it falls relative to a batch boundary.
+     */
+    private fun rejectDuplicates(storedResults: List<StoredProcessedResult>, seen: MutableSet<AccessionVersion>) {
+        for (storedResult in storedResults) {
+            val accessionVersion = AccessionVersion(storedResult.submitted.accession, storedResult.submitted.version)
+            if (!seen.add(accessionVersion)) {
+                throw BadRequestException(
+                    "Processed results contain duplicate accession version " +
+                        accessionVersion.displayAccessionVersion(),
+                )
+            }
+        }
+    }
+
+    /**
      * Stores a whole batch of results in one statement. Writing them one by one made every
      * record fire the per statement tracker trigger, and all workers then queued on the single
      * row of table_update_tracker. One statement per batch means that trigger now fires once per
@@ -515,32 +535,19 @@ class SubmissionDatabaseService(
             return
         }
 
-        // One statement per batch updates a repeated accession version only once, and from an
-        // arbitrary one of the two results, so the batch has to be free of duplicates.
-        val duplicate = storedResults
-            .groupBy { AccessionVersion(it.submitted.accession, it.submitted.version) }
-            .entries
-            .firstOrNull { it.value.size > 1 }
-        if (duplicate != null) {
-            throw BadRequestException(
-                "Processed result batch contains duplicate accession version " +
-                    duplicate.key.displayAccessionVersion(),
-            )
-        }
-
         val sql = """
-            UPDATE sequence_entries_preprocessed_data AS preprocessed
-            SET processing_status = 'PROCESSED',
+            UPDATE $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME AS preprocessed
+            SET processing_status = '${PROCESSED.name}',
                 processed_data = submitted.processed_data::jsonb,
                 errors = submitted.errors::jsonb,
                 warnings = submitted.warnings::jsonb,
-                finished_processing_at = ?
+                finished_processing_at = ?::timestamp
             FROM unnest(?::text[], ?::bigint[], ?::text[], ?::text[], ?::text[])
                 AS submitted(accession, version, processed_data, errors, warnings)
             WHERE preprocessed.accession = submitted.accession
               AND preprocessed.version = submitted.version
-              AND preprocessed.pipeline_version = ?
-              AND preprocessed.processing_status = 'IN_PROCESSING'
+              AND preprocessed.pipeline_version = ?::bigint
+              AND preprocessed.processing_status = '${IN_PROCESSING.name}'
             RETURNING preprocessed.accession, preprocessed.version
         """.trimIndent()
 
@@ -557,6 +564,7 @@ class SubmissionDatabaseService(
                 textArrayColumnType to storedResults.map { serialize(it.warnings) },
                 LongColumnType() to pipelineVersion,
             ),
+            // SELECT so that Exposed runs executeQuery and the RETURNING rows can be read.
             explicitStatementType = StatementType.SELECT,
         ) { resultSet ->
             buildSet {
