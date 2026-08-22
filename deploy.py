@@ -536,7 +536,7 @@ def get_codespace_params(codespace_name):
     }
     return [
         "--set-json",
-        f"public={json.dumps(public_runtime_config)}",
+        f"networking.publicHosts={json.dumps(public_runtime_config)}",
     ]
 
 
