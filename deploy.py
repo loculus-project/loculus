@@ -172,6 +172,24 @@ def main():
         )
 
 
+# Enable traefik access log and raise log level to DEBUG to get more insights into failures in CI
+# This resource is how k3s/k3d-bundled traefik is configured 
+TRAEFIK_LOGGING_CONFIG = """
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    logs:
+      general:
+        level: DEBUG
+      access:
+        enabled: true
+"""
+
+
 def handle_cluster():
     if args.delete:
         print(f"Deleting cluster '{CLUSTER_NAME}'.")
@@ -194,6 +212,8 @@ def handle_cluster():
             command += f" --image {args.k3s_image}"
 
         run_command([command], shell=True)
+
+    run_command(["kubectl", "apply", "-f", "-"], input=TRAEFIK_LOGGING_CONFIG, text=True)
 
     install_secret_generator()
     while not is_traefik_running():
