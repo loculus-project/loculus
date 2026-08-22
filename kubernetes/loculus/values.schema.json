@@ -955,13 +955,13 @@
             "additionalProperties": false,
             "properties": {
               "name": {
-                "groups": ["referenceGenomes"],
+                "groups": ["reference-genome"],
                 "docsIncludePrefix": false,
                 "type": "string",
                 "description": "Name of the segment (e.g., 'S', 'M', 'L', or 'main' for single-segmented organisms)"
               },
               "displayName": {
-                "groups": ["referenceGenomes"],
+                "groups": ["reference-genome"],
                 "docsIncludePrefix": false,
                 "type": "string",
                 "description": "Display name of the segment used on the website (e.g., 'S', 'M', 'L', or 'main' for single-segmented organisms)"
@@ -1028,8 +1028,7 @@
                   },
                   "required": ["name", "sequence"]
                 }
-              },
-              "additionalProperties": false
+              }
             }
           }
         }
@@ -1116,21 +1115,18 @@
     },
     "accessionPrefix": {
       "groups": ["general"],
-      "group": "general",
       "type": "string",
       "default": "LOC_",
       "description": "Prefix used for accession numbers"
     },
     "dateFieldForGroupGraph": {
       "groups": ["general"],
-      "group": "general",
       "type": ["string", "null"],
       "default": null,
       "description": "The metadata field used to plot cumulative submissions over time on the group page (typically 'earliestReleaseDate' or another date field). Set to null to disable the chart. If the specified field does not exist for an organism, the chart will show no data for that organism."
     },
     "zstdCompressionLevel": {
       "groups": ["general"],
-      "group": "general",
       "type": "integer",
       "default": 10,
       "minimum": -7,
@@ -1139,7 +1135,6 @@
     },
     "pipelineVersionUpgradeCheckIntervalSeconds": {
       "groups": ["general"],
-      "group": "general",
       "type": "integer",
       "default": 10,
       "minimum": 1,
@@ -1373,17 +1368,17 @@
           "type": "object",
           "properties": {
             "organization": {
-              "group": ["general"],
+              "groups": ["general"],
               "type": "string",
               "description": "A github organization or username."
             },
             "repository": {
-              "group": ["general"],
+              "groups": ["general"],
               "type": "string",
               "description": "A github repository belonging to the given organization."
             },
             "issueTemplate": {
-              "group": ["general"],
+              "groups": ["general"],
               "type": "string",
               "description": "An optional issuetemplate to use."
             }
@@ -1396,31 +1391,29 @@
       "additionalProperties": false
     },
     "public": {
-      "group": ["website"],
+      "groups": ["website"],
       "type": "object",
-      "description": "TODO",
+      "description": "Overrides for the public URLs at which the services are reachable.",
       "properties": {
-        "properties": {
-          "backendUrl": {
-            "groups": ["website"],
-            "type": "string",
-            "description": "Overwrite the URL where the Loculus backend is publicly available."
-          },
-          "websiteUrl": {
-            "groups": ["website"],
-            "type": "string",
-            "description": "Overwrite the URL where the website is publicly available."
-          },
-          "keycloakUrl": {
-            "groups": ["website"],
-            "type": "string",
-            "description": "Overwrite the URL where Keycloak is publicly available."
-          },
-          "lapisUrlTemplate": {
-            "groups": ["website"],
-            "type": "string",
-            "description": "Overwrite the URLs where the LAPIS instances are publicly available. Must contain `%organism%` as a placeholder."
-          }
+        "backendUrl": {
+          "groups": ["website"],
+          "type": "string",
+          "description": "Overwrite the URL where the Loculus backend is publicly available."
+        },
+        "websiteUrl": {
+          "groups": ["website"],
+          "type": "string",
+          "description": "Overwrite the URL where the website is publicly available."
+        },
+        "keycloakUrl": {
+          "groups": ["website"],
+          "type": "string",
+          "description": "Overwrite the URL where Keycloak is publicly available."
+        },
+        "lapisUrlTemplate": {
+          "groups": ["website"],
+          "type": "string",
+          "description": "Overwrite the URLs where the LAPIS instances are publicly available. Must contain `%organism%` as a placeholder."
         }
       }
     },
