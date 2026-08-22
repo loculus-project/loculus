@@ -257,10 +257,14 @@ data:
           "publicClient": true,
           "directAccessGrantsEnabled": true,
           "redirectUris": [
-            "https://{{$.Values.host}}/*",
-            "http://{{$.Values.host}}/*",
-            "http://localhost:3000/*"
-          ]
+            "https://{{$.Values.host}}/auth/callback"{{ if $.Values.insecureCookies }},
+            "http://{{$.Values.host}}/auth/callback",
+            "http://localhost:3000/auth/callback"{{ end }}
+          ],
+          "attributes": {
+            "pkce.code.challenge.method": "S256",
+            "post.logout.redirect.uris": "https://{{$.Values.host}}/logout{{ if $.Values.insecureCookies }}##http://{{$.Values.host}}/logout##http://localhost:3000/logout{{ end }}"
+          }
         },
         {
           "clientId" : "account-console2",
