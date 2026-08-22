@@ -133,20 +133,27 @@ jobs:
       - name: List running pods
         if: ${{ !cancelled() }}
         run: kubectl get pods --all-namespaces
-      - name: Describe pods
+      - name: Describe pods and collect events
         if: ${{ !cancelled() }}
         run: |
           mkdir -p pod_descriptions
           kubectl describe pods -l app=loculus | tee pod_descriptions/describe_pods.txt
+          # Structured snapshot: restartCount + per-container lastState/exitCode,
+          # node placement and start times in a greppable machine-readable form.
+          kubectl get pods -l app=loculus -o wide | tee pod_descriptions/pods_wide.txt
+          kubectl get pods -l app=loculus -o yaml > pod_descriptions/pods.yaml
+          # Node conditions (MemoryPressure/DiskPressure/evictions) that can cause
+          # restarts independent of the app itself.
+          kubectl describe nodes > pod_descriptions/describe_nodes.txt
+          # Persist cluster events (CrashLoopBackOff, OOMKilled, probe failures,
+          # image pulls, ...) so restart causes are debuggable from the artifacts.
+          kubectl get events --sort-by=.lastTimestamp -A | tee pod_descriptions/events.txt
       - name: Upload pod descriptions
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: pod-descriptions-${{ matrix.browser }}
           path: pod_descriptions/
-      - name: Show events
-        if: ${{ !cancelled() }}
-        run: kubectl get events
       - name: Save logs from all containers to file
         if: ${{ !cancelled() }}
         run: ./.github/scripts/collect_kubernetes_logs.sh
