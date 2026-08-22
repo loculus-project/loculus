@@ -117,16 +117,17 @@ Create a file `my-values.yaml` with the following configuration for the instance
 
 ```yaml
 name: '<your instance name>'
-host: '<your domain>'
 environment: local # Do not change this: this setup uses a "local" environment as the public traffic is proxied through nginx.
 
 runDevelopmentMainDatabase: true
 runDevelopmentKeycloakDatabase: true
 
-public:
-  backendUrl: 'https://api.<your domain>/backend'
-  lapisUrlTemplate: 'https://api.<your domain>/%organism%'
-  keycloakUrl: 'https://auth.<your domain>'
+networking:
+  host: '<your domain>'
+  publicHosts:
+    backendUrl: 'https://api.<your domain>/backend'
+    lapisUrlTemplate: 'https://api.<your domain>/%organism%'
+    keycloakUrl: 'https://auth.<your domain>'
 
 auth:
   verifyEmail: false
