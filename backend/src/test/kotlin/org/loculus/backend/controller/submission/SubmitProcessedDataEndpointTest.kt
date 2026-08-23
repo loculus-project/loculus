@@ -334,6 +334,25 @@ class SubmitProcessedDataEndpointTest(
             .assertStatusIs(Status.PROCESSED)
     }
 
+    // Same state as after a sequence edit, which removes the sepd rows of all pipeline versions
+    // (https://github.com/loculus-project/loculus/issues/7128).
+    @Test
+    fun `WHEN I submit data for an entry without a claim THEN discards it and stores the claimed entries`() {
+        val accessionsInProcessing = convenienceClient.prepareDataTo(Status.IN_PROCESSING).map { it.accession }
+        val accessionsWithoutClaim = convenienceClient.prepareDataTo(Status.RECEIVED).map { it.accession }
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.successfullyProcessed(accession = accessionsInProcessing.first()),
+            PreparedProcessedData.successfullyProcessed(accession = accessionsWithoutClaim.first()),
+        )
+            .andExpect(status().isNoContent)
+
+        convenienceClient.getSequenceEntry(accession = accessionsInProcessing.first(), version = 1)
+            .assertStatusIs(Status.PROCESSED)
+        convenienceClient.getSequenceEntry(accession = accessionsWithoutClaim.first(), version = 1)
+            .assertStatusIs(Status.RECEIVED)
+    }
+
     @Test
     fun `WHEN I submit a JSON entry with a missing field THEN returns bad request`() {
         val accession = prepareUnprocessedSequenceEntry()
