@@ -312,6 +312,9 @@ class SubmissionDatabaseService(
                         processingResultCounts.merge(processingResult, 1, Int::plus)
                     } else {
                         discardedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
+                        processedFiles.remove(
+                            AccessionVersion(submittedProcessedData.accession, submittedProcessedData.version),
+                        )
                     }
                 }
             }

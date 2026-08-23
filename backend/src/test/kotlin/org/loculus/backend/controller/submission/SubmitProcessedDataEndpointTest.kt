@@ -43,6 +43,7 @@ import org.loculus.backend.controller.groupmanagement.GroupManagementControllerC
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.service.files.FilesDatabaseService
+import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.submission.AminoAcidSymbols
 import org.loculus.backend.service.submission.NucleotideSymbols
 import org.loculus.backend.service.submission.SubmissionDatabaseService
@@ -69,6 +70,7 @@ class SubmitProcessedDataEndpointTest(
     @Autowired val useNewerProcessingPipelineVersionTask: UseNewerProcessingPipelineVersionTask,
     @Autowired val submissionDatabaseService: SubmissionDatabaseService,
     @Autowired val filesDatabaseService: FilesDatabaseService,
+    @Autowired val s3Service: S3Service,
     @Autowired val objectMapper: ObjectMapper,
 ) {
 
@@ -351,6 +353,44 @@ class SubmitProcessedDataEndpointTest(
             .assertStatusIs(Status.PROCESSED)
         convenienceClient.getSequenceEntry(accession = accessionsWithoutClaim.first(), version = 1)
             .assertStatusIs(Status.RECEIVED)
+    }
+
+    // A discarded result must not publish its files, they end up referenced by nothing.
+    @Test
+    fun `WHEN a discarded result has files for a released entry THEN the files are not published`() {
+        val groupId = groupManagementClient
+            .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andGetGroupId()
+        val accession = prepareUnprocessedSequenceEntry(DEFAULT_ORGANISM, groupId = groupId)
+
+        val fileV1 = filesClient.requestUploads(groupId = groupId, jwt = jwtForDefaultUser).andGetFileIdsAndUrls()[0]
+        convenienceClient.uploadFile(fileV1.presignedWriteUrl, "FileV1", fileV1.headers)
+        convenienceClient.extractUnprocessedData(pipelineVersion = 1)
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.withFiles(
+                accession,
+                mapOf("myFileCategory" to listOf(FileIdAndName(fileV1.fileId, "v1.txt"))),
+            ),
+            pipelineVersion = 1,
+        ).andExpect(status().isNoContent)
+        convenienceClient.approveProcessedSequenceEntries(listOf(AccessionVersion(accession, 1)))
+
+        // Pipeline version 2 submits a result for the released entry without holding a claim on it.
+        val fileV2 = filesClient.requestUploads(groupId = groupId, jwt = jwtForDefaultUser).andGetFileIdsAndUrls()[0]
+        convenienceClient.uploadFile(fileV2.presignedWriteUrl, "FileV2", fileV2.headers)
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.withFiles(
+                accession,
+                mapOf("myFileCategory" to listOf(FileIdAndName(fileV2.fileId, "v2.txt"))),
+            ),
+            pipelineVersion = 2,
+        ).andExpect(status().isNoContent)
+
+        val response = HttpClient.newHttpClient().send(
+            HttpRequest.newBuilder().uri(URI.create(s3Service.getPublicUrl(fileV2.fileId))).build(),
+            HttpResponse.BodyHandlers.ofString(),
+        )
+        assertThat(response.statusCode(), `is`(403))
     }
 
     @Test
