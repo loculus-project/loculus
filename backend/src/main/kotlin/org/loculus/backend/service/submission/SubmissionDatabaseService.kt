@@ -289,6 +289,7 @@ class SubmissionDatabaseService(
         log.info { "updating processed data" }
 
         val processedAccessionVersions = mutableListOf<String>()
+        val discardedAccessionVersions = mutableListOf<String>()
         val processedFiles = mutableMapOf<AccessionVersion, Set<FileId>>()
         val processingResultCounts = mutableMapOf<ProcessingResult, Int>()
         BufferedReader(InputStreamReader(inputStream)).use { reader ->
@@ -306,9 +307,12 @@ class SubmissionDatabaseService(
                 submittedProcessedDataBatch.forEach { submittedProcessedData ->
                     val processingResult = submittedProcessedData.processingResult()
 
-                    insertProcessedData(submittedProcessedData, organism, pipelineVersion)
-                    processedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
-                    processingResultCounts.merge(processingResult, 1, Int::plus)
+                    if (insertProcessedData(submittedProcessedData, organism, pipelineVersion)) {
+                        processedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
+                        processingResultCounts.merge(processingResult, 1, Int::plus)
+                    } else {
+                        discardedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
+                    }
                 }
             }
         }
@@ -327,7 +331,8 @@ class SubmissionDatabaseService(
         }
 
         log.info {
-            "Updated ${processedAccessionVersions.size} sequences to $PROCESSED. " +
+            "Updated ${processedAccessionVersions.size} sequences to $PROCESSED, " +
+                "discarded ${discardedAccessionVersions.size} results whose claim was revoked. " +
                 "Processing result counts: " +
                 processingResultCounts.entries.joinToString { "${it.key}=${it.value}" }
         }
@@ -459,11 +464,15 @@ class SubmissionDatabaseService(
         }
     }
 
+    /**
+     * Stores the result of one processing job. Returns false if the result was discarded because the
+     * pipeline's claim on the entry had been revoked while it was working on it.
+     */
     private fun insertProcessedData(
         submittedProcessedData: SubmittedProcessedData,
         organism: Organism,
         pipelineVersion: Long,
-    ) {
+    ): Boolean {
         val submittedErrors = submittedProcessedData.errors.orEmpty()
         val submittedWarnings = submittedProcessedData.warnings.orEmpty()
         val processedData = when {
@@ -489,8 +498,44 @@ class SubmissionDatabaseService(
             }
 
         if (numberInserted != 1) {
+            if (claimWasRevoked(submittedProcessedData, pipelineVersion)) {
+                log.warn {
+                    "Discarding processed data for ${submittedProcessedData.displayAccessionVersion()} " +
+                        "of pipeline version $pipelineVersion: the claim on this entry was revoked while it " +
+                        "was being processed. The entry will be handed out for processing again."
+                }
+                return false
+            }
             throwInsertFailedException(submittedProcessedData, pipelineVersion)
         }
+        return true
+    }
+
+    /**
+     * True if the sequence entry still exists but has no preprocessed data row for the given pipeline
+     * version, i.e. the claim was revoked while the pipeline was working on the entry: it was edited
+     * (which resets preprocessed data for all pipeline versions), the stale-in-processing cleanup ran,
+     * or outdated pipeline data was pruned. Results of a revoked claim are obsolete and can be dropped;
+     * the entry is picked up again by [fetchUnprocessedEntriesAndUpdateToInProcessing].
+     */
+    private fun claimWasRevoked(accessionVersion: AccessionVersionInterface, pipelineVersion: Long): Boolean {
+        val sepd = SequenceEntriesPreprocessedDataTable
+        val claimExists = sepd
+            .select(sepd.accessionColumn)
+            .where {
+                sepd.accessionVersionEquals(accessionVersion) and
+                    (sepd.pipelineVersionColumn eq pipelineVersion)
+            }
+            .limit(1)
+            .count() > 0
+        if (claimExists) {
+            return false
+        }
+        return SequenceEntriesTable
+            .select(SequenceEntriesTable.accessionColumn)
+            .where { SequenceEntriesTable.accessionVersionIsIn(listOf(accessionVersion)) }
+            .limit(1)
+            .count() > 0
     }
 
     /**
