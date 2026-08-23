@@ -507,13 +507,6 @@ class SubmissionDatabaseService(
         return true
     }
 
-    /**
-     * True if the sequence entry still exists but has no preprocessed data row for the given pipeline
-     * version, i.e. the claim was revoked while the pipeline was working on the entry: it was edited
-     * (which resets preprocessed data for all pipeline versions), the stale-in-processing cleanup ran,
-     * or outdated pipeline data was pruned. Results of a revoked claim are obsolete and can be dropped;
-     * the entry is picked up again by [fetchUnprocessedEntriesAndUpdateToInProcessing].
-     */
     private fun claimWasRevoked(accessionVersion: AccessionVersionInterface, pipelineVersion: Long): Boolean {
         val sepd = SequenceEntriesPreprocessedDataTable
         val claimExists = sepd
