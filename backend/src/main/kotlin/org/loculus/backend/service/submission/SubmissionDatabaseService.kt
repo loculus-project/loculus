@@ -464,10 +464,6 @@ class SubmissionDatabaseService(
         }
     }
 
-    /**
-     * Stores the result of one processing job. Returns false if the result was discarded because the
-     * pipeline's claim on the entry had been revoked while it was working on it.
-     */
     private fun insertProcessedData(
         submittedProcessedData: SubmittedProcessedData,
         organism: Organism,
