@@ -11,8 +11,8 @@ If the form is unavailable to you, email the Loculus team at
 [team-developers-aaaakcy2dclnasj3rubi6oztym@loculus.slack.com](mailto:team-developers-aaaakcy2dclnasj3rubi6oztym@loculus.slack.com)
 and ask to establish a private channel for your report.
 
-Do not include vulnerability details in a public GitHub issue, discussion, pull
-request, or your initial email to us.
+Do not include vulnerability details in a public GitHub issue, discussion, or pull
+request.
 
 Please include as much of the following information as possible:
 
