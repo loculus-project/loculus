@@ -128,12 +128,7 @@ tasks.named('test') {
     // java.lang.System has been called"; from a future JDK the call would be blocked outright.
     // See JEP 472: https://openjdk.org/jeps/472
     jvmArgs '--enable-native-access=ALL-UNNAMED'
-    // Run tests with the same object layout as production, so that layout-sensitive
-    // breakage (libraries reading field offsets via Unsafe/VarHandle) shows up in CI
-    // rather than in a pod. Keep in sync with JVM_OPTS in
-    // kubernetes/loculus/templates/loculus-backend.yaml.
-    // Only semantics-affecting flags belong here; the heap-sizing flags set in
-    // production tune footprint for long-lived pods and would only slow tests down.
+    // Run tests with the same object layout as production
     jvmArgs '-XX:+UseCompactObjectHeaders'
     testLogging {
         events TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR

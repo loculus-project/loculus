@@ -97,9 +97,8 @@ spec:
               {{- .Values.backendExtraArgs | toYaml | nindent 12 }}
             {{- end }}
           env:
-            # If a flag here changes object layout or other observable JVM semantics,
-            # mirror it in the test task in backend/build.gradle so CI exercises the
-            # same layout. Pure heap/GC tuning does not need mirroring.
+            # If a flag in JVM_OPTS below changes object layout or other observable JVM
+            # semantics, mirror it in the test task in backend/build.gradle
             - name: JVM_OPTS
               value: -XX:+UseContainerSupport -XX:+UseG1GC -XX:+UseCompactObjectHeaders -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2
           {{- if $.Values.seqSets.crossRef }}
