@@ -136,6 +136,9 @@ tasks.named('test') {
     if (JavaVersion.current().isCompatibleWith(JavaVersion.toVersion(24))) {
         jvmArgs '--sun-misc-unsafe-memory-access=allow'
     }
+    // Same reason as org.gradle.jvmargs in gradle.properties, but for the forked test JVM:
+    // https://github.com/gradle/gradle/issues/19989
+    jvmArgs '-Xshare:off'
     testLogging {
         events TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR
         exceptionFormat = TestExceptionFormat.FULL
