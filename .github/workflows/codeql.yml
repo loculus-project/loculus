@@ -45,7 +45,8 @@ jobs:
         name: Set up JDK
         uses: actions/setup-java@v5
         with:
-          java-version: "21"
+          # Keep in sync with the other Java versions (backend/build.gradle, backend/Dockerfile)
+          java-version: "25"
           distribution: "temurin"
       - if: matrix.language == 'java-kotlin' && matrix.build-mode == 'manual'
         name: Setup Gradle

@@ -80,7 +80,8 @@ jobs:
         if: env.CACHE_HIT == 'false'
         uses: actions/setup-java@v5
         with:
-          java-version: "21"
+          # Keep in sync with the other Java versions (backend/build.gradle, backend/Dockerfile)
+          java-version: "25"
           distribution: "temurin"
       - name: Setup Gradle
         if: env.CACHE_HIT == 'false'
