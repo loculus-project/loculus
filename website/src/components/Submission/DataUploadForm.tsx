@@ -223,12 +223,18 @@ const InnerDataUploadForm = ({
                     groupId={group.groupId}
                     currentInputMode={inputMode}
                 />
+                {action === 'revise' && inputMode === 'bulk' && (
+                    <OriginalDataDownloadHint
+                        organism={organism}
+                        groupId={group.groupId}
+                        enableConsensusSequences={submissionDataTypes.consensusSequences}
+                    />
+                )}
                 <FormOrUploadWrapper
                     inputMode={inputMode}
                     setFileFactory={setFileFactory}
                     setSubmissionFileMapping={setSubmissionFileMapping}
                     organism={organism}
-                    groupId={group.groupId}
                     action={action}
                     metadataTemplateFields={metadataTemplateFields}
                     submissionDataTypes={submissionDataTypes}
@@ -296,6 +302,40 @@ const InnerDataUploadForm = ({
 };
 
 export const DataUploadForm = withQueryProvider(InnerDataUploadForm);
+
+/**
+ * Tells users revising sequences that they can get their originally submitted data back
+ * from the group's released sequences page, instead of having to reconstruct the files.
+ */
+const OriginalDataDownloadHint = ({
+    organism,
+    groupId,
+    enableConsensusSequences,
+}: {
+    organism: string;
+    groupId: number;
+    enableConsensusSequences: boolean;
+}) => {
+    const releasedSequencesUrl = SubmissionRouteUtils.toUrl({
+        name: 'released',
+        organism,
+        groupId,
+        searchParams: new URLSearchParams(),
+    });
+
+    return (
+        <p className='text-gray-600 text-sm'>
+            To revise sequences you need to upload the new {enableConsensusSequences && 'sequences and '}metadata. You
+            can easily download your originally submitted data by opening your group's{' '}
+            <a href={releasedSequencesUrl} className='text-primary-700 hover:underline'>
+                released sequences
+            </a>{' '}
+            page, selecting the sequences you want to revise, and using the <i>Download originally submitted data</i>{' '}
+            button. The zip file contains your original metadata (with the <i>accession</i> column already filled in)
+            and sequences, ready to edit and upload here.
+        </p>
+    );
+};
 
 export const InputModeTabs = ({
     action,

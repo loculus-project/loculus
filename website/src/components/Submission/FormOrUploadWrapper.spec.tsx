@@ -59,7 +59,6 @@ const MockSaveWrapper = ({
                 inputMode='form'
                 action='submit'
                 organism='foo'
-                groupId={1}
                 setFileFactory={setFileFactory}
                 metadataTemplateFields={DUMMY_METADATA_TEMPLATE_FIELDS}
                 submissionDataTypes={{

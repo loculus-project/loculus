@@ -1,6 +1,6 @@
 import { useState, type Dispatch, type FC, type SetStateAction } from 'react';
 
-import { SubmissionRouteUtils } from '../../../routes/SubmissionRoute';
+import { routes } from '../../../routes/routes';
 import { Button } from '../../common/Button';
 import type { UploadAction } from '../DataUploadForm';
 import { metadataFormatDocsUrl } from '../metadataFormatDocsUrl';
@@ -8,13 +8,11 @@ import type { ColumnMapping } from './ColumnMapping';
 import { ColumnMappingModal } from './ColumnMappingModal';
 import { FileUploadComponent } from './FileUploadComponent';
 import { FASTA_FILE_KIND, METADATA_FILE_KIND, RawFile, type ProcessedFile } from './fileProcessing';
-import { routes } from '../../../routes/routes';
 import type { InputField, SubmissionDataTypes } from '../../../types/config';
 import { dataUploadDocsUrl } from '../dataUploadDocsUrl';
 
 type SequenceEntryUploadProps = {
     organism: string;
-    groupId: number;
     action: UploadAction;
     metadataFile: ProcessedFile | undefined;
     setMetadataFile: Dispatch<SetStateAction<ProcessedFile | undefined>>;
@@ -31,7 +29,6 @@ type SequenceEntryUploadProps = {
  */
 export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
     organism,
-    groupId,
     action,
     metadataFile,
     setMetadataFile,
@@ -61,12 +58,6 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
     };
 
     const finalMetadataFormatDocsUrl = metadataFormatDocsUrl.replace('{organism}', organism);
-    const releasedSequencesUrl = SubmissionRouteUtils.toUrl({
-        name: 'released',
-        organism,
-        groupId,
-        searchParams: new URLSearchParams(),
-    });
 
     return (
         <div className='grid sm:grid-cols-3 gap-x-16'>
@@ -107,20 +98,6 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                         unique <i>id</i> column for the full multi-segmented sample, e.g. <b>sample1</b> and a{' '}
                         <i>fastaIds</i> column with a space-separated list of the fasta headers of all segments, e.g.{' '}
                         <b>fastaHeaderSegment1 fastaHeaderSegment2 fastaHeaderSegment3</b>.
-                    </p>
-                )}
-
-                {action === 'revise' && (
-                    <p className='text-gray-400 text-xs mt-3'>
-                        To revise sequences you need to upload the new {enableConsensusSequences && 'sequences and '}
-                        metadata. You can easily download your originally submitted data by opening your group's{' '}
-                        <a href={releasedSequencesUrl} className='text-primary-700 opacity-90'>
-                            released sequences
-                        </a>{' '}
-                        page, selecting the sequences you want to revise, and using the{' '}
-                        <i>Download originally submitted data</i> button. The zip file contains your original metadata
-                        (with the <i>accession</i> column already filled in) and sequences, ready to edit and upload
-                        here.
                     </p>
                 )}
 
