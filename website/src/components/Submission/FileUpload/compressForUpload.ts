@@ -3,7 +3,7 @@ const ZSTD_LEVEL = 12;
 
 /**
  * `Zstd.load()` returns a cached singleton holding the compression stream state, so concurrent
- * compressions would interleave into one frame. Serialize all callers.
+ * compressions would interleave into one frame. Every call is chained onto the previous one.
  */
 let queue: Promise<unknown> = Promise.resolve();
 
@@ -12,12 +12,19 @@ let queue: Promise<unknown> = Promise.resolve();
  * that it needs decompressing. Falls back to the original file if anything goes wrong.
  */
 export async function compressForUpload(file: File): Promise<File> {
-    const run = queue.then(
-        () => compress(file),
-        () => compress(file),
-    );
-    queue = run;
+    const run = queue.then(() => compress(file));
+    queue = run.catch(() => undefined);
     return run;
+}
+
+/** Loads the wasm module ahead of time so that submitting doesn't have to wait for it. */
+export async function warmCompressor(): Promise<void> {
+    try {
+        const { Zstd } = await import('@hpcc-js/wasm-zstd');
+        await Zstd.load();
+    } catch (_error) {
+        // Best effort; compressForUpload retries and falls back to no compression.
+    }
 }
 
 async function compress(file: File): Promise<File> {
