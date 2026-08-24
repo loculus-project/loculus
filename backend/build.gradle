@@ -65,7 +65,6 @@ dependencies {
     implementation platform("org.jetbrains.exposed:exposed-bom:1.4.0")
     implementation "org.jetbrains.exposed:exposed-spring-boot4-starter"
     implementation "org.jetbrains.exposed:exposed-jdbc"
-    implementation "org.jetbrains.exposed:exposed-migration-jdbc"
     implementation "org.jetbrains.exposed:exposed-json"
     implementation "org.jetbrains.exposed:exposed-kotlin-datetime"
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.8.0-0.6.x-compat"
