@@ -5,9 +5,19 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 DEFAULT_MAX_WORKERS = 16
 thread_local = threading.local()
+
+retry_strategy = Retry(
+    total=3,
+    backoff_factor=1,
+    status_forcelist=[502, 503, 504],
+    allowed_methods=["GET"],
+    raise_on_status=False,
+)
 
 
 def copy_structure(input_dir, output_dir):
@@ -27,7 +37,9 @@ def download_urls(urls):
             if "Too many open files" not in str(error) or max_workers == 1:
                 raise
             max_workers = max(max_workers // 2, 1)
-            print(f"Too many open files while downloading URLs, retrying with {max_workers} worker(s)")
+            print(
+                f"Too many open files while downloading URLs, retrying with {max_workers} worker(s)"
+            )
 
 
 def download_urls_with_workers(urls, max_workers):
@@ -42,19 +54,24 @@ def download_urls_with_workers(urls, max_workers):
             if response.status_code == 200:
                 downloaded_content[url] = response.text.strip()
             else:
-                error_details = f"URL: {url}, Status Code: {response.status_code}, Reason: {response.reason}"
+                error_details = (
+                    f"URL: {url}, Status Code: {response.status_code}, Reason: {response.reason}"
+                )
                 raise ValueError(f"Problem downloading {error_details}")
     return downloaded_content
 
 
 def download_url(url):
     if not hasattr(thread_local, "session"):
-        thread_local.session = requests.Session()
+        session = requests.Session()
+        session.mount("https://", HTTPAdapter(max_retries=retry_strategy))
+        session.mount("http://", HTTPAdapter(max_retries=retry_strategy))
+        thread_local.session = session
     return thread_local.session.get(url)
 
 
 def replace_url_with_content(file_content, downloaded_content):
-    urls = re.findall(r'\[\[URL:([^\]]*)\]\]', file_content)
+    urls = re.findall(r"\[\[URL:([^\]]*)\]\]", file_content)
     for url in set(urls):
         file_content = file_content.replace(f"[[URL:{url}]]", downloaded_content[url])
     return file_content
@@ -65,21 +82,23 @@ def make_substitutions(file_content, substitutions):
         file_content = file_content.replace(f"[[{key}]]", value)
     return file_content
 
+
 def collect_urls(output_dir):
     urls = set()
     for root, dirs, files in os.walk(output_dir):
         for file in files:
             file_path = os.path.join(root, file)
             with open(file_path) as f:
-                urls.update(re.findall(r'\[\[URL:([^\]]*)\]\]', f.read()))
+                urls.update(re.findall(r"\[\[URL:([^\]]*)\]\]", f.read()))
     return urls
+
 
 def process_files(output_dir, substitutions):
     downloaded_content = download_urls(collect_urls(output_dir))
     for root, dirs, files in os.walk(output_dir):
         for file in files:
             file_path = os.path.join(root, file)
-            with open(file_path, 'r+') as f:
+            with open(file_path, "r+") as f:
                 print(f"Processing {file_path}")
                 content = f.read()
                 new_content = replace_url_with_content(content, downloaded_content)
@@ -99,6 +118,7 @@ def main(input_dir, output_dir, substitutions):
 
 if __name__ == "__main__":
     import sys
+
     input_dir = sys.argv[1]
     output_dir = sys.argv[2]
 
@@ -106,7 +126,7 @@ if __name__ == "__main__":
     for var in os.environ:
         sub_start = "LOCULUSSUB_"
         if var.startswith(sub_start):
-            key = var[len(sub_start):]
+            key = var[len(sub_start) :]
             value = os.environ[var]
             substitutions[key] = value
     main(input_dir, output_dir, substitutions)
