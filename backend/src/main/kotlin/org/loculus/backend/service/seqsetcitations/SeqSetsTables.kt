@@ -21,7 +21,7 @@ object SeqSetRecordsTable : Table("seqset_records") {
     val seqSetRecordId = long("seqset_record_id").autoIncrement()
     val accession = text("accession")
     val type = text("type")
-    val isFocal = bool("is_focal")
+    val isFocal = bool("is_focal").default(true)
     override val primaryKey = PrimaryKey(seqSetRecordId)
 }
 
