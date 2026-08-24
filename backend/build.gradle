@@ -123,6 +123,16 @@ tasks.named('test') {
         dependsOn checkDocker
     }
     useJUnitPlatform()
+    // https://github.com/mockk/mockk/pull/1550
+    doFirst {
+        def agentJar = configurations.testRuntimeClasspath.find { it.name.startsWith('byte-buddy-agent-') }
+        if (agentJar == null) {
+            throw new GradleException("byte-buddy-agent jar not found on testRuntimeClasspath")
+        }
+        jvmArgs "-javaagent:$agentJar"
+    }
+    // https://github.com/raphw/byte-buddy/issues/1922
+    jvmArgs '--sun-misc-unsafe-memory-access=allow'
     testLogging {
         events TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR
         exceptionFormat = TestExceptionFormat.FULL
