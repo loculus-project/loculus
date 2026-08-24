@@ -133,13 +133,13 @@ tasks.named('test') {
 
 // Diffs the Exposed table definitions against a database with all committed Flyway
 // migrations applied, and writes the difference as a new migration script
-tasks.register('generateMigrationScript', JavaExec) {
+tasks.register('generateMigration', JavaExec) {
     if (!System.getenv('USE_NONDOCKER_INFRA')?.toBoolean()) {
         dependsOn checkDocker
     }
     dependsOn tasks.named('testClasses')
     classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'org.loculus.backend.tools.GenerateMigrationScriptKt'
+    mainClass = 'org.loculus.backend.tools.GenerateMigrationKt'
     args = [project.findProperty('scriptName') ?: 'generated_migration']
 }
 
