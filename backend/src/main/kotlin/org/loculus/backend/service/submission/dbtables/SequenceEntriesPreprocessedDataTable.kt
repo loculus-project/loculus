@@ -21,7 +21,7 @@ object SequenceEntriesPreprocessedDataTable : Table(SEQUENCE_ENTRIES_PREPROCESSE
     val errorsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("errors").nullable()
     val warningsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("warnings").nullable()
     val processingStatusColumn = text("processing_status")
-    val startedProcessingAtColumn = datetime("started_processing_at").nullable()
+    val startedProcessingAtColumn = datetime("started_processing_at")
     val finishedProcessingAtColumn = datetime("finished_processing_at").nullable()
 
     override val primaryKey = PrimaryKey(accessionColumn, versionColumn, pipelineVersionColumn)
