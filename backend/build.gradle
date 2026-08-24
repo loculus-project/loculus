@@ -17,13 +17,14 @@ plugins {
 group = 'org.loculus'
 version = '0.0.1'
 
+// Keep the Java version in sync with the other Java versions (backend/Dockerfile, CI workflows)
 java {
-    sourceCompatibility = '21'
-    targetCompatibility = '21'
+    sourceCompatibility = '25'
+    targetCompatibility = '25'
 }
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(25)
     // Added to dismiss warnings, see: https://github.com/loculus-project/loculus/issues/4529
     compilerOptions.freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
 }
@@ -61,7 +62,7 @@ dependencies {
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0"
     implementation "org.springframework.boot:spring-boot-starter-flyway"
     implementation "org.flywaydb:flyway-database-postgresql" // Version managed by Spring Boot to ensure compatibility
-    implementation platform("org.jetbrains.exposed:exposed-bom:1.0.0")
+    implementation platform("org.jetbrains.exposed:exposed-bom:1.4.0")
     implementation "org.jetbrains.exposed:exposed-spring-boot4-starter"
     implementation "org.jetbrains.exposed:exposed-jdbc"
     implementation "org.jetbrains.exposed:exposed-json"
@@ -70,13 +71,13 @@ dependencies {
     implementation "org.hibernate.validator:hibernate-validator"
     implementation "org.keycloak:keycloak-admin-client:26.0.12"
     implementation("io.minio:minio:9.0.3")
-    implementation("software.amazon.awssdk:s3:2.51.3")
+    implementation("software.amazon.awssdk:s3:2.53.1")
 
     implementation "org.springframework.boot:spring-boot-starter-security-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
 
     implementation 'org.apache.commons:commons-compress'
-    implementation 'com.github.luben:zstd-jni:1.5.7-11'
+    implementation 'com.github.luben:zstd-jni:1.5.7-14'
     implementation 'org.tukaani:xz:1.12'
 
     implementation("org.redundent:kotlin-xml-builder:1.9.3")
@@ -130,7 +131,7 @@ tasks.named('test') {
 }
 
 tasks.named('bootBuildImage') {
-    environment["BP_JVM_VERSION"] = "21"
+    environment["BP_JVM_VERSION"] = "25"
     // https://paketo.io/docs/howto/configuration/
     environment["BPE_SPRING_PROFILES_ACTIVE"] = "docker"
 }

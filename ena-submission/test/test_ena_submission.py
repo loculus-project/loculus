@@ -29,6 +29,7 @@ from ena_deposition.ena_submission_helper import (
     get_chromsome_accessions,
     get_ena_analysis_process,
     get_sample_xml,
+    manifest_fields_diff,
     reformat_authors_from_loculus_to_embl_style,
 )
 from ena_deposition.ena_types import (
@@ -83,9 +84,9 @@ def mock_config():
     config.metadata_mapping = {
         key: MetadataMapping(**item) for key, item in defaults["metadata_mapping"].items()
     }
-    config.manifest_fields_mapping = {
+    config.assembly_manifest_fields_mapping = {
         key: ManifestFieldDetails(**item)
-        for key, item in defaults["manifest_fields_mapping"].items()
+        for key, item in defaults["assembly_manifest_fields_mapping"].items()
     }
     config.ena_checklist = "ERC000033"
     config.set_alias_suffix = None
@@ -282,6 +283,16 @@ class AssemblyCreationTests(unittest.TestCase):
         desired_result_apostrophe = "O'Brien P., Malago' G., Smith J.;"
         self.assertEqual(result_apostrophe, desired_result_apostrophe)
 
+        # Test with hyphenated first names, also with spaces around hyphens
+        authors_with_hyphenated_names = (
+            "Smith, John-Doe; Roe, Jane - Marie; Parker, Anne- Marie Beth"
+        )
+        result_hyphenated = reformat_authors_from_loculus_to_embl_style(
+            authors_with_hyphenated_names
+        )
+        desired_result_hyphenated = "Smith J.-D., Roe J.-M., Parker A.-M.B.;"
+        self.assertEqual(result_hyphenated, desired_result_hyphenated)
+
     def test_flatfile_with_apostrophe_in_authors(self):
         """Test that flatfile generation handles apostrophes correctly"""
         config = mock_config()
@@ -378,7 +389,7 @@ class AssemblyCreationTests(unittest.TestCase):
         self.assertEqual(data["ASSEMBLY_TYPE"], "isolate")
         self.assertEqual(
             data["AUTHORS"],
-            ("Umair M., Haider S.A., Jamal Z., Ammar M., Hakim R., Ali Q., Salman M.;"),
+            ("Umair M., Haider S.-A., Jamal Z., Ammar M., Hakim R., Ali Q., Salman M.;"),
         )
         self.assertEqual(data["COVERAGE"], "1")
         self.assertEqual(data["PROGRAM"], "Ivar")
@@ -469,6 +480,52 @@ class AssemblyCreationTests(unittest.TestCase):
             "segment_order": ["main"],
         }
         self.assertEqual(response.result, desired_response)
+
+
+class ManifestFieldsDiffTests(unittest.TestCase):
+    def test_no_diff_for_identical_entries(self):
+        entry = sample_data_in_submission_table()
+
+        differing_fields = manifest_fields_diff(
+            MOCK_CONFIG.assembly_manifest_fields_mapping, entry, entry
+        )
+
+        self.assertEqual(differing_fields, {})
+
+    def test_diff_detected_when_mapped_field_changes(self):
+        # Neither entry has a usable "depthOfCoverage" value (missing vs. empty string), so
+        # "coverage" falls back to its configured default ("1") on both sides.
+        last_version_entry = sample_data_in_submission_table()
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "sequencingInstrument": "Nanopore",
+            "depthOfCoverage": "",
+        }
+
+        differing_fields = manifest_fields_diff(
+            MOCK_CONFIG.assembly_manifest_fields_mapping, submission_row, last_version_entry
+        )
+
+        self.assertEqual(set(differing_fields), {"platform"})
+        self.assertIn("Illumina", differing_fields["platform"])
+        self.assertIn("Nanopore", differing_fields["platform"])
+        self.assertNotIn("coverage", differing_fields)
+
+    def test_diff_records_error_when_field_resolution_fails(self):
+        last_version_entry = sample_data_in_submission_table()
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "authors": "Doe, John 中文",  # non-Latin characters are rejected
+        }
+
+        differing_fields = manifest_fields_diff(
+            MOCK_CONFIG.assembly_manifest_fields_mapping, submission_row, last_version_entry
+        )
+
+        self.assertIn("authors", differing_fields)
+        self.assertIn("Error resolving field", differing_fields["authors"])
 
 
 if __name__ == "__main__":

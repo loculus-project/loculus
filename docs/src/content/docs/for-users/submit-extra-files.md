@@ -6,15 +6,17 @@ If the administrator has enabled the file sharing feature for an organism, you c
 
 ## Website
 
-On the website submission form, there is an input field to upload files into.
+On the website submission form, there is an input field to upload files into. You can choose to either upload individual files or select an entire folder of files to upload.
 
 ![The extra files component](../../../assets/ExtraFilesComponent.png)
 
-If files are uploaded successfully, there will be a green checkmark:
+Extra files should be associated to their corresponding consensus sequence via the `files.<category>` metadata field, where `<category>` is the type of extra files you're uploading (e.g., `rawReads`) . This field should contain a space-separated list of file names indicating which files belong to which sequence.
+
+If files are uploaded and linked to their respective sequences successfully, there will be a checkmark:
 
 ![The extra files component](../../../assets/ExtraFilesUploaded.png)
 
-For bulk submission, you need to upload a folder with one subfolder per submission ID.
+_**Note: since the `files.<category>` metadata fields refers to files in space-separated lists, file names may not contain whitespace.**_
 
 ## API
 
@@ -154,22 +156,20 @@ you can proceed to attach the file ID to your submission as described in the nex
 ### Attach file IDs to submission
 
 Now, you can follow the regular steps for [sequence submission](../submit-sequences/), calling the `/<organism>/submit` endpoint.
-But you add another parameter to the curl call:
+Files are attached by adding a `files.<fileCategory>` column to the metadata TSV file for each file category you want to submit files for.
 
-```bash
-  -F 'fileMapping=<mapping JSON>'
+The `fileCategory` needs to be a predefined category which is organism specific, e.g. a column named `files.rawReads`.
+
+The cell value for a given submission ID is a space-separated list of `fileName:fileId` pairs, e.g.:
+
+```
+files.rawReads
+reads_1.fq:8D8AC610-566D-4EF0-9C22-186B2A5ED793 reads_2.fq:2ea137d0-8773-4e0a-a9aa-5591de12ff23
 ```
 
-And the `mapping JSON` has this structure:
-
-```json
-{submissionID: {<fileCategory>: [{fileId: <fileId>, name: <fileName>}]}}
-```
-
-- The `submissionID` links the file mapping to the sequence.
-- The `fileCategory` needs to be a predefined category which is organism specific.
 - The `fileId` is the ID received in the previous step, which identifies the actual file.
 - The `fileName` can be chosen freely, but depending on configuration it might become an identifier for the file later on.
+- Cells may be left empty for submission IDs that don't have files in that category.
 
 ## Filename restrictions
 
@@ -177,5 +177,6 @@ The filenames may contain any UTF-8 characters except:
 
 - Forbidden characters: `< > : " / \ | ? *`
 - ASCII control characters (character codes 0-31)
+- Whitespace characters
 
 Filenames may not be empty or contain more than 255 characters.

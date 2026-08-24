@@ -53,7 +53,6 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
         any(),
         any(),
         any(),
-        any(),
     )
 
     @Test
