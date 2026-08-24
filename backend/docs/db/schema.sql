@@ -364,15 +364,15 @@ ALTER TABLE public.flyway_schema_history OWNER TO postgres;
 
 CREATE TABLE public.groups_table (
     group_id integer NOT NULL,
-    group_name character varying(255) NOT NULL,
-    institution character varying(255) NOT NULL,
-    address_line_1 character varying(255) NOT NULL,
-    address_line_2 character varying(255) NOT NULL,
-    address_postal_code character varying(255) NOT NULL,
-    address_city character varying(255) NOT NULL,
-    address_state character varying(255) NOT NULL,
-    address_country character varying(255) NOT NULL,
-    contact_email character varying(255) NOT NULL,
+    group_name text NOT NULL,
+    institution text NOT NULL,
+    address_line_1 text NOT NULL,
+    address_line_2 text NOT NULL,
+    address_postal_code text NOT NULL,
+    address_city text NOT NULL,
+    address_state text NOT NULL,
+    address_country text NOT NULL,
+    contact_email text NOT NULL,
     created_at timestamp without time zone NOT NULL,
     created_by text
 );
