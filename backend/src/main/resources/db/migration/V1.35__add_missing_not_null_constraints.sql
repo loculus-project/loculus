@@ -7,8 +7,8 @@ ALTER TABLE groups_table
 ALTER TABLE seqsets
     ALTER COLUMN description SET NOT NULL;
 
-ALTER TABLE sequence_entries
-    ALTER COLUMN approver SET NOT NULL;
+-- Note: sequence_entries.approver is intentionally NOT made NOT NULL here - it's genuinely null for
+-- every entry until it's approved for release.
 
 -- last_time_updated is only ever written by the update_table_tracker() trigger (see V1.2), which always
 -- supplies a value.

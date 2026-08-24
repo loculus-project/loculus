@@ -30,7 +30,7 @@ object SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
     val organismColumn = text("organism")
     val submissionIdColumn = text("submission_id")
     val submitterColumn = text("submitter")
-    val approverColumn = text("approver")
+    val approverColumn = text("approver").nullable()
     val groupIdColumn = integer("group_id")
     val submittedAtTimestampColumn = datetime("submitted_at")
     val releasedAtTimestampColumn = datetime("released_at").nullable()
