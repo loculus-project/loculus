@@ -13,7 +13,7 @@ import org.jetbrains.exposed.v1.jdbc.update
 const val CURRENT_PROCESSING_PIPELINE_TABLE_NAME = "current_processing_pipeline"
 
 object CurrentProcessingPipelineTable : Table(CURRENT_PROCESSING_PIPELINE_TABLE_NAME) {
-    val organismColumn = varchar("organism", 255)
+    val organismColumn = text("organism")
     val versionColumn = long("version")
     val startedUsingAtColumn = datetime("started_using_at")
 

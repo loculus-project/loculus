@@ -8,9 +8,9 @@ import org.loculus.backend.service.jacksonSerializableJsonb
 const val EXTERNAL_METADATA_TABLE_NAME = "external_metadata"
 
 object ExternalMetadataTable : Table(EXTERNAL_METADATA_TABLE_NAME) {
-    val accessionColumn = varchar("accession", 255)
+    val accessionColumn = text("accession")
     val versionColumn = long("version")
-    val updaterIdColumn = varchar("external_metadata_updater", 255)
+    val updaterIdColumn = text("external_metadata_updater")
     val externalMetadataColumn =
         jacksonSerializableJsonb<MetadataMap>("external_metadata").nullable()
     val updatedAtColumn = datetime("updated_metadata_at").nullable()

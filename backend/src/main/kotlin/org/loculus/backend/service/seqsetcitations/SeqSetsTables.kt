@@ -7,27 +7,27 @@ import org.loculus.backend.api.CitationOrigin
 import org.loculus.backend.service.jacksonSerializableJsonb
 
 object SeqSetsTable : Table("seqsets") {
-    val seqSetId = varchar("seqset_id", 255)
+    val seqSetId = text("seqset_id")
     val seqSetVersion = long("seqset_version")
-    val name = varchar("name", 255)
-    val description = varchar("description", 255)
-    val seqSetDOI = varchar("seqset_doi", 255).nullable()
+    val name = text("name")
+    val description = text("description")
+    val seqSetDOI = text("seqset_doi").nullable()
     val createdAt = datetime("created_at")
-    val createdBy = varchar("created_by", 255)
+    val createdBy = text("created_by")
     override val primaryKey = PrimaryKey(seqSetId, seqSetVersion)
 }
 
 object SeqSetRecordsTable : Table("seqset_records") {
     val seqSetRecordId = long("seqset_record_id").autoIncrement()
-    val accession = varchar("accession", 255)
-    val type = varchar("type", 255)
+    val accession = text("accession")
+    val type = text("type")
     val isFocal = bool("is_focal").default(true)
     override val primaryKey = PrimaryKey(seqSetRecordId)
 }
 
 object SeqSetToRecordsTable : Table("seqset_to_records") {
     val seqSetRecordId = long("seqset_record_id") references SeqSetRecordsTable.seqSetRecordId
-    val seqSetId = varchar("seqset_id", 255) references SeqSetsTable.seqSetId
+    val seqSetId = text("seqset_id") references SeqSetsTable.seqSetId
     val seqSetVersion = long("seqset_version") references SeqSetsTable.seqSetVersion
     override val primaryKey = PrimaryKey(seqSetRecordId, seqSetId, seqSetVersion)
 }
