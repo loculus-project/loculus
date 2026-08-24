@@ -9,7 +9,7 @@ on:
       - 'integration-tests/**'
 
 jobs:
-  format:
+  integration-format:
     runs-on: ubuntu-latest
     
     defaults:

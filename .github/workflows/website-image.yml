@@ -45,8 +45,8 @@ jobs:
           EXISTS=$(docker manifest inspect ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.prepare.outputs.dir-hash }} > /dev/null 2>&1 && echo "true" || echo "false")
           echo "cache-hit=$EXISTS" >> $GITHUB_OUTPUT
 
-  build:
-    name: Build ${{ matrix.platform }}
+  website-build-image:
+    name: Build website image ${{ matrix.platform }}
     needs: check-cache
     if: needs.check-cache.outputs.cache-hit == 'false'
     runs-on: ${{ matrix.runner }}
@@ -108,7 +108,7 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  merge-or-retag:
+  website-merge-or-retag:
     name: Publish Website Docker Image
     needs: [check-cache, build]
     if: always() && needs.check-cache.result == 'success' && (needs.build.result == 'success' || needs.build.result == 'skipped')

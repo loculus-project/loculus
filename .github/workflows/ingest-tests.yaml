@@ -13,8 +13,7 @@ concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-ingest-tests
   cancel-in-progress: true
 jobs:
-  unitTests:
-    name: Unit Tests
+  ingest-unit-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
