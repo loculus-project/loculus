@@ -48,7 +48,10 @@ siloImport:
   siloTimeoutSeconds: 3600
   hardRefreshIntervalSeconds: 3600
   pollIntervalSeconds: 30
-ingestLimitSeconds: 1800
+# Wall-clock cap for one ingest run. Must comfortably exceed a full from-empty
+# bootstrap of the largest organism: mpox is ~13k x ~190kb and submits at roughly
+# 100ms/record, so ~25min of submitting plus ~10min of download/hash/sort.
+ingestLimitSeconds: 3600
 getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600
 accessionPrefix: "LOC_"
