@@ -4,8 +4,8 @@
 
 \restrict dummy
 
--- Dumped from database version 15.18 (Debian 15.18-1.pgdg13+1)
--- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
+-- Dumped from database version 15.19 (Debian 15.19-1.pgdg13+2)
+-- Dumped by pg_dump version 16.15 (Debian 16.15-1.pgdg13+2)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -364,13 +364,13 @@ ALTER TABLE public.flyway_schema_history OWNER TO postgres;
 
 CREATE TABLE public.groups_table (
     group_id integer NOT NULL,
-    group_name character varying(255),
+    group_name character varying(255) NOT NULL,
     institution character varying(255) NOT NULL,
     address_line_1 character varying(255) NOT NULL,
-    address_line_2 character varying(255),
+    address_line_2 character varying(255) NOT NULL,
     address_postal_code character varying(255) NOT NULL,
     address_city character varying(255) NOT NULL,
-    address_state character varying(255),
+    address_state character varying(255) NOT NULL,
     address_country character varying(255) NOT NULL,
     contact_email character varying(255) NOT NULL,
     created_at timestamp without time zone NOT NULL,
@@ -566,7 +566,7 @@ CREATE TABLE public.seqsets (
     seqset_id text NOT NULL,
     seqset_version bigint NOT NULL,
     name text NOT NULL,
-    description text,
+    description text NOT NULL,
     seqset_doi text,
     created_at timestamp without time zone NOT NULL,
     created_by text NOT NULL
@@ -690,7 +690,7 @@ ALTER TABLE public.sequence_upload_aux_table OWNER TO postgres;
 
 CREATE TABLE public.table_update_tracker (
     table_name text NOT NULL,
-    last_time_updated timestamp without time zone DEFAULT timezone('UTC'::text, CURRENT_TIMESTAMP),
+    last_time_updated timestamp without time zone DEFAULT timezone('UTC'::text, CURRENT_TIMESTAMP) NOT NULL,
     organism text,
     pipeline_version bigint
 );
