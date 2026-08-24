@@ -75,7 +75,7 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
     }
 
     @Test
-    fun `GIVEN InvalidSequenceFileException is thrown THEN returns Unprocessable Content (422)`() {
+    fun `GIVEN UnprocessableEntityException is thrown THEN returns Unprocessable Content (422)`() {
         every { validControllerCall() } throws UnprocessableEntityException("SomeMessage")
 
         mockMvc.perform(validRequest)
@@ -86,7 +86,7 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
     }
 
     @Test
-    fun `GIVEN ProcessingException is thrown THEN returns Unprocessable Content (422)`() {
+    fun `GIVEN ProcessingValidationException is thrown THEN returns Unprocessable Content (422)`() {
         every { validControllerCall() } throws ProcessingValidationException("SomeMessage")
 
         mockMvc.perform(validRequest)
