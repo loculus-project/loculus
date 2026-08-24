@@ -133,7 +133,9 @@ tasks.named('test') {
         }
     }
     // https://github.com/raphw/byte-buddy/issues/1922
-    jvmArgs '--sun-misc-unsafe-memory-access=allow'
+    if (JavaVersion.current().isCompatibleWith(JavaVersion.toVersion(24))) {
+        jvmArgs '--sun-misc-unsafe-memory-access=allow'
+    }
     testLogging {
         events TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR
         exceptionFormat = TestExceptionFormat.FULL
