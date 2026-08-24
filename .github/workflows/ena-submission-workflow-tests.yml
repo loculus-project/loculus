@@ -65,7 +65,7 @@ jobs:
         run: |
             # The unit tests are run in ena-submission-unit-tests.yaml
             pytest \
-              --ignore=./test/test_ena_submission.py
+              --ignore=./test/test_ena_submission.py \
               --ignore=./test/test_get_ena_submission_list.py
         shell: micromamba-shell {0}
         working-directory: ena-submission
