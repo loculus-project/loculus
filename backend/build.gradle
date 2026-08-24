@@ -125,11 +125,12 @@ tasks.named('test') {
     useJUnitPlatform()
     // https://github.com/mockk/mockk/pull/1550
     doFirst {
-        def agentJar = configurations.testRuntimeClasspath.find { it.name.startsWith('byte-buddy-agent-') }
-        if (agentJar == null) {
-            throw new GradleException("byte-buddy-agent jar not found on testRuntimeClasspath")
+        def agentJar = configurations.testRuntimeClasspath.files.find { it.name.startsWith('byte-buddy-agent-') }
+        if (agentJar != null) {
+            jvmArgs "-javaagent:${agentJar.absolutePath}"
+        } else {
+            logger.warn("byte-buddy-agent jar not found on testRuntimeClasspath; running tests without -javaagent")
         }
-        jvmArgs "-javaagent:$agentJar"
     }
     // https://github.com/raphw/byte-buddy/issues/1922
     jvmArgs '--sun-misc-unsafe-memory-access=allow'
