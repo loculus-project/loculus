@@ -8,10 +8,7 @@ import org.springframework.core.type.filter.AssignableTypeFilter
 /**
  * Marker for Exposed [Table] objects that do NOT map onto a table Flyway is expected to have created, e.g.
  * because they map onto a database VIEW instead (see [org.loculus.backend.service.submission.SequenceEntriesView]).
- *
- * Every other [Table] object under `org.loculus.backend` is assumed to be Flyway-managed and is
- * automatically discovered and verified by [checkExposedSchemaMatchesDatabase] on startup - there's nothing
- * to register when adding a normal new table.
+ * By default we assume every [Table] is Flyway-managed unless it is explicitly marked [NotFlywayManaged].
  */
 interface NotFlywayManaged
 
@@ -44,7 +41,7 @@ private fun discoverFlywayManagedTables(): List<Table> {
  */
 private fun findSchemaDrift(tables: List<Table>): List<String> =
     SchemaUtils.addMissingColumnsStatements(*tables.toTypedArray(), withLogs = false)
-        .filterNot { it.contains("CONSTRAINT") }
+        .filterNot { it.contains("FOREIGN KEY") }
         .filterNot { it.contains("ALTER COLUMN") && it.contains("DEFAULT") }
 
 /**
