@@ -75,24 +75,24 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
     }
 
     @Test
-    fun `GIVEN InvalidSequenceFileException is thrown THEN returns Unprocessable Entity (422)`() {
+    fun `GIVEN InvalidSequenceFileException is thrown THEN returns Unprocessable Content (422)`() {
         every { validControllerCall() } throws UnprocessableEntityException("SomeMessage")
 
         mockMvc.perform(validRequest)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
-            .andExpect(jsonPath("$.title").value("Unprocessable Entity"))
+            .andExpect(jsonPath("$.title").value("Unprocessable Content"))
             .andExpect(jsonPath("$.detail").value("SomeMessage"))
     }
 
     @Test
-    fun `GIVEN ProcessingException is thrown THEN returns Unprocessable Entity (422)`() {
+    fun `GIVEN ProcessingException is thrown THEN returns Unprocessable Content (422)`() {
         every { validControllerCall() } throws ProcessingValidationException("SomeMessage")
 
         mockMvc.perform(validRequest)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
-            .andExpect(jsonPath("$.title").value("Unprocessable Entity"))
+            .andExpect(jsonPath("$.title").value("Unprocessable Content"))
             .andExpect(jsonPath("$.detail").value("SomeMessage"))
     }
 

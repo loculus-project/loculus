@@ -22,7 +22,7 @@ describe('BackendClient', () => {
     test('returns a ProblemDetail received from the backend', async () => {
         const problemDetail: ProblemDetail = {
             type: 'about:blank',
-            title: 'Unprocessable Entity',
+            title: 'Unprocessable Content',
             status: 422,
             detail: "Invalid accession version format 'LOC_SS_1'",
         };
