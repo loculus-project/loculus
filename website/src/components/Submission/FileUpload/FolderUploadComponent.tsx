@@ -324,9 +324,6 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             // Updates the state of file uploads and triggers the upload of the new files
             const addFiles = async () => {
                 const existingFiles = fileUploadState.files.filter((file) => !filePaths.has(file.path));
-                // Show the newly selected files straight away. Without this, a file being replaced
-                // keeps rendering its previous upload -- complete with tick -- for as long as the
-                // request for upload urls takes, claiming an upload that has not happened yet.
                 setFileUploadState({ type: 'uploadInProgress', files: [...existingFiles, ...awaiting] });
                 const pendingFiles = await requestFileUploads(awaiting);
                 setFileUploadState({
