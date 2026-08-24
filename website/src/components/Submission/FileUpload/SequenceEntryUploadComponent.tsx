@@ -112,15 +112,15 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
 
                 {action === 'revise' && (
                     <p className='text-gray-400 text-xs mt-3'>
-                        If you no longer have the files you originally submitted, you can get them back: open your
-                        group's{' '}
+                        To revise sequences you need to upload the new {enableConsensusSequences && 'sequences and '}
+                        metadata. You can easily download your originally submitted data by opening your group's{' '}
                         <a href={releasedSequencesUrl} className='text-primary-700 opacity-90'>
                             released sequences
                         </a>{' '}
-                        page, select the sequences you want to revise, and use the{' '}
-                        <i>Download originally submitted data</i> button. The zip file it produces contains your
-                        original metadata (with the <i>accession</i> column already filled in) and sequences, ready to
-                        edit and upload here.
+                        page, selecting the sequences you want to revise, and using the{' '}
+                        <i>Download originally submitted data</i> button. The zip file contains your original metadata
+                        (with the <i>accession</i> column already filled in) and sequences, ready to edit and upload
+                        here.
                     </p>
                 )}
 
