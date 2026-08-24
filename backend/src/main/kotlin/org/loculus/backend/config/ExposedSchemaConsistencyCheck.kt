@@ -41,20 +41,14 @@ private fun discoverFlywayManagedTables(): List<Table> {
  */
 private fun findSchemaDrift(tables: List<Table>): List<String> =
     SchemaUtils.addMissingColumnsStatements(*tables.toTypedArray(), withLogs = false)
-        .filterNot { it.contains("FOREIGN KEY") }
+        .filterNot { it.contains("CONSTRAINT") && !it.contains("ADD COLUMN") }
         .filterNot { it.contains("ALTER COLUMN") && it.contains("DEFAULT") }
 
 /**
  * Verifies that every Flyway-managed Exposed table (i.e. every [Table] object under `org.loculus.backend`
  * that isn't marked [NotFlywayManaged]) matches the database schema that Flyway just migrated to: same
- * columns, with the same type and nullability.
- *
- * Flyway, not the Exposed `Table` objects, is the source of truth for the database schema. Defaults,
- * indices, non-FK constraints, sequences and foreign-key constraint *names* are allowed to differ between
- * Exposed and the database - that's normal for a codebase where Exposed tables are a partial, query-focused
- * view onto tables Flyway fully owns. What must be kept in sync is everything that affects how a query
- * actually behaves: a referenced column must exist, and its type/nullability must match, or queries and
- * deserialization can fail at runtime instead of at startup.
+ * columns, with the same type and nullability. Defaults, indices, non-FK constraints, sequences and
+ * foreign-key constraint *names* are allowed to differ between Exposed and the database.
  *
  * Must be called within a transaction, after `flyway.migrate()`.
  */
