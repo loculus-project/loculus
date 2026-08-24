@@ -1054,11 +1054,11 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Amplicon size
         header: Sequencing
         orderOnDetailsPage: 2060
-      - name: pairedNominalLength
+      - name: pairedEndInsertSize
         definition: The nominal insert size for paired-end sequencing libraries.
         guidance: Provide the nominal insert size in base pairs (as an integer).
         example: "500"
-        displayName: Paired nominal length
+        displayName: Paired-end insert size
         type: int
         header: Sequencing
         orderOnDetailsPage: 2065
