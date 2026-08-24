@@ -22,6 +22,7 @@
         "@astrojs/node": "^11.1.2",
         "@emotion/react": "^11.14.0",
         "@headlessui/react": "^2.2.10",
+        "@hpcc-js/wasm-zstd": "^1.15.0",
         "@lokalise/xlsx": "^0.20.3",
         "@mui/material": "~5.14.20",
         "@svgr/core": "^8.1.0",

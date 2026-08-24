@@ -4,6 +4,7 @@ import { DateTime } from 'luxon';
 import type { Result } from 'neverthrow';
 import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo } from 'react';
 
+import { compressForUpload } from './FileUpload/compressForUpload.ts';
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
@@ -175,13 +176,17 @@ const InnerDataUploadForm = ({
             }
         }
 
-        const submitSequenceData = () => {
+        const submitSequenceData = async () => {
+            const [metadataToUpload, sequenceToUpload] = await Promise.all([
+                compressForUpload(finalMetadataFile),
+                sequenceFile === undefined ? Promise.resolve(undefined) : compressForUpload(sequenceFile),
+            ]);
             switch (action) {
                 case 'submit': {
                     const groupId = group.groupId;
                     submit({
-                        metadataFile: finalMetadataFile,
-                        sequenceFile: sequenceFile,
+                        metadataFile: metadataToUpload,
+                        sequenceFile: sequenceToUpload,
                         groupId,
                         dataUseTermsType,
                         restrictedUntil:
@@ -193,8 +198,8 @@ const InnerDataUploadForm = ({
                 }
                 case 'revise':
                     revise({
-                        metadataFile: finalMetadataFile,
-                        sequenceFile: sequenceFile,
+                        metadataFile: metadataToUpload,
+                        sequenceFile: sequenceToUpload,
                     });
                     break;
             }
@@ -206,10 +211,10 @@ const InnerDataUploadForm = ({
                     'You have selected the Open Data Use Terms. Once released under the Open Data Use Terms sequences will be deposited to INSDC and cannot be changed to the Restricted-Use Data Use Terms.',
                 confirmButtonText: 'Continue under Open terms',
                 closeButtonText: 'Cancel',
-                onConfirmation: submitSequenceData,
+                onConfirmation: () => void submitSequenceData(),
             });
         } else {
-            submitSequenceData();
+            await submitSequenceData();
         }
     };
 
