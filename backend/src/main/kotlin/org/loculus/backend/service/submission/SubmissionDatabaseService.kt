@@ -132,7 +132,7 @@ class SubmissionDatabaseService(
     private val submissionMetrics: SubmissionMetrics,
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
 ) {
-    private var lastPreprocessedDataUpdate: String? = null
+    private var lastPreprocessedDataUpdate: LocalDateTime? = null
 
     fun streamUnprocessedSubmissions(
         numberOfSequenceEntries: Int,

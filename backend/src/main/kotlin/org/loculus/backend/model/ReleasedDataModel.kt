@@ -125,8 +125,11 @@ open class ReleasedDataModel(
         val lastUpdateTime = query
             .mapNotNull { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] }
             .maxOrNull()
-            // Replace not strictly necessary but does no harm and a) shows UTC, b) simplifies silo import script logic
-            ?.replace(" ", "Z")
+            // Replacing the 'T' separator with 'Z' is not strictly necessary but does no harm and
+            // a) shows UTC, b) simplifies silo import script logic (matches the previous raw-text formatting,
+            // back when this column was read as text() instead of as a proper datetime).
+            ?.toString()
+            ?.replace("T", "Z")
             ?: ""
         return lastUpdateTime
     }
