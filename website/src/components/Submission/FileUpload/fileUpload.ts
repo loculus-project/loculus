@@ -6,6 +6,7 @@ export type Awaiting = {
     type: 'awaiting';
     file: File;
     path: string;
+    size: number;
 };
 
 export type Pending = {

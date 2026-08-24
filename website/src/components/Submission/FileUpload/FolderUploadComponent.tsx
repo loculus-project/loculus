@@ -173,7 +173,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     async function requestFileUploads(filesAwaitingUrls: Awaiting[]): Promise<Pending[]> {
         const pendingFiles: Pending[] = [];
         for (const file of filesAwaitingUrls) {
-            const { partCount, partSize } = calculatePartSizeAndCount(file.file.size);
+            const { partCount, partSize } = calculatePartSizeAndCount(file.size);
             const result = await backendClient.requestMultipartUpload(accessToken, groupId, 1, partCount);
             result.match(
                 (data) => {
@@ -181,7 +181,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                         type: 'pending',
                         file: file.file,
                         path: file.path,
-                        size: file.file.size,
+                        size: file.size,
                         fileId: data[0].fileId,
                         urls: data[0].urls,
                         uploadedParts: 0,
@@ -262,6 +262,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     file: f,
                     // Assign the path without the parent folder
                     path: f.webkitRelativePath.split('/').slice(1).join('/'),
+                    size: f.size,
                 })),
             });
         }
@@ -300,6 +301,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 type: 'awaiting',
                 file: f,
                 path: f.name,
+                size: f.size,
             }));
 
             // If the state is undefined, set it to the new awaiting files
@@ -480,7 +482,7 @@ const FileListItem: FC<FileListeItemProps> = ({ file, fileCategory }) => {
             <div className='flex-1 min-w-0 flex items-center'>
                 <FilePath file={file} />
                 <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>
-                    ({file.type === 'previousUpload' ? 'uploaded' : formatFileSize(fileSizeOf(file))})
+                    ({file.type === 'previousUpload' ? 'uploaded' : formatFileSize(file.size)})
                 </span>
                 <span className='text-xs text-blue-500 ml-2 w-9 shrink-0 text-right whitespace-nowrap'>
                     {showProgress ? `${percentage}%` : ''}
@@ -492,9 +494,6 @@ const FileListItem: FC<FileListeItemProps> = ({ file, fileCategory }) => {
         </div>
     );
 };
-
-const fileSizeOf = (file: Exclude<SingleFileUpload, PreviousUpload>) =>
-    file.type === 'awaiting' ? file.file.size : file.size;
 
 const FilePath: FC<{ file: SingleFileUpload }> = ({ file }) => {
     const folderPath = file.path.split('/').slice(0, -1);
