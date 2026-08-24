@@ -228,6 +228,7 @@ const InnerDataUploadForm = ({
                     setFileFactory={setFileFactory}
                     setSubmissionFileMapping={setSubmissionFileMapping}
                     organism={organism}
+                    groupId={group.groupId}
                     action={action}
                     metadataTemplateFields={metadataTemplateFields}
                     submissionDataTypes={submissionDataTypes}

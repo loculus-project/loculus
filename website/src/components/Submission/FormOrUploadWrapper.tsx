@@ -43,6 +43,7 @@ type FormOrUploadWrapperProps = {
     setFileFactory: Dispatch<SetStateAction<FileFactory | undefined>>;
     setSubmissionFileMapping: Dispatch<SetStateAction<Result<SubmissionFileMapping, Error> | undefined>>;
     organism: string;
+    groupId: number;
     action: UploadAction;
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
@@ -61,6 +62,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     setFileFactory,
     setSubmissionFileMapping,
     organism,
+    groupId,
     action,
     metadataTemplateFields,
     submissionDataTypes,
@@ -166,6 +168,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
         return (
             <SequenceEntryUpload
                 organism={organism}
+                groupId={groupId}
                 action={action}
                 metadataFile={metadataFile}
                 setMetadataFile={setMetadataFile}
