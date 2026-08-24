@@ -9,7 +9,20 @@ from enum import StrEnum
 from typing import Any, Final, cast
 
 import pytz
-from sqlalchemy import Engine, Enum, create_engine, delete, func, make_url, or_, select, update
+from sqlalchemy import (
+    DateTime,
+    Engine,
+    Enum,
+    ForeignKey,
+    Index,
+    create_engine,
+    delete,
+    func,
+    make_url,
+    or_,
+    select,
+    update,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -141,23 +154,27 @@ class SubmissionTableEntry(Base):
 
     # Optional fields with defaults.
     # 'seq_metadata' maps to the DB column "metadata".
-    seq_metadata: Mapped[dict[str, Any]] = mapped_column("metadata", JSONB, default_factory=dict)
+    seq_metadata: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSONB, nullable=True, default_factory=dict
+    )
     errors: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
     warnings: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
     status_all: Mapped[Status] = mapped_column(
         Enum(StatusAll, native_enum=False),  # Store enum as string in DB table.
         default=StatusAll.READY_TO_SUBMIT,
     )
-    started_at: Mapped[datetime | None] = mapped_column(default=None)
+    started_at: Mapped[datetime | None] = mapped_column(nullable=False, default=None)
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     unaligned_nucleotide_sequences: Mapped[dict[str, str | None]] = mapped_column(
-        JSONB, default_factory=dict
+        JSONB, nullable=True, default_factory=dict
     )
     center_name: Mapped[str | None] = mapped_column(default=None)
     external_metadata: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(
         JSONB, default=None
     )
-    project_id: Mapped[int | None] = mapped_column(default=None)
+    project_id: Mapped[int | None] = mapped_column(
+        ForeignKey("ena_deposition_schema.project_table.project_id"), default=None
+    )
 
     @property
     def pkey(self) -> AccessionVersion:
@@ -168,7 +185,11 @@ class ProjectTableEntry(Base):
     """Maps to project_table. Primary key: project_id (BIGSERIAL)."""
 
     __tablename__ = "project_table"
-    __table_args__: typing.ClassVar[dict[str, Any]] = {"schema": "ena_deposition_schema"}
+    __table_args__: typing.ClassVar[tuple[Any, ...]] = (
+        Index("idx_project_table_group_id", "group_id"),
+        Index("idx_project_table_organism", "organism"),
+        {"schema": "ena_deposition_schema"},
+    )
 
     # BIGSERIAL primary key — server-generated, excluded from __init__.
     project_id: Mapped[int | None] = mapped_column(
@@ -182,12 +203,16 @@ class ProjectTableEntry(Base):
         Enum(Status, native_enum=False),
         default=Status.READY,
     )
-    started_at: Mapped[datetime | None] = mapped_column(default=None)
+    started_at: Mapped[datetime | None] = mapped_column(nullable=False, default=None)
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     center_name: Mapped[str | None] = mapped_column(default=None)
     result: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(JSONB, default=None)
-    ena_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
-    ncbi_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
+    ena_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ncbi_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
 
     @property
     def pkey(self) -> ProjectId:
@@ -208,11 +233,15 @@ class SampleTableEntry(Base):
         Enum(Status, native_enum=False),
         default=Status.READY,
     )
-    started_at: Mapped[datetime | None] = mapped_column(default=None)
+    started_at: Mapped[datetime | None] = mapped_column(nullable=False, default=None)
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     result: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(JSONB, default=None)
-    ena_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
-    ncbi_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
+    ena_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ncbi_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
 
     @property
     def pkey(self) -> AccessionVersion:
@@ -233,13 +262,21 @@ class AssemblyTableEntry(Base):
         Enum(Status, native_enum=False),
         default=Status.READY,
     )
-    started_at: Mapped[datetime | None] = mapped_column(default=None)
+    started_at: Mapped[datetime | None] = mapped_column(nullable=False, default=None)
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     result: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(JSONB, default=None)
-    ena_nucleotide_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
-    ncbi_nucleotide_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
-    ena_gca_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
-    ncbi_gca_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
+    ena_nucleotide_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ncbi_nucleotide_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ena_gca_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ncbi_gca_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
 
     @property
     def pkey(self) -> AccessionVersion:
