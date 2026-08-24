@@ -103,14 +103,6 @@ spec:
   failedJobsHistoryLimit: 2
   jobTemplate:
     spec:
-      {{/*
-      No automatic retries. An ingest run is not idempotent across pods: if a submit
-      request times out client-side while the backend goes on to commit it, a replacement
-      pod re-reads previously-submitted state, cannot yet see the in-flight transaction,
-      and submits everything again - producing two Loculus accessions for one INSDC
-      accession, which then makes every later run fail in compare_hashes.
-      A failed run is simply picked up by the next scheduled run.
-      */}}
       backoffLimit: 0
       activeDeadlineSeconds: {{ $.Values.ingestLimitSeconds }}
       ttlSecondsAfterFinished: 86400
