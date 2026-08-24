@@ -29,8 +29,7 @@ jobs:
           pytest tests/
         shell: micromamba-shell {0}
         working-directory: ingest
-  check-format:
-    name: Check formatting
+  ingest-check-format:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
