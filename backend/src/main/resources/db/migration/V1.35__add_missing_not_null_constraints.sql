@@ -9,3 +9,8 @@ ALTER TABLE seqsets
 
 ALTER TABLE sequence_entries
     ALTER COLUMN approver SET NOT NULL;
+
+-- last_time_updated is only ever written by the update_table_tracker() trigger (see V1.2), which always
+-- supplies a value.
+ALTER TABLE table_update_tracker
+    ALTER COLUMN last_time_updated SET NOT NULL;
