@@ -20,11 +20,12 @@ import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.api.toPairs
+import org.loculus.backend.config.NotFlywayManaged
 import org.loculus.backend.service.jacksonSerializableJsonb
 
 const val SEQUENCE_ENTRIES_VIEW_NAME = "sequence_entries_view"
 
-object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
+object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME), NotFlywayManaged {
     val submittedDataColumn = jacksonSerializableJsonb<SubmittedData<CompressedSequence>>(
         "submitted_data",
     ).nullable()
