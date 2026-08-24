@@ -110,8 +110,8 @@ jobs:
 
   website-merge-or-retag:
     name: Publish Website Docker Image
-    needs: [check-cache, build]
-    if: always() && needs.check-cache.result == 'success' && (needs.build.result == 'success' || needs.build.result == 'skipped')
+    needs: [check-cache, website-build-image]
+    if: always() && needs.check-cache.result == 'success' && (needs.website-build-image.result == 'success' || needs.website-build-image.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
