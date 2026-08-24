@@ -2783,6 +2783,10 @@ images:
   backend:
     repository: "ghcr.io/loculus-project/backend"
     pullPolicy: Always
+  deaconIndex:
+    repository: "ghcr.io/loculus-project/deacon-index"
+    tag: "latest"
+    pullPolicy: IfNotPresent
 silo:
   apiThreadsForHttpConnections: 16
 secrets:

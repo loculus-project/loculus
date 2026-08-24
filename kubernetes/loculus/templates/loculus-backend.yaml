@@ -98,7 +98,7 @@ spec:
             {{- end }}
           env:
             - name: JVM_OPTS
-              value: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2
+              value: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseCompactObjectHeaders -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2
           {{- if $.Values.seqSets.crossRef }}
             - name: CROSSREF_USERNAME
               valueFrom:

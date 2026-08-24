@@ -30,17 +30,22 @@ export const METADATA_FILE_KIND: FileKind<ProcessedFile> = {
         const isCompressed = COMPRESSION_EXTENSIONS.includes(extension);
         const dataExtension = isCompressed ? fileNameParts[fileNameParts.length - 2] : extension;
         const compressionExtension = isCompressed ? extension : null;
-        if (dataExtension === 'tsv' && !isCompressed) return ok(new RawFile(file));
-        if (dataExtension === 'tsv' && isCompressed) return ok(new CompressedFile(file));
+
+        if (METADATA_FILE_KIND.supportedExtensions.includes(dataExtension) && compressionExtension === 'xz') {
+            return err(
+                new Error(
+                    'LZMA compression (.xz files) is not supported for metadata files. ' +
+                        'Please use a different compression format or leave it uncompressed.',
+                ),
+            );
+        }
+
+        if (dataExtension === 'tsv') {
+            if (!isCompressed) return ok(new RawFile(file));
+            return ok(new CompressedFile(file));
+        }
+
         if (dataExtension === 'xlsx' || dataExtension === 'xls') {
-            if (isCompressed && compressionExtension === 'xz') {
-                return err(
-                    new Error(
-                        'LZMA compression (.xz files) is not supported with Excel files yet. ' +
-                            'Please use a different compression format for Excel files.',
-                    ),
-                );
-            }
             const compression = isCompressed ? (compressionExtension as SupportedInBrowserCompressionKind) : null;
             const excelFile = new ExcelFile(file, compression);
             try {
@@ -50,6 +55,7 @@ export const METADATA_FILE_KIND: FileKind<ProcessedFile> = {
             }
             return ok(excelFile);
         }
+
         return err(
             new Error(
                 `Unsupported file extension for metadata upload. Please use one of: ${METADATA_FILE_KIND.supportedExtensions.join(

@@ -166,6 +166,14 @@ class ValidateFileNameTest {
     }
 
     @Test
+    fun `filename with whitespace should fail validation`() {
+        val fileMapping = createFileMapping("sequences", listOf("file test.txt"))
+        assertThrows<UnprocessableEntityException> {
+            validator.validateFilenameCharacters(fileMapping)
+        }
+    }
+
+    @Test
     fun `null file mapping should pass validation`() {
         validator.validateFilenameCharacters(null)
     }

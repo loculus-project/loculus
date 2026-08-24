@@ -1,6 +1,6 @@
 package org.loculus.backend.log
 
-import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.v1.jdbc.insert
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
