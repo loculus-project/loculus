@@ -321,12 +321,7 @@ const OriginalDataDownloadHint = ({
     <p className='text-gray-600 text-sm'>
         To revise sequences you need to upload the new {enableConsensusSequences && 'sequences and '}metadata. You can
         easily download your originally submitted data by opening your group's{' '}
-        <a
-            href={routes.mySequencesPage(organism, groupId)}
-            target='_blank'
-            rel='noopener noreferrer'
-            className='text-primary-600 hover:underline'
-        >
+        <a href={routes.mySequencesPage(organism, groupId)} className='text-primary-600 hover:underline'>
             released sequences
         </a>{' '}
         page, optionally selecting the sequences you want to revise, and using the{' '}
