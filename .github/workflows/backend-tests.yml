@@ -9,14 +9,14 @@ on:
       - main
   workflow_dispatch:
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-backend-tests
+  group: ci-${{ (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && github.run_id || github.ref }}-backend-tests
   cancel-in-progress: true
 jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      RUN_EXTRA_TESTS: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'true' || 'false' }}
+      RUN_EXTRA_TESTS: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
     steps:
       - name: Login to Docker Hub
         uses: docker/login-action@v4
