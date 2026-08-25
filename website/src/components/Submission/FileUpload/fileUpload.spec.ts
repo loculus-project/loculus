@@ -1,9 +1,21 @@
 import { describe, expect, it } from 'vitest';
 
-import { deriveFileMapping, validateFileUploadStates, type FileUploadState } from './fileUpload';
+import { deriveFileMapping, validateFileUploadStates, type FileUploadState, type Pending } from './fileUpload';
 
 const uploaded = { type: 'uploaded', fileId: 'file-1', path: 'a.txt', size: 7 } as const;
 const previousUpload = { type: 'previousUpload', fileId: 'file-2', path: 'b.txt' } as const;
+const awaiting = { type: 'awaiting', file: new File([], 'c.txt'), path: 'c.txt', size: 7 } as const;
+const pending: Pending = {
+    type: 'pending',
+    file: new File([], 'd.txt'),
+    path: 'd.txt',
+    size: 7,
+    fileId: 'file-3',
+    urls: ['url'],
+    uploadedParts: 0,
+    totalParts: 1,
+    partSize: 7,
+};
 
 const statesOf = (...states: FileUploadState[]) => new Map(states.map((state, index) => [`category${index}`, state]));
 
@@ -41,10 +53,14 @@ describe('validateFileUploadStates', () => {
 });
 
 describe('deriveFileMapping', () => {
-    it('returns undefined rather than an empty map when nothing was uploaded', () => {
+    it('returns undefined rather than an empty map when nothing has finished uploading', () => {
         // Callers treat undefined as "no file mapping to apply"; an empty map is not equivalent.
         expect(deriveFileMapping(new Map())).toBeUndefined();
-        expect(deriveFileMapping(statesOf({ type: 'uploadInProgress', files: [uploaded] }))).toBeUndefined();
+        expect(
+            deriveFileMapping(
+                statesOf({ type: 'awaitingUrls', files: [awaiting] }, { type: 'uploadInProgress', files: [pending] }),
+            ),
+        ).toBeUndefined();
     });
 
     it('maps every completed category by path to file id', () => {
@@ -63,10 +79,8 @@ describe('deriveFileMapping', () => {
         );
     });
 
-    it('omits categories which are not yet complete, mirroring validateFileUploadStates', () => {
-        const mapping = deriveFileMapping(
-            statesOf({ type: 'uploadCompleted', files: [uploaded] }, { type: 'uploadInProgress', files: [uploaded] }),
-        );
+    it('includes a finished file while others in the same category are still in flight', () => {
+        const mapping = deriveFileMapping(statesOf({ type: 'uploadInProgress', files: [uploaded, awaiting, pending] }));
 
         expect(mapping).toEqual(new Map([['category0', new Map([['a.txt', 'file-1']])]]));
     });
