@@ -50,7 +50,6 @@ jobs:
           ./gradlew test || rc=$?
           kill "$watchdog" 2>/dev/null || true
           exit $rc
-      # A killed run leaves no XML or HTML report, only test-results/test/binary
       - name: Recover test report
         if: failure()
         run: ./gradlew recoverTestReport || true
