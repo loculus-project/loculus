@@ -89,9 +89,37 @@ jobs:
               done
             } > "build/diagnostics/resources-$1.txt" 2>&1
           }
-          # The early samples are retained for green runs; later ones distinguish
-          # a long-running batch from a wedge.
-          ( sleep 90; dump at90s; probe at90s; sleep 60; dump at150s; probe at150s; sleep 60; dump at210s; probe at210s; sleep 90; dump at5min; probe at5min; sleep 30; dump at5m30s; probe at5m30s ) >/dev/null 2>&1 &
+          progress() {
+            {
+              date --iso-8601=seconds
+              containers=$(timeout 10 docker ps -a --format '{{.ID}} {{.Image}}')
+              pg=$(echo "$containers" | awk '/postgres/{print $1; exit}')
+              echo "postgres=${pg:-none}"
+              timeout 10 docker stats --no-stream
+              [ -n "$pg" ] || return 0
+              timeout 10 docker exec "$pg" psql -U test -d test -c \
+                "select pid,application_name,state,wait_event_type,wait_event,now()-xact_start as xact_age,now()-query_start as query_age,pg_blocking_pids(pid) as blocked_by,left(query,300) as query from pg_stat_activity order by xact_start" 2>&1
+              timeout 10 docker exec "$pg" psql -U test -d test -c \
+                "select datname,xact_commit,xact_rollback,tup_inserted,tup_updated,tup_deleted,blks_read,blks_hit,temp_files,temp_bytes,deadlocks from pg_stat_database where datname=current_database()" 2>&1
+            } >> build/diagnostics/progress.log 2>&1
+          }
+          sampler() {
+            SECONDS=0
+            next_full_sample=30
+            while [ "$SECONDS" -lt 350 ]; do
+              sleep 10
+              elapsed=$SECONDS
+              progress "at${elapsed}s"
+              if [ "$elapsed" -ge "$next_full_sample" ]; then
+                dump "at${elapsed}s"
+                probe "at${elapsed}s"
+                next_full_sample=$((next_full_sample + 30))
+              fi
+            done
+          }
+          # The 10-second stream quantifies progress; a complete JVM/locks/logs
+          # snapshot every 30 seconds preserves enough state for post-mortem work.
+          ( sampler ) >/dev/null 2>&1 &
           watchdog=$!
           rc=0
           if [ "$RUN_ONLY_SUBMIT_LARGE_BATCH_TEST" = "true" ]; then

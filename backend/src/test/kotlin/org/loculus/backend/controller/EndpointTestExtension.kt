@@ -171,7 +171,13 @@ class EndpointTestExtension :
             }
         }
 
-        System.setProperty(SPRING_DATASOURCE_URL, env.postgres.jdbcUrl)
+        // Let CI diagnostics identify this test JVM's exact PostgreSQL backend.
+        val separator = if (env.postgres.jdbcUrl.contains("?")) "&" else "?"
+        val runId = System.getenv("GITHUB_RUN_ID") ?: "local"
+        System.setProperty(
+            SPRING_DATASOURCE_URL,
+            "${env.postgres.jdbcUrl}${separator}ApplicationName=backend-tests-$runId",
+        )
         System.setProperty(SPRING_DATASOURCE_USERNAME, env.postgres.username)
         System.setProperty(SPRING_DATASOURCE_PASSWORD, env.postgres.password)
 
