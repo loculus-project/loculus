@@ -421,6 +421,33 @@ describe('FolderUploadComponent', () => {
             );
         });
 
+        it('stops reporting a replaced file as uploaded as soon as the replacement is confirmed', async () => {
+            let deliverUploadUrls = () => {};
+            mockRequestMultipartUpload.mockReturnValue(
+                new Promise((resolve) => {
+                    deliverUploadUrls = () =>
+                        resolve(ok([{ fileId: 'replacement-id', urls: ['http://test.com/url1'] }]));
+                }),
+            );
+
+            render(<FolderUploadComponentWithState {...defaultPropsWithFiles} />);
+
+            const file = new File(['content'], 'file-a.txt', { type: 'text/plain' });
+            Object.defineProperty(file, 'webkitRelativePath', { value: '', writable: false });
+            await userEvent.upload(screen.getByTestId('add_extraFiles'), file);
+            await waitFor(() => expect(screen.getByText(/already exist and will be replaced/)).toBeInTheDocument());
+            await userEvent.click(screen.getByRole('button', { name: 'Replace' }));
+
+            // The request for upload urls is still in flight, so nothing has been uploaded yet: the
+            // replaced entry must stop claiming the previous upload it is about to replace, while
+            // the untouched entry keeps its own.
+            await waitFor(() => expect(screen.getByTestId('status_extraFiles_file-a.txt')).not.toHaveTextContent('✓'));
+            expect(screen.getByTestId('status_extraFiles_file-b.txt')).toHaveTextContent('✓');
+
+            deliverUploadUrls();
+            await waitFor(() => expect(screen.getByTestId('status_extraFiles_file-a.txt')).toHaveTextContent('✓'));
+        });
+
         it('leaves the existing files alone when the overwrite is cancelled', async () => {
             mockRequestMultipartUpload.mockReturnValue(
                 ok([{ fileId: 'replacement-id', urls: ['http://test.com/url1'] }]),
