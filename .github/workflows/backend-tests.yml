@@ -14,9 +14,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    # Deliberately larger than the `Run tests` step timeout below: a *job* timeout cancels the job,
-    # which skips every remaining step, so the diagnostics upload would never run. The step timeout
-    # fails just that step and lets `if: always()` steps continue.
+    # larger than individual steps so logs can be collected
     timeout-minutes: 20
     env:
       RUN_EXTRA_TESTS: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'true' || 'false' }}
