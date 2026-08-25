@@ -22,14 +22,14 @@ export type Pending = {
     etags?: string[];
 };
 
-export type Uploaded = {
+type Uploaded = {
     type: 'uploaded';
     fileId: string;
     path: string;
     size: number;
 };
 
-export type PreviousUpload = {
+type PreviousUpload = {
     type: 'previousUpload';
     fileId: string;
     // Previous uploads only appear for form submissions/revisions
@@ -65,7 +65,7 @@ type UploadInProgressState = {
 
 type UploadCompleted = {
     type: 'uploadCompleted';
-    files: (Uploaded | PreviousUpload)[];
+    files: (Uploaded | PreviousUpload | FileError)[];
 };
 
 export type FileUploadState = AwaitingUrlState | UploadInProgressState | UploadCompleted;
@@ -89,6 +89,9 @@ export const getPreviousFileUploadStates = (files: FilesByCategory): Map<string,
 export const validateFileUploadStates = (fileUploadStates: Map<string, FileUploadState>): Result<void, Error> => {
     if (Array.from(fileUploadStates.values()).some((state) => state.type !== 'uploadCompleted'))
         return err(new Error('Please wait for all files to finish uploading before submitting.'));
+
+    if (Array.from(fileUploadStates.values()).some((state) => state.files.some((file) => file.type === 'error')))
+        return err(new Error('Please discard or replace any files that failed to upload before submitting.'));
 
     return ok();
 };

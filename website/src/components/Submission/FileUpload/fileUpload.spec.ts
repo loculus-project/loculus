@@ -4,6 +4,7 @@ import { validateFileUploadStates, type FileUploadState } from './fileUpload';
 
 const uploaded = { type: 'uploaded', fileId: 'file-1', path: 'a.txt', size: 7 } as const;
 const previousUpload = { type: 'previousUpload', fileId: 'file-2', path: 'b.txt' } as const;
+const failed = { type: 'error', path: 'c.txt', size: 7, msg: 'Could not complete upload' } as const;
 
 const statesOf = (...states: FileUploadState[]) => new Map(states.map((state, index) => [`category${index}`, state]));
 
@@ -37,5 +38,17 @@ describe('validateFileUploadStates', () => {
 
         expect(result.isErr()).toBeTruthy();
         expect(result._unsafeUnwrapErr().message).toContain('wait for all files to finish uploading');
+    });
+
+    it('rejects a completed category containing a file which failed to upload', () => {
+        const result = validateFileUploadStates(
+            statesOf(
+                { type: 'uploadCompleted', files: [uploaded] },
+                { type: 'uploadCompleted', files: [previousUpload, failed] },
+            ),
+        );
+
+        expect(result.isErr()).toBeTruthy();
+        expect(result._unsafeUnwrapErr().message).toContain('discard or replace any files that failed to upload');
     });
 });
