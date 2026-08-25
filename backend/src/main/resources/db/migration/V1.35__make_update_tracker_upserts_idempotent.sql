@@ -26,8 +26,19 @@
 -- Both consumers (ReleasedDataModel.getLastDatabaseWrite and
 -- SubmissionDatabaseService.useNewerProcessingPipelineIfPossible) compare this value
 -- for *equality*, never ordering, so last-writer-wins is safe even though the value can
--- move backwards. Note for future work: transaction start time is not a sound "as of"
--- clock, so this column must never be used with `>` / "changed since T" semantics.
+-- move backwards.
+--
+-- The value is also made monotonic in COMMIT order. timezone('UTC', CURRENT_TIMESTAMP)
+-- is transaction start time, which does not follow commit order, so an unconditional
+-- write lets the value move backwards. Every writer already serialises on this one
+-- tracker row, so the later committer always observes the earlier one's value: taking
+-- GREATEST(existing + 1us, our start time) makes the column strictly increasing in
+-- commit order, without track_commit_timestamp (a server GUC + restart, which also
+-- returns NULL once an xid is frozen). It stays a timestamp, so the SILO import format
+-- is unchanged. Under sustained concurrent writes the value can drift microseconds
+-- ahead of the wall clock; it remains a valid ETag either way.
+--
+-- With this change the column is safe to compare with `>`; before it, only equality was.
 
 CREATE OR REPLACE FUNCTION update_table_tracker()
 RETURNS TRIGGER AS $$
@@ -36,7 +47,9 @@ BEGIN
         INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
         VALUES (TG_TABLE_NAME, NULL, NULL, timezone('UTC', CURRENT_TIMESTAMP))
         ON CONFLICT (table_name, organism, pipeline_version)
-        DO UPDATE SET last_time_updated = EXCLUDED.last_time_updated
+        DO UPDATE SET last_time_updated = GREATEST(
+              table_update_tracker.last_time_updated + interval '1 microsecond',
+              EXCLUDED.last_time_updated)
         WHERE table_update_tracker.xmin <> pg_current_xact_id()::xid;
     END IF;
     RETURN NULL;
@@ -53,7 +66,9 @@ BEGIN
       ON se.accession = cr.accession AND se.version = cr.version
     GROUP BY se.organism, cr.pipeline_version
     ON CONFLICT (table_name, organism, pipeline_version)
-    DO UPDATE SET last_time_updated = EXCLUDED.last_time_updated
+    DO UPDATE SET last_time_updated = GREATEST(
+          table_update_tracker.last_time_updated + interval '1 microsecond',
+          EXCLUDED.last_time_updated)
     WHERE table_update_tracker.xmin <> pg_current_xact_id()::xid;
     RETURN NULL;
 END;
@@ -69,7 +84,9 @@ BEGIN
       ON se.accession = cr.accession AND se.version = cr.version
     GROUP BY se.organism
     ON CONFLICT (table_name, organism, pipeline_version)
-    DO UPDATE SET last_time_updated = EXCLUDED.last_time_updated
+    DO UPDATE SET last_time_updated = GREATEST(
+          table_update_tracker.last_time_updated + interval '1 microsecond',
+          EXCLUDED.last_time_updated)
     WHERE table_update_tracker.xmin <> pg_current_xact_id()::xid;
     RETURN NULL;
 END;
@@ -85,7 +102,9 @@ BEGIN
       ON se.accession = cr.accession
     GROUP BY se.organism
     ON CONFLICT (table_name, organism, pipeline_version)
-    DO UPDATE SET last_time_updated = EXCLUDED.last_time_updated
+    DO UPDATE SET last_time_updated = GREATEST(
+          table_update_tracker.last_time_updated + interval '1 microsecond',
+          EXCLUDED.last_time_updated)
     WHERE table_update_tracker.xmin <> pg_current_xact_id()::xid;
     RETURN NULL;
 END;
@@ -99,7 +118,9 @@ BEGIN
     FROM changed_rows cr
     GROUP BY cr.organism
     ON CONFLICT (table_name, organism, pipeline_version)
-    DO UPDATE SET last_time_updated = EXCLUDED.last_time_updated
+    DO UPDATE SET last_time_updated = GREATEST(
+          table_update_tracker.last_time_updated + interval '1 microsecond',
+          EXCLUDED.last_time_updated)
     WHERE table_update_tracker.xmin <> pg_current_xact_id()::xid;
     RETURN NULL;
 END;
@@ -113,7 +134,9 @@ BEGIN
     FROM changed_rows cr
     GROUP BY cr.organism
     ON CONFLICT (table_name, organism, pipeline_version)
-    DO UPDATE SET last_time_updated = EXCLUDED.last_time_updated
+    DO UPDATE SET last_time_updated = GREATEST(
+          table_update_tracker.last_time_updated + interval '1 microsecond',
+          EXCLUDED.last_time_updated)
     WHERE table_update_tracker.xmin <> pg_current_xact_id()::xid;
     RETURN NULL;
 END;
