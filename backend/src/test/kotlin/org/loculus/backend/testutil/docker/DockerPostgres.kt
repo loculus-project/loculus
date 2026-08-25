@@ -5,7 +5,13 @@ import org.testcontainers.postgresql.PostgreSQLContainer
 import java.io.File
 
 class DockerPostgres : PostgresProvider {
-    private val container = PostgreSQLContainer("postgres:latest")
+    private val container = PostgreSQLContainer("postgres:latest").also {
+        // Diagnostic-only toggle: a shared test database can start vacuuming
+        // tables churned by earlier tests while SubmitLargeBatchTest is running.
+        if (System.getenv("POSTGRES_AUTOVACUUM_ENABLED") == "false") {
+            it.withCommand("postgres", "-c", "autovacuum=off")
+        }
+    }
 
     override val jdbcUrl: String
         get() = container.jdbcUrl

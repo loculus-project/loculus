@@ -24,6 +24,11 @@ on:
         required: true
         default: true
         type: boolean
+      run_with_postgres_autovacuum:
+        description: Enable Postgres autovacuum (disable for the shared-database vacuum-interference A/B probe)
+        required: true
+        default: true
+        type: boolean
 concurrency:
   # Each manual dispatch needs its own group so a hang hunt can run concurrently.
   group: ci-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.ref }}-backend-tests
@@ -39,6 +44,7 @@ jobs:
       # Explicit @EnableScheduling does not honor Spring Boot's auto-config switch.
       # This app-level switch defaults to true and is only false in the diagnostic A/B run.
       LOCULUS_SCHEDULING_ENABLED: ${{ github.event_name != 'workflow_dispatch' || inputs.run_with_scheduling }}
+      POSTGRES_AUTOVACUUM_ENABLED: ${{ github.event_name != 'workflow_dispatch' || inputs.run_with_postgres_autovacuum }}
     steps:
       - name: Login to Docker Hub
         uses: docker/login-action@v4
