@@ -21,7 +21,7 @@ const typedInputFields = sequencingInputFields.map((field) => ({
     type: metadataByName.get(field.name)?.type ?? 'string',
 }));
 const requiredFields = typedInputFields
-    .filter((field) => field.requiredWhen?.includes('files.rawReads'))
+    .filter((field) => field.requiredWhen?.includes('files.rawReads') || field.required)
     .map((field) => field);
 const desiredFields = typedInputFields
     .filter((field) => !requiredFields.includes(field) && field.desired)
