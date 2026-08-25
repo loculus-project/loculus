@@ -49,8 +49,14 @@ jobs:
           # Threaddump collected to help debug test hangs
           mkdir -p build/diagnostics
           dump() {
-            for pid in $(jcmd -l 2>/dev/null | grep -v 'sun.tools.jcmd' | awk '{print $1}'); do
-              jcmd "$pid" Thread.print > "build/diagnostics/threaddump-$1-$pid.txt" 2>&1 || true
+            # jcmd -l includes the forked Gradle test executor as well as the daemon.
+            # Keep its PID-to-command mapping, then include ownable synchronizers in
+            # each dump so a Java-side lock is visible if this is not a JDBC wait.
+            jcmd -l > "build/diagnostics/java-processes-$1.txt" 2>&1 || true
+            ps -eo pid,ppid,stat,etime,args > "build/diagnostics/processes-$1.txt" 2>&1 || true
+            for pid in $(awk '/^[0-9]+ / && $0 !~ /sun\.tools\.jcmd/ {print $1}' "build/diagnostics/java-processes-$1.txt"); do
+              jcmd "$pid" VM.command_line > "build/diagnostics/jvm-command-line-$1-$pid.txt" 2>&1 || true
+              jcmd "$pid" Thread.print -l > "build/diagnostics/threaddump-$1-$pid.txt" 2>&1 || true
             done
           }
           probe() {
