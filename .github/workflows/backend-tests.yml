@@ -37,8 +37,23 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
       - name: Run tests
         timeout-minutes: 15
-        run: ./gradlew test
         working-directory: ./backend
+        run: |
+          # The step timeout kills the JVM without a stack trace, so snapshot every live JVM
+          # shortly before that deadline. Two dumps, a couple of minutes apart, so a thread that
+          # is genuinely stuck can be told apart from one that is merely slow.
+          mkdir -p build/diagnostics
+          dump() {
+            for pid in $(jcmd -l 2>/dev/null | grep -v 'sun.tools.jcmd' | awk '{print $1}'); do
+              jcmd "$pid" Thread.print > "build/diagnostics/threaddump-$1-$pid.txt" 2>&1 || true
+            done
+          }
+          ( sleep 660; dump at11min; sleep 120; dump at13min ) >/dev/null 2>&1 &
+          watchdog=$!
+          rc=0
+          ./gradlew test || rc=$?
+          kill "$watchdog" 2>/dev/null || true
+          exit $rc
       # Gradle already writes these; without an upload they die with the runner. The JUnit XML
       # carries per-class start times and captured stdout, which is what localises a hang.
       - name: Upload test results
@@ -49,6 +64,7 @@ jobs:
           path: |
             backend/build/test-results/test/**/*.xml
             backend/build/reports/tests/**
+            backend/build/diagnostics/**
           if-no-files-found: warn
           retention-days: 14
 
