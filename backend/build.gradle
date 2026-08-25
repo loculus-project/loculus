@@ -125,7 +125,13 @@ tasks.named('test') {
     useJUnitPlatform()
     jvmArgs '--enable-native-access=ALL-UNNAMED'
     testLogging {
-        events TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR
+        // STARTED + PASSED so an in-flight test is visible: on a hang, the last STARTED with no
+        // matching PASSED names the culprit. Without them the whole :test phase prints nothing,
+        // making a hung log indistinguishable from a green one.
+        events TestLogEvent.STARTED,
+            TestLogEvent.PASSED,
+            TestLogEvent.FAILED,
+            TestLogEvent.STANDARD_ERROR
         exceptionFormat = TestExceptionFormat.FULL
         showExceptions = true
     }
