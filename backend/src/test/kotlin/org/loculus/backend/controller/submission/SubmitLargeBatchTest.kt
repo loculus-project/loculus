@@ -10,7 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@EndpointTest
+// Logging 100k inserts at debug made the test-results XML 127 MB
+@EndpointTest(properties = ["logging.level.Exposed=WARN"])
 @EnabledIfEnvironmentVariable(named = "RUN_EXTRA_TESTS", matches = "true")
 class SubmitLargeBatchTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
