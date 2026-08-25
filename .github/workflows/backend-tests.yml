@@ -14,7 +14,10 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Deliberately larger than the `Run tests` step timeout below: a *job* timeout cancels the job,
+    # which skips every remaining step, so the diagnostics upload would never run. The step timeout
+    # fails just that step and lets `if: always()` steps continue.
+    timeout-minutes: 20
     env:
       RUN_EXTRA_TESTS: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'true' || 'false' }}
     steps:
@@ -33,8 +36,21 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
       - name: Run tests
+        timeout-minutes: 15
         run: ./gradlew test
         working-directory: ./backend
+      # Gradle already writes these; without an upload they die with the runner. The JUnit XML
+      # carries per-class start times and captured stdout, which is what localises a hang.
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-test-results
+          path: |
+            backend/build/test-results/test/**/*.xml
+            backend/build/reports/tests/**
+          if-no-files-found: warn
+          retention-days: 14
 
   lint:
     runs-on: ubuntu-latest
