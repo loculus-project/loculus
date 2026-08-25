@@ -82,10 +82,12 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: backend-test-results
+          # index.html is the only place output from outside a test lands, e.g. a failed test env start
           path: |
             backend/build/test-results/test/**
             backend/build/reports/recovered/**
             backend/build/diagnostics/**
+            backend/build/reports/tests/test/index.html
           if-no-files-found: warn
 
   lint:
