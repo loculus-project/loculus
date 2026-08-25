@@ -5,6 +5,7 @@ import io.minio.MakeBucketArgs
 import io.minio.MinioClient
 import io.minio.SetBucketPolicyArgs
 import mu.KotlinLogging
+import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -127,6 +128,7 @@ val MINIO_TEST_BUCKET = "testbucket"
 private val log = KotlinLogging.logger { }
 
 class EndpointTestExtension :
+    BeforeAllCallback,
     BeforeEachCallback,
     TestExecutionListener {
     companion object {
@@ -134,9 +136,25 @@ class EndpointTestExtension :
 
         private var isStarted = false
         private var isBucketCreated = false
+        private var startupFailure: Throwable? = null
     }
 
     override fun testPlanExecutionStarted(testPlan: TestPlan) {
+        try {
+            startTestEnvironment(testPlan)
+        } catch (e: Throwable) {
+            // JUnit only logs exceptions thrown from a listener, so remember this one for beforeAll to report
+            startupFailure = e
+            throw e
+        }
+    }
+
+    /** Fails the class with the real startup cause instead of letting every test report a missing JDBC url. */
+    override fun beforeAll(context: ExtensionContext) {
+        startupFailure?.let { throw IllegalStateException("Test environment failed to start", it) }
+    }
+
+    private fun startTestEnvironment(testPlan: TestPlan) {
         if (!isStarted) {
             isAnnotatedWithEndpointTest(testPlan) {
                 try {
