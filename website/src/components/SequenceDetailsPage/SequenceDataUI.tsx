@@ -82,7 +82,7 @@ export const SequenceDataUI: FC<Props> = ({
                 sequenceCitations={sequenceCitations}
             />
             {schema.submissionDataTypes.consensusSequences && !isRevocation && (
-                <div className='mt-10'>
+                <div className='mt-8 -mx-4'>
                     <SequencesContainer
                         organism={organism}
                         segmentReferences={segmentReferences}
@@ -94,54 +94,52 @@ export const SequenceDataUI: FC<Props> = ({
                 </div>
             )}
             {isMyGroup && !isRevocation && accessToken !== undefined && (
-                <>
-                    <hr className='my-4' />
-                    <div className='my-8'>
-                        <h2 className='text-xl font-bold mb-3'>Sequence management</h2>
-                        <div className='text-sm text-gray-400 mb-4 block'>
-                            <MdiEye className='w-6 h-6 inline-block mr-2' />
-                            Only visible to group members
-                        </div>
-
-                        <div className='flex flex-wrap gap-3'>
-                            {isRestricted && (
-                                <EditDataUseTermsButton
-                                    clientConfig={clientConfig}
-                                    accessToken={accessToken}
-                                    accessionVersion={[accessionVersion.split('.')[0]]}
-                                    dataUseTerms={currentDataUseTerms as RestrictedDataUseTerms}
-                                />
-                            )}
-
-                            <Button
-                                as='a'
-                                size='sm'
-                                href={routes.revisePage(organism, groupId, 'form', accession, version?.toString())}
-                            >
-                                Revise this sequence
-                            </Button>
-                            <RevokeButton
-                                organism={organism}
-                                clientConfig={clientConfig}
-                                accessionVersion={accessionVersion.split('.')[0]}
-                                accessToken={accessToken}
-                                groupId={groupId}
-                                onRevokeSuccess={onRevokeSuccess}
-                            />
-                        </div>
+                <div className='-mx-4 xl:mr-0 xl:max-w-xl mt-8 p-4'>
+                    <h2 className='text-sm font-semibold text-gray-800 pb-1 border-b border-gray-200 mb-3'>
+                        Sequence management
+                    </h2>
+                    <div className='text-sm text-gray-500 mb-4 block'>
+                        <MdiEye className='w-6 h-6 inline-block mr-2' />
+                        Only visible to group members
                     </div>
-                </>
+
+                    <div className='flex flex-wrap gap-3'>
+                        {isRestricted && (
+                            <EditDataUseTermsButton
+                                clientConfig={clientConfig}
+                                accessToken={accessToken}
+                                accessionVersion={[accessionVersion.split('.')[0]]}
+                                dataUseTerms={currentDataUseTerms as RestrictedDataUseTerms}
+                            />
+                        )}
+
+                        <Button
+                            as='a'
+                            size='sm'
+                            href={routes.revisePage(organism, groupId, 'form', accession, version?.toString())}
+                        >
+                            Revise this sequence
+                        </Button>
+                        <RevokeButton
+                            organism={organism}
+                            clientConfig={clientConfig}
+                            accessionVersion={accessionVersion.split('.')[0]}
+                            accessToken={accessToken}
+                            groupId={groupId}
+                            onRevokeSuccess={onRevokeSuccess}
+                        />
+                    </div>
+                </div>
             )}
             {reportUrl !== undefined && (
-                <>
-                    <hr className='my-4' />
-                    <div className='my-8'>
-                        <h2 className='text-xl font-bold mb-3'>Report an issue with this sequence or metadata</h2>
-                        <Button as='a' size='sm' href={reportUrl}>
-                            Create GitHub issue
-                        </Button>
-                    </div>
-                </>
+                <div className='-mx-4 xl:mr-0 xl:max-w-xl mt-8 p-4'>
+                    <h2 className='text-sm font-semibold text-gray-800 pb-1 border-b border-gray-200 mb-3'>
+                        Report an issue with this sequence or metadata
+                    </h2>
+                    <Button as='a' size='sm' href={reportUrl}>
+                        Create GitHub issue
+                    </Button>
+                </div>
             )}
         </>
     );
