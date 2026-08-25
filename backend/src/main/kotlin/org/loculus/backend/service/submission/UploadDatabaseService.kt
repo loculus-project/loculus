@@ -74,7 +74,7 @@ class UploadDatabaseService(
         uploadedAt: LocalDateTime,
     ) {
         uploadedMetadataBatch.chunked(METADATA_BATCH_SIZE).forEach { batch ->
-            MetadataUploadAuxTable.batchInsert(batch, shouldReturnGeneratedValues = false) {
+            MetadataUploadAuxTable.batchInsert(batch) {
                 this[submitterColumn] = authenticatedUser.username
                 this[groupIdColumn] = groupId
                 this[uploadedAtColumn] = uploadedAt
@@ -112,7 +112,7 @@ class UploadDatabaseService(
     ) {
         try {
             uploadedRevisedMetadataBatch.chunked(METADATA_BATCH_SIZE).forEach { batch ->
-                MetadataUploadAuxTable.batchInsert(batch, shouldReturnGeneratedValues = false) {
+                MetadataUploadAuxTable.batchInsert(batch) {
                     this[accessionColumn] = it.accession
                     this[submitterColumn] = authenticatedUser.username
                     this[uploadedAtColumn] = uploadedAt
@@ -143,7 +143,7 @@ class UploadDatabaseService(
     ) {
         uploadedSequencesBatch.chunkedForDatabase(
             { batch ->
-                SequenceUploadAuxTable.batchInsert(batch, shouldReturnGeneratedValues = false) {
+                SequenceUploadAuxTable.batchInsert(batch) {
                     this[fastaIdColumn] = it.fastaId
                     this[sequenceUploadIdColumn] = uploadId
                     this[compressedSequenceDataColumn] = compressor.compressSubmittedSequence(
