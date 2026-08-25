@@ -11,8 +11,8 @@
 -- transaction starting earlier but committing later would have its write dropped and
 -- readers holding the cached value would never refetch).
 --
--- GREATEST(existing + 1us, ...) makes the column monotonic in commit order, so unlike
--- before it is now safe to compare with `>` and not just for equality.
+-- last_time_updated keeps its existing last-writer-wins behaviour, including that it can
+-- move backwards, so it stays safe to compare only for equality.
 
 ALTER TABLE table_update_tracker ADD COLUMN IF NOT EXISTS last_xid xid8;
 
@@ -23,9 +23,7 @@ BEGIN
         INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated, last_xid)
         VALUES (TG_TABLE_NAME, NULL, NULL, timezone('UTC', CURRENT_TIMESTAMP), pg_current_xact_id())
         ON CONFLICT (table_name, organism, pipeline_version) DO UPDATE SET
-            last_time_updated = GREATEST(
-                table_update_tracker.last_time_updated + interval '1 microsecond',
-                EXCLUDED.last_time_updated),
+            last_time_updated = EXCLUDED.last_time_updated,
             last_xid = EXCLUDED.last_xid
         WHERE table_update_tracker.last_xid IS DISTINCT FROM EXCLUDED.last_xid;
     END IF;
@@ -42,9 +40,7 @@ BEGIN
     JOIN sequence_entries se ON se.accession = cr.accession AND se.version = cr.version
     GROUP BY se.organism, cr.pipeline_version
     ON CONFLICT (table_name, organism, pipeline_version) DO UPDATE SET
-        last_time_updated = GREATEST(
-            table_update_tracker.last_time_updated + interval '1 microsecond',
-            EXCLUDED.last_time_updated),
+        last_time_updated = EXCLUDED.last_time_updated,
         last_xid = EXCLUDED.last_xid
     WHERE table_update_tracker.last_xid IS DISTINCT FROM EXCLUDED.last_xid;
     RETURN NULL;
@@ -60,9 +56,7 @@ BEGIN
     JOIN sequence_entries se ON se.accession = cr.accession AND se.version = cr.version
     GROUP BY se.organism
     ON CONFLICT (table_name, organism, pipeline_version) DO UPDATE SET
-        last_time_updated = GREATEST(
-            table_update_tracker.last_time_updated + interval '1 microsecond',
-            EXCLUDED.last_time_updated),
+        last_time_updated = EXCLUDED.last_time_updated,
         last_xid = EXCLUDED.last_xid
     WHERE table_update_tracker.last_xid IS DISTINCT FROM EXCLUDED.last_xid;
     RETURN NULL;
@@ -78,9 +72,7 @@ BEGIN
     JOIN sequence_entries se ON se.accession = cr.accession
     GROUP BY se.organism
     ON CONFLICT (table_name, organism, pipeline_version) DO UPDATE SET
-        last_time_updated = GREATEST(
-            table_update_tracker.last_time_updated + interval '1 microsecond',
-            EXCLUDED.last_time_updated),
+        last_time_updated = EXCLUDED.last_time_updated,
         last_xid = EXCLUDED.last_xid
     WHERE table_update_tracker.last_xid IS DISTINCT FROM EXCLUDED.last_xid;
     RETURN NULL;
@@ -95,9 +87,7 @@ BEGIN
     FROM changed_rows cr
     GROUP BY cr.organism
     ON CONFLICT (table_name, organism, pipeline_version) DO UPDATE SET
-        last_time_updated = GREATEST(
-            table_update_tracker.last_time_updated + interval '1 microsecond',
-            EXCLUDED.last_time_updated),
+        last_time_updated = EXCLUDED.last_time_updated,
         last_xid = EXCLUDED.last_xid
     WHERE table_update_tracker.last_xid IS DISTINCT FROM EXCLUDED.last_xid;
     RETURN NULL;
@@ -112,9 +102,7 @@ BEGIN
     FROM changed_rows cr
     GROUP BY cr.organism
     ON CONFLICT (table_name, organism, pipeline_version) DO UPDATE SET
-        last_time_updated = GREATEST(
-            table_update_tracker.last_time_updated + interval '1 microsecond',
-            EXCLUDED.last_time_updated),
+        last_time_updated = EXCLUDED.last_time_updated,
         last_xid = EXCLUDED.last_xid
     WHERE table_update_tracker.last_xid IS DISTINCT FROM EXCLUDED.last_xid;
     RETURN NULL;
