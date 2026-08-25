@@ -40,7 +40,7 @@ class DataUseTermsDatabaseService(
 
             dataUseTermsPreconditionValidator.checkThatTransitionIsAllowed(chunk, newDataUseTerms)
 
-            DataUseTermsTable.batchInsert(chunk) {
+            DataUseTermsTable.batchInsert(chunk, shouldReturnGeneratedValues = false) {
                 this[DataUseTermsTable.accessionColumn] = it
                 this[DataUseTermsTable.changeDateColumn] = now
                 this[DataUseTermsTable.dataUseTermsTypeColumn] = newDataUseTerms.type.toString()
