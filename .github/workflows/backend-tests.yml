@@ -14,6 +14,11 @@ on:
         required: true
         default: true
         type: boolean
+      run_only_submit_large_batch_test:
+        description: Run only SubmitLargeBatchTest, for comparable healthy and slow samples
+        required: true
+        default: true
+        type: boolean
 concurrency:
   # Each manual dispatch needs its own group so a hang hunt can run concurrently.
   group: ci-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.ref }}-backend-tests
@@ -25,6 +30,7 @@ jobs:
     timeout-minutes: 14
     env:
       RUN_EXTRA_TESTS: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.run_extra_tests) }}
+      RUN_ONLY_SUBMIT_LARGE_BATCH_TEST: ${{ github.event_name == 'workflow_dispatch' && inputs.run_only_submit_large_batch_test }}
     steps:
       - name: Login to Docker Hub
         uses: docker/login-action@v4
@@ -61,7 +67,7 @@ jobs:
           }
           probe() {
             {
-              df -h; echo; free -m; echo; timeout 10 docker ps -a
+              df -h; echo; free -m; echo; timeout 10 docker ps -a; echo; timeout 10 docker stats --no-stream
               # The ancestor filter misses if the image is referenced by digest, so match the name too
               containers=$(timeout 10 docker ps -a --format '{{.ID}} {{.Image}}')
               pg=$(echo "$containers" | awk '/postgres/{print $1; exit}')
@@ -75,16 +81,24 @@ jobs:
               [ -n "$pg" ] || return 0
               for q in \
                 "select pid,state,wait_event_type,wait_event,now()-xact_start as xact_age,now()-query_start as query_age,pg_blocking_pids(pid) as blocked_by,left(query,300) as query from pg_stat_activity order by xact_start" \
+                "select datname,xact_commit,xact_rollback,tup_inserted,tup_updated,tup_deleted,blks_read,blks_hit,temp_files,temp_bytes,deadlocks from pg_stat_database where datname=current_database()" \
+                "select backend_type,object,context,reads,writes,writebacks,extends,fsyncs from pg_stat_io where backend_type in ('client backend','checkpointer','background writer') order by backend_type,object,context" \
                 "select locktype,relation::regclass,mode,granted,pid from pg_locks order by granted,pid"; do
                 echo "===== $q"
                 timeout 10 docker exec "$pg" psql -U test -d test -c "$q" 2>&1
               done
             } > "build/diagnostics/resources-$1.txt" 2>&1
           }
-          ( sleep 420; dump at7min; probe at7min; sleep 120; dump at9min; probe at9min ) >/dev/null 2>&1 &
+          # The early samples are retained for green runs; later ones distinguish
+          # a long-running batch from a wedge.
+          ( sleep 90; dump at90s; probe at90s; sleep 60; dump at150s; probe at150s; sleep 60; dump at210s; probe at210s; sleep 210; dump at7min; probe at7min; sleep 120; dump at9min; probe at9min ) >/dev/null 2>&1 &
           watchdog=$!
           rc=0
-          ./gradlew test || rc=$?
+          if [ "$RUN_ONLY_SUBMIT_LARGE_BATCH_TEST" = "true" ]; then
+            ./gradlew test --tests org.loculus.backend.controller.submission.SubmitLargeBatchTest || rc=$?
+          else
+            ./gradlew test || rc=$?
+          fi
           kill "$watchdog" 2>/dev/null || true
           exit $rc
       - name: Collect diagnostics
@@ -105,6 +119,13 @@ jobs:
             backend/build/test-results/test/**
             backend/build/reports/recovered/**
             backend/build/diagnostics/**
+          if-no-files-found: warn
+      - name: Upload hang diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-hang-diagnostics
+          path: backend/build/diagnostics/**
           if-no-files-found: warn
 
   lint:
