@@ -19,6 +19,11 @@ on:
         required: true
         default: true
         type: boolean
+      run_with_scheduling:
+        description: Enable scheduled backend tasks (disable for the scheduler-interference A/B probe)
+        required: true
+        default: true
+        type: boolean
 concurrency:
   # Each manual dispatch needs its own group so a hang hunt can run concurrently.
   group: ci-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.ref }}-backend-tests
@@ -31,6 +36,9 @@ jobs:
     env:
       RUN_EXTRA_TESTS: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.run_extra_tests) }}
       RUN_ONLY_SUBMIT_LARGE_BATCH_TEST: ${{ github.event_name == 'workflow_dispatch' && inputs.run_only_submit_large_batch_test }}
+      # Explicit @EnableScheduling does not honor Spring Boot's auto-config switch.
+      # This app-level switch defaults to true and is only false in the diagnostic A/B run.
+      LOCULUS_SCHEDULING_ENABLED: ${{ github.event_name != 'workflow_dispatch' || inputs.run_with_scheduling }}
     steps:
       - name: Login to Docker Hub
         uses: docker/login-action@v4

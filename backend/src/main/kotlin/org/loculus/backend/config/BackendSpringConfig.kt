@@ -26,7 +26,6 @@ import org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerA
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
-import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.CommonsRequestLoggingFilter
 import java.io.File
@@ -43,6 +42,7 @@ object BackendSpringProperty {
     const val ENABLE_SEQSETS = "loculus.enable-seqsets"
     const val SEQSET_CITATIONS_RUN_EVERY_MINUTES = "loculus.seqset-citations.run-every-minutes"
     const val CLEAN_UP_AUX_TABLE_RUN_EVERY_HOURS = "loculus.maintenance.clean-up-aux-table.run-every-hours"
+    const val SCHEDULING_ENABLED = "loculus.scheduling.enabled"
 
     const val S3_ENABLED = "loculus.s3.enabled"
     const val S3_GC_ENABLED = "loculus.s3.gc-enabled"
@@ -63,7 +63,6 @@ const val ENABLE_SEQSETS_TRUE_VALUE = "true"
 private val logger = mu.KotlinLogging.logger {}
 
 @Configuration
-@EnableScheduling
 @ImportAutoConfiguration(
     value = [ExposedAutoConfiguration::class],
     exclude = [DataSourceTransactionManagerAutoConfiguration::class],
