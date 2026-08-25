@@ -5,13 +5,10 @@ import io.minio.MakeBucketArgs
 import io.minio.MinioClient
 import io.minio.SetBucketPolicyArgs
 import mu.KotlinLogging
+import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
-import org.junit.platform.engine.support.descriptor.ClassSource
-import org.junit.platform.engine.support.descriptor.MethodSource
-import org.junit.platform.launcher.TestExecutionListener
-import org.junit.platform.launcher.TestPlan
 import org.loculus.backend.api.Address
 import org.loculus.backend.api.NewGroup
 import org.loculus.backend.config.BackendSpringProperty
@@ -37,6 +34,8 @@ import org.springframework.context.annotation.Import
 import org.springframework.core.annotation.AliasFor
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.DynamicPropertyRegistrar
+import org.springframework.test.context.DynamicPropertyRegistry
 
 /**
  * The main annotation for tests. It also loads the [EndpointTestExtension], which initializes
@@ -59,6 +58,7 @@ import org.springframework.test.context.ActiveProfiles
     SeqSetCitationsControllerClient::class,
     PublicJwtKeyConfig::class,
     FilesClient::class,
+    EndpointTestDatasourceProperties::class,
 )
 annotation class EndpointTest(@get:AliasFor(annotation = SpringBootTest::class) val properties: Array<String> = [])
 
@@ -126,38 +126,37 @@ val MINIO_TEST_BUCKET = "testbucket"
 
 private val log = KotlinLogging.logger { }
 
-class EndpointTestExtension :
-    BeforeEachCallback,
-    TestExecutionListener {
-    companion object {
-        private val env = TestEnvironment()
+private val env = TestEnvironment()
 
-        private var isStarted = false
-        private var isBucketCreated = false
+private var startupFailure: Throwable? = null
+
+class EndpointTestExtension :
+    BeforeAllCallback,
+    BeforeEachCallback {
+
+    override fun beforeAll(context: ExtensionContext) {
+        // Measured: JUnit does not remember a failed store value, so without this every class retries the startup.
+        startupFailure?.let { throw it }
+        try {
+            // Started on the first @EndpointTest class that runs, and closed when the test run finishes.
+            context.root
+                .getStore(ExtensionContext.Namespace.GLOBAL)
+                .computeIfAbsent(TestInfrastructure::class.java)
+        } catch (e: Throwable) {
+            startupFailure = e
+            throw e
+        }
     }
 
-    override fun testPlanExecutionStarted(testPlan: TestPlan) {
-        if (!isStarted) {
-            isAnnotatedWithEndpointTest(testPlan) {
-                try {
-                    env.start()
-                } catch (e: Exception) {
-                    log.error(e) { "Failed to start test environment. This may be a Docker compatibility issue." }
-                    throw e
-                }
-                isStarted = true
-                if (!isBucketCreated) {
-                    createBucket(
-                        env.minio.s3Url,
-                        env.minio.accessKey,
-                        env.minio.secretKey,
-                        MINIO_TEST_REGION,
-                        MINIO_TEST_BUCKET,
-                    )
-                    isBucketCreated = true
-                }
-            }
-        }
+    override fun beforeEach(context: ExtensionContext) {
+        log.debug("Clearing database")
+        env.postgres.exec(clearDatabaseStatement())
+    }
+}
+
+internal class TestInfrastructure : AutoCloseable {
+    init {
+        env.start()
 
         if (env.useNonDockerInfra) {
             log.info { "Started local Postgres: ${env.postgres.jdbcUrl}" }
@@ -171,9 +170,13 @@ class EndpointTestExtension :
             }
         }
 
-        System.setProperty(SPRING_DATASOURCE_URL, env.postgres.jdbcUrl)
-        System.setProperty(SPRING_DATASOURCE_USERNAME, env.postgres.username)
-        System.setProperty(SPRING_DATASOURCE_PASSWORD, env.postgres.password)
+        createBucket(
+            env.minio.s3Url,
+            env.minio.accessKey,
+            env.minio.secretKey,
+            MINIO_TEST_REGION,
+            MINIO_TEST_BUCKET,
+        )
 
         System.setProperty(BackendSpringProperty.S3_ENABLED, "true")
         System.setProperty(BackendSpringProperty.S3_BUCKET_ENDPOINT, env.minio.s3Url)
@@ -183,42 +186,8 @@ class EndpointTestExtension :
         System.setProperty(BackendSpringProperty.S3_BUCKET_SECRET_KEY, env.minio.secretKey)
     }
 
-    private fun isAnnotatedWithEndpointTest(testPlan: TestPlan, callback: () -> Unit) {
-        for (root in testPlan.roots) {
-            testPlan.getChildren(root).forEach { testIdentifier ->
-                testIdentifier.source.ifPresent { testSource ->
-                    when (testSource) {
-                        is MethodSource -> {
-                            val testClass = Class.forName(testSource.className)
-                            val method = testClass.getMethod(testSource.methodName)
-                            if (method.isAnnotationPresent(EndpointTest::class.java)) {
-                                callback()
-                            }
-                        }
-
-                        is ClassSource -> {
-                            val testClass = Class.forName(testSource.className)
-                            if (testClass.isAnnotationPresent(EndpointTest::class.java)) {
-                                callback()
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    override fun beforeEach(context: ExtensionContext) {
-        log.debug("Clearing database")
-        env.postgres.exec(clearDatabaseStatement())
-    }
-
-    override fun testPlanExecutionFinished(testPlan: TestPlan) {
+    override fun close() {
         env.stop()
-
-        System.clearProperty(SPRING_DATASOURCE_URL)
-        System.clearProperty(SPRING_DATASOURCE_USERNAME)
-        System.clearProperty(SPRING_DATASOURCE_PASSWORD)
 
         System.clearProperty(BackendSpringProperty.S3_ENABLED)
         System.clearProperty(BackendSpringProperty.S3_BUCKET_ENDPOINT)
@@ -226,6 +195,15 @@ class EndpointTestExtension :
         System.clearProperty(BackendSpringProperty.S3_BUCKET_BUCKET)
         System.clearProperty(BackendSpringProperty.S3_BUCKET_ACCESS_KEY)
         System.clearProperty(BackendSpringProperty.S3_BUCKET_SECRET_KEY)
+    }
+}
+
+class EndpointTestDatasourceProperties : DynamicPropertyRegistrar {
+    override fun accept(registry: DynamicPropertyRegistry) {
+        // Resolved when the Spring context builds its DataSource, i.e. after beforeAll started the infrastructure.
+        registry.add(SPRING_DATASOURCE_URL) { env.postgres.jdbcUrl }
+        registry.add(SPRING_DATASOURCE_USERNAME) { env.postgres.username }
+        registry.add(SPRING_DATASOURCE_PASSWORD) { env.postgres.password }
     }
 }
 
