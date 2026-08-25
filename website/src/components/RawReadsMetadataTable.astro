@@ -3,7 +3,12 @@ import { getConfiguredOrganisms, getGroupedInputFields, getSchema } from '../con
 import { MetadataTableSection } from './OrganismMetadataTable/OrganismMetadataTable';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from './common/BoxWithTabs';
 
-const SEQUENCING_HEADER = 'Sequencing';
+interface Props {
+    sequencingHeader?: string;
+    requiredWhenField?: string;
+}
+
+const { sequencingHeader = 'Sequencing', requiredWhenField = 'files.rawReads' } = Astro.props;
 
 // The 'Sequencing' fields are the same for every organism, so any configured organism will do.
 const [organism] = getConfiguredOrganisms();
@@ -13,7 +18,7 @@ if (organism === undefined) {
 
 const schema = getSchema(organism.key);
 const groupedInputFields = getGroupedInputFields(organism.key, 'submit', 'bulk');
-const sequencingInputFields = groupedInputFields.get(SEQUENCING_HEADER) ?? [];
+const sequencingInputFields = groupedInputFields.get(sequencingHeader) ?? [];
 
 const metadataByName = new Map(schema.metadata.map((meta) => [meta.name, meta]));
 const typedInputFields = sequencingInputFields.map((field) => ({
@@ -21,7 +26,7 @@ const typedInputFields = sequencingInputFields.map((field) => ({
     type: metadataByName.get(field.name)?.type ?? 'string',
 }));
 const requiredFields = typedInputFields.filter(
-    (field) => field.requiredWhen?.includes('files.rawReads') || field.required,
+    (field) => field.requiredWhen?.includes(requiredWhenField) || field.required,
 );
 const desiredFields = typedInputFields.filter((field) => !requiredFields.includes(field) && field.desired);
 const optionalFields = typedInputFields.filter(
