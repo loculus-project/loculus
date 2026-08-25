@@ -52,6 +52,8 @@ jobs:
           exit $rc
       - name: Collect diagnostics
         if: failure()
+        # bounded so a blocked Gradle lock can't eat the budget the upload needs
+        timeout-minutes: 2
         working-directory: ./backend
         run: |
           if ls build/test-results/test/*.xml >/dev/null 2>&1; then
