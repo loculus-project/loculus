@@ -1,5 +1,6 @@
 import { err, ok, Result } from 'neverthrow';
 
+import type { FileMapping } from './fileMapping';
 import type { FilesByCategory } from '../../../types/backend';
 
 export type Awaiting = {
@@ -85,6 +86,18 @@ export const getPreviousFileUploadStates = (files: FilesByCategory): Map<string,
                 },
             ]),
     );
+
+/** The file mapping is a projection of the upload states, so derive it rather than storing a copy that lags a render behind. */
+export const deriveFileMapping = (fileUploadStates: Map<string, FileUploadState>): FileMapping | undefined => {
+    const mapping: FileMapping = new Map(
+        Array.from(fileUploadStates.entries()).flatMap(([category, state]) =>
+            state.type === 'uploadCompleted'
+                ? [[category, new Map(state.files.map((file) => [file.path, file.fileId]))] as const]
+                : [],
+        ),
+    );
+    return mapping.size === 0 ? undefined : mapping;
+};
 
 export const validateFileUploadStates = (fileUploadStates: Map<string, FileUploadState>): Result<void, Error> => {
     if (Array.from(fileUploadStates.values()).some((state) => state.type !== 'uploadCompleted'))
