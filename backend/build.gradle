@@ -163,3 +163,9 @@ task downloadDependencies {
         }
     }
 }
+
+// Gradle only writes XML/HTML when `test` completes, so rebuild from the binary results
+tasks.register('recoverTestReport', TestReport) {
+    testResults.from(layout.buildDirectory.dir('test-results/test/binary'))
+    destinationDirectory = layout.buildDirectory.dir('reports/recovered')
+}

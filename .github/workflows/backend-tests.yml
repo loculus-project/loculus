@@ -50,17 +50,22 @@ jobs:
           ./gradlew test || rc=$?
           kill "$watchdog" 2>/dev/null || true
           exit $rc
+      # A killed run leaves no XML or HTML report, only test-results/test/binary
+      - name: Recover test report
+        if: failure()
+        run: ./gradlew recoverTestReport || true
+        working-directory: ./backend
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: backend-test-results
           path: |
-            backend/build/test-results/test/**/*.xml
+            backend/build/test-results/test/**
             backend/build/reports/tests/**
+            backend/build/reports/recovered/**
             backend/build/diagnostics/**
           if-no-files-found: warn
-          retention-days: 14
 
   lint:
     runs-on: ubuntu-latest
