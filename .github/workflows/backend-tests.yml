@@ -37,46 +37,21 @@ jobs:
         timeout-minutes: 15
         working-directory: ./backend
         run: |
-          # Threaddump collected to help debug test hangs
           mkdir -p build/diagnostics
-          dump() {
-            for pid in $(jcmd -l 2>/dev/null | grep -v 'sun.tools.jcmd' | awk '{print $1}'); do
-              jcmd "$pid" Thread.print > "build/diagnostics/threaddump-$1-$pid.txt" 2>&1 || true
-            done
-          }
-          ( sleep 660; dump at11min; sleep 120; dump at13min ) >/dev/null 2>&1 &
+          # Thread dumps before the step cap, so a hang shows where it is stuck.
+          # `jcmd Gradle` matches every JVM whose main class contains "Gradle": the daemon and the test executor.
+          ( sleep 660; jcmd Gradle Thread.print; sleep 120; jcmd Gradle Thread.print ) \
+            > build/diagnostics/threaddumps.txt 2>&1 &
           watchdog=$!
           rc=0
           ./gradlew test || rc=$?
           kill "$watchdog" 2>/dev/null || true
           exit $rc
-      - name: Collect diagnostics
+      - name: Show where the test run stopped
         if: failure()
-        # bounded so a blocked Gradle lock can't eat the budget the upload needs
-        timeout-minutes: 2
         working-directory: ./backend
-        run: |
-          # the only progress signal worth putting in the log: what never finished
-          progress=build/diagnostics/test-progress.log
-          if [ ! -f "$progress" ]; then
-            echo "No $progress, so the test task never got as far as running a test."
-          else
-            unfinished=$(awk '{ ts = $1; ev = $2; sub(/^[^ ]+ [^ ]+ /, "")
-                                if (ev == "STARTED") started[$0] = ts; else delete started[$0] }
-                              END { for (t in started) print started[t], t }' "$progress")
-            echo "Tests started: $(grep -c ' STARTED ' "$progress")"
-            if [ -n "$unfinished" ]; then
-              echo "Tests that started but never finished:"
-              echo "$unfinished"
-            else
-              echo "Every test that started also finished."
-            fi
-          fi
-          if ls build/test-results/test/*.xml >/dev/null 2>&1; then
-            rm -rf build/test-results/test/binary
-          else
-            ./gradlew recoverTestReport || true
-          fi
+        # the suite runs one test at a time, so the last line is the test a hang was stuck in
+        run: tail -n 5 build/diagnostics/test-progress.log || echo "No progress log, so no test ever started."
       - name: Upload test results
         if: failure()
         uses: actions/upload-artifact@v7
@@ -84,8 +59,7 @@ jobs:
           name: backend-test-results
           # index.html is the only place output from outside a test lands, e.g. a failed test env start
           path: |
-            backend/build/test-results/test/**
-            backend/build/reports/recovered/**
+            backend/build/test-results/test/*.xml
             backend/build/diagnostics/**
             backend/build/reports/tests/test/index.html
           if-no-files-found: warn
