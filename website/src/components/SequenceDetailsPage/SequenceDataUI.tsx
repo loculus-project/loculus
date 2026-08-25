@@ -89,7 +89,7 @@ export const SequenceDataUI: FC<Props> = ({
 
     return (
         <>
-            {isRestricted && !isRevocation && <RestrictedUseWarning />}
+            {isRestricted && <RestrictedUseWarning />}
             <DataTable
                 dataTableData={dataTableData}
                 segmentReferences={segmentReferences}
