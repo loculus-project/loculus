@@ -219,7 +219,7 @@ export const OrganismMetadataTable: FC<{ organism: OrganismMetadata }> = ({ orga
 
 type TypedInputField = InputField & { type: string };
 
-export type MetadataTableProps =
+export type MetadataTableProps = (
     | {
           header: string;
           fields: Metadata[];
@@ -231,7 +231,11 @@ export type MetadataTableProps =
           fields: TypedInputField[];
           search: string;
           isInputFields: true;
-      };
+      }
+) & {
+    /** Extra classes merged onto the section header's `<h3>`, appended after the default classes. */
+    headerClassName?: string;
+};
 
 function containsSearch(header: string, field: Metadata | TypedInputField, search: string): boolean {
     const searchTokens = search.toLowerCase().trim().split(/\s+/);
@@ -259,7 +263,7 @@ export const MetadataTableSection: FC<MetadataTableProps> = (props) => {
         <div className='mb-8'>
             <h3
                 id={getHeaderLinkId(props.header)}
-                className='text-lg! font-semibold mb-4! mt-0! pt-1! cursor-pointer'
+                className={`text-lg font-semibold mb-4 mt-0 cursor-pointer ${props.headerClassName ?? ''}`}
                 onClick={() => setExpandedHeader((prev) => !prev)}
             >
                 {props.header}

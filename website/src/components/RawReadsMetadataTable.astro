@@ -32,13 +32,39 @@ const desiredFields = typedInputFields.filter((field) => !requiredFields.include
 const optionalFields = typedInputFields.filter(
     (field) => !requiredFields.includes(field) && !desiredFields.includes(field),
 );
+
+// This page is rendered inside the docs layout's prose styles, which otherwise override the
+// section header's font size and spacing. The `!` (Tailwind v4 important-suffix) forces our
+// values to win over that external prose CSS.
+const headerClassName = 'text-lg! mb-4! mt-0! pt-1!';
 ---
 
 <BoxWithTabsTabBar>
     <BoxWithTabsTab isActive label='Raw Reads Metadata Fields' className='text-base' />
 </BoxWithTabsTabBar>
 <BoxWithTabsBox>
-    <MetadataTableSection header={'Required Fields'} fields={requiredFields} search='' isInputFields client:load />
-    <MetadataTableSection header={'Desired Fields'} fields={desiredFields} search='' isInputFields client:load />
-    <MetadataTableSection header={'Optional Fields'} fields={optionalFields} search='' isInputFields client:load />
+    <MetadataTableSection
+        header={'Required Fields'}
+        fields={requiredFields}
+        search=''
+        isInputFields
+        headerClassName={headerClassName}
+        client:load
+    />
+    <MetadataTableSection
+        header={'Desired Fields'}
+        fields={desiredFields}
+        search=''
+        isInputFields
+        headerClassName={headerClassName}
+        client:load
+    />
+    <MetadataTableSection
+        header={'Optional Fields'}
+        fields={optionalFields}
+        search=''
+        isInputFields
+        headerClassName={headerClassName}
+        client:load
+    />
 </BoxWithTabsBox>
