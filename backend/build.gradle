@@ -133,14 +133,12 @@ tasks.named('test') {
         showExceptions = true
     }
     // Records each test's start and finish so a hung run names the test it was stuck in.
-    // It goes to a file rather than the console, which would flood the log of every normal run.
     def progressLog = layout.buildDirectory.file('diagnostics/test-progress.log')
     doFirst {
         def file = progressLog.get().asFile
         file.parentFile.mkdirs()
         file.text = ''
     }
-    // TestListener rather than the shorter beforeTest/afterTest closures, which Gradle 9 deprecated
     addTestListener(new TestListener() {
         void beforeSuite(TestDescriptor suite) {}
 
