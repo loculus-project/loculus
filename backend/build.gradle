@@ -122,7 +122,9 @@ tasks.named('test') {
     if (!System.getenv('USE_NONDOCKER_INFRA')?.toBoolean()) {
         dependsOn checkDocker
     }
+
     useJUnitPlatform()
+
     // Testcontainers uses JNA to talk to the Docker daemon, which calls the restricted
     // System::load. Without this, every test run prints "WARNING: A restricted method in
     // java.lang.System has been called"; from a future JDK the call would be blocked outright.
@@ -130,6 +132,9 @@ tasks.named('test') {
     jvmArgs '--enable-native-access=ALL-UNNAMED'
     // Run tests with the same object layout as production
     jvmArgs '-XX:+UseCompactObjectHeaders'
+    
+    jvmArgs '--enable-native-access=ALL-UNNAMED'
+
     testLogging {
         events TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR
         exceptionFormat = TestExceptionFormat.FULL
