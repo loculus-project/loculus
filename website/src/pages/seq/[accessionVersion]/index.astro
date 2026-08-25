@@ -72,8 +72,7 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
     {
         sequenceDetailsTableData.match(
             ({ organism, result }) => {
-                const showDownloadAndReport =
-                    result.type === SequenceDetailsTableResultType.TABLE_DATA && !result.isRevocation;
+                const showDownload = result.type === SequenceDetailsTableResultType.TABLE_DATA && !result.isRevocation;
                 return (
                     <>
                         <SequencesDataTableTitle
@@ -83,9 +82,9 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
                                     ? result.sequenceEntryHistory
                                     : undefined
                             }
-                            showDownload={showDownloadAndReport}
+                            showDownload={showDownload}
                             showFastaDownloadButton={
-                                showDownloadAndReport && getSegmentNames(getReferenceGenomes(organism)).length > 0
+                                showDownload && getSegmentNames(getReferenceGenomes(organism)).length > 0
                             }
                         />
                         {result.type === SequenceDetailsTableResultType.TABLE_DATA && (
@@ -98,7 +97,7 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
                                 clientConfig={clientConfig}
                                 myGroups={myGroups}
                                 accessToken={accessToken}
-                                sequenceFlaggingConfig={showDownloadAndReport ? sequenceFlaggingConfig : undefined}
+                                sequenceFlaggingConfig={sequenceFlaggingConfig}
                                 sequenceCitations={sequenceCitations}
                                 client:load
                             />

@@ -85,7 +85,7 @@ export const SequenceDataUI: FC<Props> = ({
 
     const dataTableData = getDataTableData(relevantData);
 
-    const reportUrl = getGitHubReportUrl(sequenceFlaggingConfig, organism, accessionVersion);
+    const reportUrl = isRevocation ? undefined : getGitHubReportUrl(sequenceFlaggingConfig, organism, accessionVersion);
 
     return (
         <>

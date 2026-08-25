@@ -99,7 +99,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                         referenceGenomesInfo={referenceGenomesInfo}
                         myGroups={myGroups}
                         accessToken={accessToken}
-                        sequenceFlaggingConfig={data.isRevocation ? undefined : sequenceFlaggingConfig}
+                        sequenceFlaggingConfig={sequenceFlaggingConfig}
                         onRevokeSuccess={onClose}
                     />
                 </div>
