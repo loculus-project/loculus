@@ -1,0 +1,41 @@
+---
+import { getConfiguredOrganisms, getGroupedInputFields, getSchema } from '../config';
+import { MetadataTableSection } from './OrganismMetadataTable/OrganismMetadataTable';
+import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from './common/BoxWithTabs';
+
+const SEQUENCING_HEADER = 'Sequencing';
+
+// The 'Sequencing' fields are the same for every organism, so any configured organism will do.
+const [organism] = getConfiguredOrganisms();
+if (organism === undefined) {
+    throw new Error('No organisms configured');
+}
+
+const schema = getSchema(organism.key);
+const groupedInputFields = getGroupedInputFields(organism.key, 'submit', 'bulk');
+const sequencingInputFields = groupedInputFields.get(SEQUENCING_HEADER) ?? [];
+
+const metadataByName = new Map(schema.metadata.map((meta) => [meta.name, meta]));
+const typedInputFields = sequencingInputFields.map((field) => ({
+    ...field,
+    type: metadataByName.get(field.name)?.type ?? 'string',
+}));
+const requiredFields = typedInputFields
+    .filter((field) => field.requiredWhen?.includes('files.rawReads'))
+    .map((field) => field);
+const desiredFields = typedInputFields
+    .filter((field) => !requiredFields.includes(field) && field.desired)
+    .map((field) => field);
+const optionalFields = typedInputFields
+    .filter((field) => !requiredFields.includes(field) && !desiredFields.includes(field))
+    .map((field) => field);
+---
+
+<BoxWithTabsTabBar>
+    <BoxWithTabsTab isActive label='Raw Reads Metadata Fields' className='text-base' />
+</BoxWithTabsTabBar>
+<BoxWithTabsBox>
+    <MetadataTableSection header={'Required Fields'} fields={requiredFields} search='' isInputFields client:load />
+    <MetadataTableSection header={'Desired Fields'} fields={desiredFields} search='' isInputFields client:load />
+    <MetadataTableSection header={'Optional Fields'} fields={optionalFields} search='' isInputFields client:load />
+</BoxWithTabsBox>
