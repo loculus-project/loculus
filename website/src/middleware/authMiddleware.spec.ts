@@ -3,7 +3,9 @@ import type { BaseClient } from 'openid-client';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
+    getClient: vi.fn(),
     loggerInfo: vi.fn(),
+    shouldMiddlewareEnforceLogin: vi.fn(),
 }));
 
 vi.mock('../config.ts', () => ({
@@ -24,10 +26,21 @@ vi.mock('../logger.ts', () => ({
     }),
 }));
 
-import { getTokenFromParams } from './authMiddleware.ts';
-import { addAuthRequest } from '../utils/authRequestCookies.ts';
+vi.mock('../utils/KeycloakClientManager.ts', () => ({
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    KeycloakClientManager: {
+        getClient: mocks.getClient,
+    },
+}));
 
-describe('OIDC callback exchange', () => {
+vi.mock('../utils/shouldMiddlewareEnforceLogin.ts', () => ({
+    shouldMiddlewareEnforceLogin: mocks.shouldMiddlewareEnforceLogin,
+}));
+
+import { authMiddleware, getTokenFromParams } from './authMiddleware.ts';
+import { addAuthRequest, consumeAuthRequest } from '../utils/authRequestCookies.ts';
+
+describe('OIDC authentication middleware', () => {
     const values = new Map<string, string>();
     const cookies = {
         get: vi.fn((name: string) => {
@@ -60,12 +73,32 @@ describe('OIDC callback exchange', () => {
     beforeEach(() => {
         values.clear();
         vi.clearAllMocks();
+        mocks.getClient.mockResolvedValue(client);
+        mocks.shouldMiddlewareEnforceLogin.mockReturnValue(false);
         /* eslint-disable @typescript-eslint/naming-convention */
         callback.mockResolvedValue({
             access_token: 'access-token',
             refresh_token: 'refresh-token',
         });
         /* eslint-enable @typescript-eslint/naming-convention */
+    });
+
+    test('redirects a logged-out protected request through the absolute Astro login URL', async () => {
+        mocks.shouldMiddlewareEnforceLogin.mockReturnValue(true);
+        const context = {
+            url: new URL('https://loculus.test/user'),
+            cookies,
+            locals: {},
+        } as unknown as APIContext;
+        const next = vi.fn();
+
+        const response = (await authMiddleware(context, next)) as Response;
+
+        expect(response.status).toBe(302);
+        expect(response.headers.get('location')).toBe(
+            'https://loculus.test/auth/login?returnTo=https%3A%2F%2Floculus.test%2Fuser',
+        );
+        expect(next).not.toHaveBeenCalled();
     });
 
     test('uses the stored nonce and verifier with the fixed callback URI, then consumes the transaction', async () => {
@@ -119,7 +152,8 @@ describe('OIDC callback exchange', () => {
         expect(callback).not.toHaveBeenCalled();
     });
 
-    test('logs an error response returned by the OIDC provider', async () => {
+    test('consumes the transaction and logs an error response returned by the OIDC provider', async () => {
+        addAuthRequest(cookies, 'expected-state', 'expected-nonce', 'expected-verifier', 'https://loculus.test/user');
         const context = {
             url: new URL('https://loculus.test/auth/callback?error=access_denied&state=expected-state'),
             cookies,
@@ -132,5 +166,6 @@ describe('OIDC callback exchange', () => {
             ),
         );
         expect(callback).not.toHaveBeenCalled();
+        expect(consumeAuthRequest(cookies, 'expected-state')).toBeUndefined();
     });
 });

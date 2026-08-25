@@ -3,9 +3,9 @@ import { realmPath } from './realmPath.ts';
 import { routes } from '../routes/routes';
 
 export const getLoginUrl = (returnTo: string) => {
-    const logout = routes.logout();
-    if (returnTo.endsWith(logout)) {
-        returnTo = returnTo.replace(logout, routes.userOverviewPage());
+    const returnToPath = new URL(returnTo, 'https://loculus.invalid').pathname;
+    if ([routes.logout(), routes.authLoginFailed()].includes(returnToPath)) {
+        returnTo = routes.userOverviewPage();
     }
     return routes.authLogin(returnTo);
 };

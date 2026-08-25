@@ -73,6 +73,7 @@ export const routes = {
     logout: () => '/logout',
     authLogin: (returnTo: string) => withSearchParams('/auth/login', { returnTo }),
     authCallback: () => '/auth/callback',
+    authLoginFailed: () => '/auth/login-failed',
     datauseTermsPage: () => '/about/terms-of-use/data-use-terms',
 };
 

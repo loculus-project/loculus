@@ -69,7 +69,7 @@ describe('OIDC authentication transaction store', () => {
         vi.useFakeTimers();
         vi.setSystemTime('2026-07-24T00:00:00Z');
         addAuthRequest(cookies, 'state', 'nonce', 'verifier', 'https://loculus.test/state');
-        vi.advanceTimersByTime(5 * 60 * 1000 + 1);
+        vi.advanceTimersByTime(60 * 60 * 1000 + 1);
         expect(consumeAuthRequest(cookies, 'state')).toBeUndefined();
 
         addAuthRequest(cookies, 'other-state', 'other-nonce', 'other-verifier', 'https://loculus.test/other-state');

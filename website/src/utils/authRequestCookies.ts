@@ -6,7 +6,7 @@ import { getRuntimeConfig } from '../config.ts';
 
 export const AUTH_TRANSACTIONS_COOKIE = 'oidc_transactions';
 
-const transactionLifetimeSeconds = 5 * 60;
+const transactionLifetimeSeconds = 60 * 60;
 const maxConcurrentTransactions = 3;
 
 type StoredAuthRequest = {

@@ -238,6 +238,7 @@ type CallbackResult = {
 export async function getTokenFromParams(context: APIContext, client: BaseClient): Promise<CallbackResult | undefined> {
     const params = client.callbackParams(context.url.toString());
     if (params.code === undefined && params.error !== undefined) {
+        consumeAuthRequest(context.cookies, params.state);
         logger.info(
             `OIDC callback rejected: transactionId=${authTransactionId(params.state)} ` +
                 `reason=provider_error error=${params.error}`,
@@ -314,7 +315,7 @@ const redirectToAuth = (context: APIContext) => {
     const redirectUrl = removeTokenCodeFromSearchParams(currentUrl);
 
     logger.debug(`Redirecting to auth with redirect url: ${redirectUrl}`);
-    const authUrl = getLoginUrl(redirectUrl);
+    const authUrl = new URL(getLoginUrl(redirectUrl), context.url.origin).toString();
 
     deleteCookie(context);
     return createRedirectWithModifiableHeaders(authUrl);
