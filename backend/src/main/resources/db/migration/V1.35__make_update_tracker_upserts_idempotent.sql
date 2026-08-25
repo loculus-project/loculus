@@ -8,15 +8,26 @@
 -- linearly and the bulk insert becomes quadratic. Measured on a 100k-sequence
 -- submission: 48.9 s, against 1.0 s with this guard.
 --
--- timezone('UTC', CURRENT_TIMESTAMP) is transaction start time, so it is constant for
--- every firing within one transaction: after the first upsert the row already holds
--- the value the remaining 99,999 want to write. Skipping those no-op writes leaves the
--- committed state identical.
+-- The guard skips a write only when the row's current version was created by the
+-- *same* transaction (xmin = our xid), which is exactly the redundant storm: after the
+-- first upsert every later firing in that transaction would rewrite the value it
+-- already holds, since timezone('UTC', CURRENT_TIMESTAMP) is transaction start time
+-- and therefore constant across all of them. One version per transaction instead of
+-- 100k; committed state identical.
 --
--- The guard also makes the value monotonic across concurrent transactions (max-wins
--- rather than last-writer-wins). That is what the consumers want: the released-data
--- ETag takes the max over tracker rows, and a timestamp that can move backwards would
--- let a client keep a stale cache entry.
+-- Deliberately NOT keyed off the timestamp (e.g. `WHERE last_time_updated <
+-- EXCLUDED.last_time_updated`). Because the value is transaction *start* time, it does
+-- not follow commit order: a transaction that starts earlier can commit later, and a
+-- max-wins guard would then drop its write and leave the tracker on a value a client
+-- has already cached -- so that client would get a 304 and never see the newer data.
+-- Verified: with a max-wins guard the tracker does not change after the late commit;
+-- with this xid guard it does, matching the existing last-writer-wins behaviour.
+--
+-- Both consumers (ReleasedDataModel.getLastDatabaseWrite and
+-- SubmissionDatabaseService.useNewerProcessingPipelineIfPossible) compare this value
+-- for *equality*, never ordering, so last-writer-wins is safe even though the value can
+-- move backwards. Note for future work: transaction start time is not a sound "as of"
+-- clock, so this column must never be used with `>` / "changed since T" semantics.
 
 CREATE OR REPLACE FUNCTION update_table_tracker()
 RETURNS TRIGGER AS $$
@@ -26,7 +37,7 @@ BEGIN
         VALUES (TG_TABLE_NAME, NULL, NULL, timezone('UTC', CURRENT_TIMESTAMP))
         ON CONFLICT (table_name, organism, pipeline_version)
         DO UPDATE SET last_time_updated = EXCLUDED.last_time_updated
-        WHERE table_update_tracker.last_time_updated < EXCLUDED.last_time_updated;
+        WHERE table_update_tracker.xmin <> pg_current_xact_id()::xid;
     END IF;
     RETURN NULL;
 END;
@@ -43,7 +54,7 @@ BEGIN
     GROUP BY se.organism, cr.pipeline_version
     ON CONFLICT (table_name, organism, pipeline_version)
     DO UPDATE SET last_time_updated = EXCLUDED.last_time_updated
-    WHERE table_update_tracker.last_time_updated < EXCLUDED.last_time_updated;
+    WHERE table_update_tracker.xmin <> pg_current_xact_id()::xid;
     RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
@@ -59,7 +70,7 @@ BEGIN
     GROUP BY se.organism
     ON CONFLICT (table_name, organism, pipeline_version)
     DO UPDATE SET last_time_updated = EXCLUDED.last_time_updated
-    WHERE table_update_tracker.last_time_updated < EXCLUDED.last_time_updated;
+    WHERE table_update_tracker.xmin <> pg_current_xact_id()::xid;
     RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
@@ -75,7 +86,7 @@ BEGIN
     GROUP BY se.organism
     ON CONFLICT (table_name, organism, pipeline_version)
     DO UPDATE SET last_time_updated = EXCLUDED.last_time_updated
-    WHERE table_update_tracker.last_time_updated < EXCLUDED.last_time_updated;
+    WHERE table_update_tracker.xmin <> pg_current_xact_id()::xid;
     RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
@@ -89,7 +100,7 @@ BEGIN
     GROUP BY cr.organism
     ON CONFLICT (table_name, organism, pipeline_version)
     DO UPDATE SET last_time_updated = EXCLUDED.last_time_updated
-    WHERE table_update_tracker.last_time_updated < EXCLUDED.last_time_updated;
+    WHERE table_update_tracker.xmin <> pg_current_xact_id()::xid;
     RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
@@ -103,7 +114,7 @@ BEGIN
     GROUP BY cr.organism
     ON CONFLICT (table_name, organism, pipeline_version)
     DO UPDATE SET last_time_updated = EXCLUDED.last_time_updated
-    WHERE table_update_tracker.last_time_updated < EXCLUDED.last_time_updated;
+    WHERE table_update_tracker.xmin <> pg_current_xact_id()::xid;
     RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
