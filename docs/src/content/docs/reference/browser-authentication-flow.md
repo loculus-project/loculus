@@ -47,13 +47,15 @@ These values protect different parts of the same flow: `state` checks the browse
 
 Loculus stores these values, together with `returnTo`, in an authenticated and encrypted HTTP-only cookie. The cookie:
 
-- is valid for one hour, accommodating registration, email verification and multi-factor authentication;
+- is retained for up to one hour, allowing time for multi-step authentication and registration flows;
 - is sent only over HTTPS, except in explicitly configured local development environments;
 - uses `SameSite=Lax`;
 - can hold up to three concurrent login transactions; and
 - consumes the selected transaction when its callback is received.
 
 The transaction cookie does not contain the user's password or access token.
+
+The one-hour limit applies to the Loculus transaction. Keycloak or another authentication provider may enforce a shorter timeout for an individual login page or provider session. In that case, the provider may restart its part of the flow before the Loculus transaction expires.
 
 ## Callback validation failures
 
