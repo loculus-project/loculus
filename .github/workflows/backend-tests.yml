@@ -44,7 +44,29 @@ jobs:
               jcmd "$pid" Thread.print > "build/diagnostics/threaddump-$1-$pid.txt" 2>&1 || true
             done
           }
-          ( sleep 660; dump at11min; sleep 120; dump at13min ) >/dev/null 2>&1 &
+          probe() {
+            {
+              df -h; echo; free -m; echo; timeout 10 docker ps -a
+              # The ancestor filter misses if the image is referenced by digest, so match the name too
+              containers=$(timeout 10 docker ps -a --format '{{.ID}} {{.Image}}')
+              pg=$(echo "$containers" | awk '/postgres/{print $1; exit}')
+              minio=$(echo "$containers" | awk '/minio/{print $1; exit}')
+              echo "postgres=${pg:-none} minio=${minio:-none}"
+              for c in $pg $minio; do
+                # OOMKilled separates "container died" from "container alive but silent"
+                timeout 10 docker inspect --format '{{.Name}} {{.State.Status}} exit={{.State.ExitCode}} oom={{.State.OOMKilled}} restarting={{.State.Restarting}}' "$c"
+                echo "===== docker logs $c"; timeout 10 docker logs --tail 200 "$c" 2>&1
+              done
+              [ -n "$pg" ] || return 0
+              for q in \
+                "select pid,state,wait_event_type,wait_event,now()-xact_start as xact_age,now()-query_start as query_age,pg_blocking_pids(pid) as blocked_by,left(query,300) as query from pg_stat_activity order by xact_start" \
+                "select locktype,relation::regclass,mode,granted,pid from pg_locks order by granted,pid"; do
+                echo "===== $q"
+                timeout 10 docker exec "$pg" psql -U test -d test -c "$q" 2>&1
+              done
+            } > "build/diagnostics/resources-$1.txt" 2>&1
+          }
+          ( sleep 660; dump at11min; probe at11min; sleep 120; dump at13min; probe at13min ) >/dev/null 2>&1 &
           watchdog=$!
           rc=0
           ./gradlew test || rc=$?
