@@ -8,16 +8,23 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      run_extra_tests:
+        description: Run SubmitLargeBatchTest outside main
+        required: true
+        default: true
+        type: boolean
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-backend-tests
+  # Each manual dispatch needs its own group so a hang hunt can run concurrently.
+  group: ci-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.ref }}-backend-tests
   cancel-in-progress: true
 jobs:
   test:
     runs-on: ubuntu-latest
     # larger than individual steps so logs can be collected
-    timeout-minutes: 20
+    timeout-minutes: 14
     env:
-      RUN_EXTRA_TESTS: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'true' || 'false' }}
+      RUN_EXTRA_TESTS: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.run_extra_tests) }}
     steps:
       - name: Login to Docker Hub
         uses: docker/login-action@v4
@@ -34,7 +41,9 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
       - name: Run tests
-        timeout-minutes: 15
+        # Healthy extra-test runs have remained below nine minutes; ten minutes
+        # makes a PostgreSQL wedge fail sooner while leaving diagnostic time.
+        timeout-minutes: 10
         working-directory: ./backend
         run: |
           # Threaddump collected to help debug test hangs
@@ -66,7 +75,7 @@ jobs:
               done
             } > "build/diagnostics/resources-$1.txt" 2>&1
           }
-          ( sleep 660; dump at11min; probe at11min; sleep 120; dump at13min; probe at13min ) >/dev/null 2>&1 &
+          ( sleep 420; dump at7min; probe at7min; sleep 120; dump at9min; probe at9min ) >/dev/null 2>&1 &
           watchdog=$!
           rc=0
           ./gradlew test || rc=$?
