@@ -38,9 +38,6 @@ export const SequenceManagement: FC<Props> = ({
     onRevokeSuccess,
 }: Props) => {
     const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as number;
-
-    const { accession, version } = parseAccessionVersionFromString(accessionVersion);
-
     const isMyGroup = myGroups.some((group) => group.groupId === groupId);
 
     if (!isMyGroup || accessToken === undefined) return null;
@@ -51,6 +48,8 @@ export const SequenceManagement: FC<Props> = ({
 
     // Display nothing for previous revocations
     if (isRevocation && !isLatestVersion) return null;
+
+    const { accession, version } = parseAccessionVersionFromString(accessionVersion);
 
     dataUseTermsHistory.sort((a, b) => (a.changeDate > b.changeDate ? -1 : 1));
     const currentDataUseTerms = dataUseTermsHistory[0].dataUseTerms;
@@ -67,11 +66,10 @@ export const SequenceManagement: FC<Props> = ({
                     <MdiEye className='w-6 h-6 inline-block mr-2' />
                     Only visible to group members
                 </div>
-
                 <div className='flex flex-wrap gap-3'>
                     {isRevocation ? (
                         <Button as='a' size='sm' href={routes.revisePage(organism, groupId, 'form', accession)}>
-                            Undo revocation
+                            Restore this sequence
                         </Button>
                     ) : (
                         <>
@@ -79,11 +77,10 @@ export const SequenceManagement: FC<Props> = ({
                                 <EditDataUseTermsButton
                                     clientConfig={clientConfig}
                                     accessToken={accessToken}
-                                    accessionVersion={[accessionVersion.split('.')[0]]}
+                                    accessionVersion={accession}
                                     dataUseTerms={currentDataUseTerms as RestrictedDataUseTerms}
                                 />
                             )}
-
                             <Button
                                 as='a'
                                 size='sm'
@@ -94,7 +91,7 @@ export const SequenceManagement: FC<Props> = ({
                             <RevokeButton
                                 organism={organism}
                                 clientConfig={clientConfig}
-                                accessionVersion={accessionVersion.split('.')[0]}
+                                accessionVersion={accession}
                                 accessToken={accessToken}
                                 groupId={groupId}
                                 onRevokeSuccess={onRevokeSuccess}
