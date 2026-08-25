@@ -12,12 +12,15 @@
 -- The guard records which transaction last wrote the row and skips the write when that
 -- is us. last_xid holds pg_current_xact_id(), the TOP-LEVEL transaction id.
 --
--- Do NOT try to do this with the system column xmin instead. Statements arrive inside
--- per-statement savepoints, so xmin is the *sub*transaction id and never equals the
--- top-level id, and the guard then never fires. That was measured, not guessed: an
--- xmin-based guard skipped correctly in a plain transaction but left the tracker growing
--- in lockstep with the insert on CI, and reproducing it locally with subtransactions
--- grew the tracker to 385 kB after only 5k inserts.
+-- Do NOT try to do this with the system column xmin instead. An xmin-based guard skipped
+-- correctly in a plain local transaction but never fired on CI, where the tracker kept
+-- growing in lockstep with the insert (3.4 MB and rising) instead of staying on one page.
+-- Any subtransaction between the top-level transaction and the statement is enough to
+-- break it, because xmin is then the *sub*transaction id and never equals the top-level
+-- id: wrapping the same inserts in subtransactions locally grew the tracker to 385 kB
+-- after only 5k inserts. (That reproduces the failure; it is not established that CI's
+-- JDBC path specifically uses savepoints.) Storing the top-level id sidesteps the whole
+-- question.
 --
 -- Do NOT guard on the timestamp either (WHERE last_time_updated < EXCLUDED...).
 -- last_time_updated is transaction START time, which does not follow commit order, so a
