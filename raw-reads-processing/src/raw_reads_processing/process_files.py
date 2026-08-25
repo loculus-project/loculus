@@ -16,6 +16,7 @@ from raw_reads_processing.file_format_validation import (
     validate_file_numbers,
     validate_with_readtools,
 )
+from raw_reads_processing.deacon import validate_with_deacon
 
 logger = logging.getLogger(__name__)
 
@@ -61,3 +62,4 @@ def validate_raw_reads_submission(
         validate_with_readtools(
             local_files, file_format, config.read_validation_timeout_seconds
         )
+        validate_with_deacon(local_files, tmp_dir, config)

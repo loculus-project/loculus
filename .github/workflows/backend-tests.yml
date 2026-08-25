@@ -27,8 +27,9 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
-          java-version: "21"
-          distribution: "adopt"
+          # Keep in sync with the other Java versions (backend/build.gradle, backend/Dockerfile)
+          java-version: "25"
+          distribution: "temurin"
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
       - name: Run tests
@@ -43,8 +44,9 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
-          java-version: "21"
-          distribution: "adopt"
+          # Keep in sync with the other Java versions (backend/build.gradle, backend/Dockerfile)
+          java-version: "25"
+          distribution: "temurin"
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
       - name: Check Format And Lint

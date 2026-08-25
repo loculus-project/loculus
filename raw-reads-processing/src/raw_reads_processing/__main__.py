@@ -4,6 +4,7 @@ import click
 
 from .api import start_api
 from .config import get_config
+from .deacon import prepare_deacon_index, start_deacon_server
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +23,12 @@ def run(config_file: str):
     logging.getLogger("requests").setLevel(logging.INFO)
     logger.info(f"Config: {config}")
 
+    logger.info("Preparing deacon index and starting deacon server...")
+    prepare_deacon_index()
+    deacon_process = start_deacon_server()
+
     logger.info("Starting API...")
-    start_api(config)
+    start_api(config, deacon_process)
 
 
 if __name__ == "__main__":
