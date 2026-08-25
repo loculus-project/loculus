@@ -39,9 +39,7 @@ jobs:
         timeout-minutes: 15
         working-directory: ./backend
         run: |
-          # The step timeout kills the JVM without a stack trace, so snapshot every live JVM
-          # shortly before that deadline. Two dumps, a couple of minutes apart, so a thread that
-          # is genuinely stuck can be told apart from one that is merely slow.
+          # Threaddump collected to help debug test hangs
           mkdir -p build/diagnostics
           dump() {
             for pid in $(jcmd -l 2>/dev/null | grep -v 'sun.tools.jcmd' | awk '{print $1}'); do
@@ -54,8 +52,6 @@ jobs:
           ./gradlew test || rc=$?
           kill "$watchdog" 2>/dev/null || true
           exit $rc
-      # Gradle already writes these; without an upload they die with the runner. The JUnit XML
-      # carries per-class start times and captured stdout, which is what localises a hang.
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v7
