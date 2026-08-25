@@ -27,7 +27,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     # larger than individual steps so logs can be collected
-    timeout-minutes: 14
+    timeout-minutes: 10
     env:
       RUN_EXTRA_TESTS: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.run_extra_tests) }}
       RUN_ONLY_SUBMIT_LARGE_BATCH_TEST: ${{ github.event_name == 'workflow_dispatch' && inputs.run_only_submit_large_batch_test }}
@@ -47,9 +47,9 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
       - name: Run tests
-        # Healthy extra-test runs have remained below nine minutes; ten minutes
-        # makes a PostgreSQL wedge fail sooner while leaving diagnostic time.
-        timeout-minutes: 10
+        # Healthy full-suite runs finish in about five minutes; six minutes makes
+        # the pathological batch tail fail sooner while leaving time for artifacts.
+        timeout-minutes: 6
         working-directory: ./backend
         run: |
           # Threaddump collected to help debug test hangs
@@ -91,7 +91,7 @@ jobs:
           }
           # The early samples are retained for green runs; later ones distinguish
           # a long-running batch from a wedge.
-          ( sleep 90; dump at90s; probe at90s; sleep 60; dump at150s; probe at150s; sleep 60; dump at210s; probe at210s; sleep 210; dump at7min; probe at7min; sleep 120; dump at9min; probe at9min ) >/dev/null 2>&1 &
+          ( sleep 90; dump at90s; probe at90s; sleep 60; dump at150s; probe at150s; sleep 60; dump at210s; probe at210s; sleep 90; dump at5min; probe at5min; sleep 30; dump at5m30s; probe at5m30s ) >/dev/null 2>&1 &
           watchdog=$!
           rc=0
           if [ "$RUN_ONLY_SUBMIT_LARGE_BATCH_TEST" = "true" ]; then
