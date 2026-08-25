@@ -20,15 +20,13 @@ const typedInputFields = sequencingInputFields.map((field) => ({
     ...field,
     type: metadataByName.get(field.name)?.type ?? 'string',
 }));
-const requiredFields = typedInputFields
-    .filter((field) => field.requiredWhen?.includes('files.rawReads') || field.required)
-    .map((field) => field);
-const desiredFields = typedInputFields
-    .filter((field) => !requiredFields.includes(field) && field.desired)
-    .map((field) => field);
-const optionalFields = typedInputFields
-    .filter((field) => !requiredFields.includes(field) && !desiredFields.includes(field))
-    .map((field) => field);
+const requiredFields = typedInputFields.filter(
+    (field) => field.requiredWhen?.includes('files.rawReads') || field.required,
+);
+const desiredFields = typedInputFields.filter((field) => !requiredFields.includes(field) && field.desired);
+const optionalFields = typedInputFields.filter(
+    (field) => !requiredFields.includes(field) && !desiredFields.includes(field),
+);
 ---
 
 <BoxWithTabsTabBar>
