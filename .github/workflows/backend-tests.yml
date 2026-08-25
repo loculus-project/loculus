@@ -50,18 +50,22 @@ jobs:
           ./gradlew test || rc=$?
           kill "$watchdog" 2>/dev/null || true
           exit $rc
-      - name: Recover test report
+      - name: Collect diagnostics
         if: failure()
-        run: ./gradlew recoverTestReport || true
         working-directory: ./backend
+        run: |
+          if ls build/test-results/test/*.xml >/dev/null 2>&1; then
+            rm -rf build/test-results/test/binary
+          else
+            ./gradlew recoverTestReport || true
+          fi
       - name: Upload test results
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: backend-test-results
           path: |
             backend/build/test-results/test/**
-            backend/build/reports/tests/**
             backend/build/reports/recovered/**
             backend/build/diagnostics/**
           if-no-files-found: warn
