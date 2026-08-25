@@ -171,7 +171,7 @@ const InnerEditPage: FC<EditPageProps> = ({
             </div>
             {isCreatingRevision && isLatestVersionRevocation && (
                 <ErrorBox title='The latest version for this sequence is marked as revoked.' level='warning' className='mb-2'>
-                    <p className='mt-2'>By revising, you will be undoing the revocation.</p>
+                    <p className='mt-2'>Revising will create a new version that supersedes the revocation.</p>
                 </ErrorBox>
             )}
             {isCreatingRevision &&
