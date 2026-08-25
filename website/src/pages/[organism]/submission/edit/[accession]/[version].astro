@@ -18,7 +18,7 @@ if (!cleanedOrganism) {
     return new Response(undefined, { status: 404 });
 }
 
-const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'revise', true);
+const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'revise', 'form', true);
 const accessToken = getAccessToken(Astro.locals.session)!;
 
 const clientConfig = getRuntimeConfig().public;

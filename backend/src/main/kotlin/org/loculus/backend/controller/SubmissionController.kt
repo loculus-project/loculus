@@ -1,7 +1,5 @@
 package org.loculus.backend.controller
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.headers.Header
@@ -31,7 +29,6 @@ import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.SequenceEntryVersionToEdit
 import org.loculus.backend.api.Status
-import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
@@ -108,7 +105,6 @@ open class SubmissionController(
     private val iteratorStreamer: IteratorStreamer,
     private val requestIdContext: RequestIdContext,
     private val backendConfig: BackendConfig,
-    private val objectMapper: ObjectMapper,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
     private val submissionMetrics: SubmissionMetrics,
@@ -133,21 +129,18 @@ open class SubmissionController(
                 " It is the date when the sequence entries will become 'OPEN'." +
                 " Format: YYYY-MM-DD",
         ) @RequestParam restrictedUntil: String?,
-        @Parameter(description = FILE_MAPPING_DESCRIPTION) @RequestPart(required = false) fileMapping: String?,
     ): List<SubmissionIdMapping> {
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
         val dataUseTerms = dataUseTermsPreconditionValidator.constructDataUseTermsAndValidate(
             dataUseTermsType,
             restrictedUntil,
         )
-        val fileMappingParsed = parseFileMapping(fileMapping, organism)
 
         val params = SubmissionParams.OriginalSubmissionParams(
             organism,
             authenticatedUser,
             metadataFile,
             sequenceFile,
-            fileMappingParsed,
             groupId,
             dataUseTerms,
         )
@@ -162,15 +155,12 @@ open class SubmissionController(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @Parameter(description = REVISED_METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
         @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile?,
-        @Parameter(description = FILE_MAPPING_DESCRIPTION) @RequestPart(required = false) fileMapping: String?,
     ): List<SubmissionIdMapping> {
-        val fileMappingParsed = parseFileMapping(fileMapping, organism)
         val params = SubmissionParams.RevisionSubmissionParams(
             organism,
             authenticatedUser,
             metadataFile,
             sequenceFile,
-            fileMappingParsed,
         )
         return submitModel.processSubmissions(UUID.randomUUID().toString(), params)
     }
@@ -568,6 +558,11 @@ open class SubmissionController(
         val instanceConfig = backendConfig.getInstanceConfig(organism)
         val hasConsensusSequences = instanceConfig.schema.submissionDataTypes.consensusSequences
         val isMultiSegmented = instanceConfig.referenceGenome.nucleotideSequences.size > 1
+        val fileCategories = if (instanceConfig.schema.submissionDataTypes.files.enabled) {
+            instanceConfig.schema.submissionDataTypes.files.categories
+        } else {
+            emptyList()
+        }
 
         val streamBody = StreamingResponseBody { responseBodyStream ->
             val startTime = System.currentTimeMillis()
@@ -602,6 +597,7 @@ open class SubmissionController(
                                     uniqueFastaIdsByEntry,
                                     zipOut,
                                     isMultiSegmented,
+                                    fileCategories,
                                 )
                                 zipOut.closeEntry()
 
@@ -729,19 +725,5 @@ open class SubmissionController(
             MDC.remove(REQUEST_ID_MDC_KEY)
             MDC.remove(ORGANISM_MDC_KEY)
         }
-    }
-
-    fun parseFileMapping(fileMapping: String?, organism: Organism): SubmissionIdFilesMap? {
-        val fileMappingParsed = fileMapping?.let {
-            if (!backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files.enabled) {
-                throw BadRequestException("the ${organism.name} organism does not support file submission.")
-            }
-            try {
-                objectMapper.readValue<SubmissionIdFilesMap>(it)
-            } catch (e: Exception) {
-                throw BadRequestException("Failed to parse file mapping.", e)
-            }
-        }
-        return fileMappingParsed
     }
 }
