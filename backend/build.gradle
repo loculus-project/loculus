@@ -123,6 +123,7 @@ tasks.named('test') {
         dependsOn checkDocker
     }
     useJUnitPlatform()
+    jvmArgs '--enable-native-access=ALL-UNNAMED'
     testLogging {
         events TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR
         exceptionFormat = TestExceptionFormat.FULL
