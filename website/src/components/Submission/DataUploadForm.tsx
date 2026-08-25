@@ -1,11 +1,13 @@
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { DateTime } from 'luxon';
-import { type FormEvent, useState, type Dispatch, type SetStateAction } from 'react';
+import type { Result } from 'neverthrow';
+import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo } from 'react';
 
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
+import { validateFileUploadStates, type FileUploadState } from './FileUpload/fileUpload.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { backendApi } from '../../services/backendApi.ts';
@@ -15,7 +17,6 @@ import {
     type Group,
     openDataUseTermsOption,
     restrictedDataUseTermsOption,
-    type FilesBySubmissionId,
 } from '../../types/backend.ts';
 import type { FileCategory, InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
@@ -28,6 +29,17 @@ import { Button } from '../common/Button';
 import { Checkbox } from '../common/Checkbox';
 import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
+import {
+    applyFileMappings,
+    resolveFileMappings,
+    getLinkageErrors,
+    getSingleSubmissionFileMapping,
+    type CategoryLinkage,
+    type FileLinkage,
+    type FileMapping,
+    type SubmissionFileMapping,
+} from './FileUpload/fileMapping.ts';
+import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -66,13 +78,25 @@ const InnerDataUploadForm = ({
 
     const { submit, revise, isPending } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
-    const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(undefined);
+    const [fileUploadStates, setFileUploadStates] = useState<Map<string, FileUploadState>>(new Map());
+    const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(undefined);
+    const [submissionFileMapping, setSubmissionFileMapping] = useState<
+        Result<SubmissionFileMapping, Error> | undefined
+    >(undefined);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
     const [agreedToINSDCUploadTerms, setAgreedToINSDCUploadTerms] = useState(false);
 
     const [confirmedNoPII, setConfirmedNoPII] = useState(false);
+
+    const fileLinkage = useMemo(
+        () =>
+            inputMode === 'bulk' && submissionFileMapping?.isOk()
+                ? resolveFileMappings(submissionFileMapping.value, fileMapping).fileLinkage
+                : undefined,
+        [inputMode, submissionFileMapping, fileMapping],
+    );
 
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
@@ -103,10 +127,52 @@ const InnerDataUploadForm = ({
             return;
         }
 
-        let fileMappingWithSubmissionId = fileMapping;
-        // for single submission, use the submissionID that the user gave in the form
-        if (extraFilesEnabled && inputMode === 'form' && fileMapping !== undefined) {
-            fileMappingWithSubmissionId = { [submissionId!]: Object.values(fileMapping)[0] };
+        const fileUploadStateResult = validateFileUploadStates(fileUploadStates);
+        if (fileUploadStateResult.isErr()) {
+            onError(fileUploadStateResult.error.message);
+            return;
+        }
+
+        let finalMetadataFile = metadataFile;
+
+        if (extraFilesEnabled) {
+            if (inputMode === 'form') {
+                if (fileMapping !== undefined) {
+                    const finalSubmissionFileMapping = getSingleSubmissionFileMapping(submissionId!, fileMapping);
+                    const finalMetadataFileResult = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
+                    if (finalMetadataFileResult.isErr()) {
+                        onError(finalMetadataFileResult.error.message);
+                        return;
+                    }
+                    finalMetadataFile = finalMetadataFileResult.value;
+                }
+            } else {
+                if (submissionFileMapping === undefined) {
+                    onError('Cannot submit: metadata file is still being processed.');
+                    return;
+                }
+
+                if (submissionFileMapping.isErr()) {
+                    onError(submissionFileMapping.error.message);
+                    return;
+                }
+
+                const { submissionFileMapping: resolvedSubmissionFileMapping, fileLinkage } = resolveFileMappings(
+                    submissionFileMapping.value,
+                    fileMapping,
+                );
+                const linkageErrors = getLinkageErrors(fileLinkage);
+                if (linkageErrors !== undefined) {
+                    onError(linkageErrors);
+                    return;
+                }
+                const finalMetadataFileResult = await applyFileMappings(metadataFile, resolvedSubmissionFileMapping);
+                if (finalMetadataFileResult.isErr()) {
+                    onError(finalMetadataFileResult.error.message);
+                    return;
+                }
+                finalMetadataFile = finalMetadataFileResult.value;
+            }
         }
 
         const submitSequenceData = () => {
@@ -114,9 +180,8 @@ const InnerDataUploadForm = ({
                 case 'submit': {
                     const groupId = group.groupId;
                     submit({
-                        metadataFile: metadataFile,
+                        metadataFile: finalMetadataFile,
                         sequenceFile: sequenceFile,
-                        fileMapping: extraFilesEnabled ? fileMappingWithSubmissionId : undefined,
                         groupId,
                         dataUseTermsType,
                         restrictedUntil:
@@ -128,9 +193,8 @@ const InnerDataUploadForm = ({
                 }
                 case 'revise':
                     revise({
-                        metadataFile: metadataFile,
+                        metadataFile: finalMetadataFile,
                         sequenceFile: sequenceFile,
-                        fileMapping: extraFilesEnabled ? fileMappingWithSubmissionId : undefined,
                     });
                     break;
             }
@@ -162,10 +226,12 @@ const InnerDataUploadForm = ({
                 <FormOrUploadWrapper
                     inputMode={inputMode}
                     setFileFactory={setFileFactory}
+                    setSubmissionFileMapping={setSubmissionFileMapping}
                     organism={organism}
                     action={action}
                     metadataTemplateFields={metadataTemplateFields}
                     submissionDataTypes={submissionDataTypes}
+                    onError={onError}
                 />
                 <hr />
                 {extraFilesEnabled && (
@@ -177,8 +243,10 @@ const InnerDataUploadForm = ({
                             clientConfig={clientConfig}
                             groupId={group.groupId}
                             onError={onError}
-                            fileMapping={fileMapping}
+                            fileUploadStates={fileUploadStates}
+                            setFileUploadStates={setFileUploadStates}
                             setFileMapping={setFileMapping}
+                            fileLinkage={fileLinkage}
                         />
                         <hr />
                     </>
@@ -273,15 +341,73 @@ export const InputModeTabs = ({
     );
 };
 
+const CategoryLinkageStatus = ({ categoryLinkage }: { categoryLinkage: CategoryLinkage | undefined }) => {
+    const statuses: {
+        key: string;
+        icon: string;
+        color: string;
+        count: number;
+        message: string;
+    }[] = useMemo(() => {
+        if (categoryLinkage === undefined) return [];
+        return [
+            {
+                key: 'linked',
+                icon: '✓',
+                color: 'text-green-500',
+                // Multiple metadata entries can reference the same file,
+                // so we want to count the number of unique files that are linked to metadata
+                count: Array.from(new Set(categoryLinkage.linked.map((file) => file.path))).length,
+                message: 'uploaded and linked to metadata!',
+            },
+            {
+                key: 'reused',
+                icon: '↺',
+                color: 'text-green-500',
+                count: categoryLinkage.reused.length,
+                message: 'reused from previous uploads.',
+            },
+            {
+                key: 'missing',
+                icon: '⚠',
+                color: 'text-yellow-600',
+                count: categoryLinkage.missing.length,
+                message: 'referenced in metadata but not uploaded.',
+            },
+            {
+                key: 'unreferenced',
+                icon: '⚠',
+                color: 'text-yellow-600',
+                count: categoryLinkage.orphaned.concat(categoryLinkage.shadowed).length,
+                message: 'uploaded but not referenced in metadata.',
+            },
+        ];
+    }, [categoryLinkage]);
+
+    return categoryLinkage ? (
+        <div className='text-xs text-gray-500 text-center space-y-1'>
+            {statuses
+                .filter((status) => status.count > 0)
+                .map((status) => (
+                    <div key={status.key}>
+                        <span className={status.color}>{status.icon}</span>{' '}
+                        {`${status.count} ${status.count === 1 ? 'file' : 'files'} ${status.message}`}
+                    </div>
+                ))}
+        </div>
+    ) : null;
+};
+
 export const ExtraFilesUpload = ({
     accessToken,
     clientConfig,
     inputMode,
     groupId,
     fileCategories,
-    fileMapping,
+    fileUploadStates,
+    setFileUploadStates,
     setFileMapping,
-    formSubmissionId,
+    fileLinkage,
     onError,
 }: {
     accessToken: string;
@@ -289,35 +415,56 @@ export const ExtraFilesUpload = ({
     inputMode: InputMode;
     groupId: number;
     fileCategories: FileCategory[];
-    fileMapping: FilesBySubmissionId | undefined;
-    setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
-    formSubmissionId?: string;
+    fileUploadStates: Map<string, FileUploadState>;
+    setFileUploadStates: Dispatch<SetStateAction<Map<string, FileUploadState>>>;
+    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
+    fileLinkage?: FileLinkage;
     onError: (message: string) => void;
 }) => {
+    const setCategoryFileUploadState =
+        (category: string): Dispatch<SetStateAction<FileUploadState | undefined>> =>
+        (update) =>
+            setFileUploadStates((prev) => {
+                const next = typeof update === 'function' ? update(prev.get(category)) : update;
+                const map = new Map(prev);
+                if (next === undefined) map.delete(category);
+                else map.set(category, next);
+                return map;
+            });
+
     return (
         <div className='grid sm:grid-cols-3 gap-x-16 gap-y-4'>
             <div>
                 <h2 className='font-medium text-lg'>Extra files</h2>
                 <p className='text-gray-500 text-sm'>
                     {inputMode === 'bulk'
-                        ? 'The folder you select needs to contain one folder per sequence ID, which contains the files for that sequence entry'
-                        : 'Upload a folder of files for this sequence'}
+                        ? 'Upload a folder of files or individual files for your sequences. Each file must be referenced by its name in the corresponding file category column of your metadata.'
+                        : 'Upload a folder of files or individual files for this sequence.'}{' '}
+                    For more information please refer to the{' '}
+                    <a href={extraFilesUploadDocsUrl} target='_blank' className='text-primary-600 hover:underline'>
+                        extra files documentation
+                    </a>
+                    .
                 </p>
             </div>
             <div className='col-span-2 flex flex-col gap-4'>
                 {fileCategories.map((fileCategory) => (
-                    <FolderUploadComponent
-                        key={fileCategory.name}
-                        fileCategory={fileCategory}
-                        inputMode={inputMode}
-                        accessToken={accessToken}
-                        clientConfig={clientConfig}
-                        groupId={groupId}
-                        onError={onError}
-                        fileMapping={fileMapping}
-                        setFileMapping={setFileMapping}
-                        formSubmissionId={formSubmissionId}
-                    />
+                    <div className='space-y-2' key={fileCategory.name}>
+                        <FolderUploadComponent
+                            fileCategory={fileCategory}
+                            inputMode={inputMode}
+                            accessToken={accessToken}
+                            clientConfig={clientConfig}
+                            groupId={groupId}
+                            onError={onError}
+                            fileUploadState={fileUploadStates.get(fileCategory.name)}
+                            setFileUploadState={setCategoryFileUploadState(fileCategory.name)}
+                            setFileMapping={setFileMapping}
+                        />
+                        {inputMode === 'bulk' && (
+                            <CategoryLinkageStatus categoryLinkage={fileLinkage?.get(fileCategory.name)} />
+                        )}
+                    </div>
                 ))}
             </div>
         </div>
@@ -401,7 +548,7 @@ const Acknowledgement = ({
                     <p className='block text-sm'>
                         Your data will be available on {instanceName}, under the selected data use terms. Data with open
                         data use terms will additionally be made publicly available through the{' '}
-                        <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
+                        <a href='https://www.insdc.org/' target='_blank' className='text-primary-600 hover:underline'>
                             INSDC
                         </a>{' '}
                         databases (ENA, DDBJ, NCBI).
@@ -439,6 +586,7 @@ const Acknowledgement = ({
                                     INSDC.{' '}
                                     <a
                                         href='/docs/concepts/insdc-submission'
+                                        target='_blank'
                                         className='text-primary-600 hover:underline'
                                     >
                                         Find out more.

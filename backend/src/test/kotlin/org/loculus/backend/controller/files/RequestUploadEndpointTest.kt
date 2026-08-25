@@ -76,7 +76,7 @@ class RequestUploadEndpointTest(
             .contentAsString
         val uploadInfo = objectMapper.readTree(responseContent).get(0)
         val url = uploadInfo.get("url").textValue()
-        val headers = uploadInfo.get("headers").fields().asSequence()
+        val headers = uploadInfo.get("headers").properties()
             .associate { it.key to it.value.textValue() }
 
         val content = "test content".toByteArray()
@@ -98,7 +98,7 @@ class RequestUploadEndpointTest(
             .contentAsString
         val uploadInfo = objectMapper.readTree(responseContent).get(0)
         val url = uploadInfo.get("url").textValue()
-        val headers = uploadInfo.get("headers").fields().asSequence()
+        val headers = uploadInfo.get("headers").properties()
             .associate { it.key to it.value.textValue() }
 
         val httpClient = HttpClients.createDefault()
