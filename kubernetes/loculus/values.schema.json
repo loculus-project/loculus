@@ -939,8 +939,9 @@
                   "groups": ["ingest"],
                   "docsIncludePrefix": false,
                   "type": "integer",
+                  "minimum": 1,
                   "default": 1000,
-                  "description": "Number of sequences submitted to the backend per request. Smaller batches lose less work if a request fails, at the cost of more requests."
+                  "description": "Number of sequences submitted to the backend per request."
                 }
               },
               "required": ["taxon_id"]
