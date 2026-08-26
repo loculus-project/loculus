@@ -37,6 +37,12 @@ const FILES_DOUBLE: Record<string, string> = {
     'file2.fastq': EBOLA_SUDAN_SMALL_FASTQ(2),
 };
 
+// For parameterised tests over compressed/uncompressed metadata
+const METADATA_COMPRESSION_CASES = [
+    { compressMetadata: false, description: '' },
+    { compressMetadata: true, description: ' with compressed metadata file' },
+];
+
 // File cells can be formatted either as a list of file names,
 // Or file names with file paths under a subfolder
 const filesColumnCell = (fileNames: string[], subfolder?: string) =>
@@ -170,10 +176,7 @@ test('bulk submit 2 seqs with 1 & 2 FASTQ files respectively', async ({
     await searchPage.checkFileContentInModal('cell', COUNTRY_2, FILES_DOUBLE);
 });
 
-[
-    { compressFile: false, description: '' },
-    { compressFile: true, description: ' with compressed metadata file' },
-].forEach(({ compressFile, description }) => {
+METADATA_COMPRESSION_CASES.forEach(({ compressMetadata, description }) => {
     test(
         'bulk submit 1 seq: discarding and reading a FASTQ file' + description,
         async ({ page, groupId, tmpDir }) => {
@@ -192,7 +195,7 @@ test('bulk submit 2 seqs with 1 & 2 FASTQ files respectively', async ({
                         filesColumnCell(Object.keys(FILES_DOUBLE), ID_1),
                     ],
                 ],
-                compressFile,
+                compressMetadata,
             );
             await submissionPage.uploadSequencesFile({ [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE });
             await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_SINGLE }, tmpDir);
@@ -242,10 +245,7 @@ test('bulk submit 1 seq with a 35 MB FASTQ file', async ({ page, groupId, tmpDir
     await searchPage.checkFileContentInModal('cell', COUNTRY_1, LARGE_FILE);
 });
 
-[
-    { compressFile: false, description: '' },
-    { compressFile: true, description: ' with compressed metadata file' },
-].forEach(({ compressFile, description }) => {
+METADATA_COMPRESSION_CASES.forEach(({ compressMetadata, description }) => {
     test(
         'bulk submit blocks a submission with errors in file linkage or parsing' + description,
         async ({ page, groupId, tmpDir }) => {
@@ -288,7 +288,7 @@ test('bulk submit 1 seq with a 35 MB FASTQ file', async ({ page, groupId, tmpDir
                 await submissionPage.uploadMetadataFile(
                     [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
                     [[ID_1, COUNTRY_1, '2023-01-01', SEQUENCING_INSTRUMENT, metadataFileEntries]],
-                    compressFile,
+                    compressMetadata,
                 );
                 await submissionPage.uploadSequencesFile({
                     [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE,
