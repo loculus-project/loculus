@@ -102,6 +102,7 @@ export const inputField = z.object({
     displayName: z.string().optional(),
     noEdit: z.boolean().optional(),
     required: z.boolean().optional(),
+    requiredWhen: z.array(z.string()).optional(),
     definition: z.string().optional(), // Definition, Example and Guidance for submitters
     example: z.union([z.string(), z.number()]).optional(),
     guidance: z.string().optional(),
