@@ -17,6 +17,9 @@ logger = logging.getLogger(__name__)
 
 VALIDATION_JAR_PATH = os.environ.get("READTOOLS_JAR", "/opt/app/lib/readtools.jar")
 
+# readtools exits 1 when it judges the files invalid, and 2 when it could not judge them at all.
+READTOOLS_INVALID_EXIT_CODE = 1
+
 
 class FileFormat(StrEnum):
     FASTQ = "FASTQ"
@@ -204,6 +207,17 @@ def validate_with_readtools(
 
     if exit_code == 0:
         return
+
+    # readtools reports a verdict of "invalid" as exit 1. Anything else is readtools failing to
+    # reach a verdict at all - a missing file, or the JVM running out of heap - which is our
+    # problem, not the submitter's, and must not be reported to them as a bad file.
+    if exit_code != READTOOLS_INVALID_EXIT_CODE:
+        message = (
+            f"readtools could not validate '{','.join(file_names)}' "
+            f"(exit code {exit_code}): {stderr.strip()[:200]}"
+        )
+        logger.error(message)
+        raise ProcessingFailure(message)
 
     validation_error = _parse_validation_error(stdout=stdout, stderr=stderr)
     logger.error(validation_error)

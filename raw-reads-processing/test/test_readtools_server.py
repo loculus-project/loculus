@@ -299,3 +299,29 @@ def test_environment_jar_path_is_shared_by_both_modules():
             readtools_server.VALIDATION_JAR_PATH
             == file_format_validation.VALIDATION_JAR_PATH
         )
+
+
+def test_readtools_failing_to_run_is_not_blamed_on_the_submitter(tmp_path, monkeypatch):
+    """An out-of-heap JVM exits 2; that is our problem, not a bad file."""
+    monkeypatch.setattr(
+        readtools_server.requests,
+        "post",
+        Mock(
+            return_value=Mock(
+                status_code=200,
+                json=Mock(
+                    return_value={
+                        "exitCode": 2,
+                        "stdout": "",
+                        "stderr": "java.lang.OutOfMemoryError: Java heap space",
+                    }
+                ),
+            )
+        ),
+    )
+    reads = _write(tmp_path, "reads.fastq", VALID_SINGLE_END)
+    with pytest.raises(ProcessingFailure) as exc_info:
+        validate_with_readtools(
+            {"reads.fastq": reads}, FileFormat.FASTQ, config=_config()
+        )
+    assert "OutOfMemoryError" in str(exc_info.value)
