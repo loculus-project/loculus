@@ -144,6 +144,9 @@ tasks.named('test') {
     
     jvmArgs '--enable-native-access=ALL-UNNAMED'
     
+    // Run tests with the same object layout as production
+    jvmArgs '-XX:+UseCompactObjectHeaders'
+    
     testLogging {
         events TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR
         exceptionFormat = TestExceptionFormat.FULL
