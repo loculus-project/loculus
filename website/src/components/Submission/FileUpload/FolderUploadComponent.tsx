@@ -3,6 +3,15 @@ import React, { useEffect, useState, type Dispatch, type FC, type SetStateAction
 import { toast } from 'react-toastify';
 
 import { type FileMapping } from './fileMapping';
+import type {
+    Awaiting,
+    FileUploadState,
+    Pending,
+    PreviousUpload,
+    SingleFileUpload,
+    Uploaded,
+    UploadStatus,
+} from './fileUpload';
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
 import { type FileCategory } from '../../../types/config';
@@ -15,77 +24,14 @@ import LucideFile from '~icons/lucide/file';
 import LucideFolderUp from '~icons/lucide/folder-up';
 import LucideLoader from '~icons/lucide/loader';
 
-/**
- * The state that the component is in, right after the user dropped the files.
- * We're awaiting the presigned upload URLs from the backend, to start uploading.
- */
-type AwaitingUrlState = {
-    type: 'awaitingUrls';
-    files: Awaiting[];
-};
-
-type UploadInProgressState = {
-    type: 'uploadInProgress';
-    files: SingleFileUpload[];
-};
-
-type UploadCompleted = {
-    type: 'uploadCompleted';
-    files: (Uploaded | PreviousUpload)[];
-};
-
-type FileUploadState = AwaitingUrlState | UploadInProgressState | UploadCompleted;
-
-type UploadStatus = 'pending' | 'uploaded' | 'previousUpload' | 'error';
-
-type Awaiting = {
-    type: 'awaiting';
-    file: File;
-    path: string;
-};
-
-type Pending = {
-    type: 'pending';
-    file: File;
-    path: string;
-    size: number;
-    fileId: string;
-    urls: string[];
-    uploadedParts: number;
-    totalParts: number;
-    partSize: number;
-    etags?: string[];
-};
-
-type Uploaded = {
-    type: 'uploaded';
-    fileId: string;
-    path: string;
-    size: number;
-};
-
-type PreviousUpload = {
-    type: 'previousUpload';
-    fileId: string;
-    path: string;
-};
-
-type FileError = {
-    type: 'error';
-    path: string;
-    size: number;
-    msg: string;
-};
-
-type SingleFileUpload = Pending | Uploaded | PreviousUpload | FileError;
-
 type FolderUploadComponentProps = {
     fileCategory: FileCategory;
     inputMode: InputMode;
     accessToken: string;
     clientConfig: ClientConfig;
     groupId: number;
-    fileMapping: FileMapping | undefined;
+    fileUploadState: FileUploadState | undefined;
+    setFileUploadState: Dispatch<SetStateAction<FileUploadState | undefined>>;
     setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
     onError: (message: string) => void;
 };
@@ -142,21 +88,11 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     accessToken,
     clientConfig,
     groupId,
-    fileMapping,
+    fileUploadState,
+    setFileUploadState,
     setFileMapping,
     onError,
 }) => {
-    const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(() => {
-        const categoryFiles = fileMapping?.get(fileCategory.name);
-        if (categoryFiles === undefined || categoryFiles.size === 0) return undefined;
-
-        const files: PreviousUpload[] = [...categoryFiles.entries()].map(([path, fileId]) => ({
-            type: 'previousUpload',
-            fileId,
-            path,
-        }));
-        return { type: 'uploadCompleted', files };
-    });
     const [isDragging, setIsDragging] = useState(false);
 
     const backendClient = new BackendClient(clientConfig.backendUrl);
@@ -237,7 +173,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     async function requestFileUploads(filesAwaitingUrls: Awaiting[]): Promise<Pending[]> {
         const pendingFiles: Pending[] = [];
         for (const file of filesAwaitingUrls) {
-            const { partCount, partSize } = calculatePartSizeAndCount(file.file.size);
+            const { partCount, partSize } = calculatePartSizeAndCount(file.size);
             const result = await backendClient.requestMultipartUpload(accessToken, groupId, 1, partCount);
             result.match(
                 (data) => {
@@ -245,7 +181,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                         type: 'pending',
                         file: file.file,
                         path: file.path,
-                        size: file.file.size,
+                        size: file.size,
                         fileId: data[0].fileId,
                         urls: data[0].urls,
                         uploadedParts: 0,
@@ -326,6 +262,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     file: f,
                     // Assign the path without the parent folder
                     path: f.webkitRelativePath.split('/').slice(1).join('/'),
+                    size: f.size,
                 })),
             });
         }
@@ -364,6 +301,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 type: 'awaiting',
                 file: f,
                 path: f.name,
+                size: f.size,
             }));
 
             // If the state is undefined, set it to the new awaiting files
@@ -388,6 +326,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             // Updates the state of file uploads and triggers the upload of the new files
             const addFiles = async () => {
                 const existingFiles = fileUploadState.files.filter((file) => !filePaths.has(file.path));
+                setFileUploadState({ type: 'uploadInProgress', files: [...existingFiles, ...awaiting] });
                 const pendingFiles = await requestFileUploads(awaiting);
                 setFileUploadState({
                     type: 'uploadInProgress',
@@ -582,6 +521,7 @@ const formatFileSize = (bytes: number): string => {
 // Determine status icon for file upload
 const getStatusIcon = (status: UploadStatus) => {
     switch (status) {
+        case 'awaiting':
         case 'pending':
             return <LucideLoader className='animate-spin h-3 w-3 text-blue-500' />;
         case 'previousUpload':

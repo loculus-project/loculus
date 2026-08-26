@@ -17,13 +17,14 @@ plugins {
 group = 'org.loculus'
 version = '0.0.1'
 
+// Keep the Java version in sync with the other Java versions (backend/Dockerfile, CI workflows)
 java {
-    sourceCompatibility = '21'
-    targetCompatibility = '21'
+    sourceCompatibility = '25'
+    targetCompatibility = '25'
 }
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(25)
     // Added to dismiss warnings, see: https://github.com/loculus-project/loculus/issues/4529
     compilerOptions.freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
 }
@@ -122,6 +123,7 @@ tasks.named('test') {
         dependsOn checkDocker
     }
     useJUnitPlatform()
+    jvmArgs '--enable-native-access=ALL-UNNAMED'
     testLogging {
         events TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR
         exceptionFormat = TestExceptionFormat.FULL
@@ -130,7 +132,7 @@ tasks.named('test') {
 }
 
 tasks.named('bootBuildImage') {
-    environment["BP_JVM_VERSION"] = "21"
+    environment["BP_JVM_VERSION"] = "25"
     // https://paketo.io/docs/howto/configuration/
     environment["BPE_SPRING_PROFILES_ACTIVE"] = "docker"
 }
