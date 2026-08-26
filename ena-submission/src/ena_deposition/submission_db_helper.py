@@ -497,7 +497,6 @@ def update_with_retry[T: TableEntry](
 
 def add_to_project_table(engine: Engine, entry: ProjectTableEntry) -> int | None:
     """Insert *entry* into project_table and return the generated project_id."""
-    entry.started_at = datetime.now(tz=pytz.utc)
     try:
         with Session(engine) as session:
             session.add(entry)
@@ -512,7 +511,6 @@ def add_to_project_table(engine: Engine, entry: ProjectTableEntry) -> int | None
 
 def add_to_sample_table(engine: Engine, entry: SampleTableEntry) -> bool:
     """Insert *entry* into sample_table. Returns True on success."""
-    entry.started_at = datetime.now(tz=pytz.utc)
     try:
         with Session(engine, expire_on_commit=False) as session:
             session.add(entry)
@@ -525,7 +523,6 @@ def add_to_sample_table(engine: Engine, entry: SampleTableEntry) -> bool:
 
 def add_to_assembly_table(engine: Engine, entry: AssemblyTableEntry) -> bool:
     """Insert *entry* into assembly_table. Returns True on success."""
-    entry.started_at = datetime.now(tz=pytz.utc)
     try:
         with Session(engine, expire_on_commit=False) as session:
             session.add(entry)
@@ -547,7 +544,6 @@ def in_submission_table(engine: Engine, conditions: dict[str, Any]) -> bool:
 
 def add_to_submission_table(engine: Engine, entry: SubmissionTableEntry) -> bool:
     """Insert *entry* into submission_table. Returns True on success."""
-    entry.started_at = datetime.now(tz=pytz.utc)
     try:
         with Session(engine, expire_on_commit=False) as session:
             session.add(entry)
