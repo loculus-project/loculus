@@ -70,7 +70,7 @@ subsample_fraction: 1.0
 db_username: postgres
 db_password: unsecure
 db_url: "jdbc:postgresql://127.0.0.1:5432/loculus"
-batch_chunk_size: 1000
+batch_chunk_size: 10000 # Batch size for submitting sequences to Loculus backend
 nextclade_dataset_server: https://data.clades.nextstrain.org/v3
 backend_request_timeout_seconds: 600
 match_previous_accession_versions: false
