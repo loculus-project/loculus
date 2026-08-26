@@ -18,6 +18,7 @@ on:
       - "keycloak/**"
       - "kubernetes/**"
       - "preprocessing/**"
+      - "raw-reads-processing/**"
       - "website/**"
       - "deploy.py"
       - "integration-tests/**"
