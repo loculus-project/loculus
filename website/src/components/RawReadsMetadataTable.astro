@@ -6,9 +6,14 @@ import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from './common/BoxW
 interface Props {
     sequencingHeader?: string;
     requiredWhenField?: string;
+    tableName?: string;
 }
 
-const { sequencingHeader = 'Sequencing', requiredWhenField = 'files.rawReads' } = Astro.props;
+const {
+    sequencingHeader = 'Sequencing',
+    requiredWhenField = 'files.rawReads',
+    tableName = 'Raw Reads Metadata Fields',
+} = Astro.props;
 
 // The 'Sequencing' fields are the same for every organism, so any configured organism will do.
 const [organism] = getConfiguredOrganisms();
@@ -40,7 +45,7 @@ const headerClassName = 'text-lg! mb-4! mt-0! pt-1!';
 ---
 
 <BoxWithTabsTabBar>
-    <BoxWithTabsTab isActive label='Raw Reads Metadata Fields' className='text-base' />
+    <BoxWithTabsTab isActive label={tableName} className='text-base' />
 </BoxWithTabsTabBar>
 <BoxWithTabsBox>
     <MetadataTableSection
