@@ -130,10 +130,9 @@ tasks.named('test') {
     // java.lang.System has been called"; from a future JDK the call would be blocked outright.
     // See JEP 472: https://openjdk.org/jeps/472
     jvmArgs '--enable-native-access=ALL-UNNAMED'
+    
     // Run tests with the same object layout as production
     jvmArgs '-XX:+UseCompactObjectHeaders'
-    
-    jvmArgs '--enable-native-access=ALL-UNNAMED'
 
     testLogging {
         events TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR
