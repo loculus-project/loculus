@@ -138,7 +138,7 @@ tasks.named('test') {
     // https://github.com/raphw/byte-buddy/issues/1922
     if (JavaVersion.current().isCompatibleWith(JavaVersion.toVersion(24))) {
         jvmArgs '--sun-misc-unsafe-memory-access=allow'
-    }
+    jvmArgs '--sun-misc-unsafe-memory-access=allow'
     
     // Same reason as org.gradle.jvmargs in gradle.properties, but for the forked test JVM:
     // https://github.com/gradle/gradle/issues/19989
