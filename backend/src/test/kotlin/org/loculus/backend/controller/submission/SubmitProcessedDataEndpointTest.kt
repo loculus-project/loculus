@@ -133,6 +133,22 @@ class SubmitProcessedDataEndpointTest(
     }
 
     @Test
+    fun `WHEN I submit several entries spanning batches THEN all of them are stored`() {
+        val accessions = prepareExtractedSequencesInDatabase().map { it.accession }.take(3)
+
+        submissionControllerClient.submitProcessedData(
+            *accessions
+                .map { PreparedProcessedData.successfullyProcessed(accession = it) }
+                .toTypedArray(),
+        )
+            .andExpect(status().isNoContent)
+
+        accessions.forEach {
+            convenienceClient.getSequenceEntry(accession = it, version = 1).assertStatusIs(Status.PROCESSED)
+        }
+    }
+
+    @Test
     fun `WHEN I submit successfully preprocessed data THEN the sequence entry is in status processed`() {
         val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
 

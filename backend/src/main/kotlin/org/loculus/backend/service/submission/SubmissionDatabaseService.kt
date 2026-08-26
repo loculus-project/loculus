@@ -135,7 +135,7 @@ class SubmissionDatabaseService(
     private val auditLogger: AuditLogger,
     private val dateProvider: DateProvider,
     private val submissionMetrics: SubmissionMetrics,
-    // A whole batch is serialized in memory before it is stored, so this also bounds peak heap.
+    // A whole batch is serialized in memory before it is stored, so raising this multiplies peak heap.
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
 ) {
     private var lastPreprocessedDataUpdate: String? = null
