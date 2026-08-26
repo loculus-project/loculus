@@ -6,7 +6,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { FolderUploadComponent } from './FolderUploadComponent';
 import { type FileMapping } from './fileMapping';
-import { type FileUploadState } from './fileUpload';
+import { deriveFileMapping, type FileUploadState } from './fileUpload';
 import * as multipartUpload from '../../../utils/multipartUpload';
 
 const mockRequestMultipartUpload = vi.fn();
@@ -36,24 +36,22 @@ vi.mock('../../../utils/multipartUpload', async () => {
 
 const FolderUploadComponentWithState = ({
     initialState,
-    initialMapping,
+    otherCategories,
     onMapping,
     ...props
-}: Omit<ComponentProps<typeof FolderUploadComponent>, 'fileUploadState' | 'setFileUploadState' | 'setFileMapping'> & {
+}: Omit<ComponentProps<typeof FolderUploadComponent>, 'fileUploadState' | 'setFileUploadState'> & {
     initialState?: FileUploadState;
-    initialMapping?: FileMapping;
+    otherCategories?: Map<string, FileUploadState>;
     onMapping?: (mapping: FileMapping | undefined) => void;
 }) => {
     const [fileUploadState, setFileUploadState] = useState(initialState);
-    const [mapping, setMapping] = useState<FileMapping | undefined>(initialMapping);
+    // Stands in for the parent, which derives the mapping from the states of all its categories.
+    const states = new Map(otherCategories);
+    if (fileUploadState !== undefined) states.set(props.fileCategory.name, fileUploadState);
+    const mapping = deriveFileMapping(states);
     useEffect(() => onMapping?.(mapping), [mapping, onMapping]);
     return (
-        <FolderUploadComponent
-            {...props}
-            fileUploadState={fileUploadState}
-            setFileUploadState={setFileUploadState}
-            setFileMapping={setMapping}
-        />
+        <FolderUploadComponent {...props} fileUploadState={fileUploadState} setFileUploadState={setFileUploadState} />
     );
 };
 
@@ -503,7 +501,17 @@ describe('FolderUploadComponent', () => {
             render(
                 <FolderUploadComponentWithState
                     {...defaultPropsWithFiles}
-                    initialMapping={new Map([['otherFiles', otherCategoryFiles]])}
+                    otherCategories={
+                        new Map([
+                            [
+                                'otherFiles',
+                                {
+                                    type: 'uploadCompleted',
+                                    files: [{ type: 'previousUpload', fileId: 'file-3', path: 'other-file.txt' }],
+                                } satisfies FileUploadState,
+                            ],
+                        ])
+                    }
                     onMapping={onMapping}
                 />,
             );
