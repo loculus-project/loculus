@@ -63,10 +63,11 @@ Only FASTQ is currently accepted (`ACCEPTED_FORMATS`). If the file extension is 
 Once files are downloaded, they are validated using ENA's own validator,
 [readtools](https://github.com/loculus-project/readtools), which checks structural/content
 correctness (valid headers, IUPAC bases, matching sequence/quality lengths, etc.) and rejects
-truly duplicate read names within a single file:
+truly duplicate read names within a single file. Validation runs in full mode, which checks up to
+100 million reads per file instead of the default quick-mode limit of 100,000 reads:
 
 ```sh
-READTOOLS_JAR=readtools.jar java -jar readtools.jar read1.fastq [read2.fastq] --format FASTQ
+READTOOLS_JAR=readtools.jar java -jar readtools.jar read1.fastq [read2.fastq] --format FASTQ --full
 ```
 ## Validate sequences have been dehosted (deacon)
 

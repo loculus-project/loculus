@@ -322,6 +322,20 @@ def test_parse_validation_error_generic_fallback():
     assert message == "File validation failed while running ENA readtools."
 
 
+def test_readtools_uses_full_validation(tmp_path, monkeypatch):
+    reads = _write(tmp_path, "reads.fastq", VALID_SINGLE_END)
+    captured_args = []
+
+    def fake_run(args, **_kwargs):
+        captured_args.extend(args)
+
+    monkeypatch.setattr(file_format_validation.subprocess, "run", fake_run)
+
+    validate_with_readtools({"reads.fastq": Path(reads)}, FileFormat.FASTQ)
+
+    assert captured_args[-3:] == ["--format", "FASTQ", "--full"]
+
+
 def test_validation_timeout_is_reported_as_error(tmp_path, monkeypatch):
     reads = _write(tmp_path, "reads.fastq", VALID_SINGLE_END)
 

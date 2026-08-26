@@ -140,6 +140,7 @@ def validate_with_readtools(
         + [
             "--format",
             format_type.value,
+            "--full",
         ]
     )
     logger.debug(f"Running validation on '{file_names}': {args}")
