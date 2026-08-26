@@ -13,11 +13,13 @@ flyway -url=jdbc:postgresql://localhost:5432/loculus -schemas=ena_deposition_sch
 
 # ruff: noqa: S101 (allow asserts in tests)
 
+from collections.abc import Iterator
 from typing import Any
 
+import pytest
 from ena_deposition.config import get_config
 from ena_deposition.submission_db_helper import Base, db_init
-from sqlalchemy import MetaData, Table
+from sqlalchemy import Engine, MetaData, Table
 from sqlalchemy.types import JSON, Boolean, DateTime, Integer, String, TypeEngine
 
 CONFIG_FILE = "./test/test_config.yaml"
@@ -108,13 +110,19 @@ def _compare_table(orm_table: Table, db_table: Table) -> list[str]:
     return mismatches
 
 
-def test_orm_models_match_flyway_schema() -> None:
+@pytest.fixture(name="engine")
+def engine_fixture() -> Iterator[Engine]:
+    config = get_config(CONFIG_FILE)
+    engine = db_init(config.db_password, config.db_username, config.db_url)
+    yield engine
+    engine.dispose()
+
+
+def test_orm_models_match_flyway_schema(engine: Engine) -> None:
     """The ORM models in submission_db_helper.py are hand-maintained rather than
     generated from the flyway migrations, so nothing stops them from drifting
     apart. This reflects the actual (migrated) DB schema and diffs it against
     `Base.metadata` to catch that drift."""
-    config = get_config(CONFIG_FILE)
-    engine = db_init(config.db_password, config.db_username, config.db_url)
 
     db_metadata = MetaData()
     db_metadata.reflect(bind=engine, schema=SCHEMA)
@@ -135,8 +143,6 @@ def test_orm_models_match_flyway_schema() -> None:
         mismatches = _compare_table(orm_table, db_metadata.tables[db_table_key])
         if mismatches:
             failures[table_name] = mismatches
-
-    engine.dispose()
 
     assert not failures, "\n".join(
         f"{table}:\n  " + "\n  ".join(issues) for table, issues in failures.items()
