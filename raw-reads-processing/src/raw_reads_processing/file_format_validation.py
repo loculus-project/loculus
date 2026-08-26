@@ -1,6 +1,7 @@
 import logging
 import os
 import subprocess  # noqa: S404
+import time
 from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -140,8 +141,6 @@ def _run_readtools_subprocess(
     args = (
         ["java", "-jar", VALIDATION_JAR_PATH] + files + ["--format", file_format.value]
     )
-    logger.debug(f"Running validation: {args}")
-
     try:
         result = subprocess.run(  # noqa: S603
             args,
@@ -169,9 +168,15 @@ def validate_with_readtools(
     """
     file_names = list(file_name_to_path.keys())
     files = [str(file) for file in file_name_to_path.values()]
+    use_server = config is not None and config.readtools_server_enabled
+    logger.debug(
+        f"Validating {file_names} with readtools "
+        f"({'warm server' if use_server else 'subprocess'})"
+    )
+    started = time.monotonic()
 
     try:
-        if config is not None and config.readtools_server_enabled:
+        if use_server:
             exit_code, stdout, stderr = readtools_server.run_validation(
                 config, files, format_type.value, timeout_seconds
             )
@@ -186,6 +191,11 @@ def validate_with_readtools(
         )
         logger.error(message)
         raise ProcessingFailure(message) from None
+
+    logger.info(
+        f"readtools validation of {file_names} finished in "
+        f"{time.monotonic() - started:.2f}s (exit code {exit_code})"
+    )
 
     if exit_code == 0:
         return
