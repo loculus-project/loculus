@@ -1755,6 +1755,7 @@ defaultOrganismConfig: &defaultOrganismConfig
     extraInputFields:
       - &hostConfig
         name: host
+        header: "Host"
         type: string
         displayName: "Host"
         definition: "NCBI taxon ID or scientific name that uniquely identifies the host from which the sample was collected."

@@ -2,7 +2,7 @@
 {{- $data := . }}
 {{- $metadata := $data.metadata }}
 {{- $extraFields := $data.extraInputFields }}
-{{- $TO_KEEP := list "name" "displayName" "definition" "guidance" "example" "required" "requiredWhen" "noEdit" "desired" "options"}}
+{{- $TO_KEEP := list "name" "displayName" "definition" "guidance" "example" "required" "requiredWhen" "noEdit" "desired" "options" "header"}}
 
 {{- /* Determine default id field based on maxSequencesPerEntry */}}
 {{- $maxSeq := 1 }}

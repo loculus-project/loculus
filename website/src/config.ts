@@ -321,7 +321,7 @@ export function getGroupedInputFields(
 
     nonIdInputFields.forEach((field) => {
         const metadataEntry = schema.metadata.find((meta) => meta.name === field.name);
-        const header = metadataEntry?.header ?? 'Uncategorized';
+        const header = field.header ?? metadataEntry?.header ?? 'Uncategorized';
 
         if (!groups.has(header)) {
             groups.set(header, []);
