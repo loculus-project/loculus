@@ -1,7 +1,8 @@
 import logging
 import time
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
+from concurrent.futures import Future, ThreadPoolExecutor
 from tempfile import TemporaryDirectory
 from typing import Any
 
@@ -571,18 +572,60 @@ def unpack_annotations(config, nextclade_metadata: dict[str, Any] | None) -> dic
     return annotations
 
 
+SubmissionFiles = dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
+
+
+def process_files(
+    accession_version: AccessionVersion,
+    files: SubmissionFiles,
+    config: Config,
+) -> list[ProcessingAnnotation]:
+    """Send an entry's files to the file processing service, if it has any"""
+    if not files or not any(files.values()):
+        return []
+    return config._file_processing_service.process_files(files, accession_version=accession_version)
+
+
+def submit_file_processing(
+    entries: Iterable[tuple[AccessionVersion, SubmissionFiles]],
+    config: Config,
+    executor: ThreadPoolExecutor,
+) -> dict[AccessionVersion, Future[list[ProcessingAnnotation]]]:
+    """Start processing the files of all entries in a batch concurrently
+
+    Each entry costs one blocking HTTP request to the raw reads processing service, so
+    running them in threads rather than one after another is what makes a batch fast.
+    Entries without files are not submitted; `prefetched_file_errors` treats them as clean.
+    """
+    return {
+        accession_version: executor.submit(process_files, accession_version, files, config)
+        for accession_version, files in entries
+        if files and any(files.values())
+    }
+
+
+def prefetched_file_errors(
+    futures: dict[AccessionVersion, Future[list[ProcessingAnnotation]]],
+    accession_version: AccessionVersion,
+) -> list[ProcessingAnnotation]:
+    """Wait for an entry's file processing to finish, re-raising in the calling thread"""
+    future = futures.get(accession_version)
+    return future.result() if future else []
+
+
 def process_single(
     accession_version: AccessionVersion,
     unprocessed: UnprocessedAfterNextclade,
     config: Config,
+    file_errors: list[ProcessingAnnotation] | None = None,
 ) -> SubmissionData:
-    """Process a single sequence per config"""
-    # process files first as S3 read URLs have a limited lifetime
-    file_errors = []
-    if unprocessed.files and any(unprocessed.files.values()):
-        file_errors = config._file_processing_service.process_files(
-            unprocessed.files, accession_version=accession_version
-        )
+    """Process a single sequence per config
+
+    `file_errors` can be passed in when files were already processed for the whole batch
+    (see `process_all`); otherwise files are processed here.
+    """
+    if file_errors is None:
+        file_errors = process_files(accession_version, unprocessed.files, config)
 
     iupac_errors = errors_if_non_iupac(unprocessed.unalignedNucleotideSequences)
 
@@ -638,14 +681,15 @@ def process_single_unaligned(
     accession_version: AccessionVersion,
     unprocessed: UnprocessedData,
     config: Config,
+    file_errors: list[ProcessingAnnotation] | None = None,
 ) -> SubmissionData:
-    """Process a single sequence per config"""
-    # process files first as S3 read URLs have a limited lifetime
-    file_errors = []
-    if unprocessed.files and any(unprocessed.files.values()):
-        file_errors = config._file_processing_service.process_files(
-            unprocessed.files, accession_version=accession_version
-        )
+    """Process a single sequence per config
+
+    `file_errors` can be passed in when files were already processed for the whole batch
+    (see `process_all`); otherwise files are processed here.
+    """
+    if file_errors is None:
+        file_errors = process_files(accession_version, unprocessed.files, config)
 
     segment_assignment = assign_segment_using_header(
         input_unaligned_sequences=unprocessed.unalignedNucleotideSequences,
@@ -706,25 +750,38 @@ def process_all(
 ) -> Sequence[SubmissionData]:
     processed_results = []
     logger.debug(f"Processing {len(unprocessed)} unprocessed sequences")
-    if config.alignment_requirement != AlignmentRequirement.NONE:
-        nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
-        for id, result in nextclade_results.items():
-            try:
-                processed_single = process_single(id, result, config)
-            except Exception as e:
-                logger.error(f"Processing failed for {id} with error: {e}")
-                processed_single = processed_entry_with_errors(id)
-            processed_results.append(processed_single)
-    else:
-        for entry in unprocessed:
-            try:
-                processed_single = process_single_unaligned(
-                    entry.accessionVersion, entry.data, config
-                )
-            except Exception as e:
-                logger.error(f"Processing failed for {entry.accessionVersion} with error: {e}")
-                processed_single = processed_entry_with_errors(entry.accessionVersion)
-            processed_results.append(processed_single)
+    # Files are processed for the whole batch up front, and concurrently: the S3 read URLs
+    # have a limited lifetime, and one entry's file processing takes seconds.
+    max_workers = max(1, config.raw_reads_processing_concurrency)
+    with ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="file-processing") as pool:
+        if config.alignment_requirement != AlignmentRequirement.NONE:
+            nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
+            file_futures = submit_file_processing(
+                ((id, result.files) for id, result in nextclade_results.items()), config, pool
+            )
+            for id, result in nextclade_results.items():
+                try:
+                    processed_single = process_single(
+                        id, result, config, file_errors=prefetched_file_errors(file_futures, id)
+                    )
+                except Exception as e:
+                    logger.error(f"Processing failed for {id} with error: {e}")
+                    processed_single = processed_entry_with_errors(id)
+                processed_results.append(processed_single)
+        else:
+            file_futures = submit_file_processing(
+                ((entry.accessionVersion, entry.data.files) for entry in unprocessed), config, pool
+            )
+            for entry in unprocessed:
+                id = entry.accessionVersion
+                try:
+                    processed_single = process_single_unaligned(
+                        id, entry.data, config, file_errors=prefetched_file_errors(file_futures, id)
+                    )
+                except Exception as e:
+                    logger.error(f"Processing failed for {id} with error: {e}")
+                    processed_single = processed_entry_with_errors(id)
+                processed_results.append(processed_single)
 
     return processed_results
 

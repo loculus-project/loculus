@@ -1,4 +1,5 @@
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -39,6 +40,28 @@ def download_file(
     logger.debug(f"Successfully downloaded file '{file.name}' to '{save_path}'")
 
 
+def download_files(
+    config: Config, files: list[FileIdAndNameAndReadUrl], target_dir: Path
+) -> dict[FileName, Path]:
+    """Download all files of a submission into target_dir, both mates at the same time"""
+    with ThreadPoolExecutor(
+        max_workers=max(1, len(files)), thread_name_prefix="s3-download"
+    ) as pool:
+        futures = [
+            pool.submit(download_file, config, file, target_dir / f"{file.fileId}")
+            for file in files
+        ]
+        # Wait for every download, so that a failing one is not raised while the other
+        # is still writing into target_dir.
+        errors = [future.exception() for future in futures]
+
+    for error in errors:
+        if error is not None:
+            raise error
+
+    return {file.name: target_dir / f"{file.fileId}" for file in files}
+
+
 def validate_raw_reads_submission(
     config: Config,
     request_with_files: RequestWithFiles,
@@ -53,11 +76,7 @@ def validate_raw_reads_submission(
     validate_file_numbers(file_format, [file.name for file in files])
 
     with TemporaryDirectory() as tmp_dir:
-        local_files: dict[FileName, Path] = {}
-        for file in files:
-            downloaded_file_path = Path(tmp_dir) / f"{file.fileId}"
-            download_file(config, file, downloaded_file_path)
-            local_files[file.name] = downloaded_file_path
+        local_files = download_files(config, files, Path(tmp_dir))
 
         validate_with_readtools(
             local_files, file_format, config.read_validation_timeout_seconds
