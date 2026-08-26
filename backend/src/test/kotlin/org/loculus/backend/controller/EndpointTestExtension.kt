@@ -134,6 +134,7 @@ class EndpointTestExtension :
     BeforeAllCallback,
     BeforeEachCallback {
 
+    /** Runs before Spring builds the context, because Spring builds it at test-instance creation, not in beforeAll. */
     override fun beforeAll(context: ExtensionContext) {
         // Measured: JUnit does not remember a failed store value, so without this every class retries the startup.
         startupFailure?.let { throw it }
@@ -143,6 +144,8 @@ class EndpointTestExtension :
                 .getStore(ExtensionContext.Namespace.GLOBAL)
                 .computeIfAbsent(TestInfrastructure::class.java)
         } catch (e: Throwable) {
+            // Nothing was stored, so close() never runs: stop whatever did start before giving up.
+            runCatching { env.stop() }
             startupFailure = e
             throw e
         }
