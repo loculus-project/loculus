@@ -154,9 +154,7 @@ class SubmissionTableEntry(Base):
 
     # Optional fields with defaults.
     # 'seq_metadata' maps to the DB column "metadata".
-    seq_metadata: Mapped[dict[str, Any]] = mapped_column(
-        "metadata", JSONB, nullable=True, default_factory=dict
-    )
+    seq_metadata: Mapped[dict[str, Any]] = mapped_column("metadata", JSONB, default_factory=dict)
     errors: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
     warnings: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
     status_all: Mapped[Status] = mapped_column(
@@ -166,7 +164,7 @@ class SubmissionTableEntry(Base):
     started_at: Mapped[datetime] = mapped_column(default_factory=lambda: datetime.now(tz=pytz.utc))
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     unaligned_nucleotide_sequences: Mapped[dict[str, str | None]] = mapped_column(
-        JSONB, nullable=True, default_factory=dict
+        JSONB, default_factory=dict
     )
     center_name: Mapped[str | None] = mapped_column(default=None)
     external_metadata: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(
