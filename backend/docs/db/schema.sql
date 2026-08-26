@@ -4,8 +4,8 @@
 
 \restrict dummy
 
--- Dumped from database version 15.18 (Debian 15.18-1.pgdg13+1)
--- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
+-- Dumped from database version 15.19 (Debian 15.19-1.pgdg13+2)
+-- Dumped by pg_dump version 16.15 (Debian 16.15-1.pgdg13+2)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -58,12 +58,14 @@ CREATE FUNCTION public.update_current_processing_pipeline_tracker() RETURNS trig
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
-    SELECT TG_TABLE_NAME, cr.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
+    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated, last_xid)
+    SELECT TG_TABLE_NAME, cr.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP), pg_current_xact_id()
     FROM changed_rows cr
     GROUP BY cr.organism
-    ON CONFLICT (table_name, organism, pipeline_version)
-    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+    ON CONFLICT (table_name, organism, pipeline_version) DO UPDATE SET
+        last_time_updated = EXCLUDED.last_time_updated,
+        last_xid = EXCLUDED.last_xid
+    WHERE table_update_tracker.last_xid IS DISTINCT FROM EXCLUDED.last_xid;
     RETURN NULL;
 END;
 $$;
@@ -79,14 +81,15 @@ CREATE FUNCTION public.update_data_use_terms_table_tracker() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
-    SELECT TG_TABLE_NAME, se.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
+    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated, last_xid)
+    SELECT TG_TABLE_NAME, se.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP), pg_current_xact_id()
     FROM changed_rows cr
-    JOIN sequence_entries se
-      ON se.accession = cr.accession
+    JOIN sequence_entries se ON se.accession = cr.accession
     GROUP BY se.organism
-    ON CONFLICT (table_name, organism, pipeline_version)
-    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+    ON CONFLICT (table_name, organism, pipeline_version) DO UPDATE SET
+        last_time_updated = EXCLUDED.last_time_updated,
+        last_xid = EXCLUDED.last_xid
+    WHERE table_update_tracker.last_xid IS DISTINCT FROM EXCLUDED.last_xid;
     RETURN NULL;
 END;
 $$;
@@ -102,14 +105,15 @@ CREATE FUNCTION public.update_external_metadata_tracker() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
-    SELECT TG_TABLE_NAME, se.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
+    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated, last_xid)
+    SELECT TG_TABLE_NAME, se.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP), pg_current_xact_id()
     FROM changed_rows cr
-    JOIN sequence_entries se
-      ON se.accession = cr.accession AND se.version = cr.version
+    JOIN sequence_entries se ON se.accession = cr.accession AND se.version = cr.version
     GROUP BY se.organism
-    ON CONFLICT (table_name, organism, pipeline_version)
-    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+    ON CONFLICT (table_name, organism, pipeline_version) DO UPDATE SET
+        last_time_updated = EXCLUDED.last_time_updated,
+        last_xid = EXCLUDED.last_xid
+    WHERE table_update_tracker.last_xid IS DISTINCT FROM EXCLUDED.last_xid;
     RETURN NULL;
 END;
 $$;
@@ -125,14 +129,15 @@ CREATE FUNCTION public.update_preprocessed_data_tracker() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
-    SELECT TG_TABLE_NAME, se.organism, cr.pipeline_version, timezone('UTC', CURRENT_TIMESTAMP)
+    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated, last_xid)
+    SELECT TG_TABLE_NAME, se.organism, cr.pipeline_version, timezone('UTC', CURRENT_TIMESTAMP), pg_current_xact_id()
     FROM changed_rows cr
-    JOIN sequence_entries se
-      ON se.accession = cr.accession AND se.version = cr.version
+    JOIN sequence_entries se ON se.accession = cr.accession AND se.version = cr.version
     GROUP BY se.organism, cr.pipeline_version
-    ON CONFLICT (table_name, organism, pipeline_version)
-    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+    ON CONFLICT (table_name, organism, pipeline_version) DO UPDATE SET
+        last_time_updated = EXCLUDED.last_time_updated,
+        last_xid = EXCLUDED.last_xid
+    WHERE table_update_tracker.last_xid IS DISTINCT FROM EXCLUDED.last_xid;
     RETURN NULL;
 END;
 $$;
@@ -148,12 +153,14 @@ CREATE FUNCTION public.update_sequence_entries_tracker() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
-    SELECT TG_TABLE_NAME, cr.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
+    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated, last_xid)
+    SELECT TG_TABLE_NAME, cr.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP), pg_current_xact_id()
     FROM changed_rows cr
     GROUP BY cr.organism
-    ON CONFLICT (table_name, organism, pipeline_version)
-    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+    ON CONFLICT (table_name, organism, pipeline_version) DO UPDATE SET
+        last_time_updated = EXCLUDED.last_time_updated,
+        last_xid = EXCLUDED.last_xid
+    WHERE table_update_tracker.last_xid IS DISTINCT FROM EXCLUDED.last_xid;
     RETURN NULL;
 END;
 $$;
@@ -170,10 +177,12 @@ CREATE FUNCTION public.update_table_tracker() RETURNS trigger
     AS $$
 BEGIN
     IF TG_TABLE_NAME != 'table_update_tracker' THEN
-        INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
-        VALUES (TG_TABLE_NAME, NULL, NULL, timezone('UTC', CURRENT_TIMESTAMP))
-        ON CONFLICT (table_name, organism, pipeline_version)
-        DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+        INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated, last_xid)
+        VALUES (TG_TABLE_NAME, NULL, NULL, timezone('UTC', CURRENT_TIMESTAMP), pg_current_xact_id())
+        ON CONFLICT (table_name, organism, pipeline_version) DO UPDATE SET
+            last_time_updated = EXCLUDED.last_time_updated,
+            last_xid = EXCLUDED.last_xid
+        WHERE table_update_tracker.last_xid IS DISTINCT FROM EXCLUDED.last_xid;
     END IF;
     RETURN NULL;
 END;
@@ -692,7 +701,8 @@ CREATE TABLE public.table_update_tracker (
     table_name text NOT NULL,
     last_time_updated timestamp without time zone DEFAULT timezone('UTC'::text, CURRENT_TIMESTAMP),
     organism text,
-    pipeline_version bigint
+    pipeline_version bigint,
+    last_xid xid8
 );
 
 
