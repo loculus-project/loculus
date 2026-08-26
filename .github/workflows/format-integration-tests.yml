@@ -4,9 +4,11 @@ on:
   push:
     paths:
       - 'integration-tests/**'
+      - '.github/workflows/format-integration-tests.yml'
   pull_request:
     paths:
       - 'integration-tests/**'
+      - '.github/workflows/format-integration-tests.yml'
 
 jobs:
   format:
