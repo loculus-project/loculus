@@ -3,9 +3,14 @@ import os
 import subprocess  # noqa: S404
 from enum import StrEnum
 from pathlib import Path
+from typing import TYPE_CHECKING
 
+from raw_reads_processing import readtools_server
 from raw_reads_processing.datatypes import Annotation, FileName
 from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
+
+if TYPE_CHECKING:
+    from raw_reads_processing.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -128,46 +133,68 @@ def validate_file_numbers(file_format: FileFormat, file_names: list[FileName]) -
         )
 
 
-def validate_with_readtools(
-    file_name_to_path: dict[FileName, Path],
-    format_type: FileFormat,
-    timeout_seconds: int = 300,
-) -> None:
-    file_names = list(file_name_to_path.keys())
+def _run_readtools_subprocess(
+    files: list[str], file_format: FileFormat, timeout_seconds: int
+) -> tuple[int, str, str]:
+    """Validate by forking a fresh JVM, paying its classloading and JIT warm-up each time."""
     args = (
-        ["java", "-jar", VALIDATION_JAR_PATH]
-        + [str(file) for file in file_name_to_path.values()]
-        + [
-            "--format",
-            format_type.value,
-        ]
+        ["java", "-jar", VALIDATION_JAR_PATH] + files + ["--format", file_format.value]
     )
-    logger.debug(f"Running validation on '{file_names}': {args}")
+    logger.debug(f"Running validation: {args}")
 
     try:
-        subprocess.run(  # noqa: S603
+        result = subprocess.run(  # noqa: S603
             args,
-            check=True,
+            check=False,
             capture_output=True,
             text=True,
             timeout=timeout_seconds,
         )
     except subprocess.TimeoutExpired:
+        raise TimeoutError from None
+    return result.returncode, result.stdout, result.stderr
+
+
+def validate_with_readtools(
+    file_name_to_path: dict[FileName, Path],
+    format_type: FileFormat,
+    timeout_seconds: int = 300,
+    config: "Config | None" = None,
+) -> None:
+    """Validate the submitted files with ENA readtools.
+
+    Uses the warm validation server when one is configured, otherwise forks a JVM per call.
+    Both paths run identical validation code and return identical output, so the message a
+    submitter sees does not depend on which one ran.
+    """
+    file_names = list(file_name_to_path.keys())
+    files = [str(file) for file in file_name_to_path.values()]
+
+    try:
+        if config is not None and config.readtools_server_enabled:
+            exit_code, stdout, stderr = readtools_server.run_validation(
+                config, files, format_type.value, timeout_seconds
+            )
+        else:
+            exit_code, stdout, stderr = _run_readtools_subprocess(
+                files, format_type, timeout_seconds
+            )
+    except TimeoutError:
         message = (
             f"Validation of files '{','.join(file_names)}' "
             f"timed out after {timeout_seconds} seconds."
         )
         logger.error(message)
         raise ProcessingFailure(message) from None
-    except subprocess.CalledProcessError as error:
-        validation_error = _parse_validation_error(
-            stdout=error.stdout,
-            stderr=error.stderr,
+
+    if exit_code == 0:
+        return
+
+    validation_error = _parse_validation_error(stdout=stdout, stderr=stderr)
+    logger.error(validation_error)
+    raise InvalidSubmission(
+        error=Annotation(
+            fileNames=file_names,
+            message=validation_error,
         )
-        logger.error(validation_error)
-        raise InvalidSubmission(
-            error=Annotation(
-                fileNames=file_names,
-                message=validation_error,
-            )
-        ) from error
+    )

@@ -14,7 +14,7 @@ Download validation jar using:
 
 ```sh
 curl -L -o readtools.jar \
-  https://github.com/loculus-project/readtools/releases/download/v1.0.0/readtools-2.15.1-all.jar
+  https://github.com/loculus-project/readtools/releases/download/v1.1.0/readtools-2.15.1-all.jar
 ```
 
 ## How to configure the service
@@ -68,6 +68,29 @@ truly duplicate read names within a single file:
 ```sh
 READTOOLS_JAR=readtools.jar java -jar readtools.jar read1.fastq [read2.fastq] --format FASTQ
 ```
+
+### The warm validation server
+
+Forking a JVM per submission spends about half its wall time on classloading and JIT warm-up that
+the process then throws away. Instead the service starts one long-lived readtools JVM at startup
+(`raw_reads_processing.readtools_server`), warms it up, and POSTs each validation to it on
+loopback. On this codebase's benchmark data that takes a validation from ~1.3 s to ~0.9 s on its
+own, and to ~0.3 s when several run concurrently in the one JVM — which matters because the
+resident deacon index leaves too little memory to fork several JVMs instead.
+
+The server returns the exact stdout/stderr the CLI would have printed, so both paths produce the
+same error message for the same file; `test_server_and_subprocess_agree` pins that.
+
+Startup blocks until the JVM reports healthy, so no submission is ever served by a cold JVM. Set
+`readtools_server_enabled: false` to go back to forking a JVM per validation.
+
+| setting | default | |
+|---|---|---|
+| `readtools_server_enabled` | `true` | fall back to a JVM per validation when `false` |
+| `readtools_server_port` | `5001` | loopback only |
+| `readtools_server_threads` | `4` | concurrent validations; also bounds heap use |
+| `readtools_server_max_heap` | `1g` | `-Xmx` for the validation JVM |
+| `readtools_server_startup_timeout_seconds` | `300` | includes JIT warm-up |
 ## Validate sequences have been dehosted (deacon)
 
 Files that pass format validation are screened for human host reads with
