@@ -122,8 +122,28 @@ tasks.named('test') {
     if (!System.getenv('USE_NONDOCKER_INFRA')?.toBoolean()) {
         dependsOn checkDocker
     }
+    
     useJUnitPlatform()
+    
+    // https://github.com/mockk/mockk/pull/1550
+    doFirst {
+        def agentJar = configurations.testRuntimeClasspath.files.find { it.name.startsWith('byte-buddy-agent-') }
+        if (agentJar != null) {
+            jvmArgs "-javaagent:${agentJar.absolutePath}"
+        } else {
+            logger.warn("byte-buddy-agent jar not found on testRuntimeClasspath; running tests without -javaagent")
+        }
+    }
+    
+    // https://github.com/raphw/byte-buddy/issues/1922
+    jvmArgs '--sun-misc-unsafe-memory-access=allow'
+    
+    // Same reason as org.gradle.jvmargs in gradle.properties, but for the forked test JVM:
+    // https://github.com/gradle/gradle/issues/19989
+    jvmArgs '-Xshare:off'
+    
     jvmArgs '--enable-native-access=ALL-UNNAMED'
+    
     testLogging {
         events TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR
         exceptionFormat = TestExceptionFormat.FULL
