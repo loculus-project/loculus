@@ -163,7 +163,7 @@ class SubmissionTableEntry(Base):
         Enum(StatusAll, native_enum=False),  # Store enum as string in DB table.
         default=StatusAll.READY_TO_SUBMIT,
     )
-    started_at: Mapped[datetime | None] = mapped_column(nullable=False, default=None)
+    started_at: Mapped[datetime] = mapped_column(default_factory=lambda: datetime.now(tz=pytz.utc))
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     unaligned_nucleotide_sequences: Mapped[dict[str, str | None]] = mapped_column(
         JSONB, nullable=True, default_factory=dict
@@ -203,7 +203,7 @@ class ProjectTableEntry(Base):
         Enum(Status, native_enum=False),
         default=Status.READY,
     )
-    started_at: Mapped[datetime | None] = mapped_column(nullable=False, default=None)
+    started_at: Mapped[datetime] = mapped_column(default_factory=lambda: datetime.now(tz=pytz.utc))
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     center_name: Mapped[str | None] = mapped_column(default=None)
     result: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(JSONB, default=None)
@@ -233,7 +233,7 @@ class SampleTableEntry(Base):
         Enum(Status, native_enum=False),
         default=Status.READY,
     )
-    started_at: Mapped[datetime | None] = mapped_column(nullable=False, default=None)
+    started_at: Mapped[datetime] = mapped_column(default_factory=lambda: datetime.now(tz=pytz.utc))
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     result: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(JSONB, default=None)
     ena_first_publicly_visible: Mapped[datetime | None] = mapped_column(
@@ -262,7 +262,7 @@ class AssemblyTableEntry(Base):
         Enum(Status, native_enum=False),
         default=Status.READY,
     )
-    started_at: Mapped[datetime | None] = mapped_column(nullable=False, default=None)
+    started_at: Mapped[datetime] = mapped_column(default_factory=lambda: datetime.now(tz=pytz.utc))
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     result: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(JSONB, default=None)
     ena_nucleotide_first_publicly_visible: Mapped[datetime | None] = mapped_column(
