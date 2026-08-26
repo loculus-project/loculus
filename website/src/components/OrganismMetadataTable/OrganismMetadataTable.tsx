@@ -225,12 +225,14 @@ export type MetadataTableProps = (
           fields: Metadata[];
           search: string;
           isInputFields?: false;
+          expandedHeader?: boolean;
       }
     | {
           header: string;
           fields: TypedInputField[];
           search: string;
           isInputFields: true;
+          expandedHeader?: boolean;
       }
 ) & {
     /** Extra classes merged onto the section header's `<h3>`, appended after the default classes. */
@@ -253,7 +255,7 @@ function containsSearch(header: string, field: Metadata | TypedInputField, searc
 }
 
 export const MetadataTableSection: FC<MetadataTableProps> = (props) => {
-    const [expandedHeader, setExpandedHeader] = useState<boolean>(true);
+    const [expandedHeader, setExpandedHeader] = useState<boolean>(props.expandedHeader ?? true);
     const filteredFields = props.search
         ? props.fields.filter((field) => containsSearch(props.header, field, props.search))
         : props.fields;
