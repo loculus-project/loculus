@@ -13,8 +13,5 @@ object UpdateTrackerTable : Table(UPDATE_TRACKER_TABLE_NAME) {
     val organismColumn = text("organism").nullable()
     val pipelineVersionColumn = long("pipeline_version").nullable()
     val lastTimeUpdatedDbColumn = text("last_time_updated")
-
-    // Written only by the tracker triggers, which use it to skip their upsert when this
-    // transaction already wrote the row. NULL until a row is first written by them.
     val lastXidColumn = text("last_xid").nullable()
 }
