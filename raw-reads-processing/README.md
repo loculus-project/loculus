@@ -14,7 +14,7 @@ Download validation jar using:
 
 ```sh
 curl -L -o readtools.jar \
-  https://github.com/loculus-project/readtools/releases/download/v1.1.0/readtools-2.15.1-all.jar
+  https://github.com/corneliusroemer-agent/readtools/releases/download/v1.1.0-rc1/readtools-2.15.1-all.jar
 ```
 
 ## How to configure the service
