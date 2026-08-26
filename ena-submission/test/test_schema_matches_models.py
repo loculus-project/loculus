@@ -120,7 +120,13 @@ def test_orm_models_match_flyway_schema() -> None:
     db_metadata.reflect(bind=engine, schema=SCHEMA)
 
     failures: dict[str, list[str]] = {}
-    for orm_table in Base.metadata.tables.values():
+    orm_tables = {t.name: t for t in Base.metadata.tables.values()}
+    db_table_names = {key.split(".", 1)[1] for key in db_metadata.tables} - {
+        "flyway_schema_history"
+    }
+    for extra in sorted(db_table_names - orm_tables.keys()):
+        failures[extra] = [f"table '{extra}' exists in DB {SCHEMA} but is not defined in the ORM"]
+    for orm_table in orm_tables.values():
         table_name = orm_table.name
         db_table_key = f"{SCHEMA}.{table_name}"
         if db_table_key not in db_metadata.tables:
