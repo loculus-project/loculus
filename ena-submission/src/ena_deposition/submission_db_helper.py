@@ -157,7 +157,7 @@ class SubmissionTableEntry(Base):
     seq_metadata: Mapped[dict[str, Any]] = mapped_column("metadata", JSONB, default_factory=dict)
     errors: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
     warnings: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
-    status_all: Mapped[Status] = mapped_column(
+    status_all: Mapped[StatusAll] = mapped_column(
         Enum(StatusAll, native_enum=False),  # Store enum as string in DB table.
         default=StatusAll.READY_TO_SUBMIT,
     )
