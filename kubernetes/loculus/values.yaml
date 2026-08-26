@@ -3033,6 +3033,12 @@ resources:
       cpu: "10m"
     limits:
       memory: "1Gi"
+  raw-reads-processing:
+    requests:
+      memory: "8Gi"
+      cpu: "50m"
+    limits:
+      memory: "8Gi"
 defaultResources:
   requests:
     memory: "200Mi"
