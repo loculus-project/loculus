@@ -87,20 +87,15 @@ export const getPreviousFileUploadStates = (files: FilesByCategory): Map<string,
             ]),
     );
 
-const isUploaded = (file: SingleFileUpload): file is Uploaded | PreviousUpload =>
-    file.type === 'uploaded' || file.type === 'previousUpload';
-
-/**
- * The file mapping is derived from the upload states.
- * A file enters the mapping as soon as its own upload has finished, so files still uploading cannot be claimed as linked.
- */
 export const deriveFileMapping = (fileUploadStates: Map<string, FileUploadState>): FileMapping | undefined => {
     const mapping: FileMapping = new Map(
-        Array.from(fileUploadStates.entries()).flatMap(([category, state]) => {
-            const uploads = [...state.files].filter(isUploaded);
-            return uploads.length === 0
-                ? []
-                : [[category, new Map(uploads.map((file) => [file.path, file.fileId]))] as const];
+        Array.from(fileUploadStates.entries()).flatMap(([category, fileUploadState]) => {
+            // Only files that have finished uploading are included in the file mapping and can be claimed as linked
+            const uploads = fileUploadState.files.filter(
+                (file) => file.type === 'uploaded' || file.type === 'previousUpload',
+            ) as (Uploaded | PreviousUpload)[];
+
+            return uploads.length === 0 ? [] : [[category, new Map(uploads.map((file) => [file.path, file.fileId]))]];
         }),
     );
     return mapping.size === 0 ? undefined : mapping;
