@@ -189,57 +189,26 @@ class BatchSubmissionError(Exception):
     """Raised at the end of a run if one or more batches could not be submitted."""
 
 
-# Errors where we know the request never reached the backend, so re-sending it
-# cannot create a duplicate submission.
-RETRIABLE_ERRORS = (requests.exceptions.ConnectTimeout,)
-MAX_BATCH_ATTEMPTS = 3
-RETRY_BACKOFF_SECONDS = 10
-
-
-def build_batch_files(batch_it: BatchIterator) -> dict[str, Any]:
-    """Build a fresh multipart body. Must be called per attempt: requests reads the
-    BytesIO objects to EOF, so a reused dict uploads two empty files."""
-    return {
-        "metadataFile": (
-            "metadata.tsv",
-            BytesIO("".join(batch_it.metadata_batch_output).encode("utf-8")),
-            "text/tab-separated-values",
-        ),
-        "sequenceFile": (
-            "sequences.fasta",
-            BytesIO("".join(batch_it.sequences_batch_output).encode("utf-8")),
-            "text/plain",
-        ),
-    }
-
-
 def submit(
     url,
     config: Config,
     params: dict[str, str],
     batch_it: BatchIterator,
 ) -> list[dict[str, Any]]:
-    """Submit one batch, retrying only failures that provably never reached the backend.
-    Returns the submissionId mappings for this batch."""
+    """Submit one batch and return its submissionId mappings."""
     batch_num = -(int(batch_it.record_counter) // -config.batch_chunk_size)  # ceiling division
+    logger.info(f"Submitting batch {batch_num}")
 
-    for attempt in range(1, MAX_BATCH_ATTEMPTS + 1):
-        logger.info(f"Submitting batch {batch_num} (attempt {attempt}/{MAX_BATCH_ATTEMPTS})")
-        try:
-            response = make_request(
-                HTTPMethod.POST, url, config, params=params, files=build_batch_files(batch_it)
-            )
-        except RETRIABLE_ERRORS as e:
-            if attempt == MAX_BATCH_ATTEMPTS:
-                raise
-            logger.warning(f"Batch {batch_num} did not reach the backend ({e!r}), retrying")
-            sleep(RETRY_BACKOFF_SECONDS * attempt)
-            continue
-        logger.info(f"Batch {batch_num} response: {response.status_code}")
-        return response.json()
+    metadata_in_memory = BytesIO("".join(batch_it.metadata_batch_output).encode("utf-8"))
+    fasta_in_memory = BytesIO("".join(batch_it.sequences_batch_output).encode("utf-8"))
 
-    msg = f"unreachable: batch {batch_num} retry loop exited without returning"
-    raise AssertionError(msg)
+    files = {
+        "metadataFile": ("metadata.tsv", metadata_in_memory, "text/tab-separated-values"),
+        "sequenceFile": ("sequences.fasta", fasta_in_memory, "text/plain"),
+    }
+    response = make_request(HTTPMethod.POST, url, config, params=params, files=files)
+    logger.info(f"Batch {batch_num} Response: {response.status_code}")
+    return response.json()
 
 
 def add_seq_to_batch(
