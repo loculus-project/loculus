@@ -143,6 +143,48 @@ def test_server_is_not_used_when_disabled(tmp_path, monkeypatch):
     post.assert_not_called()
 
 
+def test_full_validation_flag_reaches_the_server(tmp_path, monkeypatch):
+    post = Mock(
+        return_value=Mock(
+            status_code=200,
+            json=Mock(return_value={"exitCode": 0, "stdout": "", "stderr": ""}),
+        )
+    )
+    monkeypatch.setattr(readtools_server.requests, "post", post)
+    reads = _write(tmp_path, "reads.fastq", VALID_SINGLE_END)
+    validate_with_readtools(
+        {"reads.fastq": reads},
+        FileFormat.FASTQ,
+        config=_config(readtools_full_validation=True),
+    )
+    assert post.call_args.kwargs["json"]["full"] is True
+
+
+def test_full_validation_flag_reaches_the_subprocess(tmp_path):
+    """Both paths must agree on how much of the file gets validated."""
+    reads = _write(tmp_path, "reads.fastq", VALID_SINGLE_END)
+    if _find_jar() is None:
+        pytest.skip("readtools jar not found")
+    exit_code, stdout, _ = file_format_validation._run_readtools_subprocess(
+        [str(reads)], FileFormat.FASTQ, 120, full=True
+    )
+    assert exit_code == 0
+    assert "full (<=100M reads)" in stdout
+
+
+def test_quick_is_the_default(tmp_path, monkeypatch):
+    post = Mock(
+        return_value=Mock(
+            status_code=200,
+            json=Mock(return_value={"exitCode": 0, "stdout": "", "stderr": ""}),
+        )
+    )
+    monkeypatch.setattr(readtools_server.requests, "post", post)
+    reads = _write(tmp_path, "reads.fastq", VALID_SINGLE_END)
+    validate_with_readtools({"reads.fastq": reads}, FileFormat.FASTQ, config=_config())
+    assert post.call_args.kwargs["json"]["full"] is False
+
+
 def test_startup_reports_a_server_that_dies_immediately():
     config = _config(
         readtools_server_port=_free_port(), readtools_server_startup_timeout_seconds=5

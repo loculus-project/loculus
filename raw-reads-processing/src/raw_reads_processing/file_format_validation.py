@@ -135,12 +135,15 @@ def validate_file_numbers(file_format: FileFormat, file_names: list[FileName]) -
 
 
 def _run_readtools_subprocess(
-    files: list[str], file_format: FileFormat, timeout_seconds: int
+    files: list[str], file_format: FileFormat, timeout_seconds: int, full: bool = False
 ) -> tuple[int, str, str]:
     """Validate by forking a fresh JVM, paying its classloading and JIT warm-up each time."""
     args = (
         ["java", "-jar", VALIDATION_JAR_PATH] + files + ["--format", file_format.value]
     )
+    if full:
+        args.append("--full")
+
     try:
         result = subprocess.run(  # noqa: S603
             args,
@@ -169,20 +172,22 @@ def validate_with_readtools(
     file_names = list(file_name_to_path.keys())
     files = [str(file) for file in file_name_to_path.values()]
     use_server = config is not None and config.readtools_server_enabled
+    full = config is not None and config.readtools_full_validation
     logger.debug(
         f"Validating {file_names} with readtools "
-        f"({'warm server' if use_server else 'subprocess'})"
+        f"({'warm server' if use_server else 'subprocess'}, "
+        f"{'full' if full else 'quick'})"
     )
     started = time.monotonic()
 
     try:
         if use_server:
             exit_code, stdout, stderr = readtools_server.run_validation(
-                config, files, format_type.value, timeout_seconds
+                config, files, format_type.value, timeout_seconds, full=full
             )
         else:
             exit_code, stdout, stderr = _run_readtools_subprocess(
-                files, format_type, timeout_seconds
+                files, format_type, timeout_seconds, full=full
             )
     except TimeoutError:
         message = (

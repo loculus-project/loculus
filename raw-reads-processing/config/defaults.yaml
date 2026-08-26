@@ -2,6 +2,7 @@ log_level: DEBUG
 s3_request_timeout_seconds: 300
 deacon_filter_timeout_seconds: 600
 read_validation_timeout_seconds: 300
+readtools_full_validation: false
 readtools_server_enabled: true
 readtools_server_port: 5001
 readtools_server_threads: 4

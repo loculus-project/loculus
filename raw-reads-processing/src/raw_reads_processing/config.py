@@ -12,6 +12,10 @@ class Config(BaseModel):
     file_service_host: str | None = None
     file_service_port: int | None = None
 
+    # Validate every read rather than only the first 100k per file. Cost scales with read
+    # count instead of being capped, so this is materially slower on large submissions.
+    readtools_full_validation: bool = False
+
     # readtools warm validation server: one long-lived JVM instead of one per validation
     readtools_server_enabled: bool = True
     readtools_server_port: int = 5001

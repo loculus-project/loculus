@@ -99,6 +99,7 @@ def run_validation(
     files: list[str],
     file_format: str,
     timeout_seconds: int,
+    full: bool = False,
 ) -> tuple[int, str, str]:
     """Run one validation on the warm server.
 
@@ -108,7 +109,7 @@ def run_validation(
     try:
         response = requests.post(
             f"{server_url(config)}/validate",
-            json={"files": files, "format": file_format},
+            json={"files": files, "format": file_format, "full": full},
             timeout=timeout_seconds,
         )
     except requests.Timeout:
