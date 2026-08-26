@@ -136,6 +136,8 @@ def test_orm_models_match_flyway_schema() -> None:
         if mismatches:
             failures[table_name] = mismatches
 
+    engine.dispose()
+
     assert not failures, "\n".join(
         f"{table}:\n  " + "\n  ".join(issues) for table, issues in failures.items()
     )
