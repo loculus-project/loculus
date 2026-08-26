@@ -49,7 +49,7 @@ const FolderUploadComponentWithState = ({
     const states = new Map(otherCategories);
     if (fileUploadState !== undefined) states.set(props.fileCategory.name, fileUploadState);
     const mapping = deriveFileMapping(states);
-    useEffect(() => onMapping?.(mapping));
+useEffect(() => onMapping?.(mapping), [mapping, onMapping]);
     return (
         <FolderUploadComponent {...props} fileUploadState={fileUploadState} setFileUploadState={setFileUploadState} />
     );
