@@ -135,6 +135,7 @@ class SubmissionDatabaseService(
     private val auditLogger: AuditLogger,
     private val dateProvider: DateProvider,
     private val submissionMetrics: SubmissionMetrics,
+    // A whole batch is serialized in memory before it is stored, so this also bounds peak heap.
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
 ) {
     private var lastPreprocessedDataUpdate: String? = null
@@ -516,7 +517,7 @@ class SubmissionDatabaseService(
         for (storedResult in storedResults) {
             val accessionVersion = AccessionVersion(storedResult.submitted.accession, storedResult.submitted.version)
             if (!seen.add(accessionVersion)) {
-                throw BadRequestException(
+                throw UnprocessableEntityException(
                     "Processed results contain duplicate accession version " +
                         accessionVersion.displayAccessionVersion(),
                 )

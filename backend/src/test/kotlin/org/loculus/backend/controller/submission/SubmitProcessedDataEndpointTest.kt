@@ -60,7 +60,11 @@ import java.net.http.HttpResponse
 import java.util.UUID
 
 @EndpointTest(
-    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
+    properties = [
+        // Batch size 2 so a request with three or more records spans several batches.
+        "${BackendSpringProperty.STREAM_BATCH_SIZE}=2",
+        "${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG",
+    ],
 )
 class SubmitProcessedDataEndpointTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
@@ -96,17 +100,35 @@ class SubmitProcessedDataEndpointTest(
     }
 
     @Test
-    fun `WHEN I submit the same accession version twice in one request THEN returns bad request`() {
+    fun `WHEN I submit the same accession version twice in one batch THEN returns unprocessable entity`() {
         val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
 
         submissionControllerClient.submitProcessedData(
             PreparedProcessedData.successfullyProcessed(accession = accessions.first()),
             PreparedProcessedData.successfullyProcessed(accession = accessions.first()),
         )
-            .andExpect(status().isBadRequest)
+            .andExpect(status().isUnprocessableEntity)
             .andExpect(jsonPath("\$.detail").value(containsString("duplicate accession version")))
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
+            .assertStatusIs(Status.IN_PROCESSING)
+    }
+
+    @Test
+    fun `WHEN a duplicate accession version spans two batches THEN returns unprocessable entity`() {
+        val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.successfullyProcessed(accession = accessions.first()),
+            PreparedProcessedData.successfullyProcessed(accession = accessions[1]),
+            PreparedProcessedData.successfullyProcessed(accession = accessions.first()),
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("\$.detail").value(containsString("duplicate accession version")))
+
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
+            .assertStatusIs(Status.IN_PROCESSING)
+        convenienceClient.getSequenceEntry(accession = accessions[1], version = 1)
             .assertStatusIs(Status.IN_PROCESSING)
     }
 
