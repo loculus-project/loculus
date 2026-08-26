@@ -15,10 +15,13 @@ on:
   pull_request:
     paths:
       - "backend/**"
+      - "cli/**"
       - "keycloak/**"
       - "kubernetes/**"
+      - "loculus-silo/**"
       - "preprocessing/**"
       - "raw-reads-processing/**"
+      - "taxonomy/taxonomy_service/**"
       - "website/**"
       - "deploy.py"
       - "integration-tests/**"
