@@ -5,7 +5,8 @@ import org.testcontainers.postgresql.PostgreSQLContainer
 import java.io.File
 
 class DockerPostgres : PostgresProvider {
-    private val container = PostgreSQLContainer("postgres:latest")
+    // THROWAWAY: deliberately unpullable tag, to see what a failed image pull looks like in the CI log.
+    private val container = PostgreSQLContainer("postgres:no-such-tag-loculus-ci-fault-injection")
 
     override val jdbcUrl: String
         get() = container.jdbcUrl
