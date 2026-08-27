@@ -12,8 +12,13 @@ import {
     testAccessToken,
     testOrganism,
 } from '../../../vitest.setup.ts';
-import { type SubmittedMetadataRecord } from '../../types/backend.ts';
+import {
+    approvedForReleaseStatus,
+    type SequenceEntryToEdit,
+    type SubmittedMetadataRecord,
+} from '../../types/backend.ts';
 import type { InputField } from '../../types/config.ts';
+import type { SequenceEntryHistory, SequenceEntryHistoryEntry } from '../../types/lapis.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 const queryClient = new QueryClient();
@@ -31,10 +36,35 @@ const groupedInputFields = new Map<string, InputField[]>([
     ],
 ]);
 
+const revisionData: SequenceEntryToEdit = { ...defaultReviewData, status: approvedForReleaseStatus };
+
+const baseEntry: SequenceEntryHistoryEntry = {
+    submittedAtTimestamp: '',
+    accession: defaultReviewData.accession,
+    version: 1,
+    accessionVersion: `${defaultReviewData.accession}.1`,
+    versionStatus: 'LATEST_VERSION',
+    isRevocation: false,
+};
+
+const revisedHistory: SequenceEntryHistory = [
+    { ...baseEntry, versionStatus: 'REVISED' },
+    { ...baseEntry, accessionVersion: `${defaultReviewData.accession}.2`, version: 2 },
+];
+
+const revokedHistory: SequenceEntryHistory = [
+    { ...baseEntry, versionStatus: 'REVOKED' },
+    { ...baseEntry, accessionVersion: `${defaultReviewData.accession}.2`, version: 2, isRevocation: true },
+];
+
+const REVOKED_WARNING = 'The latest version for this sequence is marked as revoked.';
+const NOT_LATEST_WARNING = 'This is not the latest version of this sequence entry.';
+
 function renderEditPage({
     editedData = defaultReviewData,
     clientConfig = dummyConfig,
     allowSubmissionOfConsensusSequences = true,
+    sequenceEntryHistory = undefined as SequenceEntryHistory | undefined,
 } = {}) {
     render(
         <QueryClientProvider client={queryClient}>
@@ -48,6 +78,7 @@ function renderEditPage({
                     consensusSequences: allowSubmissionOfConsensusSequences,
                     maxSequencesPerEntry: 1,
                 }}
+                sequenceEntryHistory={sequenceEntryHistory}
             />
         </QueryClientProvider>,
     );
@@ -111,6 +142,34 @@ describe('EditPage', () => {
 
         await userEvent.click(undoButton!);
         expectTextInSequenceData.unprocessedMetadata(defaultReviewData.submittedData.metadata);
+    });
+
+    test('shows the revoked warning when revising an entry whose latest version is a revocation', () => {
+        renderEditPage({ editedData: revisionData, sequenceEntryHistory: revokedHistory });
+
+        expect(screen.getByText(REVOKED_WARNING)).toBeVisible();
+    });
+
+    test('shows no revoked warning when revising an entry whose latest version is not a revocation', () => {
+        renderEditPage({ editedData: revisionData, sequenceEntryHistory: revisedHistory });
+
+        expect(screen.queryByText(REVOKED_WARNING)).not.toBeInTheDocument();
+    });
+
+    test('shows the not latest version warning when revising from an earlier version', () => {
+        renderEditPage({ editedData: revisionData, sequenceEntryHistory: revisedHistory });
+
+        expect(screen.getByText(NOT_LATEST_WARNING)).toBeVisible();
+        expect(screen.getByRole('link', { name: 'here' })).toBeVisible();
+    });
+
+    test('shows no not latest version warning when revising from the latest version', () => {
+        renderEditPage({
+            editedData: { ...revisionData, version: 2 },
+            sequenceEntryHistory: revisedHistory,
+        });
+
+        expect(screen.queryByText(NOT_LATEST_WARNING)).not.toBeInTheDocument();
     });
 });
 
