@@ -87,31 +87,27 @@ function renderSequenceManagement(
 }
 
 describe('SequenceManagement', () => {
-    describe('non-revocation versions', () => {
-        test('shows revise and revoke buttons when the latest version is not a revocation', () => {
-            renderSequenceManagement(revisedHistory, `${ACCESSION}.1`);
-            expect(screen.getByRole('link', { name: 'Revise this sequence' })).toBeVisible();
-            expect(screen.getByRole('button', { name: /revoke/i })).toBeVisible();
-        });
-
-        test('shows only the revise button when the latest version is a revocation', () => {
-            renderSequenceManagement(revokedHistory, `${ACCESSION}.1`);
-            expect(screen.getByRole('link', { name: 'Revise this sequence' })).toBeVisible();
-            expect(screen.queryByRole('button', { name: /revoke/i })).not.toBeInTheDocument();
-        });
+    test('shows revise and revoke buttons on non-revocations when the latest version is non-revocation', () => {
+        renderSequenceManagement(revisedHistory, `${ACCESSION}.1`);
+        expect(screen.getByRole('link', { name: 'Revise this sequence' })).toBeVisible();
+        expect(screen.getByRole('button', { name: /revoke/i })).toBeVisible();
     });
 
-    describe('revocation versions', () => {
-        test('shows only the restore button on a revocation version that is the latest version', () => {
-            renderSequenceManagement(revokedHistory, `${ACCESSION}.2`, true);
-            expect(screen.getByRole('link', { name: 'Restore this sequence' })).toBeVisible();
-            expect(screen.queryByRole('link', { name: 'Revise this sequence' })).not.toBeInTheDocument();
-            expect(screen.queryByRole('button', { name: /revoke/i })).not.toBeInTheDocument();
-        });
+    test('shows only the revise button on non-revocations when the latest version is a revocation', () => {
+        renderSequenceManagement(revokedHistory, `${ACCESSION}.1`);
+        expect(screen.getByRole('link', { name: 'Revise this sequence' })).toBeVisible();
+        expect(screen.queryByRole('button', { name: /revoke/i })).not.toBeInTheDocument();
+    });
 
-        test('renders nothing on a revocation version that is not the latest version', () => {
-            const { container } = renderSequenceManagement(restoredHistory, `${ACCESSION}.2`, true);
-            expect(container).toBeEmptyDOMElement();
-        });
+    test('shows only the restore button on revocation versions that are the latest version', () => {
+        renderSequenceManagement(revokedHistory, `${ACCESSION}.2`, true);
+        expect(screen.getByRole('link', { name: 'Restore this sequence' })).toBeVisible();
+        expect(screen.queryByRole('link', { name: 'Revise this sequence' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /revoke/i })).not.toBeInTheDocument();
+    });
+
+    test('renders nothing on revocation versions that are not the latest version', () => {
+        const { container } = renderSequenceManagement(restoredHistory, `${ACCESSION}.2`, true);
+        expect(container).toBeEmptyDOMElement();
     });
 });
