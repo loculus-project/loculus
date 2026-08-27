@@ -272,11 +272,8 @@ def post_fasta_batches(
                 batch_it.metadata_batch_output.append(batch_it.metadata_header)
                 continue
 
-            # add header to batch metadata output
-            if (
-                batch_it.record_counter > 1
-                and batch_it.record_counter % config.batch_chunk_size == 1
-            ):
+            # every batch's metadata needs to start with the header
+            if not batch_it.metadata_batch_output:
                 batch_it.metadata_batch_output.append(batch_it.metadata_header)
 
             batch_it.metadata_batch_output.append(record)
