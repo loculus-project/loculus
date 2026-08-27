@@ -167,6 +167,16 @@ export class SearchPage {
         await control.click();
     }
 
+    /**
+     * clickSettledManagementControl but for a revocation version. It has no sequence data, so
+     * the sequence viewer never renders and we wait for the revocation banner instead.
+     */
+    private async clickSettledRevocationManagementControl(control: Locator) {
+        await expect(this.page.getByText('This is a revocation version.')).toBeVisible();
+        await expect(control).toBeVisible();
+        await control.click();
+    }
+
     async reviseSequence() {
         const reviseButton = this.page.getByRole('link', { name: 'Revise this sequence' });
         await this.clickSettledManagementControl(reviseButton);
@@ -185,6 +195,13 @@ export class SearchPage {
         await this.page.getByRole('button', { name: 'Confirm' }).click();
 
         await expect(this.page.getByText('Sequence revoked successfully.')).toBeVisible();
+    }
+
+    async restoreSequence() {
+        const restoreButton = this.page.getByRole('link', { name: 'Restore this sequence' });
+        await this.clickSettledRevocationManagementControl(restoreButton);
+        await expect(this.page.getByText(/^Create new revision from LOC_\w+\.\d+$/)).toBeVisible();
+        return new EditPage(this.page);
     }
 
     async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string> {
