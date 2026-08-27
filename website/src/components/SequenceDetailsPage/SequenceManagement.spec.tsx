@@ -17,61 +17,109 @@ const tableData: TableDataEntry[] = [
     },
 ];
 
+const ACCESSION = 'FOO';
+
 const dataUseTermsHistory: DataUseTermsHistoryEntry[] = [
-    { accession: 'FOO', changeDate: '2024-01-01', userName: 'testUser', dataUseTerms: { type: 'OPEN' } },
+    { accession: ACCESSION, changeDate: '2024-01-01', userName: 'testUser', dataUseTerms: { type: 'OPEN' } },
 ];
 
 const baseEntry: SequenceEntryHistoryEntry = {
     submittedAtTimestamp: '',
-    accession: 'FOO',
+    accession: ACCESSION,
     version: 1,
-    accessionVersion: 'FOO.1',
+    accessionVersion: `${ACCESSION}.1`,
     versionStatus: 'LATEST_VERSION',
     isRevocation: false,
 };
 
-const revokedHistory: SequenceEntryHistory = [
-    { ...baseEntry, accessionVersion: 'FOO.1', version: 1, versionStatus: 'REVOKED', isRevocation: false },
-    { ...baseEntry, accessionVersion: 'FOO.2', version: 2, versionStatus: 'LATEST_VERSION', isRevocation: true },
-];
-
 const revisedHistory: SequenceEntryHistory = [
-    { ...baseEntry, accessionVersion: 'FOO.1', version: 1, versionStatus: 'REVISED', isRevocation: false },
-    { ...baseEntry, accessionVersion: 'FOO.2', version: 2, versionStatus: 'LATEST_VERSION', isRevocation: false },
+    { ...baseEntry, accessionVersion: `${ACCESSION}.1`, version: 1, versionStatus: 'REVISED', isRevocation: false },
+    {
+        ...baseEntry,
+        accessionVersion: `${ACCESSION}.2`,
+        version: 2,
+        versionStatus: 'LATEST_VERSION',
+        isRevocation: false,
+    },
 ];
 
-function renderSequenceManagement(sequenceEntryHistory: SequenceEntryHistory) {
+const revokedHistory: SequenceEntryHistory = [
+    { ...baseEntry, accessionVersion: `${ACCESSION}.1`, version: 1, versionStatus: 'REVOKED', isRevocation: false },
+    {
+        ...baseEntry,
+        accessionVersion: `${ACCESSION}.2`,
+        version: 2,
+        versionStatus: 'LATEST_VERSION',
+        isRevocation: true,
+    },
+];
+
+const restoredHistory: SequenceEntryHistory = [
+    { ...baseEntry, accessionVersion: `${ACCESSION}.1`, version: 1, versionStatus: 'REVOKED', isRevocation: false },
+    { ...baseEntry, accessionVersion: `${ACCESSION}.2`, version: 2, versionStatus: 'REVISED', isRevocation: true },
+    {
+        ...baseEntry,
+        accessionVersion: `${ACCESSION}.3`,
+        version: 3,
+        versionStatus: 'LATEST_VERSION',
+        isRevocation: false,
+    },
+];
+
+function renderSequenceManagement(
+    sequenceEntryHistory: SequenceEntryHistory,
+    accessionVersion: string,
+    isRevocation = false,
+) {
     return render(
         <SequenceManagement
             tableData={tableData}
             organism={testOrganism}
-            accessionVersion='FOO.1'
+            accessionVersion={accessionVersion}
             dataUseTermsHistory={dataUseTermsHistory}
             sequenceEntryHistory={sequenceEntryHistory}
             clientConfig={testConfig.public}
             myGroups={testGroups}
             accessToken={testAccessToken}
-            isRevocation={false}
+            isRevocation={isRevocation}
         />,
     );
 }
 
 describe('SequenceManagement', () => {
-    test('hides the revoke button when the latest version is already a revocation', () => {
-        renderSequenceManagement(revokedHistory);
+    describe('non-revocation versions', () => {
+        test('shows the revision button when the latest version is not a revocation', () => {
+            renderSequenceManagement(revisedHistory, `${ACCESSION}.1`);
+            expect(screen.getByRole('link', { name: 'Revise this sequence' })).toBeVisible();
+        });
 
-        expect(screen.queryByRole('button', { name: /revoke/i })).not.toBeInTheDocument();
+        test('shows the revoke button when the latest version is not a revocation', () => {
+            renderSequenceManagement(revisedHistory, `${ACCESSION}.1`);
+            expect(screen.getByRole('button', { name: /revoke/i })).toBeVisible();
+        });
+
+        test('shows the revision button when the latest version is a revocation', () => {
+            renderSequenceManagement(revokedHistory, `${ACCESSION}.1`);
+            expect(screen.getByRole('link', { name: 'Revise this sequence' })).toBeVisible();
+        });
+
+        test('hides the revoke button when the latest version is a revocation', () => {
+            renderSequenceManagement(revokedHistory, `${ACCESSION}.1`);
+            expect(screen.queryByRole('button', { name: /revoke/i })).not.toBeInTheDocument();
+        });
     });
 
-    test('still offers a revision when the latest version is a revocation', () => {
-        renderSequenceManagement(revokedHistory);
+    describe('revocation versions', () => {
+        test('shows the restore button on a revocation version that is the latest version', () => {
+            renderSequenceManagement(revokedHistory, `${ACCESSION}.2`, true);
+            expect(screen.getByRole('link', { name: 'Restore this sequence' })).toBeVisible();
+            expect(screen.queryByRole('link', { name: 'Revise this sequence' })).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: /revoke/i })).not.toBeInTheDocument();
+        });
 
-        expect(screen.getByRole('link', { name: 'Revise this sequence' })).toBeVisible();
-    });
-
-    test('shows the revoke button when the latest version is not a revocation', () => {
-        renderSequenceManagement(revisedHistory);
-
-        expect(screen.getByRole('button', { name: /revoke/i })).toBeVisible();
+        test('renders nothing on a revocation version that is not the latest version', () => {
+            const { container } = renderSequenceManagement(restoredHistory, `${ACCESSION}.2`, true);
+            expect(container).toBeEmptyDOMElement();
+        });
     });
 });
