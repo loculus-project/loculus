@@ -163,7 +163,7 @@ defaultResources:
     cpu: "20m"
   limits:
     memory: "1Gi"
-    cpu: "20m"
+    cpu: "500m"
 defaultOrganisms:
   ebola-sudan: &fileSharingOrganismDefaults
     schema:
