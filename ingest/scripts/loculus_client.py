@@ -253,10 +253,14 @@ def post_fasta_batches(
     metadata_file: str,
     config: Config,
     params: dict[str, str],
-) -> requests.Response:
-    """Chunks metadata files, joins with sequences and submits each chunk via POST."""
+) -> requests.Response | None:
+    """Chunks metadata files, joins with sequences and submits each chunk via POST.
+
+    Returns None if the metadata file held no records, in which case nothing was sent.
+    """
 
     batch_it = BatchIterator()
+    response = None
 
     with (
         open(fasta_file, encoding="utf-8") as fasta_file_stream,
@@ -301,8 +305,8 @@ def post_fasta_batches(
                 batch_it.sequences_batch_output = []
                 batch_it.metadata_batch_output = []
 
-    if batch_it.record_counter % config.batch_chunk_size != 0:
-        # submit the last chunk
+    # submit the last chunk, if the loop left anything beyond the header unsent
+    if len(batch_it.metadata_batch_output) > 1:
         response = submit(url, config, params, batch_it)
 
     return response
@@ -351,6 +355,9 @@ def submit_or_revise(
     metadata_lines = max(count_lines(metadata) - 1, 0)
 
     logger.info(f"{logging_strings['gerund']} {metadata_lines} sequence(s) to Loculus")
+
+    if metadata_lines == 0:
+        return []
 
     params = {
         "groupId": group_id,
