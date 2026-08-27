@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - "ingest/**"
-      - ".github/workflows/ingest-tests.yml"
+      - ".github/workflows/ingest-tests.yaml"
   push:
     branches:
       - main

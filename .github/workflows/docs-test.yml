@@ -3,7 +3,8 @@ on:
   pull_request:
     paths:
       - "docs/**"
-      - .github/workflows/docs-build-check.yml
+      - "kubernetes/loculus/values.schema.json"
+      - ".github/workflows/docs-test.yml"
   push:
     branches:
       - main
