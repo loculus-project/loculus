@@ -42,7 +42,7 @@ interface Props {
     onRevokeSuccess?: () => void;
 }
 
-const revocationVersionFields = [
+const REVOCATION_VERSION_FIELDS = [
     ACCESSION_VERSION_FIELD,
     ACCESSION_FIELD,
     IS_REVOCATION_FIELD,
@@ -77,13 +77,9 @@ export const SequenceDataUI: FC<Props> = ({
     const dataUseTerms = tableData.find((entry) => entry.name === DATA_USE_TERMS_FIELD);
     const isRestricted = dataUseTerms?.value.toString().toUpperCase() === 'RESTRICTED';
 
-    const loadSequencesAutomatically = schema.loadSequencesAutomatically === true;
-
-    const relevantData = isRevocation
-        ? tableData.filter((entry) => revocationVersionFields.includes(entry.name))
-        : tableData;
-
-    const dataTableData = getDataTableData(relevantData);
+    const dataTableData = getDataTableData(
+        isRevocation ? tableData.filter((entry) => REVOCATION_VERSION_FIELDS.includes(entry.name)) : tableData,
+    );
 
     const reportUrl = isRevocation ? undefined : getGitHubReportUrl(sequenceFlaggingConfig, organism, accessionVersion);
 
@@ -105,7 +101,7 @@ export const SequenceDataUI: FC<Props> = ({
                         accessionVersion={accessionVersion}
                         clientConfig={clientConfig}
                         referenceGenomesInfo={referenceGenomesInfo}
-                        loadSequencesAutomatically={loadSequencesAutomatically}
+                        loadSequencesAutomatically={!!schema.loadSequencesAutomatically}
                     />
                 </div>
             )}
