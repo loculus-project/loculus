@@ -1783,7 +1783,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
-    configFile:
+    configFile: &defaultIngestConfigFile
       muted_hashes_url: "https://pathoplexus.github.io/curation_data/muted_hashes/muted_hashes.tsv"
 defaultOrganisms:
   ebola-sudan:
@@ -1824,6 +1824,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 3052460
     enaDeposition:
       singleReference:
@@ -1971,6 +1972,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 3048448
     enaDeposition:
       singleReference:
@@ -2322,6 +2324,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 3052518
         grouping_override_url: "https://pathoplexus.github.io/curation_data/grouping_override/cchf/curated_group_02-03-2026.json"
         segment_identification:
@@ -2527,6 +2530,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 3052518
         segment_identification:
           method: "align"
@@ -2705,6 +2709,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 12059
         subsample_fraction: 0.2
     enaDeposition:
