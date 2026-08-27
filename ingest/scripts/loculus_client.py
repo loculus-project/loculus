@@ -181,7 +181,7 @@ class BatchIterator:
     current_fasta_submission_id: str | None = None
     fasta_record_header: str | None = None
 
-    record_counter: int = 0
+    record_count: int = 0  # metadata records read so far, not counting the header
 
     metadata_header: str | None = None
     submission_id_index: int | None = None  # index of id in metadata header
@@ -196,7 +196,7 @@ def submit(
     params: dict[str, str],
     batch_it: BatchIterator,
 ):
-    batch_num = -(int(batch_it.record_counter) // -config.batch_chunk_size)  # ceiling division
+    batch_num = -(batch_it.record_count // -config.batch_chunk_size)  # ceiling division
     logger.info(f"Submitting batch {batch_num}")
 
     metadata_in_memory = BytesIO("".join(batch_it.metadata_batch_output).encode("utf-8"))
@@ -267,14 +267,13 @@ def post_fasta_batches(
         open(metadata_file, encoding="utf-8") as metadata_file_stream,
     ):
         for record in metadata_file_stream:
-            batch_it.record_counter += 1
-
-            # process metadata header
-            if batch_it.record_counter == 1:
+            # the first line is the metadata header
+            if batch_it.metadata_header is None:
                 batch_it.submission_id_index = record.strip().split("\t").index("id")
                 batch_it.metadata_header = record
-                batch_it.metadata_batch_output.append(batch_it.metadata_header)
                 continue
+
+            batch_it.record_count += 1
 
             # every batch's metadata needs to start with the header
             if not batch_it.metadata_batch_output:
@@ -295,7 +294,7 @@ def post_fasta_batches(
             batch_it = add_seq_to_batch(batch_it, fasta_file_stream, metadata_submission_id, config)
 
             # submit the batch if it is full
-            if batch_it.record_counter % config.batch_chunk_size == 0:
+            if batch_it.record_count % config.batch_chunk_size == 0:
                 response = submit(
                     url,
                     config,
@@ -305,8 +304,8 @@ def post_fasta_batches(
                 batch_it.sequences_batch_output = []
                 batch_it.metadata_batch_output = []
 
-    # submit the last chunk, if the loop left anything beyond the header unsent
-    if len(batch_it.metadata_batch_output) > 1:
+    # submit the last, partial chunk
+    if batch_it.record_count % config.batch_chunk_size != 0:
         response = submit(url, config, params, batch_it)
 
     return response
