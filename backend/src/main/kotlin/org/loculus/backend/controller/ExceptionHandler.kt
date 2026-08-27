@@ -63,12 +63,12 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
         ProcessingValidationException::class,
         DuplicateKeyException::class,
     )
-    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
     fun handleUnprocessableEntityException(e: Exception): ResponseEntity<ProblemDetail> {
         log.info { "Caught unprocessable entity exception: ${e.message}" }
 
         return responseEntity(
-            HttpStatus.UNPROCESSABLE_ENTITY,
+            HttpStatus.UNPROCESSABLE_CONTENT,
             e.message,
         )
     }

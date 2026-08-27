@@ -1,5 +1,5 @@
 import { isErrorFromAlias } from '@zodios/core';
-import { type FC, useState } from 'react';
+import { type FC, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { EditableSequences } from './EditableSequences.ts';
@@ -22,12 +22,9 @@ import { getAccessionVersionString, parseAccessionVersionFromString } from '../.
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu.tsx';
 import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
+import { applyFileMappings, getSingleSubmissionFileMapping } from '../Submission/FileUpload/fileMapping.ts';
 import {
-    applyFileMappings,
-    getSingleSubmissionFileMapping,
-    type FileMapping,
-} from '../Submission/FileUpload/fileMapping.ts';
-import {
+    deriveFileMapping,
     getPreviousFileUploadStates,
     validateFileUploadStates,
     type FileUploadState,
@@ -80,7 +77,8 @@ const InnerEditPage: FC<EditPageProps> = ({
     const [fileUploadStates, setFileUploadStates] = useState<Map<string, FileUploadState>>(() =>
         dataToEdit.submittedData.files ? getPreviousFileUploadStates(dataToEdit.submittedData.files) : new Map(),
     );
-    const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(undefined);
+
+    const fileMapping = useMemo(() => deriveFileMapping(fileUploadStates), [fileUploadStates]);
 
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
 
@@ -264,7 +262,6 @@ const InnerEditPage: FC<EditPageProps> = ({
                         fileCategories={submissionDataTypes.files?.categories ?? []}
                         fileUploadStates={fileUploadStates}
                         setFileUploadStates={setFileUploadStates}
-                        setFileMapping={setFileMapping}
                         onError={(msg) => toast.error(msg, { position: 'top-center', autoClose: false })}
                     />
                 </div>

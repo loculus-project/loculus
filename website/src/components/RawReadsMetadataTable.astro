@@ -1,0 +1,77 @@
+---
+import { getConfiguredOrganisms, getGroupedInputFields, getSchema } from '../config';
+import { MetadataTableSection } from './OrganismMetadataTable/OrganismMetadataTable';
+import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from './common/BoxWithTabs';
+
+interface Props {
+    sequencingHeader?: string;
+    requiredWhenField?: string;
+    tableName?: string;
+}
+
+const {
+    sequencingHeader = 'Sequencing',
+    requiredWhenField = 'files.rawReads',
+    tableName = 'Raw Reads Metadata Fields',
+} = Astro.props;
+
+// The 'Sequencing' fields are the same for every organism, so any configured organism will do.
+const [organism] = getConfiguredOrganisms();
+if (organism === undefined) {
+    throw new Error('No organisms configured');
+}
+
+const schema = getSchema(organism.key);
+const groupedInputFields = getGroupedInputFields(organism.key, 'submit', 'bulk');
+const sequencingInputFields = groupedInputFields.get(sequencingHeader) ?? [];
+
+const metadataByName = new Map(schema.metadata.map((meta) => [meta.name, meta]));
+const typedInputFields = sequencingInputFields.map((field) => ({
+    ...field,
+    type: metadataByName.get(field.name)?.type ?? 'string',
+}));
+const requiredFields = typedInputFields.filter(
+    (field) => field.requiredWhen?.includes(requiredWhenField) || field.required,
+);
+const desiredFields = typedInputFields.filter((field) => !requiredFields.includes(field) && field.desired);
+const optionalFields = typedInputFields.filter(
+    (field) => !requiredFields.includes(field) && !desiredFields.includes(field),
+);
+
+// This page is rendered inside the docs layout's prose styles, which otherwise override the
+// section header's font size and spacing. The `!` (Tailwind v4 important-suffix) forces our
+// values to win over that external prose CSS.
+const headerClassName = 'text-lg! mb-4! mt-0! pt-1!';
+---
+
+<BoxWithTabsTabBar>
+    <BoxWithTabsTab isActive label={tableName} className='text-base' />
+</BoxWithTabsTabBar>
+<BoxWithTabsBox>
+    <MetadataTableSection
+        header={'Required Fields'}
+        fields={requiredFields}
+        search=''
+        isInputFields
+        headerClassName={headerClassName}
+        client:visible
+    />
+    <MetadataTableSection
+        header={'Desired Fields'}
+        fields={desiredFields}
+        search=''
+        isInputFields
+        headerClassName={headerClassName}
+        expandedHeader={false}
+        client:visible
+    />
+    <MetadataTableSection
+        header={'Optional Fields'}
+        fields={optionalFields}
+        search=''
+        isInputFields
+        headerClassName={headerClassName}
+        expandedHeader={false}
+        client:visible
+    />
+</BoxWithTabsBox>
