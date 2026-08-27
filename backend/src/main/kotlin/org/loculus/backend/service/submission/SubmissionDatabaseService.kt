@@ -289,6 +289,7 @@ class SubmissionDatabaseService(
         log.info { "updating processed data" }
 
         val processedAccessionVersions = mutableListOf<String>()
+        val discardedAccessionVersions = mutableListOf<String>()
         val processedFiles = mutableMapOf<AccessionVersion, Set<FileId>>()
         val processingResultCounts = mutableMapOf<ProcessingResult, Int>()
         BufferedReader(InputStreamReader(inputStream)).use { reader ->
@@ -306,9 +307,15 @@ class SubmissionDatabaseService(
                 submittedProcessedDataBatch.forEach { submittedProcessedData ->
                     val processingResult = submittedProcessedData.processingResult()
 
-                    insertProcessedData(submittedProcessedData, organism, pipelineVersion)
-                    processedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
-                    processingResultCounts.merge(processingResult, 1, Int::plus)
+                    if (insertProcessedData(submittedProcessedData, organism, pipelineVersion)) {
+                        processedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
+                        processingResultCounts.merge(processingResult, 1, Int::plus)
+                    } else {
+                        discardedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
+                        processedFiles.remove(
+                            AccessionVersion(submittedProcessedData.accession, submittedProcessedData.version),
+                        )
+                    }
                 }
             }
         }
@@ -327,7 +334,8 @@ class SubmissionDatabaseService(
         }
 
         log.info {
-            "Updated ${processedAccessionVersions.size} sequences to $PROCESSED. " +
+            "Updated ${processedAccessionVersions.size} sequences to $PROCESSED, " +
+                "discarded ${discardedAccessionVersions.size} results whose claim was revoked. " +
                 "Processing result counts: " +
                 processingResultCounts.entries.joinToString { "${it.key}=${it.value}" }
         }
@@ -463,7 +471,7 @@ class SubmissionDatabaseService(
         submittedProcessedData: SubmittedProcessedData,
         organism: Organism,
         pipelineVersion: Long,
-    ) {
+    ): Boolean {
         val submittedErrors = submittedProcessedData.errors.orEmpty()
         val submittedWarnings = submittedProcessedData.warnings.orEmpty()
         val processedData = when {
@@ -489,8 +497,37 @@ class SubmissionDatabaseService(
             }
 
         if (numberInserted != 1) {
+            if (claimWasRevoked(submittedProcessedData, pipelineVersion)) {
+                log.warn {
+                    "Discarding processed data for ${submittedProcessedData.displayAccessionVersion()} " +
+                        "of pipeline version $pipelineVersion: the claim on this entry was revoked while it " +
+                        "was being processed. The entry will be handed out for processing again."
+                }
+                return false
+            }
             throwInsertFailedException(submittedProcessedData, pipelineVersion)
         }
+        return true
+    }
+
+    private fun claimWasRevoked(accessionVersion: AccessionVersionInterface, pipelineVersion: Long): Boolean {
+        val sepd = SequenceEntriesPreprocessedDataTable
+        val claimExists = sepd
+            .select(sepd.accessionColumn)
+            .where {
+                sepd.accessionVersionEquals(accessionVersion) and
+                    (sepd.pipelineVersionColumn eq pipelineVersion)
+            }
+            .limit(1)
+            .count() > 0
+        if (claimExists) {
+            return false
+        }
+        return SequenceEntriesTable
+            .select(SequenceEntriesTable.accessionColumn)
+            .where { SequenceEntriesTable.accessionVersionIsIn(listOf(accessionVersion)) }
+            .limit(1)
+            .count() > 0
     }
 
     /**
