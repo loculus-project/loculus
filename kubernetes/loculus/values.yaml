@@ -1785,6 +1785,7 @@ defaultOrganismConfig: &defaultOrganismConfig
     image: ghcr.io/loculus-project/ingest
     configFile: &defaultIngestConfigFile
       muted_hashes_url: "https://pathoplexus.github.io/curation_data/muted_hashes/muted_hashes.tsv"
+      batch_chunk_size: 1000
 defaultOrganisms:
   ebola-sudan:
     <<: *defaultOrganismConfig
