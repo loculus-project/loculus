@@ -4,7 +4,7 @@ import { promises as fs } from 'fs';
 import ExcelJS from 'exceljs';
 import { describe, expect, test } from 'vitest';
 
-import { METADATA_FILE_KIND, PLAIN_SEGMENT_KIND } from './fileProcessing';
+import { FASTA_FILE_KIND, METADATA_FILE_KIND, PLAIN_SEGMENT_KIND } from './fileProcessing';
 
 async function buildWorkbookFile(extraSheetNames: string[]): Promise<File> {
     const workbook = new ExcelJS.Workbook();
@@ -139,4 +139,27 @@ describe('fileProcessing', () => {
         expect(text.split('\n')[0]).toContain('submissionId'); // parsed Data...
         expect(text).not.toContain('Field name'); // ...not the Guidance reference sheet
     });
+
+    test.each([
+        'metadata.tsv',
+        'metadata.TSV',
+        'metadata.xlsx',
+        'metadata.xls',
+        'metadata.tsv.zst',
+        'metadata.xlsx.gz',
+    ])('rejects %s in the sequence file field', async (fileName) => {
+        const processingResult = await FASTA_FILE_KIND.processRawFile(new File(['content'], fileName));
+
+        expect(processingResult.isErr()).toBe(true);
+        expect(processingResult._unsafeUnwrapErr().message).toContain('looks like a metadata file');
+    });
+
+    test.each(['sequences.fasta', 'sequences.fasta.zst', 'sequences.fa', 'sequences.txt', 'sequences'])(
+        'accepts %s in the sequence file field',
+        async (fileName) => {
+            const processingResult = await FASTA_FILE_KIND.processRawFile(new File(['>a\nACGT'], fileName));
+
+            expect(processingResult.isOk()).toBe(true);
+        },
+    );
 });
