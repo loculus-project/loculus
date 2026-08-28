@@ -89,18 +89,18 @@ def deacon_index(monkeypatch, deacon_server):
     )
 
 
-def test_mean_read_length_plain_fastq(tmp_path):
+def test_median_read_length_plain_fastq(tmp_path):
     reads = tmp_path / "reads.fastq"
     _write_fastq(reads, [_random_read(100), _random_read(200), _random_read(150)])
-    assert deacon_module.mean_read_length(reads) == pytest.approx(150.0)
+    assert deacon_module.median_read_length(reads) == pytest.approx(150.0)
 
 
-def test_mean_read_length_gzipped_fastq(tmp_path):
+def test_median_read_length_gzipped_fastq(tmp_path):
     config = _config()
     reads = tmp_path / "reads.fastq.gz"
     _write_fastq(tmp_path / "plain.fastq", [_random_read(80), _random_read(100)])
     reads.write_bytes(gzip.compress((tmp_path / "plain.fastq").read_bytes()))
-    assert deacon_module.mean_read_length(reads) == pytest.approx(90.0)
+    assert deacon_module.median_read_length(reads) == pytest.approx(90.0)
     assert deacon_module._deacon_a_for_reads({"boundary.fastq": reads}, config) == 2
 
 

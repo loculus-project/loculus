@@ -5,6 +5,7 @@ import os
 import subprocess  # noqa: S404
 from pathlib import Path
 from typing import IO, cast
+import numpy as np
 
 from Bio import SeqIO
 
@@ -68,18 +69,22 @@ def _open_maybe_gzipped(path: Path) -> IO[str]:
     return gzip.open(path, "rt") if is_gzip else path.open("rt")
 
 
-def mean_read_length(path: Path, sample_size: int = _READ_LENGTH_SAMPLE_SIZE) -> float:
-    """Mean sequence length over the first `sample_size` reads of a FASTQ file.
+def median_read_length(
+    path: Path,
+    sample_size: int = _READ_LENGTH_SAMPLE_SIZE,
+) -> float:
+    """Median sequence length over the first `sample_size` reads of a FASTQ file.
 
     Read length should be homogeneous within a sequencing run, so a small sample from
     the start of the file is representative and costs only a few milliseconds.
     """
-    total = count = 0
     with _open_maybe_gzipped(path) as fh:
-        for record in itertools.islice(SeqIO.parse(fh, "fastq"), sample_size):
-            total += len(record.seq)
-            count += 1
-    return total / count if count else 0.0
+        lengths = [
+            len(record.seq)
+            for record in itertools.islice(SeqIO.parse(fh, "fastq"), sample_size)
+        ]
+
+    return np.median(lengths) if lengths else 0.0
 
 
 def _deacon_a_for_reads(file_name_to_path: dict[FileName, Path], config: Config) -> int:
@@ -87,11 +92,11 @@ def _deacon_a_for_reads(file_name_to_path: dict[FileName, Path], config: Config)
     files to decide whether this is a short-read library.
     """
     sample_paths = list(file_name_to_path.values())
-    observed_length = min((mean_read_length(p) for p in sample_paths), default=0.0)
+    observed_length = min((median_read_length(p) for p in sample_paths), default=0.0)
     short_reads = observed_length < config.short_reads_threshold
     deacon_a = config.deacon_a_short_reads if short_reads else config.deacon_a
     logger.info(
-        f"Mean read length ~{observed_length:.0f}bp "
+        f"Median read length ~{observed_length:.0f}bp "
         f"({'short' if short_reads else 'normal'}-read deacon params: -a {deacon_a})"
     )
     return deacon_a
