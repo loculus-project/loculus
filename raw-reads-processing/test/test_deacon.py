@@ -14,7 +14,7 @@ from raw_reads_processing.datatypes import (
     FileIdAndNameAndReadUrl,
     RequestWithFiles,
 )
-from raw_reads_processing.errors import InvalidSubmission
+from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
 
 
 def _config() -> Config:
@@ -206,3 +206,64 @@ def test_concurrent_filters_are_capped_at_the_configured_limit(tmp_path):
             future.result()
 
     assert index.max_in_flight == 2
+
+
+def test_mismatched_pair_lengths_fail_the_submission_without_killing_the_index(
+    tmp_path, deacon_filter
+):
+    # deacon treats two inputs as mates of one pair and errors when they run out of
+    # step. Under the old server this killed the daemon and every later request with
+    # it; in-process it is an ordinary exception and the index stays usable.
+    read1, read2 = tmp_path / "reads_1.fastq", tmp_path / "reads_2.fastq"
+    _write_fastq(read1, [_random_read() for _ in range(1000)])
+    _write_fastq(read2, [_random_read() for _ in range(400)])
+
+    with pytest.raises(ProcessingFailure) as exc_info:
+        deacon_filter.run({"reads_1.fastq": read1, "reads_2.fastq": read2}, _config())
+
+    assert "Incompatible record set sizes" in str(exc_info.value)
+
+    healthy = tmp_path / "healthy.fastq"
+    _write_fastq(healthy, [_random_read()])
+    assert deacon_filter.run({"healthy.fastq": healthy}, _config()).seqs_in == 1
+
+
+@pytest.mark.parametrize(
+    ("description", "contents"),
+    [
+        ("truncated final record", "@r1\nACGT\n+\n"),
+        ("not fastq at all", "this is not a fastq file\n"),
+    ],
+)
+def test_unreadable_input_is_reported_to_the_submitter(
+    tmp_path, deacon_filter, description, contents
+):
+    # Malformed FASTQ never reaches deacon: sampling the read length to pick -a trips
+    # over it first, and that has to be an annotation rather than an unhandled 500.
+    unreadable = tmp_path / "reads.fastq"
+    unreadable.write_text(contents)
+
+    with pytest.raises(InvalidSubmission) as exc_info:
+        deacon_filter.run({"reads.fastq": unreadable}, _config())
+
+    assert "may be empty or corrupted" in exc_info.value.error.message
+
+
+def test_a_failing_filter_releases_its_concurrency_slot(tmp_path):
+    # The semaphore is held with `with`, so a raising filter must not leak a slot;
+    # leaking every slot would wedge all later requests.
+    config = _config().model_copy(update={"deacon_max_concurrent_filters": 1})
+    deacon_filter = deacon_module.DeaconFilter(_ExplodingIndex(), config)
+    reads = tmp_path / "reads.fastq"
+    _write_fastq(reads, [_random_read()])
+
+    for _ in range(3):
+        with pytest.raises(ProcessingFailure):
+            deacon_filter.run({"reads.fastq": reads}, config)
+
+    assert deacon_filter._slots.acquire(blocking=False)  # noqa: SLF001
+
+
+class _ExplodingIndex:
+    def filter(self, *args, **kwargs):
+        raise RuntimeError("Incompatible record set sizes: 1024 != 1000")

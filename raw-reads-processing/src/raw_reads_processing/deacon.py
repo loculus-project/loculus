@@ -12,7 +12,7 @@ from xopen import xopen
 
 from raw_reads_processing.config import Config
 from raw_reads_processing.datatypes import Annotation, DeaconSummary, FileName
-from raw_reads_processing.errors import InvalidSubmission
+from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
 
 logger = logging.getLogger(__name__)
 
@@ -65,20 +65,29 @@ class DeaconFilter:
             f"with -a {deacon_a} -r {config.deacon_r}, threads={self._threads}"
         )
 
-        with self._slots:
-            summary = self._index.filter(
-                read1,
-                input2=read2,
-                deplete=False,
-                # Search mode keeps the reads that MATCH the human index, so the output
-                # is human sequence: discard it rather than letting it reach stdout.
-                output=os.devnull,
-                output2=os.devnull if read2 else None,
-                abs_threshold=deacon_a,
-                rel_threshold=config.deacon_r,
-                threads=self._threads,
-                quiet=True,
-            )
+        try:
+            with self._slots:
+                summary = self._index.filter(
+                    read1,
+                    input2=read2,
+                    deplete=False,
+                    # Search mode keeps the reads that MATCH the human index, so the
+                    # output is human sequence: discard it rather than let it reach
+                    # this process's stdout, which is the pod log.
+                    output=os.devnull,
+                    output2=os.devnull if read2 else None,
+                    abs_threshold=deacon_a,
+                    rel_threshold=config.deacon_r,
+                    threads=self._threads,
+                    quiet=True,
+                )
+        except Exception as error:
+            # Unreadable or mismatched input reaches us as a RuntimeError carrying
+            # deacon's own message; the index and the process are unaffected.
+            # TODO: send a slack notification to alert the team that deacon is failing
+            message = f"Deacon filter failed: {error}"
+            logger.error(message)
+            raise ProcessingFailure(message) from error
         return DeaconSummary.from_dict(summary)
 
 
@@ -96,13 +105,19 @@ def median_read_length(
     Read length should be homogeneous within a sequencing run, so a small sample from
     the start of the file is representative and costs only a few milliseconds.
     """
-    with xopen(path, "rt", threads=0) as fh:
-        lengths = [
-            len(seq)
-            for _, seq, _ in itertools.islice(FastqGeneralIterator(fh), sample_size)
-        ]
+    message = f"Failed to determine median read length for file '{file_name}'. File may be empty or corrupted."
+    try:
+        with xopen(path, "rt", threads=0) as fh:
+            lengths = [
+                len(seq)
+                for _, seq, _ in itertools.islice(FastqGeneralIterator(fh), sample_size)
+            ]
+    except (ValueError, OSError) as error:
+        logging.error(f"{message} {error}")
+        raise InvalidSubmission(
+            Annotation(fileNames=[file_name], message=message)
+        ) from error
     if not lengths:
-        message = f"Failed to determine median read length for file '{file_name}'. File may be empty or corrupted."
         logging.error(message)
         raise InvalidSubmission(Annotation(fileNames=[file_name], message=message))
     return statistics.median(lengths)
