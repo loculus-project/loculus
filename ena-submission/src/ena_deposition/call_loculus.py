@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import tempfile
 import traceback
 import uuid
 from collections.abc import Iterator
@@ -182,7 +183,9 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
     }
     logger.info(f"Fetching released data from {url} with request id {request_id}")
 
-    with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
+    with requests.get(
+        url, headers=headers, timeout=config.get_released_data_timeout_seconds, stream=True
+    ) as response:
         response.raise_for_status()
         for line_no, line in enumerate(response.iter_lines(chunk_size=65536), start=1):
             if not line:
@@ -212,3 +215,62 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
                 for k, v in full_json.items()
                 if k in {"metadata", "unalignedNucleotideSequences"}
             }
+
+
+def download_fastq_files(
+    config: Config, metadata: dict[str, Any], accession: str, dir: str | None = None
+) -> list[str]:
+    """
+    Download the fastq files listed under the `rawreads` metadata field to local disk
+    and return their paths.
+
+    `rawreads` is a JSON-encoded string of the form
+    '[{"fileId": ..., "name": ..., "url": ...}, ...]'. Each `url` points at the backend's
+    `/files/get/{accession}/{version}/{fileCategory}/{fileName}` endpoint, which responds
+    with a 307 redirect to a pre-signed S3 URL - requests follows the redirect automatically
+    and drops the Authorization header once the redirect target's host differs from the
+    backend's.
+    """
+    raw_reads = metadata.get(config.raw_reads_metadata_field)
+    if not raw_reads:
+        msg = f"No rawreads files found in metadata for accession {accession}"
+        raise RuntimeError(msg)
+    files = json.loads(raw_reads)
+
+    if dir:
+        os.makedirs(dir, exist_ok=True)
+
+    jwt = get_jwt(config)
+    headers = {"Authorization": f"Bearer {jwt}"}
+
+    fastq_files = []
+    for file_entry in files:
+        # Use the fileId to avoid any potential security issues as name is supplied by the user
+        file_name = os.path.basename(file_entry["fileId"])
+        logger.info(
+            f"Starting download of {file_entry['name']} to {file_name} for accession {accession}"
+        )
+        if dir:
+            file_path = os.path.join(dir, file_name)
+        else:
+            with tempfile.NamedTemporaryFile(
+                delete=False, suffix=file_name, prefix=f"{accession}_", dir=dir
+            ) as temp:
+                file_path = temp.name
+
+        with requests.get(
+            file_entry["url"],
+            headers=headers,
+            stream=True,
+            timeout=config.s3_request_timeout_seconds,
+        ) as response:
+            response.raise_for_status()
+            # 1 MiB balances syscall/loop overhead against per-download memory;
+            # throughput is S3-bound above a few hundred KiB.
+            chunk_size = 1 << 20
+            with open(file_path, "wb") as f:
+                f.writelines(response.iter_content(chunk_size=chunk_size))
+
+        fastq_files.append(file_path)
+
+    return fastq_files

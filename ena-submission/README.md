@@ -78,22 +78,35 @@ In a loop
     - if (entry is in status SUBMITTED): update `submission_table` to SUBMITTED_SAMPLE.
   - else: create sample entry in `sample_table` for (accession, version).
 - Get sequences in `sample_table` in state READY, prepare submission object, set status to SUBMITTING
-  - if (submission succeeds): set status to SUBMITTED and fill in results, the results of a successful submission are an `sra_run_accession` (starting with ERS) , a `biosample_accession` (starting with SAM) and an ena-internal `ena_submission_accession`.
+  - if (submission succeeds): set status to SUBMITTED and fill in results, the results of a successful submission are a `biosample_accession` (starting with SAM) and an ena-internal `ena_submission_accession`.
   - else: set status to HAS_ERRORS and fill in errors
 - Get sequences in `sample_table` in state HAS_ERRORS for over 15min and sequences in status SUBMITTING for over 15min: send a slack notification
+
+### create_raw_reads
+
+In a loop
+
+- Get sequences in `submission_table` in state SUBMITTED_SAMPLE and `submit_raw_reads` True.
+  - if (there exists an entry in the `raw_reads_table` for the corresponding (accession, version)):
+    - if (entry is in status SUBMITTED): update `submission_table` to SUBMITTED_RAW_READS.
+  - else: create sample entry in `raw_reads_table` for (accession, version).
+- Get sequences in `raw_reads_table` in state READY, prepare files: download raw read files and prepare manifest, set status to SUBMITTING
+  - if (submission succeeds): set status to SUBMITTED and fill in results, the results of a successful submission are a run or `err_accession` (starting with ERR) and an experiment or `erz_accession` (starting with ERZ).
+  - else: set status to HAS_ERRORS and fill in errors
+- Get sequences in `raw_reads_table` in state HAS_ERRORS for over 15min and sequences in status SUBMITTING for over 15min: send a slack notification
 
 ### create_assembly
 
 In a loop:
 
-- Get sequences in `submission_table` in state SUBMITTED_SAMPLE
+- Get sequences in `submission_table` in state SUBMITTED_SAMPLE and `submit_raw_reads` False or in state SUBMITTED_RAW_READS and `submit_raw_reads` True
   - if (there exists an entry in the `assembly_table` for the corresponding (accession, version)):
     - if (entry is in status SUBMITTED): update `assembly_table` to SUBMITTED_ALL.
     - else: update `assembly_table` to SUBMITTING_ASSEMBLY.
   - else: create assembly entry in `assembly_table` for (accession, version).
 - Get sequences in `submission_table` in state SUBMITTED_SAMPLE
   - if (corresponding `assembly_table` entry is in state SUBMITTED): update entries to state SUBMITTED_ALL.
-- Get sequences in `assembly_table` in state READY, prepare files: we need chromosome_list, embl flatfiles and a manifest file, set status to WAITING
+- Get sequences in `assembly_table` in state READY, prepare files: we need chromosome_list, embl flatfiles and a manifest file (link to the SRA accession if there is a raw read associated with the consensus sequence), set status to WAITING
   - if (submission succeeds): set status to WAITING and fill in results: ena-internal `erz_accession`
   - else: set status to HAS_ERRORS and fill in errors
 - Get sequences in `assembly_table` in state WAITING, every 5minutes (to not overload ENA) check if ENA has processed the assemblies and assigned them `gca_accession`. If so update the table to status SUBMITTED and fill in results
