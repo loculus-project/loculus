@@ -58,7 +58,7 @@ def nextclade_urls_for_organism(loculus_info: dict, organism: str) -> list[str]:
 def download_organism_fasta(organism: str, dest: Path, tmp_dir: Path) -> None:
     url = (
         f"{LAPIS_URL}/{organism}/sample/unalignedNucleotideSequences"
-        "?dataUseTerms=OPEN&dataFormat=fasta&versionStatus=LATEST_VERSION&isRevocation=false"
+        "?dataUseTerms=OPEN&dataFormat=fasta&versionStatus=LATEST_VERSION&isRevocation=false&compression=zstd"
     )
     zst_path = tmp_dir / f"{organism}.fasta.zst"
     with requests.get(url, stream=True, timeout=REQUEST_TIMEOUT_SECONDS) as response:
@@ -96,8 +96,8 @@ def run_nextclade(
         "run",
         "--retry-reverse-complement=true",
         "--verbosity=error",
-        "--output-all",
-        str(out_dir),
+        "--output-tsv",
+        str(out_dir / "nextclade.tsv"),
         "--dataset-name",
         dataset_name,
         "--jobs",
@@ -131,10 +131,10 @@ def filter_fasta_by_index(
             if line.startswith(">"):
                 seq_name = line[1:].strip()
                 keep = seq_name in good_indices
+                if not keep:
+                    dropped += 1
             if keep:
                 dst.write(line)
-            else:
-                dropped += 1
         # Ensure records from separate files cannot run together.
         dst.write("\n")
     logger.info("Dropped %d sequences from %s", dropped, fasta_path.name)
