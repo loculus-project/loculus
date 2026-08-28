@@ -96,10 +96,12 @@ def test_mean_read_length_plain_fastq(tmp_path):
 
 
 def test_mean_read_length_gzipped_fastq(tmp_path):
+    config = _config()
     reads = tmp_path / "reads.fastq.gz"
-    _write_fastq(tmp_path / "plain.fastq", [_random_read(80), _random_read(120)])
+    _write_fastq(tmp_path / "plain.fastq", [_random_read(80), _random_read(100)])
     reads.write_bytes(gzip.compress((tmp_path / "plain.fastq").read_bytes()))
-    assert deacon_module.mean_read_length(reads) == pytest.approx(100.0)
+    assert deacon_module.mean_read_length(reads) == pytest.approx(90.0)
+    assert deacon_module._deacon_a_for_reads({"boundary.fastq": reads}, config) == 2
 
 
 def test_deacon_a_for_reads_switches_on_short_reads(tmp_path):
