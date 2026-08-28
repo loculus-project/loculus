@@ -1671,7 +1671,8 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
 #         # get data
 #         mock_get_group_info.return_value = TEST_GROUP
 #         mock_submit_external_metadata.return_value = mock_requests_post()
-#         sequences_to_upload = get_revisions(config=self.config, modify_raw_reads_manifest=True, with_raw_reads=True)
+#         sequences_to_upload = get_revisions(
+#             config=self.config, modify_raw_reads_manifest=True, with_raw_reads=True)
 
 #         # upload sequences
 #         upload_sequences(self.config, self.db_engine, sequences_to_upload)
