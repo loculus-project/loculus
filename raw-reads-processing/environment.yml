@@ -3,6 +3,7 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
+  - biopython=1.88
   - fastapi=0.135.1
   - pydantic=2.12.5
   - pytest=9.0.2

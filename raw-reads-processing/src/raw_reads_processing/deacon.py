@@ -1,9 +1,12 @@
 import gzip
+import itertools
 import logging
 import os
 import subprocess  # noqa: S404
 from pathlib import Path
 from typing import IO, cast
+
+from Bio import SeqIO
 
 from raw_reads_processing.config import Config
 from raw_reads_processing.datatypes import Annotation, DeaconSummary, FileName
@@ -51,8 +54,6 @@ def stop_deacon_server(proc: subprocess.Popen) -> None:
         proc.wait()
 
 
-# 0-based line offset of the sequence within each 4-line FASTQ record
-_FASTQ_SEQ_LINE = 1
 _READ_LENGTH_SAMPLE_SIZE = 100
 
 
@@ -75,12 +76,9 @@ def mean_read_length(path: Path, sample_size: int = _READ_LENGTH_SAMPLE_SIZE) ->
     """
     total = count = 0
     with _open_maybe_gzipped(path) as fh:
-        for i, line in enumerate(fh):
-            if i % 4 == _FASTQ_SEQ_LINE:
-                total += len(line.rstrip("\n"))
-                count += 1
-                if count >= sample_size:
-                    break
+        for record in itertools.islice(SeqIO.parse(fh, "fastq"), sample_size):
+            total += len(record.seq)
+            count += 1
     return total / count if count else 0.0
 
 
