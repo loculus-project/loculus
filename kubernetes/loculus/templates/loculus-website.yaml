@@ -24,7 +24,7 @@ spec:
       {{- include "loculus.podScheduling" . | nindent 6 }}
       {{- include "loculus.podSecurityContext" (list "website" $.Values) | nindent 6 }}
       initContainers:
-    {{- include "loculus.configProcessor" (dict "name" "loculus-website-config" "values" $.Values "Values" $.Values) | nindent 8 }}
+      {{- include "loculus.configProcessor" (dict "name" "loculus-website-config" "values" $.Values "Values" $.Values) | nindent 8 }}
       containers:
         - name: website
           image: {{ include "loculus.image" (dict "name" "website" "defaultRepository" "ghcr.io/loculus-project/website" "values" $.Values) }}
