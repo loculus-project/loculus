@@ -62,10 +62,10 @@ for organism in "${organisms[@]}"; do
     echo "Downloading ${organism}..." >&2 
     curl -fsSL "${LAPIS_URL}/${organism}/sample/unalignedNucleotideSequences?dataUseTerms=OPEN&dataFormat=fasta&compression=zstd&versionStatus=LATEST_VERSION&isRevocation=false" | zstdcat > "$organism_fasta"
      
-    if [[ ! -s "$organism_fasta" ]]; 
-        then echo "Warning: empty FASTA returned for ${organism}; skipping." >&2 
-        continue 
-    fi 
+    if [[ ! -s "$organism_fasta" ]]; then
+        echo "Error: empty FASTA returned for ${organism}." >&2
+        exit 1
+    fi
     cat "$organism_fasta" >> "$COMBINED_FASTA" 
     # Ensure records from separate files cannot run together. 
     printf '\n' >> "$COMBINED_FASTA"
