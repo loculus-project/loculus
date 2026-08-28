@@ -60,7 +60,11 @@ import java.net.http.HttpResponse
 import java.util.UUID
 
 @EndpointTest(
-    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
+    properties = [
+        // Batch size 2 so a request with three or more records spans several batches.
+        "${BackendSpringProperty.STREAM_BATCH_SIZE}=2",
+        "${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG",
+    ],
 )
 class SubmitProcessedDataEndpointTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
@@ -92,6 +96,55 @@ class SubmitProcessedDataEndpointTest(
                 PreparedProcessedData.successfullyProcessed("DoesNotMatter"),
                 jwt = jwtForDefaultUser,
             )
+        }
+    }
+
+    @Test
+    fun `WHEN I submit the same accession version twice in one batch THEN returns unprocessable entity`() {
+        val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.successfullyProcessed(accession = accessions.first()),
+            PreparedProcessedData.successfullyProcessed(accession = accessions.first()),
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("\$.detail").value(containsString("duplicate accession version")))
+
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
+            .assertStatusIs(Status.IN_PROCESSING)
+    }
+
+    @Test
+    fun `WHEN a duplicate accession version spans two batches THEN returns unprocessable entity`() {
+        val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.successfullyProcessed(accession = accessions.first()),
+            PreparedProcessedData.successfullyProcessed(accession = accessions[1]),
+            PreparedProcessedData.successfullyProcessed(accession = accessions.first()),
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("\$.detail").value(containsString("duplicate accession version")))
+
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
+            .assertStatusIs(Status.IN_PROCESSING)
+        convenienceClient.getSequenceEntry(accession = accessions[1], version = 1)
+            .assertStatusIs(Status.IN_PROCESSING)
+    }
+
+    @Test
+    fun `WHEN I submit several entries spanning batches THEN all of them are stored`() {
+        val accessions = prepareExtractedSequencesInDatabase().map { it.accession }.take(3)
+
+        submissionControllerClient.submitProcessedData(
+            *accessions
+                .map { PreparedProcessedData.successfullyProcessed(accession = it) }
+                .toTypedArray(),
+        )
+            .andExpect(status().isNoContent)
+
+        accessions.forEach {
+            convenienceClient.getSequenceEntry(accession = it, version = 1).assertStatusIs(Status.PROCESSED)
         }
     }
 
