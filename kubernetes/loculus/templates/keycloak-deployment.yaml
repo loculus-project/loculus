@@ -91,15 +91,15 @@ spec:
                 secretKeyRef:
                   name: keycloak-admin
                   key: initialAdminPassword
-            - name: KC_PROXY
-              value: "edge"
-            - name: PROXY_ADDRESS_FORWARDING
+            - name: KC_HTTP_ENABLED
               value: "true"
+            - name: KC_PROXY_HEADERS
+              value: "xforwarded"
             - name: KC_HEALTH_ENABLED
               value: "true"
-            - name: KC_HOSTNAME_URL
+            - name: KC_HOSTNAME
               value: "{{ include "loculus.keycloakUrl" . }}"
-            - name: KC_HOSTNAME_ADMIN_URL
+            - name: KC_HOSTNAME_ADMIN
               value: "{{ include "loculus.keycloakUrl" . }}"
             - name: KC_FEATURES
               value: "declarative-ui"
