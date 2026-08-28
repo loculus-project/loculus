@@ -3,7 +3,7 @@ import logging
 import os
 import subprocess  # noqa: S404
 from pathlib import Path
-from typing import cast
+from typing import IO, cast
 
 from raw_reads_processing.config import Config
 from raw_reads_processing.datatypes import Annotation, DeaconSummary, FileName
@@ -56,7 +56,7 @@ _FASTQ_SEQ_LINE = 1
 _READ_LENGTH_SAMPLE_SIZE = 100
 
 
-def _open_maybe_gzipped(path: Path):
+def _open_maybe_gzipped(path: Path) -> IO[str]:
     """Open a FASTQ file for text reading, transparently handling gzip.
 
     Downloaded files are stored without their original extension, so gzip is
@@ -90,7 +90,7 @@ def _deacon_a_for_reads(file_name_to_path: dict[FileName, Path], config: Config)
     """
     sample_paths = list(file_name_to_path.values())
     observed_length = min((mean_read_length(p) for p in sample_paths), default=0.0)
-    short_reads = observed_length <= config.short_reads_threshold
+    short_reads = observed_length < config.short_reads_threshold
     deacon_a = config.deacon_a_short_reads if short_reads else config.deacon_a
     logger.info(
         f"Mean read length ~{observed_length:.0f}bp "
