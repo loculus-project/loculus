@@ -69,8 +69,7 @@ done
 # Add all kmers from consensus sequences to the index mask 
 # (if a higher W is used this cannot be guaranteed and led e.g. to an mpox clade 1b insertion being incorrectly not filtered out)
 deacon index \
-    build "$TEMP_INDEX" \
-    "$COMBINED_FASTA" \
+    build "$COMBINED_FASTA" \
     -k "$KMER_LEN" \
     -w 1 \
     -o "$TEMP_MASK"
