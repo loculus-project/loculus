@@ -31,6 +31,9 @@ BASE_INDEX_URL = (
     "https://objectstorage.uk-london-1.oraclecloud.com/n/lrbvkel2wjot/b/"
     "human-genome-bucket/o/deacon/misc/panhuman-1.k31w15c8.idx"
 )
+# mpox clade 1b sequence including commonly incorrectly flagged insertion 
+# `ins_10453:TAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGAT`
+ADDITIONAL_SEQUENCES_FOR_MASK = {"PP_0014ESS.1"}
 
 KMER_LEN = 31
 WINDOW_SIZE = 15
@@ -143,12 +146,26 @@ def append_good_seq(
 def run_deacon_index_diff(
     temp_index: Path, combined_fasta: Path, output_path: Path
 ) -> None:
+    # create deacon index of mask using W=1 to get all possible kmers
+    args_mask = [
+        "deacon",
+        "index",
+        "build",
+        str(combined_fasta),
+        "-k",
+        str(KMER_LEN),
+        "-w",
+        str(1),
+        "-o",
+        str(temp_index.with_suffix(".mask.idx")),
+    ]
+    subprocess.run(args_mask, check=True)  # noqa: S603, S607
     args = [
         "deacon",
         "index",
         "diff",
         str(temp_index),
-        str(combined_fasta),
+        str(temp_index.with_suffix(".mask.idx")),
         "-k",
         str(KMER_LEN),
         "-w",
@@ -193,6 +210,7 @@ def build_index(output_path: Path) -> None:
 
                 logger.info("Filtering FASTA for good sequences...")
                 good_seq_names = good_sequence_names(tmp_dir / "nextclade.tsv")
+                good_seq_names |= ADDITIONAL_SEQUENCES_FOR_MASK
                 logger.info(
                     "Found %d good sequences for %s", len(good_seq_names), organism
                 )
