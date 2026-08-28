@@ -22,9 +22,7 @@ class Config(BaseModel):
     deacon_a_short_reads: int = (
         1  # absolute k-mer threshold used instead of deacon_a for short-read libraries
     )
-    short_reads_threshold: int = (
-        90  # mean read length (bp) below (or at) which short-read deacon params are used
-    )
+    short_reads_threshold: int = 90  # mean read length (bp) below (or at) which short-read deacon params are used
     deacon_r: float = (
         0.05  # relative proportion of k-mers in a read that need to map to index
     )
