@@ -1,8 +1,13 @@
+import itertools
 import logging
 import os
+import statistics
 import subprocess  # noqa: S404
 from pathlib import Path
 from typing import cast
+
+from Bio.SeqIO.QualityIO import FastqGeneralIterator
+from xopen import xopen
 
 from raw_reads_processing.config import Config
 from raw_reads_processing.datatypes import Annotation, DeaconSummary, FileName
@@ -50,10 +55,57 @@ def stop_deacon_server(proc: subprocess.Popen) -> None:
         proc.wait()
 
 
+_READ_LENGTH_SAMPLE_SIZE = 100
+
+
+def median_read_length(
+    path: Path, file_name: str, sample_size: int = _READ_LENGTH_SAMPLE_SIZE
+) -> float:
+    """Median read length over the first `sample_size` reads.
+
+    xopen sniffs compression from the magic bytes, which matters because downloads
+    are stored without their original extension.
+
+    Read length should be homogeneous within a sequencing run, so a small sample from
+    the start of the file is representative and costs only a few milliseconds.
+    """
+    with xopen(path, "rt", threads=0) as fh:
+        lengths = [
+            len(seq)
+            for _, seq, _ in itertools.islice(FastqGeneralIterator(fh), sample_size)
+        ]
+    if not lengths:
+        message = f"Failed to determine median read length for file '{file_name}'. File may be empty or corrupted."
+        logging.error(message)
+        raise InvalidSubmission(Annotation(fileNames=[file_name], message=message))
+    return statistics.median(lengths)
+
+
+def _deacon_a_for_reads(file_name_to_path: dict[FileName, Path], config: Config) -> int:
+    """Pick the deacon `-a` k-mer threshold, sampling the first one or two input
+    files to decide whether this is a short-read library.
+    """
+    observed_length = min(
+        [
+            median_read_length(path, file_name)
+            for file_name, path in file_name_to_path.items()
+        ],
+        default=0.0,
+    )
+    short_reads = observed_length < config.short_reads_threshold
+    deacon_a = config.deacon_a_short_reads if short_reads else config.deacon_a
+    logger.info(
+        f"Median read length ~{observed_length:.0f}bp "
+        f"({'short' if short_reads else 'normal'}-read deacon params: -a {deacon_a})"
+    )
+    return deacon_a
+
+
 def run_deacon_filter(
     file_name_to_path: dict[FileName, Path], data_dir: str, config: Config
 ) -> DeaconSummary:
     summary_json_path = Path(data_dir) / "summary.json"
+    deacon_a = _deacon_a_for_reads(file_name_to_path, config)
     args = [
         "deacon",
         "--use-server",
@@ -61,7 +113,7 @@ def run_deacon_filter(
         "--summary",
         summary_json_path,
         "-a",
-        str(config.deacon_a),
+        str(deacon_a),
         "-r",
         str(config.deacon_r),
         DEACON_INDEX_PATH,
