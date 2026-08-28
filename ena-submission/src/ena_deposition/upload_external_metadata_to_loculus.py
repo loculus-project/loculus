@@ -29,7 +29,9 @@ from .submission_db_helper import (
 logger = logging.getLogger(__name__)
 
 
-def _get_result_of_single_db_record[T: SampleTableEntry | ProjectTableEntry | AssemblyTableEntry](
+def _get_result_of_single_db_record[
+    T: SampleTableEntry | ProjectTableEntry | AssemblyTableEntry | RawReadsTableEntry
+](
     db_engine: Engine,
     model_class: type[T],
     conditions: dict[str, Any],

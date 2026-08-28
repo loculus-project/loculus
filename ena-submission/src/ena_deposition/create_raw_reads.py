@@ -389,7 +389,11 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
                 update_raw_reads_results_with_latest_version(db_engine, seq_key)
                 continue
             last_entry = get_last_entry(db_engine, submission_row.pkey)
-            old_run_accession = last_entry.seq_metadata.get(config.raw_reads_metadata_field)
+            old_run_accession = (
+                last_entry.external_metadata.get("insdcRawReadsAccession")
+                if last_entry.external_metadata
+                else None
+            )
 
         try:
             manifest_object = create_manifest_object(
