@@ -45,17 +45,22 @@ COMBINED_FASTA="$TMP_DIR/combined.fasta"
 
 mkdir -p "$(dirname "$OUTPUT_FILE")"
 
-curl https://objectstorage.uk-london-1.oraclecloud.com/n/lrbvkel2wjot/b/human-genome-bucket/o/deacon/misc/panhuman-1.k31w15c8.idx > "$TEMP_INDEX"
+curl -fsSL https://objectstorage.uk-london-1.oraclecloud.com/n/lrbvkel2wjot/b/human-genome-bucket/o/deacon/misc/panhuman-1.k31w15c8.idx -o "$TEMP_INDEX"
 
 mapfile -t organisms < <(
     curl -fsSL "${PATHOPLEXUS_URL}/loculus-info" \
     | jq -r '.organisms | keys[]'
 )
 
+if [[ ${#organisms[@]} -eq 0 ]]; then
+    echo "Error: no organisms returned by ${PATHOPLEXUS_URL}/loculus-info" >&2
+    exit 1
+fi
+
 for organism in "${organisms[@]}"; do 
     organism_fasta="$TMP_DIR/${organism}.fasta" 
     echo "Downloading ${organism}..." >&2 
-    curl "${LAPIS_URL}/${organism}/sample/unalignedNucleotideSequences?dataUseTerms=OPEN&dataFormat=fasta&versionStatus=LATEST_VERSION&isRevocation=false" | zstdcat > "$organism_fasta" 
+    curl -fsSL "${LAPIS_URL}/${organism}/sample/unalignedNucleotideSequences?dataUseTerms=OPEN&dataFormat=fasta&compression=zstd&versionStatus=LATEST_VERSION&isRevocation=false" | zstdcat > "$organism_fasta"
      
     if [[ ! -s "$organism_fasta" ]]; 
         then echo "Warning: empty FASTA returned for ${organism}; skipping." >&2 
