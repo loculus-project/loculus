@@ -1,6 +1,5 @@
 from dataclasses import dataclass, fields
-import json
-from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -40,8 +39,6 @@ class DeaconSummary:
     bp_out_proportion: float
 
     @classmethod
-    def from_json(cls, json_path: Path):
-        with open(json_path, encoding="utf-8") as f:
-            data = json.load(f)
+    def from_dict(cls, data: dict[str, Any]):
         wanted = {f.name for f in fields(cls)}
         return cls(**{k: v for k, v in data.items() if k in wanted})

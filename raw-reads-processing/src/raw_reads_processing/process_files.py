@@ -10,13 +10,13 @@ from raw_reads_processing.datatypes import (
     FileName,
     RequestWithFiles,
 )
-from raw_reads_processing.errors import ProcessingFailure
+from raw_reads_processing.deacon import DeaconFilter, validate_with_deacon
+from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
 from raw_reads_processing.file_format_validation import (
     validate_file_extensions,
     validate_file_numbers,
     validate_with_readtools,
 )
-from raw_reads_processing.deacon import validate_with_deacon
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +30,25 @@ def download_file(
             file.url, stream=True, timeout=config.s3_request_timeout_seconds
         ) as response:
             response.raise_for_status()
+            written = 0
             with save_path.open("wb") as f:
-                f.writelines(response.iter_content(chunk_size=1024 * 1024))
+                for chunk in response.iter_content(chunk_size=1024 * 1024):
+                    written += len(chunk)
+                    # Stop as soon as the cap is passed rather than after writing the
+                    # whole file: this bound is what replaces the deacon filter timeout,
+                    # and it also keeps an oversized upload off the pod's disk.
+                    if written > config.max_input_file_bytes:
+                        raise InvalidSubmission(
+                            Annotation(
+                                fileNames=[file.name],
+                                message=(
+                                    f"File '{file.name}' is larger than the maximum accepted size of "
+                                    f"{config.max_input_file_bytes} bytes. Please split the submission "
+                                    "into smaller files."
+                                ),
+                            )
+                        )
+                    f.write(chunk)
     except requests.RequestException as e:
         message = f"Error downloading file '{file.name}' from S3: {e}"
         logger.error(message)
@@ -41,6 +58,7 @@ def download_file(
 
 def validate_raw_reads_submission(
     config: Config,
+    deacon_filter: DeaconFilter,
     request_with_files: RequestWithFiles,
 ) -> None:
     files = request_with_files.files
@@ -62,4 +80,4 @@ def validate_raw_reads_submission(
         validate_with_readtools(
             local_files, file_format, config.read_validation_timeout_seconds
         )
-        validate_with_deacon(local_files, tmp_dir, config)
+        validate_with_deacon(deacon_filter, local_files, config)
