@@ -88,8 +88,8 @@ def _deacon_a_for_reads(file_name_to_path: dict[FileName, Path], config: Config)
     """Pick the deacon `-a` k-mer threshold, sampling the first one or two input
     files to decide whether this is a short-read library.
     """
-    sample_paths = list(file_name_to_path.values())[:2]
-    observed_length = min(mean_read_length(p) for p in sample_paths)
+    sample_paths = list(file_name_to_path.values())
+    observed_length = min((mean_read_length(p) for p in sample_paths), default=0.0)
     short_reads = observed_length <= config.short_reads_threshold
     deacon_a = config.deacon_a_short_reads if short_reads else config.deacon_a
     logger.info(
