@@ -578,7 +578,6 @@ def add_to_assembly_table(engine: Engine, entry: AssemblyTableEntry) -> bool:
 
 def add_to_raw_reads_table(engine: Engine, entry: RawReadsTableEntry) -> bool:
     """Insert *entry* into raw_reads_table. Returns True on success."""
-    entry.started_at = datetime.now(tz=pytz.utc)
     try:
         with Session(engine, expire_on_commit=False) as session:
             session.add(entry)
