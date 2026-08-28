@@ -1,13 +1,13 @@
-import gzip
 import itertools
 import logging
 import os
+import statistics
 import subprocess  # noqa: S404
 from pathlib import Path
-from typing import IO, cast
-import numpy as np
+from typing import cast
 
-from Bio import SeqIO
+from Bio.SeqIO.QualityIO import FastqGeneralIterator
+from xopen import xopen
 
 from raw_reads_processing.config import Config
 from raw_reads_processing.datatypes import Annotation, DeaconSummary, FileName
@@ -58,33 +58,20 @@ def stop_deacon_server(proc: subprocess.Popen) -> None:
 _READ_LENGTH_SAMPLE_SIZE = 100
 
 
-def _open_maybe_gzipped(path: Path) -> IO[str]:
-    """Open a FASTQ file for text reading, transparently handling gzip.
-
-    Downloaded files are stored without their original extension, so gzip is
-    detected from the magic bytes rather than the file name.
-    """
-    with path.open("rb") as fh:
-        is_gzip = fh.read(2) == b"\x1f\x8b"
-    return gzip.open(path, "rt") if is_gzip else path.open("rt")
-
-
 def median_read_length(
-    path: Path,
-    sample_size: int = _READ_LENGTH_SAMPLE_SIZE,
+    path: Path, sample_size: int = _READ_LENGTH_SAMPLE_SIZE
 ) -> float:
-    """Median sequence length over the first `sample_size` reads of a FASTQ file.
+    """Median read length over the first `sample_size` reads.
 
-    Read length should be homogeneous within a sequencing run, so a small sample from
-    the start of the file is representative and costs only a few milliseconds.
+    xopen sniffs compression from the magic bytes, which matters because downloads
+    are stored without their original extension.
     """
-    with _open_maybe_gzipped(path) as fh:
+    with xopen(path, "rt", threads=0) as fh:
         lengths = [
-            len(record.seq)
-            for record in itertools.islice(SeqIO.parse(fh, "fastq"), sample_size)
+            len(seq)
+            for _, seq, _ in itertools.islice(FastqGeneralIterator(fh), sample_size)
         ]
-
-    return np.median(lengths) if lengths else 0.0
+    return statistics.median(lengths) if lengths else 0.0
 
 
 def _deacon_a_for_reads(file_name_to_path: dict[FileName, Path], config: Config) -> int:
