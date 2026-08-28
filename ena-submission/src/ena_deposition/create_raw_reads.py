@@ -275,9 +275,13 @@ def can_revise_raw_reads(
     if manifest_fields_changed(
         config, db_engine, submission_row, last_entry
     ) and not has_raw_reads_changed(config, db_engine, submission_row):
-        logger.debug(
+        message = (
             f"Only manifest fields have changed for {submission_row.accession}, "
             f"from {last_entry.version} to {submission_row.version} - should be revised manually"
+        )
+        logger.debug(message)
+        update_raw_reads_error(
+            db_engine, [message], seq_key=asdict(submission_row.pkey), update_type="revision"
         )
         return False
     return True
