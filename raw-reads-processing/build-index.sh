@@ -5,7 +5,6 @@ PATHOPLEXUS_URL="https://pathoplexus.org"
 LAPIS_URL="https://lapis.pathoplexus.org"
 
 KMER_LEN=31
-WINDOW_SIZE=15
 
 usage() {
     echo "Usage: $0 -o <output-index>" >&2
@@ -79,8 +78,6 @@ deacon index \
 deacon index \
     diff "$TEMP_INDEX" \
     "$TEMP_MASK" \
-    -k "$KMER_LEN" \
-    -w "$WINDOW_SIZE" \
     -o "$OUTPUT_FILE"
 
 echo "Output written to: $OUTPUT_FILE"
