@@ -78,7 +78,6 @@ export const FASTA_FILE_KIND: FileKind<ProcessedFile> = {
     icon: PhDnaLight,
     supportedExtensions: ['fasta'],
     processRawFile: (file) => {
-        // Permissive about file names, but a metadata-only extension means the upload fields were swapped.
         const { dataExtension } = splitFileExtensions(file);
         if (METADATA_FILE_KIND.supportedExtensions.includes(dataExtension)) {
             return Promise.resolve(
