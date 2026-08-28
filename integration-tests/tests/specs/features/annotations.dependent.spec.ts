@@ -18,8 +18,8 @@ test.describe('Sequence Preview Annotations', () => {
         await searchPage.fill('Submission ID', 'foobar');
         await searchPage.fill('Author affiliations', 'Patho Institute, Paris');
 
-        const accessionVersion = await searchPage.clickOnSequenceAndGetAccession(0);
-        const accession = accessionVersion.split('.')[0];
+        const { accession, accessionVersion } = await searchPage.getUniqueAccessionVersion();
+        await searchPage.openPreviewOfAccessionVersion(accessionVersion);
 
         await expect(page.getByTestId('sequence-preview-modal')).toBeVisible();
 

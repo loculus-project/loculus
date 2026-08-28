@@ -196,15 +196,6 @@ export class SearchPage {
         await expect(this.page.getByText('Sequence revoked successfully.')).toBeVisible();
     }
 
-    async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string | null> {
-        const rows = this.getSequenceRows();
-        const row = rows.nth(rowIndex);
-        const rowText = await row.innerText();
-        const accessionVersion = parseAccessionVersion(rowText)?.accessionVersion ?? null;
-        await row.click();
-        return accessionVersion;
-    }
-
     getSequencePreviewModal() {
         return this.page.locator('[data-testid="sequence-preview-modal"]');
     }
