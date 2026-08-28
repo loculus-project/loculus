@@ -2,9 +2,6 @@ name: Create and Upload Custom Deacon Index
 
 on:
   workflow_dispatch: # Only manual trigger for now, since this is a rare operation
-  push:
-    branches:
-      - deacon_index_improvements
 
 env:
   DEACON_INDEX_IMAGE: ghcr.io/loculus-project/deacon-index
@@ -96,8 +93,8 @@ jobs:
         run: |
           s3cmd put "${INDEX_VERSIONED}" s3://loculus-public/deacon-index/"${INDEX_VERSIONED}"
 
-          # s3cmd cp s3://loculus-public/deacon-index/"${INDEX_VERSIONED}" \
-          #   s3://loculus-public/deacon-index/"${INDEX_LATEST}"
+          s3cmd cp s3://loculus-public/deacon-index/"${INDEX_VERSIONED}" \
+            s3://loculus-public/deacon-index/"${INDEX_LATEST}"
 
   notify_on_success:
     needs: build-and-upload
