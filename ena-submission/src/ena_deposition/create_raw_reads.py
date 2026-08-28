@@ -458,12 +458,6 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
                 model_class=RawReadsTableEntry,
             )
             run_accessions_to_suppress.add(old_run_accession) if revision else None
-            for file in manifest_object.fastq:
-                try:
-                    logger.info(f"Cleaning up temporary file {file} after successful submission")
-                    os.remove(file)
-                except Exception as e:
-                    logger.warning(f"Failed to remove temporary file {file}: {e}")
         else:
             update_raw_reads_error(
                 db_engine,
@@ -471,6 +465,12 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
                 seq_key=asdict(row.pkey),
                 update_type="creation",
             )
+        for file in manifest_object.fastq:
+            try:
+                logger.info(f"Cleaning up temporary file {file} after successful submission")
+                os.remove(file)
+            except Exception as e:
+                logger.warning(f"Failed to remove temporary file {file}: {e}")
     if run_accessions_to_suppress:
         notify_msg = (
             f"Raw reads creation succeeded for {len(run_accessions_to_suppress)} revisions, "
