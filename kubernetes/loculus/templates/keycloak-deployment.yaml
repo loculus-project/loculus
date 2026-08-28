@@ -116,6 +116,7 @@ spec:
             - "--cache=local"
           ports:
             - containerPort: 8080
+            - containerPort: 9000
           volumeMounts:
             - name: keycloak-config-processed
               mountPath: /opt/keycloak/data/import/
@@ -124,14 +125,14 @@ spec:
           startupProbe:
             httpGet:
               path: /health/ready
-              port: 8080
+              port: 9000
             timeoutSeconds: 3
             failureThreshold: 150
             periodSeconds: 5
           livenessProbe:
             httpGet:
               path: /health/ready
-              port: 8080
+              port: 9000
             timeoutSeconds: 3
             periodSeconds: 10
             failureThreshold: 2
