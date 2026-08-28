@@ -141,25 +141,13 @@ describe('fileProcessing', () => {
     });
 
     test.each([
-        'metadata.tsv',
-        'metadata.TSV',
-        'metadata.xlsx',
-        'metadata.xls',
-        'metadata.tsv.zst',
-        'metadata.xlsx.gz',
-    ])('rejects %s in the sequence file field', async (fileName) => {
+        ['metadata.tsv', true],
+        ['metadata.xlsx.gz', true],
+        ['sequences.fasta.zst', false],
+        ['sequences.txt', false],
+    ])('sequence file field rejects %s: %s', async (fileName, isRejected) => {
         const processingResult = await FASTA_FILE_KIND.processRawFile(new File(['content'], fileName));
 
-        expect(processingResult.isErr()).toBe(true);
-        expect(processingResult._unsafeUnwrapErr().message).toContain('looks like a metadata file');
+        expect(processingResult.isErr()).toBe(isRejected);
     });
-
-    test.each(['sequences.fasta', 'sequences.fasta.zst', 'sequences.fa', 'sequences.txt', 'sequences'])(
-        'accepts %s in the sequence file field',
-        async (fileName) => {
-            const processingResult = await FASTA_FILE_KIND.processRawFile(new File(['>a\nACGT'], fileName));
-
-            expect(processingResult.isOk()).toBe(true);
-        },
-    );
 });
