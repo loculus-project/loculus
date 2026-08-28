@@ -83,8 +83,8 @@ export const FASTA_FILE_KIND: FileKind<ProcessedFile> = {
             return Promise.resolve(
                 err(
                     new Error(
-                        `This looks like a metadata file (.${dataExtension}), not sequence data. ` +
-                            'Please upload it in the "Metadata file" field instead.',
+                        `Unsupported file extension for sequence upload: .${dataExtension} files are metadata. ` +
+                            'Please use the metadata field instead.',
                     ),
                 ),
             );
