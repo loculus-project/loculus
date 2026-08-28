@@ -1,4 +1,5 @@
 ALTER TABLE submission_table ADD submit_raw_reads boolean DEFAULT false;
+ALTER TABLE submission_table ALTER COLUMN submit_raw_reads SET NOT NULL;
 
 CREATE TABLE raw_reads_table (
     accession text not null,

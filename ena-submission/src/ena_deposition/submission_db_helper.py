@@ -262,13 +262,21 @@ class RawReadsTableEntry(Base):
         Enum(Status, native_enum=False),
         default=Status.READY,
     )
-    started_at: Mapped[datetime | None] = mapped_column(default=None)
+    started_at: Mapped[datetime] = mapped_column(default_factory=lambda: datetime.now(tz=pytz.utc))
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     result: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(JSONB, default=None)
-    ena_run_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
-    ncbi_run_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
-    ena_experiment_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
-    ncbi_experiment_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
+    ena_run_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ncbi_run_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ena_experiment_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ncbi_experiment_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
 
     @property
     def pkey(self) -> AccessionVersion:
