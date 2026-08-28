@@ -111,7 +111,7 @@ def run_nextclade(
     subprocess.run(args, check=True)  # noqa: S603, S607
 
 
-def good_sequence_indices(tsv_path: Path) -> set[str]:
+def good_sequence_names(tsv_path: Path) -> set[str]:
     """FASTA headers with qc.overallStatus == "good"."""
     with tsv_path.open(newline="") as f:
         reader = csv.DictReader(f, delimiter="\t")
@@ -120,17 +120,17 @@ def good_sequence_indices(tsv_path: Path) -> set[str]:
         }
 
 
-def filter_fasta_by_index(
-    fasta_path: Path, good_indices: set[str], combined_fasta: Path
+def append_good_seq(
+    fasta_path: Path, good_seq_names: set[str], combined_fasta: Path
 ) -> None:
-    """Append only the FASTA records at `good_indices` to combined_fasta."""
+    """Append only the FASTA records at `good_seq_names` to combined_fasta."""
     dropped = 0
     with fasta_path.open() as src, combined_fasta.open("a") as dst:
         keep = False
         for line in src:
             if line.startswith(">"):
                 seq_name = line[1:].strip()
-                keep = seq_name in good_indices
+                keep = seq_name in good_seq_names
                 if not keep:
                     dropped += 1
             if keep:
@@ -192,11 +192,11 @@ def build_index(output_path: Path) -> None:
                 run_nextclade(organism_fasta, dataset_name, dataset_server, tmp_dir)
 
                 logger.info("Filtering FASTA for good sequences...")
-                good_indices = good_sequence_indices(tmp_dir / "nextclade.tsv")
+                good_seq_names = good_sequence_names(tmp_dir / "nextclade.tsv")
                 logger.info(
-                    "Found %d good sequences for %s", len(good_indices), organism
+                    "Found %d good sequences for %s", len(good_seq_names), organism
                 )
-                filter_fasta_by_index(organism_fasta, good_indices, combined_fasta)
+                append_good_seq(organism_fasta, good_seq_names, combined_fasta)
             organism_fasta.unlink()
 
         run_deacon_index_diff(temp_index, combined_fasta, output_path)
