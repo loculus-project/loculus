@@ -934,6 +934,14 @@
                   "docsIncludePrefix": false,
                   "type": "object",
                   "description": "Filter ingested sequences based on value in metadata. Filter should be a list of metadata field and value pairs."
+                },
+                "batch_chunk_size": {
+                  "groups": ["ingest"],
+                  "docsIncludePrefix": false,
+                  "type": "integer",
+                  "minimum": 2,
+                  "default": 1000,
+                  "description": "Number of sequences submitted to the backend per request."
                 }
               },
               "required": ["taxon_id"]

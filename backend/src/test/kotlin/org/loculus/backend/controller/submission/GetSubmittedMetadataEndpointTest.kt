@@ -209,7 +209,7 @@ class GetSubmittedMetadataEndpointTest(
     fun `WHEN I filter by accessionVersions with invalid format THEN returns 422`() {
         submissionControllerClient.getSubmittedMetadata(
             accessionVersionsFilter = listOf("not-a-valid-accession-version"),
-        ).andExpect(status().isUnprocessableEntity)
+        ).andExpect(status().isUnprocessableContent)
     }
 
     // Regression test for https://github.com/loculus-project/loculus/issues/4036

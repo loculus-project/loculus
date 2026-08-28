@@ -1054,6 +1054,14 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Amplicon size
         header: Sequencing
         orderOnDetailsPage: 2060
+      - name: pairedEndInsertSize
+        definition: The nominal insert size for paired-end sequencing libraries.
+        guidance: Provide the nominal insert size in base pairs (as an integer).
+        example: "500"
+        displayName: Paired-end insert size
+        type: int
+        header: Sequencing
+        orderOnDetailsPage: 2065
       - name: sequencingInstrument
         ontology_id: GENEPIO:0001452
         definition: The model of the sequencing instrument used. (required when raw read files are provided)
@@ -1174,6 +1182,54 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sequencing
         desired: true
         orderOnDetailsPage: 2100
+      - name: sequencingLibrarySelection
+        definition: The method used to select or enrich the source material.
+        guidance: 'Example Guidance: Provide the name of the DNA or RNA sequencing library selection technology used in your study. If unsure refer to the protocol documentation, or provide a null value.'
+        desired: true
+        example: PCR
+        displayName: Sequencing library selection
+        header: Sequencing
+        orderOnDetailsPage: 2120
+        preprocessing:
+          function: process_options
+          inputs:
+            input: sequencingLibrarySelection
+        options:
+          # ena-webin-cli -context reads -fields
+          # ena-webin-cli=9.0.3
+          # Last checked: 09.06.2026
+          # Fields listed in LIBRARY_SELECTION
+          - name: "RANDOM"
+          - name: "PCR"
+          - name: "RANDOM PCR"
+          - name: "RT-PCR"
+          - name: "HMPR"
+          - name: "MF"
+          - name: "repeat fractionation"
+          - name: "size fractionation"
+          - name: "MSLL"
+          - name: "cDNA"
+          - name: "cDNA_randomPriming"
+          - name: "cDNA_oligo_dT"
+          - name: "PolyA"
+          - name: "Oligo-dT"
+          - name: "Inverse rRNA"
+          - name: "Inverse rRNA selection"
+          - name: "ChIP"
+          - name: "ChIP-Seq"
+          - name: "MNase"
+          - name: "DNase"
+          - name: "Hybrid Selection"
+          - name: "Reduced Representation"
+          - name: "Restriction Digest"
+          - name: "5-methylcytidine antibody"
+          - name: "MBD2 protein methyl-CpG binding domain"
+          - name: "CAGE"
+          - name: "RACE"
+          - name: "MDA"
+          - name: "padlock probes capture method"
+          - name: "other"
+          - name: "unspecified"
       - name: sequencingAssayType
         ontology_id: GENEPIO:0100997
         definition: The overarching sequencing technique that was used to determine the sequence of a biomaterial, also called library strategy in the INSDC. (required when raw read files are provided)
@@ -1234,6 +1290,28 @@ defaultOrganismConfig: &defaultOrganismConfig
           - name: "ChM-Seq"
           - name: "GBS"
           - name: "Ribo-seq"
+          - name: "OTHER"
+      - name: sequencingLibrarySource
+        definition: The type of biomaterial that was sequenced, also called library source in the INSDC.
+        guidance: 'Example Guidance: Provide the name of the DNA or RNA sequencing library source used in your study. If unsure refer to the protocol documentation, or provide a null value.'
+        desired: true
+        example: VIRAL RNA
+        displayName: Sequencing library source
+        header: Sequencing
+        orderOnDetailsPage: 2125
+        preprocessing:
+          function: process_options
+          inputs:
+            input: sequencingLibrarySource
+        options:
+          - name: "GENOMIC"
+          - name: "GENOMIC SINGLE CELL"
+          - name: "TRANSCRIPTOMIC"
+          - name: "TRANSCRIPTOMIC SINGLE CELL"
+          - name: "METAGENOMIC"
+          - name: "METATRANSCRIPTOMIC"
+          - name: "SYNTHETIC"
+          - name: "VIRAL RNA"
           - name: "OTHER"
       - name: sequencedByOrganization
         ontology_id: GENEPIO:0100416
@@ -1705,8 +1783,9 @@ defaultOrganismConfig: &defaultOrganismConfig
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
-    configFile:
+    configFile: &defaultIngestConfigFile
       muted_hashes_url: "https://pathoplexus.github.io/curation_data/muted_hashes/muted_hashes.tsv"
+      batch_chunk_size: 1000
 defaultOrganisms:
   ebola-sudan:
     <<: *defaultOrganismConfig
@@ -1746,6 +1825,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 3052460
     enaDeposition:
       singleReference:
@@ -1893,6 +1973,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 3048448
     enaDeposition:
       singleReference:
@@ -2244,6 +2325,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 3052518
         grouping_override_url: "https://pathoplexus.github.io/curation_data/grouping_override/cchf/curated_group_02-03-2026.json"
         segment_identification:
@@ -2449,6 +2531,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 3052518
         segment_identification:
           method: "align"
@@ -2627,6 +2710,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 12059
         subsample_fraction: 0.2
     enaDeposition:
@@ -2955,13 +3039,19 @@ resources:
       cpu: "10m"
     limits:
       memory: "1Gi"
+  raw-reads-processing:
+    requests:
+      memory: "8Gi"
+      cpu: "50m"
+    limits:
+      memory: "8Gi"
 defaultResources:
   requests:
     memory: "200Mi"
     cpu: "20m"
   limits:
     memory: "1Gi"
-    cpu: "20m"
+    cpu: "500m"
 ingest:
   ncbiGatewayUrl: null
   mirrorBucket: null
