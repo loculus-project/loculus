@@ -69,10 +69,12 @@ def get_platform_and_instrument(
     if platform := Platform.from_value(raw_value):
         return platform, Instrument.unspecified
     if raw_value != "unspecified":
-        logger.warning(
+        message = (
             f"sequencingInstrument value '{raw_value}' for accession {accession} matches "
-            "neither ENA's platform nor instrument list, defaulting to instrument=unspecified"
+            "neither ENA's platform nor instrument list - ENA submission will fail."
         )
+        logger.error(message)
+        raise RuntimeError(message)
     return None, Instrument.unspecified
 
 
@@ -405,8 +407,13 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
             )
             manifest_file = create_manifest(manifest_object, is_broker=config.is_broker)
         except Exception as e:
-            logger.error(
-                f"Raw reads manifest creation failed for accession {row.accession} with error {e}"
+            error_msg = f"Manifest creation failed for accession {row.accession} with error {e}"
+            logger.error(error_msg)
+            update_raw_reads_error(
+                db_engine,
+                [error_msg],
+                seq_key=asdict(row.pkey),
+                update_type="creation",
             )
             continue
 

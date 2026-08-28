@@ -643,7 +643,7 @@ class RawReadsCreationTests(unittest.TestCase):
         self.assertEqual(manifest.instrument, Instrument.HiSeq_X_Five)
 
     @mock.patch("ena_deposition.call_loculus.download_fastq_files")
-    def test_create_manifest_unrecognized_instrument_warns(self, mock_download_fastq_files):
+    def test_create_manifest_unrecognized_instrument_raises(self, mock_download_fastq_files):
         mock_download_fastq_files.return_value = self.fastq_files
         config = mock_config()
         submission_row = sample_data_in_submission_table()
@@ -652,13 +652,12 @@ class RawReadsCreationTests(unittest.TestCase):
             "sequencingInstrument": "Not a real instrument",
         }
 
-        with self.assertLogs("ena_deposition.create_raw_reads", level="WARNING") as cm:
-            manifest = create_raw_reads_manifest_object(
+        with self.assertRaises(
+            RuntimeError, msg="matches neither ENA's platform nor instrument list"
+        ):
+            create_raw_reads_manifest_object(
                 config, "Test Sample Accession", "Test Study Accession", submission_row
             )
-        self.assertIsNone(manifest.platform)
-        self.assertEqual(manifest.instrument, Instrument.unspecified)
-        self.assertIn("matches neither ENA's platform nor instrument list", cm.output[0])
 
 
 if __name__ == "__main__":
