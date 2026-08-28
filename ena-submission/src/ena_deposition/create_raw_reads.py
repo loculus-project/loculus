@@ -197,7 +197,7 @@ def update_raw_reads_error(
     db_engine: Engine,
     error: list[str],
     seq_key: dict[str, Any],
-    update_type: Literal["revision"] | Literal["creation"],
+    update_type: Literal["revision", "creation"],
 ) -> None:
     logger.error(
         f"Raw reads {update_type} failed for accession {seq_key['accession']} "

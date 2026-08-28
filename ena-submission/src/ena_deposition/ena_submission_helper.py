@@ -437,6 +437,7 @@ def get_authors(authors: str) -> str | None:
         raise ValueError(msg) from err
     return formatted_authors
 
+
 def get_country(metadata: dict[str, str]) -> str:
     country = metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.country_property, "Unknown")
     admin = ", ".join(
@@ -989,7 +990,7 @@ def accession_exists(
 def set_accession_does_not_exist_error(
     conditions: dict[str, Any],
     accession: str,
-    accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"] | Literal["RUN_REF"],
+    accession_type: Literal["BIOPROJECT", "BIOSAMPLE", "RUN_REF"],
     db_engine: Engine,
 ):
     error_text = f"Accession {accession} of type {accession_type} does not exist in ENA."
