@@ -104,7 +104,7 @@ class SubmitExternalMetadataEndpointTest(
                 PreparedExternalMetadata.successfullySubmitted(accession = accession),
                 externalMetadataUpdater = "other_db",
             )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail")
@@ -124,7 +124,7 @@ class SubmitExternalMetadataEndpointTest(
             .submitExternalMetadata(
                 PreparedExternalMetadata.successfullySubmitted(accession = accession),
             )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail")
@@ -147,7 +147,7 @@ class SubmitExternalMetadataEndpointTest(
             .submitExternalMetadata(
                 PreparedExternalMetadata.successfullySubmitted(accession = accession),
             )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail")

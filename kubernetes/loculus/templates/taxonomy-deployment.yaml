@@ -26,7 +26,8 @@ spec:
       {{- include "loculus.podSecurityContext" (list "taxonomy-service" $.Values) | nindent 6 }}
       initContainers:
         - name: download-taxonomy-db
-          image: alpine:3
+          image: {{ include "loculus.image" (dict "name" "alpine" "defaultRepository" "alpine" "defaultTag" "3" "values" $.Values) }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "alpine" "values" $.Values) }}
           {{- include "loculus.containerSecurityContext" (list "download-taxonomy-db" $.Values) | nindent 10 }}
           command: ["sh", "-c"]
           args:
@@ -43,8 +44,8 @@ spec:
               mountPath: /data
       containers:
         - name: taxonomy-service
-          image: "ghcr.io/loculus-project/taxonomy-service:{{ $dockerTag }}"
-          imagePullPolicy: {{ $.Values.imagePullPolicy }}
+          image: {{ include "loculus.image" (dict "name" "taxonomyService" "defaultRepository" "ghcr.io/loculus-project/taxonomy-service" "values" $.Values) }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "taxonomyService" "values" $.Values) }}
           {{- include "loculus.resources" (list "taxonomy-service" $.Values) | nindent 10 }}
           {{- include "loculus.containerSecurityContext" (list "taxonomy-service" $.Values) | nindent 10 }}
           args:

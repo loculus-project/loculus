@@ -207,12 +207,21 @@ def reformat_authors_from_loculus_to_embl_style(authors: str) -> str | None:
       in which case the surname alone will be listed.
       The author names are separated by commas
       and terminated by a semicolon; they are not split between lines."
-    See section "3.4.10.6: The RA Line" here: https://raw.githubusercontent.com/enasequence/read_docs/c4bd306c82710844128cdf43003a0167837dc442/submit/fileprep/flatfile_user_manual.txt"""
+    See section "3.4.10.6: The RA Line" here: https://raw.githubusercontent.com/enasequence/read_docs/c4bd306c82710844128cdf43003a0167837dc442/submit/fileprep/flatfile_user_manual.txt
+
+    We also convert hyphenated names to initials, e.g. "Smith, John-Doe" becomes "Smith J.-D."
+    """
     authors_list = [author for author in authors.split(";") if author]
     ena_authors = []
     for author in authors_list:
         last_names, first_names = author.split(",")[0].strip(), author.split(",")[1].strip()
-        initials = "".join([name[0] + "." for name in first_names.split() if name])
+        initials = "-".join(
+            [
+                "".join(name[0] + "." for name in hyphen_name.split() if name)
+                for hyphen_name in first_names.split("-")
+                if hyphen_name.strip()
+            ]
+        )
         ena_authors.append(f"{last_names} {initials}".strip())
     ascii_authors = authors_to_ascii(", ".join(ena_authors))
     if not ascii_authors:

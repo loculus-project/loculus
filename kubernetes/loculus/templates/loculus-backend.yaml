@@ -1,4 +1,3 @@
-{{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- if not .Values.disableBackend }}
 ---
 apiVersion: apps/v1
@@ -25,11 +24,11 @@ spec:
       {{- include "loculus.podScheduling" . | nindent 6 }}
       {{- include "loculus.podSecurityContext" (list "backend" $.Values) | nindent 6 }}
       initContainers:
-    {{- include "loculus.configProcessor" (dict "name" "loculus-backend-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy "Values" $.Values) | nindent 8 }}
+    {{- include "loculus.configProcessor" (dict "name" "loculus-backend-config" "values" $.Values "Values" $.Values) | nindent 8 }}
       containers:
         - name: backend
-          image: "{{ $.Values.images.backend.repository }}:{{ $.Values.images.backend.tag | default $dockerTag }}"
-          imagePullPolicy: "{{ $.Values.images.backend.pullPolicy | default $.Values.imagePullPolicy }}"
+          image: {{ include "loculus.image" (dict "name" "backend" "defaultRepository" "ghcr.io/loculus-project/backend" "values" $.Values) }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "backend" "values" $.Values) }}
           {{- include "loculus.resources" (list "backend" $.Values) | nindent 10 }}
           {{- include "loculus.containerSecurityContext" (list "backend" $.Values) | nindent 10 }}
           startupProbe:
@@ -99,8 +98,10 @@ spec:
               {{- .Values.backendExtraArgs | toYaml | nindent 12 }}
             {{- end }}
           env:
+            # If a flag in JVM_OPTS below changes object layout or other observable JVM
+            # semantics, mirror it in the test task in backend/build.gradle
             - name: JVM_OPTS
-              value: -XX:+UseContainerSupport -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2
+              value: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseCompactObjectHeaders -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2
           {{- if $.Values.seqSets.crossRef }}
             - name: CROSSREF_USERNAME
               valueFrom:

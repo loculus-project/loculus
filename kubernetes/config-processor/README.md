@@ -27,12 +27,12 @@ This template adds the Config Processor as an init container:
 
 ```yaml
 initContainers:
-{{- include "loculus.configProcessor" (dict "name" "your-config-name" "dockerTag" $dockerTag) | nindent 8 }}
+{{- include "loculus.configProcessor" (dict "name" "your-config-name" "values" $.Values) | nindent 8 }}
 ```
 
 Parameters:
 - `name`: The name of your configuration (used for volume names)
-- `dockerTag`: The Docker image tag to use
+- `values`: The root `.Values` (used to resolve the config-processor image from `images.configProcessor` and its pull policy)
 
 ### 2. `loculus.configVolume` Template
 
@@ -79,7 +79,7 @@ spec:
   template:
     spec:
       initContainers:
-        {{- include "loculus.configProcessor" (dict "name" "your-config-name" "dockerTag" $dockerTag) | nindent 8 }}
+        {{- include "loculus.configProcessor" (dict "name" "your-config-name" "values" $.Values) | nindent 8 }}
       containers:
         - name: your-app
           # ...

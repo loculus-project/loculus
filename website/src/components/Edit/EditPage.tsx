@@ -1,5 +1,5 @@
 import { isErrorFromAlias } from '@zodios/core';
-import { type FC, useState } from 'react';
+import { type FC, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { EditableSequences } from './EditableSequences.ts';
@@ -18,11 +18,13 @@ import { getAccessionVersionString, parseAccessionVersionFromString } from '../.
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu.tsx';
 import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
+import { applyFileMappings, getSingleSubmissionFileMapping } from '../Submission/FileUpload/fileMapping.ts';
 import {
-    applyFileMappings,
-    getSingleSubmissionFileMapping,
-    type FileMapping,
-} from '../Submission/FileUpload/fileMapping.ts';
+    deriveFileMapping,
+    getPreviousFileUploadStates,
+    validateFileUploadStates,
+    type FileUploadState,
+} from '../Submission/FileUpload/fileUpload.ts';
 import { Button } from '../common/Button';
 import ErrorBox from '../common/ErrorBox';
 import { Spinner } from '../common/Spinner';
@@ -68,18 +70,11 @@ const InnerEditPage: FC<EditPageProps> = ({
     );
 
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
-    const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(() => {
-        const previousFiles = dataToEdit.submittedData.files;
-        if (!previousFiles) return undefined;
-        return new Map(
-            Object.entries(previousFiles).map(([category, files]) => [
-                category,
-                // Subfolders are not allowed for form submissions/revisions,
-                // so here file name and path are equivalent
-                new Map(files.map((file) => [file.name, file.fileId])),
-            ]),
-        );
-    });
+    const [fileUploadStates, setFileUploadStates] = useState<Map<string, FileUploadState>>(() =>
+        dataToEdit.submittedData.files ? getPreviousFileUploadStates(dataToEdit.submittedData.files) : new Map(),
+    );
+
+    const fileMapping = useMemo(() => deriveFileMapping(fileUploadStates), [fileUploadStates]);
 
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
 
@@ -164,6 +159,19 @@ const InnerEditPage: FC<EditPageProps> = ({
         }
     };
 
+    const handleSubmit = () => {
+        const fileUploadStateResult = validateFileUploadStates(fileUploadStates);
+        if (fileUploadStateResult.isErr()) {
+            toast.error(fileUploadStateResult.error.message, { position: 'top-center', autoClose: false });
+            return;
+        }
+
+        displayConfirmationDialog({
+            dialogText: 'Do you really want to submit?',
+            onConfirmation: submitEditedDataForAccessionVersion,
+        });
+    };
+
     const isPending = isRevisionPending || isEditPending;
     const latestVersionForRevision = sequenceEntryHistory
         ? getLatestAccessionVersionForRevision(sequenceEntryHistory)?.version
@@ -236,23 +244,14 @@ const InnerEditPage: FC<EditPageProps> = ({
                         inputMode='form'
                         groupId={dataToEdit.groupId}
                         fileCategories={submissionDataTypes.files?.categories ?? []}
-                        fileMapping={fileMapping}
-                        setFileMapping={setFileMapping}
+                        fileUploadStates={fileUploadStates}
+                        setFileUploadStates={setFileUploadStates}
                         onError={(msg) => toast.error(msg, { position: 'top-center', autoClose: false })}
                     />
                 </div>
             )}
             <div className={isCreatingRevision ? 'flex justify-end gap-x-6' : 'flex items-center gap-4 mt-4'}>
-                <Button
-                    variant='primary'
-                    onClick={() =>
-                        displayConfirmationDialog({
-                            dialogText: 'Do you really want to submit?',
-                            onConfirmation: submitEditedDataForAccessionVersion,
-                        })
-                    }
-                    disabled={isPending}
-                >
+                <Button variant='primary' onClick={handleSubmit} disabled={isPending}>
                     {isPending && <Spinner size='sm' className='mr-2' />}
                     {isCreatingRevision ? 'Upload and proceed to Approval' : 'Submit edits and proceed to Approval'}
                 </Button>

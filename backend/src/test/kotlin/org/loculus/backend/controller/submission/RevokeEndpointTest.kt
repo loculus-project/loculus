@@ -67,7 +67,7 @@ class RevokeEndpointTest(
 
         val nonExistingAccession = "123"
         client.revokeSequenceEntries(listOf(nonExistingAccession))
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
@@ -82,7 +82,7 @@ class RevokeEndpointTest(
             .prepareDefaultSequenceEntriesToApprovedForRelease(organism = DEFAULT_ORGANISM).map { it.accession }
 
         client.revokeSequenceEntries(listOf(accessions.first()), organism = OTHER_ORGANISM)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
@@ -132,7 +132,7 @@ class RevokeEndpointTest(
         val accessions = convenienceClient.prepareDefaultSequenceEntriesToHasErrors().map { it.accession }
 
         client.revokeSequenceEntries(accessions)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(

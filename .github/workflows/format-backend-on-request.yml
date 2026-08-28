@@ -5,6 +5,7 @@ on:
     types: [synchronize, labeled]
     paths:
       - "backend/**"
+      - ".github/workflows/format-backend-on-request.yml"
 jobs:
   format:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'format_me'))
@@ -21,8 +22,9 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
-          java-version: "21"
-          distribution: "adopt"
+          # Keep in sync with the other Java versions (backend/build.gradle, backend/Dockerfile)
+          java-version: "25"
+          distribution: "temurin"
       
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
