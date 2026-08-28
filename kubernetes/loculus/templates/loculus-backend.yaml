@@ -53,6 +53,9 @@ spec:
             - name: management
               containerPort: 8078
             {{- end }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           args:
             - "--loculus.enable-seqsets={{ $.Values.seqSets.enabled }}"
             {{- if $.Values.seqSets.crossRef }}
@@ -180,5 +183,7 @@ spec:
             - name: loculus-backend-config-processed
               mountPath: /config
       volumes:
+        - name: tmp
+          emptyDir: {}
 {{ include "loculus.configVolume" (dict "name" "loculus-backend-config") | nindent 8 }}
 {{- end }}

@@ -46,6 +46,8 @@ spec:
             - name: lapis-silo-database-config-processed
               mountPath: /workspace/reference_genomes.json
               subPath: reference_genomes.json
+            - name: logs
+              mountPath: /workspace/logs
           startupProbe:
             httpGet:
               path: /actuator/health
@@ -67,5 +69,7 @@ spec:
             failureThreshold: 3
             timeoutSeconds: 5
       volumes:
+        - name: logs
+          emptyDir: {}
         {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 8 }}
 {{- end }}
