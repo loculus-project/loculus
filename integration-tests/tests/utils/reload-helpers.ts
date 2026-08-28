@@ -1,6 +1,6 @@
 import { type Locator, type Page, expect } from '@playwright/test';
 
-// Thrown when a reload or a read lands while a navigation's frame swap is still settling.
+// A reload or a read landing mid-navigation is rejected with one of these.
 const transientNavigationErrors = [
     'Not attached to an active page',
     'Execution context was destroyed',
@@ -16,32 +16,21 @@ function errorMessage(error: unknown): string {
     return error instanceof Error ? error.message : JSON.stringify(error);
 }
 
-function isTransient(error: unknown): boolean {
-    const message = errorMessage(error);
-    return transientNavigationErrors.some((transient) => message.includes(transient));
-}
-
 /**
  * Reloads the page and reads a value from it until a matcher chained onto the result passes:
- * `await reloadAndPoll(page, read).toBeGreaterThanOrEqual(3)`.
- *
- * The search pages do not update themselves, so waiting for released sequences to show up means
- * reloading. A reload or a read that lands in the moments after a navigation can be rejected by the
- * browser, and `expect.poll` propagates a throw from its callback instead of retrying it, so the
- * callback has to tolerate those itself or one rejection ends the whole wait. Anything else is
- * rethrown, so a page that is genuinely gone still fails with its own cause.
+ * `await reloadAndPoll(page, read).toBeGreaterThanOrEqual(3)`. The search pages do not update
+ * themselves, so waiting for released sequences to show up means reloading.
  */
 export function reloadAndPoll<T>(
     page: Page,
     read: () => Promise<T>,
     { message, timeout = defaultTimeout }: ReloadPollOptions = {},
 ) {
-    // The first attempt reads without reloading: the `while` loops this replaced checked before
-    // reloading, and there is no point reloading a page that already shows what we are waiting for.
     let firstAttempt = true;
     return expect.poll(
         async (): Promise<T | undefined> => {
             try {
+                // No point reloading a page that already shows what we are waiting for.
                 if (firstAttempt) {
                     firstAttempt = false;
                 } else {
@@ -49,12 +38,12 @@ export function reloadAndPoll<T>(
                 }
                 return await read();
             } catch (error) {
-                if (!isTransient(error)) {
+                const message = errorMessage(error);
+                // `expect.poll` propagates a throw instead of retrying it, so tolerate these here.
+                if (!transientNavigationErrors.some((transient) => message.includes(transient))) {
                     throw error;
                 }
-                // The retry hides these otherwise, and a burst of them is worth noticing.
-                const [firstLine] = errorMessage(error).split('\n');
-                console.warn(`Retrying after a transient error: ${firstLine}`);
+                console.warn(`Retrying after a transient error: ${message.split('\n')[0]}`);
                 return undefined;
             }
         },
@@ -62,7 +51,7 @@ export function reloadAndPoll<T>(
     );
 }
 
-/** Reloads the page until `read` returns a value that satisfies `isDone`, and returns that value. */
+/** Like `reloadAndPoll`, but returns the value that satisfied `isDone`. */
 export async function reloadUntil<T>(
     page: Page,
     read: () => Promise<T>,
@@ -81,20 +70,16 @@ export async function reloadUntil<T>(
     return lastRead;
 }
 
-/** Reloads the page until `locator` is visible. */
 export async function reloadUntilVisible(
     page: Page,
     locator: Locator,
     options: ReloadPollOptions = {},
 ): Promise<void> {
-    // A bare `expect(false).toBe(true)` names nothing, and the locator describes itself.
     await reloadUntil(
         page,
         () => locator.isVisible(),
         (visible) => visible,
-        {
-            message: `Expected ${String(locator)} to become visible.`,
-            ...options,
-        },
+        // `toBe(true)` failing names nothing, so let the locator describe itself.
+        { message: `Expected ${String(locator)} to become visible.`, ...options },
     );
 }
