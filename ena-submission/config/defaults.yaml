@@ -61,7 +61,7 @@ raw_reads_manifest_fields_mapping:
     default: "unspecified"
   library_strategy:
     loculus_fields: [sequencingLibraryStrategy]
-    default: "unspecified"
+    default: "OTHER"
   insert_size:
     loculus_fields: [pairedNominalLength]
 #ena_checklist: ERC000033 - do not use until all fields are mapped to ENA accepted options
