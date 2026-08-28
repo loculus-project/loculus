@@ -31,7 +31,7 @@ BASE_INDEX_URL = (
     "https://objectstorage.uk-london-1.oraclecloud.com/n/lrbvkel2wjot/b/"
     "human-genome-bucket/o/deacon/misc/panhuman-1.k31w15c8.idx"
 )
-# mpox clade 1b sequence including commonly incorrectly flagged insertion 
+# mpox clade 1b sequence including commonly incorrectly flagged insertion
 # `ins_10453:TAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGATTAGAT`
 ADDITIONAL_SEQUENCES_FOR_MASK = {"PP_0014ESS.1"}
 
