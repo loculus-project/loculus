@@ -197,6 +197,7 @@ def build_index(output_path: Path) -> None:
                     "Found %d good sequences for %s", len(good_indices), organism
                 )
                 filter_fasta_by_index(organism_fasta, good_indices, combined_fasta)
+            organism_fasta.unlink()
 
         run_deacon_index_diff(temp_index, combined_fasta, output_path)
 
