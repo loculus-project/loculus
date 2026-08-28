@@ -10,6 +10,7 @@ from .api import start_api
 from .config import Config, get_config
 from .create_assembly import create_assembly
 from .create_project import create_project
+from .create_raw_reads import create_raw_reads
 from .create_sample import create_sample
 from .trigger_submission_to_ena import trigger_submission_to_ena
 from .upload_external_metadata_to_loculus import upload_external_metadata
@@ -55,6 +56,7 @@ def run(config_file: str, input_file: str | None) -> None:
             executor.submit(create_project, config, stop_event),
             executor.submit(create_sample, config, stop_event),
             executor.submit(create_assembly, config, stop_event),
+            executor.submit(create_raw_reads, config, stop_event),
             executor.submit(upload_external_metadata, config, stop_event),
             executor.submit(start_api, config, stop_event),
             executor.submit(check_and_update_visibility, config, stop_event),
