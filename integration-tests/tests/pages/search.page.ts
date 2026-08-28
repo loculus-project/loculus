@@ -1,7 +1,7 @@
 import { type Locator, type Page, expect } from '@playwright/test';
 import { getFromLinkTargetAndAssertContent } from '../utils/link-helpers';
 import { EditPage } from './edit.page';
-import { reloadAndPoll, reloadUntilVisible } from '../utils/reload-helpers';
+import { reloadAndPoll, reloadUntil, reloadUntilVisible } from '../utils/reload-helpers';
 
 function makeAccessionVersion({
     accession,
@@ -294,10 +294,15 @@ export class SearchPage {
         minCount: number,
         timeoutMs: number = 60000,
     ): Promise<AccessionVersion[]> {
-        await reloadAndPoll(this.page, async () => (await this.getAccessionVersions()).length, {
-            timeout: timeoutMs,
-        }).toBeGreaterThanOrEqual(minCount);
-        return this.getAccessionVersions();
+        return reloadUntil(
+            this.page,
+            () => this.getAccessionVersions(),
+            (accessions) => accessions.length >= minCount,
+            {
+                message: `Expected at least ${minCount} sequences to appear in search results.`,
+                timeout: timeoutMs,
+            },
+        );
     }
 
     async waitForAccessionVersionInSearch(expectedAccession: string, expectedVersion: number) {

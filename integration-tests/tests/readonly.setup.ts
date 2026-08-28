@@ -83,7 +83,8 @@ setup('Initialize some ebola sequences as base data', async ({ page }) => {
     }
 
     // Reloading is required as the page does not automatically update with new data
-    await reloadAndPoll(page, () =>
-        page.getByRole('link', { name: /LOC_/ }).count(),
-    ).toBeGreaterThanOrEqual(3);
+    await reloadAndPoll(page, () => page.getByRole('link', { name: /LOC_/ }).count(), {
+        message: 'Expected 3 released sequences to become visible.',
+        timeout: 60_000,
+    }).toBeGreaterThanOrEqual(3);
 });
