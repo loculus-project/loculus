@@ -634,26 +634,41 @@ def get_revisions(
         return revised_sequences
 
 
+RAW_READS_FIXTURES: Final = [RAW_READS_FIXTURE_FILE_1, RAW_READS_FIXTURE_FILE_2]
+
+
 def mock_download_fastq_files_side_effect(
-    config: Config,  # noqa: ARG001
-    metadata: dict[str, Any],  # noqa: ARG001
-    accession: str,  # noqa: ARG001
+    config: Config,
+    metadata: dict[str, Any],
+    accession: str,
     dir: str | None = None,
 ) -> list[str]:
     """
-    Mock side effect for download_fastq_files that returns a
-    different file each time it's called.
+    Mock side effect for download_fastq_files.
 
-    If called more than twice it will error.
+    Parses the raw-reads metadata field the same way the real function does and
+    returns one local file per entry, cycling through the fixture fastq files so a
+    paired (2-file) submission yields two distinct paths. Raises if there are more
+    entries than fixtures.
     """
-    source = next(iter([RAW_READS_FIXTURE_FILE_1, RAW_READS_FIXTURE_FILE_2]))
+    raw_reads = metadata.get(config.raw_reads_metadata_field)
+    if not raw_reads:
+        msg = f"No rawreads files found in metadata for accession {accession}"
+        raise RuntimeError(msg)
+    files = json.loads(raw_reads)
+    if len(files) > len(RAW_READS_FIXTURES):
+        msg = f"Only {len(RAW_READS_FIXTURES)} fixture fastq files available, got {len(files)}"
+        raise ValueError(msg)
 
     target_dir = dir or tempfile.mkdtemp()
     os.makedirs(target_dir, exist_ok=True)
 
-    dest_path = os.path.join(target_dir, os.path.basename(source))
-    shutil.copy(source, dest_path)
-    return [dest_path]
+    fastq_files = []
+    for file_entry, source in zip(files, RAW_READS_FIXTURES, strict=False):
+        dest_path = os.path.join(target_dir, os.path.basename(file_entry["name"]))
+        shutil.copy(source, dest_path)
+        fastq_files.append(dest_path)
+    return fastq_files
 
 
 def mock_requests_post() -> Mock:
