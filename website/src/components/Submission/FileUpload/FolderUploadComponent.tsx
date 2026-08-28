@@ -2,7 +2,6 @@ import { produce } from 'immer';
 import React, { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
 
-import { type FileMapping } from './fileMapping';
 import type {
     Awaiting,
     FileUploadState,
@@ -32,7 +31,6 @@ type FolderUploadComponentProps = {
     groupId: number;
     fileUploadState: FileUploadState | undefined;
     setFileUploadState: Dispatch<SetStateAction<FileUploadState | undefined>>;
-    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
     onError: (message: string) => void;
 };
 
@@ -90,7 +88,6 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     groupId,
     fileUploadState,
     setFileUploadState,
-    setFileMapping,
     onError,
 }) => {
     const [isDragging, setIsDragging] = useState(false);
@@ -197,15 +194,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     }
 
     useEffect(() => {
-        if (fileUploadState === undefined) {
-            setFileMapping((currentMapping) => {
-                if (currentMapping === undefined) return undefined;
-                const newMapping = new Map(currentMapping);
-                newMapping.delete(fileCategory.name);
-                return newMapping.size === 0 ? undefined : newMapping;
-            });
-            return;
-        }
+        if (fileUploadState === undefined) return;
 
         switch (fileUploadState.type) {
             // If awaiting URLS, request pre signed upload URLs from the backend, assign them to the files,
@@ -225,17 +214,6 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                         files: fileUploadState.files as (Uploaded | PreviousUpload)[],
                     });
                 }
-                break;
-            }
-            case 'uploadCompleted': {
-                setFileMapping((currentMapping) => {
-                    const newMapping = new Map(currentMapping);
-                    newMapping.set(
-                        fileCategory.name,
-                        new Map(fileUploadState.files.map((file) => [file.path, file.fileId])),
-                    );
-                    return newMapping;
-                });
                 break;
             }
         }

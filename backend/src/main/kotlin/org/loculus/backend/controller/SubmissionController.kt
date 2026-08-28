@@ -205,7 +205,7 @@ open class SubmissionController(
             submissionMetrics.recordPollingRequest(
                 EXTRACT_UNPROCESSED_DATA_ENDPOINT,
                 organism.name,
-                HttpStatus.UNPROCESSABLE_ENTITY,
+                HttpStatus.UNPROCESSABLE_CONTENT,
                 requestStartNanos,
             )
             throw UnprocessableEntityException(

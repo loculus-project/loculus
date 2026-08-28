@@ -117,7 +117,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         val sequenceString = editedDataWithNonExistingVersion.displayAccessionVersion()
 
         client.submitEditedSequenceEntryVersion(editedDataWithNonExistingVersion)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(
                 jsonPath("\$.detail")
                     .value("Accession versions $sequenceString do not exist"),
@@ -137,7 +137,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         val editedDataWithNonExistingAccession = generateEditedData(nonExistingAccession)
 
         client.submitEditedSequenceEntryVersion(editedDataWithNonExistingAccession)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(
                 jsonPath("\$.detail").value(
                     "Accession versions $nonExistingAccession.1 do not exist",
@@ -160,7 +160,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         val editedData = generateEditedData(accessions.first())
 
         client.submitEditedSequenceEntryVersion(editedData, organism = OTHER_ORGANISM)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -230,7 +230,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         )
 
         client.submitEditedSequenceEntryVersion(editedData)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(
                 jsonPath("\$.detail", containsString("duplicate file names")),
             )
@@ -256,7 +256,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         )
 
         client.submitEditedSequenceEntryVersion(editedData)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -286,7 +286,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         )
 
         client.submitEditedSequenceEntryVersion(editedData)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -320,7 +320,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         )
 
         client.submitEditedSequenceEntryVersion(editedData)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(
                 jsonPath("\$.detail", containsString("No file uploaded for file ID")),
             )
@@ -383,7 +383,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         )
 
         client.submitEditedSequenceEntryVersion(editedData)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(
                 jsonPath(
                     "\$.detail",
