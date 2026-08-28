@@ -119,6 +119,7 @@ class Config(BaseModel):
     ena_http_timeout_seconds: int = 60
     ena_public_search_timeout_seconds: int = 120
     ncbi_public_search_timeout_seconds: int = 120
+    ena_webin_cli_timeout_seconds: int = 300
     ena_http_get_retry_attempts: int = 3
     ncbi_http_get_retry_attempts: int = 3
     # By default, don't retry HTTP post requests to ENA
@@ -135,6 +136,9 @@ class Config(BaseModel):
     slack_retry_threshold_min: int = 720
     submitting_time_threshold_min: int = 15
     waiting_threshold_hours: int = 48
+
+    s3_request_timeout_seconds: int = 600
+    get_released_data_timeout_seconds: int = 600
 
 
 def secure_ena_connection(config: Config):

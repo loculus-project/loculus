@@ -141,3 +141,6 @@ slack_retry_substrings:
 submitting_time_threshold_min: 15
 waiting_threshold_hours: 48
 allow_revision_with_manifest_changes: true
+ena_webin_cli_timeout_seconds: 300
+s3_request_timeout_seconds: 600
+get_released_data_timeout_seconds: 600

@@ -183,7 +183,9 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
     }
     logger.info(f"Fetching released data from {url} with request id {request_id}")
 
-    with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
+    with requests.get(
+        url, headers=headers, timeout=config.get_released_data_timeout_seconds, stream=True
+    ) as response:
         response.raise_for_status()
         for line_no, line in enumerate(response.iter_lines(chunk_size=65536), start=1):
             if not line:
@@ -254,7 +256,10 @@ def download_fastq_files(
                 file_path = temp.name
 
         with requests.get(
-            file_entry["url"], headers=headers, stream=True, timeout=3600
+            file_entry["url"],
+            headers=headers,
+            stream=True,
+            timeout=config.s3_request_timeout_seconds,
         ) as response:
             response.raise_for_status()
             with open(file_path, "wb") as f:

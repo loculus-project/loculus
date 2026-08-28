@@ -679,6 +679,7 @@ def post_webin_cli(
         text=True,
         check=False,
         shell=False,
+        timeout=config.ena_webin_cli_timeout_seconds,
     )
 
 
