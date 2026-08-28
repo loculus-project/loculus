@@ -85,7 +85,7 @@ export const FASTA_FILE_KIND: FileKind<ProcessedFile> = {
                 err(
                     new Error(
                         `This looks like a metadata file (.${dataExtension}), not sequence data. ` +
-                            'Please upload it in the metadata field instead.',
+                            'Please upload it in the "Metadata file" field instead.',
                     ),
                 ),
             );
