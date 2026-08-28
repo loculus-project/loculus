@@ -60,7 +60,7 @@ _READ_LENGTH_SAMPLE_SIZE = 100
 
 def median_read_length(
     path: Path, sample_size: int = _READ_LENGTH_SAMPLE_SIZE
-) -> float:
+) -> float | None:
     """Median read length over the first `sample_size` reads.
 
     xopen sniffs compression from the magic bytes, which matters because downloads
@@ -74,15 +74,26 @@ def median_read_length(
             len(seq)
             for _, seq, _ in itertools.islice(FastqGeneralIterator(fh), sample_size)
         ]
-    return statistics.median(lengths) if lengths else 0.0
+    return statistics.median(lengths) if lengths else None
 
 
 def _deacon_a_for_reads(file_name_to_path: dict[FileName, Path], config: Config) -> int:
     """Pick the deacon `-a` k-mer threshold, sampling the first one or two input
     files to decide whether this is a short-read library.
     """
-    sample_paths = list(file_name_to_path.values())
-    observed_length = min((median_read_length(p) for p in sample_paths), default=0.0)
+    median_lengths = {
+        file_name: median_read_length(path)
+        for file_name, path in file_name_to_path.items()
+    }
+    for file_name, median_length in median_lengths.items():
+        if median_length is None:
+            message = f"Failed to determine median read length for file '{file_name}'. File may be empty or corrupted."
+            logging.error(message)
+            raise InvalidSubmission(Annotation(fileNames=[file_name], message=message))
+    observed_length = min(
+        [length for length in median_lengths.values() if length is not None],
+        default=0.0,
+    )
     short_reads = observed_length < config.short_reads_threshold
     deacon_a = config.deacon_a_short_reads if short_reads else config.deacon_a
     logger.info(
