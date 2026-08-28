@@ -1,3 +1,4 @@
+import gzip
 import logging
 import os
 import subprocess  # noqa: S404
@@ -50,10 +51,59 @@ def stop_deacon_server(proc: subprocess.Popen) -> None:
         proc.wait()
 
 
+# 0-based line offset of the sequence within each 4-line FASTQ record
+_FASTQ_SEQ_LINE = 1
+_READ_LENGTH_SAMPLE_SIZE = 100
+
+
+def _open_maybe_gzipped(path: Path):
+    """Open a FASTQ file for text reading, transparently handling gzip.
+
+    Downloaded files are stored without their original extension, so gzip is
+    detected from the magic bytes rather than the file name.
+    """
+    with path.open("rb") as fh:
+        is_gzip = fh.read(2) == b"\x1f\x8b"
+    return gzip.open(path, "rt") if is_gzip else path.open("rt")
+
+
+def mean_read_length(path: Path, sample_size: int = _READ_LENGTH_SAMPLE_SIZE) -> float:
+    """Mean sequence length over the first `sample_size` reads of a FASTQ file.
+
+    Read length should be homogeneous within a sequencing run, so a small sample from
+    the start of the file is representative and costs only a few milliseconds.
+    """
+    total = count = 0
+    with _open_maybe_gzipped(path) as fh:
+        for i, line in enumerate(fh):
+            if i % 4 == _FASTQ_SEQ_LINE:
+                total += len(line.rstrip("\n"))
+                count += 1
+                if count >= sample_size:
+                    break
+    return total / count if count else 0.0
+
+
+def _deacon_a_for_reads(file_name_to_path: dict[FileName, Path], config: Config) -> int:
+    """Pick the deacon `-a` k-mer threshold, sampling the first one or two input
+    files to decide whether this is a short-read library.
+    """
+    sample_paths = list(file_name_to_path.values())[:2]
+    observed_length = min(mean_read_length(p) for p in sample_paths)
+    short_reads = observed_length <= config.short_reads_threshold
+    deacon_a = config.deacon_a_short_reads if short_reads else config.deacon_a
+    logger.info(
+        f"Mean read length ~{observed_length:.0f}bp "
+        f"({'short' if short_reads else 'normal'}-read deacon params: -a {deacon_a})"
+    )
+    return deacon_a
+
+
 def run_deacon_filter(
     file_name_to_path: dict[FileName, Path], data_dir: str, config: Config
 ) -> DeaconSummary:
     summary_json_path = Path(data_dir) / "summary.json"
+    deacon_a = _deacon_a_for_reads(file_name_to_path, config)
     args = [
         "deacon",
         "--use-server",
@@ -61,7 +111,7 @@ def run_deacon_filter(
         "--summary",
         summary_json_path,
         "-a",
-        str(config.deacon_a),
+        str(deacon_a),
         "-r",
         str(config.deacon_r),
         DEACON_INDEX_PATH,

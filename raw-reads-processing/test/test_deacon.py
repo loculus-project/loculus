@@ -1,5 +1,6 @@
 # ruff: noqa: S101
 
+import gzip
 import shutil
 import time
 from pathlib import Path
@@ -85,6 +86,37 @@ def deacon_index(monkeypatch, deacon_server):
     # Index created with `deacon index build test/fixtures/test_small_1.fastq -k 31 -w 15 -o deacon.idx`
     monkeypatch.setattr(
         deacon_module, "DEACON_INDEX_PATH", str(FIXTURES_DIR / "deacon.idx")
+    )
+
+
+def test_mean_read_length_plain_fastq(tmp_path):
+    reads = tmp_path / "reads.fastq"
+    _write_fastq(reads, [_random_read(100), _random_read(200), _random_read(150)])
+    assert deacon_module.mean_read_length(reads) == pytest.approx(150.0)
+
+
+def test_mean_read_length_gzipped_fastq(tmp_path):
+    reads = tmp_path / "reads.fastq.gz"
+    _write_fastq(tmp_path / "plain.fastq", [_random_read(80), _random_read(120)])
+    reads.write_bytes(gzip.compress((tmp_path / "plain.fastq").read_bytes()))
+    assert deacon_module.mean_read_length(reads) == pytest.approx(100.0)
+
+
+def test_deacon_a_for_reads_switches_on_short_reads(tmp_path):
+    config = _config()
+    short = tmp_path / "short.fastq"
+    _write_fastq(short, [_random_read(75)] * 5)
+    long = tmp_path / "long.fastq"
+    _write_fastq(long, [_random_read(100)] * 5)
+
+    assert deacon_module._deacon_a_for_reads({"short.fastq": short}, config) == 1
+    assert deacon_module._deacon_a_for_reads({"long.fastq": long}, config) == 2
+    # min() over mates: a short R2 still triggers short-read params
+    assert (
+        deacon_module._deacon_a_for_reads(
+            {"long.fastq": long, "short.fastq": short}, config
+        )
+        == 1
     )
 
 
