@@ -541,21 +541,14 @@ def get_codespace_params(codespace_name):
 
 
 def install_secret_generator():
-    add_helm_repo_command = [
-        "helm",
-        "repo",
-        "add",
-        "mittwald",
-        "https://helm.mittwald.de",
-    ]
-    run_command(add_helm_repo_command)
-    print("Mittwald repository added to Helm.")
-
-    update_helm_repo_command = ["helm", "repo", "update"]
-    run_command(update_helm_repo_command)
-    print("Helm repositories updated.")
-
-    secret_generator_chart = "mittwald/kubernetes-secret-generator"  # noqa: S105
+    # https://helm.mittwald.de times out intermittently (mittwald/kubernetes-secret-generator#115),
+    # which was flaking every CI run since this chart is (re-)installed on every cluster setup.
+    # We mirror the chart as an OCI artifact on GHCR instead, pinned since upstream releases are rare.
+    # To refresh the mirror after a version bump:
+    #   helm pull kubernetes-secret-generator --repo https://helm.mittwald.de --version <version>
+    #   helm push kubernetes-secret-generator-<version>.tgz oci://ghcr.io/loculus-project
+    secret_generator_chart = "oci://ghcr.io/loculus-project/kubernetes-secret-generator"  # noqa: S105
+    secret_generator_version = "3.4.1"
     print("Installing Kubernetes Secret Generator...")
     helm_install_command = [
         "helm",
@@ -563,6 +556,8 @@ def install_secret_generator():
         "--install",
         "kubernetes-secret-generator",
         secret_generator_chart,
+        "--version",
+        secret_generator_version,
         "--set",
         "secretLength=32",
         "--set",
