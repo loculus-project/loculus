@@ -3,6 +3,7 @@ import { test } from '../../fixtures/group.fixture';
 import { ReviewPage } from '../../pages/review.page';
 import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import { createTestMetadata, createTestSequenceData } from '../../test-helpers/test-data';
+import { reloadForRetry } from '../../utils/reload-helpers';
 
 test.describe('Review page restricted sequences', () => {
     test('approve restricted sequences', async ({ page, groupId }) => {
@@ -28,7 +29,7 @@ test.describe('Review page restricted sequences', () => {
         await expect
             .poll(
                 async () => {
-                    await page.reload();
+                    await reloadForRetry(page);
                     return page.getByText('Search returned 1 sequence').isVisible();
                 },
                 {

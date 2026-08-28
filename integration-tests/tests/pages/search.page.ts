@@ -1,6 +1,7 @@
 import { type Locator, type Page, expect } from '@playwright/test';
 import { getFromLinkTargetAndAssertContent } from '../utils/link-helpers';
 import { EditPage } from './edit.page';
+import { reloadForRetry } from '../utils/reload-helpers';
 
 function makeAccessionVersion({
     accession,
@@ -225,7 +226,7 @@ export class SearchPage {
 
     async waitForSequences(role: 'link' | 'cell', name: string | RegExp) {
         while (!(await this.page.getByRole(role, { name: name }).isVisible())) {
-            await this.page.reload();
+            await reloadForRetry(this.page);
             await this.page.waitForTimeout(2000);
         }
     }
@@ -304,7 +305,7 @@ export class SearchPage {
         await expect
             .poll(
                 async () => {
-                    await this.page.reload();
+                    await reloadForRetry(this.page);
                     accessions = await this.getAccessionVersions();
                     return accessions.length;
                 },
@@ -322,7 +323,7 @@ export class SearchPage {
         await expect
             .poll(
                 async () => {
-                    await this.page.reload();
+                    await reloadForRetry(this.page);
                     const accessionVersions = await this.getAccessionVersions();
                     return accessionVersions.some(
                         ({ accession, version }) =>

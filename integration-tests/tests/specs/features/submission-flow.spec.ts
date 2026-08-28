@@ -4,6 +4,7 @@ import { join } from 'path';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import { NavigationPage } from '../../pages/navigation.page';
 import { ReviewPage } from '../../pages/review.page';
+import { reloadForRetry } from '../../utils/reload-helpers';
 
 test.describe('Submission flow', () => {
     test('submission page shows group creation button when not in a group', async ({
@@ -48,7 +49,7 @@ test.describe('Submission flow', () => {
         await expect
             .poll(
                 async () => {
-                    await page.reload();
+                    await reloadForRetry(page);
                     return page.getByRole('cell', { name: 'Pakistan' }).isVisible();
                 },
                 {
@@ -93,7 +94,7 @@ test.describe('Submission flow', () => {
         await reviewPage.releaseAndGoToReleasedSequences();
 
         while (!(await page.getByRole('cell', { name: 'Colombia' }).isVisible())) {
-            await page.reload();
+            await reloadForRetry(page);
             await page.waitForTimeout(2000);
         }
 

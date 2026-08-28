@@ -8,6 +8,7 @@ import {
     CCHF_S_SEGMENT_FULL_SEQUENCE,
     removeWhitespaces,
 } from '../test-helpers/test-data';
+import { reloadForRetry } from '../utils/reload-helpers';
 
 type SequenceFixtures = {
     releasedSequence: string;
@@ -59,7 +60,7 @@ export const test = groupTest.extend<SequenceFixtures>({
             await expect
                 .poll(
                     async () => {
-                        await page.reload();
+                        await reloadForRetry(page);
                         return page.getByRole('link', { name: /LOC_/ }).isVisible();
                     },
                     {

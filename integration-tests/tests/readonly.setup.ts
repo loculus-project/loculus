@@ -6,6 +6,7 @@ import { readonlyGroup } from './utils/testGroup';
 import { SingleSequenceSubmissionPage } from './pages/submission.page';
 import { SearchPage } from './pages/search.page';
 import { readonlyUser } from './fixtures/user.fixture';
+import { reloadForRetry } from './utils/reload-helpers';
 
 setup('Initialize some ebola sequences as base data', async ({ page }) => {
     setup.setTimeout(180_000);
@@ -85,7 +86,7 @@ setup('Initialize some ebola sequences as base data', async ({ page }) => {
     await expect
         .poll(
             async () => {
-                await page.reload();
+                await reloadForRetry(page);
                 return page.getByRole('link', { name: /LOC_/ }).count();
             },
             {

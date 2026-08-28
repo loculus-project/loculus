@@ -4,6 +4,7 @@ import { ReviewPage } from '../../../pages/review.page';
 import { SearchPage } from '../../../pages/search.page';
 import { SingleSequenceSubmissionPage } from '../../../pages/submission.page';
 import { randomUUID } from 'crypto';
+import { reloadForRetry } from '../../../utils/reload-helpers';
 
 test('Override hidden fields', async ({ page, groupId }) => {
     // This test is really slow - it can take at least 150s. Speed depends on how much else is running, hence let's use buffer.
@@ -43,7 +44,7 @@ test('Override hidden fields', async ({ page, groupId }) => {
     await reviewPage.releaseAndGoToReleasedSequences();
 
     while (!(await page.getByText('Search returned 2 sequences').isVisible())) {
-        await page.reload();
+        await reloadForRetry(page);
         await page.waitForTimeout(2000);
     }
 
@@ -83,7 +84,7 @@ test('Override hidden fields', async ({ page, groupId }) => {
     await reviewPage.waitForZeroProcessing();
     await reviewPage.releaseAndGoToReleasedSequences();
     while (!(await page.getByRole('cell', { name: '2012-12-13' }).isVisible())) {
-        await page.reload();
+        await reloadForRetry(page);
         await page.waitForTimeout(2000);
     }
 

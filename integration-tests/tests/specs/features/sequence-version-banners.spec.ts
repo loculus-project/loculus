@@ -6,6 +6,7 @@ import { SearchPage } from '../../pages/search.page';
 import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import { SequenceDetailPage } from '../../pages/sequence-detail.page';
 import { randomUUID } from 'crypto';
+import { reloadForRetry } from '../../utils/reload-helpers';
 
 const TEST_SEQUENCE =
     'ATTGATCTCATCATTTACCAATTGGAGACCGTTTAACTAGTCAATCCCCCATTTGGGGGCATTCCTAAAGTGTTGCAA' +
@@ -76,7 +77,7 @@ test.describe('Sequence version banners', () => {
 
         // Wait for sequences to appear in search
         while (!(await page.getByText('Search returned 2 sequences').isVisible())) {
-            await page.reload();
+            await reloadForRetry(page);
             await page.waitForTimeout(2000);
         }
 
@@ -123,7 +124,7 @@ test.describe('Sequence version banners', () => {
 
         // Wait for the revised sequence to appear (with new date)
         while (!(await page.getByRole('cell', { name: '2023-06-15' }).isVisible())) {
-            await page.reload();
+            await reloadForRetry(page);
             await page.waitForTimeout(2000);
         }
 
@@ -180,7 +181,7 @@ test.describe('Sequence version banners', () => {
 
         // Wait for sequence to appear
         while (!(await page.getByRole('link', { name: /LOC_/ }).isVisible())) {
-            await page.reload();
+            await reloadForRetry(page);
             await page.waitForTimeout(2000);
         }
 
@@ -208,7 +209,7 @@ test.describe('Sequence version banners', () => {
 
         // Wait for revised sequence
         while (!(await page.getByRole('cell', { name: '2023-09-20' }).isVisible())) {
-            await page.reload();
+            await reloadForRetry(page);
             await page.waitForTimeout(2000);
         }
 
