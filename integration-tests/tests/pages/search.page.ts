@@ -16,6 +16,15 @@ export type AccessionVersion = { accession: string; version: number; accessionVe
 
 const accessionVersionRegex = /LOC_[A-Z0-9]+\.[0-9]+/;
 
+function parseAccessionVersion(rowText: string): AccessionVersion | undefined {
+    const match = rowText.match(accessionVersionRegex);
+    if (!match) {
+        return undefined;
+    }
+    const [accession, version] = match[0].split('.');
+    return makeAccessionVersion({ accession, version: Number.parseInt(version, 10) });
+}
+
 export class SearchPage {
     constructor(private page: Page) {}
 
@@ -187,16 +196,6 @@ export class SearchPage {
         await expect(this.page.getByText('Sequence revoked successfully.')).toBeVisible();
     }
 
-    async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string> {
-        const rows = this.getSequenceRows();
-        const row = rows.nth(rowIndex);
-        const rowText = await row.innerText();
-        const accessionVersionMatch = rowText.match(accessionVersionRegex);
-        const accessionVersion = accessionVersionMatch ? accessionVersionMatch[0] : null;
-        await row.click();
-        return accessionVersion;
-    }
-
     getSequencePreviewModal() {
         return this.page.locator('[data-testid="sequence-preview-modal"]');
     }
@@ -221,6 +220,24 @@ export class SearchPage {
         await expect(
             this.page.getByText(new RegExp(`Search returned ${count} sequence`)),
         ).toBeVisible();
+    }
+
+    /**
+     * Waits for the result table to settle on exactly one row and returns that row's
+     * accession/version. The table keeps showing the previous results while a query is in flight,
+     * so this only catches a stale read when the previous result set had a different row count.
+     * The timeout covers the LAPIS round trip, so it must exceed the default 5s expect timeout.
+     */
+    async getUniqueAccessionVersion(): Promise<AccessionVersion> {
+        const rows = this.getSequenceRows();
+        await expect(rows).toHaveCount(1, { timeout: 30_000 });
+
+        const rowText = await rows.first().innerText();
+        const accessionVersion = parseAccessionVersion(rowText);
+        if (!accessionVersion) {
+            throw new Error(`Expected an accession version in the result row, got: ${rowText}`);
+        }
+        return accessionVersion;
     }
 
     async waitForSequences(role: 'link' | 'cell', name: string | RegExp) {
@@ -274,19 +291,12 @@ export class SearchPage {
         const rows = this.getSequenceRows();
         const count = await rows.count();
 
-        if (count === 0) {
-            return [];
-        }
-
         const accessions: AccessionVersion[] = [];
         for (let i = 0; i < count; i++) {
             const rowText = await rows.nth(i).innerText();
-            const match = rowText.match(accessionVersionRegex);
-            if (match) {
-                const [accession, version] = match[0].split('.');
-                accessions.push(
-                    makeAccessionVersion({ accession, version: Number.parseInt(version) }),
-                );
+            const accessionVersion = parseAccessionVersion(rowText);
+            if (accessionVersion) {
+                accessions.push(accessionVersion);
             }
         }
 
