@@ -65,6 +65,9 @@ def median_read_length(
 
     xopen sniffs compression from the magic bytes, which matters because downloads
     are stored without their original extension.
+
+    Read length should be homogeneous within a sequencing run, so a small sample from
+    the start of the file is representative and costs only a few milliseconds.
     """
     with xopen(path, "rt", threads=0) as fh:
         lengths = [
