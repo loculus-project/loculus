@@ -10,7 +10,7 @@ const transientReloadErrors = [
 const defaultTimeout = 90_000;
 const reloadIntervals = [2000, 5000];
 
-type ReloadPollOptions = { message: string; timeout?: number };
+type ReloadPollOptions = { message?: string; timeout?: number };
 
 async function reloadForRetry(page: Page): Promise<void> {
     try {
@@ -26,8 +26,8 @@ async function reloadForRetry(page: Page): Promise<void> {
 }
 
 /**
- * Reloads the page and reads a value from it, until a matcher chained onto the result passes:
- * `await reloadAndPoll(page, read, { message }).toBe(true)`.
+ * Reloads the page and reads a value from it until a matcher chained onto the result passes:
+ * `await reloadAndPoll(page, read).toBeGreaterThanOrEqual(3)`.
  *
  * The search pages do not update themselves, so waiting for released sequences to show up means
  * reloading. Reloads that land in the moments after a navigation can be rejected by the browser,
@@ -37,7 +37,7 @@ async function reloadForRetry(page: Page): Promise<void> {
 export function reloadAndPoll<T>(
     page: Page,
     read: () => Promise<T>,
-    { message, timeout = defaultTimeout }: ReloadPollOptions,
+    { message, timeout = defaultTimeout }: ReloadPollOptions = {},
 ) {
     return expect.poll(
         async () => {
@@ -52,7 +52,11 @@ export function reloadAndPoll<T>(
 export async function reloadUntilVisible(
     page: Page,
     locator: Locator,
-    options: ReloadPollOptions,
+    options: ReloadPollOptions = {},
 ): Promise<void> {
-    await reloadAndPoll(page, () => locator.isVisible(), options).toBe(true);
+    // A bare `expect(false).toBe(true)` names nothing, and the locator describes itself.
+    await reloadAndPoll(page, () => locator.isVisible(), {
+        message: `Expected ${String(locator)} to become visible.`,
+        ...options,
+    }).toBe(true);
 }

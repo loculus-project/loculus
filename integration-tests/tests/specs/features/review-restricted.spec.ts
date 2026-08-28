@@ -27,7 +27,6 @@ test.describe('Review page restricted sequences', () => {
         await page.goto(`/ebola-sudan/submission/${groupId}/released?dataUseTerms=RESTRICTED`);
 
         await reloadUntilVisible(page, page.getByText('Search returned 1 sequence'), {
-            message: 'Expected 1 restricted sequence to appear',
             timeout: 60_000,
         });
 

@@ -40,9 +40,7 @@ test('Lineage field lineage counts', async ({ page, groupId }) => {
     await reviewPage.waitForZeroProcessing();
     await reviewPage.releaseAndGoToReleasedSequences();
 
-    await reloadUntilVisible(page, page.getByText('Search returned 6 sequences'), {
-        message: 'Expected 6 sequences to appear in search results.',
-    });
+    await reloadUntilVisible(page, page.getByText('Search returned 6 sequences'));
 
     const search = new SearchPage(page);
     await search.testOrganismWithoutAlignment();

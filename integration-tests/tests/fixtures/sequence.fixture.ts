@@ -56,9 +56,7 @@ export const test = groupTest.extend<SequenceFixtures>({
             await editPage.fillField('Authors', 'Integration, Test');
             await editPage.submitChanges();
             await reviewPage.releaseAndGoToReleasedSequences();
-            await reloadUntilVisible(page, page.getByRole('link', { name: /LOC_/ }), {
-                message: 'Link with name /LOC_/ never became visible.',
-            });
+            await reloadUntilVisible(page, page.getByRole('link', { name: /LOC_/ }));
 
             await use(submissionId);
         },

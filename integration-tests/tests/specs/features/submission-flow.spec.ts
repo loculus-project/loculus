@@ -46,9 +46,7 @@ test.describe('Submission flow', () => {
         const reviewPage = new ReviewPage(page);
         await reviewPage.releaseAndGoToReleasedSequences();
 
-        await reloadUntilVisible(page, page.getByRole('cell', { name: 'Pakistan' }), {
-            message: 'Cell with name Pakistan never became visible.',
-        });
+        await reloadUntilVisible(page, page.getByRole('cell', { name: 'Pakistan' }));
 
         await page.getByRole('cell', { name: 'Pakistan' }).click();
         await page.waitForSelector('text="test_NIHPAK-19"');
@@ -84,9 +82,7 @@ test.describe('Submission flow', () => {
 
         await reviewPage.releaseAndGoToReleasedSequences();
 
-        await reloadUntilVisible(page, page.getByRole('cell', { name: 'Colombia' }), {
-            message: 'Cell with name Colombia never became visible.',
-        });
+        await reloadUntilVisible(page, page.getByRole('cell', { name: 'Colombia' }));
 
         await page.getByRole('cell', { name: 'Colombia' }).click();
         await page.waitForSelector('text="Research Lab, University of Example"');

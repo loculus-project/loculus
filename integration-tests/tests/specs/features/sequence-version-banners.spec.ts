@@ -76,9 +76,7 @@ test.describe('Sequence version banners', () => {
         await reviewPage.releaseAndGoToReleasedSequences();
 
         // Wait for sequences to appear in search
-        await reloadUntilVisible(page, page.getByText('Search returned 2 sequences'), {
-            message: 'Expected 2 sequences to appear in search results.',
-        });
+        await reloadUntilVisible(page, page.getByText('Search returned 2 sequences'));
 
         // Find and revise the France sequence
         await search.ebolaSudan();
@@ -122,10 +120,7 @@ test.describe('Sequence version banners', () => {
         await reviewPage2.releaseAndGoToReleasedSequences();
 
         // Wait for the revised sequence to appear (with new date)
-        await reloadUntilVisible(page, page.getByRole('cell', { name: '2023-06-15' }), {
-            message:
-                'Expected the revised sequence (collection date 2023-06-15) to appear in search results.',
-        });
+        await reloadUntilVisible(page, page.getByRole('cell', { name: '2023-06-15' }));
 
         // Now test all the banners
         const detailPage = new SequenceDetailPage(page);
@@ -179,9 +174,7 @@ test.describe('Sequence version banners', () => {
         await reviewPage.releaseAndGoToReleasedSequences();
 
         // Wait for sequence to appear
-        await reloadUntilVisible(page, page.getByRole('link', { name: /LOC_/ }), {
-            message: 'Expected a released sequence to appear in search results.',
-        });
+        await reloadUntilVisible(page, page.getByRole('link', { name: /LOC_/ }));
 
         // Get the accession
         const search = new SearchPage(page);
@@ -206,10 +199,7 @@ test.describe('Sequence version banners', () => {
         await reviewPage2.releaseAndGoToReleasedSequences();
 
         // Wait for revised sequence
-        await reloadUntilVisible(page, page.getByRole('cell', { name: '2023-09-20' }), {
-            message:
-                'Expected the revised sequence (collection date 2023-09-20) to appear in search results.',
-        });
+        await reloadUntilVisible(page, page.getByRole('cell', { name: '2023-09-20' }));
 
         // Navigate to the revised (latest) entry
         const detailPage = new SequenceDetailPage(page);

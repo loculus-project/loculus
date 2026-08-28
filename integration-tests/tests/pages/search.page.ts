@@ -229,9 +229,7 @@ export class SearchPage {
     }
 
     async waitForAndOpenModalByRoleAndName(role: 'link' | 'cell', name: string | RegExp) {
-        await reloadUntilVisible(this.page, this.page.getByRole(role, { name: name }), {
-            message: `Expected a ${role} named ${String(name)} to appear in search results.`,
-        });
+        await reloadUntilVisible(this.page, this.page.getByRole(role, { name: name }));
         await this.openModalByRoleAndName(role, name);
     }
 
@@ -296,36 +294,18 @@ export class SearchPage {
         minCount: number,
         timeoutMs: number = 60000,
     ): Promise<AccessionVersion[]> {
-        let accessions: AccessionVersion[] = [];
-        await reloadAndPoll(
-            this.page,
-            async () => {
-                accessions = await this.getAccessionVersions();
-                return accessions.length;
-            },
-            {
-                message: `Expected at least ${minCount} sequences to appear in search results`,
-                timeout: timeoutMs,
-            },
-        ).toBeGreaterThanOrEqual(minCount);
-        return accessions;
+        await reloadAndPoll(this.page, async () => (await this.getAccessionVersions()).length, {
+            timeout: timeoutMs,
+        }).toBeGreaterThanOrEqual(minCount);
+        return this.getAccessionVersions();
     }
 
     async waitForAccessionVersionInSearch(expectedAccession: string, expectedVersion: number) {
         await reloadAndPoll(
             this.page,
-            async () => {
-                const accessionVersions = await this.getAccessionVersions();
-                return accessionVersions.some(
-                    ({ accession, version }) =>
-                        accession === expectedAccession && version === expectedVersion,
-                );
-            },
-            {
-                message: `Did not find accession version ${expectedAccession}.${expectedVersion} in search results`,
-                timeout: 60_000,
-            },
-        ).toBeTruthy();
+            async () => (await this.getAccessionVersions()).map((it) => it.accessionVersion),
+            { timeout: 60_000 },
+        ).toContain(`${expectedAccession}.${expectedVersion}`);
     }
 
     async expectResultTableCellText(text: string) {

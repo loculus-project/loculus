@@ -43,9 +43,7 @@ test('Override hidden fields', async ({ page, groupId }) => {
     await reviewPage.waitForZeroProcessing();
     await reviewPage.releaseAndGoToReleasedSequences();
 
-    await reloadUntilVisible(page, page.getByText('Search returned 2 sequences'), {
-        message: 'Expected 2 sequences to appear in search results.',
-    });
+    await reloadUntilVisible(page, page.getByText('Search returned 2 sequences'));
 
     let search = new SearchPage(page);
     await search.ebolaSudan();
@@ -82,10 +80,7 @@ test('Override hidden fields', async ({ page, groupId }) => {
     await reviewPage.navigateToReviewPage();
     await reviewPage.waitForZeroProcessing();
     await reviewPage.releaseAndGoToReleasedSequences();
-    await reloadUntilVisible(page, page.getByRole('cell', { name: '2012-12-13' }), {
-        message:
-            'Expected the sequence with collection date 2012-12-13 to appear in search results.',
-    });
+    await reloadUntilVisible(page, page.getByRole('cell', { name: '2012-12-13' }));
 
     await search.ebolaSudan();
 
