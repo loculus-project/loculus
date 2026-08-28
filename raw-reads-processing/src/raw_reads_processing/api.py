@@ -23,9 +23,9 @@ def read_root() -> dict[str, str]:
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    # The index lives in this process, so "we are serving and the index is loaded" is
-    # the whole health condition; there is no separate daemon that can die or wedge
-    # underneath us while the process stays up.
+    # The index lives in this process, so there is no separate daemon that can die or
+    # wedge underneath us. This does not cover a filter call that hangs in-process:
+    # that leaks a concurrency slot while /health keeps answering 200.
     if getattr(app.state, "deacon_filter", None) is None:
         raise HTTPException(status_code=503, detail="Deacon index is not loaded")
     return {"message": "Deacon index is loaded"}
