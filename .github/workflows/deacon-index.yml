@@ -45,7 +45,8 @@ jobs:
       - name: Create deacon index
         shell: bash -l {0}
         run: |
-          python3 ./raw-reads-processing/build-index.py -o "${INDEX_VERSIONED}"
+          ./raw-reads-processing/build-index.sh -o "${INDEX_VERSIONED}"
+          ls -lh "${INDEX_VERSIONED}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
