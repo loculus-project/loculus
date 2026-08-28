@@ -22,7 +22,7 @@ function parseAccessionVersion(rowText: string): AccessionVersion | undefined {
         return undefined;
     }
     const [accession, version] = match[0].split('.');
-    return makeAccessionVersion({ accession, version: Number.parseInt(version) });
+    return makeAccessionVersion({ accession, version: Number.parseInt(version, 10) });
 }
 
 export class SearchPage {
@@ -223,13 +223,14 @@ export class SearchPage {
     }
 
     /**
-     * Waits for the result table to settle on exactly one row (guarding against reading a
-     * stale/unfiltered result set while a filter is still being applied) and returns the
-     * accession/version of that row.
+     * Waits for the result table to settle on exactly one row and returns that row's
+     * accession/version. The table keeps showing the previous results while a query is in flight,
+     * so this only catches a stale read when the previous result set had a different row count.
+     * The timeout covers the LAPIS round trip, so it must exceed the default 5s expect timeout.
      */
     async getUniqueAccessionVersion(): Promise<AccessionVersion> {
         const rows = this.getSequenceRows();
-        await expect(rows).toHaveCount(1);
+        await expect(rows).toHaveCount(1, { timeout: 30_000 });
 
         const rowText = await rows.first().innerText();
         const accessionVersion = parseAccessionVersion(rowText);

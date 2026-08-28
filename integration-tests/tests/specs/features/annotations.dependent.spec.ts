@@ -19,7 +19,7 @@ test.describe('Sequence Preview Annotations', () => {
         await searchPage.fill('Author affiliations', 'Patho Institute, Paris');
 
         const { accession, accessionVersion } = await searchPage.getUniqueAccessionVersion();
-        await searchPage.openPreviewOfAccessionVersion(accessionVersion);
+        await searchPage.clickOnSequence();
 
         await expect(page.getByTestId('sequence-preview-modal')).toBeVisible();
 
