@@ -55,6 +55,7 @@ from .ena_types import (
 from .submission_db_helper import (
     AssemblyTableEntry,
     ProjectTableEntry,
+    RawReadsTableEntry,
     SampleTableEntry,
     Status,
     SubmissionTableEntry,
@@ -457,7 +458,7 @@ def create_flatfile(
     authors = get_authors(metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.authors_property) or "")
     # BioPython's EMBL writer automatically adds a terminating semicolon,
     # so we need to strip it from our formatted authors string to avoid duplication
-    authors = authors.removesuffix(";")
+    authors = authors.removesuffix(";")  # type: ignore
     country = get_country(metadata)
     organism = organism_metadata.scientific_name
     accession = metadata["accession"]
@@ -1036,9 +1037,13 @@ def set_accession_does_not_exist_error(
 def retry_failed_submissions_for_matching_errors(
     entries_with_errors: Iterable[ProjectTableEntry]
     | Iterable[SampleTableEntry]
-    | Iterable[AssemblyTableEntry],
+    | Iterable[AssemblyTableEntry]
+    | Iterable[RawReadsTableEntry],
     db_engine: Engine,
-    model_class: type[ProjectTableEntry] | type[SampleTableEntry] | type[AssemblyTableEntry],
+    model_class: type[ProjectTableEntry]
+    | type[SampleTableEntry]
+    | type[AssemblyTableEntry]
+    | type[RawReadsTableEntry],
     config: Config,
     last_retry: datetime | None = None,
 ) -> datetime | None:

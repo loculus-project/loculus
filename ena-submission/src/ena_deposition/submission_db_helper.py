@@ -386,7 +386,9 @@ def delete_records_in_db[T: TableEntry](
     return deleted_rows
 
 
-def find_errors_or_stuck_in_db[T: (ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)](
+def find_errors_or_stuck_in_db[
+    T: (ProjectTableEntry, SampleTableEntry, AssemblyTableEntry, RawReadsTableEntry)
+](
     engine: Engine,
     model_class: type[T],
     time_threshold: int = 15,

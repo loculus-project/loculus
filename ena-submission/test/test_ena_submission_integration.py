@@ -13,8 +13,10 @@ flyway -url=jdbc:postgresql://localhost:5432/loculus -schemas=ena_deposition_sch
 import json
 import logging
 import os
+import random
 import re
 import shutil
+import string
 import tempfile
 import uuid
 from dataclasses import asdict
@@ -569,17 +571,22 @@ def _test_successful_project_submission(
     check_project_submission_submitted(db_engine, sequences_to_upload)
 
 
-def get_sequences(with_raw_reads: bool = False) -> dict[str, Any]:
+def get_sequences(config: Config, with_raw_reads: bool = False) -> dict[str, Any]:
     with open(INPUT_FILE, encoding="utf-8") as json_file:
         sequences: dict[str, Any] = json.load(json_file)
         if with_raw_reads:
-            sequences[TEST_ACCESSION_VERSION]["metadata"]["raw_reads"] = (
-                '[{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d8","name":"rawReads.fastq.gz","url":"https://loculus.org/files/get/LOC_0001TLY/1/raw_reads/rawReads.fastq.gz"}]'
+            # To simulate the s3 URL changing, we generate a random id for the URL each time
+            random_id = "".join(random.choices(string.digits, k=4))  # noqa: S311
+            sequences[TEST_ACCESSION_VERSION]["metadata"][config.raw_reads_metadata_field] = (
+                f'[{{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d8",'
+                f'"name":"rawReads.fastq.gz",'
+                f'"url":"https://loculus.org/files/{random_id}/rawReads.fastq.gz"}}]'
             )
         return sequences
 
 
 def get_revisions(
+    config: Config,
     modify_assembly_manifest: bool = False,
     modify_raw_reads_manifest: bool = False,
     modify_assembly: bool = True,
@@ -596,8 +603,12 @@ def get_revisions(
             new_value["metadata"]["version"] = 2
             new_value["metadata"]["accessionVersion"] = accession_version
             if with_raw_reads:
-                new_value["metadata"]["raw_reads"] = (
-                    '[{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d8","name":"rawReads.fastq.gz","url":"https://loculus.org/files/get/LOC_0001TLY/1/raw_reads/rawReads.fastq.gz"}]'
+                # To simulate the s3 URL changing, we generate a random id for the URL each time
+                random_id = "".join(random.choices(string.digits, k=4))  # noqa: S311
+                new_value["metadata"][config.raw_reads_metadata_field] = (
+                    f'[{{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d8",'
+                    f'"name":"rawReads.fastq.gz",'
+                    f'"url":"https://loculus.org/files/{random_id}/rawReads.fastq.gz"}}]'
                 )
             if modify_assembly:
                 new_value["metadata"]["geoLocAdmin1"] = "revised location"
@@ -609,9 +620,15 @@ def get_revisions(
                 new_value["metadata"]["sequencingLibrarySelection"] = "ChIP"
             if modify_raw_reads:
                 new_value["metadata"]["pairedNominalLength"] = 150
-                new_value["metadata"]["raw_reads"] = (
-                    '[{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d8","name":"rawReads.fastq.gz","url":"https://loculus.org/files/get/LOC_0001TLY/1/raw_reads/rawReads.fastq.gz"},'
-                    '{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d9","name":"rawReads2.fastq.gz","url":"https://loculus.org/files/get/LOC_0001TLY/1/raw_reads/rawReads2.fastq.gz"}]'
+                # To simulate the s3 URL changing, we generate a random id for the URL each time
+                random_id = "".join(random.choices(string.digits, k=4))  # noqa: S311
+                new_value["metadata"][config.raw_reads_metadata_field] = (
+                    f'[{{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d8",'
+                    f'"name":"rawReads.fastq.gz",'
+                    f'"url":"https://loculus.org/files/{random_id}/rawReads.fastq.gz"}},'
+                    f'{{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d9",'
+                    f'"name":"rawReads2.fastq.gz",'
+                    f'"url":"https://loculus.org/files/{random_id}/rawReads2.fastq.gz"}}]'
                 )
             revised_sequences[accession_version] = new_value
         return revised_sequences
@@ -663,7 +680,7 @@ def multi_segment_submission(
     mock_submit_external_metadata.return_value = mock_requests_post()
     if mock_download_fastq_files is not None:
         mock_download_fastq_files.side_effect = mock_download_fastq_files_side_effect
-    sequences_to_upload = get_sequences(with_raw_reads=with_raw_reads)
+    sequences_to_upload = get_sequences(config, with_raw_reads=with_raw_reads)
 
     if single_segment:
         # Set segment M to None so we have only one segment in the assembly
@@ -1015,7 +1032,7 @@ class TestKnownBioproject(TestSubmission):
         # get data
         mock_get_group_info.return_value = TEST_GROUP
         mock_submit_external_metadata.return_value = mock_requests_post()
-        sequences_to_upload = get_sequences()
+        sequences_to_upload = get_sequences(config=self.config)
         for entry in sequences_to_upload.values():  # set to known public bioproject
             entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
 
@@ -1043,7 +1060,7 @@ class TestIncorrectBioprojectPassed(TestSubmission):
         # get data
         mock_get_group_info.return_value = TEST_GROUP
         mock_notify.return_value = None
-        sequences_to_upload = get_sequences()
+        sequences_to_upload = get_sequences(config=self.config)
         for entry in sequences_to_upload.values():  # set to invalid bioproject
             entry["metadata"]["bioprojectAccession"] = "INVALID_ACCESSION"
 
@@ -1107,7 +1124,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         # get data
         mock_get_group_info.return_value = TEST_GROUP
         mock_submit_external_metadata.return_value = mock_requests_post()
-        sequences_to_upload = get_sequences()
+        sequences_to_upload = get_sequences(config=self.config)
         for entry in sequences_to_upload.values():  # set to public bioproject and biosample
             entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
             entry["metadata"]["biosampleAccession"] = "SAMN11077987"
@@ -1149,7 +1166,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         mock_accession_exists.side_effect = chain([False], repeat(True))
         mock_notify.return_value = None
 
-        sequences_to_upload = get_sequences()
+        sequences_to_upload = get_sequences(config=self.config)
         for entry in sequences_to_upload.values():  # set to public bioproject and biosample
             entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
             entry["metadata"]["biosampleAccession"] = "SAMN11077987"
@@ -1205,7 +1222,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
         mock_accession_exists.side_effect = chain([False], repeat(True))
         mock_notify.return_value = None
 
-        sequences_to_upload = get_sequences()
+        sequences_to_upload = get_sequences(config=self.config)
         for entry in sequences_to_upload.values():  # set to public bioproject and biosample
             entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
             entry["metadata"]["biosampleAccession"] = "SAMN11077987"
@@ -1256,7 +1273,7 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
         # get data
         mock_get_group_info.return_value = TEST_GROUP
         mock_notify.return_value = None
-        sequences_to_upload = get_sequences()
+        sequences_to_upload = get_sequences(config=self.config)
         for entry in sequences_to_upload.values():  # set to invalid biosample
             entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
             entry["metadata"]["biosampleAccession"] = "INVALID_ACCESSION"
@@ -1338,7 +1355,9 @@ class TestRevisionAssemblyModificationTests(TestSubmission):
         mock_get_group_info.return_value = TEST_GROUP
         mock_submit_external_metadata.return_value = mock_requests_post()
         sequences_to_upload = get_revisions(
-            modify_assembly=modify_assembly, modify_manifest=modify_manifest
+            config=self.config,
+            modify_assembly=modify_assembly,
+            modify_assembly_manifest=modify_manifest,
         )
 
         # upload sequences
@@ -1375,7 +1394,7 @@ class TestRevisionNoAssemblyModificationTests(TestSubmission):
         # get data
         mock_get_group_info.return_value = TEST_GROUP
         mock_submit_external_metadata.return_value = mock_requests_post()
-        sequences_to_upload = get_revisions(modify_assembly=False)
+        sequences_to_upload = get_revisions(config=self.config, modify_assembly=False)
 
         # upload sequences
         upload_sequences(self.config, self.db_engine, sequences_to_upload)
@@ -1419,7 +1438,7 @@ class TestRevisionWithAssemblyManifestChangeTests(TestSubmission):
         # get data
         mock_get_group_info.return_value = TEST_GROUP
         mock_submit_external_metadata.return_value = mock_requests_post()
-        sequences_to_upload = get_revisions(modify_assembly_manifest=True)
+        sequences_to_upload = get_revisions(config=self.config, modify_assembly_manifest=True)
 
         # upload sequences
         upload_sequences(self.config, self.db_engine, sequences_to_upload)
@@ -1490,7 +1509,9 @@ class TestRevisionRawReadsModificationTests(TestSubmission):
         # get data
         mock_get_group_info.return_value = TEST_GROUP
         mock_submit_external_metadata.return_value = mock_requests_post()
-        sequences_to_upload = get_revisions(modify_raw_reads=True, with_raw_reads=True)
+        sequences_to_upload = get_revisions(
+            config=self.config, modify_raw_reads=True, with_raw_reads=True
+        )
 
         # upload sequences
         upload_sequences(self.config, self.db_engine, sequences_to_upload)
@@ -1545,7 +1566,7 @@ class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
         mock_get_group_info.return_value = TEST_GROUP
         mock_submit_external_metadata.return_value = mock_requests_post()
         sequences_to_upload = get_revisions(
-            modify_assembly=False, modify_raw_reads=False, with_raw_reads=True
+            config=self.config, modify_assembly=False, modify_raw_reads=False, with_raw_reads=True
         )
 
         # upload sequences
@@ -1604,7 +1625,9 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
         # get data
         mock_get_group_info.return_value = TEST_GROUP
         mock_submit_external_metadata.return_value = mock_requests_post()
-        sequences_to_upload = get_revisions(modify_raw_reads_manifest=True, with_raw_reads=True)
+        sequences_to_upload = get_revisions(
+            config=self.config, modify_raw_reads_manifest=True, with_raw_reads=True
+        )
 
         # upload sequences
         upload_sequences(self.config, self.db_engine, sequences_to_upload)
@@ -1648,7 +1671,7 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
 #         # get data
 #         mock_get_group_info.return_value = TEST_GROUP
 #         mock_submit_external_metadata.return_value = mock_requests_post()
-#         sequences_to_upload = get_revisions(modify_raw_reads_manifest=True, with_raw_reads=True)
+#         sequences_to_upload = get_revisions(config=self.config, modify_raw_reads_manifest=True, with_raw_reads=True)
 
 #         # upload sequences
 #         upload_sequences(self.config, self.db_engine, sequences_to_upload)
