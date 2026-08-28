@@ -223,6 +223,24 @@ export class SearchPage {
         ).toBeVisible();
     }
 
+    /**
+     * Waits for the result table to settle on exactly one row (guarding against reading a
+     * stale/unfiltered result set while a filter is still being applied) and returns the
+     * accession/version of that row.
+     */
+    async getUniqueAccessionVersion(): Promise<AccessionVersion> {
+        const rows = this.getSequenceRows();
+        await expect(rows).toHaveCount(1);
+
+        const rowText = await rows.first().innerText();
+        const match = rowText.match(accessionVersionRegex);
+        if (!match) {
+            throw new Error(`Expected an accession version in the result row, got: ${rowText}`);
+        }
+        const [accession, version] = match[0].split('.');
+        return makeAccessionVersion({ accession, version: Number.parseInt(version) });
+    }
+
     async waitForSequences(role: 'link' | 'cell', name: string | RegExp) {
         while (!(await this.page.getByRole(role, { name: name }).isVisible())) {
             await this.page.reload();
