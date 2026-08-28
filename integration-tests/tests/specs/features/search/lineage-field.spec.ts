@@ -3,7 +3,7 @@ import { test } from '../../../fixtures/group.fixture';
 import { SearchPage } from '../../../pages/search.page';
 import { BulkSubmissionPage } from '../../../pages/submission.page';
 import { randomUUID } from 'crypto';
-import { reloadForRetry } from '../../../utils/reload-helpers';
+import { reloadUntilVisible } from '../../../utils/reload-helpers';
 
 const SEQUENCE = 'ATTGATCTCATCATTT';
 
@@ -40,10 +40,9 @@ test('Lineage field lineage counts', async ({ page, groupId }) => {
     await reviewPage.waitForZeroProcessing();
     await reviewPage.releaseAndGoToReleasedSequences();
 
-    while (!(await page.getByText('Search returned 6 sequences').isVisible())) {
-        await reloadForRetry(page);
-        await page.waitForTimeout(2000);
-    }
+    await reloadUntilVisible(page, page.getByText('Search returned 6 sequences'), {
+        message: 'Expected 6 sequences to appear in search results.',
+    });
 
     const search = new SearchPage(page);
     await search.testOrganismWithoutAlignment();

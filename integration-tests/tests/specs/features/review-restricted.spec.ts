@@ -3,7 +3,7 @@ import { test } from '../../fixtures/group.fixture';
 import { ReviewPage } from '../../pages/review.page';
 import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import { createTestMetadata, createTestSequenceData } from '../../test-helpers/test-data';
-import { reloadForRetry } from '../../utils/reload-helpers';
+import { reloadUntilVisible } from '../../utils/reload-helpers';
 
 test.describe('Review page restricted sequences', () => {
     test('approve restricted sequences', async ({ page, groupId }) => {
@@ -26,18 +26,10 @@ test.describe('Review page restricted sequences', () => {
 
         await page.goto(`/ebola-sudan/submission/${groupId}/released?dataUseTerms=RESTRICTED`);
 
-        await expect
-            .poll(
-                async () => {
-                    await reloadForRetry(page);
-                    return page.getByText('Search returned 1 sequence').isVisible();
-                },
-                {
-                    message: 'Expected 1 restricted sequence to appear',
-                    timeout: 60_000,
-                },
-            )
-            .toBe(true);
+        await reloadUntilVisible(page, page.getByText('Search returned 1 sequence'), {
+            message: 'Expected 1 restricted sequence to appear',
+            timeout: 60_000,
+        });
 
         const rowLocator = page.locator('a[href*="/seq/LOC"]').first();
         await expect(rowLocator).toBeVisible();

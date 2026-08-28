@@ -6,7 +6,7 @@ import { SearchPage } from '../../pages/search.page';
 import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import { SequenceDetailPage } from '../../pages/sequence-detail.page';
 import { randomUUID } from 'crypto';
-import { reloadForRetry } from '../../utils/reload-helpers';
+import { reloadUntilVisible } from '../../utils/reload-helpers';
 
 const TEST_SEQUENCE =
     'ATTGATCTCATCATTTACCAATTGGAGACCGTTTAACTAGTCAATCCCCCATTTGGGGGCATTCCTAAAGTGTTGCAA' +
@@ -76,10 +76,9 @@ test.describe('Sequence version banners', () => {
         await reviewPage.releaseAndGoToReleasedSequences();
 
         // Wait for sequences to appear in search
-        while (!(await page.getByText('Search returned 2 sequences').isVisible())) {
-            await reloadForRetry(page);
-            await page.waitForTimeout(2000);
-        }
+        await reloadUntilVisible(page, page.getByText('Search returned 2 sequences'), {
+            message: 'Expected 2 sequences to appear in search results.',
+        });
 
         // Find and revise the France sequence
         await search.ebolaSudan();
@@ -123,10 +122,10 @@ test.describe('Sequence version banners', () => {
         await reviewPage2.releaseAndGoToReleasedSequences();
 
         // Wait for the revised sequence to appear (with new date)
-        while (!(await page.getByRole('cell', { name: '2023-06-15' }).isVisible())) {
-            await reloadForRetry(page);
-            await page.waitForTimeout(2000);
-        }
+        await reloadUntilVisible(page, page.getByRole('cell', { name: '2023-06-15' }), {
+            message:
+                'Expected the revised sequence (collection date 2023-06-15) to appear in search results.',
+        });
 
         // Now test all the banners
         const detailPage = new SequenceDetailPage(page);
@@ -180,10 +179,9 @@ test.describe('Sequence version banners', () => {
         await reviewPage.releaseAndGoToReleasedSequences();
 
         // Wait for sequence to appear
-        while (!(await page.getByRole('link', { name: /LOC_/ }).isVisible())) {
-            await reloadForRetry(page);
-            await page.waitForTimeout(2000);
-        }
+        await reloadUntilVisible(page, page.getByRole('link', { name: /LOC_/ }), {
+            message: 'Expected a released sequence to appear in search results.',
+        });
 
         // Get the accession
         const search = new SearchPage(page);
@@ -208,10 +206,10 @@ test.describe('Sequence version banners', () => {
         await reviewPage2.releaseAndGoToReleasedSequences();
 
         // Wait for revised sequence
-        while (!(await page.getByRole('cell', { name: '2023-09-20' }).isVisible())) {
-            await reloadForRetry(page);
-            await page.waitForTimeout(2000);
-        }
+        await reloadUntilVisible(page, page.getByRole('cell', { name: '2023-09-20' }), {
+            message:
+                'Expected the revised sequence (collection date 2023-09-20) to appear in search results.',
+        });
 
         // Navigate to the revised (latest) entry
         const detailPage = new SequenceDetailPage(page);

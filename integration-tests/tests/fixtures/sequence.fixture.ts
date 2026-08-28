@@ -1,5 +1,4 @@
 import { test as groupTest } from './group.fixture';
-import { expect } from '@playwright/test';
 import { randomUUID } from 'crypto';
 import { SingleSequenceSubmissionPage } from '../pages/submission.page';
 import {
@@ -8,7 +7,7 @@ import {
     CCHF_S_SEGMENT_FULL_SEQUENCE,
     removeWhitespaces,
 } from '../test-helpers/test-data';
-import { reloadForRetry } from '../utils/reload-helpers';
+import { reloadUntilVisible } from '../utils/reload-helpers';
 
 type SequenceFixtures = {
     releasedSequence: string;
@@ -57,18 +56,9 @@ export const test = groupTest.extend<SequenceFixtures>({
             await editPage.fillField('Authors', 'Integration, Test');
             await editPage.submitChanges();
             await reviewPage.releaseAndGoToReleasedSequences();
-            await expect
-                .poll(
-                    async () => {
-                        await reloadForRetry(page);
-                        return page.getByRole('link', { name: /LOC_/ }).isVisible();
-                    },
-                    {
-                        message: 'Link with name /LOC_/ never became visible.',
-                        timeout: 90000,
-                    },
-                )
-                .toBe(true);
+            await reloadUntilVisible(page, page.getByRole('link', { name: /LOC_/ }), {
+                message: 'Link with name /LOC_/ never became visible.',
+            });
 
             await use(submissionId);
         },
