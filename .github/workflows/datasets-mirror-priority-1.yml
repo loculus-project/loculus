@@ -22,6 +22,7 @@ jobs:
           - 3052518  # Orthonairovirus haemorrhagiae (CCHFV)
           - 3431483  # Orthopoxvirus monkeypox
           - 3048459  # Orthoflavivirus zikaense
+          - 3426298  # Alphavirus chikungunya
       fail-fast: false
     uses: ./.github/workflows/datasets-mirror.yml
     secrets: inherit
