@@ -7,6 +7,7 @@ import { DATA_USE_TERMS_FIELD, GROUP_ID_FIELD } from '../../settings.ts';
 import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
 import { isLatestVersionRevocation, type SequenceEntryHistory, versionStatuses } from '../../types/lapis';
 import { type ClientConfig } from '../../types/runtimeConfig';
+import { getCurrentDataUseTerms } from '../../utils/dataUseTerms.ts';
 import { parseAccessionVersionFromString } from '../../utils/extractAccessionVersion.ts';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import { Button } from '../common/Button';
@@ -51,8 +52,7 @@ export const SequenceManagement: FC<Props> = ({
 
     const { accession, version } = parseAccessionVersionFromString(accessionVersion);
 
-    dataUseTermsHistory.sort((a, b) => (a.changeDate > b.changeDate ? -1 : 1));
-    const currentDataUseTerms = dataUseTermsHistory[0].dataUseTerms;
+    const currentDataUseTerms = getCurrentDataUseTerms(dataUseTermsHistory);
 
     const dataUseTerms = tableData.find((entry) => entry.name === DATA_USE_TERMS_FIELD);
     const isRestricted = dataUseTerms?.value.toString().toUpperCase() === 'RESTRICTED';
@@ -73,7 +73,7 @@ export const SequenceManagement: FC<Props> = ({
                         </Button>
                     ) : (
                         <>
-                            {isRestricted && (
+                            {isRestricted && currentDataUseTerms !== undefined && (
                                 <EditDataUseTermsButton
                                     clientConfig={clientConfig}
                                     accessToken={accessToken}

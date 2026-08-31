@@ -72,8 +72,6 @@ export const SequenceDataUI: FC<Props> = ({
 }: Props) => {
     const { tableData, dataUseTermsHistory, segmentReferences, sequenceEntryHistory, isRevocation } = sequenceData;
 
-    dataUseTermsHistory.sort((a, b) => (a.changeDate > b.changeDate ? -1 : 1));
-
     const dataUseTerms = tableData.find((entry) => entry.name === DATA_USE_TERMS_FIELD);
     const isRestricted = dataUseTerms?.value.toString().toUpperCase() === 'RESTRICTED';
 
