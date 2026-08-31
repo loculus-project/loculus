@@ -153,40 +153,30 @@ export class SearchPage {
         await this.getSequenceRows().filter({ hasText: accessionVersion }).click();
     }
 
-    /**
-     * Clicks a control (button/link) in the "Sequence management" panel of the details view.
-     *
-     * The panel re-renders as sequence data loads, which can cause a click to be silently dropped:
-     * React delegates events to the island root and can't resolve a handler for a DOM node that was
-     * just re-rendered out from under the click. Waiting for the sequence viewer to render first
-     * ensures the panel has settled before we click. See #5447.
-     */
-    private async clickSettledManagementControl(control: Locator) {
-        await expect(this.page.getByTestId('fixed-length-text-viewer')).toBeVisible();
-        await expect(control).toBeVisible();
-        await control.click();
-    }
-
-    /**
-     * clickSettledManagementControl but for a revocation version. It has no sequence data, so
-     * the sequence viewer never renders and we wait for the revocation banner instead.
-     */
-    private async clickSettledRevocationManagementControl(control: Locator) {
-        await expect(this.page.getByText('This is a revocation version.')).toBeVisible();
+    private async clickSequenceManagementControl(control: Locator) {
+        // The panel re-renders as sequence data loads, which can cause a click to be silently dropped:
+        // React delegates events to the island root and can't resolve a handler for a DOM node that was
+        // just re-rendered out from under the click. Waiting for the page content to render first
+        // ensures the panel has settled before we click - see #5447.
+        // Revocation versions have no sequence data, so we wait for the revocation banner instead.
+        const pageContent = this.page
+            .getByTestId('fixed-length-text-viewer')
+            .or(this.page.getByText('This is a revocation version.'));
+        await expect(pageContent.first()).toBeVisible();
         await expect(control).toBeVisible();
         await control.click();
     }
 
     async reviseSequence() {
         const reviseButton = this.page.getByRole('link', { name: 'Revise this sequence' });
-        await this.clickSettledManagementControl(reviseButton);
+        await this.clickSequenceManagementControl(reviseButton);
         await expect(this.page.getByText(/^Create new revision from LOC_\w+\.\d+$/)).toBeVisible();
         return new EditPage(this.page);
     }
 
     async revokeSequence(revocationReason: string = 'Test revocation') {
         const revokeButton = this.page.getByRole('button', { name: 'Revoke this sequence' });
-        await this.clickSettledManagementControl(revokeButton);
+        await this.clickSequenceManagementControl(revokeButton);
 
         await expect(
             this.page.getByText('Are you sure you want to revoke this sequence?'),
@@ -199,7 +189,7 @@ export class SearchPage {
 
     async restoreSequence() {
         const restoreButton = this.page.getByRole('link', { name: 'Restore this sequence' });
-        await this.clickSettledRevocationManagementControl(restoreButton);
+        await this.clickSequenceManagementControl(restoreButton);
         await expect(this.page.getByText(/^Create new revision from LOC_\w+\.\d+$/)).toBeVisible();
         return new EditPage(this.page);
     }
