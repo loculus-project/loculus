@@ -12,6 +12,19 @@ class Config(BaseModel):
     file_service_host: str | None = None
     file_service_port: int | None = None
 
+    # Validate every read rather than only the first 100k per file. Cost scales with read
+    # count instead of being capped, so this is materially slower on large submissions.
+    readtools_full_validation: bool = False
+
+    # readtools warm validation server: one long-lived JVM instead of one per validation
+    readtools_server_enabled: bool = True
+    readtools_server_port: int = 5001
+    # Bounds both concurrent validations and, with them, heap use.
+    readtools_server_threads: int = 4
+    readtools_server_max_heap: str = "1g"
+    # Startup includes a JIT warm-up of several synthetic validations.
+    readtools_server_startup_timeout_seconds: int = 300
+
     deacon_max_host_reads_proportion: float
     deacon_max_host_bp: int  # maximum number of host base pairs allowed in a sample before it is flagged as contaminated
 

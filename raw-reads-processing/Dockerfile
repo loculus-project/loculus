@@ -3,9 +3,10 @@
 # ── Downloader image ────────────────────────────────────────────────────────
 FROM curlimages/curl:latest AS downloader
 
+# TODO: repoint at loculus-project/readtools once a release with the validation server is cut
 RUN curl --fail --location --show-error \
     --output /tmp/readtools.jar \
-    https://github.com/loculus-project/readtools/releases/download/v1.0.0/readtools-2.15.1-all.jar
+    https://github.com/corneliusroemer-agent/readtools/releases/download/v1.1.0-rc1/readtools-2.15.1-all.jar
 
 # ── Runtime image ────────────────────────────────────────────────────────────
 FROM mambaorg/micromamba:2.3.3-ubuntu24.04
