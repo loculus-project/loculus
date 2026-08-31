@@ -1,0 +1,45 @@
+# Source: loculus/templates/loculus-database-standin.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-database
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: database
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: database
+    spec:
+      containers:
+      - name: database
+        image: postgres:latest
+        resources:
+          requests:
+            memory: "200Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          value: "unsecure"
+        - name: POSTGRES_DB
+          value: "loculus"
+        - name: POSTGRES_HOST_AUTH_METHOD
+          value: "trust"
+        
+        - name: LOCULUS_VERSION
+          value: latest
+---

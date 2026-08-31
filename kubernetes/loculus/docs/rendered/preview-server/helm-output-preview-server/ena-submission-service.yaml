@@ -1,0 +1,16 @@
+# Source: loculus/templates/ena-submission-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-ena-submission-service
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: loculus-ena-submission
+  ports:
+    - port: 5000
+      targetPort: 5000
+      protocol: TCP
+      name: http
+---

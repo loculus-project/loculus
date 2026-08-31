@@ -1,0 +1,16 @@
+# Source: loculus/templates/keycloak-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-keycloak-service
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: keycloak
+  ports:
+    - port: 8083
+      targetPort: 8080
+      protocol: TCP
+      name: http
+---
