@@ -110,11 +110,6 @@ def make_request(  # noqa: PLR0913, PLR0917
             msg = f"Unsupported HTTP method: {method}"
             raise ValueError(msg)
 
-    if response.status_code == 423:
-        logger.warning(f"Got 423 from {url}. Retrying after 30 seconds.")
-        sleep(30)
-        return make_request(method, url, config, params, files, json_body)
-
     if not response.ok:
         error_message = (
             f"Request failed:\n"
@@ -190,12 +185,17 @@ class BatchIterator:
     metadata_batch_output: list[str] = dataclasses.field(default_factory=list)
 
 
+class BatchSubmissionError(Exception):
+    """Raised at the end of a run if one or more batches could not be submitted."""
+
+
 def submit(
     url,
     config: Config,
     params: dict[str, str],
     batch_it: BatchIterator,
-):
+) -> list[dict[str, Any]]:
+    """Submit one batch and return its submissionId mappings."""
     batch_num = -(int(batch_it.record_counter) // -config.batch_chunk_size)  # ceiling division
     logger.info(f"Submitting batch {batch_num}")
 
@@ -208,10 +208,7 @@ def submit(
     }
     response = make_request(HTTPMethod.POST, url, config, params=params, files=files)
     logger.info(f"Batch {batch_num} Response: {response.status_code}")
-    if response.status_code != 200:  # noqa: PLR2004
-        logger.error(f"Error in batch {batch_num}: {response.text}")
-
-    return response
+    return response.json()
 
 
 def add_seq_to_batch(
@@ -247,16 +244,39 @@ def add_seq_to_batch(
             batch_it.sequences_batch_output.append(line)  # Handle multi-line sequences
 
 
+def submit_batch(  # noqa: PLR0913, PLR0917
+    url,
+    config: Config,
+    params: dict[str, str],
+    batch_it: BatchIterator,
+    results: list[dict[str, Any]],
+    failures: list[str],
+) -> None:
+    """Submit one batch, recording the outcome instead of aborting the whole run."""
+    batch_num = -(int(batch_it.record_counter) // -config.batch_chunk_size)
+    try:
+        results.extend(submit(url, config, params, batch_it))
+    except (requests.RequestException, ValueError) as e:
+        logger.exception(f"Batch {batch_num} failed")
+        failures.append(f"batch {batch_num}: {e!r}")
+
+
 def post_fasta_batches(
     url,
     fasta_file: str,
     metadata_file: str,
     config: Config,
     params: dict[str, str],
-) -> requests.Response:
-    """Chunks metadata files, joins with sequences and submits each chunk via POST."""
+) -> list[dict[str, Any]]:
+    """Chunks metadata files, joins with sequences and submits each chunk via POST.
+
+    Every batch is attempted even if an earlier one failed - batches are independent, and
+    anything not submitted is re-derived by the next run's hash comparison. Returns the
+    submissionId mappings of all successful batches; raises if any batch failed."""
 
     batch_it = BatchIterator()
+    results: list[dict[str, Any]] = []
+    failures: list[str] = []
 
     with (
         open(fasta_file, encoding="utf-8") as fasta_file_stream,
@@ -295,20 +315,23 @@ def post_fasta_batches(
 
             # submit the batch if it is full
             if batch_it.record_counter % config.batch_chunk_size == 0:
-                response = submit(
-                    url,
-                    config,
-                    params,
-                    batch_it,
-                )
+                submit_batch(url, config, params, batch_it, results, failures)
                 batch_it.sequences_batch_output = []
                 batch_it.metadata_batch_output = []
 
     if batch_it.record_counter % config.batch_chunk_size != 0:
         # submit the last chunk
-        response = submit(url, config, params, batch_it)
+        submit_batch(url, config, params, batch_it, results, failures)
 
-    return response
+    if failures:
+        msg = (
+            f"{len(failures)} batch(es) failed to submit "
+            f"({len(results)} sequence entries submitted successfully): " + "; ".join(failures)
+        )
+        logger.error(msg)
+        raise BatchSubmissionError(msg)
+
+    return results
 
 
 def count_lines(path, chunk_size=1024 * 1024):
@@ -361,9 +384,7 @@ def submit_or_revise(
     if mode == "submit":
         params["dataUseTermsType"] = "OPEN"
 
-    response = post_fasta_batches(url, sequences, metadata, config, params=params)
-
-    return response.json()
+    return post_fasta_batches(url, sequences, metadata, config, params=params)
 
 
 def revoke(accession_to_revoke: str, message: str, config: Config) -> str:
