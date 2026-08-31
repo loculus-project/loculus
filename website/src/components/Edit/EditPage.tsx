@@ -11,7 +11,11 @@ import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { type FilesByCategory, type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
 import { type InputField, type SubmissionDataTypes } from '../../types/config.ts';
-import { getLatestAccessionVersionForRevision, type SequenceEntryHistory } from '../../types/lapis.ts';
+import {
+    getLatestAccessionVersionForRevision,
+    isLatestVersionRevocation,
+    type SequenceEntryHistory,
+} from '../../types/lapis.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString, parseAccessionVersionFromString } from '../../utils/extractAccessionVersion.ts';
@@ -198,6 +202,11 @@ const InnerEditPage: FC<EditPageProps> = ({
                     />
                 )}
             </div>
+            {isCreatingRevision && isLatestVersionRevocation(sequenceEntryHistory) && (
+                <ErrorBox title='The latest version of this sequence is a revocation.' level='warning' className='mb-2'>
+                    <p className='mt-2'>Revising will create a new version that supersedes the revocation.</p>
+                </ErrorBox>
+            )}
             {isCreatingRevision &&
                 latestVersionForRevision !== undefined &&
                 dataToEdit.version < latestVersionForRevision && (
