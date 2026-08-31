@@ -57,7 +57,7 @@ const revokedHistory: SequenceEntryHistory = [
     { ...baseEntry, accessionVersion: `${defaultReviewData.accession}.2`, version: 2, isRevocation: true },
 ];
 
-const REVOKED_WARNING = 'The latest version for this sequence is marked as revoked.';
+const REVOKED_WARNING = 'The latest version of this sequence is a revocation.';
 const NOT_LATEST_WARNING = 'This is not the latest version of this sequence entry.';
 
 function renderEditPage({
