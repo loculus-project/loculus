@@ -41,6 +41,22 @@ spec:
           volumeMounts:
             - name: theme-volume
               mountPath: /destination
+        - name: keycloak-quarkus-prep
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          {{- include "loculus.containerSecurityContext" (list "keycloak" $.Values) | nindent 10 }}
+          image: {{ include "loculus.image" (dict "name" "keycloak" "defaultRepository" "quay.io/keycloak/keycloak" "defaultTag" "23.0" "values" $.Values) }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "keycloak" "values" $.Values) }}
+          # seed the writable quarkus-build volume with the image's pre-built artifacts before it shadows /opt/keycloak/lib/quarkus
+          command: ["sh", "-c", "cp -r /opt/keycloak/lib/quarkus/. /quarkus-build/"]
+          volumeMounts:
+            - name: quarkus-build
+              mountPath: /quarkus-build
       containers:
         - name: keycloak
           # TODO #1221
