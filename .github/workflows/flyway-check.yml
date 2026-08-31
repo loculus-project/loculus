@@ -19,8 +19,8 @@ jobs:
     - name: Check for modified migrations
       run: |
         git fetch origin main:main
-        modified_files=$(git diff --name-only main...HEAD -- src/main/resources/db/migration/)
-        new_files=$(git diff --name-only --diff-filter=A main...HEAD -- src/main/resources/db/migration/)
+        modified_files=$(git diff --name-only --diff-filter=M main...HEAD -- backend/src/main/resources/db/migration/)
+        new_files=$(git diff --name-only --diff-filter=A main...HEAD -- backend/src/main/resources/db/migration/)
         
         if [ -n "$modified_files" ]; then
           echo "The following existing migration files have been modified:"
