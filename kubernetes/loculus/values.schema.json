@@ -2048,6 +2048,10 @@
         "silo-importer": { "$ref": "#/definitions/resourceSpec" },
         "backend": { "$ref": "#/definitions/resourceSpec" },
         "preprocessing": { "$ref": "#/definitions/resourceSpec" },
+        "minio": { "$ref": "#/definitions/resourceSpec" },
+        "taxonomy-service": { "$ref": "#/definitions/resourceSpec" },
+        "raw-reads-processing": { "$ref": "#/definitions/resourceSpec" },
+        "ingest-init": { "$ref": "#/definitions/resourceSpec" },
         "organismSpecific": {
           "type": "object",
           "patternProperties": {
@@ -2072,7 +2076,8 @@
           },
           "additionalProperties": false
         }
-      }
+      },
+      "additionalProperties": false
     },
     "secrets": {
       "description": "TODO"
