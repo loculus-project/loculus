@@ -5,6 +5,7 @@ import type { MultiFieldSearch, SetSomeFieldValues } from '../../../types/config
 import { CustomTooltip } from '../../../utils/CustomTooltip';
 import type { MetadataFilterSchema } from '../../../utils/search.ts';
 import DisabledUntilHydrated from '../../DisabledUntilHydrated';
+import { Button } from '../../common/Button.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 
 export interface MultiFieldSearchFieldProps {
@@ -33,10 +34,13 @@ export const MultiFieldSearchField = ({
                     autoComplete='off'
                 />
             </DisabledUntilHydrated>
-            <div className='absolute top-1/2 -translate-y-1/3 right-1.5'>
-                <span data-tooltip-id={tooltipId} className='text-gray-400 hover:text-primary-600 inline-flex'>
+            <div className='absolute top-1/2 -translate-y-1/3 right-0'>
+                <Button
+                    data-tooltip-id={tooltipId}
+                    className='text-gray-400 hover:text-primary-600 inline-flex cursor-default px-2'
+                >
                     <MaterialSymbolsHelpOutline className='inline-block h-6 w-5' />
-                </span>
+                </Button>
             </div>
             <CustomTooltip id={tooltipId} place='top'>
                 <p className='mb-1'>Search across the following fields:</p>
