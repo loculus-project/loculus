@@ -125,6 +125,10 @@ spec:
               mountPath: /opt/keycloak/data/import/
             - name: theme-volume
               mountPath: /opt/keycloak/providers/
+            - name: quarkus-build
+              mountPath: /opt/keycloak/lib/quarkus
+            - name: tmp
+              mountPath: /tmp
           startupProbe:
             httpGet:
               path: /health/ready
@@ -142,4 +146,8 @@ spec:
       volumes:
 {{ include "loculus.configVolume" (dict "name" "keycloak-config") | nindent 8 }}
         - name: theme-volume
+          emptyDir: {}
+        - name: quarkus-build
+          emptyDir: {}
+        - name: tmp
           emptyDir: {}
