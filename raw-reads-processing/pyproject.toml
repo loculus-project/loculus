@@ -4,6 +4,8 @@
 name = "raw_reads_processing"
 version = "0.1.0"
 requires-python = ">=3.12"
+# The bindings are PyPI-only; keep in step with the conda CLI pin in environment.yml.
+dependencies = ["deacon==0.17.0"]
 
 [project.scripts]
 raw_reads_processing = "raw_reads_processing.__main__:run"

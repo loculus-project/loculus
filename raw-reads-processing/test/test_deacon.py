@@ -1,18 +1,20 @@
 # ruff: noqa: S101
 
 import gzip
-import shutil
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
+from deacon import Index
 from raw_reads_processing import deacon as deacon_module, process_files
 from raw_reads_processing.config import Config
 from raw_reads_processing.datatypes import (
     FileIdAndNameAndReadUrl,
     RequestWithFiles,
 )
-from raw_reads_processing.errors import InvalidSubmission
+from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
 
 
 def _config() -> Config:
@@ -20,7 +22,7 @@ def _config() -> Config:
         log_level="DEBUG",
         s3_request_timeout_seconds=10,
         read_validation_timeout_seconds=10,
-        deacon_filter_timeout_seconds=10,
+        max_input_file_bytes=1_000_000,
         deacon_max_host_reads_proportion=0.05,
         deacon_max_host_bp=1000,
     )
@@ -65,27 +67,17 @@ def mock_downstream(monkeypatch):
     monkeypatch.setattr(process_files, "validate_with_readtools", lambda *a, **k: None)
 
 
-@pytest.fixture
-def deacon_server():
-    """Run validate_raw_reads_submission's deacon step against the real deacon
-    binary and the checked-in fixture index, instead of mocking it, so these
-    tests exercise the actual threshold/warning boundary logic end-to-end.
+@pytest.fixture(scope="session")
+def deacon_filter():
+    """Filter against the real bindings and the checked-in fixture index, instead of
+    mocking, so these tests exercise the actual threshold/warning boundary logic
+    end-to-end. Session-scoped because the index is loaded once per process, which is
+    exactly how the service uses it.
+
+    Index created with `deacon index build test/fixtures/test_small_1.fastq -k 31 -w 15 -o deacon.idx`
     """
-    if shutil.which("deacon") is None:
-        pytest.skip("deacon binary not found on PATH")
-    proc = deacon_module.start_deacon_server()
-    time.sleep(1)  # give the server a moment to start listening
-    try:
-        yield
-    finally:
-        deacon_module.stop_deacon_server(proc)
-
-
-@pytest.fixture
-def deacon_index(monkeypatch, deacon_server):
-    # Index created with `deacon index build test/fixtures/test_small_1.fastq -k 31 -w 15 -o deacon.idx`
-    monkeypatch.setattr(
-        deacon_module, "DEACON_INDEX_PATH", str(FIXTURES_DIR / "deacon.idx")
+    return deacon_module.DeaconFilter(
+        Index(str(FIXTURES_DIR / "deacon.idx")), _config()
     )
 
 
@@ -137,8 +129,8 @@ def test_deacon_a_for_reads_raises_when_read_length_cannot_be_parsed(tmp_path):
     assert "Failed to determine median read length" in exc_info.value.error.message
 
 
-@pytest.mark.usefixtures("mock_downstream", "deacon_index")
-def test_host_reads_above_threshold_is_an_error(tmp_path):
+@pytest.mark.usefixtures("mock_downstream")
+def test_host_reads_above_threshold_is_an_error(tmp_path, deacon_filter):
     # 3/4 reads (75%) are reused verbatim from test_small_1.fastq, so they hit
     # deacon.idx; config's deacon_max_host_reads_proportion is 0.05, so 75% > 5%.
     host_reads = _parse_fastq_records(FIXTURES_DIR / "test_small_1.fastq")[:3]
@@ -150,12 +142,12 @@ def test_host_reads_above_threshold_is_an_error(tmp_path):
         files=[_file("reads.fastq", url=str(reads))],
     )
     with pytest.raises(InvalidSubmission) as exc_info:
-        process_files.validate_raw_reads_submission(_config(), files)
+        process_files.validate_raw_reads_submission(_config(), deacon_filter, files)
     assert deacon_module.DEACON_ERROR_PROMPT in exc_info.value.error.message
 
 
-@pytest.mark.usefixtures("mock_downstream", "deacon_index")
-def test_host_reads_at_or_below_threshold_passes(tmp_path):
+@pytest.mark.usefixtures("mock_downstream")
+def test_host_reads_at_or_below_threshold_passes(tmp_path, deacon_filter):
     # 1/20 reads (5%) is reused verbatim from test_small_1.fastq, so it hits
     # deacon.idx; config's deacon_max_host_reads_proportion is 0.05, so this
     # lands exactly at the threshold: not > 0.05, so no error should be raised.
@@ -167,5 +159,111 @@ def test_host_reads_at_or_below_threshold_passes(tmp_path):
         accessionVersion="accession.1",
         files=[_file("reads.fastq", url=str(reads))],
     )
-    result = process_files.validate_raw_reads_submission(_config(), files)
+    result = process_files.validate_raw_reads_submission(
+        _config(), deacon_filter, files
+    )
     assert result is None  # no error raised
+
+
+class _CountingIndex:
+    """Stands in for deacon.Index, recording how many filters overlap."""
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self.in_flight = 0
+        self.max_in_flight = 0
+
+    def filter(self, *args, **kwargs):
+        with self._lock:
+            self.in_flight += 1
+            self.max_in_flight = max(self.max_in_flight, self.in_flight)
+        time.sleep(0.05)
+        with self._lock:
+            self.in_flight -= 1
+        return {
+            "time": 0.0,
+            "seqs_in": 1,
+            "seqs_out": 0,
+            "seqs_out_proportion": 0.0,
+            "bp_in": 1,
+            "bp_out": 0,
+            "bp_out_proportion": 0.0,
+        }
+
+
+def test_concurrent_filters_are_capped_at_the_configured_limit(tmp_path):
+    # The FastAPI threadpool has ~40 slots; without this cap each of them could start
+    # its own deacon_threads worth of filter threads.
+    config = _config().model_copy(update={"deacon_max_concurrent_filters": 2})
+    index = _CountingIndex()
+    deacon_filter = deacon_module.DeaconFilter(index, config)
+    reads = tmp_path / "reads.fastq"
+    _write_fastq(reads, [_random_read(150)])
+    files = {"reads.fastq": reads}
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        for future in [pool.submit(deacon_filter.run, files, config) for _ in range(8)]:
+            future.result()
+
+    assert index.max_in_flight == 2
+
+
+def test_mismatched_pair_lengths_fail_the_submission_without_killing_the_index(
+    tmp_path, deacon_filter
+):
+    # deacon treats two inputs as mates of one pair and errors when they run out of
+    # step. Under the old server this killed the daemon and every later request with
+    # it; in-process it is an ordinary exception and the index stays usable.
+    read1, read2 = tmp_path / "reads_1.fastq", tmp_path / "reads_2.fastq"
+    _write_fastq(read1, [_random_read() for _ in range(1000)])
+    _write_fastq(read2, [_random_read() for _ in range(400)])
+
+    with pytest.raises(ProcessingFailure) as exc_info:
+        deacon_filter.run({"reads_1.fastq": read1, "reads_2.fastq": read2}, _config())
+
+    assert "Incompatible record set sizes" in str(exc_info.value)
+
+    healthy = tmp_path / "healthy.fastq"
+    _write_fastq(healthy, [_random_read()])
+    assert deacon_filter.run({"healthy.fastq": healthy}, _config()).seqs_in == 1
+
+
+@pytest.mark.parametrize(
+    ("description", "contents"),
+    [
+        ("truncated final record", "@r1\nACGT\n+\n"),
+        ("not fastq at all", "this is not a fastq file\n"),
+    ],
+)
+def test_unreadable_input_is_reported_to_the_submitter(
+    tmp_path, deacon_filter, description, contents
+):
+    # Malformed FASTQ never reaches deacon: sampling the read length to pick -a trips
+    # over it first, and that has to be an annotation rather than an unhandled 500.
+    unreadable = tmp_path / "reads.fastq"
+    unreadable.write_text(contents)
+
+    with pytest.raises(InvalidSubmission) as exc_info:
+        deacon_filter.run({"reads.fastq": unreadable}, _config())
+
+    assert "may be empty or corrupted" in exc_info.value.error.message
+
+
+def test_a_failing_filter_releases_its_concurrency_slot(tmp_path):
+    # The semaphore is held with `with`, so a raising filter must not leak a slot;
+    # leaking every slot would wedge all later requests.
+    config = _config().model_copy(update={"deacon_max_concurrent_filters": 1})
+    deacon_filter = deacon_module.DeaconFilter(_ExplodingIndex(), config)
+    reads = tmp_path / "reads.fastq"
+    _write_fastq(reads, [_random_read()])
+
+    for _ in range(3):
+        with pytest.raises(ProcessingFailure):
+            deacon_filter.run({"reads.fastq": reads}, config)
+
+    assert deacon_filter._slots.acquire(blocking=False)  # noqa: SLF001
+
+
+class _ExplodingIndex:
+    def filter(self, *args, **kwargs):
+        raise RuntimeError("Incompatible record set sizes: 1024 != 1000")

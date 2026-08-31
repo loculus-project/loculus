@@ -1,10 +1,10 @@
 import logging
-import subprocess  # noqa: S404
 
-from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from raw_reads_processing.datatypes import RequestWithFiles, ValidationResult
+from raw_reads_processing.deacon import DeaconFilter
+from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
 from raw_reads_processing.process_files import validate_raw_reads_submission
 
 from .config import Config
@@ -23,9 +23,12 @@ def read_root() -> dict[str, str]:
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    if app.state.deacon_process.poll() is not None:
-        raise HTTPException(status_code=503, detail="Deacon server process has exited")
-    return {"message": "Deacon server is running"}
+    # The index lives in this process, so there is no separate daemon that can die or
+    # wedge underneath us. This does not cover a filter call that hangs in-process:
+    # that leaks a concurrency slot while /health keeps answering 200.
+    if getattr(app.state, "deacon_filter", None) is None:
+        raise HTTPException(status_code=503, detail="Deacon index is not loaded")
+    return {"message": "Deacon index is loaded"}
 
 
 @app.post("/process-files")
@@ -35,6 +38,7 @@ def process_files(
     try:
         validate_raw_reads_submission(
             config=app.state.config,
+            deacon_filter=app.state.deacon_filter,
             request_with_files=payload,
         )
     except InvalidSubmission as e:
@@ -44,17 +48,20 @@ def process_files(
     return ValidationResult()
 
 
-def init_app(config: Config, deacon_process: subprocess.Popen):
+def init_app(config: Config, deacon_filter: DeaconFilter):
     app.state.config = config
-    app.state.deacon_process = deacon_process
+    app.state.deacon_filter = deacon_filter
 
 
-def start_api(config: Config, deacon_process: subprocess.Popen):
-    init_app(config, deacon_process)
+def start_api(config: Config, deacon_filter: DeaconFilter):
+    init_app(config, deacon_filter)
     host = config.file_service_host or "127.0.0.1"
     port = config.file_service_port or 5000
     logger.info(f"Starting raw reads processing service API on port {port}")
 
+    # workers=1 is load-bearing, not incidental: the deacon index is ~4.5GB on this
+    # process's heap and is shared between requests by threads, not by processes.
+    # A second worker would load a second copy and exceed the pod's memory limit.
     uvicorn_config = uvicorn.Config(
         app, host=host, port=port, log_level="info", workers=1
     )
