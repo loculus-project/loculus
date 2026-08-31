@@ -94,6 +94,7 @@ dependencies {
     testImplementation "org.testcontainers:testcontainers-minio:2.0.5"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.junit.platform:junit-platform-launcher"
+    testImplementation "org.jetbrains.exposed:exposed-migration-jdbc"
     ktlint("com.pinterest.ktlint:ktlint-cli:1.8.0") {
         attributes {
             attribute(Bundling.BUNDLING_ATTRIBUTE, getObjects().named(Bundling, Bundling.EXTERNAL))
@@ -152,6 +153,18 @@ tasks.named('test') {
         exceptionFormat = TestExceptionFormat.FULL
         showExceptions = true
     }
+}
+
+// Diffs the Exposed table definitions against a database with all committed Flyway
+// migrations applied, and writes the difference as a new migration script
+tasks.register('generateMigration', JavaExec) {
+    if (!System.getenv('USE_NONDOCKER_INFRA')?.toBoolean()) {
+        dependsOn checkDocker
+    }
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'org.loculus.backend.tools.GenerateMigrationKt'
+    args = [project.findProperty('scriptName') ?: 'generated_migration']
 }
 
 tasks.named('bootBuildImage') {
