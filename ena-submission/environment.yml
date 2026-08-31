@@ -23,7 +23,7 @@ dependencies:
   - slack_sdk=3.37.0
   - xmltodict=1.0.2
   - biopython=1.85
-  - pytz=2025.2
+  - pytz=2026.2
   - ruff=0.14.2 # if changing update .pre-commit-config.yaml as well
   - tenacity=9.1.2
   - types-pytz=2025.2.0.20250809
