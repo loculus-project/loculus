@@ -3,7 +3,7 @@ import type { FC } from 'react';
 import { RevokeButton } from './RevokeButton';
 import { type TableDataEntry } from './types';
 import { routes } from '../../routes/routes';
-import { DATA_USE_TERMS_FIELD } from '../../settings.ts';
+import { DATA_USE_TERMS_FIELD, GROUP_ID_FIELD } from '../../settings.ts';
 import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
 import { isLatestVersionRevocation, type SequenceEntryHistory, versionStatuses } from '../../types/lapis';
 import { type ClientConfig } from '../../types/runtimeConfig';
@@ -37,7 +37,7 @@ export const SequenceManagement: FC<Props> = ({
     isRevocation,
     onRevokeSuccess,
 }: Props) => {
-    const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as number;
+    const groupId = tableData.find((entry) => entry.name === GROUP_ID_FIELD)!.value as number;
     const isMyGroup = myGroups.some((group) => group.groupId === groupId);
 
     if (!isMyGroup || accessToken === undefined) return null;
@@ -77,7 +77,7 @@ export const SequenceManagement: FC<Props> = ({
                                 <EditDataUseTermsButton
                                     clientConfig={clientConfig}
                                     accessToken={accessToken}
-                                    accessionVersion={accession}
+                                    accession={accession}
                                     dataUseTerms={currentDataUseTerms as RestrictedDataUseTerms}
                                 />
                             )}
@@ -92,7 +92,7 @@ export const SequenceManagement: FC<Props> = ({
                                 <RevokeButton
                                     organism={organism}
                                     clientConfig={clientConfig}
-                                    accessionVersion={accession}
+                                    accession={accession}
                                     accessToken={accessToken}
                                     groupId={groupId}
                                     onRevokeSuccess={onRevokeSuccess}
