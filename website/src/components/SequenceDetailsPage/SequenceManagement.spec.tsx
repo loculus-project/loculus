@@ -4,7 +4,7 @@ import { describe, expect, test } from 'vitest';
 import { SequenceManagement } from './SequenceManagement';
 import type { TableDataEntry } from './types';
 import { testAccessToken, testConfig, testGroups, testOrganism } from '../../../vitest.setup.ts';
-import type { DataUseTermsHistoryEntry } from '../../types/backend';
+import type { DataUseTermsHistoryEntry, Group } from '../../types/backend';
 import type { SequenceEntryHistory, SequenceEntryHistoryEntry } from '../../types/lapis';
 
 const tableData: TableDataEntry[] = [
@@ -66,11 +66,19 @@ const restoredHistory: SequenceEntryHistory = [
     },
 ];
 
-function renderSequenceManagement(
-    sequenceEntryHistory: SequenceEntryHistory,
-    accessionVersion: string,
+function renderSequenceManagement({
+    accessionVersion,
+    sequenceEntryHistory,
+    accessToken,
+    myGroups = testGroups,
     isRevocation = false,
-) {
+}: {
+    accessionVersion: string;
+    sequenceEntryHistory: SequenceEntryHistory;
+    accessToken: string | undefined;
+    myGroups?: Group[];
+    isRevocation?: boolean;
+}) {
     return render(
         <SequenceManagement
             tableData={tableData}
@@ -79,8 +87,8 @@ function renderSequenceManagement(
             dataUseTermsHistory={dataUseTermsHistory}
             sequenceEntryHistory={sequenceEntryHistory}
             clientConfig={testConfig.public}
-            myGroups={testGroups}
-            accessToken={testAccessToken}
+            myGroups={myGroups}
+            accessToken={accessToken}
             isRevocation={isRevocation}
         />,
     );
@@ -88,26 +96,63 @@ function renderSequenceManagement(
 
 describe('SequenceManagement', () => {
     test('shows revise and revoke buttons on non-revocations when the latest version is non-revocation', () => {
-        renderSequenceManagement(revisedHistory, `${ACCESSION}.1`);
+        renderSequenceManagement({
+            accessionVersion: `${ACCESSION}.1`,
+            sequenceEntryHistory: revisedHistory,
+            accessToken: testAccessToken,
+        });
         expect(screen.getByRole('link', { name: 'Revise this sequence' })).toBeVisible();
         expect(screen.getByRole('button', { name: /revoke/i })).toBeVisible();
     });
 
     test('shows only the revise button on non-revocations when the latest version is a revocation', () => {
-        renderSequenceManagement(revokedHistory, `${ACCESSION}.1`);
+        renderSequenceManagement({
+            accessionVersion: `${ACCESSION}.1`,
+            sequenceEntryHistory: revokedHistory,
+            accessToken: testAccessToken,
+        });
         expect(screen.getByRole('link', { name: 'Revise this sequence' })).toBeVisible();
         expect(screen.queryByRole('button', { name: /revoke/i })).not.toBeInTheDocument();
     });
 
     test('shows only the restore button on revocation versions that are the latest version', () => {
-        renderSequenceManagement(revokedHistory, `${ACCESSION}.2`, true);
+        renderSequenceManagement({
+            accessionVersion: `${ACCESSION}.2`,
+            sequenceEntryHistory: revokedHistory,
+            accessToken: testAccessToken,
+            isRevocation: true,
+        });
         expect(screen.getByRole('link', { name: 'Restore this sequence' })).toBeVisible();
         expect(screen.queryByRole('link', { name: 'Revise this sequence' })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: /revoke/i })).not.toBeInTheDocument();
     });
 
     test('renders nothing on revocation versions that are not the latest version', () => {
-        const { container } = renderSequenceManagement(restoredHistory, `${ACCESSION}.2`, true);
+        const { container } = renderSequenceManagement({
+            accessionVersion: `${ACCESSION}.2`,
+            sequenceEntryHistory: restoredHistory,
+            accessToken: testAccessToken,
+            isRevocation: true,
+        });
+        expect(container).toBeEmptyDOMElement();
+    });
+
+    test('renders nothing when the entry does not belong to one of the users groups', () => {
+        const { container } = renderSequenceManagement({
+            accessionVersion: `${ACCESSION}.2`,
+            sequenceEntryHistory: revisedHistory,
+            myGroups: [],
+            accessToken: testAccessToken,
+        });
+        expect(container).toBeEmptyDOMElement();
+    });
+
+    test('renders nothing when there is no access token', () => {
+        const { container } = renderSequenceManagement({
+            accessionVersion: `${ACCESSION}.2`,
+            sequenceEntryHistory: revisedHistory,
+            accessToken: undefined,
+        });
         expect(container).toBeEmptyDOMElement();
     });
 });
