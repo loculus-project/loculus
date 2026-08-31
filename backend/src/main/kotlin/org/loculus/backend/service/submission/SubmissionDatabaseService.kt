@@ -363,7 +363,7 @@ class SubmissionDatabaseService(
         submittedProcessedDataBatch.forEach { submittedProcessedData ->
             submittedProcessedData.data.files?.let { fileMapping ->
                 fileMappingPreconditionValidator
-                    .validateFilenameCharacters(fileMapping)
+                    .validateFilenameCharacters(fileMapping, organism)
                     .validateFilenamesAreUnique(fileMapping)
                     .validateCategoriesMatchOutputSchema(fileMapping, organism)
 
@@ -1183,7 +1183,7 @@ class SubmissionDatabaseService(
 
         editedSequenceEntryData.data.files?.let { fileMapping ->
             fileMappingPreconditionValidator
-                .validateFilenameCharacters(fileMapping)
+                .validateFilenameCharacters(fileMapping, organism)
                 .validateFilenamesAreUnique(fileMapping)
                 .validateCategoriesMatchSubmissionSchema(fileMapping, organism)
                 .validateMultipartUploads(fileMapping.fileIds)

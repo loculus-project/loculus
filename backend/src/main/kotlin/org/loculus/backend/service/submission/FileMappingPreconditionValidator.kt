@@ -14,15 +14,28 @@ import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
 import org.springframework.stereotype.Component
 
+private val RESERVED_DEVICE_NAME_REGEX = Regex("CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9]", RegexOption.IGNORE_CASE)
+private val STRICT_FILENAME_REGEX = Regex("[a-zA-Z0-9_.-]+")
+
 @Component
 class FileMappingPreconditionValidator(
     private val backendConfig: BackendConfig,
     private val s3Service: S3Service,
     private val filesDatabaseService: FilesDatabaseService,
 ) {
-    fun validateFilenameCharacters(fileCategoriesFilesMap: FileCategoryFilesMap?): FileMappingPreconditionValidator {
+    fun validateFilenameCharacters(
+        fileCategoriesFilesMap: FileCategoryFilesMap?,
+        organism: Organism,
+    ): FileMappingPreconditionValidator {
         if (fileCategoriesFilesMap == null) {
             return this
+        }
+
+        val instanceConfig = backendConfig.getInstanceConfig(organism)
+        val validateFilename = if (instanceConfig.schema.submissionDataTypes.files.disableStrictFilenameValidation) {
+            ::baseValidateFilename
+        } else {
+            ::strictValidateFilename
         }
 
         fileCategoriesFilesMap.forEach { (category, files) ->
@@ -128,20 +141,25 @@ class FileMappingPreconditionValidator(
     }
 
     /**
-     * This validates that the filename is not in violation with our defined restrictions, ensuring that the filenames
+     * This validates that the filename is not in violation with our base restrictions, ensuring that the filenames
      * are likely compatible with major operating systems.
      *
-     * Restrictions:
-     * - ASCII control characters (code 0-31)
-     * - /\:*"?<>| and NUL: forbidden in NTFS (for Windows) and FAT32
+     * IMPORTANT: Not having any additional filename restrictions may lead to unexpected bugs or issues.
+     *
+     * Base restrictions:
+     * - ASCII control characters: NUL, SOH, etc. (code 0-31)
+     * - /\:*"?<>| characters: forbidden in NTFS (for Windows) and FAT32
+     * - ;%# characters: forbidden due to web encoding issues (see #7056)
      * - More than 255 characters: ext4 and NTFS only allow 255 bytes
-     * - Whitespace characters are forbidden
+     * - Windows reserved device names: CON, PRN, AUX, NUL, COM1-COM9, LPT1-LPT9, with or without an extension
+     * - Single and double period names: forbidden to prevent path normalisation issues
+     * - Whitespace characters
      *
      * References:
      * - https://en.wikipedia.org/wiki/Comparison_of_file_systems#Limits
      * - https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file
      */
-    private fun validateFilename(filename: String, category: FileCategory) {
+    private fun baseValidateFilename(filename: String, category: FileCategory) {
         if (filename.isEmpty()) {
             throw UnprocessableEntityException(
                 "Invalid filename '$filename' in category '$category': Filenames may not be empty",
@@ -152,10 +170,10 @@ class FileMappingPreconditionValidator(
                 "Invalid filename '$filename' in category '$category': Filenames may not exceed 255 characters",
             )
         }
-        if (filename.any { it in "<>:\"/\\|?*" }) {
+        if (filename.any { it in "<>:\"/\\|?*;%#" }) {
             throw UnprocessableEntityException(
                 "Invalid filename '$filename' in category '$category': Filenames may not contain " +
-                    "forbidden characters (< > : \" / \\ | ? *).",
+                    "forbidden characters (< > : \" / \\ | ? * ; % #).",
             )
         }
         if (filename.any { it.code in 0..31 }) {
@@ -164,9 +182,40 @@ class FileMappingPreconditionValidator(
                     "ASCII control characters 0-31.",
             )
         }
+        if (RESERVED_DEVICE_NAME_REGEX.matches(filename.substringBefore('.'))) {
+            throw UnprocessableEntityException(
+                "Invalid filename '$filename' in category '$category': Filenames may not use Windows " +
+                    "reserved device names (CON, PRN, AUX, NUL, COM1-COM9, LPT1-LPT9).",
+            )
+        }
+        if (filename == "." || filename == "..") {
+            throw UnprocessableEntityException(
+                "Invalid filename '$filename' in category '$category': Filenames '.' and '..' are not accepted.",
+            )
+        }
         if (filename.any { it.isWhitespace() }) {
             throw UnprocessableEntityException(
                 "Invalid filename '$filename' in category '$category': Filenames may not contain whitespace.",
+            )
+        }
+    }
+
+    /**
+     * This validates filenames comply with our base restrictions, as well as ensuring names only include:
+     * - Uppercase letters (A-Z)
+     * - Lowercase letters (a-z)
+     * - Numbers (0-9)
+     * - Underscores (_)
+     * - Hyphens (-)
+     * - Periods (.)
+     */
+    private fun strictValidateFilename(filename: String, category: FileCategory) {
+        baseValidateFilename(filename, category)
+
+        if (!STRICT_FILENAME_REGEX.matches(filename)) {
+            throw UnprocessableEntityException(
+                "Invalid filename '$filename' in category '$category': Filenames must only contain " +
+                    "alphanumeric characters, underscores, periods and hyphens.",
             )
         }
     }
@@ -197,9 +246,10 @@ class SubmissionIdFilesMappingPreconditionValidator(
 ) {
     fun validateFilenameCharacters(
         submissionIdFilesMap: SubmissionIdFilesMap?,
+        organism: Organism,
     ): SubmissionIdFilesMappingPreconditionValidator {
         submissionIdFilesMap?.values?.forEach {
-            fileMappingValidator.validateFilenameCharacters(it)
+            fileMappingValidator.validateFilenameCharacters(it, organism)
         }
         return this
     }

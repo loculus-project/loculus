@@ -173,7 +173,7 @@ class SubmitModel(
                         throw BadRequestException("the $organism organism does not support file submission.")
                     }
                     submissionIdFilesMappingPreconditionValidator
-                        .validateFilenameCharacters(files)
+                        .validateFilenameCharacters(files, submissionParams.organism)
                         .validateFilenamesAreUnique(files)
                         .validateCategoriesMatchSchema(files, submissionParams.organism)
                         .validateMultipartUploads(files)

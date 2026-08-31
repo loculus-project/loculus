@@ -441,6 +441,12 @@
                         },
                         "additionalProperties": false
                       }
+                    },
+                    "disableStrictFilenameValidation": {
+                      "groups": ["schema"],
+                      "type": "boolean",
+                      "default": false,
+                      "description": "If true, only base filename restrictions are enforced; the stricter character allowlist (alphanumerics, underscores, periods, hyphens) is not applied. Not officially supported and may result in unexpected behaviour."
                     }
                   },
                   "additionalProperties": false

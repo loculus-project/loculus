@@ -64,7 +64,11 @@ data class SubmissionDataTypes(
     val files: FilesSubmissionDataType = FilesSubmissionDataType(false, emptyList()),
 )
 
-data class FilesSubmissionDataType(val enabled: Boolean = false, val categories: List<FileCategory>)
+data class FilesSubmissionDataType(
+    val enabled: Boolean = false,
+    val categories: List<FileCategory>,
+    val disableStrictFilenameValidation: Boolean = false,
+)
 
 data class FileCategory(val name: String)
 

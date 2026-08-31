@@ -2138,6 +2138,7 @@ defaultOrganisms:
         consensusSequences: false
         files:
           enabled: true
+          disableStrictFilenameValidation: false
           categories:
             - name: rawReads
               displayName: Raw reads
