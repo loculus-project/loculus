@@ -42,9 +42,23 @@ npm --version
 # Create k3d cluster with port bindings
 ./deploy.py --verbose cluster --bind-all
 
-# Deploy with Helm (use main branch to avoid image pull issues)
-./deploy.py --verbose helm --branch main --for-e2e --enablePreprocessing --use-localhost-ip
+# Create values file to use host.k3d.internal (see note below)
+echo 'localHost: host.k3d.internal' > /tmp/k3d-values.yaml
+
+# Deploy with Helm
+SHA=$(git rev-parse HEAD | cut -c1-7)
+./deploy.py --verbose helm --branch main --sha $SHA --for-e2e --enablePreprocessing --values /tmp/k3d-values.yaml
+
+# Add host entry so the browser can resolve host.k3d.internal
+# (requires sudo - add this line to /etc/hosts)
+echo '127.0.0.1 host.k3d.internal' | sudo tee -a /etc/hosts
 ```
+
+> **Why `host.k3d.internal`?** Services like MinIO generate pre-signed URLs that both browsers and internal pods need to access. Using `host.k3d.internal` works because:
+> - From inside pods: k3d automatically configures DNS to resolve this to the host machine
+> - From the browser: The `/etc/hosts` entry points to `127.0.0.1` where ports are forwarded
+>
+> The `--use-localhost-ip` flag uses your machine's actual IP (e.g., `192.168.x.x`), which often isn't routable from inside Docker containers, causing S3 connectivity failures.
 
 ### 2. Install dependencies
 
@@ -87,6 +101,12 @@ npx playwright test tests/specs/cli/auth.spec.ts --reporter=list
 BROWSER=firefox npx playwright test --workers=4 --reporter=list
 ```
 
+**Important:** Do NOT set `PLAYWRIGHT_TEST_BASE_URL=http://host.k3d.internal:3000` when running tests against local k3d. The default `localhost:3000` works correctly because:
+- Ports are forwarded from k3d to localhost
+- Keycloak is configured to allow redirects to `localhost:3000`, not `host.k3d.internal:3000`
+
+Using `host.k3d.internal` for the test URL will cause Keycloak authentication failures with "Invalid redirect URI" errors.
+
 #### Controlling Test Execution
 
 Test execution can be controlled using the `BROWSER` and `TEST_SUITE` environment variables.
@@ -106,6 +126,102 @@ PLAYWRIGHT_TEST_BASE_URL=https://main.loculus.org npx playwright test --reporter
 
 # Run tests against a specific preview environment
 PLAYWRIGHT_TEST_BASE_URL=https://preview-123.loculus.org npx playwright test --reporter=list
+```
+
+## Troubleshooting k3d Setup
+
+**Pods can't reach S3/MinIO (connection timeouts to host IP):**
+- Ensure you deployed with `localHost: host.k3d.internal` in your values file
+- Verify the config: `kubectl get deployment loculus-backend -o yaml | grep S3_BUCKET_ENDPOINT`
+- Should show `http://host.k3d.internal:8084`, not your machine's IP
+
+**Browser can't connect to services:**
+- Ensure `/etc/hosts` contains `127.0.0.1 host.k3d.internal`
+- Test with: `curl http://host.k3d.internal:3000`
+
+**Tests timeout waiting for sequence processing:**
+- Check preprocessing pod logs (see Debugging Sequence Processing below)
+- Verify all pods are running: `kubectl get pods`
+
+**Python version issues with deploy.py:**
+- The `deploy.py` script requires Python 3.9+
+- If anaconda shadows system python, use `/usr/bin/python3 ./deploy.py` instead
+
+**Cleanup:**
+```sh
+k3d cluster delete testCluster
+```
+
+## Debugging Sequence Processing
+
+When sequences are stuck in "awaiting processing" state:
+
+### 1. Find the correct preprocessing pod
+
+Preprocessing pods are named by organism and version:
+```sh
+# List all preprocessing deployments
+kubectl get deployments | grep preprocessing
+
+# Example output:
+# loculus-preprocessing-dummy-organism-v2-0
+# loculus-preprocessing-ebola-sudan-v1-0
+```
+
+### 2. Check preprocessing logs
+
+```sh
+# Get pod name for a specific organism (e.g., dummy-organism)
+kubectl get pods | grep preprocessing-dummy-organism
+
+# Check logs for errors
+kubectl logs <pod-name> --tail=100
+
+# Or stream logs in real-time
+kubectl logs -f <pod-name>
+```
+
+### 3. Common preprocessing errors
+
+**422 "Unknown genes" error:**
+```
+Exception: ('Submitting processed data failed. Status code: 422',
+'{"detail":"Unknown genes in \'alignedAminoAcidSequences\': E."}')
+```
+This means the preprocessing is submitting amino acid sequences for genes that aren't defined in the organism's `referenceGenomes` config in `values.yaml`. Check that gene names in `mock-sequences.json` (for dummy preprocessing) match gene names in `kubernetes/loculus/values.yaml`.
+
+**304 responses (no sequences to process):**
+If logs show repeated `HTTP/1.1" 304 0` responses, it means:
+- Either there are no new sequences to process
+- Or sequences are stuck in `IN_PROCESSING` status from a previous failed attempt
+
+### 4. Check backend for stuck sequences
+
+```sh
+# Port-forward to the database
+kubectl port-forward svc/loculus-database-service 5432:5432
+
+# In another terminal, connect and check sequence status
+PGPASSWORD=loculus psql -h localhost -U loculus -d loculus -c \
+  "SELECT accession, version, status FROM sequence_entries WHERE organism='dummy-organism' ORDER BY accession DESC LIMIT 10;"
+```
+
+### 5. Applying config changes
+
+After editing `kubernetes/loculus/values.yaml`, apply changes with helm upgrade:
+```sh
+# Using reuse-values to keep existing settings
+helm upgrade preview ./kubernetes/loculus --reuse-values --wait
+
+# Or redeploy fully (requires Python 3.9+)
+SHA=$(git rev-parse HEAD | cut -c1-7)
+/usr/bin/python3 ./deploy.py helm --branch main --sha $SHA --for-e2e --enablePreprocessing --values /tmp/k3d-values.yaml
+```
+
+After helm upgrade, restart affected deployments:
+```sh
+kubectl rollout restart deployment/loculus-backend
+kubectl rollout restart deployment/loculus-preprocessing-dummy-organism-v2-0
 ```
 
 ## Checklist before committing code
