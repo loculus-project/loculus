@@ -2,8 +2,9 @@ import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { DateTime } from 'luxon';
 import type { Result } from 'neverthrow';
-import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo } from 'react';
+import { type FormEvent, useState, type Dispatch, type SetStateAction, useEffect, useMemo } from 'react';
 
+import { compressForUpload, warmCompressor } from './FileUpload/compressForUpload.ts';
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
@@ -91,6 +92,12 @@ const InnerDataUploadForm = ({
 
     const [confirmedNoPII, setConfirmedNoPII] = useState(false);
 
+    const [isCompressing, setIsCompressing] = useState(false);
+
+    useEffect(() => {
+        void warmCompressor();
+    }, []);
+
     const fileLinkage = useMemo(
         () =>
             inputMode === 'bulk' && submissionFileMapping?.isOk()
@@ -176,13 +183,22 @@ const InnerDataUploadForm = ({
             }
         }
 
-        const submitSequenceData = () => {
+        const submitSequenceData = async () => {
+            setIsCompressing(true);
+            let metadataToUpload;
+            let sequenceToUpload;
+            try {
+                metadataToUpload = await compressForUpload(finalMetadataFile);
+                sequenceToUpload = sequenceFile === undefined ? undefined : await compressForUpload(sequenceFile);
+            } finally {
+                setIsCompressing(false);
+            }
             switch (action) {
                 case 'submit': {
                     const groupId = group.groupId;
                     submit({
-                        metadataFile: finalMetadataFile,
-                        sequenceFile: sequenceFile,
+                        metadataFile: metadataToUpload,
+                        sequenceFile: sequenceToUpload,
                         groupId,
                         dataUseTermsType,
                         restrictedUntil:
@@ -194,8 +210,8 @@ const InnerDataUploadForm = ({
                 }
                 case 'revise':
                     revise({
-                        metadataFile: finalMetadataFile,
-                        sequenceFile: sequenceFile,
+                        metadataFile: metadataToUpload,
+                        sequenceFile: sequenceToUpload,
                     });
                     break;
             }
@@ -207,10 +223,11 @@ const InnerDataUploadForm = ({
                     'You have selected the Open Data Use Terms. Once released under the Open Data Use Terms sequences will be deposited to INSDC and cannot be changed to the Restricted-Use Data Use Terms.',
                 confirmButtonText: 'Continue under Open terms',
                 closeButtonText: 'Cancel',
-                onConfirmation: submitSequenceData,
+                onConfirmation: () =>
+                    void submitSequenceData().catch((error: unknown) => onError(stringifyMaybeAxiosError(error))),
             });
         } else {
-            submitSequenceData();
+            await submitSequenceData().catch((error: unknown) => onError(stringifyMaybeAxiosError(error)));
         }
     };
 
@@ -288,9 +305,11 @@ const InnerDataUploadForm = ({
                         type='submit'
                         className='rounded-md py-2 text-sm font-semibold shadow-xs focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
                         onClick={(e) => void handleSubmit(e)}
-                        alsoDisabledIf={isPending}
+                        alsoDisabledIf={isPending || isCompressing}
                     >
-                        <div className={`absolute ml-1.5 inline-flex ${isPending ? 'visible' : 'invisible'}`}>
+                        <div
+                            className={`absolute ml-1.5 inline-flex ${isPending || isCompressing ? 'visible' : 'invisible'}`}
+                        >
                             <Spinner size='sm' />
                         </div>
                         <span className='flex-1 text-center mx-8'>Upload and proceed to Approval</span>
