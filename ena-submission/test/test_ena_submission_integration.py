@@ -619,7 +619,7 @@ def get_revisions(
             if modify_raw_reads_manifest:
                 new_value["metadata"]["sequencingLibrarySelection"] = "ChIP"
             if modify_raw_reads:
-                new_value["metadata"]["pairedNominalLength"] = 150
+                new_value["metadata"]["pairedEndInsertSize"] = 150
                 # To simulate the s3 URL changing, we generate a random id for the URL each time
                 random_id = "".join(random.choices(string.digits, k=4))  # noqa: S311
                 new_value["metadata"][config.raw_reads_metadata_field] = (

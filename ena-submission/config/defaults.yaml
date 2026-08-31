@@ -63,7 +63,7 @@ raw_reads_manifest_fields_mapping:
     loculus_fields: [sequencingLibraryStrategy]
     default: "OTHER"
   insert_size:
-    loculus_fields: [pairedNominalLength]
+    loculus_fields: [pairedEndInsertSize]
 #ena_checklist: ERC000033 - do not use until all fields are mapped to ENA accepted options
 metadata_mapping:
   'subject exposure':

@@ -295,7 +295,7 @@ def submission_table_start(db_engine: Engine, config: Config) -> None:
 
         run_ref = (
             corresponding_raw_reads[0].result.get("err_accession")
-            if corresponding_raw_reads
+            if corresponding_raw_reads and corresponding_raw_reads[0].result
             else None
         )
 

@@ -557,7 +557,7 @@ class RawReadsCreationTests(unittest.TestCase):
         submission_row = sample_data_in_submission_table()
         submission_row.seq_metadata = {
             **submission_row.seq_metadata,
-            "pairedNominalLength": "350",
+            "pairedEndInsertSize": "350",
         }
 
         manifest = create_raw_reads_manifest_object(
@@ -585,7 +585,7 @@ class RawReadsCreationTests(unittest.TestCase):
         submission_row = sample_data_in_submission_table()
         submission_row.seq_metadata = {
             **submission_row.seq_metadata,
-            "pairedNominalLength": "350",
+            "pairedEndInsertSize": "350",
         }
 
         manifest = create_raw_reads_manifest_object(
