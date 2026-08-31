@@ -13,4 +13,5 @@ object UpdateTrackerTable : Table(UPDATE_TRACKER_TABLE_NAME) {
     val organismColumn = text("organism").nullable()
     val pipelineVersionColumn = long("pipeline_version").nullable()
     val lastTimeUpdatedDbColumn = text("last_time_updated")
+    val lastXidColumn = text("last_xid").nullable()
 }
