@@ -5,8 +5,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter, Retry
 
 DEFAULT_MAX_WORKERS = 16
 thread_local = threading.local()
