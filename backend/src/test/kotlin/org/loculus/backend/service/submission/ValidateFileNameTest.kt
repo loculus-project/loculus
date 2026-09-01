@@ -289,23 +289,15 @@ class ValidateFileNameTest {
         validator.validateFilenameCharacters(fileMapping, organism)
     }
 
-    @Test
-    fun `unicode filenames should fail strict validation`() {
+    @ParameterizedTest(name = "{arguments}")
+    @ValueSource(strings = ["文件.txt", "データ.csv", "файл.json", "αρχείο.xml", "ملف.fasta"])
+    fun `unicode filenames should fail strict validation`(filename: String) {
         every {
             backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files
                 .disableStrictFilenameValidation
         } returns false
 
-        val fileMapping = createFileMapping(
-            "sequences",
-            listOf(
-                "文件.txt",
-                "データ.csv",
-                "файл.json",
-                "αρχείο.xml",
-                "ملف.fasta",
-            ),
-        )
+        val fileMapping = createFileMapping("sequences", listOf(filename))
         assertThrows<UnprocessableEntityException> {
             validator.validateFilenameCharacters(fileMapping, organism)
         }
