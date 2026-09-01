@@ -146,7 +146,7 @@ class FileMappingPreconditionValidator(
      * - ASCII control characters: NUL, SOH, etc. (code 0-31)
      * - /\:*"?<>| characters: forbidden in NTFS (for Windows) and FAT32
      * - ;%# characters: forbidden due to web encoding issues (see #7056)
-     * - More than 255 characters: ext4 and NTFS only allow 255 bytes
+     * - Filenames over 255 bytes: forbidden for ext4 and NTFS compatibility
      * - Windows reserved device names: CON, PRN, AUX, NUL, COM1-COM9, LPT1-LPT9, with or without an extension
      * - Trailing periods: Windows silently strips these, and single or double period names break path normalisation
      * - Whitespace characters
@@ -161,9 +161,11 @@ class FileMappingPreconditionValidator(
                 "Invalid filename '$filename' in category '$category': Filenames may not be empty",
             )
         }
-        if (filename.length > 255) {
+        val filenameBytes = filename.toByteArray(Charsets.UTF_8)
+        if (filenameBytes.size > 255) {
             throw UnprocessableEntityException(
-                "Invalid filename '$filename' in category '$category': Filenames may not exceed 255 characters",
+                "Invalid filename '$filename' in category '$category': Filenames may not exceed 255 " +
+                    if (filenameBytes.size > filename.length) "bytes" else "characters",
             )
         }
         if (filename.any { it in "<>:\"/\\|?*;%#" }) {

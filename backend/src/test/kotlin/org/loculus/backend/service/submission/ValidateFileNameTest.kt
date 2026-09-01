@@ -93,6 +93,15 @@ class ValidateFileNameTest {
     }
 
     @Test
+    fun `filename exceeding 255 bytes but not 255 characters should fail base validation`() {
+        val longFilename = "文".repeat(100) + ".txt"
+        val fileMapping = createFileMapping("sequences", listOf(longFilename))
+        assertThrows<UnprocessableEntityException> {
+            validator.validateFilenameCharacters(fileMapping)
+        }
+    }
+
+    @Test
     fun `filename with less than sign should fail base validation`() {
         val fileMapping = createFileMapping("sequences", listOf("file<test.txt"))
         assertThrows<UnprocessableEntityException> {
