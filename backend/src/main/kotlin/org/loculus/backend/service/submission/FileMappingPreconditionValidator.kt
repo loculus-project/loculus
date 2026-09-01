@@ -206,14 +206,13 @@ class FileMappingPreconditionValidator(
      * - Periods (.)
      */
     private fun strictValidateFilename(filename: String, category: FileCategory) {
-        baseValidateFilename(filename, category)
-
         if (!STRICT_FILENAME_REGEX.matches(filename)) {
             throw UnprocessableEntityException(
                 "Invalid filename '$filename' in category '$category': Filenames must only contain " +
                     "alphanumeric characters, underscores, periods and hyphens.",
             )
         }
+        baseValidateFilename(filename, category)
     }
 
     private fun validateCategoriesMatchSchema(
