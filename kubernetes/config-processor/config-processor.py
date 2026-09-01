@@ -63,8 +63,9 @@ def download_urls_with_workers(urls, max_workers):
 def download_url(url):
     if not hasattr(thread_local, "session"):
         session = requests.Session()
-        session.mount("https://", HTTPAdapter(max_retries=retry_strategy))
-        session.mount("http://", HTTPAdapter(max_retries=retry_strategy))
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        session.mount("https://", adapter)
+        session.mount("http://", adapter)
         thread_local.session = session
     return thread_local.session.get(url)
 
