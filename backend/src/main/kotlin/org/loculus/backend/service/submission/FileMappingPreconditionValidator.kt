@@ -23,16 +23,12 @@ class FileMappingPreconditionValidator(
     private val s3Service: S3Service,
     private val filesDatabaseService: FilesDatabaseService,
 ) {
-    fun validateFilenameCharacters(
-        fileCategoriesFilesMap: FileCategoryFilesMap?,
-        organism: Organism,
-    ): FileMappingPreconditionValidator {
+    fun validateFilenameCharacters(fileCategoriesFilesMap: FileCategoryFilesMap?): FileMappingPreconditionValidator {
         if (fileCategoriesFilesMap == null) {
             return this
         }
 
-        val instanceConfig = backendConfig.getInstanceConfig(organism)
-        val validateFilename = if (instanceConfig.schema.submissionDataTypes.files.disableStrictFilenameValidation) {
+        val validateFilename = if (backendConfig.fileSharing.disableStrictFilenameValidation) {
             ::baseValidateFilename
         } else {
             ::strictValidateFilename
@@ -246,10 +242,9 @@ class SubmissionIdFilesMappingPreconditionValidator(
 ) {
     fun validateFilenameCharacters(
         submissionIdFilesMap: SubmissionIdFilesMap?,
-        organism: Organism,
     ): SubmissionIdFilesMappingPreconditionValidator {
         submissionIdFilesMap?.values?.forEach {
-            fileMappingValidator.validateFilenameCharacters(it, organism)
+            fileMappingValidator.validateFilenameCharacters(it)
         }
         return this
     }

@@ -10,9 +10,7 @@ import org.junit.jupiter.params.provider.ValueSource
 import org.loculus.backend.api.FileCategory
 import org.loculus.backend.api.FileCategoryFilesMap
 import org.loculus.backend.api.FileIdAndName
-import org.loculus.backend.api.Organism
 import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
@@ -23,14 +21,16 @@ class ValidateFileNameTest {
     private val s3Service: S3Service = mockk()
     private val filesDatabaseService: FilesDatabaseService = mockk()
     private val validator = FileMappingPreconditionValidator(backendConfig, s3Service, filesDatabaseService)
-    private val organism = Organism(DEFAULT_ORGANISM)
+
+    private fun strictValidation(enabled: Boolean) {
+        every {
+            backendConfig.fileSharing.disableStrictFilenameValidation
+        } returns !enabled
+    }
 
     @BeforeEach
     fun setUp() {
-        every {
-            backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files
-                .disableStrictFilenameValidation
-        } returns true
+        strictValidation(false)
     }
 
     private fun createFileMapping(category: FileCategory, filenames: List<String>): FileCategoryFilesMap {
@@ -51,7 +51,7 @@ class ValidateFileNameTest {
                 "UPPERCASE.TXT",
             ),
         )
-        validator.validateFilenameCharacters(fileMapping, organism)
+        validator.validateFilenameCharacters(fileMapping)
     }
 
     @Test
@@ -66,20 +66,20 @@ class ValidateFileNameTest {
                 "ملف.fasta",
             ),
         )
-        validator.validateFilenameCharacters(fileMapping, organism)
+        validator.validateFilenameCharacters(fileMapping)
     }
 
     @Test
     fun `filenames with leading periods should pass base validation`() {
         val fileMapping = createFileMapping("sequences", listOf(".gitignore", ".hidden_file.txt"))
-        validator.validateFilenameCharacters(fileMapping, organism)
+        validator.validateFilenameCharacters(fileMapping)
     }
 
     @Test
     fun `empty filename should fail base validation`() {
         val fileMapping = createFileMapping("sequences", listOf(""))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
@@ -88,7 +88,7 @@ class ValidateFileNameTest {
         val longFilename = "a".repeat(256) + ".txt"
         val fileMapping = createFileMapping("sequences", listOf(longFilename))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
@@ -96,7 +96,7 @@ class ValidateFileNameTest {
     fun `filename with less than sign should fail base validation`() {
         val fileMapping = createFileMapping("sequences", listOf("file<test.txt"))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
@@ -104,7 +104,7 @@ class ValidateFileNameTest {
     fun `filename with greater than sign should fail base validation`() {
         val fileMapping = createFileMapping("sequences", listOf("file>test.txt"))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
@@ -112,7 +112,7 @@ class ValidateFileNameTest {
     fun `filename with colon should fail base validation`() {
         val fileMapping = createFileMapping("sequences", listOf("file:test.txt"))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
@@ -120,7 +120,7 @@ class ValidateFileNameTest {
     fun `filename with double quote should fail base validation`() {
         val fileMapping = createFileMapping("sequences", listOf("file\"test.txt"))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
@@ -128,7 +128,7 @@ class ValidateFileNameTest {
     fun `filename with forward slash should fail base validation`() {
         val fileMapping = createFileMapping("sequences", listOf("file/test.txt"))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
@@ -136,7 +136,7 @@ class ValidateFileNameTest {
     fun `filename with backslash should fail base validation`() {
         val fileMapping = createFileMapping("sequences", listOf("file\\test.txt"))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
@@ -144,7 +144,7 @@ class ValidateFileNameTest {
     fun `filename with pipe should fail base validation`() {
         val fileMapping = createFileMapping("sequences", listOf("file|test.txt"))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
@@ -152,7 +152,7 @@ class ValidateFileNameTest {
     fun `filename with question mark should fail base validation`() {
         val fileMapping = createFileMapping("sequences", listOf("file?.txt"))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
@@ -160,7 +160,7 @@ class ValidateFileNameTest {
     fun `filename with asterisk should fail base validation`() {
         val fileMapping = createFileMapping("sequences", listOf("file*.txt"))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
@@ -168,7 +168,7 @@ class ValidateFileNameTest {
     fun `filename with semicolon should fail base validation`() {
         val fileMapping = createFileMapping("sequences", listOf("file;test.txt"))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
@@ -176,7 +176,7 @@ class ValidateFileNameTest {
     fun `filename with percent sign should fail base validation`() {
         val fileMapping = createFileMapping("sequences", listOf("50%.fastq"))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
@@ -184,7 +184,7 @@ class ValidateFileNameTest {
     fun `filename with hash should fail base validation`() {
         val fileMapping = createFileMapping("sequences", listOf("file#1.txt"))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
@@ -192,7 +192,7 @@ class ValidateFileNameTest {
     fun `filename with NUL should fail base validation`() {
         val fileMapping = createFileMapping("sequences", listOf("file\u0000test.txt"))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
@@ -200,7 +200,7 @@ class ValidateFileNameTest {
     fun `filename with ASCII control character should fail base validation`() {
         val fileMapping = createFileMapping("sequences", listOf("file\u0001test.txt"))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
@@ -208,7 +208,7 @@ class ValidateFileNameTest {
     fun `filename with whitespace should fail base validation`() {
         val fileMapping = createFileMapping("sequences", listOf("file test.txt"))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
@@ -222,7 +222,7 @@ class ValidateFileNameTest {
     fun `windows reserved device name should fail base validation`(filename: String) {
         val fileMapping = createFileMapping("sequences", listOf(filename))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
@@ -230,7 +230,7 @@ class ValidateFileNameTest {
     @ValueSource(strings = ["CONFIG.txt", "COM10.txt", "NULL.txt", "AUXILIARY.fasta", "my_CON.txt", ".CON"])
     fun `filename only resembling a windows reserved device name should pass base validation`(filename: String) {
         val fileMapping = createFileMapping("sequences", listOf(filename))
-        validator.validateFilenameCharacters(fileMapping, organism)
+        validator.validateFilenameCharacters(fileMapping)
     }
 
     @ParameterizedTest(name = "{arguments}")
@@ -238,18 +238,18 @@ class ValidateFileNameTest {
     fun `single and double period filename should fail base validation`(filename: String) {
         val fileMapping = createFileMapping("sequences", listOf(filename))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
     @Test
     fun `null file mapping should pass base validation`() {
-        validator.validateFilenameCharacters(null, organism)
+        validator.validateFilenameCharacters(null)
     }
 
     @Test
     fun `empty file mapping should pass base validation`() {
-        validator.validateFilenameCharacters(emptyMap(), organism)
+        validator.validateFilenameCharacters(emptyMap())
     }
 
     @Test
@@ -264,16 +264,13 @@ class ValidateFileNameTest {
             ),
         )
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
     @Test
     fun `valid filenames should pass strict validation`() {
-        every {
-            backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files
-                .disableStrictFilenameValidation
-        } returns false
+        strictValidation(true)
 
         val fileMapping = createFileMapping(
             "sequences",
@@ -286,20 +283,17 @@ class ValidateFileNameTest {
                 "UPPERCASE.TXT",
             ),
         )
-        validator.validateFilenameCharacters(fileMapping, organism)
+        validator.validateFilenameCharacters(fileMapping)
     }
 
     @ParameterizedTest(name = "{arguments}")
     @ValueSource(strings = ["文件.txt", "データ.csv", "файл.json", "αρχείο.xml", "ملف.fasta"])
     fun `unicode filenames should fail strict validation`(filename: String) {
-        every {
-            backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files
-                .disableStrictFilenameValidation
-        } returns false
+        strictValidation(true)
 
         val fileMapping = createFileMapping("sequences", listOf(filename))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
@@ -312,28 +306,22 @@ class ValidateFileNameTest {
         ],
     )
     fun `filename with characters outside the allowlist should fail strict validation`(filename: String) {
-        every {
-            backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files
-                .disableStrictFilenameValidation
-        } returns false
+        strictValidation(true)
 
         val fileMapping = createFileMapping("sequences", listOf(filename))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 
     @ParameterizedTest(name = "{arguments}")
     @ValueSource(strings = ["CON.txt", "NUL", ".", ".."])
     fun `filename failing base validation should also fail strict validation`(filename: String) {
-        every {
-            backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files
-                .disableStrictFilenameValidation
-        } returns false
+        strictValidation(true)
 
         val fileMapping = createFileMapping("sequences", listOf(filename))
         assertThrows<UnprocessableEntityException> {
-            validator.validateFilenameCharacters(fileMapping, organism)
+            validator.validateFilenameCharacters(fileMapping)
         }
     }
 }
