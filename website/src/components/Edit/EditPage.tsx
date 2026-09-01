@@ -1,5 +1,5 @@
 import { isErrorFromAlias } from '@zodios/core';
-import { type FC, useState } from 'react';
+import { type FC, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { EditableSequences } from './EditableSequences.ts';
@@ -11,19 +11,20 @@ import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { type FilesByCategory, type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
 import { type InputField, type SubmissionDataTypes } from '../../types/config.ts';
-import { getLatestAccessionVersionForRevision, type SequenceEntryHistory } from '../../types/lapis.ts';
+import {
+    getLatestAccessionVersionForRevision,
+    isLatestVersionRevocation,
+    type SequenceEntryHistory,
+} from '../../types/lapis.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString, parseAccessionVersionFromString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu.tsx';
 import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
+import { applyFileMappings, getSingleSubmissionFileMapping } from '../Submission/FileUpload/fileMapping.ts';
 import {
-    applyFileMappings,
-    getSingleSubmissionFileMapping,
-    type FileMapping,
-} from '../Submission/FileUpload/fileMapping.ts';
-import {
+    deriveFileMapping,
     getPreviousFileUploadStates,
     validateFileUploadStates,
     type FileUploadState,
@@ -76,7 +77,8 @@ const InnerEditPage: FC<EditPageProps> = ({
     const [fileUploadStates, setFileUploadStates] = useState<Map<string, FileUploadState>>(() =>
         dataToEdit.submittedData.files ? getPreviousFileUploadStates(dataToEdit.submittedData.files) : new Map(),
     );
-    const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(undefined);
+
+    const fileMapping = useMemo(() => deriveFileMapping(fileUploadStates), [fileUploadStates]);
 
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
 
@@ -200,6 +202,11 @@ const InnerEditPage: FC<EditPageProps> = ({
                     />
                 )}
             </div>
+            {isCreatingRevision && isLatestVersionRevocation(sequenceEntryHistory) && (
+                <ErrorBox title='The latest version of this sequence is a revocation.' level='warning' className='mb-2'>
+                    <p className='mt-2'>Revising will create a new version that supersedes the revocation.</p>
+                </ErrorBox>
+            )}
             {isCreatingRevision &&
                 latestVersionForRevision !== undefined &&
                 dataToEdit.version < latestVersionForRevision && (
@@ -248,7 +255,6 @@ const InnerEditPage: FC<EditPageProps> = ({
                         fileCategories={submissionDataTypes.files?.categories ?? []}
                         fileUploadStates={fileUploadStates}
                         setFileUploadStates={setFileUploadStates}
-                        setFileMapping={setFileMapping}
                         onError={(msg) => toast.error(msg, { position: 'top-center', autoClose: false })}
                     />
                 </div>

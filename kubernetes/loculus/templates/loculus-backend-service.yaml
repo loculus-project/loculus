@@ -3,6 +3,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: loculus-backend-service
+  annotations:
+    traefik.ingress.kubernetes.io/service.serverstransport: "{{ include "loculus.serversTransportRef" . }}"
   labels:
     app: loculus
     component: backend

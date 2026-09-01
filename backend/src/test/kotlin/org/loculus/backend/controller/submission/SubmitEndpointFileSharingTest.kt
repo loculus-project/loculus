@@ -77,7 +77,7 @@ class SubmitEndpointFileSharingTest(
             organism = DEFAULT_ORGANISM,
             groupId = groupId,
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
@@ -136,7 +136,7 @@ class SubmitEndpointFileSharingTest(
             organism = DEFAULT_ORGANISM,
             groupId = groupId,
         )
-            .andExpect(status().isUnprocessableEntity())
+            .andExpect(status().isUnprocessableContent())
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
@@ -160,7 +160,7 @@ class SubmitEndpointFileSharingTest(
             organism = DEFAULT_ORGANISM,
             groupId = groupId,
         )
-            .andExpect(status().isUnprocessableEntity())
+            .andExpect(status().isUnprocessableContent())
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
@@ -185,7 +185,7 @@ class SubmitEndpointFileSharingTest(
             organism = DEFAULT_ORGANISM,
             groupId = groupId,
         )
-            .andExpect(status().isUnprocessableEntity())
+            .andExpect(status().isUnprocessableContent())
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
