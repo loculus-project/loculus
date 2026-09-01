@@ -13,7 +13,11 @@ thread_local = threading.local()
 retry_strategy = Retry(
     total=3,
     backoff_factor=1,
-    status_forcelist=[502, 503, 504],
+    status_forcelist=[
+        502,  # Bad Gateway
+        503,  # Service Unavailable
+        504,  # Gateway Timeout
+    ],
     allowed_methods=["GET"],
     raise_on_status=False,
 )
