@@ -137,7 +137,7 @@ class FileMappingPreconditionValidator(
     }
 
     /**
-     * This validates that the filename is not in violation with our base restrictions, ensuring that the filenames
+     * Validates that the filename is not in violation with our base restrictions, ensuring that the filenames
      * are likely compatible with major operating systems.
      *
      * IMPORTANT: Not having any additional filename restrictions may lead to unexpected bugs or issues.
@@ -148,7 +148,7 @@ class FileMappingPreconditionValidator(
      * - ;%# characters: forbidden due to web encoding issues (see #7056)
      * - More than 255 characters: ext4 and NTFS only allow 255 bytes
      * - Windows reserved device names: CON, PRN, AUX, NUL, COM1-COM9, LPT1-LPT9, with or without an extension
-     * - Single and double period names: forbidden to prevent path normalisation issues
+     * - Trailing periods: Windows silently strips these, and single or double period names break path normalisation
      * - Whitespace characters
      *
      * References:
@@ -184,9 +184,9 @@ class FileMappingPreconditionValidator(
                     "reserved device names (CON, PRN, AUX, NUL, COM1-COM9, LPT1-LPT9).",
             )
         }
-        if (filename == "." || filename == "..") {
+        if (filename.endsWith('.')) {
             throw UnprocessableEntityException(
-                "Invalid filename '$filename' in category '$category': Filenames '.' and '..' are not accepted.",
+                "Invalid filename '$filename' in category '$category': Filenames may not end with a period.",
             )
         }
         if (filename.any { it.isWhitespace() }) {
@@ -197,7 +197,7 @@ class FileMappingPreconditionValidator(
     }
 
     /**
-     * This validates filenames comply with our base restrictions, as well as ensuring names only include:
+     * Validates filenames comply with our base restrictions, as well as ensuring names only include:
      * - Uppercase letters (A-Z)
      * - Lowercase letters (a-z)
      * - Numbers (0-9)

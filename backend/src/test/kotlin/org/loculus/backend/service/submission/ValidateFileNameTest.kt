@@ -234,8 +234,8 @@ class ValidateFileNameTest {
     }
 
     @ParameterizedTest(name = "{arguments}")
-    @ValueSource(strings = [".", ".."])
-    fun `single and double period filename should fail base validation`(filename: String) {
+    @ValueSource(strings = [".", "..", "...", "reads.fastq."])
+    fun `filenames with trailing periods should fail base validation`(filename: String) {
         val fileMapping = createFileMapping("sequences", listOf(filename))
         assertThrows<UnprocessableEntityException> {
             validator.validateFilenameCharacters(fileMapping)
