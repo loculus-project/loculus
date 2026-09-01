@@ -146,7 +146,7 @@ class FileMappingPreconditionValidator(
      * - ASCII control characters: NUL, SOH, etc. (code 0-31)
      * - /\:*"?<>| characters: forbidden in NTFS (for Windows) and FAT32
      * - ;%# characters: forbidden due to web encoding issues (see #7056)
-     * - Filenames over 255 bytes: forbidden for ext4 and NTFS compatibility
+     * - Filenames over 255 bytes: forbidden for ext4 compatibility
      * - Windows reserved device names: CON, PRN, AUX, NUL, COM1-COM9, LPT1-LPT9, with or without an extension
      * - Trailing periods: Windows silently strips these, and single or double period names break path normalisation
      * - Whitespace characters
