@@ -239,6 +239,9 @@ enableDataUseTerms: {{ $.Values.dataUseTerms.enabled }}
 {{ if $.Values.dataUseTerms.agreementHTML }}
 dataUseTermsAgreementHTML: {{ quote $.Values.dataUseTerms.agreementHTML }}
 {{- end }}
+{{ if $.Values.fileSharing }}
+fileSharing: {{ $.Values.fileSharing | toYaml | nindent 6 }}
+{{ end }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
 dateFieldForGroupGraph: {{ if $.Values.dateFieldForGroupGraph }}{{ quote $.Values.dateFieldForGroupGraph }}{{ else }}null{{ end }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}

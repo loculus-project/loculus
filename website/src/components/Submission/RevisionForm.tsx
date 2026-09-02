@@ -6,7 +6,7 @@ import type { InputMode } from './FormOrUploadWrapper.tsx';
 import { IndividualRevisionForm } from './IndividualRevisionForm.tsx';
 import { routes } from '../../routes/routes.ts';
 import { type Group } from '../../types/backend.ts';
-import type { InputField } from '../../types/config.ts';
+import type { FileSharingConfig, InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
@@ -20,6 +20,7 @@ type RevisionFormProps = {
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
     dataUseTermsEnabled: boolean;
+    fileSharingConfig: FileSharingConfig;
     accession?: string;
     version?: string;
 };
@@ -34,6 +35,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
     metadataTemplateFields,
     submissionDataTypes,
     dataUseTermsEnabled,
+    fileSharingConfig,
     accession,
     version,
 }) => {
@@ -47,6 +49,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
                     group={group}
                     metadataTemplateFields={metadataTemplateFields}
                     submissionDataTypes={submissionDataTypes}
+                    fileSharingConfig={fileSharingConfig}
                     accession={accession}
                     version={version}
                 />
@@ -66,6 +69,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
                     }}
                     submissionDataTypes={submissionDataTypes}
                     dataUseTermsEnabled={dataUseTermsEnabled}
+                    fileSharingConfig={fileSharingConfig}
                 />
             )}
         </div>

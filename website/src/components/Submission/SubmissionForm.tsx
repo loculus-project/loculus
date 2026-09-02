@@ -5,7 +5,7 @@ import { DataUploadForm } from './DataUploadForm.tsx';
 import type { InputMode } from './FormOrUploadWrapper.tsx';
 import { routes } from '../../routes/routes.ts';
 import { type Group } from '../../types/backend.ts';
-import type { InputField } from '../../types/config.ts';
+import type { FileSharingConfig, InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
@@ -19,6 +19,7 @@ type SubmissionFormProps = {
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
     dataUseTermsEnabled: boolean;
+    fileSharingConfig: FileSharingConfig;
 };
 
 export const SubmissionForm: FC<SubmissionFormProps> = ({
@@ -31,6 +32,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({
     metadataTemplateFields,
     submissionDataTypes,
     dataUseTermsEnabled,
+    fileSharingConfig,
 }) => {
     return (
         <div className='flex flex-col items-center'>
@@ -49,6 +51,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({
                 }}
                 submissionDataTypes={submissionDataTypes}
                 dataUseTermsEnabled={dataUseTermsEnabled}
+                fileSharingConfig={fileSharingConfig}
             />
         </div>
     );

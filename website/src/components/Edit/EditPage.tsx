@@ -10,7 +10,7 @@ import { routes } from '../../routes/routes.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { type FilesByCategory, type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
-import { type InputField, type SubmissionDataTypes } from '../../types/config.ts';
+import { type FileSharingConfig, type InputField, type SubmissionDataTypes } from '../../types/config.ts';
 import {
     getLatestAccessionVersionForRevision,
     isLatestVersionRevocation,
@@ -41,6 +41,7 @@ type EditPageProps = {
     accessToken: string;
     groupedInputFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
+    fileSharingConfig: FileSharingConfig;
     sequenceEntryHistory?: SequenceEntryHistory;
 };
 
@@ -66,6 +67,7 @@ const InnerEditPage: FC<EditPageProps> = ({
     accessToken,
     groupedInputFields,
     submissionDataTypes,
+    fileSharingConfig,
     sequenceEntryHistory,
 }) => {
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.fromInitialData(dataToEdit));
@@ -256,6 +258,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                         fileUploadStates={fileUploadStates}
                         setFileUploadStates={setFileUploadStates}
                         onError={(msg) => toast.error(msg, { position: 'top-center', autoClose: false })}
+                        fileSharingConfig={fileSharingConfig}
                     />
                 </div>
             )}
