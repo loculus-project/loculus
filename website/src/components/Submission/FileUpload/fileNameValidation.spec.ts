@@ -141,6 +141,6 @@ describe('getFileNameErrorMessage', () => {
     });
 
     it('summarises the errors beyond the count', () => {
-        expect(getFileNameErrorMessage(errors(7), 5)).toContain('and 2 more');
+        expect(getFileNameErrorMessage(errors(7), 5)).toContain('2 more');
     });
 });

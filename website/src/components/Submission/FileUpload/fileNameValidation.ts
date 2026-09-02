@@ -32,7 +32,7 @@ export const validateFileNames = (fileNames: string[], fileSharingConfig: FileSh
             continue;
         }
         if (fileName === '') {
-            errors.push(new Error(`Invalid filename '${fileName}': Filenames cannot be empty.`));
+            errors.push(new Error(`Invalid filename '${fileName}': Filenames may not be empty.`));
             continue;
         }
         const fileNameBytes = new TextEncoder().encode(fileName);
@@ -47,29 +47,31 @@ export const validateFileNames = (fileNames: string[], fileSharingConfig: FileSh
         if (FORBIDDEN_FILENAME_CHARACTERS_REGEX.test(fileName)) {
             errors.push(
                 new Error(
-                    `Invalid filename '${fileName}': Filenames cannot contain any of the following characters: < > : " / \\ | ? * ; % #`,
+                    `Invalid filename '${fileName}': Filenames may not contain forbidden characters (< > : " / \\ | ? * ; % #).`,
                 ),
             );
             continue;
         }
         if (containsControlCharacter(fileName)) {
             errors.push(
-                new Error(`Invalid filename '${fileName}': Filenames cannot contain ASCII control characters.`),
+                new Error(`Invalid filename '${fileName}': Filenames may not contain ASCII control characters 0-31.`),
             );
             continue;
         }
         if (RESERVED_DEVICE_NAME_REGEX.test(fileName.split('.')[0])) {
             errors.push(
-                new Error(`Invalid filename '${fileName}': Filenames cannot be Windows reserved device names.`),
+                new Error(
+                    `Invalid filename '${fileName}': Filenames may not use Windows reserved device names (CON, PRN, AUX, NUL, COM1-COM9, LPT1-LPT9).`,
+                ),
             );
             continue;
         }
         if (fileName.endsWith('.')) {
-            errors.push(new Error(`Invalid filename '${fileName}': Filenames cannot end with a period.`));
+            errors.push(new Error(`Invalid filename '${fileName}': Filenames may not end with a period.`));
             continue;
         }
         if (/\s/.test(fileName)) {
-            errors.push(new Error(`Invalid filename '${fileName}': Filenames cannot contain whitespace.`));
+            errors.push(new Error(`Invalid filename '${fileName}': Filenames may not contain whitespace.`));
             continue;
         }
     }
@@ -79,10 +81,10 @@ export const validateFileNames = (fileNames: string[], fileSharingConfig: FileSh
 };
 
 export const getFileNameErrorMessage = (fileNameErrors: Error[], count: number = 5): string => {
-    return (
-        fileNameErrors
-            .slice(0, count)
-            .map((error) => error.message)
-            .join(' ') + (fileNameErrors.length > count ? `, ... and ${fileNameErrors.length - count} more` : '')
-    );
+    const shown = fileNameErrors
+        .slice(0, count)
+        .map((error) => error.message)
+        .join(' ');
+    const remaining = fileNameErrors.length - count;
+    return remaining > 0 ? `${shown} ... [${remaining} more]` : shown;
 };
