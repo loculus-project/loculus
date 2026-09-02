@@ -44,9 +44,7 @@ describe('validateFileNames without strict validation', () => {
     it.each(['<', '>', ':', '"', '/', '\\', '|', '?', '*', ';', '%', '#'])(
         'rejects the forbidden character %s',
         (character) => {
-            expect(errorsOf(`file${character}test.txt`)[0].message).toContain(
-                'may not contain forbidden characters',
-            );
+            expect(errorsOf(`file${character}test.txt`)[0].message).toContain('may not contain forbidden characters');
         },
     );
 
