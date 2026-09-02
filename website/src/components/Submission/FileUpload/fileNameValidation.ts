@@ -14,11 +14,10 @@ const containsControlCharacter = (fileName: string): boolean => {
 };
 
 /**
- * Mirrors the file name restrictions enforced by the backend in FileMappingPreconditionValidator,
- * so that users get immediate feedback. Any changes to validation here should also be mirrored in the backend.
+ * Mirrors the restrictions enforced by the backend in FileMappingPreconditionValidator.kt,
+ * so that file names are validated before any uploads.
  *
- * The base restrictions always apply. The stricter character allowlist applies unless the instance has
- * disabled it via `fileSharing.disableStrictFilenameValidation`.
+ * Any changes to validation here should also be reflected in the backend validation.
  */
 export const validateFileNames = (fileNames: string[], fileSharingConfig: FileSharingConfig): Result<void, Error[]> => {
     const errors: Error[] = [];
