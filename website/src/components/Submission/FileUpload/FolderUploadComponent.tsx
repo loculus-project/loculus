@@ -2,7 +2,7 @@ import { produce } from 'immer';
 import React, { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
 
-import { validateFileNames, getFileNameErrorString } from './fileNameValidation';
+import { validateFileNames, getFileNameErrorMessage } from './fileNameValidation';
 import {
     type Awaiting,
     type FileUploadState,
@@ -544,6 +544,6 @@ const isFilesArrayValid = (
 
     const fileNameValidationResult = validateFileNames(fileNames, fileSharingConfig);
     if (fileNameValidationResult.isErr()) {
-        return 'Encountered errors in uploaded files: ' + getFileNameErrorString(fileNameValidationResult.error);
+        return 'Encountered errors in uploaded files: ' + getFileNameErrorMessage(fileNameValidationResult.error);
     }
 };

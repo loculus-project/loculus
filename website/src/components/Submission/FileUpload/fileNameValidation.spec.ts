@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { validateFileNames, getFileNameErrorString } from './fileNameValidation';
+import { validateFileNames, getFileNameErrorMessage } from './fileNameValidation';
 
 const strict = { disableStrictFilenameValidation: false };
 const notStrict = { disableStrictFilenameValidation: true };
@@ -133,14 +133,14 @@ describe('validateFileNames with strict validation', () => {
     });
 });
 
-describe('getFileNameErrorString', () => {
+describe('getFileNameErrorMessage', () => {
     const errors = (count: number) => Array.from({ length: count }, (_, i) => new Error(`error ${i}`));
 
     it('lists every error when they fit within the count', () => {
-        expect(getFileNameErrorString(errors(3), 10)).not.toContain('more');
+        expect(getFileNameErrorMessage(errors(3), 10)).not.toContain('more');
     });
 
     it('summarises the errors beyond the count', () => {
-        expect(getFileNameErrorString(errors(12), 10)).toContain('and 2 more');
+        expect(getFileNameErrorMessage(errors(12), 10)).toContain('and 2 more');
     });
 });

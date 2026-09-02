@@ -79,11 +79,11 @@ export const validateFileNames = (fileNames: string[], fileSharingConfig: FileSh
     return ok();
 };
 
-export const getFileNameErrorString = (fileNameErrors: Error[], count: number = 10): string => {
+export const getFileNameErrorMessage = (fileNameErrors: Error[], count: number = 10): string => {
     return (
         fileNameErrors
             .slice(0, count)
             .map((error) => error.message)
-            .join(', ') + (fileNameErrors.length > count ? `, ... and ${fileNameErrors.length - count} more` : '')
+            .join(' ') + (fileNameErrors.length > count ? `, ... and ${fileNameErrors.length - count} more` : '')
     );
 };
