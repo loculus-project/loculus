@@ -85,49 +85,40 @@ class NCBIVisibilityChecker(VisibilityChecker):
     # Accession prefix -> E-utilities database name. Anything else is a nucleotide accession.
     _DB_BY_PREFIX = (("PRJ", "bioproject"), ("SAM", "biosample"))
 
-    # A nuccore record can resolve to a UID while no longer being publicly available.
-    # Treat only these esummary statuses as live (empty/"live"); anything else
-    # (e.g. "suppressed", "withdrawn", "removed", "replaced") counts as not visible.
-    _LIVE_NUCCORE_STATUSES = frozenset({"", "live"})
+    # A live nuccore record has no status field, statuses like
+    # "suppressed", "withdrawn", "removed", "replaced"... count as not visible.
+    _LIVE_NUCCORE_STATUSES = frozenset({""})
 
     def check_visibility(self, config: Config, accession: str) -> datetime | None:
+        """
+        Check the visibility of an accession in the NCBI database.
+        esearch resolves the accession to internal UID(s); an empty result means the
+        accession is not (yet) in NCBI. For nuccore we query esummary to
+        make sure the record has not been suppressed/withdrawn after being assigned a UID.
+        """
         db = next(
             (db for prefix, db in self._DB_BY_PREFIX if accession.startswith(prefix)),
             "nuccore",
         )
-        return self._check_eutils_visibility(config, accession, db)
-
-    def _check_eutils_visibility(
-        self, config: Config, accession: str, db: str
-    ) -> datetime | None:
-        """The NCBI web pages (nuccore, bioproject, biosample) are behind a bot-check that
-        returns HTTP 200 for any request regardless of whether the accession exists, so
-        query the E-utilities API instead, which returns a real JSON result.
-
-        esearch resolves the accession to internal UID(s); an empty result means the
-        accession is not (yet) in NCBI. For nuccore we additionally fetch esummary to
-        make sure the record has not been suppressed/withdrawn after being assigned a UID.
-        """
-
-        esearch = self._eutils_get_json(
-            config,
-            "esearch.fcgi",
-            {"db": db, "term": accession, "retmode": "json"},
-            accession,
-            "esearch",
-        )
-        if esearch is None:
-            return None
-        uids = esearch.get("esearchresult", {}).get("idlist", [])
-        if not uids:
-            return None
         if db != "nuccore":
+            esearch = self._eutils_get_json(
+                config,
+                "esearch.fcgi",
+                {"db": db, "term": accession, "retmode": "json"},
+                accession,
+                "esearch",
+            )
+            if esearch is None:
+                return None
+            uids = esearch.get("esearchresult", {}).get("idlist", [])
+            if not uids:
+                return None
             return datetime.now(pytz.UTC)
 
         summary = self._eutils_get_json(
             config,
             "esummary.fcgi",
-            {"db": db, "id": ",".join(uids), "retmode": "json"},
+            {"db": db, "id": accession, "retmode": "json"},
             accession,
             "esummary",
         )
@@ -190,8 +181,7 @@ class NCBIVisibilityChecker(VisibilityChecker):
             return response.json()
         except ValueError:
             logger.info(
-                f"NCBI {label} returned a non-JSON response for {accession}: "
-                f"{response.text[:500]}"
+                f"NCBI {label} returned a non-JSON response for {accession}: {response.text[:500]}"
             )
             return None
 
