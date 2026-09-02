@@ -197,7 +197,7 @@ describe('parseSubmissionFileMapping', () => {
             ['id', RAW_READS_COLUMN],
             ['e1', entry],
         ]);
-        expect(errorOf(text)).toContain('cannot be Windows reserved device names');
+        expect(errorOf(text)).toContain('may not use Windows reserved device names');
     });
 
     it('allows two different names to share the same explicit path', () => {

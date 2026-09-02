@@ -260,7 +260,7 @@ describe('FolderUploadComponent', () => {
             await userEvent.upload(screen.getByTestId('extraFiles'), file);
 
             expect(mockOnError).toHaveBeenCalledWith(expect.stringContaining('File'));
-            expect(mockOnError).toHaveBeenCalledWith(expect.stringContaining('cannot contain whitespace'));
+            expect(mockOnError).toHaveBeenCalledWith(expect.stringContaining('may not contain whitespace'));
             expect(mockRequestMultipartUpload).not.toHaveBeenCalled();
         });
 
@@ -289,7 +289,7 @@ describe('FolderUploadComponent', () => {
             await userEvent.upload(screen.getByTestId('add_extraFiles'), file);
 
             expect(mockOnError).toHaveBeenCalledWith(expect.stringContaining('File'));
-            expect(mockOnError).toHaveBeenCalledWith(expect.stringContaining('cannot contain whitespace'));
+            expect(mockOnError).toHaveBeenCalledWith(expect.stringContaining('may not contain whitespace'));
             expect(mockRequestMultipartUpload).not.toHaveBeenCalled();
         });
     });

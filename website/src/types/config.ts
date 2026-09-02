@@ -236,7 +236,7 @@ const sequenceFlaggingConfig = z.object({
 });
 export type SequenceFlaggingConfig = z.infer<typeof sequenceFlaggingConfig>;
 
-const fileSharingConfig = z.object({ disableStrictFilenameValidation: z.boolean().default(false) });
+export const fileSharingConfig = z.object({ disableStrictFilenameValidation: z.boolean().default(false) });
 export type FileSharingConfig = z.infer<typeof fileSharingConfig>;
 
 const fieldToDisplay = z.object({

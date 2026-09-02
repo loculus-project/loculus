@@ -12,6 +12,7 @@ import {
     type Schema,
     type SequenceFlaggingConfig,
     type WebsiteConfig,
+    fileSharingConfig,
     instanceConfig,
     websiteConfig,
 } from './types/config.ts';
@@ -367,7 +368,7 @@ export function dataUseTermsAreEnabled() {
 }
 
 export function getFileSharingConfig(): FileSharingConfig {
-    return getWebsiteConfig().fileSharing ?? { disableStrictFilenameValidation: false };
+    return getWebsiteConfig().fileSharing ?? fileSharingConfig.parse({});
 }
 
 export function getDataUseTermsAgreementHTML() {

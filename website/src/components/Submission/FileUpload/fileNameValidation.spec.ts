@@ -38,39 +38,39 @@ describe('validateFileNames without strict validation', () => {
     );
 
     it('rejects an empty file name', () => {
-        expect(errorsOf('')[0].message).toContain('cannot be empty');
+        expect(errorsOf('')[0].message).toContain('may not be empty');
     });
 
     it.each(['<', '>', ':', '"', '/', '\\', '|', '?', '*', ';', '%', '#'])(
         'rejects the forbidden character %s',
         (character) => {
             expect(errorsOf(`file${character}test.txt`)[0].message).toContain(
-                'cannot contain any of the following characters',
+                'may not contain forbidden characters',
             );
         },
     );
 
     it('rejects a file name containing NUL', () => {
-        expect(errorsOf('file\u0000test.txt')[0].message).toContain('cannot contain ASCII control characters');
+        expect(errorsOf('file\u0000test.txt')[0].message).toContain('may not contain ASCII control characters');
     });
 
     it('rejects a file name containing an ASCII control character', () => {
-        expect(errorsOf('file\u0001test.txt')[0].message).toContain('cannot contain ASCII control characters');
+        expect(errorsOf('file\u0001test.txt')[0].message).toContain('may not contain ASCII control characters');
     });
 
     it.each(['CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM9', 'LPT1', 'LPT9', 'con', 'Nul', 'CON.txt', 'nul.tar.gz'])(
         'rejects the reserved device name %s',
         (fileName) => {
-            expect(errorsOf(fileName)[0].message).toContain('cannot be Windows reserved device names');
+            expect(errorsOf(fileName)[0].message).toContain('may not use Windows reserved device names');
         },
     );
 
     it.each(['.', '..', '...', 'reads.fastq.'])('rejects the trailing period in %s', (fileName) => {
-        expect(errorsOf(fileName)[0].message).toContain('cannot end with a period');
+        expect(errorsOf(fileName)[0].message).toContain('may not end with a period');
     });
 
     it('rejects a file name containing whitespace', () => {
-        expect(errorsOf('file test.txt')[0].message).toContain('cannot contain whitespace');
+        expect(errorsOf('file test.txt')[0].message).toContain('may not contain whitespace');
     });
 
     it('rejects a file name exceeding 255 characters', () => {
@@ -98,7 +98,7 @@ describe('validateFileNames without strict validation', () => {
         const errors = errorsOf('CON.');
 
         expect(errors).toHaveLength(1);
-        expect(errors[0].message).toContain('cannot be Windows reserved device names');
+        expect(errors[0].message).toContain('may not use Windows reserved device names');
     });
 });
 
