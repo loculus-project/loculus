@@ -271,11 +271,13 @@ def check_and_update_visibility_for_column(
         # Check all accessions - mark as visible when ALL are visible
         all_visible = True
         first_visible_timestamp = None
+        visible_count = 0
 
         for accession in accessions:
             visible_timestamp = visibility_checker.check_visibility(config, accession)
 
             if visible_timestamp:
+                visible_count += 1
                 if first_visible_timestamp is None:
                     first_visible_timestamp = visible_timestamp
                 logger.debug(f"Accession {accession} is publicly visible")
@@ -304,9 +306,6 @@ def check_and_update_visibility_for_column(
                     f"Failed to update {column_name} for {entity_type.value} {entity_id}"
                 )
         else:
-            visible_count = sum(
-                1 for acc in accessions if visibility_checker.check_visibility(config, acc)
-            )
             logger.debug(
                 f"{entity_type.value.title()} {entity_id}: {visible_count}/{len(accessions)} "
                 "accessions are publicly visible (waiting for all)"
