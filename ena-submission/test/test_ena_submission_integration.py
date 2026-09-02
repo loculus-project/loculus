@@ -252,7 +252,7 @@ class TestIncorrectBioprojectPassed(SubmissionTestBase):
         # check project submission fails
         create_project_sync_state_with_submission_table(self.db_engine)
         project_table_create(self.db_engine, self.config)
-        check_project_submission_has_errors(self.db_engine, self.config, sequences_to_upload)
+        check_project_submission_has_errors(self.db_engine, sequences_to_upload)
 
         # Confirm error submission sends notification, DB entry is reset to READY to retry
         last_retry_time = create_project_iter(
@@ -274,7 +274,7 @@ class TestIncorrectBioprojectPassed(SubmissionTestBase):
         create_project_iter(
             self.db_engine, self.config, self.slack_config, last_retry_time=last_retry_time
         )
-        check_project_submission_has_errors(self.db_engine, self.config, sequences_to_upload)
+        check_project_submission_has_errors(self.db_engine, sequences_to_upload)
 
 
 class TestKnownBioprojectAndBioSample(SubmissionTestBase):
@@ -347,7 +347,7 @@ class TestKnownBioprojectAndBioSample(SubmissionTestBase):
         # check project submission fails
         create_project_sync_state_with_submission_table(self.db_engine)
         project_table_create(self.db_engine, self.config)
-        check_project_submission_has_errors(self.db_engine, self.config, sequences_to_upload)
+        check_project_submission_has_errors(self.db_engine, sequences_to_upload)
 
         # Confirm DB entry is reset to READY to retry submission
         create_project_iter(

@@ -313,7 +313,7 @@ def check_sent_to_loculus(db_engine: Engine, sequences_to_upload: dict[str, Any]
 
 
 def check_project_submission_submitted(
-    db_engine: Engine, config: Config, sequences_to_upload: dict[str, Any]
+    db_engine: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession, data in sequences_to_upload.items():
         accession, version = full_accession.split(".")
@@ -334,7 +334,7 @@ def check_project_submission_submitted(
 
 
 def check_project_submission_has_errors(
-    db_engine: Engine, config: Config, sequences_to_upload: dict[str, Any]
+    db_engine: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession, data in sequences_to_upload.items():
         group_id = data["metadata"]["groupId"]
@@ -450,4 +450,4 @@ def assert_successful_project_submission(
     sequences_to_upload: dict[str, Any],
 ) -> None:
     create_project_iter(db_engine, config, slack_config, last_retry_time=None)
-    check_project_submission_submitted(db_engine, config, sequences_to_upload)
+    check_project_submission_submitted(db_engine, sequences_to_upload)
