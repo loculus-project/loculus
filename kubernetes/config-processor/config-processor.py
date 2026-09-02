@@ -50,8 +50,6 @@ def download_urls_with_workers(urls, max_workers):
 
 def download_url(url):
     if not hasattr(thread_local, "session"):
-        # Retry transient network errors; raise_on_status=False keeps the
-        # caller's error message when retries are exhausted.
         retry = Retry(total=5, backoff_factor=0.5, status_forcelist=(429, 500, 502, 503, 504),
                       raise_on_status=False)
         thread_local.session = requests.Session()
