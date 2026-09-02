@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# ruff: file-ignore[hardcoded-password-string]
+
 import argparse
 import json
 import os
@@ -541,18 +543,15 @@ def get_codespace_params(codespace_name):
 
 
 def install_secret_generator():
-    # https://helm.mittwald.de times out intermittently (mittwald/kubernetes-secret-generator#115),
-    # which was flaking every CI run since this chart is (re-)installed on every cluster setup.
-    # We mirror the chart as an OCI artifact on GHCR instead, pinned since upstream releases are rare.
-    # To refresh the mirror after a version bump:
-    #   helm pull kubernetes-secret-generator --repo https://helm.mittwald.de --version <version>
-    #   gh auth refresh -h github.com -s write:packages
-    #   gh auth token | helm registry login ghcr.io -u <github-username> --password-stdin
-    #   helm push kubernetes-secret-generator-<version>.tgz oci://ghcr.io/loculus-project
-    # A newly pushed package defaults to private; make it public or anonymous pulls in CI 401:
-    #   gh api --method PATCH orgs/loculus-project/packages/container/kubernetes-secret-generator \
-    #     -f visibility=public
-    secret_generator_chart = "oci://ghcr.io/loculus-project/kubernetes-secret-generator"  # noqa: S105
+    """
+    To refresh the mirror of the helm chart after upstream version bump:
+      VERSION=<version>
+      helm pull kubernetes-secret-generator --repo https://helm.mittwald.de --version $VERSION
+      gh auth refresh -h github.com -s write:packages
+      gh auth token | helm registry login ghcr.io -u <github-username> --password-stdin
+      helm push kubernetes-secret-generator-$VERSION.tgz oci://ghcr.io/loculus-project
+    """
+    secret_generator_chart = "oci://ghcr.io/loculus-project/kubernetes-secret-generator"
     secret_generator_version = "3.4.1"
     print("Installing Kubernetes Secret Generator...")
     helm_install_command = [
