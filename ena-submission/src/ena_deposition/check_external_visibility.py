@@ -85,53 +85,31 @@ class NCBIVisibilityChecker(VisibilityChecker):
     # Accession prefix -> E-utilities database name. Anything else is a nucleotide accession.
     _DB_BY_PREFIX = (("PRJ", "bioproject"), ("SAM", "biosample"))
 
-    # A live nuccore record has no status field, statuses like
-    # "suppressed", "withdrawn", "removed", "replaced"... count as not visible.
-    _LIVE_NUCCORE_STATUSES = frozenset({""})
-
     def check_visibility(self, config: Config, accession: str) -> datetime | None:
         """
         Check the visibility of an accession in the NCBI database.
         esearch resolves the accession to internal UID(s); an empty result means the
-        accession is not (yet) in NCBI. For nuccore we query esummary to
-        make sure the record has not been suppressed/withdrawn after being assigned a UID.
+        accession is not (yet) in NCBI.
+
+        Note suppressed accessions will return a UID and will be marked as live.
         """
         db = next(
             (db for prefix, db in self._DB_BY_PREFIX if accession.startswith(prefix)),
             "nuccore",
         )
-        if db != "nuccore":
-            esearch = self._eutils_get_json(
-                config,
-                "esearch.fcgi",
-                {"db": db, "term": accession, "retmode": "json"},
-                accession,
-                "esearch",
-            )
-            if esearch is None:
-                return None
-            uids = esearch.get("esearchresult", {}).get("idlist", [])
-            if not uids:
-                return None
-            return datetime.now(pytz.UTC)
-
-        summary = self._eutils_get_json(
+        esearch = self._eutils_get_json(
             config,
-            "esummary.fcgi",
-            {"db": db, "id": accession, "retmode": "json"},
+            "esearch.fcgi",
+            {"db": db, "term": accession, "retmode": "json"},
             accession,
-            "esummary",
+            "esearch",
         )
-        if summary is None:
+        if esearch is None:
             return None
-        result = summary.get("result", {})
-        live = any(
-            uid in result
-            and not result[uid].get("error")
-            and result[uid].get("status", "") in self._LIVE_NUCCORE_STATUSES
-            for uid in result.get("uids", [])
-        )
-        return datetime.now(pytz.UTC) if live else None
+        uids = esearch.get("esearchresult", {}).get("idlist", [])
+        if not uids:
+            return None
+        return datetime.now(pytz.UTC)
 
     def _eutils_get_json(
         self,
