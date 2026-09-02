@@ -19,8 +19,10 @@ from http import HTTPStatus
 import pytz
 import requests
 from sqlalchemy import Engine
+from tenacity import Retrying, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 from ena_deposition.config import Config
+from ena_deposition.ena_submission_helper import log_before_retry
 from ena_deposition.submission_db_helper import (
     AssemblyTableEntry,
     ProjectTableEntry,
@@ -73,6 +75,10 @@ class ENAVisibilityChecker(VisibilityChecker):
         return None
 
 
+class TransientNCBIError(Exception):
+    """Raised for a retryable (rate-limited/server) error from NCBI's E-utilities."""
+
+
 class NCBIVisibilityChecker(VisibilityChecker):
     """Checker for NCBI visibility"""
 
@@ -82,7 +88,7 @@ class NCBIVisibilityChecker(VisibilityChecker):
         elif accession.startswith("SAM"):
             path = "biosample"
         else:
-            path = "nuccore"
+            return self._check_nuccore_visibility(config, accession)
         response = requests.get(
             f"https://www.ncbi.nlm.nih.gov/{path}/{accession}/",
             allow_redirects=False,
@@ -91,6 +97,48 @@ class NCBIVisibilityChecker(VisibilityChecker):
         if response.status_code == HTTPStatus.OK:
             return datetime.now(pytz.UTC)
         return None
+
+    def _check_nuccore_visibility(self, config: Config, accession: str) -> datetime | None:
+        """The nuccore web page is behind a bot-check that returns HTTP 200 for any
+        request regardless of whether the accession exists, so query the E-utilities
+        esummary API instead, which returns a real JSON result. E-utilities rate-limits
+        unauthenticated requests to 3/second per IP, so retry on timeouts and transient
+        (429/5xx) errors."""
+
+        def _do_get() -> requests.Response:
+            response = requests.get(
+                "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi",
+                params={"db": "nuccore", "id": accession, "retmode": "json"},
+                timeout=config.ncbi_public_search_timeout_seconds,
+            )
+            is_transient = response.status_code == HTTPStatus.TOO_MANY_REQUESTS or (
+                response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR
+            )
+            if is_transient:
+                logger.info(
+                    f"NCBI nuccore esummary request failed for {accession}: "
+                    f"HTTP {response.status_code} - {response.text}"
+                )
+                msg = f"Transient NCBI esummary error {response.status_code} for {accession}"
+                raise TransientNCBIError(msg)
+            return response
+
+        retryer = Retrying(
+            stop=stop_after_attempt(config.ena_http_get_retry_attempts),
+            wait=wait_fixed(2),
+            retry=retry_if_exception_type((requests.exceptions.Timeout, TransientNCBIError)),
+            reraise=True,
+            before_sleep=log_before_retry,
+        )
+        response = retryer(_do_get)
+        if response.status_code != HTTPStatus.OK:
+            logger.info(
+                f"NCBI nuccore esummary request failed for {accession}: "
+                f"HTTP {response.status_code} - {response.text}"
+            )
+            return None
+        uids = response.json().get("result", {}).get("uids", [])
+        return datetime.now(pytz.UTC) if uids else None
 
 
 # Configuration mapping: (EntityType, column_name) -> ColumnCheckConfig
