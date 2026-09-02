@@ -41,22 +41,14 @@ describe('validateFileNames without strict validation', () => {
         expect(errorsOf('')[0].message).toContain('cannot be empty');
     });
 
-    it.each([
-        'file<test.txt',
-        'file>test.txt',
-        'file:test.txt',
-        'file"test.txt',
-        'file/test.txt',
-        'file\\test.txt',
-        'file|test.txt',
-        'file?.txt',
-        'file*.txt',
-        'file;test.txt',
-        '50%.fastq',
-        'file#1.txt',
-    ])('rejects the forbidden character in %s', (fileName) => {
-        expect(errorsOf(fileName)[0].message).toContain('cannot contain any of the following characters');
-    });
+    it.each(['<', '>', ':', '"', '/', '\\', '|', '?', '*', ';', '%', '#'])(
+        'rejects the forbidden character %s',
+        (character) => {
+            expect(errorsOf(`file${character}test.txt`)[0].message).toContain(
+                'cannot contain any of the following characters',
+            );
+        },
+    );
 
     it('rejects a file name containing NUL', () => {
         expect(errorsOf('file\u0000test.txt')[0].message).toContain('cannot contain ASCII control characters');
@@ -127,22 +119,14 @@ describe('validateFileNames with strict validation', () => {
         },
     );
 
-    it.each([
-        'file&name.txt',
-        'file$name.txt',
-        "file'name.txt",
-        'file(1).txt',
-        'file+name.txt',
-        'file,name.txt',
-        'file=name.txt',
-        'file@name.txt',
-        'file~name.txt',
-        'file!name.txt',
-        'file[1].txt',
-        'file{1}.txt',
-    ])('rejects %s, whose characters are outside the allowlist', (fileName) => {
-        expect(errorsOf(fileName)[0].message).toContain('must only contain alphanumeric characters');
-    });
+    it.each(['&', '$', "'", '(', ')', '+', ',', '=', '@', '~', '!', '[', ']', '{', '}'])(
+        'rejects %s, which is outside the allowlist',
+        (character) => {
+            expect(errorsOf(`file${character}name.txt`)[0].message).toContain(
+                'must only contain alphanumeric characters',
+            );
+        },
+    );
 
     it.each(['CON.txt', 'NUL', '.', '..'])('still applies the base restrictions to %s', (fileName) => {
         expect(validateFileNames([fileName], strict).isErr()).toBeTruthy();
