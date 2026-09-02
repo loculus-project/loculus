@@ -5,7 +5,7 @@ import type { UploadAction } from './DataUploadForm';
 import type { ColumnMapping } from './FileUpload/ColumnMapping';
 import { SequenceEntryUpload } from './FileUpload/SequenceEntryUploadComponent';
 import type { ProcessedFile } from './FileUpload/fileProcessing';
-import type { InputField, SubmissionDataTypes } from '../../types/config';
+import type { FileSharingConfig, InputField, SubmissionDataTypes } from '../../types/config';
 import { EditableSequences } from '../Edit/EditableSequences';
 import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
 import { SequencesForm } from '../Edit/SequencesForm';
@@ -47,6 +47,7 @@ type FormOrUploadWrapperProps = {
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
     onError: (message: string) => void;
+    fileSharingConfig: FileSharingConfig;
 };
 
 /**
@@ -65,6 +66,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     metadataTemplateFields,
     submissionDataTypes,
     onError,
+    fileSharingConfig,
 }) => {
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
     const enableConsensusSequences = submissionDataTypes.consensusSequences;
@@ -96,6 +98,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
             const submissionFileMapping = parseSubmissionFileMapping(
                 text,
                 submissionDataTypes.files?.categories?.map((category) => category.name) ?? [],
+                fileSharingConfig,
             );
             setSubmissionFileMapping(submissionFileMapping);
             if (submissionFileMapping.isErr()) onError(submissionFileMapping.error.message);

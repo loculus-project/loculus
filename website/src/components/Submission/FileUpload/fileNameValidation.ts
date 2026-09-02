@@ -79,7 +79,7 @@ export const validateFileNames = (fileNames: string[], fileSharingConfig: FileSh
     return ok();
 };
 
-export const getFileNameErrorMessage = (fileNameErrors: Error[], count: number = 10): string => {
+export const getFileNameErrorMessage = (fileNameErrors: Error[], count: number = 5): string => {
     return (
         fileNameErrors
             .slice(0, count)

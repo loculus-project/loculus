@@ -242,6 +242,7 @@ const InnerDataUploadForm = ({
                     metadataTemplateFields={metadataTemplateFields}
                     submissionDataTypes={submissionDataTypes}
                     onError={onError}
+                    fileSharingConfig={fileSharingConfig}
                 />
                 <hr />
                 {extraFilesEnabled && (

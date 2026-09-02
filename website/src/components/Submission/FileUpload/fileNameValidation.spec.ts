@@ -137,10 +137,10 @@ describe('getFileNameErrorMessage', () => {
     const errors = (count: number) => Array.from({ length: count }, (_, i) => new Error(`error ${i}`));
 
     it('lists every error when they fit within the count', () => {
-        expect(getFileNameErrorMessage(errors(3), 10)).not.toContain('more');
+        expect(getFileNameErrorMessage(errors(3), 5)).not.toContain('more');
     });
 
     it('summarises the errors beyond the count', () => {
-        expect(getFileNameErrorMessage(errors(12), 10)).toContain('and 2 more');
+        expect(getFileNameErrorMessage(errors(7), 5)).toContain('and 2 more');
     });
 });

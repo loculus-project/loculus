@@ -1,7 +1,9 @@
 import { type Result, ok, err } from 'neverthrow';
 import Papa from 'papaparse';
 
+import { validateFileNames, getFileNameErrorMessage } from './fileNameValidation';
 import { FILES_HEADER_PREFIX, SUBMISSION_ID_INPUT_FIELD } from '../../../settings';
+import type { FileSharingConfig } from '../../../types/config';
 
 const ID_COLUMNS = [SUBMISSION_ID_INPUT_FIELD, 'submissionId'];
 
@@ -378,6 +380,7 @@ const parseMetadataText = (text: string): Result<ParsedMetadata, Error> => {
 export function parseSubmissionFileMapping(
     text: string,
     categories: FileCategory[],
+    fileSharingConfig: FileSharingConfig,
 ): Result<SubmissionFileMapping, Error> {
     const parsedMetadataResult = parseMetadataText(text);
     if (parsedMetadataResult.isErr()) return err(parsedMetadataResult.error);
@@ -455,6 +458,23 @@ export function parseSubmissionFileMapping(
         }
         submissionFileMapping.set(submissionId, categoryMapping);
     }
+
+    // Validate file names
+    const fileNames = [
+        ...new Set(
+            [...submissionFileMapping.values()]
+                .flatMap((categoryMapping) => [...categoryMapping.values()])
+                .flatMap((fileEntries) => [...fileEntries.keys()]),
+        ),
+    ];
+    const fileNameValidationResult = validateFileNames(fileNames, fileSharingConfig);
+    if (fileNameValidationResult.isErr())
+        return err(
+            new Error(
+                'Encountered errors in file names within metadata: ' +
+                    getFileNameErrorMessage(fileNameValidationResult.error),
+            ),
+        );
 
     return ok(submissionFileMapping);
 }
