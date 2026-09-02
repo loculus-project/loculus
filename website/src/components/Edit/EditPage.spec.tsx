@@ -79,6 +79,7 @@ function renderEditPage({
                     maxSequencesPerEntry: 1,
                 }}
                 sequenceEntryHistory={sequenceEntryHistory}
+                fileSharingConfig={{ disableStrictFilenameValidation: false }}
             />
         </QueryClientProvider>,
     );
