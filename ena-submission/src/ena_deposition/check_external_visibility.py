@@ -137,8 +137,17 @@ class NCBIVisibilityChecker(VisibilityChecker):
                 f"HTTP {response.status_code} - {response.text}"
             )
             return None
-        uids = response.json().get("result", {}).get("uids", [])
-        return datetime.now(pytz.UTC) if uids else None
+        try:
+            result = response.json().get("result", {})
+        except ValueError:
+            logger.info(
+                f"NCBI nuccore esummary returned a non-JSON response for {accession}: "
+                f"{response.text[:500]}"
+            )
+            return None
+        uids = result.get("uids", [])
+        visible = any(uid in result and not result[uid].get("error") for uid in uids)
+        return datetime.now(pytz.UTC) if visible else None
 
 
 # Configuration mapping: (EntityType, column_name) -> ColumnCheckConfig
