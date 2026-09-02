@@ -13,7 +13,12 @@ from sqlalchemy import Engine
 
 from ena_deposition import call_loculus
 
-from .config import Config, EnaOrganismDetails
+from .config import (
+    GCA_ENA_FIELD,
+    VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX,
+    Config,
+    EnaOrganismDetails,
+)
 from .ena_submission_helper import (
     CreationResult,
     accession_exists,
@@ -288,7 +293,7 @@ def update_assembly_error(
     db_engine: Engine,
     error: list[str],
     seq_key: dict[str, Any],
-    update_type: Literal["revision"] | Literal["creation"],
+    update_type: Literal["revision", "creation"],
 ) -> None:
     logger.error(
         f"Assembly {update_type} failed for accession {seq_key['accession']} "
@@ -353,7 +358,7 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
         f"previous study accession: {previous_study_accession}"
     )
     linked_accession_mismatches = linked_accession_diff(
-        submission_row, previous_sample_accession, previous_study_accession
+        config, submission_row, previous_sample_accession, previous_study_accession
     )
     if linked_accession_mismatches:
         error = (
@@ -605,9 +610,10 @@ def assembly_table_update(db_engine: Engine, config: Config, time_threshold: int
             if not new_result.result:
                 continue
 
-            result_contains_gca_accession = "gca_accession" in new_result.result
+            result_contains_gca_accession = GCA_ENA_FIELD in new_result.result
             result_contains_insdc_accession = any(
-                key.startswith("insdc_accession_full") for key in new_result.result
+                key.startswith(VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX)
+                for key in new_result.result
             )
 
             if not (result_contains_gca_accession and result_contains_insdc_accession):

@@ -1,6 +1,7 @@
 import logging
 import os
 from dataclasses import field
+from typing import Final
 
 import dotenv
 import yaml
@@ -9,6 +10,15 @@ from pydantic import BaseModel
 from ena_deposition.ena_types import MoleculeType, Topology
 
 logger = logging.getLogger(__name__)
+
+# Constants for names used to index ENA accessions stored in the ena_deposition_schema.
+# The corresponding Loculus schema field names are configurable per deployment - see
+# LoculusAccessionFieldNames and Config.loculus_accession_fields below.
+BIOSAMPLE_ENA_FIELD: Final = "biosample_accession"
+BIOPROJECT_ENA_FIELD: Final = "bioproject_accession"
+GCA_ENA_FIELD: Final = "gca_accession"
+INSDC_ACCESSION_ENA_FIELD_PREFIX: Final = "insdc_accession"
+VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX: Final = "insdc_accession_full"
 
 
 class MetadataMapping(BaseModel):
@@ -29,6 +39,16 @@ class ManifestFieldDetails(BaseModel):
     loculus_fields: list[str] = field(default_factory=list)
     function: str | None = None
     default: str | None = None
+
+
+class LoculusAccessionFieldNames(BaseModel):
+    """Names of the Loculus schema fields used to exchange accessions with ENA/NCBI."""
+
+    bioproject: str
+    biosample: str
+    gca: str
+    insdc_accession_prefix: str
+    versioned_insdc_accession_prefix: str
 
 
 class ExternalMetadataField(BaseModel):
@@ -106,6 +126,7 @@ class Config(BaseModel):
     metadata_mapping: dict[str, MetadataMapping]
     metadata_fallback_fields: dict[str, str]
     assembly_manifest_fields_mapping: dict[str, ManifestFieldDetails]
+    loculus_accession_fields: LoculusAccessionFieldNames
     ingest_pipeline_submission_group: int
     ena_checklist: str | None = None
     set_alias_suffix: str | None = None  # Add to test revisions in dev
