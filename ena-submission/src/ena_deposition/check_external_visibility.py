@@ -82,33 +82,82 @@ class TransientNCBIError(Exception):
 class NCBIVisibilityChecker(VisibilityChecker):
     """Checker for NCBI visibility"""
 
-    def check_visibility(self, config: Config, accession: str) -> datetime | None:
-        if accession.startswith("PRJ"):
-            path = "bioproject"
-        elif accession.startswith("SAM"):
-            path = "biosample"
-        else:
-            return self._check_nuccore_visibility(config, accession)
-        response = requests.get(
-            f"https://www.ncbi.nlm.nih.gov/{path}/{accession}/",
-            allow_redirects=False,
-            timeout=config.ncbi_public_search_timeout_seconds,
-        )
-        if response.status_code == HTTPStatus.OK:
-            return datetime.now(pytz.UTC)
-        return None
+    # Accession prefix -> E-utilities database name. Anything else is a nucleotide accession.
+    _DB_BY_PREFIX = (("PRJ", "bioproject"), ("SAM", "biosample"))
 
-    def _check_nuccore_visibility(self, config: Config, accession: str) -> datetime | None:
-        """The nuccore web page is behind a bot-check that returns HTTP 200 for any
-        request regardless of whether the accession exists, so query the E-utilities
-        esummary API instead, which returns a real JSON result. E-utilities rate-limits
-        unauthenticated requests to 3/second per IP, so retry on timeouts and transient
-        (429/5xx) errors."""
+    # A nuccore record can resolve to a UID while no longer being publicly available.
+    # Treat only these esummary statuses as live (empty/"live"); anything else
+    # (e.g. "suppressed", "withdrawn", "removed", "replaced") counts as not visible.
+    _LIVE_NUCCORE_STATUSES = frozenset({"", "live"})
+
+    def check_visibility(self, config: Config, accession: str) -> datetime | None:
+        db = next(
+            (db for prefix, db in self._DB_BY_PREFIX if accession.startswith(prefix)),
+            "nuccore",
+        )
+        return self._check_eutils_visibility(config, accession, db)
+
+    def _check_eutils_visibility(
+        self, config: Config, accession: str, db: str
+    ) -> datetime | None:
+        """The NCBI web pages (nuccore, bioproject, biosample) are behind a bot-check that
+        returns HTTP 200 for any request regardless of whether the accession exists, so
+        query the E-utilities API instead, which returns a real JSON result.
+
+        esearch resolves the accession to internal UID(s); an empty result means the
+        accession is not (yet) in NCBI. For nuccore we additionally fetch esummary to
+        make sure the record has not been suppressed/withdrawn after being assigned a UID.
+        """
+
+        esearch = self._eutils_get_json(
+            config,
+            "esearch.fcgi",
+            {"db": db, "term": accession, "retmode": "json"},
+            accession,
+            "esearch",
+        )
+        if esearch is None:
+            return None
+        uids = esearch.get("esearchresult", {}).get("idlist", [])
+        if not uids:
+            return None
+        if db != "nuccore":
+            return datetime.now(pytz.UTC)
+
+        summary = self._eutils_get_json(
+            config,
+            "esummary.fcgi",
+            {"db": db, "id": ",".join(uids), "retmode": "json"},
+            accession,
+            "esummary",
+        )
+        if summary is None:
+            return None
+        result = summary.get("result", {})
+        live = any(
+            uid in result
+            and not result[uid].get("error")
+            and result[uid].get("status", "") in self._LIVE_NUCCORE_STATUSES
+            for uid in result.get("uids", [])
+        )
+        return datetime.now(pytz.UTC) if live else None
+
+    def _eutils_get_json(
+        self,
+        config: Config,
+        endpoint: str,
+        params: dict[str, str],
+        accession: str,
+        label: str,
+    ) -> dict | None:
+        """GET an E-utilities endpoint and return the parsed JSON body, or None on a
+        non-OK / non-JSON response. E-utilities rate-limits unauthenticated requests to
+        3/second per IP, so retry on timeouts and transient (429/5xx) errors."""
 
         def _do_get() -> requests.Response:
             response = requests.get(
-                "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi",
-                params={"db": "nuccore", "id": accession, "retmode": "json"},
+                f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/{endpoint}",
+                params=params,
                 timeout=config.ncbi_public_search_timeout_seconds,
             )
             is_transient = response.status_code == HTTPStatus.TOO_MANY_REQUESTS or (
@@ -116,10 +165,10 @@ class NCBIVisibilityChecker(VisibilityChecker):
             )
             if is_transient:
                 logger.info(
-                    f"NCBI nuccore esummary request failed for {accession}: "
+                    f"NCBI {label} request failed for {accession}: "
                     f"HTTP {response.status_code} - {response.text}"
                 )
-                msg = f"Transient NCBI esummary error {response.status_code} for {accession}"
+                msg = f"Transient NCBI {label} error {response.status_code} for {accession}"
                 raise TransientNCBIError(msg)
             return response
 
@@ -133,21 +182,18 @@ class NCBIVisibilityChecker(VisibilityChecker):
         response = retryer(_do_get)
         if response.status_code != HTTPStatus.OK:
             logger.info(
-                f"NCBI nuccore esummary request failed for {accession}: "
+                f"NCBI {label} request failed for {accession}: "
                 f"HTTP {response.status_code} - {response.text}"
             )
             return None
         try:
-            result = response.json().get("result", {})
+            return response.json()
         except ValueError:
             logger.info(
-                f"NCBI nuccore esummary returned a non-JSON response for {accession}: "
+                f"NCBI {label} returned a non-JSON response for {accession}: "
                 f"{response.text[:500]}"
             )
             return None
-        uids = result.get("uids", [])
-        visible = any(uid in result and not result[uid].get("error") for uid in uids)
-        return datetime.now(pytz.UTC) if visible else None
 
 
 # Configuration mapping: (EntityType, column_name) -> ColumnCheckConfig
