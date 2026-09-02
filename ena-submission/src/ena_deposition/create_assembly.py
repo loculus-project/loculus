@@ -288,7 +288,7 @@ def update_assembly_error(
     db_engine: Engine,
     error: list[str],
     seq_key: dict[str, Any],
-    update_type: Literal["revision"] | Literal["creation"],
+    update_type: Literal["revision", "creation"],
 ) -> None:
     logger.error(
         f"Assembly {update_type} failed for accession {seq_key['accession']} "
@@ -699,6 +699,18 @@ def assembly_table_handle_errors(
     return last_retry_time
 
 
+def create_assembly_iter(
+    db_engine: Engine, config: Config, slack_config: SlackConfig, last_retry_time: datetime | None
+) -> datetime | None:
+    submission_table_start(db_engine, config)
+    submission_table_update(db_engine)
+
+    assembly_table_create(db_engine, config)
+    assembly_table_update(db_engine, config, time_threshold=config.min_between_ena_checks)
+    submission_table_update(db_engine)
+    return assembly_table_handle_errors(db_engine, config, slack_config, last_retry_time)
+
+
 def create_assembly(config: Config, stop_event: threading.Event):
     db_engine = db_init(config.db_password, config.db_username, config.db_url)
     slack_config = slack_conn_init(
@@ -713,14 +725,7 @@ def create_assembly(config: Config, stop_event: threading.Event):
             logger.warning("create_assembly stopped due to exception in another task")
             return
         logger.debug("Checking for assemblies to create")
-        submission_table_start(db_engine, config)
-        submission_table_update(db_engine)
-
-        assembly_table_create(db_engine, config)
-        assembly_table_update(db_engine, config, time_threshold=config.min_between_ena_checks)
-        last_retry_time = assembly_table_handle_errors(
-            db_engine, config, slack_config, last_retry_time
-        )
+        last_retry_time = create_assembly_iter(db_engine, config, slack_config, last_retry_time)
         if stop_event.wait(timeout=config.time_between_iterations):
             logger.info("create_assembly stopped due to exception in another task")
             return
