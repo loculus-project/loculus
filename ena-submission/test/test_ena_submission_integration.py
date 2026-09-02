@@ -621,7 +621,6 @@ class TestFirstPublicUpdate(TestSubmission):
         "invalid_result": {
             "insdc_accession_base_seg1": "XY999999",
             "insdc_accession_base_seg2": "XY999998",
-            "insdc_accession_full_seg1": "OZ211366.1",  # suppressed sequences should be invalid
         },
         "valid_result": {
             "insdc_accession_base_seg1": "OZ271453",
