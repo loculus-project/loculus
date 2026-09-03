@@ -82,9 +82,6 @@ class TransientNCBIError(Exception):
 class NCBIVisibilityChecker(VisibilityChecker):
     """Checker for NCBI visibility"""
 
-    # Accession prefix -> E-utilities database name. Anything else is a nucleotide accession.
-    _DB_BY_PREFIX = (("PRJ", "bioproject"), ("SAM", "biosample"))
-
     def check_visibility(self, config: Config, accession: str) -> datetime | None:
         """
         Check the visibility of an accession in the NCBI database.
@@ -93,10 +90,13 @@ class NCBIVisibilityChecker(VisibilityChecker):
 
         Note suppressed accessions will return a UID and will be marked as live.
         """
-        db = next(
-            (db for prefix, db in self._DB_BY_PREFIX if accession.startswith(prefix)),
-            "nuccore",
-        )
+        if accession.startswith("PRJ"):
+            db = "bioproject"
+        elif accession.startswith("SAM"):
+            db = "biosample"
+        else:
+            db = "nuccore"
+
         esearch = self._eutils_get_json(
             config,
             {"db": db, "term": accession, "retmode": "json"},
