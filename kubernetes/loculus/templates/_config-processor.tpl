@@ -1,7 +1,7 @@
 {{- define "loculus.configProcessor" -}}
 - name: config-processor-{{ .name }}
-  image: ghcr.io/loculus-project/config-processor:{{ .dockerTag }}
-  imagePullPolicy: {{ $.imagePullPolicy }}
+  image: {{ include "loculus.image" (dict "name" "configProcessor" "defaultRepository" "ghcr.io/loculus-project/config-processor" "values" .values) }}
+  imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "configProcessor" "values" .values) }}
   volumeMounts:
     - name: {{ .name }}
       mountPath: /input
@@ -16,6 +16,7 @@
     limits:
       cpu: 500m
       memory: 256Mi
+  {{- include "loculus.containerSecurityContext" (list "config-processor" .Values) | nindent 2 }}
   env:
     - name: LOCULUSSUB_smtpPassword
       valueFrom:

@@ -22,10 +22,11 @@ spec:
         app: loculus
         component: keycloak
     spec:
-     {{- include "possiblePriorityClassName" . | nindent 6 }}
+      {{- include "possiblePriorityClassName" . | nindent 6 }}
       {{- include "loculus.podScheduling" . | nindent 6 }}
+      {{- include "loculus.podSecurityContext" (list "keycloak" .Values) | nindent 6 }}
       initContainers:
-{{- include "loculus.configProcessor" (dict "name" "keycloak-config" "dockerTag" $dockerTag "imagePullPolicy" .Values.imagePullPolicy) | nindent 8 }}
+    {{- include "loculus.configProcessor" (dict "name" "keycloak-config" "values" $.Values "Values" $.Values) | nindent 8 }}
         - name: keycloak-theme-prep
           resources:
             requests:
@@ -34,15 +35,35 @@ spec:
             limits:
               cpu: 500m
               memory: 256Mi
-          image: "ghcr.io/loculus-project/keycloakify:{{ $dockerTag }}"
+          {{- include "loculus.containerSecurityContext" (list "keycloak-theme-prep" $.Values) | nindent 10 }}
+          image: {{ include "loculus.image" (dict "name" "keycloakify" "defaultRepository" "ghcr.io/loculus-project/keycloakify" "values" $.Values) }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "keycloakify" "values" $.Values) }}
           volumeMounts:
             - name: theme-volume
               mountPath: /destination
+        - name: keycloak-quarkus-prep
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          {{- include "loculus.containerSecurityContext" (list "keycloak" $.Values) | nindent 10 }}
+          image: {{ include "loculus.image" (dict "name" "keycloak" "defaultRepository" "quay.io/keycloak/keycloak" "defaultTag" "23.0" "values" $.Values) }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "keycloak" "values" $.Values) }}
+          # seed the writable quarkus-build volume with the image's pre-built artifacts before it shadows /opt/keycloak/lib/quarkus
+          command: ["sh", "-c", "cp -r /opt/keycloak/lib/quarkus/. /quarkus-build/"]
+          volumeMounts:
+            - name: quarkus-build
+              mountPath: /quarkus-build
       containers:
         - name: keycloak
           # TODO #1221
-          image: quay.io/keycloak/keycloak:23.0
+          image: {{ include "loculus.image" (dict "name" "keycloak" "defaultRepository" "quay.io/keycloak/keycloak" "defaultTag" "23.0" "values" $.Values) }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "keycloak" "values" $.Values) }}
           {{- include "loculus.resources" (list "keycloak" $.Values) | nindent 10 }}
+          {{- include "loculus.containerSecurityContext" (list "keycloak" $.Values) | nindent 10 }}
           env:
             - name: REGISTRATION_TERMS_MESSAGE
               value: {{ $.Values.registrationTermsMessage }}
@@ -89,18 +110,18 @@ spec:
                 secretKeyRef:
                   name: keycloak-admin
                   key: initialAdminPassword
-            - name: KC_PROXY
-              value: "edge"
-            - name: PROXY_ADDRESS_FORWARDING
+            - name: KC_HTTP_ENABLED
               value: "true"
+            - name: KC_PROXY_HEADERS
+              value: "xforwarded"
             - name: KC_HEALTH_ENABLED
               value: "true"
-            - name: KC_HOSTNAME_URL
+            - name: KC_HOSTNAME
               value: "{{ include "loculus.keycloakUrl" . }}"
-            - name: KC_HOSTNAME_ADMIN_URL
+            - name: KC_HOSTNAME_ADMIN
               value: "{{ include "loculus.keycloakUrl" . }}"
             - name: KC_FEATURES
-              value: "declarative-user-profile"
+              value: "declarative-ui"
             # see https://github.com/keycloak/keycloak/blob/77b58275ca06d1cbe430c51db74479a7e1b409b5/quarkus/dist/src/main/content/bin/kc.sh#L95-L150
             - name: KC_RUN_IN_CONTAINER
               value: "true"
@@ -114,26 +135,35 @@ spec:
             - "--cache=local"
           ports:
             - containerPort: 8080
+            - containerPort: 9000
           volumeMounts:
             - name: keycloak-config-processed
               mountPath: /opt/keycloak/data/import/
             - name: theme-volume
               mountPath: /opt/keycloak/providers/
+            - name: quarkus-build
+              mountPath: /opt/keycloak/lib/quarkus
+            - name: tmp
+              mountPath: /tmp
           startupProbe:
             httpGet:
               path: /health/ready
-              port: 8080
+              port: 9000
             timeoutSeconds: 3
             failureThreshold: 150
             periodSeconds: 5
           livenessProbe:
             httpGet:
               path: /health/ready
-              port: 8080
+              port: 9000
             timeoutSeconds: 3
             periodSeconds: 10
             failureThreshold: 2
       volumes:
 {{ include "loculus.configVolume" (dict "name" "keycloak-config") | nindent 8 }}
         - name: theme-volume
+          emptyDir: {}
+        - name: quarkus-build
+          emptyDir: {}
+        - name: tmp
           emptyDir: {}

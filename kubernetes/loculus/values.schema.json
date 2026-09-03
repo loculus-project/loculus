@@ -1084,8 +1084,260 @@
           "description": "The pull policy to use. Always: always pull the image. IfNotPresent: pull if not present locally. Never: never pull, use local image only."
         }
       },
-      "required": ["repository", "pullPolicy"],
       "additionalProperties": false
+    },
+    "seLinuxOptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "SELinux options. See https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#selinuxoptions-v1-core",
+      "properties": {
+        "user": {
+          "type": "string",
+          "description": "SELinux user label"
+        },
+        "role": {
+          "type": "string",
+          "description": "SELinux role label"
+        },
+        "type": {
+          "type": "string",
+          "description": "SELinux type label"
+        },
+        "level": {
+          "type": "string",
+          "description": "SELinux level label (e.g. 's0:c123,c456')"
+        }
+      }
+    },
+    "seccompProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Seccomp profile. See https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#seccompprofile-v1-core",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["RuntimeDefault", "Unconfined", "Localhost"],
+          "description": "The type of seccomp profile. RuntimeDefault uses the container runtime default, Unconfined disables seccomp, Localhost references a profile on the node."
+        },
+        "localhostProfile": {
+          "type": "string",
+          "description": "Path of the pre-configured profile on the node, relative to the kubelet's seccomp profile location. Only valid when type is Localhost."
+        }
+      },
+      "required": ["type"]
+    },
+    "windowsOptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Windows-specific security options. See https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#windowssecuritycontextoptions-v1-core",
+      "properties": {
+        "gmsaCredentialSpecName": {
+          "type": "string",
+          "description": "Name of the GMSA credential spec to use"
+        },
+        "gmsaCredentialSpec": {
+          "type": "string",
+          "description": "Inline GMSA credential spec to use"
+        },
+        "runAsUserName": {
+          "type": "string",
+          "description": "The username to run the container's process as"
+        },
+        "hostProcess": {
+          "type": "boolean",
+          "description": "Whether the container is a Windows HostProcess container"
+        }
+      }
+    },
+    "podSecurityContextValue": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Pod-level security context (spec.template.spec.securityContext). Applies to all containers in the pod. See https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+      "properties": {
+        "runAsUser": {
+          "type": "integer",
+          "description": "The UID to run all container processes in the pod as."
+        },
+        "runAsGroup": {
+          "type": "integer",
+          "description": "The primary GID for all container processes in the pod."
+        },
+        "runAsNonRoot": {
+          "type": "boolean",
+          "description": "If true, the kubelet will validate that the container runs as a non-root user before starting it."
+        },
+        "supplementalGroups": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "description": "A list of additional GIDs to apply to all container processes in the pod."
+        },
+        "supplementalGroupsPolicy": {
+          "type": "string",
+          "enum": ["Merge", "Strict"],
+          "description": "Defines how supplementary groups are calculated. Merge (default) merges /etc/group memberships; Strict only uses fsGroup, supplementalGroups and runAsGroup."
+        },
+        "fsGroup": {
+          "type": "integer",
+          "description": "A special supplemental group applied to all containers. Kubernetes changes the ownership of volumes to this GID."
+        },
+        "fsGroupChangePolicy": {
+          "type": "string",
+          "enum": ["Always", "OnRootMismatch"],
+          "description": "Controls how Kubernetes changes ownership and permissions of volumes to match fsGroup. OnRootMismatch only changes if the root directory ownership does not match."
+        },
+        "seLinuxOptions": { "$ref": "#/definitions/seLinuxOptions" },
+        "seLinuxChangePolicy": {
+          "type": "string",
+          "enum": ["MountOption", "Recursive"],
+          "description": "Controls how SELinux labels are applied to volumes. MountOption uses mount options where supported; Recursive relabels all files."
+        },
+        "seccompProfile": { "$ref": "#/definitions/seccompProfile" },
+        "sysctls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Name of a property to set (e.g. 'kernel.shm_rmid_forced')."
+              },
+              "value": {
+                "type": "string",
+                "description": "Value of the property."
+              }
+            },
+            "required": ["name", "value"]
+          },
+          "description": "A list of sysctls to set on the pod."
+        },
+        "windowsOptions": { "$ref": "#/definitions/windowsOptions" }
+      }
+    },
+    "containerSecurityContextValue": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Container-level security context (containers[].securityContext). Applies only to the individual container and overrides pod-level settings on overlap. See https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+      "properties": {
+        "runAsUser": {
+          "type": "integer",
+          "description": "The UID to run the container's process as."
+        },
+        "runAsGroup": {
+          "type": "integer",
+          "description": "The primary GID for the container's process."
+        },
+        "runAsNonRoot": {
+          "type": "boolean",
+          "description": "If true, the kubelet will validate that the container runs as a non-root user before starting it."
+        },
+        "allowPrivilegeEscalation": {
+          "type": "boolean",
+          "description": "Controls whether a process can gain more privileges than its parent process. Always true when the container is privileged or has CAP_SYS_ADMIN."
+        },
+        "privileged": {
+          "type": "boolean",
+          "description": "If true, runs the container in privileged mode (all capabilities, host access). Strongly discouraged in production."
+        },
+        "readOnlyRootFilesystem": {
+          "type": "boolean",
+          "description": "If true, mounts the container's root filesystem as read-only."
+        },
+        "capabilities": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Linux capabilities to add or drop. Capability names omit the CAP_ prefix (e.g. 'NET_ADMIN').",
+          "properties": {
+            "add": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Capabilities to add, e.g. ['NET_ADMIN']."
+            },
+            "drop": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Capabilities to drop, e.g. ['ALL']."
+            }
+          }
+        },
+        "seLinuxOptions": { "$ref": "#/definitions/seLinuxOptions" },
+        "seccompProfile": { "$ref": "#/definitions/seccompProfile" },
+        "procMount": {
+          "type": "string",
+          "enum": ["Default", "Unmasked"],
+          "description": "Controls the container's /proc mount. Unmasked makes masked/read-only paths writable (requires user namespaces)."
+        },
+        "appArmorProfile": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "AppArmor profile for the container. See https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#apparmorprofile-v1-core",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["RuntimeDefault", "Unconfined", "Localhost"],
+              "description": "The type of AppArmor profile. RuntimeDefault is the default, Unconfined disables AppArmor, Localhost references a profile loaded on the node."
+            },
+            "localhostProfile": {
+              "type": "string",
+              "description": "Name of the pre-configured profile on the node. Only valid when type is Localhost."
+            }
+          },
+          "required": ["type"]
+        },
+        "windowsOptions": { "$ref": "#/definitions/windowsOptions" }
+      }
+    },
+    "podSecurityContextSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "default": { "$ref": "#/definitions/podSecurityContextValue" },
+        "website": { "$ref": "#/definitions/podSecurityContextValue" },
+        "docs": { "$ref": "#/definitions/podSecurityContextValue" },
+        "taxonomy-service": { "$ref": "#/definitions/podSecurityContextValue" },
+        "ena-submission": { "$ref": "#/definitions/podSecurityContextValue" },
+        "ena-submission-list-cronjob": { "$ref": "#/definitions/podSecurityContextValue" },
+        "ingest": { "$ref": "#/definitions/podSecurityContextValue" },
+        "ingest-trigger": { "$ref": "#/definitions/podSecurityContextValue" },
+        "keycloak": { "$ref": "#/definitions/podSecurityContextValue" },
+        "silo": { "$ref": "#/definitions/podSecurityContextValue" },
+        "lapis": { "$ref": "#/definitions/podSecurityContextValue" },
+        "backend": { "$ref": "#/definitions/podSecurityContextValue" },
+        "preprocessing": { "$ref": "#/definitions/podSecurityContextValue" },
+        "minio": { "$ref": "#/definitions/podSecurityContextValue" },
+        "keycloak-database": { "$ref": "#/definitions/podSecurityContextValue" },
+        "database": { "$ref": "#/definitions/podSecurityContextValue" },
+        "raw-reads-processing": { "$ref": "#/definitions/podSecurityContextValue" }
+      }
+    },
+    "containerSecurityContextSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "default": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "website": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "docs": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "taxonomy-service": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "download-taxonomy-db": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "ena-submission": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "ena-submission-flyway": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "ena-submission-list-cronjob": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "ingest": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "ingest-init": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "ingest-trigger": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "keycloak": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "keycloak-theme-prep": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "silo": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "lapis": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "silo-importer": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "backend": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "raw-reads-processing": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "preprocessing": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "minio": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "keycloak-database": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "database": { "$ref": "#/definitions/containerSecurityContextValue" },
+        "config-processor": { "$ref": "#/definitions/containerSecurityContextValue" }
+      }
     }
   },
   "type": "object",
@@ -1940,14 +2192,84 @@
     "images": {
       "groups": ["general"],
       "type": "object",
-      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website`, `backend` and `deaconIndex.`",
+      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for each of the containers used by Loculus, including third-party images.",
       "properties": {
-        "lapis": { "$ref": "#/definitions/imageSpec" },
-        "lapisSilo": { "$ref": "#/definitions/imageSpec" },
-        "loculusSilo": { "$ref": "#/definitions/imageSpec" },
-        "website": { "$ref": "#/definitions/imageSpec" },
-        "backend": { "$ref": "#/definitions/imageSpec" },
-        "deaconIndex": { "$ref": "#/definitions/imageSpec" }
+        "lapis": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the Lapis image. Defaults to `ghcr.io/genspectrum/lapis:0.8.0`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "loculusSilo": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the Loculus SILO image. Defaults to `ghcr.io/loculus-project/loculus-silo:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "website": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the website image. Defaults to `ghcr.io/loculus-project/website:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "backend": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the backend image. Defaults to `ghcr.io/loculus-project/backend:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "deaconIndex": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the deacon-index image. Defaults to `ghcr.io/loculus-project/deacon-index:latest`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "autoapprove": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the autoapprove image. Defaults to `ghcr.io/loculus-project/ingest:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "configProcessor": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the config-processor image. Defaults to `ghcr.io/loculus-project/config-processor:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "docs": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the docs preview image. Defaults to `ghcr.io/loculus-project/docs:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "enaSubmission": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the ENA submission image. Defaults to `ghcr.io/loculus-project/ena-submission:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "enaSubmissionFlyway": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the ENA submission Flyway image. Defaults to `ghcr.io/loculus-project/ena-submission-flyway:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "keycloakify": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the Keycloak theme preparation image. Defaults to `ghcr.io/loculus-project/keycloakify:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "taxonomyService": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the taxonomy-service image. Defaults to `ghcr.io/loculus-project/taxonomy-service:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "rawReadsProcessing": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the raw-reads-processing image. Defaults to `ghcr.io/loculus-project/raw-reads-processing-service:<loculus.dockerTag>`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "keycloak": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the Keycloak image. Defaults to `quay.io/keycloak/keycloak:23.0`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "postgres": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the Postgres stand-in images. Defaults to `postgres:15.12`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "minio": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the MinIO image. Defaults to `minio/minio:latest`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "alpine": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the Alpine helper image. Defaults to `alpine:3`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "busybox": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the BusyBox helper image. Defaults to `busybox:latest`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        },
+        "kubectl": {
+          "allOf": [{ "$ref": "#/definitions/imageSpec" }],
+          "description": "Overrides the kubectl helper image. Defaults to `alpine/kubectl:1.36.0`; `pullPolicy` falls back to the global `imagePullPolicy`."
+        }
       },
       "additionalProperties": false
     },
@@ -2072,6 +2394,18 @@
         }
       },
       "additionalProperties": false
+    },
+    "podSecurityContext": {
+      "groups": ["general"],
+      "type": "object",
+      "$ref": "#/definitions/podSecurityContextSpec",
+      "description": "Pod-level security context values keyed by workload name. See https://kubernetes.io/docs/tasks/configure-pod-container/security-context/."
+    },
+    "containerSecurityContext": {
+      "groups": ["general"],
+      "type": "object",
+      "$ref": "#/definitions/containerSecurityContextSpec",
+      "description": "Container-level security context values keyed by workload or container name. Init containers with dedicated keys can be configured independently. See https://kubernetes.io/docs/tasks/configure-pod-container/security-context/."
     },
     "secrets": {
       "description": "TODO"

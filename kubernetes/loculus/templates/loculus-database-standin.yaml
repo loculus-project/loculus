@@ -25,9 +25,11 @@ spec:
         component: database
     spec:
       {{- include "loculus.podScheduling" . | nindent 6 }}
+      {{- include "loculus.podSecurityContext" (list "database" .Values) | nindent 6 }}
       containers:
       - name: database
-        image: postgres:15.12
+        image: {{ include "loculus.image" (dict "name" "postgres" "defaultRepository" "postgres" "defaultTag" "15.12" "values" $.Values) }}
+        imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "postgres" "values" $.Values) }}
         args:
           - "-c"
           - "shared_preload_libraries=pg_stat_statements"
@@ -39,6 +41,7 @@ spec:
             cpu: "250m"
           limits:
             memory: "2Gi"
+        {{- include "loculus.containerSecurityContext" (list "database" .Values) | nindent 8 }}
         ports:
         - containerPort: 5432
         env:
