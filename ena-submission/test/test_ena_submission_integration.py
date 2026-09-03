@@ -619,12 +619,12 @@ class TestFirstPublicUpdate(TestSubmission):
 
     NUCLEOTIDE_CONFIG: Final = {
         "invalid_result": {
-            "insdc_accession_base_seg1": "XY999999",
-            "insdc_accession_base_seg2": "XY999998",
+            "insdc_accession_seg1": "XY999999",
+            "insdc_accession_seg2": "XY999998",
         },
         "valid_result": {
-            "insdc_accession_base_seg1": "OZ271453",
-            "insdc_accession_base_seg2": "OZ271454",
+            "insdc_accession_seg1": "OZ271453",
+            "insdc_accession_seg2": "OZ271454",
         },
         "base_entry": {
             "accession": "test_accession",
