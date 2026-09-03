@@ -144,4 +144,25 @@ class RevokeEndpointTest(
                 ),
             )
     }
+
+    @Test
+    fun `WHEN revoking an already revoked entry THEN throws an unprocessableEntity error`() {
+        val accession = convenienceClient.prepareRevokedSequenceEntries().first().accession
+
+        client.revokeSequenceEntries(listOf(accession))
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                    containsString(
+                        "Accession versions are revocations and cannot be revoked again: $accession.2",
+                    ),
+                ),
+            )
+
+        convenienceClient.getSequenceEntry(accession = accession, version = 2)
+            .assertStatusIs(Status.APPROVED_FOR_RELEASE)
+            .assertIsRevocationIs(true)
+    }
 }
