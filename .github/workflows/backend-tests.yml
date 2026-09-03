@@ -18,7 +18,7 @@ concurrency:
   group: ci-${{ (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main') && github.run_id || github.ref }}-backend-tests
   cancel-in-progress: true
 jobs:
-  test:
+  backend-test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -42,7 +42,7 @@ jobs:
         run: ./gradlew test
         working-directory: ./backend
 
-  lint:
+  backend-lint:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
