@@ -653,7 +653,7 @@ class RawReadsCreationTests(unittest.TestCase):
         }
 
         with self.assertRaises(
-            RuntimeError, msg="matches neither ENA's platform nor instrument list"
+            ValueError, msg="matches neither ENA's platform nor instrument list"
         ):
             create_raw_reads_manifest_object(
                 config, "Test Sample Accession", "Test Study Accession", submission_row
