@@ -592,6 +592,7 @@ def get_revisions(
     modify_assembly: bool = True,
     modify_raw_reads: bool = False,
     with_raw_reads: bool = False,
+    set_insert_size: bool = True,
 ) -> dict[str, Any]:
     with open(INPUT_FILE, encoding="utf-8") as json_file:
         sequences: dict[str, Any] = json.load(json_file)
@@ -619,7 +620,8 @@ def get_revisions(
             if modify_raw_reads_manifest:
                 new_value["metadata"]["sequencingLibrarySelection"] = "ChIP"
             if modify_raw_reads:
-                new_value["metadata"]["pairedEndInsertSize"] = 150
+                if set_insert_size:
+                    new_value["metadata"]["pairedEndInsertSize"] = 150
                 # To simulate the s3 URL changing, we generate a random id for the URL each time
                 random_id = "".join(random.choices(string.digits, k=4))  # noqa: S311
                 new_value["metadata"][config.raw_reads_metadata_field] = (
@@ -1497,6 +1499,13 @@ class TestSimpleSubmissionWithRawReads(TestSubmission):
 
 
 class TestRevisionRawReadsModificationTests(TestSubmission):
+    @pytest.mark.parametrize(
+        "set_insert_size",
+        [
+            pytest.param(True, id="with_insert_size"),
+            pytest.param(False, id="without_insert_size"),
+        ],
+    )
     @patch(
         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
     )
@@ -1509,7 +1518,12 @@ class TestRevisionRawReadsModificationTests(TestSubmission):
         mock_download_fastq_files: Mock,
         mock_get_group_info: Mock,
         mock_submit_external_metadata: Mock,
+        set_insert_size: bool,
     ) -> None:
+        """
+        Paired (2-file) raw reads must submit successfully both with and without an
+        insert size provided in the metadata.
+        """
         self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
         payload = multi_segment_submission(
             self.db_engine,
@@ -1525,7 +1539,10 @@ class TestRevisionRawReadsModificationTests(TestSubmission):
         mock_get_group_info.return_value = TEST_GROUP
         mock_submit_external_metadata.return_value = mock_requests_post()
         sequences_to_upload = get_revisions(
-            config=self.config, modify_raw_reads=True, with_raw_reads=True
+            config=self.config,
+            modify_raw_reads=True,
+            with_raw_reads=True,
+            set_insert_size=set_insert_size,
         )
 
         # upload sequences
