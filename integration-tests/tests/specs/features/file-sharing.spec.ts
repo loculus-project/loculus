@@ -37,6 +37,12 @@ const FILES_DOUBLE: Record<string, string> = {
     'file2.fastq': EBOLA_SUDAN_SMALL_FASTQ(2),
 };
 
+// For parameterised tests over compressed/uncompressed metadata
+const METADATA_COMPRESSION_CASES = [
+    { compressMetadata: false, description: '' },
+    { compressMetadata: true, description: ' with compressed metadata file' },
+];
+
 // File cells can be formatted either as a list of file names,
 // Or file names with file paths under a subfolder
 const filesColumnCell = (fileNames: string[], subfolder?: string) =>
@@ -127,47 +133,49 @@ test('reject FASTQ raw_reads file with human host reads with a deacon validation
     await reviewPage.expectNoValidSequencesToApprove();
 });
 
-test('bulk submit 2 seqs with 1 & 2 FASTQ files respectively', async ({
-    page,
-    groupId,
-    tmpDir,
-}) => {
-    test.setTimeout(240_000);
-    void groupId;
-    const submissionPage = new BulkSubmissionPage(page);
-    await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
-    await submissionPage.uploadMetadataFile(
-        [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
-        [
-            [
-                ID_1,
-                COUNTRY_1,
-                '2022-12-02',
-                SEQUENCING_INSTRUMENT,
-                filesColumnCell(Object.keys(FILES_SINGLE), ID_1),
-            ],
-            [
-                ID_2,
-                COUNTRY_2,
-                '2022-12-13',
-                SEQUENCING_INSTRUMENT,
-                filesColumnCell(Object.keys(FILES_DOUBLE), ID_2),
-            ],
-        ],
+METADATA_COMPRESSION_CASES.forEach(({ compressMetadata, description }) => {
+    test(
+        'bulk submit 2 seqs with 1 & 2 FASTQ files respectively' + description,
+        async ({ page, groupId, tmpDir }) => {
+            test.setTimeout(240_000);
+            void groupId;
+            const submissionPage = new BulkSubmissionPage(page);
+            await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
+            await submissionPage.uploadMetadataFile(
+                [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
+                [
+                    [
+                        ID_1,
+                        COUNTRY_1,
+                        '2022-12-02',
+                        SEQUENCING_INSTRUMENT,
+                        filesColumnCell(Object.keys(FILES_SINGLE), ID_1),
+                    ],
+                    [
+                        ID_2,
+                        COUNTRY_2,
+                        '2022-12-13',
+                        SEQUENCING_INSTRUMENT,
+                        filesColumnCell(Object.keys(FILES_DOUBLE), ID_2),
+                    ],
+                ],
+                compressMetadata,
+            );
+            await submissionPage.uploadSequencesFile({
+                [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE,
+                [ID_2]: EBOLA_SUDAN_SHORT_SEQUENCE,
+            });
+            await submissionPage.uploadExternalFiles(
+                RAW_READS,
+                { [ID_1]: FILES_SINGLE, [ID_2]: FILES_DOUBLE },
+                tmpDir,
+            );
+            const reviewPage = await submissionPage.submitAndWaitForProcessingDone(180_000);
+            const searchPage = await reviewPage.releaseAndGoToReleasedSequences();
+            await searchPage.checkFileContentInModal('cell', COUNTRY_1, FILES_SINGLE);
+            await searchPage.checkFileContentInModal('cell', COUNTRY_2, FILES_DOUBLE);
+        },
     );
-    await submissionPage.uploadSequencesFile({
-        [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE,
-        [ID_2]: EBOLA_SUDAN_SHORT_SEQUENCE,
-    });
-    await submissionPage.uploadExternalFiles(
-        RAW_READS,
-        { [ID_1]: FILES_SINGLE, [ID_2]: FILES_DOUBLE },
-        tmpDir,
-    );
-    const reviewPage = await submissionPage.submitAndWaitForProcessingDone(180_000);
-    const searchPage = await reviewPage.releaseAndGoToReleasedSequences();
-    await searchPage.checkFileContentInModal('cell', COUNTRY_1, FILES_SINGLE);
-    await searchPage.checkFileContentInModal('cell', COUNTRY_2, FILES_DOUBLE);
 });
 
 test('bulk submit 1 seq: discarding and reading a FASTQ file', async ({
@@ -237,67 +245,69 @@ test('bulk submit 1 seq with a 35 MB FASTQ file', async ({ page, groupId, tmpDir
     await searchPage.checkFileContentInModal('cell', COUNTRY_1, LARGE_FILE);
 });
 
-test('bulk submit blocks a submission with errors in file linkage or parsing', async ({
-    page,
-    groupId,
-    tmpDir,
-}) => {
-    test.setTimeout(180_000);
-    void groupId;
+METADATA_COMPRESSION_CASES.forEach(({ compressMetadata, description }) => {
+    test(
+        'bulk submit blocks a submission with errors in file linkage or parsing' + description,
+        async ({ page, groupId, tmpDir }) => {
+            test.setTimeout(180_000);
+            void groupId;
 
-    const [file1Name, file2Name] = Object.keys(FILES_DOUBLE);
-    const file1 = { [file1Name]: FILES_DOUBLE[file1Name] };
-    const reusedFileId = '123e4567-e89b-12d3-a456-426614174000';
+            const [file1Name, file2Name] = Object.keys(FILES_DOUBLE);
+            const file1 = { [file1Name]: FILES_DOUBLE[file1Name] };
+            const reusedFileId = '123e4567-e89b-12d3-a456-426614174000';
 
-    const linkageErrors = [
-        {
-            metadataFileEntries: 'a::b::c',
-            uploadedFiles: undefined,
-            error: 'Failed to parse file entry',
+            const linkageErrors = [
+                {
+                    metadataFileEntries: 'a::b::c',
+                    uploadedFiles: undefined,
+                    error: 'Failed to parse file entry',
+                },
+                {
+                    metadataFileEntries: filesColumnCell(Object.keys(FILES_DOUBLE), ID_1),
+                    uploadedFiles: { [ID_1]: file1 },
+                    error: `referenced in metadata but not uploaded: ${ID_1}/${file2Name}`,
+                },
+                {
+                    metadataFileEntries: filesColumnCell(Object.keys(file1), ID_1),
+                    uploadedFiles: { [ID_1]: FILES_DOUBLE },
+                    error: `uploaded but not referenced in metadata: ${ID_1}/${file2Name}`,
+                },
+                {
+                    // Uploaded without a submission ID subfolder, so the uploaded file's path matches
+                    // the name of a metadata entry which already references an existing file
+                    metadataFileEntries: `${file1Name}:${reusedFileId}`,
+                    uploadedFiles: file1,
+                    error: `uploaded but the metadata still references an existing file for them: ${file1Name}`,
+                },
+            ];
+
+            const submissionPage = new BulkSubmissionPage(page);
+            for (const { metadataFileEntries, uploadedFiles, error } of linkageErrors) {
+                await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
+                await submissionPage.acceptTerms();
+                await submissionPage.uploadMetadataFile(
+                    [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
+                    [[ID_1, COUNTRY_1, '2023-01-01', SEQUENCING_INSTRUMENT, metadataFileEntries]],
+                    compressMetadata,
+                );
+                await submissionPage.uploadSequencesFile({
+                    [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE,
+                });
+                if (uploadedFiles !== undefined)
+                    await submissionPage.uploadExternalFiles(RAW_READS, uploadedFiles, tmpDir);
+
+                await submissionPage.clickSubmit();
+
+                // Multiple toasts can be shown at the same time
+                // For example, the parse error appears on metadata file load, as well as on handle submit
+                await expect(page.getByText(error).first()).toBeVisible();
+                // A blocked submission returns before the data use terms dialog is shown
+                await expect(
+                    page.getByRole('button', { name: 'Continue under Open terms' }),
+                ).toHaveCount(0);
+            }
         },
-        {
-            metadataFileEntries: filesColumnCell(Object.keys(FILES_DOUBLE), ID_1),
-            uploadedFiles: { [ID_1]: file1 },
-            error: `referenced in metadata but not uploaded: ${ID_1}/${file2Name}`,
-        },
-        {
-            metadataFileEntries: filesColumnCell(Object.keys(file1), ID_1),
-            uploadedFiles: { [ID_1]: FILES_DOUBLE },
-            error: `uploaded but not referenced in metadata: ${ID_1}/${file2Name}`,
-        },
-        {
-            // Uploaded without a submission ID subfolder, so the uploaded file's path matches
-            // the name of a metadata entry which already references an existing file
-            metadataFileEntries: `${file1Name}:${reusedFileId}`,
-            uploadedFiles: file1,
-            error: `uploaded but the metadata still references an existing file for them: ${file1Name}`,
-        },
-    ];
-
-    const submissionPage = new BulkSubmissionPage(page);
-    for (const { metadataFileEntries, uploadedFiles, error } of linkageErrors) {
-        await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
-        await submissionPage.acceptTerms();
-        await submissionPage.uploadMetadataFile(
-            [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
-            [[ID_1, COUNTRY_1, '2023-01-01', SEQUENCING_INSTRUMENT, metadataFileEntries]],
-        );
-        await submissionPage.uploadSequencesFile({
-            [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE,
-        });
-        if (uploadedFiles !== undefined)
-            await submissionPage.uploadExternalFiles(RAW_READS, uploadedFiles, tmpDir);
-
-        await submissionPage.clickSubmit();
-
-        // Multiple toasts can be shown at the same time
-        // For example, the parse error appears on metadata file load, as well as on handle submit
-        await expect(page.getByText(error).first()).toBeVisible();
-        // A blocked submission returns before the data use terms dialog is shown
-        await expect(page.getByRole('button', { name: 'Continue under Open terms' })).toHaveCount(
-            0,
-        );
-    }
+    );
 });
 
 const REVISION_METADATA_HEADERS = [
