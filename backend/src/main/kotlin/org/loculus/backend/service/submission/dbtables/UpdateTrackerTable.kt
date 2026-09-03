@@ -1,6 +1,7 @@
 package org.loculus.backend.service.submission
 
 import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.datetime.datetime
 
 const val UPDATE_TRACKER_TABLE_NAME = "table_update_tracker"
 
@@ -12,5 +13,5 @@ object UpdateTrackerTable : Table(UPDATE_TRACKER_TABLE_NAME) {
     // enforced by a UNIQUE NULLS NOT DISTINCT constraint in the database.
     val organismColumn = text("organism").nullable()
     val pipelineVersionColumn = long("pipeline_version").nullable()
-    val lastTimeUpdatedDbColumn = text("last_time_updated")
+    val lastTimeUpdatedDbColumn = datetime("last_time_updated")
 }

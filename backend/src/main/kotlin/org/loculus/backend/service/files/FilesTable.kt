@@ -41,7 +41,7 @@ object FilesTable : Table(FILES_TABLE_NAME) {
      */
     val sizeColumn = long("size").nullable()
 
-    val multipartCompleted = bool("multipart_completed")
+    val multipartCompleted = bool("multipart_completed").default(false)
 
     val multipartUploadId = text("multipart_upload_id").nullable()
 

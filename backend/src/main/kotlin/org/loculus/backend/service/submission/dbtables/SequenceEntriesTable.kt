@@ -25,12 +25,12 @@ object SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
         "submitted_data",
     ).nullable()
 
-    val accessionColumn = varchar("accession", 255)
+    val accessionColumn = text("accession")
     val versionColumn = long("version")
-    val organismColumn = varchar("organism", 255)
-    val submissionIdColumn = varchar("submission_id", 255)
-    val submitterColumn = varchar("submitter", 255)
-    val approverColumn = varchar("approver", 255)
+    val organismColumn = text("organism")
+    val submissionIdColumn = text("submission_id")
+    val submitterColumn = text("submitter")
+    val approverColumn = text("approver").nullable()
     val groupIdColumn = integer("group_id")
     val submittedAtTimestampColumn = datetime("submitted_at")
     val releasedAtTimestampColumn = datetime("released_at").nullable()

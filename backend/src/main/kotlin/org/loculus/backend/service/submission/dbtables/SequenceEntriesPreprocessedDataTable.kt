@@ -13,15 +13,15 @@ import org.loculus.backend.service.jacksonSerializableJsonb
 const val SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME = "sequence_entries_preprocessed_data"
 
 object SequenceEntriesPreprocessedDataTable : Table(SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME) {
-    val accessionColumn = varchar("accession", 255)
+    val accessionColumn = text("accession")
     val versionColumn = long("version")
     val pipelineVersionColumn = long("pipeline_version")
     val processedDataColumn =
         jacksonSerializableJsonb<ProcessedData<CompressedSequence>>("processed_data").nullable()
     val errorsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("errors").nullable()
     val warningsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("warnings").nullable()
-    val processingStatusColumn = varchar("processing_status", 255)
-    val startedProcessingAtColumn = datetime("started_processing_at").nullable()
+    val processingStatusColumn = text("processing_status")
+    val startedProcessingAtColumn = datetime("started_processing_at")
     val finishedProcessingAtColumn = datetime("finished_processing_at").nullable()
 
     override val primaryKey = PrimaryKey(accessionColumn, versionColumn, pipelineVersionColumn)

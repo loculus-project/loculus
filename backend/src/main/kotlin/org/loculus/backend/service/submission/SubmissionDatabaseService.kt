@@ -138,7 +138,7 @@ class SubmissionDatabaseService(
     // A whole batch is serialized in memory before it is stored, so raising this multiplies peak heap.
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
 ) {
-    private var lastPreprocessedDataUpdate: String? = null
+    private var lastPreprocessedDataUpdate: LocalDateTime? = null
 
     fun streamUnprocessedSubmissions(
         numberOfSequenceEntries: Int,
