@@ -1,5 +1,5 @@
 """
-WARNING: This script queries the INSDC databases to check liveness it also requires a 
+WARNING: This script queries the INSDC databases to check liveness it also requires a
 local PostgreSQL database to be running with the loculus schema applied.
 docker run --name test-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=unsecure \
     -e POSTGRES_DB=loculus -p 5432:5432 -d postgres
