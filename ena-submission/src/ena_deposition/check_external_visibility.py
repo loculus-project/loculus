@@ -138,7 +138,7 @@ class NCBIVisibilityChecker(VisibilityChecker):
             return response
 
         retryer = Retrying(
-            stop=stop_after_attempt(config.ena_http_get_retry_attempts),
+            stop=stop_after_attempt(config.ncbi_http_get_retry_attempts),
             wait=wait_fixed(2),
             retry=retry_if_exception_type((requests.exceptions.Timeout, TransientNCBIError)),
             reraise=True,
