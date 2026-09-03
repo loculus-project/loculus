@@ -5,7 +5,7 @@ import org.jetbrains.exposed.v1.core.java.javaUUID
 import org.jetbrains.exposed.v1.datetime.datetime
 import java.util.UUID
 
-typealias FileId = UUID
+typealias FileId = String
 typealias MultipartUploadId = String
 const val FILES_TABLE_NAME = "files"
 
