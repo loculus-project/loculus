@@ -1651,6 +1651,14 @@
       "default": false,
       "description": "If true, the instance runs in read-only mode: the backend rejects write requests (POST/PUT/DELETE/PATCH) with 503 Service Unavailable, and the website hides login/submission entry points and shows a read-only banner."
     },
+    "backendMaxRamPercentage": {
+      "groups": ["services"],
+      "type": "number",
+      "minimum": 1,
+      "maximum": 100,
+      "default": 75,
+      "description": "Share of the backend container memory limit the JVM may use as heap, passed as -XX:MaxRAMPercentage."
+    },
     "organisms": {
       "groups": ["organism-conf"],
       "type": "object",
