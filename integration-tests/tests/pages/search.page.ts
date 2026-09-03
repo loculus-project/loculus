@@ -1,6 +1,7 @@
 import { type Locator, type Page, expect } from '@playwright/test';
 import { getFromLinkTargetAndAssertContent } from '../utils/link-helpers';
 import { EditPage } from './edit.page';
+import { reloadAndPoll, reloadUntil, reloadUntilVisible } from '../utils/reload-helpers';
 
 function makeAccessionVersion({
     accession,
@@ -230,19 +231,12 @@ export class SearchPage {
         ).toBeVisible();
     }
 
-    async waitForSequences(role: 'link' | 'cell', name: string | RegExp) {
-        while (!(await this.page.getByRole(role, { name: name }).isVisible())) {
-            await this.page.reload();
-            await this.page.waitForTimeout(2000);
-        }
-    }
-
     async openModalByRoleAndName(role: 'link' | 'cell', name: string | RegExp) {
         await this.page.getByRole(role, { name: name }).click();
     }
 
     async waitForAndOpenModalByRoleAndName(role: 'link' | 'cell', name: string | RegExp) {
-        await this.waitForSequences(role, name);
+        await reloadUntilVisible(this.page, this.page.getByRole(role, { name: name }));
         await this.openModalByRoleAndName(role, name);
     }
 
@@ -307,42 +301,23 @@ export class SearchPage {
         minCount: number,
         timeoutMs: number = 60000,
     ): Promise<AccessionVersion[]> {
-        let accessions: AccessionVersion[] = [];
-        await expect
-            .poll(
-                async () => {
-                    await this.page.reload();
-                    accessions = await this.getAccessionVersions();
-                    return accessions.length;
-                },
-                {
-                    message: `Expected at least ${minCount} sequences to appear in search results`,
-                    timeout: timeoutMs,
-                    intervals: [2000, 5000],
-                },
-            )
-            .toBeGreaterThanOrEqual(minCount);
-        return accessions;
+        return reloadUntil(
+            this.page,
+            () => this.getAccessionVersions(),
+            (accessions) => accessions.length >= minCount,
+            {
+                message: `Expected at least ${minCount} sequences to appear in search results.`,
+                timeout: timeoutMs,
+            },
+        );
     }
 
     async waitForAccessionVersionInSearch(expectedAccession: string, expectedVersion: number) {
-        await expect
-            .poll(
-                async () => {
-                    await this.page.reload();
-                    const accessionVersions = await this.getAccessionVersions();
-                    return accessionVersions.some(
-                        ({ accession, version }) =>
-                            accession === expectedAccession && version === expectedVersion,
-                    );
-                },
-                {
-                    message: `Did not find accession version ${expectedAccession}.${expectedVersion} in search results`,
-                    timeout: 60000,
-                    intervals: [2000, 5000],
-                },
-            )
-            .toBeTruthy();
+        await reloadAndPoll(
+            this.page,
+            async () => (await this.getAccessionVersions()).map((it) => it.accessionVersion),
+            { timeout: 60_000 },
+        ).toContain(`${expectedAccession}.${expectedVersion}`);
     }
 
     async expectResultTableCellText(text: string) {

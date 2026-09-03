@@ -4,6 +4,7 @@ import { join } from 'path';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import { NavigationPage } from '../../pages/navigation.page';
 import { ReviewPage } from '../../pages/review.page';
+import { reloadUntilVisible } from '../../utils/reload-helpers';
 
 test.describe('Submission flow', () => {
     test('submission page shows group creation button when not in a group', async ({
@@ -45,18 +46,7 @@ test.describe('Submission flow', () => {
         const reviewPage = new ReviewPage(page);
         await reviewPage.releaseAndGoToReleasedSequences();
 
-        await expect
-            .poll(
-                async () => {
-                    await page.reload();
-                    return page.getByRole('cell', { name: 'Pakistan' }).isVisible();
-                },
-                {
-                    message: 'Cell with name Pakistan never became visible.',
-                    timeout: 90000,
-                },
-            )
-            .toBe(true);
+        await reloadUntilVisible(page, page.getByRole('cell', { name: 'Pakistan' }));
 
         await page.getByRole('cell', { name: 'Pakistan' }).click();
         await page.waitForSelector('text="test_NIHPAK-19"');
@@ -92,10 +82,7 @@ test.describe('Submission flow', () => {
 
         await reviewPage.releaseAndGoToReleasedSequences();
 
-        while (!(await page.getByRole('cell', { name: 'Colombia' }).isVisible())) {
-            await page.reload();
-            await page.waitForTimeout(2000);
-        }
+        await reloadUntilVisible(page, page.getByRole('cell', { name: 'Colombia' }));
 
         await page.getByRole('cell', { name: 'Colombia' }).click();
         await page.waitForSelector('text="Research Lab, University of Example"');
