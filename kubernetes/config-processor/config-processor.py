@@ -5,6 +5,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
+from requests.adapters import HTTPAdapter, Retry
 
 DEFAULT_MAX_WORKERS = 16
 thread_local = threading.local()
@@ -49,8 +50,12 @@ def download_urls_with_workers(urls, max_workers):
 
 def download_url(url):
     if not hasattr(thread_local, "session"):
+        retry = Retry(total=5, backoff_factor=0.5, status_forcelist=(429, 500, 502, 503, 504),
+                      raise_on_status=False)
         thread_local.session = requests.Session()
-    return thread_local.session.get(url)
+        for scheme in ("https://", "http://"):
+            thread_local.session.mount(scheme, HTTPAdapter(max_retries=retry))
+    return thread_local.session.get(url, timeout=30)
 
 
 def replace_url_with_content(file_content, downloaded_content):
