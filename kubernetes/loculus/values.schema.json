@@ -1207,11 +1207,6 @@
       "default": "localhost",
       "description": "Host string used for local development"
     },
-    "host": {
-      "groups": ["general"],
-      "type": "string",
-      "description": "Hostname where Loculus will be accessible"
-    },
     "bannerMessage": {
       "groups": ["general"],
       "type": "string",
@@ -1403,32 +1398,96 @@
       "required": ["github"],
       "additionalProperties": false
     },
-    "public": {
-      "group": ["website"],
+    "networking": {
+      "groups": ["general"],
       "type": "object",
-      "description": "TODO",
+      "description": "Network configuration, in three layers. (1) host and subdomainSeparator define the naming convention every public URL is derived from. (2) networking.publicHosts overrides the public URL of an individual service; these URLs are what the applications advertise (website links, OAuth redirects, LAPIS URLs handed to clients). (3) The hostname of the website, backend, Keycloak and LAPIS public URLs is also the hostname of that service's Ingress rule; networking.ingressHosts overrides that hostname alone, for the rare case where cluster routing must differ from the public URL. Inheritance only ever runs convention -> publicHosts -> ingressHosts: setting ingressHosts never changes an advertised URL. The convention and the Ingress hostnames apply to environment=server; in a local environment the public URLs default to localHost with per-service ports instead, and the website, backend, Keycloak and MinIO Ingress rules are not rendered at all.",
+      "additionalProperties": false,
       "properties": {
-        "properties": {
-          "backendUrl": {
-            "groups": ["website"],
-            "type": "string",
-            "description": "Overwrite the URL where the Loculus backend is publicly available."
-          },
-          "websiteUrl": {
-            "groups": ["website"],
-            "type": "string",
-            "description": "Overwrite the URL where the website is publicly available."
-          },
-          "keycloakUrl": {
-            "groups": ["website"],
-            "type": "string",
-            "description": "Overwrite the URL where Keycloak is publicly available."
-          },
-          "lapisUrlTemplate": {
-            "groups": ["website"],
-            "type": "string",
-            "description": "Overwrite the URLs where the LAPIS instances are publicly available. Must contain `%organism%` as a placeholder."
+        "host": {
+          "groups": ["general"],
+          "type": "string",
+          "description": "Base domain of the deployment. In the server environment it is the website's hostname and the base from which every other service's default URL is derived as https://<service><subdomainSeparator><host> - e.g. backend-myhost.com, authentication-myhost.com, lapis-myhost.com; it is also used for the docs-preview hostname in any environment. Set this and nothing else for the standard layout. A www. alias for the website is added automatically, unless the website has been moved off this host or this host already starts with www."
+        },
+        "subdomainSeparator": {
+          "groups": ["general"],
+          "type": "string",
+          "default": "-",
+          "description": "Separator between the service prefix and networking.host when deriving default hostnames in the server environment. Common values are '-' (backend-myhost.com) or '.' (backend.myhost.com)."
+        },
+        "publicHosts": {
+          "groups": ["general"],
+          "type": "object",
+          "description": "Per-service overrides for the public URLs the applications advertise. Leave a key unset to use the derived default: https://<host> for the website and https://<service><subdomainSeparator><host> for the others in the server environment, or http://<localHost>:<port> in a local environment. A URL set here also becomes the hostname of that service's Ingress rule (unless networking.ingressHosts overrides it), so overriding a URL alone is enough for a working deployment. In the server environment the URL must not contain a path, because the Ingress routes a whole hostname at / - rendering fails if it does. The only exception is lapisUrlTemplate, whose trailing /%organism% segment the LAPIS Ingress does route.",
+          "additionalProperties": false,
+          "properties": {
+            "backendUrl": {
+              "groups": ["general"],
+              "type": "string",
+              "default": "",
+              "description": "Public URL of the Loculus backend. Defaults to https://backend<subdomainSeparator><host>. Example: https://api.loculus.x.y.com"
+            },
+            "websiteUrl": {
+              "groups": ["general"],
+              "type": "string",
+              "default": "",
+              "description": "Public URL of the website; also the base for the Keycloak redirect URIs. Defaults to https://<host>, so only set it when the website is not simply that - a non-HTTPS deployment, or a website domain unrelated to the other services. Setting it suppresses the automatic www. alias, since a certificate for www.<override> would usually have no DNS record. Example: https://loculus.x.y.com"
+            },
+            "keycloakUrl": {
+              "groups": ["general"],
+              "type": "string",
+              "default": "",
+              "description": "Public URL of Keycloak. Defaults to https://authentication<subdomainSeparator><host>. Example: https://auth.loculus.x.y.com"
+            },
+            "lapisUrlTemplate": {
+              "groups": ["general"],
+              "type": "string",
+              "default": "",
+              "pattern": "^$|%organism%",
+              "description": "Public URL template for the LAPIS instances; must contain `%organism%` as a placeholder, and in the server environment `/%organism%` must be the only path segment. Defaults to https://lapis<subdomainSeparator><host>/%organism%. Example: https://pathogen-api.loculus.x.y.com/%organism%"
+            }
           }
+        },
+        "ingressHosts": {
+          "groups": ["general"],
+          "type": "object",
+          "description": "Per-service overrides for the hostname in a service's Ingress rule. Each key defaults to the hostname of that service's public URL - whether that URL comes from networking.publicHosts or from the host/subdomainSeparator convention - which is almost always what you want; override only when the hostname routed inside the cluster must differ from the public URL, e.g. behind a CDN or an external reverse proxy that terminates the public name. An override here changes routing only: the URLs the applications advertise are unaffected, and setting networking.publicHosts is not a prerequisite. Overrides exist for the four services listed below; the development MinIO and docs-preview Ingress hostnames are always s3/docs<subdomainSeparator><host>.",
+          "additionalProperties": false,
+          "properties": {
+            "website": {
+              "groups": ["general"],
+              "type": "string",
+              "description": "Hostname for the website Ingress rule. Defaults to the hostname of the resolved website URL - networking.publicHosts.websiteUrl if set, otherwise the convention-derived default."
+            },
+            "backend": {
+              "groups": ["general"],
+              "type": "string",
+              "description": "Hostname for the backend Ingress rule. Defaults to the hostname of the resolved backend URL - networking.publicHosts.backendUrl if set, otherwise the convention-derived default."
+            },
+            "keycloak": {
+              "groups": ["general"],
+              "type": "string",
+              "description": "Hostname for the Keycloak Ingress rule. Defaults to the hostname of the resolved Keycloak URL - networking.publicHosts.keycloakUrl if set, otherwise the convention-derived default."
+            },
+            "lapis": {
+              "groups": ["general"],
+              "type": "string",
+              "description": "Hostname for the LAPIS Ingress rule. Defaults to the hostname of the resolved LAPIS URL - networking.publicHosts.lapisUrlTemplate if set, otherwise the convention-derived default."
+            }
+          }
+        },
+        "enforceHTTPS": {
+          "groups": ["general"],
+          "type": "boolean",
+          "default": true,
+          "description": "If true, attaches an HTTP-to-HTTPS redirect middleware to the website, backend, Keycloak and development MinIO Ingress rules, and to the LAPIS trailing-slash redirect Ingress; note that the main LAPIS Ingress does not get it, so plain-HTTP LAPIS requests are served rather than redirected. When false, Keycloak additionally accepts the plaintext http:// variant of the website URL as a redirect URI."
+        },
+        "traefikVersion": {
+          "groups": ["general"],
+          "type": "integer",
+          "enum": [2, 3],
+          "default": 3,
+          "description": "Traefik major version for CRD API group. Use 2 for traefik.containo.us/v1alpha1 (Traefik v2) or 3 for traefik.io/v1alpha1 (Traefik v3)."
         }
       }
     },
@@ -1470,7 +1529,7 @@
             "public": {
               "groups": ["website"],
               "type": "object",
-              "description": "Settings for the `public` section of the `runtime_config.json`",
+              "description": "Settings for the `public` section of the `runtime_config.json`. This mirrors networking.publicHosts at runtime and is populated automatically.",
               "properties": {}
             }
           }
@@ -1692,18 +1751,6 @@
         }
       }
     },
-    "enforceHTTPS": {
-      "type": "boolean",
-      "default": true,
-      "description": "TODO"
-    },
-    "traefikVersion": {
-      "groups": ["general"],
-      "type": "integer",
-      "enum": [2, 3],
-      "default": 3,
-      "description": "Traefik major version for CRD API group. Use 2 for traefik.containo.us/v1alpha1 (Traefik v2) or 3 for traefik.io/v1alpha1 (Traefik v3)."
-    },
     "ingestLimitSeconds": {
       "type": "integer",
       "default": 1800,
@@ -1834,10 +1881,6 @@
         }
       },
       "additionalProperties": false
-    },
-    "subdomainSeparator": {
-      "type": "string",
-      "default": "-"
     },
     "getSubmissionListLimitSeconds": {
       "type": "integer",

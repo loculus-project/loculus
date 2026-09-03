@@ -474,7 +474,7 @@ def generate_config(
     helm_template_cmd.extend(["--set", "disableBackend=true"])
     if from_live:
         helm_template_cmd.extend(["--set", "environment=server"])
-        helm_template_cmd.extend(["--set", f"host={live_host}"])
+        helm_template_cmd.extend(["--set", f"networking.host={live_host}"])
         helm_template_cmd.extend(["--set", "usePublicRuntimeConfigAsServerSide=true"])
     else:
         helm_template_cmd.extend(["--set", "environment=local"])
@@ -538,7 +538,7 @@ def get_codespace_params(codespace_name):
     }
     return [
         "--set-json",
-        f"public={json.dumps(public_runtime_config)}",
+        f"networking.publicHosts={json.dumps(public_runtime_config)}",
     ]
 
 
