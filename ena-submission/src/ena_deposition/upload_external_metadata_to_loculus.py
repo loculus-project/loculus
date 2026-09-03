@@ -152,7 +152,7 @@ def get_external_metadata_to_upload(
 
     bioproject_accession = get_bioproject_accession_from_db(db_engine, entry.project_id)
     biosample_accession = get_biosample_accession_from_db(db_engine, accession, version)
-    run_accession, run_accession_present = get_run_accession_from_db(
+    run_accession, run_accession_not_missing = get_run_accession_from_db(
         db_engine, accession, version, entry.submit_raw_reads
     )
     assembly_accession, all_assemblies_present = get_assembly_accessions_from_db(
@@ -169,7 +169,12 @@ def get_external_metadata_to_upload(
             **assembly_accession,
         },
     }, all(
-        [bioproject_accession, biosample_accession, run_accession_present, all_assemblies_present]
+        [
+            bioproject_accession,
+            biosample_accession,
+            run_accession_not_missing,
+            all_assemblies_present,
+        ]
     )
 
 

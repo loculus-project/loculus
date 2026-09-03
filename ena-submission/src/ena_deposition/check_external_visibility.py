@@ -48,7 +48,7 @@ class EntityType(Enum):
 class ColumnCheckConfig:
     """Configuration for checking a specific table column"""
 
-    entry_class: type[ProjectTableEntry | SampleTableEntry | AssemblyTableEntry]
+    entry_class: type[ProjectTableEntry | SampleTableEntry | AssemblyTableEntry | RawReadsTableEntry]
     visibility_column: str
     accession_field_name_prefix: str  # Field prefix in result dict (e.g. "insdc_accession_full")
     checker_class: type  # Which visibility checker to use
