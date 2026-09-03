@@ -184,11 +184,11 @@ It's good practice to put your ENA credentials into a `.env` file in this folder
 
 #### Unit tests
 
-To run `scripts/test_ena_submission_integration.py` and `scripts/test_api.py` locally you will need to have the database running locally (see the steps above on how to run the database with the ena_deposition_schema).
+To run `test/test_ena_submission_integration.py`, `test/test_ena_submission_liveness.py` and `test/test_api.py` locally you will need to have the database running locally (see the steps above on how to run the database with the ena_deposition_schema).
 
 ```sh
 micromamba activate loculus-ena-submission
-pytest --ignore=./scripts/test_ena_submission_integration.py --ignore=./scripts/test_api.py
+pytest --ignore=./test/test_ena_submission_integration.py --ignore=./test/test_api.py --ignore=./test/test_ena_submission_liveness.py
 ```
 
 #### Dry run

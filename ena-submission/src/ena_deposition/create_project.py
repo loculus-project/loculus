@@ -354,6 +354,17 @@ def project_table_handle_errors(
     return last_retry_time
 
 
+def create_project_iter(
+    db_engine: Engine, config: Config, slack_config: SlackConfig, last_retry_time: datetime | None
+) -> datetime | None:
+    sync_state_with_submission_table(db_engine)
+
+    project_table_create(db_engine, config)
+    # update submission_table state after creation
+    sync_state_with_submission_table(db_engine)
+    return project_table_handle_errors(db_engine, config, slack_config, last_retry_time)
+
+
 def create_project(config: Config, stop_event: threading.Event):
     db_engine = db_init(config.db_password, config.db_username, config.db_url)
     slack_config = slack_conn_init(
@@ -368,13 +379,7 @@ def create_project(config: Config, stop_event: threading.Event):
             logger.warning("create_project stopped due to exception in another task")
             return
         logger.debug("Checking for projects to create")
-        sync_state_with_submission_table(db_engine)
-
-        project_table_create(db_engine, config)
-        sync_state_with_submission_table(db_engine)  # update submission_table state after creation
-        last_retry_time = project_table_handle_errors(
-            db_engine, config, slack_config, last_retry_time
-        )
+        last_retry_time = create_project_iter(db_engine, config, slack_config, last_retry_time)
         if stop_event.wait(timeout=config.time_between_iterations):
             logger.info("create_project stopped due to exception in another task")
             return
