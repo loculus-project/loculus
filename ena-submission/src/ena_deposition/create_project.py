@@ -214,7 +214,7 @@ def sync_state_with_submission_table(db_engine: Engine):
                 else None,
             ),
         )
-        if not project_row:
+        if project_row is None:
             continue
         project_id = project_row.project_id
         update_db_where_conditions(
