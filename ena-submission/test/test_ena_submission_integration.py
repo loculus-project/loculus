@@ -1251,13 +1251,22 @@ class TestInsdcRawReadsAccessionInManifest(TestSubmission):
         create_assembly_submission_table_start(self.db_engine, self.config)
         check_assembly_submission_started(self.db_engine, sequences_to_upload)
         assembly_table_create(self.db_engine, self.config)
+        check_assembly_submission_waiting(self.db_engine, sequences_to_upload)
 
         assert mock_create_ena_assembly.called, "create_ena_assembly (webin-cli) was never called"
-        assert captured_manifests, "No manifest.tsv was produced for the assembly submission"
+        assert len(captured_manifests) == len(sequences_to_upload), (
+            f"Expected one manifest.tsv per sequence, got {len(captured_manifests)}"
+        )
         for manifest_contents in captured_manifests:
-            assert f"RUN_REF\t{run_ref_accession}" in manifest_contents, (
-                f"RUN_REF line missing from the manifest.tsv sent to ENA:\n{manifest_contents}"
-            )
+            for expected_line in (
+                f"RUN_REF\t{run_ref_accession}",
+                "STUDY\tPRJNA231221",
+                "SAMPLE\tSAMN11077987",
+            ):
+                assert expected_line in manifest_contents, (
+                    f"'{expected_line}' missing from the manifest.tsv sent to ENA:"
+                    f"\n{manifest_contents}"
+                )
 
 
 if __name__ == "__main__":
