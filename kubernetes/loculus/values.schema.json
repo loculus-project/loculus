@@ -934,6 +934,14 @@
                   "docsIncludePrefix": false,
                   "type": "object",
                   "description": "Filter ingested sequences based on value in metadata. Filter should be a list of metadata field and value pairs."
+                },
+                "batch_chunk_size": {
+                  "groups": ["ingest"],
+                  "docsIncludePrefix": false,
+                  "type": "integer",
+                  "minimum": 2,
+                  "default": 1000,
+                  "description": "Number of sequences submitted to the backend per request."
                 }
               },
               "required": ["taxon_id"]
@@ -2034,6 +2042,10 @@
         "silo-importer": { "$ref": "#/definitions/resourceSpec" },
         "backend": { "$ref": "#/definitions/resourceSpec" },
         "preprocessing": { "$ref": "#/definitions/resourceSpec" },
+        "minio": { "$ref": "#/definitions/resourceSpec" },
+        "taxonomy-service": { "$ref": "#/definitions/resourceSpec" },
+        "raw-reads-processing": { "$ref": "#/definitions/resourceSpec" },
+        "ingest-init": { "$ref": "#/definitions/resourceSpec" },
         "organismSpecific": {
           "type": "object",
           "patternProperties": {
@@ -2058,7 +2070,8 @@
           },
           "additionalProperties": false
         }
-      }
+      },
+      "additionalProperties": false
     },
     "secrets": {
       "description": "TODO"

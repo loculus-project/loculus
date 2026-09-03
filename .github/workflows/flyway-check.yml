@@ -5,6 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'backend/src/main/resources/db/migration/**'
+      - '.github/workflows/flyway-check.yml'
 
 jobs:
   check-migrations:

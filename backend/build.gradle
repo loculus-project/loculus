@@ -2,7 +2,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
-    id 'org.springframework.boot' version '4.1.0'
+    id 'org.springframework.boot' version '4.1.1'
     id 'io.spring.dependency-management' version '1.1.7'
     // If kotlin version bumped, check if gradle version can be bumped as well 
     // Check here: https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin
@@ -71,13 +71,13 @@ dependencies {
     implementation "org.hibernate.validator:hibernate-validator"
     implementation "org.keycloak:keycloak-admin-client:26.0.12"
     implementation("io.minio:minio:9.0.3")
-    implementation("software.amazon.awssdk:s3:2.53.1")
+    implementation("software.amazon.awssdk:s3:2.54.2")
 
     implementation "org.springframework.boot:spring-boot-starter-security-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
 
     implementation 'org.apache.commons:commons-compress'
-    implementation 'com.github.luben:zstd-jni:1.5.7-14'
+    implementation 'com.github.luben:zstd-jni:1.5.7-15'
     implementation 'org.tukaani:xz:1.12'
 
     implementation("org.redundent:kotlin-xml-builder:1.9.3")
@@ -122,7 +122,31 @@ tasks.named('test') {
     if (!System.getenv('USE_NONDOCKER_INFRA')?.toBoolean()) {
         dependsOn checkDocker
     }
+    
     useJUnitPlatform()
+    
+    // https://github.com/mockk/mockk/pull/1550
+    doFirst {
+        def agentJar = configurations.testRuntimeClasspath.files.find { it.name.startsWith('byte-buddy-agent-') }
+        if (agentJar != null) {
+            jvmArgs "-javaagent:${agentJar.absolutePath}"
+        } else {
+            logger.warn("byte-buddy-agent jar not found on testRuntimeClasspath; running tests without -javaagent")
+        }
+    }
+    
+    // https://github.com/raphw/byte-buddy/issues/1922
+    jvmArgs '--sun-misc-unsafe-memory-access=allow'
+    
+    // Same reason as org.gradle.jvmargs in gradle.properties, but for the forked test JVM:
+    // https://github.com/gradle/gradle/issues/19989
+    jvmArgs '-Xshare:off'
+    
+    jvmArgs '--enable-native-access=ALL-UNNAMED'
+    
+    // Run tests with the same object layout as production
+    jvmArgs '-XX:+UseCompactObjectHeaders'
+    
     testLogging {
         events TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR
         exceptionFormat = TestExceptionFormat.FULL

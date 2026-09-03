@@ -5,6 +5,7 @@ on:
     types: [synchronize, labeled]
     paths:
       - "backend/**"
+      - ".github/workflows/format-backend-on-request.yml"
 jobs:
   format:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'format_me'))

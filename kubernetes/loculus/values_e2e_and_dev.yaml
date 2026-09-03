@@ -43,3 +43,10 @@ defaultOrganisms:
   cchf: *fileSharingOrganismDefaults
   cchf-multi-ref: *fileSharingOrganismDefaults
   enteroviruses: *fileSharingOrganismDefaults
+resources:
+  raw-reads-processing:
+    requests:
+      memory: "1Gi"
+      cpu: "50m"
+    limits:
+      memory: "1Gi"

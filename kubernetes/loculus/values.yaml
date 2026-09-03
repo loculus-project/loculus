@@ -1783,8 +1783,9 @@ defaultOrganismConfig: &defaultOrganismConfig
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
-    configFile:
+    configFile: &defaultIngestConfigFile
       muted_hashes_url: "https://pathoplexus.github.io/curation_data/muted_hashes/muted_hashes.tsv"
+      batch_chunk_size: 1000
 defaultOrganisms:
   ebola-sudan:
     <<: *defaultOrganismConfig
@@ -1824,6 +1825,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 3052460
     enaDeposition:
       singleReference:
@@ -1971,6 +1973,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 3048448
     enaDeposition:
       singleReference:
@@ -2322,6 +2325,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 3052518
         grouping_override_url: "https://pathoplexus.github.io/curation_data/grouping_override/cchf/curated_group_02-03-2026.json"
         segment_identification:
@@ -2527,6 +2531,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 3052518
         segment_identification:
           method: "align"
@@ -2705,6 +2710,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 12059
         subsample_fraction: 0.2
     enaDeposition:
@@ -3038,13 +3044,19 @@ resources:
       cpu: "10m"
     limits:
       memory: "1Gi"
+  raw-reads-processing:
+    requests:
+      memory: "8Gi"
+      cpu: "50m"
+    limits:
+      memory: "8Gi"
 defaultResources:
   requests:
     memory: "200Mi"
     cpu: "20m"
   limits:
     memory: "1Gi"
-    cpu: "20m"
+    cpu: "500m"
 ingest:
   ncbiGatewayUrl: null
   mirrorBucket: null
