@@ -99,10 +99,8 @@ class NCBIVisibilityChecker(VisibilityChecker):
         )
         esearch = self._eutils_get_json(
             config,
-            "esearch.fcgi",
             {"db": db, "term": accession, "retmode": "json"},
             accession,
-            "esearch",
         )
         if esearch is None:
             return None
@@ -114,10 +112,8 @@ class NCBIVisibilityChecker(VisibilityChecker):
     def _eutils_get_json(
         self,
         config: Config,
-        endpoint: str,
         params: dict[str, str],
         accession: str,
-        label: str,
     ) -> dict | None:
         """GET an E-utilities endpoint and return the parsed JSON body, or None on a
         non-OK / non-JSON response. E-utilities rate-limits unauthenticated requests to
@@ -125,7 +121,7 @@ class NCBIVisibilityChecker(VisibilityChecker):
 
         def _do_get() -> requests.Response:
             response = requests.get(
-                f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/{endpoint}",
+                "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi",
                 params=params,
                 timeout=config.ncbi_public_search_timeout_seconds,
             )
@@ -134,10 +130,10 @@ class NCBIVisibilityChecker(VisibilityChecker):
             )
             if is_transient:
                 logger.info(
-                    f"NCBI {label} request failed for {accession}: "
+                    f"NCBI esearch request failed for {accession}: "
                     f"HTTP {response.status_code} - {response.text}"
                 )
-                msg = f"Transient NCBI {label} error {response.status_code} for {accession}"
+                msg = f"Transient NCBI esearch error {response.status_code} for {accession}"
                 raise TransientNCBIError(msg)
             return response
 
@@ -151,7 +147,7 @@ class NCBIVisibilityChecker(VisibilityChecker):
         response = retryer(_do_get)
         if response.status_code != HTTPStatus.OK:
             logger.info(
-                f"NCBI {label} request failed for {accession}: "
+                f"NCBI esearch request failed for {accession}: "
                 f"HTTP {response.status_code} - {response.text}"
             )
             return None
@@ -159,7 +155,7 @@ class NCBIVisibilityChecker(VisibilityChecker):
             return response.json()
         except ValueError:
             logger.info(
-                f"NCBI {label} returned a non-JSON response for {accession}: {response.text[:500]}"
+                f"NCBI esearch returned a non-JSON response for {accession}: {response.text[:500]}"
             )
             return None
 
