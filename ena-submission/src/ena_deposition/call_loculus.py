@@ -265,8 +265,11 @@ def download_fastq_files(
             timeout=config.s3_request_timeout_seconds,
         ) as response:
             response.raise_for_status()
+            # 1 MiB balances syscall/loop overhead against per-download memory;
+            # throughput is S3-bound above a few hundred KiB.
+            chunk_size = 1 << 20
             with open(file_path, "wb") as f:
-                f.writelines(response.iter_content(chunk_size=1 << 20))
+                f.writelines(response.iter_content(chunk_size=chunk_size))
 
         fastq_files.append(file_path)
 
