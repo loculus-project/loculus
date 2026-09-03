@@ -103,6 +103,7 @@ spec:
   failedJobsHistoryLimit: 2
   jobTemplate:
     spec:
+      backoffLimit: 0
       activeDeadlineSeconds: {{ $.Values.ingestLimitSeconds }}
       ttlSecondsAfterFinished: 86400
       template:
@@ -170,6 +171,7 @@ spec:
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
+      backoffLimit: 0
       activeDeadlineSeconds: {{ $.Values.ingestLimitSeconds }}
       template:
         {{- include "loculus.ingestPodSpec" (dict
