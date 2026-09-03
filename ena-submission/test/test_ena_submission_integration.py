@@ -62,9 +62,7 @@ from ena_deposition.submission_db_helper import (
     Status,
     StatusAll,
     SubmissionTableEntry,
-    add_to_assembly_table,
-    add_to_project_table,
-    add_to_sample_table,
+    add_to_db,
     db_init,
     delete_records_in_db,
     find_conditions_in_db,
@@ -603,7 +601,7 @@ class TestFirstPublicUpdate(TestSubmission):
             "organism": "test_organism",
             "status": Status.SUBMITTED,
         },
-        "add_function": add_to_project_table,
+        "add_function": add_to_db,
     }
 
     SAMPLE_CONFIG: Final = {
@@ -614,7 +612,7 @@ class TestFirstPublicUpdate(TestSubmission):
             "version": 1,
             "status": Status.SUBMITTED,
         },
-        "add_function": add_to_sample_table,
+        "add_function": add_to_db,
     }
 
     NUCLEOTIDE_CONFIG: Final = {
@@ -631,7 +629,7 @@ class TestFirstPublicUpdate(TestSubmission):
             "version": 1,
             "status": Status.SUBMITTED,
         },
-        "add_function": add_to_assembly_table,
+        "add_function": add_to_db,
     }
 
     GCA_CONFIG: Final = {
@@ -642,7 +640,7 @@ class TestFirstPublicUpdate(TestSubmission):
             "version": 1,
             "status": Status.SUBMITTED,
         },
-        "add_function": add_to_assembly_table,
+        "add_function": add_to_db,
     }
 
     TEST_DATA: Final = {
@@ -684,20 +682,18 @@ class TestFirstPublicUpdate(TestSubmission):
 
         # Insert into the database
         add_function = test_data["add_function"]
-        entity_id = add_function(self.db_engine, entry)
-        if entity_id is None:
+        added_entry = add_function(self.db_engine, entry)
+        if added_entry is None:
             msg = f"Failed to add {entity_type.value} entry to the database."
             raise ValueError(msg)
 
-        # Build conditions dict for composite keys
-        # add_to_project_table returns the project_id of that entry or None if the request failed,
-        # the other add functions return True is add succeeded else false
-        # Hence the 2 branches below
-        if add_function == add_to_project_table:
-            # Single key (like project_id)
-            conditions = {"project_id": entity_id}
+        # Build conditions dict from the persisted entry's primary key.
+        # project_table has a single server-generated key (project_id); the
+        # other tables use a composite (accession, version) key.
+        if isinstance(added_entry, ProjectTableEntry):
+            conditions = {"project_id": added_entry.project_id}
         else:
-            conditions = asdict(entry.pkey)
+            conditions = asdict(added_entry.pkey)
 
         # Run visibility check with invalid accessions
         check_and_update_visibility_for_column(

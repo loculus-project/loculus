@@ -34,7 +34,7 @@ from .submission_db_helper import (
     Status,
     StatusAll,
     SubmissionTableEntry,
-    add_to_project_table,
+    add_to_db,
     db_init,
     find_conditions_in_db,
     find_errors_or_stuck_in_db,
@@ -204,7 +204,7 @@ def sync_state_with_submission_table(db_engine: Engine):
             )
             continue
 
-        project_id = add_to_project_table(
+        project_row = add_to_db(
             db_engine,
             ProjectTableEntry(
                 group_id=row.group_id,
@@ -214,8 +214,9 @@ def sync_state_with_submission_table(db_engine: Engine):
                 else None,
             ),
         )
-        if not project_id:
+        if not project_row:
             continue
+        project_id = project_row.project_id
         update_db_where_conditions(
             db_engine,
             model_class=SubmissionTableEntry,
