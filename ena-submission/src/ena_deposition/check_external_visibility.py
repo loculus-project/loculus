@@ -19,8 +19,10 @@ from http import HTTPStatus
 import pytz
 import requests
 from sqlalchemy import Engine
+from tenacity import Retrying, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 from ena_deposition.config import Config
+from ena_deposition.ena_submission_helper import log_before_retry
 from ena_deposition.submission_db_helper import (
     AssemblyTableEntry,
     ProjectTableEntry,
@@ -73,24 +75,89 @@ class ENAVisibilityChecker(VisibilityChecker):
         return None
 
 
+class TransientNCBIError(Exception):
+    """Raised for a retryable (rate-limited/server) error from NCBI's E-utilities."""
+
+
 class NCBIVisibilityChecker(VisibilityChecker):
     """Checker for NCBI visibility"""
 
     def check_visibility(self, config: Config, accession: str) -> datetime | None:
+        """
+        Check the visibility of an accession in the NCBI database.
+        esearch resolves the accession to internal UID(s); an empty result means the
+        accession is not (yet) in NCBI.
+
+        Note suppressed accessions will return a UID and will be marked as live.
+        """
         if accession.startswith("PRJ"):
-            path = "bioproject"
+            db = "bioproject"
         elif accession.startswith("SAM"):
-            path = "biosample"
+            db = "biosample"
         else:
-            path = "nuccore"
-        response = requests.get(
-            f"https://www.ncbi.nlm.nih.gov/{path}/{accession}/",
-            allow_redirects=False,
-            timeout=config.ncbi_public_search_timeout_seconds,
+            db = "nuccore"
+
+        esearch = self._eutils_get_json(
+            config,
+            {"db": db, "term": accession, "retmode": "json"},
+            accession,
         )
-        if response.status_code == HTTPStatus.OK:
-            return datetime.now(pytz.UTC)
-        return None
+        if esearch is None:
+            return None
+        uids = esearch.get("esearchresult", {}).get("idlist", [])
+        if not uids:
+            return None
+        return datetime.now(pytz.UTC)
+
+    def _eutils_get_json(
+        self,
+        config: Config,
+        params: dict[str, str],
+        accession: str,
+    ) -> dict | None:
+        """GET an E-utilities endpoint and return the parsed JSON body, or None on a
+        non-OK / non-JSON response. E-utilities rate-limits unauthenticated requests to
+        3/second per IP, so retry on timeouts and transient (429/5xx) errors."""
+
+        def _do_get() -> requests.Response:
+            response = requests.get(
+                "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi",
+                params=params,
+                timeout=config.ncbi_public_search_timeout_seconds,
+            )
+            is_transient = response.status_code == HTTPStatus.TOO_MANY_REQUESTS or (
+                response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR
+            )
+            if is_transient:
+                logger.info(
+                    f"NCBI esearch request failed for {accession}: "
+                    f"HTTP {response.status_code} - {response.text}"
+                )
+                msg = f"Transient NCBI esearch error {response.status_code} for {accession}"
+                raise TransientNCBIError(msg)
+            return response
+
+        retryer = Retrying(
+            stop=stop_after_attempt(config.ncbi_http_get_retry_attempts),
+            wait=wait_fixed(2),
+            retry=retry_if_exception_type((requests.exceptions.Timeout, TransientNCBIError)),
+            reraise=True,
+            before_sleep=log_before_retry,
+        )
+        response = retryer(_do_get)
+        if response.status_code != HTTPStatus.OK:
+            logger.info(
+                f"NCBI esearch request failed for {accession}: "
+                f"HTTP {response.status_code} - {response.text}"
+            )
+            return None
+        try:
+            return response.json()
+        except ValueError:
+            logger.info(
+                f"NCBI esearch returned a non-JSON response for {accession}: {response.text[:500]}"
+            )
+            return None
 
 
 # Configuration mapping: (EntityType, column_name) -> ColumnCheckConfig
@@ -223,11 +290,13 @@ def check_and_update_visibility_for_column(
         # Check all accessions - mark as visible when ALL are visible
         all_visible = True
         first_visible_timestamp = None
+        visible_count = 0
 
         for accession in accessions:
             visible_timestamp = visibility_checker.check_visibility(config, accession)
 
             if visible_timestamp:
+                visible_count += 1
                 if first_visible_timestamp is None:
                     first_visible_timestamp = visible_timestamp
                 logger.debug(f"Accession {accession} is publicly visible")
@@ -256,9 +325,6 @@ def check_and_update_visibility_for_column(
                     f"Failed to update {column_name} for {entity_type.value} {entity_id}"
                 )
         else:
-            visible_count = sum(
-                1 for acc in accessions if visibility_checker.check_visibility(config, acc)
-            )
             logger.debug(
                 f"{entity_type.value.title()} {entity_id}: {visible_count}/{len(accessions)} "
                 "accessions are publicly visible (waiting for all)"
