@@ -11,6 +11,7 @@ from ena_deposition.config import (
 )
 from ena_deposition.create_assembly import (
     assembly_table_create,
+    assembly_table_handle_errors,
     assembly_table_update,
     create_assembly_iter,
 )
@@ -424,8 +425,18 @@ def assert_assembly_submission_errored(
     mock_notify: Mock,
 ) -> None:
     assert config.test, "Not submitting to dev - stopping"
-    create_assembly_iter(db_engine, config, slack_config, last_retry_time=None)
+    create_assembly_submission_table_start(db_engine, config)
+    check_assembly_submission_started(db_engine, sequences_to_upload)
+
+    assembly_table_create(db_engine, config)
     check_assembly_submission_has_errors(db_engine, sequences_to_upload)
+
+    assembly_table_handle_errors(
+        db_engine,
+        config,
+        slack_config,
+        last_retry_time=datetime.now(tz=pytz.utc),
+    )
     msg = (
         f"{config.backend_url}: ENA Submission pipeline found 1 entries in assembly_table in "
         "status HAS_ERRORS or SUBMITTING for over 0m"
