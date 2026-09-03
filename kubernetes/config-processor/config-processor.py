@@ -5,9 +5,22 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
+from requests.adapters import HTTPAdapter, Retry
 
 DEFAULT_MAX_WORKERS = 16
 thread_local = threading.local()
+
+retry_strategy = Retry(
+    total=3,
+    backoff_factor=1,
+    status_forcelist=[
+        502,  # Bad Gateway
+        503,  # Service Unavailable
+        504,  # Gateway Timeout
+    ],
+    allowed_methods=["GET"],
+    raise_on_status=False,
+)
 
 
 def copy_structure(input_dir, output_dir):
@@ -49,7 +62,11 @@ def download_urls_with_workers(urls, max_workers):
 
 def download_url(url):
     if not hasattr(thread_local, "session"):
-        thread_local.session = requests.Session()
+        session = requests.Session()
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        session.mount("https://", adapter)
+        session.mount("http://", adapter)
+        thread_local.session = session
     return thread_local.session.get(url)
 
 
