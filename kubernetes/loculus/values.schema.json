@@ -1651,6 +1651,12 @@
       "default": false,
       "description": "If true, the instance runs in read-only mode: the backend rejects write requests (POST/PUT/DELETE/PATCH) with 503 Service Unavailable, and the website hides login/submission entry points and shows a read-only banner."
     },
+    "backendJvmOpts": {
+      "groups": ["services"],
+      "type": "string",
+      "default": "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseCompactObjectHeaders -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2",
+      "description": "JVM flags passed to the backend container as JVM_OPTS. Without an explicit -Xmx the heap is a fraction of the container memory limit in resources.backend, so MaxRAMPercentage=75 with the default 3Gi limit gives the JVM about 2.3Gi of heap. Setting this replaces the whole string, so keep the flags you still want. Drop MaxRAMPercentage to fall back to the JVM default of 25% if the instance should use less memory, for example on preview or dev deployments."
+    },
     "organisms": {
       "groups": ["organism-conf"],
       "type": "object",

@@ -97,10 +97,9 @@ spec:
               {{- .Values.backendExtraArgs | toYaml | nindent 12 }}
             {{- end }}
           env:
-            # If a flag in JVM_OPTS below changes object layout or other observable JVM
-            # semantics, mirror it in the test task in backend/build.gradle
+            # JVM_OPTS is configured through backendJvmOpts in values.yaml
             - name: JVM_OPTS
-              value: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseCompactObjectHeaders -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2
+              value: {{ .Values.backendJvmOpts | quote }}
           {{- if $.Values.seqSets.crossRef }}
             - name: CROSSREF_USERNAME
               valueFrom:

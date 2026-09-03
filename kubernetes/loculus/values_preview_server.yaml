@@ -1,5 +1,10 @@
 enableServiceMonitor: true
 createTestAccounts: true
+# Previews share one cluster, so keep the heap sizing from before #7077 (JVM default of
+# 25% of the container limit) instead of the chart default of 75%. That is roughly
+# 300MB less per backend, see
+# https://github.com/loculus-project/loculus/pull/7077#issuecomment-5393292442
+backendJvmOpts: "-XX:+UseContainerSupport -XX:+UseG1GC -XX:+UseCompactObjectHeaders -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2"
 secrets:
   smtp-password:
     type: sealedsecret
