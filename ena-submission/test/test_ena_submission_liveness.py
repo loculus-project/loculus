@@ -1,7 +1,17 @@
-from dataclasses import asdict  # noqa: I001
+"""
+WARNING: This script queries the INSDC databases to check liveness it also requires a 
+local PostgreSQL database to be running with the loculus schema applied.
+docker run --name test-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=unsecure \
+    -e POSTGRES_DB=loculus -p 5432:5432 -d postgres
+flyway -url=jdbc:postgresql://localhost:5432/loculus -schemas=ena_deposition_schema \
+    -user=postgres -password=unsecure -locations=filesystem:./flyway/sql migrate
+"""
+
 import logging
+from dataclasses import asdict
 from typing import Final
 
+import pytest
 from ena_deposition.check_external_visibility import (
     COLUMN_CONFIGS,
     EntityType,
@@ -16,7 +26,6 @@ from ena_deposition.submission_db_helper import (
     update_db_where_conditions,
 )
 from helpers import SubmissionTestBase
-import pytest
 
 logger = logging.getLogger(__name__)
 # ruff: noqa: S101 (allow asserts in tests))
