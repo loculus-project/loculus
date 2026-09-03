@@ -640,7 +640,6 @@ class TestFirstPublicUpdate(TestSubmission):
             "organism": "test_organism",
             "status": Status.SUBMITTED,
         },
-        "add_function": add_to_db,
     }
 
     SAMPLE_CONFIG: Final = {
@@ -651,7 +650,6 @@ class TestFirstPublicUpdate(TestSubmission):
             "version": 1,
             "status": Status.SUBMITTED,
         },
-        "add_function": add_to_db,
     }
 
     NUCLEOTIDE_CONFIG: Final = {
@@ -668,7 +666,6 @@ class TestFirstPublicUpdate(TestSubmission):
             "version": 1,
             "status": Status.SUBMITTED,
         },
-        "add_function": add_to_db,
     }
 
     GCA_CONFIG: Final = {
@@ -679,7 +676,6 @@ class TestFirstPublicUpdate(TestSubmission):
             "version": 1,
             "status": Status.SUBMITTED,
         },
-        "add_function": add_to_db,
     }
 
     TEST_DATA: Final = {
@@ -720,19 +716,12 @@ class TestFirstPublicUpdate(TestSubmission):
         entry = config.entry_class(**entry_data)
 
         # Insert into the database
-        add_function = test_data["add_function"]
-        added_entry = add_function(self.db_engine, entry)
+        added_entry = add_to_db(self.db_engine, entry)
         if added_entry is None:
             msg = f"Failed to add {entity_type.value} entry to the database."
             raise ValueError(msg)
 
-        # Build conditions dict from the persisted entry's primary key.
-        # project_table has a single server-generated key (project_id); the
-        # other tables use a composite (accession, version) key.
-        if isinstance(added_entry, ProjectTableEntry):
-            conditions = {"project_id": added_entry.project_id}
-        else:
-            conditions = asdict(added_entry.pkey)
+        conditions = asdict(added_entry.pkey)
 
         # Run visibility check with invalid accessions
         check_and_update_visibility_for_column(
