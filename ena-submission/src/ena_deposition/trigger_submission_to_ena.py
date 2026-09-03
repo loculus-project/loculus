@@ -37,7 +37,9 @@ def upload_sequences(db_engine: Engine, sequences_to_upload: dict[str, Any]):
             seq_metadata=data["metadata"],
             unaligned_nucleotide_sequences=data["unalignedNucleotideSequences"],
         )
-        add_to_db(db_engine, entry)
+        if add_to_db(db_engine, entry) is None:
+            logger.error(f"Failed to insert {full_accession} into submission_table")
+            continue
         logger.info(f"Inserted {full_accession} into submission_table")
 
 
