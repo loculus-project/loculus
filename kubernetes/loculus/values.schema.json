@@ -939,7 +939,7 @@
                   "groups": ["ingest"],
                   "docsIncludePrefix": false,
                   "type": "integer",
-                  "minimum": 2,
+                  "minimum": 1,
                   "default": 1000,
                   "description": "Number of sequences submitted to the backend per request."
                 }
