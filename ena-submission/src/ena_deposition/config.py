@@ -116,6 +116,7 @@ class Config(BaseModel):
     ena_public_search_timeout_seconds: int = 120
     ncbi_public_search_timeout_seconds: int = 120
     ena_http_get_retry_attempts: int = 3
+    ncbi_http_get_retry_attempts: int = 3
     # By default, don't retry HTTP post requests to ENA
     ena_http_post_retry_attempts: int = 1
     min_between_github_requests: int = 2
