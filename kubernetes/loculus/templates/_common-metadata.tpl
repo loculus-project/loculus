@@ -78,10 +78,8 @@ fields:
     orderOnDetailsPage: 5040
     definition: {{ printf "Date and time on which the sequence record was submitted to %s." $.Values.name | quote }}
   - name: submittedDate
-    type: string
+    type: date
     hideOnSequenceDetailsPage: true
-    generateIndex: true
-    autocomplete: true
     displayName: Date submitted (exact)
     orderOnDetailsPage: 5050
     definition: {{ printf "Date on which the sequence record was submitted to %s." $.Values.name | quote }}
@@ -93,10 +91,8 @@ fields:
     orderOnDetailsPage: 5060
     definition: {{ printf "Date and time on which the sequence record was released on %s." $.Values.name | quote }}
   - name: releasedDate
-    type: string
+    type: date
     hideOnSequenceDetailsPage: true
-    generateIndex: true
-    autocomplete: true
     displayName: Date released (exact)
     columnWidth: 100
     orderOnDetailsPage: 5070
