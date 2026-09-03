@@ -20,7 +20,8 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # larger than individual steps so logs can be collected
+    timeout-minutes: 20
     env:
       RUN_EXTRA_TESTS: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || inputs.run_extra_tests == true }}
     steps:
@@ -39,8 +40,34 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
       - name: Run tests
-        run: ./gradlew test
+        timeout-minutes: 15
         working-directory: ./backend
+        run: |
+          mkdir -p build/diagnostics
+          # Thread dumps before the step cap, so a hang shows where it is stuck.
+          # `jcmd Gradle` matches every JVM whose main class contains "Gradle": the daemon and the test executor.
+          ( sleep 660; jcmd Gradle Thread.print; sleep 120; jcmd Gradle Thread.print ) \
+            > build/diagnostics/threaddumps.txt 2>&1 &
+          watchdog=$!
+          rc=0
+          ./gradlew test || rc=$?
+          kill "$watchdog" 2>/dev/null || true
+          exit $rc
+      - name: Show where the test run stopped
+        if: failure()
+        working-directory: ./backend
+        # the suite runs one test at a time, so the last line is the test a hang was stuck in
+        run: tail -n 5 build/diagnostics/test-progress.log || echo "No progress log, so no test ever started."
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-test-results
+          path: |
+            backend/build/test-results/test/*.xml
+            backend/build/diagnostics/**
+            backend/build/reports/tests/test/index.html
+          if-no-files-found: warn
 
   lint:
     runs-on: ubuntu-latest

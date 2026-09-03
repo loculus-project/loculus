@@ -1,3 +1,6 @@
+import org.gradle.api.tasks.testing.TestDescriptor
+import org.gradle.api.tasks.testing.TestListener
+import org.gradle.api.tasks.testing.TestResult
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
@@ -152,6 +155,26 @@ tasks.named('test') {
         exceptionFormat = TestExceptionFormat.FULL
         showExceptions = true
     }
+    // Records each test's start and finish so a hung run names the test it was stuck in.
+    def progressLog = layout.buildDirectory.file('diagnostics/test-progress.log')
+    doFirst {
+        def file = progressLog.get().asFile
+        file.parentFile.mkdirs()
+        file.text = ''
+    }
+    addTestListener(new TestListener() {
+        void beforeSuite(TestDescriptor suite) {}
+
+        void afterSuite(TestDescriptor suite, TestResult result) {}
+
+        void beforeTest(TestDescriptor descriptor) {
+            progressLog.get().asFile << "${java.time.Instant.now()} STARTED ${descriptor.className}.${descriptor.name}\n"
+        }
+
+        void afterTest(TestDescriptor descriptor, TestResult result) {
+            progressLog.get().asFile << "${java.time.Instant.now()} ${result.resultType} ${descriptor.className}.${descriptor.name}\n"
+        }
+    })
 }
 
 tasks.named('bootBuildImage') {
