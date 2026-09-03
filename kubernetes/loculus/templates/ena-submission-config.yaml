@@ -9,7 +9,7 @@
 {{- $enaIsBroker := .Values.enaDeposition.enaIsBroker | default false }}
 {{- $enaApprovedListTestUrl := .Values.enaDeposition.enaApprovedListTestUrl | default "" }}
 {{- $enaSuppressedListTestUrl := .Values.enaDeposition.enaSuppressedListTestUrl | default "" }}
-{{- $rawReadsMetadataField := .Values.enaDeposition.rawReadsMetadataField | default "raw_reads" }}
+{{- $rawReadsMetadataField := .Values.enaDeposition.rawReadsMetadataField | default "rawReads" }}
 ---
 apiVersion: v1
 kind: ConfigMap

@@ -755,7 +755,7 @@ def _run_webin_cli_submission(
     if response.returncode != 0:
         error_message = f"Webin CLI command failed with status: {response.returncode}. "
     else:
-        missing_accessions = " or ".join(f"{kind} accession" for kind, _ in patterns.values())
+        missing_accessions = " or ".join(f"{kind} accession" for kind in patterns)
         error_message = f"Webin CLI command succeeded but did not return {missing_accessions}. "
     error_message += f"Stdout: {response.stdout}, Stderr: {response.stderr}"
     logger.error(error_message)

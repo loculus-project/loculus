@@ -1904,7 +1904,7 @@
         "rawReadsMetadataField": {
           "type": "string",
           "description": "Name of the Loculus metadata field that holds the JSON-encoded list of raw read files",
-          "default": "raw_reads"
+          "default": "rawReads"
         }
       }
     },

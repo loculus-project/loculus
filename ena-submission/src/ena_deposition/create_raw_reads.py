@@ -5,7 +5,7 @@ import threading
 import traceback
 from dataclasses import asdict
 from datetime import datetime
-from typing import Any, Literal, cast
+from typing import Any, Literal
 
 import pytz
 from sqlalchemy import Engine
@@ -22,6 +22,7 @@ from .ena_submission_helper import (
     linked_accession_diff,
     manifest_fields_diff,
     resolve_manifest_field,
+    resolve_required_manifest_field,
     retry_failed_submissions_for_matching_errors,
 )
 from .ena_types import (
@@ -74,7 +75,7 @@ def get_platform_and_instrument(
             "neither ENA's platform nor instrument list - ENA submission will fail."
         )
         logger.error(message)
-        raise RuntimeError(message)
+        raise ValueError(message)
     return None, Instrument.unspecified
 
 
@@ -103,10 +104,8 @@ def create_manifest_object(
     metadata = submission_row.seq_metadata
     raw_reads_manifest_fields_mapping = config.raw_reads_manifest_fields_mapping
 
-    # instrument_model mapping always defines a default, so resolution cannot return None
-    sequencing_instrument = cast(
-        str,
-        resolve_manifest_field(raw_reads_manifest_fields_mapping["instrument"], metadata),
+    sequencing_instrument = resolve_required_manifest_field(
+        raw_reads_manifest_fields_mapping["instrument"], metadata
     )
     platform, instrument = get_platform_and_instrument(
         sequencing_instrument, submission_row.accession

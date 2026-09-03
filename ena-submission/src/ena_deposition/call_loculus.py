@@ -254,7 +254,7 @@ def download_fastq_files(
             file_path = os.path.join(dir, file_name)
         else:
             with tempfile.NamedTemporaryFile(
-                delete=False, suffix=os.path.splitext(file_name)[1]
+                delete=False, suffix=file_name, prefix=f"{accession}_", dir=dir
             ) as temp:
                 file_path = temp.name
 
