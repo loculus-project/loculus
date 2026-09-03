@@ -20,16 +20,23 @@ export type FileKind<F extends ProcessedFile> = {
 
 const COMPRESSION_EXTENSIONS = ['zst', 'gz', 'zip', 'xz'];
 
+/** Splits a file name into its data extension and its trailing compression extension, if any. */
+const splitFileExtensions = (file: File): { dataExtension: string; compressionExtension: string | null } => {
+    const fileNameParts = file.name.toLowerCase().split('.');
+    const extension = fileNameParts[fileNameParts.length - 1];
+    const isCompressed = COMPRESSION_EXTENSIONS.includes(extension);
+    return {
+        dataExtension: isCompressed ? fileNameParts[fileNameParts.length - 2] : extension,
+        compressionExtension: isCompressed ? extension : null,
+    };
+};
+
 export const METADATA_FILE_KIND: FileKind<ProcessedFile> = {
     type: 'metadata',
     icon: MaterialSymbolsLightDataTableOutline,
     supportedExtensions: ['tsv', 'xlsx', 'xls'],
     processRawFile: async (file: File) => {
-        const fileNameParts = file.name.toLowerCase().split('.');
-        const extension = fileNameParts[fileNameParts.length - 1];
-        const isCompressed = COMPRESSION_EXTENSIONS.includes(extension);
-        const dataExtension = isCompressed ? fileNameParts[fileNameParts.length - 2] : extension;
-        const compressionExtension = isCompressed ? extension : null;
+        const { dataExtension, compressionExtension } = splitFileExtensions(file);
 
         if (METADATA_FILE_KIND.supportedExtensions.includes(dataExtension) && compressionExtension === 'xz') {
             return err(
@@ -41,12 +48,12 @@ export const METADATA_FILE_KIND: FileKind<ProcessedFile> = {
         }
 
         if (dataExtension === 'tsv') {
-            if (!isCompressed) return ok(new RawFile(file));
+            if (compressionExtension === null) return ok(new RawFile(file));
             return ok(new CompressedFile(file));
         }
 
         if (dataExtension === 'xlsx' || dataExtension === 'xls') {
-            const compression = isCompressed ? (compressionExtension as SupportedInBrowserCompressionKind) : null;
+            const compression = compressionExtension as SupportedInBrowserCompressionKind | null;
             const excelFile = new ExcelFile(file, compression);
             try {
                 await excelFile.init();
@@ -70,7 +77,20 @@ export const FASTA_FILE_KIND: FileKind<ProcessedFile> = {
     type: 'fasta',
     icon: PhDnaLight,
     supportedExtensions: ['fasta'],
-    processRawFile: (file) => Promise.resolve(ok(new RawFile(file))),
+    processRawFile: (file) => {
+        const { dataExtension } = splitFileExtensions(file);
+        if (METADATA_FILE_KIND.supportedExtensions.includes(dataExtension)) {
+            return Promise.resolve(
+                err(
+                    new Error(
+                        `Unsupported file extension for sequence upload: .${dataExtension} files are metadata. ` +
+                            'Please use the metadata field instead.',
+                    ),
+                ),
+            );
+        }
+        return Promise.resolve(ok(new RawFile(file)));
+    },
 };
 
 /**
