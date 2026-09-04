@@ -11,7 +11,11 @@ from sqlalchemy import Engine
 
 from ena_deposition.call_loculus import submit_external_metadata
 
-from .config import Config, EnaOrganismDetails
+from .config import (
+    Config,
+    EnaOrganismDetails,
+    EnaResultField,
+)
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
     AssemblyTableEntry,
@@ -53,21 +57,23 @@ def _get_result_of_single_db_record[T: SampleTableEntry | ProjectTableEntry | As
     return result
 
 
-def get_bioproject_accession_from_db(db_engine: Engine, project_id: int | None) -> dict[str, str]:
+def get_bioproject_accession_from_db(
+    db_engine: Engine, config: Config, project_id: int | None
+) -> dict[str, str]:
     if project_id is None:
         return {}
     result = _get_result_of_single_db_record(
         db_engine, ProjectTableEntry, conditions={"project_id": project_id}
     )
 
-    if not result or "bioproject_accession" not in result:
+    if not result or EnaResultField.BIOPROJECT not in result:
         return {}
 
-    return {"bioprojectAccession": result["bioproject_accession"]}
+    return {config.loculus_accession_fields.bioproject: result[EnaResultField.BIOPROJECT]}
 
 
 def get_biosample_accession_from_db(
-    db_engine: Engine, accession: str, version: int
+    db_engine: Engine, config: Config, accession: str, version: int
 ) -> dict[str, str]:
     result = _get_result_of_single_db_record(
         db_engine,
@@ -75,14 +81,15 @@ def get_biosample_accession_from_db(
         conditions={"accession": accession, "version": version},
     )
 
-    if not result or "biosample_accession" not in result:
+    if not result or EnaResultField.BIOSAMPLE not in result:
         return {}
 
-    return {"biosampleAccession": result["biosample_accession"]}
+    return {config.loculus_accession_fields.biosample: result[EnaResultField.BIOSAMPLE]}
 
 
 def get_assembly_accessions_from_db(
     db_engine: Engine,
+    config: Config,
     accession: str,
     version: int,
     organism: EnaOrganismDetails,
@@ -99,8 +106,8 @@ def get_assembly_accessions_from_db(
     data = {}
     all_present = True
 
-    if gca := result.get("gca_accession"):
-        data["gcaAccession"] = gca
+    if gca := result.get(EnaResultField.GCA):
+        data[config.loculus_accession_fields.gca] = gca
     else:
         all_present = False
 
@@ -108,15 +115,19 @@ def get_assembly_accessions_from_db(
     for segment in segment_names:
         segment_suffix = f"_{segment}" if organism.is_multi_segment() else ""
 
-        base_key = f"insdc_accession{segment_suffix}"
+        base_key = f"{EnaResultField.INSDC_ACCESSION_PREFIX}{segment_suffix}"
         if base_key in result:
-            data[f"insdcAccessionBase{segment_suffix}"] = result[base_key]
+            data[f"{config.loculus_accession_fields.insdc_accession_prefix}{segment_suffix}"] = (
+                result[base_key]
+            )
         else:
             all_present = False
 
-        full_key = f"insdc_accession_full{segment_suffix}"
+        full_key = f"{EnaResultField.INSDC_ACCESSION_FULL_PREFIX}{segment_suffix}"
         if full_key in result:
-            data[f"insdcAccessionFull{segment_suffix}"] = result[full_key]
+            data[
+                f"{config.loculus_accession_fields.insdc_accession_full_prefix}{segment_suffix}"
+            ] = result[full_key]
         else:
             all_present = False
 
@@ -130,10 +141,10 @@ def get_external_metadata_to_upload(
     version = entry.version
     organism = config.enaOrganisms[entry.organism]
 
-    bioproject_accession = get_bioproject_accession_from_db(db_engine, entry.project_id)
-    biosample_accession = get_biosample_accession_from_db(db_engine, accession, version)
+    bioproject_accession = get_bioproject_accession_from_db(db_engine, config, entry.project_id)
+    biosample_accession = get_biosample_accession_from_db(db_engine, config, accession, version)
     assembly_accession, all_assemblies_present = get_assembly_accessions_from_db(
-        db_engine, accession, version, organism
+        db_engine, config, accession, version, organism
     )
 
     return {
