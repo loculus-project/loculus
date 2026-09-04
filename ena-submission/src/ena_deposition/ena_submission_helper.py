@@ -733,9 +733,6 @@ def _run_webin_cli_submission(
 
     config.test=True, adds the `-test` flag which means submissions will use the ENA dev endpoint.
     """
-    errors: list[str] = []
-    warnings: list[str] = []
-
     # create a tmp dir for output files
     # use normal python stuff for that
 
@@ -749,17 +746,18 @@ def _run_webin_cli_submission(
             center_name=center_name,
             context=context,
         )
+    except subprocess.TimeoutExpired as e:
+        msg = f"webin-cli timed out after {e.timeout}s"
     except Exception as e:
-        msg = f"Error occurred while running webin-cli: {e}"
+        msg = f"Error occurred while running webin-cli: {type(e).__name__}"
         logger.error(msg)
-        errors.append(msg)
-        return CreationResult(errors=errors, warnings=warnings)
+        return CreationResult(errors=[msg], warnings=[])
 
     # Happy path: webin-cli succeeded and returned the expected accession(s)
     if response.returncode == 0:
         result = _extract_accessions(response.stdout, patterns)
         if result:
-            return CreationResult(result=result, errors=errors, warnings=warnings)
+            return CreationResult(result=result, errors=[], warnings=[])
 
     # Handle the case where the webin-cli command fails or does not return the expected accession(s)
     if response.returncode != 0:
@@ -769,7 +767,6 @@ def _run_webin_cli_submission(
         error_message = f"Webin CLI command succeeded but did not return {missing_accessions}. "
     error_message += f"Stdout: {response.stdout}, Stderr: {response.stderr}"
     logger.error(error_message)
-    errors.append(error_message)
 
     try:
         manifest_contents = Path(manifest_filename).read_text(encoding="utf-8")
@@ -784,7 +781,7 @@ def _run_webin_cli_submission(
             logger.info(f"webin-cli log file {file_path} contents:\n{contents}")
         except Exception as e:
             logger.warning(f"Reading webin-cli log file {file_path} failed: {e}")
-    return CreationResult(errors=errors, warnings=warnings)
+    return CreationResult(errors=[error_message], warnings=[])
 
 
 def create_ena_assembly(config: Config, manifest_filename: str, center_name=None) -> CreationResult:
