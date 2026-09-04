@@ -224,31 +224,6 @@ def update_raw_reads_error(
     )
 
 
-def manifest_fields_changed(
-    config: Config,
-    db_engine: Engine,
-    submission_row: SubmissionTableEntry,
-    last_version_entry: SubmissionTableEntry,
-) -> bool:
-    differing_fields = manifest_fields_diff(
-        config.raw_reads_manifest_fields_mapping, submission_row, last_version_entry
-    )
-    if differing_fields:
-        error = (
-            "Raw reads cannot be revised because metadata fields in manifest would change from "
-            f"last version: {json.dumps(differing_fields)}"
-        )
-        logger.error(error)
-        update_raw_reads_error(
-            db_engine,
-            [error],
-            seq_key=asdict(submission_row.pkey),
-            update_type="revision",
-        )
-        return True
-    return False
-
-
 def can_revise_raw_reads(
     config: Config, db_engine: Engine, submission_row: SubmissionTableEntry
 ) -> bool:
@@ -279,16 +254,21 @@ def can_revise_raw_reads(
     #     )
     #     return True
 
-    if manifest_fields_changed(
-        config, db_engine, submission_row, last_entry
-    ) and not has_raw_reads_changed(config, db_engine, submission_row):
-        message = (
-            f"Only manifest fields have changed for {submission_row.accession}, "
-            f"from {last_entry.version} to {submission_row.version} - should be revised manually"
+    differing_fields = manifest_fields_diff(
+        config.raw_reads_manifest_fields_mapping, submission_row, last_entry
+    )
+    if differing_fields and not has_raw_reads_changed(config, db_engine, submission_row):
+        error = (
+            "Raw reads cannot be revised because metadata fields in manifest would change from "
+            f"last version without changes in raw read data: {json.dumps(differing_fields)} "
+            "without changes in raw read data - should be revised manually"
         )
-        logger.debug(message)
+        logger.error(error)
         update_raw_reads_error(
-            db_engine, [message], seq_key=asdict(submission_row.pkey), update_type="revision"
+            db_engine,
+            [error],
+            seq_key=asdict(submission_row.pkey),
+            update_type="revision",
         )
         return False
     return True
