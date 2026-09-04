@@ -137,15 +137,27 @@ Files are attached by adding a <code dir="auto">files.&lt;fileCategory&gt;</code
 <div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">files.rawReads</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">reads_1.fq:8D8AC610-566D-4EF0-9C22-186B2A5ED793 reads_2.fq:2ea137d0-8773-4e0a-a9aa-5591de12ff23</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="files.rawReadsreads_1.fq:8D8AC610-566D-4EF0-9C22-186B2A5ED793 reads_2.fq:2ea137d0-8773-4e0a-a9aa-5591de12ff23"><div></div></button></div></figure></div>
 <ul>
 <li>The <code dir="auto">fileId</code> is the ID received in the previous step, which identifies the actual file.</li>
-<li>The <code dir="auto">fileName</code> can be chosen freely, but depending on configuration it might become an identifier for the file later on.</li>
+<li>The <code dir="auto">fileName</code> can be chosen freely within the <a href="#filename-restrictions">filename restrictions</a>, but depending on configuration it might become an identifier for the file later on.</li>
 <li>Cells may be left empty for submission IDs that don’t have files in that category.</li>
 </ul>
 <div class="sl-heading-wrapper level-h2"><h2 id="filename-restrictions">Filename restrictions</h2><a class="sl-anchor-link" href="#filename-restrictions"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Filename restrictions”</span></a></div>
-<p>The filenames may contain any UTF-8 characters except:</p>
+<p>By default, filenames may only contain:</p>
 <ul>
-<li>Forbidden characters: <code dir="auto">&lt; &gt; : " / \ | ? *</code></li>
-<li>ASCII control characters (character codes 0-31)</li>
-<li>Whitespace characters</li>
+<li>Letters <code dir="auto">A-Z</code> and <code dir="auto">a-z</code></li>
+<li>Numbers <code dir="auto">0-9</code></li>
+<li>Underscores (<code dir="auto">_</code>), hyphens (<code dir="auto">-</code>) and periods (<code dir="auto">.</code>)</li>
 </ul>
-<p>Filenames may not be empty or contain more than 255 characters.</p>
+<p>The following restrictions always apply:</p>
+<ul>
+<li>Filenames may not be empty</li>
+<li>Filenames may not exceed 255 bytes when encoded as UTF-8</li>
+<li>Filenames may not contain the characters <code dir="auto">&lt; &gt; : " / \ | ? * ; % #</code></li>
+<li>Filenames may not contain ASCII control characters (character codes 0-31)</li>
+<li>Filenames may not contain whitespace characters</li>
+<li>Filenames may not be a Windows reserved device name, with or without an extension: <code dir="auto">CON</code>, <code dir="auto">PRN</code>, <code dir="auto">AUX</code>, <code dir="auto">NUL</code>, <code dir="auto">COM1</code>-<code dir="auto">COM9</code> and <code dir="auto">LPT1</code>-<code dir="auto">LPT9</code></li>
+<li>Filenames may not have trailing periods</li>
+</ul>
+<p>Instance administrators can allow a wider range of characters by enabling <code dir="auto">fileSharing.disableStrictFilenameValidation</code>,
+in which case any UTF-8 characters are accepted except those listed as always restricted above.
+<strong>This is not officially supported and may result in unexpected behaviour</strong>.</p>
 </div><footer class="sl-flex astro-xhxjzfa7"><div class="meta sl-flex astro-xhxjzfa7"><a href="https://github.com/loculus-project/loculus/edit/main/docs/src/content/docs/for-users/submit-extra-files.md" class="sl-flex print:hidden astro-xk5gmzsg"><svg aria-hidden="true" class="astro-xk5gmzsg astro-n5k4ipy7" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.2em;"><path d="M22 7.24a1 1 0 0 0-.29-.71l-4.24-4.24a1 1 0 0 0-1.1-.22 1 1 0 0 0-.32.22l-2.83 2.83L2.29 16.05a1 1 0 0 0-.29.71V21a1 1 0 0 0 1 1h4.24a1 1 0 0 0 .76-.29l10.87-10.93L21.71 8c.1-.1.17-.2.22-.33a1 1 0 0 0 0-.24v-.14l.07-.05ZM6.83 20H4v-2.83l9.93-9.93 2.83 2.83L6.83 20ZM18.17 8.66l-2.83-2.83 1.42-1.41 2.82 2.82-1.41 1.42Z"/></svg>Edit page</a></div><div class="pagination-links print:hidden astro-jgq3vlii" dir="ltr"><a href="/for-users/submit-sequences/" rel="prev" class="astro-jgq3vlii"><svg aria-hidden="true" class="astro-jgq3vlii astro-n5k4ipy7" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg><span class="astro-jgq3vlii">Previous<br class="astro-jgq3vlii"><span class="link-title astro-jgq3vlii">Submit sequences</span></span></a><a href="/for-users/revise-sequences/" rel="next" class="astro-jgq3vlii"><svg aria-hidden="true" class="astro-jgq3vlii astro-n5k4ipy7" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg><span class="astro-jgq3vlii">Next<br class="astro-jgq3vlii"><span class="link-title astro-jgq3vlii">Revise sequences</span></span></a></div></footer></div></div></main></div></div></div></div></body></html>
