@@ -4,7 +4,6 @@ import logging
 import os
 import pathlib
 import shutil
-import tempfile
 import traceback
 import uuid
 from collections.abc import Iterator
