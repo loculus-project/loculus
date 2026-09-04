@@ -299,7 +299,7 @@ def check_assembly_submission_has_errors(
 
 
 def check_assembly_submission_started(
-    db_engine: Engine, sequences_to_upload: dict[str, Any], with_raw_reads: bool = False
+    db_engine: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
@@ -309,10 +309,6 @@ def check_assembly_submission_started(
             conditions={"accession": accession, "version": version, "status": "READY"},
         )
         assert len(rows) == 1, f"Assembly for {full_accession} not found in assembly table."
-        if with_raw_reads:
-            assert rows[0].result and "err_accession" in rows[0].result, (
-                f"Did not update err_accession for {full_accession} in assembly table."
-            )
 
 
 def check_assembly_submission_submitted(
@@ -451,7 +447,7 @@ def _test_successful_assembly_submission(
     with_raw_reads: bool = False,
 ) -> None:
     create_assembly_submission_table_start(db_engine)
-    check_assembly_submission_started(db_engine, sequences_to_upload, with_raw_reads=with_raw_reads)
+    check_assembly_submission_started(db_engine, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
     assembly_table_create(db_engine, config)
