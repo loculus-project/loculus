@@ -40,6 +40,7 @@ import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
+import org.loculus.backend.service.files.dummyFileId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
@@ -49,7 +50,6 @@ import org.springframework.test.web.servlet.ResultMatcher
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.util.UUID
 
 @EndpointTest(
     properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
@@ -378,8 +378,8 @@ class ReviseEndpointTest(
                         mapOf(
                             "myFileCategory" to
                                 listOf(
-                                    FileIdAndName(UUID.randomUUID(), "foo.txt"),
-                                    FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                                    FileIdAndName(dummyFileId(), "foo.txt"),
+                                    FileIdAndName(dummyFileId(), "foo.txt"),
                                 ),
                         ),
                 ),
@@ -412,7 +412,7 @@ class ReviseEndpointTest(
                         mapOf(
                             "unknownCategory" to
                                 listOf(
-                                    FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                                    FileIdAndName(dummyFileId(), "foo.txt"),
                                 ),
                         ),
                 ),

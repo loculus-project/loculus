@@ -46,6 +46,8 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
                 this[FilesTable.uploadRequestedAtColumn] = now
                 this[FilesTable.uploaderColumn] = uploader
                 this[FilesTable.groupIdColumn] = groupId
+                // Exposed does not apply DB-side defaults in batch inserts, so this has to be set explicitly.
+                this[FilesTable.multipartCompleted] = false
             }
         }
     }

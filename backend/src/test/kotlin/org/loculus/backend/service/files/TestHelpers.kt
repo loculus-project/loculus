@@ -8,10 +8,15 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.loculus.backend.service.files.FilesTable
 import org.loculus.backend.utils.DateProvider
-import java.util.UUID
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Clock
 
-fun insertFile(id: UUID, groupId: Int, requestedAt: LocalDateTime, uploader: String = "testuser") = transaction {
+private val fileIdCounter = AtomicInteger()
+
+/** A unique file ID for tests that just need some file to point at. */
+fun dummyFileId(): FileId = "FILE_TEST${fileIdCounter.incrementAndGet()}"
+
+fun insertFile(id: FileId, groupId: Int, requestedAt: LocalDateTime, uploader: String = "testuser") = transaction {
     FilesTable.insert {
         it[idColumn] = id
         it[uploadRequestedAtColumn] = requestedAt

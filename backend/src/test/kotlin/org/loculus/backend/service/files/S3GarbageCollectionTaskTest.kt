@@ -18,14 +18,15 @@ import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.PreparedProcessedData
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.loculus.backend.log.AuditLogger
+import org.loculus.backend.service.files.FileId
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.files.daysAgo
+import org.loculus.backend.service.files.dummyFileId
 import org.loculus.backend.service.files.insertFile
 import org.loculus.backend.service.scheduler.TASK_LOCK_TABLE_NAME
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
-import java.util.UUID
 
 @EndpointTest(
     properties = [
@@ -48,7 +49,7 @@ class S3GarbageCollectionTaskTest(
 
     private var groupId = 0
 
-    private fun createProcessedSubmissionReferencingFile(file: UUID) {
+    private fun createProcessedSubmissionReferencingFile(file: FileId) {
         val submissions = convenienceClient.submitDefaultFiles(groupId = groupId).submissionIdMappings
         val targetAccession = submissions.first().accession
 
@@ -77,7 +78,7 @@ class S3GarbageCollectionTaskTest(
 
     @Test
     fun `GIVEN GC is disabled WHEN the task runs THEN orphaned files are not deleted`() {
-        val orphan = UUID.randomUUID()
+        val orphan = dummyFileId()
         insertFile(orphan, groupId, daysAgo(2))
 
         S3GarbageCollectionTask(
@@ -96,7 +97,7 @@ class S3GarbageCollectionTaskTest(
     @Suppress("ktlint:standard:max-line-length")
     @Test
     fun `GIVEN an orphaned file WHEN the task runs once THEN the orphan is marked but not yet deleted from S3 or the DB`() {
-        val orphan = UUID.randomUUID()
+        val orphan = dummyFileId()
         insertFile(orphan, groupId, daysAgo(2))
 
         s3GarbageCollectionTask.task()
@@ -108,7 +109,7 @@ class S3GarbageCollectionTaskTest(
 
     @Test
     fun `GIVEN a file marked in a previous run WHEN the task runs again THEN the file is deleted`() {
-        val orphan = UUID.randomUUID()
+        val orphan = dummyFileId()
         insertFile(orphan, groupId, daysAgo(2))
 
         s3GarbageCollectionTask.task() // phase 1: marks the file
@@ -122,8 +123,8 @@ class S3GarbageCollectionTaskTest(
     @Suppress("ktlint:standard:max-line-length")
     @Test
     fun `GIVEN an orphan and a referenced file WHEN the task runs THEN only the orphan is marked and the referenced file is untouched`() {
-        val orphan = UUID.randomUUID()
-        val referenced = UUID.randomUUID()
+        val orphan = dummyFileId()
+        val referenced = dummyFileId()
         listOf(orphan, referenced).forEach { insertFile(it, groupId, daysAgo(2)) }
 
         createProcessedSubmissionReferencingFile(referenced)
@@ -143,7 +144,7 @@ class S3GarbageCollectionTaskTest(
     @Suppress("ktlint:standard:max-line-length")
     @Test
     fun `GIVEN a referenced file that is marked for deletion WHEN the task runs THEN the file is NOT deleted (race condition fix)`() {
-        val file = UUID.randomUUID()
+        val file = dummyFileId()
         insertFile(file, groupId, daysAgo(2))
 
         createProcessedSubmissionReferencingFile(file)
