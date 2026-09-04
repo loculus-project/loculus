@@ -517,7 +517,9 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
                 update_values=update_values,
                 model_class=RawReadsTableEntry,
             )
-            run_accessions_to_suppress.add(old_run_accession) if revision else None
+            run_accessions_to_suppress.add(
+                old_run_accession
+            ) if revision and old_run_accession else None
         else:
             update_raw_reads_error(
                 db_engine,
