@@ -60,7 +60,7 @@ raw_reads_manifest_fields_mapping:
     loculus_fields: [sequencingLibrarySelection]
     default: "unspecified"
   library_strategy:
-    loculus_fields: [sequencingLibraryStrategy]
+    loculus_fields: [sequencingAssayType]
     default: "OTHER"
   insert_size:
     loculus_fields: [pairedEndInsertSize]

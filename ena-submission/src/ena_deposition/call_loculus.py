@@ -243,9 +243,6 @@ def download_fastq_files(
     if dir:
         os.makedirs(dir, exist_ok=True)
 
-    jwt = get_jwt(config)
-    headers = {"Authorization": f"Bearer {jwt}"}
-
     fastq_files = []
     for file_entry in files:
         # Use the fileId to avoid any potential security issues as name is supplied by the user
@@ -264,7 +261,6 @@ def download_fastq_files(
 
         with requests.get(
             file_entry["url"],
-            headers=headers,
             stream=True,
             timeout=config.s3_request_timeout_seconds,
         ) as response:
