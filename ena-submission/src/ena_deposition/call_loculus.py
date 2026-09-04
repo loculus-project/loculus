@@ -253,7 +253,7 @@ def download_fastq_files(
             f"Starting download of {file_entry['name']} to {file_name} for accession {accession}"
         )
         if dir:
-            file_path = os.path.join(dir, file_name)
+            file_path = os.path.join(dir, file_name + file_extension)
         else:
             with tempfile.NamedTemporaryFile(
                 delete=False, suffix=file_name + file_extension, prefix=f"{accession}_", dir=dir
