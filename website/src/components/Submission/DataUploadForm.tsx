@@ -19,7 +19,7 @@ import {
     openDataUseTermsOption,
     restrictedDataUseTermsOption,
 } from '../../types/backend.ts';
-import type { FileCategory, InputField } from '../../types/config.ts';
+import type { FileCategory, FileSharingConfig, InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
@@ -39,6 +39,7 @@ import {
     type CategoryLinkage,
     type FileLinkage,
     type SubmissionFileMapping,
+    validateSubmissionFileMapping,
 } from './FileUpload/fileMapping.ts';
 import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
 
@@ -57,6 +58,7 @@ type DataUploadFormProps = {
     onError: (message: string) => void;
     submissionDataTypes: SubmissionDataTypes;
     dataUseTermsEnabled: boolean;
+    fileSharingConfig: FileSharingConfig;
 };
 
 const logger = getClientLogger('DataUploadForm');
@@ -74,6 +76,7 @@ const InnerDataUploadForm = ({
     metadataTemplateFields,
     submissionDataTypes,
     dataUseTermsEnabled,
+    fileSharingConfig,
 }: DataUploadFormProps) => {
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
 
@@ -140,6 +143,16 @@ const InnerDataUploadForm = ({
             if (inputMode === 'form') {
                 if (fileMapping !== undefined) {
                     const finalSubmissionFileMapping = getSingleSubmissionFileMapping(submissionId!, fileMapping);
+
+                    const validationResult = validateSubmissionFileMapping(
+                        finalSubmissionFileMapping,
+                        fileSharingConfig,
+                    );
+                    if (validationResult.isErr()) {
+                        onError(validationResult.error.message);
+                        return;
+                    }
+
                     const finalMetadataFileResult = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
                     if (finalMetadataFileResult.isErr()) {
                         onError(finalMetadataFileResult.error.message);
@@ -158,10 +171,17 @@ const InnerDataUploadForm = ({
                     return;
                 }
 
+                const validationResult = validateSubmissionFileMapping(submissionFileMapping.value, fileSharingConfig);
+                if (validationResult.isErr()) {
+                    onError(validationResult.error.message);
+                    return;
+                }
+
                 const { submissionFileMapping: resolvedSubmissionFileMapping, fileLinkage } = resolveFileMappings(
                     submissionFileMapping.value,
                     fileMapping,
                 );
+
                 const linkageErrors = getLinkageErrors(fileLinkage);
                 if (linkageErrors !== undefined) {
                     onError(linkageErrors);

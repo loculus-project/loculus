@@ -300,6 +300,47 @@ test('bulk submit blocks a submission with errors in file linkage or parsing', a
     }
 });
 
+test('bulk submit blocks a submission with an invalid file name', async ({
+    page,
+    groupId,
+    tmpDir,
+}) => {
+    test.setTimeout(180_000);
+    void groupId;
+
+    const VALID_FILE_NAME = 'testfile.fastq';
+    const INVALID_FILE_NAME = 'CON.fastq';
+    const FILES = {
+        [VALID_FILE_NAME]: EBOLA_SUDAN_SMALL_FASTQ(1),
+        [INVALID_FILE_NAME]: EBOLA_SUDAN_SMALL_FASTQ(2),
+    };
+
+    const submissionPage = new BulkSubmissionPage(page);
+    await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
+    await submissionPage.acceptTerms();
+    await submissionPage.uploadMetadataFile(
+        [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
+        [
+            [
+                ID_1,
+                COUNTRY_1,
+                '2023-01-01',
+                SEQUENCING_INSTRUMENT,
+                filesColumnCell(Object.keys(FILES), ID_1),
+            ],
+        ],
+    );
+    await submissionPage.uploadSequencesFile({ [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE });
+    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES }, tmpDir);
+
+    await submissionPage.clickSubmit();
+
+    await expect(page.getByText(`Invalid filename '${INVALID_FILE_NAME}'`).first()).toBeVisible();
+    await expect(page.getByText(`Invalid filename '${VALID_FILE_NAME}'`)).toHaveCount(0);
+    // A blocked submission returns before the data use terms dialog is shown
+    await expect(page.getByRole('button', { name: 'Continue under Open terms' })).toHaveCount(0);
+});
+
 const REVISION_METADATA_HEADERS = [
     'accession',
     'submissionId',

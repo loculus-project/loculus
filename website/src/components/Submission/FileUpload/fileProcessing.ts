@@ -143,8 +143,6 @@ export interface ProcessedPlainSegmentFile extends ProcessedFile {
     fastaHeader(): string | null;
 }
 
-export const dummy = 0;
-
 export class RawFile implements ProcessedFile {
     constructor(private innerFile: File) {}
 

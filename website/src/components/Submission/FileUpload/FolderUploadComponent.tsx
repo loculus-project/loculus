@@ -2,14 +2,14 @@ import { produce } from 'immer';
 import React, { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
 
-import type {
-    Awaiting,
-    FileUploadState,
-    Pending,
-    PreviousUpload,
-    SingleFileUpload,
-    Uploaded,
-    UploadStatus,
+import {
+    type Awaiting,
+    type FileUploadState,
+    type Pending,
+    type PreviousUpload,
+    type SingleFileUpload,
+    type Uploaded,
+    type UploadStatus,
 } from './fileUpload';
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
@@ -533,6 +533,6 @@ const isFilesArrayValid = (files: File[], inputMode: InputMode): string | undefi
     const fileNames = files.map((f) => f.name);
     const folderNames = files.flatMap((f) => f.webkitRelativePath.split('/').slice(1, -1));
 
-    if (fileNames.some((n) => /\s/.test(n))) return 'File names cannot contain whitespace.';
-    if (folderNames.some((p) => /\s/.test(p))) return 'Folder names cannot contain whitespace.';
+    if (fileNames.some((n) => /\s/.test(n))) return 'File names may not contain whitespace.';
+    if (folderNames.some((p) => /\s/.test(p))) return 'Folder names may not contain whitespace.';
 };

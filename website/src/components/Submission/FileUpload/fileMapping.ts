@@ -1,7 +1,9 @@
 import { type Result, ok, err } from 'neverthrow';
 import Papa from 'papaparse';
 
+import { getFileNameErrorMessage, validateFileNames } from './fileNameValidation';
 import { FILES_HEADER_PREFIX, SUBMISSION_ID_INPUT_FIELD } from '../../../settings';
+import type { FileSharingConfig } from '../../../types/config';
 
 const ID_COLUMNS = [SUBMISSION_ID_INPUT_FIELD, 'submissionId'];
 
@@ -516,4 +518,28 @@ export async function applyFileMappings(
     const header = columns.map(({ name }) => name);
     const content = Papa.unparse([header, ...updatedRows], { delimiter: '\t', newline: '\n' });
     return ok(new File([content], 'metadata.tsv', { type: 'text/tab-separated-values' }));
+}
+
+export function validateSubmissionFileMapping<T>(
+    submissionFileMapping: SubmissionFileMapping<T>,
+    fileSharingConfig: FileSharingConfig,
+): Result<void, Error> {
+    // Validate file names
+    const fileNames = [
+        ...new Set(
+            [...submissionFileMapping.values()]
+                .flatMap((categoryMapping) => [...categoryMapping.values()])
+                .flatMap((fileEntries) => [...fileEntries.keys()]),
+        ),
+    ];
+    const fileNameValidationResult = validateFileNames(fileNames, fileSharingConfig);
+    if (fileNameValidationResult.isErr()) {
+        return err(
+            new Error(
+                'Encountered errors in submitted file names: ' +
+                    getFileNameErrorMessage(fileNameValidationResult.error),
+            ),
+        );
+    }
+    return ok();
 }
