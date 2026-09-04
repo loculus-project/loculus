@@ -4,8 +4,8 @@
 
 \restrict dummy
 
--- Dumped from database version 15.18 (Debian 15.18-1.pgdg13+1)
--- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg13+1)
+-- Dumped from database version 15.19 (Debian 15.19-1.pgdg13+2)
+-- Dumped by pg_dump version 16.15 (Debian 16.15-1.pgdg13+2)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -321,11 +321,25 @@ CREATE TABLE public.external_metadata (
 ALTER TABLE public.external_metadata OWNER TO postgres;
 
 --
+-- Name: file_id_sequence; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.file_id_sequence
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.file_id_sequence OWNER TO postgres;
+
+--
 -- Name: files; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.files (
-    id uuid NOT NULL,
+    id text NOT NULL,
     upload_requested_at timestamp without time zone NOT NULL,
     uploader text NOT NULL,
     group_id integer NOT NULL,
