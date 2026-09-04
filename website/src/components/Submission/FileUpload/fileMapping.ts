@@ -520,20 +520,18 @@ export async function applyFileMappings(
     return ok(new File([content], 'metadata.tsv', { type: 'text/tab-separated-values' }));
 }
 
-export function validateSubmissionFileMapping(
-    resolvedSubmissionFileMapping: SubmissionFileMapping<ResolvedFile>,
+export function validateSubmissionFileMapping<T>(
+    submissionFileMapping: SubmissionFileMapping<T>,
     fileSharingConfig: FileSharingConfig,
-) {
-    // Get file names
+): Result<void, Error> {
+    // Validate file names
     const fileNames = [
         ...new Set(
-            [...resolvedSubmissionFileMapping.values()]
+            [...submissionFileMapping.values()]
                 .flatMap((categoryMapping) => [...categoryMapping.values()])
                 .flatMap((fileEntries) => [...fileEntries.keys()]),
         ),
     ];
-
-    // Validate file names
     const fileNameValidationResult = validateFileNames(fileNames, fileSharingConfig);
     if (fileNameValidationResult.isErr()) {
         return err(

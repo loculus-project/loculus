@@ -171,19 +171,16 @@ const InnerDataUploadForm = ({
                     return;
                 }
 
-                const { submissionFileMapping: resolvedSubmissionFileMapping, fileLinkage } = resolveFileMappings(
-                    submissionFileMapping.value,
-                    fileMapping,
-                );
-
-                const validationResult = validateSubmissionFileMapping(
-                    resolvedSubmissionFileMapping,
-                    fileSharingConfig,
-                );
+                const validationResult = validateSubmissionFileMapping(submissionFileMapping.value, fileSharingConfig);
                 if (validationResult.isErr()) {
                     onError(validationResult.error.message);
                     return;
                 }
+
+                const { submissionFileMapping: resolvedSubmissionFileMapping, fileLinkage } = resolveFileMappings(
+                    submissionFileMapping.value,
+                    fileMapping,
+                );
 
                 const linkageErrors = getLinkageErrors(fileLinkage);
                 if (linkageErrors !== undefined) {

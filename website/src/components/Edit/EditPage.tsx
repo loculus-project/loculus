@@ -157,13 +157,23 @@ const InnerEditPage: FC<EditPageProps> = ({
             });
         } else {
             let fileMappingForEdit: FilesByCategory | null = null;
-            if (extraFilesEnabled && fileMapping !== undefined)
+            if (extraFilesEnabled && fileMapping !== undefined) {
+                const validationResult = validateSubmissionFileMapping(
+                    getSingleSubmissionFileMapping(dataToEdit.submissionId, fileMapping),
+                    fileSharingConfig,
+                );
+                if (validationResult.isErr()) {
+                    toast.error(validationResult.error.message, { position: 'top-center', autoClose: false });
+                    return;
+                }
+
                 fileMappingForEdit = Object.fromEntries(
                     [...fileMapping].map(([category, files]) => [
                         category,
                         [...files.entries()].map(([path, fileId]) => ({ fileId, name: path })),
                     ]),
                 );
+            }
             submitEdit({
                 accession: dataToEdit.accession,
                 version: dataToEdit.version,

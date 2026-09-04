@@ -8,6 +8,7 @@ import {
     getLinkageErrors,
     LinkageType,
     parseSubmissionFileMapping,
+    validateSubmissionFileMapping,
     type FileLinkage,
     type FileMapping,
     type SubmissionFile,
@@ -386,5 +387,31 @@ describe('applyFileMappings', () => {
             merged,
         );
         expect(errorMessageOf(result)).toContain(`Encountered unknown category ${RAW_READS} not present in metadata`);
+    });
+});
+
+describe('validateSubmissionFileMapping', () => {
+    const fileSharingConfig = { disableStrictFilenameValidation: false };
+
+    it('validates the file names of every submission and category', () => {
+        const mapping = submissionMappingOf({
+            e1: { [RAW_READS]: [declaredFile('a.txt')] },
+            e2: { [RAW_READS]: [declaredFile('b.txt')], [OTHER_FILES]: [reusedFile('CON.txt', 'id-c')] },
+        });
+        expect(errorMessageOf(validateSubmissionFileMapping(mapping, fileSharingConfig))).toContain(
+            "Invalid filename 'CON.txt'",
+        );
+    });
+
+    it('validates the file names of a resolved mapping', () => {
+        const mapping = resolvedMappingOf({ e1: { [RAW_READS]: [{ name: 'CON.txt', fileId: 'id-a' }] } });
+        expect(errorMessageOf(validateSubmissionFileMapping(mapping, fileSharingConfig))).toContain(
+            "Invalid filename 'CON.txt'",
+        );
+    });
+
+    it('accepts valid file names', () => {
+        const mapping = submissionMappingOf({ e1: { [RAW_READS]: [declaredFile('a.txt')] } });
+        expect(validateSubmissionFileMapping(mapping, fileSharingConfig).isOk()).toBe(true);
     });
 });

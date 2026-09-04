@@ -13,12 +13,7 @@ const containsControlCharacter = (fileName: string): boolean => {
     return false;
 };
 
-/**
- * Mirrors the restrictions enforced by the backend in FileMappingPreconditionValidator.kt,
- * so that file names are validated before any uploads.
- *
- * Any changes to validation here should also be reflected in the backend validation.
- */
+/** Mirrors the restrictions enforced by the backend - any changes to validation here should also be reflected there. */
 export const validateFileNames = (fileNames: string[], fileSharingConfig: FileSharingConfig): Result<void, Error[]> => {
     const errors: Error[] = [];
 
