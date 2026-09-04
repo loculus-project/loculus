@@ -380,6 +380,7 @@ def update_with_existing_runrecord(db_engine: Engine, row: SubmissionTableEntry,
                 "errors": [error],
             },
         )
+        return
 
     logger.info("Checking if run actually exists and is public")
     seq_key = asdict(row.pkey)
@@ -443,6 +444,7 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
 
         if row.result and row.result.get("err_accession"):
             update_with_existing_runrecord(db_engine, submission_row, config)
+            continue
 
         revision = is_revision(db_engine, seq_key)
         if revision:
