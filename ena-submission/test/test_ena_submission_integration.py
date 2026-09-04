@@ -90,6 +90,7 @@ from sqlalchemy import Engine
 
 CONFIG_FILE = "./test/test_config.yaml"
 INPUT_FILE = "./test/data/approved_ena_submission_list_test.json"
+# Created using `seqkit split -p 2 SRR38154636.fastq` on the interleaved SRA read file SRR38154636
 RAW_READS_FIXTURE_FILE_1 = "./test/data/SRR38154636.part_001.fastq.gz"
 RAW_READS_FIXTURE_FILE_2 = "./test/data/SRR38154636.part_002.fastq.gz"
 TEST_ACCESSION = "LOC_0001TLY"
