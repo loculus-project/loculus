@@ -364,6 +364,22 @@ def update_with_existing_runrecord(db_engine: Engine, row: SubmissionTableEntry,
     )
     run = row.seq_metadata["insdcRawReadsAccession"]
 
+    if run and row.seq_metadata.get(config.raw_reads_metadata_field):
+        error = (
+            f"Accession: {row.accession} has insdcRawReadsAccession and raw reads files, "
+            "do not know how to proceed."
+        )
+        logger.error(error)
+        update_db_where_conditions(
+            db_engine,
+            model_class=RawReadsTableEntry,
+            conditions=asdict(row.pkey),
+            update_values={
+                "status": Status.HAS_ERRORS,
+                "errors": [error],
+            },
+        )
+
     logger.info("Checking if run actually exists and is public")
     seq_key = asdict(row.pkey)
     if not accession_exists(run, config):
