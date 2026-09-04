@@ -444,7 +444,6 @@ def _test_successful_assembly_submission(
     config: Config,
     sequences_to_upload: dict[str, Any],
     single_segment: bool = False,
-    with_raw_reads: bool = False,
 ) -> None:
     create_assembly_submission_table_start(db_engine)
     check_assembly_submission_started(db_engine, sequences_to_upload)
@@ -745,9 +744,7 @@ def multi_segment_submission(
         }
         assert payload["externalMetadata"]["insdcRawReadsAccession"].startswith("ERR")
 
-    _test_successful_assembly_submission(
-        db_engine, config, sequences_to_upload, single_segment, with_raw_reads=with_raw_reads
-    )
+    _test_successful_assembly_submission(db_engine, config, sequences_to_upload, single_segment)
     get_external_metadata_and_send_to_loculus(db_engine, config)
     if not single_segment:
         # Only complete in case of multi-segment submission
