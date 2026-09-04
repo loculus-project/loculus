@@ -377,6 +377,7 @@ class AssemblyCreationTests(unittest.TestCase):
             sample_accession,
             study_accession,
             sample_data_in_submission_table(),
+            dir="./tmp",
         )
         manifest_file_name = create_manifest(manifest, is_broker=True)
         data = {}

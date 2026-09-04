@@ -221,7 +221,7 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
 
 
 def download_fastq_files(
-    config: Config, metadata: dict[str, Any], accession: str, dir: str | None = None
+    config: Config, metadata: dict[str, Any], accession: str, dir: str
 ) -> list[str]:
     """
     Download the fastq files listed under the `rawreads` metadata field to local disk
@@ -240,8 +240,7 @@ def download_fastq_files(
         raise RuntimeError(msg)
     files = json.loads(raw_reads)
 
-    if dir:
-        os.makedirs(dir, exist_ok=True)
+    os.makedirs(dir, exist_ok=True)
 
     fastq_files = []
     for file_entry in files:
@@ -251,13 +250,7 @@ def download_fastq_files(
         logger.info(
             f"Starting download of {file_entry['name']} to {file_name} for accession {accession}"
         )
-        if dir:
-            file_path = os.path.join(dir, file_name + file_extension)
-        else:
-            with tempfile.NamedTemporaryFile(
-                delete=False, suffix=file_name + file_extension, prefix=f"{accession}_", dir=dir
-            ) as temp:
-                file_path = temp.name
+        file_path = os.path.join(dir, file_name + file_extension)
 
         with requests.get(
             file_entry["url"],
