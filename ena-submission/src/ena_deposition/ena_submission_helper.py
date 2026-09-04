@@ -1024,7 +1024,7 @@ def set_accession_does_not_exist_error(
         case "RUN_REF":
             succeeded = update_db_where_conditions(
                 db_engine,
-                AssemblyTableEntry,
+                RawReadsTableEntry,
                 conditions,
                 {
                     "status": Status.HAS_ERRORS,

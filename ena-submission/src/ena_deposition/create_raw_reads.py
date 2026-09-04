@@ -388,7 +388,7 @@ def update_with_existing_runrecord(db_engine: Engine, row: SubmissionTableEntry,
         set_accession_does_not_exist_error(
             conditions=seq_key,
             accession=run,
-            accession_type="RUN",
+            accession_type="RUN_REF",
             db_engine=db_engine,
         )
         return
