@@ -62,7 +62,7 @@ dependencies {
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0"
     implementation "org.springframework.boot:spring-boot-starter-flyway"
     implementation "org.flywaydb:flyway-database-postgresql" // Version managed by Spring Boot to ensure compatibility
-    implementation platform("org.jetbrains.exposed:exposed-bom:1.4.0")
+    implementation platform("org.jetbrains.exposed:exposed-bom:1.5.0")
     implementation "org.jetbrains.exposed:exposed-spring-boot4-starter"
     implementation "org.jetbrains.exposed:exposed-jdbc"
     implementation "org.jetbrains.exposed:exposed-json"
