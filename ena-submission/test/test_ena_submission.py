@@ -4,7 +4,7 @@ import csv
 import gzip
 import json
 import logging
-import os
+import tempfile
 import unittest
 from pathlib import Path
 from typing import Final
@@ -278,6 +278,9 @@ class AssemblyCreationTests(unittest.TestCase):
             "main": "CTTAACTTTGAGAGAGTGAATT",
         }
         self.seq_key = "LOC_0001TLY"
+        tmp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp_dir.cleanup)
+        self.tmp_dir = tmp_dir.name
 
     def test_format_authors(self):
         authors = "Xi,L.;Smith, Anna Maria; Perez Gonzalez, Anthony J.;Doe,;von Doe, John"
@@ -321,7 +324,7 @@ class AssemblyCreationTests(unittest.TestCase):
         }
 
         flatfile_path = create_flatfile(
-            config, metadata, mock_organism(), unaligned_sequences, dir="./tmp"
+            config, metadata, mock_organism(), unaligned_sequences, dir=self.tmp_dir
         )
 
         with gzip.open(flatfile_path, "rt", encoding="utf-8") as f:
@@ -334,9 +337,6 @@ class AssemblyCreationTests(unittest.TestCase):
 
         # Additional check: ensure no &apos; entities are present
         self.assertNotIn("&apos;", generated_content, "Flatfile should not contain &apos; entities")
-
-        # Clean up
-        os.remove(flatfile_path)
 
     def test_create_chromosome_list_multi_segment(self):
         chromosome_list = create_chromosome_list_object(
@@ -377,7 +377,7 @@ class AssemblyCreationTests(unittest.TestCase):
             sample_accession,
             study_accession,
             sample_data_in_submission_table(),
-            dir="./tmp",
+            dir=self.tmp_dir,
         )
         manifest_file_name = create_manifest(manifest, is_broker=True)
         data = {}
@@ -546,6 +546,9 @@ class RawReadsCreationTests(unittest.TestCase):
     def setUp(self):
         self.seq_key = "LOC_0001TLY"
         self.fastq_files = ["/tmp/fake_R1.fastq.gz", "/tmp/fake_R2.fastq.gz"]  # noqa: S108
+        tmp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp_dir.cleanup)
+        self.tmp_dir = tmp_dir.name
 
     @mock.patch("ena_deposition.call_loculus.get_group_info")
     @mock.patch("ena_deposition.call_loculus.download_fastq_files")
@@ -562,7 +565,11 @@ class RawReadsCreationTests(unittest.TestCase):
         }
 
         manifest = create_raw_reads_manifest_object(
-            config, "Test Sample Accession", "Test Study Accession", submission_row
+            config,
+            "Test Sample Accession",
+            "Test Study Accession",
+            submission_row,
+            dir=self.tmp_dir,
         )
         self.assertEqual(manifest.insert_size, 350)
         self.assertEqual(manifest.study, "Test Study Accession")
@@ -590,7 +597,11 @@ class RawReadsCreationTests(unittest.TestCase):
         }
 
         manifest = create_raw_reads_manifest_object(
-            config, "Test Sample Accession", "Test Study Accession", submission_row
+            config,
+            "Test Sample Accession",
+            "Test Study Accession",
+            submission_row,
+            dir=self.tmp_dir,
         )
         self.assertIsNone(manifest.insert_size)
 
@@ -604,7 +615,11 @@ class RawReadsCreationTests(unittest.TestCase):
 
         with self.assertRaises(RuntimeError) as ctx:
             create_raw_reads_manifest_object(
-                config, "Test Sample Accession", "Test Study Accession", submission_row
+                config,
+                "Test Sample Accession",
+                "Test Study Accession",
+                submission_row,
+                dir=self.tmp_dir,
             )
         self.assertIn("No fastq files found", str(ctx.exception))
         self.assertIsNone(ctx.exception.__cause__)
@@ -622,7 +637,11 @@ class RawReadsCreationTests(unittest.TestCase):
 
         with self.assertRaises(RuntimeError) as ctx:
             create_raw_reads_manifest_object(
-                config, "Test Sample Accession", "Test Study Accession", submission_row
+                config,
+                "Test Sample Accession",
+                "Test Study Accession",
+                submission_row,
+                dir=self.tmp_dir,
             )
         self.assertIn(submission_row.accession, str(ctx.exception))
         self.assertIsInstance(ctx.exception.__cause__, ValueError)
@@ -638,7 +657,11 @@ class RawReadsCreationTests(unittest.TestCase):
         }
 
         manifest = create_raw_reads_manifest_object(
-            config, "Test Sample Accession", "Test Study Accession", submission_row
+            config,
+            "Test Sample Accession",
+            "Test Study Accession",
+            submission_row,
+            dir=self.tmp_dir,
         )
         self.assertIsNone(manifest.platform)
         self.assertEqual(manifest.instrument, Instrument.HiSeq_X_Five)
@@ -657,7 +680,11 @@ class RawReadsCreationTests(unittest.TestCase):
             ValueError, msg="matches neither ENA's platform nor instrument list"
         ):
             create_raw_reads_manifest_object(
-                config, "Test Sample Accession", "Test Study Accession", submission_row
+                config,
+                "Test Sample Accession",
+                "Test Study Accession",
+                submission_row,
+                dir=self.tmp_dir,
             )
 
 
