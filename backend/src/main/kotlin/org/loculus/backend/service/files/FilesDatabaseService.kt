@@ -26,7 +26,7 @@ import java.util.*
 @Transactional
 class FilesDatabaseService(private val dateProvider: DateProvider) {
 
-    fun createFileEntry(fileId: UUID, uploader: String, groupId: Int, multipartUploadId: String? = null) {
+    fun createFileEntry(fileId: FileId, uploader: String, groupId: Int, multipartUploadId: String? = null) {
         val now = dateProvider.getCurrentDateTime()
         FilesTable.insert {
             it[idColumn] = fileId
@@ -37,7 +37,7 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         }
     }
 
-    fun deleteFileEntry(fileId: UUID) {
+    fun deleteFileEntry(fileId: FileId) {
         FilesTable.deleteWhere { FilesTable.idColumn eq fileId }
     }
 
@@ -80,7 +80,7 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
             -- archive_of_submitted_data and processed_data jsonb objects
             WITH referenced AS (
                 -- fetch ids for files uploaded by users and referenced in submissions
-                SELECT (fil->>'fileId')::uuid AS file_id
+                SELECT (fil->>'fileId') AS file_id
                 FROM sequence_entries se,
                     LATERAL (
                         VALUES
@@ -94,7 +94,7 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
                 UNION
                 -- also need to check processed_data since preprocessing
                 -- can create files that are never referenced in submissions
-                SELECT (fil->>'fileId')::uuid AS file_id
+                SELECT (fil->>'fileId') AS file_id
                 FROM sequence_entries_preprocessed_data sepd
                 JOIN sequence_entries se
                     ON se.accession = sepd.accession
@@ -115,7 +115,7 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
             ) { rs ->
                 buildList<DeletionCandidateFile> {
                     while (rs.next()) {
-                        val id = rs.getObject("id", UUID::class.java)
+                        val id = rs.getString("id")
                         val markedAt = rs.getTimestamp("marked_for_deletion_at")?.toLocalDateTime()?.let { ldt ->
                             LocalDateTime(
                                 ldt.year,
