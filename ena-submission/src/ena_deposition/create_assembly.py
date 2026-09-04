@@ -44,7 +44,7 @@ from .submission_db_helper import (
     Status,
     StatusAll,
     SubmissionTableEntry,
-    add_to_assembly_table,
+    add_to_db,
     db_init,
     find_conditions_in_db,
     find_errors_or_stuck_in_db,
@@ -233,7 +233,7 @@ def submission_table_start(db_engine: Engine, config: Config) -> None:
                 status_all = StatusAll.SUBMITTING_ASSEMBLY
         else:
             # If not: create assembly_entry, change status to SUBMITTING_ASSEMBLY
-            if not add_to_assembly_table(db_engine, AssemblyTableEntry(**seq_key)):
+            if not add_to_db(db_engine, AssemblyTableEntry(**seq_key)):
                 continue
             status_all = StatusAll.SUBMITTING_ASSEMBLY
         update_db_where_conditions(
@@ -288,7 +288,7 @@ def update_assembly_error(
     db_engine: Engine,
     error: list[str],
     seq_key: dict[str, Any],
-    update_type: Literal["revision"] | Literal["creation"],
+    update_type: Literal["revision", "creation"],
 ) -> None:
     logger.error(
         f"Assembly {update_type} failed for accession {seq_key['accession']} "
