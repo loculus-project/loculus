@@ -24,7 +24,10 @@ data class DataUseTerms(val enabled: Boolean, val urls: DataUseTermsUrls?)
 
 data class DataUseTermsUrls(val open: String, val restricted: String)
 
-data class FileSharing(val outputFileUrlType: FileUrlType = FileUrlType.WEBSITE)
+data class FileSharing(
+    val outputFileUrlType: FileUrlType = FileUrlType.WEBSITE,
+    val disableStrictFilenameValidation: Boolean = false,
+)
 
 /**
  * The types URLs that can be output for a file.

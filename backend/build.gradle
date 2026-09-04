@@ -62,7 +62,7 @@ dependencies {
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0"
     implementation "org.springframework.boot:spring-boot-starter-flyway"
     implementation "org.flywaydb:flyway-database-postgresql" // Version managed by Spring Boot to ensure compatibility
-    implementation platform("org.jetbrains.exposed:exposed-bom:1.4.0")
+    implementation platform("org.jetbrains.exposed:exposed-bom:1.5.0")
     implementation "org.jetbrains.exposed:exposed-spring-boot4-starter"
     implementation "org.jetbrains.exposed:exposed-jdbc"
     implementation "org.jetbrains.exposed:exposed-json"
@@ -71,7 +71,7 @@ dependencies {
     implementation "org.hibernate.validator:hibernate-validator"
     implementation "org.keycloak:keycloak-admin-client:26.0.12"
     implementation("io.minio:minio:9.0.3")
-    implementation("software.amazon.awssdk:s3:2.54.2")
+    implementation("software.amazon.awssdk:s3:2.54.7")
 
     implementation "org.springframework.boot:spring-boot-starter-security-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
@@ -81,7 +81,7 @@ dependencies {
     implementation 'org.tukaani:xz:1.12'
 
     implementation("org.redundent:kotlin-xml-builder:1.9.3")
-    implementation("org.jsoup:jsoup:1.23.1")
+    implementation("org.jsoup:jsoup:1.23.2")
 
     testImplementation "org.springframework.boot:spring-boot-starter-webmvc-test"
     testImplementation platform("io.jsonwebtoken:jjwt-bom:0.13.0")
