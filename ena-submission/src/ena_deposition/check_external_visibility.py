@@ -68,7 +68,11 @@ class ENAVisibilityChecker(VisibilityChecker):
     """Checker for ENA visibility"""
 
     def check_visibility(self, config: Config, accession: str) -> datetime | None:
-        file_type = "xml" if accession.startswith(("PRJ", "SAM", "GCA", "ERR", "ERX")) else "embl"
+        file_type = (
+            "xml"
+            if accession.startswith(("PRJ", "SAM", "GCA", "ERR", "ERX", "SRR", "SRX", "DRR", "DRX"))
+            else "embl"
+        )
         response = requests.get(
             f"https://www.ebi.ac.uk/ena/browser/api/{file_type}/{accession}",
             allow_redirects=False,
@@ -98,7 +102,7 @@ class NCBIVisibilityChecker(VisibilityChecker):
             db = "bioproject"
         elif accession.startswith("SAM"):
             db = "biosample"
-        elif accession.startswith(("ERR", "ERX")):
+        elif accession.startswith(("ERR", "ERX", "SRR", "SRX", "DRR", "DRX")):
             db = "sra"
         else:
             db = "nuccore"
