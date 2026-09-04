@@ -1,7 +1,9 @@
+import gzip
 import json
 import logging
 import os
-import tempfile
+import pathlib
+import shutil
 import traceback
 import uuid
 from collections.abc import Iterator
@@ -218,7 +220,7 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
 
 
 def download_fastq_files(
-    config: Config, metadata: dict[str, Any], accession: str, dir: str | None = None
+    config: Config, metadata: dict[str, Any], accession: str, dir: str
 ) -> list[str]:
     """
     Download the fastq files listed under the `rawreads` metadata field to local disk
@@ -237,30 +239,20 @@ def download_fastq_files(
         raise RuntimeError(msg)
     files = json.loads(raw_reads)
 
-    if dir:
-        os.makedirs(dir, exist_ok=True)
-
-    jwt = get_jwt(config)
-    headers = {"Authorization": f"Bearer {jwt}"}
+    os.makedirs(dir, exist_ok=True)
 
     fastq_files = []
     for file_entry in files:
         # Use the fileId to avoid any potential security issues as name is supplied by the user
         file_name = os.path.basename(file_entry["fileId"])
+        file_extension = "".join(pathlib.Path(file_entry["name"]).suffixes)
         logger.info(
             f"Starting download of {file_entry['name']} to {file_name} for accession {accession}"
         )
-        if dir:
-            file_path = os.path.join(dir, file_name)
-        else:
-            with tempfile.NamedTemporaryFile(
-                delete=False, suffix=file_name, prefix=f"{accession}_", dir=dir
-            ) as temp:
-                file_path = temp.name
+        file_path = os.path.join(dir, file_name + file_extension)
 
         with requests.get(
             file_entry["url"],
-            headers=headers,
             stream=True,
             timeout=config.s3_request_timeout_seconds,
         ) as response:
@@ -270,6 +262,15 @@ def download_fastq_files(
             chunk_size = 1 << 20
             with open(file_path, "wb") as f:
                 f.writelines(response.iter_content(chunk_size=chunk_size))
+
+        # ENA's webin-cli only accepts FASTQ files compressed as .gz or .bz2 - gzip
+        # any file that wasn't already uploaded pre-compressed.
+        if not file_path.endswith((".gz", ".bz2")):
+            compressed_path = file_path + ".gz"
+            with open(file_path, "rb") as src, gzip.open(compressed_path, "wb") as dst:
+                shutil.copyfileobj(src, dst)
+            os.remove(file_path)
+            file_path = compressed_path
 
         fastq_files.append(file_path)
 

@@ -238,6 +238,9 @@ def check_raw_reads_submission_submitted(
         )
         assert len(rows) == 1, f"Raw reads for {full_accession} not found in raw reads table."
         assert rows[0].result, f"No result for raw reads {full_accession} in raw reads table."
+        assert not rows[0].errors, (
+            f"Raw reads {full_accession} is SUBMITTED but still has errors: {rows[0].errors}"
+        )
         assert in_submission_table(
             db_engine,
             {
@@ -306,7 +309,7 @@ def check_assembly_submission_has_errors(
 
 
 def check_assembly_submission_started(
-    db_engine: Engine, sequences_to_upload: dict[str, Any], with_raw_reads: bool = False
+    db_engine: Engine, sequences_to_upload: dict[str, Any]
 ) -> None:
     for full_accession in sequences_to_upload:
         accession, version = full_accession.split(".")
@@ -316,10 +319,6 @@ def check_assembly_submission_started(
             conditions={"accession": accession, "version": version, "status": "READY"},
         )
         assert len(rows) == 1, f"Assembly for {full_accession} not found in assembly table."
-        if with_raw_reads:
-            assert rows[0].result and "err_accession" in rows[0].result, (
-                f"Did not update err_accession for {full_accession} in assembly table."
-            )
 
 
 def check_assembly_submission_submitted(
@@ -461,10 +460,9 @@ def _test_successful_assembly_submission(
     config: Config,
     sequences_to_upload: dict[str, Any],
     single_segment: bool = False,
-    with_raw_reads: bool = False,
 ) -> None:
-    create_assembly_submission_table_start(db_engine, config)
-    check_assembly_submission_started(db_engine, sequences_to_upload, with_raw_reads=with_raw_reads)
+    create_assembly_submission_table_start(db_engine)
+    check_assembly_submission_started(db_engine, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
     assembly_table_create(db_engine, config)
@@ -484,7 +482,7 @@ def _test_successful_assembly_submission(
 def _test_successful_assembly_submission_no_wait(
     db_engine: Engine, config: Config, sequences_to_upload: dict[str, Any]
 ) -> None:
-    create_assembly_submission_table_start(db_engine, config)
+    create_assembly_submission_table_start(db_engine)
     check_assembly_submission_started(db_engine, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
@@ -500,7 +498,7 @@ def _test_assembly_submission_errored(
     sequences_to_upload: dict[str, Any],
     mock_notify: Mock,
 ) -> None:
-    create_assembly_submission_table_start(db_engine, config)
+    create_assembly_submission_table_start(db_engine)
     check_assembly_submission_started(db_engine, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
@@ -771,9 +769,7 @@ def multi_segment_submission(
         }
         assert payload["externalMetadata"]["insdcRawReadsAccession"].startswith("ERR")
 
-    _test_successful_assembly_submission(
-        db_engine, config, sequences_to_upload, single_segment, with_raw_reads=with_raw_reads
-    )
+    _test_successful_assembly_submission(db_engine, config, sequences_to_upload, single_segment)
     get_external_metadata_and_send_to_loculus(db_engine, config)
     if not single_segment:
         # Only complete in case of multi-segment submission

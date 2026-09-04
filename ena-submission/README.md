@@ -91,7 +91,7 @@ In a loop
     - if (entry is in status SUBMITTED): update `submission_table` to SUBMITTED_RAW_READS.
   - else: create sample entry in `raw_reads_table` for (accession, version).
 - Get sequences in `raw_reads_table` in state READY, prepare files: download raw read files and prepare manifest, set status to SUBMITTING
-  - if (submission succeeds): set status to SUBMITTED and fill in results, the results of a successful submission are a run or `err_accession` (starting with ERR) and an experiment or `erz_accession` (starting with ERZ).
+  - if (submission succeeds): set status to SUBMITTED and fill in results, the results of a successful submission are a run or `err_accession` (starting with ERR) and an experiment or `erx_accession` (starting with ERX).
   - else: set status to HAS_ERRORS and fill in errors
 - Get sequences in `raw_reads_table` in state HAS_ERRORS for over 15min and sequences in status SUBMITTING for over 15min: send a slack notification
 

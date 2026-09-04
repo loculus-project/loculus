@@ -1,6 +1,6 @@
 import json
 import logging
-import os
+import tempfile
 import threading
 import traceback
 from dataclasses import asdict
@@ -15,6 +15,7 @@ from ena_deposition import call_loculus
 from .config import Config
 from .ena_submission_helper import (
     CreationResult,
+    accession_exists,
     create_ena_raw_reads,
     create_manifest,
     get_alias,
@@ -24,6 +25,7 @@ from .ena_submission_helper import (
     resolve_manifest_field,
     resolve_required_manifest_field,
     retry_failed_submissions_for_matching_errors,
+    set_accession_does_not_exist_error,
 )
 from .ena_types import (
     Instrument,
@@ -84,7 +86,7 @@ def create_manifest_object(
     sample_accession: str,
     study_accession: str,
     submission_row: SubmissionTableEntry,
-    dir: str | None = None,
+    dir: str,
     random_alias: bool = False,
 ) -> RawReadsManifest:
     """
@@ -191,7 +193,13 @@ def sync_state_with_submission_table(db_engine: Engine):
                 f"{corresponding_raw_reads[0].status}, not updating submission_table status."
             )
             continue
-        add_to_db(db_engine, RawReadsTableEntry(**seq_key))
+        run_ref = None
+        if row and row.seq_metadata.get("insdcRawReadsAccession"):
+            run_ref = row.seq_metadata["insdcRawReadsAccession"]
+        add_to_db(
+            db_engine,
+            RawReadsTableEntry(**seq_key, result={"err_accession": run_ref} if run_ref else None),
+        )
 
 
 def update_raw_reads_error(
@@ -214,31 +222,6 @@ def update_raw_reads_error(
         },
         model_class=RawReadsTableEntry,
     )
-
-
-def manifest_fields_changed(
-    config: Config,
-    db_engine: Engine,
-    submission_row: SubmissionTableEntry,
-    last_version_entry: SubmissionTableEntry,
-) -> bool:
-    differing_fields = manifest_fields_diff(
-        config.raw_reads_manifest_fields_mapping, submission_row, last_version_entry
-    )
-    if differing_fields:
-        error = (
-            "Raw reads cannot be revised because metadata fields in manifest would change from "
-            f"last version: {json.dumps(differing_fields)}"
-        )
-        logger.error(error)
-        update_raw_reads_error(
-            db_engine,
-            [error],
-            seq_key=asdict(submission_row.pkey),
-            update_type="revision",
-        )
-        return True
-    return False
 
 
 def can_revise_raw_reads(
@@ -271,16 +254,21 @@ def can_revise_raw_reads(
     #     )
     #     return True
 
-    if manifest_fields_changed(
-        config, db_engine, submission_row, last_entry
-    ) and not has_raw_reads_changed(config, db_engine, submission_row):
-        message = (
-            f"Only manifest fields have changed for {submission_row.accession}, "
-            f"from {last_entry.version} to {submission_row.version} - should be revised manually"
+    differing_fields = manifest_fields_diff(
+        config.raw_reads_manifest_fields_mapping, submission_row, last_entry
+    )
+    if differing_fields and not has_raw_reads_changed(config, db_engine, submission_row):
+        error = (
+            "Raw reads cannot be revised because metadata fields in manifest would change from "
+            f"last version without changes in raw read data: {json.dumps(differing_fields)} "
+            "without changes in raw read data - should be revised manually"
         )
-        logger.debug(message)
+        logger.error(error)
         update_raw_reads_error(
-            db_engine, [message], seq_key=asdict(submission_row.pkey), update_type="revision"
+            db_engine,
+            [error],
+            seq_key=asdict(submission_row.pkey),
+            update_type="revision",
         )
         return False
     return True
@@ -350,7 +338,56 @@ def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: Acc
     )
 
 
-def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: SlackConfig):  # noqa: PLR0912, PLR0915
+def update_with_existing_runrecord(db_engine: Engine, row: SubmissionTableEntry, config: Config):
+    """Update sample_table entry for entry with insdcRawReadsAccession"""
+    logger.debug(
+        f"Accession: {row.accession} already has insdcRawReadsAccession, updating sample_table"
+    )
+    run = row.seq_metadata["insdcRawReadsAccession"]
+
+    if run and row.seq_metadata.get(config.raw_reads_metadata_field):
+        error = (
+            f"Accession: {row.accession} has insdcRawReadsAccession and raw reads files, "
+            "do not know how to proceed."
+        )
+        logger.error(error)
+        update_db_where_conditions(
+            db_engine,
+            model_class=RawReadsTableEntry,
+            conditions=asdict(row.pkey),
+            update_values={
+                "status": Status.HAS_ERRORS,
+                "errors": [error],
+            },
+        )
+        return
+
+    logger.info("Checking if run actually exists and is public")
+    seq_key = asdict(row.pkey)
+    if not accession_exists(run, config):
+        set_accession_does_not_exist_error(
+            conditions=seq_key,
+            accession=run,
+            accession_type="RUN_REF",
+            db_engine=db_engine,
+        )
+        return
+
+    logger.info("Updating entry with insdcRawReadsAccession to state SUBMITTED")
+    update_db_where_conditions(
+        db_engine,
+        model_class=RawReadsTableEntry,
+        conditions=seq_key,
+        update_values={
+            "accession": row.accession,
+            "version": row.version,
+            "result": {"ena_sample_accession": run, "err_accession": run},
+            "status": Status.SUBMITTED,
+        },
+    )
+
+
+def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: SlackConfig):  # noqa: PLR0915
     """
     1. Find all entries in raw_reads_table in state READY
     2. Create temporary files: download fastq files, manifest_file
@@ -385,6 +422,10 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
             db_engine, submission_row
         )
 
+        if row.result and row.result.get("err_accession"):
+            update_with_existing_runrecord(db_engine, submission_row, config)
+            continue
+
         revision = is_revision(db_engine, seq_key)
         if revision:
             logger.debug(f"Entry {row.accession} is a revision, checking if it can be revised")
@@ -400,76 +441,79 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
                 else None
             )
 
-        try:
-            manifest_object = create_manifest_object(
-                config,
-                sample_accession,
-                study_accession,
-                submission_row,
-                random_alias=config.random_alias,
-            )
-            manifest_file = create_manifest(manifest_object, is_broker=config.is_broker)
-        except Exception as e:
-            error_msg = f"Manifest creation failed for accession {row.accession} with error {e}"
-            logger.error(error_msg)
-            update_raw_reads_error(
+        # Downloaded fastq files and the manifest are written under tmp_dir, which is removed
+        # on every exit from this block
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            try:
+                manifest_object = create_manifest_object(
+                    config,
+                    sample_accession,
+                    study_accession,
+                    submission_row,
+                    dir=tmp_dir,
+                    random_alias=config.random_alias,
+                )
+                manifest_file = create_manifest(
+                    manifest_object, is_broker=config.is_broker, dir=tmp_dir
+                )
+            except Exception as e:
+                error_msg = f"Manifest creation failed for accession {row.accession} with error {e}"
+                logger.error(error_msg)
+                update_raw_reads_error(
+                    db_engine,
+                    [error_msg],
+                    seq_key=asdict(row.pkey),
+                    update_type="creation",
+                )
+                continue
+
+            update_values: dict[str, Any] = {"status": Status.SUBMITTING}
+            number_rows_updated = update_db_where_conditions(
                 db_engine,
-                [error_msg],
-                seq_key=asdict(row.pkey),
-                update_type="creation",
-            )
-            continue
-
-        update_values: dict[str, Any] = {"status": Status.SUBMITTING}
-        number_rows_updated = update_db_where_conditions(
-            db_engine,
-            model_class=RawReadsTableEntry,
-            conditions=asdict(seq_key),
-            update_values=update_values,
-        )
-        if number_rows_updated != 1:
-            # state not correctly updated - do not start submission
-            logger.warning(
-                "raw_reads_table: Status update from READY to SUBMITTING failed - "
-                "not starting submission."
-            )
-            continue
-        logger.info(f"Starting raw reads creation for accession {row.accession}")
-
-        # Actual webin-cli command is run here
-        raw_reads_creation_results: CreationResult = create_ena_raw_reads(
-            config=config,
-            manifest_filename=manifest_file,
-            center_name=center_name,
-        )
-        if raw_reads_creation_results.result:
-            update_values = {
-                "status": Status.SUBMITTED,
-                "result": raw_reads_creation_results.result,
-            }
-            logger.info(
-                f"Raw reads creation succeeded for {seq_key.accession} version {seq_key.version}"
-            )
-            update_with_retry(
-                db_engine=db_engine,
+                model_class=RawReadsTableEntry,
                 conditions=asdict(seq_key),
                 update_values=update_values,
-                model_class=RawReadsTableEntry,
             )
-            run_accessions_to_suppress.add(old_run_accession) if revision else None
-        else:
-            update_raw_reads_error(
-                db_engine,
-                raw_reads_creation_results.errors,
-                seq_key=asdict(row.pkey),
-                update_type="creation",
+            if number_rows_updated != 1:
+                # state not correctly updated - do not start submission
+                logger.warning(
+                    "raw_reads_table: Status update from READY to SUBMITTING failed - "
+                    "not starting submission."
+                )
+                continue
+            logger.info(f"Starting raw reads creation for accession {row.accession}")
+
+            # Actual webin-cli command is run here
+            raw_reads_creation_results: CreationResult = create_ena_raw_reads(
+                config=config,
+                manifest_filename=manifest_file,
+                center_name=center_name,
             )
-        for file in manifest_object.fastq:
-            try:
-                logger.info(f"Cleaning up temporary file {file} after successful submission")
-                os.remove(file)
-            except Exception as e:
-                logger.warning(f"Failed to remove temporary file {file}: {e}")
+            if raw_reads_creation_results.result:
+                update_values = {
+                    "status": Status.SUBMITTED,
+                    "result": raw_reads_creation_results.result,
+                }
+                logger.info(
+                    f"Raw reads creation succeeded for {seq_key.accession} "
+                    f"version {seq_key.version}"
+                )
+                update_with_retry(
+                    db_engine=db_engine,
+                    conditions=asdict(seq_key),
+                    update_values=update_values,
+                    model_class=RawReadsTableEntry,
+                )
+                run_accessions_to_suppress.add(
+                    old_run_accession
+                ) if revision and old_run_accession else None
+            else:
+                update_raw_reads_error(
+                    db_engine,
+                    raw_reads_creation_results.errors,
+                    seq_key=asdict(row.pkey),
+                    update_type="creation",
+                )
     if run_accessions_to_suppress:
         notify_msg = (
             f"Raw reads creation succeeded for {len(run_accessions_to_suppress)} revisions, "
