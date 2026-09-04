@@ -43,7 +43,7 @@ def get_insdc_accessions(engine: Engine) -> dict[str, list[str]]:
         row.accession: [
             cast(str, row.result[key])
             for key in row.result
-            if key.startswith(EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX)
+            if key.startswith(EnaResultField.INSDC_ACCESSION_FULL_PREFIX)
         ]
         for row in results
         if row.result

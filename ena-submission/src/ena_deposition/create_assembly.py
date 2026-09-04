@@ -611,7 +611,7 @@ def assembly_table_update(db_engine: Engine, config: Config, time_threshold: int
 
             result_contains_gca_accession = EnaResultField.GCA in new_result.result
             result_contains_insdc_accession = any(
-                key.startswith(EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX)
+                key.startswith(EnaResultField.INSDC_ACCESSION_FULL_PREFIX)
                 for key in new_result.result
             )
 

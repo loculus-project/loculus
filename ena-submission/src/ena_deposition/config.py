@@ -24,7 +24,7 @@ class EnaResultField(StrEnum):
     BIOPROJECT = "bioproject_accession"
     GCA = "gca_accession"
     INSDC_ACCESSION_PREFIX = "insdc_accession"
-    VERSIONED_INSDC_ACCESSION_PREFIX = "insdc_accession_full"
+    INSDC_ACCESSION_FULL_PREFIX = "insdc_accession_full"
 
 
 class MetadataMapping(BaseModel):

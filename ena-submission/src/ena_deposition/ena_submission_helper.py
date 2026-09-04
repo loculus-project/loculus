@@ -875,15 +875,13 @@ def get_chromsome_accessions(
             accession = f"{start_letters}{start_num:0{num_digits}d}"
             return {
                 EnaResultField.INSDC_ACCESSION_PREFIX: accession,
-                EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX: f"{accession}.1",
+                EnaResultField.INSDC_ACCESSION_FULL_PREFIX: f"{accession}.1",
             }
         results = {}
         for i, segment in enumerate(segment_order):
             accession = f"{start_letters}{(start_num + i):0{num_digits}d}"
             results[f"{EnaResultField.INSDC_ACCESSION_PREFIX}_{segment}"] = accession
-            results[f"{EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX}_{segment}"] = (
-                f"{accession}.1"
-            )
+            results[f"{EnaResultField.INSDC_ACCESSION_FULL_PREFIX}_{segment}"] = f"{accession}.1"
         return results
 
     # Don't handle the Value error here, let it propagate

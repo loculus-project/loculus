@@ -193,13 +193,13 @@ COLUMN_CONFIGS = {
     (EntityType.ASSEMBLY, "ena_nucleotide_first_publicly_visible"): ColumnCheckConfig(
         entry_class=AssemblyTableEntry,
         visibility_column="ena_nucleotide_first_publicly_visible",
-        accession_field_name_prefix=EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX,
+        accession_field_name_prefix=EnaResultField.INSDC_ACCESSION_FULL_PREFIX,
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.ASSEMBLY, "ncbi_nucleotide_first_publicly_visible"): ColumnCheckConfig(
         entry_class=AssemblyTableEntry,
         visibility_column="ncbi_nucleotide_first_publicly_visible",
-        accession_field_name_prefix=EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX,
+        accession_field_name_prefix=EnaResultField.INSDC_ACCESSION_FULL_PREFIX,
         checker_class=NCBIVisibilityChecker,
     ),
     # Assemblies - ENA GCA accessions

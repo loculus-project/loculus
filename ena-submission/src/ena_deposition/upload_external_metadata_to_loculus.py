@@ -123,7 +123,7 @@ def get_assembly_accessions_from_db(
         else:
             all_present = False
 
-        full_key = f"{EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX}{segment_suffix}"
+        full_key = f"{EnaResultField.INSDC_ACCESSION_FULL_PREFIX}{segment_suffix}"
         if full_key in result:
             data[
                 f"{config.loculus_accession_fields.versioned_insdc_accession_prefix}{segment_suffix}"

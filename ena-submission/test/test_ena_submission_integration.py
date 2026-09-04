@@ -281,10 +281,8 @@ def check_assembly_submission_with_nuc_without_gca(
             f"Assembly for {full_accession} not in state 'WAITING' in assembly table."
         )
         assert rows[0].result, f"No result for assembly {full_accession} in assembly table."
-        assert (
-            rows[0].result.get(f"{EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX}_L") is not None
-        )
-        assert rows[0].result.get(f"{EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX}_M") is None
+        assert rows[0].result.get(f"{EnaResultField.INSDC_ACCESSION_FULL_PREFIX}_L") is not None
+        assert rows[0].result.get(f"{EnaResultField.INSDC_ACCESSION_FULL_PREFIX}_M") is None
         assert rows[0].result.get(EnaResultField.GCA) is None
 
 
@@ -654,12 +652,12 @@ class TestFirstPublicUpdate(TestSubmission):
 
     NUCLEOTIDE_CONFIG: Final = {
         "invalid_result": {
-            f"{EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX}_seg1": "XY999999.1",
-            f"{EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX}_seg2": "XY999998.1",
+            f"{EnaResultField.INSDC_ACCESSION_FULL_PREFIX}_seg1": "XY999999.1",
+            f"{EnaResultField.INSDC_ACCESSION_FULL_PREFIX}_seg2": "XY999998.1",
         },
         "valid_result": {
-            f"{EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX}_seg1": "OZ271453.1",
-            f"{EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX}_seg2": "OZ271454.1",
+            f"{EnaResultField.INSDC_ACCESSION_FULL_PREFIX}_seg1": "OZ271453.1",
+            f"{EnaResultField.INSDC_ACCESSION_FULL_PREFIX}_seg2": "OZ271454.1",
         },
         "base_entry": {
             "accession": "test_accession",
