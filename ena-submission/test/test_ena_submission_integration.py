@@ -450,7 +450,7 @@ def _test_successful_assembly_submission(
     single_segment: bool = False,
     with_raw_reads: bool = False,
 ) -> None:
-    create_assembly_submission_table_start(db_engine, config)
+    create_assembly_submission_table_start(db_engine)
     check_assembly_submission_started(db_engine, sequences_to_upload, with_raw_reads=with_raw_reads)
 
     assert config.test, "Not submitting to dev - stopping"
@@ -471,7 +471,7 @@ def _test_successful_assembly_submission(
 def _test_successful_assembly_submission_no_wait(
     db_engine: Engine, config: Config, sequences_to_upload: dict[str, Any]
 ) -> None:
-    create_assembly_submission_table_start(db_engine, config)
+    create_assembly_submission_table_start(db_engine)
     check_assembly_submission_started(db_engine, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
@@ -487,7 +487,7 @@ def _test_assembly_submission_errored(
     sequences_to_upload: dict[str, Any],
     mock_notify: Mock,
 ) -> None:
-    create_assembly_submission_table_start(db_engine, config)
+    create_assembly_submission_table_start(db_engine)
     check_assembly_submission_started(db_engine, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
