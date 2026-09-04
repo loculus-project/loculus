@@ -30,6 +30,7 @@ import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.metadataFileTypes
 import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.sequenceFileTypes
+import org.loculus.backend.service.files.dummyFileId
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
@@ -42,7 +43,6 @@ import org.springframework.test.web.servlet.ResultMatcher
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.util.UUID
 import kotlin.time.Clock
 
 @EndpointTest
@@ -172,7 +172,7 @@ class SubmitEndpointTest(
     fun `GIVEN submission with file mapping for organism without file support THEN returns an error`() {
         submissionControllerClient.submit(
             DefaultFiles.multiSegmentedMetadataFile.withFileMapping(
-                mapOf("custom0" to mapOf("bar" to listOf(FileIdAndName(UUID.randomUUID(), "baz")))),
+                mapOf("custom0" to mapOf("bar" to listOf(FileIdAndName(dummyFileId(), "baz")))),
             ),
             DefaultFiles.sequencesFileMultiSegmented,
             organism = OTHER_ORGANISM,
