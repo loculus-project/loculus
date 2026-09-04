@@ -54,7 +54,7 @@ class LoculusAccessionFieldNames(BaseModel):
     biosample: str
     gca: str
     insdc_accession_prefix: str
-    versioned_insdc_accession_prefix: str
+    insdc_accession_full_prefix: str
 
 
 class ExternalMetadataField(BaseModel):
