@@ -743,7 +743,11 @@ def _run_webin_cli_submission(
 
     try:
         response = post_webin_cli(
-            config, manifest_filename, tmpdir=output_tmpdir, center_name=center_name, context=context
+            config,
+            manifest_filename,
+            tmpdir=output_tmpdir,
+            center_name=center_name,
+            context=context,
         )
     except Exception as e:
         msg = f"Error occurred while running webin-cli: {e}"
