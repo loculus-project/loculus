@@ -1937,6 +1937,10 @@
           "type": "integer",
           "description": "Timeout in seconds for raw reads processing service requests"
         },
+        "raw_reads_processing_concurrency": {
+          "type": "integer",
+          "description": "How many entries of a preprocessing batch have their files processed concurrently"
+        },
         "rawReadsProcessingConfig": {
           "type": "object",
           "description": "Configuration for the raw reads processing service"

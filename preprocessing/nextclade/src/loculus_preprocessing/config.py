@@ -142,6 +142,10 @@ class Config(BaseModel):
     _taxonomy_service: TaxonomyService = PrivateAttr(default=TaxonomyService(None))
     raw_reads_processing_service_url: str | None = None
     raw_reads_processing_service_timeout_seconds: int = 600
+    # How many entries of a batch have their files processed at the same time.
+    # Note the load on the single raw reads processing pod is this times
+    # the number of preprocessing replicas of all organisms using it.
+    raw_reads_processing_concurrency: int = 4
     _file_processing_service: FileProcessingService = PrivateAttr(
         default=FileProcessingService(None, 600)
     )
