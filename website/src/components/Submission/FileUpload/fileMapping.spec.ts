@@ -20,7 +20,6 @@ const RAW_READS_COLUMN = `${FILES_HEADER_PREFIX}${RAW_READS}`;
 const OTHER_FILES = 'otherFiles';
 const OTHER_FILES_COLUMN = `${FILES_HEADER_PREFIX}${OTHER_FILES}`;
 const FILE_CATEGORIES = [RAW_READS, OTHER_FILES];
-const FILE_SHARING_CONFIG = { disableStrictFilenameValidation: false };
 
 const tsv = (rows: string[][]) => rows.map((row) => row.join('\t')).join('\n');
 const declaredFile = (name: string, path: string = name) => ({ type: 'declaredFile' as const, name, path });
@@ -45,12 +44,12 @@ const errorMessageOf = <T>(result: Result<T, Error>): string => {
 };
 
 const entriesOf = (text: string, submissionId: string, category: string) => {
-    const mapping = valueOf(parseSubmissionFileMapping(text, FILE_CATEGORIES, FILE_SHARING_CONFIG));
+    const mapping = valueOf(parseSubmissionFileMapping(text, FILE_CATEGORIES));
     return [...(mapping.get(submissionId)?.get(category)?.values() ?? [])];
 };
 
 const errorOf = (text: string, categories: string[] = FILE_CATEGORIES): string => {
-    const result = parseSubmissionFileMapping(text, categories, FILE_SHARING_CONFIG);
+    const result = parseSubmissionFileMapping(text, categories);
     if (result.isOk()) throw new Error('expected the parse to fail');
     return result.error.message;
 };
@@ -139,12 +138,9 @@ describe('parseSubmissionFileMapping', () => {
                 ['e1', 'CH'],
             ]),
             FILE_CATEGORIES,
-            FILE_SHARING_CONFIG,
         );
         expect(valueOf(result)).toEqual(new Map());
-        expect(
-            valueOf(parseSubmissionFileMapping(tsv([['country'], ['CH']]), FILE_CATEGORIES, FILE_SHARING_CONFIG)),
-        ).toEqual(new Map());
+        expect(valueOf(parseSubmissionFileMapping(tsv([['country'], ['CH']]), FILE_CATEGORIES))).toEqual(new Map());
     });
 
     it('rejects a file column without an id column', () => {
@@ -192,14 +188,6 @@ describe('parseSubmissionFileMapping', () => {
         expect(errorOf(text)).toContain(`Found duplicate file names for entry e1 in the ${RAW_READS} category: a.txt`);
     });
 
-    it.each(['CON.txt', 'CON.txt::sub/reads.fastq', 'CON.txt:fileId'])('rejects invalid file name %s', (entry) => {
-        const text = tsv([
-            ['id', RAW_READS_COLUMN],
-            ['e1', entry],
-        ]);
-        expect(errorOf(text)).toContain('may not use Windows reserved device names');
-    });
-
     it('allows two different names to share the same explicit path', () => {
         const text = tsv([
             ['id', RAW_READS_COLUMN],
@@ -213,7 +201,7 @@ describe('parseSubmissionFileMapping', () => {
             ['id', RAW_READS_COLUMN, OTHER_FILES_COLUMN],
             ['e1', 'a.txt', ''],
         ]);
-        const result = valueOf(parseSubmissionFileMapping(text, FILE_CATEGORIES, FILE_SHARING_CONFIG));
+        const result = valueOf(parseSubmissionFileMapping(text, FILE_CATEGORIES));
         expect([...result.get('e1')!.keys()]).toEqual([RAW_READS]);
     });
 
@@ -223,7 +211,7 @@ describe('parseSubmissionFileMapping', () => {
             ['e1', 'CH', 'a.txt', 'a.json'],
             ['e2', 'DE', 'b.txt', 'b.json'],
         ]);
-        const result = valueOf(parseSubmissionFileMapping(text, FILE_CATEGORIES, FILE_SHARING_CONFIG));
+        const result = valueOf(parseSubmissionFileMapping(text, FILE_CATEGORIES));
         expect([...result.keys()]).toEqual(['e1', 'e2']);
         expect(entriesOf(text, 'e1', OTHER_FILES).map((f) => f.name)).toEqual(['a.json']);
         expect(entriesOf(text, 'e2', RAW_READS).map((f) => f.name)).toEqual(['b.txt']);

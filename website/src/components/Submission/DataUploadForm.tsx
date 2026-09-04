@@ -39,6 +39,7 @@ import {
     type CategoryLinkage,
     type FileLinkage,
     type SubmissionFileMapping,
+    validateSubmissionFileMapping,
 } from './FileUpload/fileMapping.ts';
 import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
 
@@ -142,6 +143,16 @@ const InnerDataUploadForm = ({
             if (inputMode === 'form') {
                 if (fileMapping !== undefined) {
                     const finalSubmissionFileMapping = getSingleSubmissionFileMapping(submissionId!, fileMapping);
+
+                    const validationResult = validateSubmissionFileMapping(
+                        finalSubmissionFileMapping,
+                        fileSharingConfig,
+                    );
+                    if (validationResult.isErr()) {
+                        onError(validationResult.error.message);
+                        return;
+                    }
+
                     const finalMetadataFileResult = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
                     if (finalMetadataFileResult.isErr()) {
                         onError(finalMetadataFileResult.error.message);
@@ -164,6 +175,16 @@ const InnerDataUploadForm = ({
                     submissionFileMapping.value,
                     fileMapping,
                 );
+
+                const validationResult = validateSubmissionFileMapping(
+                    resolvedSubmissionFileMapping,
+                    fileSharingConfig,
+                );
+                if (validationResult.isErr()) {
+                    onError(validationResult.error.message);
+                    return;
+                }
+
                 const linkageErrors = getLinkageErrors(fileLinkage);
                 if (linkageErrors !== undefined) {
                     onError(linkageErrors);
@@ -242,7 +263,6 @@ const InnerDataUploadForm = ({
                     metadataTemplateFields={metadataTemplateFields}
                     submissionDataTypes={submissionDataTypes}
                     onError={onError}
-                    fileSharingConfig={fileSharingConfig}
                 />
                 <hr />
                 {extraFilesEnabled && (
@@ -257,7 +277,6 @@ const InnerDataUploadForm = ({
                             fileUploadStates={fileUploadStates}
                             setFileUploadStates={setFileUploadStates}
                             fileLinkage={fileLinkage}
-                            fileSharingConfig={fileSharingConfig}
                         />
                         <hr />
                     </>
@@ -445,7 +464,6 @@ export const ExtraFilesUpload = ({
     setFileUploadStates,
     fileLinkage,
     onError,
-    fileSharingConfig,
 }: {
     accessToken: string;
     clientConfig: ClientConfig;
@@ -456,7 +474,6 @@ export const ExtraFilesUpload = ({
     setFileUploadStates: Dispatch<SetStateAction<Map<string, FileUploadState>>>;
     fileLinkage?: FileLinkage;
     onError: (message: string) => void;
-    fileSharingConfig: FileSharingConfig;
 }) => {
     const setCategoryFileUploadState =
         (category: string): Dispatch<SetStateAction<FileUploadState | undefined>> =>
@@ -496,7 +513,6 @@ export const ExtraFilesUpload = ({
                             onError={onError}
                             fileUploadState={fileUploadStates.get(fileCategory.name)}
                             setFileUploadState={setCategoryFileUploadState(fileCategory.name)}
-                            fileSharingConfig={fileSharingConfig}
                         />
                         {inputMode === 'bulk' && (
                             <CategoryLinkageStatus categoryLinkage={fileLinkage?.get(fileCategory.name)} />

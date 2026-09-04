@@ -2,7 +2,6 @@ import { produce } from 'immer';
 import React, { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
 
-import { validateFileNames, getFileNameErrorMessage } from './fileNameValidation';
 import {
     type Awaiting,
     type FileUploadState,
@@ -14,7 +13,7 @@ import {
 } from './fileUpload';
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
-import { type FileCategory, type FileSharingConfig } from '../../../types/config';
+import { type FileCategory } from '../../../types/config';
 import type { ClientConfig } from '../../../types/runtimeConfig';
 import { calculatePartSizeAndCount, splitFileIntoParts, uploadPart } from '../../../utils/multipartUpload';
 import { displayConfirmationDialog } from '../../ConfirmationDialog';
@@ -33,7 +32,6 @@ type FolderUploadComponentProps = {
     fileUploadState: FileUploadState | undefined;
     setFileUploadState: Dispatch<SetStateAction<FileUploadState | undefined>>;
     onError: (message: string) => void;
-    fileSharingConfig: FileSharingConfig;
 };
 
 const FileInput = ({
@@ -91,7 +89,6 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     fileUploadState,
     setFileUploadState,
     onError,
-    fileSharingConfig,
 }) => {
     const [isDragging, setIsDragging] = useState(false);
 
@@ -230,7 +227,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             // Reset the input so the same folder can be selected again
             e.target.value = '';
 
-            const error = isFilesArrayValid(filesArray, inputMode, fileSharingConfig);
+            const error = isFilesArrayValid(filesArray, inputMode);
             if (error) {
                 onError(error);
                 return;
@@ -272,7 +269,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             // Reset the input so the same file can be selected again
             e.target.value = '';
 
-            const error = isFilesArrayValid(filesArray, inputMode, fileSharingConfig);
+            const error = isFilesArrayValid(filesArray, inputMode);
             if (error) {
                 onError(error);
                 return;
@@ -527,23 +524,15 @@ const filterDotFiles = (files: File[]): File[] => {
 /**
  * Returns `undefined` if the files are fine, or an error otherwise.
  */
-const isFilesArrayValid = (
-    files: File[],
-    inputMode: InputMode,
-    fileSharingConfig: FileSharingConfig,
-): string | undefined => {
+const isFilesArrayValid = (files: File[], inputMode: InputMode): string | undefined => {
     if (inputMode === 'form') {
         if (files.some((f) => f.webkitRelativePath.split('/').length > 2)) {
             return 'Subdirectories are not supported for individual submissions.';
         }
     }
-    const folderNames = files.flatMap((f) => f.webkitRelativePath.split('/').slice(1, -1));
     const fileNames = files.map((f) => f.name);
+    const folderNames = files.flatMap((f) => f.webkitRelativePath.split('/').slice(1, -1));
 
-    if (folderNames.some((p) => /\s/.test(p))) return 'Folder names cannot contain whitespace.';
-
-    const fileNameValidationResult = validateFileNames(fileNames, fileSharingConfig);
-    if (fileNameValidationResult.isErr()) {
-        return 'Encountered errors in uploaded files: ' + getFileNameErrorMessage(fileNameValidationResult.error);
-    }
+    if (fileNames.some((n) => /\s/.test(n))) return 'File names may not contain whitespace.';
+    if (folderNames.some((p) => /\s/.test(p))) return 'Folder names may not contain whitespace.';
 };

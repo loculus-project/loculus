@@ -22,7 +22,11 @@ import { getAccessionVersionString, parseAccessionVersionFromString } from '../.
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu.tsx';
 import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
-import { applyFileMappings, getSingleSubmissionFileMapping } from '../Submission/FileUpload/fileMapping.ts';
+import {
+    applyFileMappings,
+    getSingleSubmissionFileMapping,
+    validateSubmissionFileMapping,
+} from '../Submission/FileUpload/fileMapping.ts';
 import {
     deriveFileMapping,
     getPreviousFileUploadStates,
@@ -118,6 +122,13 @@ const InnerEditPage: FC<EditPageProps> = ({
 
             if (extraFilesEnabled && fileMapping !== undefined) {
                 const finalSubmissionFileMapping = getSingleSubmissionFileMapping(dataToEdit.submissionId, fileMapping);
+
+                const validationResult = validateSubmissionFileMapping(finalSubmissionFileMapping, fileSharingConfig);
+                if (validationResult.isErr()) {
+                    toast.error(validationResult.error.message, { position: 'top-center', autoClose: false });
+                    return;
+                }
+
                 const finalMetadataFileResult = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
                 if (finalMetadataFileResult.isErr()) {
                     toast.error(finalMetadataFileResult.error.message, { position: 'top-center', autoClose: false });
@@ -258,7 +269,6 @@ const InnerEditPage: FC<EditPageProps> = ({
                         fileUploadStates={fileUploadStates}
                         setFileUploadStates={setFileUploadStates}
                         onError={(msg) => toast.error(msg, { position: 'top-center', autoClose: false })}
-                        fileSharingConfig={fileSharingConfig}
                     />
                 </div>
             )}

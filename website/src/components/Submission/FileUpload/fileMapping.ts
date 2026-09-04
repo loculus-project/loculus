@@ -1,7 +1,7 @@
 import { type Result, ok, err } from 'neverthrow';
 import Papa from 'papaparse';
 
-import { validateFileNames, getFileNameErrorMessage } from './fileNameValidation';
+import { getFileNameErrorMessage, validateFileNames } from './fileNameValidation';
 import { FILES_HEADER_PREFIX, SUBMISSION_ID_INPUT_FIELD } from '../../../settings';
 import type { FileSharingConfig } from '../../../types/config';
 
@@ -380,7 +380,6 @@ const parseMetadataText = (text: string): Result<ParsedMetadata, Error> => {
 export function parseSubmissionFileMapping(
     text: string,
     categories: FileCategory[],
-    fileSharingConfig: FileSharingConfig,
 ): Result<SubmissionFileMapping, Error> {
     const parsedMetadataResult = parseMetadataText(text);
     if (parsedMetadataResult.isErr()) return err(parsedMetadataResult.error);
@@ -459,23 +458,6 @@ export function parseSubmissionFileMapping(
         submissionFileMapping.set(submissionId, categoryMapping);
     }
 
-    // Validate file names
-    const fileNames = [
-        ...new Set(
-            [...submissionFileMapping.values()]
-                .flatMap((categoryMapping) => [...categoryMapping.values()])
-                .flatMap((fileEntries) => [...fileEntries.keys()]),
-        ),
-    ];
-    const fileNameValidationResult = validateFileNames(fileNames, fileSharingConfig);
-    if (fileNameValidationResult.isErr())
-        return err(
-            new Error(
-                'Encountered errors in file names within metadata: ' +
-                    getFileNameErrorMessage(fileNameValidationResult.error),
-            ),
-        );
-
     return ok(submissionFileMapping);
 }
 
@@ -536,4 +518,30 @@ export async function applyFileMappings(
     const header = columns.map(({ name }) => name);
     const content = Papa.unparse([header, ...updatedRows], { delimiter: '\t', newline: '\n' });
     return ok(new File([content], 'metadata.tsv', { type: 'text/tab-separated-values' }));
+}
+
+export function validateSubmissionFileMapping(
+    resolvedSubmissionFileMapping: SubmissionFileMapping<ResolvedFile>,
+    fileSharingConfig: FileSharingConfig,
+) {
+    // Get file names
+    const fileNames = [
+        ...new Set(
+            [...resolvedSubmissionFileMapping.values()]
+                .flatMap((categoryMapping) => [...categoryMapping.values()])
+                .flatMap((fileEntries) => [...fileEntries.keys()]),
+        ),
+    ];
+
+    // Validate file names
+    const fileNameValidationResult = validateFileNames(fileNames, fileSharingConfig);
+    if (fileNameValidationResult.isErr()) {
+        return err(
+            new Error(
+                'Encountered errors in submitted file names: ' +
+                    getFileNameErrorMessage(fileNameValidationResult.error),
+            ),
+        );
+    }
+    return ok();
 }

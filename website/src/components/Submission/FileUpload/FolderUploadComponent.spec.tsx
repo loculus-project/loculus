@@ -65,7 +65,6 @@ const defaultProps = {
     clientConfig: { backendUrl: 'http://test-backend', lapisUrls: {} },
     groupId: 1,
     onError: mockOnError,
-    fileSharingConfig: { disableStrictFilenameValidation: true },
 };
 
 const previousUploadsState = (files: { fileId: string; path: string }[]): FileUploadState => ({
@@ -276,7 +275,7 @@ describe('FolderUploadComponent', () => {
             await userEvent.upload(screen.getByTestId('extraFiles'), file);
 
             expect(mockOnError).toHaveBeenCalledWith(expect.stringContaining('Folder'));
-            expect(mockOnError).toHaveBeenCalledWith(expect.stringContaining('cannot contain whitespace'));
+            expect(mockOnError).toHaveBeenCalledWith(expect.stringContaining('may not contain whitespace'));
             expect(mockRequestMultipartUpload).not.toHaveBeenCalled();
         });
 
