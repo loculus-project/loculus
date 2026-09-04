@@ -39,7 +39,7 @@ from tenacity import (
     wait_fixed,
 )
 
-from ena_deposition.config import BIOPROJECT_ENA_FIELD
+from ena_deposition.config import EnaResultField
 
 logger = logging.getLogger(__name__)
 
@@ -633,7 +633,7 @@ def get_project_and_sample_results(
         sample_rows[0].result.get("ena_sample_accession") if sample_rows[0].result else None
     )
     study_accession = (
-        project_rows[0].result.get(BIOPROJECT_ENA_FIELD) if project_rows[0].result else None
+        project_rows[0].result.get(EnaResultField.BIOPROJECT) if project_rows[0].result else None
     )
     if not sample_accession or not study_accession:
         error_msg = (

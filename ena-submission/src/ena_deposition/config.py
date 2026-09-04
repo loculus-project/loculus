@@ -1,7 +1,7 @@
 import logging
 import os
 from dataclasses import field
-from typing import Final
+from enum import StrEnum
 
 import dotenv
 import yaml
@@ -11,14 +11,20 @@ from ena_deposition.ena_types import MoleculeType, Topology
 
 logger = logging.getLogger(__name__)
 
-# Constants for names used to index ENA accessions stored in the ena_deposition_schema.
-# The corresponding Loculus schema field names are configurable per deployment - see
-# LoculusAccessionFieldNames and Config.loculus_accession_fields below.
-BIOSAMPLE_ENA_FIELD: Final = "biosample_accession"
-BIOPROJECT_ENA_FIELD: Final = "bioproject_accession"
-GCA_ENA_FIELD: Final = "gca_accession"
-INSDC_ACCESSION_ENA_FIELD_PREFIX: Final = "insdc_accession"
-VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX: Final = "insdc_accession_full"
+
+class EnaResultField(StrEnum):
+    """Keys used to store ENA accessions in the `result` column of the
+    ena_deposition_schema project/sample/assembly tables.
+
+    The corresponding Loculus schema field names are configurable per deployment - see
+    LoculusAccessionFieldNames and Config.loculus_accession_fields below.
+    """
+
+    BIOSAMPLE = "biosample_accession"
+    BIOPROJECT = "bioproject_accession"
+    GCA = "gca_accession"
+    INSDC_ACCESSION_PREFIX = "insdc_accession"
+    VERSIONED_INSDC_ACCESSION_PREFIX = "insdc_accession_full"
 
 
 class MetadataMapping(BaseModel):

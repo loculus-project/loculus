@@ -14,10 +14,9 @@ from sqlalchemy import Engine
 from ena_deposition import call_loculus
 
 from .config import (
-    GCA_ENA_FIELD,
-    VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX,
     Config,
     EnaOrganismDetails,
+    EnaResultField,
 )
 from .ena_submission_helper import (
     CreationResult,
@@ -610,9 +609,9 @@ def assembly_table_update(db_engine: Engine, config: Config, time_threshold: int
             if not new_result.result:
                 continue
 
-            result_contains_gca_accession = GCA_ENA_FIELD in new_result.result
+            result_contains_gca_accession = EnaResultField.GCA in new_result.result
             result_contains_insdc_accession = any(
-                key.startswith(VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX)
+                key.startswith(EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX)
                 for key in new_result.result
             )
 

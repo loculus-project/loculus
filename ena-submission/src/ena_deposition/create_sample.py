@@ -7,7 +7,7 @@ from datetime import datetime
 import pytz
 from sqlalchemy import Engine
 
-from .config import BIOSAMPLE_ENA_FIELD, Config, MetadataMapping
+from .config import Config, EnaResultField, MetadataMapping
 from .ena_submission_helper import (
     CreationResult,
     accession_exists,
@@ -191,7 +191,7 @@ def update_with_existing_biosample(db_engine: Engine, row: SubmissionTableEntry,
         update_values={
             "accession": row.accession,
             "version": row.version,
-            "result": {"ena_sample_accession": biosample, BIOSAMPLE_ENA_FIELD: biosample},
+            "result": {"ena_sample_accession": biosample, EnaResultField.BIOSAMPLE: biosample},
             "status": Status.SUBMITTED,
         },
     )
@@ -247,7 +247,7 @@ def sync_state_with_submission_table(db_engine: Engine, config: Config):
         add_to_sample_table(
             db_engine,
             SampleTableEntry(
-                **seq_key, result={BIOSAMPLE_ENA_FIELD: biosample} if biosample else None
+                **seq_key, result={EnaResultField.BIOSAMPLE: biosample} if biosample else None
             ),
         )
 
@@ -281,7 +281,7 @@ def sample_table_create(db_engine: Engine, config: Config):
             db_engine, SubmissionTableEntry, conditions=asdict(seq_key)
         )
 
-        if row.result and row.result.get(BIOSAMPLE_ENA_FIELD):
+        if row.result and row.result.get(EnaResultField.BIOSAMPLE):
             update_with_existing_biosample(db_engine, sample_data_in_submission_table[0], config)
             continue
 

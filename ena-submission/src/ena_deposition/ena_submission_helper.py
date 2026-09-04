@@ -36,13 +36,9 @@ from tenacity import (
 from unidecode import unidecode
 
 from ena_deposition.config import (
-    BIOPROJECT_ENA_FIELD,
-    BIOSAMPLE_ENA_FIELD,
-    GCA_ENA_FIELD,
-    INSDC_ACCESSION_ENA_FIELD_PREFIX,
-    VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX,
     Config,
     EnaOrganismDetails,
+    EnaResultField,
     ManifestFieldDetails,
 )
 
@@ -283,7 +279,7 @@ def create_ena_project(config: Config, project_set: ProjectSet) -> CreationResul
         errors.append(error_message)
         return CreationResult(errors=errors, warnings=warnings)
     project_results = {
-        BIOPROJECT_ENA_FIELD: parsed_response["RECEIPT"]["PROJECT"]["@accession"],
+        EnaResultField.BIOPROJECT: parsed_response["RECEIPT"]["PROJECT"]["@accession"],
         "ena_submission_accession": parsed_response["RECEIPT"]["SUBMISSION"]["@accession"],
     }
     return CreationResult(result=project_results, errors=errors, warnings=warnings)
@@ -356,7 +352,7 @@ def create_ena_sample(
         return CreationResult(errors=errors, warnings=warnings)
     sample_results = {
         "ena_sample_accession": parsed_response["RECEIPT"]["SAMPLE"]["@accession"],
-        BIOSAMPLE_ENA_FIELD: parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@accession"],
+        EnaResultField.BIOSAMPLE: parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@accession"],
         "ena_submission_accession": parsed_response["RECEIPT"]["SUBMISSION"]["@accession"],
     }
     return CreationResult(result=sample_results, errors=errors, warnings=warnings)
@@ -813,7 +809,7 @@ def get_ena_analysis_process(
             if gca_accession:
                 assembly_results.update(
                     {
-                        GCA_ENA_FIELD: gca_accession,
+                        EnaResultField.GCA: gca_accession,
                     }
                 )
             insdc_accession_range = acc_dict.get("chromosomes")
@@ -878,14 +874,16 @@ def get_chromsome_accessions(
         if not is_multi_segment:
             accession = f"{start_letters}{start_num:0{num_digits}d}"
             return {
-                INSDC_ACCESSION_ENA_FIELD_PREFIX: accession,
-                VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX: f"{accession}.1",
+                EnaResultField.INSDC_ACCESSION_PREFIX: accession,
+                EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX: f"{accession}.1",
             }
         results = {}
         for i, segment in enumerate(segment_order):
             accession = f"{start_letters}{(start_num + i):0{num_digits}d}"
-            results[f"{INSDC_ACCESSION_ENA_FIELD_PREFIX}_{segment}"] = accession
-            results[f"{VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX}_{segment}"] = f"{accession}.1"
+            results[f"{EnaResultField.INSDC_ACCESSION_PREFIX}_{segment}"] = accession
+            results[f"{EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX}_{segment}"] = (
+                f"{accession}.1"
+            )
         return results
 
     # Don't handle the Value error here, let it propagate
@@ -935,7 +933,10 @@ def set_accession_does_not_exist_error(
                 {
                     "status": Status.HAS_ERRORS,
                     "errors": [error_text],
-                    "result": {BIOSAMPLE_ENA_FIELD: accession, "ena_sample_accession": accession},
+                    "result": {
+                        EnaResultField.BIOSAMPLE: accession,
+                        "ena_sample_accession": accession,
+                    },
                 },
             )
         case "BIOPROJECT":
@@ -946,7 +947,7 @@ def set_accession_does_not_exist_error(
                 {
                     "status": Status.HAS_ERRORS,
                     "errors": [error_text],
-                    "result": {BIOPROJECT_ENA_FIELD: accession},
+                    "result": {EnaResultField.BIOPROJECT: accession},
                 },
             )
         case "RUN_REF":

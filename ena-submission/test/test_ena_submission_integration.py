@@ -28,11 +28,8 @@ from ena_deposition.check_external_visibility import (
     check_and_update_visibility_for_column,
 )
 from ena_deposition.config import (
-    BIOPROJECT_ENA_FIELD,
-    BIOSAMPLE_ENA_FIELD,
-    GCA_ENA_FIELD,
-    VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX,
     Config,
+    EnaResultField,
     get_config,
 )
 from ena_deposition.create_assembly import (
@@ -99,7 +96,7 @@ def assert_biosample_accession(
     assert len(rows) == 1, f"Sample for {full_accession} not found in sample table."
     if biosample_accession:
         assert rows[0].result, f"No result for sample {full_accession} in sample table."
-        assert rows[0].result.get(BIOSAMPLE_ENA_FIELD) == biosample_accession, (
+        assert rows[0].result.get(EnaResultField.BIOSAMPLE) == biosample_accession, (
             "Incorrect biosample accession in sample table."
         )
 
@@ -110,7 +107,7 @@ def assert_bioproject_accession(
     assert len(rows) == 1, f"Project {group_id} for {full_accession} not found in project table."
     if bioproject_accession:
         assert rows[0].result, f"No result for project {group_id} in project table."
-        assert rows[0].result.get(BIOPROJECT_ENA_FIELD) == bioproject_accession, (
+        assert rows[0].result.get(EnaResultField.BIOPROJECT) == bioproject_accession, (
             "Incorrect bioproject accession in project table."
         )
 
@@ -284,9 +281,11 @@ def check_assembly_submission_with_nuc_without_gca(
             f"Assembly for {full_accession} not in state 'WAITING' in assembly table."
         )
         assert rows[0].result, f"No result for assembly {full_accession} in assembly table."
-        assert rows[0].result.get(f"{VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX}_L") is not None
-        assert rows[0].result.get(f"{VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX}_M") is None
-        assert rows[0].result.get(GCA_ENA_FIELD) is None
+        assert (
+            rows[0].result.get(f"{EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX}_L") is not None
+        )
+        assert rows[0].result.get(f"{EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX}_M") is None
+        assert rows[0].result.get(EnaResultField.GCA) is None
 
 
 def check_sent_to_loculus(db_engine: Engine, sequences_to_upload: dict[str, Any]) -> None:
@@ -632,8 +631,8 @@ class TestSubmission:
 
 class TestFirstPublicUpdate(TestSubmission):
     PROJECT_CONFIG: Final = {
-        "invalid_result": {BIOPROJECT_ENA_FIELD: "PRJEB2"},
-        "valid_result": {BIOPROJECT_ENA_FIELD: "PRJEB53055"},
+        "invalid_result": {EnaResultField.BIOPROJECT: "PRJEB2"},
+        "valid_result": {EnaResultField.BIOPROJECT: "PRJEB53055"},
         "base_entry": {
             "group_id": 1,
             "organism": "test_organism",
@@ -643,8 +642,8 @@ class TestFirstPublicUpdate(TestSubmission):
     }
 
     SAMPLE_CONFIG: Final = {
-        "invalid_result": {BIOSAMPLE_ENA_FIELD: "SAMEA999999999"},
-        "valid_result": {BIOSAMPLE_ENA_FIELD: "SAMEA7997453"},
+        "invalid_result": {EnaResultField.BIOSAMPLE: "SAMEA999999999"},
+        "valid_result": {EnaResultField.BIOSAMPLE: "SAMEA7997453"},
         "base_entry": {
             "accession": "test_accession",
             "version": 1,
@@ -655,12 +654,12 @@ class TestFirstPublicUpdate(TestSubmission):
 
     NUCLEOTIDE_CONFIG: Final = {
         "invalid_result": {
-            f"{VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX}_seg1": "XY999999.1",
-            f"{VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX}_seg2": "XY999998.1",
+            f"{EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX}_seg1": "XY999999.1",
+            f"{EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX}_seg2": "XY999998.1",
         },
         "valid_result": {
-            f"{VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX}_seg1": "OZ271453.1",
-            f"{VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX}_seg2": "OZ271454.1",
+            f"{EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX}_seg1": "OZ271453.1",
+            f"{EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX}_seg2": "OZ271454.1",
         },
         "base_entry": {
             "accession": "test_accession",
@@ -671,8 +670,8 @@ class TestFirstPublicUpdate(TestSubmission):
     }
 
     GCA_CONFIG: Final = {
-        "invalid_result": {GCA_ENA_FIELD: "GCA_999999999.1"},
-        "valid_result": {GCA_ENA_FIELD: "GCA_965196905.1"},
+        "invalid_result": {EnaResultField.GCA: "GCA_999999999.1"},
+        "valid_result": {EnaResultField.GCA: "GCA_965196905.1"},
         "base_entry": {
             "accession": "test_accession",
             "version": 1,

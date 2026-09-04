@@ -9,7 +9,7 @@ from sqlalchemy import Engine
 from ena_deposition import call_loculus
 from ena_deposition.loculus_models import Group
 
-from .config import BIOPROJECT_ENA_FIELD, Config
+from .config import Config, EnaResultField
 from .ena_submission_helper import (
     CreationResult,
     accession_exists,
@@ -113,7 +113,7 @@ def update_with_existing_bioproject(
         f"Group {row.group_id} and organism {row.organism} already has "
         f"bioprojectAccession, adding to project_table"
     )
-    bioproject = row.result.get(BIOPROJECT_ENA_FIELD) if row.result else None
+    bioproject = row.result.get(EnaResultField.BIOPROJECT) if row.result else None
 
     logger.info("Checking if bioproject actually exists and is public")
     if not bioproject or not accession_exists(str(bioproject), config):
@@ -133,7 +133,7 @@ def update_with_existing_bioproject(
         {
             "group_id": row.group_id,
             "organism": row.organism,
-            "result": {BIOPROJECT_ENA_FIELD: bioproject},
+            "result": {EnaResultField.BIOPROJECT: bioproject},
             "status": Status.SUBMITTED,
             "center_name": center_name,
         },
@@ -172,7 +172,7 @@ def sync_state_with_submission_table(db_engine: Engine, config: Config):
                 project
                 for project in existing_corresponding_projects
                 if project.result
-                and project.result.get(BIOPROJECT_ENA_FIELD) == submitter_provided_bioproject
+                and project.result.get(EnaResultField.BIOPROJECT) == submitter_provided_bioproject
             ]
         else:
             corresponding_project = existing_corresponding_projects
@@ -211,7 +211,7 @@ def sync_state_with_submission_table(db_engine: Engine, config: Config):
             ProjectTableEntry(
                 group_id=row.group_id,
                 organism=row.organism,
-                result={BIOPROJECT_ENA_FIELD: submitter_provided_bioproject}
+                result={EnaResultField.BIOPROJECT: submitter_provided_bioproject}
                 if submitter_provided_bioproject
                 else None,
             ),
@@ -257,7 +257,7 @@ def project_table_create(
             logger.error(f"Was unable to get group info for group: {row.group_id}, {e}")
             continue
 
-        if row.result and row.result.get(BIOPROJECT_ENA_FIELD):
+        if row.result and row.result.get(EnaResultField.BIOPROJECT):
             update_with_existing_bioproject(
                 db_engine, config, row, center_name=group_info.institution
             )

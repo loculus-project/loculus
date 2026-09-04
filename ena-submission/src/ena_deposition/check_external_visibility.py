@@ -22,11 +22,8 @@ from sqlalchemy import Engine
 from tenacity import Retrying, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 from ena_deposition.config import (
-    BIOPROJECT_ENA_FIELD,
-    BIOSAMPLE_ENA_FIELD,
-    GCA_ENA_FIELD,
-    VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX,
     Config,
+    EnaResultField,
 )
 from ena_deposition.ena_submission_helper import log_before_retry
 from ena_deposition.submission_db_helper import (
@@ -171,45 +168,45 @@ COLUMN_CONFIGS = {
     (EntityType.PROJECT, "ena_first_publicly_visible"): ColumnCheckConfig(
         entry_class=ProjectTableEntry,
         visibility_column="ena_first_publicly_visible",
-        accession_field_name_prefix=BIOPROJECT_ENA_FIELD,
+        accession_field_name_prefix=EnaResultField.BIOPROJECT,
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.PROJECT, "ncbi_first_publicly_visible"): ColumnCheckConfig(
         entry_class=ProjectTableEntry,
         visibility_column="ncbi_first_publicly_visible",
-        accession_field_name_prefix=BIOPROJECT_ENA_FIELD,
+        accession_field_name_prefix=EnaResultField.BIOPROJECT,
         checker_class=NCBIVisibilityChecker,
     ),
     (EntityType.SAMPLE, "ena_first_publicly_visible"): ColumnCheckConfig(
         entry_class=SampleTableEntry,
         visibility_column="ena_first_publicly_visible",
-        accession_field_name_prefix=BIOSAMPLE_ENA_FIELD,
+        accession_field_name_prefix=EnaResultField.BIOSAMPLE,
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.SAMPLE, "ncbi_first_publicly_visible"): ColumnCheckConfig(
         entry_class=SampleTableEntry,
         visibility_column="ncbi_first_publicly_visible",
-        accession_field_name_prefix=BIOSAMPLE_ENA_FIELD,
+        accession_field_name_prefix=EnaResultField.BIOSAMPLE,
         checker_class=NCBIVisibilityChecker,
     ),
     # Assemblies - ENA nucleotide accessions
     (EntityType.ASSEMBLY, "ena_nucleotide_first_publicly_visible"): ColumnCheckConfig(
         entry_class=AssemblyTableEntry,
         visibility_column="ena_nucleotide_first_publicly_visible",
-        accession_field_name_prefix=VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX,
+        accession_field_name_prefix=EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX,
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.ASSEMBLY, "ncbi_nucleotide_first_publicly_visible"): ColumnCheckConfig(
         entry_class=AssemblyTableEntry,
         visibility_column="ncbi_nucleotide_first_publicly_visible",
-        accession_field_name_prefix=VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX,
+        accession_field_name_prefix=EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX,
         checker_class=NCBIVisibilityChecker,
     ),
     # Assemblies - ENA GCA accessions
     (EntityType.ASSEMBLY, "ena_gca_first_publicly_visible"): ColumnCheckConfig(
         entry_class=AssemblyTableEntry,
         visibility_column="ena_gca_first_publicly_visible",
-        accession_field_name_prefix=GCA_ENA_FIELD,
+        accession_field_name_prefix=EnaResultField.GCA,
         checker_class=ENAVisibilityChecker,
     ),
 }

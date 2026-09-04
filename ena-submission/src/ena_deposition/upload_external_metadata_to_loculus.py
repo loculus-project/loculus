@@ -12,13 +12,9 @@ from sqlalchemy import Engine
 from ena_deposition.call_loculus import submit_external_metadata
 
 from .config import (
-    BIOPROJECT_ENA_FIELD,
-    BIOSAMPLE_ENA_FIELD,
-    GCA_ENA_FIELD,
-    INSDC_ACCESSION_ENA_FIELD_PREFIX,
-    VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX,
     Config,
     EnaOrganismDetails,
+    EnaResultField,
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
@@ -70,10 +66,10 @@ def get_bioproject_accession_from_db(
         db_engine, ProjectTableEntry, conditions={"project_id": project_id}
     )
 
-    if not result or BIOPROJECT_ENA_FIELD not in result:
+    if not result or EnaResultField.BIOPROJECT not in result:
         return {}
 
-    return {config.loculus_accession_fields.bioproject: result[BIOPROJECT_ENA_FIELD]}
+    return {config.loculus_accession_fields.bioproject: result[EnaResultField.BIOPROJECT]}
 
 
 def get_biosample_accession_from_db(
@@ -85,10 +81,10 @@ def get_biosample_accession_from_db(
         conditions={"accession": accession, "version": version},
     )
 
-    if not result or BIOSAMPLE_ENA_FIELD not in result:
+    if not result or EnaResultField.BIOSAMPLE not in result:
         return {}
 
-    return {config.loculus_accession_fields.biosample: result[BIOSAMPLE_ENA_FIELD]}
+    return {config.loculus_accession_fields.biosample: result[EnaResultField.BIOSAMPLE]}
 
 
 def get_assembly_accessions_from_db(
@@ -110,7 +106,7 @@ def get_assembly_accessions_from_db(
     data = {}
     all_present = True
 
-    if gca := result.get(GCA_ENA_FIELD):
+    if gca := result.get(EnaResultField.GCA):
         data[config.loculus_accession_fields.gca] = gca
     else:
         all_present = False
@@ -119,7 +115,7 @@ def get_assembly_accessions_from_db(
     for segment in segment_names:
         segment_suffix = f"_{segment}" if organism.is_multi_segment() else ""
 
-        base_key = f"{INSDC_ACCESSION_ENA_FIELD_PREFIX}{segment_suffix}"
+        base_key = f"{EnaResultField.INSDC_ACCESSION_PREFIX}{segment_suffix}"
         if base_key in result:
             data[f"{config.loculus_accession_fields.insdc_accession_prefix}{segment_suffix}"] = (
                 result[base_key]
@@ -127,7 +123,7 @@ def get_assembly_accessions_from_db(
         else:
             all_present = False
 
-        full_key = f"{VERSIONED_INSDC_ACCESSION_ENA_FIELD_PREFIX}{segment_suffix}"
+        full_key = f"{EnaResultField.VERSIONED_INSDC_ACCESSION_PREFIX}{segment_suffix}"
         if full_key in result:
             data[
                 f"{config.loculus_accession_fields.versioned_insdc_accession_prefix}{segment_suffix}"

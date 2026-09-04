@@ -13,7 +13,7 @@ from typing import Any
 
 import click
 from ena_deposition.call_loculus import get_group_info
-from ena_deposition.config import BIOPROJECT_ENA_FIELD, BIOSAMPLE_ENA_FIELD, Config, get_config
+from ena_deposition.config import Config, EnaResultField, get_config
 from ena_deposition.create_assembly import create_manifest_object
 from ena_deposition.create_project import construct_project_set_object
 from ena_deposition.create_sample import construct_sample_set_object
@@ -101,13 +101,13 @@ def local_ena_submission_generator(
         project_entry = ProjectTableEntry(
             group_id=data["metadata"]["groupId"],
             organism=data["organism"],
-            result={BIOPROJECT_ENA_FIELD: bioproject} if bioproject else None,
+            result={EnaResultField.BIOPROJECT: bioproject} if bioproject else None,
             center_name=center_name,
         )
         sample_entry = SampleTableEntry(
             accession=accession,
             version=int(version),
-            result={BIOSAMPLE_ENA_FIELD: biosample} if biosample else None,
+            result={EnaResultField.BIOSAMPLE: biosample} if biosample else None,
         )
 
     if mode == "project":
