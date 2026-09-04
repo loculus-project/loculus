@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import pathlib
 import tempfile
 import traceback
 import uuid
@@ -247,6 +248,7 @@ def download_fastq_files(
     for file_entry in files:
         # Use the fileId to avoid any potential security issues as name is supplied by the user
         file_name = os.path.basename(file_entry["fileId"])
+        file_extension = "".join(pathlib.Path(file_entry["name"]).suffixes)
         logger.info(
             f"Starting download of {file_entry['name']} to {file_name} for accession {accession}"
         )
@@ -254,7 +256,7 @@ def download_fastq_files(
             file_path = os.path.join(dir, file_name)
         else:
             with tempfile.NamedTemporaryFile(
-                delete=False, suffix=file_name, prefix=f"{accession}_", dir=dir
+                delete=False, suffix=file_name + file_extension, prefix=f"{accession}_", dir=dir
             ) as temp:
                 file_path = temp.name
 
