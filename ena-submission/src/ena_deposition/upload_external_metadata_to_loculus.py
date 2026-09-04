@@ -16,6 +16,7 @@ from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
     AssemblyTableEntry,
     ProjectTableEntry,
+    RawReadsTableEntry,
     SampleTableEntry,
     StatusAll,
     SubmissionTableEntry,
@@ -28,7 +29,9 @@ from .submission_db_helper import (
 logger = logging.getLogger(__name__)
 
 
-def _get_result_of_single_db_record[T: SampleTableEntry | ProjectTableEntry | AssemblyTableEntry](
+def _get_result_of_single_db_record[
+    T: SampleTableEntry | ProjectTableEntry | AssemblyTableEntry | RawReadsTableEntry
+](
     db_engine: Engine,
     model_class: type[T],
     conditions: dict[str, Any],
@@ -79,6 +82,23 @@ def get_biosample_accession_from_db(
         return {}
 
     return {"biosampleAccession": result["biosample_accession"]}
+
+
+def get_run_accession_from_db(
+    db_engine: Engine, accession: str, version: int, submit_raw_reads: bool
+) -> tuple[dict[str, str], bool]:
+    if not submit_raw_reads:
+        return {}, True
+    result = _get_result_of_single_db_record(
+        db_engine,
+        RawReadsTableEntry,
+        conditions={"accession": accession, "version": version},
+    )
+
+    if not result or "err_accession" not in result:
+        return {}, False
+
+    return {"insdcRawReadsAccession": result["err_accession"]}, True
 
 
 def get_assembly_accessions_from_db(
@@ -132,6 +152,9 @@ def get_external_metadata_to_upload(
 
     bioproject_accession = get_bioproject_accession_from_db(db_engine, entry.project_id)
     biosample_accession = get_biosample_accession_from_db(db_engine, accession, version)
+    run_accession, run_accession_not_missing = get_run_accession_from_db(
+        db_engine, accession, version, entry.submit_raw_reads
+    )
     assembly_accession, all_assemblies_present = get_assembly_accessions_from_db(
         db_engine, accession, version, organism
     )
@@ -142,15 +165,24 @@ def get_external_metadata_to_upload(
         "externalMetadata": {
             **bioproject_accession,
             **biosample_accession,
+            **run_accession,
             **assembly_accession,
         },
-    }, all([bioproject_accession, biosample_accession, all_assemblies_present])
+    }, all(
+        [
+            bioproject_accession,
+            biosample_accession,
+            run_accession_not_missing,
+            all_assemblies_present,
+        ]
+    )
 
 
 def get_external_metadata_and_send_to_loculus(db_engine: Engine, config: Config) -> None:
     for status in (
         StatusAll.SUBMITTED_PROJECT,
         StatusAll.SUBMITTED_SAMPLE,
+        StatusAll.SUBMITTED_RAW_READS,
         StatusAll.SUBMITTING_ASSEMBLY,
         StatusAll.SUBMITTED_ALL,
     ):

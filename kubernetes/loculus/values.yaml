@@ -1082,7 +1082,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         options:
           # ena-webin-cli -context reads -fields
           # ena-webin-cli=9.0.3
-          # Last checked: 09.06.2026
+          # Last checked: 04.09.2026
           # Fields listed in INSTRUMENT (excluding `unspecified`)
           - name: "454 GS"
           - name: "454 GS 20"
@@ -1097,15 +1097,14 @@ defaultOrganismConfig: &defaultOrganismConfig
           - name: "AB 3500xL Genetic Analyzer"
           - name: "AB 3730 Genetic Analyzer"
           - name: "AB 3730xL Genetic Analyzer"
-          - name: "AB 5500 Genetic Analyzer"
-          - name: "AB 5500xl Genetic Analyzer"
-          - name: "AB 5500xl-W Genetic Analysis System"
+          - name: "AVITI 24"
           - name: "BGISEQ-50"
           - name: "BGISEQ-500"
           - name: "DNBSEQ-G400"
           - name: "DNBSEQ-G400 FAST"
           - name: "DNBSEQ-G50"
           - name: "DNBSEQ-T7"
+          - name: "DNBSEQ-T10x4RS"
           - name: "Element AVITI"
           - name: "FASTASeq 300"
           - name: "GENIUS"
@@ -1114,7 +1113,6 @@ defaultOrganismConfig: &defaultOrganismConfig
           - name: "GenoCare 1600"
           - name: "GenoLab M"
           - name: "GridION"
-          - name: "Helicos HeliScope"
           - name: "HiSeq X Five"
           - name: "HiSeq X Ten"
           - name: "Illumina Genome Analyzer"
@@ -1132,6 +1130,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           - name: "Illumina MiniSeq"
           - name: "Illumina NovaSeq 6000"
           - name: "Illumina NovaSeq X"
+          - name: "Illumina NovaSeq X Plus"
           - name: "Illumina iSeq 100"
           - name: "Ion GeneStudio S5"
           - name: "Ion GeneStudio S5 Plus"
@@ -2946,6 +2945,8 @@ enaDeposition:
   enaUniqueSuffix: Loculus
   enaIsBroker: False
   enaSuppressedListTestUrl: "https://loculus-project.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt"
+  enaApprovedListTestUrl: "https://raw.githubusercontent.com/pathoplexus/ena-submission/raw_reads_test/test/approved_ena_submission_list.json"
+  rawReadsMetadataField: rawReads
 rawReadsProcessingService:
   raw_reads_processing_service_url: http://loculus-raw-reads-processing:5000
 subdomainSeparator: "-"

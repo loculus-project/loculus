@@ -10,6 +10,8 @@ keycloak_client_id: backend-client
 ingest_pipeline_submission_group: 1
 db_name: Loculus
 unique_project_suffix: Loculus
+unique_raw_reads_suffix: Loculus
+raw_reads_metadata_field: rawReads
 ena_submission_username: fake-user
 ena_submission_password: fake-password
 submit_to_ena_prod: False
@@ -45,6 +47,23 @@ assembly_manifest_fields_mapping:
     default: "1"
   run_ref:
     loculus_fields: [insdcRawReadsAccession]
+raw_reads_manifest_fields_mapping:
+  instrument:
+    loculus_fields: [sequencingInstrument]
+    default: "unspecified"
+  platform:
+    loculus_fields: [sequencingInstrument]
+  library_source:
+    loculus_fields: [sequencingLibrarySource]
+    default: "OTHER"
+  library_selection:
+    loculus_fields: [sequencingLibrarySelection]
+    default: "unspecified"
+  library_strategy:
+    loculus_fields: [sequencingAssayType]
+    default: "OTHER"
+  insert_size:
+    loculus_fields: [pairedEndInsertSize]
 #ena_checklist: ERC000033 - do not use until all fields are mapped to ENA accepted options
 metadata_mapping:
   'subject exposure':
@@ -122,3 +141,6 @@ slack_retry_substrings:
 submitting_time_threshold_min: 15
 waiting_threshold_hours: 48
 allow_revision_with_manifest_changes: true
+ena_webin_cli_timeout_seconds: 300
+s3_request_timeout_seconds: 600
+get_released_data_timeout_seconds: 600

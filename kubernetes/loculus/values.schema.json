@@ -1906,6 +1906,11 @@
         "enaSuppressedListTestUrl": {
           "type": "string",
           "description": "URL to the ENA suppressed sequence list (typically hosted on a Github repo)"
+        },
+        "rawReadsMetadataField": {
+          "type": "string",
+          "description": "Name of the Loculus metadata field that holds the JSON-encoded list of raw read files",
+          "default": "rawReads"
         }
       }
     },

@@ -1,6 +1,9 @@
+import gzip
 import json
 import logging
 import os
+import pathlib
+import shutil
 import traceback
 import uuid
 from collections.abc import Iterator
@@ -182,7 +185,9 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
     }
     logger.info(f"Fetching released data from {url} with request id {request_id}")
 
-    with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
+    with requests.get(
+        url, headers=headers, timeout=config.get_released_data_timeout_seconds, stream=True
+    ) as response:
         response.raise_for_status()
         for line_no, line in enumerate(response.iter_lines(chunk_size=65536), start=1):
             if not line:
@@ -212,3 +217,61 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
                 for k, v in full_json.items()
                 if k in {"metadata", "unalignedNucleotideSequences"}
             }
+
+
+def download_fastq_files(
+    config: Config, metadata: dict[str, Any], accession: str, dir: str
+) -> list[str]:
+    """
+    Download the fastq files listed under the `rawreads` metadata field to local disk
+    and return their paths.
+
+    `rawreads` is a JSON-encoded string of the form
+    '[{"fileId": ..., "name": ..., "url": ...}, ...]'. Each `url` points at the backend's
+    `/files/get/{accession}/{version}/{fileCategory}/{fileName}` endpoint, which responds
+    with a 307 redirect to a pre-signed S3 URL - requests follows the redirect automatically
+    and drops the Authorization header once the redirect target's host differs from the
+    backend's.
+    """
+    raw_reads = metadata.get(config.raw_reads_metadata_field)
+    if not raw_reads:
+        msg = f"No rawreads files found in metadata for accession {accession}"
+        raise RuntimeError(msg)
+    files = json.loads(raw_reads)
+
+    os.makedirs(dir, exist_ok=True)
+
+    fastq_files = []
+    for file_entry in files:
+        # Use the fileId to avoid any potential security issues as name is supplied by the user
+        file_name = os.path.basename(file_entry["fileId"])
+        file_extension = "".join(pathlib.Path(file_entry["name"]).suffixes)
+        logger.info(
+            f"Starting download of {file_entry['name']} to {file_name} for accession {accession}"
+        )
+        file_path = os.path.join(dir, file_name + file_extension)
+
+        with requests.get(
+            file_entry["url"],
+            stream=True,
+            timeout=config.s3_request_timeout_seconds,
+        ) as response:
+            response.raise_for_status()
+            # 1 MiB balances syscall/loop overhead against per-download memory;
+            # throughput is S3-bound above a few hundred KiB.
+            chunk_size = 1 << 20
+            with open(file_path, "wb") as f:
+                f.writelines(response.iter_content(chunk_size=chunk_size))
+
+        # ENA's webin-cli only accepts FASTQ files compressed as .gz or .bz2 - gzip
+        # any file that wasn't already uploaded pre-compressed.
+        if not file_path.endswith((".gz", ".bz2")):
+            compressed_path = file_path + ".gz"
+            with open(file_path, "rb") as src, gzip.open(compressed_path, "wb") as dst:
+                shutil.copyfileobj(src, dst)
+            os.remove(file_path)
+            file_path = compressed_path
+
+        fastq_files.append(file_path)
+
+    return fastq_files
