@@ -193,6 +193,7 @@ def sync_state_with_submission_table(db_engine: Engine):
                 f"{corresponding_raw_reads[0].status}, not updating submission_table status."
             )
             continue
+        run_ref = None
         if row and row.seq_metadata.get("insdcRawReadsAccession"):
             run_ref = row.seq_metadata["insdcRawReadsAccession"]
         add_to_raw_reads_table(
