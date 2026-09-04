@@ -10,6 +10,7 @@ import org.jetbrains.exposed.v1.core.neq
 import org.jetbrains.exposed.v1.core.not
 import org.jetbrains.exposed.v1.core.statements.StatementType
 import org.jetbrains.exposed.v1.datetime.KotlinLocalDateTimeColumnType
+import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
@@ -34,6 +35,18 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
             it[uploaderColumn] = uploader
             it[groupIdColumn] = groupId
             it[FilesTable.multipartUploadId] = multipartUploadId
+        }
+    }
+
+    fun createFileEntries(fileIds: List<FileId>, uploader: String, groupId: Int) {
+        val now = dateProvider.getCurrentDateTime()
+        fileIds.processInDatabaseSafeChunks { chunk ->
+            FilesTable.batchInsert(chunk) { fileId ->
+                this[FilesTable.idColumn] = fileId
+                this[FilesTable.uploadRequestedAtColumn] = now
+                this[FilesTable.uploaderColumn] = uploader
+                this[FilesTable.groupIdColumn] = groupId
+            }
         }
     }
 

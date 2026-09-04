@@ -1,1 +1,3 @@
 ALTER TABLE files ALTER COLUMN id TYPE text;
+
+CREATE SEQUENCE file_id_sequence START WITH 1;
