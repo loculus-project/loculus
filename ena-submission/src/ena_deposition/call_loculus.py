@@ -1,7 +1,9 @@
+import gzip
 import json
 import logging
 import os
 import pathlib
+import shutil
 import tempfile
 import traceback
 import uuid
@@ -272,6 +274,15 @@ def download_fastq_files(
             chunk_size = 1 << 20
             with open(file_path, "wb") as f:
                 f.writelines(response.iter_content(chunk_size=chunk_size))
+
+        # ENA's webin-cli only accepts FASTQ files compressed as .gz or .bz2 - gzip
+        # any file that wasn't already uploaded pre-compressed.
+        if not file_path.endswith((".gz", ".bz2")):
+            compressed_path = file_path + ".gz"
+            with open(file_path, "rb") as src, gzip.open(compressed_path, "wb") as dst:
+                shutil.copyfileobj(src, dst)
+            os.remove(file_path)
+            file_path = compressed_path
 
         fastq_files.append(file_path)
 
