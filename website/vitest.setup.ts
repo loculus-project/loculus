@@ -43,8 +43,6 @@ export const testConfig = {
         keycloakUrl: 'http://authentication.dummy',
     },
     insecureCookies: true,
-    backendKeycloakClientSecret: 'dummy',
-    oidcTransactionCookieSecret: 'test-oidc-transaction-cookie-secret',
 } as RuntimeConfig;
 
 // Stubbing necessary since headlessui v2

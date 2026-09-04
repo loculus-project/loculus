@@ -1,4 +1,4 @@
-import { defineConfig } from 'astro/config';
+import { defineConfig, envField } from 'astro/config';
 import node from '@astrojs/node';
 import tailwindcss from '@tailwindcss/vite';
 import Icons from 'unplugin-icons/vite';
@@ -9,6 +9,20 @@ import flowbiteReact from 'flowbite-react/plugin/astro';
 // https://astro.build/config
 export default defineConfig({
     output: 'server',
+    env: {
+        schema: {
+            BACKEND_KEYCLOAK_CLIENT_SECRET: envField.string({
+                context: 'server',
+                access: 'secret',
+                min: 5,
+            }),
+            OIDC_TRANSACTION_COOKIE_SECRET: envField.string({
+                context: 'server',
+                access: 'secret',
+                min: 32,
+            }),
+        },
+    },
     integrations: [react(), mdx(), flowbiteReact()],
     security: {
         // Allow any forwarded host/proto (required for ingress-terminated deployments with dynamic hostnames).

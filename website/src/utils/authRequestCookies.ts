@@ -1,6 +1,7 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 
 import type { AstroCookies } from 'astro';
+import { OIDC_TRANSACTION_COOKIE_SECRET } from 'astro:env/server';
 
 import { getRuntimeConfig } from '../config.ts';
 
@@ -25,7 +26,7 @@ export type AuthRequest = {
 };
 
 function encryptionKey() {
-    return createHash('sha256').update(getRuntimeConfig().oidcTransactionCookieSecret).digest();
+    return createHash('sha256').update(OIDC_TRANSACTION_COOKIE_SECRET).digest();
 }
 
 function seal(store: AuthRequestStore): string {

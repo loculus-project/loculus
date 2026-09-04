@@ -12,7 +12,6 @@ vi.mock('../config.ts', () => ({
     getConfiguredOrganisms: () => [],
     getRuntimeConfig: () => ({
         insecureCookies: false,
-        oidcTransactionCookieSecret: 'test-oidc-transaction-cookie-secret',
     }),
     getWebsiteConfig: () => ({ readOnlyMode: false }),
 }));

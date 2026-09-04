@@ -11,7 +11,6 @@ import {
 vi.mock('../config.ts', () => ({
     getRuntimeConfig: () => ({
         insecureCookies: false,
-        oidcTransactionCookieSecret: 'test-oidc-transaction-cookie-secret',
     }),
 }));
 

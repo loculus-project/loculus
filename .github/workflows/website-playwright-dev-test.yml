@@ -56,3 +56,5 @@ jobs:
           npx playwright screenshot localhost:3000 test.png
         env:
           CONFIG_DIR: "tests/config"
+          BACKEND_KEYCLOAK_CLIENT_SECRET: "dummy"
+          OIDC_TRANSACTION_COOKIE_SECRET: "test-oidc-transaction-cookie-secret"
