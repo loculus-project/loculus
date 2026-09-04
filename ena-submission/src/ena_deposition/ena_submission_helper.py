@@ -741,9 +741,15 @@ def _run_webin_cli_submission(
 
     output_tmpdir = tempfile.TemporaryDirectory()
 
-    response = post_webin_cli(
-        config, manifest_filename, tmpdir=output_tmpdir, center_name=center_name, context=context
-    )
+    try:
+        response = post_webin_cli(
+            config, manifest_filename, tmpdir=output_tmpdir, center_name=center_name, context=context
+        )
+    except Exception as e:
+        msg = f"Error occurred while running webin-cli: {e}"
+        logger.error(msg)
+        errors.append(msg)
+        return CreationResult(errors=errors, warnings=warnings)
 
     # Happy path: webin-cli succeeded and returned the expected accession(s)
     if response.returncode == 0:
