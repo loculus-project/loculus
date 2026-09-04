@@ -95,7 +95,7 @@ fun ResultActions.andGetFileIds(): List<FileId> = andReturn()
     .contentAsString
     .let {
         val responseJson = jacksonObjectMapper().readTree(it)
-        responseJson.map { UUID.fromString(it.get("fileId").textValue()) }
+        responseJson.map { it.get("fileId").textValue() }
     }
 
 fun ResultActions.andGetFileIdsAndUrls(): List<FileIdAndWriteUrl> = andReturn()
@@ -103,7 +103,7 @@ fun ResultActions.andGetFileIdsAndUrls(): List<FileIdAndWriteUrl> = andReturn()
     .contentAsString
     .let {
         val responseJson = jacksonObjectMapper().readTree(it)
-        responseJson.map { FileIdAndWriteUrl(UUID.fromString(it.get("fileId").textValue()), it.get("url").textValue()) }
+        responseJson.map { FileIdAndWriteUrl(it.get("fileId").textValue(), it.get("url").textValue()) }
     }
 
 fun ResultActions.andGetFileIdsAndMultipartUrls(): List<FileIdAndMultipartWriteUrl> = andReturn()
@@ -112,7 +112,7 @@ fun ResultActions.andGetFileIdsAndMultipartUrls(): List<FileIdAndMultipartWriteU
     .let { body ->
         val root = jacksonObjectMapper().readTree(body)
         root.map { node ->
-            val fileId = UUID.fromString(node.get("fileId").textValue())
+            val fileId = node.get("fileId").textValue()
             val urls = node.get("urls").map { it.textValue() }
             FileIdAndMultipartWriteUrl(fileId, urls)
         }
