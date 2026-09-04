@@ -20,7 +20,7 @@ CREATE TABLE raw_reads_table (
 -- Create raw-reads records for entries with an insdcRawReadsAccession in the metadata, and mark them as submitted
 UPDATE submission_table
 SET submit_raw_reads = true
-WHERE metadata->>'insdcRawReadsAccession' IS NOT NULL;
+WHERE metadata->>'insdcRawReadsAccession' IS NOT NULL AND metadata->>'insdcRawReadsAccession' <> '';
 
 INSERT INTO raw_reads_table (
     accession,
@@ -39,4 +39,4 @@ SELECT
         metadata->>'insdcRawReadsAccession'
     )
 FROM submission_table
-WHERE metadata->>'insdcRawReadsAccession' IS NOT NULL;
+WHERE metadata->>'insdcRawReadsAccession' IS NOT NULL AND metadata->>'insdcRawReadsAccession' <> '';
