@@ -35,7 +35,10 @@ def upload_sequences(config: Config, db_engine: Engine, sequences_to_upload: dic
             group_id=data["metadata"]["groupId"],
             organism=data["organism"],
             seq_metadata=data["metadata"],
-            submit_raw_reads=bool(data["metadata"].get(config.raw_reads_metadata_field)),
+            submit_raw_reads=bool(
+                data["metadata"].get(config.raw_reads_metadata_field)
+                or data["metadata"].get("insdcRawReadsAccession")
+            ),
             unaligned_nucleotide_sequences=data["unalignedNucleotideSequences"],
         )
         add_to_submission_table(db_engine, entry)

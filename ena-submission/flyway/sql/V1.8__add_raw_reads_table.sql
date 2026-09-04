@@ -16,3 +16,27 @@ CREATE TABLE raw_reads_table (
     ncbi_experiment_first_publicly_visible timestamp with time zone,
     primary key (accession, version)
 );
+
+-- Create raw-reads records for entries with an insdcRawReadsAccession in the metadata, and mark them as submitted
+UPDATE submission_table
+SET submit_raw_reads = true
+WHERE metadata->>'insdcRawReadsAccession' IS NOT NULL;
+
+INSERT INTO raw_reads_table (
+    accession,
+    version,
+    status,
+    started_at,
+    result
+)
+SELECT
+    accession,
+    version,
+    'SUBMITTED',
+    NOW(),
+    jsonb_build_object(
+        'err_accession',
+        metadata->>'insdcRawReadsAccession'
+    )
+FROM submission_table
+WHERE metadata->>'insdcRawReadsAccession' IS NOT NULL;

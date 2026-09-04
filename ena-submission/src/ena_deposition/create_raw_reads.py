@@ -15,6 +15,7 @@ from ena_deposition import call_loculus
 from .config import Config
 from .ena_submission_helper import (
     CreationResult,
+    accession_exists,
     create_ena_raw_reads,
     create_manifest,
     get_alias,
@@ -24,6 +25,7 @@ from .ena_submission_helper import (
     resolve_manifest_field,
     resolve_required_manifest_field,
     retry_failed_submissions_for_matching_errors,
+    set_accession_does_not_exist_error,
 )
 from .ena_types import (
     Instrument,
@@ -191,7 +193,12 @@ def sync_state_with_submission_table(db_engine: Engine):
                 f"{corresponding_raw_reads[0].status}, not updating submission_table status."
             )
             continue
-        add_to_raw_reads_table(db_engine, RawReadsTableEntry(**seq_key))
+        if row and row.seq_metadata.get("insdcRawReadsAccession"):
+            run_ref = row.seq_metadata["insdcRawReadsAccession"]
+        add_to_raw_reads_table(
+            db_engine,
+            RawReadsTableEntry(**seq_key, result={"err_accession": run_ref} if run_ref else None),
+        )
 
 
 def update_raw_reads_error(
@@ -350,6 +357,38 @@ def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: Acc
     )
 
 
+def update_with_existing_runrecord(db_engine: Engine, row: SubmissionTableEntry, config: Config):
+    """Update sample_table entry for entry with insdcRawReadsAccession"""
+    logger.debug(
+        f"Accession: {row.accession} already has insdcRawReadsAccession, updating sample_table"
+    )
+    run = row.seq_metadata["insdcRawReadsAccession"]
+
+    logger.info("Checking if run actually exists and is public")
+    seq_key = asdict(row.pkey)
+    if not accession_exists(run, config):
+        set_accession_does_not_exist_error(
+            conditions=seq_key,
+            accession=run,
+            accession_type="RUN",
+            db_engine=db_engine,
+        )
+        return
+
+    logger.info("Updating entry with insdcRawReadsAccession to state SUBMITTED")
+    update_db_where_conditions(
+        db_engine,
+        model_class=RawReadsTableEntry,
+        conditions=seq_key,
+        update_values={
+            "accession": row.accession,
+            "version": row.version,
+            "result": {"ena_sample_accession": run, "err_accession": run},
+            "status": Status.SUBMITTED,
+        },
+    )
+
+
 def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: SlackConfig):  # noqa: PLR0912, PLR0915
     """
     1. Find all entries in raw_reads_table in state READY
@@ -384,6 +423,9 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
         sample_accession, study_accession = get_project_and_sample_results(
             db_engine, submission_row
         )
+
+        if row.result and row.result.get("err_accession"):
+            update_with_existing_runrecord(db_engine, submission_row, config)
 
         revision = is_revision(db_engine, seq_key)
         if revision:
