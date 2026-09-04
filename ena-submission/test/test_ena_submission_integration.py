@@ -17,6 +17,7 @@ import uuid
 from dataclasses import asdict
 from datetime import datetime, timedelta
 from itertools import chain, repeat
+from pathlib import Path
 from typing import Any, Final
 from unittest.mock import Mock, patch
 
@@ -53,6 +54,7 @@ from ena_deposition.create_sample import (
 from ena_deposition.create_sample import (
     sync_state_with_submission_table as create_sample_sync_state_with_submission_table,
 )
+from ena_deposition.ena_submission_helper import CreationResult
 from ena_deposition.loculus_models import Group
 from ena_deposition.notifications import SlackConfig
 from ena_deposition.submission_db_helper import (
@@ -1194,6 +1196,77 @@ class TestRevisionWithManifestChangeTests(TestSubmission):
         _test_assembly_submission_errored(
             self.db_engine, self.config, self.slack_config, sequences_to_upload, mock_notify
         )
+
+
+class TestInsdcRawReadsAccessionInManifest(TestSubmission):
+    @patch("ena_deposition.ena_submission_helper.post_webin_with_retry", autospec=True)
+    @patch("ena_deposition.create_assembly.create_ena_assembly", autospec=True)
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
+    def test_run_ref_written_to_manifest(
+        self,
+        mock_get_group_info: Mock,
+        mock_create_ena_assembly: Mock,
+        mock_post_webin_with_retry: Mock,
+    ) -> None:
+        """When ``insdcRawReadsAccession`` is present in the metadata it must be sent to ENA
+        as the ``RUN_REF`` field of the assembly manifest.tsv.
+
+        No data is submitted to ENA as known public bioproject, biosample
+        (and insdcRawReadsAccession) accessions are supplied, so no new project/sample is created.
+
+        The test captures the manifest.tsv file that would be sent to ENA and checks that the
+        correct RUN_REF is present.
+        """
+        run_ref_accession = "ERR17356121"
+
+        mock_get_group_info.return_value = TEST_GROUP
+
+        captured_manifests: list[str] = []
+
+        def spy_create_ena_assembly(
+            config: Config,  # noqa: ARG001
+            manifest_filename: str,
+            center_name: str | None = None,  # noqa: ARG001
+        ) -> CreationResult:
+            captured_manifests.append(Path(manifest_filename).read_text(encoding="utf-8"))
+            return CreationResult(errors=[], warnings=[], result={"erz_accession": "ERZ_TEST"})
+
+        mock_create_ena_assembly.side_effect = spy_create_ena_assembly
+
+        sequences_to_upload = get_sequences()
+        for entry in sequences_to_upload.values():
+            # known public accessions
+            entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
+            entry["metadata"]["biosampleAccession"] = "SAMN11077987"
+            entry["metadata"]["insdcRawReadsAccession"] = run_ref_accession
+
+        upload_sequences(self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload)
+
+        _test_successful_project_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
+
+        mock_post_webin_with_retry.assert_not_called()
+
+        create_assembly_submission_table_start(self.db_engine, self.config)
+        check_assembly_submission_started(self.db_engine, sequences_to_upload)
+        assembly_table_create(self.db_engine, self.config)
+        check_assembly_submission_waiting(self.db_engine, sequences_to_upload)
+
+        assert mock_create_ena_assembly.called, "create_ena_assembly (webin-cli) was never called"
+        assert len(captured_manifests) == len(sequences_to_upload), (
+            f"Expected one manifest.tsv per sequence, got {len(captured_manifests)}"
+        )
+        for manifest_contents in captured_manifests:
+            for expected_line in (
+                f"RUN_REF\t{run_ref_accession}",
+                "STUDY\tPRJNA231221",
+                "SAMPLE\tSAMN11077987",
+            ):
+                assert expected_line in manifest_contents, (
+                    f"'{expected_line}' missing from the manifest.tsv sent to ENA:"
+                    f"\n{manifest_contents}"
+                )
 
 
 if __name__ == "__main__":
