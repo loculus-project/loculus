@@ -342,7 +342,7 @@ export type Info = z.infer<typeof info>;
 
 export const requestMultipartUploadResponse = z.array(
     z.object({
-        fileId: z.string().uuid(),
+        fileId: z.string(),
         urls: z.array(z.string()),
     }),
 );
@@ -351,7 +351,7 @@ export type RequestMultipartUploadResponse = z.infer<typeof requestMultipartUplo
 
 export const completeMultipartUploadRequest = z.array(
     z.object({
-        fileId: z.string().uuid(),
+        fileId: z.string(),
         etags: z.array(z.string()),
     }),
 );
