@@ -233,6 +233,9 @@ def check_raw_reads_submission_submitted(
         )
         assert len(rows) == 1, f"Raw reads for {full_accession} not found in raw reads table."
         assert rows[0].result, f"No result for raw reads {full_accession} in raw reads table."
+        assert not rows[0].errors, (
+            f"Raw reads {full_accession} is SUBMITTED but still has errors: {rows[0].errors}"
+        )
         assert in_submission_table(
             db_engine,
             {
