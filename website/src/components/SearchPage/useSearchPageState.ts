@@ -249,6 +249,7 @@ export function useSearchPageState({
     return useMemo(
         () => ({
             state,
+            setState,
             previewedSeqId,
             setPreviewedSeqId,
             previewHalfScreen,
@@ -267,6 +268,7 @@ export function useSearchPageState({
         }),
         [
             state,
+            setState,
             previewedSeqId,
             setPreviewedSeqId,
             previewHalfScreen,
