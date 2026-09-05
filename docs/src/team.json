@@ -100,6 +100,11 @@
             "name": "Thomas Brier",
             "description": "Swiss TPH; ARTIC network",
             "picture": "/images/team/thomasBrier-square.jpg"
+        },
+        {
+            "name": "Sneha",
+            "description": "Independent Consultant, Pathoplexus",
+            "picture": "/images/team/sneha-square.png"
         }
     ]
 }
