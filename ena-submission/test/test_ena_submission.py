@@ -14,8 +14,10 @@ import xmltodict
 import yaml
 from ena_deposition.config import EnaOrganismDetails, ManifestFieldDetails, MetadataMapping
 from ena_deposition.create_assembly import (
+    can_be_revised,
     create_chromosome_list_object,
     create_manifest_object,
+    has_assembly_data_changed,
 )
 from ena_deposition.create_project import construct_project_set_object
 from ena_deposition.create_raw_reads import (
@@ -543,6 +545,114 @@ class ManifestFieldsDiffTests(unittest.TestCase):
 
         self.assertIn("authors", differing_fields)
         self.assertIn("Error resolving field", differing_fields["authors"])
+
+
+class AssemblyRevisionRunRefTests(unittest.TestCase):
+    """
+    The RUN_REF written to the assembly manifest comes from raw_reads_table, not from
+    seq_metadata. Replacing or adding raw read files therefore changes the RUN_REF without
+    changing anything the flatfile/manifest metadata comparison can see. These tests check that
+    such a change is still detected so the previous assembly result is not silently reused.
+    """
+
+    def setUp(self):
+        self.config = mock.Mock()
+        self.config.assembly_manifest_fields_mapping = MOCK_CONFIG.assembly_manifest_fields_mapping
+        self.config.allow_revision_with_manifest_changes = True
+        self.db_engine = mock.Mock()
+        self.last_entry = sample_data_in_submission_table()
+        self.submission_row = sample_data_in_submission_table()
+        self.submission_row.version = 2
+
+    @mock.patch("ena_deposition.create_assembly.get_run_ref")
+    @mock.patch("ena_deposition.create_assembly.get_last_entry")
+    def test_unchanged_run_ref_is_not_a_change(self, mock_get_last_entry, mock_get_run_ref):
+        mock_get_last_entry.return_value = self.last_entry
+        mock_get_run_ref.return_value = "ERR111"
+
+        self.assertFalse(
+            has_assembly_data_changed(
+                self.config, self.db_engine, self.submission_row, run_ref="ERR111"
+            )
+        )
+        mock_get_run_ref.assert_called_once_with(self.db_engine, self.last_entry.pkey)
+
+    @mock.patch("ena_deposition.create_assembly.get_run_ref")
+    @mock.patch("ena_deposition.create_assembly.get_last_entry")
+    def test_replaced_run_ref_is_a_change(self, mock_get_last_entry, mock_get_run_ref):
+        mock_get_last_entry.return_value = self.last_entry
+        mock_get_run_ref.return_value = "ERR111"
+
+        self.assertTrue(
+            has_assembly_data_changed(
+                self.config, self.db_engine, self.submission_row, run_ref="ERR222"
+            )
+        )
+
+    @mock.patch("ena_deposition.create_assembly.get_run_ref")
+    @mock.patch("ena_deposition.create_assembly.get_last_entry")
+    def test_added_run_ref_is_a_change(self, mock_get_last_entry, mock_get_run_ref):
+        mock_get_last_entry.return_value = self.last_entry
+        mock_get_run_ref.return_value = None
+
+        self.assertTrue(
+            has_assembly_data_changed(
+                self.config, self.db_engine, self.submission_row, run_ref="ERR222"
+            )
+        )
+
+    @mock.patch("ena_deposition.create_assembly.update_assembly_error")
+    @mock.patch("ena_deposition.create_assembly.get_run_ref")
+    @mock.patch("ena_deposition.create_assembly.get_project_and_sample_results")
+    @mock.patch("ena_deposition.create_assembly.get_last_entry")
+    @mock.patch("ena_deposition.create_assembly.is_latest_revision")
+    def test_changed_run_ref_requires_manual_revision_if_manifest_changes_not_allowed(
+        self,
+        mock_is_latest_revision,
+        mock_get_last_entry,
+        mock_get_project_and_sample_results,
+        mock_get_run_ref,
+        mock_update_assembly_error,
+    ):
+        self.config.allow_revision_with_manifest_changes = False
+        mock_is_latest_revision.return_value = True
+        mock_get_last_entry.return_value = self.last_entry
+        mock_get_project_and_sample_results.return_value = ("SAMEA000001", "PRJEB000001")
+        mock_get_run_ref.return_value = "ERR111"
+
+        self.assertFalse(
+            can_be_revised(self.config, self.db_engine, self.submission_row, run_ref="ERR222")
+        )
+        mock_update_assembly_error.assert_called_once()
+        errors = mock_update_assembly_error.call_args[0][1]
+        self.assertEqual(len(errors), 1)
+        self.assertIn("run_ref", errors[0])
+        self.assertIn("ERR111", errors[0])
+        self.assertIn("ERR222", errors[0])
+
+    @mock.patch("ena_deposition.create_assembly.update_assembly_error")
+    @mock.patch("ena_deposition.create_assembly.get_run_ref")
+    @mock.patch("ena_deposition.create_assembly.get_project_and_sample_results")
+    @mock.patch("ena_deposition.create_assembly.get_last_entry")
+    @mock.patch("ena_deposition.create_assembly.is_latest_revision")
+    def test_unchanged_run_ref_can_be_revised_if_manifest_changes_not_allowed(
+        self,
+        mock_is_latest_revision,
+        mock_get_last_entry,
+        mock_get_project_and_sample_results,
+        mock_get_run_ref,
+        mock_update_assembly_error,
+    ):
+        self.config.allow_revision_with_manifest_changes = False
+        mock_is_latest_revision.return_value = True
+        mock_get_last_entry.return_value = self.last_entry
+        mock_get_project_and_sample_results.return_value = ("SAMEA000001", "PRJEB000001")
+        mock_get_run_ref.return_value = "ERR111"
+
+        self.assertTrue(
+            can_be_revised(self.config, self.db_engine, self.submission_row, run_ref="ERR111")
+        )
+        mock_update_assembly_error.assert_not_called()
 
 
 class RawReadsCreationTests(unittest.TestCase):
