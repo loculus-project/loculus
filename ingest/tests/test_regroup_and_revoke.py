@@ -88,28 +88,60 @@ def replicate_cchf_revoke_record(tmp_path: Path, group_ids: list[str]) -> tuple[
     return str(metadata_path), str(sequences_path)
 
 
-def install_fake_backend(monkeypatch, known_submission_ids: set[str] | None = None):
+@dataclasses.dataclass
+class SubmitBatch:
+    """One /submit call: the metadata ids sent and the fasta headers sent alongside."""
+
+    metadata_ids: list[str]
+    fasta_headers: list[str]
+
+
+@dataclasses.dataclass
+class FakeBackend:
+    submit_batches: list[SubmitBatch] = dataclasses.field(default_factory=list)
+    revoke_calls: list[dict] = dataclasses.field(default_factory=list)
+    slack_posts: list[tuple[str, dict]] = dataclasses.field(default_factory=list)
+
+
+def _record_submit_batch(files: dict) -> SubmitBatch:
+    metadata_ids = pd.read_csv(files["metadataFile"][1], sep="\t")["id"].tolist()
+    sequence_text = files["sequenceFile"][1].getvalue().decode("utf-8")
+    fasta_headers = [
+        line[1:].strip() for line in sequence_text.splitlines() if line.startswith(">")
+    ]
+    return SubmitBatch(metadata_ids=metadata_ids, fasta_headers=fasta_headers)
+
+
+def install_fake_backend(monkeypatch, known_submission_ids: set[str] | None = None) -> FakeBackend:
     """Patch make_request so /submit echoes back a new accession per submissionId
-    and /revoke calls are recorded instead of sent.
+    and both /submit and /revoke calls are recorded instead of sent. Also patches
+    requests.post so the Slack notification on the abort path is captured, not sent.
 
     known_submission_ids, when given, restricts which submissionIds the fake /submit
     response includes - used to simulate a submit response that is missing entries.
     """
-    revoke_calls: list[dict] = []
+    backend = FakeBackend()
+
+    def fake_slack_post(url, **kwargs):
+        backend.slack_posts.append((url, json.loads(kwargs["data"])))
+        return FakeResponse({}, status_code=200)
+
+    monkeypatch.setattr(loculus_client.requests, "post", fake_slack_post)
 
     def fake_make_request(_method, url, _config, **kwargs):
         if url.endswith("/submit"):
-            df = pd.read_csv(kwargs["files"]["metadataFile"][1], sep="\t")
+            batch = _record_submit_batch(kwargs["files"])
+            backend.submit_batches.append(batch)
             return FakeResponse(
                 [
                     {"submissionId": sid, "accession": f"LOC_NEW_{sid}"}
-                    for sid in df["id"].tolist()
+                    for sid in batch.metadata_ids
                     if known_submission_ids is None or sid in known_submission_ids
                 ]
             )
         if url.endswith("/revoke"):
             body = kwargs["json_body"]
-            revoke_calls.append(body)
+            backend.revoke_calls.append(body)
             return FakeResponse(
                 [{"accession": accession, "version": 2} for accession in body["accessions"]]
             )
@@ -117,7 +149,28 @@ def install_fake_backend(monkeypatch, known_submission_ids: set[str] | None = No
         raise AssertionError(msg)
 
     monkeypatch.setattr(loculus_client, "make_request", fake_make_request)
-    return revoke_calls
+    return backend
+
+
+def assert_submit_batches(batches: list[SubmitBatch], expected_sizes: list[int]) -> list[str]:
+    """Check the submit calls were split into batches of the expected sizes and that,
+    in every batch, the fasta records line up with that batch's metadata rows (same
+    ids, same order, all three segments, nothing leaking across the boundary).
+
+    Returns the metadata ids seen across all batches, in order.
+    """
+    assert [len(batch.metadata_ids) for batch in batches] == expected_sizes
+
+    seen_ids: list[str] = []
+    for batch in batches:
+        segments_by_id: dict[str, set[str]] = {}
+        for header in batch.fasta_headers:
+            group_id, segment = header.rsplit("_", 1)
+            segments_by_id.setdefault(group_id, set()).add(segment)
+        assert list(segments_by_id) == batch.metadata_ids
+        assert all(segments == {"L", "M", "S"} for segments in segments_by_id.values())
+        seen_ids.extend(batch.metadata_ids)
+    return seen_ids
 
 
 def test_regroup_and_revoke_on_cchf_fixture(cchf_pipeline, monkeypatch):
@@ -130,12 +183,13 @@ def test_regroup_and_revoke_on_cchf_fixture(cchf_pipeline, monkeypatch):
     (submission_id,) = to_revoke
     old_accessions = set(to_revoke[submission_id])
 
-    revoke_calls = install_fake_backend(monkeypatch)
+    backend = install_fake_backend(monkeypatch)
     responses = loculus_client.regroup_and_revoke(
         str(REVOKE_METADATA), str(REVOKE_SEQUENCES), str(REVOKE_MAP), load_config(), group_id="1"
     )
 
-    revoked = {call["accessions"][0]: call["versionComment"] for call in revoke_calls}
+    assert assert_submit_batches(backend.submit_batches, [1]) == [submission_id]
+    revoked = {call["accessions"][0]: call["versionComment"] for call in backend.revoke_calls}
     assert set(revoked) == old_accessions
     assert all(f"LOC_NEW_{submission_id}" in comment for comment in revoked.values())
     assert len(responses) == len(old_accessions)
@@ -152,16 +206,21 @@ def test_regroup_and_revoke_spans_multiple_submit_batches(cchf_pipeline, tmp_pat
     revoke_map = tmp_path / "to_revoke.json"
     revoke_map.write_text(json.dumps(to_revoke), encoding="utf-8")
 
-    revoke_calls = install_fake_backend(monkeypatch)
+    backend = install_fake_backend(monkeypatch)
     # 3 records, batch_chunk_size=2 -> submit batches are [grpA, grpB] and [grpC]
     config = load_config(batch_chunk_size=2)
     responses = loculus_client.regroup_and_revoke(
         metadata, sequences, str(revoke_map), config, group_id="1"
     )
 
-    revoked = {call["accessions"][0] for call in revoke_calls}
+    # the submission was split into batches of 2 and 1, with fasta records
+    # correctly aligned to metadata rows within each batch
+    assert assert_submit_batches(backend.submit_batches, [2, 1]) == group_ids
+
+    revoked = {call["accessions"][0] for call in backend.revoke_calls}
     assert revoked == {"LOC_OLD_0", "LOC_OLD_1", "LOC_OLD_2"}
     assert len(responses) == len(group_ids)
+    assert backend.slack_posts == []
 
 
 def test_regroup_and_revoke_aborts_when_new_accession_missing(cchf_pipeline, tmp_path, monkeypatch):
@@ -174,11 +233,16 @@ def test_regroup_and_revoke_aborts_when_new_accession_missing(cchf_pipeline, tmp
     revoke_map.write_text(json.dumps(to_revoke), encoding="utf-8")
 
     # submit response is missing grpB
-    revoke_calls = install_fake_backend(monkeypatch, known_submission_ids={"grpA"})
-    config = load_config(batch_chunk_size=2)
+    backend = install_fake_backend(monkeypatch, known_submission_ids={"grpA"})
+    config = load_config(batch_chunk_size=2, slack_hook="https://hooks.slack.test/xyz")
     with pytest.raises(ValueError, match="missing new accessions"):
         loculus_client.regroup_and_revoke(
             metadata, sequences, str(revoke_map), config, group_id="1"
         )
 
-    assert revoke_calls == []
+    assert backend.revoke_calls == []
+    # the abort is announced on Slack before raising
+    assert len(backend.slack_posts) == 1
+    (hook_url, payload) = backend.slack_posts[0]
+    assert hook_url == "https://hooks.slack.test/xyz"
+    assert "missing new accessions" in payload["text"]

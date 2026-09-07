@@ -415,6 +415,7 @@ def regroup_and_revoke(metadata, sequences, map, config: Config, group_id):
             "old and new sequence groups are not left inconsistent."
         )
         logger.error(msg)
+        requests.post(config.slack_hook, data=json.dumps({"text": msg}), timeout=60)
         raise ValueError(msg)
 
     old_to_new_loculus_keys: dict[
