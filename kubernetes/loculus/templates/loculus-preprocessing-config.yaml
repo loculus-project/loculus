@@ -23,6 +23,9 @@ data:
     {{- if hasKey $.Values.rawReadsProcessingService "raw_reads_processing_service_timeout_seconds" }}
     raw_reads_processing_service_timeout_seconds: {{ $.Values.rawReadsProcessingService.raw_reads_processing_service_timeout_seconds }}
     {{- end }}
+    {{- if hasKey $.Values.rawReadsProcessingService "raw_reads_processing_concurrency" }}
+    raw_reads_processing_concurrency: {{ $.Values.rawReadsProcessingService.raw_reads_processing_concurrency }}
+    {{- end }}
     {{- end }}
     {{- if and (hasKey $organismConfig.schema "submissionDataTypes") (hasKey $organismConfig.schema.submissionDataTypes "maxSequencesPerEntry") }}
     max_sequences_per_entry: {{ $organismConfig.schema.submissionDataTypes.maxSequencesPerEntry }}
