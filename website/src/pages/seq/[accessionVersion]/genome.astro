@@ -1,0 +1,60 @@
+---
+import { findOrganismAndData } from './findOrganismAndData';
+import { SequenceDetailsTableResultType } from './getSequenceDetailsTableData';
+import GenomeViewer from '../../../components/SequenceDetailsPage/GenomePreview/GenomeViewer';
+import { getGenomePreviewData } from '../../../components/SequenceDetailsPage/GenomePreview/getGenomePreviewData';
+import type { GenomePreviewData } from '../../../components/SequenceDetailsPage/GenomePreview/types';
+import { getWebsiteConfig } from '../../../config';
+import { LapisClient } from '../../../services/lapisClient';
+import { normalizeAccessionCase } from '../../../utils/normalizeAccessionCase';
+
+const accessionVersion = normalizeAccessionCase(Astro.params.accessionVersion!, getWebsiteConfig().accessionPrefix);
+const details = await findOrganismAndData(accessionVersion);
+let data: GenomePreviewData | undefined;
+let error: string | undefined;
+Astro.response.headers.set('Cache-Control', 'no-store');
+if (
+    details.isErr() ||
+    details.value.result.type !== SequenceDetailsTableResultType.TABLE_DATA ||
+    details.value.result.isRevocation
+) {
+    Astro.response.status = 404;
+    error = 'Genome preview is unavailable for this entry.';
+} else {
+    const { organism, result } = details.value;
+    const config = getWebsiteConfig().organisms[organism];
+    try {
+        if (!config.schema.submissionDataTypes.consensusSequences)
+            throw new Error('This entry has no consensus sequence.');
+        data = await getGenomePreviewData({
+            accessionVersion,
+            segmentName: Astro.url.searchParams.get('segment') ?? '',
+            references: config.referenceGenomes,
+            selections: result.segmentReferences,
+            primaryKey: config.schema.primaryKey,
+            client: LapisClient.createForOrganism(organism),
+        });
+    } catch (cause) {
+        error = cause instanceof Error ? cause.message : 'Genome preview could not be loaded.';
+    }
+}
+---
+
+<html lang='en'>
+    <head
+        ><meta charset='utf-8' /><meta name='viewport' content='width=device-width' /><meta
+            name='robots'
+            content='noindex'
+        /><title>Genome viewer — {accessionVersion}</title></head
+    >
+    <body>
+        {data !== undefined && <GenomeViewer {...data} client:only='react' />}
+        {
+            error !== undefined && (
+                <p role='alert' style='font-family: sans-serif; padding: 1rem'>
+                    {error}
+                </p>
+            )
+        }
+    </body>
+</html>
