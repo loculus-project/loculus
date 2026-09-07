@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 
 import DataTable from './DataTable';
+import { GenomePreviewToggle } from './GenomePreview/GenomePreviewToggle';
 import { SequenceManagement } from './SequenceManagement.tsx';
 import { SequencesContainer } from './SequencesDisplay/SequencesContainer.tsx';
 import { getDataTableData } from './getDataTableData';
@@ -25,6 +26,7 @@ import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
 import { type SequenceCitation } from '../../types/seqSetCitation.ts';
+import { getSegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers';
 import { Button } from '../common/Button';
 import RestrictedUseWarning from '../common/RestrictedUseWarning';
 
@@ -40,6 +42,7 @@ interface Props {
     referenceGenomesInfo: ReferenceGenomesInfo;
     sequenceCitations?: SequenceCitation[];
     onRevokeSuccess?: () => void;
+    enableGenomePreview?: boolean;
 }
 
 const REVOCATION_VERSION_FIELDS = [
@@ -69,6 +72,7 @@ export const SequenceDataUI: FC<Props> = ({
     referenceGenomesInfo,
     sequenceCitations,
     onRevokeSuccess,
+    enableGenomePreview = false,
 }: Props) => {
     const { tableData, dataUseTermsHistory, segmentReferences, sequenceEntryHistory, isRevocation } = sequenceData;
 
@@ -84,6 +88,13 @@ export const SequenceDataUI: FC<Props> = ({
     return (
         <>
             {isRestricted && <RestrictedUseWarning />}
+            {enableGenomePreview && schema.submissionDataTypes.consensusSequences && !isRevocation && (
+                <GenomePreviewToggle
+                    key={accessionVersion}
+                    accessionVersion={accessionVersion}
+                    segments={getSegmentAndGeneInfo(referenceGenomesInfo, segmentReferences).nucleotideSegmentInfos}
+                />
+            )}
             <DataTable
                 dataTableData={dataTableData}
                 segmentReferences={segmentReferences}
