@@ -253,14 +253,17 @@ def post_fasta_batches(
     metadata_file: str,
     config: Config,
     params: dict[str, str],
-) -> requests.Response | None:
+) -> list[dict[str, Any]]:
     """Chunks metadata files, joins with sequences and submits each chunk via POST.
 
-    Returns None if the metadata file held no records, in which case nothing was sent.
+    Returns the concatenated response entries across all submitted batches
+    (one ``{"submissionId": ..., "accession": ...}`` dict per submitted record).
+    Returns an empty list if the metadata file held no records, in which case
+    nothing was sent.
     """
 
     batch_it = BatchIterator()
-    response = None
+    results: list[dict[str, Any]] = []
 
     with (
         open(fasta_file, encoding="utf-8") as fasta_file_stream,
@@ -295,20 +298,22 @@ def post_fasta_batches(
 
             # submit the batch if it is full
             if batch_it.record_count % config.batch_chunk_size == 0:
-                response = submit(
-                    url,
-                    config,
-                    params,
-                    batch_it,
+                results.extend(
+                    submit(
+                        url,
+                        config,
+                        params,
+                        batch_it,
+                    ).json()
                 )
                 batch_it.sequences_batch_output = []
                 batch_it.metadata_batch_output = []
 
     # submit the last, partial chunk
     if batch_it.record_count % config.batch_chunk_size != 0:
-        response = submit(url, config, params, batch_it)
+        results.extend(submit(url, config, params, batch_it).json())
 
-    return response
+    return results
 
 
 def count_lines(path, chunk_size=1024 * 1024):
@@ -364,9 +369,7 @@ def submit_or_revise(
     if mode == "submit":
         params["dataUseTermsType"] = "OPEN"
 
-    response = post_fasta_batches(url, sequences, metadata, config, params=params)
-
-    return response.json()
+    return post_fasta_batches(url, sequences, metadata, config, params=params)
 
 
 def revoke(accession_to_revoke: str, message: str, config: Config) -> str:
@@ -386,7 +389,19 @@ def regroup_and_revoke(metadata, sequences, map, config: Config, group_id):
     for item in response:
         submission_id_to_new_accessions[item["submissionId"]] = item["accession"]
 
-    to_revoke = json.load(open(map, encoding="utf-8"))
+    with open(map, encoding="utf-8") as map_file:
+        to_revoke = json.load(map_file)
+
+    missing_submission_ids = sorted(set(to_revoke) - set(submission_id_to_new_accessions))
+    if missing_submission_ids:
+        msg = (
+            "regroup_and_revoke: the submit response is missing new accessions for "
+            f"{len(missing_submission_ids)} submissionId(s) present in the revoke map "
+            f"(e.g. {missing_submission_ids[:10]}). Aborting before revoking anything so that "
+            "old and new sequence groups are not left inconsistent."
+        )
+        logger.error(msg)
+        raise ValueError(msg)
 
     old_to_new_loculus_keys: dict[
         str, list[str]
