@@ -563,14 +563,14 @@ def multi_segment_submission(
     if not single_segment:
         extra_items = {
             config.loculus_accession_fields.gca,
-            "insdcAccessionBase_M",
-            "insdcAccessionFull_M",
+            config.loculus_accession_fields.insdc_accession_prefix + "_M",
+            config.loculus_accession_fields.insdc_accession_full_prefix + "_M",
         }
     assert set(payload["externalMetadata"]) == {
         config.loculus_accession_fields.bioproject,
         config.loculus_accession_fields.biosample,
-        "insdcAccessionBase_L",
-        "insdcAccessionFull_L",
+        config.loculus_accession_fields.insdc_accession_prefix + "_L",
+        config.loculus_accession_fields.insdc_accession_full_prefix + "_L",
         *extra_items,
     }
     assert payload["externalMetadata"][config.loculus_accession_fields.bioproject].startswith(
@@ -583,20 +583,26 @@ def multi_segment_submission(
     insdc_full_pattern = r"^[A-Z]{2}[0-9]{6}\.[0-9]+$"
     insdc_base_pattern = r"^[A-Z]{2}[0-9]{6}$"
     gca_pattern = r"^GCA_[0-9]{9}\.[0-9]+$"
-
-    assert re.match(insdc_full_pattern, payload["externalMetadata"]["insdcAccessionFull_L"]), (
-        f"insdcAccessionFull_L '{payload['externalMetadata']['insdcAccessionFull_L']}' "
+    insdc_accession_full_l = config.loculus_accession_fields.insdc_accession_full_prefix + "_L"
+    insdc_accession_base_l = config.loculus_accession_fields.insdc_accession_prefix + "_L"
+    gca_accession = config.loculus_accession_fields.gca
+    assert re.match(
+        insdc_full_pattern,
+        payload["externalMetadata"][insdc_accession_full_l],
+    ), (
+        f"{insdc_accession_full_l} '{payload['externalMetadata'][insdc_accession_full_l]}' "
         f"does not match INSDC full pattern {insdc_full_pattern}"
     )
-    assert re.match(insdc_base_pattern, payload["externalMetadata"]["insdcAccessionBase_L"]), (
-        f"insdcAccessionBase_L '{payload['externalMetadata']['insdcAccessionBase_L']}' "
+    assert re.match(
+        insdc_base_pattern,
+        payload["externalMetadata"][insdc_accession_base_l],
+    ), (
+        f"{insdc_accession_base_l} '{payload['externalMetadata'][insdc_accession_base_l]}' "
         f"does not match INSDC base pattern {insdc_base_pattern}"
     )
     if not single_segment:
-        assert re.match(
-            gca_pattern, payload["externalMetadata"][config.loculus_accession_fields.gca]
-        ), (
-            f"gcaAccession '{payload['externalMetadata']['gcaAccession']}' "
+        assert re.match(gca_pattern, payload["externalMetadata"][gca_accession]), (
+            f"{gca_accession} '{payload['externalMetadata'][gca_accession]}' "
             f"does not match GCA pattern {gca_pattern}"
         )
 
