@@ -134,10 +134,9 @@ class FilesController(
         @RequestParam
         numberFiles: Int = 1,
     ): List<FileIdAndWriteUrl> {
+        filesPreconditionValidator.validateNumberFiles(numberFiles)
         filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
-        if (numberFiles < 1) {
-            throw BadRequestException("Number of files must be at least 1")
-        }
+
         val fileIds = generateFileIds(numberFiles)
         filesDatabaseService.createFileEntries(fileIds, authenticatedUser.username, groupId)
         return fileIds.map { fileId ->
@@ -169,10 +168,9 @@ class FilesController(
         @RequestParam
         numberParts: Int = 1,
     ): List<FileIdAndMultipartWriteUrl> {
+        filesPreconditionValidator.validateNumberFiles(numberFiles)
         filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
-        if (numberFiles < 1) {
-            throw BadRequestException("Number of files must be at least 1")
-        }
+
         return generateFileIds(numberFiles).map { fileId ->
             val multipartUploadHandler = s3Service.initiateMultipartUploadAndCreateUrlsToUpload(fileId, numberParts)
             filesDatabaseService.createFileEntry(

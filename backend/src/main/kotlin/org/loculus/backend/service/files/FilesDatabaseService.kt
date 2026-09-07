@@ -21,7 +21,6 @@ import org.loculus.backend.utils.chunkedForDatabase
 import org.loculus.backend.utils.processInDatabaseSafeChunks
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.util.*
 
 @Service
 @Transactional
