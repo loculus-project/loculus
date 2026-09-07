@@ -24,7 +24,8 @@ export class EditableSequences {
     private readonly maxNumberOfRows: number;
 
     public get rows(): Required<EditableSequenceFile>[] {
-        return this.editableSequenceFiles;
+        // Return a copy so callers cannot mutate the internal list.
+        return [...this.editableSequenceFiles];
     }
 
     private constructor(rows: EditableSequenceFile[], maxNumberOfRows: number) {
@@ -122,17 +123,15 @@ export class EditableSequences {
      */
     update(key: string, value: string | null, label: string | null, fastaHeader: string | null): EditableSequences {
         const rows = this.editableSequenceFiles;
-        const rowsWithoutPlaceholders = rows.filter((row) => row.value !== null);
         const existingFileIndex = rows.findIndex((file) => file.key === key);
         if (existingFileIndex === -1) {
             throw new Error(`Attempting to update sequence with key '${key}' that does not exist.`);
         }
         fastaHeader ??= value == null ? null : key; // Ensure fastaHeader is never null if a sequence exists
-        if (
-            rowsWithoutPlaceholders.some(
-                (seq, index) => index !== existingFileIndex && getFastaId(seq.fastaHeader) === getFastaId(fastaHeader),
-            )
-        ) {
+        const collidesWithAnotherRow = rows.some(
+            (row) => row.key !== key && row.value !== null && getFastaId(row.fastaHeader) === getFastaId(fastaHeader),
+        );
+        if (collidesWithAnotherRow) {
             toast.error(`A sequence with the fastaID ${getFastaId(fastaHeader)} already exists.`);
             return this;
         }
