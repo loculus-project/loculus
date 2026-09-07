@@ -89,7 +89,7 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output,
         except ValueError as e:
             logger.error(f"Aborting {mode} due to error: {e}")
             return
-        response = submit_or_revise(metadata, sequences, config, group_id, mode=mode)
+        submit_or_revise(metadata, sequences, config, group_id, mode=mode)
         logger.info(f"Completed {mode}")
 
     if mode == "regroup-and-revoke":
