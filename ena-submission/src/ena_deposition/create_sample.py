@@ -33,7 +33,7 @@ from .submission_db_helper import (
     Status,
     StatusAll,
     SubmissionTableEntry,
-    add_to_sample_table,
+    add_to_db,
     db_init,
     find_conditions_in_db,
     find_errors_or_stuck_in_db,
@@ -244,7 +244,7 @@ def sync_state_with_submission_table(db_engine: Engine, config: Config):
         biosample = None
         if row and row.seq_metadata.get(config.loculus_accession_fields.biosample):
             biosample = row.seq_metadata[config.loculus_accession_fields.biosample]
-        add_to_sample_table(
+        add_to_db(
             db_engine,
             SampleTableEntry(
                 **seq_key, result={EnaResultField.BIOSAMPLE: biosample} if biosample else None

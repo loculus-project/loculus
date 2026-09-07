@@ -62,7 +62,7 @@ from .submission_db_helper import (
     SampleTableEntry,
     Status,
     SubmissionTableEntry,
-    add_to_assembly_table,
+    add_to_db,
     update_db_where_conditions,
     update_with_retry,
 )
@@ -956,7 +956,7 @@ def set_accession_does_not_exist_error(
                 errors=[error_text],
                 result={},  # type: ignore
             )
-            succeeded = add_to_assembly_table(db_engine, assembly_table_entry)
+            succeeded = add_to_db(db_engine, assembly_table_entry) is not None
 
     if not succeeded:
         logger.warning(f"{accession_type} creation failed and DB update failed.")
