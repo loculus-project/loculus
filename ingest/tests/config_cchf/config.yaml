@@ -29,4 +29,3 @@ rename:
   ncbiSubmitterNames: authors
 taxon_id: 3052518
 check_ena_deposition: true
-batch_chunk_size: 1 # use batching code in tests
