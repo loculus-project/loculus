@@ -1240,6 +1240,8 @@ class TestInsdcRawReadsAccessionInManifest(TestSubmission):
         correct RUN_REF is present.
         """
         run_ref_accession = "ERR17356121"
+        bioproject_accession = "PRJNA231221"
+        biosample_accession = "SAMN11077987"
 
         mock_get_group_info.return_value = TEST_GROUP
 
@@ -1258,9 +1260,11 @@ class TestInsdcRawReadsAccessionInManifest(TestSubmission):
         sequences_to_upload = get_sequences()
         for entry in sequences_to_upload.values():
             # known public accessions
-            entry["metadata"]["bioprojectAccession"] = "PRJNA231221"
-            entry["metadata"]["biosampleAccession"] = "SAMN11077987"
-            entry["metadata"]["insdcRawReadsAccession"] = run_ref_accession
+            entry["metadata"][self.config.loculus_accession_fields.bioproject] = (
+                bioproject_accession
+            )
+            entry["metadata"][self.config.loculus_accession_fields.biosample] = biosample_accession
+            entry["metadata"][self.config.loculus_accession_fields.run] = run_ref_accession
 
         upload_sequences(self.db_engine, sequences_to_upload)
         check_sequences_uploaded(self.db_engine, sequences_to_upload)
@@ -1282,8 +1286,8 @@ class TestInsdcRawReadsAccessionInManifest(TestSubmission):
         for manifest_contents in captured_manifests:
             for expected_line in (
                 f"RUN_REF\t{run_ref_accession}",
-                "STUDY\tPRJNA231221",
-                "SAMPLE\tSAMN11077987",
+                f"STUDY\t{bioproject_accession}",
+                f"SAMPLE\t{biosample_accession}",
             ):
                 assert expected_line in manifest_contents, (
                     f"'{expected_line}' missing from the manifest.tsv sent to ENA:"

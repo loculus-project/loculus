@@ -23,6 +23,7 @@ class EnaResultField(StrEnum):
     BIOSAMPLE = "biosample_accession"
     BIOPROJECT = "bioproject_accession"
     GCA = "gca_accession"
+    RUN = "run_accession"
     INSDC_ACCESSION_PREFIX = "insdc_accession"
     INSDC_ACCESSION_FULL_PREFIX = "insdc_accession_full"
 
@@ -55,6 +56,7 @@ class LoculusAccessionFieldNames(BaseModel):
     gca: str
     insdc_accession_prefix: str
     insdc_accession_full_prefix: str
+    run: str
 
 
 class ExternalMetadataField(BaseModel):

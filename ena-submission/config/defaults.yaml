@@ -125,6 +125,7 @@ loculus_accession_fields:
   bioproject: bioprojectAccession
   biosample: biosampleAccession
   gca: gcaAccession
+  run: insdcRawReadsAccession
   insdc_accession_prefix: insdcAccessionBase
   insdc_accession_full_prefix: insdcAccessionFull
 allow_revision_with_manifest_changes: true
