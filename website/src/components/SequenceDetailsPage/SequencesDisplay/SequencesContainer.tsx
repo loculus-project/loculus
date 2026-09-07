@@ -20,6 +20,7 @@ import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../../common/
 import { Button } from '../../common/Button';
 import { Select } from '../../common/Select.tsx';
 import { withQueryProvider } from '../../common/withQueryProvider.tsx';
+import { GenomePreview } from '../GenomePreview/GenomePreview';
 
 type SequenceContainerProps = {
     organism: string;
@@ -28,6 +29,7 @@ type SequenceContainerProps = {
     clientConfig: ClientConfig;
     referenceGenomesInfo: ReferenceGenomesInfo;
     loadSequencesAutomatically: boolean;
+    enableGenomePreview?: boolean;
 };
 
 export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
@@ -37,6 +39,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     clientConfig,
     referenceGenomesInfo,
     loadSequencesAutomatically,
+    enableGenomePreview = false,
 }) => {
     const { nucleotideSegmentInfos, geneInfos } = getSegmentAndGeneInfo(referenceGenomesInfo, segmentReferences);
 
@@ -53,6 +56,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
 
     return (
         <SequenceTabs
+            enableGenomePreview={enableGenomePreview}
             organism={organism}
             accessionVersion={accessionVersion}
             clientConfig={clientConfig}
@@ -68,6 +72,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
 export const SequencesContainer = withQueryProvider(InnerSequencesContainer);
 
 type SequenceTabsProps = {
+    enableGenomePreview: boolean;
     organism: string;
     accessionVersion: string;
     clientConfig: ClientConfig;
@@ -79,6 +84,7 @@ type SequenceTabsProps = {
 };
 
 const SequenceTabs: FC<SequenceTabsProps> = ({
+    enableGenomePreview,
     organism,
     accessionVersion,
     clientConfig,
@@ -88,7 +94,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
     setType,
     useLapisMultiSegmentedEndpoint,
 }) => {
-    const [activeTab, setActiveTab] = useState<'unaligned' | 'aligned' | 'gene'>('unaligned');
+    const [activeTab, setActiveTab] = useState<'unaligned' | 'aligned' | 'gene' | 'genome'>('unaligned');
 
     useEffect(() => {
         if (isUnalignedSequence(sequenceType)) {
@@ -122,6 +128,13 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
                     label='Aligned amino acid sequences'
                     onClick={() => setActiveTab('gene')}
                 />
+                {enableGenomePreview && segments.length > 0 && (
+                    <BoxWithTabsTab
+                        isActive={activeTab === 'genome'}
+                        label='Genome viewer'
+                        onClick={() => setActiveTab('genome')}
+                    />
+                )}
             </BoxWithTabsTabBar>
             <BoxWithTabsBox>
                 {activeTab === 'gene' && <GeneDropdown genes={genes} sequenceType={sequenceType} setType={setType} />}
@@ -136,7 +149,9 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
                 {segments.length > 1 && activeTab === 'aligned' && (
                     <SegmentDropdown segments={segments} sequenceType={sequenceType} setType={setType} mode='aligned' />
                 )}
-                {activeTab !== 'gene' || isGeneSequence(sequenceType.name, sequenceType) ? (
+                {activeTab === 'genome' ? (
+                    <GenomePreview accessionVersion={accessionVersion} segments={segments} />
+                ) : activeTab !== 'gene' || isGeneSequence(sequenceType.name, sequenceType) ? (
                     <SequencesViewer
                         organism={organism}
                         accessionVersion={accessionVersion}

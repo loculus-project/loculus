@@ -1,7 +1,6 @@
 import type { FC } from 'react';
 
 import DataTable from './DataTable';
-import { GenomePreviewToggle } from './GenomePreview/GenomePreviewToggle';
 import { SequenceManagement } from './SequenceManagement.tsx';
 import { SequencesContainer } from './SequencesDisplay/SequencesContainer.tsx';
 import { getDataTableData } from './getDataTableData';
@@ -26,7 +25,6 @@ import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
 import { type SequenceCitation } from '../../types/seqSetCitation.ts';
-import { getSegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers';
 import { Button } from '../common/Button';
 import RestrictedUseWarning from '../common/RestrictedUseWarning';
 
@@ -88,13 +86,6 @@ export const SequenceDataUI: FC<Props> = ({
     return (
         <>
             {isRestricted && <RestrictedUseWarning />}
-            {enableGenomePreview && schema.submissionDataTypes.consensusSequences && !isRevocation && (
-                <GenomePreviewToggle
-                    key={accessionVersion}
-                    accessionVersion={accessionVersion}
-                    segments={getSegmentAndGeneInfo(referenceGenomesInfo, segmentReferences).nucleotideSegmentInfos}
-                />
-            )}
             <DataTable
                 dataTableData={dataTableData}
                 segmentReferences={segmentReferences}
@@ -105,6 +96,7 @@ export const SequenceDataUI: FC<Props> = ({
             {schema.submissionDataTypes.consensusSequences && !isRevocation && (
                 <div className='mt-10'>
                     <SequencesContainer
+                        enableGenomePreview={enableGenomePreview}
                         organism={organism}
                         segmentReferences={segmentReferences}
                         accessionVersion={accessionVersion}
