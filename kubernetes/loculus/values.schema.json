@@ -359,7 +359,7 @@
         }
       ]
     },
-    "inputField": {
+    "extraInputField": {
       "type": "object",
       "additionalProperties": false,
       "description": "An additional, input-only field for the submission form (see `extraInputFields`). Unlike `metadata` fields, these are not searchable or displayed on the sequence details page; a preprocessing function can consume them to derive one or more `metadata` fields and they are added to the metadata template.",
