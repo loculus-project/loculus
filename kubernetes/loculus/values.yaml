@@ -2946,6 +2946,7 @@ enaDeposition:
   enaUniqueSuffix: Loculus
   enaIsBroker: False
   enaSuppressedListTestUrl: "https://loculus-project.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt"
+  configFile: {}
 rawReadsProcessingService:
   raw_reads_processing_service_url: http://loculus-raw-reads-processing:5000
 subdomainSeparator: "-"
