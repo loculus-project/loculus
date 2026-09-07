@@ -14,14 +14,14 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 type EditDataUseTermsButtonProps = {
     accessToken: string;
     clientConfig: ClientConfig;
-    accessionVersion: string[];
+    accession: string;
     dataUseTerms: RestrictedDataUseTerms;
 };
 
 const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
     accessToken,
     clientConfig,
-    accessionVersion,
+    accession,
     dataUseTerms,
 }) => {
     const restrictedUntil = DateTime.fromISO(dataUseTerms.restrictedUntil);
@@ -83,7 +83,7 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
                             onClick={() => {
                                 closeDialog();
                                 useSetDataUseTerms.mutate({
-                                    accessions: accessionVersion,
+                                    accessions: [accession],
                                     newDataUseTerms: selectedDataUseTerms,
                                 });
                             }}

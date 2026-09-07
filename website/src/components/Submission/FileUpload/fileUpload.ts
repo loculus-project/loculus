@@ -1,5 +1,6 @@
 import { err, ok, Result } from 'neverthrow';
 
+import type { FileMapping } from './fileMapping';
 import type { FilesByCategory } from '../../../types/backend';
 
 export type Awaiting = {
@@ -85,6 +86,20 @@ export const getPreviousFileUploadStates = (files: FilesByCategory): Map<string,
                 },
             ]),
     );
+
+export const deriveFileMapping = (fileUploadStates: Map<string, FileUploadState>): FileMapping | undefined => {
+    const mapping: FileMapping = new Map(
+        Array.from(fileUploadStates.entries()).flatMap(([category, fileUploadState]) => {
+            // Only files that have finished uploading are included in the file mapping and can be claimed as linked
+            const uploads = fileUploadState.files.filter(
+                (file) => file.type === 'uploaded' || file.type === 'previousUpload',
+            ) as (Uploaded | PreviousUpload)[];
+
+            return uploads.length === 0 ? [] : [[category, new Map(uploads.map((file) => [file.path, file.fileId]))]];
+        }),
+    );
+    return mapping.size === 0 ? undefined : mapping;
+};
 
 export const validateFileUploadStates = (fileUploadStates: Map<string, FileUploadState>): Result<void, Error> => {
     if (Array.from(fileUploadStates.values()).some((state) => state.type !== 'uploadCompleted'))

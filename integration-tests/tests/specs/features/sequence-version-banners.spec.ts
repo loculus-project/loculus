@@ -40,7 +40,7 @@ test.describe('Sequence version banners', () => {
         page,
         groupId,
     }) => {
-        test.setTimeout(300_000);
+        test.setTimeout(420_000);
         void groupId;
 
         const uuid = randomUUID();
@@ -150,6 +150,28 @@ test.describe('Sequence version banners', () => {
         const revisedAccessionVersion = `${toReviseAccession}.2`;
         await detailPage.goto(revisedAccessionVersion);
         await detailPage.expectNoNotLatestVersionBanner();
+
+        // Restore the revoked German sequence
+        await detailPage.goto(revocationAccessionVersion);
+        await search.restoreSequence();
+        await page.getByRole('button', { name: /proceed to Approval/ }).click();
+        await page.getByRole('button', { name: 'Confirm' }).click();
+        await expect(page.getByText('Review pending submissions')).toBeVisible();
+
+        const reviewPage3 = new ReviewPage(page);
+        await reviewPage3.waitForZeroProcessing();
+        await reviewPage3.releaseAndGoToReleasedSequences();
+        await search.waitForAccessionVersionInSearch(toRevokeAccession, 3);
+
+        // Test 5: Restored entry (v3 of revoked sequence): no revoked banner and no not latest
+        await detailPage.goto(`${toRevokeAccession}.3`);
+        await detailPage.expectNoRevocationBanner();
+        await detailPage.expectNoNotLatestVersionBanner();
+
+        // Test 6: v1 of the restored sequence: no revoked banner and has not latest
+        await detailPage.goto(revokedAccessionVersion);
+        await detailPage.expectNoRevocationBanner();
+        await detailPage.expectNotLatestVersionBanner();
     });
 
     test('can navigate to versions page and click deprecated version link', async ({

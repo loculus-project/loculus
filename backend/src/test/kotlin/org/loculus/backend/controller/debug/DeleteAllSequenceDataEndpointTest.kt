@@ -135,7 +135,7 @@ class DeleteAllSequenceDataEndpointTest(
 
         useNewerProcessingPipelineVersionTask.task()
         submissionControllerClient.extractUnprocessedData(numberOfSequenceEntries = 1, pipelineVersion = 1)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
 
         deleteAllSequences(jwtForSuperUser)
             .andExpect(status().isNoContent)

@@ -1,5 +1,6 @@
 # ruff: noqa: S101
 
+import gzip
 import shutil
 import time
 from pathlib import Path
@@ -86,6 +87,54 @@ def deacon_index(monkeypatch, deacon_server):
     monkeypatch.setattr(
         deacon_module, "DEACON_INDEX_PATH", str(FIXTURES_DIR / "deacon.idx")
     )
+
+
+def test_median_read_length_plain_fastq(tmp_path):
+    reads = tmp_path / "reads.fastq"
+    _write_fastq(reads, [_random_read(100), _random_read(200), _random_read(150)])
+    assert deacon_module.median_read_length(reads, "reads.fastq") == pytest.approx(
+        150.0
+    )
+
+
+def test_median_read_length_gzipped_fastq(tmp_path):
+    config = _config()
+    reads = tmp_path / "reads.fastq.gz"
+    _write_fastq(tmp_path / "plain.fastq", [_random_read(80), _random_read(100)])
+    reads.write_bytes(gzip.compress((tmp_path / "plain.fastq").read_bytes()))
+    assert deacon_module.median_read_length(reads, "reads.fastq.gz") == pytest.approx(
+        90.0
+    )
+    assert deacon_module._deacon_a_for_reads({"boundary.fastq": reads}, config) == 2
+
+
+def test_deacon_a_for_reads_switches_on_short_reads(tmp_path):
+    config = _config()
+    short = tmp_path / "short.fastq"
+    _write_fastq(short, [_random_read(75)] * 5)
+    long = tmp_path / "long.fastq"
+    _write_fastq(long, [_random_read(100)] * 5)
+
+    assert deacon_module._deacon_a_for_reads({"short.fastq": short}, config) == 1
+    assert deacon_module._deacon_a_for_reads({"long.fastq": long}, config) == 2
+    # min() over mates: a short R2 still triggers short-read params
+    assert (
+        deacon_module._deacon_a_for_reads(
+            {"long.fastq": long, "short.fastq": short}, config
+        )
+        == 1
+    )
+
+
+def test_deacon_a_for_reads_raises_when_read_length_cannot_be_parsed(tmp_path):
+    config = _config()
+    empty = tmp_path / "empty.fastq"
+    empty.write_text("")
+
+    with pytest.raises(InvalidSubmission) as exc_info:
+        deacon_module._deacon_a_for_reads({"empty.fastq": empty}, config)
+    assert exc_info.value.error.fileNames == ["empty.fastq"]
+    assert "Failed to determine median read length" in exc_info.value.error.message
 
 
 @pytest.mark.usefixtures("mock_downstream", "deacon_index")

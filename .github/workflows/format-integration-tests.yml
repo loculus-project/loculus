@@ -2,11 +2,17 @@ name: Format Check - integration tests
 
 on:
   push:
-    paths:
-      - 'integration-tests/**'
+    branches:
+      - main
   pull_request:
     paths:
       - 'integration-tests/**'
+      - '.github/workflows/format-integration-tests.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-format-integration-tests
+  cancel-in-progress: true
 
 jobs:
   format:

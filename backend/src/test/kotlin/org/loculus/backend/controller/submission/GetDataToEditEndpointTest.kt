@@ -62,7 +62,7 @@ class GetDataToEditEndpointTest(
         val nonExistentAccession = "DefinitelyNotExisting"
 
         client.getSequenceEntryToEdit(nonExistentAccession, 1)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
@@ -82,7 +82,7 @@ class GetDataToEditEndpointTest(
         client.getSequenceEntryToEdit(firstAccession, 1, organism = DEFAULT_ORGANISM)
             .andExpect(status().isOk)
         client.getSequenceEntryToEdit(firstAccession, 1, organism = OTHER_ORGANISM)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
@@ -100,7 +100,7 @@ class GetDataToEditEndpointTest(
         convenienceClient.prepareDataTo(Status.PROCESSED, errors = true)
 
         client.getSequenceEntryToEdit("1", nonExistentAccessionVersion)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
@@ -151,7 +151,7 @@ class GetDataToEditEndpointTest(
             .first()
 
         client.getSequenceEntryToEdit(accessionVersion.accession, accessionVersion.version)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(jsonPath("\$.detail", containsString("is a revocation")))
     }
 }

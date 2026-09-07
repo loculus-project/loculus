@@ -110,7 +110,7 @@ class DeleteSequencesEndpointTest(
             accessionVersionsToDelete.sortedWith(AccessionVersionComparator).joinToString(", ") {
                 "${it.accession}.${it.version} - ${it.status}"
             }
-        deletionResult.andExpect(status().isUnprocessableEntity)
+        deletionResult.andExpect(status().isUnprocessableContent)
             .andExpect(
                 content().contentType(MediaType.APPLICATION_PROBLEM_JSON),
             )
@@ -136,7 +136,7 @@ class DeleteSequencesEndpointTest(
             scope = ALL,
             accessionVersionsFilter = listOf(nonExistingAccession, nonExistingVersion),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
@@ -257,7 +257,7 @@ class DeleteSequencesEndpointTest(
             accessionVersionsFilter = listOf(accessionVersion.toAccessionVersion()),
             organism = OTHER_ORGANISM,
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail", containsString("accession versions are not of organism $OTHER_ORGANISM:")),

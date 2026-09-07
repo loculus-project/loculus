@@ -7,7 +7,7 @@ import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo }
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
-import { validateFileUploadStates, type FileUploadState } from './FileUpload/fileUpload.ts';
+import { deriveFileMapping, validateFileUploadStates, type FileUploadState } from './FileUpload/fileUpload.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { routes } from '../../routes/routes.ts';
@@ -19,7 +19,7 @@ import {
     openDataUseTermsOption,
     restrictedDataUseTermsOption,
 } from '../../types/backend.ts';
-import type { FileCategory, InputField } from '../../types/config.ts';
+import type { FileCategory, FileSharingConfig, InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
@@ -38,8 +38,8 @@ import {
     getSingleSubmissionFileMapping,
     type CategoryLinkage,
     type FileLinkage,
-    type FileMapping,
     type SubmissionFileMapping,
+    validateSubmissionFileMapping,
 } from './FileUpload/fileMapping.ts';
 import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
 
@@ -58,6 +58,7 @@ type DataUploadFormProps = {
     onError: (message: string) => void;
     submissionDataTypes: SubmissionDataTypes;
     dataUseTermsEnabled: boolean;
+    fileSharingConfig: FileSharingConfig;
 };
 
 const logger = getClientLogger('DataUploadForm');
@@ -75,13 +76,14 @@ const InnerDataUploadForm = ({
     metadataTemplateFields,
     submissionDataTypes,
     dataUseTermsEnabled,
+    fileSharingConfig,
 }: DataUploadFormProps) => {
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
 
     const { submit, revise, isPending } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
     const [fileUploadStates, setFileUploadStates] = useState<Map<string, FileUploadState>>(new Map());
-    const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(undefined);
+    const fileMapping = useMemo(() => deriveFileMapping(fileUploadStates), [fileUploadStates]);
     const [submissionFileMapping, setSubmissionFileMapping] = useState<
         Result<SubmissionFileMapping, Error> | undefined
     >(undefined);
@@ -141,6 +143,16 @@ const InnerDataUploadForm = ({
             if (inputMode === 'form') {
                 if (fileMapping !== undefined) {
                     const finalSubmissionFileMapping = getSingleSubmissionFileMapping(submissionId!, fileMapping);
+
+                    const validationResult = validateSubmissionFileMapping(
+                        finalSubmissionFileMapping,
+                        fileSharingConfig,
+                    );
+                    if (validationResult.isErr()) {
+                        onError(validationResult.error.message);
+                        return;
+                    }
+
                     const finalMetadataFileResult = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
                     if (finalMetadataFileResult.isErr()) {
                         onError(finalMetadataFileResult.error.message);
@@ -159,10 +171,17 @@ const InnerDataUploadForm = ({
                     return;
                 }
 
+                const validationResult = validateSubmissionFileMapping(submissionFileMapping.value, fileSharingConfig);
+                if (validationResult.isErr()) {
+                    onError(validationResult.error.message);
+                    return;
+                }
+
                 const { submissionFileMapping: resolvedSubmissionFileMapping, fileLinkage } = resolveFileMappings(
                     submissionFileMapping.value,
                     fileMapping,
                 );
+
                 const linkageErrors = getLinkageErrors(fileLinkage);
                 if (linkageErrors !== undefined) {
                     onError(linkageErrors);
@@ -254,7 +273,6 @@ const InnerDataUploadForm = ({
                             onError={onError}
                             fileUploadStates={fileUploadStates}
                             setFileUploadStates={setFileUploadStates}
-                            setFileMapping={setFileMapping}
                             fileLinkage={fileLinkage}
                         />
                         <hr />
@@ -441,7 +459,6 @@ export const ExtraFilesUpload = ({
     fileCategories,
     fileUploadStates,
     setFileUploadStates,
-    setFileMapping,
     fileLinkage,
     onError,
 }: {
@@ -452,7 +469,6 @@ export const ExtraFilesUpload = ({
     fileCategories: FileCategory[];
     fileUploadStates: Map<string, FileUploadState>;
     setFileUploadStates: Dispatch<SetStateAction<Map<string, FileUploadState>>>;
-    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
     fileLinkage?: FileLinkage;
     onError: (message: string) => void;
 }) => {
@@ -494,7 +510,6 @@ export const ExtraFilesUpload = ({
                             onError={onError}
                             fileUploadState={fileUploadStates.get(fileCategory.name)}
                             setFileUploadState={setCategoryFileUploadState(fileCategory.name)}
-                            setFileMapping={setFileMapping}
                         />
                         {inputMode === 'bulk' && (
                             <CategoryLinkageStatus categoryLinkage={fileLinkage?.get(fileCategory.name)} />
