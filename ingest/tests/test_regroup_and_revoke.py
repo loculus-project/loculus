@@ -63,26 +63,26 @@ def load_config(**overrides):
 
 def replicate_cchf_revoke_record(tmp_path: Path, group_ids: list[str]) -> tuple[str, str]:
     """Write metadata.tsv + sequences.fasta holding the single CCHF revoke record
-    duplicated once per id in group_ids (which must already be sorted)."""
-    header_line, data_row = REVOKE_METADATA.read_text(encoding="utf-8").splitlines()
-    id_idx = header_line.split("\t").index("id")
+    duplicated once per id in group_ids."""
+    df = pd.read_csv(REVOKE_METADATA, sep="\t")
     segments = {
         record.id.rsplit("_", 1)[1]: str(record.seq)
         for record in SeqIO.parse(REVOKE_SEQUENCES, "fasta")
     }
 
-    metadata_rows = [header_line]
+    new_metadata = pd.concat(
+        [df.iloc[[0]]] * len(group_ids),
+        ignore_index=True,
+    )
+    new_metadata["id"] = group_ids
+
     fasta_lines: list[str] = []
     for group_id in group_ids:
-        cells = data_row.split("\t")
-        cells[id_idx] = group_id
-        metadata_rows.append("\t".join(cells))
         for segment, seq in segments.items():
-            fasta_lines.append(f">{group_id}_{segment}")
-            fasta_lines.extend(seq)
+            fasta_lines.extend((f">{group_id}_{segment}", seq))
 
     metadata_path = tmp_path / "metadata.tsv"
-    metadata_path.write_text("\n".join(metadata_rows) + "\n", encoding="utf-8")
+    new_metadata.to_csv(metadata_path, sep="\t", index=False)
     sequences_path = tmp_path / "sequences.fasta"
     sequences_path.write_text("\n".join(fasta_lines) + "\n", encoding="utf-8")
     return str(metadata_path), str(sequences_path)
@@ -99,9 +99,7 @@ def install_fake_backend(monkeypatch, known_submission_ids: set[str] | None = No
 
     def fake_make_request(_method, url, _config, **kwargs):
         if url.endswith("/submit"):
-            df = pd.read_csv(
-                kwargs["files"]["metadataFile"][1], sep="\t"
-            )
+            df = pd.read_csv(kwargs["files"]["metadataFile"][1], sep="\t")
             return FakeResponse(
                 [
                     {"submissionId": sid, "accession": f"LOC_NEW_{sid}"}
@@ -113,10 +111,7 @@ def install_fake_backend(monkeypatch, known_submission_ids: set[str] | None = No
             body = kwargs["json_body"]
             revoke_calls.append(body)
             return FakeResponse(
-                [
-                    {"accession": accession, "version": 2}
-                    for accession in body["accessions"]
-                ]
+                [{"accession": accession, "version": 2} for accession in body["accessions"]]
             )
         msg = f"unexpected url: {url}"
         raise AssertionError(msg)
