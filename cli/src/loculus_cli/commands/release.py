@@ -5,15 +5,11 @@ from rich.console import Console
 from rich.prompt import Confirm
 from rich.table import Table
 
+from ..api.backend import BackendClient
+from ..api.models import ProcessingResult, SequenceEntry, SequenceStatus
 from ..auth.client import AuthClient
 from ..config import get_instance_config
 from ..utils.guards import require_instance, require_organism
-from ..utils.review_utils import (
-    ProcessingResult,
-    ReviewApiClient,
-    SequenceEntry,
-    SequenceStatus,
-)
 
 console = Console()
 
@@ -65,12 +61,24 @@ def release(
     auth_client = AuthClient(config)
     console = Console()
 
+    current_user = auth_client.get_current_user()
+    if not current_user:
+        console.print(
+            "[red]Not authenticated. Please run 'loculus auth login' first.[/red]"
+        )
+        raise click.Abort()
+
+    api_client = BackendClient(config, auth_client)
+
     # Get organism with default (required for release)
     organism = require_organism(instance, ctx.obj.get("organism"))
 
     # Get group with default (optional)
-    # Group is optional for release command - use if provided via top-level param
-    group = ctx.obj.get("group")
+    # Group is optional for release command - use top-level default only when
+    # the command did not specify one explicitly.
+    context_group = ctx.obj.get("group")
+    if group is None:
+        group = context_group
 
     # Validate options
     if accession and not version:
@@ -95,8 +103,6 @@ def release(
     status_filter = SequenceStatus(filter_status) if filter_status else None
     result_filter = ProcessingResult(filter_result) if filter_result else None
 
-    api_client = ReviewApiClient(config, auth_client)
-
     try:
         if accession:
             # Release specific sequence
@@ -104,6 +110,7 @@ def release(
                 version = 1  # Default version
             success = release_specific_sequence(
                 api_client,
+                current_user,
                 organism,
                 accession,
                 version,
@@ -118,6 +125,7 @@ def release(
             # Bulk release
             success = release_bulk_sequences(
                 api_client,
+                current_user,
                 organism,
                 group,
                 all_valid,
@@ -139,7 +147,8 @@ def release(
 
 
 def release_specific_sequence(
-    api_client: ReviewApiClient,
+    api_client: BackendClient,
+    username: str,
     organism: str,
     accession: str,
     version: int,
@@ -156,7 +165,8 @@ def release_specific_sequence(
 
     # Get sequence details to verify it can be released
     try:
-        response = api_client.get_sequences(
+        response = api_client.get_review_sequences(
+            username=username,
             organism=organism,
             group_ids=[group] if group else None,
             page=0,
@@ -217,7 +227,8 @@ def release_specific_sequence(
         group_ids = [target_seq.group_id]
         accession_versions = [{"accession": accession, "version": version}]
 
-        api_client.approve_sequences(
+        api_client.approve_sequences_for_release(
+            username=username,
             organism=organism,
             group_ids=group_ids,
             accession_versions=accession_versions,
@@ -237,7 +248,8 @@ def release_specific_sequence(
 
 
 def release_bulk_sequences(
-    api_client: ReviewApiClient,
+    api_client: BackendClient,
+    username: str,
     organism: str,
     group: int | None,
     all_valid: bool,
@@ -256,7 +268,8 @@ def release_bulk_sequences(
 
     try:
         # Get all sequences that match filters
-        response = api_client.get_sequences(
+        response = api_client.get_review_sequences(
+            username=username,
             organism=organism,
             group_ids=[group] if group else None,
             statuses=[status_filter] if status_filter else None,
@@ -329,7 +342,8 @@ def release_bulk_sequences(
                 # Determine scope
                 scope = "WITHOUT_WARNINGS" if no_warnings_only else "ALL"
 
-                result = api_client.approve_sequences(
+                result = api_client.approve_sequences_for_release(
+                    username=username,
                     organism=organism,
                     group_ids=[group_id],
                     scope=scope,
