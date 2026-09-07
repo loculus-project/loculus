@@ -99,7 +99,7 @@ fun extractAndValidateFastaIds(record: CSVRecord, submissionId: String, recordNu
 
 /**
  * Parses the `files.<category>` columns of a record into a [FileCategoryFilesMap].
- * Each cell is a space-separated list of `fileName:fileId` pairs, e.g. `reads_1.fq:<uuid> reads_2.fq:<uuid>`.
+ * Each cell is a space-separated list of `fileName:fileId` pairs, e.g. `reads_1.fq:<id> reads_2.fq:<id>`.
  * Returns `null` if the metadata file has no `files.*` columns at all. Categories with a blank cell are omitted.
  */
 fun extractAndValidateFiles(
@@ -166,6 +166,14 @@ private fun extractAndValidateFileIdAndName(
                 "file entry '$token' in column '$header' is missing a file name. " +
                 "Expected format 'fileName${FILE_NAME_ID_SEPARATOR}fileId'. " +
                 "Please also ensure file names do not contain whitespace.",
+        )
+    }
+
+    if (fileId.isEmpty()) {
+        throw UnprocessableEntityException(
+            "In metadata file: record #$recordNumber with id '$submissionId': " +
+                "file entry '$token' in column '$header' is missing a file ID. " +
+                "Expected format 'fileName${FILE_NAME_ID_SEPARATOR}fileId'.",
         )
     }
 
