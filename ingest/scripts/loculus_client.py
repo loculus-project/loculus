@@ -247,12 +247,13 @@ def add_seq_to_batch(
             batch_it.sequences_batch_output.append(line)  # Handle multi-line sequences
 
 
-def post_fasta_batches(
+def post_fasta_batches(  # noqa: PLR0913, PLR0917
     url,
     fasta_file: str,
     metadata_file: str,
     config: Config,
     params: dict[str, str],
+    collect_responses: bool = True,
 ) -> list[dict[str, Any]]:
     """Chunks metadata files, joins with sequences and submits each chunk via POST.
 
@@ -283,7 +284,7 @@ def post_fasta_batches(
                 batch_it.metadata_batch_output.append(batch_it.metadata_header)
 
             batch_it.metadata_batch_output.append(record)
-            metadata_submission_id = record.split("\t")[batch_it.submission_id_index].strip()
+            metadata_submission_id = record.split("\t")[batch_it.submission_id_index].strip()  # type: ignore
 
             if (
                 batch_it.current_fasta_submission_id
@@ -298,20 +299,22 @@ def post_fasta_batches(
 
             # submit the batch if it is full
             if batch_it.record_count % config.batch_chunk_size == 0:
-                results.extend(
-                    submit(
-                        url,
-                        config,
-                        params,
-                        batch_it,
-                    ).json()
-                )
+                response = submit(
+                    url,
+                    config,
+                    params,
+                    batch_it,
+                ).json()
+                if collect_responses:
+                    results.extend(response)
                 batch_it.sequences_batch_output = []
                 batch_it.metadata_batch_output = []
 
     # submit the last, partial chunk
     if batch_it.record_count % config.batch_chunk_size != 0:
-        results.extend(submit(url, config, params, batch_it).json())
+        response = submit(url, config, params, batch_it).json()
+        if collect_responses:
+            results.extend(response)
 
     return results
 
@@ -329,9 +332,14 @@ def count_lines(path, chunk_size=1024 * 1024):
     return count
 
 
-def submit_or_revise(
-    metadata, sequences, config: Config, group_id, mode=Literal["submit", "revise"]
-) -> list[dict[str, Any]]:
+def submit_or_revise(  # noqa: PLR0913, PLR0917
+    metadata,
+    sequences,
+    config: Config,
+    group_id,
+    mode: Literal["submit", "revise"] = "submit",
+    collect_responses: bool = True,
+) -> list[dict[str, Any]] | None:
     """
     Submit/revise data to Loculus -requires metadata and sequences sorted by id.
     """
@@ -360,6 +368,8 @@ def submit_or_revise(
 
     logger.info(f"{logging_strings['gerund']} {metadata_lines} sequence(s) to Loculus")
 
+    if metadata_lines == 0 and not collect_responses:
+        return None
     if metadata_lines == 0:
         return []
 
@@ -369,7 +379,9 @@ def submit_or_revise(
     if mode == "submit":
         params["dataUseTermsType"] = "OPEN"
 
-    return post_fasta_batches(url, sequences, metadata, config, params=params)
+    return post_fasta_batches(
+        url, sequences, metadata, config, params=params, collect_responses=collect_responses
+    )
 
 
 def revoke(accession_to_revoke: str, message: str, config: Config) -> str:
@@ -384,7 +396,9 @@ def regroup_and_revoke(metadata, sequences, map, config: Config, group_id):
     """
     Submit segments in new sequence groups and revoke segments in old (incorrect) groups in Loculus.
     """
-    response = submit_or_revise(metadata, sequences, config, group_id, mode="submit")
+    response = submit_or_revise(
+        metadata, sequences, config, group_id, mode="submit", collect_responses=True
+    )
     submission_id_to_new_accessions = {}  # Map from submissionId to new loculus accession
     for item in response:
         submission_id_to_new_accessions[item["submissionId"]] = item["accession"]
