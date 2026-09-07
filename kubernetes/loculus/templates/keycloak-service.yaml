@@ -2,6 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: loculus-keycloak-service
+  annotations:
+    traefik.ingress.kubernetes.io/service.serverstransport: "{{ include "loculus.serversTransportRef" . }}"
 spec:
   {{- template "loculus.serviceType" . }}
   selector:

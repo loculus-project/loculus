@@ -7,8 +7,10 @@ import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo }
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
+import { deriveFileMapping, validateFileUploadStates, type FileUploadState } from './FileUpload/fileUpload.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
+import { routes } from '../../routes/routes.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
@@ -24,6 +26,7 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { dateTimeInMonths } from '../../utils/utcDates.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES } from '../SearchPage/DownloadDialog/DownloadSubmittedDataButton.tsx';
 import { Button } from '../common/Button';
 import { Checkbox } from '../common/Checkbox';
 import { Spinner } from '../common/Spinner';
@@ -35,10 +38,9 @@ import {
     getSingleSubmissionFileMapping,
     type CategoryLinkage,
     type FileLinkage,
-    type FileMapping,
     type SubmissionFileMapping,
 } from './FileUpload/fileMapping.ts';
-import { validateFileUploadStates, type FileUploadState } from './FileUpload/fileUpload.ts';
+import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -78,7 +80,7 @@ const InnerDataUploadForm = ({
     const { submit, revise, isPending } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
     const [fileUploadStates, setFileUploadStates] = useState<Map<string, FileUploadState>>(new Map());
-    const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(undefined);
+    const fileMapping = useMemo(() => deriveFileMapping(fileUploadStates), [fileUploadStates]);
     const [submissionFileMapping, setSubmissionFileMapping] = useState<
         Result<SubmissionFileMapping, Error> | undefined
     >(undefined);
@@ -222,6 +224,13 @@ const InnerDataUploadForm = ({
                     groupId={group.groupId}
                     currentInputMode={inputMode}
                 />
+                {action === 'revise' && inputMode === 'bulk' && (
+                    <OriginalDataDownloadHint
+                        organism={organism}
+                        groupId={group.groupId}
+                        enableConsensusSequences={submissionDataTypes.consensusSequences}
+                    />
+                )}
                 <FormOrUploadWrapper
                     inputMode={inputMode}
                     setFileFactory={setFileFactory}
@@ -244,7 +253,6 @@ const InnerDataUploadForm = ({
                             onError={onError}
                             fileUploadStates={fileUploadStates}
                             setFileUploadStates={setFileUploadStates}
-                            setFileMapping={setFileMapping}
                             fileLinkage={fileLinkage}
                         />
                         <hr />
@@ -294,6 +302,32 @@ const InnerDataUploadForm = ({
 };
 
 export const DataUploadForm = withQueryProvider(InnerDataUploadForm);
+
+/**
+ * Tells users revising sequences that they can get their originally submitted data back
+ * from the group's released sequences page, instead of having to reconstruct the files.
+ */
+const OriginalDataDownloadHint = ({
+    organism,
+    groupId,
+    enableConsensusSequences,
+}: {
+    organism: string;
+    groupId: number;
+    enableConsensusSequences: boolean;
+}) => (
+    <p className='text-gray-600 text-sm'>
+        To revise sequences you need to upload the new {enableConsensusSequences && 'sequences and '}metadata. You can
+        easily download your originally submitted data by opening your group's{' '}
+        <a href={routes.mySequencesPage(organism, groupId)} className='text-primary-600 hover:underline'>
+            released sequences
+        </a>{' '}
+        page, optionally selecting the sequences you want to revise, and using the{' '}
+        <i>Download originally submitted data</i> button, which covers up to {MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES}{' '}
+        sequences at a time. The zip file contains your original metadata (with the <i>accession</i> column already
+        filled in){enableConsensusSequences && ' and sequences'}, ready to edit and upload here.
+    </p>
+);
 
 export const InputModeTabs = ({
     action,
@@ -405,7 +439,6 @@ export const ExtraFilesUpload = ({
     fileCategories,
     fileUploadStates,
     setFileUploadStates,
-    setFileMapping,
     fileLinkage,
     onError,
 }: {
@@ -416,7 +449,6 @@ export const ExtraFilesUpload = ({
     fileCategories: FileCategory[];
     fileUploadStates: Map<string, FileUploadState>;
     setFileUploadStates: Dispatch<SetStateAction<Map<string, FileUploadState>>>;
-    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
     fileLinkage?: FileLinkage;
     onError: (message: string) => void;
 }) => {
@@ -437,8 +469,13 @@ export const ExtraFilesUpload = ({
                 <h2 className='font-medium text-lg'>Extra files</h2>
                 <p className='text-gray-500 text-sm'>
                     {inputMode === 'bulk'
-                        ? 'Upload a folder of files for your sequences. Each file must be referenced by its name in the corresponding file category column of your metadata.'
-                        : 'Upload a folder of files for this sequence'}
+                        ? 'Upload a folder of files or individual files for your sequences. Each file must be referenced by its name in the corresponding file category column of your metadata.'
+                        : 'Upload a folder of files or individual files for this sequence.'}{' '}
+                    For more information please refer to the{' '}
+                    <a href={extraFilesUploadDocsUrl} target='_blank' className='text-primary-600 hover:underline'>
+                        extra files documentation
+                    </a>
+                    .
                 </p>
             </div>
             <div className='col-span-2 flex flex-col gap-4'>
@@ -453,7 +490,6 @@ export const ExtraFilesUpload = ({
                             onError={onError}
                             fileUploadState={fileUploadStates.get(fileCategory.name)}
                             setFileUploadState={setCategoryFileUploadState(fileCategory.name)}
-                            setFileMapping={setFileMapping}
                         />
                         {inputMode === 'bulk' && (
                             <CategoryLinkageStatus categoryLinkage={fileLinkage?.get(fileCategory.name)} />
@@ -542,7 +578,7 @@ const Acknowledgement = ({
                     <p className='block text-sm'>
                         Your data will be available on {instanceName}, under the selected data use terms. Data with open
                         data use terms will additionally be made publicly available through the{' '}
-                        <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
+                        <a href='https://www.insdc.org/' target='_blank' className='text-primary-600 hover:underline'>
                             INSDC
                         </a>{' '}
                         databases (ENA, DDBJ, NCBI).
@@ -580,6 +616,7 @@ const Acknowledgement = ({
                                     INSDC.{' '}
                                     <a
                                         href='/docs/concepts/insdc-submission'
+                                        target='_blank'
                                         className='text-primary-600 hover:underline'
                                     >
                                         Find out more.

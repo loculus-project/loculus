@@ -1,7 +1,12 @@
 package org.loculus.backend.service.datauseterms
 
+import org.jetbrains.exposed.v1.core.QueryParameter
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.stringParam
+import org.jetbrains.exposed.v1.datetime.dateTimeParam
 import org.jetbrains.exposed.v1.jdbc.batchInsert
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsHistoryEntry
@@ -10,6 +15,7 @@ import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
+import org.loculus.backend.service.submission.MetadataUploadAuxTable
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.processInDatabaseSafeChunks
@@ -24,6 +30,47 @@ class DataUseTermsDatabaseService(
     private val auditLogger: AuditLogger,
     private val dateProvider: DateProvider,
 ) {
+
+    fun setInitialDataUseTerms(
+        authenticatedUser: AuthenticatedUser,
+        uploadId: String,
+        expectedCount: Int,
+        newDataUseTerms: DataUseTerms,
+    ) {
+        dataUseTermsPreconditionValidator.checkThatRestrictedUntilDateValid(newDataUseTerms)
+        val restrictedUntil = (newDataUseTerms as? DataUseTerms.Restricted)?.restrictedUntil
+
+        val insertedCount = DataUseTermsTable.insert(
+            MetadataUploadAuxTable
+                .select(
+                    MetadataUploadAuxTable.accessionColumn,
+                    dateTimeParam(dateProvider.getCurrentDateTime()),
+                    stringParam(newDataUseTerms.type.toString()),
+                    QueryParameter(restrictedUntil, DataUseTermsTable.restrictedUntilColumn.columnType),
+                    stringParam(authenticatedUser.username),
+                )
+                .where { MetadataUploadAuxTable.uploadIdColumn eq uploadId },
+            columns = listOf(
+                DataUseTermsTable.accessionColumn,
+                DataUseTermsTable.changeDateColumn,
+                DataUseTermsTable.dataUseTermsTypeColumn,
+                DataUseTermsTable.restrictedUntilColumn,
+                DataUseTermsTable.userNameColumn,
+            ),
+        ) ?: 0
+
+        if (insertedCount != expectedCount) {
+            throw IllegalStateException(
+                "Expected to set initial data use terms for $expectedCount accessions in upload $uploadId, " +
+                    "but inserted $insertedCount.",
+            )
+        }
+
+        auditLogger.log(
+            username = authenticatedUser.username,
+            description = "Set data use terms to $newDataUseTerms for $insertedCount accessions in upload $uploadId",
+        )
+    }
 
     fun setNewDataUseTerms(
         authenticatedUser: AuthenticatedUser,

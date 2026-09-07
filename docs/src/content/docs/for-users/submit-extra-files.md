@@ -6,18 +6,17 @@ If the administrator has enabled the file sharing feature for an organism, you c
 
 ## Website
 
-On the website submission form, there is an input field to upload files into.
+On the website submission form, there is an input field to upload files into. You can choose to either upload individual files or select an entire folder of files to upload.
 
 ![The extra files component](../../../assets/ExtraFilesComponent.png)
 
-If files are uploaded successfully, there will be a green checkmark:
+Extra files should be associated to their corresponding consensus sequence via the `files.<category>` metadata field, where `<category>` is the type of extra files you're uploading (e.g., `rawReads`) . This field should contain a space-separated list of file names indicating which files belong to which sequence.
+
+If files are uploaded and linked to their respective sequences successfully, there will be a checkmark:
 
 ![The extra files component](../../../assets/ExtraFilesUploaded.png)
 
-For bulk submission, you need to upload a folder with one subfolder per submission ID.
-
-Neither the file names nor the subfolder names may contain whitespace, since the metadata file refers to them in
-space-separated lists.
+_**Note: since the `files.<category>` metadata fields refers to files in space-separated lists, file names may not contain whitespace.**_
 
 ## API
 
@@ -169,15 +168,27 @@ reads_1.fq:8D8AC610-566D-4EF0-9C22-186B2A5ED793 reads_2.fq:2ea137d0-8773-4e0a-a9
 ```
 
 - The `fileId` is the ID received in the previous step, which identifies the actual file.
-- The `fileName` can be chosen freely, but depending on configuration it might become an identifier for the file later on.
+- The `fileName` can be chosen freely within the [filename restrictions](#filename-restrictions), but depending on configuration it might become an identifier for the file later on.
 - Cells may be left empty for submission IDs that don't have files in that category.
 
 ## Filename restrictions
 
-The filenames may contain any UTF-8 characters except:
+By default, filenames may only contain:
 
-- Forbidden characters: `< > : " / \ | ? *`
-- ASCII control characters (character codes 0-31)
-- Whitespace characters
+- Letters `A-Z` and `a-z`
+- Numbers `0-9`
+- Underscores (`_`), hyphens (`-`) and periods (`.`)
 
-Filenames may not be empty or contain more than 255 characters.
+The following restrictions always apply:
+
+- Filenames may not be empty
+- Filenames may not exceed 255 bytes when encoded as UTF-8
+- Filenames may not contain the characters `< > : " / \ | ? * ; % #`
+- Filenames may not contain ASCII control characters (character codes 0-31)
+- Filenames may not contain whitespace characters
+- Filenames may not be a Windows reserved device name, with or without an extension: `CON`, `PRN`, `AUX`, `NUL`, `COM1`-`COM9` and `LPT1`-`LPT9`
+- Filenames may not have trailing periods
+
+Instance administrators can allow a wider range of characters by enabling `fileSharing.disableStrictFilenameValidation`,
+in which case any UTF-8 characters are accepted except those listed as always restricted above.
+**This is not officially supported and may result in unexpected behaviour**.

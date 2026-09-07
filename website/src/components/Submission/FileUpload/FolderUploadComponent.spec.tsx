@@ -6,7 +6,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { FolderUploadComponent } from './FolderUploadComponent';
 import { type FileMapping } from './fileMapping';
-import { type FileUploadState } from './fileUpload';
+import { deriveFileMapping, type FileUploadState } from './fileUpload';
 import * as multipartUpload from '../../../utils/multipartUpload';
 
 const mockRequestMultipartUpload = vi.fn();
@@ -36,24 +36,22 @@ vi.mock('../../../utils/multipartUpload', async () => {
 
 const FolderUploadComponentWithState = ({
     initialState,
-    initialMapping,
+    otherCategories,
     onMapping,
     ...props
-}: Omit<ComponentProps<typeof FolderUploadComponent>, 'fileUploadState' | 'setFileUploadState' | 'setFileMapping'> & {
+}: Omit<ComponentProps<typeof FolderUploadComponent>, 'fileUploadState' | 'setFileUploadState'> & {
     initialState?: FileUploadState;
-    initialMapping?: FileMapping;
+    otherCategories?: Map<string, FileUploadState>;
     onMapping?: (mapping: FileMapping | undefined) => void;
 }) => {
     const [fileUploadState, setFileUploadState] = useState(initialState);
-    const [mapping, setMapping] = useState<FileMapping | undefined>(initialMapping);
+    // Stands in for the parent, which derives the mapping from the states of all its categories.
+    const states = new Map(otherCategories);
+    if (fileUploadState !== undefined) states.set(props.fileCategory.name, fileUploadState);
+    const mapping = deriveFileMapping(states);
     useEffect(() => onMapping?.(mapping), [mapping, onMapping]);
     return (
-        <FolderUploadComponent
-            {...props}
-            fileUploadState={fileUploadState}
-            setFileUploadState={setFileUploadState}
-            setFileMapping={setMapping}
-        />
+        <FolderUploadComponent {...props} fileUploadState={fileUploadState} setFileUploadState={setFileUploadState} />
     );
 };
 
@@ -421,6 +419,33 @@ describe('FolderUploadComponent', () => {
             );
         });
 
+        it('stops reporting a replaced file as uploaded as soon as the replacement is confirmed', async () => {
+            let deliverUploadUrls = () => {};
+            mockRequestMultipartUpload.mockReturnValue(
+                new Promise((resolve) => {
+                    deliverUploadUrls = () =>
+                        resolve(ok([{ fileId: 'replacement-id', urls: ['http://test.com/url1'] }]));
+                }),
+            );
+
+            render(<FolderUploadComponentWithState {...defaultPropsWithFiles} />);
+
+            const file = new File(['content'], 'file-a.txt', { type: 'text/plain' });
+            Object.defineProperty(file, 'webkitRelativePath', { value: '', writable: false });
+            await userEvent.upload(screen.getByTestId('add_extraFiles'), file);
+            await waitFor(() => expect(screen.getByText(/already exist and will be replaced/)).toBeInTheDocument());
+            await userEvent.click(screen.getByRole('button', { name: 'Replace' }));
+
+            // The request for upload urls is still in flight, so nothing has been uploaded yet: the
+            // replaced entry must stop claiming the previous upload it is about to replace, while
+            // the untouched entry keeps its own.
+            await waitFor(() => expect(screen.getByTestId('status_extraFiles_file-a.txt')).not.toHaveTextContent('✓'));
+            expect(screen.getByTestId('status_extraFiles_file-b.txt')).toHaveTextContent('✓');
+
+            deliverUploadUrls();
+            await waitFor(() => expect(screen.getByTestId('status_extraFiles_file-a.txt')).toHaveTextContent('✓'));
+        });
+
         it('leaves the existing files alone when the overwrite is cancelled', async () => {
             mockRequestMultipartUpload.mockReturnValue(
                 ok([{ fileId: 'replacement-id', urls: ['http://test.com/url1'] }]),
@@ -476,7 +501,17 @@ describe('FolderUploadComponent', () => {
             render(
                 <FolderUploadComponentWithState
                     {...defaultPropsWithFiles}
-                    initialMapping={new Map([['otherFiles', otherCategoryFiles]])}
+                    otherCategories={
+                        new Map([
+                            [
+                                'otherFiles',
+                                {
+                                    type: 'uploadCompleted',
+                                    files: [{ type: 'previousUpload', fileId: 'file-3', path: 'other-file.txt' }],
+                                } satisfies FileUploadState,
+                            ],
+                        ])
+                    }
                     onMapping={onMapping}
                 />,
             );

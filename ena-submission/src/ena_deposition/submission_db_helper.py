@@ -9,7 +9,20 @@ from enum import StrEnum
 from typing import Any, Final, cast
 
 import pytz
-from sqlalchemy import Engine, Enum, create_engine, delete, func, make_url, or_, select, update
+from sqlalchemy import (
+    DateTime,
+    Engine,
+    Enum,
+    ForeignKey,
+    Index,
+    create_engine,
+    delete,
+    func,
+    make_url,
+    or_,
+    select,
+    update,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -144,11 +157,11 @@ class SubmissionTableEntry(Base):
     seq_metadata: Mapped[dict[str, Any]] = mapped_column("metadata", JSONB, default_factory=dict)
     errors: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
     warnings: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
-    status_all: Mapped[Status] = mapped_column(
+    status_all: Mapped[StatusAll] = mapped_column(
         Enum(StatusAll, native_enum=False),  # Store enum as string in DB table.
         default=StatusAll.READY_TO_SUBMIT,
     )
-    started_at: Mapped[datetime | None] = mapped_column(default=None)
+    started_at: Mapped[datetime] = mapped_column(default_factory=lambda: datetime.now(tz=pytz.utc))
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     unaligned_nucleotide_sequences: Mapped[dict[str, str | None]] = mapped_column(
         JSONB, default_factory=dict
@@ -157,7 +170,9 @@ class SubmissionTableEntry(Base):
     external_metadata: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(
         JSONB, default=None
     )
-    project_id: Mapped[int | None] = mapped_column(default=None)
+    project_id: Mapped[int | None] = mapped_column(
+        ForeignKey("ena_deposition_schema.project_table.project_id"), default=None
+    )
 
     @property
     def pkey(self) -> AccessionVersion:
@@ -168,7 +183,11 @@ class ProjectTableEntry(Base):
     """Maps to project_table. Primary key: project_id (BIGSERIAL)."""
 
     __tablename__ = "project_table"
-    __table_args__: typing.ClassVar[dict[str, Any]] = {"schema": "ena_deposition_schema"}
+    __table_args__: typing.ClassVar[tuple[Any, ...]] = (
+        Index("idx_project_table_group_id", "group_id"),
+        Index("idx_project_table_organism", "organism"),
+        {"schema": "ena_deposition_schema"},
+    )
 
     # BIGSERIAL primary key — server-generated, excluded from __init__.
     project_id: Mapped[int | None] = mapped_column(
@@ -182,12 +201,16 @@ class ProjectTableEntry(Base):
         Enum(Status, native_enum=False),
         default=Status.READY,
     )
-    started_at: Mapped[datetime | None] = mapped_column(default=None)
+    started_at: Mapped[datetime] = mapped_column(default_factory=lambda: datetime.now(tz=pytz.utc))
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     center_name: Mapped[str | None] = mapped_column(default=None)
     result: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(JSONB, default=None)
-    ena_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
-    ncbi_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
+    ena_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ncbi_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
 
     @property
     def pkey(self) -> ProjectId:
@@ -208,11 +231,15 @@ class SampleTableEntry(Base):
         Enum(Status, native_enum=False),
         default=Status.READY,
     )
-    started_at: Mapped[datetime | None] = mapped_column(default=None)
+    started_at: Mapped[datetime] = mapped_column(default_factory=lambda: datetime.now(tz=pytz.utc))
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     result: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(JSONB, default=None)
-    ena_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
-    ncbi_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
+    ena_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ncbi_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
 
     @property
     def pkey(self) -> AccessionVersion:
@@ -233,13 +260,21 @@ class AssemblyTableEntry(Base):
         Enum(Status, native_enum=False),
         default=Status.READY,
     )
-    started_at: Mapped[datetime | None] = mapped_column(default=None)
+    started_at: Mapped[datetime] = mapped_column(default_factory=lambda: datetime.now(tz=pytz.utc))
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     result: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(JSONB, default=None)
-    ena_nucleotide_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
-    ncbi_nucleotide_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
-    ena_gca_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
-    ncbi_gca_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
+    ena_nucleotide_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ncbi_nucleotide_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ena_gca_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ncbi_gca_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
 
     @property
     def pkey(self) -> AccessionVersion:
@@ -462,7 +497,6 @@ def update_with_retry[T: TableEntry](
 
 def add_to_project_table(engine: Engine, entry: ProjectTableEntry) -> int | None:
     """Insert *entry* into project_table and return the generated project_id."""
-    entry.started_at = datetime.now(tz=pytz.utc)
     try:
         with Session(engine) as session:
             session.add(entry)
@@ -477,7 +511,6 @@ def add_to_project_table(engine: Engine, entry: ProjectTableEntry) -> int | None
 
 def add_to_sample_table(engine: Engine, entry: SampleTableEntry) -> bool:
     """Insert *entry* into sample_table. Returns True on success."""
-    entry.started_at = datetime.now(tz=pytz.utc)
     try:
         with Session(engine, expire_on_commit=False) as session:
             session.add(entry)
@@ -490,7 +523,6 @@ def add_to_sample_table(engine: Engine, entry: SampleTableEntry) -> bool:
 
 def add_to_assembly_table(engine: Engine, entry: AssemblyTableEntry) -> bool:
     """Insert *entry* into assembly_table. Returns True on success."""
-    entry.started_at = datetime.now(tz=pytz.utc)
     try:
         with Session(engine, expire_on_commit=False) as session:
             session.add(entry)
@@ -512,7 +544,6 @@ def in_submission_table(engine: Engine, conditions: dict[str, Any]) -> bool:
 
 def add_to_submission_table(engine: Engine, entry: SubmissionTableEntry) -> bool:
     """Insert *entry* into submission_table. Returns True on success."""
-    entry.started_at = datetime.now(tz=pytz.utc)
     try:
         with Session(engine, expire_on_commit=False) as session:
             session.add(entry)
