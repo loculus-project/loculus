@@ -56,7 +56,7 @@ describe('EditableSequences', () => {
         }
 
         expect(() => editableSequences.update('another key', 'GG', 'another key', 'FASTAHEADER_anotherkey')).toThrow(
-            'Maximum limit reached — you can add up to 1 sequence file(s) only.',
+            "Attempting to update sequence with key 'another key' that does not exist.",
         );
         editableSequences = editableSequences.update(firstKey, null, null, null);
         const secondKey = String(Number(firstKey) + 1);
@@ -148,7 +148,7 @@ describe('EditableSequences', () => {
         }
 
         expect(() => editableSequences.update('another key', 'GG', 'another key', 'anything')).toThrow(
-            'Maximum limit reached — you can add up to 2 sequence file(s) only.',
+            "Attempting to update sequence with key 'another key' that does not exist.",
         );
         expect(editableSequences.getFastaIds()).toEqual(`${FASTAHEADER} ${OTHER_FASTAHEADER}`);
     });
@@ -204,7 +204,7 @@ describe('EditableSequences', () => {
         const rows = editableSequences.rows;
         expect(rows).deep.equals([{ label: key, value: SEQUENCE, initialValue: null, fastaHeader: FASTAHEADER, key }]);
         expect(() => editableSequences.update('another key', OTHER_SEQUENCE, OTHER_LABEL, OTHER_FASTAHEADER)).toThrow(
-            'Maximum limit reached — you can add up to 1 sequence file(s) only.',
+            "Attempting to update sequence with key 'another key' that does not exist.",
         );
     });
 
@@ -228,7 +228,7 @@ describe('EditableSequences', () => {
         const rows = editableSequences.rows;
         expect(rows).deep.equals([{ label: LABEL, value: SEQUENCE, initialValue: null, fastaHeader: key, key }]);
         expect(() => editableSequences.update('another key', OTHER_SEQUENCE, OTHER_LABEL, OTHER_FASTAHEADER)).toThrow(
-            'Maximum limit reached — you can add up to 1 sequence file(s) only.',
+            "Attempting to update sequence with key 'another key' that does not exist.",
         );
     });
 
