@@ -131,7 +131,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
                 {enableGenomePreview && segments.length > 0 && (
                     <BoxWithTabsTab
                         isActive={activeTab === 'genome'}
-                        label='Genome viewer'
+                        label='View vs. reference'
                         onClick={() => setActiveTab('genome')}
                     />
                 )}
