@@ -2,14 +2,14 @@ import { produce } from 'immer';
 import React, { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
 
-import {
-    type Awaiting,
-    type FileUploadState,
-    type Pending,
-    type PreviousUpload,
-    type SingleFileUpload,
-    type Uploaded,
-    type UploadStatus,
+import type {
+    Awaiting,
+    FileUploadState,
+    Pending,
+    PreviousUpload,
+    SingleFileUpload,
+    Uploaded,
+    UploadStatus,
 } from './fileUpload';
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
