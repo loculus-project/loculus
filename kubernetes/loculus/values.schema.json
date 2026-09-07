@@ -438,7 +438,7 @@
           "description": "Where to place this field relative to the organism's regular metadata fields when generating the submission form. Only affects ordering; the value itself is not passed through to the frontend."
         }
       },
-      "required": ["name"],
+      "required": ["name", "position"],
       "allOf": [
         {
           "if": {
