@@ -108,6 +108,7 @@ export const inputField = z.object({
     guidance: z.string().optional(),
     desired: z.boolean().optional(),
     options: z.array(inputFieldOption).optional(),
+    header: z.string().optional(),
 });
 
 export type InputFieldOption = z.infer<typeof inputFieldOption>;
