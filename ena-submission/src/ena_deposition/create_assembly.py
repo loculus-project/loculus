@@ -215,7 +215,7 @@ def submission_table_start(db_engine: Engine, config: Config) -> None:
     for row in ready_to_submit:
         seq_key = asdict(row.pkey)
 
-        run_ref = row.seq_metadata.get("insdcRawReadsAccession")
+        run_ref = row.seq_metadata.get(config.loculus_accession_fields.run)
         if run_ref and not accession_exists(run_ref, config):
             set_accession_does_not_exist_error(
                 conditions=seq_key,
