@@ -5,12 +5,14 @@ import type { z, ZodError } from 'zod';
 
 import { ACCESSION_FIELD, FASTA_IDS_FIELD, FILES_HEADER_PREFIX, SUBMISSION_ID_INPUT_FIELD } from './settings.ts';
 import {
+    type FileSharingConfig,
     type InputField,
     type InstanceConfig,
     type MetadataType,
     type Schema,
     type SequenceFlaggingConfig,
     type WebsiteConfig,
+    fileSharingConfig,
     instanceConfig,
     websiteConfig,
 } from './types/config.ts';
@@ -363,6 +365,10 @@ export function seqSetsAreEnabled() {
 
 export function dataUseTermsAreEnabled() {
     return getWebsiteConfig().enableDataUseTerms;
+}
+
+export function getFileSharingConfig(): FileSharingConfig {
+    return getWebsiteConfig().fileSharing ?? fileSharingConfig.parse({});
 }
 
 export function getDataUseTermsAgreementHTML() {

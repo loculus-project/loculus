@@ -236,6 +236,9 @@ const sequenceFlaggingConfig = z.object({
 });
 export type SequenceFlaggingConfig = z.infer<typeof sequenceFlaggingConfig>;
 
+export const fileSharingConfig = z.object({ disableStrictFilenameValidation: z.boolean().default(false) });
+export type FileSharingConfig = z.infer<typeof fileSharingConfig>;
+
 const fieldToDisplay = z.object({
     field: z.string(),
     displayName: z.string(),
@@ -272,6 +275,7 @@ export const websiteConfig = z.object({
     enableSubmissionNavigationItem: z.boolean(),
     enableSubmissionPages: z.boolean(),
     enableDataUseTerms: z.boolean(),
+    fileSharing: fileSharingConfig.optional(),
     readOnlyMode: z.boolean().default(false),
     dataUseTermsAgreementHTML: z.string().optional(),
     sequenceFlagging: sequenceFlaggingConfig.optional(),
