@@ -459,9 +459,6 @@ def create_flatfile(
 ):
     collection_date = metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.collection_date_property, "Unknown")
     authors = get_authors(metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.authors_property) or "")
-    # BioPython's EMBL writer automatically adds a terminating semicolon,
-    # so we need to strip it from our formatted authors string to avoid duplication
-    authors = authors.removesuffix(";")  # type: ignore
     country = get_country(metadata)
     organism = organism_metadata.scientific_name
     accession = metadata["accession"]
@@ -488,7 +485,11 @@ def create_flatfile(
         if not isinstance(sequence_str, str) or len(sequence_str) == 0:
             continue
         reference = Reference()
-        reference.authors = authors
+        if authors:
+            # BioPython's EMBL writer automatically adds a terminating semicolon,
+            # so we need to strip it from our formatted authors string to avoid duplication
+            authors = authors.removesuffix(";")
+            reference.authors = authors
         sequence = SeqRecord(
             seq=Seq(sequence_str),
             id=f"{accession}_{seq_name}" if multi_segment else accession,
