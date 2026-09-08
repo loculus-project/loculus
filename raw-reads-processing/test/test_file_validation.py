@@ -314,7 +314,7 @@ def test_truncated_gzip_is_reported_as_invalid_submission(tmp_path):
     path.write_bytes(GZIP_MAGIC)
     with pytest.raises(InvalidSubmission) as exc_info:
         validate_compression({"reads.fastq.gz": path}, FileFormat.FASTQ)
-    assert "could not be decompressed" in exc_info.value.error.message
+    assert "appears to be truncated" in exc_info.value.error.message
 
 
 def test_corrupt_gzip_is_reported_as_invalid_submission(tmp_path):
@@ -322,7 +322,7 @@ def test_corrupt_gzip_is_reported_as_invalid_submission(tmp_path):
     path.write_bytes(GZIP_MAGIC + b"\x08\x00\x00\x00\x00\x00\x00\x03" + b"\xff" * 20)
     with pytest.raises(InvalidSubmission) as exc_info:
         validate_compression({"reads.fastq.gz": path}, FileFormat.FASTQ)
-    assert "could not be decompressed" in exc_info.value.error.message
+    assert "appears to be corrupt" in exc_info.value.error.message
 
 
 def test_empty_file_named_gz_is_rejected(tmp_path):
@@ -339,6 +339,14 @@ def test_compression_check_skipped_for_non_fastq(tmp_path):
     with gzip.open(path, "wb") as f:
         f.write(b"anything")
     assert validate_compression({"reads.bam": path}, FileFormat.BAM) is None
+
+
+def test_invalid_gzip_body_is_reported_as_invalid_submission(tmp_path):
+    path = tmp_path / "stored"
+    path.write_bytes(GZIP_MAGIC + b"not really a gzip member")
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_compression({"reads.fastq.gz": path}, FileFormat.FASTQ)
+    assert "contact the administrators" in exc_info.value.error.message
 
 
 def _write_bytes(tmp_path: Path, name: str, data: bytes) -> str:

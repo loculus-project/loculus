@@ -41,6 +41,10 @@ def process_files(
         return ValidationResult(errors=[e.error])
     except ProcessingFailure as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
+    except Exception as e:
+        # A bug on our side: report it as internal rather than blaming the submission.
+        logger.exception("Unexpected error validating %s", payload.accessionVersion)
+        raise HTTPException(status_code=500, detail="Internal error validating files") from e
     return ValidationResult()
 
 
