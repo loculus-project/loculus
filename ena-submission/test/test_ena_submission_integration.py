@@ -697,7 +697,7 @@ class ExternalMetadataUploads:
 
     Lets a test assert on "the next upload" instead of indexing an absolute
     call number, so inserting a pipeline stage does not renumber every later
-    assertion. Replaces `mock.call_args_list[n][0][0]`.
+    assertion.
 
     Each upload's accessions are keyed by Loculus metadata field name
     (`config.loculus_accession_fields`) but the values are assigned by ENA -
@@ -707,7 +707,6 @@ class ExternalMetadataUploads:
     def __init__(self, mock: Mock) -> None:
         self._mock = mock
         self._consumed = 0
-        self.last_external_metadata_accessions: dict[str, Any] = {}
 
     def next_upload(self) -> dict[str, Any]:
         """Assert another upload happened, and return its ENA accessions."""
@@ -720,8 +719,7 @@ class ExternalMetadataUploads:
         self._consumed += 1
         assert payload["accession"] == TEST_ACCESSION
         assert payload["version"] == TEST_VERSION
-        self.last_external_metadata_accessions = payload["externalMetadata"]
-        return self.last_external_metadata_accessions
+        return payload["externalMetadata"]
 
     def assert_no_further_uploads(self) -> None:
         calls = self._mock.call_args_list
@@ -731,11 +729,7 @@ class ExternalMetadataUploads:
 
 
 def last_external_metadata_accessions(mock: Mock) -> dict[str, Any]:
-    """ENA accessions of the most recent `submit_external_metadata` call.
-
-    `Mock.call_args` is already the last call and `.args` names the positional
-    tuple, so this replaces `mock.call_args_list[-1][0][0]["externalMetadata"]`.
-    """
+    """ENA accessions of the most recent `submit_external_metadata` call."""
     mock.assert_called()
     return mock.call_args.args[0]["externalMetadata"]
 
@@ -842,7 +836,7 @@ def multi_segment_submission(
             f"does not match GCA pattern {gca_pattern}"
         )
     uploads.assert_no_further_uploads()
-    return uploads.last_external_metadata_accessions
+    return external_metadata_accessions
 
 
 class TestSubmission:
