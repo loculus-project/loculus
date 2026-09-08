@@ -58,7 +58,7 @@ export async function uploadFilesFromTmpDir(
     timeout = 30_000,
 ) {
     await page.getByRole('heading', { name: 'Extra files' }).scrollIntoViewIfNeeded();
-    // Not awaited: playwright's own idea of when the upload is done was the flake fixed in #5462.
+    // Not awaited: playwright sometimes never returns, deflaked in #5462.
     void page.getByTestId(fileCategory).setInputFiles(tmpDir);
     await Promise.all([
         expect(
