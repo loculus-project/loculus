@@ -388,7 +388,7 @@ class SubmissionDatabaseService(
                 fileMappingPreconditionValidator
                     .validateFilenameCharacters(fileMapping)
                     .validateFilenamesAreUnique(fileMapping)
-                    .validateFileIdsAreUnique(fileMapping)
+                    // no file-ID uniqueness check: would break reprocessing of older entries
                     .validateCategoriesMatchOutputSchema(fileMapping, organism)
 
                 val accessionVersion =
