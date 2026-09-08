@@ -362,7 +362,7 @@ def reject_revision_if_manifest_fields_changed(
     db_engine: Engine,
     submission_row: SubmissionTableEntry,
     last_version_entry: SubmissionTableEntry,
-    run_ref: str | None = None,
+    run_ref: str | None,
 ) -> bool:
     """
     Check if any fields in the assembly manifest have changed between the last version
