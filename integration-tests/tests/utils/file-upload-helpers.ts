@@ -50,13 +50,6 @@ export async function prepareTmpDirForSingleUpload(
     );
 }
 
-/**
- * Selects `tmpDir` for the given file category and waits until the upload has finished.
- *
- * Do not count checkmarks across the whole page: in bulk mode the "N files uploaded and linked to
- * metadata!" line renders a checkmark of its own, so N checkmarks are on the page once N-1 files
- * have uploaded, and submitting then fails with "Please wait for all files to finish uploading".
- */
 export async function uploadFilesFromTmpDir(
     page: Page,
     fileCategory: string,
