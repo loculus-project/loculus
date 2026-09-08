@@ -222,13 +222,13 @@ COLUMN_CONFIGS = {
     (EntityType.RAW_READS, "ena_run_first_publicly_visible"): ColumnCheckConfig(
         entry_class=RawReadsTableEntry,
         visibility_column="ena_run_first_publicly_visible",
-        accession_field_name_prefix="err_accession",
+        accession_field_name_prefix=EnaResultField.RUN,
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.RAW_READS, "ncbi_run_first_publicly_visible"): ColumnCheckConfig(
         entry_class=RawReadsTableEntry,
         visibility_column="ncbi_run_first_publicly_visible",
-        accession_field_name_prefix="err_accession",
+        accession_field_name_prefix=EnaResultField.RUN,
         checker_class=NCBIVisibilityChecker,
     ),
     (EntityType.RAW_READS, "ena_experiment_first_publicly_visible"): ColumnCheckConfig(

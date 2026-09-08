@@ -12,7 +12,7 @@ from sqlalchemy import Engine
 
 from ena_deposition import call_loculus
 
-from .config import Config
+from .config import Config, EnaResultField
 from .ena_submission_helper import (
     CreationResult,
     accession_exists,
@@ -157,7 +157,7 @@ def create_manifest_object(
     return manifest
 
 
-def sync_state_with_submission_table(db_engine: Engine):
+def sync_state_with_submission_table(db_engine: Engine, config: Config) -> None:
     """
     1. Find all entries in submission_table in state SUBMITTED_SAMPLE and submit_raw_reads=True
     2. If (exists an entry in the raw_reads_table for (accession, version)):
@@ -194,11 +194,11 @@ def sync_state_with_submission_table(db_engine: Engine):
             )
             continue
         run_ref = None
-        if row and row.seq_metadata.get("insdcRawReadsAccession"):
-            run_ref = row.seq_metadata["insdcRawReadsAccession"]
+        if row and row.seq_metadata.get(config.loculus_accession_fields.run):
+            run_ref = row.seq_metadata[config.loculus_accession_fields.run]
         add_to_db(
             db_engine,
-            RawReadsTableEntry(**seq_key, result={"err_accession": run_ref} if run_ref else None),
+            RawReadsTableEntry(**seq_key, result={EnaResultField.RUN: run_ref} if run_ref else None),
         )
 
 
@@ -343,7 +343,7 @@ def update_with_existing_runrecord(db_engine: Engine, row: SubmissionTableEntry,
     logger.debug(
         f"Accession: {row.accession} already has insdcRawReadsAccession, updating sample_table"
     )
-    run = row.seq_metadata["insdcRawReadsAccession"]
+    run = row.seq_metadata[config.loculus_accession_fields.run]
 
     if run and row.seq_metadata.get(config.raw_reads_metadata_field):
         error = (
@@ -381,7 +381,7 @@ def update_with_existing_runrecord(db_engine: Engine, row: SubmissionTableEntry,
         update_values={
             "accession": row.accession,
             "version": row.version,
-            "result": {"ena_sample_accession": run, "err_accession": run},
+            "result": {"ena_sample_accession": run, EnaResultField.RUN: run},
             "status": Status.SUBMITTED,
         },
     )
@@ -422,7 +422,7 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
             db_engine, submission_row
         )
 
-        if row.result and row.result.get("err_accession"):
+        if row.result and row.result.get("EnaResultField.RUN"):
             update_with_existing_runrecord(db_engine, submission_row, config)
             continue
 
@@ -589,13 +589,13 @@ def create_raw_reads(config: Config, stop_event: threading.Event):
             logger.warning("create_raw_reads stopped due to exception in another task")
             return
         logger.debug("Checking for raw reads to create")
-        sync_state_with_submission_table(db_engine)
+        sync_state_with_submission_table(db_engine, config)
 
         raw_reads_table_create(db_engine, config, slack_config)
         last_retry_time = raw_reads_table_handle_errors(
             db_engine, config, slack_config, last_retry_time
         )
-        sync_state_with_submission_table(db_engine)
+        sync_state_with_submission_table(db_engine, config)
         if stop_event.wait(timeout=config.time_between_iterations):
             logger.info("create_raw_reads stopped due to exception in another task")
             return

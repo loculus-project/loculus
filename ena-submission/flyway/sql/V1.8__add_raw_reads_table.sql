@@ -35,7 +35,7 @@ SELECT
     'SUBMITTED',
     NOW(),
     jsonb_build_object(
-        'err_accession',
+        'run_accession',
         metadata->>'insdcRawReadsAccession'
     )
 FROM submission_table

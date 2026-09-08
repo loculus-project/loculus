@@ -828,7 +828,7 @@ def create_ena_raw_reads(
         context="reads",
         patterns={
             "erx_accession": ("experiment", r"ERX\d+"),
-            "err_accession": ("run", r"ERR\d+"),
+            EnaResultField.RUN: ("run", r"ERR\d+"),
         },
     )
 
@@ -1048,7 +1048,7 @@ def set_accession_does_not_exist_error(
                 {
                     "status": Status.HAS_ERRORS,
                     "errors": [error_text],
-                    "result": {"err_accession": accession},
+                    "result": {EnaResultField.RUN: accession},
                 },
             )
 

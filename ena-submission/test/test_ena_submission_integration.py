@@ -525,12 +525,12 @@ def _test_raw_reads_submission_errored(
     sequences_to_upload: dict[str, Any],
     mock_notify: Mock,
 ) -> None:
-    create_raw_reads_sync_state_with_submission_table(db_engine)
+    create_raw_reads_sync_state_with_submission_table(db_engine, config)
     check_raw_reads_submission_started(db_engine, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
     raw_reads_table_create(db_engine, config, slack_config)
-    create_raw_reads_sync_state_with_submission_table(db_engine)
+    create_raw_reads_sync_state_with_submission_table(db_engine, config)
     check_raw_reads_submission_has_errors(db_engine, sequences_to_upload)
 
     raw_reads_table_handle_errors(
@@ -552,12 +552,12 @@ def _test_successful_raw_reads_submission(
     sequences_to_upload: dict[str, Any],
     slack_config: SlackConfig,
 ) -> None:
-    create_raw_reads_sync_state_with_submission_table(db_engine)
+    create_raw_reads_sync_state_with_submission_table(db_engine, config)
     check_raw_reads_submission_started(db_engine, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
     raw_reads_table_create(db_engine, config, slack_config)
-    create_raw_reads_sync_state_with_submission_table(db_engine)
+    create_raw_reads_sync_state_with_submission_table(db_engine, config)
     check_raw_reads_submission_submitted(db_engine, sequences_to_upload)
 
 
@@ -763,11 +763,11 @@ def multi_segment_submission(
         assert payload["accession"] == TEST_ACCESSION
         assert payload["version"] == TEST_VERSION
         assert set(payload["externalMetadata"]) == {
-            "bioprojectAccession",
-            "biosampleAccession",
-            "insdcRawReadsAccession",
+            config.loculus_accession_fields.bioproject,
+            config.loculus_accession_fields.biosample,
+            config.loculus_accession_fields.run,
         }
-        assert payload["externalMetadata"]["insdcRawReadsAccession"].startswith("ERR")
+        assert payload["externalMetadata"][config.loculus_accession_fields.run].startswith("ERR")
 
     _test_successful_assembly_submission(db_engine, config, sequences_to_upload, single_segment)
     get_external_metadata_and_send_to_loculus(db_engine, config)
@@ -791,7 +791,7 @@ def multi_segment_submission(
             config.loculus_accession_fields.insdc_accession_full_prefix + "_M",
         }
     if with_raw_reads:
-        extra_items.add("insdcRawReadsAccession")
+        extra_items.add(config.loculus_accession_fields.run)
     assert set(payload["externalMetadata"]) == {
         config.loculus_accession_fields.bioproject,
         config.loculus_accession_fields.biosample,
@@ -908,8 +908,8 @@ class TestFirstPublicUpdate(TestSubmission):
     }
 
     RUN_CONFIG: Final = {
-        "invalid_result": {"err_accession": "ERR999"},
-        "valid_result": {"err_accession": "ERR14673164"},
+        "invalid_result": {EnaResultField.RUN: "ERR999"},
+        "valid_result": {EnaResultField.RUN: "ERR14673164"},
         "base_entry": {
             "accession": "test_accession",
             "version": 1,
@@ -1544,7 +1544,7 @@ class TestInsdcRawReadsAccessionInManifest(TestSubmission):
 
         mock_post_webin_with_retry.assert_not_called()
 
-        create_assembly_submission_table_start(self.db_engine, self.config)
+        create_assembly_submission_table_start(self.db_engine)
         check_assembly_submission_started(self.db_engine, sequences_to_upload)
         assembly_table_create(self.db_engine, self.config)
         check_assembly_submission_waiting(self.db_engine, sequences_to_upload)
@@ -1818,8 +1818,8 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
 
 #         payload_revision = args[-1][0][0]  # first positional argument of last call
 #         assert (
-#             payload["externalMetadata"]["insdcRawReadsAccession"]
-#             == payload_revision["externalMetadata"]["insdcRawReadsAccession"]
+#             payload["externalMetadata"][config.loculus_accession_fields.run]
+#             == payload_revision["externalMetadata"][config.loculus_accession_fields.run]
 #         ), "When raw reads are not modified, insdcRawReadsAccession should stay the same"
 #         check_sent_to_loculus(self.db_engine, sequences_to_upload)
 

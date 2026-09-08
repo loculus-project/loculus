@@ -252,7 +252,7 @@ def submission_table_start(db_engine: Engine) -> None:
         else:
             # If not: create assembly_entry, change status to SUBMITTING_ASSEMBLY
             assembly_entry = AssemblyTableEntry(**seq_key)
-            if not add_to_assembly_table(db_engine, assembly_entry):
+            if not add_to_db(db_engine, assembly_entry):
                 return
 
             status_all = StatusAll.SUBMITTING_ASSEMBLY
@@ -501,7 +501,7 @@ def assembly_table_create(db_engine: Engine, config: Config):
         )
 
         run_ref = (
-            cast(str, corresponding_raw_reads[0].result.get("err_accession"))
+            cast(str, corresponding_raw_reads[0].result.get(EnaResultField.RUN))
             if corresponding_raw_reads and corresponding_raw_reads[0].result
             else None
         )

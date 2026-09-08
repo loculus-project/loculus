@@ -101,10 +101,10 @@ def get_run_accession_from_db(
         conditions={"accession": accession, "version": version},
     )
 
-    if not result or "err_accession" not in result:
+    if not result or EnaResultField.RUN not in result:
         return {}, False
 
-    return {config.loculus_accession_fields.run: result["err_accession"]}, True
+    return {config.loculus_accession_fields.run: result[EnaResultField.RUN]}, True
 
 
 def get_assembly_accessions_from_db(
