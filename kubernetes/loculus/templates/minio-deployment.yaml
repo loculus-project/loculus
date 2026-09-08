@@ -82,7 +82,6 @@ spec:
                   - /bin/sh
                   - -c
                   - |
-                    # foreground, so a failed bucket setup fails the container instead of vanishing
                     set -e
                     attempt=0
                     until mc alias set local http://localhost:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"; do
