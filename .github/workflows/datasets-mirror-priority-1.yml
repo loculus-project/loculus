@@ -13,6 +13,7 @@ jobs:
           - 3046277  # Orthoflavivirus flavi
           - 3048148  # Metapneumovirus hominis
           - 3048448  # Orthoflavivirus nilense (West nile virus)
+          - 3048459  # Orthoflavivirus zikaense
           - 3052345  # Morbillivirus hominis (Measles)
           - 3052458  # Orthoebolavirus bundibugyoense
           - 3052460  # Orthoebolavirus sudanense
