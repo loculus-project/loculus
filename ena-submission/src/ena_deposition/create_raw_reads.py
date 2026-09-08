@@ -71,10 +71,10 @@ def get_platform_and_instrument(
     """
     if instrument := Instrument.from_value(raw_value):
         if instrument is Instrument.unspecified:
-            # webin-cli rejects INSTRUMENT=unspecified unless PLATFORM is also given, and we
-            # have no separate platform field to supply it from. Preprocessing requires
-            # sequencingInstrument to be one of the configured options (which exclude
-            # "unspecified") whenever raw reads are attached, so this should never fire.
+            # webin-cli rejects INSTRUMENT=unspecified unless PLATFORM is also given
+            # Preprocessing forces sequencingInstrument to be one of the configured options
+            # (excluding "unspecified") whenever raw reads are attached,
+            # so this should never fire.
             message = (
                 f"sequencingInstrument is 'unspecified' for accession {accession} - ENA "
                 "requires a PLATFORM alongside it, which we cannot supply."
