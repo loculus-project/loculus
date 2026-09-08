@@ -1,16 +1,16 @@
 ---
 import { findOrganismAndData } from './findOrganismAndData';
 import { SequenceDetailsTableResultType } from './getSequenceDetailsTableData';
-import GenomeViewer from '../../../components/SequenceDetailsPage/GenomePreview/GenomeViewer';
-import { getGenomePreviewData } from '../../../components/SequenceDetailsPage/GenomePreview/getGenomePreviewData';
-import type { GenomePreviewData } from '../../../components/SequenceDetailsPage/GenomePreview/types';
+import ReferenceComparisonViewer from '../../../components/SequenceDetailsPage/ReferenceComparison/ReferenceComparisonViewer';
+import { getReferenceComparisonData } from '../../../components/SequenceDetailsPage/ReferenceComparison/getReferenceComparisonData';
+import type { ReferenceComparisonData } from '../../../components/SequenceDetailsPage/ReferenceComparison/types';
 import { getWebsiteConfig } from '../../../config';
 import { LapisClient } from '../../../services/lapisClient';
 import { normalizeAccessionCase } from '../../../utils/normalizeAccessionCase';
 
 const accessionVersion = normalizeAccessionCase(Astro.params.accessionVersion!, getWebsiteConfig().accessionPrefix);
 const details = await findOrganismAndData(accessionVersion);
-let data: GenomePreviewData | undefined;
+let data: ReferenceComparisonData | undefined;
 let error: string | undefined;
 Astro.response.headers.set('Cache-Control', 'no-store');
 if (
@@ -19,14 +19,14 @@ if (
     details.value.result.isRevocation
 ) {
     Astro.response.status = 404;
-    error = 'Genome preview is unavailable for this entry.';
+    error = 'Reference Comparison is unavailable for this entry.';
 } else {
     const { organism, result } = details.value;
     const config = getWebsiteConfig().organisms[organism];
     try {
         if (!config.schema.submissionDataTypes.consensusSequences)
             throw new Error('This entry has no consensus sequence.');
-        data = await getGenomePreviewData({
+        data = await getReferenceComparisonData({
             accessionVersion,
             segmentName: Astro.url.searchParams.get('segment') ?? '',
             references: config.referenceGenomes,
@@ -35,7 +35,7 @@ if (
             client: LapisClient.createForOrganism(organism),
         });
     } catch (cause) {
-        error = cause instanceof Error ? cause.message : 'Genome preview could not be loaded.';
+        error = cause instanceof Error ? cause.message : 'Reference Comparison could not be loaded.';
     }
 }
 ---
@@ -45,10 +45,10 @@ if (
         ><meta charset='utf-8' /><meta name='viewport' content='width=device-width' /><meta
             name='robots'
             content='noindex'
-        /><title>Genome viewer — {accessionVersion}</title></head
+        /><title>Reference Comparison — {accessionVersion}</title></head
     >
     <body>
-        {data !== undefined && <GenomeViewer {...data} client:only='react' />}
+        {data !== undefined && <ReferenceComparisonViewer {...data} client:only='react' />}
         {
             error !== undefined && (
                 <p role='alert' style='font-family: sans-serif; padding: 1rem'>

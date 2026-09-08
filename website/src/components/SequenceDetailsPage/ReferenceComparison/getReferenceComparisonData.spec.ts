@@ -1,7 +1,7 @@
 import { ok } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';
 
-import { getGenomePreviewData, previewInsertions, previewReference } from './getGenomePreviewData';
+import { getReferenceComparisonData, comparisonInsertions, comparisonReference } from './getReferenceComparisonData';
 import type { LapisClient } from '../../../services/lapisClient';
 import type { InsertionCount } from '../../../types/lapis';
 
@@ -22,25 +22,25 @@ const insertion = (sequenceName: string | null): InsertionCount => ({
     insertedSymbols: 'GAC',
 });
 
-describe('genome preview data', () => {
+describe('reference comparison data', () => {
     it('requires an assigned reference when several exist', () => {
-        expect(previewReference(references, undefined, 'main')).toBeUndefined();
-        expect(previewReference(references, { main: 'ref2' }, 'main')?.name).toBe('ref2');
-        expect(previewReference(references, { main: 'missing' }, 'main')).toBeUndefined();
-        expect(previewReference([references[0]], { main: null }, 'main')).toBeUndefined();
+        expect(comparisonReference(references, undefined, 'main')).toBeUndefined();
+        expect(comparisonReference(references, { main: 'ref2' }, 'main')?.name).toBe('ref2');
+        expect(comparisonReference(references, { main: 'missing' }, 'main')).toBeUndefined();
+        expect(comparisonReference([references[0]], { main: null }, 'main')).toBeUndefined();
     });
 
     it('keeps insertion boundaries and filters other segments and references', () => {
         const insertions = [insertion('ref1'), insertion('ref2'), insertion(null)];
-        expect(previewInsertions(insertions, 'ref1', true)).toEqual([{ position: 4, sequence: 'GAC' }]);
-        expect(previewInsertions([insertion(null)], 'main', false)).toEqual([{ position: 4, sequence: 'GAC' }]);
+        expect(comparisonInsertions(insertions, 'ref1', true)).toEqual([{ position: 4, sequence: 'GAC' }]);
+        expect(comparisonInsertions([insertion(null)], 'main', false)).toEqual([{ position: 4, sequence: 'GAC' }]);
     });
 
     it('passes through supplied gaps and Ns without realigning', async () => {
         const call = vi.fn().mockResolvedValue(ok('>TEST1.1\nAC--NCGT\n'));
         const getSequenceInsertions = vi.fn().mockResolvedValue(ok({ data: [insertion('ref1'), insertion('ref2')] }));
         const client = { call, getSequenceInsertions } as unknown as LapisClient;
-        const data = await getGenomePreviewData({
+        const data = await getReferenceComparisonData({
             accessionVersion: 'TEST1.1',
             segmentName: 'main',
             references,
@@ -60,7 +60,7 @@ describe('genome preview data', () => {
         });
         call.mockResolvedValue(ok('>TEST1.1\nACGT\n'));
         await expect(
-            getGenomePreviewData({
+            getReferenceComparisonData({
                 accessionVersion: 'TEST1.1',
                 segmentName: 'main',
                 references,

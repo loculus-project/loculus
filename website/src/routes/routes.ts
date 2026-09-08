@@ -29,8 +29,8 @@ export const routes = {
         }),
     sequenceEntryDetailsPage: (accessionVersion: AccessionVersion | string) =>
         `/seq/${getAccessionVersionString(accessionVersion)}`,
-    sequenceEntryGenomePreviewPage: (accessionVersion: string, segment: string) =>
-        `/seq/${encodeURIComponent(accessionVersion)}/genome?${new URLSearchParams({ segment }).toString()}`,
+    sequenceEntryReferenceComparisonPage: (accessionVersion: string, segment: string) =>
+        `/seq/${encodeURIComponent(accessionVersion)}/reference-comparison?${new URLSearchParams({ segment }).toString()}`,
     sequenceEntryVersionsPage: (accessionVersion: AccessionVersion | string) =>
         `/seq/${getAccessionVersionString(accessionVersion)}/versions`,
     sequenceEntryFastaPage: (accessionVersion: AccessionVersion | string, download = false) =>

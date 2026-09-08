@@ -1,5 +1,5 @@
 import { getReferenceGenbank } from './referenceGenbank';
-import type { GenomePreviewData } from './types';
+import type { ReferenceComparisonData } from './types';
 import type { LapisClient } from '../../../services/lapisClient';
 import type { InsertionCount } from '../../../types/lapis';
 import type { ReferenceGenomesSchema } from '../../../types/referencesGenomes';
@@ -10,7 +10,7 @@ import {
     type SegmentReferenceSelections,
 } from '../../../utils/sequenceTypeHelpers';
 
-export function previewReference(
+export function comparisonReference(
     references: ReferenceGenomesSchema,
     selections: SegmentReferenceSelections | undefined,
     segmentName: string,
@@ -22,13 +22,13 @@ export function previewReference(
         : segment?.references.find(({ name }) => name === selected);
 }
 
-export function previewInsertions(insertions: InsertionCount[], lapisName: string, multiSegmented: boolean) {
+export function comparisonInsertions(insertions: InsertionCount[], lapisName: string, multiSegmented: boolean) {
     return insertions
         .filter(({ sequenceName }) => sequenceName === lapisName || (!multiSegmented && sequenceName === null))
         .map(({ position, insertedSymbols }) => ({ position, sequence: insertedSymbols }));
 }
 
-export async function getGenomePreviewData({
+export async function getReferenceComparisonData({
     accessionVersion,
     segmentName,
     references,
@@ -42,8 +42,8 @@ export async function getGenomePreviewData({
     selections: SegmentReferenceSelections | undefined;
     primaryKey: string;
     client: LapisClient;
-}): Promise<GenomePreviewData> {
-    const reference = previewReference(references, selections, segmentName);
+}): Promise<ReferenceComparisonData> {
+    const reference = comparisonReference(references, selections, segmentName);
     const info = toReferenceGenomes(references);
     const segment = getSegmentAndGeneInfo(info, selections).nucleotideSegmentInfos.find(
         ({ name }) => name === segmentName,
@@ -66,7 +66,7 @@ export async function getGenomePreviewData({
         alignedSequence: {
             name: accessionVersion,
             sequence: records[0].sequence,
-            insertions: previewInsertions(
+            insertions: comparisonInsertions(
                 insertions.value.data,
                 segment.lapisName,
                 info.useLapisMultiSegmentedEndpoint,

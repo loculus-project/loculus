@@ -90,7 +90,7 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
                         {result.type === SequenceDetailsTableResultType.TABLE_DATA && (
                             <SequenceDataUI
                                 sequenceData={result}
-                                enableGenomePreview
+                                enableReferenceComparison
                                 organism={organism}
                                 referenceGenomesInfo={getReferenceGenomes(organism)}
                                 accessionVersion={accessionVersion}

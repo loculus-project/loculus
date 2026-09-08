@@ -1,4 +1,4 @@
-export type GenomePreviewData = {
+export type ReferenceComparisonData = {
     genbankString: string;
     alignedSequence: {
         name: string;

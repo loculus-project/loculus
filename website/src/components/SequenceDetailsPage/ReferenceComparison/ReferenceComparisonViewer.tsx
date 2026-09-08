@@ -1,8 +1,12 @@
 import Gensplore from 'gensplore';
 
-import type { GenomePreviewData } from './types';
+import type { ReferenceComparisonData } from './types';
 
-export default function GenomeViewer({ genbankString, alignedSequence, annotationNotice }: GenomePreviewData) {
+export default function ReferenceComparisonViewer({
+    genbankString,
+    alignedSequence,
+    annotationNotice,
+}: ReferenceComparisonData) {
     return (
         <>
             {annotationNotice !== undefined && (

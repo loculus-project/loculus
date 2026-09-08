@@ -19,29 +19,33 @@ const props = {
     ),
 };
 
-describe('genome viewer tab', () => {
-    it('switches between sequence text and the lazy genome viewer', async () => {
-        testServer.use(http.get('http://localhost:3000/seq/TEST1.1/genome', () => HttpResponse.html('<html></html>')));
+describe('reference comparison tab', () => {
+    it('switches between sequence text and the lazy reference comparison', async () => {
+        testServer.use(
+            http.get('http://localhost:3000/seq/TEST1.1/reference-comparison', () =>
+                HttpResponse.html('<html></html>'),
+            ),
+        );
         const user = userEvent.setup();
-        const { container } = render(<InnerSequencesContainer {...props} enableGenomePreview />);
+        const { container } = render(<InnerSequencesContainer {...props} enableReferenceComparison />);
         expect(container.querySelector('iframe')).toBeNull();
-        await user.click(screen.getByRole('tab', { name: 'Compare to reference' }));
+        await user.click(screen.getByRole('tab', { name: 'Reference Comparison' }));
         expect(screen.queryByText('Sequence text')).toBeNull();
-        expect(screen.getByTitle('Genome viewer for TEST1.1, first')).toHaveAttribute(
+        expect(screen.getByTitle('Reference Comparison for TEST1.1, first')).toHaveAttribute(
             'src',
-            '/seq/TEST1.1/genome?segment=first',
+            '/seq/TEST1.1/reference-comparison?segment=first',
         );
         await user.selectOptions(screen.getByRole('combobox'), 'second');
-        expect(screen.getByTitle('Genome viewer for TEST1.1, second')).toHaveAttribute(
+        expect(screen.getByTitle('Reference Comparison for TEST1.1, second')).toHaveAttribute(
             'src',
-            '/seq/TEST1.1/genome?segment=second',
+            '/seq/TEST1.1/reference-comparison?segment=second',
         );
         await user.click(screen.getByRole('tab', { name: 'Nucleotide sequences' }));
         expect(screen.getByText('Sequence text')).toBeVisible();
         expect(container.querySelector('iframe')).toBeNull();
     });
-    it('keeps the existing tabs when the preview is disabled', () => {
+    it('keeps the existing tabs when reference comparison is disabled', () => {
         render(<InnerSequencesContainer {...props} />);
-        expect(screen.queryByRole('tab', { name: 'Compare to reference' })).toBeNull();
+        expect(screen.queryByRole('tab', { name: 'Reference Comparison' })).toBeNull();
     });
 });

@@ -20,7 +20,7 @@ import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../../common/
 import { Button } from '../../common/Button';
 import { Select } from '../../common/Select.tsx';
 import { withQueryProvider } from '../../common/withQueryProvider.tsx';
-import { GenomePreview } from '../GenomePreview/GenomePreview';
+import { ReferenceComparison } from '../ReferenceComparison/ReferenceComparison';
 
 type SequenceContainerProps = {
     organism: string;
@@ -29,7 +29,7 @@ type SequenceContainerProps = {
     clientConfig: ClientConfig;
     referenceGenomesInfo: ReferenceGenomesInfo;
     loadSequencesAutomatically: boolean;
-    enableGenomePreview?: boolean;
+    enableReferenceComparison?: boolean;
 };
 
 export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
@@ -39,7 +39,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     clientConfig,
     referenceGenomesInfo,
     loadSequencesAutomatically,
-    enableGenomePreview = false,
+    enableReferenceComparison = false,
 }) => {
     const { nucleotideSegmentInfos, geneInfos } = getSegmentAndGeneInfo(referenceGenomesInfo, segmentReferences);
 
@@ -56,7 +56,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
 
     return (
         <SequenceTabs
-            enableGenomePreview={enableGenomePreview}
+            enableReferenceComparison={enableReferenceComparison}
             organism={organism}
             accessionVersion={accessionVersion}
             clientConfig={clientConfig}
@@ -72,7 +72,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
 export const SequencesContainer = withQueryProvider(InnerSequencesContainer);
 
 type SequenceTabsProps = {
-    enableGenomePreview: boolean;
+    enableReferenceComparison: boolean;
     organism: string;
     accessionVersion: string;
     clientConfig: ClientConfig;
@@ -84,7 +84,7 @@ type SequenceTabsProps = {
 };
 
 const SequenceTabs: FC<SequenceTabsProps> = ({
-    enableGenomePreview,
+    enableReferenceComparison,
     organism,
     accessionVersion,
     clientConfig,
@@ -94,7 +94,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
     setType,
     useLapisMultiSegmentedEndpoint,
 }) => {
-    const [activeTab, setActiveTab] = useState<'unaligned' | 'aligned' | 'gene' | 'genome'>('unaligned');
+    const [activeTab, setActiveTab] = useState<'unaligned' | 'aligned' | 'gene' | 'referenceComparison'>('unaligned');
 
     useEffect(() => {
         if (isUnalignedSequence(sequenceType)) {
@@ -128,11 +128,11 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
                     label='Aligned amino acid sequences'
                     onClick={() => setActiveTab('gene')}
                 />
-                {enableGenomePreview && segments.length > 0 && (
+                {enableReferenceComparison && segments.length > 0 && (
                     <BoxWithTabsTab
-                        isActive={activeTab === 'genome'}
-                        label='Compare to reference'
-                        onClick={() => setActiveTab('genome')}
+                        isActive={activeTab === 'referenceComparison'}
+                        label='Reference Comparison'
+                        onClick={() => setActiveTab('referenceComparison')}
                     />
                 )}
             </BoxWithTabsTabBar>
@@ -149,8 +149,8 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
                 {segments.length > 1 && activeTab === 'aligned' && (
                     <SegmentDropdown segments={segments} sequenceType={sequenceType} setType={setType} mode='aligned' />
                 )}
-                {activeTab === 'genome' ? (
-                    <GenomePreview accessionVersion={accessionVersion} segments={segments} />
+                {activeTab === 'referenceComparison' ? (
+                    <ReferenceComparison accessionVersion={accessionVersion} segments={segments} />
                 ) : activeTab !== 'gene' || isGeneSequence(sequenceType.name, sequenceType) ? (
                     <SequencesViewer
                         organism={organism}
