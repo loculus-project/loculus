@@ -823,7 +823,7 @@ def create_ena_raw_reads(
         center_name,
         context="reads",
         patterns={
-            "erx_accession": ("experiment", r"ERX\d+"),
+            EnaResultField.EXPERIMENT: ("experiment", r"ERX\d+"),
             EnaResultField.RUN: ("run", r"ERR\d+"),
         },
     )
