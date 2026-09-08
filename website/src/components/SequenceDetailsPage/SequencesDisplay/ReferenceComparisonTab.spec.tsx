@@ -27,7 +27,7 @@ describe('reference comparison tab', () => {
             ),
         );
         const user = userEvent.setup();
-        const { container } = render(<InnerSequencesContainer {...props} enableReferenceComparison />);
+        const { container } = render(<InnerSequencesContainer {...props} />);
         expect(container.querySelector('iframe')).toBeNull();
         await user.click(screen.getByRole('tab', { name: 'Reference comparison' }));
         expect(screen.queryByText('Sequence text')).toBeNull();
@@ -43,9 +43,5 @@ describe('reference comparison tab', () => {
         await user.click(screen.getByRole('tab', { name: 'Nucleotide sequences' }));
         expect(screen.getByText('Sequence text')).toBeVisible();
         expect(container.querySelector('iframe')).toBeNull();
-    });
-    it('keeps the existing tabs when reference comparison is disabled', () => {
-        render(<InnerSequencesContainer {...props} />);
-        expect(screen.queryByRole('tab', { name: 'Reference comparison' })).toBeNull();
     });
 });

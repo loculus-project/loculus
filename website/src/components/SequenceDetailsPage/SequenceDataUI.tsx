@@ -40,7 +40,6 @@ interface Props {
     referenceGenomesInfo: ReferenceGenomesInfo;
     sequenceCitations?: SequenceCitation[];
     onRevokeSuccess?: () => void;
-    enableReferenceComparison?: boolean;
 }
 
 const REVOCATION_VERSION_FIELDS = [
@@ -70,7 +69,6 @@ export const SequenceDataUI: FC<Props> = ({
     referenceGenomesInfo,
     sequenceCitations,
     onRevokeSuccess,
-    enableReferenceComparison = false,
 }: Props) => {
     const { tableData, dataUseTermsHistory, segmentReferences, sequenceEntryHistory, isRevocation } = sequenceData;
 
@@ -96,7 +94,6 @@ export const SequenceDataUI: FC<Props> = ({
             {schema.submissionDataTypes.consensusSequences && !isRevocation && (
                 <div className='mt-10'>
                     <SequencesContainer
-                        enableReferenceComparison={enableReferenceComparison}
                         organism={organism}
                         segmentReferences={segmentReferences}
                         accessionVersion={accessionVersion}

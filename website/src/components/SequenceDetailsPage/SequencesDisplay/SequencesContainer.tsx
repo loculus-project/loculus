@@ -29,7 +29,6 @@ type SequenceContainerProps = {
     clientConfig: ClientConfig;
     referenceGenomesInfo: ReferenceGenomesInfo;
     loadSequencesAutomatically: boolean;
-    enableReferenceComparison?: boolean;
 };
 
 export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
@@ -39,7 +38,6 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     clientConfig,
     referenceGenomesInfo,
     loadSequencesAutomatically,
-    enableReferenceComparison = false,
 }) => {
     const { nucleotideSegmentInfos, geneInfos } = getSegmentAndGeneInfo(referenceGenomesInfo, segmentReferences);
 
@@ -56,7 +54,6 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
 
     return (
         <SequenceTabs
-            enableReferenceComparison={enableReferenceComparison}
             organism={organism}
             accessionVersion={accessionVersion}
             clientConfig={clientConfig}
@@ -72,7 +69,6 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
 export const SequencesContainer = withQueryProvider(InnerSequencesContainer);
 
 type SequenceTabsProps = {
-    enableReferenceComparison: boolean;
     organism: string;
     accessionVersion: string;
     clientConfig: ClientConfig;
@@ -84,7 +80,6 @@ type SequenceTabsProps = {
 };
 
 const SequenceTabs: FC<SequenceTabsProps> = ({
-    enableReferenceComparison,
     organism,
     accessionVersion,
     clientConfig,
@@ -128,7 +123,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
                     label='Aligned amino acid sequences'
                     onClick={() => setActiveTab('gene')}
                 />
-                {enableReferenceComparison && segments.length > 0 && (
+                {segments.length > 0 && (
                     <BoxWithTabsTab
                         isActive={activeTab === 'referenceComparison'}
                         label='Reference comparison'
