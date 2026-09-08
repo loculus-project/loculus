@@ -2,17 +2,22 @@
 import json
 import unittest
 from collections.abc import Iterator
+from pathlib import Path
 from typing import Any
 from unittest.mock import ANY, Mock, patch
 
 import get_ena_submission_list
 import orjsonl
+import pytest
 from deepdiff import DeepDiff
 
-CONFIG_FILE = "./test/test_config.yaml"
-GET_RELEASED_ENTRIES_PATH = "./test/data/get-released-data.ndjson"
+# Absolute, because the tests run with the working directory set to a tmp dir
+TEST_DIR = Path(__file__).parent
+MODULE_DIR = TEST_DIR.parent
+CONFIG_FILE = TEST_DIR / "test_config.yaml"
+GET_RELEASED_ENTRIES_PATH = TEST_DIR / "data/get-released-data.ndjson"
 
-APPROVED_RELEASED_DATA_PATH = "./test/data/approved_ena_submission_list_test.json"
+APPROVED_RELEASED_DATA_PATH = TEST_DIR / "data/approved_ena_submission_list_test.json"
 
 
 def json_diff(path_a, path_b):
@@ -35,6 +40,16 @@ def fake_fetch_released_entries(config, organism) -> Iterator[dict[str, Any]]:  
 
 
 class GetSubmissionListTests(unittest.TestCase):
+    @pytest.fixture(autouse=True)
+    def _run_in_tmp_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        """Run in a tmp dir, so the output files the code writes don't land in the repo.
+
+        get_config reads config/defaults.yaml relative to the working directory
+        (in the container that's the module root), so link it into place.
+        """
+        (tmp_path / "config").symlink_to(MODULE_DIR / "config")
+        monkeypatch.chdir(tmp_path)
+
     @patch("get_ena_submission_list.fetch_suppressed_accessions")
     @patch("get_ena_submission_list.fetch_released_entries")
     @patch("get_ena_submission_list.upload_file_with_comment")
