@@ -39,7 +39,7 @@
         "fflate": "^0.8.3",
         "flowbite-react": "^0.12.17",
         "fzstd": "^0.1.1",
-        "gensplore": "^0.0.13",
+        "gensplore": "^0.0.14",
         "immer": "^11.1.18",
         "jsonwebtoken": "^9.0.3",
         "jszip": "^3.10.1",
