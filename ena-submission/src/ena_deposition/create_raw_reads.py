@@ -424,7 +424,7 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
             db_engine, submission_row
         )
 
-        if row.result and row.result.get("EnaResultField.RUN"):
+        if row.result and row.result.get(EnaResultField.RUN):
             update_with_existing_runrecord(db_engine, submission_row, config)
             continue
 
