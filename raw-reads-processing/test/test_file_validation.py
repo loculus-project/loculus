@@ -10,6 +10,7 @@ import pytest
 from raw_reads_processing import file_format_validation
 from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
 from raw_reads_processing.file_format_validation import (
+    GZIP_MAGIC,
     FileFormat,
     _parse_validation_error,
     validate_compression,
@@ -272,7 +273,9 @@ def test_compression_matching_name_and_content_passes(tmp_path):
     plain.write_text(VALID_SINGLE_END)
     gzipped = _gz(tmp_path, "reads2.fastq.gz", VALID_SINGLE_END.encode())
     assert (
-        validate_compression({"reads.fastq": plain, "reads2.fastq.gz": gzipped}) is None
+        validate_compression(
+            {"reads.fastq": plain, "reads2.fastq.gz": gzipped}, FileFormat.FASTQ
+        ) is None
     )
 
 
@@ -280,7 +283,7 @@ def test_plain_file_named_gz_is_rejected(tmp_path):
     path = tmp_path / "stored"
     path.write_text(VALID_SINGLE_END)
     with pytest.raises(InvalidSubmission) as exc_info:
-        validate_compression({"reads.fastq.gz": path})
+        validate_compression({"reads.fastq.gz": path}, FileFormat.FASTQ)
     assert "named as gzip-compressed" in exc_info.value.error.message
 
 
@@ -288,7 +291,7 @@ def test_gzipped_file_not_named_gz_is_rejected(tmp_path):
     """This is the one that used to reach ENA and get gzipped a second time."""
     path = _gz(tmp_path, "stored", VALID_SINGLE_END.encode())
     with pytest.raises(InvalidSubmission) as exc_info:
-        validate_compression({"reads.fastq": path})
+        validate_compression({"reads.fastq": path}, FileFormat.FASTQ)
     assert "does not end in '.gz'" in exc_info.value.error.message
 
 
@@ -296,13 +299,46 @@ def test_double_gzipped_file_is_rejected(tmp_path):
     inner = gzip.compress(VALID_SINGLE_END.encode())
     path = _gz(tmp_path, "stored", inner)
     with pytest.raises(InvalidSubmission) as exc_info:
-        validate_compression({"reads.fastq.gz": path})
+        validate_compression({"reads.fastq.gz": path}, FileFormat.FASTQ)
     assert "more than once" in exc_info.value.error.message
 
 
 def test_compression_check_is_case_insensitive_about_the_name(tmp_path):
     path = _gz(tmp_path, "stored", VALID_SINGLE_END.encode())
-    assert validate_compression({"READS.FASTQ.GZ": path}) is None
+    assert validate_compression({"READS.FASTQ.GZ": path}, FileFormat.FASTQ) is None
+
+
+def test_truncated_gzip_is_reported_as_invalid_submission(tmp_path):
+    """gzip raises EOFError here, not OSError - it must still become an annotation."""
+    path = tmp_path / "stored"
+    path.write_bytes(GZIP_MAGIC)
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_compression({"reads.fastq.gz": path}, FileFormat.FASTQ)
+    assert "could not be decompressed" in exc_info.value.error.message
+
+
+def test_corrupt_gzip_is_reported_as_invalid_submission(tmp_path):
+    path = tmp_path / "stored"
+    path.write_bytes(GZIP_MAGIC + b"\x08\x00\x00\x00\x00\x00\x00\x03" + b"\xff" * 20)
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_compression({"reads.fastq.gz": path}, FileFormat.FASTQ)
+    assert "could not be decompressed" in exc_info.value.error.message
+
+
+def test_empty_file_named_gz_is_rejected(tmp_path):
+    path = tmp_path / "stored"
+    path.write_bytes(b"")
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_compression({"reads.fastq.gz": path}, FileFormat.FASTQ)
+    assert "named as gzip-compressed" in exc_info.value.error.message
+
+
+def test_compression_check_skipped_for_non_fastq(tmp_path):
+    """BAM is BGZF, so a .bam would otherwise trip the 'gzipped but not named .gz' branch."""
+    path = tmp_path / "stored"
+    with gzip.open(path, "wb") as f:
+        f.write(b"anything")
+    assert validate_compression({"reads.bam": path}, FileFormat.BAM) is None
 
 
 def _write_bytes(tmp_path: Path, name: str, data: bytes) -> str:

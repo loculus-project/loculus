@@ -2,6 +2,7 @@ import gzip
 import logging
 import os
 import subprocess  # noqa: S404
+import zlib
 from enum import StrEnum
 from pathlib import Path
 
@@ -19,7 +20,7 @@ class FileFormat(StrEnum):
     CRAM = "CRAM"
 
 
-# Keep in sync with ena-submission/src/ena_deposition/call_loculus.py
+# Keep in sync with ena-submission/src/ena_deposition/call_loculus.py (added in #7265)
 ACCEPTED_FASTQ_EXTENSIONS = {".fastq", ".fq", ".fastq.gz", ".fq.gz"}
 ACCEPTED_BAM_EXTENSIONS = {".bam", ".sam"}
 ACCEPTED_CRAM_EXTENSIONS = {".cram"}
@@ -138,10 +139,16 @@ def _is_gzip(path: Path) -> bool:
         return f.read(2) == GZIP_MAGIC
 
 
-def validate_compression(file_name_to_path: dict[FileName, Path]) -> None:
+def validate_compression(
+    file_name_to_path: dict[FileName, Path], file_format: FileFormat
+) -> None:
     """Check each file's compression extension (`.gz` or none) matches actual compression.
     Allow at most one level of compression.
     """
+    # FASTQ only: BAM is BGZF, i.e. a valid gzip stream, so the name check would misfire.
+    if file_format != FileFormat.FASTQ:
+        return
+
     for file_name, path in file_name_to_path.items():
         claims_gzip = file_name.lower().endswith(".gz")
         is_gzip = _is_gzip(path)
@@ -170,11 +177,14 @@ def validate_compression(file_name_to_path: dict[FileName, Path]) -> None:
             try:
                 with gzip.open(path, "rb") as f:
                     inner_is_gzip = f.read(2) == GZIP_MAGIC
-            except OSError as error:
+            except (OSError, EOFError, zlib.error) as error:
                 raise InvalidSubmission(
                     error=Annotation(
                         fileNames=[file_name],
-                        message=f"File '{file_name}' could not be decompressed: {error}",
+                        message=(
+                            f"File '{file_name}' could not be decompressed - it may be "
+                            "truncated or corrupt."
+                        ),
                     )
                 ) from error
             if inner_is_gzip:
