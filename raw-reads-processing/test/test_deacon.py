@@ -58,9 +58,7 @@ def mock_downstream(monkeypatch):
     monkeypatch.setattr(
         process_files,
         "download_file",
-        lambda config, file, save_path: save_path.write_bytes(
-            Path(file.url).read_bytes()
-        ),
+        lambda config, file, save_path: save_path.write_bytes(Path(file.url).read_bytes()),
     )
     monkeypatch.setattr(process_files, "validate_with_readtools", lambda *a, **k: None)
 
@@ -84,17 +82,13 @@ def deacon_server():
 @pytest.fixture
 def deacon_index(monkeypatch, deacon_server):
     # Index created with `deacon index build test/fixtures/test_small_1.fastq -k 31 -w 15 -o deacon.idx`
-    monkeypatch.setattr(
-        deacon_module, "DEACON_INDEX_PATH", str(FIXTURES_DIR / "deacon.idx")
-    )
+    monkeypatch.setattr(deacon_module, "DEACON_INDEX_PATH", str(FIXTURES_DIR / "deacon.idx"))
 
 
 def test_median_read_length_plain_fastq(tmp_path):
     reads = tmp_path / "reads.fastq"
     _write_fastq(reads, [_random_read(100), _random_read(200), _random_read(150)])
-    assert deacon_module.median_read_length(reads, "reads.fastq") == pytest.approx(
-        150.0
-    )
+    assert deacon_module.median_read_length(reads, "reads.fastq") == pytest.approx(150.0)
 
 
 def test_median_read_length_gzipped_fastq(tmp_path):
@@ -102,9 +96,7 @@ def test_median_read_length_gzipped_fastq(tmp_path):
     reads = tmp_path / "reads.fastq.gz"
     _write_fastq(tmp_path / "plain.fastq", [_random_read(80), _random_read(100)])
     reads.write_bytes(gzip.compress((tmp_path / "plain.fastq").read_bytes()))
-    assert deacon_module.median_read_length(reads, "reads.fastq.gz") == pytest.approx(
-        90.0
-    )
+    assert deacon_module.median_read_length(reads, "reads.fastq.gz") == pytest.approx(90.0)
     assert deacon_module._deacon_a_for_reads({"boundary.fastq": reads}, config) == 2
 
 
@@ -119,10 +111,7 @@ def test_deacon_a_for_reads_switches_on_short_reads(tmp_path):
     assert deacon_module._deacon_a_for_reads({"long.fastq": long}, config) == 2
     # min() over mates: a short R2 still triggers short-read params
     assert (
-        deacon_module._deacon_a_for_reads(
-            {"long.fastq": long, "short.fastq": short}, config
-        )
-        == 1
+        deacon_module._deacon_a_for_reads({"long.fastq": long, "short.fastq": short}, config) == 1
     )
 
 

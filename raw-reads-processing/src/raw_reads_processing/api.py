@@ -11,9 +11,7 @@ from .config import Config
 
 logger = logging.getLogger()
 
-app = FastAPI(
-    title="Raw Reads Processing Service", description="Loculus raw reads processing API"
-)
+app = FastAPI(title="Raw Reads Processing Service", description="Loculus raw reads processing API")
 
 
 @app.get("/")
@@ -55,9 +53,7 @@ def start_api(config: Config, deacon_process: subprocess.Popen):
     port = config.file_service_port or 5000
     logger.info(f"Starting raw reads processing service API on port {port}")
 
-    uvicorn_config = uvicorn.Config(
-        app, host=host, port=port, log_level="info", workers=1
-    )
+    uvicorn_config = uvicorn.Config(app, host=host, port=port, log_level="info", workers=1)
     server = uvicorn.Server(uvicorn_config)
 
     server.run()
