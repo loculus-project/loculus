@@ -12,6 +12,7 @@ from raw_reads_processing.datatypes import (
 )
 from raw_reads_processing.errors import ProcessingFailure
 from raw_reads_processing.file_format_validation import (
+    validate_compression,
     validate_file_extensions,
     validate_file_numbers,
     validate_with_readtools,
@@ -59,6 +60,9 @@ def validate_raw_reads_submission(
             download_file(config, file, downloaded_file_path)
             local_files[file.name] = downloaded_file_path
 
+        # Name-vs-content agreement first: readtools reads the content and ignores the
+        # name, so it cannot catch a mislabelled file.
+        validate_compression(local_files)
         validate_with_readtools(
             local_files, file_format, config.read_validation_timeout_seconds
         )

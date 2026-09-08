@@ -1,3 +1,4 @@
+import gzip
 import logging
 import os
 import subprocess  # noqa: S404
@@ -18,6 +19,11 @@ class FileFormat(StrEnum):
     CRAM = "CRAM"
 
 
+# Matched case-insensitively (see _has_extension), so "READS.FASTQ.GZ" is accepted.
+# Consumers that pass these names to case-sensitive tools must lower-case them first:
+# ENA's webin-cli compares suffixes with String.endsWith and rejects anything not
+# literally ".gz"/".bz2". ena-submission mirrors this set in
+# ena-submission/src/ena_deposition/call_loculus.py - keep the two in sync.
 ACCEPTED_FASTQ_EXTENSIONS = {".fastq", ".fq", ".fastq.gz", ".fq.gz"}
 ACCEPTED_BAM_EXTENSIONS = {".bam", ".sam"}
 ACCEPTED_CRAM_EXTENSIONS = {".cram"}
@@ -126,6 +132,73 @@ def validate_file_numbers(file_format: FileFormat, file_names: list[FileName]) -
                 ),
             )
         )
+
+
+GZIP_MAGIC = b"\x1f\x8b"
+
+
+def _is_gzip(path: Path) -> bool:
+    with path.open("rb") as f:
+        return f.read(2) == GZIP_MAGIC
+
+
+def validate_compression(file_name_to_path: dict[FileName, Path]) -> None:
+    """Check each file's actual compression against the one its name claims.
+
+    readtools detects compression from content and ignores the file name, so a
+    plain FASTQ called "reads.fastq.gz" - or a gzipped one called "reads.fastq" -
+    validates cleanly here and only fails much later, at ENA. Catch the mismatch at
+    submission time, where the submitter can act on it.
+
+    Also rejects doubly-gzipped files: gzip that decompresses to more gzip is never
+    what a submitter intended, and ENA's webin-cli does not detect it at manifest
+    validation (it only unwraps one layer).
+    """
+    for file_name, path in file_name_to_path.items():
+        claims_gzip = file_name.lower().endswith(".gz")
+        is_gzip = _is_gzip(path)
+
+        if claims_gzip and not is_gzip:
+            raise InvalidSubmission(
+                error=Annotation(
+                    fileNames=[file_name],
+                    message=(
+                        f"File '{file_name}' is named as gzip-compressed but its contents "
+                        "are not gzip-compressed. Please compress it, or rename it."
+                    ),
+                )
+            )
+        if not claims_gzip and is_gzip:
+            raise InvalidSubmission(
+                error=Annotation(
+                    fileNames=[file_name],
+                    message=(
+                        f"File '{file_name}' is gzip-compressed but its name does not end "
+                        "in '.gz'. Please rename it, or upload it uncompressed."
+                    ),
+                )
+            )
+        if is_gzip:
+            try:
+                with gzip.open(path, "rb") as f:
+                    inner_is_gzip = f.read(2) == GZIP_MAGIC
+            except OSError as error:
+                raise InvalidSubmission(
+                    error=Annotation(
+                        fileNames=[file_name],
+                        message=f"File '{file_name}' could not be decompressed: {error}",
+                    )
+                ) from error
+            if inner_is_gzip:
+                raise InvalidSubmission(
+                    error=Annotation(
+                        fileNames=[file_name],
+                        message=(
+                            f"File '{file_name}' is gzip-compressed more than once. "
+                            "Please compress it exactly once."
+                        ),
+                    )
+                )
 
 
 def validate_with_readtools(

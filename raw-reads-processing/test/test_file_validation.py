@@ -12,6 +12,7 @@ from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
 from raw_reads_processing.file_format_validation import (
     FileFormat,
     _parse_validation_error,
+    validate_compression,
     validate_file_extensions,
     validate_file_numbers,
     validate_with_readtools,
@@ -259,6 +260,51 @@ def test_gzipped_fastq_is_recognized_and_passes(tmp_path):
     )
 
 
+def _gz(tmp_path: Path, name: str, payload: bytes) -> Path:
+    path = tmp_path / name
+    with gzip.open(path, "wb") as f:
+        f.write(payload)
+    return path
+
+
+def test_compression_matching_name_and_content_passes(tmp_path):
+    plain = tmp_path / "reads.fastq"
+    plain.write_text(VALID_SINGLE_END)
+    gzipped = _gz(tmp_path, "reads2.fastq.gz", VALID_SINGLE_END.encode())
+    assert (
+        validate_compression({"reads.fastq": plain, "reads2.fastq.gz": gzipped}) is None
+    )
+
+
+def test_plain_file_named_gz_is_rejected(tmp_path):
+    path = tmp_path / "stored"
+    path.write_text(VALID_SINGLE_END)
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_compression({"reads.fastq.gz": path})
+    assert "named as gzip-compressed" in exc_info.value.error.message
+
+
+def test_gzipped_file_not_named_gz_is_rejected(tmp_path):
+    """This is the one that used to reach ENA and get gzipped a second time."""
+    path = _gz(tmp_path, "stored", VALID_SINGLE_END.encode())
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_compression({"reads.fastq": path})
+    assert "does not end in '.gz'" in exc_info.value.error.message
+
+
+def test_double_gzipped_file_is_rejected(tmp_path):
+    inner = gzip.compress(VALID_SINGLE_END.encode())
+    path = _gz(tmp_path, "stored", inner)
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_compression({"reads.fastq.gz": path})
+    assert "more than once" in exc_info.value.error.message
+
+
+def test_compression_check_is_case_insensitive_about_the_name(tmp_path):
+    path = _gz(tmp_path, "stored", VALID_SINGLE_END.encode())
+    assert validate_compression({"READS.FASTQ.GZ": path}) is None
+
+
 def _write_bytes(tmp_path: Path, name: str, data: bytes) -> str:
     file_path = tmp_path / name
     file_path.write_bytes(data)
@@ -335,6 +381,32 @@ def test_validation_timeout_is_reported_as_error(tmp_path, monkeypatch):
         )
     assert "timed out" in str(exc_info.value)
     assert "1 second" in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    ["reads.fastq", "reads.fq", "reads.fastq.gz", "reads.fq.gz"],
+)
+def test_accepted_fastq_extensions(file_name):
+    assert validate_file_extensions([file_name]) == FileFormat.FASTQ
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    ["READS.FASTQ.GZ", "reads.Fq.Gz", "Reads.FastQ"],
+)
+def test_fastq_extension_matching_is_case_insensitive(file_name):
+    """Pins the contract consumers rely on: mixed-case names are accepted here, so
+    anything handing these names to a case-sensitive tool (ENA's webin-cli compares
+    suffixes with String.endsWith) must lower-case them itself."""
+    assert validate_file_extensions([file_name]) == FileFormat.FASTQ
+
+
+@pytest.mark.parametrize("file_name", ["reads.fastq.zst", "reads.fastq.bz2"])
+def test_other_compression_formats_are_rejected(file_name):
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_file_extensions([file_name])
+    assert "File is not in accepted format" in exc_info.value.error.message
 
 
 def test_unsupported_extension_is_rejected():
