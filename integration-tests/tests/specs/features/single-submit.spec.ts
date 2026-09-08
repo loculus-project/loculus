@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
+import { hoverUntilVisible } from '../../utils/hover-helpers';
 
 test('submit a single sequence', async ({ page, groupId }) => {
     test.setTimeout(90_000);
@@ -52,12 +53,6 @@ test('field description tooltip appears on hover', async ({ page, groupId }) => 
     await expect(infoIcon).toBeVisible();
 
     const tooltip = page.locator('#field-tooltipsampleCollectionDate');
-    // The form is server-rendered before react hydrates, and a hover dispatched before the tooltip
-    // has attached its listeners is lost, so retry the hover instead of hovering once.
-    await expect(async () => {
-        await page.mouse.move(0, 0);
-        await infoIcon.hover();
-        await expect(tooltip).toBeVisible({ timeout: 2000 });
-    }).toPass({ timeout: 30_000 });
+    await hoverUntilVisible(page, infoIcon, tooltip);
     await expect(tooltip).toContainText('sampleCollectionDate');
 });
