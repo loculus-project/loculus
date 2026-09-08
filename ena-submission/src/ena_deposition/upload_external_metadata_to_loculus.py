@@ -93,6 +93,7 @@ def get_biosample_accession_from_db(
 def get_run_accession_from_db(
     db_engine: Engine, config: Config, accession: str, version: int, submit_raw_reads: bool
 ) -> tuple[dict[str, str], bool]:
+    """Return run accession and a boolean indicating whether the raw reads upload is complete"""
     if not submit_raw_reads:
         return {}, True
     result = _get_result_of_single_db_record(
@@ -114,6 +115,8 @@ def get_assembly_accessions_from_db(
     version: int,
     organism: EnaOrganismDetails,
 ) -> tuple[dict[str, str], bool]:
+    """Return assembly accessions and a boolean indicating whether all assembly submissions
+    are complete"""
     result = _get_result_of_single_db_record(
         db_engine,
         AssemblyTableEntry,
