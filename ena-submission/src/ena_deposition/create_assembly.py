@@ -452,7 +452,7 @@ def has_assembly_data_changed(
     Check if there have been changes since last version in:
     - sequence
     - flatfile
-    - manifest metadata including RUN_REF (iff config.allow_revision_with_manifest_changes==True)
+    - manifest metadata including RUN_REF
     """
     last_entry = get_last_entry(db_engine, submission_row.pkey)
 
@@ -479,18 +479,14 @@ def has_assembly_data_changed(
                 f"for {submission_row.accession}. (Maybe other fields changed as well)"
             )
             return True
-    if config.allow_revision_with_manifest_changes and (
-        differing_run_ref := run_ref_diff(db_engine, last_entry, run_ref)
-    ):
+    if differing_run_ref := run_ref_diff(db_engine, last_entry, run_ref):
         logger.debug(
             f"RUN_REF has changed for {submission_row.accession}, "
             f"from {last_entry.version} to {submission_row.version}: "
             f"{differing_run_ref['run_ref']} - should be revised"
         )
         return True
-    if config.allow_revision_with_manifest_changes and manifest_fields_diff(
-        config.assembly_manifest_fields_mapping, submission_row, last_entry
-    ):
+    if manifest_fields_diff(config.assembly_manifest_fields_mapping, submission_row, last_entry):
         logger.debug(
             f"Manifest fields have changed for {submission_row.accession}, "
             f"from {last_entry.version} to {submission_row.version} - should be revised"
