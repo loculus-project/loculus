@@ -53,12 +53,9 @@ export async function prepareTmpDirForSingleUpload(
 /**
  * Selects `tmpDir` for the given file category and waits until the upload has finished.
  *
- * Do not wait for `fileCount` checkmarks here: in bulk mode the "N files uploaded and linked to
- * metadata!" status line renders a checkmark of its own, so the page already holds N checkmarks
- * once N-1 files have uploaded, and a subsequent submit is rejected with "Please wait for all
- * files to finish uploading before submitting.". Wait instead for the state that the submit
- * handler actually checks - the category being in `uploadCompleted`, which is the only state in
- * which the per-category buttons are enabled.
+ * Do not count checkmarks across the whole page: in bulk mode the "N files uploaded and linked to
+ * metadata!" line renders a checkmark of its own, so N checkmarks are on the page once N-1 files
+ * have uploaded, and submitting then fails with "Please wait for all files to finish uploading".
  */
 export async function uploadFilesFromTmpDir(
     page: Page,
@@ -68,12 +65,12 @@ export async function uploadFilesFromTmpDir(
     timeout = 30_000,
 ) {
     await page.getByRole('heading', { name: 'Extra files' }).scrollIntoViewIfNeeded();
-    // Trigger the file upload without awaiting, so the waits below can observe it progressing.
-    const filesSelected = page.getByTestId(fileCategory).setInputFiles(tmpDir);
-    await expect(page.getByTestId(new RegExp(`^discard_${fileCategory}_`))).toHaveCount(fileCount, {
-        timeout,
-    });
-    await expect(page.getByTestId(`add_button_${fileCategory}`)).toBeEnabled({ timeout });
-    // Awaited last so a failure to select the files is reported rather than swallowed.
-    await filesSelected;
+    await Promise.all([
+        page.getByTestId(fileCategory).setInputFiles(tmpDir),
+        expect(
+            page.getByTestId(new RegExp(`^status_${fileCategory}_`)).filter({ hasText: '✓' }),
+        ).toHaveCount(fileCount, { timeout }),
+        // Enabled only while the category is 'uploadCompleted', which is what submitting requires.
+        expect(page.getByTestId(`add_button_${fileCategory}`)).toBeEnabled({ timeout }),
+    ]);
 }
