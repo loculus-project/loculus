@@ -29,7 +29,7 @@ describe('reference comparison tab', () => {
         const user = userEvent.setup();
         const { container } = render(<InnerSequencesContainer {...props} enableReferenceComparison />);
         expect(container.querySelector('iframe')).toBeNull();
-        await user.click(screen.getByRole('tab', { name: 'Reference Comparison' }));
+        await user.click(screen.getByRole('tab', { name: 'Reference comparison' }));
         expect(screen.queryByText('Sequence text')).toBeNull();
         expect(screen.getByTitle('Reference Comparison for TEST1.1, first')).toHaveAttribute(
             'src',
@@ -46,6 +46,6 @@ describe('reference comparison tab', () => {
     });
     it('keeps the existing tabs when reference comparison is disabled', () => {
         render(<InnerSequencesContainer {...props} />);
-        expect(screen.queryByRole('tab', { name: 'Reference Comparison' })).toBeNull();
+        expect(screen.queryByRole('tab', { name: 'Reference comparison' })).toBeNull();
     });
 });

@@ -131,7 +131,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
                 {enableReferenceComparison && segments.length > 0 && (
                     <BoxWithTabsTab
                         isActive={activeTab === 'referenceComparison'}
-                        label='Reference Comparison'
+                        label='Reference comparison'
                         onClick={() => setActiveTab('referenceComparison')}
                     />
                 )}
