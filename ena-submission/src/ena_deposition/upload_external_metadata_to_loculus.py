@@ -160,6 +160,8 @@ def get_assembly_accessions_from_db(
 def get_external_metadata_to_upload(
     db_engine: Engine, entry: SubmissionTableEntry, config: Config
 ) -> tuple[dict[str, Any], bool]:
+    """Get external metadata to upload to Loculus for a given submission entry, and a boolean
+    indicating whether all accessions have been received from ENA for this entry."""
     accession = entry.accession
     version = entry.version
     organism = config.enaOrganisms[entry.organism]
