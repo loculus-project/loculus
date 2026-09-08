@@ -14,10 +14,8 @@ import xmltodict
 import yaml
 from ena_deposition.config import EnaOrganismDetails, ManifestFieldDetails, MetadataMapping
 from ena_deposition.create_assembly import (
-    can_be_revised,
     create_chromosome_list_object,
     create_manifest_object,
-    has_assembly_data_changed,
 )
 from ena_deposition.create_project import construct_project_set_object
 from ena_deposition.create_raw_reads import (
