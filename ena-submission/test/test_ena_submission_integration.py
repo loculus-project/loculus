@@ -712,9 +712,9 @@ class ExternalMetadataUploads:
     def next_upload(self) -> dict[str, Any]:
         """Assert another upload happened, and return its ENA accessions."""
         calls = self._mock.call_args_list
-        assert len(calls) > self._consumed, (
-            f"expected external-metadata upload #{self._consumed + 1}, "
-            f"but only {len(calls)} happened"
+        assert len(calls) == self._consumed + 1, (
+            f"expected exactly one new external-metadata upload (#{self._consumed + 1}), "
+            f"but {len(calls) - self._consumed} happened since the last check"
         )
         payload = calls[self._consumed].args[0]
         self._consumed += 1
