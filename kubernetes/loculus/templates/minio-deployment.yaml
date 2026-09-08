@@ -75,13 +75,6 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
-          livenessProbe:
-            httpGet:
-              path: /minio/health/live
-              port: 9000
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
           lifecycle:
             postStart:
               exec:
