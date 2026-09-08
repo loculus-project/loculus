@@ -66,19 +66,30 @@ def get_platform_and_instrument(
     (e.g. "ILLUMINA") or an ENA INSTRUMENT value (e.g. "Illumina MiSeq") - the two
     permitted value sets don't overlap, so a case-insensitive lookup against both
     unambiguously tells us which one the user provided.
+
+    Raises ValueError if the value cannot yield a manifest ENA will accept.
     """
     if instrument := Instrument.from_value(raw_value):
+        if instrument is Instrument.unspecified:
+            # webin-cli rejects INSTRUMENT=unspecified unless PLATFORM is also given
+            # Preprocessing forces sequencingInstrument to be one of the configured options
+            # (excluding "unspecified") whenever raw reads are attached,
+            # so this should never fire.
+            message = (
+                f"sequencingInstrument is 'unspecified' for accession {accession} - ENA "
+                "requires a PLATFORM alongside it, which we cannot supply."
+            )
+            logger.error(message)
+            raise ValueError(message)
         return None, instrument
     if platform := Platform.from_value(raw_value):
         return platform, Instrument.unspecified
-    if raw_value != "unspecified":
-        message = (
-            f"sequencingInstrument value '{raw_value}' for accession {accession} matches "
-            "neither ENA's platform nor instrument list - ENA submission will fail."
-        )
-        logger.error(message)
-        raise ValueError(message)
-    return None, Instrument.unspecified
+    message = (
+        f"sequencingInstrument value '{raw_value}' for accession {accession} matches "
+        "neither ENA's platform nor instrument list - ENA submission will fail."
+    )
+    logger.error(message)
+    raise ValueError(message)
 
 
 def create_manifest_object(
