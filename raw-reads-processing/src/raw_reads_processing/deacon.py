@@ -71,8 +71,7 @@ def median_read_length(
     """
     with xopen(path, "rt", threads=0) as fh:
         lengths = [
-            len(seq)
-            for _, seq, _ in itertools.islice(FastqGeneralIterator(fh), sample_size)
+            len(seq) for _, seq, _ in itertools.islice(FastqGeneralIterator(fh), sample_size)
         ]
     if not lengths:
         message = f"Failed to determine median read length for file '{file_name}'. File may be empty or corrupted."
@@ -86,10 +85,7 @@ def _deacon_a_for_reads(file_name_to_path: dict[FileName, Path], config: Config)
     files to decide whether this is a short-read library.
     """
     observed_length = min(
-        [
-            median_read_length(path, file_name)
-            for file_name, path in file_name_to_path.items()
-        ],
+        [median_read_length(path, file_name) for file_name, path in file_name_to_path.items()],
         default=0.0,
     )
     short_reads = observed_length < config.short_reads_threshold

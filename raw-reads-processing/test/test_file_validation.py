@@ -141,9 +141,7 @@ def _find_jar() -> str | None:
 def readtools_jar(monkeypatch):
     jar_path = _find_jar()
     if jar_path is None:
-        pytest.skip(
-            "readtools jar not found; set READTOOLS_JAR to its path to run this test"
-        )
+        pytest.skip("readtools jar not found; set READTOOLS_JAR to its path to run this test")
     monkeypatch.setattr(file_format_validation, "VALIDATION_JAR_PATH", jar_path)
 
 
@@ -156,9 +154,7 @@ def _write(tmp_path: Path, name: str, content: str) -> str:
 @pytest.mark.usefixtures("readtools_jar")
 def test_valid_single_end_fastq_passes(tmp_path):
     reads = _write(tmp_path, "reads.fastq", VALID_SINGLE_END)
-    assert (
-        validate_with_readtools({"reads.fastq": Path(reads)}, FileFormat.FASTQ) is None
-    )
+    assert validate_with_readtools({"reads.fastq": Path(reads)}, FileFormat.FASTQ) is None
 
 
 @pytest.mark.usefixtures("readtools_jar")
@@ -166,9 +162,7 @@ def test_valid_paired_end_fastq_passes(tmp_path):
     r1 = _write(tmp_path, "R1.fastq", VALID_R1)
     r2 = _write(tmp_path, "R2.fastq", VALID_R2)
     assert (
-        validate_with_readtools(
-            {"R1.fastq": Path(r1), "R2.fastq": Path(r2)}, FileFormat.FASTQ
-        )
+        validate_with_readtools({"R1.fastq": Path(r1), "R2.fastq": Path(r2)}, FileFormat.FASTQ)
         is None
     )
 
@@ -226,9 +220,7 @@ def test_deinterleaved_paired_reads_pass(tmp_path):
         "@read1\nTGCATGCATG\n+\nIIIIIIIIII\n@read2\nTGCATGCATG\n+\nIIIIIIIIII\n",
     )
     assert (
-        validate_with_readtools(
-            {"R1.fastq": Path(r1), "R2.fastq": Path(r2)}, FileFormat.FASTQ
-        )
+        validate_with_readtools({"R1.fastq": Path(r1), "R2.fastq": Path(r2)}, FileFormat.FASTQ)
         is None
     )
 
@@ -241,10 +233,7 @@ def test_casava_style_interleaved_single_file_passes(tmp_path):
     """
     reads = _write(tmp_path, "interleaved_casava.fastq", CASAVA_INTERLEAVED_SINGLE_FILE)
     assert (
-        validate_with_readtools(
-            {"interleaved_casava.fastq": Path(reads)}, FileFormat.FASTQ
-        )
-        is None
+        validate_with_readtools({"interleaved_casava.fastq": Path(reads)}, FileFormat.FASTQ) is None
     )
 
 
@@ -253,10 +242,7 @@ def test_gzipped_fastq_is_recognized_and_passes(tmp_path):
     gz_path = tmp_path / "reads.fastq.gz"
     with gzip.open(gz_path, "wt") as f:
         f.write(VALID_SINGLE_END)
-    assert (
-        validate_with_readtools({"reads.fastq.gz": Path(gz_path)}, FileFormat.FASTQ)
-        is None
-    )
+    assert validate_with_readtools({"reads.fastq.gz": Path(gz_path)}, FileFormat.FASTQ) is None
 
 
 def _write_bytes(tmp_path: Path, name: str, data: bytes) -> str:
@@ -330,9 +316,7 @@ def test_validation_timeout_is_reported_as_error(tmp_path, monkeypatch):
 
     monkeypatch.setattr(file_format_validation.subprocess, "run", fake_run)
     with pytest.raises(ProcessingFailure) as exc_info:
-        validate_with_readtools(
-            {"reads.fastq": Path(reads)}, FileFormat.FASTQ, timeout_seconds=1
-        )
+        validate_with_readtools({"reads.fastq": Path(reads)}, FileFormat.FASTQ, timeout_seconds=1)
     assert "timed out" in str(exc_info.value)
     assert "1 second" in str(exc_info.value)
 

@@ -55,9 +55,7 @@ def test_invalid_submission_is_returned_as_validation_result(client, monkeypatch
     def fake_process_submitted_files(**kwargs):
         raise InvalidSubmission(error=error)
 
-    monkeypatch.setattr(
-        api, "validate_raw_reads_submission", fake_process_submitted_files
-    )
+    monkeypatch.setattr(api, "validate_raw_reads_submission", fake_process_submitted_files)
 
     response = client.post("/process-files", json=VALID_PAYLOAD)
 
@@ -69,9 +67,7 @@ def test_processing_failure_is_returned_as_internal_server_error(client, monkeyp
     def fake_process_submitted_files(**kwargs):
         raise ProcessingFailure("readtools jar not found")
 
-    monkeypatch.setattr(
-        api, "validate_raw_reads_submission", fake_process_submitted_files
-    )
+    monkeypatch.setattr(api, "validate_raw_reads_submission", fake_process_submitted_files)
 
     response = client.post("/process-files", json=VALID_PAYLOAD)
 
