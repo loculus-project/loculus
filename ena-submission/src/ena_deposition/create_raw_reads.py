@@ -282,10 +282,7 @@ def parse_raw_reads_metadata_field(entry: str | None) -> list[str]:
     '[{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d8","name":"rawReads.fastq.gz","url":"https://s3.loculus.org/files/8854565e6"}]'
 
     Return just the fileIds, sorted: only the fileId identifies the data. The URL is a
-    temporary S3 URL that changes even if files are unchanged, and the name never reaches ENA -
-    download_fastq_files names the uploaded file after the fileId - so renaming a file is not a
-    change to what we submitted. Sorted because the reads manifest has no R1/R2 designation,
-    so reordering the same files is not a change either.
+    temporary S3 URL that changes even if files are unchanged, and the name never reaches ENA
     """
     parsed_entry = json.loads(entry) if entry else []
     return sorted(item["fileId"] for item in parsed_entry)
@@ -303,7 +300,7 @@ def has_raw_reads_changed(
     )
     if current_raw_reads_metadata != last_raw_reads_metadata:
         logger.debug(
-            f"Raw read files have changed for {submission_row.accession}, "
+            f"Raw read fileIds have changed for {submission_row.accession}, "
             f"from {last_entry.version} to {submission_row.version} - should be revised"
             "(Metadata maybe also changed.)"
         )

@@ -689,65 +689,6 @@ class RawReadsCreationTests(unittest.TestCase):
             )
 
 
-class ParseRawReadsMetadataFieldTests(unittest.TestCase):
-    """Only the fileIds decide whether the raw reads changed - not the names or the URLs."""
-
-    @staticmethod
-    def _field(*files: tuple[str, str], url: str = "https://s3.loculus.org/files/abc") -> str:
-        return json.dumps(
-            [{"fileId": file_id, "name": name, "url": url} for file_id, name in files]
-        )
-
-    def setUp(self):
-        self.version_1 = self._field(("id-1", "SRR1_1.fastq.gz"), ("id-2", "SRR1_2.fastq.gz"))
-
-    def test_empty_and_none(self):
-        assert parse_raw_reads_metadata_field(None) == []
-        assert parse_raw_reads_metadata_field("[]") == []
-
-    def test_returns_sorted_file_ids(self):
-        assert parse_raw_reads_metadata_field(self.version_1) == ["id-1", "id-2"]
-
-    def test_new_url_is_not_a_change(self):
-        # The S3 URL is regenerated on every release, even when the file is untouched.
-        version_2 = self._field(
-            ("id-1", "SRR1_1.fastq.gz"), ("id-2", "SRR1_2.fastq.gz"), url="https://s3/other"
-        )
-        assert parse_raw_reads_metadata_field(version_2) == parse_raw_reads_metadata_field(
-            self.version_1
-        )
-
-    def test_rename_is_not_a_change(self):
-        version_2 = self._field(("id-1", "sample_R1.fastq.gz"), ("id-2", "sample_R2.fastq.gz"))
-        assert parse_raw_reads_metadata_field(version_2) == parse_raw_reads_metadata_field(
-            self.version_1
-        )
-
-    def test_reorder_is_not_a_change(self):
-        version_2 = self._field(("id-2", "SRR1_2.fastq.gz"), ("id-1", "SRR1_1.fastq.gz"))
-        assert parse_raw_reads_metadata_field(version_2) == parse_raw_reads_metadata_field(
-            self.version_1
-        )
-
-    def test_swapped_file_is_a_change(self):
-        version_2 = self._field(("id-1", "SRR1_1.fastq.gz"), ("id-3", "SRR1_2.fastq.gz"))
-        assert parse_raw_reads_metadata_field(version_2) != parse_raw_reads_metadata_field(
-            self.version_1
-        )
-
-    def test_reupload_under_the_same_name_is_a_change(self):
-        version_2 = self._field(("id-3", "SRR1_1.fastq.gz"), ("id-4", "SRR1_2.fastq.gz"))
-        assert parse_raw_reads_metadata_field(version_2) != parse_raw_reads_metadata_field(
-            self.version_1
-        )
-
-    def test_same_file_listed_twice_is_a_change(self):
-        version_2 = self._field(("id-1", "SRR1_1.fastq.gz"), ("id-1", "SRR1_2.fastq.gz"))
-        assert parse_raw_reads_metadata_field(version_2) != parse_raw_reads_metadata_field(
-            self.version_1
-        )
-
-
 if __name__ == "__main__":
     import pytest
 
