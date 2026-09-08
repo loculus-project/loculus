@@ -44,10 +44,12 @@ function renderSubmissionForm({
     inputMode = 'bulk',
     allowSubmissionOfConsensusSequences = true,
     dataUseTermsEnabled = true,
+    extraFilesEnabled = false,
 }: {
     inputMode?: InputMode;
     allowSubmissionOfConsensusSequences?: boolean;
     dataUseTermsEnabled?: boolean;
+    extraFilesEnabled?: boolean;
 } = {}) {
     return render(
         <SubmissionForm
@@ -72,6 +74,7 @@ function renderSubmissionForm({
             submissionDataTypes={{
                 consensusSequences: allowSubmissionOfConsensusSequences,
                 maxSequencesPerEntry: 1,
+                files: extraFilesEnabled ? { enabled: true, categories: [{ name: 'rawReads' }] } : undefined,
             }}
             dataUseTermsEnabled={dataUseTermsEnabled}
             fileSharingConfig={{ disableStrictFilenameValidation: false }}
@@ -128,6 +131,31 @@ describe('SubmitForm', () => {
             });
         },
     );
+
+    test('disables submitting while the metadata file is still being read', async () => {
+        mockRequest.backend.getGroupsOfUser();
+
+        let releaseMetadataText: (text: string) => void;
+        const deferredText = new Promise<string>((resolve) => {
+            releaseMetadataText = resolve;
+        });
+        const slowMetadataFile = new File(['content'], 'metadata.tsv', { type: 'text/plain' });
+        vi.spyOn(slowMetadataFile, 'text').mockReturnValue(deferredText);
+
+        const { getByLabelText, getByRole } = renderSubmissionForm({ extraFilesEnabled: true });
+
+        await userEvent.upload(getByLabelText(/metadata file/i), slowMetadataFile);
+
+        const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
+        await waitFor(() => {
+            expect(submitButton).toBeDisabled();
+        });
+
+        releaseMetadataText!('submissionId\tfoo\n');
+        await waitFor(() => {
+            expect(submitButton).toBeEnabled();
+        });
+    });
 
     test('should answer with feedback that a file is missing', async () => {
         mockRequest.backend.submit(200, testResponse);

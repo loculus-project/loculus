@@ -520,6 +520,11 @@ export async function applyFileMappings(
     return ok(new File([content], 'metadata.tsv', { type: 'text/tab-separated-values' }));
 }
 
+/**
+ * The parsed file mapping of the uploaded metadata file, or `'processing'` while it is being read.
+ */
+export type SubmissionFileMappingState = Result<SubmissionFileMapping, Error> | 'processing' | undefined;
+
 export function validateSubmissionFileMapping<T>(
     submissionFileMapping: SubmissionFileMapping<T>,
     fileSharingConfig: FileSharingConfig,

@@ -1,4 +1,3 @@
-import type { Result } from 'neverthrow';
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 
 import type { UploadAction } from './DataUploadForm';
@@ -9,7 +8,7 @@ import type { InputField, SubmissionDataTypes } from '../../types/config';
 import { EditableSequences } from '../Edit/EditableSequences';
 import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
 import { SequencesForm } from '../Edit/SequencesForm';
-import { parseSubmissionFileMapping, type SubmissionFileMapping } from './FileUpload/fileMapping';
+import { parseSubmissionFileMapping, type SubmissionFileMappingState } from './FileUpload/fileMapping';
 
 export type InputMode = 'form' | 'bulk';
 
@@ -41,7 +40,7 @@ export type FileFactory = () => Promise<SequenceData | InputError>;
 type FormOrUploadWrapperProps = {
     inputMode: InputMode;
     setFileFactory: Dispatch<SetStateAction<FileFactory | undefined>>;
-    setSubmissionFileMapping: Dispatch<SetStateAction<Result<SubmissionFileMapping, Error> | undefined>>;
+    setSubmissionFileMapping: Dispatch<SetStateAction<SubmissionFileMappingState>>;
     organism: string;
     action: UploadAction;
     metadataTemplateFields: Map<string, InputField[]>;
@@ -87,6 +86,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 setSubmissionFileMapping(undefined);
                 return;
             }
+            setSubmissionFileMapping('processing');
             const text = columnMapping
                 ? await (await columnMapping.applyTo(metadataFile)).text()
                 : await metadataFile.text();

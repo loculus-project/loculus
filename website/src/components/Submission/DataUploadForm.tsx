@@ -1,7 +1,6 @@
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { DateTime } from 'luxon';
-import type { Result } from 'neverthrow';
 import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo } from 'react';
 
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
@@ -38,7 +37,7 @@ import {
     getSingleSubmissionFileMapping,
     type CategoryLinkage,
     type FileLinkage,
-    type SubmissionFileMapping,
+    type SubmissionFileMappingState,
     validateSubmissionFileMapping,
 } from './FileUpload/fileMapping.ts';
 import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
@@ -84,9 +83,9 @@ const InnerDataUploadForm = ({
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
     const [fileUploadStates, setFileUploadStates] = useState<Map<string, FileUploadState>>(new Map());
     const fileMapping = useMemo(() => deriveFileMapping(fileUploadStates), [fileUploadStates]);
-    const [submissionFileMapping, setSubmissionFileMapping] = useState<
-        Result<SubmissionFileMapping, Error> | undefined
-    >(undefined);
+    const [submissionFileMappingState, setSubmissionFileMapping] = useState<SubmissionFileMappingState>(undefined);
+    const metadataFileIsProcessing = submissionFileMappingState === 'processing';
+    const submissionFileMapping = metadataFileIsProcessing ? undefined : submissionFileMappingState;
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
@@ -308,7 +307,7 @@ const InnerDataUploadForm = ({
                         type='submit'
                         className='rounded-md py-2 text-sm font-semibold shadow-xs focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
                         onClick={(e) => void handleSubmit(e)}
-                        alsoDisabledIf={isPending}
+                        alsoDisabledIf={isPending || metadataFileIsProcessing}
                     >
                         <div className={`absolute ml-1.5 inline-flex ${isPending ? 'visible' : 'invisible'}`}>
                             <Spinner size='sm' />
