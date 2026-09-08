@@ -396,9 +396,6 @@ def test_accepted_fastq_extensions(file_name):
     ["READS.FASTQ.GZ", "reads.Fq.Gz", "Reads.FastQ"],
 )
 def test_fastq_extension_matching_is_case_insensitive(file_name):
-    """Pins the contract consumers rely on: mixed-case names are accepted here, so
-    anything handing these names to a case-sensitive tool (ENA's webin-cli compares
-    suffixes with String.endsWith) must lower-case them itself."""
     assert validate_file_extensions([file_name]) == FileFormat.FASTQ
 
 
