@@ -357,13 +357,19 @@ def run_ref_diff(
     return {}
 
 
-def manifest_fields_changed(
+def reject_revision_if_manifest_fields_changed(
     config: Config,
     db_engine: Engine,
     submission_row: SubmissionTableEntry,
     last_version_entry: SubmissionTableEntry,
     run_ref: str | None = None,
 ) -> bool:
+    """
+    Check if any fields in the assembly manifest have changed between the last version
+    and the new version and set error in assembly_table if so.
+
+    This includes the RUN_REF taken from raw_reads_table.
+    """
     differing_fields = {
         **manifest_fields_diff(
             config.assembly_manifest_fields_mapping, submission_row, last_version_entry
@@ -431,7 +437,7 @@ def can_be_revised(
             "allow_revision_with_manifest_changes=True, skipping manifest field comparison"
         )
         return True
-    return not manifest_fields_changed(
+    return not reject_revision_if_manifest_fields_changed(
         config, db_engine, submission_row, last_version_entry, run_ref
     )
 
@@ -446,9 +452,7 @@ def has_assembly_data_changed(
     Check if there have been changes since last version in:
     - sequence
     - flatfile
-    - RUN_REF (the run accession from raw_reads_table linked to the assembly), e.g. because raw
-      read files were replaced or added
-    - manifest metadata (iff config.allow_revision_with_manifest_changes==True)
+    - manifest metadata including RUN_REF (iff config.allow_revision_with_manifest_changes==True)
     """
     last_entry = get_last_entry(db_engine, submission_row.pkey)
 
@@ -475,7 +479,9 @@ def has_assembly_data_changed(
                 f"for {submission_row.accession}. (Maybe other fields changed as well)"
             )
             return True
-    if differing_run_ref := run_ref_diff(db_engine, last_entry, run_ref):
+    if config.allow_revision_with_manifest_changes and (
+        differing_run_ref := run_ref_diff(db_engine, last_entry, run_ref)
+    ):
         logger.debug(
             f"RUN_REF has changed for {submission_row.accession}, "
             f"from {last_entry.version} to {submission_row.version}: "
