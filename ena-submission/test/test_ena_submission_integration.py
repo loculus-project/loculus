@@ -1541,6 +1541,9 @@ class TestInsdcRawReadsAccessionInManifest(TestSubmission):
 
         _test_successful_project_submission(self.db_engine, self.config, sequences_to_upload)
         _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_raw_reads_submission(
+            self.db_engine, self.config, sequences_to_upload, self.slack_config
+        )
 
         mock_post_webin_with_retry.assert_not_called()
 
