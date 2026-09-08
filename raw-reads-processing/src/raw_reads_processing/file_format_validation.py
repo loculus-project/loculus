@@ -1,15 +1,24 @@
 import logging
 import os
 import subprocess  # noqa: S404
+import time
 from enum import StrEnum
 from pathlib import Path
+from typing import TYPE_CHECKING
 
+from raw_reads_processing import readtools_server
 from raw_reads_processing.datatypes import Annotation, FileName
 from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
+
+if TYPE_CHECKING:
+    from raw_reads_processing.config import Config
 
 logger = logging.getLogger(__name__)
 
 VALIDATION_JAR_PATH = os.environ.get("READTOOLS_JAR", "/opt/app/lib/readtools.jar")
+
+# readtools exits 1 when it judges the files invalid, and 2 when it could not judge them at all.
+READTOOLS_INVALID_EXIT_CODE = 1
 
 
 class FileFormat(StrEnum):
@@ -128,46 +137,93 @@ def validate_file_numbers(file_format: FileFormat, file_names: list[FileName]) -
         )
 
 
-def validate_with_readtools(
-    file_name_to_path: dict[FileName, Path],
-    format_type: FileFormat,
-    timeout_seconds: int = 300,
-) -> None:
-    file_names = list(file_name_to_path.keys())
+def _run_readtools_subprocess(
+    files: list[str], file_format: FileFormat, timeout_seconds: int, full: bool = False
+) -> tuple[int, str, str]:
+    """Validate by forking a fresh JVM, paying its classloading and JIT warm-up each time."""
     args = (
-        ["java", "-jar", VALIDATION_JAR_PATH]
-        + [str(file) for file in file_name_to_path.values()]
-        + [
-            "--format",
-            format_type.value,
-        ]
+        ["java", "-jar", VALIDATION_JAR_PATH] + files + ["--format", file_format.value]
     )
-    logger.debug(f"Running validation on '{file_names}': {args}")
+    if full:
+        args.append("--full")
 
     try:
-        subprocess.run(  # noqa: S603
+        result = subprocess.run(  # noqa: S603
             args,
-            check=True,
+            check=False,
             capture_output=True,
             text=True,
             timeout=timeout_seconds,
         )
     except subprocess.TimeoutExpired:
+        raise TimeoutError from None
+    return result.returncode, result.stdout, result.stderr
+
+
+def validate_with_readtools(
+    file_name_to_path: dict[FileName, Path],
+    format_type: FileFormat,
+    timeout_seconds: int = 300,
+    config: "Config | None" = None,
+) -> None:
+    """Validate the submitted files with ENA readtools.
+
+    Uses the warm validation server when one is configured, otherwise forks a JVM per call.
+    Both paths run identical validation code and return identical output, so the message a
+    submitter sees does not depend on which one ran.
+    """
+    file_names = list(file_name_to_path.keys())
+    files = [str(file) for file in file_name_to_path.values()]
+    use_server = config is not None and config.readtools_server_enabled
+    full = config is not None and config.readtools_full_validation
+    logger.debug(
+        f"Validating {file_names} with readtools "
+        f"({'warm server' if use_server else 'subprocess'}, "
+        f"{'full' if full else 'quick'})"
+    )
+    started = time.monotonic()
+
+    try:
+        if use_server:
+            exit_code, stdout, stderr = readtools_server.run_validation(
+                config, files, format_type.value, timeout_seconds, full=full
+            )
+        else:
+            exit_code, stdout, stderr = _run_readtools_subprocess(
+                files, format_type, timeout_seconds, full=full
+            )
+    except TimeoutError:
         message = (
             f"Validation of files '{','.join(file_names)}' "
             f"timed out after {timeout_seconds} seconds."
         )
         logger.error(message)
         raise ProcessingFailure(message) from None
-    except subprocess.CalledProcessError as error:
-        validation_error = _parse_validation_error(
-            stdout=error.stdout,
-            stderr=error.stderr,
+
+    logger.info(
+        f"readtools validation of {file_names} finished in "
+        f"{time.monotonic() - started:.2f}s (exit code {exit_code})"
+    )
+
+    if exit_code == 0:
+        return
+
+    # readtools reports a verdict of "invalid" as exit 1. Anything else is readtools failing to
+    # reach a verdict at all - a missing file, or the JVM running out of heap - which is our
+    # problem, not the submitter's, and must not be reported to them as a bad file.
+    if exit_code != READTOOLS_INVALID_EXIT_CODE:
+        message = (
+            f"readtools could not validate '{','.join(file_names)}' "
+            f"(exit code {exit_code}): {stderr.strip()[:200]}"
         )
-        logger.error(validation_error)
-        raise InvalidSubmission(
-            error=Annotation(
-                fileNames=file_names,
-                message=validation_error,
-            )
-        ) from error
+        logger.error(message)
+        raise ProcessingFailure(message)
+
+    validation_error = _parse_validation_error(stdout=stdout, stderr=stderr)
+    logger.error(validation_error)
+    raise InvalidSubmission(
+        error=Annotation(
+            fileNames=file_names,
+            message=validation_error,
+        )
+    )

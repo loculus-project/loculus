@@ -5,6 +5,7 @@ import click
 from .api import start_api
 from .config import get_config
 from .deacon import prepare_deacon_index, start_deacon_server
+from .readtools_server import start_readtools_server, wait_until_ready
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +28,15 @@ def run(config_file: str):
     prepare_deacon_index()
     deacon_process = start_deacon_server()
 
+    readtools_process = None
+    if config.readtools_server_enabled:
+        logger.info("Starting readtools validation server and warming it up...")
+        readtools_process = start_readtools_server(config)
+        # Warm-up takes a while; block so we never serve a request on a cold JVM.
+        wait_until_ready(config, readtools_process)
+
     logger.info("Starting API...")
-    start_api(config, deacon_process)
+    start_api(config, deacon_process, readtools_process)
 
 
 if __name__ == "__main__":

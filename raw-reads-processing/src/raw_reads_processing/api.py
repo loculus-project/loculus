@@ -6,6 +6,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from raw_reads_processing.datatypes import RequestWithFiles, ValidationResult
 from raw_reads_processing.process_files import validate_raw_reads_submission
+from raw_reads_processing.readtools_server import readtools_server_healthy
 
 from .config import Config
 
@@ -25,6 +26,16 @@ def read_root() -> dict[str, str]:
 def health() -> dict[str, str]:
     if app.state.deacon_process.poll() is not None:
         raise HTTPException(status_code=503, detail="Deacon server process has exited")
+    if app.state.readtools_process is not None:
+        if app.state.readtools_process.poll() is not None:
+            raise HTTPException(
+                status_code=503, detail="readtools validation server process has exited"
+            )
+        # A live JVM whose validation path is broken or fully wedged still fails this.
+        if not readtools_server_healthy(app.state.config):
+            raise HTTPException(
+                status_code=503, detail="readtools validation server is not healthy"
+            )
     return {"message": "Deacon server is running"}
 
 
@@ -44,13 +55,22 @@ def process_files(
     return ValidationResult()
 
 
-def init_app(config: Config, deacon_process: subprocess.Popen):
+def init_app(
+    config: Config,
+    deacon_process: subprocess.Popen,
+    readtools_process: subprocess.Popen | None = None,
+):
     app.state.config = config
     app.state.deacon_process = deacon_process
+    app.state.readtools_process = readtools_process
 
 
-def start_api(config: Config, deacon_process: subprocess.Popen):
-    init_app(config, deacon_process)
+def start_api(
+    config: Config,
+    deacon_process: subprocess.Popen,
+    readtools_process: subprocess.Popen | None = None,
+):
+    init_app(config, deacon_process, readtools_process)
     host = config.file_service_host or "127.0.0.1"
     port = config.file_service_port or 5000
     logger.info(f"Starting raw reads processing service API on port {port}")

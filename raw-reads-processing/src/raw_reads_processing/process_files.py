@@ -60,6 +60,9 @@ def validate_raw_reads_submission(
             local_files[file.name] = downloaded_file_path
 
         validate_with_readtools(
-            local_files, file_format, config.read_validation_timeout_seconds
+            local_files,
+            file_format,
+            config.read_validation_timeout_seconds,
+            config=config,
         )
         validate_with_deacon(local_files, tmp_dir, config)
