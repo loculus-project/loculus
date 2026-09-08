@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 def upload_sequences(config: Config, db_engine: Engine, sequences_to_upload: dict[str, Any]):
+    """Add new sequences to the submission_table in the database."""
     for full_accession, data in sequences_to_upload.items():
         accession_version = AccessionVersion.from_string(full_accession)
         if in_submission_table(
@@ -50,6 +51,7 @@ def upload_sequences(config: Config, db_engine: Engine, sequences_to_upload: dic
 def trigger_submission_to_ena(
     config: Config, stop_event: threading.Event, input_file: str | None = None
 ):
+    """Download the list of sequences to submit from GitHub and add them to the submission_table."""
     db_engine = db_init(config.db_password, config.db_username, config.db_url)
 
     if input_file:

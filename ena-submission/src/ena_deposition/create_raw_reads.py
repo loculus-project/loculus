@@ -66,19 +66,30 @@ def get_platform_and_instrument(
     (e.g. "ILLUMINA") or an ENA INSTRUMENT value (e.g. "Illumina MiSeq") - the two
     permitted value sets don't overlap, so a case-insensitive lookup against both
     unambiguously tells us which one the user provided.
+
+    Raises ValueError if the value cannot yield a manifest ENA will accept.
     """
     if instrument := Instrument.from_value(raw_value):
+        if instrument is Instrument.unspecified:
+            # webin-cli rejects INSTRUMENT=unspecified unless PLATFORM is also given
+            # Preprocessing forces sequencingInstrument to be one of the configured options
+            # (excluding "unspecified") whenever raw reads are attached,
+            # so this should never fire.
+            message = (
+                f"sequencingInstrument is 'unspecified' for accession {accession} - ENA "
+                "requires a PLATFORM alongside it, which we cannot supply."
+            )
+            logger.error(message)
+            raise ValueError(message)
         return None, instrument
     if platform := Platform.from_value(raw_value):
         return platform, Instrument.unspecified
-    if raw_value != "unspecified":
-        message = (
-            f"sequencingInstrument value '{raw_value}' for accession {accession} matches "
-            "neither ENA's platform nor instrument list - ENA submission will fail."
-        )
-        logger.error(message)
-        raise ValueError(message)
-    return None, Instrument.unspecified
+    message = (
+        f"sequencingInstrument value '{raw_value}' for accession {accession} matches "
+        "neither ENA's platform nor instrument list - ENA submission will fail."
+    )
+    logger.error(message)
+    raise ValueError(message)
 
 
 def create_manifest_object(
@@ -276,18 +287,16 @@ def can_revise_raw_reads(
     return True
 
 
-def parse_raw_reads_metadata_field(entry: str | None) -> dict[str, str]:
+def parse_raw_reads_metadata_field(entry: str | None) -> list[str]:
     """
     The fields inside config.raw_reads_metadata_field are strings of JSON objects, e.g.
     '[{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d8","name":"rawReads.fastq.gz","url":"https://s3.loculus.org/files/8854565e6"}]'
 
-    Note the URL is created by S3 as a temporary reads URL (changes even if files are unchanged).
+    Return just the fileIds, sorted: only the fileId identifies the data. The URL is a
+    temporary S3 URL that changes even if files are unchanged, and the name never reaches ENA
     """
     parsed_entry = json.loads(entry) if entry else []
-    name_to_id: dict[str, str] = {}
-    for item in parsed_entry:
-        name_to_id[item["name"]] = item["fileId"]
-    return name_to_id
+    return sorted(item["fileId"] for item in parsed_entry)
 
 
 def has_raw_reads_changed(
@@ -302,7 +311,7 @@ def has_raw_reads_changed(
     )
     if current_raw_reads_metadata != last_raw_reads_metadata:
         logger.debug(
-            f"Raw read file URLs have changed for {submission_row.accession}, "
+            f"Raw read fileIds have changed for {submission_row.accession}, "
             f"from {last_entry.version} to {submission_row.version} - should be revised"
             "(Metadata maybe also changed.)"
         )
