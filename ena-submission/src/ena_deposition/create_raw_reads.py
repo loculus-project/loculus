@@ -276,18 +276,19 @@ def can_revise_raw_reads(
     return True
 
 
-def parse_raw_reads_metadata_field(entry: str | None) -> dict[str, str]:
+def parse_raw_reads_metadata_field(entry: str | None) -> list[str]:
     """
     The fields inside config.raw_reads_metadata_field are strings of JSON objects, e.g.
     '[{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d8","name":"rawReads.fastq.gz","url":"https://s3.loculus.org/files/8854565e6"}]'
 
-    Note the URL is created by S3 as a temporary reads URL (changes even if files are unchanged).
+    Return just the fileIds, sorted: only the fileId identifies the data. The URL is a
+    temporary S3 URL that changes even if files are unchanged, and the name never reaches ENA -
+    download_fastq_files names the uploaded file after the fileId - so renaming a file is not a
+    change to what we submitted. Sorted because the reads manifest has no R1/R2 designation,
+    so reordering the same files is not a change either.
     """
     parsed_entry = json.loads(entry) if entry else []
-    name_to_id: dict[str, str] = {}
-    for item in parsed_entry:
-        name_to_id[item["name"]] = item["fileId"]
-    return name_to_id
+    return sorted(item["fileId"] for item in parsed_entry)
 
 
 def has_raw_reads_changed(
@@ -302,7 +303,7 @@ def has_raw_reads_changed(
     )
     if current_raw_reads_metadata != last_raw_reads_metadata:
         logger.debug(
-            f"Raw read file URLs have changed for {submission_row.accession}, "
+            f"Raw read files have changed for {submission_row.accession}, "
             f"from {last_entry.version} to {submission_row.version} - should be revised"
             "(Metadata maybe also changed.)"
         )
