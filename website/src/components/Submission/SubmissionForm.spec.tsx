@@ -44,10 +44,12 @@ function renderSubmissionForm({
     inputMode = 'bulk',
     allowSubmissionOfConsensusSequences = true,
     dataUseTermsEnabled = true,
+    extraFilesEnabled = false,
 }: {
     inputMode?: InputMode;
     allowSubmissionOfConsensusSequences?: boolean;
     dataUseTermsEnabled?: boolean;
+    extraFilesEnabled?: boolean;
 } = {}) {
     return render(
         <SubmissionForm
@@ -72,6 +74,7 @@ function renderSubmissionForm({
             submissionDataTypes={{
                 consensusSequences: allowSubmissionOfConsensusSequences,
                 maxSequencesPerEntry: 1,
+                files: extraFilesEnabled ? { enabled: true, categories: [{ name: 'rawReads' }] } : undefined,
             }}
             dataUseTermsEnabled={dataUseTermsEnabled}
             fileSharingConfig={{ disableStrictFilenameValidation: false }}
@@ -128,6 +131,58 @@ describe('SubmitForm', () => {
             });
         },
     );
+
+    test('submitting while the metadata file is still being read waits for it', async () => {
+        mockRequest.backend.submit(200, testResponse);
+        mockRequest.backend.getGroupsOfUser();
+
+        let releaseMetadataText!: (text: string) => void;
+        const slowMetadataFile = new File(['content'], 'metadata.tsv', { type: 'text/plain' });
+        vi.spyOn(slowMetadataFile, 'text').mockReturnValue(
+            new Promise<string>((resolve) => {
+                releaseMetadataText = resolve;
+            }),
+        );
+
+        const { getByLabelText, getByRole, findByRole } = renderSubmissionForm({ extraFilesEnabled: true });
+
+        await userEvent.upload(getByLabelText(/metadata file/i), slowMetadataFile);
+        await userEvent.upload(getByLabelText(/sequence file/i), sequencesFile);
+        await userEvent.click(
+            getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
+        );
+        await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
+
+        // Submit before the metadata file has been read
+        await userEvent.click(getByRole('button', { name: 'Upload and proceed to Approval' }));
+        expect(toast.error).not.toHaveBeenCalled();
+
+        releaseMetadataText('submissionId\trawReads_fileName\n');
+
+        // The submission goes through once the file has been read, rather than being rejected
+        await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
+        await waitFor(() => {
+            expect(toast.error).not.toHaveBeenCalled();
+        });
+    });
+
+    test('reports a metadata file that cannot be read', async () => {
+        mockRequest.backend.getGroupsOfUser();
+
+        const unreadableFile = new File(['content'], 'metadata.tsv', { type: 'text/plain' });
+        vi.spyOn(unreadableFile, 'text').mockRejectedValue(new Error('disk is on fire'));
+
+        const { getByLabelText } = renderSubmissionForm({ extraFilesEnabled: true });
+
+        await userEvent.upload(getByLabelText(/metadata file/i), unreadableFile);
+
+        await waitFor(() => {
+            expect(toast.error).toHaveBeenCalledWith(
+                expect.stringContaining('Could not read the metadata file: disk is on fire'),
+                expect.anything(),
+            );
+        });
+    });
 
     test('should answer with feedback that a file is missing', async () => {
         mockRequest.backend.submit(200, testResponse);

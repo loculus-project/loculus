@@ -520,6 +520,9 @@ export async function applyFileMappings(
     return ok(new File([content], 'metadata.tsv', { type: 'text/tab-separated-values' }));
 }
 
+/** The parse of the uploaded metadata file, still in flight; it resolves rather than rejects. */
+export type SubmissionFileMappingPromise = Promise<Result<SubmissionFileMapping, Error>> | undefined;
+
 export function validateSubmissionFileMapping<T>(
     submissionFileMapping: SubmissionFileMapping<T>,
     fileSharingConfig: FileSharingConfig,

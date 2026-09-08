@@ -1,4 +1,4 @@
-import type { Result } from 'neverthrow';
+import { ResultAsync } from 'neverthrow';
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 
 import type { UploadAction } from './DataUploadForm';
@@ -9,7 +9,7 @@ import type { InputField, SubmissionDataTypes } from '../../types/config';
 import { EditableSequences } from '../Edit/EditableSequences';
 import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
 import { SequencesForm } from '../Edit/SequencesForm';
-import { parseSubmissionFileMapping, type SubmissionFileMapping } from './FileUpload/fileMapping';
+import { parseSubmissionFileMapping, type SubmissionFileMappingPromise } from './FileUpload/fileMapping';
 
 export type InputMode = 'form' | 'bulk';
 
@@ -41,7 +41,7 @@ export type FileFactory = () => Promise<SequenceData | InputError>;
 type FormOrUploadWrapperProps = {
     inputMode: InputMode;
     setFileFactory: Dispatch<SetStateAction<FileFactory | undefined>>;
-    setSubmissionFileMapping: Dispatch<SetStateAction<Result<SubmissionFileMapping, Error> | undefined>>;
+    setSubmissionFileMapping: Dispatch<SetStateAction<SubmissionFileMappingPromise>>;
     organism: string;
     action: UploadAction;
     metadataTemplateFields: Map<string, InputField[]>;
@@ -80,26 +80,33 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
 
     useEffect(() => {
         if (!extraFilesEnabled) return;
+        if (!metadataFile) {
+            setSubmissionFileMapping(undefined);
+            return;
+        }
 
         const state = { cancelled: false };
-        void (async () => {
-            if (!metadataFile) {
-                setSubmissionFileMapping(undefined);
-                return;
-            }
-            const text = columnMapping
-                ? await (await columnMapping.applyTo(metadataFile)).text()
-                : await metadataFile.text();
-
-            if (state.cancelled) return;
-
-            const submissionFileMapping = parseSubmissionFileMapping(
-                text,
-                submissionDataTypes.files?.categories?.map((category) => category.name) ?? [],
-            );
-            setSubmissionFileMapping(submissionFileMapping);
-            if (submissionFileMapping.isErr()) onError(submissionFileMapping.error.message);
-        })();
+        setSubmissionFileMapping(
+            (async () => {
+                const textResult = await ResultAsync.fromPromise(
+                    columnMapping ? (await columnMapping.applyTo(metadataFile)).text() : metadataFile.text(),
+                    (error) =>
+                        new Error(
+                            `Could not read the metadata file: ${error instanceof Error ? error.message : String(error)}`,
+                        ),
+                );
+                const submissionFileMapping = textResult.andThen((text) =>
+                    parseSubmissionFileMapping(
+                        text,
+                        submissionDataTypes.files?.categories?.map((category) => category.name) ?? [],
+                    ),
+                );
+                if (submissionFileMapping.isErr() && !state.cancelled) {
+                    onError(submissionFileMapping.error.message);
+                }
+                return submissionFileMapping;
+            })(),
+        );
         return () => {
             state.cancelled = true;
         };

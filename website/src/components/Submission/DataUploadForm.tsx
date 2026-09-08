@@ -2,7 +2,7 @@ import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { DateTime } from 'luxon';
 import type { Result } from 'neverthrow';
-import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo } from 'react';
+import { type FormEvent, useEffect, useState, type Dispatch, type SetStateAction, useMemo } from 'react';
 
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
@@ -39,6 +39,7 @@ import {
     type CategoryLinkage,
     type FileLinkage,
     type SubmissionFileMapping,
+    type SubmissionFileMappingPromise,
     validateSubmissionFileMapping,
 } from './FileUpload/fileMapping.ts';
 import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
@@ -84,9 +85,25 @@ const InnerDataUploadForm = ({
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
     const [fileUploadStates, setFileUploadStates] = useState<Map<string, FileUploadState>>(new Map());
     const fileMapping = useMemo(() => deriveFileMapping(fileUploadStates), [fileUploadStates]);
-    const [submissionFileMapping, setSubmissionFileMapping] = useState<
+    const [submissionFileMappingPromise, setSubmissionFileMapping] = useState<SubmissionFileMappingPromise>(undefined);
+    // Kept separately from the promise above, because rendering needs the resolved value
+    const [submissionFileMapping, setResolvedSubmissionFileMapping] = useState<
         Result<SubmissionFileMapping, Error> | undefined
     >(undefined);
+
+    useEffect(() => {
+        if (submissionFileMappingPromise === undefined) {
+            setResolvedSubmissionFileMapping(undefined);
+            return;
+        }
+        const state = { cancelled: false };
+        void submissionFileMappingPromise.then((mapping: Result<SubmissionFileMapping, Error>) => {
+            if (!state.cancelled) setResolvedSubmissionFileMapping(mapping);
+        });
+        return () => {
+            state.cancelled = true;
+        };
+    }, [submissionFileMappingPromise]);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
@@ -161,24 +178,27 @@ const InnerDataUploadForm = ({
                     finalMetadataFile = finalMetadataFileResult.value;
                 }
             } else {
-                if (submissionFileMapping === undefined) {
-                    onError('Cannot submit: metadata file is still being processed.');
+                if (submissionFileMappingPromise === undefined) {
+                    onError('Cannot submit: no metadata file has been selected.');
                     return;
                 }
 
-                if (submissionFileMapping.isErr()) {
-                    onError(submissionFileMapping.error.message);
+                // Waits for the metadata file to be read, if it still is
+                const parsedFileMapping = await submissionFileMappingPromise;
+
+                if (parsedFileMapping.isErr()) {
+                    onError(parsedFileMapping.error.message);
                     return;
                 }
 
-                const validationResult = validateSubmissionFileMapping(submissionFileMapping.value, fileSharingConfig);
+                const validationResult = validateSubmissionFileMapping(parsedFileMapping.value, fileSharingConfig);
                 if (validationResult.isErr()) {
                     onError(validationResult.error.message);
                     return;
                 }
 
                 const { submissionFileMapping: resolvedSubmissionFileMapping, fileLinkage } = resolveFileMappings(
-                    submissionFileMapping.value,
+                    parsedFileMapping.value,
                     fileMapping,
                 );
 
