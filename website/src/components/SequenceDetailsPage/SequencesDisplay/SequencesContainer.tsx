@@ -20,6 +20,7 @@ import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../../common/
 import { Button } from '../../common/Button';
 import { Select } from '../../common/Select.tsx';
 import { withQueryProvider } from '../../common/withQueryProvider.tsx';
+import { ReferenceComparison } from '../ReferenceComparison/ReferenceComparison';
 
 type SequenceContainerProps = {
     organism: string;
@@ -88,7 +89,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
     setType,
     useLapisMultiSegmentedEndpoint,
 }) => {
-    const [activeTab, setActiveTab] = useState<'unaligned' | 'aligned' | 'gene'>('unaligned');
+    const [activeTab, setActiveTab] = useState<'unaligned' | 'aligned' | 'gene' | 'referenceComparison'>('unaligned');
 
     useEffect(() => {
         if (isUnalignedSequence(sequenceType)) {
@@ -122,6 +123,13 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
                     label='Aligned amino acid sequences'
                     onClick={() => setActiveTab('gene')}
                 />
+                {segments.length > 0 && (
+                    <BoxWithTabsTab
+                        isActive={activeTab === 'referenceComparison'}
+                        label='Reference comparison'
+                        onClick={() => setActiveTab('referenceComparison')}
+                    />
+                )}
             </BoxWithTabsTabBar>
             <BoxWithTabsBox>
                 {activeTab === 'gene' && <GeneDropdown genes={genes} sequenceType={sequenceType} setType={setType} />}
@@ -136,7 +144,9 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
                 {segments.length > 1 && activeTab === 'aligned' && (
                     <SegmentDropdown segments={segments} sequenceType={sequenceType} setType={setType} mode='aligned' />
                 )}
-                {activeTab !== 'gene' || isGeneSequence(sequenceType.name, sequenceType) ? (
+                {activeTab === 'referenceComparison' ? (
+                    <ReferenceComparison accessionVersion={accessionVersion} segments={segments} />
+                ) : activeTab !== 'gene' || isGeneSequence(sequenceType.name, sequenceType) ? (
                     <SequencesViewer
                         organism={organism}
                         accessionVersion={accessionVersion}
