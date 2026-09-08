@@ -25,7 +25,7 @@ describe('genome viewer tab', () => {
         const user = userEvent.setup();
         const { container } = render(<InnerSequencesContainer {...props} enableGenomePreview />);
         expect(container.querySelector('iframe')).toBeNull();
-        await user.click(screen.getByRole('tab', { name: 'View vs. reference' }));
+        await user.click(screen.getByRole('tab', { name: 'Compare to reference' }));
         expect(screen.queryByText('Sequence text')).toBeNull();
         expect(screen.getByTitle('Genome viewer for TEST1.1, first')).toHaveAttribute(
             'src',
@@ -42,6 +42,6 @@ describe('genome viewer tab', () => {
     });
     it('keeps the existing tabs when the preview is disabled', () => {
         render(<InnerSequencesContainer {...props} />);
-        expect(screen.queryByRole('tab', { name: 'View vs. reference' })).toBeNull();
+        expect(screen.queryByRole('tab', { name: 'Compare to reference' })).toBeNull();
     });
 });
