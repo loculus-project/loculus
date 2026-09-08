@@ -28,6 +28,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 import pytz
+from ena_deposition.call_loculus import canonical_fastq_extension
 from ena_deposition.check_external_visibility import (
     COLUMN_CONFIGS,
     EntityType,
@@ -679,7 +680,12 @@ def mock_download_fastq_files_side_effect(
 
     fastq_files = []
     for file_entry, source in zip(files, RAW_READS_FIXTURES, strict=False):
-        dest_path = os.path.join(target_dir, os.path.basename(file_entry["name"]))
+        # Mirror the real function's naming: <fileId><canonical lower-cased extension>,
+        # so the paths webin-cli sees here match production.
+        dest_name = os.path.basename(file_entry["fileId"]) + canonical_fastq_extension(
+            file_entry["name"]
+        )
+        dest_path = os.path.join(target_dir, dest_name)
         shutil.copy(source, dest_path)
         fastq_files.append(dest_path)
     return fastq_files

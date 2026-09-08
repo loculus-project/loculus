@@ -12,6 +12,7 @@ from unittest import mock
 
 import xmltodict
 import yaml
+from ena_deposition.call_loculus import download_fastq_files
 from ena_deposition.config import EnaOrganismDetails, ManifestFieldDetails, MetadataMapping
 from ena_deposition.create_assembly import (
     create_chromosome_list_object,
@@ -686,6 +687,69 @@ class RawReadsCreationTests(unittest.TestCase):
                 submission_row,
                 dir=self.tmp_dir,
             )
+
+
+class DownloadFastqFilesTests(unittest.TestCase):
+    FILE_ID: Final = "11111111-2222-3333-4444-555555555555"
+    CONTENT: Final = b"@r1\nACGT\n+\nIIII\n"
+
+    def setUp(self):
+        tmp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp_dir.cleanup)
+        self.tmp_dir = tmp_dir.name
+        self.config = mock.Mock()
+        self.config.raw_reads_metadata_field = "rawReads"
+        self.config.s3_request_timeout_seconds = 60
+
+    def _metadata(self, name: str):
+        return {
+            "rawReads": json.dumps(
+                [{"fileId": self.FILE_ID, "name": name, "url": "https://s3.test/object"}]
+            )
+        }
+
+    def _download(self, name: str, content: bytes | None = None):
+        response = mock.MagicMock()
+        response.__enter__.return_value = response
+        response.iter_content.return_value = [content if content is not None else self.CONTENT]
+        with mock.patch("ena_deposition.call_loculus.requests.get", return_value=response):
+            return download_fastq_files(
+                self.config, self._metadata(name), "LOC_0001TLY", self.tmp_dir
+            )
+
+    def test_gzipped_input_is_passed_through_unchanged(self):
+        gzipped = gzip.compress(self.CONTENT)
+        (path,) = self._download("reads.fastq.gz", gzipped)
+        self.assertEqual(Path(path).name, f"{self.FILE_ID}.fastq.gz")
+        self.assertEqual(Path(path).read_bytes(), gzipped)
+
+    def test_uppercase_gz_is_lowercased_and_not_recompressed(self):
+        """Upstream accepts READS.FASTQ.GZ; webin-cli's suffix check is case-sensitive, and
+        re-gzipping an already-gzipped file would only fail later, during submit."""
+        gzipped = gzip.compress(self.CONTENT)
+        (path,) = self._download("READS.FASTQ.GZ", gzipped)
+        self.assertEqual(Path(path).name, f"{self.FILE_ID}.fastq.gz")
+        self.assertEqual(Path(path).read_bytes(), gzipped)
+
+    def test_uncompressed_input_is_gzipped(self):
+        (path,) = self._download("reads.fastq")
+        self.assertEqual(Path(path).name, f"{self.FILE_ID}.fastq.gz")
+        with gzip.open(path, "rb") as f:
+            self.assertEqual(f.read(), self.CONTENT)
+        # the uncompressed intermediate is not left behind
+        self.assertFalse(Path(self.tmp_dir, f"{self.FILE_ID}.fastq").exists())
+
+    def test_uncompressed_fq_is_gzipped(self):
+        (path,) = self._download("reads.fq")
+        self.assertEqual(Path(path).name, f"{self.FILE_ID}.fq.gz")
+
+    def test_unaccepted_extension_raises_before_download(self):
+        with self.assertRaises(RuntimeError):
+            self._download("reads.fastq.zst")
+
+    def test_missing_raw_reads_field_raises(self):
+        with self.assertRaises(RuntimeError):
+            download_fastq_files(self.config, {}, "LOC_0001TLY", self.tmp_dir)
 
 
 if __name__ == "__main__":
