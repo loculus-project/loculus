@@ -19,11 +19,7 @@ class FileFormat(StrEnum):
     CRAM = "CRAM"
 
 
-# Matched case-insensitively (see _has_extension), so "READS.FASTQ.GZ" is accepted.
-# Consumers that pass these names to case-sensitive tools must lower-case them first:
-# ENA's webin-cli compares suffixes with String.endsWith and rejects anything not
-# literally ".gz"/".bz2". ena-submission mirrors this set in
-# ena-submission/src/ena_deposition/call_loculus.py - keep the two in sync.
+# Keep in sync with ena-submission/src/ena_deposition/call_loculus.py
 ACCEPTED_FASTQ_EXTENSIONS = {".fastq", ".fq", ".fastq.gz", ".fq.gz"}
 ACCEPTED_BAM_EXTENSIONS = {".bam", ".sam"}
 ACCEPTED_CRAM_EXTENSIONS = {".cram"}
