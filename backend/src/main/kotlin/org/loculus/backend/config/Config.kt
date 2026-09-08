@@ -122,3 +122,39 @@ data class ExternalMetadata(
 ) : BaseMetadata()
 
 data class EarliestReleaseDate(val enabled: Boolean = false, val externalFields: List<String>)
+
+/**
+ * Metadata keys that the backend itself adds to every released record, rather than taking them
+ * from the organism's configured metadata.
+ *
+ * Released data puts these, the configured metadata fields and the file categories into one flat
+ * map (see ReleasedDataModel.computeAdditionalMetadataFields), so any name used here cannot also
+ * be used for a file category without one silently overwriting the other.
+ *
+ * Note that configured *metadata* fields deliberately may repeat some of these (several organisms
+ * declare `earliestReleaseDate` so it reaches SILO and the website); only file categories are
+ * validated against this set.
+ *
+ * Keep in sync with the keys added in ReleasedDataModel.
+ */
+val RESERVED_RELEASED_METADATA_KEYS = setOf(
+    "accession",
+    "accessionVersion",
+    "dataBecameOpenAt",
+    "dataUseTerms",
+    "dataUseTermsRestrictedUntil",
+    "dataUseTermsUrl",
+    "earliestReleaseDate",
+    "groupId",
+    "groupName",
+    "isRevocation",
+    "pipelineVersion",
+    "releasedAtTimestamp",
+    "releasedDate",
+    "submissionId",
+    "submittedAtTimestamp",
+    "submittedDate",
+    "submitter",
+    "version",
+    "versionStatus",
+)

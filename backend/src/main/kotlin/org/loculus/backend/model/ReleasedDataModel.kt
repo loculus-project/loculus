@@ -177,6 +177,8 @@ open class ReleasedDataModel(
 
         val filesFieldNames = backendConfig.getInstanceConfig(organism).schema.files.map { it.name }
 
+        // The literal keys added below are mirrored in RESERVED_RELEASED_METADATA_KEYS, which
+        // config validation uses to reject a file category of the same name - keep the two in sync.
         val metadata = rawProcessedData.processedData.metadata +
             mapOf(
                 ("accession" to TextNode(rawProcessedData.accession)),

@@ -203,13 +203,46 @@ internal fun validateEarliestReleaseDateFields(config: BackendConfig): List<Stri
     return errors
 }
 
+/**
+ * Check that no file category name collides with a metadata field name, or with one of the
+ * metadata keys the backend adds itself ([RESERVED_RELEASED_METADATA_KEYS]).
+ *
+ * Released data puts all three into one flat map, with the file categories merged in last
+ * (see ReleasedDataModel), so a collision would silently replace the other value with the
+ * file list JSON.
+ * Returns a non-empty list of errors if validation errors were found.
+ */
+internal fun validateFileCategoryNames(config: BackendConfig): List<String> {
+    val errors = mutableListOf<String>()
+    config.organisms.values.forEach { instanceConfig ->
+        val schema = instanceConfig.schema
+        val metadataNames = (schema.metadata.map { it.name } + schema.externalMetadata.map { it.name }).toSet()
+        val categoryNames = (
+            schema.files.map { it.name } + schema.submissionDataTypes.files.categories.map { it.name }
+            ).distinct()
+        categoryNames.forEach { category ->
+            val clashesWith = when {
+                metadataNames.contains(category) -> "a metadata field"
+                RESERVED_RELEASED_METADATA_KEYS.contains(category) -> "a metadata key the backend adds itself"
+                else -> return@forEach
+            }
+            errors.add(
+                "Error on organism ${schema.organismName}: file category '$category' has the same name as " +
+                    "$clashesWith. File categories share one namespace with metadata fields in released data, " +
+                    "so this would overwrite it.",
+            )
+        }
+    }
+    return errors
+}
+
 fun readBackendConfig(objectMapper: ObjectMapper, configPath: String): BackendConfig {
     val config = objectMapper
         .enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
         .readValue<BackendConfig>(File(configPath))
     logger.info { "Loaded backend config from $configPath" }
     logger.info { "Config: $config" }
-    val validationErrors = validateEarliestReleaseDateFields(config)
+    val validationErrors = validateEarliestReleaseDateFields(config) + validateFileCategoryNames(config)
     if (validationErrors.isNotEmpty()) {
         throw IllegalArgumentException(
             "The configuration file at $configPath is invalid: " +
