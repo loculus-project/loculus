@@ -1,15 +1,15 @@
-import { type FC, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { toast } from 'react-toastify';
 
 import { type SequenceFilter } from './SequenceFilters';
 import { getSubmittedData } from '../../../services/backendClientSideApi';
 import { downloadBlob } from '../../../utils/downloadBlob';
 import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber';
-import { Button } from '../../common/Button';
 
 export const MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES = 500;
 
-type DownloadSubmittedDataButtonProps = {
+type UseSubmittedDataDownloadProps = {
     sequenceFilter: SequenceFilter;
     backendUrl: string;
     accessToken: string;
@@ -19,12 +19,28 @@ type DownloadSubmittedDataButtonProps = {
     fetchAccessions: () => Promise<string[]>;
 };
 
+type SubmittedDataDownload = {
+    /** Label describing what will be downloaded, including how many entries. */
+    label: string;
+    isDownloading: boolean;
+    /** True when there are more entries than the backend will return in one go. */
+    exceedsLimit: boolean;
+    /** Explains `exceedsLimit`, for a tooltip on whatever is disabled because of it. */
+    limitMessage: string;
+    download: () => void;
+};
+
 const extractAccessions = (accessionVersions: string[]): string[] => {
     const accessions = accessionVersions.map((av) => parseAccessionVersionFromString(av).accession);
     return [...new Set(accessions)];
 };
 
-export const DownloadSubmittedDataButton: FC<DownloadSubmittedDataButtonProps> = ({
+/**
+ * Downloads the files a group originally uploaded, as opposed to the processed data the rest of
+ * the download machinery deals in. Editing these and submitting them back is how a bulk revision
+ * is made, which is why this is offered alongside the other ways of modifying released entries.
+ */
+export const useSubmittedDataDownload = ({
     sequenceFilter,
     backendUrl,
     accessToken,
@@ -32,26 +48,28 @@ export const DownloadSubmittedDataButton: FC<DownloadSubmittedDataButtonProps> =
     groupId,
     totalSequences,
     fetchAccessions,
-}) => {
+}: UseSubmittedDataDownloadProps): SubmittedDataDownload => {
     const [isDownloading, setIsDownloading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const sequenceCount = sequenceFilter.sequenceCount();
     const effectiveCount = sequenceCount ?? totalSequences;
     const exceedsLimit = effectiveCount !== undefined && effectiveCount > MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES;
+    const limitMessage = `Download is limited to ${formatNumberWithDefaultLocale(MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES)} entries. Please select fewer.`;
 
-    let buttonText: string;
-    if (sequenceCount === undefined) {
-        const formattedCount = totalSequences !== undefined ? formatNumberWithDefaultLocale(totalSequences) : 'all';
-        buttonText = `Download originally submitted data (${formattedCount})`;
+    // Scoped the way the data use terms item beside it is, so the two read alike, and saying
+    // whether that scope is a selection or the whole result set.
+    let scope: string;
+    if (effectiveCount === undefined) {
+        scope = 'all sequences';
     } else {
-        const formattedCount = formatNumberWithDefaultLocale(sequenceCount);
-        buttonText = `Download originally submitted data (${formattedCount} selected)`;
+        const formattedCount = formatNumberWithDefaultLocale(effectiveCount);
+        const noun = `sequence${effectiveCount === 1 ? '' : 's'}`;
+        scope = sequenceCount === undefined ? `${formattedCount} ${noun}` : `${formattedCount} selected ${noun}`;
     }
+    const label = `Download original data to prepare bulk revision (${scope})`;
 
     const handleDownload = useCallback(async () => {
         setIsDownloading(true);
-        setError(null);
 
         try {
             let accessionVersions: string[];
@@ -72,9 +90,7 @@ export const DownloadSubmittedDataButton: FC<DownloadSubmittedDataButtonProps> =
                 throw new Error('No sequences to download');
             }
             if (accessions.length > MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES) {
-                throw new Error(
-                    `Download is limited to ${formatNumberWithDefaultLocale(MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES)} entries. Please select fewer.`,
-                );
+                throw new Error(limitMessage);
             }
 
             const result = await getSubmittedData(backendUrl, organism, accessToken, {
@@ -97,45 +113,17 @@ export const DownloadSubmittedDataButton: FC<DownloadSubmittedDataButtonProps> =
             downloadBlob(result.blob, filename);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Download failed';
-            setError(message);
+            toast.error(message, { position: 'top-center', autoClose: 8000 });
         } finally {
             setIsDownloading(false);
         }
-    }, [sequenceFilter, backendUrl, accessToken, organism, groupId, sequenceCount, fetchAccessions]);
+    }, [sequenceFilter, backendUrl, accessToken, organism, groupId, sequenceCount, fetchAccessions, limitMessage]);
 
-    const isDisabled = isDownloading || exceedsLimit;
-
-    return (
-        <div className='relative'>
-            <div className='group relative inline-block'>
-                <Button
-                    variant='outline'
-                    className={`w-[18rem] ${exceedsLimit ? 'opacity-50 cursor-not-allowed hover:bg-white hover:text-primary-600' : ''}`}
-                    onClick={() => void handleDownload()}
-                    disabled={isDisabled}
-                >
-                    {isDownloading ? 'Downloading...' : buttonText}
-                </Button>
-                {exceedsLimit && (
-                    <div className='invisible group-hover:visible absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 text-sm text-white bg-gray-800 rounded-md shadow-lg whitespace-nowrap z-20'>
-                        Limited to {formatNumberWithDefaultLocale(MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES)} entries. Please
-                        select fewer.
-                        <div className='absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-gray-800' />
-                    </div>
-                )}
-            </div>
-            {error !== null && (
-                <div className='absolute top-full left-0 mt-1 text-sm text-red-600 bg-white p-2 rounded shadow-md z-10 max-w-xs'>
-                    {error}
-                    <Button
-                        className='ml-2 text-gray-500 hover:text-gray-700'
-                        onClick={() => setError(null)}
-                        aria-label='Dismiss error'
-                    >
-                        x
-                    </Button>
-                </div>
-            )}
-        </div>
-    );
+    return {
+        label,
+        isDownloading,
+        exceedsLimit,
+        limitMessage,
+        download: () => void handleDownload(),
+    };
 };
