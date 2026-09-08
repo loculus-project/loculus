@@ -51,10 +51,13 @@ test('field description tooltip appears on hover', async ({ page, groupId }) => 
     const infoIcon = page.locator('[data-tooltip-id="field-tooltipsampleCollectionDate"]');
     await expect(infoIcon).toBeVisible();
 
-    await infoIcon.hover();
-
-    // The tooltip should become visible after the hover delay
     const tooltip = page.locator('#field-tooltipsampleCollectionDate');
-    await expect(tooltip).toBeVisible({ timeout: 2000 });
+    // The form is server-rendered before react hydrates, and a hover dispatched before the tooltip
+    // has attached its listeners is lost, so retry the hover instead of hovering once.
+    await expect(async () => {
+        await page.mouse.move(0, 0);
+        await infoIcon.hover();
+        await expect(tooltip).toBeVisible({ timeout: 2000 });
+    }).toPass({ timeout: 30_000 });
     await expect(tooltip).toContainText('sampleCollectionDate');
 });
