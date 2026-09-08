@@ -760,18 +760,15 @@ def _run_webin_cli_submission(
         logger.error(msg)
         return CreationResult(errors=[msg], warnings=[])
 
-    # Happy path: webin-cli succeeded and returned the expected accession(s)
     if response.returncode == 0:
-        result = _extract_accessions(response.stdout, patterns)
-        if result:
-            return CreationResult(result=result, errors=[], warnings=[])
-
-    # Handle the case where the webin-cli command fails or does not return the expected accession(s)
-    if response.returncode != 0:
-        error_message = f"Webin CLI command failed with status: {response.returncode}. "
-    else:
+        if accessions := _extract_accessions(response.stdout, patterns):
+            # Happy path: webin-cli succeeded and returned the expected accession(s)
+            return CreationResult(result=accessions, errors=[], warnings=[])
         missing_accessions = " or ".join(f"{kind} accession" for kind in patterns)
         error_message = f"Webin CLI command succeeded but did not return {missing_accessions}. "
+    else:
+        error_message = f"Webin CLI command failed with status: {response.returncode}. "
+
     error_message += f"Stdout: {response.stdout}, Stderr: {response.stderr}"
     logger.error(error_message)
 
