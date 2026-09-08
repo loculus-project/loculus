@@ -37,7 +37,7 @@ def upload_sequences(config: Config, db_engine: Engine, sequences_to_upload: dic
             seq_metadata=data["metadata"],
             submit_raw_reads=bool(
                 data["metadata"].get(config.raw_reads_metadata_field)
-                or data["metadata"].get("insdcRawReadsAccession")
+                or data["metadata"].get(config.loculus_accession_fields.run)
             ),
             unaligned_nucleotide_sequences=data["unalignedNucleotideSequences"],
         )
