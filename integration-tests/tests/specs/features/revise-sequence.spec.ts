@@ -125,7 +125,7 @@ groupTest.describe('Bulk sequence revision', () => {
         await revisionPage.acceptTerms();
         await revisionPage.clickSubmit();
 
-        await waitForUrlReportingAlerts(page, /\/review/, { timeout: 15_000 });
+        await waitForUrlReportingAlerts(page, '**/review', { timeout: 15_000 });
         await reviewPage.waitForZeroProcessing();
 
         const overview = await reviewPage.getReviewPageOverview();
