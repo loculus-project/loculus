@@ -341,9 +341,9 @@ def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: Acc
 
 
 def update_with_existing_runrecord(db_engine: Engine, row: SubmissionTableEntry, config: Config):
-    """Update sample_table entry for entry with insdcRawReadsAccession"""
+    """Update raw_reads_table entry for entry with insdcRawReadsAccession"""
     logger.debug(
-        f"Accession: {row.accession} already has insdcRawReadsAccession, updating sample_table"
+        f"Accession: {row.accession} already has insdcRawReadsAccession, updating raw_reads_table"
     )
     run = row.seq_metadata[config.loculus_accession_fields.run]
 
@@ -383,7 +383,7 @@ def update_with_existing_runrecord(db_engine: Engine, row: SubmissionTableEntry,
         update_values={
             "accession": row.accession,
             "version": row.version,
-            "result": {"ena_sample_accession": run, EnaResultField.RUN: run},
+            "result": {EnaResultField.RUN: run},
             "status": Status.SUBMITTED,
         },
     )
