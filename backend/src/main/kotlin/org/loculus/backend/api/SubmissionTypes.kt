@@ -483,10 +483,8 @@ fun FileCategoryFilesMap.getDuplicateFileNames(category: FileCategory): Set<Stri
 /**
  * File IDs used more than once within [category].
  *
- * Reusing one file ID under several names is rejected: consumers key their local copies by file ID
- * (the raw reads processing service and the ENA deposition pipeline both do), so the entries would
- * collapse onto a single downloaded object. For paired-end reads that is silently accepted by
- * readtools/webin-cli - the file pairs with itself at 100% - and would archive mate 1 twice.
+ * Consumers key their local copy by file ID, so duplicate entries collapse onto one downloaded
+ * file - for paired-end reads that still passes validation and would archive one mate twice.
  */
 fun FileCategoryFilesMap.getDuplicateFileIds(category: FileCategory): Set<FileId> {
     val idCounts = this[category]!!
