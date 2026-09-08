@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
 import { clearTmpDir } from './tmpdir';
@@ -50,18 +50,30 @@ export async function prepareTmpDirForSingleUpload(
     );
 }
 
+/**
+ * Selects `tmpDir` for the given file category and waits until the upload has finished.
+ *
+ * Do not wait for `fileCount` checkmarks here: in bulk mode the "N files uploaded and linked to
+ * metadata!" status line renders a checkmark of its own, so the page already holds N checkmarks
+ * once N-1 files have uploaded, and a subsequent submit is rejected with "Please wait for all
+ * files to finish uploading before submitting.". Wait instead for the state that the submit
+ * handler actually checks - the category being in `uploadCompleted`, which is the only state in
+ * which the per-category buttons are enabled.
+ */
 export async function uploadFilesFromTmpDir(
     page: Page,
-    testId: string,
+    fileCategory: string,
     tmpDir: string,
     fileCount: number,
+    timeout = 30_000,
 ) {
     await page.getByRole('heading', { name: 'Extra files' }).scrollIntoViewIfNeeded();
-    // Trigger file upload (don't await) and wait for checkmarks to appear (indicates success)
-    void page.getByTestId(testId).setInputFiles(tmpDir);
-    return Promise.all(
-        Array.from({ length: fileCount }, (_, i) =>
-            page.getByText('✓').nth(i).waitFor({ state: 'visible' }),
-        ),
-    );
+    // Trigger the file upload without awaiting, so the waits below can observe it progressing.
+    const filesSelected = page.getByTestId(fileCategory).setInputFiles(tmpDir);
+    await expect(page.getByTestId(new RegExp(`^discard_${fileCategory}_`))).toHaveCount(fileCount, {
+        timeout,
+    });
+    await expect(page.getByTestId(`add_button_${fileCategory}`)).toBeEnabled({ timeout });
+    // Awaited last so a failure to select the files is reported rather than swallowed.
+    await filesSelected;
 }
