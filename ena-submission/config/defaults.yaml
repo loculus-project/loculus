@@ -148,6 +148,6 @@ loculus_accession_fields:
   insdc_accession_prefix: insdcAccessionBase
   insdc_accession_full_prefix: insdcAccessionFull
 allow_revision_with_manifest_changes: true
-ena_webin_cli_timeout_seconds: 300
-s3_request_timeout_seconds: 600
+ena_webin_cli_timeout_seconds: 600
+s3_request_timeout_seconds: 300
 get_released_data_timeout_seconds: 600
