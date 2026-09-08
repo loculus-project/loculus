@@ -1836,7 +1836,7 @@ defaultOrganisms:
         references:
           - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/reference.fasta]]"
-            insdcAccessionFull: NC_002549.1
+            insdcAccessionFull: NC_006432.1
             genes:
               - name: NP
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/NP.fasta]]"
