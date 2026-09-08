@@ -123,6 +123,7 @@ class Config(BaseModel):
     alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
     segment_classification_method: SegmentClassificationMethod = SegmentClassificationMethod.ALIGN
     nextclade_dataset_server: str = "https://data.clades.nextstrain.org/v3"
+    nextclade_jobs: int = Field(default=1, gt=0)
 
     require_nextclade_sort_match: bool = False
     minimizer_url: str | None = None

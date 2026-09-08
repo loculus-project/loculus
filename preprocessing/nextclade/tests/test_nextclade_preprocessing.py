@@ -3,6 +3,7 @@
 
 from pathlib import Path
 from typing import Literal
+from unittest.mock import Mock
 
 import pytest
 from Bio import SeqIO
@@ -13,11 +14,13 @@ from factory_methods import (
     ProcessedEntryFactory,
     ProcessingAnnotationHelper,
     ProcessingTestCase,
+    UnprocessedEntryFactory,
     build_processing_annotations,
     ts_from_ymd,
     verify_processed_entry,
 )
 
+from loculus_preprocessing import nextclade
 from loculus_preprocessing.config import (
     AlignmentRequirement,
     Config,
@@ -57,6 +60,19 @@ CCHF_DATASET = "tests/cchfv"
 SINGLE_SEGMENT_EMBL = "tests/flatfiles/single_segment.embl"
 MUTATIONS_FROM_FOUNDER_CLADE = "tests/mutationsFromFounderClade.json"
 LABELED_PRIVATE_MUTATIONS = "tests/labeledPrivateMutations.json"
+
+
+def test_nextclade_jobs_is_passed(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
+    config.nextclade_jobs = 4
+    entry = UnprocessedEntryFactory.create_unprocessed_entry({}, "01", {"main": "ACGT"})
+    runner = Mock(side_effect=RuntimeError("stop"))
+    monkeypatch.setattr(nextclade.subprocess, "run", runner)
+
+    with pytest.raises(RuntimeError, match="stop"):
+        nextclade.assign_segment_with_nextclade_align([entry], config, str(tmp_path))
+
+    assert "--jobs=4" in runner.call_args.args[0]
 
 
 def test_get_nested_metadata_uses_simple_dot_paths():
