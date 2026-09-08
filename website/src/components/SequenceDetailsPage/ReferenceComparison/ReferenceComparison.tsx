@@ -34,7 +34,7 @@ export function ReferenceComparison({
                 key={`${accessionVersion}:${segment.name}`}
                 title={`Reference Comparison for ${accessionVersion}, ${segment.displayName ?? segment.name}`}
                 src={routes.sequenceEntryReferenceComparisonPage(accessionVersion, segment.name)}
-                className='mt-3 h-[650px] w-full rounded border border-gray-200 bg-white'
+                className='mt-3 h-[550px] w-full rounded border border-gray-200 bg-white'
                 allow='clipboard-write'
             />
         </>
