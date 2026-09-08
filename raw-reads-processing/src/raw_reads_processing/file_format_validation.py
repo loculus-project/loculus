@@ -139,16 +139,8 @@ def _is_gzip(path: Path) -> bool:
 
 
 def validate_compression(file_name_to_path: dict[FileName, Path]) -> None:
-    """Check each file's actual compression against the one its name claims.
-
-    readtools detects compression from content and ignores the file name, so a
-    plain FASTQ called "reads.fastq.gz" - or a gzipped one called "reads.fastq" -
-    validates cleanly here and only fails much later, at ENA. Catch the mismatch at
-    submission time, where the submitter can act on it.
-
-    Also rejects doubly-gzipped files: gzip that decompresses to more gzip is never
-    what a submitter intended, and ENA's webin-cli does not detect it at manifest
-    validation (it only unwraps one layer).
+    """Check each file's compression extension (`.gz` or none) matches actual compression.
+    Allow at most one level of compression.
     """
     for file_name, path in file_name_to_path.items():
         claims_gzip = file_name.lower().endswith(".gz")
