@@ -275,7 +275,8 @@ def test_compression_matching_name_and_content_passes(tmp_path):
     assert (
         validate_compression(
             {"reads.fastq": plain, "reads2.fastq.gz": gzipped}, FileFormat.FASTQ
-        ) is None
+        )
+        is None
     )
 
 
