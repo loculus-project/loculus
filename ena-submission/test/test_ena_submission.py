@@ -21,7 +21,6 @@ from ena_deposition.create_project import construct_project_set_object
 from ena_deposition.create_raw_reads import (
     create_manifest_object as create_raw_reads_manifest_object,
 )
-from ena_deposition.create_raw_reads import parse_raw_reads_metadata_field
 from ena_deposition.create_sample import construct_sample_set_object
 from ena_deposition.ena_submission_helper import (
     create_chromosome_list,
