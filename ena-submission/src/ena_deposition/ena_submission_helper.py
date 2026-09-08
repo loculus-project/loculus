@@ -64,7 +64,6 @@ from .submission_db_helper import (
     SampleTableEntry,
     Status,
     SubmissionTableEntry,
-    add_to_db,
     update_db_where_conditions,
     update_with_retry,
 )

@@ -198,7 +198,9 @@ def sync_state_with_submission_table(db_engine: Engine, config: Config) -> None:
             run_ref = row.seq_metadata[config.loculus_accession_fields.run]
         add_to_db(
             db_engine,
-            RawReadsTableEntry(**seq_key, result={EnaResultField.RUN: run_ref} if run_ref else None),
+            RawReadsTableEntry(
+                **seq_key, result={EnaResultField.RUN: run_ref} if run_ref else None
+            ),
         )
 
 
