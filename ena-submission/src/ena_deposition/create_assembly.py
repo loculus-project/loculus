@@ -335,9 +335,21 @@ def get_run_ref(db_engine: Engine, seq_key: AccessionVersion) -> str | None:
     raw_reads_rows = find_conditions_in_db(
         db_engine, RawReadsTableEntry, conditions=asdict(seq_key)
     )
-    if not raw_reads_rows or not raw_reads_rows[0].result:
+    if not raw_reads_rows:
         return None
-    return cast(str | None, raw_reads_rows[0].result.get(EnaResultField.RUN))
+    run_ref = (
+        cast(str | None, raw_reads_rows[0].result.get(EnaResultField.RUN))
+        if raw_reads_rows[0].result
+        else None
+    )
+    if raw_reads_rows and not run_ref:
+        msg = (
+            f"{seq_key.accession}.{seq_key.version} has a corresponding raw reads entry but"
+            "does not have a run_ref in result - this should not happen."
+        )
+        logger.error(msg)
+        raise RuntimeError(msg)
+    return run_ref
 
 
 def run_ref_diff(
@@ -549,19 +561,7 @@ def assembly_table_create(db_engine: Engine, config: Config):
         )
     for row in ready_to_submit_assembly:
         seq_key = row.pkey
-        corresponding_raw_reads = find_conditions_in_db(
-            db_engine,
-            RawReadsTableEntry,
-            conditions=asdict(seq_key),
-        )
         run_ref = get_run_ref(db_engine, seq_key)
-        if corresponding_raw_reads and not run_ref:
-            msg = (
-                f"{seq_key.accession}.{seq_key.version} has a corresponding raw reads entry but"
-                "does not have a run_ref in result - this should not happen."
-            )
-            logger.error(msg)
-            raise RuntimeError(msg)
         submission_rows = find_conditions_in_db(
             db_engine, SubmissionTableEntry, conditions=asdict(seq_key)
         )
