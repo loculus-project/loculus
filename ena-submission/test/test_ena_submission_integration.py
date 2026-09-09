@@ -93,6 +93,17 @@ INPUT_FILE = "./test/data/approved_ena_submission_list_test.json"
 # Created using `seqkit split -p 2 SRR38154636.fastq` on the interleaved SRA read file SRR38154636
 RAW_READS_FIXTURE_FILE_1 = "./test/data/SRR38154636.part_001.fastq.gz"
 RAW_READS_FIXTURE_FILE_2 = "./test/data/SRR38154636.part_002.fastq.gz"
+# The pipeline identifies a raw-reads file by its fileId
+RAW_READS_FIXTURE_BY_NAME: dict[str, dict[str, str]] = {
+    "rawReads.fastq.gz": {
+        "fileId": "341fac6f-c5ca-4138-ac4b-9aa9872d64d8",
+        "path": RAW_READS_FIXTURE_FILE_1,
+    },
+    "rawReads2.fastq.gz": {
+        "fileId": "341fac6f-c5ca-4138-ac4b-9aa9872d64d9",
+        "path": RAW_READS_FIXTURE_FILE_2,
+    },
+}
 TEST_ACCESSION = "LOC_0001TLY"
 TEST_ACCESSION_VERSION = "LOC_0001TLY.1"
 TEST_VERSION = 1
@@ -590,11 +601,11 @@ def add_raw_reads_to_sequences(
 
     files: list[dict[str, str]] = []
     for file_name in file_names:
-        # To simulate the S3 URL changing, generate a random ID for each URL
-        random_id = "".join(random.choices(string.digits, k=4, seed=42))  # noqa: S311
+        # Simulate the pre-signed S3 URL changing between versions; the fileId stays put.
+        random_id = "".join(random.choices(string.digits, k=4))  # noqa: S311
         files.append(
             {
-                "fileId": str(uuid.uuid4()),
+                "fileId": RAW_READS_FIXTURE_BY_NAME[file_name]["fileId"],
                 "name": file_name,
                 "url": f"https://loculus.org/files/{random_id}/{file_name}",
             }
@@ -656,23 +667,16 @@ def get_revisions(
         return revised_sequences
 
 
-RAW_READS_FIXTURES: Final = [RAW_READS_FIXTURE_FILE_1, RAW_READS_FIXTURE_FILE_2]
-
-
 def mock_requests_get_fastq_side_effect(url: str, *_args: Any, **_kwargs: Any) -> MagicMock:
     """
     Mock side effect for `requests.get` when `download_fastq_files` streams a raw-reads
     file from its (pre-signed S3) URL.
     """
-    fixture_by_name = {
-        "rawReads.fastq.gz": RAW_READS_FIXTURE_FILE_1,
-        "rawReads2.fastq.gz": RAW_READS_FIXTURE_FILE_2,
-    }
     filename = url.rsplit("/", 1)[-1]
-    if filename not in fixture_by_name:
+    if filename not in RAW_READS_FIXTURE_BY_NAME:
         msg = f"unexpected requests.get call during test: {url}"
         raise AssertionError(msg)
-    content = Path(fixture_by_name[filename]).read_bytes()
+    content = Path(RAW_READS_FIXTURE_BY_NAME[filename]["path"]).read_bytes()
 
     response = MagicMock()
     response.__enter__.return_value = response
