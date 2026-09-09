@@ -343,7 +343,7 @@ def last_raw_reads_entry(
     if len(last_version_rows) == 0 and raise_on_empty:
         error_msg = f"Last version {version_to_revise} not found in raw_reads_table"
         raise RuntimeError(error_msg)
-    return previous_version[0]
+    return last_version_rows[0]
 
 
 def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: AccessionVersion):
