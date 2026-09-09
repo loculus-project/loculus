@@ -70,6 +70,12 @@ def get_platform_and_instrument(
     Raises ValueError if the value cannot yield a manifest ENA will accept.
     """
     try:
+        platform = Platform.from_value(raw_value)
+    except ValueError:
+        platform = None
+    if platform is not None:
+        return platform, None
+    try:
         instrument = Instrument.from_value(raw_value)
     except ValueError:
         instrument = None
@@ -86,12 +92,6 @@ def get_platform_and_instrument(
             logger.error(message)
             raise ValueError(message)
         return None, instrument
-    try:
-        platform = Platform.from_value(raw_value)
-    except ValueError:
-        platform = None
-    if platform is not None:
-        return platform, None
     message = (
         f"sequencingInstrument value '{raw_value}' for accession {accession} matches "
         "neither ENA's platform nor instrument list - ENA submission will fail."

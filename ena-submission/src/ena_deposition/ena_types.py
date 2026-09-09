@@ -10,7 +10,10 @@ class XmlNone(UserString):
 
 
 class LookupStrEnum(StrEnum):
-    """StrEnum with case-insensitive lookup by ENA's controlled-vocabulary value."""
+    """StrEnum with case-insensitive lookup by ENA's controlled-vocabulary value.
+    A raw value that is present but not in the vocabulary always raises; `required`
+    only governs whether a missing/empty value is an error or yields `None`.
+    """
 
     @classmethod
     def from_value(cls, raw_value: str | None, required: bool = False) -> Self | None:
