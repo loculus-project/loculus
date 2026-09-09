@@ -1,6 +1,7 @@
 import logging
 import os
 from dataclasses import field
+from enum import StrEnum
 
 import dotenv
 import yaml
@@ -9,6 +10,22 @@ from pydantic import BaseModel
 from ena_deposition.ena_types import MoleculeType, Topology
 
 logger = logging.getLogger(__name__)
+
+
+class EnaResultField(StrEnum):
+    """Keys used to store ENA accessions in the `result` column of the
+    ena_deposition_schema project/sample/assembly tables.
+
+    The corresponding Loculus schema field names are configurable per deployment - see
+    LoculusAccessionFieldNames and Config.loculus_accession_fields below.
+    """
+
+    BIOSAMPLE = "biosample_accession"
+    BIOPROJECT = "bioproject_accession"
+    GCA = "gca_accession"
+    RUN = "run_accession"
+    INSDC_ACCESSION_PREFIX = "insdc_accession"
+    INSDC_ACCESSION_FULL_PREFIX = "insdc_accession_full"
 
 
 class MetadataMapping(BaseModel):
@@ -29,6 +46,17 @@ class ManifestFieldDetails(BaseModel):
     loculus_fields: list[str] = field(default_factory=list)
     function: str | None = None
     default: str | None = None
+
+
+class LoculusAccessionFieldNames(BaseModel):
+    """Names of the Loculus schema fields used to exchange accessions with ENA/NCBI."""
+
+    bioproject: str
+    biosample: str
+    gca: str
+    insdc_accession_prefix: str
+    insdc_accession_full_prefix: str
+    run: str
 
 
 class ExternalMetadataField(BaseModel):
@@ -106,6 +134,7 @@ class Config(BaseModel):
     metadata_mapping: dict[str, MetadataMapping]
     metadata_fallback_fields: dict[str, str]
     assembly_manifest_fields_mapping: dict[str, ManifestFieldDetails]
+    loculus_accession_fields: LoculusAccessionFieldNames
     ingest_pipeline_submission_group: int
     ena_checklist: str | None = None
     set_alias_suffix: str | None = None  # Add to test revisions in dev
@@ -116,6 +145,7 @@ class Config(BaseModel):
     ena_public_search_timeout_seconds: int = 120
     ncbi_public_search_timeout_seconds: int = 120
     ena_http_get_retry_attempts: int = 3
+    ncbi_http_get_retry_attempts: int = 3
     # By default, don't retry HTTP post requests to ENA
     ena_http_post_retry_attempts: int = 1
     min_between_github_requests: int = 2

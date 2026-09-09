@@ -35,7 +35,12 @@ from tenacity import (
 )
 from unidecode import unidecode
 
-from ena_deposition.config import Config, EnaOrganismDetails, ManifestFieldDetails
+from ena_deposition.config import (
+    Config,
+    EnaOrganismDetails,
+    EnaResultField,
+    ManifestFieldDetails,
+)
 
 from .ena_types import (
     DEFAULT_EMBL_PROPERTY_FIELDS,
@@ -57,7 +62,7 @@ from .submission_db_helper import (
     SampleTableEntry,
     Status,
     SubmissionTableEntry,
-    add_to_assembly_table,
+    add_to_db,
     update_db_where_conditions,
     update_with_retry,
 )
@@ -274,7 +279,7 @@ def create_ena_project(config: Config, project_set: ProjectSet) -> CreationResul
         errors.append(error_message)
         return CreationResult(errors=errors, warnings=warnings)
     project_results = {
-        "bioproject_accession": parsed_response["RECEIPT"]["PROJECT"]["@accession"],
+        EnaResultField.BIOPROJECT: parsed_response["RECEIPT"]["PROJECT"]["@accession"],
         "ena_submission_accession": parsed_response["RECEIPT"]["SUBMISSION"]["@accession"],
     }
     return CreationResult(result=project_results, errors=errors, warnings=warnings)
@@ -347,7 +352,7 @@ def create_ena_sample(
         return CreationResult(errors=errors, warnings=warnings)
     sample_results = {
         "ena_sample_accession": parsed_response["RECEIPT"]["SAMPLE"]["@accession"],
-        "biosample_accession": parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@accession"],
+        EnaResultField.BIOSAMPLE: parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@accession"],
         "ena_submission_accession": parsed_response["RECEIPT"]["SUBMISSION"]["@accession"],
     }
     return CreationResult(result=sample_results, errors=errors, warnings=warnings)
@@ -454,9 +459,6 @@ def create_flatfile(
 ):
     collection_date = metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.collection_date_property, "Unknown")
     authors = get_authors(metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.authors_property) or "")
-    # BioPython's EMBL writer automatically adds a terminating semicolon,
-    # so we need to strip it from our formatted authors string to avoid duplication
-    authors = authors.removesuffix(";")
     country = get_country(metadata)
     organism = organism_metadata.scientific_name
     accession = metadata["accession"]
@@ -483,7 +485,11 @@ def create_flatfile(
         if not isinstance(sequence_str, str) or len(sequence_str) == 0:
             continue
         reference = Reference()
-        reference.authors = authors
+        if authors:
+            # BioPython's EMBL writer automatically adds a terminating semicolon,
+            # so we need to strip it from our formatted authors string to avoid duplication
+            authors = authors.removesuffix(";")
+            reference.authors = authors
         sequence = SeqRecord(
             seq=Seq(sequence_str),
             id=f"{accession}_{seq_name}" if multi_segment else accession,
@@ -616,6 +622,7 @@ def manifest_fields_diff(
 
 
 def linked_accession_diff(
+    config: Config,
     submission_row: SubmissionTableEntry,
     previous_sample_accession: str,
     previous_study_accession: str,
@@ -624,8 +631,8 @@ def linked_accession_diff(
     are linked to an already-existing sample/project), check it still matches the accession
     used for the previous version."""
     previous_accessions = {
-        "biosampleAccession": previous_sample_accession,
-        "bioprojectAccession": previous_study_accession,
+        config.loculus_accession_fields.biosample: previous_sample_accession,
+        config.loculus_accession_fields.bioproject: previous_study_accession,
     }
     differing_fields = {}
     for field, previous_accession in previous_accessions.items():
@@ -803,7 +810,7 @@ def get_ena_analysis_process(
             if gca_accession:
                 assembly_results.update(
                     {
-                        "gca_accession": gca_accession,
+                        EnaResultField.GCA: gca_accession,
                     }
                 )
             insdc_accession_range = acc_dict.get("chromosomes")
@@ -868,14 +875,14 @@ def get_chromsome_accessions(
         if not is_multi_segment:
             accession = f"{start_letters}{start_num:0{num_digits}d}"
             return {
-                "insdc_accession": accession,
-                "insdc_accession_full": f"{accession}.1",
+                EnaResultField.INSDC_ACCESSION_PREFIX: accession,
+                EnaResultField.INSDC_ACCESSION_FULL_PREFIX: f"{accession}.1",
             }
         results = {}
         for i, segment in enumerate(segment_order):
             accession = f"{start_letters}{(start_num + i):0{num_digits}d}"
-            results[f"insdc_accession_{segment}"] = accession
-            results[f"insdc_accession_full_{segment}"] = f"{accession}.1"
+            results[f"{EnaResultField.INSDC_ACCESSION_PREFIX}_{segment}"] = accession
+            results[f"{EnaResultField.INSDC_ACCESSION_FULL_PREFIX}_{segment}"] = f"{accession}.1"
         return results
 
     # Don't handle the Value error here, let it propagate
@@ -909,7 +916,7 @@ def accession_exists(
 def set_accession_does_not_exist_error(
     conditions: dict[str, Any],
     accession: str,
-    accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"] | Literal["RUN_REF"],
+    accession_type: Literal["BIOPROJECT", "BIOSAMPLE", "RUN_REF"],
     db_engine: Engine,
 ):
     error_text = f"Accession {accession} of type {accession_type} does not exist in ENA."
@@ -925,7 +932,10 @@ def set_accession_does_not_exist_error(
                 {
                     "status": Status.HAS_ERRORS,
                     "errors": [error_text],
-                    "result": {"biosample_accession": accession, "ena_sample_accession": accession},
+                    "result": {
+                        EnaResultField.BIOSAMPLE: accession,
+                        "ena_sample_accession": accession,
+                    },
                 },
             )
         case "BIOPROJECT":
@@ -936,7 +946,7 @@ def set_accession_does_not_exist_error(
                 {
                     "status": Status.HAS_ERRORS,
                     "errors": [error_text],
-                    "result": {"bioproject_accession": accession},
+                    "result": {EnaResultField.BIOPROJECT: accession},
                 },
             )
         case "RUN_REF":
@@ -946,7 +956,7 @@ def set_accession_does_not_exist_error(
                 errors=[error_text],
                 result={},  # type: ignore
             )
-            succeeded = add_to_assembly_table(db_engine, assembly_table_entry)
+            succeeded = add_to_db(db_engine, assembly_table_entry) is not None
 
     if not succeeded:
         logger.warning(f"{accession_type} creation failed and DB update failed.")

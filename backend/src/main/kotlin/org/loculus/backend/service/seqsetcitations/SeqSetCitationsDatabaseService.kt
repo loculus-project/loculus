@@ -699,7 +699,7 @@ class SeqSetCitationsDatabaseService(
         }
 
         if (oldSeqSet.name == newSeqSetName &&
-            oldSeqSet.description == newSeqSetDescription &&
+            oldSeqSet.description.orEmpty() == newSeqSetDescription.orEmpty() &&
             oldSubmittedSeqSetRecords == newSeqSetRecords
         ) {
             throw UnprocessableEntityException("SeqSet update must contain at least one change")

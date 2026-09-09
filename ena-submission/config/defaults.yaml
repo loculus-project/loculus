@@ -22,6 +22,7 @@ ena_http_timeout_seconds: 60
 ena_public_search_timeout_seconds: 120
 ncbi_public_search_timeout_seconds: 120
 ena_http_get_retry_attempts: 3
+ncbi_http_get_retry_attempts: 3
 # Don't retry posts by default as they might not be idempotent
 ena_http_post_retry_attempts: 1
 # 12 hours in minutes
@@ -120,4 +121,11 @@ slack_retry_substrings:
   - "does not exist in ENA"
 submitting_time_threshold_min: 15
 waiting_threshold_hours: 48
+loculus_accession_fields:
+  bioproject: bioprojectAccession
+  biosample: biosampleAccession
+  gca: gcaAccession
+  run: insdcRawReadsAccession
+  insdc_accession_prefix: insdcAccessionBase
+  insdc_accession_full_prefix: insdcAccessionFull
 allow_revision_with_manifest_changes: true
