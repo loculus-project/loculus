@@ -258,6 +258,9 @@ def send_slack_notification_with_file(
 @click.option(
     "--output-dir",
     required=False,
+    default=".",
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    help="Directory to write the ENA submission list JSON files to.",
 )
 def get_ena_submission_list(config_file, output_dir) -> None:
     """
@@ -271,7 +274,6 @@ def get_ena_submission_list(config_file, output_dir) -> None:
     logger.info(f"Config: {config}")
 
     output_file_suffix = "ena_submission_list.json"
-    output_dir = output_dir or "."
 
     db_engine = db_init(
         db_password_default=config.db_password,
@@ -302,7 +304,7 @@ def get_ena_submission_list(config_file, output_dir) -> None:
                 f"{config.backend_url}: {loculus_organism} - ENA Submission pipeline wants to "
                 f"submit {len(submission_results.entries_to_submit)} sequences"
             )
-            output_file = Path(f"{output_dir}/{loculus_organism}_{output_file_suffix}")
+            output_file = Path(output_dir) / f"{loculus_organism}_{output_file_suffix}"
             send_slack_notification_with_file(
                 slack_config, message, submission_results.entries_to_submit, output_file
             )
@@ -316,8 +318,8 @@ def get_ena_submission_list(config_file, output_dir) -> None:
                 " Bioprojects should be public and SRA accessions should also include bioprojects"
                 " and biosamples."
             )
-            output_file = Path(
-                f"{output_dir}/{loculus_organism}_with_ena_fields_{output_file_suffix}"
+            output_file = (
+                Path(output_dir) / f"{loculus_organism}_with_ena_fields_{output_file_suffix}"
             )
             send_slack_notification_with_file(
                 slack_config,
@@ -331,7 +333,7 @@ def get_ena_submission_list(config_file, output_dir) -> None:
                 f"{len(submission_results.revoked_entries)} sequences that have been revoked"
                 " investigate if these need to be suppressed on ENA."
             )
-            output_file = Path(f"{output_dir}/{loculus_organism}_revoked_{output_file_suffix}")
+            output_file = Path(output_dir) / f"{loculus_organism}_revoked_{output_file_suffix}"
             send_slack_notification_with_file(
                 slack_config,
                 message,
