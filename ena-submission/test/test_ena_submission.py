@@ -675,6 +675,26 @@ class RawReadsCreationTests(unittest.TestCase):
                 self.fastq_files,
             )
 
+    def test_create_manifest_unrecognized_enum_raises(self):
+        config = mock_config()
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "sequencingInstrument": "HiSeq X Five",
+            "sequencingLibrarySelection": "Not a valid enum",
+        }
+
+        with self.assertRaises(
+            ValueError, msg="not a valid LibrarySelection enum value"
+        ):
+            create_raw_reads_manifest_object(
+                config,
+                "Test Sample Accession",
+                "Test Study Accession",
+                submission_row,
+                self.fastq_files,
+            )
+
 
 class GetPlatformAndInstrumentTests(unittest.TestCase):
     def test_valid_platform_value(self):

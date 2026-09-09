@@ -69,21 +69,27 @@ def get_platform_and_instrument(
 
     Raises ValueError if the value cannot yield a manifest ENA will accept.
     """
-    if instrument := Instrument.from_value(raw_value):
-        if instrument is Instrument.unspecified:
-            # webin-cli rejects INSTRUMENT=unspecified unless PLATFORM is also given
-            # Preprocessing forces sequencingInstrument to be one of the configured options
-            # (excluding "unspecified") whenever raw reads are attached,
-            # so this should never fire.
-            message = (
-                f"sequencingInstrument is 'unspecified' for accession {accession} - ENA "
-                "requires a PLATFORM alongside it, which we cannot supply."
-            )
-            logger.error(message)
-            raise ValueError(message)
-        return None, instrument
-    if platform := Platform.from_value(raw_value):
-        return platform, Instrument.unspecified
+    try:
+        if instrument := Instrument.from_value(raw_value):
+            if instrument is Instrument.unspecified:
+                # webin-cli rejects INSTRUMENT=unspecified unless PLATFORM is also given
+                # Preprocessing forces sequencingInstrument to be one of the configured options
+                # (excluding "unspecified") whenever raw reads are attached,
+                # so this should never fire.
+                message = (
+                    f"sequencingInstrument is 'unspecified' for accession {accession} - ENA "
+                    "requires a PLATFORM alongside it, which we cannot supply."
+                )
+                logger.error(message)
+                raise ValueError(message)
+            return None, instrument
+    except ValueError:
+        pass
+    try:
+        if platform := Platform.from_value(raw_value):
+            return platform, Instrument.unspecified
+    except ValueError:
+        pass
     message = (
         f"sequencingInstrument value '{raw_value}' for accession {accession} matches "
         "neither ENA's platform nor instrument list - ENA submission will fail."
@@ -121,7 +127,7 @@ def create_manifest_object(
     metadata = submission_row.seq_metadata
     raw_reads_manifest_fields_mapping = config.raw_reads_manifest_fields_mapping
 
-    sequencing_instrument = resolve_required_manifest_field(
+    sequencing_instrument = resolve_manifest_field(
         raw_reads_manifest_fields_mapping["instrument"], metadata
     )
     platform, instrument = get_platform_and_instrument(
@@ -133,22 +139,16 @@ def create_manifest_object(
     )
     insert_size = int(insert_size_) if len(fastq_files) > 1 and insert_size_ else None
     library_source = LibrarySource.from_value(
-        resolve_required_manifest_field(
-            raw_reads_manifest_fields_mapping["library_source"], metadata
-        ),
-        LibrarySource.OTHER,
+        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_source"], metadata),
+        required=True,
     )
     library_selection = LibrarySelection.from_value(
-        resolve_required_manifest_field(
-            raw_reads_manifest_fields_mapping["library_selection"], metadata
-        ),
-        LibrarySelection.UNSPECIFIED,
+        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_selection"], metadata),
+        required=True,
     )
     library_strategy = LibraryStrategy.from_value(
-        resolve_required_manifest_field(
-            raw_reads_manifest_fields_mapping["library_strategy"], metadata
-        ),
-        LibraryStrategy.OTHER,
+        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_strategy"], metadata),
+        required=True,
     )
 
     try:
