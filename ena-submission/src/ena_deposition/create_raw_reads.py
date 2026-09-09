@@ -328,7 +328,9 @@ def has_raw_reads_changed(
     return False
 
 
-def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: AccessionVersion):
+def last_raw_reads_entry(
+    db_engine: Engine, seq_key: AccessionVersion, raise_on_empty: bool = True
+) -> RawReadsTableEntry:
     version_to_revise = previous_version(db_engine, seq_key)
     last_version_rows = find_conditions_in_db(
         db_engine,
@@ -338,12 +340,17 @@ def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: Acc
             "version": version_to_revise,
         },
     )
-    if len(last_version_rows) == 0:
+    if len(last_version_rows) == 0 and raise_on_empty:
         error_msg = f"Last version {version_to_revise} not found in raw_reads_table"
         raise RuntimeError(error_msg)
+    return previous_version[0]
+
+
+def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: AccessionVersion):
+    last_version_rows = last_raw_reads_entry(db_engine, seq_key)
     logger.info(
         f"Updating raw reads results for accession {seq_key.accession} version "
-        f"{seq_key.version} using results from version {version_to_revise} as there was no"
+        f"{seq_key.version} using results from version {seq_key.version} as there was no"
         "change in raw read data."
     )
     update_with_retry(
@@ -454,9 +461,8 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
             if not has_raw_reads_changed(config, db_engine, submission_row):
                 update_raw_reads_results_with_latest_version(db_engine, seq_key)
                 continue
-            last_entry = get_last_entry(db_engine, submission_row.pkey)
-            last_version_raw_reads = find_conditions_in_db(
-                db_engine, RawReadsTableEntry, conditions=asdict(last_entry.pkey)
+            last_version_raw_reads = last_raw_reads_entry(
+                db_engine, seq_key, raise_on_empty=False
             )
             old_run_accession = (
                 last_version_raw_reads[0].result.get(EnaResultField.RUN)
