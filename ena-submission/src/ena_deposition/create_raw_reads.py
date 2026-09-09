@@ -350,8 +350,8 @@ def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: Acc
     last_version_rows = last_raw_reads_entry(db_engine, seq_key)
     logger.info(
         f"Updating raw reads results for accession {seq_key.accession} version "
-        f"{seq_key.version} using results from version {seq_key.version} as there was no"
-        "change in raw read data."
+        f"{seq_key.version} using results from version {last_version_rows[0].version} as there was"
+        "no change in raw read data."
     )
     update_with_retry(
         db_engine=db_engine,
