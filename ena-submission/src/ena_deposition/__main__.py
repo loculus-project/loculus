@@ -35,7 +35,6 @@ logger = logging.getLogger(__name__)
 )
 def run(config_file: str, input_file: str | None) -> None:
     logging.basicConfig(
-        encoding="utf-8",
         level=logging.INFO,
         format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
         datefmt="%H:%M:%S",

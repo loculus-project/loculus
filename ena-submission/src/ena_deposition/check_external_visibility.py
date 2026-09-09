@@ -236,7 +236,7 @@ def get_accessions_to_check(
     Returns:
         Set of accessions to check
     """
-    accessions = set()
+    accessions: set[str] = set()
 
     if not isinstance(entity.result, dict):
         msg = (
@@ -246,7 +246,7 @@ def get_accessions_to_check(
         raise TypeError(msg)
 
     for key, value in entity.result.items():
-        if key.startswith(column_config.accession_field_name_prefix) and value:
+        if key.startswith(column_config.accession_field_name_prefix) and isinstance(value, str):
             accessions.add(value)
 
     return accessions
