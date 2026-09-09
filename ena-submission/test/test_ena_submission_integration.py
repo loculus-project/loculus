@@ -1631,7 +1631,7 @@ class TestRevisionRawReadsOnlyModificationTests(TestSubmission):
         self,
         mock_create_manifest: Mock,
         mock_notify: Mock,  # noqa: ARG002 - used in _test_successful_raw_reads_submission
-        mock_download_fastq_files: Mock,
+        mock_requests_get: Mock,
         mock_get_group_info: Mock,
         mock_submit_external_metadata: Mock,
     ) -> None:
@@ -1649,7 +1649,7 @@ class TestRevisionRawReadsOnlyModificationTests(TestSubmission):
             mock_get_group_info,
             mock_submit_external_metadata,
             with_raw_reads=True,
-            mock_download_fastq_files=mock_download_fastq_files,
+            mock_requests_get=mock_requests_get,
         )
         first_manifest = mock_create_manifest.call_args[0][0]
         old_run_ref = get_run_ref_from_raw_reads_table(self.db_engine, TEST_ACCESSION, 1)
