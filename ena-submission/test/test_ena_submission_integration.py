@@ -689,7 +689,7 @@ def mock_requests_get_fastq_side_effect(url: str, *args: Any, **kwargs: Any) -> 
         raise AssertionError(msg)
     content = Path(RAW_READS_FIXTURE_BY_NAME[filename]["path"]).read_bytes()
 
-    response = MagicMock()
+    response = MagicMock(spec=requests.Response)
     response.__enter__.return_value = response
     response.__exit__.return_value = False
     response.raise_for_status.return_value = None
@@ -1610,7 +1610,7 @@ class TestSimpleSubmissionWithRawReads(TestSubmission):
         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-    @patch("ena_deposition.call_loculus.requests.get")
+    @patch("ena_deposition.call_loculus.requests.get", autospec=True)
     def test_submit(
         self,
         mock_requests_get: Mock,
