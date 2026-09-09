@@ -612,8 +612,9 @@ class RawReadsCreationTests(unittest.TestCase):
 
     @mock.patch("ena_deposition.call_loculus.get_group_info")
     def test_create_manifest_library_fields_unrecognized_value(self, mock_get_group_info):
-        """A metadata value that matches no ENA vocabulary term resolves to None
-        (the field is then omitted from the manifest) rather than being coerced."""
+        """A metadata value that matches no ENA vocabulary term is a sync error between the
+        Loculus options, the enum and the mapping defaults - it must fail loudly rather than
+        silently drop a field ENA requires."""
         mock_get_group_info.return_value = TEST_GROUP
         config = mock_config()
 
@@ -623,6 +624,36 @@ class RawReadsCreationTests(unittest.TestCase):
             "sequencingLibrarySource": "not a real ENA library source",
         }
 
+        with self.assertRaises(ValueError) as ctx:
+            create_raw_reads_manifest_object(
+                config,
+                "Test Sample Accession",
+                "Test Study Accession",
+                submission_row,
+                self.fastq_files,
+            )
+        self.assertIn("not a valid LibrarySource", str(ctx.exception))
+
+    @mock.patch("ena_deposition.call_loculus.get_group_info")
+    def test_create_manifest_library_fields_fall_back_to_config_default(self, mock_get_group_info):
+        """An absent library field is legitimate - the default from
+        raw_reads_manifest_fields_mapping fills it, so the manifest still carries the
+        fields ENA marks mandatory."""
+        mock_get_group_info.return_value = TEST_GROUP
+        config = mock_config()
+
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            k: v
+            for k, v in submission_row.seq_metadata.items()
+            if k
+            not in {
+                "sequencingLibrarySource",
+                "sequencingLibrarySelection",
+                "sequencingAssayType",
+            }
+        }
+
         manifest = create_raw_reads_manifest_object(
             config,
             "Test Sample Accession",
@@ -630,7 +661,9 @@ class RawReadsCreationTests(unittest.TestCase):
             submission_row,
             self.fastq_files,
         )
-        self.assertIsNone(manifest.library_source)
+        self.assertEqual(manifest.library_source, LibrarySource.OTHER)
+        self.assertEqual(manifest.library_selection, LibrarySelection.UNSPECIFIED)
+        self.assertEqual(manifest.library_strategy, LibraryStrategy.OTHER)
 
     def test_create_manifest_insert_size_ignored_for_single_end(self):
         config = mock_config()

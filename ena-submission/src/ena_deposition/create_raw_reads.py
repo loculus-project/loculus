@@ -69,7 +69,7 @@ def get_platform_and_instrument(
 
     Raises ValueError if the value cannot yield a manifest ENA will accept.
     """
-    if instrument := Instrument.from_value(raw_value):
+    if instrument := Instrument.try_from_value(raw_value):
         if instrument is Instrument.unspecified:
             # webin-cli rejects INSTRUMENT=unspecified unless PLATFORM is also given
             # Preprocessing forces sequencingInstrument to be one of the configured options
@@ -82,7 +82,7 @@ def get_platform_and_instrument(
             logger.error(message)
             raise ValueError(message)
         return None, instrument
-    if platform := Platform.from_value(raw_value):
+    if platform := Platform.try_from_value(raw_value):
         return platform, Instrument.unspecified
     message = (
         f"sequencingInstrument value '{raw_value}' for accession {accession} matches "

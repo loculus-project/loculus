@@ -2,7 +2,7 @@ import dataclasses
 from collections import UserString
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Self, overload
+from typing import Self
 
 
 class XmlNone(UserString):
@@ -12,22 +12,38 @@ class XmlNone(UserString):
 class LookupStrEnum(StrEnum):
     """StrEnum with case-insensitive lookup by ENA's controlled-vocabulary value."""
 
-    @overload
     @classmethod
-    def from_value(cls, raw_value: str | None) -> Self | None: ...
-    @overload
-    @classmethod
-    def from_value(cls, raw_value: str | None, default: Self) -> Self: ...
-
-    @classmethod
-    def from_value(cls, raw_value: str | None, default: Self | None = None) -> Self | None:
+    def try_from_value(cls, raw_value: str | None) -> Self | None:
+        """Membership test: the matching member, or None if `raw_value` is empty or is not
+        in this vocabulary. Use when "not in this vocabulary" is an expected answer."""
         if not raw_value:
-            return default
+            return None
         normalized = raw_value.strip().lower()
         for member in cls:
             if member.value.lower() == normalized:
                 return member
-        return default
+        return None
+
+    @classmethod
+    def from_value(cls, raw_value: str | None) -> Self | None:
+        """Convert a resolved metadata value to its ENA vocabulary member.
+
+        An empty value is legitimate and yields None - the field is then omitted from the
+        manifest. A non-empty value that is not in the vocabulary is not: it means the
+        Loculus options list, this enum, or a `default:` in the manifest field mapping have
+        drifted apart, so fail loudly rather than silently dropping the field.
+        """
+        if not raw_value:
+            return None
+        member = cls.try_from_value(raw_value)
+        if member is None:
+            msg = (
+                f"{raw_value!r} is not a valid {cls.__name__} value - the Loculus metadata "
+                "options, this enum and the manifest field mapping defaults are out of sync "
+                "with ENA's controlled vocabulary."
+            )
+            raise ValueError(msg)
+        return member
 
 
 @dataclass
