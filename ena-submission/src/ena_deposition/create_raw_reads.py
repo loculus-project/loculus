@@ -335,12 +335,26 @@ def last_raw_reads_entry(
     return last_version_rows
 
 
+def previous_run_accession(db_engine: Engine, seq_key: AccessionVersion) -> str | None:
+    """The ENA run accession the previous version was submitted under, if it has one."""
+    last_version_rows = last_raw_reads_entry(db_engine, seq_key, raise_on_empty=False)
+    result = last_version_rows[0].result if last_version_rows else None
+    run_accession = result.get(EnaResultField.RUN) if result else None
+    if run_accession is None:
+        logger.warning(
+            f"No previous run accession found for {seq_key.accession} version {seq_key.version}, "
+            "so no old run will be requested for suppression. This is only expected if the "
+            "previous version had no raw reads."
+        )
+    return run_accession
+
+
 def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: AccessionVersion):
     last_version_rows = last_raw_reads_entry(db_engine, seq_key)
     logger.info(
         f"Updating raw reads results for accession {seq_key.accession} version "
-        f"{seq_key.version} using results from version {last_version_rows[0].version} as there was"
-        "no change in raw read data."
+        f"{seq_key.version} using results from version {last_version_rows[0].version} "
+        "as there was no change in raw read data."
     )
     update_with_retry(
         db_engine=db_engine,
@@ -450,12 +464,7 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
             if not has_raw_reads_changed(config, db_engine, submission_row):
                 update_raw_reads_results_with_latest_version(db_engine, seq_key)
                 continue
-            last_version_raw_reads = last_raw_reads_entry(db_engine, seq_key, raise_on_empty=False)
-            old_run_accession = (
-                last_version_raw_reads[0].result.get(EnaResultField.RUN)
-                if last_version_raw_reads and last_version_raw_reads[0].result
-                else None
-            )
+            old_run_accession = previous_run_accession(db_engine, seq_key)
 
         # Downloaded fastq files and the manifest are written under tmp_dir, which is removed
         # on every exit from this block
