@@ -593,7 +593,7 @@ def _test_successful_project_submission(
 
 
 def add_raw_reads_to_sequences(
-    sequences: dict[str, Any],
+    entry: dict[str, Any],
     config: Config,
     file_names: list[str] | None = None,
 ) -> None:
@@ -612,9 +612,7 @@ def add_raw_reads_to_sequences(
             }
         )
 
-    sequences[TEST_ACCESSION_VERSION]["metadata"][config.raw_reads_metadata_field] = json.dumps(
-        files
-    )
+    entry["metadata"][config.raw_reads_metadata_field] = json.dumps(files)
 
 
 def get_sequences(
@@ -624,7 +622,7 @@ def get_sequences(
     with open(INPUT_FILE, encoding="utf-8") as json_file:
         sequences: dict[str, Any] = json.load(json_file)
         if with_raw_reads:
-            add_raw_reads_to_sequences(sequences, config)
+            add_raw_reads_to_sequences(sequences[TEST_ACCESSION_VERSION], config)
         return sequences
 
 
@@ -647,7 +645,7 @@ def get_revisions(
             new_value["metadata"]["version"] = 2
             new_value["metadata"]["accessionVersion"] = accession_version
             if with_raw_reads:
-                add_raw_reads_to_sequences({accession_version: new_value}, config)
+                add_raw_reads_to_sequences(new_value, config)
             if modify_assembly:
                 new_value["metadata"]["geoLocAdmin1"] = "revised location"
             else:
@@ -660,7 +658,7 @@ def get_revisions(
                 if set_insert_size:
                     new_value["metadata"]["pairedEndInsertSize"] = 150
                 add_raw_reads_to_sequences(
-                    {accession_version: new_value},
+                    new_value,
                     config,
                     ["rawReads.fastq.gz", "rawReads2.fastq.gz"],
                 )
