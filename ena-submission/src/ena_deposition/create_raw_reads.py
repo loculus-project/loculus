@@ -172,8 +172,9 @@ def sync_state_with_submission_table(db_engine: Engine, config: Config) -> None:
     """
     1. Find all entries in submission_table in state SUBMITTED_SAMPLE and submit_raw_reads=True
     2. If (exists an entry in the raw_reads_table for (accession, version)):
-    a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_ALL
+    a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_RAW_READS
     3. Else create corresponding entry in raw_reads_table in state READY
+    (with run accession if present in submission_table)
     """
     conditions = {"status_all": StatusAll.SUBMITTED_SAMPLE, "submit_raw_reads": True}
     ready_to_submit = find_conditions_in_db(db_engine, SubmissionTableEntry, conditions=conditions)
@@ -260,7 +261,7 @@ def can_revise_raw_reads(
             db_engine, [error], seq_key=asdict(submission_row.pkey), update_type="revision"
         )
         return False
-    # TODO: Automate automatic revisions of raw reads metadata fields
+    # TODO(#6877): Automate automatic revisions of raw reads metadata fields
     # if config.allow_revision_with_manifest_changes:
     #     logger.debug(
     #         "allow_revision_with_manifest_changes=True, skipping manifest field comparison"

@@ -199,12 +199,12 @@ def create_manifest_object(
 
 def submission_table_start(db_engine: Engine) -> None:
     """
-    1. Find all entries in submission_table in state SUBMITTED_SAMPLE
-    2. If entry has insdcRawReadsAccession, check it exists in ENA, if not set error and continue
-    3. If (exists an entry in the assembly_table for (accession, version)):
+    1. Find all entries in submission_table in state SUBMITTED_SAMPLE and submit_raw_reads=False
+    and all entries in submission_table in state SUBMITTED_RAW_READS and submit_raw_reads=True
+    2. If (exists an entry in the assembly_table for (accession, version)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_ALL
     b.      Else update state to SUBMITTING_ASSEMBLY
-    4. Else create corresponding entry in assembly_table
+    3. Else create corresponding entry in assembly_table
     """
 
     submitted_sample_conditions = {
@@ -253,7 +253,7 @@ def submission_table_start(db_engine: Engine) -> None:
             # If not: create assembly_entry, change status to SUBMITTING_ASSEMBLY
             assembly_entry = AssemblyTableEntry(**seq_key)
             if not add_to_db(db_engine, assembly_entry):
-                return
+                continue
 
             status_all = StatusAll.SUBMITTING_ASSEMBLY
 
@@ -428,7 +428,8 @@ def has_assembly_data_changed(
                 f"for {submission_row.accession}. (Maybe other fields changed as well)"
             )
             return True
-    # TODO: if config.allow_revision_with_manifest_changes==True: check if the run ref has changed
+    # TODO(#7245): if config.allow_revision_with_manifest_changes==True: check if the run ref has
+    # changed
     if config.allow_revision_with_manifest_changes and manifest_fields_diff(
         config.assembly_manifest_fields_mapping, submission_row, last_entry
     ):

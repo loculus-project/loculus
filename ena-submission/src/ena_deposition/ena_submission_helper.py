@@ -753,6 +753,7 @@ def _run_webin_cli_submission(
             context=context,
         )
     except subprocess.TimeoutExpired as e:
+        # timeout logs may include sensitive info, so redact them
         msg = f"webin-cli timed out after {e.timeout}s"
         return CreationResult(errors=[msg], warnings=[])
     except Exception as e:
