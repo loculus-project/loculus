@@ -25,5 +25,8 @@ data:
     keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token
     approved_list_test_url: {{ $enaApprovedListTestUrl }}
     suppressed_list_test_url: {{ $enaSuppressedListTestUrl }}
+    {{- with .Values.enaDeposition.configFile }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
     {{- include "loculus.generateENASubmissionConfig" . | nindent 4 }}
 {{- end }}

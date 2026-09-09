@@ -151,6 +151,8 @@ class FileMappingPreconditionValidator(
      * - Trailing periods: Windows silently strips these, and single or double period names break path normalisation
      * - Whitespace characters
      *
+     * The website mirrors this validation in fileNameValidation.ts - any changes here must also be made there.
+     *
      * References:
      * - https://en.wikipedia.org/wiki/Comparison_of_file_systems#Limits
      * - https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file
@@ -206,6 +208,8 @@ class FileMappingPreconditionValidator(
      * - Underscores (_)
      * - Hyphens (-)
      * - Periods (.)
+     *
+     * The website mirrors this validation in fileNameValidation.ts - any changes here must also be made there.
      */
     private fun strictValidateFilename(filename: String, category: FileCategory) {
         if (!STRICT_FILENAME_REGEX.matches(filename)) {

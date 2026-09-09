@@ -149,6 +149,12 @@ into a single row.
   header: 'INSDC'
 ```
 
+### Extra input field (type)
+
+Definition of an additional, input-only field for the submission form (see `extraInputFields` on the [Organism schema](#organism-schema-type)). Unlike `metadata` fields, these are not searchable or displayed on the sequence details page; a preprocessing function can consume them to derive one or more `metadata` fields and they are shown in the metadata template.
+
+<SchemaDocs group='inputField' fieldColumnClass='w-56' />
+
 ### Preprocessing (type)
 
 <SchemaDocs group='preprocessing' fieldColumnClass='w-28' />
