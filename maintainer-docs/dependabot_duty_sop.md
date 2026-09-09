@@ -1,4 +1,4 @@
-# Dependabot Duty Standard Operating Practice
+# Dependabot Duty Standard Operating Procedure
 
 ## Background
 
