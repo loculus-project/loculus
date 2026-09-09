@@ -133,16 +133,13 @@ def create_manifest_object(
     )
     insert_size = int(insert_size_) if len(fastq_files) > 1 and insert_size_ else None
     library_source = LibrarySource.from_value(
-        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_source"], metadata),
-        LibrarySource.OTHER,
+        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_source"], metadata)
     )
     library_selection = LibrarySelection.from_value(
-        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_selection"], metadata),
-        LibrarySelection.UNSPECIFIED,
+        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_selection"], metadata)
     )
     library_strategy = LibraryStrategy.from_value(
-        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_strategy"], metadata),
-        LibraryStrategy.OTHER,
+        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_strategy"], metadata)
     )
 
     try:
@@ -453,9 +450,7 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
             if not has_raw_reads_changed(config, db_engine, submission_row):
                 update_raw_reads_results_with_latest_version(db_engine, seq_key)
                 continue
-            last_version_raw_reads = last_raw_reads_entry(
-                db_engine, seq_key, raise_on_empty=False
-            )
+            last_version_raw_reads = last_raw_reads_entry(db_engine, seq_key, raise_on_empty=False)
             old_run_accession = (
                 last_version_raw_reads[0].result.get(EnaResultField.RUN)
                 if last_version_raw_reads and last_version_raw_reads[0].result
