@@ -2003,6 +2003,11 @@
           "type": "string",
           "description": "URL to the ENA suppressed sequence list (typically hosted on a Github repo)"
         },
+        "rawReadsMetadataField": {
+          "type": "string",
+          "description": "Name of the Loculus metadata field that holds the JSON-encoded list of raw read files",
+          "default": "rawReads"
+        },
         "configFile": {
           "type": "object",
           "description": "Additional fields merged into the ena-submission config file. Keys set here override the values generated from the other enaDeposition settings and the pipeline's own config/defaults.yaml (but not the generated per-organism enaOrganisms block).",

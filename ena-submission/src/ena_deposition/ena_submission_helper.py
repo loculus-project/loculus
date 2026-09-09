@@ -51,6 +51,7 @@ from .ena_types import (
     Hold,
     MoleculeType,
     ProjectSet,
+    RawReadsManifest,
     SampleSetType,
     Submission,
     XmlAttribute,
@@ -59,10 +60,10 @@ from .ena_types import (
 from .submission_db_helper import (
     AssemblyTableEntry,
     ProjectTableEntry,
+    RawReadsTableEntry,
     SampleTableEntry,
     Status,
     SubmissionTableEntry,
-    add_to_db,
     update_db_where_conditions,
     update_with_retry,
 )
@@ -162,7 +163,7 @@ def get_alias(prefix: str, random_alias=False, set_alias_suffix: str | None = No
 
     Loculus-accession aliases should be unique, but for testing, I add a timestamp
     to allow multiple submissions of the same sample.
-    For revisions, the alias must match the original, so I set a suffix for testing.
+    For assembly revisions, the alias must match the original, so I set a suffix for testing.
     """
     if set_alias_suffix:
         return XmlAttribute(f"{prefix}:{set_alias_suffix}")
@@ -436,7 +437,7 @@ def get_authors(authors: str) -> str | None:
         formatted_authors = reformat_authors_from_loculus_to_embl_style(authors)
         logger.debug("Reformatted authors")
     except Exception as err:
-        msg = f"Was unable to format authors: {authors} as ENA expects"
+        msg = f"Was unable to format authors as ENA expects: {authors}"
         logger.error(msg)
         raise ValueError(msg) from err
     return formatted_authors
@@ -533,14 +534,17 @@ def create_flatfile(
 
 
 def create_manifest(
-    manifest: AssemblyManifest, is_broker: bool = False, dir: str | None = None
+    manifest: AssemblyManifest | RawReadsManifest, is_broker: bool = False, dir: str | None = None
 ) -> str:
     """
     Creates a temp manifest file:
     https://ena-docs.readthedocs.io/en/latest/submit/assembly/genome.html#manifest-files
     """
-    if not manifest.fasta and not manifest.flatfile:
+    if isinstance(manifest, AssemblyManifest) and not manifest.fasta and not manifest.flatfile:
         msg = "Either fasta or flatfile must be provided"
+        raise ValueError(msg)
+    if isinstance(manifest, RawReadsManifest) and not manifest.fastq:
+        msg = "Fastq files must be provided"
         raise ValueError(msg)
 
     if dir:
@@ -647,6 +651,7 @@ def post_webin_cli(
     manifest_filename,
     tmpdir: tempfile.TemporaryDirectory,
     center_name=None,
+    context: Literal["genome", "reads"] = "genome",
 ) -> subprocess.CompletedProcess:
     logger.debug(
         f"Posting manifest {manifest_filename} to ENA Webin CLI with test={config.test} and "
@@ -657,7 +662,7 @@ def post_webin_cli(
         f"-username={config.ena_submission_username}",
         f"-centername={center_name}" if center_name else "",
         "-submit",
-        "-context=genome",
+        f"-context={context}",
         f"-manifest={manifest_filename}",
         f"-outputdir={tmpdir.name}",
         "-test" if config.test else "",
@@ -680,51 +685,93 @@ def post_webin_cli(
         text=True,
         check=False,
         shell=False,
+        timeout=config.ena_webin_cli_timeout_seconds,
     )
 
 
-def create_ena_assembly(config: Config, manifest_filename: str, center_name=None) -> CreationResult:
+_WEBIN_CLI_ACCESSION_MARKER = "The following {kind} accession was assigned to the submission:"
+
+
+def _extract_accessions(
+    stdout: str,
+    patterns: dict[str, tuple[str, str]],
+) -> dict[str, str | Sequence[str]] | None:
     """
-    This is equivalent to running:
-    ena-webin-cli -username {params.ena_submission_username} \\
-        -password {params.ena_submission_password} -context genome \\
-        -manifest {manifest_file} -submit
+    Extract accessions from Webin CLI output.
+
+    patterns maps output keys to (kind, regex), where `kind` is the noun Webin CLI uses in
+    its "The following {kind} accession was assigned to the submission:" marker line, e.g.
+    "analysis", "experiment", "run".
+    """
+    result: dict[str, str | Sequence[str]] = {}
+
+    for line in stdout.splitlines():
+        for key, (kind, regex) in patterns.items():
+            if _WEBIN_CLI_ACCESSION_MARKER.format(kind=kind) not in line:
+                continue
+
+            match = re.search(regex, line)
+            if match:
+                accession = match.group(0)
+                result[key] = accession
+                logger.info(
+                    "Webin CLI succeeded and returned %s: %s",
+                    key,
+                    accession,
+                )
+
+    return result if len(result) == len(patterns) else None
+
+
+def _run_webin_cli_submission(
+    config: Config,
+    manifest_filename: str,
+    center_name: str | None,
+    context: Literal["genome", "reads"],
+    patterns: dict[str, tuple[str, str]],
+) -> CreationResult:
+    """
+    Runs `ena-webin-cli -submit` for the given context and manifest, extracting the
+    accession(s) named in `patterns` (see `_extract_accessions`) from stdout on success.
+
+    On failure - a non-zero exit code, or a zero exit code without all expected
+    accessions - logs the manifest and webin-cli log files and returns the errors instead.
+
     config.test=True, adds the `-test` flag which means submissions will use the ENA dev endpoint.
     """
-    errors: list[str] = []
-    warnings: list[str] = []
-
     # create a tmp dir for output files
     # use normal python stuff for that
 
     output_tmpdir = tempfile.TemporaryDirectory()
 
-    response = post_webin_cli(
-        config, manifest_filename, tmpdir=output_tmpdir, center_name=center_name
-    )
+    try:
+        response = post_webin_cli(
+            config,
+            manifest_filename,
+            tmpdir=output_tmpdir,
+            center_name=center_name,
+            context=context,
+        )
+    except subprocess.TimeoutExpired as e:
+        # timeout logs may include sensitive info, so redact them
+        msg = f"webin-cli timed out after {e.timeout}s"
+        return CreationResult(errors=[msg], warnings=[])
+    except Exception as e:
+        msg = f"Error occurred while running webin-cli: {type(e).__name__}"
+        logger.error(msg)
+        return CreationResult(errors=[msg], warnings=[])
 
-    # Happy path: webin-cli succeeded and returned ERZ accession
     if response.returncode == 0:
-        for line in response.stdout.splitlines():
-            if "The following analysis accession was assigned to the submission:" in line:
-                match = re.search(r"ERZ\d+", line)
-                if match:
-                    erz_accession = match.group(0)
-                    logger.info(f"Webin CLI succeeded and returned ERZ accession: {erz_accession}")
-                    return CreationResult(
-                        result={"erz_accession": erz_accession},
-                        errors=errors,
-                        warnings=warnings,
-                    )
-
-    # Handle the case where the webin-cli command fails or does not return ERZ accession
-    if response.returncode != 0:
-        error_message = f"Webin CLI command failed with status: {response.returncode}. "
+        if accessions := _extract_accessions(response.stdout, patterns):
+            # Happy path: webin-cli succeeded and returned the expected accession(s)
+            return CreationResult(result=accessions, errors=[], warnings=[])
+        missing_accessions = " or ".join(f"{kind} accession" for kind in patterns)
+        error_message = f"Webin CLI command succeeded but did not return {missing_accessions}. "
     else:
-        error_message = "Webin CLI command succeeded but did not return ERZ accession. "
+        error_message = f"Webin CLI command failed with status: {response.returncode}. "
+
     error_message += f"Stdout: {response.stdout}, Stderr: {response.stderr}"
     logger.error(error_message)
-    errors.append(error_message)
 
     try:
         manifest_contents = Path(manifest_filename).read_text(encoding="utf-8")
@@ -739,7 +786,48 @@ def create_ena_assembly(config: Config, manifest_filename: str, center_name=None
             logger.info(f"webin-cli log file {file_path} contents:\n{contents}")
         except Exception as e:
             logger.warning(f"Reading webin-cli log file {file_path} failed: {e}")
-    return CreationResult(errors=errors, warnings=warnings)
+    return CreationResult(errors=[error_message], warnings=[])
+
+
+def create_ena_assembly(config: Config, manifest_filename: str, center_name=None) -> CreationResult:
+    """
+    This is equivalent to running:
+    ena-webin-cli -username {params.ena_submission_username} \\
+        -password {params.ena_submission_password} -context genome \\
+        -manifest {manifest_file} -submit
+    config.test=True, adds the `-test` flag which means submissions will use the ENA dev endpoint.
+    """
+    return _run_webin_cli_submission(
+        config,
+        manifest_filename,
+        center_name,
+        context="genome",
+        patterns={"erz_accession": ("analysis", r"ERZ\d+")},
+    )
+
+
+def create_ena_raw_reads(
+    config: Config, manifest_filename: str, center_name=None
+) -> CreationResult:
+    """
+    This is equivalent to running:
+    ena-webin-cli -submit \\
+        -context reads \\
+        -manifest manifest.tsv \\
+        -username Webin-XXXXX \\
+        -password YYYYYY
+    config.test=True, adds the `-test` flag which means submissions will use the ENA dev endpoint.
+    """
+    return _run_webin_cli_submission(
+        config,
+        manifest_filename,
+        center_name,
+        context="reads",
+        patterns={
+            EnaResultField.EXPERIMENT: ("experiment", r"ERX\d+"),
+            EnaResultField.RUN: ("run", r"ERR\d+"),
+        },
+    )
 
 
 def get_ena_analysis_process(
@@ -950,13 +1038,16 @@ def set_accession_does_not_exist_error(
                 },
             )
         case "RUN_REF":
-            assembly_table_entry = AssemblyTableEntry(
-                **conditions,  # type: ignore
-                status=Status.HAS_ERRORS,
-                errors=[error_text],
-                result={},  # type: ignore
+            succeeded = update_db_where_conditions(
+                db_engine,
+                RawReadsTableEntry,
+                conditions,
+                {
+                    "status": Status.HAS_ERRORS,
+                    "errors": [error_text],
+                    "result": {EnaResultField.RUN: accession},
+                },
             )
-            succeeded = add_to_db(db_engine, assembly_table_entry) is not None
 
     if not succeeded:
         logger.warning(f"{accession_type} creation failed and DB update failed.")
@@ -965,9 +1056,13 @@ def set_accession_does_not_exist_error(
 def retry_failed_submissions_for_matching_errors(
     entries_with_errors: Iterable[ProjectTableEntry]
     | Iterable[SampleTableEntry]
-    | Iterable[AssemblyTableEntry],
+    | Iterable[AssemblyTableEntry]
+    | Iterable[RawReadsTableEntry],
     db_engine: Engine,
-    model_class: type[ProjectTableEntry] | type[SampleTableEntry] | type[AssemblyTableEntry],
+    model_class: type[ProjectTableEntry]
+    | type[SampleTableEntry]
+    | type[AssemblyTableEntry]
+    | type[RawReadsTableEntry],
     config: Config,
     last_retry: datetime | None = None,
 ) -> datetime | None:
