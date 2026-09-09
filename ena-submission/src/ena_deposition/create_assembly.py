@@ -327,7 +327,9 @@ def update_assembly_error(
     )
 
 
-def get_run_ref(db_engine: Engine, seq_key: AccessionVersion) -> str | None:
+def get_run_ref(
+    db_engine: Engine, seq_key: AccessionVersion, raise_on_missing: bool = True
+) -> str | None:
     """
     Return the run accession (used as RUN_REF in the assembly manifest) for *seq_key*
     from raw_reads_table, or None if there is no raw reads entry or it has no result yet.
@@ -342,7 +344,7 @@ def get_run_ref(db_engine: Engine, seq_key: AccessionVersion) -> str | None:
         if raw_reads_rows[0].result
         else None
     )
-    if raw_reads_rows and not run_ref:
+    if raw_reads_rows and not run_ref and raise_on_missing:
         msg = (
             f"{seq_key.accession}.{seq_key.version} has a corresponding raw reads entry but"
             "does not have a run_ref in result - this should not happen."
@@ -363,7 +365,7 @@ def run_ref_diff(
     seq_metadata), e.g. it changes when raw read files are replaced or added, so it is not
     covered by manifest_fields_diff.
     """
-    previous_run_ref = get_run_ref(db_engine, last_version_entry.pkey)
+    previous_run_ref = get_run_ref(db_engine, last_version_entry.pkey, raise_on_missing=False)
     if previous_run_ref != run_ref:
         return {"run_ref": f"Last: {previous_run_ref}, New: {run_ref}"}
     return {}
