@@ -330,7 +330,7 @@ def has_raw_reads_changed(
 
 def last_raw_reads_entry(
     db_engine: Engine, seq_key: AccessionVersion, raise_on_empty: bool = True
-) -> RawReadsTableEntry:
+) -> list[RawReadsTableEntry]:
     version_to_revise = previous_version(db_engine, seq_key)
     last_version_rows = find_conditions_in_db(
         db_engine,
@@ -343,7 +343,7 @@ def last_raw_reads_entry(
     if len(last_version_rows) == 0 and raise_on_empty:
         error_msg = f"Last version {version_to_revise} not found in raw_reads_table"
         raise RuntimeError(error_msg)
-    return last_version_rows[0]
+    return last_version_rows
 
 
 def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: AccessionVersion):
