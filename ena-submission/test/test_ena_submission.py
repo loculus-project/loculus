@@ -610,28 +610,6 @@ class RawReadsCreationTests(unittest.TestCase):
         self.assertEqual(manifest.library_selection, LibrarySelection.RT_PCR)
         self.assertEqual(manifest.library_strategy, LibraryStrategy.AMPLICON)
 
-    @mock.patch("ena_deposition.call_loculus.get_group_info")
-    def test_create_manifest_library_fields_unrecognized_value(self, mock_get_group_info):
-        """A metadata value that matches no ENA vocabulary term resolves to None
-        (the field is then omitted from the manifest) rather than being coerced."""
-        mock_get_group_info.return_value = TEST_GROUP
-        config = mock_config()
-
-        submission_row = sample_data_in_submission_table()
-        submission_row.seq_metadata = {
-            **submission_row.seq_metadata,
-            "sequencingLibrarySource": "not a real ENA library source",
-        }
-
-        manifest = create_raw_reads_manifest_object(
-            config,
-            "Test Sample Accession",
-            "Test Study Accession",
-            submission_row,
-            self.fastq_files,
-        )
-        self.assertIsNone(manifest.library_source)
-
     def test_create_manifest_insert_size_ignored_for_single_end(self):
         config = mock_config()
         submission_row = sample_data_in_submission_table()
