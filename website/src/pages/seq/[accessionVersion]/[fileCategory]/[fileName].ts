@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 
 import { getRuntimeConfig } from '../../../../config';
+import { createAuthorizationHeader } from '../../../../utils/createAuthorizationHeader';
 import { parseAccessionVersionFromString } from '../../../../utils/extractAccessionVersion';
 import { getAccessToken } from '../../../../utils/getAccessToken';
 
@@ -11,15 +12,12 @@ async function proxyToBackend({ params, locals }: Parameters<APIRoute>[0], metho
 
     const backendUrl = `${runtimeConfig.serverSide.backendUrl}/files/get/${accession}/${version}/${encodeURIComponent(fileCategory!)}/${encodeURIComponent(fileName!)}`;
 
-    const accessToken = getAccessToken(locals.session)!;
+    const accessToken = getAccessToken(locals.session);
 
     const response = await fetch(backendUrl, {
         method,
         redirect: 'manual',
-        headers: {
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            Authorization: `Bearer ${accessToken}`,
-        },
+        headers: createAuthorizationHeader(accessToken),
     });
 
     if (response.status === 307 || response.status === 302) {
