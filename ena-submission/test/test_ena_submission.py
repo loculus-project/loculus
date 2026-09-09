@@ -549,14 +549,9 @@ class RawReadsCreationTests(unittest.TestCase):
     def setUp(self):
         self.seq_key = "LOC_0001TLY"
         self.fastq_files = ["/tmp/fake_R1.fastq.gz", "/tmp/fake_R2.fastq.gz"]  # noqa: S108
-        tmp_dir = tempfile.TemporaryDirectory()
-        self.addCleanup(tmp_dir.cleanup)
-        self.tmp_dir = tmp_dir.name
 
     @mock.patch("ena_deposition.call_loculus.get_group_info")
-    @mock.patch("ena_deposition.call_loculus.download_fastq_files")
-    def test_create_manifest(self, mock_download_fastq_files, mock_get_group_info):
-        mock_download_fastq_files.return_value = self.fastq_files
+    def test_create_manifest(self, mock_get_group_info):
         mock_get_group_info.return_value = TEST_GROUP
         config = mock_config()
         config.unique_raw_reads_suffix = "Test suffix"
@@ -572,7 +567,7 @@ class RawReadsCreationTests(unittest.TestCase):
             "Test Sample Accession",
             "Test Study Accession",
             submission_row,
-            dir=self.tmp_dir,
+            self.fastq_files,
         )
         self.assertEqual(manifest.insert_size, 350)
         self.assertEqual(manifest.study, "Test Study Accession")
@@ -589,9 +584,7 @@ class RawReadsCreationTests(unittest.TestCase):
             "Original sequence submitted to Loculus with accession: LOC_0001TLY, version: 1",
         )
 
-    @mock.patch("ena_deposition.call_loculus.download_fastq_files")
-    def test_create_manifest_insert_size_ignored_for_single_end(self, mock_download_fastq_files):
-        mock_download_fastq_files.return_value = [self.fastq_files[0]]
+    def test_create_manifest_insert_size_ignored_for_single_end(self):
         config = mock_config()
         submission_row = sample_data_in_submission_table()
         submission_row.seq_metadata = {
@@ -604,15 +597,13 @@ class RawReadsCreationTests(unittest.TestCase):
             "Test Sample Accession",
             "Test Study Accession",
             submission_row,
-            dir=self.tmp_dir,
+            [self.fastq_files[0]],
         )
         self.assertIsNone(manifest.insert_size)
 
-    @mock.patch("ena_deposition.call_loculus.download_fastq_files")
-    def test_create_manifest_no_fastq_files(self, mock_download_fastq_files):
-        """If no fastq files are found, a RuntimeError is raised directly (not wrapped,
+    def test_create_manifest_no_fastq_files(self):
+        """If no fastq files are passed in, a RuntimeError is raised directly (not wrapped,
         since this check happens before the manifest is built)."""
-        mock_download_fastq_files.return_value = []
         config = mock_config()
         submission_row = sample_data_in_submission_table()
 
@@ -622,18 +613,16 @@ class RawReadsCreationTests(unittest.TestCase):
                 "Test Sample Accession",
                 "Test Study Accession",
                 submission_row,
-                dir=self.tmp_dir,
+                [],
             )
         self.assertIn("No fastq files found", str(ctx.exception))
         self.assertIsNone(ctx.exception.__cause__)
 
     @mock.patch("ena_deposition.create_raw_reads.get_description")
-    @mock.patch("ena_deposition.call_loculus.download_fastq_files")
-    def test_create_manifest_error_wrapped(self, mock_download_fastq_files, mock_get_description):
+    def test_create_manifest_error_wrapped(self, mock_get_description):
         """Errors raised while building the RawReadsManifest itself should be wrapped in
         a RuntimeError that identifies the offending accession, with the original error
         preserved as the cause."""
-        mock_download_fastq_files.return_value = self.fastq_files
         mock_get_description.side_effect = ValueError("boom")
         config = mock_config()
         submission_row = sample_data_in_submission_table()
@@ -644,14 +633,12 @@ class RawReadsCreationTests(unittest.TestCase):
                 "Test Sample Accession",
                 "Test Study Accession",
                 submission_row,
-                dir=self.tmp_dir,
+                self.fastq_files,
             )
         self.assertIn(submission_row.accession, str(ctx.exception))
         self.assertIsInstance(ctx.exception.__cause__, ValueError)
 
-    @mock.patch("ena_deposition.call_loculus.download_fastq_files")
-    def test_create_manifest_instrument_no_platform(self, mock_download_fastq_files):
-        mock_download_fastq_files.return_value = self.fastq_files
+    def test_create_manifest_instrument_no_platform(self):
         config = mock_config()
         submission_row = sample_data_in_submission_table()
         submission_row.seq_metadata = {
@@ -664,14 +651,12 @@ class RawReadsCreationTests(unittest.TestCase):
             "Test Sample Accession",
             "Test Study Accession",
             submission_row,
-            dir=self.tmp_dir,
+            self.fastq_files,
         )
         self.assertIsNone(manifest.platform)
         self.assertEqual(manifest.instrument, Instrument.HiSeq_X_Five)
 
-    @mock.patch("ena_deposition.call_loculus.download_fastq_files")
-    def test_create_manifest_unrecognized_instrument_raises(self, mock_download_fastq_files):
-        mock_download_fastq_files.return_value = self.fastq_files
+    def test_create_manifest_unrecognized_instrument_raises(self):
         config = mock_config()
         submission_row = sample_data_in_submission_table()
         submission_row.seq_metadata = {
@@ -687,7 +672,7 @@ class RawReadsCreationTests(unittest.TestCase):
                 "Test Sample Accession",
                 "Test Study Accession",
                 submission_row,
-                dir=self.tmp_dir,
+                self.fastq_files,
             )
 
 

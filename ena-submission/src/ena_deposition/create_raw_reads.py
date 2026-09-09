@@ -97,18 +97,22 @@ def create_manifest_object(
     sample_accession: str,
     study_accession: str,
     submission_row: SubmissionTableEntry,
-    dir: str,
+    fastq_files: list[str],
     random_alias: bool = False,
 ) -> RawReadsManifest:
     """
     Create an RawReadsManifest object for an entry in the raw reads table using:
     - the corresponding ena_sample_accession and bioproject_accession
     - the organism metadata from the config file
-    - downloaded fastq files from the corresponding submission table entry,
+    - the already-downloaded fastq files passed in as `fastq_files`
 
     If random_alias=True add a timestamp to the alias suffix to allow for multiple
     submissions of the same manifest for testing.
     """
+    if len(fastq_files) == 0:
+        msg = f"No fastq files found for accession {submission_row.accession}"
+        raise RuntimeError(msg)
+
     # We must create a new run read accession for each revision that changes the files
     alias = get_alias(
         f"{submission_row.accession}:{submission_row.version}:{submission_row.organism}:{config.unique_raw_reads_suffix}",
@@ -123,10 +127,6 @@ def create_manifest_object(
     platform, instrument = get_platform_and_instrument(
         sequencing_instrument, submission_row.accession
     )
-    fastq_files = call_loculus.download_fastq_files(config, metadata, submission_row.accession, dir)
-    if len(fastq_files) == 0:
-        msg = f"No fastq files found for accession {submission_row.accession}"
-        raise RuntimeError(msg)
 
     insert_size_ = resolve_manifest_field(
         raw_reads_manifest_fields_mapping["insert_size"], metadata
@@ -457,12 +457,15 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
         # on every exit from this block
         with tempfile.TemporaryDirectory() as tmp_dir:
             try:
+                fastq_files = call_loculus.download_fastq_files(
+                    config, submission_row.seq_metadata, submission_row.accession, tmp_dir
+                )
                 manifest_object = create_manifest_object(
                     config,
                     sample_accession,
                     study_accession,
                     submission_row,
-                    dir=tmp_dir,
+                    fastq_files,
                     random_alias=config.random_alias,
                 )
                 manifest_file = create_manifest(
