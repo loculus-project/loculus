@@ -707,7 +707,7 @@ class GetPlatformAndInstrumentTests(unittest.TestCase):
         self.assertEqual(instrument, Instrument.unspecified)
 
     def test_instrument_unspecified_raises(self):
-        """"unspecified" is a valid INSTRUMENT value but ENA needs a PLATFORM alongside
+        """ "unspecified" is a valid INSTRUMENT value but ENA needs a PLATFORM alongside
         it, which we cannot supply, so it must be rejected."""
         with self.assertRaises(ValueError) as ctx:
             get_platform_and_instrument("unspecified", "LOC_0001TLY")
@@ -716,7 +716,7 @@ class GetPlatformAndInstrumentTests(unittest.TestCase):
         self.assertIn("LOC_0001TLY", str(ctx.exception))
 
     def test_instrument_invalid_raises(self):
-        """"unspecified" is a valid INSTRUMENT value but ENA needs a PLATFORM alongside
+        """ "unspecified" is a valid INSTRUMENT value but ENA needs a PLATFORM alongside
         it, which we cannot supply, so it must be rejected."""
         with self.assertRaises(ValueError) as ctx:
             get_platform_and_instrument("invalid_instrument", "LOC_0001TLY")
