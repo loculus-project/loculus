@@ -692,6 +692,48 @@ def mock_requests_post() -> Mock:
     return mock_response
 
 
+class ExternalMetadataUploads:
+    """Reads `submit_external_metadata` calls in the order they happened.
+
+    Lets a test assert on "the next upload" instead of indexing an absolute
+    call number, so inserting a pipeline stage does not renumber every later
+    assertion.
+
+    Each upload's accessions are keyed by Loculus metadata field name
+    (`config.loculus_accession_fields`) but the values are assigned by ENA -
+    unlike the Loculus accession in the same request, which is ours.
+    """
+
+    def __init__(self, mock: Mock) -> None:
+        self._mock = mock
+        self._consumed = 0
+
+    def next_upload(self) -> dict[str, Any]:
+        """Assert another upload happened, and return its ENA accessions."""
+        calls = self._mock.call_args_list
+        assert len(calls) == self._consumed + 1, (
+            f"expected exactly one new external-metadata upload (#{self._consumed + 1}), "
+            f"but {len(calls) - self._consumed} happened since the last check"
+        )
+        payload = calls[self._consumed].args[0]
+        self._consumed += 1
+        assert payload["accession"] == TEST_ACCESSION
+        assert payload["version"] == TEST_VERSION
+        return payload["externalMetadata"]
+
+    def assert_no_further_uploads(self) -> None:
+        calls = self._mock.call_args_list
+        assert len(calls) == self._consumed, (
+            f"{len(calls) - self._consumed} unexpected external-metadata upload(s)"
+        )
+
+
+def last_external_metadata_accessions(mock: Mock) -> dict[str, Any]:
+    """ENA accessions of the most recent `submit_external_metadata` call."""
+    mock.assert_called()
+    return mock.call_args.args[0]["externalMetadata"]
+
+
 def multi_segment_submission(
     db_engine: Engine,
     config: Config,
@@ -707,6 +749,8 @@ def multi_segment_submission(
     Otherwise there are 2"""
     mock_get_group_info.return_value = TEST_GROUP
     mock_submit_external_metadata.return_value = mock_requests_post()
+    uploads = ExternalMetadataUploads(mock_submit_external_metadata)
+    fields = config.loculus_accession_fields
     if mock_download_fastq_files is not None:
         mock_download_fastq_files.side_effect = mock_download_fastq_files_side_effect
     sequences_to_upload = get_sequences(config, with_raw_reads=with_raw_reads)
@@ -725,113 +769,74 @@ def multi_segment_submission(
 
     _test_successful_project_submission(db_engine, config, sequences_to_upload)
     get_external_metadata_and_send_to_loculus(db_engine, config)
-    args = mock_submit_external_metadata.call_args_list
-
-    assert len(args) == 1
-    payload = args[0][0][0]  # first positional argument of first call
-    assert payload["accession"] == TEST_ACCESSION
-    assert payload["version"] == TEST_VERSION
-    assert set(payload["externalMetadata"]) == {config.loculus_accession_fields.bioproject}
-    assert payload["externalMetadata"][config.loculus_accession_fields.bioproject].startswith(
-        "PRJEB"
-    )
+    external_metadata_accessions = uploads.next_upload()
+    assert set(external_metadata_accessions) == {fields.bioproject}
+    assert external_metadata_accessions[fields.bioproject].startswith("PRJEB")
 
     _test_successful_sample_submission(db_engine, config, sequences_to_upload)
     get_external_metadata_and_send_to_loculus(db_engine, config)
-    args = mock_submit_external_metadata.call_args_list
-    assert len(args) == 2  # noqa: PLR2004
-    payload = args[1][0][0]  # first positional argument of second call
-    assert payload["accession"] == TEST_ACCESSION
-    assert payload["version"] == TEST_VERSION
-    assert set(payload["externalMetadata"]) == {
-        config.loculus_accession_fields.bioproject,
-        config.loculus_accession_fields.biosample,
-    }
-    assert payload["externalMetadata"][config.loculus_accession_fields.bioproject].startswith(
-        "PRJEB"
-    )
-    assert payload["externalMetadata"][config.loculus_accession_fields.biosample].startswith(
-        "SAMEA"
-    )
+    external_metadata_accessions = uploads.next_upload()
+    assert set(external_metadata_accessions) == {fields.bioproject, fields.biosample}
+    assert external_metadata_accessions[fields.bioproject].startswith("PRJEB")
+    assert external_metadata_accessions[fields.biosample].startswith("SAMEA")
 
     if with_raw_reads:
         _test_successful_raw_reads_submission(db_engine, config, sequences_to_upload, slack_config)
         get_external_metadata_and_send_to_loculus(db_engine, config)
-        args = mock_submit_external_metadata.call_args_list
-        assert len(args) == 3  # noqa: PLR2004
-        payload = args[2][0][0]  # first positional argument of third call
-        assert payload["accession"] == TEST_ACCESSION
-        assert payload["version"] == TEST_VERSION
-        assert set(payload["externalMetadata"]) == {
-            config.loculus_accession_fields.bioproject,
-            config.loculus_accession_fields.biosample,
-            config.loculus_accession_fields.run,
+        external_metadata_accessions = uploads.next_upload()
+        assert set(external_metadata_accessions) == {
+            fields.bioproject,
+            fields.biosample,
+            fields.run,
         }
-        assert payload["externalMetadata"][config.loculus_accession_fields.run].startswith("ERR")
+        assert external_metadata_accessions[fields.run].startswith("ERR")
 
     _test_successful_assembly_submission(db_engine, config, sequences_to_upload, single_segment)
     get_external_metadata_and_send_to_loculus(db_engine, config)
     if not single_segment:
         # Only complete in case of multi-segment submission
         check_sent_to_loculus(db_engine, sequences_to_upload)
-    args = mock_submit_external_metadata.call_args_list
-    if not with_raw_reads:
-        assert len(args) == 3  # noqa: PLR2004
-        payload = args[2][0][0]  # first positional argument of third call
-    else:
-        assert len(args) == 4  # noqa: PLR2004
-        payload = args[3][0][0]  # first positional argument of fourth call
-    assert payload["accession"] == TEST_ACCESSION
-    assert payload["version"] == TEST_VERSION
+    external_metadata_accessions = uploads.next_upload()
     extra_items = set()
     if not single_segment:
         extra_items = {
-            config.loculus_accession_fields.gca,
-            config.loculus_accession_fields.insdc_accession_prefix + "_M",
-            config.loculus_accession_fields.insdc_accession_full_prefix + "_M",
+            fields.gca,
+            fields.insdc_accession_prefix + "_M",
+            fields.insdc_accession_full_prefix + "_M",
         }
     if with_raw_reads:
-        extra_items.add(config.loculus_accession_fields.run)
-    assert set(payload["externalMetadata"]) == {
-        config.loculus_accession_fields.bioproject,
-        config.loculus_accession_fields.biosample,
-        config.loculus_accession_fields.insdc_accession_prefix + "_L",
-        config.loculus_accession_fields.insdc_accession_full_prefix + "_L",
+        extra_items.add(fields.run)
+    assert set(external_metadata_accessions) == {
+        fields.bioproject,
+        fields.biosample,
+        fields.insdc_accession_prefix + "_L",
+        fields.insdc_accession_full_prefix + "_L",
         *extra_items,
     }
-    assert payload["externalMetadata"][config.loculus_accession_fields.bioproject].startswith(
-        "PRJEB"
-    )
-    assert payload["externalMetadata"][config.loculus_accession_fields.biosample].startswith(
-        "SAMEA"
-    )
+    assert external_metadata_accessions[fields.bioproject].startswith("PRJEB")
+    assert external_metadata_accessions[fields.biosample].startswith("SAMEA")
 
     insdc_full_pattern = r"^[A-Z]{2}[0-9]{6}\.[0-9]+$"
     insdc_base_pattern = r"^[A-Z]{2}[0-9]{6}$"
     gca_pattern = r"^GCA_[0-9]{9}\.[0-9]+$"
-    insdc_accession_full_l = config.loculus_accession_fields.insdc_accession_full_prefix + "_L"
-    insdc_accession_base_l = config.loculus_accession_fields.insdc_accession_prefix + "_L"
-    gca_accession = config.loculus_accession_fields.gca
-    assert re.match(
-        insdc_full_pattern,
-        payload["externalMetadata"][insdc_accession_full_l],
-    ), (
-        f"{insdc_accession_full_l} '{payload['externalMetadata'][insdc_accession_full_l]}' "
+    insdc_accession_full_l = fields.insdc_accession_full_prefix + "_L"
+    insdc_accession_base_l = fields.insdc_accession_prefix + "_L"
+    gca_accession = fields.gca
+    assert re.match(insdc_full_pattern, external_metadata_accessions[insdc_accession_full_l]), (
+        f"{insdc_accession_full_l} '{external_metadata_accessions[insdc_accession_full_l]}' "
         f"does not match INSDC full pattern {insdc_full_pattern}"
     )
-    assert re.match(
-        insdc_base_pattern,
-        payload["externalMetadata"][insdc_accession_base_l],
-    ), (
-        f"{insdc_accession_base_l} '{payload['externalMetadata'][insdc_accession_base_l]}' "
+    assert re.match(insdc_base_pattern, external_metadata_accessions[insdc_accession_base_l]), (
+        f"{insdc_accession_base_l} '{external_metadata_accessions[insdc_accession_base_l]}' "
         f"does not match INSDC base pattern {insdc_base_pattern}"
     )
     if not single_segment:
-        assert re.match(gca_pattern, payload["externalMetadata"][gca_accession]), (
-            f"{gca_accession} '{payload['externalMetadata'][gca_accession]}' "
+        assert re.match(gca_pattern, external_metadata_accessions[gca_accession]), (
+            f"{gca_accession} '{external_metadata_accessions[gca_accession]}' "
             f"does not match GCA pattern {gca_pattern}"
         )
-    return payload
+    uploads.assert_no_further_uploads()
+    return external_metadata_accessions
 
 
 class TestSubmission:
@@ -1621,7 +1626,7 @@ class TestRevisionRawReadsModificationTests(TestSubmission):
         insert size provided in the metadata.
         """
         self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
-        payload = multi_segment_submission(
+        original_accessions = multi_segment_submission(
             self.db_engine,
             self.config,
             self.slack_config,
@@ -1657,13 +1662,12 @@ class TestRevisionRawReadsModificationTests(TestSubmission):
 
         # send to loculus
         get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
-        args = mock_submit_external_metadata.call_args_list
 
-        payload_revision = args[-1][0][0]  # first positional argument of last call
-        assert (
-            payload["externalMetadata"][self.config.loculus_accession_fields.run]
-            != payload_revision["externalMetadata"][self.config.loculus_accession_fields.run]
-        ), "When raw reads are modified, insdcRawReadsAccession should change"
+        run_field = self.config.loculus_accession_fields.run
+        revised_run = last_external_metadata_accessions(mock_submit_external_metadata)[run_field]
+        assert original_accessions[run_field] != revised_run, (
+            "When raw reads are modified, insdcRawReadsAccession should change"
+        )
         check_sent_to_loculus(self.db_engine, sequences_to_upload)
 
 
@@ -1680,7 +1684,7 @@ class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
         mock_submit_external_metadata: Mock,
     ) -> None:
         self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
-        payload = multi_segment_submission(
+        original_accessions = multi_segment_submission(
             self.db_engine,
             self.config,
             self.slack_config,
@@ -1715,13 +1719,12 @@ class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
 
         # send to loculus
         get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
-        args = mock_submit_external_metadata.call_args_list
 
-        payload_revision = args[-1][0][0]  # first positional argument of last call
-        assert (
-            payload["externalMetadata"][self.config.loculus_accession_fields.run]
-            == payload_revision["externalMetadata"][self.config.loculus_accession_fields.run]
-        ), "When raw reads are not modified, insdcRawReadsAccession should stay the same"
+        run_field = self.config.loculus_accession_fields.run
+        revised_run = last_external_metadata_accessions(mock_submit_external_metadata)[run_field]
+        assert original_accessions[run_field] == revised_run, (
+            "When raw reads are not modified, insdcRawReadsAccession should stay the same"
+        )
         check_sent_to_loculus(self.db_engine, sequences_to_upload)
 
 
@@ -1787,7 +1790,7 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
 #         mock_submit_external_metadata: Mock,
 #     ) -> None:
 #         self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
-#         payload = multi_segment_submission(
+#         original_accessions = multi_segment_submission(
 #             self.db_engine,
 #             self.config,
 #             self.slack_config,
@@ -1817,13 +1820,12 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
 
 #         # send to loculus
 #         get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
-#         args = mock_submit_external_metadata.call_args_list
 
-#         payload_revision = args[-1][0][0]  # first positional argument of last call
-#         assert (
-#             payload["externalMetadata"][config.loculus_accession_fields.run]
-#             == payload_revision["externalMetadata"][config.loculus_accession_fields.run]
-#         ), "When raw reads are not modified, insdcRawReadsAccession should stay the same"
+#         run_field = config.loculus_accession_fields.run
+#         revised_run = last_external_metadata_accessions(mock_submit_external_metadata)[run_field]
+#         assert original_accessions[run_field] == revised_run, (
+#             "When raw reads are not modified, insdcRawReadsAccession should stay the same"
+#         )
 #         check_sent_to_loculus(self.db_engine, sequences_to_upload)
 
 
