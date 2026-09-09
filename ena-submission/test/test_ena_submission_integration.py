@@ -1624,7 +1624,7 @@ class TestRevisionRawReadsOnlyModificationTests(TestSubmission):
         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-    @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
+    @patch("ena_deposition.call_loculus.requests.get", autospec=True)
     @patch("ena_deposition.create_raw_reads.notify", autospec=True)
     @patch("ena_deposition.create_assembly.create_manifest", autospec=True)
     def test_revise(
