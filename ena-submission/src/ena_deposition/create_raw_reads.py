@@ -133,15 +133,21 @@ def create_manifest_object(
     )
     insert_size = int(insert_size_) if len(fastq_files) > 1 and insert_size_ else None
     library_source = LibrarySource.from_value(
-        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_source"], metadata),
+        resolve_required_manifest_field(
+            raw_reads_manifest_fields_mapping["library_source"], metadata
+        ),
         LibrarySource.OTHER,
     )
     library_selection = LibrarySelection.from_value(
-        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_selection"], metadata),
+        resolve_required_manifest_field(
+            raw_reads_manifest_fields_mapping["library_selection"], metadata
+        ),
         LibrarySelection.UNSPECIFIED,
     )
     library_strategy = LibraryStrategy.from_value(
-        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_strategy"], metadata),
+        resolve_required_manifest_field(
+            raw_reads_manifest_fields_mapping["library_strategy"], metadata
+        ),
         LibraryStrategy.OTHER,
     )
 
