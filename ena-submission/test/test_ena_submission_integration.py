@@ -14,6 +14,7 @@ import json
 import logging
 import random
 import re
+import shutil
 import string
 import uuid
 from dataclasses import asdict
@@ -21,11 +22,10 @@ from datetime import datetime, timedelta
 from itertools import chain, repeat
 from pathlib import Path
 from typing import Any, Final, cast
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 import pytz
-import requests
 from ena_deposition.check_external_visibility import (
     COLUMN_CONFIGS,
     EntityType,
@@ -95,6 +95,7 @@ INPUT_FILE = "./test/data/approved_ena_submission_list_test.json"
 RAW_READS_FIXTURE_FILE_1 = "./test/data/SRR38154636.part_001.fastq.gz"
 RAW_READS_FIXTURE_FILE_2 = "./test/data/SRR38154636.part_002.fastq.gz"
 # The pipeline identifies a raw-reads file by its fileId
+RAW_READS_URL_PREFIX = "https://loculus.org/files/"
 RAW_READS_FIXTURE_BY_NAME: dict[str, dict[str, str]] = {
     "rawReads.fastq.gz": {
         "fileId": "341fac6f-c5ca-4138-ac4b-9aa9872d64d8",
@@ -608,7 +609,7 @@ def add_raw_reads_to_sequences(
             {
                 "fileId": RAW_READS_FIXTURE_BY_NAME[file_name]["fileId"],
                 "name": file_name,
-                "url": f"https://loculus.org/files/{random_id}/{file_name}",
+                "url": f"{RAW_READS_URL_PREFIX}{random_id}/{file_name}",
             }
         )
 
@@ -666,33 +667,14 @@ def get_revisions(
         return revised_sequences
 
 
-# `requests.get` is patched module-wide, this keeps a handle to the real function
-# and can be used to pass to any call that should not be mocked.
-_real_requests_get = requests.get
-RAW_READS_URL_PREFIX = "https://loculus.org/files/"
-
-
-def mock_requests_get_fastq_side_effect(url: str, *args: Any, **kwargs: Any) -> MagicMock:
-    """
-    Fake `requests.get` only for the raw-reads file downloads in `download_fastq_files`,
-    streaming a fixture fastq file instead of hitting S3. Every other GET is passed through
-    to the real `requests.get`.
-    """
-    if not url.startswith(RAW_READS_URL_PREFIX):
-        return _real_requests_get(url, *args, **kwargs)
-
+def mock_download_file_side_effect(url: str, path: str, timeout: float) -> None:  # noqa: ARG001
+    """Fake side effect for `download_file`: copy a fixture fastq instead of fetching from S3."""
+    assert url.startswith(RAW_READS_URL_PREFIX), f"unexpected download url {url}"
     filename = url.rsplit("/", 1)[-1]
     if filename not in RAW_READS_FIXTURE_BY_NAME:
         msg = f"no raw-reads fixture registered for {url}"
         raise AssertionError(msg)
-    content = Path(RAW_READS_FIXTURE_BY_NAME[filename]["path"]).read_bytes()
-
-    response = MagicMock(spec=requests.Response)
-    response.__enter__.return_value = response
-    response.__exit__.return_value = False
-    response.raise_for_status.return_value = None
-    response.iter_content.return_value = [content]
-    return response
+    shutil.copy(RAW_READS_FIXTURE_BY_NAME[filename]["path"], path)
 
 
 def get_run_ref_from_raw_reads_table(db_engine: Engine, accession: str, version: int) -> str | None:
@@ -760,7 +742,7 @@ def multi_segment_submission(
     slack_config: SlackConfig,
     mock_get_group_info: Mock,
     mock_submit_external_metadata: Mock,
-    mock_requests_get: Mock | None = None,
+    mock_download_file: Mock | None = None,
     single_segment: bool = False,
     with_raw_reads: bool = False,
 ) -> Any:
@@ -771,8 +753,8 @@ def multi_segment_submission(
     mock_submit_external_metadata.return_value = mock_requests_post()
     uploads = ExternalMetadataUploads(mock_submit_external_metadata)
     fields = config.loculus_accession_fields
-    if mock_requests_get is not None:
-        mock_requests_get.side_effect = mock_requests_get_fastq_side_effect
+    if mock_download_file is not None:
+        mock_download_file.side_effect = mock_download_file_side_effect
     sequences_to_upload = get_sequences(config, with_raw_reads=with_raw_reads)
 
     if single_segment:
@@ -1598,10 +1580,10 @@ class TestSimpleSubmissionWithRawReads(TestSubmission):
         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-    @patch("ena_deposition.call_loculus.requests.get", autospec=True)
+    @patch("ena_deposition.call_loculus.download_file", autospec=True)
     def test_submit(
         self,
-        mock_requests_get: Mock,
+        mock_download_file: Mock,
         mock_get_group_info: Mock,
         mock_submit_external_metadata: Mock,
     ) -> None:
@@ -1615,7 +1597,7 @@ class TestSimpleSubmissionWithRawReads(TestSubmission):
             mock_get_group_info,
             mock_submit_external_metadata,
             with_raw_reads=True,
-            mock_requests_get=mock_requests_get,
+            mock_download_file=mock_download_file,
         )
 
 
@@ -1624,14 +1606,14 @@ class TestRevisionRawReadsOnlyModificationTests(TestSubmission):
         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-    @patch("ena_deposition.call_loculus.requests.get", autospec=True)
+    @patch("ena_deposition.call_loculus.download_file", autospec=True)
     @patch("ena_deposition.create_raw_reads.notify", autospec=True)
     @patch("ena_deposition.create_assembly.create_manifest", autospec=True)
     def test_revise(
         self,
         mock_create_manifest: Mock,
         mock_notify: Mock,  # noqa: ARG002 - used in _test_successful_raw_reads_submission
-        mock_requests_get: Mock,
+        mock_download_file: Mock,
         mock_get_group_info: Mock,
         mock_submit_external_metadata: Mock,
     ) -> None:
@@ -1649,7 +1631,7 @@ class TestRevisionRawReadsOnlyModificationTests(TestSubmission):
             mock_get_group_info,
             mock_submit_external_metadata,
             with_raw_reads=True,
-            mock_requests_get=mock_requests_get,
+            mock_download_file=mock_download_file,
         )
         first_manifest = mock_create_manifest.call_args[0][0]
         old_run_ref = get_run_ref_from_raw_reads_table(self.db_engine, TEST_ACCESSION, 1)
@@ -1706,12 +1688,12 @@ class TestRevisionRawReadsModificationTests(TestSubmission):
         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-    @patch("ena_deposition.call_loculus.requests.get")
+    @patch("ena_deposition.call_loculus.download_file", autospec=True)
     @patch("ena_deposition.create_raw_reads.notify", autospec=True)
     def test_revise(
         self,
         mock_notify: Mock,  # noqa: ARG002 - used in _test_successful_raw_reads_submission
-        mock_requests_get: Mock,
+        mock_download_file: Mock,
         mock_get_group_info: Mock,
         mock_submit_external_metadata: Mock,
         set_insert_size: bool,
@@ -1728,7 +1710,7 @@ class TestRevisionRawReadsModificationTests(TestSubmission):
             mock_get_group_info,
             mock_submit_external_metadata,
             with_raw_reads=True,
-            mock_requests_get=mock_requests_get,
+            mock_download_file=mock_download_file,
         )
 
         # get data
@@ -1771,10 +1753,10 @@ class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-    @patch("ena_deposition.call_loculus.requests.get")
+    @patch("ena_deposition.call_loculus.download_file", autospec=True)
     def test_revise(
         self,
-        mock_requests_get: Mock,
+        mock_download_file: Mock,
         mock_get_group_info: Mock,
         mock_submit_external_metadata: Mock,
     ) -> None:
@@ -1786,7 +1768,7 @@ class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
             mock_get_group_info,
             mock_submit_external_metadata,
             with_raw_reads=True,
-            mock_requests_get=mock_requests_get,
+            mock_download_file=mock_download_file,
         )
 
         # get data
@@ -1829,10 +1811,10 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
     @patch("ena_deposition.notifications.notify", autospec=True)
-    @patch("ena_deposition.call_loculus.requests.get")
+    @patch("ena_deposition.call_loculus.download_file", autospec=True)
     def test_revise(
         self,
-        mock_requests_get: Mock,
+        mock_download_file: Mock,
         mock_notify: Mock,
         mock_get_group_info: Mock,
         mock_submit_external_metadata: Mock,
@@ -1846,7 +1828,7 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
             mock_get_group_info,
             mock_submit_external_metadata,
             with_raw_reads=True,
-            mock_requests_get=mock_requests_get,
+            mock_download_file=mock_download_file,
         )
         # get data
         mock_get_group_info.return_value = TEST_GROUP
@@ -1877,10 +1859,10 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
 #         autospec=True,
 #     )
 #     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-#     @patch("ena_deposition.call_loculus.requests.get")
+#     @patch("ena_deposition.call_loculus.download_file", autospec=True)
 #     def test_revise(
 #         self,
-#         mock_requests_get: Mock,
+#         mock_download_file: Mock,
 #         mock_get_group_info: Mock,
 #         mock_submit_external_metadata: Mock,
 #     ) -> None:
@@ -1892,7 +1874,7 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
 #             mock_get_group_info,
 #             mock_submit_external_metadata,
 #             with_raw_reads=True,
-#             mock_requests_get=mock_requests_get,
+#             mock_download_file=mock_download_file,
 #         )
 #         # get data
 #         mock_get_group_info.return_value = TEST_GROUP
