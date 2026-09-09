@@ -22,6 +22,7 @@ const OTHER_FILES_COLUMN = `${FILES_HEADER_PREFIX}${OTHER_FILES}`;
 const FILE_CATEGORIES = [RAW_READS, OTHER_FILES];
 
 const tsv = (rows: string[][]) => rows.map((row) => row.join('\t')).join('\n');
+const tsvFile = (text: string) => new File([text], 'metadata.tsv');
 const declaredFile = (name: string, path: string = name) => ({ type: 'declaredFile' as const, name, path });
 const reusedFile = (name: string, fileId: string) => ({ type: 'reusedFile' as const, name, fileId });
 const uploadedFile = (path: string, fileId: string) => ({ type: 'uploadedFile' as const, path, fileId });
@@ -43,13 +44,13 @@ const errorMessageOf = <T>(result: Result<T, Error>): string => {
     return result.error.message;
 };
 
-const entriesOf = (text: string, submissionId: string, category: string) => {
-    const mapping = valueOf(parseSubmissionFileMapping(text, FILE_CATEGORIES));
+const entriesOf = async (text: string, submissionId: string, category: string) => {
+    const mapping = valueOf(await parseSubmissionFileMapping(tsvFile(text), FILE_CATEGORIES));
     return [...(mapping.get(submissionId)?.get(category)?.values() ?? [])];
 };
 
-const errorOf = (text: string, categories: string[] = FILE_CATEGORIES): string => {
-    const result = parseSubmissionFileMapping(text, categories);
+const errorOf = async (text: string, categories: string[] = FILE_CATEGORIES): Promise<string> => {
+    const result = await parseSubmissionFileMapping(tsvFile(text), categories);
     if (result.isOk()) throw new Error('expected the parse to fail');
     return result.error.message;
 };
@@ -89,19 +90,19 @@ const resolvedMappingOf = (submissions: Record<string, Record<string, { name: st
     );
 
 describe('parseSubmissionFileMapping', () => {
-    it('parses every accepted file entry form', () => {
+    it('parses every accepted file entry form', async () => {
         const text = tsv([
             ['id', RAW_READS_COLUMN],
             ['e1', 'a.txt b.txt::sub/b.txt c.txt:id-c'],
         ]);
-        expect(entriesOf(text, 'e1', RAW_READS)).toEqual([
+        expect(await entriesOf(text, 'e1', RAW_READS)).toEqual([
             declaredFile('a.txt'),
             declaredFile('b.txt', 'sub/b.txt'),
             reusedFile('c.txt', 'id-c'),
         ]);
     });
 
-    it('rejects entries that do not match any accepted form', () => {
+    it('rejects entries that do not match any accepted form', async () => {
         const tsvs = [
             tsv([
                 ['id', RAW_READS_COLUMN],
@@ -112,109 +113,118 @@ describe('parseSubmissionFileMapping', () => {
                 ['e1', 'a.txt::sub/a.txt:id-a'],
             ]),
         ];
-        for (const t of tsvs) expect(errorOf(t)).toContain('Failed to parse file entry');
+        for (const t of tsvs) expect(await errorOf(t)).toContain('Failed to parse file entry');
     });
 
-    it('ignores extra whitespace between entries', () => {
+    it('ignores extra whitespace between entries', async () => {
         const text = tsv([
             ['id', RAW_READS_COLUMN],
             ['e1', '  a.txt   b.txt  '],
         ]);
-        expect(entriesOf(text, 'e1', RAW_READS).map((f) => f.name)).toEqual(['a.txt', 'b.txt']);
+        expect((await entriesOf(text, 'e1', RAW_READS)).map((f) => f.name)).toEqual(['a.txt', 'b.txt']);
     });
 
-    it('rejects entries containing whitespace', () => {
+    it('rejects entries containing whitespace', async () => {
         const text = tsv([
             ['id', RAW_READS_COLUMN],
             ['e1', 'my\vreads.fastq'],
         ]);
-        expect(errorOf(text)).toContain('may not contain whitespace');
+        expect(await errorOf(text)).toContain('may not contain whitespace');
     });
 
-    it('returns an empty mapping when there are no file columns', () => {
-        const result = parseSubmissionFileMapping(
-            tsv([
-                ['id', 'country'],
-                ['e1', 'CH'],
-            ]),
+    it('returns an empty mapping when there are no file columns', async () => {
+        const result = await parseSubmissionFileMapping(
+            tsvFile(
+                tsv([
+                    ['id', 'country'],
+                    ['e1', 'CH'],
+                ]),
+            ),
             FILE_CATEGORIES,
         );
         expect(valueOf(result)).toEqual(new Map());
-        expect(valueOf(parseSubmissionFileMapping(tsv([['country'], ['CH']]), FILE_CATEGORIES))).toEqual(new Map());
+        expect(valueOf(await parseSubmissionFileMapping(tsvFile(tsv([['country'], ['CH']])), FILE_CATEGORIES))).toEqual(
+            new Map(),
+        );
     });
 
-    it('rejects a file column without an id column', () => {
-        expect(errorOf(tsv([[RAW_READS_COLUMN], ['a.txt']]))).toContain('Missing id column');
+    it('rejects a file column without an id column', async () => {
+        expect(await errorOf(tsv([[RAW_READS_COLUMN], ['a.txt']]))).toContain('Missing id column');
     });
 
-    it.each(['id', 'submissionId'])('accepts %s as the id column', (idColumn) => {
+    it.each(['id', 'submissionId'])('accepts %s as the id column', async (idColumn) => {
         const text = tsv([
             [idColumn, RAW_READS_COLUMN],
             ['e1', 'a.txt'],
         ]);
-        expect(entriesOf(text, 'e1', RAW_READS).map((f) => f.name)).toEqual(['a.txt']);
+        expect((await entriesOf(text, 'e1', RAW_READS)).map((f) => f.name)).toEqual(['a.txt']);
     });
 
-    it('rejects an empty id value', () => {
+    it('rejects an empty id value', async () => {
         const text = tsv([
             ['id', RAW_READS_COLUMN],
             ['', 'a.txt'],
         ]);
-        expect(errorOf(text)).toContain('Found empty id value');
+        expect(await errorOf(text)).toContain('Found empty id value');
     });
 
-    it('rejects duplicate ids', () => {
+    it('rejects duplicate ids', async () => {
         const text = tsv([
             ['id', RAW_READS_COLUMN],
             ['e1', 'a.txt'],
             ['e1', 'b.txt'],
         ]);
-        expect(errorOf(text)).toContain('Found duplicate ids within metadata file: e1');
+        expect(await errorOf(text)).toContain('Found duplicate ids within metadata file: e1');
     });
 
-    it('rejects duplicate file categories', () => {
+    it('rejects duplicate file categories', async () => {
         const text = tsv([
             ['id', RAW_READS_COLUMN, RAW_READS_COLUMN],
             ['e1', 'a.txt', 'b.txt'],
         ]);
-        expect(errorOf(text)).toContain(`Found duplicate file categories within metadata file: ${RAW_READS}`);
+        expect(await errorOf(text)).toContain(`Found duplicate file categories within metadata file: ${RAW_READS}`);
     });
 
-    it('rejects duplicate file names within one entry', () => {
+    it('rejects duplicate file names within one entry', async () => {
         const text = tsv([
             ['id', RAW_READS_COLUMN],
             ['e1', 'a.txt::one/a.txt a.txt::two/a.txt'],
         ]);
-        expect(errorOf(text)).toContain(`Found duplicate file names for entry e1 in the ${RAW_READS} category: a.txt`);
+        expect(await errorOf(text)).toContain(
+            `Found duplicate file names for entry e1 in the ${RAW_READS} category: a.txt`,
+        );
     });
 
-    it('allows two different names to share the same explicit path', () => {
+    it('allows two different names to share the same explicit path', async () => {
         const text = tsv([
             ['id', RAW_READS_COLUMN],
             ['e1', 'a.txt::x b.txt::x'],
         ]);
-        expect(entriesOf(text, 'e1', RAW_READS)).toEqual([declaredFile('a.txt', 'x'), declaredFile('b.txt', 'x')]);
+        expect(await entriesOf(text, 'e1', RAW_READS)).toEqual([
+            declaredFile('a.txt', 'x'),
+            declaredFile('b.txt', 'x'),
+        ]);
     });
 
-    it('omits the category entirely for an empty cell', () => {
+    it('omits the category entirely for an empty cell', async () => {
         const text = tsv([
             ['id', RAW_READS_COLUMN, OTHER_FILES_COLUMN],
             ['e1', 'a.txt', ''],
         ]);
-        const result = valueOf(parseSubmissionFileMapping(text, FILE_CATEGORIES));
+        const result = valueOf(await parseSubmissionFileMapping(tsvFile(text), FILE_CATEGORIES));
         expect([...result.get('e1')!.keys()]).toEqual([RAW_READS]);
     });
 
-    it('parses several categories across several entries', () => {
+    it('parses several categories across several entries', async () => {
         const text = tsv([
             ['id', 'country', RAW_READS_COLUMN, OTHER_FILES_COLUMN],
             ['e1', 'CH', 'a.txt', 'a.json'],
             ['e2', 'DE', 'b.txt', 'b.json'],
         ]);
-        const result = valueOf(parseSubmissionFileMapping(text, FILE_CATEGORIES));
+        const result = valueOf(await parseSubmissionFileMapping(tsvFile(text), FILE_CATEGORIES));
         expect([...result.keys()]).toEqual(['e1', 'e2']);
-        expect(entriesOf(text, 'e1', OTHER_FILES).map((f) => f.name)).toEqual(['a.json']);
-        expect(entriesOf(text, 'e2', RAW_READS).map((f) => f.name)).toEqual(['b.txt']);
+        expect((await entriesOf(text, 'e1', OTHER_FILES)).map((f) => f.name)).toEqual(['a.json']);
+        expect((await entriesOf(text, 'e2', RAW_READS)).map((f) => f.name)).toEqual(['b.txt']);
     });
 });
 
@@ -342,7 +352,7 @@ describe('getLinkageErrors', () => {
 });
 
 describe('applyFileMappings', () => {
-    const metadataFile = (rows: string[][]) => new File([tsv(rows)], 'metadata.tsv');
+    const metadataFile = (rows: string[][]) => tsvFile(tsv(rows));
     const linesOf = async (file: File) => (await file.text()).split('\n');
 
     it('writes name:fileId into an existing file column', async () => {

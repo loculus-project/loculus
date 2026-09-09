@@ -40,6 +40,7 @@ import {
     type FileLinkage,
     type SubmissionFileMapping,
     validateSubmissionFileMapping,
+    parseSubmissionFileMapping,
 } from './FileUpload/fileMapping.ts';
 import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
 
@@ -161,10 +162,10 @@ const InnerDataUploadForm = ({
                     finalMetadataFile = finalMetadataFileResult.value;
                 }
             } else {
-                if (submissionFileMapping === undefined) {
-                    onError('Cannot submit: metadata file is still being processed.');
-                    return;
-                }
+                const submissionFileMapping = await parseSubmissionFileMapping(
+                    metadataFile,
+                    submissionDataTypes.files?.categories?.map((category) => category.name) ?? [],
+                );
 
                 if (submissionFileMapping.isErr()) {
                     onError(submissionFileMapping.error.message);
