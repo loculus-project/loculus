@@ -69,7 +69,17 @@ def get_platform_and_instrument(
 
     Raises ValueError if the value cannot yield a manifest ENA will accept.
     """
-    if instrument := Instrument.from_value(raw_value):
+    try:
+        platform = Platform.from_value(raw_value)
+    except ValueError:
+        platform = None
+    if platform is not None:
+        return platform, Instrument.unspecified
+    try:
+        instrument = Instrument.from_value(raw_value)
+    except ValueError:
+        instrument = None
+    if instrument is not None:
         if instrument is Instrument.unspecified:
             # webin-cli rejects INSTRUMENT=unspecified unless PLATFORM is also given
             # Preprocessing forces sequencingInstrument to be one of the configured options
@@ -82,8 +92,6 @@ def get_platform_and_instrument(
             logger.error(message)
             raise ValueError(message)
         return None, instrument
-    if platform := Platform.from_value(raw_value):
-        return platform, Instrument.unspecified
     message = (
         f"sequencingInstrument value '{raw_value}' for accession {accession} matches "
         "neither ENA's platform nor instrument list - ENA submission will fail."
@@ -133,22 +141,16 @@ def create_manifest_object(
     )
     insert_size = int(insert_size_) if len(fastq_files) > 1 and insert_size_ else None
     library_source = LibrarySource.from_value(
-        resolve_required_manifest_field(
-            raw_reads_manifest_fields_mapping["library_source"], metadata
-        ),
-        LibrarySource.OTHER,
+        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_source"], metadata),
+        required=True,
     )
     library_selection = LibrarySelection.from_value(
-        resolve_required_manifest_field(
-            raw_reads_manifest_fields_mapping["library_selection"], metadata
-        ),
-        LibrarySelection.UNSPECIFIED,
+        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_selection"], metadata),
+        required=True,
     )
     library_strategy = LibraryStrategy.from_value(
-        resolve_required_manifest_field(
-            raw_reads_manifest_fields_mapping["library_strategy"], metadata
-        ),
-        LibraryStrategy.OTHER,
+        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_strategy"], metadata),
+        required=True,
     )
 
     try:
