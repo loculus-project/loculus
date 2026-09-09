@@ -26,7 +26,6 @@ from sqlalchemy import Engine
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
-    encoding="utf-8",
     level=logging.INFO,
     format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
     datefmt="%H:%M:%S",
@@ -256,7 +255,14 @@ def send_slack_notification_with_file(
     required=True,
     type=click.Path(exists=True),
 )
-def get_ena_submission_list(config_file) -> None:
+@click.option(
+    "--output-dir",
+    required=False,
+    default=".",
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    help="Directory to write the ENA submission list JSON files to.",
+)
+def get_ena_submission_list(config_file, output_dir) -> None:
     """
     Get a list of all sequences in state APPROVED_FOR_RELEASE without insdc-specific
     metadata fields and not already in the ena_submission.submission_table.
@@ -298,7 +304,7 @@ def get_ena_submission_list(config_file) -> None:
                 f"{config.backend_url}: {loculus_organism} - ENA Submission pipeline wants to "
                 f"submit {len(submission_results.entries_to_submit)} sequences"
             )
-            output_file = f"{loculus_organism}_{output_file_suffix}"
+            output_file = Path(output_dir) / f"{loculus_organism}_{output_file_suffix}"
             send_slack_notification_with_file(
                 slack_config, message, submission_results.entries_to_submit, output_file
             )
@@ -312,7 +318,9 @@ def get_ena_submission_list(config_file) -> None:
                 " Bioprojects should be public and SRA accessions should also include bioprojects"
                 " and biosamples."
             )
-            output_file = f"{loculus_organism}_with_ena_fields_{output_file_suffix}"
+            output_file = (
+                Path(output_dir) / f"{loculus_organism}_with_ena_fields_{output_file_suffix}"
+            )
             send_slack_notification_with_file(
                 slack_config,
                 message,
@@ -325,7 +333,7 @@ def get_ena_submission_list(config_file) -> None:
                 f"{len(submission_results.revoked_entries)} sequences that have been revoked"
                 " investigate if these need to be suppressed on ENA."
             )
-            output_file = f"{loculus_organism}_revoked_{output_file_suffix}"
+            output_file = Path(output_dir) / f"{loculus_organism}_revoked_{output_file_suffix}"
             send_slack_notification_with_file(
                 slack_config,
                 message,
