@@ -705,16 +705,6 @@ def get_run_ref_from_raw_reads_table(db_engine: Engine, accession: str, version:
     return cast(str, rows[0].result.get(EnaResultField.RUN)) if rows[0].result else None
 
 
-def get_run_ref_from_raw_reads_table(db_engine: Engine, accession: str, version: int) -> str | None:
-    rows = find_conditions_in_db(
-        db_engine,
-        RawReadsTableEntry,
-        conditions={"accession": accession, "version": version},
-    )
-    assert len(rows) == 1, f"Raw reads for {accession}.{version} not found in raw_reads_table."
-    return cast(str, rows[0].result.get(EnaResultField.RUN)) if rows[0].result else None
-
-
 def mock_requests_post() -> Mock:
     mock_response = Mock()
     mock_response.status_code = 204
