@@ -328,9 +328,14 @@ def has_raw_reads_changed(
     return False
 
 
-def last_raw_reads_entry(
-    db_engine: Engine, seq_key: AccessionVersion, raise_on_empty: bool = True
-) -> list[RawReadsTableEntry]:
+def previous_version_raw_reads_entry(
+    db_engine: Engine, seq_key: AccessionVersion
+) -> RawReadsTableEntry | None:
+    """The raw_reads_table row of the version this one revises, or None if there is none.
+
+    A previous raw_reads_table row is not guaranteed to exist even for a revision: the
+    previous version may simply not have had raw reads attached.
+    """
     version_to_revise = previous_version(db_engine, seq_key)
     last_version_rows = find_conditions_in_db(
         db_engine,
@@ -340,17 +345,19 @@ def last_raw_reads_entry(
             "version": version_to_revise,
         },
     )
-    if len(last_version_rows) == 0 and raise_on_empty:
-        error_msg = f"Last version {version_to_revise} not found in raw_reads_table"
-        raise RuntimeError(error_msg)
-    return last_version_rows
+    return last_version_rows[0] if last_version_rows else None
 
 
 def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: AccessionVersion):
-    last_version_rows = last_raw_reads_entry(db_engine, seq_key)
+    last_version_entry = previous_version_raw_reads_entry(db_engine, seq_key)
+    if last_version_entry is None:
+        error_msg = (
+            f"Version preceding {seq_key.accession}.{seq_key.version} not found in raw_reads_table"
+        )
+        raise RuntimeError(error_msg)
     logger.info(
         f"Updating raw reads results for accession {seq_key.accession} version "
-        f"{seq_key.version} using results from version {last_version_rows[0].version} as there was"
+        f"{seq_key.version} using results from version {last_version_entry.version} as there was "
         "no change in raw read data."
     )
     update_with_retry(
@@ -358,7 +365,7 @@ def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: Acc
         conditions=asdict(seq_key),
         update_values={
             "status": Status.SUBMITTED,
-            "result": last_version_rows[0].result,
+            "result": last_version_entry.result,
         },
         model_class=RawReadsTableEntry,
         reraise=False,
@@ -461,10 +468,10 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
             if not has_raw_reads_changed(config, db_engine, submission_row):
                 update_raw_reads_results_with_latest_version(db_engine, seq_key)
                 continue
-            last_version_raw_reads = last_raw_reads_entry(db_engine, seq_key, raise_on_empty=False)
+            last_version_entry = previous_version_raw_reads_entry(db_engine, seq_key)
             old_run_accession = (
-                last_version_raw_reads[0].result.get(EnaResultField.RUN)
-                if last_version_raw_reads and last_version_raw_reads[0].result
+                (last_version_entry.result or {}).get(EnaResultField.RUN)
+                if last_version_entry
                 else None
             )
 
