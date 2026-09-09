@@ -25,6 +25,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 import pytz
+import requests
 from ena_deposition.check_external_visibility import (
     COLUMN_CONFIGS,
     EntityType,
@@ -667,14 +668,24 @@ def get_revisions(
         return revised_sequences
 
 
-def mock_requests_get_fastq_side_effect(url: str, *_args: Any, **_kwargs: Any) -> MagicMock:
+# `requests.get` is patched module-wide, this keeps a handle to the real function
+# and can be used to pass to any call that should not be mocked.
+_real_requests_get = requests.get
+RAW_READS_URL_PREFIX = "https://loculus.org/files/"
+
+
+def mock_requests_get_fastq_side_effect(url: str, *args: Any, **kwargs: Any) -> MagicMock:
     """
-    Mock side effect for `requests.get` when `download_fastq_files` streams a raw-reads
-    file from its (pre-signed S3) URL.
+    Fake `requests.get` only for the raw-reads file downloads in `download_fastq_files`,
+    streaming a fixture fastq file instead of hitting S3. Every other GET is passed through
+    to the real `requests.get`.
     """
+    if not url.startswith(RAW_READS_URL_PREFIX):
+        return _real_requests_get(url, *args, **kwargs)
+
     filename = url.rsplit("/", 1)[-1]
     if filename not in RAW_READS_FIXTURE_BY_NAME:
-        msg = f"unexpected requests.get call during test: {url}"
+        msg = f"no raw-reads fixture registered for {url}"
         raise AssertionError(msg)
     content = Path(RAW_READS_FIXTURE_BY_NAME[filename]["path"]).read_bytes()
 
