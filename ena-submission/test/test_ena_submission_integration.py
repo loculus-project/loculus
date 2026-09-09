@@ -669,8 +669,6 @@ def get_revisions(
 
 def mock_download_file_side_effect(url: str, path: str, timeout: float) -> None:  # noqa: ARG001
     """Fake side effect for `download_file`: copy a fixture fastq instead of fetching from S3."""
-    # Assert rather than fall back: this catches download_fastq_files reaching for the wrong
-    # field or host, which a bare lookup on the last path segment would happily serve.
     assert url.startswith(RAW_READS_URL_PREFIX), f"unexpected download url {url}"
     filename = url.rsplit("/", 1)[-1]
     if filename not in RAW_READS_FIXTURE_BY_NAME:
