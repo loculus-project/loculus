@@ -12,12 +12,10 @@ flyway -url=jdbc:postgresql://localhost:5432/loculus -schemas=ena_deposition_sch
 # ruff: noqa: PLR0915 (allow too many arguments in functions)
 import json
 import logging
-import os
 import random
 import re
 import shutil
 import string
-import tempfile
 import uuid
 from dataclasses import asdict
 from datetime import datetime, timedelta
@@ -96,6 +94,18 @@ INPUT_FILE = "./test/data/approved_ena_submission_list_test.json"
 # Created using `seqkit split -p 2 SRR38154636.fastq` on the interleaved SRA read file SRR38154636
 RAW_READS_FIXTURE_FILE_1 = "./test/data/SRR38154636.part_001.fastq.gz"
 RAW_READS_FIXTURE_FILE_2 = "./test/data/SRR38154636.part_002.fastq.gz"
+# The pipeline identifies a raw-reads file by its fileId
+RAW_READS_URL_PREFIX = "https://loculus.org/files/"
+RAW_READS_FIXTURE_BY_NAME: dict[str, dict[str, str]] = {
+    "rawReads.fastq.gz": {
+        "fileId": "341fac6f-c5ca-4138-ac4b-9aa9872d64d8",
+        "path": RAW_READS_FIXTURE_FILE_1,
+    },
+    "rawReads2.fastq.gz": {
+        "fileId": "341fac6f-c5ca-4138-ac4b-9aa9872d64d9",
+        "path": RAW_READS_FIXTURE_FILE_2,
+    },
+}
 TEST_ACCESSION = "LOC_0001TLY"
 TEST_ACCESSION_VERSION = "LOC_0001TLY.1"
 TEST_VERSION = 1
@@ -583,17 +593,37 @@ def _test_successful_project_submission(
     check_project_submission_submitted(db_engine, config, sequences_to_upload)
 
 
-def get_sequences(config: Config, with_raw_reads: bool = False) -> dict[str, Any]:
+def add_raw_reads_to_sequences(
+    entry: dict[str, Any],
+    config: Config,
+    file_names: list[str] | None = None,
+) -> None:
+    if file_names is None:
+        file_names = ["rawReads.fastq.gz"]
+
+    files: list[dict[str, str]] = []
+    for file_name in file_names:
+        # Simulate the pre-signed S3 URL changing between versions; the fileId stays put.
+        random_id = "".join(random.choices(string.digits, k=4))  # noqa: S311
+        files.append(
+            {
+                "fileId": RAW_READS_FIXTURE_BY_NAME[file_name]["fileId"],
+                "name": file_name,
+                "url": f"{RAW_READS_URL_PREFIX}{random_id}/{file_name}",
+            }
+        )
+
+    entry["metadata"][config.raw_reads_metadata_field] = json.dumps(files)
+
+
+def get_sequences(
+    config: Config,
+    with_raw_reads: bool = False,
+) -> dict[str, Any]:
     with open(INPUT_FILE, encoding="utf-8") as json_file:
         sequences: dict[str, Any] = json.load(json_file)
         if with_raw_reads:
-            # To simulate the s3 URL changing, we generate a random id for the URL each time
-            random_id = "".join(random.choices(string.digits, k=4))  # noqa: S311
-            sequences[TEST_ACCESSION_VERSION]["metadata"][config.raw_reads_metadata_field] = (
-                f'[{{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d8",'
-                f'"name":"rawReads.fastq.gz",'
-                f'"url":"https://loculus.org/files/{random_id}/rawReads.fastq.gz"}}]'
-            )
+            add_raw_reads_to_sequences(sequences[TEST_ACCESSION_VERSION], config)
         return sequences
 
 
@@ -616,13 +646,7 @@ def get_revisions(
             new_value["metadata"]["version"] = 2
             new_value["metadata"]["accessionVersion"] = accession_version
             if with_raw_reads:
-                # To simulate the s3 URL changing, we generate a random id for the URL each time
-                random_id = "".join(random.choices(string.digits, k=4))  # noqa: S311
-                new_value["metadata"][config.raw_reads_metadata_field] = (
-                    f'[{{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d8",'
-                    f'"name":"rawReads.fastq.gz",'
-                    f'"url":"https://loculus.org/files/{random_id}/rawReads.fastq.gz"}}]'
-                )
+                add_raw_reads_to_sequences(new_value, config)
             if modify_assembly:
                 new_value["metadata"]["geoLocAdmin1"] = "revised location"
             else:
@@ -634,55 +658,23 @@ def get_revisions(
             if modify_raw_reads:
                 if set_insert_size:
                     new_value["metadata"]["pairedEndInsertSize"] = 150
-                # To simulate the s3 URL changing, we generate a random id for the URL each time
-                random_id = "".join(random.choices(string.digits, k=4))  # noqa: S311
-                new_value["metadata"][config.raw_reads_metadata_field] = (
-                    f'[{{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d8",'
-                    f'"name":"rawReads.fastq.gz",'
-                    f'"url":"https://loculus.org/files/{random_id}/rawReads.fastq.gz"}},'
-                    f'{{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d9",'
-                    f'"name":"rawReads2.fastq.gz",'
-                    f'"url":"https://loculus.org/files/{random_id}/rawReads2.fastq.gz"}}]'
+                add_raw_reads_to_sequences(
+                    new_value,
+                    config,
+                    ["rawReads.fastq.gz", "rawReads2.fastq.gz"],
                 )
             revised_sequences[accession_version] = new_value
         return revised_sequences
 
 
-RAW_READS_FIXTURES: Final = [RAW_READS_FIXTURE_FILE_1, RAW_READS_FIXTURE_FILE_2]
-
-
-def mock_download_fastq_files_side_effect(
-    config: Config,
-    metadata: dict[str, Any],
-    accession: str,
-    dir: str | None = None,
-) -> list[str]:
-    """
-    Mock side effect for download_fastq_files.
-
-    Parses the raw-reads metadata field the same way the real function does and
-    returns one local file per entry, cycling through the fixture fastq files so a
-    paired (2-file) submission yields two distinct paths. Raises if there are more
-    entries than fixtures.
-    """
-    raw_reads = metadata.get(config.raw_reads_metadata_field)
-    if not raw_reads:
-        msg = f"No rawreads files found in metadata for accession {accession}"
-        raise RuntimeError(msg)
-    files = json.loads(raw_reads)
-    if len(files) > len(RAW_READS_FIXTURES):
-        msg = f"Only {len(RAW_READS_FIXTURES)} fixture fastq files available, got {len(files)}"
-        raise ValueError(msg)
-
-    target_dir = dir or tempfile.mkdtemp()
-    os.makedirs(target_dir, exist_ok=True)
-
-    fastq_files = []
-    for file_entry, source in zip(files, RAW_READS_FIXTURES, strict=False):
-        dest_path = os.path.join(target_dir, os.path.basename(file_entry["name"]))
-        shutil.copy(source, dest_path)
-        fastq_files.append(dest_path)
-    return fastq_files
+def mock_download_file_side_effect(url: str, path: str, timeout: float) -> None:  # noqa: ARG001
+    """Fake side effect for `download_file`: copy a fixture fastq instead of fetching from S3."""
+    assert url.startswith(RAW_READS_URL_PREFIX), f"unexpected download url {url}"
+    filename = url.rsplit("/", 1)[-1]
+    if filename not in RAW_READS_FIXTURE_BY_NAME:
+        msg = f"no raw-reads fixture registered for {url}"
+        raise AssertionError(msg)
+    shutil.copy(RAW_READS_FIXTURE_BY_NAME[filename]["path"], path)
 
 
 def get_run_ref_from_raw_reads_table(db_engine: Engine, accession: str, version: int) -> str | None:
@@ -750,7 +742,7 @@ def multi_segment_submission(
     slack_config: SlackConfig,
     mock_get_group_info: Mock,
     mock_submit_external_metadata: Mock,
-    mock_download_fastq_files: Mock | None = None,
+    mock_download_file: Mock | None = None,
     single_segment: bool = False,
     with_raw_reads: bool = False,
 ) -> Any:
@@ -761,8 +753,8 @@ def multi_segment_submission(
     mock_submit_external_metadata.return_value = mock_requests_post()
     uploads = ExternalMetadataUploads(mock_submit_external_metadata)
     fields = config.loculus_accession_fields
-    if mock_download_fastq_files is not None:
-        mock_download_fastq_files.side_effect = mock_download_fastq_files_side_effect
+    if mock_download_file is not None:
+        mock_download_file.side_effect = mock_download_file_side_effect
     sequences_to_upload = get_sequences(config, with_raw_reads=with_raw_reads)
 
     if single_segment:
@@ -1588,10 +1580,10 @@ class TestSimpleSubmissionWithRawReads(TestSubmission):
         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-    @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
+    @patch("ena_deposition.call_loculus.download_file", autospec=True)
     def test_submit(
         self,
-        mock_download_fastq_files: Mock,
+        mock_download_file: Mock,
         mock_get_group_info: Mock,
         mock_submit_external_metadata: Mock,
     ) -> None:
@@ -1605,7 +1597,7 @@ class TestSimpleSubmissionWithRawReads(TestSubmission):
             mock_get_group_info,
             mock_submit_external_metadata,
             with_raw_reads=True,
-            mock_download_fastq_files=mock_download_fastq_files,
+            mock_download_file=mock_download_file,
         )
 
 
@@ -1614,14 +1606,14 @@ class TestRevisionRawReadsOnlyModificationTests(TestSubmission):
         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-    @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
+    @patch("ena_deposition.call_loculus.download_file", autospec=True)
     @patch("ena_deposition.create_raw_reads.notify", autospec=True)
     @patch("ena_deposition.create_assembly.create_manifest", autospec=True)
     def test_revise(
         self,
         mock_create_manifest: Mock,
         mock_notify: Mock,  # noqa: ARG002 - used in _test_successful_raw_reads_submission
-        mock_download_fastq_files: Mock,
+        mock_download_file: Mock,
         mock_get_group_info: Mock,
         mock_submit_external_metadata: Mock,
     ) -> None:
@@ -1639,7 +1631,7 @@ class TestRevisionRawReadsOnlyModificationTests(TestSubmission):
             mock_get_group_info,
             mock_submit_external_metadata,
             with_raw_reads=True,
-            mock_download_fastq_files=mock_download_fastq_files,
+            mock_download_file=mock_download_file,
         )
         first_manifest = mock_create_manifest.call_args[0][0]
         old_run_ref = get_run_ref_from_raw_reads_table(self.db_engine, TEST_ACCESSION, 1)
@@ -1696,12 +1688,12 @@ class TestRevisionRawReadsModificationTests(TestSubmission):
         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-    @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
+    @patch("ena_deposition.call_loculus.download_file", autospec=True)
     @patch("ena_deposition.create_raw_reads.notify", autospec=True)
     def test_revise(
         self,
         mock_notify: Mock,  # noqa: ARG002 - used in _test_successful_raw_reads_submission
-        mock_download_fastq_files: Mock,
+        mock_download_file: Mock,
         mock_get_group_info: Mock,
         mock_submit_external_metadata: Mock,
         set_insert_size: bool,
@@ -1718,7 +1710,7 @@ class TestRevisionRawReadsModificationTests(TestSubmission):
             mock_get_group_info,
             mock_submit_external_metadata,
             with_raw_reads=True,
-            mock_download_fastq_files=mock_download_fastq_files,
+            mock_download_file=mock_download_file,
         )
 
         # get data
@@ -1761,10 +1753,10 @@ class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-    @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
+    @patch("ena_deposition.call_loculus.download_file", autospec=True)
     def test_revise(
         self,
-        mock_download_fastq_files: Mock,
+        mock_download_file: Mock,
         mock_get_group_info: Mock,
         mock_submit_external_metadata: Mock,
     ) -> None:
@@ -1776,7 +1768,7 @@ class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
             mock_get_group_info,
             mock_submit_external_metadata,
             with_raw_reads=True,
-            mock_download_fastq_files=mock_download_fastq_files,
+            mock_download_file=mock_download_file,
         )
 
         # get data
@@ -1819,10 +1811,10 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
     @patch("ena_deposition.notifications.notify", autospec=True)
-    @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
+    @patch("ena_deposition.call_loculus.download_file", autospec=True)
     def test_revise(
         self,
-        mock_download_fastq_files: Mock,
+        mock_download_file: Mock,
         mock_notify: Mock,
         mock_get_group_info: Mock,
         mock_submit_external_metadata: Mock,
@@ -1836,7 +1828,7 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
             mock_get_group_info,
             mock_submit_external_metadata,
             with_raw_reads=True,
-            mock_download_fastq_files=mock_download_fastq_files,
+            mock_download_file=mock_download_file,
         )
         # get data
         mock_get_group_info.return_value = TEST_GROUP
@@ -1867,10 +1859,10 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
 #         autospec=True,
 #     )
 #     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-#     @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
+#     @patch("ena_deposition.call_loculus.download_file", autospec=True)
 #     def test_revise(
 #         self,
-#         mock_download_fastq_files: Mock,
+#         mock_download_file: Mock,
 #         mock_get_group_info: Mock,
 #         mock_submit_external_metadata: Mock,
 #     ) -> None:
@@ -1882,7 +1874,7 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
 #             mock_get_group_info,
 #             mock_submit_external_metadata,
 #             with_raw_reads=True,
-#             mock_download_fastq_files=mock_download_fastq_files,
+#             mock_download_file=mock_download_file,
 #         )
 #         # get data
 #         mock_get_group_info.return_value = TEST_GROUP

@@ -130,7 +130,7 @@ def create_manifest_object(
     raw_reads_manifest_fields_mapping = config.raw_reads_manifest_fields_mapping
 
     sequencing_instrument = resolve_required_manifest_field(
-        raw_reads_manifest_fields_mapping["instrument"], metadata
+        raw_reads_manifest_fields_mapping["instrument_platform"], metadata
     )
     platform, instrument = get_platform_and_instrument(
         sequencing_instrument, submission_row.accession
@@ -328,7 +328,14 @@ def has_raw_reads_changed(
     return False
 
 
-def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: AccessionVersion):
+def previous_version_raw_reads_entry(
+    db_engine: Engine, seq_key: AccessionVersion
+) -> RawReadsTableEntry | None:
+    """The raw_reads_table row of the version this one revises, or None if there is none.
+
+    A previous raw_reads_table row is not guaranteed to exist even for a revision: the
+    previous version may simply not have had raw reads attached.
+    """
     version_to_revise = previous_version(db_engine, seq_key)
     last_version_rows = find_conditions_in_db(
         db_engine,
@@ -338,20 +345,27 @@ def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: Acc
             "version": version_to_revise,
         },
     )
-    if len(last_version_rows) == 0:
-        error_msg = f"Last version {version_to_revise} not found in raw_reads_table"
+    return last_version_rows[0] if last_version_rows else None
+
+
+def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: AccessionVersion):
+    last_version_entry = previous_version_raw_reads_entry(db_engine, seq_key)
+    if last_version_entry is None:
+        error_msg = (
+            f"Version preceding {seq_key.accession}.{seq_key.version} not found in raw_reads_table"
+        )
         raise RuntimeError(error_msg)
     logger.info(
         f"Updating raw reads results for accession {seq_key.accession} version "
-        f"{seq_key.version} using results from version {version_to_revise} as there was no"
-        "change in raw read data."
+        f"{seq_key.version} using results from version {last_version_entry.version} as there was "
+        "no change in raw read data."
     )
     update_with_retry(
         db_engine=db_engine,
         conditions=asdict(seq_key),
         update_values={
             "status": Status.SUBMITTED,
-            "result": last_version_rows[0].result,
+            "result": last_version_entry.result,
         },
         model_class=RawReadsTableEntry,
         reraise=False,
@@ -454,10 +468,10 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
             if not has_raw_reads_changed(config, db_engine, submission_row):
                 update_raw_reads_results_with_latest_version(db_engine, seq_key)
                 continue
-            last_entry = get_last_entry(db_engine, submission_row.pkey)
+            last_version_entry = previous_version_raw_reads_entry(db_engine, seq_key)
             old_run_accession = (
-                last_entry.external_metadata.get(config.loculus_accession_fields.run)
-                if last_entry.external_metadata
+                (last_version_entry.result or {}).get(EnaResultField.RUN)
+                if last_version_entry
                 else None
             )
 

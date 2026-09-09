@@ -48,10 +48,7 @@ assembly_manifest_fields_mapping:
   run_ref:
     loculus_fields: [insdcRawReadsAccession]
 raw_reads_manifest_fields_mapping:
-  instrument:
-    loculus_fields: [sequencingInstrument]
-    default: "unspecified"
-  platform:
+  instrument_platform: # mapped to instrument and platform in the manifest
     loculus_fields: [sequencingInstrument]
   library_source:
     loculus_fields: [sequencingLibrarySource]
