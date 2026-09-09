@@ -1,7 +1,12 @@
 import type { FC } from 'react';
 
 import { routes } from '../../routes/routes.ts';
-import { getLatestAccessionVersion, versionStatuses, type SequenceEntryHistory } from '../../types/lapis';
+import {
+    getLatestAccessionVersion,
+    isLatestVersionRevocation,
+    versionStatuses,
+    type SequenceEntryHistory,
+} from '../../types/lapis';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion';
 import { Button } from '../common/Button.tsx';
 
@@ -17,7 +22,7 @@ const SequencesBanner: FC<SequencesBannerProps> = ({ sequenceEntryHistory, acces
     const latestAccessionVersion = getLatestAccessionVersion(sequenceEntryHistory);
 
     const revoked =
-        ownHistoryEntry?.versionStatus === versionStatuses.revoked && latestAccessionVersion?.isRevocation === true;
+        ownHistoryEntry?.versionStatus === versionStatuses.revoked && isLatestVersionRevocation(sequenceEntryHistory);
     const isLatestVersion = ownHistoryEntry?.versionStatus === versionStatuses.latestVersion;
 
     return (

@@ -1,28 +1,21 @@
 import { Result } from 'neverthrow';
 
 import { getTableData } from '../../../components/SequenceDetailsPage/getTableData';
-import { type TableDataEntry } from '../../../components/SequenceDetailsPage/types.ts';
+import type { SequenceData } from '../../../components/SequenceDetailsPage/types.ts';
 import { getReferenceGenomes, getSchema } from '../../../config.ts';
 import { routes } from '../../../routes/routes.ts';
 import { createBackendClient } from '../../../services/backendClientFactory.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
-import type { DataUseTermsHistoryEntry, ProblemDetail } from '../../../types/backend.ts';
-import type { SequenceEntryHistory } from '../../../types/lapis.ts';
+import type { ProblemDetail } from '../../../types/backend.ts';
 import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion.ts';
-import type { SegmentReferenceSelections } from '../../../utils/sequenceTypeHelpers.ts';
 
 export enum SequenceDetailsTableResultType {
     TABLE_DATA = 'tableData',
     REDIRECT = 'redirect',
 }
 
-export type TableData = {
+type TableData = SequenceData & {
     type: SequenceDetailsTableResultType.TABLE_DATA;
-    tableData: TableDataEntry[];
-    sequenceEntryHistory: SequenceEntryHistory;
-    dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    segmentReferences?: SegmentReferenceSelections;
-    isRevocation: boolean;
 };
 
 export type Redirect = {

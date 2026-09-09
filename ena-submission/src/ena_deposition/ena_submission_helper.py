@@ -35,7 +35,12 @@ from tenacity import (
 )
 from unidecode import unidecode
 
-from ena_deposition.config import Config, EnaOrganismDetails, ManifestFieldDetails
+from ena_deposition.config import (
+    Config,
+    EnaOrganismDetails,
+    EnaResultField,
+    ManifestFieldDetails,
+)
 
 from .ena_types import (
     DEFAULT_EMBL_PROPERTY_FIELDS,
@@ -46,6 +51,7 @@ from .ena_types import (
     Hold,
     MoleculeType,
     ProjectSet,
+    RawReadsManifest,
     SampleSetType,
     Submission,
     XmlAttribute,
@@ -54,10 +60,10 @@ from .ena_types import (
 from .submission_db_helper import (
     AssemblyTableEntry,
     ProjectTableEntry,
+    RawReadsTableEntry,
     SampleTableEntry,
     Status,
     SubmissionTableEntry,
-    add_to_assembly_table,
     update_db_where_conditions,
     update_with_retry,
 )
@@ -157,7 +163,7 @@ def get_alias(prefix: str, random_alias=False, set_alias_suffix: str | None = No
 
     Loculus-accession aliases should be unique, but for testing, I add a timestamp
     to allow multiple submissions of the same sample.
-    For revisions, the alias must match the original, so I set a suffix for testing.
+    For assembly revisions, the alias must match the original, so I set a suffix for testing.
     """
     if set_alias_suffix:
         return XmlAttribute(f"{prefix}:{set_alias_suffix}")
@@ -274,7 +280,7 @@ def create_ena_project(config: Config, project_set: ProjectSet) -> CreationResul
         errors.append(error_message)
         return CreationResult(errors=errors, warnings=warnings)
     project_results = {
-        "bioproject_accession": parsed_response["RECEIPT"]["PROJECT"]["@accession"],
+        EnaResultField.BIOPROJECT: parsed_response["RECEIPT"]["PROJECT"]["@accession"],
         "ena_submission_accession": parsed_response["RECEIPT"]["SUBMISSION"]["@accession"],
     }
     return CreationResult(result=project_results, errors=errors, warnings=warnings)
@@ -347,7 +353,7 @@ def create_ena_sample(
         return CreationResult(errors=errors, warnings=warnings)
     sample_results = {
         "ena_sample_accession": parsed_response["RECEIPT"]["SAMPLE"]["@accession"],
-        "biosample_accession": parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@accession"],
+        EnaResultField.BIOSAMPLE: parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@accession"],
         "ena_submission_accession": parsed_response["RECEIPT"]["SUBMISSION"]["@accession"],
     }
     return CreationResult(result=sample_results, errors=errors, warnings=warnings)
@@ -431,7 +437,7 @@ def get_authors(authors: str) -> str | None:
         formatted_authors = reformat_authors_from_loculus_to_embl_style(authors)
         logger.debug("Reformatted authors")
     except Exception as err:
-        msg = f"Was unable to format authors: {authors} as ENA expects"
+        msg = f"Was unable to format authors as ENA expects: {authors}"
         logger.error(msg)
         raise ValueError(msg) from err
     return formatted_authors
@@ -454,9 +460,6 @@ def create_flatfile(
 ):
     collection_date = metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.collection_date_property, "Unknown")
     authors = get_authors(metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.authors_property) or "")
-    # BioPython's EMBL writer automatically adds a terminating semicolon,
-    # so we need to strip it from our formatted authors string to avoid duplication
-    authors = authors.removesuffix(";")
     country = get_country(metadata)
     organism = organism_metadata.scientific_name
     accession = metadata["accession"]
@@ -483,7 +486,11 @@ def create_flatfile(
         if not isinstance(sequence_str, str) or len(sequence_str) == 0:
             continue
         reference = Reference()
-        reference.authors = authors
+        if authors:
+            # BioPython's EMBL writer automatically adds a terminating semicolon,
+            # so we need to strip it from our formatted authors string to avoid duplication
+            authors = authors.removesuffix(";")
+            reference.authors = authors
         sequence = SeqRecord(
             seq=Seq(sequence_str),
             id=f"{accession}_{seq_name}" if multi_segment else accession,
@@ -527,14 +534,17 @@ def create_flatfile(
 
 
 def create_manifest(
-    manifest: AssemblyManifest, is_broker: bool = False, dir: str | None = None
+    manifest: AssemblyManifest | RawReadsManifest, is_broker: bool = False, dir: str | None = None
 ) -> str:
     """
     Creates a temp manifest file:
     https://ena-docs.readthedocs.io/en/latest/submit/assembly/genome.html#manifest-files
     """
-    if not manifest.fasta and not manifest.flatfile:
+    if isinstance(manifest, AssemblyManifest) and not manifest.fasta and not manifest.flatfile:
         msg = "Either fasta or flatfile must be provided"
+        raise ValueError(msg)
+    if isinstance(manifest, RawReadsManifest) and not manifest.fastq:
+        msg = "Fastq files must be provided"
         raise ValueError(msg)
 
     if dir:
@@ -616,6 +626,7 @@ def manifest_fields_diff(
 
 
 def linked_accession_diff(
+    config: Config,
     submission_row: SubmissionTableEntry,
     previous_sample_accession: str,
     previous_study_accession: str,
@@ -624,8 +635,8 @@ def linked_accession_diff(
     are linked to an already-existing sample/project), check it still matches the accession
     used for the previous version."""
     previous_accessions = {
-        "biosampleAccession": previous_sample_accession,
-        "bioprojectAccession": previous_study_accession,
+        config.loculus_accession_fields.biosample: previous_sample_accession,
+        config.loculus_accession_fields.bioproject: previous_study_accession,
     }
     differing_fields = {}
     for field, previous_accession in previous_accessions.items():
@@ -640,6 +651,7 @@ def post_webin_cli(
     manifest_filename,
     tmpdir: tempfile.TemporaryDirectory,
     center_name=None,
+    context: Literal["genome", "reads"] = "genome",
 ) -> subprocess.CompletedProcess:
     logger.debug(
         f"Posting manifest {manifest_filename} to ENA Webin CLI with test={config.test} and "
@@ -650,7 +662,7 @@ def post_webin_cli(
         f"-username={config.ena_submission_username}",
         f"-centername={center_name}" if center_name else "",
         "-submit",
-        "-context=genome",
+        f"-context={context}",
         f"-manifest={manifest_filename}",
         f"-outputdir={tmpdir.name}",
         "-test" if config.test else "",
@@ -673,51 +685,93 @@ def post_webin_cli(
         text=True,
         check=False,
         shell=False,
+        timeout=config.ena_webin_cli_timeout_seconds,
     )
 
 
-def create_ena_assembly(config: Config, manifest_filename: str, center_name=None) -> CreationResult:
+_WEBIN_CLI_ACCESSION_MARKER = "The following {kind} accession was assigned to the submission:"
+
+
+def _extract_accessions(
+    stdout: str,
+    patterns: dict[str, tuple[str, str]],
+) -> dict[str, str | Sequence[str]] | None:
     """
-    This is equivalent to running:
-    ena-webin-cli -username {params.ena_submission_username} \\
-        -password {params.ena_submission_password} -context genome \\
-        -manifest {manifest_file} -submit
+    Extract accessions from Webin CLI output.
+
+    patterns maps output keys to (kind, regex), where `kind` is the noun Webin CLI uses in
+    its "The following {kind} accession was assigned to the submission:" marker line, e.g.
+    "analysis", "experiment", "run".
+    """
+    result: dict[str, str | Sequence[str]] = {}
+
+    for line in stdout.splitlines():
+        for key, (kind, regex) in patterns.items():
+            if _WEBIN_CLI_ACCESSION_MARKER.format(kind=kind) not in line:
+                continue
+
+            match = re.search(regex, line)
+            if match:
+                accession = match.group(0)
+                result[key] = accession
+                logger.info(
+                    "Webin CLI succeeded and returned %s: %s",
+                    key,
+                    accession,
+                )
+
+    return result if len(result) == len(patterns) else None
+
+
+def _run_webin_cli_submission(
+    config: Config,
+    manifest_filename: str,
+    center_name: str | None,
+    context: Literal["genome", "reads"],
+    patterns: dict[str, tuple[str, str]],
+) -> CreationResult:
+    """
+    Runs `ena-webin-cli -submit` for the given context and manifest, extracting the
+    accession(s) named in `patterns` (see `_extract_accessions`) from stdout on success.
+
+    On failure - a non-zero exit code, or a zero exit code without all expected
+    accessions - logs the manifest and webin-cli log files and returns the errors instead.
+
     config.test=True, adds the `-test` flag which means submissions will use the ENA dev endpoint.
     """
-    errors: list[str] = []
-    warnings: list[str] = []
-
     # create a tmp dir for output files
     # use normal python stuff for that
 
     output_tmpdir = tempfile.TemporaryDirectory()
 
-    response = post_webin_cli(
-        config, manifest_filename, tmpdir=output_tmpdir, center_name=center_name
-    )
+    try:
+        response = post_webin_cli(
+            config,
+            manifest_filename,
+            tmpdir=output_tmpdir,
+            center_name=center_name,
+            context=context,
+        )
+    except subprocess.TimeoutExpired as e:
+        # timeout logs may include sensitive info, so redact them
+        msg = f"webin-cli timed out after {e.timeout}s"
+        return CreationResult(errors=[msg], warnings=[])
+    except Exception as e:
+        msg = f"Error occurred while running webin-cli: {type(e).__name__}"
+        logger.error(msg)
+        return CreationResult(errors=[msg], warnings=[])
 
-    # Happy path: webin-cli succeeded and returned ERZ accession
     if response.returncode == 0:
-        for line in response.stdout.splitlines():
-            if "The following analysis accession was assigned to the submission:" in line:
-                match = re.search(r"ERZ\d+", line)
-                if match:
-                    erz_accession = match.group(0)
-                    logger.info(f"Webin CLI succeeded and returned ERZ accession: {erz_accession}")
-                    return CreationResult(
-                        result={"erz_accession": erz_accession},
-                        errors=errors,
-                        warnings=warnings,
-                    )
-
-    # Handle the case where the webin-cli command fails or does not return ERZ accession
-    if response.returncode != 0:
-        error_message = f"Webin CLI command failed with status: {response.returncode}. "
+        if accessions := _extract_accessions(response.stdout, patterns):
+            # Happy path: webin-cli succeeded and returned the expected accession(s)
+            return CreationResult(result=accessions, errors=[], warnings=[])
+        missing_accessions = " or ".join(f"{kind} accession" for kind in patterns)
+        error_message = f"Webin CLI command succeeded but did not return {missing_accessions}. "
     else:
-        error_message = "Webin CLI command succeeded but did not return ERZ accession. "
+        error_message = f"Webin CLI command failed with status: {response.returncode}. "
+
     error_message += f"Stdout: {response.stdout}, Stderr: {response.stderr}"
     logger.error(error_message)
-    errors.append(error_message)
 
     try:
         manifest_contents = Path(manifest_filename).read_text(encoding="utf-8")
@@ -732,7 +786,48 @@ def create_ena_assembly(config: Config, manifest_filename: str, center_name=None
             logger.info(f"webin-cli log file {file_path} contents:\n{contents}")
         except Exception as e:
             logger.warning(f"Reading webin-cli log file {file_path} failed: {e}")
-    return CreationResult(errors=errors, warnings=warnings)
+    return CreationResult(errors=[error_message], warnings=[])
+
+
+def create_ena_assembly(config: Config, manifest_filename: str, center_name=None) -> CreationResult:
+    """
+    This is equivalent to running:
+    ena-webin-cli -username {params.ena_submission_username} \\
+        -password {params.ena_submission_password} -context genome \\
+        -manifest {manifest_file} -submit
+    config.test=True, adds the `-test` flag which means submissions will use the ENA dev endpoint.
+    """
+    return _run_webin_cli_submission(
+        config,
+        manifest_filename,
+        center_name,
+        context="genome",
+        patterns={"erz_accession": ("analysis", r"ERZ\d+")},
+    )
+
+
+def create_ena_raw_reads(
+    config: Config, manifest_filename: str, center_name=None
+) -> CreationResult:
+    """
+    This is equivalent to running:
+    ena-webin-cli -submit \\
+        -context reads \\
+        -manifest manifest.tsv \\
+        -username Webin-XXXXX \\
+        -password YYYYYY
+    config.test=True, adds the `-test` flag which means submissions will use the ENA dev endpoint.
+    """
+    return _run_webin_cli_submission(
+        config,
+        manifest_filename,
+        center_name,
+        context="reads",
+        patterns={
+            EnaResultField.EXPERIMENT: ("experiment", r"ERX\d+"),
+            EnaResultField.RUN: ("run", r"ERR\d+"),
+        },
+    )
 
 
 def get_ena_analysis_process(
@@ -803,7 +898,7 @@ def get_ena_analysis_process(
             if gca_accession:
                 assembly_results.update(
                     {
-                        "gca_accession": gca_accession,
+                        EnaResultField.GCA: gca_accession,
                     }
                 )
             insdc_accession_range = acc_dict.get("chromosomes")
@@ -868,14 +963,14 @@ def get_chromsome_accessions(
         if not is_multi_segment:
             accession = f"{start_letters}{start_num:0{num_digits}d}"
             return {
-                "insdc_accession": accession,
-                "insdc_accession_full": f"{accession}.1",
+                EnaResultField.INSDC_ACCESSION_PREFIX: accession,
+                EnaResultField.INSDC_ACCESSION_FULL_PREFIX: f"{accession}.1",
             }
         results = {}
         for i, segment in enumerate(segment_order):
             accession = f"{start_letters}{(start_num + i):0{num_digits}d}"
-            results[f"insdc_accession_{segment}"] = accession
-            results[f"insdc_accession_full_{segment}"] = f"{accession}.1"
+            results[f"{EnaResultField.INSDC_ACCESSION_PREFIX}_{segment}"] = accession
+            results[f"{EnaResultField.INSDC_ACCESSION_FULL_PREFIX}_{segment}"] = f"{accession}.1"
         return results
 
     # Don't handle the Value error here, let it propagate
@@ -909,7 +1004,7 @@ def accession_exists(
 def set_accession_does_not_exist_error(
     conditions: dict[str, Any],
     accession: str,
-    accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"] | Literal["RUN_REF"],
+    accession_type: Literal["BIOPROJECT", "BIOSAMPLE", "RUN_REF"],
     db_engine: Engine,
 ):
     error_text = f"Accession {accession} of type {accession_type} does not exist in ENA."
@@ -925,7 +1020,10 @@ def set_accession_does_not_exist_error(
                 {
                     "status": Status.HAS_ERRORS,
                     "errors": [error_text],
-                    "result": {"biosample_accession": accession, "ena_sample_accession": accession},
+                    "result": {
+                        EnaResultField.BIOSAMPLE: accession,
+                        "ena_sample_accession": accession,
+                    },
                 },
             )
         case "BIOPROJECT":
@@ -936,17 +1034,20 @@ def set_accession_does_not_exist_error(
                 {
                     "status": Status.HAS_ERRORS,
                     "errors": [error_text],
-                    "result": {"bioproject_accession": accession},
+                    "result": {EnaResultField.BIOPROJECT: accession},
                 },
             )
         case "RUN_REF":
-            assembly_table_entry = AssemblyTableEntry(
-                **conditions,  # type: ignore
-                status=Status.HAS_ERRORS,
-                errors=[error_text],
-                result={},  # type: ignore
+            succeeded = update_db_where_conditions(
+                db_engine,
+                RawReadsTableEntry,
+                conditions,
+                {
+                    "status": Status.HAS_ERRORS,
+                    "errors": [error_text],
+                    "result": {EnaResultField.RUN: accession},
+                },
             )
-            succeeded = add_to_assembly_table(db_engine, assembly_table_entry)
 
     if not succeeded:
         logger.warning(f"{accession_type} creation failed and DB update failed.")
@@ -955,9 +1056,13 @@ def set_accession_does_not_exist_error(
 def retry_failed_submissions_for_matching_errors(
     entries_with_errors: Iterable[ProjectTableEntry]
     | Iterable[SampleTableEntry]
-    | Iterable[AssemblyTableEntry],
+    | Iterable[AssemblyTableEntry]
+    | Iterable[RawReadsTableEntry],
     db_engine: Engine,
-    model_class: type[ProjectTableEntry] | type[SampleTableEntry] | type[AssemblyTableEntry],
+    model_class: type[ProjectTableEntry]
+    | type[SampleTableEntry]
+    | type[AssemblyTableEntry]
+    | type[RawReadsTableEntry],
     config: Config,
     last_retry: datetime | None = None,
 ) -> datetime | None:

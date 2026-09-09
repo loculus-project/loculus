@@ -137,6 +137,17 @@ export function getLatestAccessionVersion(
     return clonedSequenceEntryHistory.sort((a, b) => b.version - a.version)[0];
 }
 
+/**
+ * Whether the newest version of an accession is a revocation, i.e. the accession is currently revoked.
+ * An absent history (not yet loaded, or the entry is not the user's own) counts as not revoked.
+ */
+export function isLatestVersionRevocation(sequenceEntryHistory: SequenceEntryHistory | undefined): boolean {
+    if (sequenceEntryHistory === undefined) {
+        return false;
+    }
+    return getLatestAccessionVersion(sequenceEntryHistory)?.isRevocation === true;
+}
+
 export function getLatestAccessionVersionForRevision(
     sequenceEntryHistory: SequenceEntryHistory,
 ): SequenceEntryHistoryEntry | undefined {

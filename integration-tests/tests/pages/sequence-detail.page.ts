@@ -37,8 +37,16 @@ export class SequenceDetailPage {
         await expect(this.page.getByText(/[ACGTN]{20,}/)).toBeVisible({ timeout });
     }
 
+    private get revocationBanner() {
+        return this.page.getByText('This sequence entry has been revoked!');
+    }
+
     async expectRevocationBanner() {
-        await expect(this.page.getByText('This sequence entry has been revoked!')).toBeVisible();
+        await expect(this.revocationBanner).toBeVisible();
+    }
+
+    async expectNoRevocationBanner() {
+        await expect(this.revocationBanner).not.toBeVisible();
     }
 
     private get notLatestVersionBanner() {

@@ -11,11 +11,16 @@ from sqlalchemy import Engine
 
 from ena_deposition.call_loculus import submit_external_metadata
 
-from .config import Config, EnaOrganismDetails
+from .config import (
+    Config,
+    EnaOrganismDetails,
+    EnaResultField,
+)
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
     AssemblyTableEntry,
     ProjectTableEntry,
+    RawReadsTableEntry,
     SampleTableEntry,
     StatusAll,
     SubmissionTableEntry,
@@ -28,7 +33,9 @@ from .submission_db_helper import (
 logger = logging.getLogger(__name__)
 
 
-def _get_result_of_single_db_record[T: SampleTableEntry | ProjectTableEntry | AssemblyTableEntry](
+def _get_result_of_single_db_record[
+    T: SampleTableEntry | ProjectTableEntry | AssemblyTableEntry | RawReadsTableEntry
+](
     db_engine: Engine,
     model_class: type[T],
     conditions: dict[str, Any],
@@ -53,21 +60,23 @@ def _get_result_of_single_db_record[T: SampleTableEntry | ProjectTableEntry | As
     return result
 
 
-def get_bioproject_accession_from_db(db_engine: Engine, project_id: int | None) -> dict[str, str]:
+def get_bioproject_accession_from_db(
+    db_engine: Engine, config: Config, project_id: int | None
+) -> dict[str, str]:
     if project_id is None:
         return {}
     result = _get_result_of_single_db_record(
         db_engine, ProjectTableEntry, conditions={"project_id": project_id}
     )
 
-    if not result or "bioproject_accession" not in result:
+    if not result or EnaResultField.BIOPROJECT not in result:
         return {}
 
-    return {"bioprojectAccession": result["bioproject_accession"]}
+    return {config.loculus_accession_fields.bioproject: result[EnaResultField.BIOPROJECT]}
 
 
 def get_biosample_accession_from_db(
-    db_engine: Engine, accession: str, version: int
+    db_engine: Engine, config: Config, accession: str, version: int
 ) -> dict[str, str]:
     result = _get_result_of_single_db_record(
         db_engine,
@@ -75,18 +84,39 @@ def get_biosample_accession_from_db(
         conditions={"accession": accession, "version": version},
     )
 
-    if not result or "biosample_accession" not in result:
+    if not result or EnaResultField.BIOSAMPLE not in result:
         return {}
 
-    return {"biosampleAccession": result["biosample_accession"]}
+    return {config.loculus_accession_fields.biosample: result[EnaResultField.BIOSAMPLE]}
+
+
+def get_run_accession_from_db(
+    db_engine: Engine, config: Config, accession: str, version: int, submit_raw_reads: bool
+) -> tuple[dict[str, str], bool]:
+    """Return run accession and a boolean indicating whether the raw reads upload is complete"""
+    if not submit_raw_reads:
+        return {}, True
+    result = _get_result_of_single_db_record(
+        db_engine,
+        RawReadsTableEntry,
+        conditions={"accession": accession, "version": version},
+    )
+
+    if not result or EnaResultField.RUN not in result:
+        return {}, False
+
+    return {config.loculus_accession_fields.run: result[EnaResultField.RUN]}, True
 
 
 def get_assembly_accessions_from_db(
     db_engine: Engine,
+    config: Config,
     accession: str,
     version: int,
     organism: EnaOrganismDetails,
 ) -> tuple[dict[str, str], bool]:
+    """Return assembly accessions and a boolean indicating whether all assembly submissions
+    are complete"""
     result = _get_result_of_single_db_record(
         db_engine,
         AssemblyTableEntry,
@@ -99,8 +129,8 @@ def get_assembly_accessions_from_db(
     data = {}
     all_present = True
 
-    if gca := result.get("gca_accession"):
-        data["gcaAccession"] = gca
+    if gca := result.get(EnaResultField.GCA):
+        data[config.loculus_accession_fields.gca] = gca
     else:
         all_present = False
 
@@ -108,15 +138,19 @@ def get_assembly_accessions_from_db(
     for segment in segment_names:
         segment_suffix = f"_{segment}" if organism.is_multi_segment() else ""
 
-        base_key = f"insdc_accession{segment_suffix}"
+        base_key = f"{EnaResultField.INSDC_ACCESSION_PREFIX}{segment_suffix}"
         if base_key in result:
-            data[f"insdcAccessionBase{segment_suffix}"] = result[base_key]
+            data[f"{config.loculus_accession_fields.insdc_accession_prefix}{segment_suffix}"] = (
+                result[base_key]
+            )
         else:
             all_present = False
 
-        full_key = f"insdc_accession_full{segment_suffix}"
+        full_key = f"{EnaResultField.INSDC_ACCESSION_FULL_PREFIX}{segment_suffix}"
         if full_key in result:
-            data[f"insdcAccessionFull{segment_suffix}"] = result[full_key]
+            data[
+                f"{config.loculus_accession_fields.insdc_accession_full_prefix}{segment_suffix}"
+            ] = result[full_key]
         else:
             all_present = False
 
@@ -126,14 +160,19 @@ def get_assembly_accessions_from_db(
 def get_external_metadata_to_upload(
     db_engine: Engine, entry: SubmissionTableEntry, config: Config
 ) -> tuple[dict[str, Any], bool]:
+    """Get external metadata to upload to Loculus for a given submission entry, and a boolean
+    indicating whether all accessions have been received from ENA for this entry."""
     accession = entry.accession
     version = entry.version
     organism = config.enaOrganisms[entry.organism]
 
-    bioproject_accession = get_bioproject_accession_from_db(db_engine, entry.project_id)
-    biosample_accession = get_biosample_accession_from_db(db_engine, accession, version)
+    bioproject_accession = get_bioproject_accession_from_db(db_engine, config, entry.project_id)
+    biosample_accession = get_biosample_accession_from_db(db_engine, config, accession, version)
+    run_accession, run_accession_not_missing = get_run_accession_from_db(
+        db_engine, config, accession, version, entry.submit_raw_reads
+    )
     assembly_accession, all_assemblies_present = get_assembly_accessions_from_db(
-        db_engine, accession, version, organism
+        db_engine, config, accession, version, organism
     )
 
     return {
@@ -142,15 +181,24 @@ def get_external_metadata_to_upload(
         "externalMetadata": {
             **bioproject_accession,
             **biosample_accession,
+            **run_accession,
             **assembly_accession,
         },
-    }, all([bioproject_accession, biosample_accession, all_assemblies_present])
+    }, all(
+        [
+            bioproject_accession,
+            biosample_accession,
+            run_accession_not_missing,
+            all_assemblies_present,
+        ]
+    )
 
 
 def get_external_metadata_and_send_to_loculus(db_engine: Engine, config: Config) -> None:
     for status in (
         StatusAll.SUBMITTED_PROJECT,
         StatusAll.SUBMITTED_SAMPLE,
+        StatusAll.SUBMITTED_RAW_READS,
         StatusAll.SUBMITTING_ASSEMBLY,
         StatusAll.SUBMITTED_ALL,
     ):
