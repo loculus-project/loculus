@@ -242,6 +242,8 @@ def sync_state_with_submission_table(db_engine: Engine, config: Config):
             )
             continue
         biosample = None
+        # TODO(#6845): remove this and prevent users from submitting `biosampleAccession` once
+        # raw read submission is fully implemented and tested
         if row and row.seq_metadata.get(config.loculus_accession_fields.biosample):
             biosample = row.seq_metadata[config.loculus_accession_fields.biosample]
         add_to_db(
@@ -281,6 +283,8 @@ def sample_table_create(db_engine: Engine, config: Config):
             db_engine, SubmissionTableEntry, conditions=asdict(seq_key)
         )
 
+        # TODO(#6845): remove this and prevent users from submitting `biosampleAccession` once raw
+        # read submission is fully implemented and tested
         if row.result and row.result.get(EnaResultField.BIOSAMPLE):
             update_with_existing_biosample(db_engine, sample_data_in_submission_table[0], config)
             continue
