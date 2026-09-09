@@ -130,7 +130,7 @@ def create_manifest_object(
     raw_reads_manifest_fields_mapping = config.raw_reads_manifest_fields_mapping
 
     sequencing_instrument = resolve_required_manifest_field(
-        raw_reads_manifest_fields_mapping["instrument"], metadata
+        raw_reads_manifest_fields_mapping["instrument_platform"], metadata
     )
     platform, instrument = get_platform_and_instrument(
         sequencing_instrument, submission_row.accession
