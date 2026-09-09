@@ -1,9 +1,9 @@
-import { type Result, ok, err } from 'neverthrow';
+import { type Result, ResultAsync, ok, err } from 'neverthrow';
 import Papa from 'papaparse';
 
 import { getFileNameErrorMessage, validateFileNames } from './fileNameValidation';
 import { FILES_HEADER_PREFIX, SUBMISSION_ID_INPUT_FIELD } from '../../../settings';
-import type { FileSharingConfig } from '../../../types/config';
+import type { FileSharingConfig, SubmissionDataTypes } from '../../../types/config';
 
 const ID_COLUMNS = [SUBMISSION_ID_INPUT_FIELD, 'submissionId'];
 
@@ -459,6 +459,26 @@ export function parseSubmissionFileMapping(
     }
 
     return ok(submissionFileMapping);
+}
+
+/**
+ * Reads a metadata file and parses the file mapping it declares.
+ * @param metadataFile The metadata file to read, with any column mapping already applied.
+ * @param submissionDataTypes The submission data types, used to determine the configured file categories.
+ * @returns The declared file mapping, or an error if the file could not be read or parsed.
+ */
+export async function parseMetadataFileMapping(
+    metadataFile: Pick<File, 'text'>,
+    submissionDataTypes: SubmissionDataTypes,
+): Promise<Result<SubmissionFileMapping, Error>> {
+    const textResult = await ResultAsync.fromPromise(
+        metadataFile.text(),
+        (error) =>
+            new Error(`Could not read the metadata file: ${error instanceof Error ? error.message : String(error)}`),
+    );
+    return textResult.andThen((text) =>
+        parseSubmissionFileMapping(text, submissionDataTypes.files?.categories?.map((category) => category.name) ?? []),
+    );
 }
 
 /**

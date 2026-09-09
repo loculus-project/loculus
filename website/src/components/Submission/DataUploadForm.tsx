@@ -39,6 +39,7 @@ import {
     type CategoryLinkage,
     type FileLinkage,
     type SubmissionFileMapping,
+    parseMetadataFileMapping,
     validateSubmissionFileMapping,
 } from './FileUpload/fileMapping.ts';
 import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
@@ -161,24 +162,22 @@ const InnerDataUploadForm = ({
                     finalMetadataFile = finalMetadataFileResult.value;
                 }
             } else {
-                if (submissionFileMapping === undefined) {
-                    onError('Cannot submit: metadata file is still being processed.');
+                // Parsed here rather than reused from the state above, so that submitting never depends on
+                // whether the file has already been read in the background.
+                const parsedFileMapping = await parseMetadataFileMapping(metadataFile, submissionDataTypes);
+                if (parsedFileMapping.isErr()) {
+                    onError(parsedFileMapping.error.message);
                     return;
                 }
 
-                if (submissionFileMapping.isErr()) {
-                    onError(submissionFileMapping.error.message);
-                    return;
-                }
-
-                const validationResult = validateSubmissionFileMapping(submissionFileMapping.value, fileSharingConfig);
+                const validationResult = validateSubmissionFileMapping(parsedFileMapping.value, fileSharingConfig);
                 if (validationResult.isErr()) {
                     onError(validationResult.error.message);
                     return;
                 }
 
                 const { submissionFileMapping: resolvedSubmissionFileMapping, fileLinkage } = resolveFileMappings(
-                    submissionFileMapping.value,
+                    parsedFileMapping.value,
                     fileMapping,
                 );
 

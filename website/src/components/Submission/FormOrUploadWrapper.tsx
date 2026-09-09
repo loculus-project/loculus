@@ -9,7 +9,7 @@ import type { InputField, SubmissionDataTypes } from '../../types/config';
 import { EditableSequences } from '../Edit/EditableSequences';
 import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
 import { SequencesForm } from '../Edit/SequencesForm';
-import { parseSubmissionFileMapping, type SubmissionFileMapping } from './FileUpload/fileMapping';
+import { parseMetadataFileMapping, type SubmissionFileMapping } from './FileUpload/fileMapping';
 
 export type InputMode = 'form' | 'bulk';
 
@@ -87,16 +87,11 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 setSubmissionFileMapping(undefined);
                 return;
             }
-            const text = columnMapping
-                ? await (await columnMapping.applyTo(metadataFile)).text()
-                : await metadataFile.text();
+            const file = columnMapping ? await columnMapping.applyTo(metadataFile) : metadataFile;
+            const submissionFileMapping = await parseMetadataFileMapping(file, submissionDataTypes);
 
             if (state.cancelled) return;
 
-            const submissionFileMapping = parseSubmissionFileMapping(
-                text,
-                submissionDataTypes.files?.categories?.map((category) => category.name) ?? [],
-            );
             setSubmissionFileMapping(submissionFileMapping);
             if (submissionFileMapping.isErr()) onError(submissionFileMapping.error.message);
         })();
