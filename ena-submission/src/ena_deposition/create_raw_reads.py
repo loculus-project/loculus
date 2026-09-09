@@ -74,7 +74,7 @@ def get_platform_and_instrument(
     except ValueError:
         platform = None
     if platform is not None:
-        return platform, None
+        return platform, Instrument.unspecified
     try:
         instrument = Instrument.from_value(raw_value)
     except ValueError:
