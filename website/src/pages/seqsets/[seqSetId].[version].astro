@@ -32,9 +32,9 @@ if (!seqSetsAreEnabled()) {
 }
 
 const seqSetClient = SeqSetCitationClient.create();
-const seqSetVersionsResponse = await seqSetClient.call('getSeqSetVersions', { params: { seqSetId } });
-const seqSetRecordsResponse = await seqSetClient.call('getSeqSetRecords', { params: { seqSetId, version } });
-const seqSetCitationsResponse = await seqSetClient.call('getSeqSetCitations', { params: { seqSetId, version } });
+const seqSetVersionsResponse = await seqSetClient.getSeqSetVersions(seqSetId);
+const seqSetRecordsResponse = await seqSetClient.getSeqSetRecords(seqSetId, version);
+const seqSetCitationsResponse = await seqSetClient.getSeqSetCitations(seqSetId, version);
 
 const getSeqSetByVersion = (seqSetVersions: SeqSet[], version: string) => {
     const matchedVersion = seqSetVersions.find((obj) => {

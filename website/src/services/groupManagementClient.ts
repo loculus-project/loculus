@@ -1,38 +1,39 @@
-import { groupManagementApi } from './groupManagementApi.ts';
-import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
+import z from 'zod';
+
+import { ApiClient } from './zodiosWrapperClient.ts';
 import { getRuntimeConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
-import type { NewGroup } from '../types/backend.ts';
+import { group, groupDetails, type NewGroup, type ProblemDetail } from '../types/backend.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 
 const instanceLogger = getInstanceLogger('GroupManagementClient');
 
-export class GroupManagementClient extends ZodiosWrapperClient<typeof groupManagementApi> {
+export class GroupManagementClient extends ApiClient {
     public static create(backendUrl: string = getRuntimeConfig().serverSide.backendUrl, logger = instanceLogger) {
         return new GroupManagementClient(
             backendUrl,
-            groupManagementApi,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            (axiosError) => axiosError.data,
+            (data: unknown) => data as ProblemDetail | undefined,
             logger,
             'backend',
         );
     }
 
     public getGroupsOfUser(token: string | undefined) {
-        return this.call('getGroupsOfUser', {
+        return this.request('get', '/user/groups', z.array(group), {
             headers: createAuthorizationHeader(token),
         });
     }
 
     public getGroupDetails(groupId: number, token?: string) {
-        return this.call('getGroupDetails', {
+        return this.request('get', `/groups/${groupId}`, groupDetails, {
             headers: createAuthorizationHeader(token),
-            params: { groupId },
         });
     }
 
     public createGroup(token: string, data: NewGroup) {
-        return this.call('createGroup', data, { headers: createAuthorizationHeader(token) });
+        return this.request('post', '/groups', group, {
+            data,
+            headers: createAuthorizationHeader(token),
+        });
     }
 }
