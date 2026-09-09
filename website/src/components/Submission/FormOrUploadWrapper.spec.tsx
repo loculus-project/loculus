@@ -67,6 +67,8 @@ const MockSaveWrapper = ({
                 }}
                 setSubmissionFileMapping={vi.fn()}
                 onError={vi.fn()}
+                fileSharingConfig={{ disableStrictFilenameValidation: false }}
+                fileMapping={undefined}
             />
             <Button onClick={handler}>generate</Button>
         </>
