@@ -455,9 +455,12 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
                 update_raw_reads_results_with_latest_version(db_engine, seq_key)
                 continue
             last_entry = get_last_entry(db_engine, submission_row.pkey)
+            last_version_raw_reads = find_conditions_in_db(
+                db_engine, RawReadsTableEntry, conditions=asdict(last_entry.pkey)
+            )
             old_run_accession = (
-                last_entry.external_metadata.get(config.loculus_accession_fields.run)
-                if last_entry.external_metadata
+                last_version_raw_reads[0].result.get(EnaResultField.RUN)
+                if last_version_raw_reads and last_version_raw_reads[0].result
                 else None
             )
 
