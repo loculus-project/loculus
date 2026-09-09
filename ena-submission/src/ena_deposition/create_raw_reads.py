@@ -23,6 +23,7 @@ from .ena_submission_helper import (
     linked_accession_diff,
     manifest_fields_diff,
     resolve_manifest_field,
+    resolve_required_manifest_field,
     retry_failed_submissions_for_matching_errors,
     set_accession_does_not_exist_error,
 )
@@ -69,26 +70,28 @@ def get_platform_and_instrument(
     Raises ValueError if the value cannot yield a manifest ENA will accept.
     """
     try:
-        if instrument := Instrument.from_value(raw_value):
-            if instrument is Instrument.unspecified:
-                # webin-cli rejects INSTRUMENT=unspecified unless PLATFORM is also given
-                # Preprocessing forces sequencingInstrument to be one of the configured options
-                # (excluding "unspecified") whenever raw reads are attached,
-                # so this should never fire.
-                message = (
-                    f"sequencingInstrument is 'unspecified' for accession {accession} - ENA "
-                    "requires a PLATFORM alongside it, which we cannot supply."
-                )
-                logger.error(message)
-                raise ValueError(message)
-            return None, instrument
+        instrument = Instrument.from_value(raw_value)
     except ValueError:
-        pass
+        instrument = None
+    if instrument is not None:
+        if instrument is Instrument.unspecified:
+            # webin-cli rejects INSTRUMENT=unspecified unless PLATFORM is also given
+            # Preprocessing forces sequencingInstrument to be one of the configured options
+            # (excluding "unspecified") whenever raw reads are attached,
+            # so this should never fire.
+            message = (
+                f"sequencingInstrument is 'unspecified' for accession {accession} - ENA "
+                "requires a PLATFORM alongside it, which we cannot supply."
+            )
+            logger.error(message)
+            raise ValueError(message)
+        return None, instrument
     try:
-        if platform := Platform.from_value(raw_value):
-            return platform, Instrument.unspecified
+        platform = Platform.from_value(raw_value)
     except ValueError:
-        pass
+        platform = None
+    if platform is not None:
+        return platform, None
     message = (
         f"sequencingInstrument value '{raw_value}' for accession {accession} matches "
         "neither ENA's platform nor instrument list - ENA submission will fail."
@@ -126,7 +129,7 @@ def create_manifest_object(
     metadata = submission_row.seq_metadata
     raw_reads_manifest_fields_mapping = config.raw_reads_manifest_fields_mapping
 
-    sequencing_instrument = resolve_manifest_field(
+    sequencing_instrument = resolve_required_manifest_field(
         raw_reads_manifest_fields_mapping["instrument"], metadata
     )
     platform, instrument = get_platform_and_instrument(
