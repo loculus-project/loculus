@@ -21,6 +21,9 @@ from ena_deposition.create_project import construct_project_set_object
 from ena_deposition.create_raw_reads import (
     create_manifest_object as create_raw_reads_manifest_object,
 )
+from ena_deposition.create_raw_reads import (
+    get_platform_and_instrument,
+)
 from ena_deposition.create_sample import construct_sample_set_object
 from ena_deposition.ena_submission_helper import (
     create_chromosome_list,
@@ -686,6 +689,47 @@ class RawReadsCreationTests(unittest.TestCase):
                 submission_row,
                 dir=self.tmp_dir,
             )
+
+
+class GetPlatformAndInstrumentTests(unittest.TestCase):
+    def test_valid_platform_value(self):
+        """A value from ENA's PLATFORM list yields that platform and an unspecified
+        instrument."""
+        platform, instrument = get_platform_and_instrument("ILLUMINA", "LOC_0001TLY")
+
+        self.assertEqual(platform, Platform.ILLUMINA)
+        self.assertEqual(instrument, Instrument.unspecified)
+
+    def test_valid_platform_value_is_case_insensitive(self):
+        platform, instrument = get_platform_and_instrument("illumina", "LOC_0001TLY")
+
+        self.assertEqual(platform, Platform.ILLUMINA)
+        self.assertEqual(instrument, Instrument.unspecified)
+
+    def test_instrument_unspecified_raises(self):
+        """"unspecified" is a valid INSTRUMENT value but ENA needs a PLATFORM alongside
+        it, which we cannot supply, so it must be rejected."""
+        with self.assertRaises(ValueError) as ctx:
+            get_platform_and_instrument("unspecified", "LOC_0001TLY")
+
+        self.assertIn("unspecified", str(ctx.exception))
+        self.assertIn("LOC_0001TLY", str(ctx.exception))
+
+    def test_instrument_invalid_raises(self):
+        """"unspecified" is a valid INSTRUMENT value but ENA needs a PLATFORM alongside
+        it, which we cannot supply, so it must be rejected."""
+        with self.assertRaises(ValueError) as ctx:
+            get_platform_and_instrument("invalid_instrument", "LOC_0001TLY")
+
+        self.assertIn("invalid_instrument", str(ctx.exception))
+        self.assertIn("LOC_0001TLY", str(ctx.exception))
+
+    def test_valid_instrument_value(self):
+        """A value from ENA's INSTRUMENT list yields that instrument and no platform."""
+        platform, instrument = get_platform_and_instrument("Illumina MiSeq", "LOC_0001TLY")
+
+        self.assertIsNone(platform)
+        self.assertEqual(instrument, Instrument.Illumina_MiSeq)
 
 
 if __name__ == "__main__":
