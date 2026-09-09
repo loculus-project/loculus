@@ -21,7 +21,7 @@ Green CI is a good sign that nothing major broke, but still:
 
 - Check if any of the updated dependencies are marked with comments in the PR's 'Files changed' tab, there may be instructions to ignore certain versions or to also update another dependency if a version is bumped.
 - For anything that can affect front-end styling (website, docs, keycloak/keycloakify), add the `preview` label and visually compare the preview against [main's preview](https://main.loculus.org/). This is good practice as the integration tests may not catch visual regressions.
-- For (larger) keycloak changes, it is a good idea to login to the keycloak admin console and confirm this still works. You can find the URL for the keycloak server under the 'Keycloak server' section of the preview's API docs. For previews, the keycloak admin username/password are admin/admin.
+- For (larger) keycloak changes, it is a good idea to login to the keycloak admin console and confirm this still works. You can find the URL for the keycloak server under the 'Keycloak server' section of the preview's API docs. The URL for the admin console will look like `https://authentication-<your preview prefix>.loculus.org/admin/master/console/`. For previews, the keycloak admin username/password are admin/admin.
 - Potentially skim the `Release notes`/`Changelog` in the PR description for breaking changes or changes to behaviour Loculus relies on.
 
 If everything looks in order you can approve the PR and merge it yourself. If you performed any manual tests or checked something on a preview, add a brief description of this to the approval message.
