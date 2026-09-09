@@ -23,7 +23,6 @@ from .ena_submission_helper import (
     linked_accession_diff,
     manifest_fields_diff,
     resolve_manifest_field,
-    resolve_required_manifest_field,
     retry_failed_submissions_for_matching_errors,
     set_accession_does_not_exist_error,
 )

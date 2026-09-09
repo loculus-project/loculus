@@ -684,9 +684,7 @@ class RawReadsCreationTests(unittest.TestCase):
             "sequencingLibrarySelection": "Not a valid enum",
         }
 
-        with self.assertRaises(
-            ValueError, msg="not a valid LibrarySelection enum value"
-        ):
+        with self.assertRaises(ValueError, msg="not a valid LibrarySelection enum value"):
             create_raw_reads_manifest_object(
                 config,
                 "Test Sample Accession",
