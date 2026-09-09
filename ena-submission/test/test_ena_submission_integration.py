@@ -23,7 +23,7 @@ from dataclasses import asdict
 from datetime import datetime, timedelta
 from itertools import chain, repeat
 from pathlib import Path
-from typing import Any, Final
+from typing import Any, Final, cast
 from unittest.mock import Mock, patch
 
 import pytest
@@ -67,7 +67,7 @@ from ena_deposition.create_sample import (
 from ena_deposition.create_sample import (
     sync_state_with_submission_table as create_sample_sync_state_with_submission_table,
 )
-from ena_deposition.ena_submission_helper import CreationResult
+from ena_deposition.ena_submission_helper import CreationResult, create_manifest
 from ena_deposition.loculus_models import Group
 from ena_deposition.notifications import SlackConfig
 from ena_deposition.submission_db_helper import (
@@ -683,6 +683,16 @@ def mock_download_fastq_files_side_effect(
         shutil.copy(source, dest_path)
         fastq_files.append(dest_path)
     return fastq_files
+
+
+def get_run_ref_from_raw_reads_table(db_engine: Engine, accession: str, version: int) -> str | None:
+    rows = find_conditions_in_db(
+        db_engine,
+        RawReadsTableEntry,
+        conditions={"accession": accession, "version": version},
+    )
+    assert len(rows) == 1, f"Raw reads for {accession}.{version} not found in raw_reads_table."
+    return cast(str, rows[0].result.get(EnaResultField.RUN)) if rows[0].result else None
 
 
 def mock_requests_post() -> Mock:
@@ -1597,6 +1607,81 @@ class TestSimpleSubmissionWithRawReads(TestSubmission):
             with_raw_reads=True,
             mock_download_fastq_files=mock_download_fastq_files,
         )
+
+
+class TestRevisionRawReadsOnlyModificationTests(TestSubmission):
+    @patch(
+        "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
+    )
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
+    @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
+    @patch("ena_deposition.create_raw_reads.notify", autospec=True)
+    @patch("ena_deposition.create_assembly.create_manifest", autospec=True)
+    def test_revise(
+        self,
+        mock_create_manifest: Mock,
+        mock_notify: Mock,  # noqa: ARG002 - used in _test_successful_raw_reads_submission
+        mock_download_fastq_files: Mock,
+        mock_get_group_info: Mock,
+        mock_submit_external_metadata: Mock,
+    ) -> None:
+        """
+        Revising only the raw reads (consensus sequence and assembly metadata unchanged) creates
+        a new run accession. The assembly must then be resubmitted with a manifest that links to
+        the new run instead of reusing the previous assembly result (which links to the old run).
+        """
+        mock_create_manifest.side_effect = create_manifest
+        self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
+        multi_segment_submission(
+            self.db_engine,
+            self.config,
+            self.slack_config,
+            mock_get_group_info,
+            mock_submit_external_metadata,
+            with_raw_reads=True,
+            mock_download_fastq_files=mock_download_fastq_files,
+        )
+        first_manifest = mock_create_manifest.call_args[0][0]
+        old_run_ref = get_run_ref_from_raw_reads_table(self.db_engine, TEST_ACCESSION, 1)
+        assert old_run_ref is not None and old_run_ref.startswith("ERR")
+        assert first_manifest.run_ref == old_run_ref
+
+        # get data
+        mock_get_group_info.return_value = TEST_GROUP
+        mock_submit_external_metadata.return_value = mock_requests_post()
+        sequences_to_upload = get_revisions(
+            config=self.config,
+            modify_raw_reads=True,
+            modify_assembly=False,
+            with_raw_reads=True,
+        )
+
+        # upload sequences
+        upload_sequences(self.config, self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload, with_raw_reads=True)
+
+        # submit
+        create_project_sync_state_with_submission_table(self.db_engine, self.config)
+        project_table_create(self.db_engine, self.config)
+        check_project_submission_submitted(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_raw_reads_submission(
+            self.db_engine, self.config, sequences_to_upload, self.slack_config
+        )
+        new_run_ref = get_run_ref_from_raw_reads_table(self.db_engine, TEST_ACCESSION, 2)
+        assert new_run_ref is not None and new_run_ref.startswith("ERR")
+        assert new_run_ref != old_run_ref
+
+        # The assembly must be resubmitted (WAITING with a new erz_accession), not copied from v1
+        mock_create_manifest.reset_mock()
+        _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
+        mock_create_manifest.assert_called_once()
+        revised_manifest = mock_create_manifest.call_args[0][0]
+        assert revised_manifest.run_ref == new_run_ref
+
+        # send to loculus
+        get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
+        check_sent_to_loculus(self.db_engine, sequences_to_upload)
 
 
 class TestRevisionRawReadsModificationTests(TestSubmission):
