@@ -46,6 +46,7 @@ from .datatypes import (
     SegmentClassificationMethod,
     SegmentName,
     SubmissionData,
+    SubmissionDetails,
     UnprocessedAfterNextclade,
     UnprocessedData,
     UnprocessedEntry,
@@ -147,7 +148,7 @@ def get_nested_metadata(metadata: dict[str, Any], path: str, separator: str = ".
     return value
 
 
-def add_nextclade_metadata(
+def add_nextclade_metadata(  # noqa: C901, PLR0911
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
     nextclade_path: str,
@@ -252,15 +253,12 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     accession_version: AccessionVersion,
     spec: ProcessingSpec,
     output_field: str,
-    group_id: int | None,
-    submitted_at: str | None,
+    submission_details: SubmissionDetails,
     input_data: InputMetadata,
     input_fields: list[str],
     config: Config,
 ) -> ProcessingResult:
     args = dict(spec.args) if spec.args else {}
-    args["is_insdc_ingest_group"] = config.insdc_ingest_group_id == group_id
-    args["submittedAt"] = submitted_at
     args["ACCESSION_VERSION"] = accession_version
     args["taxonomy_service"] = config._taxonomy_service  # type: ignore
 
@@ -271,6 +269,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
             input_data,
             output_field,
             input_fields,
+            submission_details,
         )
     except Exception as e:
         msg = f"Processing for spec: {spec} with input data: {input_data} failed with {e}"
@@ -311,7 +310,7 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
             errors=errors,
             warnings=warnings,
         ),
-        submitter=unprocessed.submitter,
+        submitter=unprocessed.submissionDetails.submitter,
     )
 
 
@@ -325,7 +324,7 @@ def get_sequence_length(
     return len(sequence) if sequence else 0
 
 
-def get_output_metadata(  # noqa: C901, PLR0912, PLR0914, PLR0915
+def get_output_metadata(  # noqa: C901, PLR0912, PLR0915
     accession_version: AccessionVersion,
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
     config: Config,
@@ -389,12 +388,6 @@ def get_output_metadata(  # noqa: C901, PLR0912, PLR0914, PLR0915
                     warnings.extend(input_metadata.warnings)
 
                 input_fields.append(resolved_path)
-                group_id = (
-                    int(unprocessed.inputMetadata["group_id"])
-                    if unprocessed.inputMetadata["group_id"]
-                    else None
-                )
-                submitted_at = unprocessed.inputMetadata["submittedAt"]
             else:
                 input_data[arg_name] = (  # type: ignore
                     output_metadata.get(resolved_path)  # type: ignore
@@ -402,15 +395,12 @@ def get_output_metadata(  # noqa: C901, PLR0912, PLR0914, PLR0915
                     else unprocessed.metadata.get(resolved_path)
                 )
                 input_fields.append(resolved_path)
-                group_id = unprocessed.group_id
-                submitted_at = unprocessed.submittedAt
 
         processing_result = _call_processing_function(
             accession_version=accession_version,
             spec=spec,
             output_field=output_field,
-            group_id=group_id,
-            submitted_at=submitted_at,
+            submission_details=unprocessed.submissionDetails,
             input_data=input_data,
             input_fields=input_fields,
             config=config,
@@ -422,7 +412,7 @@ def get_output_metadata(  # noqa: C901, PLR0912, PLR0914, PLR0915
 
         if (
             not null_per_backend(processing_result.datum)
-            or group_id == config.insdc_ingest_group_id
+            or unprocessed.submissionDetails.is_insdc_ingest_group
         ):
             # skip requirement checks when the field has a value, or for INSDC ingested data.
             continue
@@ -629,8 +619,8 @@ def process_single(
     return SubmissionData(
         processed_entry=processed_entry,
         annotations=unpack_annotations(config, unprocessed.nextcladeMetadata),
-        group_id=int(str(unprocessed.inputMetadata["group_id"])),
-        submitter=str(unprocessed.inputMetadata["submitter"]),
+        group_id=unprocessed.submissionDetails.group_id,
+        submitter=unprocessed.submissionDetails.submitter,
     )
 
 

@@ -92,11 +92,17 @@ class FileIdAndNameAndReadUrl:
 
 
 @dataclass
-class UnprocessedData:
+class SubmissionDetails:
     submitter: str
     group_id: int
     submittedAt: str  # timestamp  # noqa: N815
     submissionId: str  # noqa: N815
+    is_insdc_ingest_group: bool
+
+
+@dataclass
+class UnprocessedData:
+    submissionDetails: SubmissionDetails  # noqa: N815
     metadata: InputMetadata
     unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
     files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
@@ -114,6 +120,7 @@ FunctionArgs = dict[ArgName, ArgValue]
 
 @dataclass
 class UnprocessedAfterNextclade:
+    submissionDetails: SubmissionDetails  # noqa: N815
     inputMetadata: InputMetadata  # noqa: N815
     files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
     # Derived metadata produced by Nextclade

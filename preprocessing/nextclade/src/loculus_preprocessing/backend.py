@@ -21,6 +21,7 @@ from .datatypes import (
     FileIdAndNameAndReadUrl,
     FileUploadInfo,
     ProcessedEntry,
+    SubmissionDetails,
     UnprocessedData,
     UnprocessedEntry,
 )
@@ -76,7 +77,7 @@ def get_jwt(config: Config) -> str:
         raise Exception(error_msg)
 
 
-def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
+def parse_ndjson(ndjson_data: str, config: Config) -> Sequence[UnprocessedEntry]:
     entries: list[UnprocessedEntry] = []
     if len(ndjson_data) == 0:
         return entries
@@ -108,10 +109,13 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
             else None
         )
         unprocessed_data = UnprocessedData(
-            submitter=json_object["submitter"],
-            group_id=json_object["groupId"],
-            submittedAt=json_object["submittedAt"],
-            submissionId=json_object["submissionId"],
+            submissionDetails=SubmissionDetails(
+                submitter=json_object["submitter"],
+                group_id=json_object["groupId"],
+                submittedAt=json_object["submittedAt"],
+                submissionId=json_object["submissionId"],
+                is_insdc_ingest_group=json_object["groupId"] == config.insdc_ingest_group_id,
+            ),
             metadata=json_object["data"]["metadata"],
             unalignedNucleotideSequences=trimmed_unaligned_nucleotide_sequences
             if unaligned_nucleotide_sequences
@@ -152,7 +156,7 @@ def fetch_unprocessed_sequences(
             return etag, None
         case HTTPStatus.OK:
             try:
-                parsed_ndjson = parse_ndjson(response.text)
+                parsed_ndjson = parse_ndjson(response.text, config)
             except ValueError as e:
                 logger.error(f"[{request_id}] {e}")
                 time.sleep(10 * 1)
