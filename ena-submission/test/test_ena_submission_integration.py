@@ -12,18 +12,16 @@ flyway -url=jdbc:postgresql://localhost:5432/loculus -schemas=ena_deposition_sch
 # ruff: noqa: PLR0915 (allow too many arguments in functions)
 import json
 import logging
-import os
 import random
 import re
 import shutil
 import string
-import tempfile
 import uuid
 from dataclasses import asdict
 from datetime import datetime, timedelta
 from itertools import chain, repeat
 from pathlib import Path
-from typing import Any, Final
+from typing import Any, Final, cast
 from unittest.mock import Mock, patch
 
 import pytest
@@ -68,7 +66,7 @@ from ena_deposition.create_sample import (
 from ena_deposition.create_sample import (
     sync_state_with_submission_table as create_sample_sync_state_with_submission_table,
 )
-from ena_deposition.ena_submission_helper import CreationResult
+from ena_deposition.ena_submission_helper import CreationResult, create_manifest
 from ena_deposition.loculus_models import Group
 from ena_deposition.notifications import SlackConfig
 from ena_deposition.submission_db_helper import (
@@ -97,6 +95,18 @@ INPUT_FILE = "./test/data/approved_ena_submission_list_test.json"
 # Created using `seqkit split -p 2 SRR38154636.fastq` on the interleaved SRA read file SRR38154636
 RAW_READS_FIXTURE_FILE_1 = "./test/data/SRR38154636.part_001.fastq.gz"
 RAW_READS_FIXTURE_FILE_2 = "./test/data/SRR38154636.part_002.fastq.gz"
+# The pipeline identifies a raw-reads file by its fileId
+RAW_READS_URL_PREFIX = "https://loculus.org/files/"
+RAW_READS_FIXTURE_BY_NAME: dict[str, dict[str, str]] = {
+    "rawReads.fastq.gz": {
+        "fileId": "341fac6f-c5ca-4138-ac4b-9aa9872d64d8",
+        "path": RAW_READS_FIXTURE_FILE_1,
+    },
+    "rawReads2.fastq.gz": {
+        "fileId": "341fac6f-c5ca-4138-ac4b-9aa9872d64d9",
+        "path": RAW_READS_FIXTURE_FILE_2,
+    },
+}
 TEST_ACCESSION = "LOC_0001TLY"
 TEST_ACCESSION_VERSION = "LOC_0001TLY.1"
 TEST_VERSION = 1
@@ -584,17 +594,37 @@ def _test_successful_project_submission(
     check_project_submission_submitted(db_engine, config, sequences_to_upload)
 
 
-def get_sequences(config: Config, with_raw_reads: bool = False) -> dict[str, Any]:
+def add_raw_reads_to_sequences(
+    entry: dict[str, Any],
+    config: Config,
+    file_names: list[str] | None = None,
+) -> None:
+    if file_names is None:
+        file_names = ["rawReads.fastq.gz"]
+
+    files: list[dict[str, str]] = []
+    for file_name in file_names:
+        # Simulate the pre-signed S3 URL changing between versions; the fileId stays put.
+        random_id = "".join(random.choices(string.digits, k=4))  # noqa: S311
+        files.append(
+            {
+                "fileId": RAW_READS_FIXTURE_BY_NAME[file_name]["fileId"],
+                "name": file_name,
+                "url": f"{RAW_READS_URL_PREFIX}{random_id}/{file_name}",
+            }
+        )
+
+    entry["metadata"][config.raw_reads_metadata_field] = json.dumps(files)
+
+
+def get_sequences(
+    config: Config,
+    with_raw_reads: bool = False,
+) -> dict[str, Any]:
     with open(INPUT_FILE, encoding="utf-8") as json_file:
         sequences: dict[str, Any] = json.load(json_file)
         if with_raw_reads:
-            # To simulate the s3 URL changing, we generate a random id for the URL each time
-            random_id = "".join(random.choices(string.digits, k=4))  # noqa: S311
-            sequences[TEST_ACCESSION_VERSION]["metadata"][config.raw_reads_metadata_field] = (
-                f'[{{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d8",'
-                f'"name":"rawReads.fastq.gz",'
-                f'"url":"https://loculus.org/files/{random_id}/rawReads.fastq.gz"}}]'
-            )
+            add_raw_reads_to_sequences(sequences[TEST_ACCESSION_VERSION], config)
         return sequences
 
 
@@ -617,13 +647,7 @@ def get_revisions(
             new_value["metadata"]["version"] = 2
             new_value["metadata"]["accessionVersion"] = accession_version
             if with_raw_reads:
-                # To simulate the s3 URL changing, we generate a random id for the URL each time
-                random_id = "".join(random.choices(string.digits, k=4))  # noqa: S311
-                new_value["metadata"][config.raw_reads_metadata_field] = (
-                    f'[{{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d8",'
-                    f'"name":"rawReads.fastq.gz",'
-                    f'"url":"https://loculus.org/files/{random_id}/rawReads.fastq.gz"}}]'
-                )
+                add_raw_reads_to_sequences(new_value, config)
             if modify_assembly:
                 new_value["metadata"]["geoLocAdmin1"] = "revised location"
             else:
@@ -635,60 +659,33 @@ def get_revisions(
             if modify_raw_reads:
                 if set_insert_size:
                     new_value["metadata"]["pairedEndInsertSize"] = 150
-                # To simulate the s3 URL changing, we generate a random id for the URL each time
-                random_id = "".join(random.choices(string.digits, k=4))  # noqa: S311
-                new_value["metadata"][config.raw_reads_metadata_field] = (
-                    f'[{{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d8",'
-                    f'"name":"rawReads.fastq.gz",'
-                    f'"url":"https://loculus.org/files/{random_id}/rawReads.fastq.gz"}},'
-                    f'{{"fileId":"341fac6f-c5ca-4138-ac4b-9aa9872d64d9",'
-                    f'"name":"rawReads2.fastq.gz",'
-                    f'"url":"https://loculus.org/files/{random_id}/rawReads2.fastq.gz"}}]'
+                add_raw_reads_to_sequences(
+                    new_value,
+                    config,
+                    ["rawReads.fastq.gz", "rawReads2.fastq.gz"],
                 )
             revised_sequences[accession_version] = new_value
         return revised_sequences
 
 
-RAW_READS_FIXTURES: Final = [RAW_READS_FIXTURE_FILE_1, RAW_READS_FIXTURE_FILE_2]
+def mock_download_file_side_effect(url: str, path: str, timeout: float) -> None:  # noqa: ARG001
+    """Fake side effect for `download_file`: copy a fixture fastq instead of fetching from S3."""
+    assert url.startswith(RAW_READS_URL_PREFIX), f"unexpected download url {url}"
+    filename = url.rsplit("/", 1)[-1]
+    if filename not in RAW_READS_FIXTURE_BY_NAME:
+        msg = f"no raw-reads fixture registered for {url}"
+        raise AssertionError(msg)
+    shutil.copy(RAW_READS_FIXTURE_BY_NAME[filename]["path"], path)
 
 
-def mock_download_fastq_files_side_effect(
-    config: Config,
-    metadata: dict[str, Any],
-    accession: str,
-    dir: str | None = None,
-) -> list[str]:
-    """
-    Mock side effect for download_fastq_files.
-
-    Parses the raw-reads metadata field the same way the real function does and
-    returns one local file per entry, cycling through the fixture fastq files so a
-    paired (2-file) submission yields two distinct paths. Raises if there are more
-    entries than fixtures.
-    """
-    raw_reads = metadata.get(config.raw_reads_metadata_field)
-    if not raw_reads:
-        msg = f"No rawreads files found in metadata for accession {accession}"
-        raise RuntimeError(msg)
-    files = json.loads(raw_reads)
-    if len(files) > len(RAW_READS_FIXTURES):
-        msg = f"Only {len(RAW_READS_FIXTURES)} fixture fastq files available, got {len(files)}"
-        raise ValueError(msg)
-
-    target_dir = dir or tempfile.mkdtemp()
-    os.makedirs(target_dir, exist_ok=True)
-
-    fastq_files = []
-    for file_entry, source in zip(files, RAW_READS_FIXTURES, strict=False):
-        # Mirror the real function's naming: <fileId><canonical lower-cased extension>,
-        # so the paths webin-cli sees here match production.
-        dest_name = os.path.basename(file_entry["fileId"]) + canonical_fastq_extension(
-            file_entry["name"]
-        )
-        dest_path = os.path.join(target_dir, dest_name)
-        shutil.copy(source, dest_path)
-        fastq_files.append(dest_path)
-    return fastq_files
+def get_run_ref_from_raw_reads_table(db_engine: Engine, accession: str, version: int) -> str | None:
+    rows = find_conditions_in_db(
+        db_engine,
+        RawReadsTableEntry,
+        conditions={"accession": accession, "version": version},
+    )
+    assert len(rows) == 1, f"Raw reads for {accession}.{version} not found in raw_reads_table."
+    return cast(str, rows[0].result.get(EnaResultField.RUN)) if rows[0].result else None
 
 
 def mock_requests_post() -> Mock:
@@ -698,13 +695,55 @@ def mock_requests_post() -> Mock:
     return mock_response
 
 
+class ExternalMetadataUploads:
+    """Reads `submit_external_metadata` calls in the order they happened.
+
+    Lets a test assert on "the next upload" instead of indexing an absolute
+    call number, so inserting a pipeline stage does not renumber every later
+    assertion.
+
+    Each upload's accessions are keyed by Loculus metadata field name
+    (`config.loculus_accession_fields`) but the values are assigned by ENA -
+    unlike the Loculus accession in the same request, which is ours.
+    """
+
+    def __init__(self, mock: Mock) -> None:
+        self._mock = mock
+        self._consumed = 0
+
+    def next_upload(self) -> dict[str, Any]:
+        """Assert another upload happened, and return its ENA accessions."""
+        calls = self._mock.call_args_list
+        assert len(calls) == self._consumed + 1, (
+            f"expected exactly one new external-metadata upload (#{self._consumed + 1}), "
+            f"but {len(calls) - self._consumed} happened since the last check"
+        )
+        payload = calls[self._consumed].args[0]
+        self._consumed += 1
+        assert payload["accession"] == TEST_ACCESSION
+        assert payload["version"] == TEST_VERSION
+        return payload["externalMetadata"]
+
+    def assert_no_further_uploads(self) -> None:
+        calls = self._mock.call_args_list
+        assert len(calls) == self._consumed, (
+            f"{len(calls) - self._consumed} unexpected external-metadata upload(s)"
+        )
+
+
+def last_external_metadata_accessions(mock: Mock) -> dict[str, Any]:
+    """ENA accessions of the most recent `submit_external_metadata` call."""
+    mock.assert_called()
+    return mock.call_args.args[0]["externalMetadata"]
+
+
 def multi_segment_submission(
     db_engine: Engine,
     config: Config,
     slack_config: SlackConfig,
     mock_get_group_info: Mock,
     mock_submit_external_metadata: Mock,
-    mock_download_fastq_files: Mock | None = None,
+    mock_download_file: Mock | None = None,
     single_segment: bool = False,
     with_raw_reads: bool = False,
 ) -> Any:
@@ -713,8 +752,10 @@ def multi_segment_submission(
     Otherwise there are 2"""
     mock_get_group_info.return_value = TEST_GROUP
     mock_submit_external_metadata.return_value = mock_requests_post()
-    if mock_download_fastq_files is not None:
-        mock_download_fastq_files.side_effect = mock_download_fastq_files_side_effect
+    uploads = ExternalMetadataUploads(mock_submit_external_metadata)
+    fields = config.loculus_accession_fields
+    if mock_download_file is not None:
+        mock_download_file.side_effect = mock_download_file_side_effect
     sequences_to_upload = get_sequences(config, with_raw_reads=with_raw_reads)
 
     if single_segment:
@@ -731,34 +772,27 @@ def multi_segment_submission(
 
     _test_successful_project_submission(db_engine, config, sequences_to_upload)
     get_external_metadata_and_send_to_loculus(db_engine, config)
-    args = mock_submit_external_metadata.call_args_list
-
-    assert len(args) == 1
-    payload = args[0][0][0]  # first positional argument of first call
-    assert payload["accession"] == TEST_ACCESSION
-    assert payload["version"] == TEST_VERSION
-    assert set(payload["externalMetadata"]) == {config.loculus_accession_fields.bioproject}
-    assert payload["externalMetadata"][config.loculus_accession_fields.bioproject].startswith(
-        "PRJEB"
-    )
+    external_metadata_accessions = uploads.next_upload()
+    assert set(external_metadata_accessions) == {fields.bioproject}
+    assert external_metadata_accessions[fields.bioproject].startswith("PRJEB")
 
     _test_successful_sample_submission(db_engine, config, sequences_to_upload)
     get_external_metadata_and_send_to_loculus(db_engine, config)
-    args = mock_submit_external_metadata.call_args_list
-    assert len(args) == 2  # noqa: PLR2004
-    payload = args[1][0][0]  # first positional argument of second call
-    assert payload["accession"] == TEST_ACCESSION
-    assert payload["version"] == TEST_VERSION
-    assert set(payload["externalMetadata"]) == {
-        config.loculus_accession_fields.bioproject,
-        config.loculus_accession_fields.biosample,
-    }
-    assert payload["externalMetadata"][config.loculus_accession_fields.bioproject].startswith(
-        "PRJEB"
-    )
-    assert payload["externalMetadata"][config.loculus_accession_fields.biosample].startswith(
-        "SAMEA"
-    )
+    external_metadata_accessions = uploads.next_upload()
+    assert set(external_metadata_accessions) == {fields.bioproject, fields.biosample}
+    assert external_metadata_accessions[fields.bioproject].startswith("PRJEB")
+    assert external_metadata_accessions[fields.biosample].startswith("SAMEA")
+
+    if with_raw_reads:
+        _test_successful_raw_reads_submission(db_engine, config, sequences_to_upload, slack_config)
+        get_external_metadata_and_send_to_loculus(db_engine, config)
+        external_metadata_accessions = uploads.next_upload()
+        assert set(external_metadata_accessions) == {
+            fields.bioproject,
+            fields.biosample,
+            fields.run,
+        }
+        assert external_metadata_accessions[fields.run].startswith("ERR")
 
     if with_raw_reads:
         _test_successful_raw_reads_submission(db_engine, config, sequences_to_upload, slack_config)
@@ -780,64 +814,47 @@ def multi_segment_submission(
     if not single_segment:
         # Only complete in case of multi-segment submission
         check_sent_to_loculus(db_engine, sequences_to_upload)
-    args = mock_submit_external_metadata.call_args_list
-    if not with_raw_reads:
-        assert len(args) == 3  # noqa: PLR2004
-        payload = args[2][0][0]  # first positional argument of third call
-    else:
-        assert len(args) == 4  # noqa: PLR2004
-        payload = args[3][0][0]  # first positional argument of fourth call
-    assert payload["accession"] == TEST_ACCESSION
-    assert payload["version"] == TEST_VERSION
+    external_metadata_accessions = uploads.next_upload()
     extra_items = set()
     if not single_segment:
         extra_items = {
-            config.loculus_accession_fields.gca,
-            config.loculus_accession_fields.insdc_accession_prefix + "_M",
-            config.loculus_accession_fields.insdc_accession_full_prefix + "_M",
+            fields.gca,
+            fields.insdc_accession_prefix + "_M",
+            fields.insdc_accession_full_prefix + "_M",
         }
     if with_raw_reads:
-        extra_items.add(config.loculus_accession_fields.run)
-    assert set(payload["externalMetadata"]) == {
-        config.loculus_accession_fields.bioproject,
-        config.loculus_accession_fields.biosample,
-        config.loculus_accession_fields.insdc_accession_prefix + "_L",
-        config.loculus_accession_fields.insdc_accession_full_prefix + "_L",
+        extra_items.add(fields.run)
+    assert set(external_metadata_accessions) == {
+        fields.bioproject,
+        fields.biosample,
+        fields.insdc_accession_prefix + "_L",
+        fields.insdc_accession_full_prefix + "_L",
         *extra_items,
     }
-    assert payload["externalMetadata"][config.loculus_accession_fields.bioproject].startswith(
-        "PRJEB"
-    )
-    assert payload["externalMetadata"][config.loculus_accession_fields.biosample].startswith(
-        "SAMEA"
-    )
+    assert external_metadata_accessions[fields.bioproject].startswith("PRJEB")
+    assert external_metadata_accessions[fields.biosample].startswith("SAMEA")
 
     insdc_full_pattern = r"^[A-Z]{2}[0-9]{6}\.[0-9]+$"
     insdc_base_pattern = r"^[A-Z]{2}[0-9]{6}$"
     gca_pattern = r"^GCA_[0-9]{9}\.[0-9]+$"
-    insdc_accession_full_l = config.loculus_accession_fields.insdc_accession_full_prefix + "_L"
-    insdc_accession_base_l = config.loculus_accession_fields.insdc_accession_prefix + "_L"
-    gca_accession = config.loculus_accession_fields.gca
-    assert re.match(
-        insdc_full_pattern,
-        payload["externalMetadata"][insdc_accession_full_l],
-    ), (
-        f"{insdc_accession_full_l} '{payload['externalMetadata'][insdc_accession_full_l]}' "
+    insdc_accession_full_l = fields.insdc_accession_full_prefix + "_L"
+    insdc_accession_base_l = fields.insdc_accession_prefix + "_L"
+    gca_accession = fields.gca
+    assert re.match(insdc_full_pattern, external_metadata_accessions[insdc_accession_full_l]), (
+        f"{insdc_accession_full_l} '{external_metadata_accessions[insdc_accession_full_l]}' "
         f"does not match INSDC full pattern {insdc_full_pattern}"
     )
-    assert re.match(
-        insdc_base_pattern,
-        payload["externalMetadata"][insdc_accession_base_l],
-    ), (
-        f"{insdc_accession_base_l} '{payload['externalMetadata'][insdc_accession_base_l]}' "
+    assert re.match(insdc_base_pattern, external_metadata_accessions[insdc_accession_base_l]), (
+        f"{insdc_accession_base_l} '{external_metadata_accessions[insdc_accession_base_l]}' "
         f"does not match INSDC base pattern {insdc_base_pattern}"
     )
     if not single_segment:
-        assert re.match(gca_pattern, payload["externalMetadata"][gca_accession]), (
-            f"{gca_accession} '{payload['externalMetadata'][gca_accession]}' "
+        assert re.match(gca_pattern, external_metadata_accessions[gca_accession]), (
+            f"{gca_accession} '{external_metadata_accessions[gca_accession]}' "
             f"does not match GCA pattern {gca_pattern}"
         )
-    return payload
+    uploads.assert_no_further_uploads()
+    return external_metadata_accessions
 
 
 class TestSubmission:
@@ -1579,10 +1596,10 @@ class TestSimpleSubmissionWithRawReads(TestSubmission):
         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-    @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
+    @patch("ena_deposition.call_loculus.download_file", autospec=True)
     def test_submit(
         self,
-        mock_download_fastq_files: Mock,
+        mock_download_file: Mock,
         mock_get_group_info: Mock,
         mock_submit_external_metadata: Mock,
     ) -> None:
@@ -1596,8 +1613,83 @@ class TestSimpleSubmissionWithRawReads(TestSubmission):
             mock_get_group_info,
             mock_submit_external_metadata,
             with_raw_reads=True,
-            mock_download_fastq_files=mock_download_fastq_files,
+            mock_download_file=mock_download_file,
         )
+
+
+class TestRevisionRawReadsOnlyModificationTests(TestSubmission):
+    @patch(
+        "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
+    )
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
+    @patch("ena_deposition.call_loculus.download_file", autospec=True)
+    @patch("ena_deposition.create_raw_reads.notify", autospec=True)
+    @patch("ena_deposition.create_assembly.create_manifest", autospec=True)
+    def test_revise(
+        self,
+        mock_create_manifest: Mock,
+        mock_notify: Mock,  # noqa: ARG002 - used in _test_successful_raw_reads_submission
+        mock_download_file: Mock,
+        mock_get_group_info: Mock,
+        mock_submit_external_metadata: Mock,
+    ) -> None:
+        """
+        Revising only the raw reads (consensus sequence and assembly metadata unchanged) creates
+        a new run accession. The assembly must then be resubmitted with a manifest that links to
+        the new run instead of reusing the previous assembly result (which links to the old run).
+        """
+        mock_create_manifest.side_effect = create_manifest
+        self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
+        multi_segment_submission(
+            self.db_engine,
+            self.config,
+            self.slack_config,
+            mock_get_group_info,
+            mock_submit_external_metadata,
+            with_raw_reads=True,
+            mock_download_file=mock_download_file,
+        )
+        first_manifest = mock_create_manifest.call_args[0][0]
+        old_run_ref = get_run_ref_from_raw_reads_table(self.db_engine, TEST_ACCESSION, 1)
+        assert old_run_ref is not None and old_run_ref.startswith("ERR")
+        assert first_manifest.run_ref == old_run_ref
+
+        # get data
+        mock_get_group_info.return_value = TEST_GROUP
+        mock_submit_external_metadata.return_value = mock_requests_post()
+        sequences_to_upload = get_revisions(
+            config=self.config,
+            modify_raw_reads=True,
+            modify_assembly=False,
+            with_raw_reads=True,
+        )
+
+        # upload sequences
+        upload_sequences(self.config, self.db_engine, sequences_to_upload)
+        check_sequences_uploaded(self.db_engine, sequences_to_upload, with_raw_reads=True)
+
+        # submit
+        create_project_sync_state_with_submission_table(self.db_engine, self.config)
+        project_table_create(self.db_engine, self.config)
+        check_project_submission_submitted(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_sample_submission(self.db_engine, self.config, sequences_to_upload)
+        _test_successful_raw_reads_submission(
+            self.db_engine, self.config, sequences_to_upload, self.slack_config
+        )
+        new_run_ref = get_run_ref_from_raw_reads_table(self.db_engine, TEST_ACCESSION, 2)
+        assert new_run_ref is not None and new_run_ref.startswith("ERR")
+        assert new_run_ref != old_run_ref
+
+        # The assembly must be resubmitted (WAITING with a new erz_accession), not copied from v1
+        mock_create_manifest.reset_mock()
+        _test_successful_assembly_submission(self.db_engine, self.config, sequences_to_upload)
+        mock_create_manifest.assert_called_once()
+        revised_manifest = mock_create_manifest.call_args[0][0]
+        assert revised_manifest.run_ref == new_run_ref
+
+        # send to loculus
+        get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
+        check_sent_to_loculus(self.db_engine, sequences_to_upload)
 
 
 class TestRevisionRawReadsModificationTests(TestSubmission):
@@ -1612,12 +1704,12 @@ class TestRevisionRawReadsModificationTests(TestSubmission):
         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-    @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
+    @patch("ena_deposition.call_loculus.download_file", autospec=True)
     @patch("ena_deposition.create_raw_reads.notify", autospec=True)
     def test_revise(
         self,
         mock_notify: Mock,  # noqa: ARG002 - used in _test_successful_raw_reads_submission
-        mock_download_fastq_files: Mock,
+        mock_download_file: Mock,
         mock_get_group_info: Mock,
         mock_submit_external_metadata: Mock,
         set_insert_size: bool,
@@ -1627,14 +1719,14 @@ class TestRevisionRawReadsModificationTests(TestSubmission):
         insert size provided in the metadata.
         """
         self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
-        payload = multi_segment_submission(
+        original_accessions = multi_segment_submission(
             self.db_engine,
             self.config,
             self.slack_config,
             mock_get_group_info,
             mock_submit_external_metadata,
             with_raw_reads=True,
-            mock_download_fastq_files=mock_download_fastq_files,
+            mock_download_file=mock_download_file,
         )
 
         # get data
@@ -1663,13 +1755,12 @@ class TestRevisionRawReadsModificationTests(TestSubmission):
 
         # send to loculus
         get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
-        args = mock_submit_external_metadata.call_args_list
 
-        payload_revision = args[-1][0][0]  # first positional argument of last call
-        assert (
-            payload["externalMetadata"][self.config.loculus_accession_fields.run]
-            != payload_revision["externalMetadata"][self.config.loculus_accession_fields.run]
-        ), "When raw reads are modified, insdcRawReadsAccession should change"
+        run_field = self.config.loculus_accession_fields.run
+        revised_run = last_external_metadata_accessions(mock_submit_external_metadata)[run_field]
+        assert original_accessions[run_field] != revised_run, (
+            "When raw reads are modified, insdcRawReadsAccession should change"
+        )
         check_sent_to_loculus(self.db_engine, sequences_to_upload)
 
 
@@ -1678,22 +1769,22 @@ class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-    @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
+    @patch("ena_deposition.call_loculus.download_file", autospec=True)
     def test_revise(
         self,
-        mock_download_fastq_files: Mock,
+        mock_download_file: Mock,
         mock_get_group_info: Mock,
         mock_submit_external_metadata: Mock,
     ) -> None:
         self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
-        payload = multi_segment_submission(
+        original_accessions = multi_segment_submission(
             self.db_engine,
             self.config,
             self.slack_config,
             mock_get_group_info,
             mock_submit_external_metadata,
             with_raw_reads=True,
-            mock_download_fastq_files=mock_download_fastq_files,
+            mock_download_file=mock_download_file,
         )
 
         # get data
@@ -1721,13 +1812,12 @@ class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
 
         # send to loculus
         get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
-        args = mock_submit_external_metadata.call_args_list
 
-        payload_revision = args[-1][0][0]  # first positional argument of last call
-        assert (
-            payload["externalMetadata"][self.config.loculus_accession_fields.run]
-            == payload_revision["externalMetadata"][self.config.loculus_accession_fields.run]
-        ), "When raw reads are not modified, insdcRawReadsAccession should stay the same"
+        run_field = self.config.loculus_accession_fields.run
+        revised_run = last_external_metadata_accessions(mock_submit_external_metadata)[run_field]
+        assert original_accessions[run_field] == revised_run, (
+            "When raw reads are not modified, insdcRawReadsAccession should stay the same"
+        )
         check_sent_to_loculus(self.db_engine, sequences_to_upload)
 
 
@@ -1737,10 +1827,10 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
     @patch("ena_deposition.notifications.notify", autospec=True)
-    @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
+    @patch("ena_deposition.call_loculus.download_file", autospec=True)
     def test_revise(
         self,
-        mock_download_fastq_files: Mock,
+        mock_download_file: Mock,
         mock_notify: Mock,
         mock_get_group_info: Mock,
         mock_submit_external_metadata: Mock,
@@ -1754,7 +1844,7 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
             mock_get_group_info,
             mock_submit_external_metadata,
             with_raw_reads=True,
-            mock_download_fastq_files=mock_download_fastq_files,
+            mock_download_file=mock_download_file,
         )
         # get data
         mock_get_group_info.return_value = TEST_GROUP
@@ -1785,22 +1875,22 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
 #         autospec=True,
 #     )
 #     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
-#     @patch("ena_deposition.call_loculus.download_fastq_files", autospec=True)
+#     @patch("ena_deposition.call_loculus.download_file", autospec=True)
 #     def test_revise(
 #         self,
-#         mock_download_fastq_files: Mock,
+#         mock_download_file: Mock,
 #         mock_get_group_info: Mock,
 #         mock_submit_external_metadata: Mock,
 #     ) -> None:
 #         self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
-#         payload = multi_segment_submission(
+#         original_accessions = multi_segment_submission(
 #             self.db_engine,
 #             self.config,
 #             self.slack_config,
 #             mock_get_group_info,
 #             mock_submit_external_metadata,
 #             with_raw_reads=True,
-#             mock_download_fastq_files=mock_download_fastq_files,
+#             mock_download_file=mock_download_file,
 #         )
 #         # get data
 #         mock_get_group_info.return_value = TEST_GROUP
@@ -1823,13 +1913,12 @@ class TestRevisionWithNotAllowedRawReadsManifestChangeTest(TestSubmission):
 
 #         # send to loculus
 #         get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
-#         args = mock_submit_external_metadata.call_args_list
 
-#         payload_revision = args[-1][0][0]  # first positional argument of last call
-#         assert (
-#             payload["externalMetadata"][config.loculus_accession_fields.run]
-#             == payload_revision["externalMetadata"][config.loculus_accession_fields.run]
-#         ), "When raw reads are not modified, insdcRawReadsAccession should stay the same"
+#         run_field = config.loculus_accession_fields.run
+#         revised_run = last_external_metadata_accessions(mock_submit_external_metadata)[run_field]
+#         assert original_accessions[run_field] == revised_run, (
+#             "When raw reads are not modified, insdcRawReadsAccession should stay the same"
+#         )
 #         check_sent_to_loculus(self.db_engine, sequences_to_upload)
 
 

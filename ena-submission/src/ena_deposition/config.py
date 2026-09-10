@@ -24,6 +24,7 @@ class EnaResultField(StrEnum):
     BIOPROJECT = "bioproject_accession"
     GCA = "gca_accession"
     RUN = "run_accession"
+    EXPERIMENT = "erx_accession"
     INSDC_ACCESSION_PREFIX = "insdc_accession"
     INSDC_ACCESSION_FULL_PREFIX = "insdc_accession_full"
 

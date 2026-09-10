@@ -199,12 +199,12 @@ def create_manifest_object(
 
 def submission_table_start(db_engine: Engine) -> None:
     """
-    1. Find all entries in submission_table in state SUBMITTED_SAMPLE
-    2. If entry has insdcRawReadsAccession, check it exists in ENA, if not set error and continue
-    3. If (exists an entry in the assembly_table for (accession, version)):
+    1. Find all entries in submission_table in state SUBMITTED_SAMPLE and submit_raw_reads=False
+    and all entries in submission_table in state SUBMITTED_RAW_READS and submit_raw_reads=True
+    2. If (exists an entry in the assembly_table for (accession, version)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_ALL
     b.      Else update state to SUBMITTING_ASSEMBLY
-    4. Else create corresponding entry in assembly_table
+    3. Else create corresponding entry in assembly_table
     """
 
     submitted_sample_conditions = {
@@ -253,7 +253,7 @@ def submission_table_start(db_engine: Engine) -> None:
             # If not: create assembly_entry, change status to SUBMITTING_ASSEMBLY
             assembly_entry = AssemblyTableEntry(**seq_key)
             if not add_to_db(db_engine, assembly_entry):
-                return
+                continue
 
             status_all = StatusAll.SUBMITTING_ASSEMBLY
 
@@ -327,15 +327,69 @@ def update_assembly_error(
     )
 
 
-def manifest_fields_changed(
+def get_run_ref(
+    db_engine: Engine, seq_key: AccessionVersion, raise_on_missing: bool = True
+) -> str | None:
+    """
+    Return the run accession (used as RUN_REF in the assembly manifest) for *seq_key*
+    from raw_reads_table, or None if there is no raw reads entry or it has no result yet.
+    """
+    raw_reads_rows = find_conditions_in_db(
+        db_engine, RawReadsTableEntry, conditions=asdict(seq_key)
+    )
+    if not raw_reads_rows:
+        return None
+    run_ref = (
+        cast(str | None, raw_reads_rows[0].result.get(EnaResultField.RUN))
+        if raw_reads_rows[0].result
+        else None
+    )
+    if raw_reads_rows and not run_ref and raise_on_missing:
+        msg = (
+            f"{seq_key.accession}.{seq_key.version} has a corresponding raw reads entry but"
+            "does not have a run_ref in result - this should not happen."
+        )
+        logger.error(msg)
+        raise RuntimeError(msg)
+    return run_ref
+
+
+def run_ref_diff(
+    db_engine: Engine,
+    last_version_entry: SubmissionTableEntry,
+    run_ref: str | None,
+) -> dict[str, str]:
+    """
+    Compare the RUN_REF that would be written to the manifest of the new version with the one
+    used for the previous version. The RUN_REF is taken from raw_reads_table (not from
+    seq_metadata), e.g. it changes when raw read files are replaced or added, so it is not
+    covered by manifest_fields_diff.
+    """
+    previous_run_ref = get_run_ref(db_engine, last_version_entry.pkey, raise_on_missing=False)
+    if previous_run_ref != run_ref:
+        return {"run_ref": f"Last: {previous_run_ref}, New: {run_ref}"}
+    return {}
+
+
+def reject_revision_if_manifest_fields_changed(
     config: Config,
     db_engine: Engine,
     submission_row: SubmissionTableEntry,
     last_version_entry: SubmissionTableEntry,
+    run_ref: str | None,
 ) -> bool:
-    differing_fields = manifest_fields_diff(
-        config.assembly_manifest_fields_mapping, submission_row, last_version_entry
-    )
+    """
+    Check if any fields in the assembly manifest have changed between the last version
+    and the new version and set error in assembly_table if so.
+
+    This includes the RUN_REF taken from raw_reads_table.
+    """
+    differing_fields = {
+        **manifest_fields_diff(
+            config.assembly_manifest_fields_mapping, submission_row, last_version_entry
+        ),
+        **run_ref_diff(db_engine, last_version_entry, run_ref),
+    }
     if differing_fields:
         error = (
             "Assembly cannot be revised because metadata fields in manifest would change from "
@@ -352,14 +406,20 @@ def manifest_fields_changed(
     return False
 
 
-def can_be_revised(config: Config, db_engine: Engine, submission_row: SubmissionTableEntry) -> bool:
+def can_be_revised(
+    config: Config,
+    db_engine: Engine,
+    submission_row: SubmissionTableEntry,
+    run_ref: str | None = None,
+) -> bool:
     """
     Check if assembly can be revised
     1. Last version exists in submission_table, otherwise throw RuntimeError
     2. If biosampleAccession and bioprojectAccession provided by submitter (e.g. raw reads linked)
        those must be same as in previous version, otherwise cannot be revised
-    3. metadata fields in manifest haven't changed since previous version, otherwise
-       requires manual revision
+    3. metadata fields in manifest (including the RUN_REF taken from raw_reads_table) haven't
+       changed since previous version, otherwise requires manual revision
+       (skipped if config.allow_revision_with_manifest_changes==True)
     """
     seq_key = submission_row.pkey
     if not is_latest_revision(db_engine, seq_key):
@@ -391,17 +451,22 @@ def can_be_revised(config: Config, db_engine: Engine, submission_row: Submission
             "allow_revision_with_manifest_changes=True, skipping manifest field comparison"
         )
         return True
-    return not manifest_fields_changed(config, db_engine, submission_row, last_version_entry)
+    return not reject_revision_if_manifest_fields_changed(
+        config, db_engine, submission_row, last_version_entry, run_ref
+    )
 
 
 def has_assembly_data_changed(
-    config: Config, db_engine: Engine, submission_row: SubmissionTableEntry
+    config: Config,
+    db_engine: Engine,
+    submission_row: SubmissionTableEntry,
+    run_ref: str | None = None,
 ) -> bool:
     """
     Check if there have been changes since last version in:
     - sequence
     - flatfile
-    - manifest metadata (iff config.allow_revision_with_manifest_changes==True)
+    - manifest metadata including RUN_REF
     """
     last_entry = get_last_entry(db_engine, submission_row.pkey)
 
@@ -428,10 +493,14 @@ def has_assembly_data_changed(
                 f"for {submission_row.accession}. (Maybe other fields changed as well)"
             )
             return True
-    # TODO: if config.allow_revision_with_manifest_changes==True: check if the run ref has changed
-    if config.allow_revision_with_manifest_changes and manifest_fields_diff(
-        config.assembly_manifest_fields_mapping, submission_row, last_entry
-    ):
+    if differing_run_ref := run_ref_diff(db_engine, last_entry, run_ref):
+        logger.debug(
+            f"RUN_REF has changed for {submission_row.accession}, "
+            f"from {last_entry.version} to {submission_row.version}: "
+            f"{differing_run_ref['run_ref']} - should be revised"
+        )
+        return True
+    if manifest_fields_diff(config.assembly_manifest_fields_mapping, submission_row, last_entry):
         logger.debug(
             f"Manifest fields have changed for {submission_row.accession}, "
             f"from {last_entry.version} to {submission_row.version} - should be revised"
@@ -494,24 +563,7 @@ def assembly_table_create(db_engine: Engine, config: Config):
         )
     for row in ready_to_submit_assembly:
         seq_key = row.pkey
-        corresponding_raw_reads = find_conditions_in_db(
-            db_engine,
-            RawReadsTableEntry,
-            conditions=asdict(seq_key),
-        )
-
-        run_ref = (
-            cast(str, corresponding_raw_reads[0].result.get(EnaResultField.RUN))
-            if corresponding_raw_reads and corresponding_raw_reads[0].result
-            else None
-        )
-        if corresponding_raw_reads and not run_ref:
-            msg = (
-                f"{seq_key.accession}.{seq_key.version} has a corresponding raw reads entry but"
-                "does not have a run_ref in result - this should not happen."
-            )
-            logger.error(msg)
-            raise RuntimeError(msg)
+        run_ref = get_run_ref(db_engine, seq_key)
         submission_rows = find_conditions_in_db(
             db_engine, SubmissionTableEntry, conditions=asdict(seq_key)
         )
@@ -527,10 +579,10 @@ def assembly_table_create(db_engine: Engine, config: Config):
 
         if is_revision(db_engine, seq_key):
             logger.debug(f"Entry {row.accession} is a revision, checking if it can be revised")
-            if not can_be_revised(config, db_engine, submission_row):
+            if not can_be_revised(config, db_engine, submission_row, run_ref):
                 continue
-            if not has_assembly_data_changed(config, db_engine, submission_row):
-                # Do not revise assembly if there are no changes
+            if not has_assembly_data_changed(config, db_engine, submission_row, run_ref):
+                # Do not revise assembly if there are no changes (including no RUN_REF change)
                 update_assembly_results_with_latest_version(db_engine, seq_key)
                 continue
 

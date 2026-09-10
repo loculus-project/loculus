@@ -22,6 +22,9 @@ from ena_deposition.create_project import construct_project_set_object
 from ena_deposition.create_raw_reads import (
     create_manifest_object as create_raw_reads_manifest_object,
 )
+from ena_deposition.create_raw_reads import (
+    get_platform_and_instrument,
+)
 from ena_deposition.create_sample import construct_sample_set_object
 from ena_deposition.ena_submission_helper import (
     create_chromosome_list,
@@ -547,14 +550,9 @@ class RawReadsCreationTests(unittest.TestCase):
     def setUp(self):
         self.seq_key = "LOC_0001TLY"
         self.fastq_files = ["/tmp/fake_R1.fastq.gz", "/tmp/fake_R2.fastq.gz"]  # noqa: S108
-        tmp_dir = tempfile.TemporaryDirectory()
-        self.addCleanup(tmp_dir.cleanup)
-        self.tmp_dir = tmp_dir.name
 
     @mock.patch("ena_deposition.call_loculus.get_group_info")
-    @mock.patch("ena_deposition.call_loculus.download_fastq_files")
-    def test_create_manifest(self, mock_download_fastq_files, mock_get_group_info):
-        mock_download_fastq_files.return_value = self.fastq_files
+    def test_create_manifest(self, mock_get_group_info):
         mock_get_group_info.return_value = TEST_GROUP
         config = mock_config()
         config.unique_raw_reads_suffix = "Test suffix"
@@ -570,7 +568,7 @@ class RawReadsCreationTests(unittest.TestCase):
             "Test Sample Accession",
             "Test Study Accession",
             submission_row,
-            dir=self.tmp_dir,
+            self.fastq_files,
         )
         self.assertEqual(manifest.insert_size, 350)
         self.assertEqual(manifest.study, "Test Study Accession")
@@ -587,9 +585,33 @@ class RawReadsCreationTests(unittest.TestCase):
             "Original sequence submitted to Loculus with accession: LOC_0001TLY, version: 1",
         )
 
-    @mock.patch("ena_deposition.call_loculus.download_fastq_files")
-    def test_create_manifest_insert_size_ignored_for_single_end(self, mock_download_fastq_files):
-        mock_download_fastq_files.return_value = [self.fastq_files[0]]
+    @mock.patch("ena_deposition.call_loculus.get_group_info")
+    def test_create_manifest_library_fields_from_metadata(self, mock_get_group_info):
+        """When the mapped Loculus metadata is present, its value wins over the
+        config default in raw_reads_manifest_fields_mapping[...].default."""
+        mock_get_group_info.return_value = TEST_GROUP
+        config = mock_config()
+
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "sequencingLibrarySource": "VIRAL RNA",
+            "sequencingLibrarySelection": "RT-PCR",
+            "sequencingAssayType": "AMPLICON",
+        }
+
+        manifest = create_raw_reads_manifest_object(
+            config,
+            "Test Sample Accession",
+            "Test Study Accession",
+            submission_row,
+            self.fastq_files,
+        )
+        self.assertEqual(manifest.library_source, LibrarySource.VIRAL_RNA)
+        self.assertEqual(manifest.library_selection, LibrarySelection.RT_PCR)
+        self.assertEqual(manifest.library_strategy, LibraryStrategy.AMPLICON)
+
+    def test_create_manifest_insert_size_ignored_for_single_end(self):
         config = mock_config()
         submission_row = sample_data_in_submission_table()
         submission_row.seq_metadata = {
@@ -602,15 +624,13 @@ class RawReadsCreationTests(unittest.TestCase):
             "Test Sample Accession",
             "Test Study Accession",
             submission_row,
-            dir=self.tmp_dir,
+            [self.fastq_files[0]],
         )
         self.assertIsNone(manifest.insert_size)
 
-    @mock.patch("ena_deposition.call_loculus.download_fastq_files")
-    def test_create_manifest_no_fastq_files(self, mock_download_fastq_files):
-        """If no fastq files are found, a RuntimeError is raised directly (not wrapped,
+    def test_create_manifest_no_fastq_files(self):
+        """If no fastq files are passed in, a RuntimeError is raised directly (not wrapped,
         since this check happens before the manifest is built)."""
-        mock_download_fastq_files.return_value = []
         config = mock_config()
         submission_row = sample_data_in_submission_table()
 
@@ -620,18 +640,16 @@ class RawReadsCreationTests(unittest.TestCase):
                 "Test Sample Accession",
                 "Test Study Accession",
                 submission_row,
-                dir=self.tmp_dir,
+                [],
             )
         self.assertIn("No fastq files found", str(ctx.exception))
         self.assertIsNone(ctx.exception.__cause__)
 
     @mock.patch("ena_deposition.create_raw_reads.get_description")
-    @mock.patch("ena_deposition.call_loculus.download_fastq_files")
-    def test_create_manifest_error_wrapped(self, mock_download_fastq_files, mock_get_description):
+    def test_create_manifest_error_wrapped(self, mock_get_description):
         """Errors raised while building the RawReadsManifest itself should be wrapped in
         a RuntimeError that identifies the offending accession, with the original error
         preserved as the cause."""
-        mock_download_fastq_files.return_value = self.fastq_files
         mock_get_description.side_effect = ValueError("boom")
         config = mock_config()
         submission_row = sample_data_in_submission_table()
@@ -642,14 +660,12 @@ class RawReadsCreationTests(unittest.TestCase):
                 "Test Sample Accession",
                 "Test Study Accession",
                 submission_row,
-                dir=self.tmp_dir,
+                self.fastq_files,
             )
         self.assertIn(submission_row.accession, str(ctx.exception))
         self.assertIsInstance(ctx.exception.__cause__, ValueError)
 
-    @mock.patch("ena_deposition.call_loculus.download_fastq_files")
-    def test_create_manifest_instrument_no_platform(self, mock_download_fastq_files):
-        mock_download_fastq_files.return_value = self.fastq_files
+    def test_create_manifest_instrument_no_platform(self):
         config = mock_config()
         submission_row = sample_data_in_submission_table()
         submission_row.seq_metadata = {
@@ -662,14 +678,12 @@ class RawReadsCreationTests(unittest.TestCase):
             "Test Sample Accession",
             "Test Study Accession",
             submission_row,
-            dir=self.tmp_dir,
+            self.fastq_files,
         )
         self.assertIsNone(manifest.platform)
         self.assertEqual(manifest.instrument, Instrument.HiSeq_X_Five)
 
-    @mock.patch("ena_deposition.call_loculus.download_fastq_files")
-    def test_create_manifest_unrecognized_instrument_raises(self, mock_download_fastq_files):
-        mock_download_fastq_files.return_value = self.fastq_files
+    def test_create_manifest_unrecognized_instrument_raises(self):
         config = mock_config()
         submission_row = sample_data_in_submission_table()
         submission_row.seq_metadata = {
@@ -685,71 +699,67 @@ class RawReadsCreationTests(unittest.TestCase):
                 "Test Sample Accession",
                 "Test Study Accession",
                 submission_row,
-                dir=self.tmp_dir,
+                self.fastq_files,
             )
 
-
-class DownloadFastqFilesTests(unittest.TestCase):
-    FILE_ID: Final = "11111111-2222-3333-4444-555555555555"
-    CONTENT: Final = b"@r1\nACGT\n+\nIIII\n"
-
-    def setUp(self):
-        tmp_dir = tempfile.TemporaryDirectory()
-        self.addCleanup(tmp_dir.cleanup)
-        self.tmp_dir = tmp_dir.name
-        self.config = mock.Mock()
-        self.config.raw_reads_metadata_field = "rawReads"
-        self.config.s3_request_timeout_seconds = 60
-
-    def _metadata(self, name: str):
-        return {
-            "rawReads": json.dumps(
-                [{"fileId": self.FILE_ID, "name": name, "url": "https://s3.test/object"}]
-            )
+    def test_create_manifest_unrecognized_enum_raises(self):
+        config = mock_config()
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "sequencingInstrument": "HiSeq X Five",
+            "sequencingLibrarySelection": "Not a valid enum",
         }
 
-    def _download(self, name: str, content: bytes | None = None):
-        response = mock.MagicMock()
-        response.__enter__.return_value = response
-        response.iter_content.return_value = [content if content is not None else self.CONTENT]
-        with mock.patch("ena_deposition.call_loculus.requests.get", return_value=response):
-            return download_fastq_files(
-                self.config, self._metadata(name), "LOC_0001TLY", self.tmp_dir
+        with self.assertRaisesRegex(ValueError, "not a valid LibrarySelection"):
+            create_raw_reads_manifest_object(
+                config,
+                "Test Sample Accession",
+                "Test Study Accession",
+                submission_row,
+                self.fastq_files,
             )
 
-    def test_gzipped_input_is_passed_through_unchanged(self):
-        gzipped = gzip.compress(self.CONTENT)
-        (path,) = self._download("reads.fastq.gz", gzipped)
-        self.assertEqual(Path(path).name, f"{self.FILE_ID}.fastq.gz")
-        self.assertEqual(Path(path).read_bytes(), gzipped)
 
-    def test_uppercase_gz_is_lowercased_and_not_recompressed(self):
-        """Upstream accepts READS.FASTQ.GZ; webin-cli's suffix check is case-sensitive, and
-        re-gzipping an already-gzipped file would only fail later, during submit."""
-        gzipped = gzip.compress(self.CONTENT)
-        (path,) = self._download("READS.FASTQ.GZ", gzipped)
-        self.assertEqual(Path(path).name, f"{self.FILE_ID}.fastq.gz")
-        self.assertEqual(Path(path).read_bytes(), gzipped)
+class GetPlatformAndInstrumentTests(unittest.TestCase):
+    def test_valid_platform_value(self):
+        """A value from ENA's PLATFORM list yields that platform and an unspecified
+        instrument."""
+        platform, instrument = get_platform_and_instrument("ILLUMINA", "LOC_0001TLY")
 
-    def test_uncompressed_input_is_gzipped(self):
-        (path,) = self._download("reads.fastq")
-        self.assertEqual(Path(path).name, f"{self.FILE_ID}.fastq.gz")
-        with gzip.open(path, "rb") as f:
-            self.assertEqual(f.read(), self.CONTENT)
-        # the uncompressed intermediate is not left behind
-        self.assertFalse(Path(self.tmp_dir, f"{self.FILE_ID}.fastq").exists())
+        self.assertEqual(platform, Platform.ILLUMINA)
+        self.assertEqual(instrument, Instrument.unspecified)
 
-    def test_uncompressed_fq_is_gzipped(self):
-        (path,) = self._download("reads.fq")
-        self.assertEqual(Path(path).name, f"{self.FILE_ID}.fq.gz")
+    def test_valid_platform_value_is_case_insensitive(self):
+        platform, instrument = get_platform_and_instrument("illumina", "LOC_0001TLY")
 
-    def test_unaccepted_extension_raises_before_download(self):
-        with self.assertRaises(RuntimeError):
-            self._download("reads.fastq.zst")
+        self.assertEqual(platform, Platform.ILLUMINA)
+        self.assertEqual(instrument, Instrument.unspecified)
 
-    def test_missing_raw_reads_field_raises(self):
-        with self.assertRaises(RuntimeError):
-            download_fastq_files(self.config, {}, "LOC_0001TLY", self.tmp_dir)
+    def test_instrument_unspecified_raises(self):
+        """ "unspecified" is a valid INSTRUMENT value but ENA needs a PLATFORM alongside
+        it, which we cannot supply, so it must be rejected."""
+        with self.assertRaises(ValueError) as ctx:
+            get_platform_and_instrument("unspecified", "LOC_0001TLY")
+
+        self.assertIn("unspecified", str(ctx.exception))
+        self.assertIn("LOC_0001TLY", str(ctx.exception))
+
+    def test_instrument_invalid_raises(self):
+        """ "unspecified" is a valid INSTRUMENT value but ENA needs a PLATFORM alongside
+        it, which we cannot supply, so it must be rejected."""
+        with self.assertRaises(ValueError) as ctx:
+            get_platform_and_instrument("invalid_instrument", "LOC_0001TLY")
+
+        self.assertIn("invalid_instrument", str(ctx.exception))
+        self.assertIn("LOC_0001TLY", str(ctx.exception))
+
+    def test_valid_instrument_value(self):
+        """A value from ENA's INSTRUMENT list yields that instrument and no platform."""
+        platform, instrument = get_platform_and_instrument("Illumina MiSeq", "LOC_0001TLY")
+
+        self.assertIsNone(platform)
+        self.assertEqual(instrument, Instrument.Illumina_MiSeq)
 
 
 if __name__ == "__main__":

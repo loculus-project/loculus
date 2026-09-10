@@ -2,7 +2,7 @@ import dataclasses
 from collections import UserString
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Self, overload
+from typing import Self
 
 
 class XmlNone(UserString):
@@ -10,24 +10,24 @@ class XmlNone(UserString):
 
 
 class LookupStrEnum(StrEnum):
-    """StrEnum with case-insensitive lookup by ENA's controlled-vocabulary value."""
-
-    @overload
-    @classmethod
-    def from_value(cls, raw_value: str | None) -> Self | None: ...
-    @overload
-    @classmethod
-    def from_value(cls, raw_value: str | None, default: Self) -> Self: ...
+    """StrEnum with case-insensitive lookup by ENA's controlled-vocabulary value.
+    A raw value that is present but not in the vocabulary always raises; `required`
+    only governs whether a missing/empty value is an error or yields `None`.
+    """
 
     @classmethod
-    def from_value(cls, raw_value: str | None, default: Self | None = None) -> Self | None:
+    def from_value(cls, raw_value: str | None, required: bool = False) -> Self | None:
         if not raw_value:
-            return default
+            if required:
+                msg = f"{cls.__name__} is required but no value was provided"
+                raise ValueError(msg)
+            return None
         normalized = raw_value.strip().lower()
         for member in cls:
             if member.value.lower() == normalized:
                 return member
-        return default
+        msg = f"{raw_value!r} is not a valid {cls.__name__}"
+        raise ValueError(msg)
 
 
 @dataclass

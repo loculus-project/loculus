@@ -66,19 +66,38 @@ def get_platform_and_instrument(
     (e.g. "ILLUMINA") or an ENA INSTRUMENT value (e.g. "Illumina MiSeq") - the two
     permitted value sets don't overlap, so a case-insensitive lookup against both
     unambiguously tells us which one the user provided.
+
+    Raises ValueError if the value cannot yield a manifest ENA will accept.
     """
-    if instrument := Instrument.from_value(raw_value):
-        return None, instrument
-    if platform := Platform.from_value(raw_value):
+    try:
+        platform = Platform.from_value(raw_value)
+    except ValueError:
+        platform = None
+    if platform is not None:
         return platform, Instrument.unspecified
-    if raw_value != "unspecified":
-        message = (
-            f"sequencingInstrument value '{raw_value}' for accession {accession} matches "
-            "neither ENA's platform nor instrument list - ENA submission will fail."
-        )
-        logger.error(message)
-        raise ValueError(message)
-    return None, Instrument.unspecified
+    try:
+        instrument = Instrument.from_value(raw_value)
+    except ValueError:
+        instrument = None
+    if instrument is not None:
+        if instrument is Instrument.unspecified:
+            # webin-cli rejects INSTRUMENT=unspecified unless PLATFORM is also given
+            # Preprocessing forces sequencingInstrument to be one of the configured options
+            # (excluding "unspecified") whenever raw reads are attached,
+            # so this should never fire.
+            message = (
+                f"sequencingInstrument is 'unspecified' for accession {accession} - ENA "
+                "requires a PLATFORM alongside it, which we cannot supply."
+            )
+            logger.error(message)
+            raise ValueError(message)
+        return None, instrument
+    message = (
+        f"sequencingInstrument value '{raw_value}' for accession {accession} matches "
+        "neither ENA's platform nor instrument list - ENA submission will fail."
+    )
+    logger.error(message)
+    raise ValueError(message)
 
 
 def create_manifest_object(
@@ -86,18 +105,22 @@ def create_manifest_object(
     sample_accession: str,
     study_accession: str,
     submission_row: SubmissionTableEntry,
-    dir: str,
+    fastq_files: list[str],
     random_alias: bool = False,
 ) -> RawReadsManifest:
     """
     Create an RawReadsManifest object for an entry in the raw reads table using:
     - the corresponding ena_sample_accession and bioproject_accession
     - the organism metadata from the config file
-    - downloaded fastq files from the corresponding submission table entry,
+    - the already-downloaded fastq files passed in as `fastq_files`
 
     If random_alias=True add a timestamp to the alias suffix to allow for multiple
     submissions of the same manifest for testing.
     """
+    if len(fastq_files) == 0:
+        msg = f"No fastq files found for accession {submission_row.accession}"
+        raise RuntimeError(msg)
+
     # We must create a new run read accession for each revision that changes the files
     alias = get_alias(
         f"{submission_row.accession}:{submission_row.version}:{submission_row.organism}:{config.unique_raw_reads_suffix}",
@@ -107,15 +130,11 @@ def create_manifest_object(
     raw_reads_manifest_fields_mapping = config.raw_reads_manifest_fields_mapping
 
     sequencing_instrument = resolve_required_manifest_field(
-        raw_reads_manifest_fields_mapping["instrument"], metadata
+        raw_reads_manifest_fields_mapping["instrument_platform"], metadata
     )
     platform, instrument = get_platform_and_instrument(
         sequencing_instrument, submission_row.accession
     )
-    fastq_files = call_loculus.download_fastq_files(config, metadata, submission_row.accession, dir)
-    if len(fastq_files) == 0:
-        msg = f"No fastq files found for accession {submission_row.accession}"
-        raise RuntimeError(msg)
 
     insert_size_ = resolve_manifest_field(
         raw_reads_manifest_fields_mapping["insert_size"], metadata
@@ -123,15 +142,15 @@ def create_manifest_object(
     insert_size = int(insert_size_) if len(fastq_files) > 1 and insert_size_ else None
     library_source = LibrarySource.from_value(
         resolve_manifest_field(raw_reads_manifest_fields_mapping["library_source"], metadata),
-        LibrarySource.OTHER,
+        required=True,
     )
     library_selection = LibrarySelection.from_value(
         resolve_manifest_field(raw_reads_manifest_fields_mapping["library_selection"], metadata),
-        LibrarySelection.UNSPECIFIED,
+        required=True,
     )
     library_strategy = LibraryStrategy.from_value(
         resolve_manifest_field(raw_reads_manifest_fields_mapping["library_strategy"], metadata),
-        LibraryStrategy.OTHER,
+        required=True,
     )
 
     try:
@@ -161,8 +180,9 @@ def sync_state_with_submission_table(db_engine: Engine, config: Config) -> None:
     """
     1. Find all entries in submission_table in state SUBMITTED_SAMPLE and submit_raw_reads=True
     2. If (exists an entry in the raw_reads_table for (accession, version)):
-    a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_ALL
+    a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_RAW_READS
     3. Else create corresponding entry in raw_reads_table in state READY
+    (with run accession if present in submission_table)
     """
     conditions = {"status_all": StatusAll.SUBMITTED_SAMPLE, "submit_raw_reads": True}
     ready_to_submit = find_conditions_in_db(db_engine, SubmissionTableEntry, conditions=conditions)
@@ -249,7 +269,7 @@ def can_revise_raw_reads(
             db_engine, [error], seq_key=asdict(submission_row.pkey), update_type="revision"
         )
         return False
-    # TODO: Automate automatic revisions of raw reads metadata fields
+    # TODO(#6877): Automate automatic revisions of raw reads metadata fields
     # if config.allow_revision_with_manifest_changes:
     #     logger.debug(
     #         "allow_revision_with_manifest_changes=True, skipping manifest field comparison"
@@ -308,7 +328,14 @@ def has_raw_reads_changed(
     return False
 
 
-def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: AccessionVersion):
+def previous_version_raw_reads_entry(
+    db_engine: Engine, seq_key: AccessionVersion
+) -> RawReadsTableEntry | None:
+    """The raw_reads_table row of the version this one revises, or None if there is none.
+
+    A previous raw_reads_table row is not guaranteed to exist even for a revision: the
+    previous version may simply not have had raw reads attached.
+    """
     version_to_revise = previous_version(db_engine, seq_key)
     last_version_rows = find_conditions_in_db(
         db_engine,
@@ -318,20 +345,27 @@ def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: Acc
             "version": version_to_revise,
         },
     )
-    if len(last_version_rows) == 0:
-        error_msg = f"Last version {version_to_revise} not found in raw_reads_table"
+    return last_version_rows[0] if last_version_rows else None
+
+
+def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: AccessionVersion):
+    last_version_entry = previous_version_raw_reads_entry(db_engine, seq_key)
+    if last_version_entry is None:
+        error_msg = (
+            f"Version preceding {seq_key.accession}.{seq_key.version} not found in raw_reads_table"
+        )
         raise RuntimeError(error_msg)
     logger.info(
         f"Updating raw reads results for accession {seq_key.accession} version "
-        f"{seq_key.version} using results from version {version_to_revise} as there was no"
-        "change in raw read data."
+        f"{seq_key.version} using results from version {last_version_entry.version} as there was "
+        "no change in raw read data."
     )
     update_with_retry(
         db_engine=db_engine,
         conditions=asdict(seq_key),
         update_values={
             "status": Status.SUBMITTED,
-            "result": last_version_rows[0].result,
+            "result": last_version_entry.result,
         },
         model_class=RawReadsTableEntry,
         reraise=False,
@@ -434,10 +468,10 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
             if not has_raw_reads_changed(config, db_engine, submission_row):
                 update_raw_reads_results_with_latest_version(db_engine, seq_key)
                 continue
-            last_entry = get_last_entry(db_engine, submission_row.pkey)
+            last_version_entry = previous_version_raw_reads_entry(db_engine, seq_key)
             old_run_accession = (
-                last_entry.external_metadata.get(config.loculus_accession_fields.run)
-                if last_entry.external_metadata
+                (last_version_entry.result or {}).get(EnaResultField.RUN)
+                if last_version_entry
                 else None
             )
 
@@ -445,12 +479,15 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
         # on every exit from this block
         with tempfile.TemporaryDirectory() as tmp_dir:
             try:
+                fastq_files = call_loculus.download_fastq_files(
+                    config, submission_row.seq_metadata, submission_row.accession, tmp_dir
+                )
                 manifest_object = create_manifest_object(
                     config,
                     sample_accession,
                     study_accession,
                     submission_row,
-                    dir=tmp_dir,
+                    fastq_files,
                     random_alias=config.random_alias,
                 )
                 manifest_file = create_manifest(
