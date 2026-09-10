@@ -1750,7 +1750,8 @@
     "organisms": {
       "groups": ["organism-conf"],
       "type": "object",
-      "description": "An object where the keys are the organism IDs and values are an [Organism (type)](#organism-type)",
+      "description": "An object where the keys are the organism IDs and values are an [Organism (type)](#organism-type). Keys are used verbatim as `metadata.name` of per-organism Kubernetes resources, so they must be valid RFC 1123 DNS labels: lower-case alphanumeric characters or '-'.",
+      "additionalProperties": false,
       "patternProperties": {
         "^[a-z0-9-]+$": { "$ref": "#/definitions/organism" }
       }
@@ -1760,6 +1761,7 @@
     },
     "defaultOrganisms": {
       "type": "object",
+      "additionalProperties": false,
       "patternProperties": {
         "^[a-z0-9-]+$": { "$ref": "#/definitions/organism" }
       }
