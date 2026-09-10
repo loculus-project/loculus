@@ -10,6 +10,7 @@ import type { SequenceFilter } from './SequenceFilters.tsx';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../../types/referencesGenomes.ts';
+import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
 import { MetadataVisibility } from '../../../utils/search.ts';
 import {
     getSegmentAndGeneInfo,
@@ -34,6 +35,7 @@ type DownloadDialogProps = {
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
     selectedReferenceNames?: SegmentReferenceSelections;
     referenceIdentifierField: string | undefined;
+    restrictedSequenceCount?: number;
 };
 
 export const DownloadDialog: FC<DownloadDialogProps> = ({
@@ -47,6 +49,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     richFastaHeaderFields,
     selectedReferenceNames,
     referenceIdentifierField,
+    restrictedSequenceCount,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -152,6 +155,16 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                             </label>
                         </div>
                     )}
+                    {dataUseTermsEnabled &&
+                        !downloadFormState.includeRestricted &&
+                        restrictedSequenceCount !== undefined &&
+                        restrictedSequenceCount > 0 && (
+                            <div className='mb-4 text-sm text-gray-600'>
+                                {formatNumberWithDefaultLocale(restrictedSequenceCount)} restricted{' '}
+                                {restrictedSequenceCount === 1 ? 'sequence' : 'sequences'} will not be included in this
+                                download.
+                            </div>
+                        )}
                     <DownloadButton
                         downloadUrlGenerator={downloadUrlGenerator}
                         downloadOption={downloadOption}

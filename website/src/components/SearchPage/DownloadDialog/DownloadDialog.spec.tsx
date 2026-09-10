@@ -61,6 +61,7 @@ async function renderDialog({
     selectedReferenceNames = { main: null },
     referenceIdentifierField,
     referenceGenomesInfo = SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+    restrictedSequenceCount,
 }: {
     downloadParams?: SequenceFilter;
     allowSubmissionOfConsensusSequences?: boolean;
@@ -71,6 +72,7 @@ async function renderDialog({
     selectedReferenceNames?: SegmentReferenceSelections;
     referenceIdentifierField?: string;
     referenceGenomesInfo?: ReferenceGenomesInfo;
+    restrictedSequenceCount?: number;
 } = {}) {
     const schema: Schema = {
         defaultOrder: 'ascending',
@@ -99,6 +101,7 @@ async function renderDialog({
             richFastaHeaderFields={richFastaHeaderFields}
             selectedReferenceNames={selectedReferenceNames}
             referenceIdentifierField={referenceIdentifierField}
+            restrictedSequenceCount={restrictedSequenceCount}
         />,
     );
 
@@ -317,6 +320,24 @@ describe('DownloadDialog', () => {
         expectRouteInPathMatches(path, `/sample/details`);
         expect(query).toMatch(/field2=/);
         expect(query).not.toMatch(/field1=/);
+    });
+
+    test('shows how many restricted sequences will be excluded when only downloading open data', async () => {
+        await renderDialog({ restrictedSequenceCount: 1234 });
+
+        expect(
+            screen.getByText('1,234 restricted sequences will not be included in this download.'),
+        ).toBeInTheDocument();
+    });
+
+    test('hides the restricted exclusion notice when restricted sequences are included', async () => {
+        await renderDialog({ restrictedSequenceCount: 1234 });
+
+        await userEvent.click(screen.getByLabelText(/include restricted data/));
+
+        expect(
+            screen.queryByText('1,234 restricted sequences will not be included in this download.'),
+        ).not.toBeInTheDocument();
     });
 
     test('should not show the fasta header options when rich fasta headers are disabled', async () => {
