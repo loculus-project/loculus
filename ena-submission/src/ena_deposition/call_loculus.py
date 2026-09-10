@@ -278,11 +278,13 @@ def download_fastq_files(
 
     os.makedirs(dir, exist_ok=True)
 
+    # Validate every name to prevent unnecessary downloads.
+    extensions = [canonical_fastq_extension(entry["name"]) for entry in files]
+
     fastq_files = []
-    for file_entry in files:
+    for file_entry, file_extension in zip(files, extensions, strict=True):
         # Use the fileId to avoid any potential security issues as name is supplied by the user
         file_name = os.path.basename(file_entry["fileId"])
-        file_extension = canonical_fastq_extension(file_entry["name"])
         logger.info(
             f"Starting download of {file_entry['name']} to {file_name} for accession {accession}"
         )

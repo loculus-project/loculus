@@ -13,7 +13,7 @@ from unittest import mock
 import xmltodict
 import yaml
 from ena_deposition.call_loculus import download_fastq_files
-from ena_deposition.config import EnaOrganismDetails, ManifestFieldDetails, MetadataMapping
+from ena_deposition.config import Config, EnaOrganismDetails, ManifestFieldDetails, MetadataMapping
 from ena_deposition.create_assembly import (
     create_chromosome_list_object,
     create_manifest_object,
@@ -89,7 +89,7 @@ def mock_multi_segmented_organism() -> EnaOrganismDetails:
 
 
 def mock_config():
-    config = mock.Mock()
+    config = mock.Mock(spec=Config)
     config.db_name = "Loculus"
     config.unique_project_suffix = "Test suffix"
     config.unique_raw_reads_suffix = "Test suffix"
@@ -770,7 +770,7 @@ class DownloadFastqFilesTests(unittest.TestCase):
         tmp_dir = tempfile.TemporaryDirectory()
         self.addCleanup(tmp_dir.cleanup)
         self.tmp_dir = tmp_dir.name
-        self.config = mock.Mock()
+        self.config = mock.Mock(spec=Config)
         self.config.raw_reads_metadata_field = "rawReads"
         self.config.s3_request_timeout_seconds = 60
 
@@ -784,6 +784,7 @@ class DownloadFastqFilesTests(unittest.TestCase):
     def _download(self, name: str, content: bytes | None = None):
         response = mock.MagicMock()
         response.__enter__.return_value = response
+        response.__exit__.return_value = False
         response.iter_content.return_value = [content if content is not None else self.CONTENT]
         with mock.patch("ena_deposition.call_loculus.requests.get", return_value=response):
             return download_fastq_files(
@@ -817,8 +818,18 @@ class DownloadFastqFilesTests(unittest.TestCase):
         self.assertEqual(Path(path).name, f"{self.FILE_ID}.fq.gz")
 
     def test_unaccepted_extension_raises_before_download(self):
-        with self.assertRaises(RuntimeError):
-            self._download("reads.fastq.zst")
+        with (
+            mock.patch("ena_deposition.call_loculus.requests.get") as get,
+            self.assertRaises(RuntimeError),
+        ):
+            download_fastq_files(
+                self.config,
+                self._metadata("reads.fastq.zst"),
+                "LOC_0001TLY",
+                self.tmp_dir,
+            )
+
+        get.assert_not_called()
 
     def test_missing_raw_reads_field_raises(self):
         with self.assertRaises(RuntimeError):
