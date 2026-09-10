@@ -28,7 +28,7 @@ from .datatypes import (
     ProcessingAnnotation,
     ProcessingResult,
     RawProcessingResult,
-    SubmissionDetails,
+    SubmissionContext,
     _internal_error_message,
     processing_error,
     raw_internal_error,
@@ -256,7 +256,7 @@ class ProcessingFunctions:
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
-        submission_details: SubmissionDetails,
+        submission_context: SubmissionContext,
     ) -> ProcessingResult:
         if not hasattr(cls, function_name):
             msg = (
@@ -271,7 +271,7 @@ class ProcessingFunctions:
                 output_field,
                 input_fields=input_fields,
                 args=args,
-                submission_details=submission_details,
+                submission_context=submission_context,
             )
         except Exception as e:
             result = raw_internal_error(
@@ -322,7 +322,7 @@ class ProcessingFunctions:
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,  # args is essential - even if Pylance says it's not used
-        submission_details: SubmissionDetails,
+        submission_context: SubmissionContext,
     ) -> RawProcessingResult:
         """Check that date is complete YYYY-MM-DD
         If not according to format return error
@@ -351,7 +351,7 @@ class ProcessingFunctions:
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,  # args is essential - even if Pylance says it's not used
-        submission_details: SubmissionDetails,
+        submission_context: SubmissionContext,
     ) -> RawProcessingResult:
         """
         Parse date string (`input.date`) with input formats:
@@ -379,11 +379,11 @@ class ProcessingFunctions:
 
         try:
             submitted_at = datetime.fromtimestamp(
-                float(submission_details.submittedAt), tz=pytz.utc
+                float(submission_context.submittedAt), tz=pytz.utc
             )
         except Exception:
             return raw_internal_error(
-                f"parse_into_ranges did not receive a valid submittedAt date, with input {input_data} and submittedAt {submission_details.submittedAt!r}."
+                f"parse_into_ranges did not receive a valid submittedAt date, with input {input_data} and submittedAt {submission_context.submittedAt!r}."
             )
 
         max_upper_limit = min(submitted_at, release_date) if release_date else submitted_at
@@ -509,7 +509,7 @@ class ProcessingFunctions:
         output_field,
         input_fields: list[str],
         args: FunctionArgs,  # args is essential - even if Pylance says it's not used
-        submission_details: SubmissionDetails,
+        submission_context: SubmissionContext,
     ) -> RawProcessingResult:
         """Parse date string. If it's incomplete, add 01-01, if no year, return null and error
         input_data:
@@ -574,7 +574,7 @@ class ProcessingFunctions:
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,  # args is essential - even if Pylance says it's not used
-        submission_details: SubmissionDetails,
+        submission_context: SubmissionContext,
     ) -> RawProcessingResult:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
         timestamp = input_data["timestamp"]
@@ -596,7 +596,7 @@ class ProcessingFunctions:
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
-        submission_details: SubmissionDetails,
+        submission_context: SubmissionContext,
     ) -> RawProcessingResult:
         """Concatenates input fields using the "/" separator in the order
         specified by the order argument. Optionally, a 'fallback_value' argument can be provided.
@@ -606,12 +606,7 @@ class ProcessingFunctions:
         warnings: list[str] = []
         errors: list[str] = []
 
-        if not isinstance(args["ACCESSION_VERSION"], str):
-            return raw_internal_error(
-                f"concatenate did not receive a valid ACCESSION_VERSION (got: {args['ACCESSION_VERSION']!r})."
-            )
-
-        accession_version: str = args["ACCESSION_VERSION"]
+        accession_version = submission_context.accessionVersion
         order = args["order"]
         field_types = args["type"]
         fallback_value = (
@@ -646,7 +641,7 @@ class ProcessingFunctions:
                         output_field,
                         input_fields,
                         args,
-                        submission_details,
+                        submission_context,
                     )
                     formatted_input_data.append(
                         fallback_value
@@ -678,7 +673,7 @@ class ProcessingFunctions:
                         output_field,
                         input_fields,
                         args,
-                        submission_details,
+                        submission_context,
                     )
                     formatted_input_data.append(
                         fallback_value
@@ -727,7 +722,7 @@ class ProcessingFunctions:
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
-        submission_details: SubmissionDetails,
+        submission_context: SubmissionContext,
     ) -> RawProcessingResult:
         authors = input_data["authors"]
 
@@ -778,7 +773,7 @@ class ProcessingFunctions:
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
-        submission_details: SubmissionDetails,
+        submission_context: SubmissionContext,
     ) -> RawProcessingResult:
         """
         Extracts a substring from the `regex_field` using the provided regex `pattern`
@@ -823,7 +818,7 @@ class ProcessingFunctions:
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
-        submission_details: SubmissionDetails,
+        submission_context: SubmissionContext,
     ) -> RawProcessingResult:
         """
         Validates that the field regex_field matches the regex expression.
@@ -850,7 +845,7 @@ class ProcessingFunctions:
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
-        submission_details: SubmissionDetails,
+        submission_context: SubmissionContext,
     ) -> RawProcessingResult:
         """Identity function, takes input_data["input"] and returns it as output"""
         if "input" not in input_data:
@@ -906,7 +901,7 @@ class ProcessingFunctions:
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
-        submission_details: SubmissionDetails,
+        submission_context: SubmissionContext,
     ) -> RawProcessingResult:
         """Checks that option is in options"""
         if "options" not in args or not isinstance(args["options"], list):
@@ -930,7 +925,7 @@ class ProcessingFunctions:
         if standardized_input_datum in options:
             output_datum = options[standardized_input_datum]
         # Allow ingested data to include fields not in options
-        elif submission_details.is_insdc_ingest_group:
+        elif submission_context.is_insdc_ingest_group:
             return RawProcessingResult(datum=input_datum, warnings=[error_msg])
         else:
             return processing_error(error_msg)
@@ -942,7 +937,7 @@ class ProcessingFunctions:
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
-        submission_details: SubmissionDetails,
+        submission_context: SubmissionContext,
     ) -> RawProcessingResult:
         """Flag if input value is above a threshold specified in args"""
         if "threshold" not in args:
@@ -968,7 +963,7 @@ class ProcessingFunctions:
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
-        submission_details: SubmissionDetails,
+        submission_context: SubmissionContext,
     ) -> RawProcessingResult:
         """Flag if number of mutations is above mutation rate (specified in args) times length"""
         if "mu" not in args:
@@ -989,7 +984,7 @@ class ProcessingFunctions:
                 output_field=output_field,
                 input_fields=input_fields,
                 args={"threshold": threshold},
-                submission_details=submission_details,
+                submission_context=submission_context,
             )
         except (ValueError, TypeError):
             return processing_error(
@@ -1007,7 +1002,7 @@ class ProcessingFunctions:
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
-        submission_details: SubmissionDetails,
+        submission_context: SubmissionContext,
     ) -> RawProcessingResult:
         """
         Assign flu lineage based on seg4 and seg6.
@@ -1092,7 +1087,7 @@ class ProcessingFunctions:
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
-        submission_details: SubmissionDetails,
+        submission_context: SubmissionContext,
     ) -> RawProcessingResult:
         """Builds a displayName from input_fields. The identifier field in the displayName is based
         on specimenCollectorSampleId or - if it is not set - submissionId (direct submissions only).
@@ -1102,7 +1097,7 @@ class ProcessingFunctions:
             - specimenCollectorSampleId must be in the input_data
             - IDENTIFIER keyword must be in args['order'] and args['type']
             - the IDENTIFIER is resolved by trying specimenCollectorSampleId first, then the
-              submissionId from submission_details; if neither yields a usable value it is
+              submissionId from submission_context; if neither yields a usable value it is
               replaced with ACCESSION_VERSION
             - if fallback_value is not in args, { 'fallback_value': 'unknown' } is added to the args
               before passing them on to concatenate()
@@ -1147,18 +1142,18 @@ class ProcessingFunctions:
         concatenate_order = order.copy()
         concatenate_field_types = field_types.copy()
 
-        insdc_ingested = bool(submission_details.is_insdc_ingest_group)
+        insdc_ingested = bool(submission_context.is_insdc_ingest_group)
 
         # Try to parse the specimenCollectorSampleId first
         identifier = parse_identifier_string(
-            collector_id, insdc_ingested, submission_details, regex_pattern
+            collector_id, insdc_ingested, submission_context, regex_pattern
         )
         if identifier is None and not insdc_ingested:
             # For direct submissions only: try to parse the submissionId
             # Don't do this for ingested since there the submissionId is just the
             # (concatenation of) nuccore accession(s) of the sequence(s)
             identifier = parse_identifier_string(
-                submission_details.submissionId, insdc_ingested, submission_details, regex_pattern
+                submission_context.submissionId, insdc_ingested, submission_context, regex_pattern
             )
 
         def replace_identifier(values, replacement):
@@ -1185,7 +1180,6 @@ class ProcessingFunctions:
                 "order": concatenate_order,
                 "type": concatenate_field_types,
                 "fallback_value": args.get("fallback_value", "unknown"),
-                "ACCESSION_VERSION": args["ACCESSION_VERSION"],
             }
         )
 
@@ -1194,7 +1188,7 @@ class ProcessingFunctions:
             output_field,
             input_fields,
             new_args,
-            submission_details,
+            submission_context,
         )
 
         return RawProcessingResult(
@@ -1209,7 +1203,7 @@ class ProcessingFunctions:
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
-        submission_details: SubmissionDetails,
+        submission_context: SubmissionContext,
     ) -> RawProcessingResult:
         """Validates that the host exists
         in NCBI's taxonomy. Checks either the hostTaxonId or the
@@ -1227,7 +1221,7 @@ class ProcessingFunctions:
 
         taxonomy_service: TaxonomyService = args["taxonomy_service"]  # type: ignore
         return taxonomy_service.get_tax_id(
-            unvalidated_host, not bool(submission_details.is_insdc_ingest_group)
+            unvalidated_host, not bool(submission_context.is_insdc_ingest_group)
         )
 
     @staticmethod
@@ -1236,7 +1230,7 @@ class ProcessingFunctions:
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
-        submission_details: SubmissionDetails,
+        submission_context: SubmissionContext,
     ) -> RawProcessingResult:
         tax_id: str | None = input_data.get("hostTaxonId")
         if not tax_id:
@@ -1244,7 +1238,7 @@ class ProcessingFunctions:
 
         taxonomy_service: TaxonomyService = args["taxonomy_service"]  # type: ignore
         return taxonomy_service.get_scientific_name(
-            tax_id, not bool(submission_details.is_insdc_ingest_group)
+            tax_id, not bool(submission_context.is_insdc_ingest_group)
         )
 
     @staticmethod
@@ -1253,7 +1247,7 @@ class ProcessingFunctions:
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
-        submission_details: SubmissionDetails,
+        submission_context: SubmissionContext,
     ) -> RawProcessingResult:
         tax_id: str | None = input_data.get("hostTaxonId")
         if not tax_id:
@@ -1481,7 +1475,7 @@ def process_phenotype_values(input: str | None, args: FunctionArgs | None) -> In
 def parse_identifier_string(
     input: ProcessedMetadataValue,
     insdc_ingested: bool,
-    submission_details: SubmissionDetails,
+    submission_context: SubmissionContext,
     regex_pattern: str | None = None,
 ) -> str | None:
     """Return an IDENTIFIER string to use in the displayName or None if `input` cannot be used
@@ -1508,7 +1502,7 @@ def parse_identifier_string(
         output_field="IDENTIFIER",
         input_fields=[],
         args={"pattern": regex_pattern, "capture_group": "identifier"},
-        submission_details=submission_details,
+        submission_context=submission_context,
     )
     return None if extract_result.datum is None else str(extract_result.datum)
 

@@ -38,7 +38,7 @@ from .datatypes import (
     SegmentName,
     SequenceAssignment,
     SequenceAssignmentBatch,
-    SubmissionDetails,
+    SubmissionContext,
     UnprocessedAfterNextclade,
     UnprocessedEntry,
 )
@@ -794,8 +794,8 @@ def enrich_with_nextclade(  # noqa: PLR0914
             sequenceNameToFastaId: dict[SegmentName, str]
     )` object.
     """
-    submission_details: dict[AccessionVersion, SubmissionDetails] = {
-        entry.accessionVersion: entry.data.submissionDetails for entry in unprocessed
+    submission_context: dict[AccessionVersion, SubmissionContext] = {
+        entry.accessionVersion: entry.data.submissionContext for entry in unprocessed
     }
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {
         entry.accessionVersion: entry.data.metadata for entry in unprocessed
@@ -894,7 +894,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
 
     return {
         id: UnprocessedAfterNextclade(
-            submissionDetails=submission_details[id],
+            submissionContext=submission_context[id],
             inputMetadata=input_metadata[id],
             files=input_files[id],
             nextcladeMetadata=nextclade_metadata[id],

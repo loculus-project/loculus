@@ -45,8 +45,8 @@ from .datatypes import (
     ProcessingResult,
     SegmentClassificationMethod,
     SegmentName,
+    SubmissionContext,
     SubmissionData,
-    SubmissionDetails,
     UnprocessedAfterNextclade,
     UnprocessedData,
     UnprocessedEntry,
@@ -250,16 +250,14 @@ def add_input_metadata(
 
 
 def _call_processing_function(  # noqa: PLR0913, PLR0917
-    accession_version: AccessionVersion,
     spec: ProcessingSpec,
     output_field: str,
-    submission_details: SubmissionDetails,
+    submission_context: SubmissionContext,
     input_data: InputMetadata,
     input_fields: list[str],
     config: Config,
 ) -> ProcessingResult:
     args = dict(spec.args) if spec.args else {}
-    args["ACCESSION_VERSION"] = accession_version
     args["taxonomy_service"] = config._taxonomy_service  # type: ignore
 
     try:
@@ -269,7 +267,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
             input_data,
             output_field,
             input_fields,
-            submission_details,
+            submission_context,
         )
     except Exception as e:
         msg = f"Processing for spec: {spec} with input data: {input_data} failed with {e}"
@@ -278,8 +276,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     return processing_result
 
 
-def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
-    accession_version: AccessionVersion,
+def processed_entry_no_alignment(
     unprocessed: UnprocessedData,
     output_metadata: ProcessedMetadata,
     errors: list[ProcessingAnnotation],
@@ -292,6 +289,7 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
     aligned_aminoacid_sequences: dict[GeneName, AminoAcidSequence | None] = {}
     nucleotide_insertions: dict[SequenceName, list[NucleotideInsertion]] = {}
     amino_acid_insertions: dict[GeneName, list[AminoAcidInsertion]] = {}
+    accession_version = unprocessed.submissionContext.accessionVersion
 
     return SubmissionData(
         processed_entry=ProcessedEntry(
@@ -310,7 +308,7 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
             errors=errors,
             warnings=warnings,
         ),
-        submitter=unprocessed.submissionDetails.submitter,
+        submitter=unprocessed.submissionContext.submitter,
     )
 
 
@@ -325,7 +323,6 @@ def get_sequence_length(
 
 
 def get_output_metadata(  # noqa: C901, PLR0912, PLR0915
-    accession_version: AccessionVersion,
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
     config: Config,
 ) -> tuple[ProcessedMetadata, list[ProcessingAnnotation], list[ProcessingAnnotation]]:
@@ -397,10 +394,9 @@ def get_output_metadata(  # noqa: C901, PLR0912, PLR0915
                 input_fields.append(resolved_path)
 
         processing_result = _call_processing_function(
-            accession_version=accession_version,
             spec=spec,
             output_field=output_field,
-            submission_details=unprocessed.submissionDetails,
+            submission_context=unprocessed.submissionContext,
             input_data=input_data,
             input_fields=input_fields,
             config=config,
@@ -412,7 +408,7 @@ def get_output_metadata(  # noqa: C901, PLR0912, PLR0915
 
         if (
             not null_per_backend(processing_result.datum)
-            or unprocessed.submissionDetails.is_insdc_ingest_group
+            or unprocessed.submissionContext.is_insdc_ingest_group
         ):
             # skip requirement checks when the field has a value, or for INSDC ingested data.
             continue
@@ -441,7 +437,7 @@ def get_output_metadata(  # noqa: C901, PLR0912, PLR0915
             for msg in requirement_errors
         )
 
-    logger.debug(f"Processed {accession_version}: {output_metadata}")
+    logger.debug(f"Processed {unprocessed.submissionContext.accessionVersion}: {output_metadata}")
     return output_metadata, errors, warnings
 
 
@@ -562,16 +558,16 @@ def unpack_annotations(config, nextclade_metadata: dict[str, Any] | None) -> dic
 
 
 def process_single(
-    accession_version: AccessionVersion,
     unprocessed: UnprocessedAfterNextclade,
     config: Config,
 ) -> SubmissionData:
     """Process a single sequence per config"""
+    accession_version = unprocessed.submissionContext.accessionVersion
     # process files first as S3 read URLs have a limited lifetime
     file_errors = []
     if unprocessed.files and any(unprocessed.files.values()):
         file_errors = config._file_processing_service.process_files(
-            unprocessed.files, accession_version=accession_version
+            unprocessed.files, accession_version
         )
 
     iupac_errors = errors_if_non_iupac(unprocessed.unalignedNucleotideSequences)
@@ -586,9 +582,7 @@ def process_single(
         config,
     )
 
-    output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
-        accession_version, unprocessed, config
-    )
+    output_metadata, metadata_errors, metadata_warnings = get_output_metadata(unprocessed, config)
 
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
@@ -619,13 +613,12 @@ def process_single(
     return SubmissionData(
         processed_entry=processed_entry,
         annotations=unpack_annotations(config, unprocessed.nextcladeMetadata),
-        group_id=unprocessed.submissionDetails.group_id,
-        submitter=unprocessed.submissionDetails.submitter,
+        group_id=unprocessed.submissionContext.group_id,
+        submitter=unprocessed.submissionContext.submitter,
     )
 
 
 def process_single_unaligned(
-    accession_version: AccessionVersion,
     unprocessed: UnprocessedData,
     config: Config,
 ) -> SubmissionData:
@@ -634,7 +627,7 @@ def process_single_unaligned(
     file_errors = []
     if unprocessed.files and any(unprocessed.files.values()):
         file_errors = config._file_processing_service.process_files(
-            unprocessed.files, accession_version=accession_version
+            unprocessed.files, unprocessed.submissionContext.accessionVersion
         )
 
     segment_assignment = assign_segment_using_header(
@@ -644,12 +637,9 @@ def process_single_unaligned(
     unprocessed.unalignedNucleotideSequences = segment_assignment.unalignedNucleotideSequences
     iupac_errors = errors_if_non_iupac(unprocessed.unalignedNucleotideSequences)
 
-    output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
-        accession_version, unprocessed, config
-    )
+    output_metadata, metadata_errors, metadata_warnings = get_output_metadata(unprocessed, config)
 
     return processed_entry_no_alignment(
-        accession_version=accession_version,
         unprocessed=unprocessed,
         output_metadata=output_metadata,
         errors=list(
@@ -700,7 +690,7 @@ def process_all(
         nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
         for id, result in nextclade_results.items():
             try:
-                processed_single = process_single(id, result, config)
+                processed_single = process_single(result, config)
             except Exception as e:
                 logger.error(f"Processing failed for {id} with error: {e}")
                 processed_single = processed_entry_with_errors(id)
@@ -708,9 +698,7 @@ def process_all(
     else:
         for entry in unprocessed:
             try:
-                processed_single = process_single_unaligned(
-                    entry.accessionVersion, entry.data, config
-                )
+                processed_single = process_single_unaligned(entry.data, config)
             except Exception as e:
                 logger.error(f"Processing failed for {entry.accessionVersion} with error: {e}")
                 processed_single = processed_entry_with_errors(entry.accessionVersion)

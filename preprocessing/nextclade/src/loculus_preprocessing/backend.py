@@ -21,7 +21,7 @@ from .datatypes import (
     FileIdAndNameAndReadUrl,
     FileUploadInfo,
     ProcessedEntry,
-    SubmissionDetails,
+    SubmissionContext,
     UnprocessedData,
     UnprocessedEntry,
 )
@@ -108,8 +108,10 @@ def parse_ndjson(ndjson_data: str, config: Config) -> Sequence[UnprocessedEntry]
             if submitted_files
             else None
         )
+        accession_version = f"{json_object['accession']}.{json_object['version']}"
         unprocessed_data = UnprocessedData(
-            submissionDetails=SubmissionDetails(
+            submissionContext=SubmissionContext(
+                accessionVersion=accession_version,
                 submitter=json_object["submitter"],
                 group_id=json_object["groupId"],
                 submittedAt=json_object["submittedAt"],
@@ -123,7 +125,7 @@ def parse_ndjson(ndjson_data: str, config: Config) -> Sequence[UnprocessedEntry]
             files=file_mapping,
         )
         entry = UnprocessedEntry(
-            accessionVersion=f"{json_object['accession']}.{json_object['version']}",
+            accessionVersion=accession_version,
             data=unprocessed_data,
         )
         entries.append(entry)
