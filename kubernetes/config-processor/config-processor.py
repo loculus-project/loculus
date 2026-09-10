@@ -15,6 +15,8 @@ retry_strategy = Retry(
     total=3,
     backoff_factor=1,
     status_forcelist=[
+        429,  # Too Many Requests
+        500,  # Internal Server Error
         502,  # Bad Gateway
         503,  # Service Unavailable
         504,  # Gateway Timeout
