@@ -1,0 +1,29 @@
+{{- /*
+Renders nothing; fails the render if an organism's field names overlap. commonMetadata, the
+organism's own metadata (after metadataAdd) and the file categories all end up in one flat set of
+keys, and each merge silently lets one side win, so an overlap loses a field rather than erroring.
+*/ -}}
+{{- $commonNames := dict -}}
+{{- range (include "loculus.commonMetadata" . | fromYaml).fields -}}
+  {{- $_ := set $commonNames .name true -}}
+{{- end -}}
+{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms -}}
+  {{- $organism := $item.key -}}
+  {{- $schema := $item.contents.schema | include "loculus.patchMetadataSchema" | fromYaml -}}
+  {{- $metadataNames := dict -}}
+  {{- range $schema.metadata -}}
+    {{- if hasKey $commonNames .name -}}
+      {{- fail (printf "organism %q: metadata field %q is already added to every organism as common metadata. Remove it from schema.metadata / metadataAdd." $organism .name) -}}
+    {{- end -}}
+    {{- $_ := set $metadataNames .name true -}}
+  {{- end -}}
+  {{- $categories := concat ($schema.files | default list) (dig "submissionDataTypes" "files" "categories" list $schema) -}}
+  {{- range $categories -}}
+    {{- if hasKey $commonNames .name -}}
+      {{- fail (printf "organism %q: file category %q has the same name as a common metadata field. File categories share one namespace with metadata fields." $organism .name) -}}
+    {{- end -}}
+    {{- if hasKey $metadataNames .name -}}
+      {{- fail (printf "organism %q: file category %q has the same name as a metadata field. File categories share one namespace with metadata fields." $organism .name) -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
