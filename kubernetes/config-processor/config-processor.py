@@ -70,7 +70,7 @@ def download_url(url):
         session.mount("https://", adapter)
         session.mount("http://", adapter)
         thread_local.session = session
-    return thread_local.session.get(url)
+    return thread_local.session.get(url, timeout=REQUEST_TIMEOUT)
 
 
 def replace_url_with_content(file_content, downloaded_content):
