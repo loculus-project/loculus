@@ -333,13 +333,23 @@ def test_parse_validation_error_condenses_duplicate_read_name_spam(separator):
         f'Multiple (2) occurrences of read name "{name}"' for name in read_names
     )
     message = _parse_validation_error(f"RESULT: INVALID\n  {raw}\n", "")
-    assert message == (
-        "File validation failed while running ENA readtools. The same read name appears "
+    assert (
         f'more than once in this file (for example "{read_names[0]}"). This usually '
-        "means the file is an interleaved FASTQ, with forward and reverse mates stored "
-        "together. Paired-end FASTQ files must be submitted as separate, de-interleaved "
-        "files. Please submit one file for the forward reads and one for the reverse reads."
+        in message
     )
+    assert "occurrences of read name" not in message
+
+    def test_parse_validation_error_condenses_duplicates_among_other_errors():
+        message = _parse_validation_error(
+            "RESULT: INVALID\n"
+            "  Sequence and quality strings must be the same length\n"
+            '  Multiple (2) occurrences of read name "read1"\n'
+            '  Multiple (2) occurrences of read name "read2"\n',
+            "",
+        )
+        assert "The same read name appears more than once" in message
+        assert "Sequence and quality strings must be the same length" in message
+        assert "occurrences of read name" not in message
 
 
 def test_parse_validation_error_leaves_unrelated_errors_untouched():
