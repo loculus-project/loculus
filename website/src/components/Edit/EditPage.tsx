@@ -27,6 +27,7 @@ import {
     getSingleSubmissionFileMapping,
     validateSubmissionFileMapping,
 } from '../Submission/FileUpload/fileMapping.ts';
+import { RawFile, type ProcessedFile } from '../Submission/FileUpload/fileProcessing.ts';
 import {
     deriveFileMapping,
     getPreviousFileUploadStates,
@@ -118,28 +119,28 @@ const InnerEditPage: FC<EditPageProps> = ({
                 return;
             }
 
-            let finalMetadataFile = metadataFile;
+            let mFile: ProcessedFile = new RawFile(metadataFile);
 
             if (extraFilesEnabled && fileMapping !== undefined) {
-                const finalSubmissionFileMapping = getSingleSubmissionFileMapping(dataToEdit.submissionId, fileMapping);
+                const submissionFileMapping = getSingleSubmissionFileMapping(dataToEdit.submissionId, fileMapping);
 
-                const validationResult = validateSubmissionFileMapping(finalSubmissionFileMapping, fileSharingConfig);
-                if (validationResult.isErr()) {
-                    toast.error(validationResult.error.message, { position: 'top-center', autoClose: false });
+                const validation = validateSubmissionFileMapping(submissionFileMapping, fileSharingConfig);
+                if (validation.isErr()) {
+                    toast.error(validation.error.message, { position: 'top-center', autoClose: false });
                     return;
                 }
 
-                const finalMetadataFileResult = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
-                if (finalMetadataFileResult.isErr()) {
-                    toast.error(finalMetadataFileResult.error.message, { position: 'top-center', autoClose: false });
+                const metadataWithFileMapping = await applyFileMappings(mFile, submissionFileMapping);
+                if (metadataWithFileMapping.isErr()) {
+                    toast.error(metadataWithFileMapping.error.message, { position: 'top-center', autoClose: false });
                     return;
                 }
-                finalMetadataFile = finalMetadataFileResult.value;
+                mFile = metadataWithFileMapping.value;
             }
 
             if (!submissionDataTypes.consensusSequences) {
                 submitRevision({
-                    metadataFile: finalMetadataFile,
+                    metadataFile: mFile.inner(),
                 });
                 return;
             }
@@ -152,18 +153,18 @@ const InnerEditPage: FC<EditPageProps> = ({
                 return;
             }
             submitRevision({
-                metadataFile: finalMetadataFile,
+                metadataFile: mFile.inner(),
                 sequenceFile,
             });
         } else {
             let fileMappingForEdit: FilesByCategory | null = null;
             if (extraFilesEnabled && fileMapping !== undefined) {
-                const validationResult = validateSubmissionFileMapping(
+                const validation = validateSubmissionFileMapping(
                     getSingleSubmissionFileMapping(dataToEdit.submissionId, fileMapping),
                     fileSharingConfig,
                 );
-                if (validationResult.isErr()) {
-                    toast.error(validationResult.error.message, { position: 'top-center', autoClose: false });
+                if (validation.isErr()) {
+                    toast.error(validation.error.message, { position: 'top-center', autoClose: false });
                     return;
                 }
 

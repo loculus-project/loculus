@@ -1,6 +1,7 @@
+import { err, ok, type Result } from 'neverthrow';
 import Papa from 'papaparse';
 
-import { type ProcessedFile } from './fileProcessing';
+import { VirtualFile, type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
 import stringSimilarity from '../../../utils/stringSimilarity';
 
@@ -90,21 +91,30 @@ export class ColumnMapping {
     }
 
     /* Apply this mapping to a TSV file, returning a new file with remapped columns. */
-    public async applyTo(tsvFile: ProcessedFile): Promise<File> {
-        const text = await tsvFile.text();
-        const parsed = Papa.parse<string[]>(text, { delimiter: '\t', skipEmptyLines: true });
-        const inputRows: string[][] = parsed.data;
-        const headersInFile = inputRows.splice(0, 1)[0];
-        const headers: string[] = [];
-        const indices: number[] = [];
-        this.entries().forEach(([sourceCol, targetCol]) => {
-            if (targetCol === null) return;
-            headers.push(targetCol);
-            indices.push(headersInFile.findIndex((sourceHeader) => sourceHeader === sourceCol));
-        });
-        const newRows = inputRows.map((row) => indices.map((i) => row[i]));
-        const newFileContent = Papa.unparse([headers, ...newRows], { delimiter: '\t', newline: '\n' });
-        return new File([newFileContent], 'remapped.tsv');
+    public async applyTo(tsvFile: ProcessedFile): Promise<Result<ProcessedFile, Error>> {
+        try {
+            const text = await tsvFile.text();
+            const parsed = Papa.parse<string[]>(text, { delimiter: '\t', skipEmptyLines: true });
+            const inputRows: string[][] = parsed.data;
+            const headersInFile = inputRows.splice(0, 1)[0];
+            const headers: string[] = [];
+            const indices: number[] = [];
+            this.entries().forEach(([sourceCol, targetCol]) => {
+                if (targetCol === null) return;
+                headers.push(targetCol);
+                indices.push(headersInFile.findIndex((sourceHeader) => sourceHeader === sourceCol));
+            });
+            const newRows = inputRows.map((row) => indices.map((i) => row[i]));
+            const newFileContent = Papa.unparse([headers, ...newRows], { delimiter: '\t', newline: '\n' });
+
+            return ok(new VirtualFile(newFileContent, 'remapped.tsv'));
+        } catch {
+            return err(
+                new Error(
+                    'Could not apply the column mapping to the metadata file. Please review your column mapping.',
+                ),
+            );
+        }
     }
 
     public equals(other: ColumnMapping | null): boolean {
