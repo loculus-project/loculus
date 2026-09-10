@@ -13,6 +13,7 @@ import {
     type SubmissionFile,
     type SubmissionFileMapping,
 } from './fileMapping';
+import { RawFile, type ProcessedFile } from './fileProcessing';
 import { FILES_HEADER_PREFIX } from '../../../settings';
 
 const RAW_READS = 'rawReads';
@@ -22,7 +23,7 @@ const OTHER_FILES_COLUMN = `${FILES_HEADER_PREFIX}${OTHER_FILES}`;
 const FILE_CATEGORIES = [RAW_READS, OTHER_FILES];
 
 const tsv = (rows: string[][]) => rows.map((row) => row.join('\t')).join('\n');
-const tsvFile = (text: string) => new File([text], 'metadata.tsv');
+const tsvFile = (text: string) => new RawFile(new File([text], 'metadata.tsv'));
 const declaredFile = (name: string, path: string = name) => ({ type: 'declaredFile' as const, name, path });
 const reusedFile = (name: string, fileId: string) => ({ type: 'reusedFile' as const, name, fileId });
 const uploadedFile = (path: string, fileId: string) => ({ type: 'uploadedFile' as const, path, fileId });
@@ -353,7 +354,7 @@ describe('getLinkageErrors', () => {
 
 describe('applyFileMappings', () => {
     const metadataFile = (rows: string[][]) => tsvFile(tsv(rows));
-    const linesOf = async (file: File) => (await file.text()).split('\n');
+    const linesOf = async (file: ProcessedFile) => (await file.text()).split('\n');
 
     it('writes name:fileId into an existing file column', async () => {
         const merged = resolvedMappingOf({ e1: { [RAW_READS]: [{ name: 'a.txt', fileId: 'id-a' }] } });
