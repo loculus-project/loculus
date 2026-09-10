@@ -308,6 +308,7 @@ def processed_entry_no_alignment(
             errors=errors,
             warnings=warnings,
         ),
+        group_id=unprocessed.submissionContext.group_id,
         submitter=unprocessed.submissionContext.submitter,
     )
 
@@ -650,11 +651,12 @@ def process_single_unaligned(
     )
 
 
-def processed_entry_with_errors(id) -> SubmissionData:
+def processed_entry_with_errors(submission_context: SubmissionContext) -> SubmissionData:
+    accession_version = submission_context.accessionVersion
     return SubmissionData(
         processed_entry=ProcessedEntry(
-            accession=accession_from_str(id),
-            version=version_from_str(id),
+            accession=accession_from_str(accession_version),
+            version=version_from_str(accession_version),
             data=ProcessedData(
                 metadata=dict[str, ProcessedMetadataValue](),
                 files=None,
@@ -670,14 +672,16 @@ def processed_entry_with_errors(id) -> SubmissionData:
                     "unknown",
                     AnnotationSourceType.METADATA,
                     message=(
-                        f"Failed to process submission with id: {id} - please review your "
-                        "submission or reach out to an administrator if this error persists."
+                        f"Failed to process submission with id: {accession_version} - please "
+                        "review your submission or reach out to an administrator if this error "
+                        "persists."
                     ),
                 ),
             ],
             warnings=[],
         ),
-        submitter=None,
+        group_id=submission_context.group_id,
+        submitter=submission_context.submitter,
     )
 
 
@@ -693,7 +697,7 @@ def process_all(
                 processed_single = process_single(result, config)
             except Exception as e:
                 logger.error(f"Processing failed for {id} with error: {e}")
-                processed_single = processed_entry_with_errors(id)
+                processed_single = processed_entry_with_errors(result.submissionContext)
             processed_results.append(processed_single)
     else:
         for entry in unprocessed:
@@ -701,7 +705,7 @@ def process_all(
                 processed_single = process_single_unaligned(entry.data, config)
             except Exception as e:
                 logger.error(f"Processing failed for {entry.accessionVersion} with error: {e}")
-                processed_single = processed_entry_with_errors(entry.accessionVersion)
+                processed_single = processed_entry_with_errors(entry.data.submissionContext)
             processed_results.append(processed_single)
 
     return processed_results
@@ -711,10 +715,14 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
     for submission_data in processed:
         accession = submission_data.processed_entry.accession
         version = submission_data.processed_entry.version
+        if submission_data.processed_entry.errors:
+            # The entry won't be released, so don't build a flatfile for it - and don't stack
+            # an "EMBL upload failed" error on top of the errors the submitter has to fix.
+            logger.debug(
+                "Skipping EMBL file for %s.%s: entry already has errors", accession, version
+            )
+            continue
         try:
-            if submission_data.group_id is None:
-                msg = "Group ID is required for EMBL file upload"
-                raise ValueError(msg)
             file_content = create_flatfile(config, submission_data)
             file_name = f"{accession}.{version}.embl"
             upload_info = request_upload(submission_data.group_id, 1, config)[0]

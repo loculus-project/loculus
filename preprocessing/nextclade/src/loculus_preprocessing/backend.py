@@ -108,15 +108,14 @@ def parse_ndjson(ndjson_data: str, config: Config) -> Sequence[UnprocessedEntry]
             if submitted_files
             else None
         )
-        accession_version = f"{json_object['accession']}.{json_object['version']}"
         unprocessed_data = UnprocessedData(
             submissionContext=SubmissionContext(
-                accessionVersion=accession_version,
+                accessionVersion=f"{json_object['accession']}.{json_object['version']}",
                 submitter=json_object["submitter"],
-                group_id=json_object["groupId"],
+                group_id=int(json_object["groupId"]),
                 submittedAt=json_object["submittedAt"],
                 submissionId=json_object["submissionId"],
-                is_insdc_ingest_group=json_object["groupId"] == config.insdc_ingest_group_id,
+                insdc_ingest_group_id=config.insdc_ingest_group_id,
             ),
             metadata=json_object["data"]["metadata"],
             unalignedNucleotideSequences=trimmed_unaligned_nucleotide_sequences
@@ -124,11 +123,7 @@ def parse_ndjson(ndjson_data: str, config: Config) -> Sequence[UnprocessedEntry]
             else {},
             files=file_mapping,
         )
-        entry = UnprocessedEntry(
-            accessionVersion=accession_version,
-            data=unprocessed_data,
-        )
-        entries.append(entry)
+        entries.append(UnprocessedEntry(data=unprocessed_data))
     return entries
 
 

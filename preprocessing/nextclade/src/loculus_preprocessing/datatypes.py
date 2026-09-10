@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Iterable
-from dataclasses import dataclass, field
+from dataclasses import InitVar, dataclass, field
 from enum import StrEnum, unique
 from typing import Any, Final
 
@@ -93,16 +93,18 @@ class FileIdAndNameAndReadUrl:
 
 @dataclass
 class SubmissionContext:
-    """Information about the submission that's not provided by the submitter
-    but assigned or attached by Loculus itself
-    """
+    """Submission-level information supplied by the backend alongside the submitted metadata."""
 
     accessionVersion: AccessionVersion  # noqa: N815
     submitter: str
     group_id: int
     submittedAt: str  # timestamp  # noqa: N815
     submissionId: str  # noqa: N815
-    is_insdc_ingest_group: bool
+    insdc_ingest_group_id: InitVar[int]
+    is_insdc_ingest_group: bool = field(init=False)
+
+    def __post_init__(self, insdc_ingest_group_id: int) -> None:
+        self.is_insdc_ingest_group = self.group_id == insdc_ingest_group_id
 
 
 @dataclass
@@ -115,8 +117,11 @@ class UnprocessedData:
 
 @dataclass
 class UnprocessedEntry:
-    accessionVersion: AccessionVersion  # {accession}.{version}  # noqa: N815
     data: UnprocessedData
+
+    @property
+    def accessionVersion(self) -> AccessionVersion:  # {accession}.{version}  # noqa: N802
+        return self.data.submissionContext.accessionVersion
 
 
 FunctionInputs = dict[ArgName, InputField]
@@ -182,8 +187,8 @@ class SubmissionData:
     but the annotations need to be uploaded separately."""
 
     processed_entry: ProcessedEntry
-    submitter: str | None
-    group_id: int | None = None
+    submitter: str
+    group_id: int
     annotations: dict[str, Any] | None = None
 
 

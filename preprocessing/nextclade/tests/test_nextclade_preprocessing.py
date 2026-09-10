@@ -1274,7 +1274,6 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
     config.max_sequences_per_entry = 1
 
     bad_entry = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
         data=UnprocessedData(
             submissionContext=make_submission_context(accession_version="LOC_01.1"),
             metadata={},
@@ -1287,7 +1286,6 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
     )
 
     good_entry = UnprocessedEntry(
-        accessionVersion="LOC_02.1",
         data=UnprocessedData(
             submissionContext=make_submission_context(accession_version="LOC_02.1"),
             metadata={},
@@ -1317,7 +1315,6 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
 def test_preprocessing_without_metadata() -> None:
     config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
     sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
         data=UnprocessedData(
             submissionContext=make_submission_context(accession_version="LOC_01.1"),
             metadata={},
@@ -1438,7 +1435,6 @@ def test_create_flatfile():
     config.processing_order = get_processing_order(config)
     config.create_embl_file = True
     sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
         data=UnprocessedData(
             submissionContext=make_submission_context(accession_version="LOC_01.1"),
             metadata={

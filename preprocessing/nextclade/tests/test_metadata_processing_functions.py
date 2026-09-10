@@ -87,7 +87,7 @@ test_case_definitions = [
             "concatenated_string": "LOC_21.1",
             "required_collection_date": None,
         },
-        group_id=1,
+        is_insdc_ingest_group=True,
     ),
     Case(
         name="invalid_option",
@@ -1128,7 +1128,6 @@ def test_required_field_message_lists_only_user_input_fields() -> None:
 def test_preprocessing_without_consensus_sequences(config: Config) -> None:
     sequence_name = "entry without sequences"
     sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
         data=UnprocessedData(
             submissionContext=make_submission_context(accession_version="LOC_01.1"),
             metadata={
@@ -1713,11 +1712,12 @@ def _assert_display_name_warnings(warnings: list, expected_message: str | None) 
         assert warnings[0] == expected_message
 
 
+# Mirrors the build_display_name inputs in values.yaml: submissionId is not among them,
+# it reaches the function via the SubmissionContext.
 input_fields = [
     "nextclade.clade",
     "geoLocCountry",
     "specimenCollectorSampleId",
-    "submissionId",
     "sampleCollectionDate",
 ]
 base_args: FunctionArgs = {
@@ -1747,11 +1747,12 @@ def test_display_name_construction(case: DisplayNameCase) -> None:
             "nextclade.clade": "DENV-1",
             "geoLocCountry": case.geo_loc_country,
             "sampleCollectionDate": case.sample_collection_date,
-            "submissionId": case.submission_id,
             "specimenCollectorSampleId": case.specimen_collector_id,
         }
 
-    # submissionId is read off the SubmissionContext, not the input metadata
+    # submissionId is read off the SubmissionContext, and reaches the function nowhere else:
+    # it is absent from input_data above, so a regression to reading it from the input
+    # metadata falls through to the ACCESSION_VERSION identifier and fails these cases.
     direct_context = make_submission_context(submission_id=case.submission_id)
     insdc_context = make_submission_context(
         submission_id=case.submission_id, is_insdc_ingest_group=True
