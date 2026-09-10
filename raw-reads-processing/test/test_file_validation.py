@@ -323,10 +323,12 @@ def test_parse_validation_error_condenses_duplicate_read_name_spam():
     )
     message = _parse_validation_error(f"RESULT: INVALID\n  {raw}\n", "")
     assert message == (
-        "File validation failed while running ENA readtools. Detected read pairs with "
-        "the same name, if you are submitting interleaved fastq files please split your "
-        'fastq file into two files (first shared read name: "ERR17356121.13 '
-        'VH00852:178:AAJ7F5MM5:1:1101:5734:28792 length=121")'
+        "File validation failed while running ENA readtools. The same read name appears "
+        'more than once in this file (for example "ERR17356121.13 '
+        'VH00852:178:AAJ7F5MM5:1:1101:5734:28792 length=121"). This usually means the '
+        "file is an interleaved FASTQ, with forward and reverse mates stored together. "
+        "Paired-end FASTQ files must be submitted as separate, de-interleaved files. "
+        "Please submit one file for the forward reads and one for the reverse reads."
     )
 
 
@@ -338,9 +340,11 @@ def test_parse_validation_error_condenses_newline_separated_duplicate_read_names
         "",
     )
     assert message == (
-        "File validation failed while running ENA readtools. Detected read pairs with "
-        "the same name, if you are submitting interleaved fastq files please split your "
-        'fastq file into two files (first shared read name: "read1")'
+        "File validation failed while running ENA readtools. The same read name appears "
+        'more than once in this file (for example "read1"). This usually means the file '
+        "is an interleaved FASTQ, with forward and reverse mates stored together. "
+        "Paired-end FASTQ files must be submitted as separate, de-interleaved files. "
+        "Please submit one file for the forward reads and one for the reverse reads."
     )
 
 
