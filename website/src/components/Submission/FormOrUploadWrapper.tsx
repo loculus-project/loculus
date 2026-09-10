@@ -4,7 +4,7 @@ import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from
 import type { UploadAction } from './DataUploadForm';
 import type { ColumnMapping } from './FileUpload/ColumnMapping';
 import { SequenceEntryUpload } from './FileUpload/SequenceEntryUploadComponent';
-import { type ProcessedFile } from './FileUpload/fileProcessing';
+import { RawFile, type ProcessedFile } from './FileUpload/fileProcessing';
 import type { FileSharingConfig, InputField, SubmissionDataTypes } from '../../types/config';
 import { EditableSequences } from '../Edit/EditableSequences';
 import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
@@ -100,17 +100,24 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 setSubmissionFileMapping(undefined);
                 return;
             }
-            const mFile =
-                columnMapping !== null
-                    ? await columnMapping.applyTo(metadataFile)
-                    : new File([await metadataFile.text()], 'metadata.tsv', { type: 'text/tab-separated-values' });
 
-            if (state.cancelled) return;
+            let mFile = metadataFile;
+            if (columnMapping !== null) {
+                const metadataWithColumnMapping = await columnMapping.applyTo(metadataFile);
+                if (state.cancelled) return;
+                if (metadataWithColumnMapping.isErr()) {
+                    setSubmissionFileMapping(undefined);
+                    onError(metadataWithColumnMapping.error.message);
+                    return;
+                }
+                mFile = metadataWithColumnMapping.value;
+            }
 
             const submissionFileMapping = await parseSubmissionFileMapping(
                 mFile,
                 submissionDataTypes.files?.categories?.map((category) => category.name) ?? [],
             );
+            if (state.cancelled) return;
             setSubmissionFileMapping(submissionFileMapping);
             if (submissionFileMapping.isErr()) onError(submissionFileMapping.error.message);
         })();
@@ -144,30 +151,27 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                             return { type: 'error', errorMessage: 'Please enter sequence data.' };
                         }
 
-                        let mFile = metadataFile;
+                        let mFile: ProcessedFile = new RawFile(metadataFile);
 
                         if (extraFilesEnabled && fileMapping !== undefined) {
                             const submissionFileMapping = getSingleSubmissionFileMapping(submissionId, fileMapping);
 
-                            const validationResult = validateSubmissionFileMapping(
-                                submissionFileMapping,
-                                fileSharingConfig,
-                            );
-                            if (validationResult.isErr()) {
-                                return { type: 'error', errorMessage: validationResult.error.message };
+                            const validation = validateSubmissionFileMapping(submissionFileMapping, fileSharingConfig);
+                            if (validation.isErr()) {
+                                return { type: 'error', errorMessage: validation.error.message };
                             }
 
-                            const applyMappingResult = await applyFileMappings(mFile, submissionFileMapping);
-                            if (applyMappingResult.isErr()) {
-                                return { type: 'error', errorMessage: applyMappingResult.error.message };
+                            const metadataWithFileMapping = await applyFileMappings(mFile, submissionFileMapping);
+                            if (metadataWithFileMapping.isErr()) {
+                                return { type: 'error', errorMessage: metadataWithFileMapping.error.message };
                             }
 
-                            mFile = applyMappingResult.value;
+                            mFile = metadataWithFileMapping.value;
                         }
 
                         return {
                             type: 'ok',
-                            metadataFile: mFile,
+                            metadataFile: mFile.inner(),
                             sequenceFile,
                             submissionId,
                         };
@@ -177,56 +181,61 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                             return { type: 'error', errorMessage: 'Please specify a metadata file.' };
                         }
 
-                        const sFile = sequenceFile?.inner();
-                        if (enableConsensusSequences && sFile === undefined) {
+                        if (enableConsensusSequences && !sequenceFile) {
                             return { type: 'error', errorMessage: 'Please specify a sequences file.' };
                         }
 
-                        let mFile = new File([await metadataFile.text()], 'metadata.tsv', {
-                            type: 'text/tab-separated-values',
-                        });
+                        let mFile = metadataFile;
 
                         if (columnMapping !== null) {
-                            mFile = await columnMapping.applyTo(metadataFile);
+                            const metadataWithColumnMapping = await columnMapping.applyTo(metadataFile);
+                            if (metadataWithColumnMapping.isErr()) {
+                                return { type: 'error', errorMessage: metadataWithColumnMapping.error.message };
+                            }
+                            mFile = metadataWithColumnMapping.value;
                         }
 
                         if (extraFilesEnabled) {
+                            // Parse submission file mapping from the metadata
                             const submissionFileMapping = await parseSubmissionFileMapping(
                                 mFile,
                                 submissionDataTypes.files?.categories?.map((category) => category.name) ?? [],
                             );
-
                             if (submissionFileMapping.isErr()) {
                                 return { type: 'error', errorMessage: submissionFileMapping.error.message };
                             }
 
-                            const validationResult = validateSubmissionFileMapping(
+                            // Validate the submission file mapping
+                            const validation = validateSubmissionFileMapping(
                                 submissionFileMapping.value,
                                 fileSharingConfig,
                             );
-                            if (validationResult.isErr()) {
-                                return { type: 'error', errorMessage: validationResult.error.message };
+                            if (validation.isErr()) {
+                                return { type: 'error', errorMessage: validation.error.message };
                             }
 
-                            const { submissionFileMapping: resolvedSubmissionFileMapping, fileLinkage } =
-                                resolveFileMappings(submissionFileMapping.value, fileMapping);
-
-                            const linkageErrors = getLinkageErrors(fileLinkage);
-                            if (linkageErrors !== undefined) {
-                                return { type: 'error', errorMessage: linkageErrors };
-                            }
-                            const applyMappingResult = await applyFileMappings(mFile, resolvedSubmissionFileMapping);
-                            if (applyMappingResult.isErr()) {
-                                return { type: 'error', errorMessage: applyMappingResult.error.message };
+                            // Resolve the submission file mapping against file mapping of uploads
+                            const { submissionFileMapping: resolvedFileMapping, fileLinkage } = resolveFileMappings(
+                                submissionFileMapping.value,
+                                fileMapping,
+                            );
+                            const linkageErrorMessage = getLinkageErrors(fileLinkage);
+                            if (linkageErrorMessage !== undefined) {
+                                return { type: 'error', errorMessage: linkageErrorMessage };
                             }
 
-                            mFile = applyMappingResult.value;
+                            // Apply resolved mapping to metadata file
+                            const metadataWithFileMapping = await applyFileMappings(mFile, resolvedFileMapping);
+                            if (metadataWithFileMapping.isErr()) {
+                                return { type: 'error', errorMessage: metadataWithFileMapping.error.message };
+                            }
+                            mFile = metadataWithFileMapping.value;
                         }
 
                         return {
                             type: 'ok',
-                            metadataFile: mFile,
-                            sequenceFile: sFile,
+                            metadataFile: mFile.inner(),
+                            sequenceFile: sequenceFile?.inner(),
                         };
                     }
                 }
@@ -241,6 +250,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
         columnMapping,
         fileMapping,
         fileSharingConfig,
+        extraFilesEnabled,
     ]);
 
     if (inputMode === 'bulk') {
