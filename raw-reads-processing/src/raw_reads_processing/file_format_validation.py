@@ -28,6 +28,7 @@ ACCEPTED_FORMATS = [FileFormat.FASTQ]
 PAIRED_END_SUBMISSION_HINT = (
     "Paired-end FASTQ files must be submitted as separate, de-interleaved files."
 )
+FASTQ_NUMBER_HINT = "We only allow 1 FASTQ file for single-end reads or 2 FASTQ files for paired-end reads."
 
 
 _DUPLICATE_READ_NAME_RE = re.compile(
@@ -57,7 +58,7 @@ def _condense_duplicate_read_name_errors(details: str) -> str:
         "interleaved FASTQ, with forward and reverse mates stored together. "
         f"{PAIRED_END_SUBMISSION_HINT} "
         "Please submit one file for the forward reads and one for the reverse reads."
-        "Only a maximum of 2 FASTQ files are allowed per submission."  # keep in sync with validate_file_numbers()
+        f" {FASTQ_NUMBER_HINT}"
     )
     stripped = _DUPLICATE_READ_NAME_RE.sub("", details)
     remainder = "; ".join(filter(None, (part.strip() for part in stripped.split(";"))))
@@ -144,13 +145,11 @@ def validate_file_numbers(file_format: FileFormat, file_names: list[FileName]) -
         # but it treats every 1+i file as a paired read of the first file.
         # ENA documents that multi-FASTQs should be submitted using a JSON manifest,
         # which we don't support, so we enforce a stricter limit here.
-        # Keep in sync with the message in _condense_duplicate_read_name_errors().
         raise InvalidSubmission(
             error=Annotation(
                 fileNames=file_names,
                 message=(
-                    f"Too many FASTQ files submitted ({len(file_names)}). We only allow"
-                    " 1 FASTQ file for single-end reads or 2 FASTQ files for paired-end reads."
+                    f"Too many FASTQ files submitted ({len(file_names)}). {FASTQ_NUMBER_HINT}"
                 ),
             )
         )
