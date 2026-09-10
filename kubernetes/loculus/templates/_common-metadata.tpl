@@ -223,6 +223,9 @@ welcomeMessageHTML: {{ quote $.Values.welcomeMessageHTML }}
 {{ if $.Values.additionalHeadHTML }}
 additionalHeadHTML: {{ quote $.Values.additionalHeadHTML }}
 {{end}}
+{{ if $.Values.openGraph }}
+openGraph: {{ $.Values.openGraph | toYaml | nindent 6 }}
+{{ end }}
 
 enableLoginNavigationItem: {{ $.Values.website.websiteConfig.enableLoginNavigationItem }}
 enableSubmissionNavigationItem: {{ $.Values.website.websiteConfig.enableSubmissionNavigationItem }}
