@@ -793,21 +793,6 @@ def multi_segment_submission(
         }
         assert external_metadata_accessions[fields.run].startswith("ERR")
 
-    if with_raw_reads:
-        _test_successful_raw_reads_submission(db_engine, config, sequences_to_upload, slack_config)
-        get_external_metadata_and_send_to_loculus(db_engine, config)
-        args = mock_submit_external_metadata.call_args_list
-        assert len(args) == 3  # noqa: PLR2004
-        payload = args[2][0][0]  # first positional argument of third call
-        assert payload["accession"] == TEST_ACCESSION
-        assert payload["version"] == TEST_VERSION
-        assert set(payload["externalMetadata"]) == {
-            config.loculus_accession_fields.bioproject,
-            config.loculus_accession_fields.biosample,
-            config.loculus_accession_fields.run,
-        }
-        assert payload["externalMetadata"][config.loculus_accession_fields.run].startswith("ERR")
-
     _test_successful_assembly_submission(db_engine, config, sequences_to_upload, single_segment)
     get_external_metadata_and_send_to_loculus(db_engine, config)
     if not single_segment:
