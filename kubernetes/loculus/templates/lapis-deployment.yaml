@@ -56,7 +56,6 @@ spec:
             httpGet:
               path: /sample/info
               port: 8080
-            # 60s of continuous failure before eviction; LAPIS gives its SILO call only 100ms
             periodSeconds: 5
             failureThreshold: 12
             timeoutSeconds: 5
