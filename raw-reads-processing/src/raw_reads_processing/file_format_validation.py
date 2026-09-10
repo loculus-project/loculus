@@ -42,8 +42,9 @@ def _condense_duplicate_read_name_errors(details: str) -> str:
 
         Multiple (2) occurrences of read name "ERR17356121.13 ..."
 
-    for *every* mate pair that shares a name, so the error can run to hundreds of
-    near-identical entries. If the details start with such an entry, replace all
+    for *every* mate pair that shares a name.
+    
+    If the details start with such an entry, replace all
     of them with a single message that states what was found, the likely cause,
     and what to do, quoting only the first offending read name as an example.
     """

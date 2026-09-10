@@ -311,40 +311,33 @@ def test_parse_validation_error_handles_qualified_result_line():
     )
 
 
-def test_parse_validation_error_condenses_duplicate_read_name_spam():
+@pytest.mark.parametrize(
+    "separator",
+    [
+        "",
+        "\n  ",
+    ],
+)
+def test_parse_validation_error_condenses_duplicate_read_name_spam(separator):
     """An interleaved FASTQ trips readtools' duplicate-read-name check once per
-    shared pair, so the raw error is a huge run of near-identical lines. We
-    collapse them into one hint that names only the first offending read.
+    shared pair. Test we collapse them into one hint with the first offending
+    read name, and that it works for different separators.
     """
-    raw = (
-        'Multiple (2) occurrences of read name "ERR17356121.13 VH00852:178:AAJ7F5MM5:1:1101:5734:28792 length=121"'
-        'Multiple (2) occurrences of read name "ERR17356121.17 VH00852:178:AAJ7F5MM5:1:1101:5866:23661 length=49"'
-        'Multiple (2) occurrences of read name "ERR17356121.20 VH00852:178:AAJ7F5MM5:1:1101:5885:25952 length=120"'
+    read_names = [
+        "ERR17356121.13 VH00852:178:AAJ7F5MM5:1:1101:5734:28792 length=121",
+        "ERR17356121.17 VH00852:178:AAJ7F5MM5:1:1101:5866:23661 length=49",
+        "ERR17356121.20 VH00852:178:AAJ7F5MM5:1:1101:5885:25952 length=120",
+    ]
+    raw = separator.join(
+        f'Multiple (2) occurrences of read name "{name}"' for name in read_names
     )
     message = _parse_validation_error(f"RESULT: INVALID\n  {raw}\n", "")
     assert message == (
         "File validation failed while running ENA readtools. The same read name appears "
-        'more than once in this file (for example "ERR17356121.13 '
-        'VH00852:178:AAJ7F5MM5:1:1101:5734:28792 length=121"). This usually means the '
-        "file is an interleaved FASTQ, with forward and reverse mates stored together. "
-        "Paired-end FASTQ files must be submitted as separate, de-interleaved files. "
-        "Please submit one file for the forward reads and one for the reverse reads."
-    )
-
-
-def test_parse_validation_error_condenses_newline_separated_duplicate_read_names():
-    message = _parse_validation_error(
-        "RESULT: INVALID\n"
-        '  Multiple (2) occurrences of read name "read1"\n'
-        '  Multiple (2) occurrences of read name "read2"\n',
-        "",
-    )
-    assert message == (
-        "File validation failed while running ENA readtools. The same read name appears "
-        'more than once in this file (for example "read1"). This usually means the file '
-        "is an interleaved FASTQ, with forward and reverse mates stored together. "
-        "Paired-end FASTQ files must be submitted as separate, de-interleaved files. "
-        "Please submit one file for the forward reads and one for the reverse reads."
+        f'more than once in this file (for example "{read_names[0]}"). This usually '
+        "means the file is an interleaved FASTQ, with forward and reverse mates stored "
+        "together. Paired-end FASTQ files must be submitted as separate, de-interleaved "
+        "files. Please submit one file for the forward reads and one for the reverse reads."
     )
 
 
