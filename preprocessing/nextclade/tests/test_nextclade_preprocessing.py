@@ -14,7 +14,7 @@ from factory_methods import (
     ProcessingAnnotationHelper,
     ProcessingTestCase,
     build_processing_annotations,
-    ts_from_ymd,
+    make_submission_context,
     verify_processed_entry,
 )
 
@@ -1276,10 +1276,7 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
     bad_entry = UnprocessedEntry(
         accessionVersion="LOC_01.1",
         data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
+            submissionContext=make_submission_context(accession_version="LOC_01.1"),
             metadata={},
             unalignedNucleotideSequences={
                 "ebola-sudan": sequence_with_mutation("ebola-sudan"),
@@ -1292,10 +1289,7 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
     good_entry = UnprocessedEntry(
         accessionVersion="LOC_02.1",
         data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
+            submissionContext=make_submission_context(accession_version="LOC_02.1"),
             metadata={},
             unalignedNucleotideSequences={
                 "ebola-sudan": sequence_with_mutation("ebola-sudan"),
@@ -1325,10 +1319,7 @@ def test_preprocessing_without_metadata() -> None:
     sequence_entry_data = UnprocessedEntry(
         accessionVersion="LOC_01.1",
         data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
+            submissionContext=make_submission_context(accession_version="LOC_01.1"),
             metadata={},
             unalignedNucleotideSequences={
                 "ebola-sudan": sequence_with_mutation("ebola-sudan"),
@@ -1449,10 +1440,7 @@ def test_create_flatfile():
     sequence_entry_data = UnprocessedEntry(
         accessionVersion="LOC_01.1",
         data=UnprocessedData(
-            submitter="test_submitter",
-            group_id=2,
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            submissionId="test_submission_id",
+            submissionContext=make_submission_context(accession_version="LOC_01.1"),
             metadata={
                 "sampleCollectionDate": "2024-01-01",
                 "geoLocCountry": "Netherlands",

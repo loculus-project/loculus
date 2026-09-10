@@ -1052,6 +1052,7 @@ class ProcessingFunctions:
                     {"regex_field": references.get(segment, "")},
                     "output_field",
                     ["segment_name"],
+                    submission_context,
                 ).datum
             logger.debug(f"Extracted lineages: {extracted_lineages} from references: {references}")
             if not ha_subtype or not na_subtype:

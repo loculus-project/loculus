@@ -18,15 +18,37 @@ from loculus_preprocessing.datatypes import (
     ProcessingAnnotation,
     ProcessingAnnotationAlignment,
     SegmentName,
+    SubmissionContext,
     UnprocessedData,
     UnprocessedEntry,
 )
+
+# Mirrors the default of Config.insdc_ingest_group_id
+DEFAULT_INSDC_INGEST_GROUP_ID = 1
 
 
 def ts_from_ymd(year: int, month: int, day: int) -> str:
     """Convert a year, month, and day into a UTC timestamp string."""
     dt = datetime(year, month, day, tzinfo=pytz.UTC)
     return str(dt.timestamp())
+
+
+def make_submission_context(
+    accession_version: str = "accession.1",
+    group_id: int = 2,
+    submitted_at: str | None = None,
+    submission_id: str = "test_submission_id",
+    is_insdc_ingest_group: bool = False,
+) -> SubmissionContext:
+    """A SubmissionContext for tests that call ProcessingFunctions directly."""
+    return SubmissionContext(
+        accessionVersion=accession_version,
+        submitter="test_submitter",
+        group_id=group_id,
+        submittedAt=submitted_at if submitted_at is not None else ts_from_ymd(2021, 12, 15),
+        submissionId=submission_id,
+        is_insdc_ingest_group=is_insdc_ingest_group,
+    )
 
 
 @dataclass
@@ -74,22 +96,30 @@ class ProcessedAlignment:
 @dataclass
 class UnprocessedEntryFactory:
     @staticmethod
-    def create_unprocessed_entry(
+    def create_unprocessed_entry(  # noqa: PLR0913, PLR0917
         metadata_dict: dict[str, str | None],
         accession_id: str,
         sequences: dict[SegmentName, NucleotideSequence | None],
         group_id: int = 2,
         files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None = None,
+        insdc_ingest_group_id: int = DEFAULT_INSDC_INGEST_GROUP_ID,
     ) -> UnprocessedEntry:
+        accession_version = f"LOC_{accession_id}.1"
         return UnprocessedEntry(
-            accessionVersion=f"LOC_{accession_id}.1",
+            accessionVersion=accession_version,
             data=UnprocessedData(
-                submitter="test_submitter",
-                submittedAt=str(
-                    datetime.strptime("2021-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
+                submissionContext=SubmissionContext(
+                    accessionVersion=accession_version,
+                    submitter="test_submitter",
+                    submittedAt=str(
+                        datetime.strptime("2021-12-15", "%Y-%m-%d")
+                        .replace(tzinfo=pytz.utc)
+                        .timestamp()
+                    ),
+                    submissionId=metadata_dict.get("submissionId") or "test_submission_id",
+                    group_id=group_id,
+                    is_insdc_ingest_group=group_id == insdc_ingest_group_id,
                 ),
-                submissionId=metadata_dict.get("submissionId") or "test_submission_id",
-                group_id=group_id,
                 metadata=metadata_dict,
                 unalignedNucleotideSequences=sequences,
                 files=files,
