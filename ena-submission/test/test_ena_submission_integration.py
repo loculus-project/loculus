@@ -26,7 +26,6 @@ from unittest.mock import Mock, patch
 
 import pytest
 import pytz
-from ena_deposition.call_loculus import canonical_fastq_extension
 from ena_deposition.check_external_visibility import (
     COLUMN_CONFIGS,
     EntityType,
