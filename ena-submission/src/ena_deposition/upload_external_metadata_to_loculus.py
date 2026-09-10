@@ -20,6 +20,7 @@ from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
     AssemblyTableEntry,
     ProjectTableEntry,
+    RawReadsTableEntry,
     SampleTableEntry,
     StatusAll,
     SubmissionTableEntry,
@@ -32,7 +33,9 @@ from .submission_db_helper import (
 logger = logging.getLogger(__name__)
 
 
-def _get_result_of_single_db_record[T: SampleTableEntry | ProjectTableEntry | AssemblyTableEntry](
+def _get_result_of_single_db_record[
+    T: SampleTableEntry | ProjectTableEntry | AssemblyTableEntry | RawReadsTableEntry
+](
     db_engine: Engine,
     model_class: type[T],
     conditions: dict[str, Any],
@@ -87,6 +90,24 @@ def get_biosample_accession_from_db(
     return {config.loculus_accession_fields.biosample: result[EnaResultField.BIOSAMPLE]}
 
 
+def get_run_accession_from_db(
+    db_engine: Engine, config: Config, accession: str, version: int, submit_raw_reads: bool
+) -> tuple[dict[str, str], bool]:
+    """Return run accession and a boolean indicating whether the raw reads upload is complete"""
+    if not submit_raw_reads:
+        return {}, True
+    result = _get_result_of_single_db_record(
+        db_engine,
+        RawReadsTableEntry,
+        conditions={"accession": accession, "version": version},
+    )
+
+    if not result or EnaResultField.RUN not in result:
+        return {}, False
+
+    return {config.loculus_accession_fields.run: result[EnaResultField.RUN]}, True
+
+
 def get_assembly_accessions_from_db(
     db_engine: Engine,
     config: Config,
@@ -94,6 +115,8 @@ def get_assembly_accessions_from_db(
     version: int,
     organism: EnaOrganismDetails,
 ) -> tuple[dict[str, str], bool]:
+    """Return assembly accessions and a boolean indicating whether all assembly submissions
+    are complete"""
     result = _get_result_of_single_db_record(
         db_engine,
         AssemblyTableEntry,
@@ -137,12 +160,17 @@ def get_assembly_accessions_from_db(
 def get_external_metadata_to_upload(
     db_engine: Engine, entry: SubmissionTableEntry, config: Config
 ) -> tuple[dict[str, Any], bool]:
+    """Get external metadata to upload to Loculus for a given submission entry, and a boolean
+    indicating whether all accessions have been received from ENA for this entry."""
     accession = entry.accession
     version = entry.version
     organism = config.enaOrganisms[entry.organism]
 
     bioproject_accession = get_bioproject_accession_from_db(db_engine, config, entry.project_id)
     biosample_accession = get_biosample_accession_from_db(db_engine, config, accession, version)
+    run_accession, run_accession_not_missing = get_run_accession_from_db(
+        db_engine, config, accession, version, entry.submit_raw_reads
+    )
     assembly_accession, all_assemblies_present = get_assembly_accessions_from_db(
         db_engine, config, accession, version, organism
     )
@@ -153,15 +181,24 @@ def get_external_metadata_to_upload(
         "externalMetadata": {
             **bioproject_accession,
             **biosample_accession,
+            **run_accession,
             **assembly_accession,
         },
-    }, all([bioproject_accession, biosample_accession, all_assemblies_present])
+    }, all(
+        [
+            bioproject_accession,
+            biosample_accession,
+            run_accession_not_missing,
+            all_assemblies_present,
+        ]
+    )
 
 
 def get_external_metadata_and_send_to_loculus(db_engine: Engine, config: Config) -> None:
     for status in (
         StatusAll.SUBMITTED_PROJECT,
         StatusAll.SUBMITTED_SAMPLE,
+        StatusAll.SUBMITTED_RAW_READS,
         StatusAll.SUBMITTING_ASSEMBLY,
         StatusAll.SUBMITTED_ALL,
     ):
