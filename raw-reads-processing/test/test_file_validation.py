@@ -206,8 +206,12 @@ def test_interleaved_fastq_in_single_file_is_rejected(tmp_path):
     reads = _write(tmp_path, "interleaved.fastq", INTERLEAVED_SAME_NAME)
     with pytest.raises(InvalidSubmission) as exc_info:
         validate_with_readtools({"interleaved.fastq": Path(reads)}, FileFormat.FASTQ)
-    assert "Multiple" in exc_info.value.error.message
-    assert "occurrences of read name" in exc_info.value.error.message
+    message = exc_info.value.error.message
+    assert "The same read name appears more than once in this file" in message
+    assert 'for example "read1"' in message
+    assert "de-interleaved files" in message
+    # The verbose per-read readtools lines are collapsed into the single hint.
+    assert "occurrences of read name" not in message
 
 
 @pytest.mark.usefixtures("readtools_jar")
@@ -304,6 +308,49 @@ def test_parse_validation_error_handles_qualified_result_line():
     assert (
         message
         == "File validation failed while running ENA readtools. htsjdk.samtools.FileTruncatedException: Premature end of file: data stream"
+    )
+
+
+def test_parse_validation_error_condenses_duplicate_read_name_spam():
+    """An interleaved FASTQ trips readtools' duplicate-read-name check once per
+    shared pair, so the raw error is a huge run of near-identical lines. We
+    collapse them into one hint that names only the first offending read.
+    """
+    raw = (
+        'Multiple (2) occurrences of read name "ERR17356121.13 VH00852:178:AAJ7F5MM5:1:1101:5734:28792 length=121"'
+        'Multiple (2) occurrences of read name "ERR17356121.17 VH00852:178:AAJ7F5MM5:1:1101:5866:23661 length=49"'
+        'Multiple (2) occurrences of read name "ERR17356121.20 VH00852:178:AAJ7F5MM5:1:1101:5885:25952 length=120"'
+    )
+    message = _parse_validation_error(f"RESULT: INVALID\n  {raw}\n", "")
+    assert message == (
+        "File validation failed while running ENA readtools. Detected read pairs with "
+        "the same name, if you are submitting interleaved fastq files please split your "
+        'fastq file into two files (first shared read name: "ERR17356121.13 '
+        'VH00852:178:AAJ7F5MM5:1:1101:5734:28792 length=121")'
+    )
+
+
+def test_parse_validation_error_condenses_newline_separated_duplicate_read_names():
+    message = _parse_validation_error(
+        "RESULT: INVALID\n"
+        '  Multiple (2) occurrences of read name "read1"\n'
+        '  Multiple (2) occurrences of read name "read2"\n',
+        "",
+    )
+    assert message == (
+        "File validation failed while running ENA readtools. Detected read pairs with "
+        "the same name, if you are submitting interleaved fastq files please split your "
+        'fastq file into two files (first shared read name: "read1")'
+    )
+
+
+def test_parse_validation_error_leaves_unrelated_errors_untouched():
+    message = _parse_validation_error(
+        "RESULT: INVALID\n  Sequence and quality strings must be the same length\n", ""
+    )
+    assert message == (
+        "File validation failed while running ENA readtools. "
+        "Sequence and quality strings must be the same length"
     )
 
 
