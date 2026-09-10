@@ -89,7 +89,7 @@ def mock_multi_segmented_organism() -> EnaOrganismDetails:
 
 
 def mock_config():
-    config = mock.Mock(spec=Config)
+    config = mock.Mock()
     config.db_name = "Loculus"
     config.unique_project_suffix = "Test suffix"
     config.unique_raw_reads_suffix = "Test suffix"
