@@ -8,6 +8,7 @@ import requests
 from requests.adapters import HTTPAdapter, Retry
 
 DEFAULT_MAX_WORKERS = 16
+REQUEST_TIMEOUT = 30  # seconds
 thread_local = threading.local()
 
 retry_strategy = Retry(
