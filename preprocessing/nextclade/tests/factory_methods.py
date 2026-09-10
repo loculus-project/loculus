@@ -6,7 +6,6 @@ from datetime import datetime
 
 import pytz
 
-from loculus_preprocessing.config import Config
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
     AnnotationSourceType,
