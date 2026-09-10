@@ -4,7 +4,7 @@ import csv
 import gzip
 import json
 import logging
-import os
+import tempfile
 import unittest
 from pathlib import Path
 from typing import Final
@@ -18,6 +18,12 @@ from ena_deposition.create_assembly import (
     create_manifest_object,
 )
 from ena_deposition.create_project import construct_project_set_object
+from ena_deposition.create_raw_reads import (
+    create_manifest_object as create_raw_reads_manifest_object,
+)
+from ena_deposition.create_raw_reads import (
+    get_platform_and_instrument,
+)
 from ena_deposition.create_sample import construct_sample_set_object
 from ena_deposition.ena_submission_helper import (
     create_chromosome_list,
@@ -33,7 +39,12 @@ from ena_deposition.ena_submission_helper import (
     reformat_authors_from_loculus_to_embl_style,
 )
 from ena_deposition.ena_types import (
+    Instrument,
+    LibrarySelection,
+    LibrarySource,
+    LibraryStrategy,
     MoleculeType,
+    Platform,
     Topology,
     default_project_set,
     default_sample_set_type,
@@ -80,6 +91,7 @@ def mock_config():
     config = mock.Mock()
     config.db_name = "Loculus"
     config.unique_project_suffix = "Test suffix"
+    config.unique_raw_reads_suffix = "Test suffix"
     config.enaOrganisms = {"Test organism": mock_organism()}
     config.metadata_mapping = {
         key: MetadataMapping(**item) for key, item in defaults["metadata_mapping"].items()
@@ -87,6 +99,10 @@ def mock_config():
     config.assembly_manifest_fields_mapping = {
         key: ManifestFieldDetails(**item)
         for key, item in defaults["assembly_manifest_fields_mapping"].items()
+    }
+    config.raw_reads_manifest_fields_mapping = {
+        key: ManifestFieldDetails(**item)
+        for key, item in defaults["raw_reads_manifest_fields_mapping"].items()
     }
     config.ena_checklist = "ERC000033"
     config.set_alias_suffix = None
@@ -265,6 +281,9 @@ class AssemblyCreationTests(unittest.TestCase):
             "main": "CTTAACTTTGAGAGAGTGAATT",
         }
         self.seq_key = "LOC_0001TLY"
+        tmp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp_dir.cleanup)
+        self.tmp_dir = tmp_dir.name
 
     def test_format_authors(self):
         authors = "Xi,L.;Smith, Anna Maria; Perez Gonzalez, Anthony J.;Doe,;von Doe, John"
@@ -308,7 +327,7 @@ class AssemblyCreationTests(unittest.TestCase):
         }
 
         flatfile_path = create_flatfile(
-            config, metadata, mock_organism(), unaligned_sequences, dir="./tmp"
+            config, metadata, mock_organism(), unaligned_sequences, dir=self.tmp_dir
         )
 
         with gzip.open(flatfile_path, "rt", encoding="utf-8") as f:
@@ -321,9 +340,6 @@ class AssemblyCreationTests(unittest.TestCase):
 
         # Additional check: ensure no &apos; entities are present
         self.assertNotIn("&apos;", generated_content, "Flatfile should not contain &apos; entities")
-
-        # Clean up
-        os.remove(flatfile_path)
 
     def test_create_chromosome_list_multi_segment(self):
         chromosome_list = create_chromosome_list_object(
@@ -364,6 +380,7 @@ class AssemblyCreationTests(unittest.TestCase):
             sample_accession,
             study_accession,
             sample_data_in_submission_table(),
+            dir=self.tmp_dir,
         )
         manifest_file_name = create_manifest(manifest, is_broker=True)
         data = {}
@@ -526,6 +543,222 @@ class ManifestFieldsDiffTests(unittest.TestCase):
 
         self.assertIn("authors", differing_fields)
         self.assertIn("Error resolving field", differing_fields["authors"])
+
+
+class RawReadsCreationTests(unittest.TestCase):
+    def setUp(self):
+        self.seq_key = "LOC_0001TLY"
+        self.fastq_files = ["/tmp/fake_R1.fastq.gz", "/tmp/fake_R2.fastq.gz"]  # noqa: S108
+
+    @mock.patch("ena_deposition.call_loculus.get_group_info")
+    def test_create_manifest(self, mock_get_group_info):
+        mock_get_group_info.return_value = TEST_GROUP
+        config = mock_config()
+        config.unique_raw_reads_suffix = "Test suffix"
+
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "pairedEndInsertSize": "350",
+        }
+
+        manifest = create_raw_reads_manifest_object(
+            config,
+            "Test Sample Accession",
+            "Test Study Accession",
+            submission_row,
+            self.fastq_files,
+        )
+        self.assertEqual(manifest.insert_size, 350)
+        self.assertEqual(manifest.study, "Test Study Accession")
+        self.assertEqual(manifest.sample, "Test Sample Accession")
+        self.assertEqual(manifest.name, f"{self.seq_key}:1:Test organism:Test suffix")
+        self.assertEqual(manifest.fastq, self.fastq_files)
+        self.assertEqual(manifest.platform, Platform.ILLUMINA)
+        self.assertEqual(manifest.instrument, Instrument.unspecified)
+        self.assertEqual(manifest.library_source, LibrarySource.OTHER)
+        self.assertEqual(manifest.library_selection, LibrarySelection.UNSPECIFIED)
+        self.assertEqual(manifest.library_strategy, LibraryStrategy.OTHER)
+        self.assertEqual(
+            manifest.description,
+            "Original sequence submitted to Loculus with accession: LOC_0001TLY, version: 1",
+        )
+
+    @mock.patch("ena_deposition.call_loculus.get_group_info")
+    def test_create_manifest_library_fields_from_metadata(self, mock_get_group_info):
+        """When the mapped Loculus metadata is present, its value wins over the
+        config default in raw_reads_manifest_fields_mapping[...].default."""
+        mock_get_group_info.return_value = TEST_GROUP
+        config = mock_config()
+
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "sequencingLibrarySource": "VIRAL RNA",
+            "sequencingLibrarySelection": "RT-PCR",
+            "sequencingAssayType": "AMPLICON",
+        }
+
+        manifest = create_raw_reads_manifest_object(
+            config,
+            "Test Sample Accession",
+            "Test Study Accession",
+            submission_row,
+            self.fastq_files,
+        )
+        self.assertEqual(manifest.library_source, LibrarySource.VIRAL_RNA)
+        self.assertEqual(manifest.library_selection, LibrarySelection.RT_PCR)
+        self.assertEqual(manifest.library_strategy, LibraryStrategy.AMPLICON)
+
+    def test_create_manifest_insert_size_ignored_for_single_end(self):
+        config = mock_config()
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "pairedEndInsertSize": "350",
+        }
+
+        manifest = create_raw_reads_manifest_object(
+            config,
+            "Test Sample Accession",
+            "Test Study Accession",
+            submission_row,
+            [self.fastq_files[0]],
+        )
+        self.assertIsNone(manifest.insert_size)
+
+    def test_create_manifest_no_fastq_files(self):
+        """If no fastq files are passed in, a RuntimeError is raised directly (not wrapped,
+        since this check happens before the manifest is built)."""
+        config = mock_config()
+        submission_row = sample_data_in_submission_table()
+
+        with self.assertRaises(RuntimeError) as ctx:
+            create_raw_reads_manifest_object(
+                config,
+                "Test Sample Accession",
+                "Test Study Accession",
+                submission_row,
+                [],
+            )
+        self.assertIn("No fastq files found", str(ctx.exception))
+        self.assertIsNone(ctx.exception.__cause__)
+
+    @mock.patch("ena_deposition.create_raw_reads.get_description")
+    def test_create_manifest_error_wrapped(self, mock_get_description):
+        """Errors raised while building the RawReadsManifest itself should be wrapped in
+        a RuntimeError that identifies the offending accession, with the original error
+        preserved as the cause."""
+        mock_get_description.side_effect = ValueError("boom")
+        config = mock_config()
+        submission_row = sample_data_in_submission_table()
+
+        with self.assertRaises(RuntimeError) as ctx:
+            create_raw_reads_manifest_object(
+                config,
+                "Test Sample Accession",
+                "Test Study Accession",
+                submission_row,
+                self.fastq_files,
+            )
+        self.assertIn(submission_row.accession, str(ctx.exception))
+        self.assertIsInstance(ctx.exception.__cause__, ValueError)
+
+    def test_create_manifest_instrument_no_platform(self):
+        config = mock_config()
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "sequencingInstrument": "HiSeq X Five",
+        }
+
+        manifest = create_raw_reads_manifest_object(
+            config,
+            "Test Sample Accession",
+            "Test Study Accession",
+            submission_row,
+            self.fastq_files,
+        )
+        self.assertIsNone(manifest.platform)
+        self.assertEqual(manifest.instrument, Instrument.HiSeq_X_Five)
+
+    def test_create_manifest_unrecognized_instrument_raises(self):
+        config = mock_config()
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "sequencingInstrument": "Not a real instrument",
+        }
+
+        with self.assertRaises(
+            ValueError, msg="matches neither ENA's platform nor instrument list"
+        ):
+            create_raw_reads_manifest_object(
+                config,
+                "Test Sample Accession",
+                "Test Study Accession",
+                submission_row,
+                self.fastq_files,
+            )
+
+    def test_create_manifest_unrecognized_enum_raises(self):
+        config = mock_config()
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "sequencingInstrument": "HiSeq X Five",
+            "sequencingLibrarySelection": "Not a valid enum",
+        }
+
+        with self.assertRaisesRegex(ValueError, "not a valid LibrarySelection"):
+            create_raw_reads_manifest_object(
+                config,
+                "Test Sample Accession",
+                "Test Study Accession",
+                submission_row,
+                self.fastq_files,
+            )
+
+
+class GetPlatformAndInstrumentTests(unittest.TestCase):
+    def test_valid_platform_value(self):
+        """A value from ENA's PLATFORM list yields that platform and an unspecified
+        instrument."""
+        platform, instrument = get_platform_and_instrument("ILLUMINA", "LOC_0001TLY")
+
+        self.assertEqual(platform, Platform.ILLUMINA)
+        self.assertEqual(instrument, Instrument.unspecified)
+
+    def test_valid_platform_value_is_case_insensitive(self):
+        platform, instrument = get_platform_and_instrument("illumina", "LOC_0001TLY")
+
+        self.assertEqual(platform, Platform.ILLUMINA)
+        self.assertEqual(instrument, Instrument.unspecified)
+
+    def test_instrument_unspecified_raises(self):
+        """ "unspecified" is a valid INSTRUMENT value but ENA needs a PLATFORM alongside
+        it, which we cannot supply, so it must be rejected."""
+        with self.assertRaises(ValueError) as ctx:
+            get_platform_and_instrument("unspecified", "LOC_0001TLY")
+
+        self.assertIn("unspecified", str(ctx.exception))
+        self.assertIn("LOC_0001TLY", str(ctx.exception))
+
+    def test_instrument_invalid_raises(self):
+        """ "unspecified" is a valid INSTRUMENT value but ENA needs a PLATFORM alongside
+        it, which we cannot supply, so it must be rejected."""
+        with self.assertRaises(ValueError) as ctx:
+            get_platform_and_instrument("invalid_instrument", "LOC_0001TLY")
+
+        self.assertIn("invalid_instrument", str(ctx.exception))
+        self.assertIn("LOC_0001TLY", str(ctx.exception))
+
+    def test_valid_instrument_value(self):
+        """A value from ENA's INSTRUMENT list yields that instrument and no platform."""
+        platform, instrument = get_platform_and_instrument("Illumina MiSeq", "LOC_0001TLY")
+
+        self.assertIsNone(platform)
+        self.assertEqual(instrument, Instrument.Illumina_MiSeq)
 
 
 if __name__ == "__main__":

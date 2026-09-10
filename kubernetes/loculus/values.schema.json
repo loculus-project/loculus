@@ -359,6 +359,99 @@
         }
       ]
     },
+    "extraInputField": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "An additional, input-only field for the submission form (see `extraInputFields`). Unlike `metadata` fields, these are not searchable or displayed on the sequence details page; a preprocessing function can consume them to derive one or more `metadata` fields and they are added to the metadata template.",
+      "properties": {
+        "name": {
+          "groups": ["extraInputField"],
+          "type": "string",
+          "description": "Key used to refer to this field. If set to 'id' or 'fastaIds', overrides the corresponding default field."
+        },
+        "displayName": {
+          "groups": ["extraInputField"],
+          "type": "string",
+          "description": "Name displayed to users."
+        },
+        "header": {
+          "groups": ["extraInputField"],
+          "type": "string",
+          "description": "Grouping of fields in the submission form."
+        },
+        "required": {
+          "groups": ["extraInputField"],
+          "type": "boolean",
+          "description": "Whether the field is required by backend."
+        },
+        "requiredWhen": {
+          "groups": ["extraInputField"],
+          "type": "array",
+          "description": "Array of conditions under which this field is required. When multiple conditions are provided they are ORed; a submission is rejected if at least one condition is not met. Conditions can be: the presence of a file category - specified as files.<file_category>; the input value of another metadata field - specified as <field_name>; or the processed value of another metadata field - specified as processed.<field_name>"
+        },
+        "desired": {
+          "groups": ["extraInputField"],
+          "type": "boolean",
+          "description": "Whether the field is a desired input field for submitters."
+        },
+        "noEdit": {
+          "groups": ["extraInputField"],
+          "type": "boolean",
+          "description": "If true, the field is only shown on the submission form, not on the revision form."
+        },
+        "definition": {
+          "groups": ["extraInputField"],
+          "type": "string",
+          "description": "Definition of input field for submitters."
+        },
+        "guidance": {
+          "groups": ["extraInputField"],
+          "type": "string",
+          "description": "Guidance for submitters on filling in input field."
+        },
+        "example": {
+          "groups": ["extraInputField"],
+          "type": ["string", "number"],
+          "description": "Example value for the field."
+        },
+        "options": {
+          "groups": ["extraInputField"],
+          "type": "array",
+          "description": "An array of options for the value of this field.",
+          "placeholder": "option",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "groups": ["extraInputField"],
+                "type": "string",
+                "description": "The name of the option."
+              }
+            }
+          }
+        },
+        "position": {
+          "groups": ["extraInputField"],
+          "type": "string",
+          "enum": ["first", "last"],
+          "description": "Where to place this field relative to the organism's regular metadata fields when generating the submission form. Only affects ordering; the value itself is not passed through to the frontend."
+        }
+      },
+      "required": ["name", "position"],
+      "allOf": [
+        {
+          "if": {
+            "properties": { "required": { "const": true } },
+            "required": ["required"]
+          },
+          "then": {
+            "not": { "required": ["requiredWhen"] },
+            "errorMessage": "A field with 'required: true' cannot also set 'requiredWhen' (it is already always required)."
+          }
+        }
+      ]
+    },
     "organism": {
       "type": "object",
       "additionalProperties": false,
@@ -500,8 +593,11 @@
               }
             },
             "extraInputFields": {
+              "groups": ["schema"],
+              "docsIncludePrefix": false,
               "type": "array",
-              "description": "Additional input fields for the submission form. If you add a field with name 'id' or 'fastaIds', it will overwrite the default 'id' or 'fastaIds' field. Note that the 'fastaIds' field is only automatically added if the organism has maxSequencesPerEntry > 1."
+              "description": "Additional input fields for the submission form. If you add a field with name 'id' or 'fastaIds', it will overwrite the default 'id' or 'fastaIds' field. Note that the 'fastaIds' field is only automatically added if the organism has maxSequencesPerEntry > 1.",
+              "items": { "$ref": "#/definitions/extraInputField" }
             },
             "nucleotideSequences": {
               "groups": ["schema"],
@@ -939,7 +1035,7 @@
                   "groups": ["ingest"],
                   "docsIncludePrefix": false,
                   "type": "integer",
-                  "minimum": 2,
+                  "minimum": 1,
                   "default": 1000,
                   "description": "Number of sequences submitted to the backend per request."
                 }
@@ -1753,6 +1849,12 @@
           "groups": ["general"],
           "enum": ["website", "backend", "s3"],
           "description": "Whether the backend should supply file URLs as links to the website, the backend itself, or directly to the S3 server objects."
+        },
+        "disableStrictFilenameValidation": {
+          "type": "boolean",
+          "groups": ["general"],
+          "default": false,
+          "description": "If true, only base filename restrictions are enforced; the stricter character allowlist (alphanumerics, underscores, periods, hyphens) is not applied. Not officially supported and may result in unexpected behaviour."
         }
       },
       "required": ["outputFileUrlType"],
@@ -1900,6 +2002,16 @@
         "enaSuppressedListTestUrl": {
           "type": "string",
           "description": "URL to the ENA suppressed sequence list (typically hosted on a Github repo)"
+        },
+        "rawReadsMetadataField": {
+          "type": "string",
+          "description": "Name of the Loculus metadata field that holds the JSON-encoded list of raw read files",
+          "default": "rawReads"
+        },
+        "configFile": {
+          "type": "object",
+          "description": "Additional fields merged into the ena-submission config file. Keys set here override the values generated from the other enaDeposition settings and the pipeline's own config/defaults.yaml (but not the generated per-organism enaOrganisms block).",
+          "additionalProperties": true
         }
       }
     },

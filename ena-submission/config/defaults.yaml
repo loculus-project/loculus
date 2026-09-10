@@ -10,6 +10,8 @@ keycloak_client_id: backend-client
 ingest_pipeline_submission_group: 1
 db_name: Loculus
 unique_project_suffix: Loculus
+unique_raw_reads_suffix: Loculus
+raw_reads_metadata_field: rawReads
 ena_submission_username: fake-user
 ena_submission_password: fake-password
 submit_to_ena_prod: False
@@ -22,6 +24,7 @@ ena_http_timeout_seconds: 60
 ena_public_search_timeout_seconds: 120
 ncbi_public_search_timeout_seconds: 120
 ena_http_get_retry_attempts: 3
+ncbi_http_get_retry_attempts: 3
 # Don't retry posts by default as they might not be idempotent
 ena_http_post_retry_attempts: 1
 # 12 hours in minutes
@@ -44,6 +47,20 @@ assembly_manifest_fields_mapping:
     default: "1"
   run_ref:
     loculus_fields: [insdcRawReadsAccession]
+raw_reads_manifest_fields_mapping:
+  instrument_platform: # mapped to instrument and platform in the manifest
+    loculus_fields: [sequencingInstrument]
+  library_source:
+    loculus_fields: [sequencingLibrarySource]
+    default: "OTHER"
+  library_selection:
+    loculus_fields: [sequencingLibrarySelection]
+    default: "unspecified"
+  library_strategy:
+    loculus_fields: [sequencingAssayType]
+    default: "OTHER"
+  insert_size:
+    loculus_fields: [pairedEndInsertSize]
 #ena_checklist: ERC000033 - do not use until all fields are mapped to ENA accepted options
 metadata_mapping:
   'subject exposure':
@@ -120,4 +137,14 @@ slack_retry_substrings:
   - "does not exist in ENA"
 submitting_time_threshold_min: 15
 waiting_threshold_hours: 48
+loculus_accession_fields:
+  bioproject: bioprojectAccession
+  biosample: biosampleAccession
+  gca: gcaAccession
+  run: insdcRawReadsAccession
+  insdc_accession_prefix: insdcAccessionBase
+  insdc_accession_full_prefix: insdcAccessionFull
 allow_revision_with_manifest_changes: true
+ena_webin_cli_timeout_seconds: 600
+s3_request_timeout_seconds: 300
+get_released_data_timeout_seconds: 600

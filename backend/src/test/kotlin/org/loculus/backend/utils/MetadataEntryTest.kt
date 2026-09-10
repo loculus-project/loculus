@@ -326,6 +326,44 @@ class MetadataEntryTest {
     }
 
     @Test
+    fun `test the same fileId reused under two names in one category is rejected`() {
+        val sharedFileId = "123e4567-e89b-12d3-a456-426614174000"
+        val files = listOf(
+            "reads_1.fq$FILE_NAME_ID_SEPARATOR$sharedFileId",
+            "reads_2.fq$FILE_NAME_ID_SEPARATOR$sharedFileId",
+        ).joinToString(FILES_SEPARATOR)
+        val str = """
+            submissionId${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}Country
+            foo${'\t'}$files${'\t'}bar
+        """.trimIndent()
+        val exception = assertThrows<UnprocessableEntityException> {
+            metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        }
+        assertThat(exception.message, containsString("duplicate file IDs"))
+        assertThat(exception.message, containsString(sharedFileId))
+    }
+
+    @Test
+    fun `test distinct fileIds under distinct names in one category are accepted`() {
+        val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
+        val fileId2 = "223e4567-e89b-12d3-a456-426614174001"
+        val files = listOf(
+            "reads_1.fq$FILE_NAME_ID_SEPARATOR$fileId1",
+            "reads_2.fq$FILE_NAME_ID_SEPARATOR$fileId2",
+        ).joinToString(FILES_SEPARATOR)
+        val str = """
+            submissionId${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}Country
+            foo${'\t'}$files${'\t'}bar
+        """.trimIndent()
+
+        val parsed = metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray()))
+            .toList().single().files!!["raw_reads"]!!
+
+        assertThat(parsed, hasSize(2))
+        assertThat(parsed.map { it.fileId }.toSet(), hasSize(2))
+    }
+
+    @Test
     fun `test duplicate files columns for the same category are rejected`() {
         val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
         val fileId2 = "223e4567-e89b-12d3-a456-426614174001"

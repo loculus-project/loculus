@@ -168,15 +168,27 @@ reads_1.fq:8D8AC610-566D-4EF0-9C22-186B2A5ED793 reads_2.fq:2ea137d0-8773-4e0a-a9
 ```
 
 - The `fileId` is the ID received in the previous step, which identifies the actual file.
-- The `fileName` can be chosen freely, but depending on configuration it might become an identifier for the file later on.
+- The `fileName` can be chosen freely within the [filename restrictions](#filename-restrictions), but depending on configuration it might become an identifier for the file later on.
 - Cells may be left empty for submission IDs that don't have files in that category.
 
 ## Filename restrictions
 
-The filenames may contain any UTF-8 characters except:
+By default, filenames may only contain:
 
-- Forbidden characters: `< > : " / \ | ? *`
-- ASCII control characters (character codes 0-31)
-- Whitespace characters
+- Letters `A-Z` and `a-z`
+- Numbers `0-9`
+- Underscores (`_`), hyphens (`-`) and periods (`.`)
 
-Filenames may not be empty or contain more than 255 characters.
+The following restrictions always apply:
+
+- Filenames may not be empty
+- Filenames may not exceed 255 bytes when encoded as UTF-8
+- Filenames may not contain the characters `< > : " / \ | ? * ; % #`
+- Filenames may not contain ASCII control characters (character codes 0-31)
+- Filenames may not contain whitespace characters
+- Filenames may not be a Windows reserved device name, with or without an extension: `CON`, `PRN`, `AUX`, `NUL`, `COM1`-`COM9` and `LPT1`-`LPT9`
+- Filenames may not have trailing periods
+
+Instance administrators can allow a wider range of characters by enabling `fileSharing.disableStrictFilenameValidation`,
+in which case any UTF-8 characters are accepted except those listed as always restricted above.
+**This is not officially supported and may result in unexpected behaviour**.

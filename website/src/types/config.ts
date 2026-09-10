@@ -108,6 +108,7 @@ export const inputField = z.object({
     guidance: z.string().optional(),
     desired: z.boolean().optional(),
     options: z.array(inputFieldOption).optional(),
+    header: z.string().optional(),
 });
 
 export type InputFieldOption = z.infer<typeof inputFieldOption>;
@@ -236,6 +237,9 @@ const sequenceFlaggingConfig = z.object({
 });
 export type SequenceFlaggingConfig = z.infer<typeof sequenceFlaggingConfig>;
 
+export const fileSharingConfig = z.object({ disableStrictFilenameValidation: z.boolean().default(false) });
+export type FileSharingConfig = z.infer<typeof fileSharingConfig>;
+
 const fieldToDisplay = z.object({
     field: z.string(),
     displayName: z.string(),
@@ -272,6 +276,7 @@ export const websiteConfig = z.object({
     enableSubmissionNavigationItem: z.boolean(),
     enableSubmissionPages: z.boolean(),
     enableDataUseTerms: z.boolean(),
+    fileSharing: fileSharingConfig.optional(),
     readOnlyMode: z.boolean().default(false),
     dataUseTermsAgreementHTML: z.string().optional(),
     sequenceFlagging: sequenceFlaggingConfig.optional(),

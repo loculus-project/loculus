@@ -13,7 +13,7 @@ from .config import Config
 from .submission_db_helper import (
     AccessionVersion,
     SubmissionTableEntry,
-    add_to_submission_table,
+    add_to_db,
     db_init,
     in_submission_table,
 )
@@ -21,7 +21,8 @@ from .submission_db_helper import (
 logger = logging.getLogger(__name__)
 
 
-def upload_sequences(db_engine: Engine, sequences_to_upload: dict[str, Any]):
+def upload_sequences(config: Config, db_engine: Engine, sequences_to_upload: dict[str, Any]):
+    """Add new sequences to the submission_table in the database."""
     for full_accession, data in sequences_to_upload.items():
         accession_version = AccessionVersion.from_string(full_accession)
         if in_submission_table(
@@ -35,22 +36,29 @@ def upload_sequences(db_engine: Engine, sequences_to_upload: dict[str, Any]):
             group_id=data["metadata"]["groupId"],
             organism=data["organism"],
             seq_metadata=data["metadata"],
+            submit_raw_reads=bool(
+                data["metadata"].get(config.raw_reads_metadata_field)
+                or data["metadata"].get(config.loculus_accession_fields.run)
+            ),
             unaligned_nucleotide_sequences=data["unalignedNucleotideSequences"],
         )
-        add_to_submission_table(db_engine, entry)
+        if add_to_db(db_engine, entry) is None:
+            logger.error(f"Failed to insert {full_accession} into submission_table")
+            continue
         logger.info(f"Inserted {full_accession} into submission_table")
 
 
 def trigger_submission_to_ena(
     config: Config, stop_event: threading.Event, input_file: str | None = None
 ):
+    """Download the list of sequences to submit from GitHub and add them to the submission_table."""
     db_engine = db_init(config.db_password, config.db_username, config.db_url)
 
     if input_file:
         # Get sequences to upload from a file
         with open(input_file, encoding="utf-8") as json_file:
             sequences_to_upload: dict[str, Any] = json.load(json_file)
-            upload_sequences(db_engine, sequences_to_upload)
+            upload_sequences(config, db_engine, sequences_to_upload)
             return
 
     while True:
@@ -62,7 +70,7 @@ def trigger_submission_to_ena(
             response = requests.get(config.approved_list_url, timeout=60)
             response.raise_for_status()
             sequences_to_upload = response.json()
-            upload_sequences(db_engine, sequences_to_upload)
+            upload_sequences(config, db_engine, sequences_to_upload)
         except requests.exceptions.RequestException as e:
             logger.error(f"Failed to retrieve file due to requests exception: {e}")
         except Exception as upload_error:
