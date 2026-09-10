@@ -208,7 +208,8 @@ def test_interleaved_fastq_in_single_file_is_rejected(tmp_path):
         validate_with_readtools({"interleaved.fastq": Path(reads)}, FileFormat.FASTQ)
     message = exc_info.value.error.message
     assert "The same read name appears more than once in this file" in message
-    assert 'for example "read1"' in message
+    # readtools reports its duplicate read names in an unspecified order
+    assert 'for example "read1"' in message or 'for example "read2"' in message
     assert "de-interleaved files" in message
     # The verbose per-read readtools lines are collapsed into the single hint.
     assert "occurrences of read name" not in message
