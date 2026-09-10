@@ -108,20 +108,15 @@ class SubmissionContext:
 
 
 @dataclass
-class UnprocessedData:
+class UnprocessedEntry:
     submissionContext: SubmissionContext  # noqa: N815
     metadata: InputMetadata
     unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
     files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
 
-
-@dataclass
-class UnprocessedEntry:
-    data: UnprocessedData
-
     @property
     def accessionVersion(self) -> AccessionVersion:  # {accession}.{version}  # noqa: N802
-        return self.data.submissionContext.accessionVersion
+        return self.submissionContext.accessionVersion
 
 
 FunctionInputs = dict[ArgName, InputField]

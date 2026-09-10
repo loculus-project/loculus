@@ -48,7 +48,6 @@ from .datatypes import (
     SubmissionContext,
     SubmissionData,
     UnprocessedAfterNextclade,
-    UnprocessedData,
     UnprocessedEntry,
 )
 from .embl import create_flatfile
@@ -277,7 +276,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
 
 
 def processed_entry_no_alignment(
-    unprocessed: UnprocessedData,
+    unprocessed: UnprocessedEntry,
     output_metadata: ProcessedMetadata,
     errors: list[ProcessingAnnotation],
     warnings: list[ProcessingAnnotation],
@@ -324,7 +323,7 @@ def get_sequence_length(
 
 
 def get_output_metadata(  # noqa: C901, PLR0912, PLR0915
-    unprocessed: UnprocessedData | UnprocessedAfterNextclade,
+    unprocessed: UnprocessedEntry | UnprocessedAfterNextclade,
     config: Config,
 ) -> tuple[ProcessedMetadata, list[ProcessingAnnotation], list[ProcessingAnnotation]]:
     errors: list[ProcessingAnnotation] = []
@@ -456,7 +455,7 @@ def build_missing_required_msg(output_field: str, input_fields: list[str], confi
 def check_required_when_condition(
     condition: str,
     output_field: str,
-    unprocessed: UnprocessedData | UnprocessedAfterNextclade,
+    unprocessed: UnprocessedEntry | UnprocessedAfterNextclade,
     output_metadata: ProcessedMetadata,
 ) -> str | None:
     input_metadata = (
@@ -620,7 +619,7 @@ def process_single(
 
 
 def process_single_unaligned(
-    unprocessed: UnprocessedData,
+    unprocessed: UnprocessedEntry,
     config: Config,
 ) -> SubmissionData:
     """Process a single sequence per config"""
@@ -702,10 +701,10 @@ def process_all(
     else:
         for entry in unprocessed:
             try:
-                processed_single = process_single_unaligned(entry.data, config)
+                processed_single = process_single_unaligned(entry, config)
             except Exception as e:
                 logger.error(f"Processing failed for {entry.accessionVersion} with error: {e}")
-                processed_single = processed_entry_with_errors(entry.data.submissionContext)
+                processed_single = processed_entry_with_errors(entry.submissionContext)
             processed_results.append(processed_single)
 
     return processed_results

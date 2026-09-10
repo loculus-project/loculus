@@ -24,7 +24,6 @@ from loculus_preprocessing.datatypes import (
     FunctionArgs,
     InputMetadata,
     ProcessedEntry,
-    UnprocessedData,
     UnprocessedEntry,
 )
 from loculus_preprocessing.prepro import process_all
@@ -1128,15 +1127,13 @@ def test_required_field_message_lists_only_user_input_fields() -> None:
 def test_preprocessing_without_consensus_sequences(config: Config) -> None:
     sequence_name = "entry without sequences"
     sequence_entry_data = UnprocessedEntry(
-        data=UnprocessedData(
-            submissionContext=make_submission_context(accession_version="LOC_01.1"),
-            metadata={
-                "ncbi_required_collection_date": "2024-01-01",
-                "name_required": sequence_name,
-            },
-            unalignedNucleotideSequences={},
-            files=None,
-        ),
+        submissionContext=make_submission_context(accession_version="LOC_01.1"),
+        metadata={
+            "ncbi_required_collection_date": "2024-01-01",
+            "name_required": sequence_name,
+        },
+        unalignedNucleotideSequences={},
+        files=None,
     )
 
     result = process_all([sequence_entry_data], "temp_dataset_dir", config)

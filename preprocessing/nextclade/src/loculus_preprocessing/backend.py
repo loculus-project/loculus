@@ -22,7 +22,6 @@ from .datatypes import (
     FileUploadInfo,
     ProcessedEntry,
     SubmissionContext,
-    UnprocessedData,
     UnprocessedEntry,
 )
 from .processing_functions import trim_ns
@@ -108,7 +107,7 @@ def parse_ndjson(ndjson_data: str, config: Config) -> Sequence[UnprocessedEntry]
             if submitted_files
             else None
         )
-        unprocessed_data = UnprocessedData(
+        entry = UnprocessedEntry(
             submissionContext=SubmissionContext(
                 accessionVersion=f"{json_object['accession']}.{json_object['version']}",
                 submitter=json_object["submitter"],
@@ -123,7 +122,7 @@ def parse_ndjson(ndjson_data: str, config: Config) -> Sequence[UnprocessedEntry]
             else {},
             files=file_mapping,
         )
-        entries.append(UnprocessedEntry(data=unprocessed_data))
+        entries.append(entry)
     return entries
 
 

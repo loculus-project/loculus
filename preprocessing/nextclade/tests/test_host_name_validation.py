@@ -8,7 +8,6 @@ from loculus_preprocessing import external_services
 from loculus_preprocessing.config import Config, get_config
 from loculus_preprocessing.datatypes import (
     SubmissionContext,
-    UnprocessedData,
     UnprocessedEntry,
 )
 from loculus_preprocessing.prepro import process_all
@@ -30,19 +29,17 @@ def make_response(status_code, json_data):
 
 def make_entry(metadata: dict, group_id: int, config: Config) -> UnprocessedEntry:
     return UnprocessedEntry(
-        data=UnprocessedData(
-            submissionContext=SubmissionContext(
-                accessionVersion="LOC_01.1",
-                submitter="test_submitter",
-                submissionId="test_submission_id",
-                submittedAt="2026-01-01",
-                group_id=group_id,
-                insdc_ingest_group_id=config.insdc_ingest_group_id,
-            ),
-            metadata=metadata,
-            unalignedNucleotideSequences={},
-            files=None,
+        submissionContext=SubmissionContext(
+            accessionVersion="LOC_01.1",
+            submitter="test_submitter",
+            submissionId="test_submission_id",
+            submittedAt="2026-01-01",
+            group_id=group_id,
+            insdc_ingest_group_id=config.insdc_ingest_group_id,
         ),
+        metadata=metadata,
+        unalignedNucleotideSequences={},
+        files=None,
     )
 
 

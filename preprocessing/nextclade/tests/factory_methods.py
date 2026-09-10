@@ -20,7 +20,6 @@ from loculus_preprocessing.datatypes import (
     ProcessingAnnotationAlignment,
     SegmentName,
     SubmissionContext,
-    UnprocessedData,
     UnprocessedEntry,
 )
 
@@ -106,16 +105,14 @@ class UnprocessedEntryFactory:
         files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None = None,
     ) -> UnprocessedEntry:
         return UnprocessedEntry(
-            data=UnprocessedData(
-                submissionContext=make_submission_context(
-                    accession_version=f"LOC_{accession_id}.1",
-                    submission_id=metadata_dict.get("submissionId") or "test_submission_id",
-                    is_insdc_ingest_group=is_insdc_ingest_group,
-                ),
-                metadata=metadata_dict,
-                unalignedNucleotideSequences=sequences,
-                files=files,
+            submissionContext=make_submission_context(
+                accession_version=f"LOC_{accession_id}.1",
+                submission_id=metadata_dict.get("submissionId") or "test_submission_id",
+                is_insdc_ingest_group=is_insdc_ingest_group,
             ),
+            metadata=metadata_dict,
+            unalignedNucleotideSequences=sequences,
+            files=files,
         )
 
 
