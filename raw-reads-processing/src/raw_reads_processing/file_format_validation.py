@@ -48,7 +48,7 @@ def _condense_duplicate_read_name_errors(details: str) -> str:
     of them with a single message that states what was found, the likely cause,
     and what to do, quoting only the first offending read name as an example.
     """
-    first_match = _DUPLICATE_READ_NAME_RE.match(details.lstrip())
+    first_match = _DUPLICATE_READ_NAME_RE.search(details)
     if first_match is None:
         return details
     condensed = (
@@ -58,7 +58,8 @@ def _condense_duplicate_read_name_errors(details: str) -> str:
         f"{PAIRED_END_SUBMISSION_HINT} "
         "Please submit one file for the forward reads and one for the reverse reads."
     )
-    remainder = _DUPLICATE_READ_NAME_RE.sub("", details).strip(" ;")
+    stripped = _DUPLICATE_READ_NAME_RE.sub("", details)
+    remainder = "; ".join(filter(None, (part.strip() for part in stripped.split(";"))))
     return f"{condensed}; {remainder}" if remainder else condensed
 
 
