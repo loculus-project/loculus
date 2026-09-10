@@ -24,7 +24,10 @@ function callRoute(session: Session): Promise<Response> {
     return GET({ params, locals: { session } } as unknown as APIContext) as Promise<Response>;
 }
 
-const backendRequest = () => fetchMock.mock.calls[0][1]!;
+const backendRequest = () => {
+    expect(fetchMock).toHaveBeenCalledOnce();
+    return fetchMock.mock.calls[0][1]!;
+};
 const authHeader = () => new Headers(backendRequest().headers).get('Authorization');
 
 describe('file download proxy route', () => {
