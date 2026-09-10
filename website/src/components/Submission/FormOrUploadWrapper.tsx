@@ -249,7 +249,6 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
         enableConsensusSequences,
         columnMapping,
         fileMapping,
-        extraFilesEnabled,
     ]);
 
     if (inputMode === 'bulk') {
