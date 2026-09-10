@@ -236,12 +236,14 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                             <TableRow key={organism.key} label={organism.displayName} noWrapChildren>
                                 {sequenceCountsLoading ? (
                                     <Spinner size='xs' />
+                                ) : sequenceCounts?.[organism.key] == null ? (
+                                    <span className='text-gray-500 italic'>unavailable</span>
                                 ) : (
                                     <a
                                         href={`${routes.searchPage(organism.key)}?${GROUP_ID_FIELD}=${groupId}`}
                                         className='underline'
                                     >
-                                        {sequenceCounts?.[organism.key] ?? 0}
+                                        {sequenceCounts[organism.key]}
                                     </a>
                                 )}
                             </TableRow>
@@ -253,6 +255,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
             {dateFieldForGroupGraph !== null && (
                 <div className=' max-w-2xl mx-auto px-10 py-4 bg-gray-100 rounded-md my-4'>
                     <h2 className='text-lg font-bold mb-2'>Cumulative submissions over time</h2>
+                    <UnavailableOrganismsNote timeSeriesData={timeSeriesData} organisms={organisms} />
                     <CumulativeSubmissionsChart
                         timeSeriesData={timeSeriesData ?? {}}
                         organisms={organisms}
@@ -311,13 +314,31 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     );
 };
 
+const UnavailableOrganismsNote: FC<{ timeSeriesData: TimeSeriesData | undefined; organisms: Organism[] }> = ({
+    timeSeriesData,
+    organisms,
+}) => {
+    const unavailable = organisms.filter((organism) => timeSeriesData?.[organism.key] === null);
+    // when nothing loaded the chart says so itself, so only name organisms on a partial failure
+    if (unavailable.length === 0 || unavailable.length === organisms.length) {
+        return null;
+    }
+    return (
+        <p className='text-xs text-gray-500 mb-2'>
+            Submission data is currently unavailable for{' '}
+            {unavailable.map((organism) => organism.displayName).join(', ')}
+        </p>
+    );
+};
+
 async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, organisms: Organism[]) {
-    const counts: Record<string, number> = {};
+    // null means we could not find out, which must not be displayed as a count
+    const counts: Record<string, number | null> = {};
     await Promise.all(
         organisms.map(async ({ key }) => {
             const url = clientConfig.lapisUrls[key];
             if (!url) {
-                counts[key] = 0;
+                counts[key] = null;
                 return;
             }
             try {
@@ -327,11 +348,10 @@ async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, 
                     [IS_REVOCATION_FIELD]: 'false',
                     fields: [],
                 });
-                const count = (response.data as { data?: { count?: number }[] }).data?.[0]?.count ?? 0;
-                counts[key] = count;
+                counts[key] = (response.data as { data?: { count?: number }[] }).data?.[0]?.count ?? null;
             } catch (error) {
                 void logger.error(`Failed to fetch sequence count for ${key}: ${JSON.stringify(error)}`);
-                counts[key] = 0;
+                counts[key] = null;
             }
         }),
     );
@@ -349,7 +369,7 @@ async function fetchTimeSeriesData(
         organisms.map(async ({ key }) => {
             const url = clientConfig.lapisUrls[key];
             if (!url) {
-                data[key] = [];
+                data[key] = null;
                 return;
             }
             try {
@@ -369,7 +389,7 @@ async function fetchTimeSeriesData(
                     .sort((a, b) => a.date.localeCompare(b.date));
             } catch (error) {
                 void logger.error(`Failed to fetch time series data for ${key}: ${JSON.stringify(error)}`);
-                data[key] = [];
+                data[key] = null;
             }
         }),
     );

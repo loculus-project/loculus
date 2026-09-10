@@ -11,8 +11,9 @@ import {
 import { versionStatuses } from '../../types/lapis';
 
 export type OrganismStatistics = {
-    totalSequences: number;
-    recentSequences: number;
+    // null means we could not find out, which must not be displayed as a count
+    totalSequences: number | null;
+    recentSequences: number | null;
     lastUpdatedAt: DateTime | undefined;
 };
 type OrganismStatisticsMap = Map<string, OrganismStatistics>;
@@ -35,8 +36,8 @@ export const getOrganismStatisticsMap = async (
 
 const getOrganismStatistics = async (organism: string, numberDaysAgo: number): Promise<OrganismStatistics> => {
     const [{ total, lastUpdatedAt }, recent] = await Promise.all([
-        withTimeout(getTotalAndLastUpdatedAt(organism), TIMEOUT_MS, { total: -1, lastUpdatedAt: undefined }),
-        withTimeout(getRecent(organism, numberDaysAgo), TIMEOUT_MS, 0),
+        withTimeout(getTotalAndLastUpdatedAt(organism), TIMEOUT_MS, { total: null, lastUpdatedAt: undefined }),
+        withTimeout(getRecent(organism, numberDaysAgo), TIMEOUT_MS, null),
     ]);
     return {
         totalSequences: total,
@@ -52,7 +53,7 @@ const withTimeout = <T>(promise: Promise<T>, ms: number, defaultValue: T): Promi
 
 const getTotalAndLastUpdatedAt = async (
     organism: string,
-): Promise<{ total: number; lastUpdatedAt: DateTime | undefined }> => {
+): Promise<{ total: number | null; lastUpdatedAt: DateTime | undefined }> => {
     const client = LapisClient.createForOrganism(organism);
     return (
         await client.call('aggregated', {
@@ -67,7 +68,7 @@ const getTotalAndLastUpdatedAt = async (
             }),
         }))
         .unwrapOr({
-            total: 0,
+            total: null,
             lastUpdatedAt: undefined,
         });
 };
@@ -98,7 +99,7 @@ const getRecentFilter = (organism: string, numberDaysAgo: number): Record<string
  * This trade-off allows for a simpler, more efficient query
  * without needing to fetch individual accession lists.
  */
-const getRecent = async (organism: string, numberDaysAgo: number): Promise<number> => {
+const getRecent = async (organism: string, numberDaysAgo: number): Promise<number | null> => {
     const recentFilter = getRecentFilter(organism, numberDaysAgo);
     const client = LapisClient.createForOrganism(organism);
     const recentlyReleasedTotal = (
@@ -108,7 +109,7 @@ const getRecent = async (organism: string, numberDaysAgo: number): Promise<numbe
         })
     )
         .map((x) => x.data[0].count)
-        .unwrapOr(0);
+        .unwrapOr(null);
     const recentlyReleasedThenRevokedTotal = (
         await client.call('aggregated', {
             ...recentFilter,
@@ -117,6 +118,9 @@ const getRecent = async (organism: string, numberDaysAgo: number): Promise<numbe
         })
     )
         .map((x) => x.data[0].count)
-        .unwrapOr(0);
+        .unwrapOr(null);
+    if (recentlyReleasedTotal === null || recentlyReleasedThenRevokedTotal === null) {
+        return null;
+    }
     return recentlyReleasedTotal - recentlyReleasedThenRevokedTotal;
 };

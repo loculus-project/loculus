@@ -32,7 +32,8 @@ export type TimeSeriesDataPoint = {
     count: number;
 };
 
-export type TimeSeriesData = Record<string, TimeSeriesDataPoint[]>;
+// null means we could not find out, which must not be drawn as "no submissions"
+export type TimeSeriesData = Record<string, TimeSeriesDataPoint[] | null>;
 
 // Note: Colors will repeat if there are more than 8 organisms
 const ORGANISM_COLORS = ['#54858c', '#e6a756', '#7b68a6', '#5aa469', '#d4776b', '#4a90a4', '#9b8b6e', '#c97b84'];
@@ -108,7 +109,12 @@ export const CumulativeSubmissionsChart: FC<CumulativeSubmissionsChartProps> = (
     }
 
     if (chartData.datasets.length === 0) {
-        return <p className='text-gray-500 text-center py-8'>No submission data available</p>;
+        const allUnavailable = organisms.every((organism) => timeSeriesData[organism.key] === null);
+        return (
+            <p className='text-gray-500 text-center py-8'>
+                {allUnavailable ? 'Submission data is currently unavailable' : 'No submission data available'}
+            </p>
+        );
     }
 
     return (

@@ -62,7 +62,16 @@ export interface InnerSearchFullUIProps {
     isReleasedPage: boolean;
 }
 
-const buildSequenceCountText = (totalSequences: number | undefined, oldCount: number | null, initialCount: number) => {
+const buildSequenceCountText = (
+    totalSequences: number | undefined,
+    oldCount: number | null,
+    initialCount: number,
+    countUnavailable: boolean,
+) => {
+    // never fall back to a stale count on error: it reads as a fresh result
+    if (countUnavailable) {
+        return 'Sequence count currently unavailable';
+    }
     const sequenceCount = totalSequences ?? oldCount ?? initialCount;
 
     const formattedCount = formatNumberWithDefaultLocale(sequenceCount);
@@ -296,7 +305,7 @@ const InnerSearchFullUI = ({
                     (aggregatedHook.error?.response?.status === 503 ? (
                         <div className='p-3 rounded-lg text-lg text-gray-700 text-italic'>
                             {' '}
-                            The retrieval database is currently initializing – please check back later.
+                            Sequence data is currently unavailable – please check back shortly.
                         </div>
                     ) : (
                         <div className='bg-red-400 p-3 rounded-lg'>
@@ -341,7 +350,7 @@ const InnerSearchFullUI = ({
                     )}
                     <div className='text-sm text-gray-800 mb-6 justify-between flex flex-wrap gap-4'>
                         <div className='mt-auto'>
-                            {buildSequenceCountText(totalSequences, oldCount, initialCount)}
+                            {buildSequenceCountText(totalSequences, oldCount, initialCount, aggregatedHook.isError)}
                             {detailsHook.isPending ||
                             aggregatedHook.isPending ||
                             !firstClientSideLoadOfCountCompleted ||
