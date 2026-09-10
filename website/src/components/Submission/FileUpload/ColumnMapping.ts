@@ -110,7 +110,9 @@ export class ColumnMapping {
             return ok(new VirtualFile(newFileContent, 'remapped.tsv'));
         } catch {
             return err(
-                new Error('Could not apply the column mapping to the metadata file. Please review your column mapping.'),
+                new Error(
+                    'Could not apply the column mapping to the metadata file. Please review your column mapping.',
+                ),
             );
         }
     }
