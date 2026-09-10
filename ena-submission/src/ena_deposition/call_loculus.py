@@ -241,6 +241,25 @@ def canonical_fastq_extension(file_name: str) -> str:
     raise RuntimeError(msg)
 
 
+def download_file(url: str, path: str, timeout: float) -> None:
+    """
+    Stream the contents of `url` into `path`.
+
+    For raw reads the url points at the backend's
+    `/files/get/{accession}/{version}/{fileCategory}/{fileName}` endpoint, which responds
+    with a 307 redirect to a pre-signed S3 URL - requests follows the redirect automatically
+    and drops the Authorization header once the redirect target's host differs from the
+    backend's.
+    """
+    with requests.get(url, stream=True, timeout=timeout) as response:
+        response.raise_for_status()
+        # 1 MiB balances syscall/loop overhead against per-download memory;
+        # throughput is S3-bound above a few hundred KiB.
+        chunk_size = 1 << 20
+        with open(path, "wb") as f:
+            f.writelines(response.iter_content(chunk_size=chunk_size))
+
+
 def download_fastq_files(
     config: Config, metadata: dict[str, Any], accession: str, dir: str
 ) -> list[str]:
@@ -249,11 +268,7 @@ def download_fastq_files(
     and return their paths.
 
     `rawreads` is a JSON-encoded string of the form
-    '[{"fileId": ..., "name": ..., "url": ...}, ...]'. Each `url` points at the backend's
-    `/files/get/{accession}/{version}/{fileCategory}/{fileName}` endpoint, which responds
-    with a 307 redirect to a pre-signed S3 URL - requests follows the redirect automatically
-    and drops the Authorization header once the redirect target's host differs from the
-    backend's.
+    '[{"fileId": ..., "name": ..., "url": ...}, ...]'.
     """
     raw_reads = metadata.get(config.raw_reads_metadata_field)
     if not raw_reads:
@@ -273,20 +288,10 @@ def download_fastq_files(
         )
         file_path = os.path.join(dir, file_name + file_extension)
 
-        with requests.get(
-            file_entry["url"],
-            stream=True,
-            timeout=config.s3_request_timeout_seconds,
-        ) as response:
-            response.raise_for_status()
-            # 1 MiB balances syscall/loop overhead against per-download memory;
-            # throughput is S3-bound above a few hundred KiB.
-            chunk_size = 1 << 20
-            with open(file_path, "wb") as f:
-                f.writelines(response.iter_content(chunk_size=chunk_size))
+        download_file(file_entry["url"], file_path, config.s3_request_timeout_seconds)
 
-        # webin-cli rejects any FASTQ whose name does not end in .gz or .bz2, so gzip the
-        # two accepted uncompressed extensions.
+        # webin-cli rejects any FASTQ whose name does not end in .gz or .bz2, upstream only accepts
+        # .gz, so gzip the two accepted uncompressed extensions.
         if not file_extension.endswith(".gz"):
             compressed_path = file_path + ".gz"
             with open(file_path, "rb") as src, gzip.open(compressed_path, "wb") as dst:
