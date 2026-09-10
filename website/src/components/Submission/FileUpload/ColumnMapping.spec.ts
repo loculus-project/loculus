@@ -108,7 +108,7 @@ describe('ColumnMapping', () => {
 
         const tsvFile = new File([tsvContent], 'input.tsv');
 
-        const remappedFile = await updatedMapping.applyTo(new RawFile(tsvFile));
+        const remappedFile = (await updatedMapping.applyTo(new RawFile(tsvFile)))._unsafeUnwrap();
         const remappedContent = await remappedFile.text();
 
         expect(remappedContent).toBe('location\tdate\n' + '"U\nS\nA"\t2023-01-01\n' + 'Canada\t2023-01-02');
