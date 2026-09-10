@@ -6,6 +6,7 @@ import org.loculus.backend.api.Organism
 import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.categories
 import org.loculus.backend.api.fileIds
+import org.loculus.backend.api.getDuplicateFileIds
 import org.loculus.backend.api.getDuplicateFileNames
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.UnprocessableEntityException
@@ -49,6 +50,20 @@ class FileMappingPreconditionValidator(
             if (duplicateFileNames.isNotEmpty()) {
                 throw UnprocessableEntityException(
                     "The files in category $category contain duplicate file names: ${duplicateFileNames.joinToString()}",
+                )
+            }
+        }
+        return this
+    }
+
+    fun validateFileIdsAreUnique(fileCategoriesFilesMap: FileCategoryFilesMap?): FileMappingPreconditionValidator {
+        if (fileCategoriesFilesMap == null) return this
+        fileCategoriesFilesMap.categories.forEach { category: FileCategory ->
+            val duplicateFileIds = fileCategoriesFilesMap.getDuplicateFileIds(category)
+            if (duplicateFileIds.isNotEmpty()) {
+                throw UnprocessableEntityException(
+                    "The files in category $category reuse the same file ID more than once: " +
+                        "${duplicateFileIds.joinToString()}. Each file must have its own file ID.",
                 )
             }
         }
@@ -259,6 +274,15 @@ class SubmissionIdFilesMappingPreconditionValidator(
     ): SubmissionIdFilesMappingPreconditionValidator {
         submissionIdFilesMap?.values?.forEach {
             fileMappingValidator.validateFilenamesAreUnique(it)
+        }
+        return this
+    }
+
+    fun validateFileIdsAreUnique(
+        submissionIdFilesMap: SubmissionIdFilesMap?,
+    ): SubmissionIdFilesMappingPreconditionValidator {
+        submissionIdFilesMap?.values?.forEach {
+            fileMappingValidator.validateFileIdsAreUnique(it)
         }
         return this
     }
