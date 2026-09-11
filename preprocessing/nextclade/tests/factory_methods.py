@@ -21,12 +21,18 @@ from loculus_preprocessing.datatypes import (
     UnprocessedData,
     UnprocessedEntry,
 )
+from loculus_preprocessing.external_services import TaxonomyService
 from loculus_preprocessing.processing_functions import ProcessingContext
 
 # Default ProcessingContext for tests that don't care about its contents (no taxonomy
-# service, no INSDC ingest group, no submittedAt). Tests that do care should construct
-# their own ProcessingContext(...) with the relevant field(s) set.
-DEFAULT_TEST_CONTEXT = ProcessingContext()
+# service, no INSDC ingest group, no submittedAt). Tests that do care about specific
+# field(s) should use `dataclasses.replace(DEFAULT_TEST_CONTEXT, ...)`.
+DEFAULT_TEST_CONTEXT = ProcessingContext(
+    accession_version="",
+    is_insdc_ingest_group=False,
+    submitted_at="",
+    taxonomy_service=TaxonomyService(None),
+)
 
 
 def ts_from_ymd(year: int, month: int, day: int) -> str:

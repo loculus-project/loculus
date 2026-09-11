@@ -10,7 +10,7 @@ import logging
 import math
 import re
 import unicodedata
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
@@ -46,10 +46,10 @@ class ProcessingContext:
     declared in the organism's YAML config.
     """
 
-    accession_version: AccessionVersion = ""
-    is_insdc_ingest_group: bool = False
-    submitted_at: str = ""
-    taxonomy_service: TaxonomyService = field(default_factory=lambda: TaxonomyService(None))
+    accession_version: AccessionVersion
+    is_insdc_ingest_group: bool
+    submitted_at: str
+    taxonomy_service: TaxonomyService
 
 
 def compute_options_cache(output_field: str, options_list: list[str]) -> dict[str, str]:
