@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import subprocess  # noqa: S404
 from enum import StrEnum
 from pathlib import Path
@@ -24,6 +25,45 @@ ACCEPTED_CRAM_EXTENSIONS = {".cram"}
 
 ACCEPTED_FORMATS = [FileFormat.FASTQ]
 
+PAIRED_END_SUBMISSION_HINT = (
+    "Paired-end FASTQ files must be submitted as separate, de-interleaved files."
+)
+FASTQ_NUMBER_HINT = "We only allow 1 FASTQ file for single-end reads or 2 FASTQ files for paired-end reads."
+
+
+_DUPLICATE_READ_NAME_RE = re.compile(
+    r'Multiple \(\d+\) occurrences of read name "([^"]*)"'
+)
+
+
+def _condense_duplicate_read_name_errors(details: str) -> str:
+    """Collapse readtools' per-read duplicate-name complaints into one hint.
+
+    When a single interleaved FASTQ is validated as unpaired, readtools emits
+
+        Multiple (2) occurrences of read name "ERR17356121.13 ..."
+
+    for *every* mate pair that shares a name.
+
+    If the details start with such an entry, replace all
+    of them with a single message that states what was found, the likely cause,
+    and what to do, quoting only the first offending read name as an example.
+    """
+    first_match = _DUPLICATE_READ_NAME_RE.search(details)
+    if first_match is None:
+        return details
+    condensed = (
+        "The same read name appears more than once in this file "
+        f'(for example "{first_match.group(1)}"). This usually means the file is an '
+        "interleaved FASTQ, with forward and reverse mates stored together. "
+        f"{PAIRED_END_SUBMISSION_HINT} "
+        "Please submit one file for the forward reads and one for the reverse reads."
+        f" {FASTQ_NUMBER_HINT}"
+    )
+    stripped = _DUPLICATE_READ_NAME_RE.sub("", details)
+    remainder = "; ".join(filter(None, (part.strip() for part in stripped.split(";"))))
+    return f"{condensed}; {remainder}" if remainder else condensed
+
 
 def _parse_validation_error(stdout: str, stderr: str) -> str:
     """Extract the reason readtools reported RESULT: INVALID.
@@ -43,6 +83,7 @@ def _parse_validation_error(stdout: str, stderr: str) -> str:
 
     details = stdout[marker_pos:].partition("\n")[2]
     details = "; ".join(filter(None, map(str.strip, details.splitlines())))
+    details = _condense_duplicate_read_name_errors(details)
     return f"File validation failed while running ENA readtools. {details}".rstrip()
 
 
@@ -71,9 +112,6 @@ def validate_file_extensions(
 ) -> FileFormat:
     """Validate that all files have extensions consistent with the accepted formats."""
     file_formats = {determine_file_format(file_name) for file_name in file_names}
-    paired_end_info = (
-        "Paired-end FASTQ files must be submitted as separate, de-interleaved files."
-    )
     if len(file_formats) > 1:
         raise InvalidSubmission(
             error=Annotation(
@@ -81,7 +119,7 @@ def validate_file_extensions(
                 message=(
                     "Input files have mixed formats. Please provide files with consistent and "
                     f"supported formats: {', '.join(accepted_formats)} "
-                    f"{paired_end_info}"
+                    f"{PAIRED_END_SUBMISSION_HINT}"
                 ),
             )
         )
@@ -92,7 +130,7 @@ def validate_file_extensions(
                 fileNames=file_names,
                 message=(
                     f"File is not in accepted format: {', '.join(accepted_formats)}. "
-                    f"{paired_end_info}"
+                    f"{PAIRED_END_SUBMISSION_HINT}"
                 ),
             )
         )
@@ -111,8 +149,7 @@ def validate_file_numbers(file_format: FileFormat, file_names: list[FileName]) -
             error=Annotation(
                 fileNames=file_names,
                 message=(
-                    f"Too many FASTQ files submitted ({len(file_names)}). We only allow"
-                    " 1 FASTQ file for single-end reads or 2 FASTQ files for paired-end reads."
+                    f"Too many FASTQ files submitted ({len(file_names)}). {FASTQ_NUMBER_HINT}"
                 ),
             )
         )
