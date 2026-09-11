@@ -24,6 +24,10 @@ When configuring this feature for an organism, you can configure file categories
 
 You need admin access to an S3 bucket, and have the [credentials](../../reference/glossary#s3-credentials) at hand.
 
+The credentials consist of an `accessKey` and a `secretKey` (an Access Key ID/Secret Access Key pair) that together authenticate as a single S3 identity - much like a username and password. This identity must be able to read, write, tag, and delete objects in the bucket (see [IAM permissions](#iam-permissions) below).
+
+For AWS S3, you get such a pair by creating an [IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html) and then generating an [access key](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html) for that user.
+
 Enable S3 and configure the location of the bucket:
 
 ```yaml
@@ -66,6 +70,8 @@ secrets:
       secretKey: AgAS8a/ldl....
 ```
 
+To create the `encryptedData` above, seal your `accessKey`/`secretKey` with `kubeseal` - see [Adding a sealed secret](https://github.com/loculus-project/loculus/blob/main/kubernetes/README.md#adding-a-sealed-secret).
+
 :::note
 Alternatively, you can also use the `raw` secret type. If you do, ensure the configuration file is properly access-protected, since it will contain credentials in plain text.
 
@@ -80,6 +86,25 @@ secrets:
 ```
 
 :::
+
+#### IAM permissions
+
+The `accessKey`/`secretKey` only need enough permissions for the backend to read, write, tag, and delete objects under the bucket.
+
+For AWS, attach a policy like this to the IAM user (replace `my-loculus-bucket` with your bucket name):
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:PutObjectTagging", "s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::my-loculus-bucket/*"
+    }
+  ]
+}
+```
 
 ### Configuring file submission
 
