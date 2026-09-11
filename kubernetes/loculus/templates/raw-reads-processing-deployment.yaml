@@ -25,8 +25,8 @@ spec:
       {{- include "loculus.podScheduling" $ | nindent 6 }}
       containers:
         - name: raw-reads-processing
-          image: "ghcr.io/loculus-project/raw-reads-processing-service:{{ $dockerTag }}"
-          imagePullPolicy: {{ $.Values.imagePullPolicy }}
+          image: {{ include "loculus.image" (dict "name" "rawReadsProcessing" "defaultRepository" "ghcr.io/loculus-project/raw-reads-processing-service" "values" $.Values) }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "rawReadsProcessing" "values" $.Values) }}
           {{- include "loculus.resources" (list "raw-reads-processing" $.Values) | nindent 10 }}
           args:
             - raw_reads_processing
@@ -62,6 +62,6 @@ spec:
             name: loculus-raw-reads-processing-config
         - name: deacon-index
           image:
-            reference: "{{ $.Values.images.deaconIndex.repository }}:{{ $.Values.images.deaconIndex.tag }}"
-            pullPolicy: "{{ $.Values.images.deaconIndex.pullPolicy }}"
+            reference: {{ include "loculus.image" (dict "name" "deaconIndex" "defaultRepository" "ghcr.io/loculus-project/deacon-index" "defaultTag" "latest" "values" $.Values) }}
+            pullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "deaconIndex" "values" $.Values) }}
 {{- end }}

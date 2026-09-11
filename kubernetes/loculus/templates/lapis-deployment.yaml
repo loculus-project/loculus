@@ -1,5 +1,3 @@
-{{- $dockerTag := include "loculus.dockerTag" .Values }}
-
 {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
 {{- $organismContent := $item.contents }}
@@ -26,11 +24,11 @@ spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       {{- include "loculus.podScheduling" $ | nindent 6 }}
       initContainers:
-        {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
+        {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "values" $.Values) | nindent 8 }}
       containers:
         - name: lapis
-          image: "{{ $.Values.images.lapis.repository }}:{{ $.Values.images.lapis.tag }}"
-          imagePullPolicy: "{{ $.Values.images.lapis.pullPolicy | default $.Values.imagePullPolicy }}"
+          image: {{ include "loculus.image" (dict "name" "lapis" "defaultRepository" "ghcr.io/genspectrum/lapis" "defaultTag" "0.8.0" "values" $.Values) }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "lapis" "values" $.Values) }}
           {{- include "loculus.resources" (list "lapis" $.Values $key) | nindent 10 }}
           ports:
             - containerPort: 8080
