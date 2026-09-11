@@ -170,7 +170,6 @@ You can set a permissive CORS policy on your bucket with `s3cmd setcors cors.xml
     <AllowedMethod>HEAD</AllowedMethod>
     <AllowedMethod>POST</AllowedMethod>
     <AllowedMethod>PUT</AllowedMethod>
-    <AllowedMethod>DELETE</AllowedMethod>
     <AllowedOrigin>*</AllowedOrigin>
   </CORSRule>
 </CORSConfiguration>
