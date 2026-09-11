@@ -57,7 +57,6 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
-import java.util.UUID
 
 @EndpointTest(
     properties = [
@@ -606,7 +605,7 @@ class SubmitProcessedDataEndpointTest(
         val groupId = groupManagementClient
             .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
             .andGetGroupId()
-        val fileId = UUID.fromString("caaf8c66-e1ba-4c47-99b1-8c368adb9850")
+        val fileId = "FILE_DOESNOTEXIST"
         val accession = prepareUnprocessedSequenceEntry(DEFAULT_ORGANISM, groupId = groupId)
 
         submissionControllerClient.submitProcessedData(

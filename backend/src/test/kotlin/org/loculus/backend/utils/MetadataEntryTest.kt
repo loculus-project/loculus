@@ -14,10 +14,9 @@ import org.loculus.backend.model.FASTA_IDS_HEADER
 import org.loculus.backend.model.FASTA_IDS_SEPARATOR
 import org.loculus.backend.model.FILES_HEADER_PREFIX
 import org.loculus.backend.model.FILES_SEPARATOR
-import org.loculus.backend.model.FILE_ID_LENGTH
 import org.loculus.backend.model.FILE_NAME_ID_SEPARATOR
+import org.loculus.backend.service.files.dummyFileId
 import java.io.ByteArrayInputStream
-import java.util.UUID
 
 class MetadataEntryTest {
     @Test
@@ -187,8 +186,8 @@ class MetadataEntryTest {
 
     @Test
     fun `test files columns are parsed and excluded from metadata`() {
-        val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
-        val fileId2 = "223e4567-e89b-12d3-a456-426614174001"
+        val fileId1 = dummyFileId()
+        val fileId2 = dummyFileId()
         val files = listOf(
             "reads_1.fq$FILE_NAME_ID_SEPARATOR$fileId1",
             "reads_2.fq$FILE_NAME_ID_SEPARATOR$fileId2",
@@ -204,8 +203,8 @@ class MetadataEntryTest {
             equalTo(
                 mapOf(
                     "raw_reads" to listOf(
-                        FileIdAndName(UUID.fromString(fileId1), "reads_1.fq"),
-                        FileIdAndName(UUID.fromString(fileId2), "reads_2.fq"),
+                        FileIdAndName(fileId1, "reads_1.fq"),
+                        FileIdAndName(fileId2, "reads_2.fq"),
                     ),
                 ),
             ),
@@ -217,8 +216,8 @@ class MetadataEntryTest {
 
     @Test
     fun `test multiple files categories are parsed`() {
-        val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
-        val fileId2 = "223e4567-e89b-12d3-a456-426614174001"
+        val fileId1 = dummyFileId()
+        val fileId2 = dummyFileId()
         val str = """
             submissionId${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}${FILES_HEADER_PREFIX}assemblies${'\t'}Country
             foo${'\t'}reads.fq$FILE_NAME_ID_SEPARATOR$fileId1${'\t'}asm.fa$FILE_NAME_ID_SEPARATOR$fileId2${'\t'}bar
@@ -227,17 +226,17 @@ class MetadataEntryTest {
         assertThat(entries[0].files!!.keys, equalTo(setOf("raw_reads", "assemblies")))
         assertThat(
             entries[0].files!!["raw_reads"],
-            equalTo(listOf(FileIdAndName(UUID.fromString(fileId1), "reads.fq"))),
+            equalTo(listOf(FileIdAndName(fileId1, "reads.fq"))),
         )
         assertThat(
             entries[0].files!!["assemblies"],
-            equalTo(listOf(FileIdAndName(UUID.fromString(fileId2), "asm.fa"))),
+            equalTo(listOf(FileIdAndName(fileId2, "asm.fa"))),
         )
     }
 
     @Test
     fun `test blank files cell omits that category`() {
-        val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
+        val fileId1 = dummyFileId()
         val str = """
             submissionId${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}${FILES_HEADER_PREFIX}assemblies${'\t'}Country
             foo${'\t'}reads.fq$FILE_NAME_ID_SEPARATOR$fileId1${'\t'}${'\t'}bar
@@ -270,7 +269,7 @@ class MetadataEntryTest {
 
     @Test
     fun `test files entry missing file name is rejected`() {
-        val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
+        val fileId1 = dummyFileId()
         val str = """
             submissionId${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}Country
             foo${'\t'}$FILE_NAME_ID_SEPARATOR$fileId1${'\t'}bar
@@ -282,34 +281,9 @@ class MetadataEntryTest {
     }
 
     @Test
-    fun `test files entry with invalid UUID is rejected`() {
-        val str = """
-            submissionId${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}Country
-            foo${'\t'}reads_1.fq${FILE_NAME_ID_SEPARATOR}not-a-uuid${'\t'}bar
-        """.trimIndent()
-        val exception = assertThrows<UnprocessableEntityException> {
-            metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
-        }
-        assertThat(exception.message, containsString("invalid file ID"))
-    }
-
-    @Test
-    fun `test files entry with UUID of non-standard length is rejected`() {
-        val str = """
-            submissionId${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}Country
-            foo${'\t'}reads_1.fq${FILE_NAME_ID_SEPARATOR}1-2-3-4-5${'\t'}bar
-        """.trimIndent()
-        val exception = assertThrows<UnprocessableEntityException> {
-            metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
-        }
-        assertThat(exception.message, containsString("invalid file ID"))
-        assertThat(exception.message, containsString("Expected a UUID of length $FILE_ID_LENGTH"))
-    }
-
-    @Test
     fun `test duplicate file names within a category are rejected`() {
-        val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
-        val fileId2 = "223e4567-e89b-12d3-a456-426614174001"
+        val fileId1 = dummyFileId()
+        val fileId2 = dummyFileId()
         val files = listOf(
             "reads.fq$FILE_NAME_ID_SEPARATOR$fileId1",
             "reads.fq$FILE_NAME_ID_SEPARATOR$fileId2",
@@ -327,7 +301,7 @@ class MetadataEntryTest {
 
     @Test
     fun `test the same fileId reused under two names in one category is rejected`() {
-        val sharedFileId = "123e4567-e89b-12d3-a456-426614174000"
+        val sharedFileId = dummyFileId()
         val files = listOf(
             "reads_1.fq$FILE_NAME_ID_SEPARATOR$sharedFileId",
             "reads_2.fq$FILE_NAME_ID_SEPARATOR$sharedFileId",
@@ -345,8 +319,8 @@ class MetadataEntryTest {
 
     @Test
     fun `test distinct fileIds under distinct names in one category are accepted`() {
-        val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
-        val fileId2 = "223e4567-e89b-12d3-a456-426614174001"
+        val fileId1 = dummyFileId()
+        val fileId2 = dummyFileId()
         val files = listOf(
             "reads_1.fq$FILE_NAME_ID_SEPARATOR$fileId1",
             "reads_2.fq$FILE_NAME_ID_SEPARATOR$fileId2",
@@ -365,8 +339,8 @@ class MetadataEntryTest {
 
     @Test
     fun `test duplicate files columns for the same category are rejected`() {
-        val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
-        val fileId2 = "223e4567-e89b-12d3-a456-426614174001"
+        val fileId1 = dummyFileId()
+        val fileId2 = dummyFileId()
         val str = """
             submissionId${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}Country
             foo${'\t'}reads_1.fq$FILE_NAME_ID_SEPARATOR$fileId1${'\t'}reads_2.fq$FILE_NAME_ID_SEPARATOR$fileId2${'\t'}bar
@@ -380,7 +354,7 @@ class MetadataEntryTest {
 
     @Test
     fun `test file name containing a separator splits on the last separator`() {
-        val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
+        val fileId1 = dummyFileId()
         val str = """
             submissionId${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}Country
             foo${'\t'}weird${FILE_NAME_ID_SEPARATOR}name.fq$FILE_NAME_ID_SEPARATOR$fileId1${'\t'}bar
@@ -388,7 +362,7 @@ class MetadataEntryTest {
         val entries = metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
         assertThat(
             entries[0].files!!["raw_reads"],
-            equalTo(listOf(FileIdAndName(UUID.fromString(fileId1), "weird${FILE_NAME_ID_SEPARATOR}name.fq"))),
+            equalTo(listOf(FileIdAndName(fileId1, "weird${FILE_NAME_ID_SEPARATOR}name.fq"))),
         )
     }
 }
@@ -530,7 +504,7 @@ class RevisionEntryTest {
 
     @Test
     fun `test revision files column is parsed and excluded from metadata`() {
-        val fileId1 = "123e4567-e89b-12d3-a456-426614174000"
+        val fileId1 = dummyFileId()
         val str = """
             submissionId${'\t'}$ACCESSION_HEADER${'\t'}${FILES_HEADER_PREFIX}raw_reads${'\t'}Country
             foo${'\t'}ACC123${'\t'}reads.fq$FILE_NAME_ID_SEPARATOR$fileId1${'\t'}bar
@@ -538,7 +512,7 @@ class RevisionEntryTest {
         val entries = revisionEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
         assertThat(
             entries[0].files,
-            equalTo(mapOf("raw_reads" to listOf(FileIdAndName(UUID.fromString(fileId1), "reads.fq")))),
+            equalTo(mapOf("raw_reads" to listOf(FileIdAndName(fileId1, "reads.fq")))),
         )
         assertThat(entries[0].metadata.containsKey("${FILES_HEADER_PREFIX}raw_reads"), equalTo(false))
     }

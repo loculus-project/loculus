@@ -28,10 +28,10 @@ import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForSuperUser
+import org.loculus.backend.service.files.dummyFileId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.util.UUID
 
 @EndpointTest(
     properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
@@ -222,8 +222,8 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
                 files = mapOf(
                     "myFileCategory" to
                         listOf(
-                            FileIdAndName(UUID.randomUUID(), "foo.txt"),
-                            FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                            FileIdAndName(dummyFileId(), "foo.txt"),
+                            FileIdAndName(dummyFileId(), "foo.txt"),
                         ),
                 ),
             ),
@@ -240,7 +240,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     fun `WHEN submitting files with duplicate file IDs THEN an error is returned`() {
         val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
 
-        val reusedFileId = UUID.randomUUID()
+        val reusedFileId = dummyFileId()
         val editedData = EditedSequenceEntryData(
             accession = accessions.first(),
             version = 1,
@@ -283,7 +283,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
                 files = mapOf(
                     "unknownCategory" to
                         listOf(
-                            FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                            FileIdAndName(dummyFileId(), "foo.txt"),
                         ),
                 ),
             ),
@@ -301,7 +301,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
     @Test
     fun `WHEN submitting a non-existing file ID THEN an error is returned`() {
-        val randomFileId = UUID.randomUUID()
+        val randomFileId = dummyFileId()
         val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
 
         val editedData = EditedSequenceEntryData(

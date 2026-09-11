@@ -20,7 +20,7 @@ import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
-import org.loculus.backend.utils.generateFileId
+import org.loculus.backend.utils.generateFileIds
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.ResponseEntity
@@ -134,18 +134,14 @@ class FilesController(
         @RequestParam
         numberFiles: Int = 1,
     ): List<FileIdAndWriteUrl> {
+        filesPreconditionValidator.validateNumberFiles(numberFiles)
         filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
-        val response = mutableListOf<FileIdAndWriteUrl>()
-        if (numberFiles < 1) {
-            throw BadRequestException("Number of files must be at least 1")
+
+        val fileIds = generateFileIds(numberFiles)
+        filesDatabaseService.createFileEntries(fileIds, authenticatedUser.username, groupId)
+        return fileIds.map { fileId ->
+            FileIdAndWriteUrl(fileId, s3Service.createUrlToUploadPrivateFile(fileId))
         }
-        repeat(numberFiles) {
-            val fileId = generateFileId()
-            val presignedUploadUrl = s3Service.createUrlToUploadPrivateFile(fileId)
-            filesDatabaseService.createFileEntry(fileId, authenticatedUser.username, groupId)
-            response.add(FileIdAndWriteUrl(fileId, presignedUploadUrl))
-        }
-        return response
     }
 
     @Operation(
@@ -172,10 +168,10 @@ class FilesController(
         @RequestParam
         numberParts: Int = 1,
     ): List<FileIdAndMultipartWriteUrl> {
+        filesPreconditionValidator.validateNumberFiles(numberFiles)
         filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
-        val response = mutableListOf<FileIdAndMultipartWriteUrl>()
-        repeat(numberFiles) {
-            val fileId = generateFileId()
+
+        return generateFileIds(numberFiles).map { fileId ->
             val multipartUploadHandler = s3Service.initiateMultipartUploadAndCreateUrlsToUpload(fileId, numberParts)
             filesDatabaseService.createFileEntry(
                 fileId,
@@ -183,9 +179,8 @@ class FilesController(
                 groupId,
                 multipartUploadHandler.uploadId,
             )
-            response.add(FileIdAndMultipartWriteUrl(fileId, multipartUploadHandler.presignedUrls))
+            FileIdAndMultipartWriteUrl(fileId, multipartUploadHandler.presignedUrls)
         }
-        return response
     }
 
     @Operation(

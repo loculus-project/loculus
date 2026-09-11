@@ -12,7 +12,6 @@ import org.loculus.backend.model.FASTA_IDS_HEADER
 import org.loculus.backend.model.FASTA_IDS_SEPARATOR
 import org.loculus.backend.model.FILES_HEADER_PREFIX
 import org.loculus.backend.model.FILES_SEPARATOR
-import org.loculus.backend.model.FILE_ID_LENGTH
 import org.loculus.backend.model.FILE_NAME_ID_SEPARATOR
 import org.loculus.backend.model.FastaId
 import org.loculus.backend.model.METADATA_ID_HEADER
@@ -20,7 +19,6 @@ import org.loculus.backend.model.METADATA_ID_HEADER_ALTERNATE_FOR_BACKCOMPAT
 import org.loculus.backend.model.SubmissionId
 import java.io.InputStream
 import java.io.InputStreamReader
-import java.util.UUID
 
 data class MetadataEntry(
     val submissionId: SubmissionId,
@@ -101,7 +99,7 @@ fun extractAndValidateFastaIds(record: CSVRecord, submissionId: String, recordNu
 
 /**
  * Parses the `files.<category>` columns of a record into a [FileCategoryFilesMap].
- * Each cell is a space-separated list of `fileName:fileId` pairs, e.g. `reads_1.fq:<uuid> reads_2.fq:<uuid>`.
+ * Each cell is a space-separated list of `fileName:fileId` pairs, e.g. `reads_1.fq:<id> reads_2.fq:<id>`.
  * Returns `null` if the metadata file has no `files.*` columns at all. Categories with a blank cell are omitted.
  */
 fun extractAndValidateFiles(
@@ -160,7 +158,7 @@ private fun extractAndValidateFileIdAndName(
     }
 
     val fileName = token.substring(0, separatorIndex)
-    val fileIdString = token.substring(separatorIndex + 1)
+    val fileId = token.substring(separatorIndex + 1)
 
     if (fileName.isEmpty()) {
         throw UnprocessableEntityException(
@@ -171,23 +169,11 @@ private fun extractAndValidateFileIdAndName(
         )
     }
 
-    // TODO: Update when moving away from UUIDs to more user-friendly file IDs
-    // Issue: https://github.com/loculus-project/loculus/issues/6907
-    val fileId = try {
-        UUID.fromString(fileIdString)
-    } catch (e: IllegalArgumentException) {
+    if (fileId.isEmpty()) {
         throw UnprocessableEntityException(
             "In metadata file: record #$recordNumber with id '$submissionId': " +
-                "file entry '$token' in column '$header' has an invalid file ID '$fileIdString'. " +
-                "Expected a UUID.",
-        )
-    }
-
-    if (fileIdString.length != FILE_ID_LENGTH) {
-        throw UnprocessableEntityException(
-            "In metadata file: record #$recordNumber with id '$submissionId': " +
-                "file entry '$token' in column '$header' has an invalid file ID '$fileIdString'. " +
-                "Expected a UUID of length $FILE_ID_LENGTH but received a UUID of length ${fileIdString.length}.",
+                "file entry '$token' in column '$header' is missing a file ID. " +
+                "Expected format 'fileName${FILE_NAME_ID_SEPARATOR}fileId'.",
         )
     }
 
