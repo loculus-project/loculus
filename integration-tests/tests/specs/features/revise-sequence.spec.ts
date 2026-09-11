@@ -6,6 +6,7 @@ import { ReviewPage } from '../../pages/review.page';
 import { RevisionPage } from '../../pages/revision.page';
 import { NavigationPage } from '../../pages/navigation.page';
 import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
+import { waitForUrlReportingAlerts } from '../../utils/navigation-helpers';
 import {
     CCHF_S_SEGMENT_FULL_SEQUENCE,
     createFastaContent,
@@ -124,7 +125,7 @@ groupTest.describe('Bulk sequence revision', () => {
         await revisionPage.acceptTerms();
         await revisionPage.clickSubmit();
 
-        await expect(page).toHaveURL(/\/review/);
+        await waitForUrlReportingAlerts(page, '**/review', { timeout: 15_000 });
         await reviewPage.waitForZeroProcessing();
 
         const overview = await reviewPage.getReviewPageOverview();

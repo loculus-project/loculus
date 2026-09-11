@@ -7,6 +7,7 @@ import {
     prepareTmpDirForSingleUpload,
     uploadFilesFromTmpDir,
 } from '../utils/file-upload-helpers';
+import { waitForUrlReportingAlerts } from '../utils/navigation-helpers';
 
 class SubmissionPage {
     protected page: Page;
@@ -66,7 +67,7 @@ class SubmissionPage {
             .click({ timeout: 3_000 })
             .catch(() => {});
 
-        await this.page.waitForURL('**/review', { timeout: 15_000 });
+        await waitForUrlReportingAlerts(this.page, '**/review', { timeout: 15_000 });
         return new ReviewPage(this.page);
     }
 
