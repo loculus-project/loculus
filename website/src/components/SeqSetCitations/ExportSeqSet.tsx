@@ -1,5 +1,4 @@
 import { type FC, useState } from 'react';
-import { toast } from 'react-toastify';
 
 import type { SeqSet, SeqSetRecord } from '../../types/seqSetCitation';
 import { serializeSeqSetRecords } from '../../utils/parseAccessionInput';
@@ -8,24 +7,11 @@ import { Button } from '../common/Button';
 type ExportSeqSetProps = {
     seqSet: SeqSet;
     seqSetRecords: SeqSetRecord[];
-    databaseName: string;
 };
 
-export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, databaseName }) => {
+export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords }) => {
     const [isDownloading, setIsDownloading] = useState(false);
     const [selectedDownload, setSelectedDownload] = useState(0);
-    const [selectedCitation, setSelectedCitation] = useState(0);
-
-    const formatYear = (date: string) => {
-        const dateObj = new Date(date);
-        return dateObj.getFullYear();
-    };
-
-    const getSeqSetURL = () => {
-        return seqSet.seqSetDOI === null || seqSet.seqSetDOI === undefined
-            ? window.location.href
-            : `https://doi.org/${seqSet.seqSetDOI}`;
-    };
 
     const downloadJSONSeqSet = () => {
         const exportData = {
@@ -65,161 +51,49 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, dat
         setIsDownloading(false);
     };
 
-    const getBibtex = () => {
-        const citationKey = (seqSet.seqSetDOI ?? `${seqSet.seqSetId}.${seqSet.seqSetVersion}`).replace(/[^\w]/g, '_');
-        const fields = [
-            `title = {SeqSet: ${seqSet.name}}`,
-            `journal = {${databaseName}}`,
-            `year = {${formatYear(seqSet.createdAt)}}`,
-            `url = {${getSeqSetURL()}}`,
-        ];
-
-        if (seqSet.seqSetDOI !== null && seqSet.seqSetDOI !== undefined) {
-            fields.push(`doi = {${seqSet.seqSetDOI}}`);
-        }
-
-        return `@dataset{${citationKey},\n\t${fields.join(',\n\t')}\n}`;
-    };
-
-    const getMLACitation = () => {
-        return `SeqSet: ${seqSet.name}. ${databaseName}, ${formatYear(seqSet.createdAt)}. ${getSeqSetURL()}`;
-    };
-
-    const getAPACitation = () => {
-        return `SeqSet: ${seqSet.name}. (${formatYear(seqSet.createdAt)}). ${databaseName}. ${getSeqSetURL()}`;
-    };
-
-    const getSelectedCitationText = () => {
-        if (selectedCitation === 0) {
-            return getBibtex();
-        }
-        if (selectedCitation === 1) {
-            return getMLACitation();
-        }
-        return getAPACitation();
-    };
-
-    const copyToClipboard = async () => {
-        const citationText = getSelectedCitationText();
-        await navigator.clipboard.writeText(citationText);
-        toast.success('Copied to clipboard', {
-            position: 'bottom-center',
-            autoClose: 2000,
-        });
-    };
-
     return (
         <div className='flex flex-col items-center w-full'>
             <div className='flex justify-start items-center py-5'>
-                <h1 className='text-xl font-semibold py-4'>Export / Cite SeqSet</h1>
+                <h1 className='text-xl font-semibold py-4'>Export SeqSet</h1>
             </div>
             <div className='flex flex-col justify-around max-w-lg'>
-                <div>
-                    <div className='flex'>
-                        <div className='flex items-center me-4'>
-                            <input
-                                id='json-radio'
-                                data-testid='json-radio'
-                                checked={selectedDownload === 0}
-                                type='radio'
-                                className='h-4 w-4 p-2 text-primary-600 border-gray-300 checked:border-primary-600 focus:ring-primary-600 inline-block'
-                                onChange={() => setSelectedDownload(0)}
-                            />
-                            <label
-                                htmlFor='json-radio'
-                                className='ms-2 text-sm font-medium text-gray-900 dark:text-gray-300'
-                            >
-                                JSON
-                            </label>
-                        </div>
-                        <div className='flex items-center me-4'>
-                            <input
-                                id='tsv-radio'
-                                data-testid='tsv-radio'
-                                type='radio'
-                                checked={selectedDownload === 1}
-                                className='h-4 w-4 p-2 text-primary-600 border-gray-300 checked:border-primary-600 focus:ring-primary-600 inline-block'
-                                onChange={() => setSelectedDownload(1)}
-                            />
-                            <label
-                                htmlFor='tsv-radio'
-                                className='ms-2 text-sm font-medium text-gray-900 dark:text-gray-300'
-                            >
-                                TSV
-                            </label>
-                        </div>
-                    </div>
-                    <div className='pb-8 pt-4'>
-                        <Button variant='primary' onClick={downloadSeqSet} disabled={isDownloading}>
-                            Download
-                        </Button>
-                    </div>
-                </div>
-                <hr className='mb-8' />
                 <div className='flex'>
                     <div className='flex items-center me-4'>
                         <input
-                            id='bibtex-radio'
-                            checked={selectedCitation === 0}
+                            id='json-radio'
+                            data-testid='json-radio'
+                            checked={selectedDownload === 0}
                             type='radio'
-                            name='inline-radio-group'
                             className='h-4 w-4 p-2 text-primary-600 border-gray-300 checked:border-primary-600 focus:ring-primary-600 inline-block'
-                            onChange={() => setSelectedCitation(0)}
+                            onChange={() => setSelectedDownload(0)}
                         />
                         <label
-                            htmlFor='bibtex-radio'
+                            htmlFor='json-radio'
                             className='ms-2 text-sm font-medium text-gray-900 dark:text-gray-300'
                         >
-                            BibTeX
+                            JSON
                         </label>
                     </div>
                     <div className='flex items-center me-4'>
                         <input
-                            id='mla-radio'
+                            id='tsv-radio'
+                            data-testid='tsv-radio'
                             type='radio'
-                            checked={selectedCitation === 1}
-                            name='inline-radio-group'
+                            checked={selectedDownload === 1}
                             className='h-4 w-4 p-2 text-primary-600 border-gray-300 checked:border-primary-600 focus:ring-primary-600 inline-block'
-                            onChange={() => setSelectedCitation(1)}
+                            onChange={() => setSelectedDownload(1)}
                         />
                         <label
-                            htmlFor='mla-radio'
+                            htmlFor='tsv-radio'
                             className='ms-2 text-sm font-medium text-gray-900 dark:text-gray-300'
                         >
-                            MLA
-                        </label>
-                    </div>
-                    <div className='flex items-center me-4'>
-                        <input
-                            id='apa-radio'
-                            type='radio'
-                            checked={selectedCitation === 2}
-                            name='inline-radio-group'
-                            className='h-4 w-4 p-2 text-primary-600 border-gray-300 checked:border-primary-600 focus:ring-primary-600 inline-block'
-                            onChange={() => setSelectedCitation(2)}
-                        />
-                        <label
-                            htmlFor='apa-radio'
-                            className='ms-2 text-sm font-medium text-gray-900 dark:text-gray-300'
-                        >
-                            APA
+                            TSV
                         </label>
                     </div>
                 </div>
-
-                <div className='py-4 w-full'>
-                    <textarea
-                        id='citation-text'
-                        className='block w-full p-4 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-base focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500'
-                        rows={5}
-                        cols={40}
-                        value={getSelectedCitationText()}
-                        readOnly
-                    />
-                </div>
-                <div className='pb-8'>
-                    <Button variant='primary' onClick={() => void copyToClipboard()} disabled={isDownloading}>
-                        Copy to clipboard
+                <div className='pb-8 pt-4'>
+                    <Button variant='primary' onClick={downloadSeqSet} disabled={isDownloading}>
+                        Download
                     </Button>
                 </div>
             </div>
