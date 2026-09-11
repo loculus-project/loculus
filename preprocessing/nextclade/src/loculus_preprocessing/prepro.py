@@ -16,6 +16,7 @@ from .backend import (
 from .config import (
     ASSIGNED_REFERENCE_PREFIX,
     FILES_PREFIX,
+    LENGTH_PREFIX,
     NEXTCLADE_PREFIX,
     PROCESSED_PREFIX,
     AlignmentRequirement,
@@ -365,9 +366,11 @@ def _try_compute_length_field(
             return True, None
         return True, get_sequence_length(unprocessed.unalignedNucleotideSequences, sequence_name)
 
-    if output_field.startswith("length_"):
+    if output_field.startswith(LENGTH_PREFIX):
         sequence_name = get_dataset_name(
-            output_field[7:], unprocessed.unalignedNucleotideSequences, config
+            output_field.removeprefix(LENGTH_PREFIX),
+            unprocessed.unalignedNucleotideSequences,
+            config,
         )
         return True, get_sequence_length(unprocessed.unalignedNucleotideSequences, sequence_name)
 
