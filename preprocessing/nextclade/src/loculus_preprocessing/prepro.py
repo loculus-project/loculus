@@ -378,7 +378,7 @@ def _try_compute_length_field(
     return False, None
 
 
-def get_output_metadata(  # noqa: PLR0914
+def get_output_metadata(  # noqa: C901, PLR0912
     accession_version: AccessionVersion,
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
     config: Config,
@@ -388,9 +388,10 @@ def get_output_metadata(  # noqa: PLR0914
     output_metadata: ProcessedMetadata = {}
 
     group_id, submitted_at = _get_group_id_and_submitted_at(unprocessed)
+    is_insdc_ingest_user = group_id == config.insdc_ingest_group_id
     context = ProcessingContext(
         accession_version=accession_version,
-        is_insdc_ingest_group=config.insdc_ingest_group_id == group_id,
+        is_insdc_ingest_group=is_insdc_ingest_user,
         submitted_at=submitted_at,
         taxonomy_service=config._taxonomy_service,
     )
@@ -447,10 +448,7 @@ def get_output_metadata(  # noqa: PLR0914
         errors.extend(processing_result.errors)
         warnings.extend(processing_result.warnings)
 
-        if (
-            not null_per_backend(processing_result.datum)
-            or group_id == config.insdc_ingest_group_id
-        ):
+        if not null_per_backend(processing_result.datum) or is_insdc_ingest_user:
             # skip requirement checks when the field has a value, or for INSDC ingested data.
             continue
 
