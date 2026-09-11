@@ -28,7 +28,7 @@ from loculus_preprocessing.processing_functions import ProcessingContext
 # service, no INSDC ingest group, no submittedAt). Tests that do care about specific
 # field(s) should use `dataclasses.replace(DEFAULT_TEST_CONTEXT, ...)`.
 DEFAULT_TEST_CONTEXT = ProcessingContext(
-    accession_version="",
+    accession_version="accession.1",
     is_insdc_ingest_group=False,
     submitted_at="",
     taxonomy_service=TaxonomyService(None),

@@ -1601,7 +1601,7 @@ def test_concatenate(case: ConcatenateCase) -> None:
         output_field="displayName",
         input_fields=case.input_fields,
         args=case.concatenate_args,
-        context=replace(DEFAULT_TEST_CONTEXT, accession_version="accession.1"),
+        context=DEFAULT_TEST_CONTEXT,
     )
     assert result.datum == case.expected
 
@@ -1760,27 +1760,21 @@ def test_display_name_construction(case: DisplayNameCase) -> None:
         "displayName",
         input_fields,
         base_args | case.extra_args,
-        context=replace(
-            DEFAULT_TEST_CONTEXT, accession_version="accession.1", is_insdc_ingest_group=False
-        ),
+        context=replace(DEFAULT_TEST_CONTEXT, is_insdc_ingest_group=False),
     )
     res_insdc = ProcessingFunctions.build_display_name(
         input_data(),
         "displayName",
         input_fields,
         insdc_args | case.extra_args,
-        context=replace(
-            DEFAULT_TEST_CONTEXT, accession_version="accession.1", is_insdc_ingest_group=True
-        ),
+        context=replace(DEFAULT_TEST_CONTEXT, is_insdc_ingest_group=True),
     )
     res_prefix = ProcessingFunctions.build_display_name(
         input_data(),
         "displayName",
         input_fields,
         prefix_args | case.extra_args,
-        context=replace(
-            DEFAULT_TEST_CONTEXT, accession_version="accession.1", is_insdc_ingest_group=False
-        ),
+        context=replace(DEFAULT_TEST_CONTEXT, is_insdc_ingest_group=False),
     )
 
     assert res.datum == case.expected_regular
