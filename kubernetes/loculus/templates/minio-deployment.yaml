@@ -48,7 +48,7 @@ spec:
             name: minio-policies
       containers:
         - name: minio
-          image: minio/minio:latest
+          image: minio/minio:RELEASE.2025-09-07T16-13-09Z
           {{- include "loculus.resources" (list "minio" $.Values) | nindent 10 }}
           args: ["server", "/data"]
           ports:
@@ -68,6 +68,13 @@ spec:
             - name: LOCULUS_VERSION
               value: {{ $dockerTag }}
             {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: 9000
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
           lifecycle:
             postStart:
               exec:
@@ -75,13 +82,19 @@ spec:
                   - /bin/sh
                   - -c
                   - |
-                    (
-                      sleep 10
-                      mc alias set local http://localhost:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
-                      mc mb -p local/{{ .Values.s3.bucket.bucket }}
-                      echo "Bucket {{ .Values.s3.bucket.bucket }} ensured."
-                      mc anonymous set-json /policy/policy.json local/{{ .Values.s3.bucket.bucket }}
-                    ) &
+                    set -e
+                    attempt=0
+                    until mc alias set local http://localhost:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" \
+                      && mc mb --ignore-existing local/{{ .Values.s3.bucket.bucket }} \
+                      && mc anonymous set-json /policy/policy.json local/{{ .Values.s3.bucket.bucket }}; do
+                      attempt=$((attempt + 1))
+                      if [ "$attempt" -ge 60 ]; then
+                        echo "Could not set up bucket {{ .Values.s3.bucket.bucket }} after 60 attempts" >&2
+                        exit 1
+                      fi
+                      sleep 2
+                    done
+                    echo "Bucket {{ .Values.s3.bucket.bucket }} ensured."
           volumeMounts:
             - name: policy-volume
               mountPath: /policy
