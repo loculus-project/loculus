@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Iterable
-from dataclasses import dataclass, field
+from dataclasses import InitVar, dataclass, field
 from enum import StrEnum, unique
 from typing import Any, Final
 
@@ -92,20 +92,31 @@ class FileIdAndNameAndReadUrl:
 
 
 @dataclass
-class UnprocessedData:
+class SubmissionContext:
+    """Submission-level information supplied by the backend alongside the submitted metadata."""
+
+    accessionVersion: AccessionVersion  # noqa: N815
     submitter: str
     group_id: int
     submittedAt: str  # timestamp  # noqa: N815
     submissionId: str  # noqa: N815
-    metadata: InputMetadata
-    unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
-    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
+    insdc_ingest_group_id: InitVar[int]
+    is_insdc_ingest_group: bool = field(init=False)
+
+    def __post_init__(self, insdc_ingest_group_id: int) -> None:
+        self.is_insdc_ingest_group = self.group_id == insdc_ingest_group_id
 
 
 @dataclass
 class UnprocessedEntry:
-    accessionVersion: AccessionVersion  # {accession}.{version}  # noqa: N815
-    data: UnprocessedData
+    submissionContext: SubmissionContext  # noqa: N815
+    metadata: InputMetadata
+    unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
+    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
+
+    @property
+    def accessionVersion(self) -> AccessionVersion:  # {accession}.{version}  # noqa: N802
+        return self.submissionContext.accessionVersion
 
 
 FunctionInputs = dict[ArgName, InputField]
@@ -114,6 +125,7 @@ FunctionArgs = dict[ArgName, ArgValue]
 
 @dataclass
 class UnprocessedAfterNextclade:
+    submissionContext: SubmissionContext  # noqa: N815
     inputMetadata: InputMetadata  # noqa: N815
     files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
     # Derived metadata produced by Nextclade
@@ -170,8 +182,8 @@ class SubmissionData:
     but the annotations need to be uploaded separately."""
 
     processed_entry: ProcessedEntry
-    submitter: str | None
-    group_id: int | None = None
+    submitter: str
+    group_id: int
     annotations: dict[str, Any] | None = None
 
 

@@ -18,7 +18,7 @@ from loculus_preprocessing.datatypes import (
     ProcessingAnnotation,
     ProcessingAnnotationAlignment,
     SegmentName,
-    UnprocessedData,
+    SubmissionContext,
     UnprocessedEntry,
 )
 
@@ -27,6 +27,28 @@ def ts_from_ymd(year: int, month: int, day: int) -> str:
     """Convert a year, month, and day into a UTC timestamp string."""
     dt = datetime(year, month, day, tzinfo=pytz.UTC)
     return str(dt.timestamp())
+
+
+def make_submission_context(
+    accession_version: str = "accession.1",
+    submitted_at: str | None = None,
+    submission_id: str = "test_submission_id",
+    is_insdc_ingest_group: bool = False,
+    insdc_ingest_group_id: int = 1,
+) -> SubmissionContext:
+    """A SubmissionContext for tests that call ProcessingFunctions directly.
+
+    `group_id` is picked to match the requested `is_insdc_ingest_group`, so tests can't
+    construct the contradictory pairing that can never arise in production.
+    """
+    return SubmissionContext(
+        accessionVersion=accession_version,
+        submitter="test_submitter",
+        group_id=insdc_ingest_group_id if is_insdc_ingest_group else insdc_ingest_group_id + 1,
+        submittedAt=submitted_at if submitted_at is not None else ts_from_ymd(2021, 12, 15),
+        submissionId=submission_id,
+        insdc_ingest_group_id=insdc_ingest_group_id,
+    )
 
 
 @dataclass
@@ -78,22 +100,18 @@ class UnprocessedEntryFactory:
         metadata_dict: dict[str, str | None],
         accession_id: str,
         sequences: dict[SegmentName, NucleotideSequence | None],
-        group_id: int = 2,
+        is_insdc_ingest_group: bool = False,
         files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None = None,
     ) -> UnprocessedEntry:
         return UnprocessedEntry(
-            accessionVersion=f"LOC_{accession_id}.1",
-            data=UnprocessedData(
-                submitter="test_submitter",
-                submittedAt=str(
-                    datetime.strptime("2021-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
-                ),
-                submissionId=metadata_dict.get("submissionId") or "test_submission_id",
-                group_id=group_id,
-                metadata=metadata_dict,
-                unalignedNucleotideSequences=sequences,
-                files=files,
+            submissionContext=make_submission_context(
+                accession_version=f"LOC_{accession_id}.1",
+                submission_id=metadata_dict.get("submissionId") or "test_submission_id",
+                is_insdc_ingest_group=is_insdc_ingest_group,
             ),
+            metadata=metadata_dict,
+            unalignedNucleotideSequences=sequences,
+            files=files,
         )
 
 
@@ -177,7 +195,7 @@ class Case:
     expected_errors: list[ProcessingAnnotation] | None = None
     expected_warnings: list[ProcessingAnnotation] | None = None
     expected_processed_alignment: ProcessedAlignment | None = None
-    group_id: int = 2
+    is_insdc_ingest_group: bool = False
 
     def create_test_case(self, factory_custom: ProcessedEntryFactory) -> ProcessingTestCase:
         if not self.expected_processed_alignment:
@@ -186,7 +204,7 @@ class Case:
             metadata_dict=self.input_metadata,
             accession_id=self.accession_id,
             sequences=self.input_sequence,
-            group_id=self.group_id,
+            is_insdc_ingest_group=self.is_insdc_ingest_group,
             files=self.input_files,
         )
         expected_output = factory_custom.create_processed_entry(
