@@ -31,7 +31,7 @@ class UseNewerProcessingPipelineVersionTask(private val submissionDatabaseServic
 
         newVersions.forEach { (organism, latestVersion) ->
             if (latestVersion != null) {
-                submissionDatabaseService.cleanUpOutdatedPreprocessingData(organism, latestVersion - 1)
+                submissionDatabaseService.cleanUpOutdatedPreprocessingData(organism, latestVersion)
             }
         }
 
