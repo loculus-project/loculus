@@ -1,6 +1,8 @@
+import gzip
 import logging
 import os
 import subprocess  # noqa: S404
+import zlib
 from enum import StrEnum
 from pathlib import Path
 
@@ -18,6 +20,8 @@ class FileFormat(StrEnum):
     CRAM = "CRAM"
 
 
+# Keep in sync with ACCEPTED_FASTQ_EXTENSIONS in
+# ena-submission/src/ena_deposition/call_loculus.py (~L220)
 ACCEPTED_FASTQ_EXTENSIONS = {".fastq", ".fq", ".fastq.gz", ".fq.gz"}
 ACCEPTED_BAM_EXTENSIONS = {".bam", ".sam"}
 ACCEPTED_CRAM_EXTENSIONS = {".cram"}
@@ -126,6 +130,86 @@ def validate_file_numbers(file_format: FileFormat, file_names: list[FileName]) -
                 ),
             )
         )
+
+
+GZIP_MAGIC = b"\x1f\x8b"
+
+_FALSE_POSITIVE_HINT = (
+    "If you believe this file is valid, please contact the administrators."
+)
+_DECOMPRESSION_ERRORS = {
+    gzip.BadGzipFile: "is named as gzip-compressed but is not a valid gzip file.",
+    EOFError: "appears to be truncated - the gzip stream ends early.",
+    zlib.error: "appears to be corrupt - its compressed data could not be read.",
+}
+
+
+def _is_gzip(path: Path) -> bool:
+    with path.open("rb") as f:
+        return f.read(2) == GZIP_MAGIC
+
+
+def validate_compression(
+    file_name_to_path: dict[FileName, Path], file_format: FileFormat
+) -> None:
+    """Check each file's compression extension (`.gz` or none) matches actual compression.
+    Allow at most one level of compression.
+    """
+    # FASTQ only: BAM is BGZF, i.e. a valid gzip stream, so the name check would misfire.
+    if file_format != FileFormat.FASTQ:
+        return
+
+    for file_name, path in file_name_to_path.items():
+        claims_gzip = file_name.lower().endswith(".gz")
+        is_gzip = _is_gzip(path)
+
+        if claims_gzip and not is_gzip:
+            raise InvalidSubmission(
+                error=Annotation(
+                    fileNames=[file_name],
+                    message=(
+                        f"File '{file_name}' is named as gzip-compressed but its contents "
+                        "are not gzip-compressed. Please compress it, or rename it."
+                    ),
+                )
+            )
+        if not claims_gzip and is_gzip:
+            raise InvalidSubmission(
+                error=Annotation(
+                    fileNames=[file_name],
+                    message=(
+                        f"File '{file_name}' is gzip-compressed but its name does not end "
+                        "in '.gz'. Please rename it, or upload it uncompressed."
+                    ),
+                )
+            )
+        if is_gzip:
+            try:
+                with gzip.open(path, "rb") as f:
+                    inner_is_gzip = f.read(2) == GZIP_MAGIC
+            # Only these three mean the submitter's file is bad; anything else (a missing
+            # temp file, a disk error) is ours and must not be blamed on them.
+            except (gzip.BadGzipFile, EOFError, zlib.error) as error:
+                logger.exception("Could not decompress '%s'", file_name)
+                reason = _DECOMPRESSION_ERRORS.get(
+                    type(error), "could not be decompressed."
+                )
+                raise InvalidSubmission(
+                    error=Annotation(
+                        fileNames=[file_name],
+                        message=f"File '{file_name}' {reason} {_FALSE_POSITIVE_HINT}",
+                    )
+                ) from error
+            if inner_is_gzip:
+                raise InvalidSubmission(
+                    error=Annotation(
+                        fileNames=[file_name],
+                        message=(
+                            f"File '{file_name}' is gzip-compressed more than once. "
+                            "Please compress it exactly once."
+                        ),
+                    )
+                )
 
 
 def validate_with_readtools(
