@@ -61,7 +61,7 @@ dataUseTerms:
     open: https://#TODO-MVP/open
     restricted: https://#TODO-MVP/restricted
 fileSharing:
-  outputFileUrlType: backend
+  outputFileUrlType: website
 s3:
   enabled: true
   gcInitialDelayMinutes: 15
