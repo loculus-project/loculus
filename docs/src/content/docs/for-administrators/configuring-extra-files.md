@@ -35,6 +35,21 @@ s3:
     bucket: loculus-data
 ```
 
+For AWS S3 specifically:
+
+```yaml
+s3:
+  enabled: true
+  bucket:
+    region: eu-central-1
+    endpoint: https://s3.eu-central-1.amazonaws.com
+    bucket: my-loculus-bucket
+```
+
+:::note
+`endpoint` must include the `https://` protocol and be the _regional_ S3 endpoint, not a bucket-specific virtual-hosted one (e.g. not `https://my-loculus-bucket.s3.eu-central-1.amazonaws.com`) - the backend addresses objects path-style (`endpoint/bucket/key`) and supplies the bucket name separately via `bucket`. `bucket` is the bare bucket name, not the ARN (`arn:aws:s3:::my-loculus-bucket`).
+:::
+
 :::note
 Have a look at the [Helm Chart S3 reference](../../reference/helm-chart-config/#s3-deployments) for more information on these configuration settings.
 :::
