@@ -5,7 +5,7 @@ import logging
 import os
 from enum import StrEnum
 from types import UnionType
-from typing import Any, get_args
+from typing import Any, Final, get_args
 
 import yaml
 from pydantic import BaseModel, Field, PrivateAttr, model_validator
@@ -34,7 +34,8 @@ FILES_PREFIX = "files."
 NEXTCLADE_PREFIX = "nextclade."
 ASSIGNED_REFERENCE_PREFIX = "ASSIGNED_REFERENCE"
 INTERNAL_INPUT_PREFIXES = (NEXTCLADE_PREFIX, ASSIGNED_REFERENCE_PREFIX)
-LENGTH_PREFIX = "length_"
+LENGTH: Final = "length"
+LENGTH_PREFIX = f"{LENGTH}_"
 
 
 class EmblInfoMetadataPropertyNames(BaseModel):

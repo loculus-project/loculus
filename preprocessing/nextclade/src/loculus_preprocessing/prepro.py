@@ -16,6 +16,7 @@ from .backend import (
 from .config import (
     ASSIGNED_REFERENCE_PREFIX,
     FILES_PREFIX,
+    LENGTH,
     LENGTH_PREFIX,
     NEXTCLADE_PREFIX,
     PROCESSED_PREFIX,
@@ -349,7 +350,7 @@ def _try_compute_length_field(
     Returns (False, None) if `output_field` is not a length field, so the caller should fall
     through to normal processing_spec-based handling.
     """
-    if output_field == "length":
+    if output_field == LENGTH:
         try:
             segment = spec.args.get("segment", "main") if spec.args else "main"
             if not isinstance(segment, str):
