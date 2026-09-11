@@ -24,6 +24,10 @@ When configuring this feature for an organism, you can configure file categories
 
 You need admin access to an S3 bucket, and have the [credentials](../../reference/glossary#s3-credentials) at hand.
 
+The credentials consist of an `accessKey` and a `secretKey` (an Access Key ID/Secret Access Key pair) that together authenticate as a single S3 identity - much like a username and password. This identity must be able to read, write, tag, and delete objects in the bucket (see [IAM permissions](#iam-permissions) below).
+
+For AWS S3, you get such a pair by creating an [IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html) and then generating an [access key](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html) for that user.
+
 Enable S3 and configure the location of the bucket:
 
 ```yaml
@@ -34,6 +38,21 @@ s3:
     endpoint: https://my-s3.net
     bucket: loculus-data
 ```
+
+For AWS S3 specifically:
+
+```yaml
+s3:
+  enabled: true
+  bucket:
+    region: eu-central-1
+    endpoint: https://s3.eu-central-1.amazonaws.com
+    bucket: my-loculus-bucket
+```
+
+:::note
+`endpoint` must include the `https://` protocol and be the _regional_ S3 endpoint, not a bucket-specific virtual-hosted one (e.g. not `https://my-loculus-bucket.s3.eu-central-1.amazonaws.com`) - the backend addresses objects path-style (`endpoint/bucket/key`) and supplies the bucket name separately via `bucket`. `bucket` is the bare bucket name, not the ARN (`arn:aws:s3:::my-loculus-bucket`).
+:::
 
 :::note
 Have a look at the [Helm Chart S3 reference](../../reference/helm-chart-config/#s3-deployments) for more information on these configuration settings.
@@ -51,6 +70,8 @@ secrets:
       secretKey: AgAS8a/ldl....
 ```
 
+To create the `encryptedData` above, seal your `accessKey`/`secretKey` with `kubeseal` - see [Adding a sealed secret](https://github.com/loculus-project/loculus/blob/main/kubernetes/README.md#adding-a-sealed-secret).
+
 :::note
 Alternatively, you can also use the `raw` secret type. If you do, ensure the configuration file is properly access-protected, since it will contain credentials in plain text.
 
@@ -65,6 +86,25 @@ secrets:
 ```
 
 :::
+
+#### IAM permissions
+
+The `accessKey`/`secretKey` only need enough permissions for the backend to read, write, tag, and delete objects under the bucket.
+
+For AWS, attach a policy like this to the IAM user (replace `my-loculus-bucket` with your bucket name):
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:PutObjectTagging", "s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::my-loculus-bucket/*"
+    }
+  ]
+}
+```
 
 ### Configuring file submission
 
@@ -130,7 +170,6 @@ You can set a permissive CORS policy on your bucket with `s3cmd setcors cors.xml
     <AllowedMethod>HEAD</AllowedMethod>
     <AllowedMethod>POST</AllowedMethod>
     <AllowedMethod>PUT</AllowedMethod>
-    <AllowedMethod>DELETE</AllowedMethod>
     <AllowedOrigin>*</AllowedOrigin>
   </CORSRule>
 </CORSConfiguration>
