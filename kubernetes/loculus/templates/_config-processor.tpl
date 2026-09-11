@@ -16,6 +16,7 @@
     limits:
       cpu: 500m
       memory: 256Mi
+  {{- include "loculus.containerSecurityContext" (list "config-processor" .Values) | nindent 2 }}
   env:
     - name: LOCULUSSUB_smtpPassword
       valueFrom:
