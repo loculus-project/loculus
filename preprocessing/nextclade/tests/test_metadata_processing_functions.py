@@ -1760,7 +1760,7 @@ def test_display_name_construction(case: DisplayNameCase) -> None:
         "displayName",
         input_fields,
         base_args | case.extra_args,
-        context=replace(DEFAULT_TEST_CONTEXT, is_insdc_ingest_group=False),
+        context=DEFAULT_TEST_CONTEXT,
     )
     res_insdc = ProcessingFunctions.build_display_name(
         input_data(),
@@ -1774,7 +1774,7 @@ def test_display_name_construction(case: DisplayNameCase) -> None:
         "displayName",
         input_fields,
         prefix_args | case.extra_args,
-        context=replace(DEFAULT_TEST_CONTEXT, is_insdc_ingest_group=False),
+        context=DEFAULT_TEST_CONTEXT,
     )
 
     assert res.datum == case.expected_regular
@@ -1801,7 +1801,7 @@ def test_call_function_converts_raw_errors_to_annotations() -> None:
         input_data={"input": "NotAnOption"},
         output_field=output_field,
         input_fields=input_fields,
-        context=replace(DEFAULT_TEST_CONTEXT, is_insdc_ingest_group=False),
+        context=DEFAULT_TEST_CONTEXT,
     )
 
     assert result.datum is None
