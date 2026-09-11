@@ -2,7 +2,6 @@ import gzip
 import json
 import logging
 import os
-import pathlib
 import shutil
 import traceback
 import uuid
@@ -219,6 +218,29 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
             }
 
 
+# Kept in sync with ACCEPTED_FASTQ_EXTENSIONS in
+# raw-reads-processing/src/raw_reads_processing/file_format_validation.py, which rejects
+# anything else at submission time. Separate deployables, hence the duplication.
+ACCEPTED_FASTQ_EXTENSIONS = (".fastq.gz", ".fq.gz", ".fastq", ".fq")
+
+
+def canonical_fastq_extension(file_name: str) -> str:
+    """Return the accepted FASTQ extension of `file_name`, lower-cased.
+
+    Names are accepted case-insensitively upstream, but webin-cli compares suffixes with
+    String.endsWith, so what we hand it must be lower-cased.
+    """
+    lowered = file_name.lower()
+    for extension in ACCEPTED_FASTQ_EXTENSIONS:
+        if lowered.endswith(extension):
+            return extension
+    msg = (
+        f"Raw read file '{file_name}' does not end in an accepted FASTQ extension "
+        f"({', '.join(ACCEPTED_FASTQ_EXTENSIONS)})"
+    )
+    raise RuntimeError(msg)
+
+
 def download_file(url: str, path: str, timeout: float) -> None:
     """
     Stream the contents of `url` into `path`.
@@ -256,11 +278,13 @@ def download_fastq_files(
 
     os.makedirs(dir, exist_ok=True)
 
+    # Validate every name to prevent unnecessary downloads.
+    extensions = [canonical_fastq_extension(entry["name"]) for entry in files]
+
     fastq_files = []
-    for file_entry in files:
+    for file_entry, file_extension in zip(files, extensions, strict=True):
         # Use the fileId to avoid any potential security issues as name is supplied by the user
         file_name = os.path.basename(file_entry["fileId"])
-        file_extension = "".join(pathlib.Path(file_entry["name"]).suffixes)
         logger.info(
             f"Starting download of {file_entry['name']} to {file_name} for accession {accession}"
         )
@@ -268,9 +292,9 @@ def download_fastq_files(
 
         download_file(file_entry["url"], file_path, config.s3_request_timeout_seconds)
 
-        # ENA's webin-cli only accepts FASTQ files compressed as .gz or .bz2 - gzip
-        # any file that wasn't already uploaded pre-compressed.
-        if not file_path.endswith((".gz", ".bz2")):
+        # webin-cli rejects any FASTQ whose name does not end in .gz or .bz2, upstream only accepts
+        # .gz, so gzip the two accepted uncompressed extensions.
+        if not file_extension.endswith(".gz"):
             compressed_path = file_path + ".gz"
             with open(file_path, "rb") as src, gzip.open(compressed_path, "wb") as dst:
                 shutil.copyfileobj(src, dst)
