@@ -1,5 +1,7 @@
 enableServiceMonitor: true
 createTestAccounts: true
+# Smaller backend heap, previews share one cluster
+backendMaxRamPercentage: 25
 secrets:
   smtp-password:
     type: sealedsecret
