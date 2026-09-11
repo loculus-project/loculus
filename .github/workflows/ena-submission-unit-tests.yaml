@@ -18,8 +18,7 @@ defaults:
     shell: micromamba-shell {0}
     working-directory: ena-submission
 jobs:
-  checkFormat:
-    name: Check formatting
+  ena-check-format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -31,8 +30,7 @@ jobs:
           cache-environment: true
       - name: Run ruff format check
         run: ruff format --diff .
-  lint:
-    name: Lint code
+  ena-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -44,8 +42,7 @@ jobs:
           cache-environment: true
       - name: Run ruff check
         run: ruff check .
-  unitTests:
-    name: Unit Tests
+  ena-unit-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

@@ -16,7 +16,7 @@ on:
         required: true
         type: number
 jobs:
-  download-and-upload:
+  datasets-mirror-download-and-upload:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -50,8 +50,8 @@ jobs:
           for file in ${{ inputs.taxon_id }}.zip ${{ inputs.taxon_id }}.tar.zst ; do
             s3cmd put "${file}" s3://loculus-public/mirror/"${file}"
           done
-  notify_on_failure:
-    needs: download-and-upload
+  datasets-mirror-notify-on-failure:
+    needs: datasets-mirror-download-and-upload
     runs-on: ubuntu-latest
     if: failure()
     steps:

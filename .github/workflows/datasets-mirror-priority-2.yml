@@ -4,7 +4,7 @@ on:
   schedule:
     - cron: '12 3 * * *' # Runs daily at 03:12 UTC
 jobs:
-  mirror:
+  datasets-mirror-priority-2:
     strategy:
       matrix:
         taxon_id:

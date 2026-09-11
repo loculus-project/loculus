@@ -11,7 +11,7 @@ on:
       - '.github/workflows/values-schema-prettier.yml'
 
 jobs:
-  prettier:
+  values-schema-prettier:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository

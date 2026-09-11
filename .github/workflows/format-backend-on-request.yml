@@ -7,7 +7,7 @@ on:
       - "backend/**"
       - ".github/workflows/format-backend-on-request.yml"
 jobs:
-  format:
+  backend-format:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'format_me'))
     permissions:
       contents: write

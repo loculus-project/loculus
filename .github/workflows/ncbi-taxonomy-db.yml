@@ -6,7 +6,7 @@ on:
     - cron: "0 3 1 * *" # First of every month, 03:00 UTC
 
 jobs:
-  build-and-upload:
+  taxonomydb-build-and-upload:
     runs-on: ubuntu-latest
     outputs:
       db_zipped: ${{ steps.set-filenames.outputs.db_zipped }}
@@ -64,8 +64,8 @@ jobs:
           s3cmd cp s3://loculus-public/taxonomy/"${DB_ZIPPED}" \
             s3://loculus-public/taxonomy/"${DB_LATEST}"
 
-  notify_on_success:
-    needs: build-and-upload
+  taxonomydb-notify-on-success:
+    needs: taxonomydb-build-and-upload
     runs-on: ubuntu-latest
     if: success()
     steps:
@@ -74,11 +74,11 @@ jobs:
           SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
         run: |
           curl -X POST -H 'Content-type: application/json' --data '{
-            "text": "✅ Successfully built and uploaded NCBI taxonomy DB ${{ needs.build-and-upload.outputs.db_zipped }}: ${{ github.repository }}\n🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
+            "text": "✅ Successfully built and uploaded NCBI taxonomy DB ${{ needs.taxonomydb-build-and-upload.outputs.db_zipped }}: ${{ github.repository }}\n🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
           }' $SLACK_HOOK
 
-  notify_on_failure:
-    needs: build-and-upload
+  taxonomydb-notify-on-failure:
+    needs: taxonomydb-build-and-upload
     runs-on: ubuntu-latest
     if: failure()
     steps:
