@@ -16,6 +16,7 @@ from .backend import (
 from .config import (
     ASSIGNED_REFERENCE_PREFIX,
     FILES_PREFIX,
+    INJECTED_INPUT_FIELDS,
     LENGTH,
     LENGTH_PREFIX,
     NEXTCLADE_PREFIX,
@@ -378,6 +379,35 @@ def _try_compute_length_field(
     return False, None
 
 
+def _get_submitted_metadata(
+    unprocessed: UnprocessedData | UnprocessedAfterNextclade,
+) -> InputMetadata:
+    if isinstance(unprocessed, UnprocessedAfterNextclade):
+        return {
+            k: v for k, v in unprocessed.inputMetadata.items() if k not in INJECTED_INPUT_FIELDS
+        }
+    return unprocessed.metadata
+
+
+def _check_no_input_restrictions(
+    submitted_metadata: InputMetadata,
+    config: Config,
+    is_insdc_ingest_group: bool,
+) -> list[ProcessingAnnotation]:
+    errors: list[ProcessingAnnotation] = []
+    for field_name, value in submitted_metadata.items():
+        spec = config.processing_spec.get(field_name)
+        if spec is None or not spec.no_input or is_insdc_ingest_group:
+            continue
+        if null_per_backend(value):
+            continue
+        message = f"Error. '{field_name}' may not be provided as input"
+        errors.append(
+            ProcessingAnnotation.from_single(field_name, AnnotationSourceType.METADATA, message),
+        )
+    return errors
+
+
 def get_output_metadata(  # noqa: C901, PLR0912
     accession_version: AccessionVersion,
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
@@ -388,12 +418,18 @@ def get_output_metadata(  # noqa: C901, PLR0912
     output_metadata: ProcessedMetadata = {}
 
     group_id, submitted_at = _get_group_id_and_submitted_at(unprocessed)
-    is_insdc_ingest_user = group_id == config.insdc_ingest_group_id
+    is_insdc_ingest_group = group_id == config.insdc_ingest_group_id
     context = ProcessingContext(
         accession_version=accession_version,
-        is_insdc_ingest_group=is_insdc_ingest_user,
+        is_insdc_ingest_group=is_insdc_ingest_group,
         submitted_at=submitted_at,
         taxonomy_service=config._taxonomy_service,
+    )
+
+    errors.extend(
+        _check_no_input_restrictions(
+            _get_submitted_metadata(unprocessed), config, is_insdc_ingest_group
+        )
     )
 
     for output_field in config.processing_order:
@@ -448,7 +484,7 @@ def get_output_metadata(  # noqa: C901, PLR0912
         errors.extend(processing_result.errors)
         warnings.extend(processing_result.warnings)
 
-        if not null_per_backend(processing_result.datum) or is_insdc_ingest_user:
+        if not null_per_backend(processing_result.datum) or is_insdc_ingest_group:
             # skip requirement checks when the field has a value, or for INSDC ingested data.
             continue
 
