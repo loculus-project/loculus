@@ -91,7 +91,7 @@ vi.mock('../../services/lapisClient.ts', () => ({
     // eslint-disable-next-line @typescript-eslint/naming-convention
     LapisClient: {
         createForOrganism: vi.fn().mockImplementation((organism: string) => ({
-            call: vi.fn().mockImplementation((_method: string, params: MockParams) => {
+            getAggregated: vi.fn().mockImplementation((params: MockParams) => {
                 // Determine if the call is for versioned or unversioned accessions
                 const isVersioned = params[ACCESSION_VERSION_FIELD] !== undefined;
                 const versionType = isVersioned ? 'versioned' : 'unversioned';

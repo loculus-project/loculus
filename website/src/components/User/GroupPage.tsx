@@ -68,7 +68,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
         setNewUserName('');
     };
 
-    const userIsGroupMember = groupDetails.data?.users?.some((user) => user.name === username) ?? false;
+    const userIsGroupMember = groupDetails.data.users?.some((user) => user.name === username) ?? false;
     const userHasEditPrivileges = userGroups.some((group) => group.groupId === prefetchedGroupDetails.group.groupId);
 
     const { data: sequenceCounts, isLoading: sequenceCountsLoading } = useQuery({
@@ -172,7 +172,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                             <Button
                                 className='object-right p-2 loculusColor text-white rounded-sm px-4'
                                 onClick={() => {
-                                    const isLastMember = (groupDetails.data?.users?.length ?? 0) <= 1;
+                                    const isLastMember = (groupDetails.data.users?.length ?? 0) <= 1;
                                     const lastMemberWarning =
                                         'You are the last user in this group. Leaving will leave the group without any members, meaning that nobody is able to add future members. ';
                                     const dialogText = `${isLastMember ? lastMemberWarning : ''}Are you sure you want to leave the ${groupName} group?`;
@@ -201,18 +201,18 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                 <table className='w-full'>
                     <tbody>
                         <TableRow label='Group ID' noWrapLabel>
-                            {groupDetails.data?.group.groupId}
+                            {groupDetails.data.group.groupId}
                         </TableRow>
                         <TableRow label='Institution' noWrapLabel>
-                            {groupDetails.data?.group.institution}
+                            {groupDetails.data.group.institution}
                         </TableRow>
                         {accessToken && (
                             <TableRow label='Contact email' noWrapLabel>
-                                {groupDetails.data?.group.contactEmail}
+                                {groupDetails.data.group.contactEmail}
                             </TableRow>
                         )}
                         <TableRow label='Address' noWrapLabel>
-                            <PostalAddress address={groupDetails.data?.group.address} />
+                            <PostalAddress address={groupDetails.data.group.address} />
                         </TableRow>
                     </tbody>
                 </table>
@@ -281,7 +281,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                     </form>
                     <div className='flex-1 overflow-y-auto'>
                         <ul>
-                            {groupDetails.data?.users?.map((user) => (
+                            {groupDetails.data.users?.map((user) => (
                                 <li key={user.name} className='flex items-center gap-6 bg-gray-100 p-2 mb-2 rounded-sm'>
                                     <span className='text-lg'>{user.name}</span>
                                     {user.name !== username && (

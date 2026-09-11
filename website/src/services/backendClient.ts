@@ -1,6 +1,6 @@
 import axios, { type Method } from 'axios';
 import { err, ok, Result } from 'neverthrow';
-import { z, ZodSchema } from 'zod';
+import z from 'zod';
 
 import {
     dataUseTermsHistoryEntry,
@@ -165,7 +165,7 @@ export class BackendClient {
     private async request<T>(
         endpoint: string,
         method: Method,
-        responseSchema: ZodSchema<T>,
+        responseSchema: z.ZodType<T>,
         headers: Record<string, string> | undefined,
         request: unknown,
         params: unknown,

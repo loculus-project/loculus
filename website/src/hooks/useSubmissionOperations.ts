@@ -1,9 +1,6 @@
-import { isErrorFromAlias } from '@zodios/core';
-import type { AxiosError } from 'axios';
 import { useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { backendApi } from '../services/backendApi.ts';
 import { backendClientHooks } from '../services/serviceHooks.ts';
 import {
     type Group,
@@ -17,6 +14,7 @@ import {
 } from '../types/backend.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
+import { isAxiosErrorWithProblemDetail } from '../utils/isAxiosErrorWithProblemDetail.ts';
 import { stringifyMaybeAxiosError } from '../utils/stringifyMaybeAxiosError.ts';
 
 export function useSubmissionOperations(
@@ -73,10 +71,9 @@ export function useSubmissionOperations(
             },
             onSuccess: (data, _variables, context) => {
                 void useGetSequences.refetch();
-                const ctx = context as { toastId: string | number } | undefined;
-                if (ctx?.toastId) {
+                if (context?.toastId) {
                     const isBatchRelease = data.length > 1;
-                    toast.update(ctx.toastId, {
+                    toast.update(context.toastId, {
                         render: isBatchRelease
                             ? '🎉 All sequences have been approved. They will appear on the website shortly.'
                             : 'Sequence approved. It will appear on the website shortly.',
@@ -88,9 +85,8 @@ export function useSubmissionOperations(
                 }
             },
             onError: (error, _variables, context) => {
-                const ctx = context as { toastId: string | number } | undefined;
-                if (ctx?.toastId) {
-                    toast.update(ctx.toastId, {
+                if (context?.toastId) {
+                    toast.update(context.toastId, {
                         render: approveProcessedDataErrorMessage(error),
                         type: 'error',
                         isLoading: false,
@@ -112,22 +108,22 @@ export function useSubmissionOperations(
     };
 }
 
-function deleteSequenceEntriesErrorMessage(error: unknown | AxiosError) {
-    if (isErrorFromAlias(backendApi, 'deleteSequences', error)) {
+function deleteSequenceEntriesErrorMessage(error: unknown) {
+    if (isAxiosErrorWithProblemDetail(error)) {
         return 'Failed to delete sequence entries: ' + error.response.data.detail;
     }
     return 'Failed to delete sequence entries: ' + stringifyMaybeAxiosError(error);
 }
 
-function approveProcessedDataErrorMessage(error: unknown | AxiosError) {
-    if (isErrorFromAlias(backendApi, 'approveProcessedData', error)) {
+function approveProcessedDataErrorMessage(error: unknown) {
+    if (isAxiosErrorWithProblemDetail(error)) {
         return 'Failed to approve processed sequence entries: ' + error.response.data.detail;
     }
     return 'Failed to approve processed sequence entries: ' + stringifyMaybeAxiosError(error);
 }
 
-function getSequencesErrorMessage(error: unknown | AxiosError) {
-    if (isErrorFromAlias(backendApi, 'getSequences', error)) {
+function getSequencesErrorMessage(error: unknown) {
+    if (isAxiosErrorWithProblemDetail(error)) {
         return 'Failed to query sequences: ' + error.response.data.detail;
     }
     return 'Failed to query sequences: ' + stringifyMaybeAxiosError(error);
