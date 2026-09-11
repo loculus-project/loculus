@@ -19,13 +19,13 @@ import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForAlternativeUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
+import org.loculus.backend.service.files.dummyFileId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.util.*
 
 @EndpointTest(
     properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
@@ -67,7 +67,7 @@ class SubmitEndpointFileSharingTest(
 
     @Test
     fun `GIVEN a non-existing file ID is given in submit THEN the request is not valid`() {
-        val randomId = UUID.randomUUID()
+        val randomId = dummyFileId()
 
         submissionControllerClient.submit(
             DefaultFiles.metadataFile.withFileMapping(

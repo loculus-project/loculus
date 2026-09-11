@@ -14,7 +14,7 @@ import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
-import java.util.UUID
+import org.loculus.backend.service.files.dummyFileId
 
 class ValidateFileNameTest {
     private val backendConfig: BackendConfig = mockk()
@@ -34,7 +34,7 @@ class ValidateFileNameTest {
     }
 
     private fun createFileMapping(category: FileCategory, filenames: List<String>): FileCategoryFilesMap {
-        val files = filenames.map { FileIdAndName(UUID.randomUUID(), it) }
+        val files = filenames.map { FileIdAndName(dummyFileId(), it) }
         return mapOf(category to files)
     }
 

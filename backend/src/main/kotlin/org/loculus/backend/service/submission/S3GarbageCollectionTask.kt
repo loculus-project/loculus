@@ -5,6 +5,7 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.log.AuditLogger
+import org.loculus.backend.service.files.FileId
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.scheduler.TaskLock
@@ -13,7 +14,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import java.util.UUID
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
@@ -84,7 +84,7 @@ class S3GarbageCollectionTask(
         }
     }
 
-    private fun deleteFiles(fileIds: Set<UUID>, orphanRetentionPeriod: Int) {
+    private fun deleteFiles(fileIds: Set<FileId>, orphanRetentionPeriod: Int) {
         var deleteFailures = 0
         fileIds.forEach { fileId ->
             try {
