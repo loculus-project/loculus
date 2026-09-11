@@ -240,7 +240,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     fun `WHEN submitting files with duplicate file IDs THEN an error is returned`() {
         val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
 
-        val reusedFileId = UUID.randomUUID()
+        val reusedFileId = dummyFileId()
         val editedData = EditedSequenceEntryData(
             accession = accessions.first(),
             version = 1,
