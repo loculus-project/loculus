@@ -1,9 +1,9 @@
 ---
 import { buttonClasses } from './buttonStyles';
-import { getAuthUrl } from '../../utils/getAuthUrl';
+import { getLoginUrl } from '../../utils/getAuthUrl';
 import IcOutlineLogin from '~icons/ic/outline-login';
 
-const loginUrl = await getAuthUrl(Astro.url.toString());
+const loginUrl = getLoginUrl(Astro.url.toString());
 
 interface Props {
     message?: string;
