@@ -18,6 +18,7 @@ from .backend import (
 from .config import (
     ASSIGNED_REFERENCE_PREFIX,
     FILES_PREFIX,
+    INJECTED_INPUT_FIELDS,
     LENGTH,
     LENGTH_PREFIX,
     NEXTCLADE_PREFIX,
@@ -401,6 +402,12 @@ def get_output_metadata(  # noqa: C901
 
     if not context.is_insdc_ingest_group:
         errors.extend(_check_no_input_restrictions(unprocessed.metadata, config))
+
+    errors.extend(
+        _check_no_input_restrictions(
+            _get_submitted_metadata(unprocessed), config, is_insdc_ingest_group
+        )
+    )
 
     for output_field in config.processing_order:
         spec = config.processing_spec[output_field]
