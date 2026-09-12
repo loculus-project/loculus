@@ -143,11 +143,14 @@ spec:
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       {{- include "loculus.podScheduling" $ | nindent 6 }}
+      {{- include "loculus.podSecurityContext" (list "ingest-trigger" $.Values) | nindent 6 }}
       restartPolicy: Never
       serviceAccountName: loculus-ingest-trigger
       containers:
         - name: trigger
-          image: alpine/kubectl:1.36.0
+          image: {{ include "loculus.image" (dict "name" "kubectl" "defaultRepository" "alpine/kubectl" "defaultTag" "1.36.0" "values" $.Values) }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "kubectl" "values" $.Values) }}
+          {{- include "loculus.containerSecurityContext" (list "ingest-trigger" $.Values) | nindent 10 }}
           command:
             - sh
             - -c

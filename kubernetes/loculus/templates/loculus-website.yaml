@@ -1,4 +1,3 @@
-{{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- if not .Values.disableWebsite }}
 ---
 apiVersion: apps/v1
@@ -23,13 +22,15 @@ spec:
     spec:
       {{- include "possiblePriorityClassName" . | nindent 6 }}
       {{- include "loculus.podScheduling" . | nindent 6 }}
+      {{- include "loculus.podSecurityContext" (list "website" $.Values) | nindent 6 }}
       initContainers:
-{{- include "loculus.configProcessor" (dict "name" "loculus-website-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
+      {{- include "loculus.configProcessor" (dict "name" "loculus-website-config" "values" $.Values "Values" $.Values) | nindent 8 }}
       containers:
         - name: website
-          image: "{{ $.Values.images.website.repository }}:{{ $.Values.images.website.tag | default $dockerTag }}"
-          imagePullPolicy: "{{ $.Values.images.website.pullPolicy | default $.Values.imagePullPolicy }}"
+          image: {{ include "loculus.image" (dict "name" "website" "defaultRepository" "ghcr.io/loculus-project/website" "values" $.Values) }}
+          imagePullPolicy: {{ include "loculus.imagePullPolicy" (dict "name" "website" "values" $.Values) }}
           {{- include "loculus.resources" (list "website" .Values) | nindent 10 }}
+          {{- include "loculus.containerSecurityContext" (list "website" $.Values) | nindent 10 }}
           ports:
             - containerPort: 3000
           volumeMounts:
