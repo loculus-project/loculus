@@ -45,6 +45,14 @@ describe('SubmissionRouteUtils', () => {
         expect(SubmissionRouteUtils.parseToRoute('/invalid/path', '')).toBeUndefined();
     });
 
+    test('switching groups from a revision diff opens the other group review list', () => {
+        const route = SubmissionRouteUtils.parseToRoute('/cchf/submission/123/review/LOC_TEST.2', '');
+        expect(route).toEqual({ name: 'review', organism: 'cchf', groupId: 123 });
+        expect(SubmissionRouteUtils.toUrl({ ...route!, groupId: 456 })).toBe('/cchf/submission/456/review');
+        expect(SubmissionRouteUtils.parseToRoute('/cchf/submission/123/submit/LOC_TEST.2', '')).toBeUndefined();
+        expect(SubmissionRouteUtils.parseToRoute('/cchf/submission/123/review/LOC_TEST.2/extra', '')).toBeUndefined();
+    });
+
     test('toUrl - portal route', () => {
         expect(SubmissionRouteUtils.toUrl({ name: 'portal', organism: 'cchf', groupId: 123 })).toBe(
             '/cchf/submission/123',
