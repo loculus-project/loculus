@@ -4,7 +4,7 @@ import org.loculus.backend.testutil.MinioProvider
 import org.testcontainers.containers.MinIOContainer
 
 class DockerMinio : MinioProvider {
-    private val container = MinIOContainer("minio/minio:latest").withReuse(true)
+    private val container = MinIOContainer("quay.io/minio/minio:latest").withReuse(true)
 
     override val s3Url: String
         get() = container.s3URL
