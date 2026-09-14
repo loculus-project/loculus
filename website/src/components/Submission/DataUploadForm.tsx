@@ -274,6 +274,7 @@ const InnerDataUploadForm = ({
                             fileUploadStates={fileUploadStates}
                             setFileUploadStates={setFileUploadStates}
                             fileLinkage={fileLinkage}
+                            maxFileSizeBytes={fileSharingConfig.maxFileSizeBytes}
                         />
                         <hr />
                     </>
@@ -461,6 +462,7 @@ export const ExtraFilesUpload = ({
     setFileUploadStates,
     fileLinkage,
     onError,
+    maxFileSizeBytes,
 }: {
     accessToken: string;
     clientConfig: ClientConfig;
@@ -471,6 +473,7 @@ export const ExtraFilesUpload = ({
     setFileUploadStates: Dispatch<SetStateAction<Map<string, FileUploadState>>>;
     fileLinkage?: FileLinkage;
     onError: (message: string) => void;
+    maxFileSizeBytes?: number;
 }) => {
     const setCategoryFileUploadState =
         (category: string): Dispatch<SetStateAction<FileUploadState | undefined>> =>
@@ -510,6 +513,7 @@ export const ExtraFilesUpload = ({
                             onError={onError}
                             fileUploadState={fileUploadStates.get(fileCategory.name)}
                             setFileUploadState={setCategoryFileUploadState(fileCategory.name)}
+                            maxFileSizeBytes={maxFileSizeBytes}
                         />
                         {inputMode === 'bulk' && (
                             <CategoryLinkageStatus categoryLinkage={fileLinkage?.get(fileCategory.name)} />
