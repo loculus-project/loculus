@@ -56,7 +56,7 @@
         "noInput": {
           "groups": ["metadata"],
           "type": "boolean",
-          "description": "Whether a field with this name is expected as possible input, and so should be included in the metadata template and as a form field. (If set to true it will not be included)."
+          "description": "Whether a field with this name is expected as possible input, and so should be included in the metadata template and as a form field. (If set to true it will not be included). If set to true, the preprocessing pipeline also rejects any submissions that provide a value for the field, except from the INSDC ingest group."
         },
         "notSearchable": {
           "groups": ["metadata"],
