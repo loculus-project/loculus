@@ -219,3 +219,24 @@ For this to work, you need to configure a bucket policy like this:
 ```
 
 You can do this with `s3cmd`. Save the policy above in a file, `policy.json`, and then call `s3cmd setpolicy policy.json s3://<bucket-name>` (replace `<bucket-name>` with your bucket name).
+
+### Set a lifecycle policy to abort incomplete multipart uploads
+
+Files are uploaded to S3 as multipart uploads directly from the browser. If an upload is interrupted (closed tab, network drop, etc.) before it completes, the parts already uploaded are not automatically deleted and continue to incur storage costs.
+
+To avoid accumulating these orphaned parts, configure a bucket lifecycle rule with the `AbortIncompleteMultipartUpload` action, which tells S3 to abort (and delete the parts of) any multipart upload that hasn't completed within a given number of days:
+
+```json
+{
+  "Rules": [
+    {
+      "ID": "abort-incomplete-multipart-uploads",
+      "Status": "Enabled",
+      "Filter": {},
+      "AbortIncompleteMultipartUpload": {
+        "DaysAfterInitiation": 1
+      }
+    }
+  ]
+}
+```
