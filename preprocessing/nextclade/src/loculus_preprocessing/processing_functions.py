@@ -1128,7 +1128,7 @@ class ProcessingFunctions:
               (e.g. '<any>/<any>/<identifier>/<date>')
         """
         collector_id = input_data.get("specimenCollectorSampleId", None)
-        submission_id = context.submissionId
+        submission_id = context.submission_id
         warnings: list[str] = []
 
         order = args.get("order")
