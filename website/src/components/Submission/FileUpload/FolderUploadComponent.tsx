@@ -15,7 +15,12 @@ import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
 import { type FileCategory } from '../../../types/config';
 import type { ClientConfig } from '../../../types/runtimeConfig';
-import { calculatePartSizeAndCount, splitFileIntoParts, uploadPart } from '../../../utils/multipartUpload';
+import {
+    calculatePartSizeAndCount,
+    calculatePartSizes,
+    splitFileIntoParts,
+    uploadPart,
+} from '../../../utils/multipartUpload';
 import { displayConfirmationDialog } from '../../ConfirmationDialog';
 import { Button } from '../../common/Button';
 import type { InputMode } from '../FormOrUploadWrapper';
@@ -174,7 +179,8 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         const pendingFiles: Pending[] = [];
         for (const file of filesAwaitingUrls) {
             const { partCount, partSize } = calculatePartSizeAndCount(file.size);
-            const result = await backendClient.requestMultipartUpload(accessToken, groupId, 1, partCount);
+            const partSizes = calculatePartSizes(file.size);
+            const result = await backendClient.requestMultipartUpload(accessToken, groupId, 1, partSizes);
             result.match(
                 (data) => {
                     pendingFiles.push({

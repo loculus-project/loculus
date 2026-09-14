@@ -177,7 +177,14 @@ describe('FolderUploadComponent', () => {
             });
 
             await userEvent.upload(input, file);
-            await waitFor(() => expect(mockRequestMultipartUpload).toHaveBeenCalledWith('test-token', 1, 1, 3));
+            await waitFor(() =>
+                expect(mockRequestMultipartUpload).toHaveBeenCalledWith(
+                    'test-token',
+                    1,
+                    1,
+                    multipartUpload.calculatePartSizes(30_000_000),
+                ),
+            );
         });
 
         it('calls completeMultipartUpload with ETags', async () => {

@@ -2,7 +2,6 @@ package org.loculus.backend.service.files
 
 import org.loculus.backend.config.S3BucketConfig
 import org.loculus.backend.config.S3Config
-import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.springframework.stereotype.Service
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
@@ -61,12 +60,12 @@ class S3Service(private val s3Config: S3Config) {
         presigner.presignPutObject(presignRequest).url().toString()
     }
 
-    fun initiateMultipartUploadAndCreateUrlsToUpload(fileId: FileId, numberParts: Int): MultipartUploadHandler =
+    /**
+     * Creates a multipart upload and one presigned URL per entry in [partSizes], each locked to accept
+     * exactly that many bytes (see [createUrlToUploadPrivateFile] for how S3 enforces this).
+     */
+    fun initiateMultipartUploadAndCreateUrlsToUpload(fileId: FileId, partSizes: List<Long>): MultipartUploadHandler =
         s3ErrorMapping {
-            if (numberParts <= 0 || numberParts > 10000) {
-                throw BadRequestException("The number of parts must between 1 and 10000.")
-            }
-
             val config = getS3BucketConfig()
 
             val uploadId = s3Client.createMultipartUpload(
@@ -76,12 +75,13 @@ class S3Service(private val s3Config: S3Config) {
                     .build(),
             ).uploadId()
 
-            val urls = (1..numberParts).map { part ->
+            val urls = partSizes.mapIndexed { index, partSize ->
                 val uploadPartRequest = UploadPartRequest.builder()
                     .bucket(config.bucket)
                     .key(getFileIdPath(fileId))
                     .uploadId(uploadId)
-                    .partNumber(part)
+                    .partNumber(index + 1)
+                    .contentLength(partSize)
                     .build()
 
                 val presignRequest = UploadPartPresignRequest.builder()

@@ -38,14 +38,18 @@ class FilesClient(private val mockMvc: MockMvc) {
     fun requestMultipartUploads(
         groupId: Int? = null,
         numberFiles: Int? = null,
-        numberParts: Int? = null,
+        partSizes: List<Long>? = listOf(DEFAULT_SIMPLE_FILE_CONTENT.length.toLong()),
         jwt: String = jwtForDefaultUser,
     ): ResultActions {
         val request = post("/files/request-multipart-upload")
             .withAuth(jwt)
         groupId?.let { request.param("groupId", it.toString()) }
         numberFiles?.let { request.param("numberFiles", it.toString()) }
-        numberParts?.let { request.param("numberParts", it.toString()) }
+        partSizes?.let {
+            request
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jacksonObjectMapper().writeValueAsString(it))
+        }
         return mockMvc.perform(request)
     }
 

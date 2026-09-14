@@ -39,6 +39,7 @@ val DEFAULT_MULTIPART_FILE_PARTS = listOf(
     "A".repeat(5 * 1024 * 1024),
     "B".repeat(7),
 )
+val DEFAULT_MULTIPART_FILE_PART_SIZES = DEFAULT_MULTIPART_FILE_PARTS.map { it.length.toLong() }
 val DEFAULT_MULTIPART_FILE_CONTENT = DEFAULT_MULTIPART_FILE_PARTS.joinToString("")
 
 /**

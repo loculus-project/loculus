@@ -65,20 +65,21 @@ export class BackendClient {
      * @param token The bearer token.
      * @param groupId The group ID of the group that will own the uploaded files.
      * @param numberFiles How many file IDs and URLs to generate.
-     * @param numberParts How many parts per file.
+     * @param partSizes The exact size, in bytes, of each part to be uploaded, in order. If multiple files are
+     * requested, these part sizes apply to all of them. Each presigned part URL will only accept an upload of
+     * exactly the corresponding size.
      * @returns A list of file IDs with lists of presigned URLs for each part.
      */
-    public requestMultipartUpload(token: string, groupId: number, numberFiles: number, numberParts: number) {
+    public requestMultipartUpload(token: string, groupId: number, numberFiles: number, partSizes: number[]) {
         return this.request(
             '/files/request-multipart-upload',
             'POST',
             requestMultipartUploadResponse,
             createAuthorizationHeader(token),
-            undefined,
+            partSizes,
             {
                 groupId,
                 numberFiles,
-                numberParts,
             },
         );
     }

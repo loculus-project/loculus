@@ -8,6 +8,7 @@ import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_PARTS
+import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_PART_SIZES
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.S3_CONFIG
@@ -43,7 +44,7 @@ class SubmitEndpointMultipartFileSharingTest(
 
     @Test
     fun `GIVEN a valid multipart upload THEN the request is valid`() {
-        val fileIdAndUrls = filesClient.requestMultipartUploads(groupId, numberParts = 2)
+        val fileIdAndUrls = filesClient.requestMultipartUploads(groupId, partSizes = DEFAULT_MULTIPART_FILE_PART_SIZES)
             .andGetFileIdsAndMultipartUrls()[0]
         val etag1 = convenienceClient.uploadFile(fileIdAndUrls.presignedWriteUrls[0], DEFAULT_MULTIPART_FILE_PARTS[0])
             .headers().map()["etag"]!![0]
@@ -69,7 +70,7 @@ class SubmitEndpointMultipartFileSharingTest(
 
     @Test
     fun `GIVEN a valid multipart upload, used in multiple submissions, THEN the request is valid`() {
-        val fileIdAndUrls = filesClient.requestMultipartUploads(groupId, numberParts = 2)
+        val fileIdAndUrls = filesClient.requestMultipartUploads(groupId, partSizes = DEFAULT_MULTIPART_FILE_PART_SIZES)
             .andGetFileIdsAndMultipartUrls()[0]
         val etag1 = convenienceClient.uploadFile(fileIdAndUrls.presignedWriteUrls[0], DEFAULT_MULTIPART_FILE_PARTS[0])
             .headers().map()["etag"]!![0]

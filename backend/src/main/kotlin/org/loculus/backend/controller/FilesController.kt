@@ -170,8 +170,17 @@ class FilesController(
         "Requests S3 pre-signed URLs to upload files using multipart upload. The endpoint returns a list of " +
             "file IDs and, for each file ID, a list of URLs. The URLs should be used to upload the parts " +
             "and the upload should then be completed using the /complete-multipart-upload endpoint. " +
-            "Afterwards, the file IDs can be attached to the metadata in the `files.<fileCategory>` column.",
+            "Afterwards, the file IDs can be attached to the metadata in the `files.<fileCategory>` column. " +
+            "Each presigned part URL is locked to accept exactly the corresponding size in `partSizes`: the " +
+            "upload of that part must have a body of exactly that many bytes, or S3 will reject it (typically " +
+            "with HTTP 403).",
     )
+    @ApiResponse(responseCode = "200", description = "Successfully generated pre-signed multipart upload URLs")
+    @ApiResponse(responseCode = "400", description = "Invalid request parameters")
+    @ApiResponse(responseCode = "401", description = "Authentication required")
+    @ApiResponse(responseCode = "403", description = "User is not a member of the specified group")
+    @ApiResponse(responseCode = "404", description = "Group does not exist")
+    @ApiResponse(responseCode = "422", description = "Total size of partSizes exceeds the maximum allowed file size")
     @PostMapping("/request-multipart-upload")
     fun requestMultipartUploads(
         @HiddenParam
@@ -185,15 +194,29 @@ class FilesController(
         @Parameter(description = "Number of files, default is 1.")
         @RequestParam
         numberFiles: Int = 1,
-        @Parameter(description = "Number of parts, default is 1.")
-        @RequestParam
-        numberParts: Int = 1,
+        @RequestBody
+        @Parameter(
+            description = "The exact size, in bytes, of each part to be uploaded, in order. If multiple files " +
+                "are requested, these part sizes apply to all of them - request separately for files with a " +
+                "different part breakdown. The number of entries determines the number of parts.",
+        )
+        partSizes: List<Long>,
     ): List<FileIdAndMultipartWriteUrl> {
         filesPreconditionValidator.validateNumberFiles(numberFiles)
+        filesPreconditionValidator.validatePartSizes(partSizes)
         filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
 
+        val maxFileSizeBytes = backendConfig.fileSharing.maxFileSizeBytes
+        val totalSize = partSizes.sum()
+        if (maxFileSizeBytes != null && totalSize > maxFileSizeBytes) {
+            throw UnprocessableEntityException(
+                "The total size of partSizes ($totalSize bytes) exceeds the maximum allowed file size of " +
+                    "$maxFileSizeBytes bytes.",
+            )
+        }
+
         return generateFileIds(numberFiles).map { fileId ->
-            val multipartUploadHandler = s3Service.initiateMultipartUploadAndCreateUrlsToUpload(fileId, numberParts)
+            val multipartUploadHandler = s3Service.initiateMultipartUploadAndCreateUrlsToUpload(fileId, partSizes)
             filesDatabaseService.createFileEntry(
                 fileId,
                 authenticatedUser.username,
@@ -206,9 +229,7 @@ class FilesController(
 
     @Operation(
         description =
-        "Completes multipart uploads that have been initiated with the /request-multipart-upload endpoint. " +
-            "If a file exceeds the configured maximum file size, it is deleted from storage and the request " +
-            "fails with an error.",
+        "Completes multipart uploads that have been initiated with the /request-multipart-upload endpoint.",
     )
     @PostMapping("/complete-multipart-upload")
     fun completeMultipartUploads(
@@ -227,30 +248,13 @@ class FilesController(
             )
         }
 
-        val maxFileSizeBytes = backendConfig.fileSharing.maxFileSizeBytes
-        val oversizedFileIds = mutableListOf<String>()
         multipartUploadIds.forEach { (fileId, uploadId) ->
             val etags = fileIdsAndEtags[fileId]
             if (etags == null || etags.isEmpty()) {
                 throw UnprocessableEntityException("No etags provided for file ID $fileId.")
             }
             s3Service.completeMultipartUpload(fileId, uploadId, etags)
-
-            val fileSize = if (maxFileSizeBytes != null) s3Service.getFileSize(fileId) else null
-            if (maxFileSizeBytes != null && fileSize != null && fileSize > maxFileSizeBytes) {
-                s3Service.deleteFile(fileId)
-                filesDatabaseService.deleteFileEntry(fileId)
-                oversizedFileIds.add("$fileId ($fileSize bytes)")
-            } else {
-                filesDatabaseService.completeMultipartUpload(fileId)
-            }
-        }
-
-        if (oversizedFileIds.isNotEmpty()) {
-            throw UnprocessableEntityException(
-                "The following files exceed the maximum allowed file size of $maxFileSizeBytes bytes and " +
-                    "have been deleted: " + oversizedFileIds.joinToString(),
-            )
+            filesDatabaseService.completeMultipartUpload(fileId)
         }
     }
 }

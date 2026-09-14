@@ -19,6 +19,7 @@ import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_PARTS
+import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_PART_SIZES
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
 import org.loculus.backend.controller.DEFAULT_USER_NAME
@@ -497,7 +498,7 @@ class ReviseEndpointTest(
         val fileIdAndUrls = filesClient.requestMultipartUploads(
             groupId = groupId,
             jwt = jwtForDefaultUser,
-            numberParts = 2,
+            partSizes = DEFAULT_MULTIPART_FILE_PART_SIZES,
         ).andGetFileIdsAndMultipartUrls()[0]
         val etag1 = convenienceClient.uploadFile(fileIdAndUrls.presignedWriteUrls[0], DEFAULT_MULTIPART_FILE_PARTS[0])
             .headers().map()["etag"]!![0]

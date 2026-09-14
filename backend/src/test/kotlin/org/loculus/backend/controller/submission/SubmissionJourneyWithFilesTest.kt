@@ -16,6 +16,7 @@ import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_CONTENT
 import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_PARTS
+import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_PART_SIZES
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
 import org.loculus.backend.controller.EndpointTest
@@ -121,7 +122,7 @@ class SubmissionJourneyWithFilesTest(
             .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
             .andGetGroupId()
 
-        val fileIdAndUrls = filesClient.requestMultipartUploads(groupId, numberParts = 2)
+        val fileIdAndUrls = filesClient.requestMultipartUploads(groupId, partSizes = DEFAULT_MULTIPART_FILE_PART_SIZES)
             .andGetFileIdsAndMultipartUrls()[0]
         val etag1 = convenienceClient.uploadFile(fileIdAndUrls.presignedWriteUrls[0], DEFAULT_MULTIPART_FILE_PARTS[0])
             .headers().map()["etag"]!![0]
@@ -156,7 +157,7 @@ class SubmissionJourneyWithFilesTest(
 
         val processedFileIdAndUrls = filesClient.requestMultipartUploads(
             groupId,
-            numberParts = 2,
+            partSizes = listOf(DEFAULT_MULTIPART_FILE_PART_SIZES[0], "_processed".length.toLong()),
             jwt = jwtForProcessingPipeline,
         )
             .andGetFileIdsAndMultipartUrls()[0]
