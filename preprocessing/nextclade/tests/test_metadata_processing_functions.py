@@ -1136,24 +1136,42 @@ def test_errors_when_no_input_field_is_provided() -> None:
     )
     config.processing_order = get_processing_order(config)
 
-    entry = UnprocessedEntryFactory.create_unprocessed_entry(
-        metadata_dict={
-            "non_user_input": "illigal_user_input",
-        },
-        accession_id="0",
-        sequences={"main": None},
+    entries = [
+        UnprocessedEntryFactory.create_unprocessed_entry(
+            metadata_dict={
+                "non_user_input": "illegal_user_input",
+            },
+            accession_id="0",
+            sequences={"main": None},
+        ),
+        UnprocessedEntryFactory.create_unprocessed_entry(
+            metadata_dict={
+                "non_user_input": "illegal_user_input",
+            },
+            accession_id="1",
+            sequences={"main": None},
+            group_id=config.insdc_ingest_group_id,
+        ),
+    ]
+    processed_entries = process_all(entries, "temp_dataset_dir", config)
+    (processed_non_insdc, processed_insdc) = (
+        processed_entries[0].processed_entry,
+        processed_entries[1].processed_entry,
     )
-    processed_entry = process_all([entry], "temp_dataset_dir", config)[0].processed_entry
 
     messages = {
         annotation.processedFields[0].name: annotation.message
-        for annotation in processed_entry.errors
+        for annotation in processed_non_insdc.errors
         if annotation.processedFields
     }
-
     assert messages["non_user_input"] == (
         "Metadata field `non_user_input` may not be provided as input. "
         "Please remove it from your metadata."
+    )
+    assert not any(
+        field.name == "non_user_input"
+        for annotation in processed_insdc.errors
+        for field in annotation.processedFields
     )
 
 
