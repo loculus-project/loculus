@@ -803,7 +803,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
             group_id=entry.data.group_id,
             insdc_ingest_group_id=config.insdc_ingest_group_id,
             submitted_at=entry.data.submittedAt,
-            submissionId=entry.data.submissionId,
+            submission_id=entry.data.submissionId,
             submitter=entry.data.submitter,
         )
         for entry in unprocessed

@@ -382,7 +382,7 @@ def get_output_metadata(
             group_id=unprocessed.group_id,
             insdc_ingest_group_id=config.insdc_ingest_group_id,
             submitted_at=unprocessed.submittedAt,
-            submissionId=unprocessed.submissionId,
+            submission_id=unprocessed.submissionId,
             submitter=unprocessed.submitter,
         )
     external_services = config._external_services
