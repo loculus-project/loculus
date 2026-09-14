@@ -122,6 +122,7 @@ class Config(BaseModel):
     segments: list[Segment] = Field(default_factory=list)
     processing_spec: dict[str, ProcessingSpec] = Field(default_factory=dict)
     processing_order: tuple[str, ...] = ()
+    extra_input_fields: list[str] = Field(default_factory=list)
 
     alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
     segment_classification_method: SegmentClassificationMethod = SegmentClassificationMethod.ALIGN
