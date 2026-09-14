@@ -379,8 +379,8 @@ def get_output_metadata(
     else:
         context = ProcessingContext(
             accession_version=accession_version,
-            is_insdc_ingest_group=unprocessed.group_id == config.insdc_ingest_group_id,
             group_id=unprocessed.group_id,
+            insdc_ingest_group_id=config.insdc_ingest_group_id,
             submitted_at=unprocessed.submittedAt,
             submissionId=unprocessed.submissionId,
             submitter=unprocessed.submitter,

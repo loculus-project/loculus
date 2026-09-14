@@ -30,8 +30,8 @@ from loculus_preprocessing.processing_functions import ExternalServices
 # `dataclasses.replace(DEFAULT_TEST_CONTEXT, ...)`.
 DEFAULT_TEST_CONTEXT = ProcessingContext(
     accession_version="accession.1",
-    is_insdc_ingest_group=False,
     group_id=2,
+    insdc_ingest_group_id=1,
     submitted_at="",
     submissionId="test_submission_id",
     submitter="test_submitter",
