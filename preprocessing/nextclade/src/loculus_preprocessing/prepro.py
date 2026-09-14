@@ -403,8 +403,8 @@ def _check_no_input_restrictions(
         if null_per_backend(value):
             continue
         message = (
-            f"Error. '{field_name}' may not be provided as input, "
-            f"please remove it from your metadata."
+            f"Metadata field `{field_name}` may not be provided as input, "
+            "please remove it from your metadata."
         )
         errors.append(
             ProcessingAnnotation.from_single(field_name, AnnotationSourceType.METADATA, message),
