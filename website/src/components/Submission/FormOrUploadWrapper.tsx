@@ -1,4 +1,4 @@
-import type { Result } from 'neverthrow';
+import { err, ok, type Result } from 'neverthrow';
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 
 import type { UploadAction } from './DataUploadForm';
@@ -30,22 +30,16 @@ export type InputMode = 'form' | 'bulk';
  * there.
  */
 export type SequenceData = {
-    type: 'ok';
     metadataFile: File;
     sequenceFile?: File;
     submissionId?: string;
 };
 
-export type InputError = {
-    type: 'error';
-    errorMessage: string;
-};
-
 /**
- * A function that generates a {@link SequenceData} or {@link InputError} if the user has made a mistake
+ * A function that generates a result containing {@link SequenceData}, or a {@link Error} if the user has made a mistake
  * when entering the data (such as, no Submission ID given, or no metadata given).
  */
-export type FileFactory = () => Promise<SequenceData | InputError>;
+export type FileFactory = () => Promise<Result<SequenceData, Error>>;
 
 type FormOrUploadWrapperProps = {
     inputMode: InputMode;
@@ -129,12 +123,12 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     useEffect(() => {
         setFileFactory(() => {
             // Returns a function that the parent component can call to get the files needed for submission
-            return async (): Promise<SequenceData | InputError> => {
+            return async (): Promise<Result<SequenceData, Error>> => {
                 switch (inputMode) {
                     case 'form': {
                         const submissionId = editableMetadata.getSubmissionId();
                         if (!submissionId) {
-                            return { type: 'error', errorMessage: 'Please specify an ID.' };
+                            return err(new Error('Please specify an ID.'));
                         }
                         const fastaIds = enableConsensusSequences ? editableSequences.getFastaIds() : undefined;
                         const metadataFile = editableMetadata.getMetadataTsv(
@@ -144,11 +138,11 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                             submissionDataTypes.files?.categories,
                         );
                         if (!metadataFile) {
-                            return { type: 'error', errorMessage: 'Please specify metadata.' };
+                            return err(new Error('Please specify metadata.'));
                         }
                         const sequenceFile = editableSequences.getSequenceFasta();
                         if (!sequenceFile && enableConsensusSequences) {
-                            return { type: 'error', errorMessage: 'Please enter sequence data.' };
+                            return err(new Error('Please enter sequence data.'));
                         }
 
                         let mFile: ProcessedFile = new RawFile(metadataFile);
@@ -158,31 +152,30 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
 
                             const validation = validateSubmissionFileMapping(submissionFileMapping, fileSharingConfig);
                             if (validation.isErr()) {
-                                return { type: 'error', errorMessage: validation.error.message };
+                                return err(validation.error);
                             }
 
                             const metadataWithFileMapping = await applyFileMappings(mFile, submissionFileMapping);
                             if (metadataWithFileMapping.isErr()) {
-                                return { type: 'error', errorMessage: metadataWithFileMapping.error.message };
+                                return err(metadataWithFileMapping.error);
                             }
 
                             mFile = metadataWithFileMapping.value;
                         }
 
-                        return {
-                            type: 'ok',
+                        return ok({
                             metadataFile: mFile.inner(),
                             sequenceFile,
                             submissionId,
-                        };
+                        });
                     }
                     case 'bulk': {
                         if (!metadataFile) {
-                            return { type: 'error', errorMessage: 'Please specify a metadata file.' };
+                            return err(new Error('Please specify a metadata file.'));
                         }
 
                         if (enableConsensusSequences && !sequenceFile) {
-                            return { type: 'error', errorMessage: 'Please specify a sequences file.' };
+                            return err(new Error('Please specify a sequences file.'));
                         }
 
                         let mFile = metadataFile;
@@ -190,7 +183,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                         if (columnMapping !== null) {
                             const metadataWithColumnMapping = await columnMapping.applyTo(metadataFile);
                             if (metadataWithColumnMapping.isErr()) {
-                                return { type: 'error', errorMessage: metadataWithColumnMapping.error.message };
+                                return err(metadataWithColumnMapping.error);
                             }
                             mFile = metadataWithColumnMapping.value;
                         }
@@ -202,7 +195,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                                 submissionDataTypes.files?.categories?.map((category) => category.name) ?? [],
                             );
                             if (submissionFileMapping.isErr()) {
-                                return { type: 'error', errorMessage: submissionFileMapping.error.message };
+                                return err(submissionFileMapping.error);
                             }
 
                             // Validate the submission file mapping
@@ -211,7 +204,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                                 fileSharingConfig,
                             );
                             if (validation.isErr()) {
-                                return { type: 'error', errorMessage: validation.error.message };
+                                return err(validation.error);
                             }
 
                             // Resolve the submission file mapping against file mapping of uploads
@@ -221,22 +214,21 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                             );
                             const linkageErrorMessage = getLinkageErrors(fileLinkage);
                             if (linkageErrorMessage !== undefined) {
-                                return { type: 'error', errorMessage: linkageErrorMessage };
+                                return err(new Error(linkageErrorMessage));
                             }
 
                             // Apply resolved mapping to metadata file
                             const metadataWithFileMapping = await applyFileMappings(mFile, resolvedFileMapping);
                             if (metadataWithFileMapping.isErr()) {
-                                return { type: 'error', errorMessage: metadataWithFileMapping.error.message };
+                                return err(metadataWithFileMapping.error);
                             }
                             mFile = metadataWithFileMapping.value;
                         }
 
-                        return {
-                            type: 'ok',
+                        return ok({
                             metadataFile: mFile.inner(),
                             sequenceFile: sequenceFile?.inner(),
-                        };
+                        });
                     }
                 }
             };
