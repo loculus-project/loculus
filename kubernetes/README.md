@@ -154,7 +154,7 @@ You now have a file `my-sealed-secret.yaml` with `spec.encryptedData` in it. You
 
 ## Configuring an S3 bucket (e.g. AWS)
 
-See [Configuring extra file submission](/docs/src/content/docs/for-administrators/configuring-extra-files.md) for the full walkthrough (bucket config, credentials via sealed secrets, CORS, bucket policy).
+See [Configuring extra file submission](../docs/src/content/docs/for-administrators/configuring-extra-files.md) for the full walkthrough (bucket config, credentials via sealed secrets, CORS, bucket policy).
 
 ## Setting up kubeconfig locally to access the remote cluster
 
