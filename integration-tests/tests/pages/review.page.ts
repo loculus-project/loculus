@@ -239,7 +239,8 @@ export class ReviewPage {
         await expect(
             this.page
                 .getByTestId(`review-card-${submissionId}`)
-                .locator('.text-red-600', { hasText: pattern }),
+                .getByTestId('processing-error')
+                .filter({ hasText: pattern }),
         ).toBeVisible();
     }
 

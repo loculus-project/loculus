@@ -304,8 +304,11 @@ const Errors: FC<ErrorsProps> = ({ errors, accession, metadataDisplayNames }) =>
                         <div key={uniqueKey} className='flex shrink-0'>
                             <p
                                 className='text-red-600'
+                                role='alert'
+                                data-testid='processing-error'
                                 data-tooltip-id={'error-tooltip-' + accession + '-' + uniqueKey}
                             >
+                                <span className='sr-only'>Error: </span>
                                 {processedFieldName}: {error.message}
                             </p>
                             <CustomTooltip
