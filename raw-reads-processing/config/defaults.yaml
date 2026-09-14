@@ -1,7 +1,7 @@
 log_level: DEBUG
 s3_request_timeout_seconds: 300
-deacon_filter_timeout_seconds: 600
 read_validation_timeout_seconds: 300
+max_input_file_bytes: 21474836480 # 20GiB per file; bounds deacon runtime now that an in-process filter call cannot be timed out
 file_service_host: "0.0.0.0"
 deacon_max_host_reads_proportion: 0.1
 deacon_max_host_bp: 300000 # 300kBp - or 10^-4 coverage of the human genome
@@ -10,3 +10,7 @@ deacon_a: 2
 short_reads_threshold: 90 # (31 + 15 - 1) x 2 = 90bp
 deacon_a_short_reads: 1 # k-mer threshold used instead of deacon_a when reads are short
 deacon_r: 0.05
+# Threads per filter call x concurrent filters is the pod's deacon thread budget.
+# Starting values only - tune against a real preview instance.
+deacon_threads: 4
+deacon_max_concurrent_filters: 2

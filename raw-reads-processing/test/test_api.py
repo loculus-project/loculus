@@ -28,11 +28,11 @@ def client():
             log_level="INFO",
             s3_request_timeout_seconds=10,
             read_validation_timeout_seconds=10,
-            deacon_filter_timeout_seconds=10,
+            max_input_file_bytes=1_000_000,
             deacon_max_host_reads_proportion=0.05,
             deacon_max_host_bp=1000,
         ),
-        deacon_process=Mock(poll=Mock(return_value=None)),
+        deacon_filter=Mock(),
     )
     return TestClient(api.app)
 
@@ -79,14 +79,14 @@ def test_processing_failure_is_returned_as_internal_server_error(client, monkeyp
     assert response.json() == {"detail": "readtools jar not found"}
 
 
-def test_health_is_ok_while_deacon_process_is_alive(client):
+def test_health_is_ok_once_the_index_is_loaded(client):
     response = client.get("/health")
 
     assert response.status_code == 200
 
 
-def test_health_is_unavailable_once_deacon_process_has_exited(client):
-    api.app.state.deacon_process.poll.return_value = 1  # exit code of the dead process
+def test_health_is_unavailable_before_the_index_is_loaded(client):
+    api.app.state.deacon_filter = None
 
     response = client.get("/health")
 

@@ -8,7 +8,9 @@ class Config(BaseModel):
     log_level: str
     s3_request_timeout_seconds: int
     read_validation_timeout_seconds: int
-    deacon_filter_timeout_seconds: int
+    # deacon runs in-process, so a released-GIL filter call cannot be interrupted the
+    # way a subprocess could be killed on timeout; input size is what bounds its runtime.
+    max_input_file_bytes: int
     file_service_host: str | None = None
     file_service_port: int | None = None
 
@@ -28,6 +30,8 @@ class Config(BaseModel):
     deacon_r: float = (
         0.05  # relative proportion of k-mers in a read that need to map to index
     )
+    deacon_threads: int = 4  # worker threads within a single deacon filter call
+    deacon_max_concurrent_filters: int = 2  # filter calls allowed to run at once
 
 
 def get_config(config_file: str | Path) -> Config:
