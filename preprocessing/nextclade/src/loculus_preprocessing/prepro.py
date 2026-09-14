@@ -365,7 +365,7 @@ def _try_compute_length_field(
     return False, None
 
 
-def get_output_metadata(  # noqa: PLR0914
+def get_output_metadata(
     accession_version: AccessionVersion,
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
     config: Config,
