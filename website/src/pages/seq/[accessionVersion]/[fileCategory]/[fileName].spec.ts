@@ -53,4 +53,11 @@ describe('file download proxy route', () => {
         const response = await callRoute({ isLoggedIn: false });
         expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
     });
+
+    test('allows any origin on non-redirect responses', async () => {
+        fetchMock.mockResolvedValue(new Response('not found', { status: 404 }));
+        const response = await callRoute({ isLoggedIn: false });
+        expect(response.status).toBe(404);
+        expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
+    });
 });
