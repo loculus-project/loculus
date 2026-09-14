@@ -32,6 +32,7 @@ type FolderUploadComponentProps = {
     fileUploadState: FileUploadState | undefined;
     setFileUploadState: Dispatch<SetStateAction<FileUploadState | undefined>>;
     onError: (message: string) => void;
+    maxFileSizeBytes?: number;
 };
 
 const FileInput = ({
@@ -89,6 +90,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     fileUploadState,
     setFileUploadState,
     onError,
+    maxFileSizeBytes,
 }) => {
     const [isDragging, setIsDragging] = useState(false);
 
@@ -227,7 +229,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             // Reset the input so the same folder can be selected again
             e.target.value = '';
 
-            const error = isFilesArrayValid(filesArray, inputMode);
+            const error = isFilesArrayValid(filesArray, inputMode, maxFileSizeBytes);
             if (error) {
                 onError(error);
                 return;
@@ -269,7 +271,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             // Reset the input so the same file can be selected again
             e.target.value = '';
 
-            const error = isFilesArrayValid(filesArray, inputMode);
+            const error = isFilesArrayValid(filesArray, inputMode, maxFileSizeBytes);
             if (error) {
                 onError(error);
                 return;
@@ -524,7 +526,7 @@ const filterDotFiles = (files: File[]): File[] => {
 /**
  * Returns `undefined` if the files are fine, or an error otherwise.
  */
-const isFilesArrayValid = (files: File[], inputMode: InputMode): string | undefined => {
+const isFilesArrayValid = (files: File[], inputMode: InputMode, maxFileSizeBytes?: number): string | undefined => {
     if (inputMode === 'form') {
         if (files.some((f) => f.webkitRelativePath.split('/').length > 2)) {
             return 'Subdirectories are not supported for individual submissions.';
@@ -535,4 +537,14 @@ const isFilesArrayValid = (files: File[], inputMode: InputMode): string | undefi
 
     if (fileNames.some((n) => /\s/.test(n))) return 'File names may not contain whitespace.';
     if (folderNames.some((p) => /\s/.test(p))) return 'Folder names may not contain whitespace.';
+
+    if (maxFileSizeBytes !== undefined) {
+        const tooLarge = files.find((f) => f.size > maxFileSizeBytes);
+        if (tooLarge !== undefined) {
+            return (
+                `File '${tooLarge.name}' is ${formatFileSize(tooLarge.size)}, which exceeds the maximum ` +
+                `allowed file size of ${formatFileSize(maxFileSizeBytes)}.`
+            );
+        }
+    }
 };
