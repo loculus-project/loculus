@@ -110,8 +110,8 @@ test('reject raw_reads files that are not valid or not gzipped', async ({
         tmpDir,
     );
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone(180_000);
-    await reviewPage.expectFileProcessingError(/This is not a FASTQ file./i);
-    await reviewPage.expectFileProcessingError(/must be gzip-compressed/i);
+    await reviewPage.expectFileProcessingError(/This is not a FASTQ file./i, ID_1);
+    await reviewPage.expectFileProcessingError(/must be gzip-compressed/i, ID_2);
     await reviewPage.expectNoValidSequencesToApprove();
 });
 
@@ -142,7 +142,10 @@ test('reject FASTQ raw_reads file with human host reads with a deacon validation
         tmpDir,
     );
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone(180_000);
-    await reviewPage.expectFileProcessingError(/high proportion of human reads/i);
+    await reviewPage.expectFileProcessingError(
+        /high proportion of human reads/i,
+        'host-contaminated',
+    );
     await reviewPage.expectNoValidSequencesToApprove();
 });
 

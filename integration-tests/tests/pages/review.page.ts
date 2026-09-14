@@ -235,8 +235,12 @@ export class ReviewPage {
         return tabNames;
     }
 
-    async expectFileProcessingError(pattern: RegExp) {
-        await expect(this.page.locator('.text-red-600', { hasText: pattern })).toBeVisible();
+    async expectFileProcessingError(pattern: RegExp, submissionId: string) {
+        await expect(
+            this.page
+                .getByTestId(`review-card-${submissionId}`)
+                .locator('.text-red-600', { hasText: pattern }),
+        ).toBeVisible();
     }
 
     async expectNoValidSequencesToApprove() {
