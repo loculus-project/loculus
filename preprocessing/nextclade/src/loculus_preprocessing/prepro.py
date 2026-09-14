@@ -57,6 +57,7 @@ from .datatypes import (
     _internal_error_message,
 )
 from .embl import create_flatfile
+from .external_services import ExternalServices
 from .nextclade import (
     assign_segment_using_header,
     download_nextclade_dataset,
@@ -64,7 +65,6 @@ from .nextclade import (
 )
 from .nextclade_annotation import NextcladeAnnotation
 from .processing_functions import (
-    ExternalServices,
     ProcessingFunctions,
     null_per_backend,
     process_frameshifts,
@@ -389,7 +389,7 @@ def get_output_metadata(
             submissionId=unprocessed.submissionId,
             submitter=unprocessed.submitter,
         )
-    external_services = ExternalServices(taxonomy_service=config._taxonomy_service)
+    external_services = config._external_services
 
     for output_field in config.processing_order:
         spec = config.processing_spec[output_field]
