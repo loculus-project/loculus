@@ -20,13 +20,13 @@ import pytz
 from loculus_preprocessing.external_services import TaxonomyService
 
 from .datatypes import (
-    AccessionVersion,
     AnnotationSourceType,
     FunctionArgs,
     InputData,
     InputMetadata,
     ProcessedMetadataValue,
     ProcessingAnnotation,
+    ProcessingContext,
     ProcessingResult,
     RawProcessingResult,
     _internal_error_message,
@@ -37,19 +37,6 @@ from .datatypes import (
 logger = logging.getLogger(__name__)
 
 options_cache: dict[str, dict[str, str]] = {}
-
-
-@dataclass(frozen=True)
-class ProcessingContext:
-    """Runtime context that is the same for every processing function call for a given
-    accession, as opposed to `FunctionArgs` which holds the literal, per-function arguments
-    declared in the organism's YAML config.
-    """
-
-    accession_version: AccessionVersion
-    is_insdc_ingest_group: bool
-    submitted_at: str
-    taxonomy_service: TaxonomyService
 
 
 def compute_options_cache(output_field: str, options_list: list[str]) -> dict[str, str]:
@@ -260,6 +247,17 @@ def derive_date_range_string(lower: datetime, upper: datetime) -> str:
     return f"{lower.strftime('%Y-%m-%d')}/{upper.strftime('%Y-%m-%d')}"
 
 
+@dataclass(frozen=True)
+class ExternalServices:
+    """External services available to processing functions.
+
+    Kept separate from `ProcessingContext` since these don't vary per accession, unlike
+    `ProcessingContext`'s fields.
+    """
+
+    taxonomy_service: TaxonomyService
+
+
 class ProcessingFunctions:
     @classmethod
     def call_function(  # noqa: PLR0913, PLR0917
@@ -270,6 +268,7 @@ class ProcessingFunctions:
         output_field: str,
         input_fields: list[str],
         context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> ProcessingResult:
         if not hasattr(cls, function_name):
             msg = (
@@ -280,7 +279,12 @@ class ProcessingFunctions:
         func = getattr(cls, function_name)
         try:
             result = func(
-                input_data, output_field, input_fields=input_fields, args=args, context=context
+                input_data,
+                output_field,
+                input_fields=input_fields,
+                args=args,
+                context=context,
+                external_services=external_services,
             )
         except Exception as e:
             result = raw_internal_error(
@@ -326,12 +330,13 @@ class ProcessingFunctions:
         return result
 
     @staticmethod
-    def check_date(
+    def check_date(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,  # args is essential - even if Pylance says it's not used
         context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Check that date is complete YYYY-MM-DD
         If not according to format return error
@@ -355,12 +360,13 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def parse_date_into_range(  # noqa: C901, PLR0912, PLR0915
+    def parse_date_into_range(  # noqa: C901, PLR0912, PLR0913, PLR0915, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,  # args is essential - even if Pylance says it's not used
         context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """
         Parse date string (`input.date`) with input formats:
@@ -512,12 +518,13 @@ class ProcessingFunctions:
         return RawProcessingResult(datum=return_value, warnings=warnings, errors=errors)
 
     @staticmethod
-    def parse_and_assert_past_date(  # noqa: C901
+    def parse_and_assert_past_date(  # noqa: C901, PLR0913, PLR0917
         input_data: InputMetadata,
         output_field,
         input_fields: list[str],
         args: FunctionArgs,  # args is essential - even if Pylance says it's not used
         context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Parse date string. If it's incomplete, add 01-01, if no year, return null and error
         input_data:
@@ -577,12 +584,13 @@ class ProcessingFunctions:
         return processing_error(f"Metadata field {output_field}: Date format is not recognized.")
 
     @staticmethod
-    def parse_timestamp(
+    def parse_timestamp(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,  # args is essential - even if Pylance says it's not used
         context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
         timestamp = input_data["timestamp"]
@@ -599,12 +607,13 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def concatenate(
+    def concatenate(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
         context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Concatenates input fields using the "/" separator in the order
         specified by the order argument. Optionally, a 'fallback_value' argument can be provided.
@@ -645,7 +654,12 @@ class ProcessingFunctions:
             for i in range(len(order)):
                 if field_types[i] == "date":
                     processed = ProcessingFunctions.parse_and_assert_past_date(
-                        {"date": input_data[order[i]]}, output_field, input_fields, args, context
+                        {"date": input_data[order[i]]},
+                        output_field,
+                        input_fields,
+                        args,
+                        context,
+                        external_services,
                     )
                     formatted_input_data.append(
                         fallback_value
@@ -678,6 +692,7 @@ class ProcessingFunctions:
                         input_fields,
                         args,
                         context,
+                        external_services,
                     )
                     formatted_input_data.append(
                         fallback_value
@@ -721,12 +736,13 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def check_authors(
+    def check_authors(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
         context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         authors = input_data["authors"]
 
@@ -772,12 +788,13 @@ class ProcessingFunctions:
         return RawProcessingResult(errors=[error_message], warnings=warnings)
 
     @staticmethod
-    def extract_regex(
+    def extract_regex(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
         context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """
         Extracts a substring from the `regex_field` using the provided regex `pattern`
@@ -817,12 +834,13 @@ class ProcessingFunctions:
         return RawProcessingResult(errors=errors)
 
     @staticmethod
-    def check_regex(
+    def check_regex(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
         context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """
         Validates that the field regex_field matches the regex expression.
@@ -844,12 +862,13 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def identity(  # noqa: C901, PLR0912
+    def identity(  # noqa: C901, PLR0912, PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
         context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Identity function, takes input_data["input"] and returns it as output"""
         if "input" not in input_data:
@@ -900,12 +919,13 @@ class ProcessingFunctions:
         return RawProcessingResult(datum=output_datum, errors=errors)
 
     @staticmethod
-    def process_options(
+    def process_options(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
         context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Checks that option is in options"""
         if "options" not in args or not isinstance(args["options"], list):
@@ -936,12 +956,13 @@ class ProcessingFunctions:
         return RawProcessingResult(datum=output_datum)
 
     @staticmethod
-    def is_above_threshold(
+    def is_above_threshold(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
         context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Flag if input value is above a threshold specified in args"""
         if "threshold" not in args:
@@ -962,12 +983,13 @@ class ProcessingFunctions:
         return RawProcessingResult(datum=(input > threshold))
 
     @staticmethod
-    def is_variant(
+    def is_variant(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
         context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Flag if number of mutations is above mutation rate (specified in args) times length"""
         if "mu" not in args:
@@ -989,6 +1011,7 @@ class ProcessingFunctions:
                 input_fields=input_fields,
                 args={"threshold": threshold},
                 context=context,
+                external_services=external_services,
             )
         except (ValueError, TypeError):
             return processing_error(
@@ -1001,12 +1024,13 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def assign_custom_lineage(  # noqa: C901
+    def assign_custom_lineage(  # noqa: C901, PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
         context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """
         Assign flu lineage based on seg4 and seg6.
@@ -1057,6 +1081,7 @@ class ProcessingFunctions:
                     "output_field",
                     ["segment_name"],
                     context,
+                    external_services,
                 ).datum
             logger.debug(f"Extracted lineages: {extracted_lineages} from references: {references}")
             if not ha_subtype or not na_subtype:
@@ -1087,12 +1112,13 @@ class ProcessingFunctions:
         return RawProcessingResult()
 
     @staticmethod
-    def build_display_name(
+    def build_display_name(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
         context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Builds a displayName from input_fields. The identifier field in the displayName is based
         on specimenCollectorSampleId or - if it is not set - submissionId (direct submissions only).
@@ -1113,7 +1139,7 @@ class ProcessingFunctions:
               (e.g. '<any>/<any>/<identifier>/<date>')
         """
         collector_id = input_data.get("specimenCollectorSampleId", None)
-        submission_id = input_data.get("submissionId", None)
+        submission_id = context.submissionId
         warnings: list[str] = []
 
         order = args.get("order")
@@ -1150,13 +1176,15 @@ class ProcessingFunctions:
         insdc_ingested = context.is_insdc_ingest_group
 
         # Try to parse the specimenCollectorSampleId first
-        identifier = parse_identifier_string(collector_id, insdc_ingested, regex_pattern, context)
+        identifier = parse_identifier_string(
+            collector_id, insdc_ingested, regex_pattern, context, external_services
+        )
         if identifier is None and not insdc_ingested:
             # For direct submissions only: try to parse the submissionId
             # Don't do this for ingested since there the submissionId is just the
             # (concatenation of) nuccore accession(s) of the sequence(s)
             identifier = parse_identifier_string(
-                submission_id, insdc_ingested, regex_pattern, context
+                submission_id, insdc_ingested, regex_pattern, context, external_services
             )
 
         def replace_identifier(values, replacement):
@@ -1192,6 +1220,7 @@ class ProcessingFunctions:
             input_fields,
             new_args,
             context,
+            external_services,
         )
 
         return RawProcessingResult(
@@ -1201,12 +1230,13 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def resolve_host_taxon_id(
+    def resolve_host_taxon_id(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
         context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Validates that the host exists
         in NCBI's taxonomy. Checks either the hostTaxonId or the
@@ -1222,39 +1252,41 @@ class ProcessingFunctions:
         if not unvalidated_host:
             return RawProcessingResult()
 
-        return context.taxonomy_service.get_tax_id(
+        return external_services.taxonomy_service.get_tax_id(
             unvalidated_host, not context.is_insdc_ingest_group
         )
 
     @staticmethod
-    def scientific_name_from_id(
+    def scientific_name_from_id(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
         context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         tax_id: str | None = input_data.get("hostTaxonId")
         if not tax_id:
             return RawProcessingResult()
 
-        return context.taxonomy_service.get_scientific_name(
+        return external_services.taxonomy_service.get_scientific_name(
             tax_id, not context.is_insdc_ingest_group
         )
 
     @staticmethod
-    def common_name_from_id(
+    def common_name_from_id(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
         context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         tax_id: str | None = input_data.get("hostTaxonId")
         if not tax_id:
             return RawProcessingResult()
 
-        return context.taxonomy_service.get_common_name(tax_id)
+        return external_services.taxonomy_service.get_common_name(tax_id)
 
 
 def single_metadata_annotation(
@@ -1477,6 +1509,7 @@ def parse_identifier_string(
     insdc_ingested: bool,
     regex_pattern: str | None,
     context: ProcessingContext,
+    external_services: ExternalServices,
 ) -> str | None:
     """Return an IDENTIFIER string to use in the displayName or None if `input` cannot be used
     as an identifier.
@@ -1503,6 +1536,7 @@ def parse_identifier_string(
         input_fields=[],
         args={"pattern": regex_pattern, "capture_group": "identifier"},
         context=context,
+        external_services=external_services,
     )
     return None if extract_result.datum is None else str(extract_result.datum)
 

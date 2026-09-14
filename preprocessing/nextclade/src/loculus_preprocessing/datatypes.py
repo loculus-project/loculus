@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -112,9 +114,25 @@ FunctionInputs = dict[ArgName, InputField]
 FunctionArgs = dict[ArgName, ArgValue]
 
 
+@dataclass(frozen=True)
+class ProcessingContext:
+    """Runtime context that is the same for every processing function call for a given
+    accession, as opposed to `FunctionArgs` which holds the literal, per-function arguments
+    declared in the organism's YAML config.
+    """
+
+    accession_version: AccessionVersion
+    submissionId: str  # noqa: N815
+    submitter: str
+    is_insdc_ingest_group: bool
+    group_id: int
+    submitted_at: str
+
+
 @dataclass
 class UnprocessedAfterNextclade:
     inputMetadata: InputMetadata  # noqa: N815
+    context: ProcessingContext
     files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
     # Derived metadata produced by Nextclade
     nextcladeMetadata: dict[SequenceName, Any] | None  # noqa: N815
@@ -203,7 +221,7 @@ class RawProcessingResult:
     errors: list[str] = field(default_factory=list)
 
 
-def processing_error(message: str) -> "RawProcessingResult":
+def processing_error(message: str) -> RawProcessingResult:
     """Helper to create a RawProcessingResult with a single error and no datum."""
     return RawProcessingResult(datum=None, errors=[message])
 

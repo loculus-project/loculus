@@ -17,22 +17,29 @@ from loculus_preprocessing.datatypes import (
     ProcessedMetadataValue,
     ProcessingAnnotation,
     ProcessingAnnotationAlignment,
+    ProcessingContext,
     SegmentName,
     UnprocessedData,
     UnprocessedEntry,
 )
 from loculus_preprocessing.external_services import TaxonomyService
-from loculus_preprocessing.processing_functions import ProcessingContext
+from loculus_preprocessing.processing_functions import ExternalServices
 
-# Default ProcessingContext for tests that don't care about its contents (no taxonomy
-# service, no INSDC ingest group, no submittedAt). Tests that do care about specific
-# field(s) should use `dataclasses.replace(DEFAULT_TEST_CONTEXT, ...)`.
+# Default ProcessingContext for tests that don't care about its contents (no INSDC
+# ingest group, no submittedAt). Tests that do care about specific field(s) should use
+# `dataclasses.replace(DEFAULT_TEST_CONTEXT, ...)`.
 DEFAULT_TEST_CONTEXT = ProcessingContext(
     accession_version="accession.1",
     is_insdc_ingest_group=False,
+    group_id=2,
     submitted_at="",
-    taxonomy_service=TaxonomyService(None),
+    submissionId="test_submission_id",
+    submitter="test_submitter",
 )
+
+# Default ExternalServices for tests that don't care about its contents (no taxonomy
+# service URL configured).
+DEFAULT_EXTERNAL_SERVICES = ExternalServices(taxonomy_service=TaxonomyService(None))
 
 
 def ts_from_ymd(year: int, month: int, day: int) -> str:
