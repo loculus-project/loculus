@@ -101,6 +101,12 @@ const InnerDataUploadForm = ({
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
 
+        const fileUploadStateResult = validateFileUploadStates(fileUploadStates);
+        if (fileUploadStateResult.isErr()) {
+            onError(fileUploadStateResult.error.message);
+            return;
+        }
+
         const sequenceDataResult = await fileFactory!();
 
         if (sequenceDataResult.type === 'error') {
@@ -124,12 +130,6 @@ const InnerDataUploadForm = ({
 
         if (dataUseTermsEnabled && !agreedToINSDCUploadTerms) {
             onError('Please tick the box to agree that you will not independently submit these sequences to INSDC');
-            return;
-        }
-
-        const fileUploadStateResult = validateFileUploadStates(fileUploadStates);
-        if (fileUploadStateResult.isErr()) {
-            onError(fileUploadStateResult.error.message);
             return;
         }
 
