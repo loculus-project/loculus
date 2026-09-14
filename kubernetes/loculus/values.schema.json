@@ -1901,18 +1901,18 @@
             "endpoint": {
               "groups": ["s3"],
               "type": "string",
-              "default": "s3-<host value>",
-              "description": "The endpoint where S3 is running. Do not include a protocol prefix."
+              "default": "https://s3-<host value>",
+              "description": "The base URL of the S3-compatible service, including the protocol (e.g. https://). This is passed directly to the AWS SDK's endpoint override, which requires a scheme; a value without one will fail with 'The scheme of the endpoint override must not be null.' The backend addresses objects path-style (endpoint/bucket/key), so for AWS S3 use the regional endpoint rather than a bucket-specific virtual-hosted one, e.g. https://s3.eu-central-1.amazonaws.com for a bucket in eu-central-1. Ignored when runDevelopmentS3 is true: the dev S3 (MinIO) URL is generated automatically, scheme included."
             },
             "region": {
               "groups": ["s3"],
               "type": "string",
-              "description": "The region where the bucket is located."
+              "description": "The region where the bucket is located, e.g. eu-central-1 for AWS S3."
             },
             "bucket": {
               "groups": ["s3"],
               "type": "string",
-              "description": "The name of the bucket."
+              "description": "The name of the bucket, e.g. my-loculus-bucket for AWS S3. Do not include the arn:aws:s3::: prefix or any path - just the bucket name."
             }
           },
           "required": ["bucket"],
