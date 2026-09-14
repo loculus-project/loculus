@@ -1,0 +1,17 @@
+{{- $traefikApiVersion := ternary "traefik.io/v1alpha1" "traefik.containo.us/v1alpha1" (ne (int $.Values.traefikVersion) 2) -}}
+{{/*
+Traefik's default 90s idle keep-alive outlives our backends' (Tomcat 20s, Node/uvicorn 5s), so it
+reuses connections they are closing -> 502 Bad Gateway.
+https://github.com/loculus-project/loculus/pull/7092
+
+Beware: this replaces traefik's cluster-wide static serversTransport for these services instead of
+merging with it, so changes made there won't apply and need mirroring here.
+*/}}
+apiVersion: {{ $traefikApiVersion }}
+kind: ServersTransport
+metadata:
+  name: short-idle-conn-timeout
+spec:
+  maxIdleConnsPerHost: 200 # matches traefik defaults
+  forwardingTimeouts:
+    idleConnTimeout: "3s" # must stay below the shortest backend keep-alive (5s)

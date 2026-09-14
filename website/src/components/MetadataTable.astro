@@ -9,7 +9,7 @@ const organisms: OrganismMetadata[] = configuredOrganisms.map((organism) => {
         key: organism.key,
         displayName: organism.displayName,
         metadata: getSchema(organism.key).metadata,
-        groupedInputFields: getGroupedInputFields(organism.key, 'submit'),
+        groupedInputFields: getGroupedInputFields(organism.key, 'submit', 'bulk'),
     };
 });
 ---

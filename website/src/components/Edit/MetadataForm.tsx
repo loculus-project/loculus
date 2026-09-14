@@ -4,9 +4,9 @@ import { Fragment, type Dispatch, type FC, type SetStateAction } from 'react';
 
 import { EditableDataRow } from './DataRow.tsx';
 import type { Row } from './InputField';
-import { ACCESSION_FIELD, FASTA_IDS_FIELD, SUBMISSION_ID_INPUT_FIELD } from '../../settings.ts';
+import { ACCESSION_FIELD, FASTA_IDS_FIELD, FILES_HEADER_PREFIX, SUBMISSION_ID_INPUT_FIELD } from '../../settings.ts';
 import { mapErrorsAndWarnings, type SequenceEntryToEdit } from '../../types/backend.ts';
-import type { InputField } from '../../types/config';
+import type { FileCategory, InputField } from '../../types/config';
 
 type SubtitleProps = {
     title: string;
@@ -72,8 +72,15 @@ export class EditableMetadata {
      *      The submission ID to put into the TSV.
      * @param accession optional. If an accession is already assigned to this sequence, it should be given.
      * @param fastaIds optional. Add a fastaIds field with content if supplied.
+     * @param fileCategories optional. If supplied, add an empty field for each file category.
+     * @returns a File object containing the TSV, or undefined if no values are set.
      */
-    getMetadataTsv(submissionId?: string, accession?: string, fastaIds?: string): File | undefined {
+    getMetadataTsv(
+        submissionId?: string,
+        accession?: string,
+        fastaIds?: string,
+        fileCategories?: FileCategory[],
+    ): File | undefined {
         // if no values are set at all, return undefined
         if (!this.rows.some((row) => row.value !== '')) return undefined;
 
@@ -96,6 +103,12 @@ export class EditableMetadata {
 
         if (fastaIds) {
             tsvFields.set(FASTA_IDS_FIELD, fastaIds);
+        }
+
+        if (fileCategories) {
+            fileCategories.forEach((fileCategory) => {
+                tsvFields.set(`${FILES_HEADER_PREFIX}${fileCategory.name}`, '');
+            });
         }
 
         const tsvContent = Papa.unparse([Array.from(tsvFields.keys()), Array.from(tsvFields.values())], {

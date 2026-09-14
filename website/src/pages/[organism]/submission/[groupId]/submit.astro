@@ -5,6 +5,7 @@ import { SubmissionForm } from '../../../../components/Submission/SubmissionForm
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
 import {
     dataUseTermsAreEnabled,
+    getFileSharingConfig,
     getGroupedInputFields,
     getRuntimeConfig,
     getSchema,
@@ -26,7 +27,7 @@ if (!cleanedOrganism) {
     return new Response(undefined, { status: 404 });
 }
 const schema = getSchema(cleanedOrganism.key);
-const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'submit', true);
+const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'submit', inputMode, true);
 
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 
@@ -52,6 +53,7 @@ Astro.response.headers.append('Expires', '0');
                     inputMode={inputMode}
                     submissionDataTypes={schema.submissionDataTypes}
                     dataUseTermsEnabled={dataUseTermsAreEnabled()}
+                    fileSharingConfig={getFileSharingConfig()}
                     client:load
                 />
             ),

@@ -169,13 +169,14 @@ class SubmitEndpointTest(
     }
 
     @Test
-    fun `GIVEN submission with file mapping THEN returns an error`() {
+    fun `GIVEN submission with file mapping for organism without file support THEN returns an error`() {
         submissionControllerClient.submit(
-            DefaultFiles.metadataFile,
+            DefaultFiles.multiSegmentedMetadataFile.withFileMapping(
+                mapOf("custom0" to mapOf("bar" to listOf(FileIdAndName(UUID.randomUUID(), "baz")))),
+            ),
             DefaultFiles.sequencesFileMultiSegmented,
             organism = OTHER_ORGANISM,
             groupId = groupId,
-            fileMapping = mapOf("foo" to mapOf("bar" to listOf(FileIdAndName(UUID.randomUUID(), "baz")))),
         )
             .andExpect(status().isBadRequest)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
@@ -365,8 +366,8 @@ class SubmitEndpointTest(
                         """.trimIndent(),
                     ),
                     DefaultFiles.sequencesFile,
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
+                    status().isUnprocessableContent,
+                    "Unprocessable Content",
                     "contains no value for 'id'",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
@@ -380,8 +381,8 @@ class SubmitEndpointTest(
                         """.trimIndent(),
                     ),
                     DefaultFiles.sequencesFile,
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
+                    status().isUnprocessableContent,
+                    "Unprocessable Content",
                     "The metadata file does not contain either header 'id' or 'submissionId'",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
@@ -396,8 +397,8 @@ class SubmitEndpointTest(
                         """.trimIndent(),
                     ),
                     DefaultFiles.sequencesFile,
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
+                    status().isUnprocessableContent,
+                    "Unprocessable Content",
                     "Metadata file contains at least one duplicate submissionId",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
@@ -413,8 +414,8 @@ class SubmitEndpointTest(
                             AC
                         """.trimIndent(),
                     ),
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
+                    status().isUnprocessableContent,
+                    "Unprocessable Content",
                     "Sequence file contains at least one duplicate submissionId",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
@@ -435,8 +436,8 @@ class SubmitEndpointTest(
                             AC
                         """.trimIndent(),
                     ),
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
+                    status().isUnprocessableContent,
+                    "Unprocessable Content",
                     "Sequence file contains 1 FASTA ids that are not present in the metadata file: 'notInMetadata'",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
@@ -456,8 +457,8 @@ class SubmitEndpointTest(
                             AC
                         """.trimIndent(),
                     ),
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
+                    status().isUnprocessableContent,
+                    "Unprocessable Content",
                     "Metadata file contains 1 FASTA ids that are not present in the sequence file: 'notInSequences'",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
@@ -539,7 +540,7 @@ class SubmitEndpointTest(
             sequencesFile,
             groupId = groupId,
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(

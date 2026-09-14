@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - "website/**"
+      - "kubernetes/**"
       - "deploy.py"
       - generate_local_test_config.sh
       - .github/workflows/website-playwright-dev-test.yml

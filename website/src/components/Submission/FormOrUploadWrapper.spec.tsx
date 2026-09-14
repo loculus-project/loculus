@@ -65,6 +65,8 @@ const MockSaveWrapper = ({
                     consensusSequences: enableConsensusSequences,
                     maxSequencesPerEntry: 2,
                 }}
+                setSubmissionFileMapping={vi.fn()}
+                onError={vi.fn()}
             />
             <Button onClick={handler}>generate</Button>
         </>

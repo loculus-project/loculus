@@ -59,11 +59,11 @@ class RequestMeasurement(
             object : CallableProcessingInterceptor {
                 private var cpuStart = -1L
 
-                override fun <T : Any?> preProcess(request: NativeWebRequest, task: Callable<T>) {
+                override fun <T : Any> preProcess(request: NativeWebRequest, task: Callable<T>) {
                     cpuStart = currentThreadCpuTime()
                 }
 
-                override fun <T : Any?> postProcess(
+                override fun <T : Any> postProcess(
                     request: NativeWebRequest,
                     task: Callable<T>,
                     concurrentResult: Any?,
@@ -71,7 +71,7 @@ class RequestMeasurement(
                     addCpuTimeSince(cpuStart)
                 }
 
-                override fun <T : Any?> afterCompletion(request: NativeWebRequest, task: Callable<T>) {
+                override fun <T : Any> afterCompletion(request: NativeWebRequest, task: Callable<T>) {
                     asynchronousPartFinished.set(true)
                     recordWhenCompleted()
                 }

@@ -145,6 +145,12 @@ resources:
       cpu: "10m"
     limits:
       memory: "3Gi"
+  raw-reads-processing:
+    requests:
+      memory: "8Gi"
+      cpu: "50m"
+    limits:
+      memory: "8Gi"
   minio:
     requests:
       memory: "250Mi"
@@ -157,7 +163,7 @@ defaultResources:
     cpu: "20m"
   limits:
     memory: "1Gi"
-    cpu: "20m"
+    cpu: "500m"
 defaultOrganisms:
   ebola-sudan: &fileSharingOrganismDefaults
     schema:

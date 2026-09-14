@@ -44,8 +44,12 @@ def slack_conn_init(
 
 def notify(config: SlackConfig, text: str):
     """Send slack notification using slack hook"""
-    if config.slack_hook:
+    if not config.slack_hook:
+        return
+    try:
         requests.post(config.slack_hook, data=json.dumps({"text": text}), timeout=10)
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error sending slack notification: {e}")
 
 
 def upload_file_with_comment(

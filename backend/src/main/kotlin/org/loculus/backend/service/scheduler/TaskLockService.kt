@@ -1,10 +1,10 @@
 package org.loculus.backend.service.scheduler
 
 import mu.KotlinLogging
-import org.jetbrains.exposed.sql.LongColumnType
-import org.jetbrains.exposed.sql.TextColumnType
-import org.jetbrains.exposed.sql.statements.StatementType
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.LongColumnType
+import org.jetbrains.exposed.v1.core.TextColumnType
+import org.jetbrains.exposed.v1.core.statements.StatementType
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 

@@ -12,10 +12,10 @@ import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.model.SubmitModel
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -25,7 +25,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 private val validRoute = addOrganismToPath("submit")
 
-private val validRequest: MockHttpServletRequestBuilder = multipart(validRoute)
+private val validRequest: MockMultipartHttpServletRequestBuilder = multipart(validRoute)
     .file("sequenceFile", "sequences".toByteArray())
     .file("metadataFile", "metadata".toByteArray())
     .param("groupId", "5")
@@ -46,7 +46,6 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
     }
 
     private fun MockKMatcherScope.validControllerCall() = submissionController.submit(
-        any(),
         any(),
         any(),
         any(),
@@ -76,24 +75,24 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
     }
 
     @Test
-    fun `GIVEN InvalidSequenceFileException is thrown THEN returns Unprocessable Entity (422)`() {
+    fun `GIVEN UnprocessableEntityException is thrown THEN returns Unprocessable Content (422)`() {
         every { validControllerCall() } throws UnprocessableEntityException("SomeMessage")
 
         mockMvc.perform(validRequest)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
-            .andExpect(jsonPath("$.title").value("Unprocessable Entity"))
+            .andExpect(jsonPath("$.title").value("Unprocessable Content"))
             .andExpect(jsonPath("$.detail").value("SomeMessage"))
     }
 
     @Test
-    fun `GIVEN ProcessingException is thrown THEN returns Unprocessable Entity (422)`() {
+    fun `GIVEN ProcessingValidationException is thrown THEN returns Unprocessable Content (422)`() {
         every { validControllerCall() } throws ProcessingValidationException("SomeMessage")
 
         mockMvc.perform(validRequest)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
-            .andExpect(jsonPath("$.title").value("Unprocessable Entity"))
+            .andExpect(jsonPath("$.title").value("Unprocessable Content"))
             .andExpect(jsonPath("$.detail").value("SomeMessage"))
     }
 

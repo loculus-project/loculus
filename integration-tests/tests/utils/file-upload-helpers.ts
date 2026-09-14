@@ -4,25 +4,31 @@ import path from 'path';
 import { clearTmpDir } from './tmpdir';
 
 /**
- * @param fileContents A struct: submissionID -> filename -> filecontent
+ * @param fileContents Struct containing possible mixture of:
+ *                      filename -> filecontent, or
+ *                      subfolder -> filename -> filecontent
  * @param tmpDir The temporary directory to use for storing files
  */
 export async function prepareTmpDirForBulkUpload(
-    fileContents: Record<string, Record<string, string>>,
+    fileContents: Record<string, string | Record<string, string>>,
     tmpDir: string,
 ) {
     await clearTmpDir(tmpDir);
 
-    // Create submission directories and write files
-    const submissionIds = Object.keys(fileContents);
+    // Create subfolders if required
     await Promise.all(
-        submissionIds.map((submissionId) => fs.promises.mkdir(path.join(tmpDir, submissionId))),
+        Object.entries(fileContents).flatMap(([p, f]) => {
+            if (typeof f !== 'string') return fs.promises.mkdir(path.join(tmpDir, p));
+        }),
     );
+    // Populate files, in subfolders if required
     await Promise.all(
-        Object.entries(fileContents).flatMap(([submissionId, files]) => {
-            return Object.entries(files).map(([fileName, fileContent]) =>
-                fs.promises.writeFile(path.join(tmpDir, submissionId, fileName), fileContent),
-            );
+        Object.entries(fileContents).flatMap(([p, f]) => {
+            if (typeof f !== 'string')
+                return Object.entries(f).map(([fileName, fileContent]) =>
+                    fs.promises.writeFile(path.join(tmpDir, p, fileName), fileContent),
+                );
+            else return fs.promises.writeFile(path.join(tmpDir, p), f);
         }),
     );
 }

@@ -17,6 +17,8 @@ export const DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD = 'dataUseTermsRestrictedUnti
 export const VERSION_COMMENT_FIELD = 'versionComment';
 export const SUBMISSION_ID_INPUT_FIELD = 'id';
 
+export const FILES_HEADER_PREFIX = 'files.';
+
 export const metadataDefaultDownloadDataFormat = 'tsv';
 export const sequenceDefaultDownloadDataFormat = 'fasta';
 

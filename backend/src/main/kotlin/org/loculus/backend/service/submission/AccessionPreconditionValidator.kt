@@ -1,7 +1,9 @@
 package org.loculus.backend.service.submission
 
-import org.jetbrains.exposed.sql.Query
-import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.jdbc.Query
+import org.jetbrains.exposed.v1.jdbc.select
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.Organism
@@ -65,6 +67,7 @@ class AccessionPreconditionValidator(
                 SequenceEntriesView.statusColumn,
                 SequenceEntriesView.organismColumn,
                 SequenceEntriesView.errorsColumn,
+                SequenceEntriesView.isRevocationColumn,
             )
             .where { SequenceEntriesView.accessionVersionIsIn(accessionVersions) },
         groupManagementPreconditionValidator = groupManagementPreconditionValidator,
@@ -101,6 +104,7 @@ class AccessionPreconditionValidator(
                 SequenceEntriesView.statusColumn,
                 SequenceEntriesView.organismColumn,
                 SequenceEntriesView.errorsColumn,
+                SequenceEntriesView.isRevocationColumn,
             )
             .where {
                 (SequenceEntriesView.accessionColumn inList accessions) and SequenceEntriesView.isMaxVersion
@@ -162,6 +166,21 @@ class AccessionPreconditionValidator(
                 throw UnprocessableEntityException(
                     "Accession versions have errors: " +
                         sequenceEntriesWithErrors.map {
+                            "${it[SequenceEntriesView.accessionColumn]}.${it[SequenceEntriesView.versionColumn]}"
+                        }.joinToString(", "),
+                )
+            }
+            return this
+        }
+
+        fun andThatLatestVersionsAreNotRevocations(): CommonPreconditions {
+            val revocationEntries = sequenceEntries
+                .filter { it[SequenceEntriesView.isRevocationColumn] }
+
+            if (revocationEntries.isNotEmpty()) {
+                throw UnprocessableEntityException(
+                    "Accession versions are revocations and cannot be revoked again: " +
+                        revocationEntries.map {
                             "${it[SequenceEntriesView.accessionColumn]}.${it[SequenceEntriesView.versionColumn]}"
                         }.joinToString(", "),
                 )

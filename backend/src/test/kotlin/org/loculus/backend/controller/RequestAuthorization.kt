@@ -4,7 +4,7 @@ import io.jsonwebtoken.Jwts
 import org.loculus.backend.auth.Roles.EXTERNAL_METADATA_UPDATER
 import org.loculus.backend.auth.Roles.PREPROCESSING_PIPELINE
 import org.loculus.backend.auth.Roles.SUPER_USER
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
+import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder
 import java.security.KeyPair
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -27,8 +27,15 @@ fun generateJwtFor(username: String, roles: List<String> = emptyList()): String 
     .claim("realm_access", mapOf("roles" to roles))
     .compact()
 
-fun MockHttpServletRequestBuilder.withAuth(bearerToken: String? = jwtForDefaultUser): MockHttpServletRequestBuilder =
+fun <B : AbstractMockHttpServletRequestBuilder<B>> B.withAuth(bearerToken: String? = jwtForDefaultUser): B =
     when (bearerToken) {
         null -> this
         else -> this.header("Authorization", "Bearer $bearerToken")
     }
+
+/**
+ * Adds a query parameter only when [value] is non-null. Spring Test 7's `param()` rejects null
+ * (JSpecify null-safety); omitting an absent optional filter is equivalent to passing null in Spring 6.
+ */
+fun <B : AbstractMockHttpServletRequestBuilder<B>> B.paramIfPresent(name: String, value: String?): B =
+    if (value != null) param(name, value) else this

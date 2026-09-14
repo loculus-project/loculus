@@ -1,4 +1,5 @@
 import logging
+import subprocess  # noqa: S404
 
 from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
 import uvicorn
@@ -20,6 +21,13 @@ def read_root() -> dict[str, str]:
     return {"message": "Raw Reads Processing Service is running"}
 
 
+@app.get("/health")
+def health() -> dict[str, str]:
+    if app.state.deacon_process.poll() is not None:
+        raise HTTPException(status_code=503, detail="Deacon server process has exited")
+    return {"message": "Deacon server is running"}
+
+
 @app.post("/process-files")
 def process_files(
     payload: RequestWithFiles,
@@ -36,12 +44,13 @@ def process_files(
     return ValidationResult()
 
 
-def init_app(config: Config):
+def init_app(config: Config, deacon_process: subprocess.Popen):
     app.state.config = config
+    app.state.deacon_process = deacon_process
 
 
-def start_api(config: Config):
-    init_app(config)
+def start_api(config: Config, deacon_process: subprocess.Popen):
+    init_app(config, deacon_process)
     host = config.file_service_host or "127.0.0.1"
     port = config.file_service_port or 5000
     logger.info(f"Starting raw reads processing service API on port {port}")

@@ -32,7 +32,6 @@ function renderReviewPage() {
             metadataDisplayNames={new Map()}
             accessToken={testAccessToken}
             clientConfig={testConfig.public}
-            filesEnabled={false}
             referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
         />,
     );

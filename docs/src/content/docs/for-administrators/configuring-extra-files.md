@@ -85,6 +85,12 @@ The example above configures the `rawReads` file category.
 
 If a user submits these files, they will be passed along to the processing pipeline as well, and the pipeline can read them, pass them through as output files, or generate additional fields or process them in any other way.
 
+:::note
+Files are submitted by adding a `files.<category>` column to the metadata file, e.g. `files.rawReads`.
+The `files.` prefix is therefore reserved: no metadata field may have a name starting with it, as such columns are
+treated as file categories during submission rather than as metadata.
+:::
+
 ### Configuring output files
 
 By default, files are not shown in the sequence detail view as well.
