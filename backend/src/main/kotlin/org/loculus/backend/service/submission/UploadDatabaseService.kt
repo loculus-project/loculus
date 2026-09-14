@@ -2,8 +2,9 @@ package org.loculus.backend.service.submission
 
 import kotlinx.datetime.LocalDateTime
 import mu.KotlinLogging
+import org.jetbrains.exposed.v1.core.ArrayColumnType
+import org.jetbrains.exposed.v1.core.TextColumnType
 import org.jetbrains.exposed.v1.core.VarCharColumnType
-import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.statements.StatementType
@@ -12,7 +13,6 @@ import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import org.jetbrains.exposed.v1.jdbc.update
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdFilesMap
@@ -25,6 +25,7 @@ import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.service.GenerateAccessionFromNumberService
 import org.loculus.backend.service.datauseterms.DataUseTermsDatabaseService
+import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.accessionColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.fastaIdsColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.filesColumn
@@ -61,6 +62,7 @@ class UploadDatabaseService(
     private val compressor: CompressionService,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val dataUseTermsDatabaseService: DataUseTermsDatabaseService,
+    private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val generateAccessionFromNumberService: GenerateAccessionFromNumberService,
     private val auditLogger: AuditLogger,
 ) {
@@ -258,11 +260,18 @@ class UploadDatabaseService(
 
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
             log.debug { "Setting data use terms for submission $uploadId to ${submissionParams.dataUseTerms}" }
-            val accessions = insertionResult.map { it.accession }
-            dataUseTermsDatabaseService.setNewDataUseTerms(
+            // setNewDataUseTerms authorized the groups of the affected entries in chunks, which
+            // the set based insert cannot do. rows of an original upload all carry the submitted
+            // group, so the group is authorized once for the whole upload instead.
+            groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(
+                submissionParams.groupId,
                 submissionParams.authenticatedUser,
-                accessions,
-                submissionParams.dataUseTerms,
+            )
+            dataUseTermsDatabaseService.setInitialDataUseTerms(
+                authenticatedUser = submissionParams.authenticatedUser,
+                uploadId = uploadId,
+                expectedCount = insertionResult.size,
+                newDataUseTerms = submissionParams.dataUseTerms,
             )
         }
 
@@ -345,21 +354,28 @@ class UploadDatabaseService(
             )
         }
 
-        val submissionIdToAccessionMap = submissionIds.zip(nextAccessions)
+        log.info { "Generated ${nextAccessions.size} new accessions for original upload with UploadId $uploadId" }
 
-        log.info {
-            "Generated ${submissionIdToAccessionMap.size} new accessions for original upload with UploadId $uploadId:"
-        }
-
-        submissionIdToAccessionMap.forEach { (submissionId, accession) ->
-            MetadataUploadAuxTable.update(
-                where = {
-                    (submissionIdColumn eq submissionId) and (uploadIdColumn eq uploadId)
-                },
-            ) {
-                it[accessionColumn] = accession
-                it[versionColumn] = 1
-            }
+        val updateSql = """
+            UPDATE metadata_upload_aux_table AS m
+            SET
+                accession = generated.accession,
+                version = 1
+            FROM unnest(?::text[], ?::text[]) AS generated(submission_id, accession)
+            WHERE
+                m.upload_id = ?
+                AND m.submission_id = generated.submission_id
+        """.trimIndent()
+        val textArrayColumnType = ArrayColumnType<String, List<String>>(TextColumnType())
+        transaction {
+            exec(
+                updateSql,
+                listOf(
+                    Pair(textArrayColumnType, submissionIds),
+                    Pair(textArrayColumnType, nextAccessions),
+                    Pair(VarCharColumnType(), uploadId),
+                ),
+            )
         }
     }
 }

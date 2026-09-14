@@ -65,4 +65,5 @@ jobs:
           # They require postgres to be running
             pytest \
             --ignore=./test/test_ena_submission_integration.py \
-            --ignore=./test/test_api.py
+            --ignore=./test/test_api.py \
+            --ignore=./test/test_schema_matches_models.py

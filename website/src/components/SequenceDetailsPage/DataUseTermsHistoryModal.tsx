@@ -2,6 +2,7 @@ import { DateTime, FixedOffsetZone } from 'luxon';
 import { type FC, useState } from 'react';
 
 import { type DataUseTermsHistoryEntry, restrictedDataUseTermsOption } from '../../types/backend.ts';
+import { sortDataUseTermsHistory } from '../../utils/dataUseTerms.ts';
 import { BaseDialog } from '../common/BaseDialog';
 import { Button } from '../common/Button';
 
@@ -38,7 +39,7 @@ export const DataUseTermsHistoryModal: FC<DataUseTermsHistoryProps> = ({ dataUse
                         </tr>
                     </thead>
                     <tbody>
-                        {dataUseTermsHistory.map((row, index) => (
+                        {sortDataUseTermsHistory(dataUseTermsHistory).map((row, index) => (
                             <tr key={index}>
                                 <td className='whitespace-nowrap'>{formatDate(row.changeDate)}</td>
                                 <td className='whitespace-nowrap'>{row.userName}</td>

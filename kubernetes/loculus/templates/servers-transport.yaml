@@ -4,7 +4,7 @@ Traefik's default 90s idle keep-alive outlives our backends' (Tomcat 20s, Node/u
 reuses connections they are closing -> 502 Bad Gateway.
 https://github.com/loculus-project/loculus/pull/7092
 
-Beware: this replaces traefik's cluster-wide static serversTransport for these routers instead of
+Beware: this replaces traefik's cluster-wide static serversTransport for these services instead of
 merging with it, so changes made there won't apply and need mirroring here.
 */}}
 apiVersion: {{ $traefikApiVersion }}

@@ -60,7 +60,7 @@ class CompleteMultipartUploadEndpointTest(
             .andGetFileIdsAndMultipartUrls()[0]
 
         filesClient.completeMultipartUploads(listOf(FileIdAndEtags(fileIdAndUrls.fileId, emptyList())))
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().string(containsString("No etags provided")))
     }
 
@@ -75,7 +75,7 @@ class CompleteMultipartUploadEndpointTest(
         val wrongEtag2 = (if (etag2[0] != 'a') 'a' else 'b') + etag2.substring(1)
 
         filesClient.completeMultipartUploads(listOf(FileIdAndEtags(fileIdAndUrls.fileId, listOf(etag1, wrongEtag2))))
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().string(containsString("InvalidPart")))
     }
 
@@ -89,7 +89,7 @@ class CompleteMultipartUploadEndpointTest(
             .headers().map()["etag"]!![0]
 
         filesClient.completeMultipartUploads(listOf(FileIdAndEtags(fileIdAndUrls.fileId, listOf(etag1, etag2))))
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().string(containsString("EntityTooSmall")))
     }
 }

@@ -28,10 +28,10 @@ import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForSuperUser
+import org.loculus.backend.service.files.dummyFileId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.util.UUID
 
 @EndpointTest(
     properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
@@ -117,7 +117,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         val sequenceString = editedDataWithNonExistingVersion.displayAccessionVersion()
 
         client.submitEditedSequenceEntryVersion(editedDataWithNonExistingVersion)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(
                 jsonPath("\$.detail")
                     .value("Accession versions $sequenceString do not exist"),
@@ -137,7 +137,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         val editedDataWithNonExistingAccession = generateEditedData(nonExistingAccession)
 
         client.submitEditedSequenceEntryVersion(editedDataWithNonExistingAccession)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(
                 jsonPath("\$.detail").value(
                     "Accession versions $nonExistingAccession.1 do not exist",
@@ -160,7 +160,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         val editedData = generateEditedData(accessions.first())
 
         client.submitEditedSequenceEntryVersion(editedData, organism = OTHER_ORGANISM)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -222,17 +222,51 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
                 files = mapOf(
                     "myFileCategory" to
                         listOf(
-                            FileIdAndName(UUID.randomUUID(), "foo.txt"),
-                            FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                            FileIdAndName(dummyFileId(), "foo.txt"),
+                            FileIdAndName(dummyFileId(), "foo.txt"),
                         ),
                 ),
             ),
         )
 
         client.submitEditedSequenceEntryVersion(editedData)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(
                 jsonPath("\$.detail", containsString("duplicate file names")),
+            )
+    }
+
+    @Test
+    fun `WHEN submitting files with duplicate file IDs THEN an error is returned`() {
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
+
+        val reusedFileId = dummyFileId()
+        val editedData = EditedSequenceEntryData(
+            accession = accessions.first(),
+            version = 1,
+            data = SubmittedData(
+                metadata = emptyMap(),
+                unalignedNucleotideSequences = emptyMap(),
+                files = mapOf(
+                    "myFileCategory" to
+                        listOf(
+                            FileIdAndName(reusedFileId, "foo.txt"),
+                            FileIdAndName(reusedFileId, "bar.txt"),
+                        ),
+                ),
+            ),
+        )
+
+        client.submitEditedSequenceEntryVersion(editedData)
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                    allOf(
+                        containsString("reuse the same file ID more than once"),
+                        containsString(reusedFileId.toString()),
+                    ),
+                ),
             )
     }
 
@@ -249,14 +283,14 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
                 files = mapOf(
                     "unknownCategory" to
                         listOf(
-                            FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                            FileIdAndName(dummyFileId(), "foo.txt"),
                         ),
                 ),
             ),
         )
 
         client.submitEditedSequenceEntryVersion(editedData)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -267,7 +301,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
     @Test
     fun `WHEN submitting a non-existing file ID THEN an error is returned`() {
-        val randomFileId = UUID.randomUUID()
+        val randomFileId = dummyFileId()
         val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
 
         val editedData = EditedSequenceEntryData(
@@ -286,7 +320,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         )
 
         client.submitEditedSequenceEntryVersion(editedData)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -320,7 +354,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         )
 
         client.submitEditedSequenceEntryVersion(editedData)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(
                 jsonPath("\$.detail", containsString("No file uploaded for file ID")),
             )
@@ -383,7 +417,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         )
 
         client.submitEditedSequenceEntryVersion(editedData)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(
                 jsonPath(
                     "\$.detail",
