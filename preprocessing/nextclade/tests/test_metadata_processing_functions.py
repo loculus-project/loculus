@@ -4,6 +4,7 @@ from unittest import mock
 
 import pytest
 from factory_methods import (
+    DEFAULT_EXTERNAL_SERVICES,
     DEFAULT_TEST_CONTEXT,
     Case,
     ProcessedEntryFactory,
@@ -1188,6 +1189,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeString",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 12, 15)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021-12"
     ), "dateRangeString: 2021-12 should be returned as is."
@@ -1200,6 +1202,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeLower",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2021, 12, 15)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021-12-01"
     ), "dateRangeLower: 2021-12 should be returned as 2021-12-01."
@@ -1212,6 +1215,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeUpper",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 12, 15)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021-12-31"
     ), "dateRangeUpper: 2021-12 should be returned as 2021-12-31."
@@ -1224,6 +1228,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeUpper",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2021, 12, 15)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021-12-15"
     ), "dateRangeUpper: 2021-12 should be returned as submittedAt time: 2021-12-15."
@@ -1236,6 +1241,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeUpper",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2021, 3, 15)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021-02-28"
     ), "dateRangeUpper: 2021-02 should be returned as 2021-02-28."
@@ -1248,6 +1254,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeUpper",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2021, 12, 15)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021-12-15"
     ), "dateRangeUpper: 2021 should be returned as 2021-12-15."
@@ -1260,6 +1267,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeUpper",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 15)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021-12-31"
     ), "dateRangeUpper: 2021 should be returned as 2021-12-31."
@@ -1272,6 +1280,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeUpper",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2021, 12, 16)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021-12-15"
     ), "dateRangeUpper: 2021-12 with releaseDate 2021-12-15 should be returned as 2021-12-15."
@@ -1284,6 +1293,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeUpper",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2021, 12, 16)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021-12-15"
     ), "dateRangeUpper: empty date with releaseDate 2021-12-15 should be returned as 2021-12-15."
@@ -1296,6 +1306,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeString",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2021, 12, 16)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         is None
     ), "dateRangeString: empty date should be returned as None."
@@ -1308,6 +1319,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeString",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2021, 12, 16)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         is None
     ), "dateRangeString: invalid date should be returned as None."
@@ -1320,6 +1332,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeLower",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2021, 12, 16)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         is None
     ), "dateRangeLower: empty date should be returned as None."
@@ -1332,6 +1345,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeLower",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021-01-02"
     ), "dateRangeLower: lucene range should return lower bound."
@@ -1344,6 +1358,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeLower",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021-01-01"
     ), "dateRangeLower: lucene range should return lower bound of leading year."
@@ -1356,6 +1371,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeUpper",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021-06-30"
     ), "dateRangeUpper: lucene range should return upper bound."
@@ -1368,6 +1384,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeUpper",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021-12-31"
     ), "dateRangeUpper: lucene range should return upper bound of final date."
@@ -1380,6 +1397,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeString",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021-05/2021-06"
     ), "dateRangeString: lucene range should be returned in ISO format (compressed to month range)."
@@ -1392,6 +1410,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeString",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021-01/2021-06"
     ), "dateRangeString: lucene range should be returned in ISO format (compressed to month range)."
@@ -1404,6 +1423,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeLower",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021-03-05"
     ), "dateRangeLower: ISO range should return lower bound."
@@ -1416,6 +1436,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeLower",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021-01-01"
     ), "dateRangeLower: ISO range should return lower bound of leading date."
@@ -1428,6 +1449,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeUpper",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021-06-12"
     ), "dateRangeUpper: ISO range should return upper bound."
@@ -1440,6 +1462,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeUpper",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021-06-30"
     ), "dateRangeUpper: ISO range should return upper bound of trailing date."
@@ -1452,6 +1475,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeString",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2020-01/2021-06"
     ), "dateRangeString: ISO range should be returned compressed to month range."
@@ -1464,6 +1488,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeString",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).errors[0]
         == "Metadata field field_name: Detected date range but could not parse date: 20-01-2020/2021-06-30."
     ), "Invalid date range format errors."
@@ -1476,6 +1501,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeString",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).errors[0]
         == "Metadata field field_name:'2022-01-01/2021-06-30' is an invalid date range. Lower bound: 2022-01-01 00:00:00+00:00 is after upper bound: 2021-06-30 00:00:00+00:00."
     ), "Invalid date range format errors."
@@ -1488,6 +1514,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeString",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 6, 15)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021"
     ), "Years are compressed in dateRangeString."
@@ -1500,6 +1527,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeString",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2024, 6, 15)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021/2022"
     ), "Multiple years are compressed in dateRangeString."
@@ -1512,6 +1540,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeString",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2024, 6, 15)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2024-02"
     ), "Months are compressed in dateRangeString (also for leap years)."
@@ -1524,6 +1553,7 @@ def test_parse_date_into_range() -> None:
                 "fieldType": "dateRangeUpper",
             },
             replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2021, 6, 15)),
+            DEFAULT_EXTERNAL_SERVICES,
         ).datum
         == "2021-06-15"
     ), "dateRangeUpper: lucene range upper bound should be tightened by submittedAt."
@@ -1602,6 +1632,7 @@ def test_concatenate(case: ConcatenateCase) -> None:
         input_fields=case.input_fields,
         args=case.concatenate_args,
         context=DEFAULT_TEST_CONTEXT,
+        external_services=DEFAULT_EXTERNAL_SERVICES,
     )
     assert result.datum == case.expected
 
@@ -1751,30 +1782,34 @@ def test_display_name_construction(case: DisplayNameCase) -> None:
             "nextclade.clade": "DENV-1",
             "geoLocCountry": case.geo_loc_country,
             "sampleCollectionDate": case.sample_collection_date,
-            "submissionId": case.submission_id,
             "specimenCollectorSampleId": case.specimen_collector_id,
         }
+
+    test_context = replace(DEFAULT_TEST_CONTEXT, submissionId=case.submission_id)
 
     res = ProcessingFunctions.build_display_name(
         input_data(),
         "displayName",
         input_fields,
         base_args | case.extra_args,
-        context=DEFAULT_TEST_CONTEXT,
+        context=test_context,
+        external_services=DEFAULT_EXTERNAL_SERVICES,
     )
     res_insdc = ProcessingFunctions.build_display_name(
         input_data(),
         "displayName",
         input_fields,
         insdc_args | case.extra_args,
-        context=replace(DEFAULT_TEST_CONTEXT, is_insdc_ingest_group=True),
+        context=replace(test_context, is_insdc_ingest_group=True),
+        external_services=DEFAULT_EXTERNAL_SERVICES,
     )
     res_prefix = ProcessingFunctions.build_display_name(
         input_data(),
         "displayName",
         input_fields,
         prefix_args | case.extra_args,
-        context=DEFAULT_TEST_CONTEXT,
+        context=test_context,
+        external_services=DEFAULT_EXTERNAL_SERVICES,
     )
 
     assert res.datum == case.expected_regular
@@ -1802,6 +1837,7 @@ def test_call_function_converts_raw_errors_to_annotations() -> None:
         output_field=output_field,
         input_fields=input_fields,
         context=DEFAULT_TEST_CONTEXT,
+        external_services=DEFAULT_EXTERNAL_SERVICES,
     )
 
     assert result.datum is None
