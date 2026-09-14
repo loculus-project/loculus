@@ -374,6 +374,7 @@ def _get_submitted_metadata(
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
 ) -> InputMetadata:
     if isinstance(unprocessed, UnprocessedAfterNextclade):
+        #  INJECTED_INPUT_FIELDS are not submitted metadata: they're added in enrich_with_nextclade
         return {
             k: v for k, v in unprocessed.inputMetadata.items() if k not in INJECTED_INPUT_FIELDS
         }
