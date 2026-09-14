@@ -51,9 +51,7 @@ def _condense_duplicate_read_name_errors(details: str) -> str:
 
     Replace every such entry with a single message that states what was found,
     the likely cause and what to do, quoting one offending read name as an
-    example. readtools builds the report by iterating a HashMap, so the names
-    arrive in arbitrary order and the quoted one need not be the first in the
-    file.
+    example.
     """
     first_match = _DUPLICATE_READ_NAME_RE.search(details)
     if first_match is None:
