@@ -1,4 +1,4 @@
-import type { Result } from 'neverthrow';
+import { err, type Result } from 'neverthrow';
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 
 import type { UploadAction } from './DataUploadForm';
@@ -87,18 +87,30 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 setSubmissionFileMapping(undefined);
                 return;
             }
-            const text = columnMapping
-                ? await (await columnMapping.applyTo(metadataFile)).text()
-                : await metadataFile.text();
+            try {
+                const text = columnMapping
+                    ? await (await columnMapping.applyTo(metadataFile)).text()
+                    : await metadataFile.text();
 
-            if (state.cancelled) return;
+                if (state.cancelled) return;
 
-            const submissionFileMapping = parseSubmissionFileMapping(
-                text,
-                submissionDataTypes.files?.categories?.map((category) => category.name) ?? [],
-            );
-            setSubmissionFileMapping(submissionFileMapping);
-            if (submissionFileMapping.isErr()) onError(submissionFileMapping.error.message);
+                const submissionFileMapping = parseSubmissionFileMapping(
+                    text,
+                    submissionDataTypes.files?.categories?.map((category) => category.name) ?? [],
+                );
+                setSubmissionFileMapping(submissionFileMapping);
+                if (submissionFileMapping.isErr()) onError(submissionFileMapping.error.message);
+            } catch (error) {
+                // Reading the file can throw, e.g. when a compressed metadata file is corrupt and
+                // cannot be decompressed. Surface this instead of leaving the mapping undefined
+                // forever, which would only show 'metadata file is still being processed' on submit.
+                if (state.cancelled) return;
+                const message = `Failed to read metadata file ${metadataFile.handle().name}: ${
+                    error instanceof Error ? error.message : String(error)
+                }`;
+                setSubmissionFileMapping(err(new Error(message)));
+                onError(message);
+            }
         })();
         return () => {
             state.cancelled = true;
