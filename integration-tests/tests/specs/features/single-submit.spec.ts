@@ -51,6 +51,9 @@ test('field description tooltip appears on hover', async ({ page, groupId }) => 
     const infoIcon = page.locator('[data-tooltip-id="field-tooltipsampleCollectionDate"]');
     await expect(infoIcon).toBeVisible();
 
+    // a hover landing before hydration never fires mouseenter again, so wait for it
+    await expect(page.getByLabel('Collection date')).toBeEnabled();
+
     await infoIcon.hover();
 
     // The tooltip should become visible after the hover delay
