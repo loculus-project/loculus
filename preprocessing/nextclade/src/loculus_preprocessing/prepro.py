@@ -65,6 +65,7 @@ from .nextclade import (
 )
 from .nextclade_annotation import NextcladeAnnotation
 from .processing_functions import (
+    ExternalServices,
     ProcessingFunctions,
     null_per_backend,
     process_frameshifts,
@@ -383,13 +384,13 @@ def get_output_metadata(
     else:
         context = ProcessingContext(
             accession_version=accession_version,
+            is_insdc_ingest_group=unprocessed.group_id == config.insdc_ingest_group_id,
             group_id=unprocessed.group_id,
-            insdc_ingest_group_id=config.insdc_ingest_group_id,
             submitted_at=unprocessed.submittedAt,
-            submission_id=unprocessed.submissionId,
+            submissionId=unprocessed.submissionId,
             submitter=unprocessed.submitter,
         )
-    external_services = config._external_services
+    external_services = ExternalServices(taxonomy_service=config._taxonomy_service)
 
     for output_field in config.processing_order:
         spec = config.processing_spec[output_field]

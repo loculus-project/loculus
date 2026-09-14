@@ -795,15 +795,15 @@ def enrich_with_nextclade(  # noqa: PLR0914
     )` object.
     """
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {
-        entry.accessionVersion: dict(entry.data.metadata) for entry in unprocessed
+        entry.accessionVersion: entry.data.metadata for entry in unprocessed
     }
     context: dict[AccessionVersion, ProcessingContext] = {
         entry.accessionVersion: ProcessingContext(
             accession_version=entry.accessionVersion,
+            is_insdc_ingest_group=entry.data.group_id == config.insdc_ingest_group_id,
             group_id=entry.data.group_id,
-            insdc_ingest_group_id=config.insdc_ingest_group_id,
             submitted_at=entry.data.submittedAt,
-            submission_id=entry.data.submissionId,
+            submissionId=entry.data.submissionId,
             submitter=entry.data.submitter,
         )
         for entry in unprocessed

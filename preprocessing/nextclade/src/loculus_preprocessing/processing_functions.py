@@ -247,6 +247,17 @@ def derive_date_range_string(lower: datetime, upper: datetime) -> str:
     return f"{lower.strftime('%Y-%m-%d')}/{upper.strftime('%Y-%m-%d')}"
 
 
+@dataclass(frozen=True)
+class ExternalServices:
+    """External services available to processing functions.
+
+    Kept separate from `ProcessingContext` since these don't vary per accession, unlike
+    `ProcessingContext`'s fields.
+    """
+
+    taxonomy_service: TaxonomyService
+
+
 class ProcessingFunctions:
     @classmethod
     def call_function(  # noqa: PLR0913, PLR0917
