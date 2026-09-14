@@ -3,6 +3,7 @@ import { ReviewPage } from './review.page';
 import Papa from 'papaparse';
 import { NavigationPage } from './navigation.page';
 import {
+    FileContent,
     prepareTmpDirForBulkUpload,
     prepareTmpDirForSingleUpload,
     uploadFilesFromTmpDir,
@@ -121,7 +122,7 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
 
     async uploadExternalFiles(
         fileId: string,
-        fileContents: Record<string, string>,
+        fileContents: Record<string, FileContent>,
         tmpDir: string,
     ) {
         await prepareTmpDirForSingleUpload(fileContents, tmpDir);
@@ -207,7 +208,7 @@ export class BulkSubmissionPage extends SubmissionPage {
 
     async uploadExternalFiles(
         fileId: string,
-        fileContents: Record<string, string | Record<string, string>>,
+        fileContents: Record<string, FileContent | Record<string, FileContent>>,
         tmpDir: string,
     ) {
         await prepareTmpDirForBulkUpload(fileContents, tmpDir);

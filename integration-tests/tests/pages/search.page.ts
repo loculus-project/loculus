@@ -1,5 +1,6 @@
 import { type Locator, type Page, expect } from '@playwright/test';
 import { getFromLinkTargetAndAssertContent } from '../utils/link-helpers';
+import { FileContent } from '../utils/file-upload-helpers';
 import { EditPage } from './edit.page';
 import { reloadAndPoll, reloadUntil, reloadUntilVisible } from '../utils/reload-helpers';
 
@@ -240,7 +241,7 @@ export class SearchPage {
         await this.openModalByRoleAndName(role, name);
     }
 
-    async checkAllFileContents(fileData: Record<string, string>) {
+    async checkAllFileContents(fileData: Record<string, FileContent>) {
         for (const [fileName, fileContent] of Object.entries(fileData)) {
             await getFromLinkTargetAndAssertContent(
                 this.page.getByRole('link', { name: fileName }),
@@ -252,7 +253,7 @@ export class SearchPage {
     async checkFileContentInModal(
         role: 'link' | 'cell',
         name: string | RegExp,
-        fileData: Record<string, string>,
+        fileData: Record<string, FileContent>,
     ) {
         await this.waitForAndOpenModalByRoleAndName(role, name);
         await this.checkAllFileContents(fileData);

@@ -164,11 +164,12 @@ The cell value for a given submission ID is a space-separated list of `fileName:
 
 ```
 files.rawReads
-reads_1.fq:FILE_2K7Q reads_2.fq:FILE_2K7R
+reads_1.fq.gz:FILE_2K7Q reads_2.fq.gz:FILE_2K7R
 ```
 
 - The `fileId` is the ID received in the previous step, which identifies the actual file.
 - The `fileName` can be chosen freely within the [filename restrictions](#filename-restrictions), but depending on configuration it might become an identifier for the file later on.
+  Instances that validate raw reads additionally require raw read files to be gzip-compressed FASTQ, named `.fastq.gz` or `.fq.gz`.
 - Cells may be left empty for submission IDs that don't have files in that category.
 
 ## Filename restrictions

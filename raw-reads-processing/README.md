@@ -53,20 +53,33 @@ The service downloads the files and validates their structure. The service respo
 
 Raw reads submissions go through `validate_raw_reads_submission`, which checks:
 
-1. **Format validation** (`raw_reads_processing.file_format_validation`) — is the submission well-formed FASTQ?
+1. **Format validation** (`raw_reads_processing.file_format_validation`) — is the submission well-formed, gzip-compressed FASTQ?
 2. **Human Host Contamination** (`raw_reads_processing.deacon`) - run deacon to confirm that the submission does not contain human reads (thresholds and parameters used by deacon are defined below).
 
 ## Raw reads format validation
 
-Only FASTQ is currently accepted (`ACCEPTED_FORMATS`). If the file extension is not supported the function errors early.
+Only gzip-compressed FASTQ is accepted: file names must end in `.fastq.gz` or `.fq.gz`
+(`ACCEPTED_FASTQ_EXTENSIONS`, matched case-insensitively). Anything else — uncompressed
+`.fastq`/`.fq`, other compression such as `.bz2` or `.zst`, or an unrelated extension — is
+rejected before anything is downloaded.
 
-Once files are downloaded, they are validated using ENA's own validator,
+Requiring exactly one compression format saves storage and bandwidth, makes downloads
+uniform for everyone, and matches what ENA requires of submitted read files anyway. It is
+also what lets `ena-submission` upload what it downloads without recompressing it.
+
+Once files are downloaded, `validate_compression` confirms the contents agree with the
+name: the file really is gzip (checked by magic bytes, since readtools infers compression
+from content and would accept a mislabelled file) and is **not** gzipped more than once.
+Truncated and corrupt gzip streams are reported to the submitter; anything else is treated
+as our own failure and surfaces as a 500.
+
+They are then validated using ENA's own validator,
 [readtools](https://github.com/loculus-project/readtools), which checks structural/content
 correctness (valid headers, IUPAC bases, matching sequence/quality lengths, etc.) and rejects
 truly duplicate read names within a single file:
 
 ```sh
-READTOOLS_JAR=readtools.jar java -jar readtools.jar read1.fastq [read2.fastq] --format FASTQ
+READTOOLS_JAR=readtools.jar java -jar readtools.jar read1.fastq.gz [read2.fastq.gz] --format FASTQ
 ```
 ## Validate sequences have been dehosted (deacon)
 

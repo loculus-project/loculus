@@ -1,5 +1,9 @@
 import { expect, type Page } from '@playwright/test';
-import { prepareTmpDirForBulkUpload, uploadFilesFromTmpDir } from '../utils/file-upload-helpers';
+import {
+    FileContent,
+    prepareTmpDirForBulkUpload,
+    uploadFilesFromTmpDir,
+} from '../utils/file-upload-helpers';
 
 /**
  * Page object for the sequence revision page.
@@ -143,7 +147,7 @@ export class RevisionPage {
 
     async uploadExternalFiles(
         fileId: string,
-        fileContents: Record<string, string | Record<string, string>>,
+        fileContents: Record<string, FileContent | Record<string, FileContent>>,
         tmpDir: string,
     ) {
         await prepareTmpDirForBulkUpload(fileContents, tmpDir);

@@ -3,6 +3,12 @@ import fs from 'fs';
 import path from 'path';
 import { clearTmpDir } from './tmpdir';
 
+/** Contents of a file to upload: text, or raw bytes for binary files such as gzipped reads. */
+export type FileContent = string | Buffer;
+
+const isFileContent = (value: FileContent | Record<string, FileContent>): value is FileContent =>
+    typeof value === 'string' || Buffer.isBuffer(value);
+
 /**
  * @param fileContents Struct containing possible mixture of:
  *                      filename -> filecontent, or
@@ -10,7 +16,7 @@ import { clearTmpDir } from './tmpdir';
  * @param tmpDir The temporary directory to use for storing files
  */
 export async function prepareTmpDirForBulkUpload(
-    fileContents: Record<string, string | Record<string, string>>,
+    fileContents: Record<string, FileContent | Record<string, FileContent>>,
     tmpDir: string,
 ) {
     await clearTmpDir(tmpDir);
@@ -18,13 +24,13 @@ export async function prepareTmpDirForBulkUpload(
     // Create subfolders if required
     await Promise.all(
         Object.entries(fileContents).flatMap(([p, f]) => {
-            if (typeof f !== 'string') return fs.promises.mkdir(path.join(tmpDir, p));
+            if (!isFileContent(f)) return fs.promises.mkdir(path.join(tmpDir, p));
         }),
     );
     // Populate files, in subfolders if required
     await Promise.all(
         Object.entries(fileContents).flatMap(([p, f]) => {
-            if (typeof f !== 'string')
+            if (!isFileContent(f))
                 return Object.entries(f).map(([fileName, fileContent]) =>
                     fs.promises.writeFile(path.join(tmpDir, p, fileName), fileContent),
                 );
@@ -38,7 +44,7 @@ export async function prepareTmpDirForBulkUpload(
  * @param tmpDir The temporary directory to use for storing files
  */
 export async function prepareTmpDirForSingleUpload(
-    fileContents: Record<string, string>,
+    fileContents: Record<string, FileContent>,
     tmpDir: string,
 ) {
     await clearTmpDir(tmpDir);
