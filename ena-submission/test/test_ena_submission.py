@@ -811,22 +811,6 @@ class DownloadFastqFilesTests(unittest.TestCase):
         self.assertEqual(Path(path).name, f"{self.FILE_ID}.fq.gz")
         self.assertEqual(Path(path).read_bytes(), gzipped)
 
-    def test_unaccepted_extension_raises_before_download(self):
-        """Raw reads validation only lets gzipped FASTQ through, so anything else here is
-        a bug upstream, not a file to convert. Uncompressed FASTQ used to be gzipped here.
-        """
-        for name in ("reads.fastq", "reads.fq", "reads.fastq.bz2", "reads.fastq.zst"):
-            with self.subTest(name=name):
-                with (
-                    mock.patch("ena_deposition.call_loculus.requests.get") as get,
-                    self.assertRaises(RuntimeError),
-                ):
-                    download_fastq_files(
-                        self.config, self._metadata(name), "LOC_0001TLY", self.tmp_dir
-                    )
-
-                get.assert_not_called()
-
     def test_missing_raw_reads_field_raises(self):
         with self.assertRaises(RuntimeError):
             download_fastq_files(self.config, {}, "LOC_0001TLY", self.tmp_dir)

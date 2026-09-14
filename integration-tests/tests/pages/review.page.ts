@@ -1,7 +1,6 @@
 import { Page, expect } from '@playwright/test';
 import { NavigationPage } from './navigation.page';
 import { getFromLinkTargetAndAssertContent } from '../utils/link-helpers';
-import { FileContent } from '../utils/file-upload-helpers';
 import { SearchPage } from './search.page';
 import { EditPage } from './edit.page';
 
@@ -164,7 +163,7 @@ export class ReviewPage {
     }
 
     async checkFilesInReviewDialog(
-        presentFiles: Record<string, FileContent>,
+        presentFiles: Record<string, string>,
         absentFiles: string[] = [],
     ) {
         const filesDialog = await this.viewFiles();
@@ -174,6 +173,7 @@ export class ReviewPage {
                 await getFromLinkTargetAndAssertContent(
                     this.page.getByRole('link', { name: fileName }),
                     fileContent,
+                    fileName,
                 );
             }
         }

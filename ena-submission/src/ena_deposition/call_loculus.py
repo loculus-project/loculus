@@ -219,8 +219,6 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
 # Kept in sync with ACCEPTED_FASTQ_EXTENSIONS in
 # raw-reads-processing/src/raw_reads_processing/file_format_validation.py, which rejects
 # anything else at submission time. Separate deployables, hence the duplication.
-# Everything reaching us is therefore gzipped exactly once, which is what webin-cli wants:
-# nothing here needs to compress, decompress or recognise any other compression format.
 ACCEPTED_FASTQ_EXTENSIONS = (".fastq.gz", ".fq.gz")
 
 

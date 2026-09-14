@@ -280,9 +280,6 @@ def test_gzipped_files_pass(tmp_path):
 
 
 def test_plain_file_named_gz_is_rejected(tmp_path):
-    """Extension validation passes such a file through, so this is the only check that
-    stops an uncompressed upload wearing a '.gz' name.
-    """
     path = tmp_path / "stored"
     path.write_text(VALID_SINGLE_END)
     with pytest.raises(InvalidSubmission) as exc_info:
@@ -433,9 +430,6 @@ def test_fastq_extension_matching_is_case_insensitive(file_name):
 
 @pytest.mark.parametrize("file_name", ["reads.fastq", "reads.fq", "READS.FASTQ"])
 def test_uncompressed_fastq_is_rejected(file_name):
-    """Uncompressed FASTQ was accepted until raw reads became gzip-only, so it gets a
-    message that says what to do rather than the generic unknown-format one.
-    """
     with pytest.raises(InvalidSubmission) as exc_info:
         validate_file_extensions([file_name])
     assert "must be gzip-compressed" in exc_info.value.error.message
@@ -444,9 +438,6 @@ def test_uncompressed_fastq_is_rejected(file_name):
 
 
 def test_uncompressed_fastq_is_reported_even_when_mixed_with_a_valid_file():
-    """Otherwise the submitter is told their files have 'mixed formats', which does not
-    point at the one file they need to fix.
-    """
     with pytest.raises(InvalidSubmission) as exc_info:
         validate_file_extensions(["reads_1.fastq.gz", "reads_2.fastq"])
     assert "must be gzip-compressed" in exc_info.value.error.message

@@ -58,20 +58,12 @@ Raw reads submissions go through `validate_raw_reads_submission`, which checks:
 
 ## Raw reads format validation
 
-Only gzip-compressed FASTQ is accepted: file names must end in `.fastq.gz` or `.fq.gz`
-(`ACCEPTED_FASTQ_EXTENSIONS`, matched case-insensitively). Anything else — uncompressed
-`.fastq`/`.fq`, other compression such as `.bz2` or `.zst`, or an unrelated extension — is
-rejected before anything is downloaded.
+Only gzip-compressed FASTQ is accepted (`ACCEPTED_FASTQ_EXTENSIONS`: `.fastq.gz` and
+`.fq.gz`, matched case-insensitively). If the file extension is not supported the function
+errors early.
 
-Requiring exactly one compression format saves storage and bandwidth, makes downloads
-uniform for everyone, and matches what ENA requires of submitted read files anyway. It is
-also what lets `ena-submission` upload what it downloads without recompressing it.
-
-Once files are downloaded, `validate_compression` confirms the contents agree with the
-name: the file really is gzip (checked by magic bytes, since readtools infers compression
-from content and would accept a mislabelled file) and is **not** gzipped more than once.
-Truncated and corrupt gzip streams are reported to the submitter; anything else is treated
-as our own failure and surfaces as a 500.
+Once files are downloaded, `validate_compression` checks that the contents really are gzip,
+compressed exactly once.
 
 They are then validated using ENA's own validator,
 [readtools](https://github.com/loculus-project/readtools), which checks structural/content

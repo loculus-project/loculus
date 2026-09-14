@@ -46,7 +46,6 @@ def _write_fastq(path: Path, records: list[tuple[str, str]]) -> None:
 
 
 def _write_fastq_gz(path: Path, records: list[tuple[str, str]]) -> None:
-    """Submissions are gzip-only, so end-to-end tests have to feed gzipped reads."""
     lines = []
     for i, (seq, qual) in enumerate(records):
         lines += [f"@read{i}", seq, "+", qual]

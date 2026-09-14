@@ -1,7 +1,7 @@
 import { expect, Page } from '@playwright/test';
 import { ReviewPage } from './review.page';
 import {
-    FileContent,
+    contentForUpload,
     prepareTmpDirForSingleUpload,
     uploadFilesFromTmpDir,
 } from '../utils/file-upload-helpers';
@@ -43,7 +43,7 @@ export class EditPage {
 
     async uploadExternalFiles(
         fileId: string,
-        fileContents: Record<string, FileContent>,
+        fileContents: Record<string, string>,
         tmpDir: string,
     ) {
         await prepareTmpDirForSingleUpload(fileContents, tmpDir);
@@ -51,11 +51,11 @@ export class EditPage {
         await uploadFilesFromTmpDir(this.page, fileId, tmpDir, fileCount);
     }
 
-    async addAdditionalFile(fileCategory: string, fileName: string, content: FileContent) {
+    async addAdditionalFile(fileCategory: string, fileName: string, content: string) {
         await this.page.getByTestId(`add_${fileCategory}`).setInputFiles({
             name: fileName,
             mimeType: 'text/plain',
-            buffer: Buffer.isBuffer(content) ? content : Buffer.from(content),
+            buffer: Buffer.from(contentForUpload(fileName, content)),
         });
     }
 

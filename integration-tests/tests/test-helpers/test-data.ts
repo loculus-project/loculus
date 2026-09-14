@@ -3,20 +3,7 @@
  * This file centralizes test data to reduce duplication and improve maintainability.
  */
 
-import { gzipSync } from 'zlib';
-
 import { AccessionVersion } from '../pages/search.page';
-
-/**
- * Gzip file content for upload. Raw reads are only accepted gzip-compressed, so the
- * fixtures that stand in for them have to be real gzip streams.
- *
- * `level` is worth setting to 0 (store, no compression) when a test cares about the
- * uploaded size: FASTQ fixtures are repetitive and would otherwise compress to almost
- * nothing.
- */
-export const gzipped = (content: string, level?: number): Buffer =>
-    gzipSync(content, level === undefined ? {} : { level });
 
 /**
  * Short Ebola Sudan test sequence for basic testing

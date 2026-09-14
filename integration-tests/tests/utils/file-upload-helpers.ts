@@ -1,13 +1,16 @@
 import { Page } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
+import { gzipSync } from 'zlib';
 import { clearTmpDir } from './tmpdir';
 
-/** Contents of a file to upload: text, or raw bytes for binary files such as gzipped reads. */
-export type FileContent = string | Buffer;
+export const isGzipName = (fileName: string) => fileName.toLowerCase().endsWith('.gz');
 
-const isFileContent = (value: FileContent | Record<string, FileContent>): value is FileContent =>
-    typeof value === 'string' || Buffer.isBuffer(value);
+/** Gzips content whose file name ends in `.gz`. */
+export const contentForUpload = (fileName: string, content: string, gzipLevel?: number) =>
+    isGzipName(fileName)
+        ? gzipSync(content, gzipLevel === undefined ? {} : { level: gzipLevel })
+        : content;
 
 /**
  * @param fileContents Struct containing possible mixture of:
@@ -16,25 +19,33 @@ const isFileContent = (value: FileContent | Record<string, FileContent>): value 
  * @param tmpDir The temporary directory to use for storing files
  */
 export async function prepareTmpDirForBulkUpload(
-    fileContents: Record<string, FileContent | Record<string, FileContent>>,
+    fileContents: Record<string, string | Record<string, string>>,
     tmpDir: string,
+    gzipLevel?: number,
 ) {
     await clearTmpDir(tmpDir);
 
     // Create subfolders if required
     await Promise.all(
         Object.entries(fileContents).flatMap(([p, f]) => {
-            if (!isFileContent(f)) return fs.promises.mkdir(path.join(tmpDir, p));
+            if (typeof f !== 'string') return fs.promises.mkdir(path.join(tmpDir, p));
         }),
     );
     // Populate files, in subfolders if required
     await Promise.all(
         Object.entries(fileContents).flatMap(([p, f]) => {
-            if (!isFileContent(f))
+            if (typeof f !== 'string')
                 return Object.entries(f).map(([fileName, fileContent]) =>
-                    fs.promises.writeFile(path.join(tmpDir, p, fileName), fileContent),
+                    fs.promises.writeFile(
+                        path.join(tmpDir, p, fileName),
+                        contentForUpload(fileName, fileContent, gzipLevel),
+                    ),
                 );
-            else return fs.promises.writeFile(path.join(tmpDir, p), f);
+            else
+                return fs.promises.writeFile(
+                    path.join(tmpDir, p),
+                    contentForUpload(p, f, gzipLevel),
+                );
         }),
     );
 }
@@ -44,14 +55,17 @@ export async function prepareTmpDirForBulkUpload(
  * @param tmpDir The temporary directory to use for storing files
  */
 export async function prepareTmpDirForSingleUpload(
-    fileContents: Record<string, FileContent>,
+    fileContents: Record<string, string>,
     tmpDir: string,
 ) {
     await clearTmpDir(tmpDir);
 
     await Promise.all(
         Object.entries(fileContents).map(([fileName, fileContent]) =>
-            fs.promises.writeFile(path.join(tmpDir, fileName), fileContent),
+            fs.promises.writeFile(
+                path.join(tmpDir, fileName),
+                contentForUpload(fileName, fileContent),
+            ),
         ),
     );
 }

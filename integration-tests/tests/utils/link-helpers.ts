@@ -1,12 +1,15 @@
 import { Locator, expect } from '@playwright/test';
-import { FileContent } from './file-upload-helpers';
+import { gunzipSync } from 'zlib';
+import { isGzipName } from './file-upload-helpers';
 
 /**
- * Fetches content from a link's href attribute and asserts it matches expected content
+ * Fetches content from a link's href attribute and asserts it matches expected content.
+ * `fileName` decides whether the served bytes are gunzipped before comparing.
  */
 export async function getFromLinkTargetAndAssertContent(
     linkLocator: Locator,
-    expectedContent: FileContent,
+    expectedContent: string,
+    fileName: string,
 ) {
     await expect(linkLocator).toBeVisible();
     const page = linkLocator.page();
@@ -17,16 +20,7 @@ export async function getFromLinkTargetAndAssertContent(
     const url = href.startsWith('http') ? href : new URL(href, page.url()).toString();
     const response = await page.request.get(url);
     expect(response.status()).toBe(200);
-    if (Buffer.isBuffer(expectedContent)) {
-        // Gzipped uploads are served back byte for byte; a diff of the bytes would be
-        // unreadable (and huge), so just report the sizes on mismatch.
-        const body = await response.body();
-        expect(
-            body.equals(expectedContent),
-            `content served from ${url} (${body.byteLength} bytes) differs from the expected ${expectedContent.byteLength} bytes`,
-        ).toBe(true);
-        return;
-    }
-    const content = await response.text();
+    const body = await response.body();
+    const content = isGzipName(fileName) ? gunzipSync(body).toString() : body.toString();
     expect(content).toBe(expectedContent);
 }

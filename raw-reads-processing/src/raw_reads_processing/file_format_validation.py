@@ -20,8 +20,6 @@ class FileFormat(StrEnum):
     CRAM = "CRAM"
 
 
-# Raw reads must be uploaded gzip-compressed: ENA requires compressed FASTQ anyway, and
-# accepting a single compression format keeps what we store uniform and cheap to serve.
 # Keep in sync with ACCEPTED_FASTQ_EXTENSIONS in
 # ena-submission/src/ena_deposition/call_loculus.py
 ACCEPTED_FASTQ_EXTENSIONS = (".fastq.gz", ".fq.gz")
@@ -34,8 +32,6 @@ EXTENSIONS_BY_FORMAT = {
     FileFormat.CRAM: ACCEPTED_CRAM_EXTENSIONS,
 }
 
-# Uncompressed FASTQ used to be accepted, so it is worth its own error message rather
-# than the generic "not an accepted format" one.
 UNCOMPRESSED_FASTQ_EXTENSIONS = (".fastq", ".fq")
 
 ACCEPTED_FORMATS = [FileFormat.FASTQ]
@@ -96,8 +92,6 @@ def validate_file_extensions(
     paired_end_info = (
         "Paired-end FASTQ files must be submitted as separate, de-interleaved files."
     )
-    # Checked before the generic branches below so that a plain ".fastq" is told to
-    # gzip itself rather than that it has an unknown format or mixes formats.
     uncompressed = [
         file_name
         for file_name in file_names
@@ -190,13 +184,8 @@ def _is_gzip(path: Path) -> bool:
 def validate_compression(
     file_name_to_path: dict[FileName, Path], file_format: FileFormat
 ) -> None:
-    """Check each file really is gzip-compressed, exactly once.
-
-    Extension validation has already required a `.gz` name; readtools decides compression
-    from the content and would happily accept a mislabelled file, so the two have to be
-    confirmed to agree here.
-    """
-    # FASTQ only: BAM is BGZF, i.e. a valid gzip stream, but `.bam` carries no `.gz`.
+    """Check each file really is gzip-compressed, exactly once."""
+    # FASTQ only: BAM is BGZF, i.e. a valid gzip stream.
     if file_format != FileFormat.FASTQ:
         return
 

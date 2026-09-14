@@ -13,9 +13,7 @@ import {
     EBOLA_SUDAN_SHORT_SEQUENCE,
     EBOLA_SUDAN_SMALL_FASTQ,
     EBOLA_SUDAN_MEDIUM_FASTQ,
-    gzipped,
 } from '../../test-helpers/test-data';
-import { FileContent } from '../../utils/file-upload-helpers';
 
 const ORGANISM_NAME = 'Ebola Sudan';
 const ORGANISM_URL_NAME = 'ebola-sudan';
@@ -33,12 +31,10 @@ const COUNTRY_2 = 'Uganda';
 const SEQUENCING_INSTRUMENT = 'Illumina MiSeq';
 const ID_1 = 'sub1';
 const ID_2 = 'sub2';
-// Raw reads are only accepted gzip-compressed, so every fixture standing in for them is
-// a real gzip stream and is compared byte for byte when served back.
-const FILES_SINGLE = { 'testfile.fastq.gz': gzipped(EBOLA_SUDAN_SMALL_FASTQ(1)) };
-const FILES_DOUBLE: Record<string, Buffer> = {
-    'file1.fastq.gz': gzipped(EBOLA_SUDAN_SMALL_FASTQ(1)),
-    'file2.fastq.gz': gzipped(EBOLA_SUDAN_SMALL_FASTQ(2)),
+const FILES_SINGLE = { 'testfile.fastq.gz': EBOLA_SUDAN_SMALL_FASTQ(1) };
+const FILES_DOUBLE: Record<string, string> = {
+    'file1.fastq.gz': EBOLA_SUDAN_SMALL_FASTQ(1),
+    'file2.fastq.gz': EBOLA_SUDAN_SMALL_FASTQ(2),
 };
 
 // File cells can be formatted either as a list of file names,
@@ -73,57 +69,48 @@ test('submit single seq w/ 2 FASTQ files thru single seq submission form', async
     await searchPage.checkAllFileContents(FILES_DOUBLE);
 });
 
-test('reject non-FASTQ raw_reads file with a format-validation error', async ({
+test('reject raw_reads files that are not valid or not gzipped', async ({
     page,
     groupId,
     tmpDir,
 }) => {
-    test.setTimeout(200_000);
+    test.setTimeout(240_000);
     void groupId;
-    const submissionPage = new SingleSequenceSubmissionPage(page);
+    const INVALID_FASTQ = { 'reads.fastq.gz': 'This is not a FASTQ file.' };
+    const UNCOMPRESSED = { 'reads.fastq': EBOLA_SUDAN_SMALL_FASTQ(1) };
+
+    const submissionPage = new BulkSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
-    await submissionPage.fillSubmissionForm({
-        submissionId: 'invalid-format',
-        collectionCountry: COUNTRY_1,
-        collectionDate: '2023-11-01',
-        authorAffiliations: AUTHOR_AFFILIATIONS,
-        sequencingInstrument: SEQUENCING_INSTRUMENT,
+    await submissionPage.uploadMetadataFile(
+        [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
+        [
+            [
+                ID_1,
+                COUNTRY_1,
+                '2023-11-01',
+                SEQUENCING_INSTRUMENT,
+                filesColumnCell(Object.keys(INVALID_FASTQ), ID_1),
+            ],
+            [
+                ID_2,
+                COUNTRY_2,
+                '2023-11-02',
+                SEQUENCING_INSTRUMENT,
+                filesColumnCell(Object.keys(UNCOMPRESSED), ID_2),
+            ],
+        ],
+    );
+    await submissionPage.uploadSequencesFile({
+        [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE,
+        [ID_2]: EBOLA_SUDAN_SHORT_SEQUENCE,
     });
-    await submissionPage.fillSequenceData({ main: EBOLA_SUDAN_SHORT_SEQUENCE });
     await submissionPage.uploadExternalFiles(
         RAW_READS,
-        // Validly gzipped, so this gets past the compression check and reaches readtools
-        { 'reads.fastq.gz': gzipped('This is not a FASTQ file.') },
+        { [ID_1]: INVALID_FASTQ, [ID_2]: UNCOMPRESSED },
         tmpDir,
     );
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone(180_000);
     await reviewPage.expectFileProcessingError(/This is not a FASTQ file./i);
-    await reviewPage.expectNoValidSequencesToApprove();
-});
-
-test('reject uncompressed raw_reads file with a gzip-required error', async ({
-    page,
-    groupId,
-    tmpDir,
-}) => {
-    test.setTimeout(200_000);
-    void groupId;
-    const submissionPage = new SingleSequenceSubmissionPage(page);
-    await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
-    await submissionPage.fillSubmissionForm({
-        submissionId: 'uncompressed',
-        collectionCountry: COUNTRY_1,
-        collectionDate: '2023-11-03',
-        authorAffiliations: AUTHOR_AFFILIATIONS,
-        sequencingInstrument: SEQUENCING_INSTRUMENT,
-    });
-    await submissionPage.fillSequenceData({ main: EBOLA_SUDAN_SHORT_SEQUENCE });
-    await submissionPage.uploadExternalFiles(
-        RAW_READS,
-        { 'reads.fastq': EBOLA_SUDAN_SMALL_FASTQ(1) },
-        tmpDir,
-    );
-    const reviewPage = await submissionPage.submitAndWaitForProcessingDone(180_000);
     await reviewPage.expectFileProcessingError(/must be gzip-compressed/i);
     await reviewPage.expectNoValidSequencesToApprove();
 });
@@ -151,7 +138,7 @@ test('reject FASTQ raw_reads file with human host reads with a deacon validation
     await submissionPage.fillSequenceData({ main: EBOLA_SUDAN_SHORT_SEQUENCE });
     await submissionPage.uploadExternalFiles(
         RAW_READS,
-        { 'reads.fastq.gz': gzipped(contaminatedReads) },
+        { 'reads.fastq.gz': contaminatedReads },
         tmpDir,
     );
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone(180_000);
@@ -246,9 +233,7 @@ test('bulk submit 1 seq with a 35 MB FASTQ file', async ({ page, groupId, tmpDir
     for (let i = 0; i < REPEATS; i++) {
         largeFileContent.push(EBOLA_SUDAN_SMALL_FASTQ(1, i + 1));
     }
-    // Level 0 (store, no compression): these reads are repetitive and would otherwise
-    // gzip down to a few KB, leaving nothing for the multipart upload to split.
-    const LARGE_FILE = { 'large_file.fastq.gz': gzipped(largeFileContent.join(''), 0) };
+    const LARGE_FILE = { 'large_file.fastq.gz': largeFileContent.join('') };
 
     const submissionPage = new BulkSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
@@ -265,7 +250,9 @@ test('bulk submit 1 seq with a 35 MB FASTQ file', async ({ page, groupId, tmpDir
         ],
     );
     await submissionPage.uploadSequencesFile({ [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE });
-    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: LARGE_FILE }, tmpDir);
+    // Level 0 (store, no compression): these reads are repetitive and would otherwise gzip
+    // down to a few KB, leaving nothing for the multipart upload to split.
+    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: LARGE_FILE }, tmpDir, 0);
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone(240_000);
     const searchPage = await reviewPage.releaseAndGoToReleasedSequences();
     await searchPage.checkFileContentInModal('cell', COUNTRY_1, LARGE_FILE);
@@ -345,8 +332,8 @@ test('bulk submit blocks a submission with an invalid file name', async ({
     const VALID_FILE_NAME = 'testfile.fastq.gz';
     const INVALID_FILE_NAME = 'CON.fastq.gz';
     const FILES = {
-        [VALID_FILE_NAME]: gzipped(EBOLA_SUDAN_SMALL_FASTQ(1)),
-        [INVALID_FILE_NAME]: gzipped(EBOLA_SUDAN_SMALL_FASTQ(2)),
+        [VALID_FILE_NAME]: EBOLA_SUDAN_SMALL_FASTQ(1),
+        [INVALID_FILE_NAME]: EBOLA_SUDAN_SMALL_FASTQ(2),
     };
 
     const submissionPage = new BulkSubmissionPage(page);
@@ -382,8 +369,8 @@ const REVISION_METADATA_HEADERS = [
     'sampleCollectionDate',
     'sequencingInstrument',
 ];
-const REVISION_FILES = { 'revised_file.fastq.gz': gzipped(EBOLA_SUDAN_MEDIUM_FASTQ(1)) };
-const REVISION_FILES_2 = { 'another_file.fastq.gz': gzipped(EBOLA_SUDAN_MEDIUM_FASTQ(2)) };
+const REVISION_FILES = { 'revised_file.fastq.gz': EBOLA_SUDAN_MEDIUM_FASTQ(1) };
+const REVISION_FILES_2 = { 'another_file.fastq.gz': EBOLA_SUDAN_MEDIUM_FASTQ(2) };
 
 test('bulk revise 2 seqs with files', async ({ page, groupId, tmpDir }) => {
     test.setTimeout(400_000);
@@ -556,7 +543,7 @@ test('single revise seq via edit page reuses, replaces, discards and adds files'
     await editPage.expectExtraFileUploaded(RAW_READS, file1Name);
 
     // Replaced file 2
-    await editPage.addAdditionalFile(RAW_READS, file2Name, gzipped(EBOLA_SUDAN_SMALL_FASTQ(1)));
+    await editPage.addAdditionalFile(RAW_READS, file2Name, EBOLA_SUDAN_SMALL_FASTQ(1));
     await editPage.confirmReplaceFile();
     await editPage.expectExtraFileUploaded(RAW_READS, file2Name);
 
@@ -569,7 +556,7 @@ test('single revise seq via edit page reuses, replaces, discards and adds files'
     await searchPage2.goToReleasedSequences(ORGANISM_URL_NAME, groupId);
     await searchPage2.checkFileContentInModal('link', `${accession}.${version + 1}`, {
         [file1Name]: FILES_DOUBLE[file1Name],
-        [file2Name]: gzipped(EBOLA_SUDAN_SMALL_FASTQ(1)),
+        [file2Name]: EBOLA_SUDAN_SMALL_FASTQ(1),
     });
 
     // Step 4: A second revision discards the reused file and adds a new one
@@ -579,7 +566,7 @@ test('single revise seq via edit page reuses, replaces, discards and adds files'
     await editPage.discardExtraFile(RAW_READS, file1Name);
     await editPage.expectExtraFileDiscarded(RAW_READS, file1Name);
 
-    await editPage.addAdditionalFile(RAW_READS, addedFileName, gzipped(EBOLA_SUDAN_SMALL_FASTQ(2)));
+    await editPage.addAdditionalFile(RAW_READS, addedFileName, EBOLA_SUDAN_SMALL_FASTQ(2));
     await editPage.expectExtraFileUploaded(RAW_READS, addedFileName);
 
     const reviewPage3 = await editPage.submitChanges();
@@ -591,8 +578,8 @@ test('single revise seq via edit page reuses, replaces, discards and adds files'
     await searchPage2.waitForAccessionVersionInSearch(accession, version + 2);
     await searchPage2.openModalByRoleAndName('link', `${accession}.${version + 2}`);
     await searchPage2.checkAllFileContents({
-        [file2Name]: gzipped(EBOLA_SUDAN_SMALL_FASTQ(1)),
-        [addedFileName]: gzipped(EBOLA_SUDAN_SMALL_FASTQ(2)),
+        [file2Name]: EBOLA_SUDAN_SMALL_FASTQ(1),
+        [addedFileName]: EBOLA_SUDAN_SMALL_FASTQ(2),
     });
     await expect(page.getByRole('link', { name: file1Name })).toHaveCount(0);
     await searchPage2.closeDetailsModal();
@@ -675,9 +662,9 @@ test('bulk revise can reuse, replace, discard and add files', async ({ page, gro
     // Step 3: The first entry reuses one file and replaces the other
     // The second entry reuses one file, discards the other and adds a new one
     const [file1Name, file2Name] = Object.keys(FILES_DOUBLE);
-    const REPLACED_FILE = { [file2Name]: gzipped(EBOLA_SUDAN_SMALL_FASTQ(3)) };
-    const ADDED_FILE = { 'file3.fastq.gz': gzipped(EBOLA_SUDAN_SMALL_FASTQ(2)) };
-    const uploadedFiles: Record<string, FileContent | Record<string, FileContent>> = {
+    const REPLACED_FILE = { [file2Name]: EBOLA_SUDAN_SMALL_FASTQ(3) };
+    const ADDED_FILE = { 'file3.fastq.gz': EBOLA_SUDAN_SMALL_FASTQ(2) };
+    const uploadedFiles: Record<string, string | Record<string, string>> = {
         // First entry replaces an existing file, uploaded in its submission ID subfolder
         [ID_1]: REPLACED_FILE,
         // Second entry adds a new file, uploaded without a subfolder
