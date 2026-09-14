@@ -35,7 +35,7 @@ DEFAULT_TEST_CONTEXT = ProcessingContext(
     group_id=2,
     insdc_ingest_group_id=1,
     submitted_at="",
-    submissionId="test_submission_id",
+    submission_id="test_submission_id",
     submitter="test_submitter",
 )
 

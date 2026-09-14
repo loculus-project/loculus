@@ -1751,7 +1751,6 @@ input_fields = [
     "nextclade.clade",
     "geoLocCountry",
     "specimenCollectorSampleId",
-    "submissionId",
     "sampleCollectionDate",
 ]
 base_args: FunctionArgs = {
@@ -1785,7 +1784,7 @@ def test_display_name_construction(case: DisplayNameCase) -> None:
             "specimenCollectorSampleId": case.specimen_collector_id,
         }
 
-    test_context = replace(DEFAULT_TEST_CONTEXT, submissionId=case.submission_id)
+    test_context = replace(DEFAULT_TEST_CONTEXT, submission_id=case.submission_id)
 
     res = ProcessingFunctions.build_display_name(
         input_data(),
