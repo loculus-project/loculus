@@ -48,4 +48,16 @@ describe('file download proxy route', () => {
         // Without 'manual' the file would be streamed through the website instead of from S3
         expect(backendRequest().redirect).toBe('manual');
     });
+
+    test('allows any origin on the S3 redirect', async () => {
+        const response = await callRoute({ isLoggedIn: false });
+        expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
+    });
+
+    test('allows any origin on non-redirect responses', async () => {
+        fetchMock.mockResolvedValue(new Response('not found', { status: 404 }));
+        const response = await callRoute({ isLoggedIn: false });
+        expect(response.status).toBe(404);
+        expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
+    });
 });
