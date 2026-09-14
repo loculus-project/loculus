@@ -5,6 +5,7 @@
     "scripts": {
         "format": "eslint --cache --fix && prettier --write \"**/*.{ts,js,mjs,json}\"",
         "format:check": "eslint --cache && prettier --check \"**/*.{ts,js,mjs,json}\"",
+        "check-types": "tsc --noEmit",
         "test": "npx playwright test"
     },
     "devDependencies": {
@@ -19,6 +20,7 @@
         "eslint-plugin-unicorn": "^74.0.0",
         "papaparse": "^5.7.0",
         "prettier": "^3.9.6",
+        "typescript": "^5.8.3",
         "typescript-eslint": "^8.69.0",
         "uuid": "^14.0.2"
     }
