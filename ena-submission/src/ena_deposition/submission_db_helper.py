@@ -77,6 +77,7 @@ class StatusAll(StrEnum):
     READY_TO_SUBMIT = "READY_TO_SUBMIT"
     SUBMITTED_PROJECT = "SUBMITTED_PROJECT"
     SUBMITTED_SAMPLE = "SUBMITTED_SAMPLE"
+    SUBMITTED_RAW_READS = "SUBMITTED_RAW_READS"
     SUBMITTING_ASSEMBLY = "SUBMITTING_ASSEMBLY"
     SUBMITTED_ALL = "SUBMITTED_ALL"
     SENT_TO_LOCULUS = "SENT_TO_LOCULUS"
@@ -153,6 +154,7 @@ class SubmissionTableEntry(Base):
     version: Mapped[int] = mapped_column(primary_key=True)
     organism: Mapped[str] = mapped_column()
     group_id: Mapped[int] = mapped_column()
+    submit_raw_reads: Mapped[bool] = mapped_column(default=False)
 
     # Optional fields with defaults.
     # 'seq_metadata' maps to the DB column "metadata".
@@ -248,6 +250,41 @@ class SampleTableEntry(Base):
         return AccessionVersion(accession=self.accession, version=self.version)
 
 
+class RawReadsTableEntry(Base):
+    """Maps to raw_reads_table. Primary key: (accession, version)."""
+
+    __tablename__ = "raw_reads_table"
+    __table_args__: typing.ClassVar[dict[str, Any]] = {"schema": "ena_deposition_schema"}
+
+    accession: Mapped[str] = mapped_column(primary_key=True)
+    version: Mapped[int] = mapped_column(primary_key=True)
+    errors: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
+    warnings: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
+    status: Mapped[Status] = mapped_column(
+        Enum(Status, native_enum=False),
+        default=Status.READY,
+    )
+    started_at: Mapped[datetime] = mapped_column(default_factory=lambda: datetime.now(tz=pytz.utc))
+    finished_at: Mapped[datetime | None] = mapped_column(default=None)
+    result: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(JSONB, default=None)
+    ena_run_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ncbi_run_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ena_experiment_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ncbi_experiment_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+
+    @property
+    def pkey(self) -> AccessionVersion:
+        return AccessionVersion(accession=self.accession, version=self.version)
+
+
 class AssemblyTableEntry(Base):
     """Maps to assembly_table. Primary key: (accession, version)."""
 
@@ -283,7 +320,13 @@ class AssemblyTableEntry(Base):
         return AccessionVersion(accession=self.accession, version=self.version)
 
 
-type TableEntry = SubmissionTableEntry | ProjectTableEntry | SampleTableEntry | AssemblyTableEntry
+type TableEntry = (
+    SubmissionTableEntry
+    | ProjectTableEntry
+    | SampleTableEntry
+    | AssemblyTableEntry
+    | RawReadsTableEntry
+)
 
 
 def highest_version_in_submission_table(engine: Engine) -> dict[Accession, Version]:
@@ -345,7 +388,9 @@ def delete_records_in_db[T: TableEntry](
     return deleted_rows
 
 
-def find_errors_or_stuck_in_db[T: (ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)](
+def find_errors_or_stuck_in_db[
+    T: (ProjectTableEntry, SampleTableEntry, AssemblyTableEntry, RawReadsTableEntry)
+](
     engine: Engine,
     model_class: type[T],
     time_threshold: int = 15,

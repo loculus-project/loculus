@@ -237,6 +237,40 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     }
 
     @Test
+    fun `WHEN submitting files with duplicate file IDs THEN an error is returned`() {
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
+
+        val reusedFileId = UUID.randomUUID()
+        val editedData = EditedSequenceEntryData(
+            accession = accessions.first(),
+            version = 1,
+            data = SubmittedData(
+                metadata = emptyMap(),
+                unalignedNucleotideSequences = emptyMap(),
+                files = mapOf(
+                    "myFileCategory" to
+                        listOf(
+                            FileIdAndName(reusedFileId, "foo.txt"),
+                            FileIdAndName(reusedFileId, "bar.txt"),
+                        ),
+                ),
+            ),
+        )
+
+        client.submitEditedSequenceEntryVersion(editedData)
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                    allOf(
+                        containsString("reuse the same file ID more than once"),
+                        containsString(reusedFileId.toString()),
+                    ),
+                ),
+            )
+    }
+
+    @Test
     fun `WHEN submitting unknown file categories THEN an error is returned`() {
         val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
 

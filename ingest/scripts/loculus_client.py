@@ -181,7 +181,7 @@ class BatchIterator:
     current_fasta_submission_id: str | None = None
     fasta_record_header: str | None = None
 
-    record_counter: int = 0
+    record_count: int = 0  # metadata records read so far, not counting the header
 
     metadata_header: str | None = None
     submission_id_index: int | None = None  # index of id in metadata header
@@ -196,7 +196,7 @@ def submit(
     params: dict[str, str],
     batch_it: BatchIterator,
 ):
-    batch_num = -(int(batch_it.record_counter) // -config.batch_chunk_size)  # ceiling division
+    batch_num = -(batch_it.record_count // -config.batch_chunk_size)  # ceiling division
     logger.info(f"Submitting batch {batch_num}")
 
     metadata_in_memory = BytesIO("".join(batch_it.metadata_batch_output).encode("utf-8"))
@@ -253,30 +253,30 @@ def post_fasta_batches(
     metadata_file: str,
     config: Config,
     params: dict[str, str],
-) -> requests.Response:
-    """Chunks metadata files, joins with sequences and submits each chunk via POST."""
+) -> requests.Response | None:
+    """Chunks metadata files, joins with sequences and submits each chunk via POST.
+
+    Returns None if the metadata file held no records, in which case nothing was sent.
+    """
 
     batch_it = BatchIterator()
+    response = None
 
     with (
         open(fasta_file, encoding="utf-8") as fasta_file_stream,
         open(metadata_file, encoding="utf-8") as metadata_file_stream,
     ):
         for record in metadata_file_stream:
-            batch_it.record_counter += 1
-
-            # process metadata header
-            if batch_it.record_counter == 1:
+            # the first line is the metadata header
+            if batch_it.metadata_header is None:
                 batch_it.submission_id_index = record.strip().split("\t").index("id")
                 batch_it.metadata_header = record
-                batch_it.metadata_batch_output.append(batch_it.metadata_header)
                 continue
 
-            # add header to batch metadata output
-            if (
-                batch_it.record_counter > 1
-                and batch_it.record_counter % config.batch_chunk_size == 1
-            ):
+            batch_it.record_count += 1
+
+            # every batch's metadata needs to start with the header
+            if not batch_it.metadata_batch_output:
                 batch_it.metadata_batch_output.append(batch_it.metadata_header)
 
             batch_it.metadata_batch_output.append(record)
@@ -294,7 +294,7 @@ def post_fasta_batches(
             batch_it = add_seq_to_batch(batch_it, fasta_file_stream, metadata_submission_id, config)
 
             # submit the batch if it is full
-            if batch_it.record_counter % config.batch_chunk_size == 0:
+            if batch_it.record_count % config.batch_chunk_size == 0:
                 response = submit(
                     url,
                     config,
@@ -304,8 +304,8 @@ def post_fasta_batches(
                 batch_it.sequences_batch_output = []
                 batch_it.metadata_batch_output = []
 
-    if batch_it.record_counter % config.batch_chunk_size != 0:
-        # submit the last chunk
+    # submit the last, partial chunk
+    if batch_it.record_count % config.batch_chunk_size != 0:
         response = submit(url, config, params, batch_it)
 
     return response
@@ -354,6 +354,9 @@ def submit_or_revise(
     metadata_lines = max(count_lines(metadata) - 1, 0)
 
     logger.info(f"{logging_strings['gerund']} {metadata_lines} sequence(s) to Loculus")
+
+    if metadata_lines == 0:
+        return []
 
     params = {
         "groupId": group_id,
