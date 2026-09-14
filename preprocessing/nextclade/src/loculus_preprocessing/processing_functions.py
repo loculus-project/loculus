@@ -17,7 +17,7 @@ from typing import Any
 import dateutil.parser as dateutil
 import pytz
 
-from loculus_preprocessing.external_services import TaxonomyService
+from loculus_preprocessing.external_services import ExternalServices
 
 from .datatypes import (
     AnnotationSourceType,
@@ -245,17 +245,6 @@ def derive_date_range_string(lower: datetime, upper: datetime) -> str:
     if lower.day == 1 and upper.day == calendar.monthrange(upper.year, upper.month)[1]:
         return f"{lower.strftime('%Y-%m')}/{upper.strftime('%Y-%m')}"
     return f"{lower.strftime('%Y-%m-%d')}/{upper.strftime('%Y-%m-%d')}"
-
-
-@dataclass(frozen=True)
-class ExternalServices:
-    """External services available to processing functions.
-
-    Kept separate from `ProcessingContext` since these don't vary per accession, unlike
-    `ProcessingContext`'s fields.
-    """
-
-    taxonomy_service: TaxonomyService
 
 
 class ProcessingFunctions:

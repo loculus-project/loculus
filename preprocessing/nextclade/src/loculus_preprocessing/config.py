@@ -20,6 +20,7 @@ from loculus_preprocessing.datatypes import (
     Topology,
 )
 from loculus_preprocessing.external_services import (
+    ExternalServices,
     FileProcessingService,
     TaxonomyService,
 )
@@ -141,7 +142,9 @@ class Config(BaseModel):
 
     # External services
     taxonomy_service_url: str | None = None
-    _taxonomy_service: TaxonomyService = PrivateAttr(default=TaxonomyService(None))
+    _external_services: ExternalServices = PrivateAttr(
+        default=ExternalServices(taxonomy_service=TaxonomyService(None))
+    )
     raw_reads_processing_service_url: str | None = None
     raw_reads_processing_service_timeout_seconds: int = 600
     _file_processing_service: FileProcessingService = PrivateAttr(
@@ -161,14 +164,15 @@ class Config(BaseModel):
         if not self.backend_host:  # Set here so we can use organism
             self.backend_host = f"http://127.0.0.1:8079/{self.organism}"
 
-        self._taxonomy_service = TaxonomyService(self.taxonomy_service_url)
         self._file_processing_service = FileProcessingService(
             self.raw_reads_processing_service_url, self.raw_reads_processing_service_timeout_seconds
         )
 
         validate_required_when(self)
         self.processing_order = get_processing_order(self)
-        self._taxonomy_service = TaxonomyService(self.taxonomy_service_url)
+        self._external_services = ExternalServices(
+            taxonomy_service=TaxonomyService(self.taxonomy_service_url)
+        )
 
         return self
 
