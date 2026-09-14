@@ -9,10 +9,15 @@ import { problemDetail, type ProblemDetail } from '../types/backend.ts';
 
 type ZodiosMethods<Api extends ZodiosEndpointDefinitions> = Aliases<Api>;
 
+/* eslint-disable @typescript-eslint/no-generated-empty-object-type --
+ * `ZodiosAliases<Api>` is a mapped type over the still-unresolved type parameter `Api`, so it has no
+ * members yet and appears as `{}` to the linter. It resolves to the actual aliases once `Api` is
+ * instantiated with a concrete set of endpoint definitions. */
 type ZodiosMethod<Api extends ZodiosEndpointDefinitions, Method extends ZodiosMethods<Api>> = {
     parameters: Parameters<ZodiosAliases<Api>[Method]>;
     response: ReturnType<ZodiosAliases<Api>[Method]>;
 };
+/* eslint-enable @typescript-eslint/no-generated-empty-object-type */
 
 type TypeThatCanBeUsedAsArgs = [any, any]; // eslint-disable-line @typescript-eslint/no-explicit-any -- unfortunately, TS doesn't properly infer the correct types, so we have to use this workaround
 
@@ -38,6 +43,7 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
         method: Method,
         ...args: ZodiosMethod<Api, Method>['parameters']
     ): Promise<Result<Awaited<ZodiosMethod<Api, Method>['response']>, ProblemDetail>> {
+        // eslint-disable-next-line @typescript-eslint/no-generated-empty-object-type -- see the note on ZodiosMethod above
         const zodiosMethod = this.zodios[method] as ZodiosAliases<Api>[Method];
         const zodiosResponse = zodiosMethod(...(args as TypeThatCanBeUsedAsArgs)) as ZodiosMethod<
             Api,

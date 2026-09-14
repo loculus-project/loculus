@@ -130,6 +130,15 @@ fun extractAndValidateFiles(
             )
         }
 
+        val duplicateIds = files.groupingBy { it.fileId }.eachCount().filter { it.value > 1 }.keys
+        if (duplicateIds.isNotEmpty()) {
+            throw UnprocessableEntityException(
+                "In metadata file: record #$recordNumber with id '$submissionId': " +
+                    "found duplicate file IDs in column '$header': " + duplicateIds.joinToString(", ") +
+                    ". Each file must have its own file ID.",
+            )
+        }
+
         category to files
     }.toMap().ifEmpty { null }
 }

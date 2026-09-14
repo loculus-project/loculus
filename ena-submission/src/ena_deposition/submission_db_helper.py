@@ -39,6 +39,8 @@ from tenacity import (
     wait_fixed,
 )
 
+from ena_deposition.config import EnaResultField
+
 logger = logging.getLogger(__name__)
 
 
@@ -75,6 +77,7 @@ class StatusAll(StrEnum):
     READY_TO_SUBMIT = "READY_TO_SUBMIT"
     SUBMITTED_PROJECT = "SUBMITTED_PROJECT"
     SUBMITTED_SAMPLE = "SUBMITTED_SAMPLE"
+    SUBMITTED_RAW_READS = "SUBMITTED_RAW_READS"
     SUBMITTING_ASSEMBLY = "SUBMITTING_ASSEMBLY"
     SUBMITTED_ALL = "SUBMITTED_ALL"
     SENT_TO_LOCULUS = "SENT_TO_LOCULUS"
@@ -151,6 +154,7 @@ class SubmissionTableEntry(Base):
     version: Mapped[int] = mapped_column(primary_key=True)
     organism: Mapped[str] = mapped_column()
     group_id: Mapped[int] = mapped_column()
+    submit_raw_reads: Mapped[bool] = mapped_column(default=False)
 
     # Optional fields with defaults.
     # 'seq_metadata' maps to the DB column "metadata".
@@ -246,6 +250,41 @@ class SampleTableEntry(Base):
         return AccessionVersion(accession=self.accession, version=self.version)
 
 
+class RawReadsTableEntry(Base):
+    """Maps to raw_reads_table. Primary key: (accession, version)."""
+
+    __tablename__ = "raw_reads_table"
+    __table_args__: typing.ClassVar[dict[str, Any]] = {"schema": "ena_deposition_schema"}
+
+    accession: Mapped[str] = mapped_column(primary_key=True)
+    version: Mapped[int] = mapped_column(primary_key=True)
+    errors: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
+    warnings: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
+    status: Mapped[Status] = mapped_column(
+        Enum(Status, native_enum=False),
+        default=Status.READY,
+    )
+    started_at: Mapped[datetime] = mapped_column(default_factory=lambda: datetime.now(tz=pytz.utc))
+    finished_at: Mapped[datetime | None] = mapped_column(default=None)
+    result: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(JSONB, default=None)
+    ena_run_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ncbi_run_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ena_experiment_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ncbi_experiment_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+
+    @property
+    def pkey(self) -> AccessionVersion:
+        return AccessionVersion(accession=self.accession, version=self.version)
+
+
 class AssemblyTableEntry(Base):
     """Maps to assembly_table. Primary key: (accession, version)."""
 
@@ -281,7 +320,13 @@ class AssemblyTableEntry(Base):
         return AccessionVersion(accession=self.accession, version=self.version)
 
 
-type TableEntry = SubmissionTableEntry | ProjectTableEntry | SampleTableEntry | AssemblyTableEntry
+type TableEntry = (
+    SubmissionTableEntry
+    | ProjectTableEntry
+    | SampleTableEntry
+    | AssemblyTableEntry
+    | RawReadsTableEntry
+)
 
 
 def highest_version_in_submission_table(engine: Engine) -> dict[Accession, Version]:
@@ -343,7 +388,9 @@ def delete_records_in_db[T: TableEntry](
     return deleted_rows
 
 
-def find_errors_or_stuck_in_db[T: (ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)](
+def find_errors_or_stuck_in_db[
+    T: (ProjectTableEntry, SampleTableEntry, AssemblyTableEntry, RawReadsTableEntry)
+](
     engine: Engine,
     model_class: type[T],
     time_threshold: int = 15,
@@ -495,42 +542,22 @@ def update_with_retry[T: TableEntry](
         return 0
 
 
-def add_to_project_table(engine: Engine, entry: ProjectTableEntry) -> int | None:
-    """Insert *entry* into project_table and return the generated project_id."""
+def add_to_db[T: TableEntry](engine: Engine, entry: T) -> T | None:
+    """Insert *entry* into its table.
+
+    Returns the persisted entry on success, or None on failure. Because the
+    session is opened with ``expire_on_commit=False``, the returned entry's
+    attributes stay populated after the session closes, including any
+    server-generated key such as ``project_table.project_id``.
+    """
     try:
-        with Session(engine) as session:
+        with Session(engine, expire_on_commit=False) as session:
             session.add(entry)
-            session.flush()  # Sends INSERT; project_id is populated via RETURNING.
-            project_id = entry.project_id
             session.commit()
-        return project_id
+        return entry
     except Exception as e:
-        logger.warning(f"add_to_project_table errored with: {e}")
+        logger.warning(f"add_to_db errored for {type(entry).__name__}: {e}")
         return None
-
-
-def add_to_sample_table(engine: Engine, entry: SampleTableEntry) -> bool:
-    """Insert *entry* into sample_table. Returns True on success."""
-    try:
-        with Session(engine, expire_on_commit=False) as session:
-            session.add(entry)
-            session.commit()
-        return True
-    except Exception as e:
-        logger.warning(f"add_to_sample_table errored with: {e}")
-        return False
-
-
-def add_to_assembly_table(engine: Engine, entry: AssemblyTableEntry) -> bool:
-    """Insert *entry* into assembly_table. Returns True on success."""
-    try:
-        with Session(engine, expire_on_commit=False) as session:
-            session.add(entry)
-            session.commit()
-        return True
-    except Exception as e:
-        logger.warning(f"add_to_assembly_table errored with: {e}")
-        return False
 
 
 def in_submission_table(engine: Engine, conditions: dict[str, Any]) -> bool:
@@ -540,18 +567,6 @@ def in_submission_table(engine: Engine, conditions: dict[str, Any]) -> bool:
         for col_name, value in conditions.items():
             stmt = stmt.where(getattr(SubmissionTableEntry, col_name) == value)
         return session.scalar(stmt) is not None
-
-
-def add_to_submission_table(engine: Engine, entry: SubmissionTableEntry) -> bool:
-    """Insert *entry* into submission_table. Returns True on success."""
-    try:
-        with Session(engine, expire_on_commit=False) as session:
-            session.add(entry)
-            session.commit()
-        return True
-    except Exception as e:
-        logger.warning(f"add_to_submission_table errored with: {e}")
-        return False
 
 
 def is_latest_revision(engine: Engine, seq_key: AccessionVersion) -> bool:
@@ -631,7 +646,7 @@ def get_project_and_sample_results(
         sample_rows[0].result.get("ena_sample_accession") if sample_rows[0].result else None
     )
     study_accession = (
-        project_rows[0].result.get("bioproject_accession") if project_rows[0].result else None
+        project_rows[0].result.get(EnaResultField.BIOPROJECT) if project_rows[0].result else None
     )
     if not sample_accession or not study_accession:
         error_msg = (

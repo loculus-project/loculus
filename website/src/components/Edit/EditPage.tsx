@@ -10,7 +10,7 @@ import { routes } from '../../routes/routes.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { type FilesByCategory, type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
-import { type InputField, type SubmissionDataTypes } from '../../types/config.ts';
+import { type FileSharingConfig, type InputField, type SubmissionDataTypes } from '../../types/config.ts';
 import {
     getLatestAccessionVersionForRevision,
     isLatestVersionRevocation,
@@ -22,7 +22,11 @@ import { getAccessionVersionString, parseAccessionVersionFromString } from '../.
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu.tsx';
 import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
-import { applyFileMappings, getSingleSubmissionFileMapping } from '../Submission/FileUpload/fileMapping.ts';
+import {
+    applyFileMappings,
+    getSingleSubmissionFileMapping,
+    validateSubmissionFileMapping,
+} from '../Submission/FileUpload/fileMapping.ts';
 import {
     deriveFileMapping,
     getPreviousFileUploadStates,
@@ -41,6 +45,7 @@ type EditPageProps = {
     accessToken: string;
     groupedInputFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
+    fileSharingConfig: FileSharingConfig;
     sequenceEntryHistory?: SequenceEntryHistory;
 };
 
@@ -66,6 +71,7 @@ const InnerEditPage: FC<EditPageProps> = ({
     accessToken,
     groupedInputFields,
     submissionDataTypes,
+    fileSharingConfig,
     sequenceEntryHistory,
 }) => {
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.fromInitialData(dataToEdit));
@@ -116,6 +122,13 @@ const InnerEditPage: FC<EditPageProps> = ({
 
             if (extraFilesEnabled && fileMapping !== undefined) {
                 const finalSubmissionFileMapping = getSingleSubmissionFileMapping(dataToEdit.submissionId, fileMapping);
+
+                const validationResult = validateSubmissionFileMapping(finalSubmissionFileMapping, fileSharingConfig);
+                if (validationResult.isErr()) {
+                    toast.error(validationResult.error.message, { position: 'top-center', autoClose: false });
+                    return;
+                }
+
                 const finalMetadataFileResult = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
                 if (finalMetadataFileResult.isErr()) {
                     toast.error(finalMetadataFileResult.error.message, { position: 'top-center', autoClose: false });
@@ -144,13 +157,23 @@ const InnerEditPage: FC<EditPageProps> = ({
             });
         } else {
             let fileMappingForEdit: FilesByCategory | null = null;
-            if (extraFilesEnabled && fileMapping !== undefined)
+            if (extraFilesEnabled && fileMapping !== undefined) {
+                const validationResult = validateSubmissionFileMapping(
+                    getSingleSubmissionFileMapping(dataToEdit.submissionId, fileMapping),
+                    fileSharingConfig,
+                );
+                if (validationResult.isErr()) {
+                    toast.error(validationResult.error.message, { position: 'top-center', autoClose: false });
+                    return;
+                }
+
                 fileMappingForEdit = Object.fromEntries(
                     [...fileMapping].map(([category, files]) => [
                         category,
                         [...files.entries()].map(([path, fileId]) => ({ fileId, name: path })),
                     ]),
                 );
+            }
             submitEdit({
                 accession: dataToEdit.accession,
                 version: dataToEdit.version,
