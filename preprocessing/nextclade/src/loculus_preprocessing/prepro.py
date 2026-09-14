@@ -766,7 +766,8 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
                 raise ValueError(msg)
             file_content = create_flatfile(config, submission_data)
             file_name = f"{accession}.{version}.embl"
-            upload_info = request_upload(submission_data.group_id, 1, config)[0]
+            content_length = len(file_content.encode("utf-8"))
+            upload_info = request_upload(submission_data.group_id, 1, content_length, config)[0]
             file_id = upload_info.fileId
             upload_embl_file_to_presigned_url(file_content, upload_info.url, upload_info.headers)
             processed_files = submission_data.processed_entry.data.files or {}

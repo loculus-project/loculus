@@ -210,14 +210,20 @@ def submit_processed_sequences(
     )
 
 
-def request_upload(group_id: int, number_of_files: int, config: Config) -> Sequence[FileUploadInfo]:
+def request_upload(
+    group_id: int, number_of_files: int, content_length: int, config: Config
+) -> Sequence[FileUploadInfo]:
     request_id = str(uuid.uuid4())
     # we need to parse the backend URL, to extract the API path without the organism component
     parsed = urlparse(config.backend_host)
 
     base_url = f"{parsed.scheme}://{parsed.netloc}"
     url = base_url + "/files/request-upload"
-    params = {"groupId": group_id, "numberFiles": number_of_files}
+    params = {
+        "groupId": group_id,
+        "numberFiles": number_of_files,
+        "contentLength": content_length,
+    }
     headers = {
         "Authorization": "Bearer " + get_jwt(config),
         "x-request-id": request_id,

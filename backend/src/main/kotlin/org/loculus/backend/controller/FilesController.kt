@@ -115,13 +115,16 @@ class FilesController(
             "associated with the entry, supplied as <fileName>:<fileId>. " +
             "Note: the presigned URL includes an `If-None-Match: *` condition to prevent accidental " +
             "overwrites. If the file ID has already been uploaded to, S3 will return HTTP 412 " +
-            "(Precondition Failed) - this means the file already exists and cannot be overwritten.",
+            "(Precondition Failed) - this means the file already exists and cannot be overwritten. " +
+            "The presigned URL is also locked to accept exactly `contentLength` bytes: the upload must have " +
+            "a body of exactly that many bytes, or S3 will reject it (typically with HTTP 403).",
     )
     @ApiResponse(responseCode = "200", description = "Successfully generated pre-signed upload URLs")
     @ApiResponse(responseCode = "400", description = "Invalid request parameters")
     @ApiResponse(responseCode = "401", description = "Authentication required")
     @ApiResponse(responseCode = "403", description = "User is not a member of the specified group")
     @ApiResponse(responseCode = "404", description = "Group does not exist")
+    @ApiResponse(responseCode = "422", description = "contentLength exceeds the maximum allowed file size")
     @PostMapping("/request-upload")
     fun requestUploads(
         @HiddenParam
@@ -135,14 +138,30 @@ class FilesController(
         @Parameter(description = "Number of files, default is 1.")
         @RequestParam
         numberFiles: Int = 1,
+        @Parameter(
+            description = "The exact size, in bytes, of each file to be uploaded. If multiple files are " +
+                "requested, this size applies to all of them - request separately for files of different sizes. " +
+                "The presigned URL will only accept an upload of exactly this many bytes.",
+        )
+        @RequestParam
+        contentLength: Long,
     ): List<FileIdAndWriteUrl> {
         filesPreconditionValidator.validateNumberFiles(numberFiles)
+        filesPreconditionValidator.validateContentLength(contentLength)
         filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
+
+        val maxFileSizeBytes = backendConfig.fileSharing.maxFileSizeBytes
+        if (maxFileSizeBytes != null && contentLength > maxFileSizeBytes) {
+            throw UnprocessableEntityException(
+                "contentLength $contentLength bytes exceeds the maximum allowed file size of " +
+                    "$maxFileSizeBytes bytes.",
+            )
+        }
 
         val fileIds = generateFileIds(numberFiles)
         filesDatabaseService.createFileEntries(fileIds, authenticatedUser.username, groupId)
         return fileIds.map { fileId ->
-            FileIdAndWriteUrl(fileId, s3Service.createUrlToUploadPrivateFile(fileId))
+            FileIdAndWriteUrl(fileId, s3Service.createUrlToUploadPrivateFile(fileId, contentLength))
         }
     }
 

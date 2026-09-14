@@ -16,6 +16,12 @@ class FilesPreconditionValidator(
         }
     }
 
+    fun validateContentLength(contentLength: Long) {
+        if (contentLength < 0) {
+            throw BadRequestException("contentLength must not be negative")
+        }
+    }
+
     /**
      * Users who can modify the group and the preprocessing pipeline can
      * upload files for a group.

@@ -676,6 +676,7 @@ class SubmitProcessedDataEndpointTest(
         val fileIdAndUrlV1 = filesClient.requestUploads(
             groupId = groupId,
             jwt = jwtForDefaultUser,
+            contentLength = 6,
         ).andGetFileIdsAndUrls()[0]
         convenienceClient.uploadFile(fileIdAndUrlV1.presignedWriteUrl, "FileV1", fileIdAndUrlV1.headers)
         convenienceClient.extractUnprocessedData(pipelineVersion = 1)
@@ -695,6 +696,7 @@ class SubmitProcessedDataEndpointTest(
         val fileIdAndUrlV2 = filesClient.requestUploads(
             groupId = groupId,
             jwt = jwtForDefaultUser,
+            contentLength = 6,
         ).andGetFileIdsAndUrls()[0]
         convenienceClient.uploadFile(fileIdAndUrlV2.presignedWriteUrl, "FileV2", fileIdAndUrlV2.headers)
         convenienceClient.extractUnprocessedData(pipelineVersion = 2)
@@ -741,6 +743,7 @@ class SubmitProcessedDataEndpointTest(
         val fileIdAndUrlV1 = filesClient.requestUploads(
             groupId = groupId,
             jwt = jwtForDefaultUser,
+            contentLength = 6,
         ).andGetFileIdsAndUrls()[0]
         convenienceClient.uploadFile(fileIdAndUrlV1.presignedWriteUrl, "FileV1", fileIdAndUrlV1.headers)
         convenienceClient.extractUnprocessedData(pipelineVersion = 1)
@@ -757,6 +760,7 @@ class SubmitProcessedDataEndpointTest(
         val fileIdAndUrlV2 = filesClient.requestUploads(
             groupId = groupId,
             jwt = jwtForDefaultUser,
+            contentLength = 6,
         ).andGetFileIdsAndUrls()[0]
         convenienceClient.uploadFile(fileIdAndUrlV2.presignedWriteUrl, "FileV2", fileIdAndUrlV2.headers)
         convenienceClient.extractUnprocessedData(pipelineVersion = 2)

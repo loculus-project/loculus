@@ -35,19 +35,23 @@ You do not need to upload it multiple times.
 #### Simple upload
 
 The simple (single-part) way to upload files is to call the `/files/request-upload` endpoint.
-You need to provide a group ID, which is the group that will then own the files and give a number of how many files
-you want to upload.
+You need to provide a group ID, which is the group that will then own the files, a number of how many files
+you want to upload, and the exact size in bytes (`contentLength`) of each file. If you request more than one
+file in a single call, they must all be the same size; request separately for files of different sizes.
 
 curl example:
 
 ```bash
 curl -X POST \
-  '<Backend URL>/files/request-upload?groupId=2&numberFiles=3' \
+  '<Backend URL>/files/request-upload?groupId=2&numberFiles=3&contentLength=1234' \
   -H 'accept: application/json' \
   -H 'Authorization: Bearer eyJhbGciOiJSUzI1...' \
 ```
 
-The endpoint returns an array of file IDs and pre-signed URLs to use to upload the file to:
+The endpoint returns an array of file IDs and pre-signed URLs to use to upload the file to. Each pre-signed URL
+is locked to accept an upload of exactly `contentLength` bytes - if the administrator has configured a maximum
+file size and `contentLength` exceeds it, the request fails immediately with a 422 response; if you then upload
+a body of a different size than declared, S3 will reject the upload (typically with a 403 response):
 
 ```json
 [

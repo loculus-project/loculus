@@ -41,12 +41,18 @@ class S3Service(private val s3Config: S3Config) {
     private val s3Client: S3Client by lazy { createClient(getS3BucketConfig()) }
     private val presigner: S3Presigner by lazy { createPresigner(getS3BucketConfig()) }
 
-    fun createUrlToUploadPrivateFile(fileId: FileId): String = s3ErrorMapping {
+    /**
+     * Creates a presigned URL for uploading a file, locked to accept exactly [contentLength] bytes.
+     * S3 rejects (with a signature mismatch) any request whose actual body size differs from [contentLength],
+     * so the client must upload a body of exactly that size.
+     */
+    fun createUrlToUploadPrivateFile(fileId: FileId, contentLength: Long): String = s3ErrorMapping {
         val config = getS3BucketConfig()
         val putObjectRequest = PutObjectRequest.builder()
             .bucket(config.bucket)
             .key(getFileIdPath(fileId))
             .ifNoneMatch("*") // prevent accidental overwrites of URL contents by blocking more than one write
+            .contentLength(contentLength)
             .build()
         val presignRequest = PutObjectPresignRequest.builder()
             .putObjectRequest(putObjectRequest)
