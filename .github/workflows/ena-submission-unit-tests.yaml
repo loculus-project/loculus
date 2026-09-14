@@ -44,6 +44,23 @@ jobs:
           cache-environment: true
       - name: Run ruff check
         run: ruff check .
+  typeCheck:
+    name: Type Checking
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v3
+        with:
+          environment-file: "ena-submission/environment.yml"
+          micromamba-version: "latest"
+          cache-environment: true
+      - name: Install package
+        run: |
+            uv pip install --system .
+      - name: Run mypy (checks type hints)
+        run: mypy --config-file .mypy.ini
   unitTests:
     name: Unit Tests
     runs-on: ubuntu-latest
