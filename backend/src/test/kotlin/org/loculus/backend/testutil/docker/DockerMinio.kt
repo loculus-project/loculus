@@ -6,7 +6,7 @@ import org.testcontainers.utility.DockerImageName
 
 class DockerMinio : MinioProvider {
     private val minioImage = DockerImageName
-        .parse("quay.io/minio/minio:latest")
+        .parse("quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z")
         .asCompatibleSubstituteFor("minio/minio")
     private val container = MinIOContainer(minioImage).withReuse(true)
 

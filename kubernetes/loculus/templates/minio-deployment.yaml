@@ -48,7 +48,7 @@ spec:
             name: minio-policies
       containers:
         - name: minio
-          image: quay.io/minio/minio:latest
+          image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
           {{- include "loculus.resources" (list "minio" $.Values) | nindent 10 }}
           args: ["server", "/data"]
           ports:
