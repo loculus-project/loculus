@@ -1152,7 +1152,8 @@ def test_errors_when_no_input_field_is_provided() -> None:
     }
 
     assert messages["non_user_input"] == (
-        "Error. 'non_user_input' may not be provided as input, please remove it from your metadata."
+        "Metadata field `non_user_input` may not be provided as input. "
+        "Please remove it from your metadata."
     )
 
 
