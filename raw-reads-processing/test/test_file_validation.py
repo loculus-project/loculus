@@ -320,6 +320,7 @@ def test_truncated_gzip_is_reported_as_invalid_submission(tmp_path):
 
 def test_corrupt_gzip_is_reported_as_invalid_submission(tmp_path):
     path = tmp_path / "stored"
+    # Create a gzip-looking file with a corrupt payload.
     path.write_bytes(GZIP_MAGIC + b"\x08\x00\x00\x00\x00\x00\x00\x03" + b"\xff" * 20)
     with pytest.raises(InvalidSubmission) as exc_info:
         validate_compression({"reads.fastq.gz": path}, FileFormat.FASTQ)
