@@ -176,9 +176,15 @@ You can set a permissive CORS policy on your bucket with `s3cmd setcors cors.xml
     <AllowedMethod>POST</AllowedMethod>
     <AllowedMethod>PUT</AllowedMethod>
     <AllowedOrigin>*</AllowedOrigin>
+    <ExposeHeader>ETag</ExposeHeader>
+    <MaxAgeSeconds>3000</MaxAgeSeconds>
   </CORSRule>
 </CORSConfiguration>
 ```
+
+:::note
+`ExposeHeader: ETag` is required for multipart uploads. `MaxAgeSeconds` is optional; it just lets the browser cache the CORS preflight response to reduce the number of preflight requests.
+:::
 
 Also consult the documentation for you S3 provider to find out about CORS policy configuration. For example: [AWS](https://docs.aws.amazon.com/AmazonS3/latest/userguide/enabling-cors-examples.html) and [Hetzner](https://docs.hetzner.com/storage/object-storage/howto-protect-objects/cors/).
 
