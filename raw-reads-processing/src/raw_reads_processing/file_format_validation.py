@@ -49,9 +49,11 @@ def _condense_duplicate_read_name_errors(details: str) -> str:
 
     for *every* mate pair that shares a name.
 
-    If the details start with such an entry, replace all
-    of them with a single message that states what was found, the likely cause,
-    and what to do, quoting only the first offending read name as an example.
+    Replace every such entry with a single message that states what was found,
+    the likely cause and what to do, quoting one offending read name as an
+    example. readtools builds the report by iterating a HashMap, so the names
+    arrive in arbitrary order and the quoted one need not be the first in the
+    file.
     """
     first_match = _DUPLICATE_READ_NAME_RE.search(details)
     if first_match is None:
