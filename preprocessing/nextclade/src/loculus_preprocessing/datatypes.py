@@ -124,7 +124,7 @@ class ProcessingContext:
     """
 
     accession_version: AccessionVersion
-    submissionId: str  # noqa: N815
+    submission_id: str
     submitter: str
     group_id: int
     insdc_ingest_group_id: int
