@@ -1149,384 +1149,255 @@ def test_format_authors() -> None:
             raise AssertionError(msg)
 
 
-def test_parse_date_into_range() -> None:
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-12"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeString",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 12, 15)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021-12"
-    ), "dateRangeString: 2021-12 should be returned as is."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-12"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeLower",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2021, 12, 15)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021-12-01"
-    ), "dateRangeLower: 2021-12 should be returned as 2021-12-01."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-12"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeUpper",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 12, 15)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021-12-31"
-    ), "dateRangeUpper: 2021-12 should be returned as 2021-12-31."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-12"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeUpper",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2021, 12, 15)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021-12-15"
-    ), "dateRangeUpper: 2021-12 should be returned as submittedAt time: 2021-12-15."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-02"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeUpper",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2021, 3, 15)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021-02-28"
-    ), "dateRangeUpper: 2021-02 should be returned as 2021-02-28."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "2021"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeUpper",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2021, 12, 15)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021-12-15"
-    ), "dateRangeUpper: 2021 should be returned as 2021-12-15."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "2021"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeUpper",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 15)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021-12-31"
-    ), "dateRangeUpper: 2021 should be returned as 2021-12-31."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-12", "releaseDate": "2021-12-15"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeUpper",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2021, 12, 16)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021-12-15"
-    ), "dateRangeUpper: 2021-12 with releaseDate 2021-12-15 should be returned as 2021-12-15."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "", "releaseDate": "2021-12-15"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeUpper",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2021, 12, 16)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021-12-15"
-    ), "dateRangeUpper: empty date with releaseDate 2021-12-15 should be returned as 2021-12-15."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": ""},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeString",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2021, 12, 16)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        is None
-    ), "dateRangeString: empty date should be returned as None."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "not.date"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeString",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2021, 12, 16)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        is None
-    ), "dateRangeString: invalid date should be returned as None."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "", "releaseDate": "2021-12-15"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeLower",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2021, 12, 16)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        is None
-    ), "dateRangeLower: empty date should be returned as None."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "[2021-01-02 TO 2021-06-30]"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeLower",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021-01-02"
-    ), "dateRangeLower: lucene range should return lower bound."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "[2021 TO 2021-06-30]"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeLower",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021-01-01"
-    ), "dateRangeLower: lucene range should return lower bound of leading year."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "[2021-01-01 TO 2021-06-30]"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeUpper",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021-06-30"
-    ), "dateRangeUpper: lucene range should return upper bound."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "[2021-01-01 TO 2021]"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeUpper",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021-12-31"
-    ), "dateRangeUpper: lucene range should return upper bound of final date."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "[2021-05-01 TO 2021-06-30]"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeString",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021-05/2021-06"
-    ), "dateRangeString: lucene range should be returned in ISO format (compressed to month range)."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "[2021 TO 2021-06]"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeString",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021-01/2021-06"
-    ), "dateRangeString: lucene range should be returned in ISO format (compressed to month range)."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-03-05/2021-06-30"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeLower",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021-03-05"
-    ), "dateRangeLower: ISO range should return lower bound."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "2021/2021-06-30"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeLower",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021-01-01"
-    ), "dateRangeLower: ISO range should return lower bound of leading date."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-01-01/2021-06-12"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeUpper",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021-06-12"
-    ), "dateRangeUpper: ISO range should return upper bound."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-01-01/2021-06"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeUpper",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021-06-30"
-    ), "dateRangeUpper: ISO range should return upper bound of trailing date."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "2020-01/2021-06-30"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeString",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2020-01/2021-06"
-    ), "dateRangeString: ISO range should be returned compressed to month range."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "20-01-2020/2021-06-30"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeString",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).errors[0]
-        == "Metadata field field_name: Detected date range but could not parse date: 20-01-2020/2021-06-30."
-    ), "Invalid date range format errors."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "2022-01-01/2021-06-30"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeString",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 1, 1)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).errors[0]
-        == "Metadata field field_name:'2022-01-01/2021-06-30' is an invalid date range. Lower bound: 2022-01-01 00:00:00+00:00 is after upper bound: 2021-06-30 00:00:00+00:00."
-    ), "Invalid date range format errors."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "[2021-01-01 TO 2021-12-31]"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeString",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2022, 6, 15)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021"
-    ), "Years are compressed in dateRangeString."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "[2021-01-01 TO 2022-12-31]"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeString",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2024, 6, 15)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021/2022"
-    ), "Multiple years are compressed in dateRangeString."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "[2024-02-01 TO 2024-02-29]"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeString",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2024, 6, 15)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2024-02"
-    ), "Months are compressed in dateRangeString (also for leap years)."
-    assert (
-        ProcessingFunctions.parse_date_into_range(
-            {"date": "[2021-01-01 TO 2021-12-31]"},
-            "field_name",
-            ["field_name"],
-            {
-                "fieldType": "dateRangeUpper",
-            },
-            replace(DEFAULT_TEST_CONTEXT, submitted_at=ts_from_ymd(2021, 6, 15)),
-            DEFAULT_EXTERNAL_SERVICES,
-        ).datum
-        == "2021-06-15"
-    ), "dateRangeUpper: lucene range upper bound should be tightened by submittedAt."
+@dataclass
+class DateRangeCase:
+    name: str
+    date: str
+    field_type: str
+    submitted_at: str
+    release_date: str | None = None
+    expected_datum: str | None = None
+    expected_error: str | None = None
+
+
+date_range_cases = [
+    DateRangeCase(
+        name="dateRangeString: 2021-12 should be returned as is.",
+        date="2021-12",
+        field_type="dateRangeString",
+        submitted_at=ts_from_ymd(2022, 12, 15),
+        expected_datum="2021-12",
+    ),
+    DateRangeCase(
+        name="dateRangeLower: 2021-12 should be returned as 2021-12-01.",
+        date="2021-12",
+        field_type="dateRangeLower",
+        submitted_at=ts_from_ymd(2021, 12, 15),
+        expected_datum="2021-12-01",
+    ),
+    DateRangeCase(
+        name="dateRangeUpper: 2021-12 should be returned as 2021-12-31.",
+        date="2021-12",
+        field_type="dateRangeUpper",
+        submitted_at=ts_from_ymd(2022, 12, 15),
+        expected_datum="2021-12-31",
+    ),
+    DateRangeCase(
+        name="dateRangeUpper: 2021-12 should be returned as submittedAt time: 2021-12-15.",
+        date="2021-12",
+        field_type="dateRangeUpper",
+        submitted_at=ts_from_ymd(2021, 12, 15),
+        expected_datum="2021-12-15",
+    ),
+    DateRangeCase(
+        name="dateRangeUpper: 2021-02 should be returned as 2021-02-28.",
+        date="2021-02",
+        field_type="dateRangeUpper",
+        submitted_at=ts_from_ymd(2021, 3, 15),
+        expected_datum="2021-02-28",
+    ),
+    DateRangeCase(
+        name="dateRangeUpper: 2021 should be returned as 2021-12-15.",
+        date="2021",
+        field_type="dateRangeUpper",
+        submitted_at=ts_from_ymd(2021, 12, 15),
+        expected_datum="2021-12-15",
+    ),
+    DateRangeCase(
+        name="dateRangeUpper: 2021 should be returned as 2021-12-31.",
+        date="2021",
+        field_type="dateRangeUpper",
+        submitted_at=ts_from_ymd(2022, 1, 15),
+        expected_datum="2021-12-31",
+    ),
+    DateRangeCase(
+        name=(
+            "dateRangeUpper: 2021-12 with releaseDate 2021-12-15 should be returned as 2021-12-15."
+        ),
+        date="2021-12",
+        release_date="2021-12-15",
+        field_type="dateRangeUpper",
+        submitted_at=ts_from_ymd(2021, 12, 16),
+        expected_datum="2021-12-15",
+    ),
+    DateRangeCase(
+        name=(
+            "dateRangeUpper: empty date with releaseDate 2021-12-15 should be returned as "
+            "2021-12-15."
+        ),
+        date="",
+        release_date="2021-12-15",
+        field_type="dateRangeUpper",
+        submitted_at=ts_from_ymd(2021, 12, 16),
+        expected_datum="2021-12-15",
+    ),
+    DateRangeCase(
+        name="dateRangeString: empty date should be returned as None.",
+        date="",
+        field_type="dateRangeString",
+        submitted_at=ts_from_ymd(2021, 12, 16),
+    ),
+    DateRangeCase(
+        name="dateRangeString: invalid date should be returned as None.",
+        date="not.date",
+        field_type="dateRangeString",
+        submitted_at=ts_from_ymd(2021, 12, 16),
+    ),
+    DateRangeCase(
+        name="dateRangeLower: empty date should be returned as None.",
+        date="",
+        release_date="2021-12-15",
+        field_type="dateRangeLower",
+        submitted_at=ts_from_ymd(2021, 12, 16),
+    ),
+    DateRangeCase(
+        name="dateRangeLower: lucene range should return lower bound.",
+        date="[2021-01-02 TO 2021-06-30]",
+        field_type="dateRangeLower",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+        expected_datum="2021-01-02",
+    ),
+    DateRangeCase(
+        name="dateRangeLower: lucene range should return lower bound of leading year.",
+        date="[2021 TO 2021-06-30]",
+        field_type="dateRangeLower",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+        expected_datum="2021-01-01",
+    ),
+    DateRangeCase(
+        name="dateRangeUpper: lucene range should return upper bound.",
+        date="[2021-01-01 TO 2021-06-30]",
+        field_type="dateRangeUpper",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+        expected_datum="2021-06-30",
+    ),
+    DateRangeCase(
+        name="dateRangeUpper: lucene range should return upper bound of final date.",
+        date="[2021-01-01 TO 2021]",
+        field_type="dateRangeUpper",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+        expected_datum="2021-12-31",
+    ),
+    DateRangeCase(
+        name="dateRangeString: lucene day range should be compressed to month range.",
+        date="[2021-05-01 TO 2021-06-30]",
+        field_type="dateRangeString",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+        expected_datum="2021-05/2021-06",
+    ),
+    DateRangeCase(
+        name="dateRangeString: lucene year range should be compressed to month range.",
+        date="[2021 TO 2021-06]",
+        field_type="dateRangeString",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+        expected_datum="2021-01/2021-06",
+    ),
+    DateRangeCase(
+        name="dateRangeLower: ISO range should return lower bound.",
+        date="2021-03-05/2021-06-30",
+        field_type="dateRangeLower",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+        expected_datum="2021-03-05",
+    ),
+    DateRangeCase(
+        name="dateRangeLower: ISO range should return lower bound of leading date.",
+        date="2021/2021-06-30",
+        field_type="dateRangeLower",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+        expected_datum="2021-01-01",
+    ),
+    DateRangeCase(
+        name="dateRangeUpper: ISO range should return upper bound.",
+        date="2021-01-01/2021-06-12",
+        field_type="dateRangeUpper",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+        expected_datum="2021-06-12",
+    ),
+    DateRangeCase(
+        name="dateRangeUpper: ISO range should return upper bound of trailing date.",
+        date="2021-01-01/2021-06",
+        field_type="dateRangeUpper",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+        expected_datum="2021-06-30",
+    ),
+    DateRangeCase(
+        name="dateRangeString: ISO range should be returned compressed to month range.",
+        date="2020-01/2021-06-30",
+        field_type="dateRangeString",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+        expected_datum="2020-01/2021-06",
+    ),
+    DateRangeCase(
+        name="Invalid date range format is reported as an error.",
+        date="20-01-2020/2021-06-30",
+        field_type="dateRangeString",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+        expected_error=(
+            "Metadata field field_name: Detected date range but could not parse date: "
+            "20-01-2020/2021-06-30."
+        ),
+    ),
+    DateRangeCase(
+        name="Date range with lower bound after upper bound is reported as an error.",
+        date="2022-01-01/2021-06-30",
+        field_type="dateRangeString",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+        expected_error=(
+            "Metadata field field_name:'2022-01-01/2021-06-30' is an invalid date range. "
+            "Lower bound: 2022-01-01 00:00:00+00:00 is after upper bound: "
+            "2021-06-30 00:00:00+00:00."
+        ),
+    ),
+    DateRangeCase(
+        name="Years are compressed in dateRangeString.",
+        date="[2021-01-01 TO 2021-12-31]",
+        field_type="dateRangeString",
+        submitted_at=ts_from_ymd(2022, 6, 15),
+        expected_datum="2021",
+    ),
+    DateRangeCase(
+        name="Multiple years are compressed in dateRangeString.",
+        date="[2021-01-01 TO 2022-12-31]",
+        field_type="dateRangeString",
+        submitted_at=ts_from_ymd(2024, 6, 15),
+        expected_datum="2021/2022",
+    ),
+    DateRangeCase(
+        name="Months are compressed in dateRangeString (also for leap years).",
+        date="[2024-02-01 TO 2024-02-29]",
+        field_type="dateRangeString",
+        submitted_at=ts_from_ymd(2024, 6, 15),
+        expected_datum="2024-02",
+    ),
+    DateRangeCase(
+        name="dateRangeUpper: lucene range upper bound should be tightened by submittedAt.",
+        date="[2021-01-01 TO 2021-12-31]",
+        field_type="dateRangeUpper",
+        submitted_at=ts_from_ymd(2021, 6, 15),
+        expected_datum="2021-06-15",
+    ),
+]
+
+
+@pytest.mark.parametrize("case", date_range_cases, ids=lambda c: c.name)
+def test_parse_date_into_range(case: DateRangeCase) -> None:
+    input_data: InputMetadata = {"date": case.date}
+    if case.release_date is not None:
+        input_data["releaseDate"] = case.release_date
+
+    result = ProcessingFunctions.parse_date_into_range(
+        input_data,
+        "field_name",
+        ["field_name"],
+        {"fieldType": case.field_type},
+        replace(DEFAULT_TEST_CONTEXT, submitted_at=case.submitted_at),
+        DEFAULT_EXTERNAL_SERVICES,
+    )
+
+    if case.expected_error is not None:
+        assert result.errors[0] == case.expected_error, case.name
+    else:
+        assert result.datum == case.expected_datum, case.name
 
 
 @dataclass
