@@ -3,6 +3,7 @@ import { ReviewPage } from './review.page';
 import Papa from 'papaparse';
 import { NavigationPage } from './navigation.page';
 import {
+    isSingleFile,
     prepareTmpDirForBulkUpload,
     prepareTmpDirForSingleUpload,
     uploadFilesFromTmpDir,
@@ -207,13 +208,13 @@ export class BulkSubmissionPage extends SubmissionPage {
 
     async uploadExternalFiles(
         fileId: string,
-        fileContents: Record<string, string | Record<string, string>>,
+        fileContents: Record<string, string | Buffer | Record<string, string | Buffer>>,
         tmpDir: string,
         gzipLevel?: number,
     ) {
         await prepareTmpDirForBulkUpload(fileContents, tmpDir, gzipLevel);
         const fileCount = Object.values(fileContents).reduce(
-            (total, files) => total + (typeof files === 'string' ? 1 : Object.keys(files).length),
+            (total, files) => total + (isSingleFile(files) ? 1 : Object.keys(files).length),
             0,
         );
         await uploadFilesFromTmpDir(this.page, fileId, tmpDir, fileCount);

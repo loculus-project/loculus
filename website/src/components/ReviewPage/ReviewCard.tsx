@@ -338,7 +338,10 @@ const Warnings: FC<WarningsProps> = ({ warnings, accession }) => {
                         <p
                             key={warning.processedFields.map((field) => field.type + field.name).join('.') + accession}
                             className='text-yellow-500'
+                            role='status'
+                            data-testid='processing-warning'
                         >
+                            <span className='sr-only'>Warning: </span>
                             {processedFieldName}: {warning.message}
                         </p>
                     );

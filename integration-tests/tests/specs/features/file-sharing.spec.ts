@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import { execSync } from 'child_process';
 import fs, { readFileSync } from 'fs';
+import { gzipSync } from 'zlib';
 import os from 'os';
 import path, { join } from 'path';
 import { test } from '../../fixtures/tmpdir.fixture';
@@ -69,83 +70,97 @@ test('submit single seq w/ 2 FASTQ files thru single seq submission form', async
     await searchPage.checkAllFileContents(FILES_DOUBLE);
 });
 
-test('reject raw_reads files that are not valid or not gzipped', async ({
-    page,
-    groupId,
-    tmpDir,
-}) => {
-    test.setTimeout(240_000);
+// Two mates sharing a read name, as an interleaved FASTQ downloaded from INSDC has.
+const INTERLEAVED_FASTQ =
+    `@read1\nACGTACGTAC\n+\nIIIIIIIIII\n@read1\nTGCATGCATG\n+\nIIIIIIIIII\n` +
+    `@read2\nACGTACGTAC\n+\nIIIIIIIIII\n@read2\nTGCATGCATG\n+\nIIIIIIIIII\n`;
+
+const contaminatedReads = () =>
+    readFileSync(join(__dirname, '../../test-data/contaminated.fastq'), 'utf-8');
+
+/**
+ * Every way a raw-reads submission can be rejected after it reaches the backend. They share
+ * one bulk submission because the submission itself, not the validation, is what costs time.
+ * A string is gzipped if its name says `.gz`; a Buffer is uploaded byte for byte, which is
+ * how the deliberately malformed gzips are expressed.
+ */
+const RAW_READS_FAILURES: { id: string; files: Record<string, string | Buffer>; error: RegExp }[] =
+    [
+        {
+            id: 'invalid-fastq',
+            files: { 'reads.fastq.gz': 'This is not a FASTQ file.' },
+            error: /This is not a FASTQ file./i,
+        },
+        {
+            id: 'uncompressed',
+            files: { 'reads.fastq': EBOLA_SUDAN_SMALL_FASTQ(1) },
+            error: /must be gzip-compressed/i,
+        },
+        {
+            id: 'not-gzipped',
+            files: { 'reads.fastq.gz': Buffer.from(EBOLA_SUDAN_SMALL_FASTQ(1)) },
+            error: /contents are not gzip-compressed/i,
+        },
+        {
+            id: 'double-gzipped',
+            files: { 'reads.fastq.gz': gzipSync(gzipSync(EBOLA_SUDAN_SMALL_FASTQ(1))) },
+            error: /gzip-compressed more than once/i,
+        },
+        {
+            id: 'truncated-gzip',
+            files: { 'reads.fastq.gz': gzipSync(EBOLA_SUDAN_SMALL_FASTQ(1)).subarray(0, 10) },
+            error: /truncated|corrupt/i,
+        },
+        {
+            id: 'too-many-files',
+            files: {
+                'reads_1.fastq.gz': EBOLA_SUDAN_SMALL_FASTQ(1),
+                'reads_2.fastq.gz': EBOLA_SUDAN_SMALL_FASTQ(2),
+                'reads_3.fastq.gz': EBOLA_SUDAN_SMALL_FASTQ(1, 2),
+            },
+            error: /Too many FASTQ files/i,
+        },
+        {
+            id: 'interleaved',
+            files: { 'reads.fastq.gz': INTERLEAVED_FASTQ },
+            error: /same read name appears more than once/i,
+        },
+        {
+            id: 'host-contaminated',
+            files: { 'reads.fastq.gz': contaminatedReads() },
+            error: /high proportion of human reads/i,
+        },
+    ];
+
+test('reject every kind of invalid raw_reads submission', async ({ page, groupId, tmpDir }) => {
+    test.setTimeout(400_000);
     void groupId;
-    const INVALID_FASTQ = { 'reads.fastq.gz': 'This is not a FASTQ file.' };
-    const UNCOMPRESSED = { 'reads.fastq': EBOLA_SUDAN_SMALL_FASTQ(1) };
 
     const submissionPage = new BulkSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
     await submissionPage.uploadMetadataFile(
         [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
-        [
-            [
-                ID_1,
-                COUNTRY_1,
-                '2023-11-01',
-                SEQUENCING_INSTRUMENT,
-                filesColumnCell(Object.keys(INVALID_FASTQ), ID_1),
-            ],
-            [
-                ID_2,
-                COUNTRY_2,
-                '2023-11-02',
-                SEQUENCING_INSTRUMENT,
-                filesColumnCell(Object.keys(UNCOMPRESSED), ID_2),
-            ],
-        ],
+        RAW_READS_FAILURES.map(({ id, files }) => [
+            id,
+            COUNTRY_1,
+            '2023-11-01',
+            SEQUENCING_INSTRUMENT,
+            filesColumnCell(Object.keys(files), id),
+        ]),
     );
-    await submissionPage.uploadSequencesFile({
-        [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE,
-        [ID_2]: EBOLA_SUDAN_SHORT_SEQUENCE,
-    });
+    await submissionPage.uploadSequencesFile(
+        Object.fromEntries(RAW_READS_FAILURES.map(({ id }) => [id, EBOLA_SUDAN_SHORT_SEQUENCE])),
+    );
     await submissionPage.uploadExternalFiles(
         RAW_READS,
-        { [ID_1]: INVALID_FASTQ, [ID_2]: UNCOMPRESSED },
+        Object.fromEntries(RAW_READS_FAILURES.map(({ id, files }) => [id, files])),
         tmpDir,
     );
-    const reviewPage = await submissionPage.submitAndWaitForProcessingDone(180_000);
-    await reviewPage.expectFileProcessingError(/This is not a FASTQ file./i, ID_1);
-    await reviewPage.expectFileProcessingError(/must be gzip-compressed/i, ID_2);
-    await reviewPage.expectNoValidSequencesToApprove();
-});
 
-test('reject FASTQ raw_reads file with human host reads with a deacon validation error', async ({
-    page,
-    groupId,
-    tmpDir,
-}) => {
-    test.setTimeout(200_000);
-    void groupId;
-    const contaminatedReads = readFileSync(
-        join(__dirname, '../../test-data/contaminated.fastq'),
-        'utf-8',
-    );
-    const submissionPage = new SingleSequenceSubmissionPage(page);
-    await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
-    await submissionPage.fillSubmissionForm({
-        submissionId: 'host-contaminated',
-        collectionCountry: COUNTRY_1,
-        collectionDate: '2023-11-02',
-        authorAffiliations: AUTHOR_AFFILIATIONS,
-        sequencingInstrument: SEQUENCING_INSTRUMENT,
-    });
-    await submissionPage.fillSequenceData({ main: EBOLA_SUDAN_SHORT_SEQUENCE });
-    await submissionPage.uploadExternalFiles(
-        RAW_READS,
-        { 'reads.fastq.gz': contaminatedReads },
-        tmpDir,
-    );
-    const reviewPage = await submissionPage.submitAndWaitForProcessingDone(180_000);
-    await reviewPage.expectFileProcessingError(
-        /high proportion of human reads/i,
-        'host-contaminated',
-    );
+    const reviewPage = await submissionPage.submitAndWaitForProcessingDone(300_000);
+    for (const { id, error } of RAW_READS_FAILURES) {
+        await reviewPage.expectFileProcessingError(error, id);
+    }
     await reviewPage.expectNoValidSequencesToApprove();
 });
 

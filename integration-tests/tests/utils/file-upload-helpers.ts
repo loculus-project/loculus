@@ -4,11 +4,20 @@ import path from 'path';
 import { gzipSync } from 'zlib';
 import { clearTmpDir } from './tmpdir';
 
+/** One file's content, as opposed to a subfolder of files. */
+export const isSingleFile = (
+    value: string | Buffer | Record<string, string | Buffer>,
+): value is string | Buffer => typeof value === 'string' || Buffer.isBuffer(value);
+
 export const isGzipName = (fileName: string) => fileName.toLowerCase().endsWith('.gz');
 
-/** Gzips content whose file name ends in `.gz`. */
-export const contentForUpload = (fileName: string, content: string, gzipLevel?: number) =>
-    isGzipName(fileName)
+/**
+ * Gzips string content whose file name ends in `.gz`. A Buffer is written byte for byte,
+ * which is how tests express deliberately malformed uploads such as a `.gz` that is not
+ * gzipped, or one that was gzipped twice.
+ */
+export const contentForUpload = (fileName: string, content: string | Buffer, gzipLevel?: number) =>
+    typeof content === 'string' && isGzipName(fileName)
         ? gzipSync(content, gzipLevel === undefined ? {} : { level: gzipLevel })
         : content;
 
@@ -19,7 +28,7 @@ export const contentForUpload = (fileName: string, content: string, gzipLevel?: 
  * @param tmpDir The temporary directory to use for storing files
  */
 export async function prepareTmpDirForBulkUpload(
-    fileContents: Record<string, string | Record<string, string>>,
+    fileContents: Record<string, string | Buffer | Record<string, string | Buffer>>,
     tmpDir: string,
     gzipLevel?: number,
 ) {
@@ -28,13 +37,13 @@ export async function prepareTmpDirForBulkUpload(
     // Create subfolders if required
     await Promise.all(
         Object.entries(fileContents).flatMap(([p, f]) => {
-            if (typeof f !== 'string') return fs.promises.mkdir(path.join(tmpDir, p));
+            if (!isSingleFile(f)) return fs.promises.mkdir(path.join(tmpDir, p));
         }),
     );
     // Populate files, in subfolders if required
     await Promise.all(
         Object.entries(fileContents).flatMap(([p, f]) => {
-            if (typeof f !== 'string')
+            if (!isSingleFile(f))
                 return Object.entries(f).map(([fileName, fileContent]) =>
                     fs.promises.writeFile(
                         path.join(tmpDir, p, fileName),
@@ -55,7 +64,7 @@ export async function prepareTmpDirForBulkUpload(
  * @param tmpDir The temporary directory to use for storing files
  */
 export async function prepareTmpDirForSingleUpload(
-    fileContents: Record<string, string>,
+    fileContents: Record<string, string | Buffer>,
     tmpDir: string,
 ) {
     await clearTmpDir(tmpDir);
