@@ -96,6 +96,9 @@ export class ColumnMapping {
             const text = await tsvFile.text();
             const parsed = Papa.parse<string[]>(text, { delimiter: '\t', skipEmptyLines: true });
             const inputRows: string[][] = parsed.data;
+            if (inputRows.length === 0) {
+                return err(new Error('Please provide a non-empty metadata file.'));
+            }
             const headersInFile = inputRows.splice(0, 1)[0];
             const headers: string[] = [];
             const indices: number[] = [];
