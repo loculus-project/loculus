@@ -17,6 +17,26 @@ curl -L -o readtools.jar \
   https://github.com/loculus-project/readtools/releases/download/v1.0.0/readtools-2.15.1-all.jar
 ```
 
+## Testing
+
+```sh
+pytest
+```
+
+Most tests are pure Python, but some run the real `readtools` jar and the real `deacon`
+binary — those are the only tests covering either tool, so they **fail** rather than skip
+when the tool is missing. The service image ships both, so this only comes up locally:
+download the jar as above (`_find_jar` also honours `READTOOLS_JAR` and the image path
+`/opt/app/lib/readtools.jar`), and install deacon via `environment.yml`.
+
+Those tests carry the `needs_external_tools` marker (applied automatically to anything
+using the `readtools_jar` or `deacon_server` fixtures). To run everything else without
+either tool installed:
+
+```sh
+pytest -m "not needs_external_tools"
+```
+
 ## How to configure the service
 
 Preprocessing is currently configured to send raw read files to the `rawReadsProcessingService` and requires the `values.yaml` to contain:
