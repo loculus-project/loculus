@@ -431,17 +431,18 @@ def test_parse_validation_error_condenses_duplicate_read_name_spam(separator):
     )
     assert "occurrences of read name" not in message
 
-    def test_parse_validation_error_condenses_duplicates_among_other_errors():
-        message = _parse_validation_error(
-            "RESULT: INVALID\n"
-            "  Sequence and quality strings must be the same length\n"
-            '  Multiple (2) occurrences of read name "read1"\n'
-            '  Multiple (2) occurrences of read name "read2"\n',
-            "",
-        )
-        assert "The same read name appears more than once" in message
-        assert "Sequence and quality strings must be the same length" in message
-        assert "occurrences of read name" not in message
+
+def test_parse_validation_error_condenses_duplicates_among_other_errors():
+    message = _parse_validation_error(
+        "RESULT: INVALID\n"
+        "  Sequence and quality strings must be the same length\n"
+        '  Multiple (2) occurrences of read name "read1"\n'
+        '  Multiple (2) occurrences of read name "read2"\n',
+        "",
+    )
+    assert "The same read name appears more than once" in message
+    assert "Sequence and quality strings must be the same length" in message
+    assert "occurrences of read name" not in message
 
 
 def test_parse_validation_error_leaves_unrelated_errors_untouched():
