@@ -43,7 +43,6 @@ METADATA_DEPENDENCY_CONFIG = "tests/metadata_dependency.yaml"
 test_case_definitions = [
     Case(
         name="missing_required_fields",
-        input_metadata={"submissionId": "missing_required_fields"},
         accession_id="0",
         expected_metadata={"concatenated_string": "LOC_0.1"},
         expected_errors=build_processing_annotations(
@@ -63,7 +62,7 @@ test_case_definitions = [
     ),
     Case(
         name="missing_one_required_field",
-        input_metadata={"submissionId": "missing_one_required_field", "name_required": "name"},
+        input_metadata={"name_required": "name"},
         accession_id="1",
         expected_metadata={
             "name_required": "name",
@@ -81,7 +80,7 @@ test_case_definitions = [
     ),
     Case(
         name="insdc_ingest group can submit without required fields",
-        input_metadata={"submissionId": "missing_one_required_field", "name_required": "name"},
+        input_metadata={"name_required": "name"},
         accession_id="21",
         expected_metadata={
             "name_required": "name",
@@ -93,7 +92,6 @@ test_case_definitions = [
     Case(
         name="invalid_option",
         input_metadata={
-            "submissionId": "invalid_option",
             "continent": "Afrika",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
@@ -117,7 +115,6 @@ test_case_definitions = [
     Case(
         name="collection_date_in_future",
         input_metadata={
-            "submissionId": "collection_date_in_future",
             "collection_date": "2088-12-01",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
@@ -142,7 +139,6 @@ test_case_definitions = [
     Case(
         name="invalid_collection_date",
         input_metadata={
-            "submissionId": "invalid_collection_date",
             "collection_date": "01-02-2024",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
@@ -166,7 +162,6 @@ test_case_definitions = [
     Case(
         name="invalid_timestamp",
         input_metadata={
-            "submissionId": "invalid_timestamp",
             "sequenced_timestamp": " 2022-11-01Europe",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
@@ -193,7 +188,6 @@ test_case_definitions = [
     Case(
         name="date_only_year",
         input_metadata={
-            "submissionId": "date_only_year",
             "collection_date": "2023",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
@@ -222,7 +216,6 @@ test_case_definitions = [
     Case(
         name="regex_match",
         input_metadata={
-            "submissionId": "date_only_year",
             "collection_date": "2023-01-01",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
@@ -243,7 +236,6 @@ test_case_definitions = [
     Case(
         name="regex_empty_capture_group",
         input_metadata={
-            "submissionId": "date_only_year",
             "collection_date": "2023-01-01",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
@@ -275,7 +267,6 @@ test_case_definitions = [
     Case(
         name="regex_match",
         input_metadata={
-            "submissionId": "date_only_year",
             "collection_date": "2023-01-01",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
@@ -315,7 +306,6 @@ test_case_definitions = [
     Case(
         name="date_no_day",
         input_metadata={
-            "submissionId": "date_no_day",
             "collection_date": "2023-12",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
@@ -341,7 +331,6 @@ test_case_definitions = [
     Case(
         name="invalid_int",
         input_metadata={
-            "submissionId": "invalid_int",
             "age_int": "asdf",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
@@ -363,7 +352,6 @@ test_case_definitions = [
     Case(
         name="invalid_float",
         input_metadata={
-            "submissionId": "invalid_float",
             "percentage_float": "asdf",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
@@ -387,7 +375,6 @@ test_case_definitions = [
     Case(
         name="invalid_date",
         input_metadata={
-            "submissionId": "invalid_date",
             "name_required": "name",
             "other_date": "01-02-2024",
             "ncbi_required_collection_date": "2022-11-01",
@@ -414,7 +401,6 @@ test_case_definitions = [
     Case(
         name="invalid_boolean",
         input_metadata={
-            "submissionId": "invalid_boolean",
             "name_required": "name",
             "is_lab_host_bool": "maybe",
             "ncbi_required_collection_date": "2022-11-01",
@@ -438,7 +424,6 @@ test_case_definitions = [
     Case(
         name="warn_potential_author_error",
         input_metadata={
-            "submissionId": "warn_potential_author_error",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
             "authors": "Anna Smith, Cameron Tucker",
@@ -472,7 +457,6 @@ test_case_definitions = [
     Case(
         name="non_latin_characters_authors",
         input_metadata={
-            "submissionId": "non_latin_characters_authors",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
             "authors": "Pérez, José; Bailley, François; 汉",
@@ -496,7 +480,6 @@ test_case_definitions = [
     Case(
         name="diacritics_in_authors",
         input_metadata={
-            "submissionId": "diacritics_in_authors",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
             "authors": "Pérez, José; Bailley, François; Møller, Anäis; Wałęsa, Lech",
@@ -514,7 +497,6 @@ test_case_definitions = [
     Case(
         name="nan_float",
         input_metadata={
-            "submissionId": "nan_float",
             "percentage_float": "NaN",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
@@ -531,7 +513,6 @@ test_case_definitions = [
     Case(
         name="infinity_float",
         input_metadata={
-            "submissionId": "infinity_float",
             "percentage_float": "Infinity",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
@@ -555,7 +536,6 @@ test_case_definitions = [
     Case(
         name="and_in_authors",
         input_metadata={
-            "submissionId": "and_in_authors",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
             "authors": "Smith, Anna; Perez, Tom J. and Xu X.L.",
@@ -585,7 +565,6 @@ test_case_definitions = [
     Case(
         name="trailing_dots_in_authors",
         input_metadata={
-            "submissionId": "trailing_dots_in_authors",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
             "authors": (
@@ -611,7 +590,6 @@ test_case_definitions = [
     Case(
         name="invalid_author_names_listed",
         input_metadata={
-            "submissionId": "invalid_author_names_listed",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
             "authors": "Smith, Anna; Invalid Name; BadFormat123; Perez, Tom J.; 12345; NoComma",
@@ -643,7 +621,6 @@ test_case_definitions = [
     Case(
         name="strip_spaces_in_metadata",
         input_metadata={
-            "submissionId": "strip_spaces_in_metadata",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
             "authors": " Smith, John II; Doe, A.B.C. \t",
@@ -704,7 +681,6 @@ test_metadata_dependency_test_definitions = [
     Case(
         name="metadata_dependencies_all_present",
         input_metadata={
-            "submissionId": "metadata_dependency",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
             "continent": "Asia",
@@ -743,7 +719,6 @@ test_metadata_dependency_test_definitions = [
     Case(
         name="raw_reads_prerequisite_missing",
         input_metadata={
-            "submissionId": "raw_reads_prerequisite_missing",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
             "continent": "Asia",
@@ -781,7 +756,6 @@ test_metadata_dependency_test_definitions = [
     Case(
         name="processed_field_prerequisite_missing",
         input_metadata={
-            "submissionId": "processed_field_prerequisite_missing",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
             "continent": "Asia",
@@ -815,7 +789,6 @@ test_metadata_dependency_test_definitions = [
     Case(
         name="required_when_input_A",
         input_metadata={
-            "submissionId": "required_when_input_A",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
             "continent": "Asia",
@@ -849,7 +822,6 @@ test_metadata_dependency_test_definitions = [
     Case(
         name="missing_multi_dep_fails_when_one_requiredWhen_condition_present",
         input_metadata={
-            "submissionId": "multi_dep_fails_when_one_present",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
             "continent": "Asia",
@@ -882,7 +854,6 @@ test_metadata_dependency_test_definitions = [
     Case(
         name="missing_multi_dep_fails_when_all_requiredWhen_condition_present",
         input_metadata={
-            "submissionId": "multi_dep_fails_when_all_present",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
             "continent": "Asia",
@@ -960,7 +931,6 @@ file_case_definitions = [
     Case(
         name="with file",
         input_metadata={
-            "submissionId": "with_file",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
             "authors": "Smith, Anna; Perez, Tom J.",
@@ -1109,7 +1079,7 @@ def test_required_field_message_lists_only_user_input_fields() -> None:
     config.processing_order = get_processing_order(config)
 
     entry = UnprocessedEntryFactory.create_unprocessed_entry(
-        metadata_dict={"submissionId": "no_input_filtering", "name_required": "name"},
+        metadata_dict={"name_required": "name"},
         accession_id="0",
         sequences={"main": None},
     )
