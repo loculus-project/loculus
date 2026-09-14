@@ -14,6 +14,7 @@ import org.loculus.backend.api.FileIdAndWriteUrl
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.auth.User
+import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.FilesPreconditionValidator
 import org.loculus.backend.service.files.S3Service
@@ -45,6 +46,7 @@ class FilesController(
     private val filesPreconditionValidator: FilesPreconditionValidator,
     private val submissionDatabaseService: SubmissionDatabaseService,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
+    private val backendConfig: BackendConfig,
 ) {
 
     @Operation(
@@ -185,7 +187,9 @@ class FilesController(
 
     @Operation(
         description =
-        "Completes multipart uploads that have been initiated with the /request-multipart-upload endpoint",
+        "Completes multipart uploads that have been initiated with the /request-multipart-upload endpoint. " +
+            "If a file exceeds the configured maximum file size, it is deleted from storage and the request " +
+            "fails with an error.",
     )
     @PostMapping("/complete-multipart-upload")
     fun completeMultipartUploads(
@@ -203,13 +207,31 @@ class FilesController(
                 "The following files have already been completed: " + alreadyCompleted.joinToString(),
             )
         }
+
+        val maxFileSizeBytes = backendConfig.fileSharing.maxFileSizeBytes
+        val oversizedFileIds = mutableListOf<String>()
         multipartUploadIds.forEach { (fileId, uploadId) ->
             val etags = fileIdsAndEtags[fileId]
             if (etags == null || etags.isEmpty()) {
                 throw UnprocessableEntityException("No etags provided for file ID $fileId.")
             }
             s3Service.completeMultipartUpload(fileId, uploadId, etags)
-            filesDatabaseService.completeMultipartUpload(fileId)
+
+            val fileSize = if (maxFileSizeBytes != null) s3Service.getFileSize(fileId) else null
+            if (maxFileSizeBytes != null && fileSize != null && fileSize > maxFileSizeBytes) {
+                s3Service.deleteFile(fileId)
+                filesDatabaseService.deleteFileEntry(fileId)
+                oversizedFileIds.add("$fileId ($fileSize bytes)")
+            } else {
+                filesDatabaseService.completeMultipartUpload(fileId)
+            }
+        }
+
+        if (oversizedFileIds.isNotEmpty()) {
+            throw UnprocessableEntityException(
+                "The following files exceed the maximum allowed file size of $maxFileSizeBytes bytes and " +
+                    "have been deleted: " + oversizedFileIds.joinToString(),
+            )
         }
     }
 }

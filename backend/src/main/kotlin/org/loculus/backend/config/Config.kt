@@ -27,6 +27,8 @@ data class DataUseTermsUrls(val open: String, val restricted: String)
 data class FileSharing(
     val outputFileUrlType: FileUrlType = FileUrlType.WEBSITE,
     val disableStrictFilenameValidation: Boolean = false,
+    // Maximum allowed size, in bytes, of an uploaded file. Null means no limit is enforced.
+    val maxFileSizeBytes: Long? = null,
 )
 
 /**

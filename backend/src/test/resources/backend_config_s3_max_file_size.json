@@ -1,0 +1,55 @@
+{
+    "accessionPrefix": "LOC_",
+    "websiteUrl": "https://example.com",
+    "backendUrl": "http://dummy-backend.com",
+    "organisms": {
+        "dummyOrganism": {
+            "referenceGenome": {
+                "nucleotideSequences": [
+                    {
+                        "name": "main",
+                        "sequence": "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT"
+                    }
+                ],
+                "genes": [
+                    {
+                        "name": "someLongGene",
+                        "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "someShortGene",
+                        "sequence": "MADS"
+                    }
+                ]
+            },
+            "schema": {
+                "organismName": "Test",
+                "allowSubmissionOfConsensusSequences": true,
+                "metadata": [
+                    {
+                        "name": "date",
+                        "type": "date",
+                        "required": true
+                    }
+                ]
+            }
+        }
+    },
+    "dataUseTerms": {
+        "enabled": true
+    },
+    "fileSharing": {
+        "outputFileUrlType": "s3",
+        "maxFileSizeBytes": 10485760
+    },
+    "s3": {
+        "enabled": true,
+        "bucket": {
+            "endpoint": "dummyendpoint.com",
+            "region": "dummyregion",
+            "bucket": "dummybucket",
+            "accessKey": "dummyaccesskey",
+            "secretKey": "dummysecretkey"
+        }
+    }
+}
