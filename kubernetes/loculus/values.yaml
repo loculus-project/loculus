@@ -1881,7 +1881,6 @@ defaultOrganisms:
               geoLocCountry: geoLocCountry
               sampleCollectionDateRangeLower: processed.sampleCollectionDateRangeLower
               specimenCollectorSampleId: specimenCollectorSampleId
-              submissionId: submissionId
             args:
               order: [geoLocCountry, IDENTIFIER, sampleCollectionDateRangeLower]
               type: [string, IDENTIFIER, string]
