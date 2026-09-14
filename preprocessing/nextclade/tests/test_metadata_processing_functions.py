@@ -1125,6 +1125,37 @@ def test_required_field_message_lists_only_user_input_fields() -> None:
     )
 
 
+def test_errors_when_no_input_field_is_provided() -> None:
+    config = get_config(NO_ALIGNMENT_CONFIG, ignore_args=True)
+    config.processing_spec.update(
+        {
+            "non_user_input": ProcessingSpec(
+                function="identity", inputs={"input": "non_user_input"}, no_input=True
+            ),
+        }
+    )
+    config.processing_order = get_processing_order(config)
+
+    entry = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={
+            "non_user_input": "illigal_user_input",
+        },
+        accession_id="0",
+        sequences={"main": None},
+    )
+    processed_entry = process_all([entry], "temp_dataset_dir", config)[0].processed_entry
+
+    messages = {
+        annotation.processedFields[0].name: annotation.message
+        for annotation in processed_entry.errors
+        if annotation.processedFields
+    }
+
+    assert messages["non_user_input"] == (
+        "Error. 'non_user_input' may not be provided as input, please remove it from your metadata."
+    )
+
+
 def test_preprocessing_without_consensus_sequences(config: Config) -> None:
     sequence_name = "entry without sequences"
     sequence_entry_data = UnprocessedEntry(
