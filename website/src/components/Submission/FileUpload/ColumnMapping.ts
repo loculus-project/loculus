@@ -108,10 +108,11 @@ export class ColumnMapping {
             const newFileContent = Papa.unparse([headers, ...newRows], { delimiter: '\t', newline: '\n' });
 
             return ok(new VirtualFile(newFileContent, 'remapped.tsv'));
-        } catch {
+        } catch (error) {
             return err(
                 new Error(
-                    'Could not apply the column mapping to the metadata file. Please review your column mapping.',
+                    'Could not apply the column mapping to the metadata file: ' +
+                        (error instanceof Error ? error.message : String(error)),
                 ),
             );
         }
