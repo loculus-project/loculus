@@ -1,7 +1,9 @@
 package org.loculus.backend.controller.submission
 
+import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.FileIdAndName
@@ -19,13 +21,15 @@ import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForAlternativeUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
+import org.loculus.backend.service.files.daysAgo
+import org.loculus.backend.service.files.dummyFileId
+import org.loculus.backend.service.files.insertFile
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.util.*
 
 @EndpointTest(
     properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
@@ -66,8 +70,47 @@ class SubmitEndpointFileSharingTest(
     }
 
     @Test
+    fun `GIVEN a legacy UUID file ID next to a current one THEN both are accepted and stored`() {
+        // File IDs are FILE_xxxx now, but rows written before that change hold UUIDs and must keep working.
+        val legacyFileId = "123e4567-e89b-12d3-a456-426614174000"
+        insertFile(legacyFileId, groupId, daysAgo(1))
+        val currentFileIdAndUrl = filesClient.requestUploads(groupId).andGetFileIdsAndUrls()[0]
+        convenienceClient.uploadFile(
+            currentFileIdAndUrl.presignedWriteUrl,
+            DEFAULT_SIMPLE_FILE_CONTENT,
+            currentFileIdAndUrl.headers,
+        )
+
+        submissionControllerClient.submit(
+            DefaultFiles.metadataFile.withFileMapping(
+                mapOf(
+                    "custom0" to mapOf(
+                        "myFileCategory" to listOf(
+                            FileIdAndName(legacyFileId, "legacy.txt"),
+                            FileIdAndName(currentFileIdAndUrl.fileId, "current.txt"),
+                        ),
+                    ),
+                ),
+            ),
+            DefaultFiles.sequencesFile,
+            organism = DEFAULT_ORGANISM,
+            groupId = groupId,
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
+
+        val storedFiles = convenienceClient.extractUnprocessedData()
+            .single { it.submissionId == "custom0" }
+            .data.files!!["myFileCategory"]!!
+        assertThat(
+            storedFiles.map { it.fileId to it.name },
+            `is`(listOf(legacyFileId to "legacy.txt", currentFileIdAndUrl.fileId to "current.txt")),
+        )
+    }
+
+    @Test
     fun `GIVEN a non-existing file ID is given in submit THEN the request is not valid`() {
-        val randomId = UUID.randomUUID()
+        val randomId = dummyFileId()
 
         submissionControllerClient.submit(
             DefaultFiles.metadataFile.withFileMapping(
