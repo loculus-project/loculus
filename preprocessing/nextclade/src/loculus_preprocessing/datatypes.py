@@ -126,9 +126,13 @@ class ProcessingContext:
     accession_version: AccessionVersion
     submissionId: str  # noqa: N815
     submitter: str
-    is_insdc_ingest_group: bool
     group_id: int
+    insdc_ingest_group_id: int
     submitted_at: str
+
+    @property
+    def is_insdc_ingest_group(self) -> bool:
+        return self.group_id == self.insdc_ingest_group_id
 
 
 @dataclass

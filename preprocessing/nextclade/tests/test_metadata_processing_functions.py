@@ -1800,7 +1800,7 @@ def test_display_name_construction(case: DisplayNameCase) -> None:
         "displayName",
         input_fields,
         insdc_args | case.extra_args,
-        context=replace(test_context, is_insdc_ingest_group=True),
+        context=replace(test_context, group_id=test_context.insdc_ingest_group_id),
         external_services=DEFAULT_EXTERNAL_SERVICES,
     )
     res_prefix = ProcessingFunctions.build_display_name(
