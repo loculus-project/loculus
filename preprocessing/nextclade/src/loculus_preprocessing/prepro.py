@@ -371,31 +371,26 @@ def _try_compute_length_field(
 
 
 def _get_submitted_metadata(
-    unprocessed: UnprocessedData | UnprocessedAfterNextclade,
+    unprocessed: UnprocessedEntry | UnprocessedAfterNextclade,
 ) -> InputMetadata:
     if isinstance(unprocessed, UnprocessedAfterNextclade):
         #  INJECTED_INPUT_FIELDS are not submitted metadata: they're added in enrich_with_nextclade
-        return {
-            k: v for k, v in unprocessed.inputMetadata.items() if k not in INJECTED_INPUT_FIELDS
-        }
+        return {k: v for k, v in unprocessed.metadata.items() if k not in INJECTED_INPUT_FIELDS}
     return unprocessed.metadata
 
 
 def _check_no_input_restrictions(
     submitted_metadata: InputMetadata,
     config: Config,
-    is_insdc_ingest_group: bool,
 ) -> list[ProcessingAnnotation]:
     errors: list[ProcessingAnnotation] = []
     for field_name, value in submitted_metadata.items():
         spec = config.processing_spec.get(field_name)
-        if spec is None or not spec.no_input or is_insdc_ingest_group:
-            continue
-        if null_per_backend(value):
+        if spec is None or not spec.no_input or null_per_backend(value):
             continue
         message = (
-            f"Metadata field `{field_name}` may not be provided as input, "
-            "please remove it from your metadata."
+            f"Metadata field `{field_name}` may not be provided as input. "
+            "Please remove it from your metadata."
         )
         errors.append(
             ProcessingAnnotation.from_single(field_name, AnnotationSourceType.METADATA, message),
@@ -414,11 +409,8 @@ def get_output_metadata(
     external_services = config._external_services
     context = unprocessed.context
 
-    errors.extend(
-        _check_no_input_restrictions(
-            _get_submitted_metadata(unprocessed), config, context.is_insdc_ingest_group
-        )
-    )
+    if not is_insdc_ingest_group:
+        errors.extend(_check_no_input_restrictions(_get_submitted_metadata(unprocessed), config))
 
     for output_field in config.processing_order:
         spec = config.processing_spec[output_field]
