@@ -1125,7 +1125,7 @@ class ProcessingFunctions:
 
         This method wraps ProcessingFunctions.concatenate(). Thus, it has the same required input
         args, as well as adding some additional checks and requirements:
-            - submissionId and specimenCollectorSampleId must be in the input_data
+            - specimenCollectorSampleId must be in the input_data
             - IDENTIFIER keyword must be in args['order'] and args['type']
             - the IDENTIFIER is resolved by trying specimenCollectorSampleId first, then
               submissionId; if neither yields a usable value it is replaced with ACCESSION_VERSION
