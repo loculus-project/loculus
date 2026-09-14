@@ -16,6 +16,21 @@ class FilesPreconditionValidator(
         }
     }
 
+    fun validateContentLength(contentLength: Long) {
+        if (contentLength < 0) {
+            throw BadRequestException("contentLength must not be negative")
+        }
+    }
+
+    fun validatePartSizes(partSizes: List<Long>) {
+        if (partSizes.isEmpty() || partSizes.size > 10000) {
+            throw BadRequestException("The number of parts must be between 1 and 10000.")
+        }
+        if (partSizes.any { it < 0 }) {
+            throw BadRequestException("partSizes must not contain negative values")
+        }
+    }
+
     /**
      * Users who can modify the group and the preprocessing pipeline can
      * upload files for a group.

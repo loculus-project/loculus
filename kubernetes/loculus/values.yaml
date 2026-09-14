@@ -62,6 +62,7 @@ dataUseTerms:
     restricted: https://#TODO-MVP/restricted
 fileSharing:
   outputFileUrlType: website
+  # maxFileSizeBytes: 10737418240 # 10 GiB - uncomment and adjust to enforce a maximum upload file size
 s3:
   enabled: true
   gcInitialDelayMinutes: 15

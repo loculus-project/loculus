@@ -7,6 +7,7 @@ import org.loculus.backend.api.FileIdAndEtags
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_PARTS
+import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_PART_SIZES
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
@@ -40,7 +41,7 @@ class CompleteMultipartUploadEndpointTest(
         val fileIdAndUrls = filesClient.requestMultipartUploads(
             groupId = groupId,
             numberFiles = 2,
-            numberParts = 2,
+            partSizes = DEFAULT_MULTIPART_FILE_PART_SIZES,
         ).andGetFileIdsAndMultipartUrls()
         val fileIdAndEtags = fileIdAndUrls.map { file ->
             val etag1 = convenienceClient.uploadFile(file.presignedWriteUrls[0], DEFAULT_MULTIPART_FILE_PARTS[0])
@@ -56,7 +57,10 @@ class CompleteMultipartUploadEndpointTest(
 
     @Test
     fun `GIVEN missing etags THEN the request is not valid`() {
-        val fileIdAndUrls = filesClient.requestMultipartUploads(groupId = groupId, numberParts = 2)
+        val fileIdAndUrls = filesClient.requestMultipartUploads(
+            groupId = groupId,
+            partSizes = DEFAULT_MULTIPART_FILE_PART_SIZES,
+        )
             .andGetFileIdsAndMultipartUrls()[0]
 
         filesClient.completeMultipartUploads(listOf(FileIdAndEtags(fileIdAndUrls.fileId, emptyList())))
@@ -66,7 +70,10 @@ class CompleteMultipartUploadEndpointTest(
 
     @Test
     fun `GIVEN a wrong etag THEN the request is not valid`() {
-        val fileIdAndUrls = filesClient.requestMultipartUploads(groupId = groupId, numberParts = 2)
+        val fileIdAndUrls = filesClient.requestMultipartUploads(
+            groupId = groupId,
+            partSizes = DEFAULT_MULTIPART_FILE_PART_SIZES,
+        )
             .andGetFileIdsAndMultipartUrls()[0]
         val etag1 = convenienceClient.uploadFile(fileIdAndUrls.presignedWriteUrls[0], DEFAULT_MULTIPART_FILE_PARTS[0])
             .headers().map()["etag"]!![0]
@@ -81,7 +88,10 @@ class CompleteMultipartUploadEndpointTest(
 
     @Test
     fun `GIVEN parts that are too small THEN the request is not valid`() {
-        val fileIdAndUrls = filesClient.requestMultipartUploads(groupId, numberParts = 2)
+        val fileIdAndUrls = filesClient.requestMultipartUploads(
+            groupId,
+            partSizes = listOf(4L * 1024 * 1024, 7L * 1024 * 1024),
+        )
             .andGetFileIdsAndMultipartUrls()[0]
         val etag1 = convenienceClient.uploadFile(fileIdAndUrls.presignedWriteUrls[0], "A".repeat(4 * 1024 * 1024))
             .headers().map()["etag"]!![0]

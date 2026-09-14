@@ -5,6 +5,7 @@ import org.loculus.backend.api.FileCategory
 import org.loculus.backend.api.FileIdAndEtags
 import org.loculus.backend.api.FileIdAndMultipartWriteUrl
 import org.loculus.backend.api.FileIdAndWriteUrl
+import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
 import org.loculus.backend.controller.jacksonObjectMapper
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.withAuth
@@ -20,25 +21,35 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 
 class FilesClient(private val mockMvc: MockMvc) {
 
-    fun requestUploads(groupId: Int?, numberFiles: Int? = null, jwt: String = jwtForDefaultUser): ResultActions {
+    fun requestUploads(
+        groupId: Int?,
+        numberFiles: Int? = null,
+        contentLength: Long? = DEFAULT_SIMPLE_FILE_CONTENT.length.toLong(),
+        jwt: String = jwtForDefaultUser,
+    ): ResultActions {
         val request = post("/files/request-upload")
             .withAuth(jwt)
         groupId?.let { request.param("groupId", it.toString()) }
         numberFiles?.let { request.param("numberFiles", it.toString()) }
+        contentLength?.let { request.param("contentLength", it.toString()) }
         return mockMvc.perform(request)
     }
 
     fun requestMultipartUploads(
         groupId: Int? = null,
         numberFiles: Int? = null,
-        numberParts: Int? = null,
+        partSizes: List<Long>? = listOf(DEFAULT_SIMPLE_FILE_CONTENT.length.toLong()),
         jwt: String = jwtForDefaultUser,
     ): ResultActions {
         val request = post("/files/request-multipart-upload")
             .withAuth(jwt)
         groupId?.let { request.param("groupId", it.toString()) }
         numberFiles?.let { request.param("numberFiles", it.toString()) }
-        numberParts?.let { request.param("numberParts", it.toString()) }
+        partSizes?.let {
+            request
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jacksonObjectMapper().writeValueAsString(it))
+        }
         return mockMvc.perform(request)
     }
 

@@ -25,6 +25,7 @@ import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_PARTS
+import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_PART_SIZES
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
 import org.loculus.backend.controller.DUMMY_ORGANISM_MAIN_SEQUENCE
@@ -676,6 +677,7 @@ class SubmitProcessedDataEndpointTest(
         val fileIdAndUrlV1 = filesClient.requestUploads(
             groupId = groupId,
             jwt = jwtForDefaultUser,
+            contentLength = 6,
         ).andGetFileIdsAndUrls()[0]
         convenienceClient.uploadFile(fileIdAndUrlV1.presignedWriteUrl, "FileV1", fileIdAndUrlV1.headers)
         convenienceClient.extractUnprocessedData(pipelineVersion = 1)
@@ -695,6 +697,7 @@ class SubmitProcessedDataEndpointTest(
         val fileIdAndUrlV2 = filesClient.requestUploads(
             groupId = groupId,
             jwt = jwtForDefaultUser,
+            contentLength = 6,
         ).andGetFileIdsAndUrls()[0]
         convenienceClient.uploadFile(fileIdAndUrlV2.presignedWriteUrl, "FileV2", fileIdAndUrlV2.headers)
         convenienceClient.extractUnprocessedData(pipelineVersion = 2)
@@ -741,6 +744,7 @@ class SubmitProcessedDataEndpointTest(
         val fileIdAndUrlV1 = filesClient.requestUploads(
             groupId = groupId,
             jwt = jwtForDefaultUser,
+            contentLength = 6,
         ).andGetFileIdsAndUrls()[0]
         convenienceClient.uploadFile(fileIdAndUrlV1.presignedWriteUrl, "FileV1", fileIdAndUrlV1.headers)
         convenienceClient.extractUnprocessedData(pipelineVersion = 1)
@@ -757,6 +761,7 @@ class SubmitProcessedDataEndpointTest(
         val fileIdAndUrlV2 = filesClient.requestUploads(
             groupId = groupId,
             jwt = jwtForDefaultUser,
+            contentLength = 6,
         ).andGetFileIdsAndUrls()[0]
         convenienceClient.uploadFile(fileIdAndUrlV2.presignedWriteUrl, "FileV2", fileIdAndUrlV2.headers)
         convenienceClient.extractUnprocessedData(pipelineVersion = 2)
@@ -801,7 +806,7 @@ class SubmitProcessedDataEndpointTest(
         val fileIdAndUrls = filesClient.requestMultipartUploads(
             groupId = groupId,
             jwt = jwtForDefaultUser,
-            numberParts = 2,
+            partSizes = DEFAULT_MULTIPART_FILE_PART_SIZES,
         ).andGetFileIdsAndMultipartUrls()[0]
         val etag1 = convenienceClient.uploadFile(fileIdAndUrls.presignedWriteUrls[0], DEFAULT_MULTIPART_FILE_PARTS[0])
             .headers().map()["etag"]!![0]

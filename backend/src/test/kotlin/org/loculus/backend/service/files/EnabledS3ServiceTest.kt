@@ -14,7 +14,7 @@ class EnabledS3ServiceTest(@Autowired val s3Service: S3Service) {
     @Test
     fun `WHEN calling createUrlToUploadPrivateFile THEN no error is thrown`() {
         assertDoesNotThrow {
-            s3Service.createUrlToUploadPrivateFile(dummyFileId())
+            s3Service.createUrlToUploadPrivateFile(dummyFileId(), contentLength = 13)
         }
     }
 }

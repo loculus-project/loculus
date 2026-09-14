@@ -71,7 +71,7 @@ class RequestUploadEndpointTest(
     @Test
     fun `GIVEN a request for a URL THEN returns a valid presigned URL`() {
         val groupId = groupManagementClient.createNewGroup().andGetGroupId()
-        val responseContent = client.requestUploads(groupId, 1)
+        val responseContent = client.requestUploads(groupId, 1, contentLength = 12)
             .andExpect(status().isOk)
             .andReturn()
             .response
@@ -112,7 +112,8 @@ class RequestUploadEndpointTest(
         Assertions.assertEquals(200, firstResponse.statusLine.statusCode)
 
         val secondRequest = HttpPut(url)
-        secondRequest.entity = ByteArrayEntity("second content".toByteArray(), ContentType.TEXT_PLAIN)
+        // Must be the same length as "first content" above: the presigned URL is locked to that exact size.
+        secondRequest.entity = ByteArrayEntity("2nd content!!".toByteArray(), ContentType.TEXT_PLAIN)
         headers.forEach { (key, value) -> secondRequest.addHeader(key, value) }
         val secondResponse = httpClient.execute(secondRequest)
         Assertions.assertEquals(412, secondResponse.statusLine.statusCode)
@@ -156,7 +157,7 @@ class RequestUploadEndpointTest(
     @Test
     fun `GIVEN a preprocessing pipeline request with groupId of a different group THEN returns ok`() {
         val groupId = groupManagementClient.createNewGroup(jwt = jwtForAlternativeUser).andGetGroupId()
-        client.requestUploads(groupId = groupId, numberFiles = 1, jwtForProcessingPipeline)
+        client.requestUploads(groupId = groupId, numberFiles = 1, jwt = jwtForProcessingPipeline)
             .andExpect(status().isOk)
     }
 
@@ -226,5 +227,46 @@ class RequestUploadEndpointTest(
 
         client.requestUploads(groupId = groupId, numberFiles = 100)
             .andExpect(status().isOk)
+    }
+
+    @Test
+    fun `GIVEN request with no contentLength THEN returns 400 bad request`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+
+        client.requestUploads(groupId = groupId, contentLength = null)
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `GIVEN request with negative contentLength THEN returns 400 bad request`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+
+        client.requestUploads(groupId = groupId, contentLength = -1)
+            .andExpect(status().isBadRequest)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("\$.detail", containsString("must not be negative")))
+    }
+
+    @Test
+    fun `GIVEN an upload with a different size than declared THEN the upload is rejected`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+        val responseContent = client.requestUploads(groupId, 1, contentLength = 12)
+            .andExpect(status().isOk)
+            .andReturn()
+            .response
+            .contentAsString
+        val uploadInfo = objectMapper.readTree(responseContent).get(0)
+        val url = uploadInfo.get("url").textValue()
+        val headers = uploadInfo.get("headers").properties()
+            .associate { it.key to it.value.textValue() }
+
+        // The presigned URL is locked to accept exactly 12 bytes, but this body is longer.
+        val content = "this content is too long".toByteArray()
+        val request = HttpPut(url)
+        request.entity = ByteArrayEntity(content, ContentType.TEXT_PLAIN)
+        headers.forEach { (key, value) -> request.addHeader(key, value) }
+        val httpClient = HttpClients.createDefault()
+        val response = httpClient.execute(request)
+        Assertions.assertNotEquals(200, response.statusLine.statusCode)
     }
 }

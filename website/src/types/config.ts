@@ -237,7 +237,12 @@ const sequenceFlaggingConfig = z.object({
 });
 export type SequenceFlaggingConfig = z.infer<typeof sequenceFlaggingConfig>;
 
-export const fileSharingConfig = z.object({ disableStrictFilenameValidation: z.boolean().default(false) });
+export const fileSharingConfig = z.object({
+    disableStrictFilenameValidation: z.boolean().default(false),
+    // Undefined means no limit is enforced. Mirrors `fileSharing.maxFileSizeBytes` in the backend config -
+    // this is only used for early client-side rejection; the backend enforces the limit authoritatively.
+    maxFileSizeBytes: z.number().optional(),
+});
 export type FileSharingConfig = z.infer<typeof fileSharingConfig>;
 
 const fieldToDisplay = z.object({

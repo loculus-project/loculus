@@ -15,7 +15,7 @@ class DisabledS3ServiceTest(@Autowired val s3Service: S3Service) {
     @Test
     fun `WHEN calling createUrlToUploadPrivateFile THEN an error is thrown`() {
         assertThrows<IllegalStateException> {
-            s3Service.createUrlToUploadPrivateFile(dummyFileId())
+            s3Service.createUrlToUploadPrivateFile(dummyFileId(), contentLength = 13)
         }.also {
             Assertions.assertEquals("S3 is not enabled", it.message)
         }

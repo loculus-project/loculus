@@ -49,6 +49,7 @@ class GetReleasedDataFileSharingEndpointTest(
             groupId = groupId,
             jwt = jwtForDefaultUser,
             numberFiles = 2,
+            contentLength = 4,
         ).andGetFileIdsAndUrls()
         fileIdsAndUrls.forEach { convenienceClient.uploadFile(it.presignedWriteUrl, "File", it.headers) }
         val fileIds = fileIdsAndUrls.map { it.fileId }

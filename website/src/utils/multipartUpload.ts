@@ -14,6 +14,16 @@ export const calculatePartSizeAndCount = (fileSize: number): { partSize: number;
     return { partSize, partCount };
 };
 
+/**
+ * Returns the exact byte size of each part a file will be split into by `splitFileIntoParts`.
+ * These sizes must be declared upfront when requesting multipart upload URLs from the backend,
+ * since each presigned part URL is locked to accept exactly that many bytes.
+ */
+export const calculatePartSizes = (fileSize: number): number[] => {
+    const { partSize, partCount } = calculatePartSizeAndCount(fileSize);
+    return Array.from({ length: partCount }, (_, i) => Math.min(partSize, fileSize - i * partSize));
+};
+
 export const splitFileIntoParts = (file: File, partSize: number): Blob[] => {
     const parts: Blob[] = [];
     let offset = 0;
