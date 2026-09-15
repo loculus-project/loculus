@@ -13,8 +13,7 @@ concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-website-tests
   cancel-in-progress: true
 jobs:
-  checks:
-    name: Check format and types
+  website-checks:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -33,8 +32,7 @@ jobs:
       - run: npm run check-format
       - run: npm run check-types
         if: always()
-  unitTests:
-    name: Unit Tests
+  website-unit-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:

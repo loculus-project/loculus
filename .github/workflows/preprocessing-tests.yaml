@@ -16,8 +16,7 @@ defaults:
     shell: micromamba-shell {0}
     working-directory: preprocessing/nextclade/
 jobs:
-  unitTests:
-    name: Unit Tests
+  prepro-unit-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -35,8 +34,7 @@ jobs:
       - name: Run tests
         run: |
           pytest
-  typeCheck:
-    name: Type Checking
+  prepro-type-check:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -53,8 +51,7 @@ jobs:
           uv pip install --system '.[test]'
       - name: Run mypy (checks type hints)
         run: mypy . --config-file .mypy.ini --non-interactive --install-types
-  formatCheck:
-    name: Code Format Checking
+  prepro-format-check:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

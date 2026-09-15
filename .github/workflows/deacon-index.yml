@@ -7,7 +7,7 @@ env:
   DEACON_INDEX_IMAGE: ghcr.io/loculus-project/deacon-index
 
 jobs:
-  build-and-upload:
+  deacon-index-build-and-upload:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -96,8 +96,8 @@ jobs:
           s3cmd cp s3://loculus-public/deacon-index/"${INDEX_VERSIONED}" \
             s3://loculus-public/deacon-index/"${INDEX_LATEST}"
 
-  notify_on_success:
-    needs: build-and-upload
+  deacon-index-notify-on-success:
+    needs: deacon-index-build-and-upload
     runs-on: ubuntu-latest
     if: success()
     steps:
@@ -106,11 +106,11 @@ jobs:
           SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
         run: |
           curl -X POST -H 'Content-type: application/json' --data '{
-            "text": "✅ Successfully built and uploaded Deacon index ${{ needs.build-and-upload.outputs.index }} (also published as ghcr.io/loculus-project/deacon-index:${{ needs.build-and-upload.outputs.oci_tag }} / :latest): ${{ github.repository }}\n🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
+            "text": "✅ Successfully built and uploaded Deacon index ${{ needs.deacon-index-build-and-upload.outputs.index }} (also published as ghcr.io/loculus-project/deacon-index:${{ needs.deacon-index-build-and-upload.outputs.oci_tag }} / :latest): ${{ github.repository }}\n🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
           }' $SLACK_HOOK
 
-  notify_on_failure:
-    needs: build-and-upload
+  deacon-index-notify-on-failure:
+    needs: deacon-index-build-and-upload
     runs-on: ubuntu-latest
     if: failure()
     steps:
