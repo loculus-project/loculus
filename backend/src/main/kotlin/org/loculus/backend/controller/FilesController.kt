@@ -14,6 +14,7 @@ import org.loculus.backend.api.FileIdAndWriteUrl
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.auth.User
+import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.FilesPreconditionValidator
 import org.loculus.backend.service.files.S3Service
@@ -45,6 +46,7 @@ class FilesController(
     private val filesPreconditionValidator: FilesPreconditionValidator,
     private val submissionDatabaseService: SubmissionDatabaseService,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
+    private val backendConfig: BackendConfig,
 ) {
 
     @Operation(
@@ -185,7 +187,9 @@ class FilesController(
 
     @Operation(
         description =
-        "Completes multipart uploads that have been initiated with the /request-multipart-upload endpoint",
+        "Completes multipart uploads that have been initiated with the /request-multipart-upload endpoint. " +
+            "If a maximum file size is configured, uploads exceeding it are aborted (never assembled into a " +
+            "stored object) and rejected.",
     )
     @PostMapping("/complete-multipart-upload")
     fun completeMultipartUploads(
@@ -203,11 +207,26 @@ class FilesController(
                 "The following files have already been completed: " + alreadyCompleted.joinToString(),
             )
         }
+        val maxFileSizeBytes = backendConfig.fileSharing.maxFileSizeBytes
         multipartUploadIds.forEach { (fileId, uploadId) ->
             val etags = fileIdsAndEtags[fileId]
             if (etags == null || etags.isEmpty()) {
                 throw UnprocessableEntityException("No etags provided for file ID $fileId.")
             }
+
+            if (maxFileSizeBytes != null) {
+                val fileSize = s3Service.getMultipartUploadSize(fileId, uploadId)
+                if (fileSize > maxFileSizeBytes) {
+                    // Abort instead of completing, so the oversized file is never assembled into an
+                    // object in storage at all - not even briefly.
+                    s3Service.abortMultipartUpload(fileId, uploadId)
+                    throw UnprocessableEntityException(
+                        "File $fileId exceeds the maximum allowed file size of $maxFileSizeBytes bytes " +
+                            "(actual size: $fileSize bytes). The upload has been aborted.",
+                    )
+                }
+            }
+
             s3Service.completeMultipartUpload(fileId, uploadId, etags)
             filesDatabaseService.completeMultipartUpload(fileId)
         }

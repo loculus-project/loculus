@@ -1,0 +1,81 @@
+package org.loculus.backend.controller.files
+
+import org.hamcrest.CoreMatchers.containsString
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.loculus.backend.api.FileIdAndEtags
+import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.controller.DEFAULT_GROUP
+import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_PARTS
+import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.S3_CONFIG_WITH_MAX_FILE_SIZE
+import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
+import org.loculus.backend.controller.groupmanagement.andGetGroupId
+import org.loculus.backend.controller.jwtForDefaultUser
+import org.loculus.backend.controller.submission.SubmissionConvenienceClient
+import org.loculus.backend.service.files.S3Service
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+
+/**
+ * The configured backend config sets `fileSharing.maxFileSizeBytes` to 1024 bytes, well below the
+ * ~5 MB [DEFAULT_MULTIPART_FILE_PARTS] file used elsewhere in these tests.
+ */
+@EndpointTest(
+    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG_WITH_MAX_FILE_SIZE"],
+)
+class CompleteMultipartUploadFileSizeLimitEndpointTest(
+    @Autowired private val groupManagementClient: GroupManagementControllerClient,
+    @Autowired private val filesClient: FilesClient,
+    @Autowired private val convenienceClient: SubmissionConvenienceClient,
+    @Autowired private val s3Service: S3Service,
+) {
+
+    var groupId: Int = 0
+
+    @BeforeEach
+    fun prepareNewGroup() {
+        groupId = groupManagementClient
+            .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andGetGroupId()
+    }
+
+    @Test
+    fun `GIVEN a file exceeding maxFileSizeBytes THEN completion is rejected and the upload is aborted`() {
+        val fileIdAndUrls = filesClient.requestMultipartUploads(
+            groupId = groupId,
+            numberParts = 2,
+        ).andGetFileIdsAndMultipartUrls()[0]
+        val etag1 = convenienceClient.uploadFile(fileIdAndUrls.presignedWriteUrls[0], DEFAULT_MULTIPART_FILE_PARTS[0])
+            .headers().map()["etag"]!![0]
+        val etag2 = convenienceClient.uploadFile(fileIdAndUrls.presignedWriteUrls[1], DEFAULT_MULTIPART_FILE_PARTS[1])
+            .headers().map()["etag"]!![0]
+
+        filesClient.completeMultipartUploads(listOf(FileIdAndEtags(fileIdAndUrls.fileId, listOf(etag1, etag2))))
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(content().string(containsString("exceeds the maximum allowed file size of 1024 bytes")))
+            .andExpect(content().string(containsString(fileIdAndUrls.fileId)))
+
+        // The file was never assembled into an object at all - it was only ever uploaded as loose parts,
+        // which the abort just discarded.
+        assertNull(s3Service.getFileSize(fileIdAndUrls.fileId))
+    }
+
+    @Test
+    fun `GIVEN a file within maxFileSizeBytes THEN completion succeeds`() {
+        val fileIdAndUrls = filesClient.requestMultipartUploads(
+            groupId = groupId,
+            numberParts = 1,
+        ).andGetFileIdsAndMultipartUrls()[0]
+        val etag = convenienceClient.uploadFile(fileIdAndUrls.presignedWriteUrls[0], "small file content")
+            .headers().map()["etag"]!![0]
+
+        filesClient.completeMultipartUploads(listOf(FileIdAndEtags(fileIdAndUrls.fileId, listOf(etag))))
+            .andExpect(status().isOk)
+
+        assertNotNull(s3Service.getFileSize(fileIdAndUrls.fileId))
+    }
+}

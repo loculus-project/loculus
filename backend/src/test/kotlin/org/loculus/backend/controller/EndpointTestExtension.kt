@@ -68,6 +68,8 @@ const val DATA_USE_TERMS_DISABLED_CONFIG = "src/test/resources/backend_config_da
 
 const val S3_CONFIG = "src/test/resources/backend_config_s3.json"
 
+const val S3_CONFIG_WITH_MAX_FILE_SIZE = "src/test/resources/backend_config_s3_max_file_size.json"
+
 const val SPRING_DATASOURCE_URL = "spring.datasource.url"
 const val SPRING_DATASOURCE_USERNAME = "spring.datasource.username"
 const val SPRING_DATASOURCE_PASSWORD = "spring.datasource.password"
