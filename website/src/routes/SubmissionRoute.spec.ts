@@ -41,6 +41,36 @@ describe('SubmissionRouteUtils', () => {
         });
     });
 
+    test('parseToRoute - valid revise route with inputMode', () => {
+        expect(SubmissionRouteUtils.parseToRoute('/cchf/submission/123/revise', '?inputMode=bulk')).toEqual({
+            name: 'revise',
+            organism: 'cchf',
+            groupId: 123,
+            inputMode: 'bulk',
+            accession: undefined,
+            version: undefined,
+        });
+    });
+
+    test('parseToRoute - revise - inputMode defaults to form', () => {
+        expect(SubmissionRouteUtils.parseToRoute('/cchf/submission/123/revise', '')).toEqual({
+            name: 'revise',
+            organism: 'cchf',
+            groupId: 123,
+            inputMode: 'form',
+            accession: undefined,
+            version: undefined,
+        });
+        expect(SubmissionRouteUtils.parseToRoute('/cchf/submission/123/revise', '?inputMode=foo')).toEqual({
+            name: 'revise',
+            organism: 'cchf',
+            groupId: 123,
+            inputMode: 'form',
+            accession: undefined,
+            version: undefined,
+        });
+    });
+
     test('parseToRoute - invalid route', () => {
         expect(SubmissionRouteUtils.parseToRoute('/invalid/path', '')).toBeUndefined();
     });
