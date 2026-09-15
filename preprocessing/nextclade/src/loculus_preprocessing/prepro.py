@@ -382,13 +382,12 @@ def _try_compute_length_field(
 def _get_submitted_metadata(
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
 ) -> InputMetadata:
-    metadata = (
-        unprocessed.inputMetadata
-        if isinstance(unprocessed, UnprocessedAfterNextclade)
-        else unprocessed.metadata
-    )
-    #  INJECTED_INPUT_FIELDS are not submitted metadata: they're added in enrich_with_nextclade
-    return {k: v for k, v in metadata.items() if k not in INJECTED_INPUT_FIELDS}
+    if isinstance(unprocessed, UnprocessedAfterNextclade):
+        #  INJECTED_INPUT_FIELDS are not submitted metadata: they're added in enrich_with_nextclade
+        return {
+            k: v for k, v in unprocessed.inputMetadata.items() if k not in INJECTED_INPUT_FIELDS
+        }
+    return unprocessed.metadata
 
 
 def _check_submitted_metadata(

@@ -33,7 +33,6 @@ PROCESSED_PREFIX = "processed."
 FILES_PREFIX = "files."
 NEXTCLADE_PREFIX = "nextclade."
 ASSIGNED_REFERENCE_PREFIX = "ASSIGNED_REFERENCE"
-INTERNAL_INPUT_PREFIXES = (NEXTCLADE_PREFIX, ASSIGNED_REFERENCE_PREFIX)
 LENGTH: Final = "length"
 LENGTH_PREFIX = f"{LENGTH}_"
 INJECTED_INPUT_FIELDS = ("submitter", "submittedAt", "submissionId", "group_id")
@@ -218,6 +217,8 @@ class Config(BaseModel):
         return datasets[0]
 
     def is_existing_field(self, field: str) -> bool:
+        # If we ever add per-segment metadata fields that should be supplied by
+        # the user, this will erroneously return False
         return field in self.processing_spec or field in self.extra_input_fields
 
     def is_user_input(self, field: str) -> bool:
