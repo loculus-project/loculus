@@ -31,7 +31,11 @@ from loculus_preprocessing.datatypes import (
     UnprocessedData,
     UnprocessedEntry,
 )
-from loculus_preprocessing.embl import create_flatfile, reformat_authors_from_loculus_to_embl_style
+from loculus_preprocessing.embl import (
+    create_flatfile,
+    get_seq_features,
+    reformat_authors_from_loculus_to_embl_style,
+)
 from loculus_preprocessing.prepro import get_nested_metadata, process_all
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
@@ -1424,6 +1428,30 @@ def test_reformat_authors_from_loculus_to_embl_style():
     result_extended = reformat_authors_from_loculus_to_embl_style(extended_latin_authors)
     desired_result_extended = "Perez J., Bailley F., Moller A., Walesa L."
     assert result_extended == desired_result_extended
+
+
+def test_get_seq_features_translates_minus_strand_cds_correctly():
+    # Genomic (plus-strand) slice [3:12) is the reverse complement of the ORF ATG AAA TAA
+    # (Met Lys Stop), so a minus-strand CDS over this range must translate to "MK*".
+    sequence_str = "AAA" + "TTATTTCAT" + "CCCC"
+    annotation_object = {
+        "genes": [
+            {
+                "range": {"begin": 3, "end": 12},
+                "attributes": {},
+                "cdses": [
+                    {
+                        "segments": [{"range": {"begin": 3, "end": 12}, "strand": "-"}],
+                        "attributes": {},
+                    }
+                ],
+            }
+        ]
+    }
+    features = get_seq_features(annotation_object, sequence_str)
+    cds_features = [feature for feature in features if feature.type == "CDS"]
+    assert len(cds_features) == 1
+    assert cds_features[0].qualifiers["translation"] == "MK*"
 
 
 def test_process_clade_founder_values():
