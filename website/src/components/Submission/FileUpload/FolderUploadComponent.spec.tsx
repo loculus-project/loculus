@@ -295,7 +295,12 @@ describe('FolderUploadComponent', () => {
 
     describe('rejects oversized files', () => {
         it('rejects a file exceeding maxFileSizeBytes before requesting an upload', async () => {
-            render(<FolderUploadComponentWithState {...defaultProps} maxFileSizeBytes={10} />);
+            render(
+                <FolderUploadComponentWithState
+                    {...defaultProps}
+                    fileSharingConfig={{ maxFileSizeBytes: 10, disableStrictFilenameValidation: false }}
+                />,
+            );
 
             const file = new File(['x'.repeat(20)], 'reads.fastq', { type: 'text/plain' });
             Object.defineProperty(file, 'webkitRelativePath', {
@@ -313,7 +318,12 @@ describe('FolderUploadComponent', () => {
         it('allows a file within maxFileSizeBytes', async () => {
             mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'file-1', urls: ['http://test.com/url1'] }]));
 
-            render(<FolderUploadComponentWithState {...defaultProps} maxFileSizeBytes={1000} />);
+            render(
+                <FolderUploadComponentWithState
+                    {...defaultProps}
+                    fileSharingConfig={{ maxFileSizeBytes: 1000, disableStrictFilenameValidation: false }}
+                />,
+            );
 
             const file = new File(['x'.repeat(20)], 'reads.fastq', { type: 'text/plain' });
             Object.defineProperty(file, 'webkitRelativePath', {

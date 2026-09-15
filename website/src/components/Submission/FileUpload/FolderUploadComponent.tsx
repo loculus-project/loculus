@@ -13,7 +13,7 @@ import type {
 } from './fileUpload';
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
-import { type FileCategory } from '../../../types/config';
+import { type FileCategory, type FileSharingConfig } from '../../../types/config';
 import type { ClientConfig } from '../../../types/runtimeConfig';
 import { calculatePartSizeAndCount, splitFileIntoParts, uploadPart } from '../../../utils/multipartUpload';
 import { displayConfirmationDialog } from '../../ConfirmationDialog';
@@ -32,7 +32,7 @@ type FolderUploadComponentProps = {
     fileUploadState: FileUploadState | undefined;
     setFileUploadState: Dispatch<SetStateAction<FileUploadState | undefined>>;
     onError: (message: string) => void;
-    maxFileSizeBytes?: number;
+    fileSharingConfig?: FileSharingConfig;
 };
 
 const FileInput = ({
@@ -90,7 +90,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     fileUploadState,
     setFileUploadState,
     onError,
-    maxFileSizeBytes,
+    fileSharingConfig,
 }) => {
     const [isDragging, setIsDragging] = useState(false);
 
@@ -229,7 +229,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             // Reset the input so the same folder can be selected again
             e.target.value = '';
 
-            const error = isFilesArrayValid(filesArray, inputMode, maxFileSizeBytes);
+            const error = isFilesArrayValid(filesArray, inputMode, fileSharingConfig?.maxFileSizeBytes);
             if (error) {
                 onError(error);
                 return;
@@ -271,7 +271,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             // Reset the input so the same file can be selected again
             e.target.value = '';
 
-            const error = isFilesArrayValid(filesArray, inputMode, maxFileSizeBytes);
+            const error = isFilesArrayValid(filesArray, inputMode, fileSharingConfig?.maxFileSizeBytes);
             if (error) {
                 onError(error);
                 return;
