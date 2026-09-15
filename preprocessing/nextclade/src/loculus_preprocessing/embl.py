@@ -3,7 +3,14 @@ from collections.abc import Iterable, Mapping, Sequence
 from typing import Any
 
 from Bio.Seq import Seq
-from Bio.SeqFeature import CompoundLocation, FeatureLocation, Reference, SeqFeature
+from Bio.SeqFeature import (
+    AfterPosition,
+    BeforePosition,
+    CompoundLocation,
+    FeatureLocation,
+    Reference,
+    SeqFeature,
+)
 from Bio.SeqRecord import SeqRecord
 from unidecode import unidecode
 
@@ -227,13 +234,57 @@ def get_gene_feature(gene: Mapping[str, Any]) -> SeqFeature:
     )
 
 
+def get_truncation(segment: Mapping[str, Any]) -> tuple[int, int]:
+    """How many nucleotides of this segment are missing at its 5' and 3' ends.
+
+    Nextclade serialises `truncation` as the string "none" or as one of
+    `{"fivePrime": n}`, `{"threePrime": n}`, `{"both": [n, m]}`.
+    """
+    truncation = segment.get("truncation")
+    if not isinstance(truncation, Mapping):
+        return (0, 0)
+    if "both" in truncation:
+        five, three = truncation["both"]
+        return (int(five), int(three))
+    return (int(truncation.get("fivePrime", 0)), int(truncation.get("threePrime", 0)))
+
+
+def mark_partial(
+    location: FeatureLocation, *, five_prime: bool, three_prime: bool
+) -> FeatureLocation:
+    """Flag the ends where the feature runs past what the sequence shows.
+
+    INSDC marks an unknown boundary by the coordinate it lies at rather than by which end
+    of the protein it is, so on the minus strand the 5' end is the upper coordinate.
+    """
+    lower_unknown, upper_unknown = (
+        (three_prime, five_prime) if location.strand == -1 else (five_prime, three_prime)
+    )
+    return FeatureLocation(
+        BeforePosition(location.start) if lower_unknown else location.start,
+        AfterPosition(location.end) if upper_unknown else location.end,
+        strand=location.strand,
+    )
+
+
 def get_cds_feature(cds: Mapping[str, Any], sequence_str: str) -> SeqFeature:
     """One EMBL `CDS` feature, spanning several segments when the CDS is spliced."""
     segments = cds.get("segments", [])
     strand = -1 if is_minus_strand(segments) else 1
+    # Segments are in transcription order, so a truncated CDS is missing its start from
+    # the first segment and its end from the last.
+    five_prime = bool(segments) and get_truncation(segments[0])[0] > 0
+    three_prime = bool(segments) and get_truncation(segments[-1])[1] > 0
+    last = len(segments) - 1
     locations = [
-        FeatureLocation(start=s["range"]["begin"], end=s["range"]["end"], strand=strand)
-        for s in segments
+        mark_partial(
+            FeatureLocation(
+                start=segment["range"]["begin"], end=segment["range"]["end"], strand=strand
+            ),
+            five_prime=five_prime and index == 0,
+            three_prime=three_prime and index == last,
+        )
+        for index, segment in enumerate(segments)
     ]
     codon_start = get_codon_start(segments)
     return SeqFeature(

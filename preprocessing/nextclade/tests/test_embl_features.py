@@ -36,8 +36,13 @@ def _annotation(*, cds_attributes=None, segments, gene_range=None):
     }
 
 
-def _segment(begin, end, strand="+", phase=0):
-    return {"range": {"begin": begin, "end": end}, "strand": strand, "phase": phase}
+def _segment(begin, end, strand="+", phase=0, truncation=None):
+    return {
+        "range": {"begin": begin, "end": end},
+        "strand": strand,
+        "phase": phase,
+        "truncation": truncation or "none",
+    }
 
 
 def _only_cds(features):
@@ -137,6 +142,42 @@ def test_cds_spanning_the_origin_of_a_circular_genome():
         (len(sequence) - 11, len(sequence)),
         (0, 4),
     ]
+
+
+def test_truncated_cds_is_marked_partial():
+    """INSDC marks an unknown boundary with < or >; a partial genome truncates CDSes."""
+    sequence = "ATGGCTTAA"
+    annotation = _annotation(segments=[_segment(0, len(sequence), truncation={"fivePrime": 30})])
+
+    cds = _only_cds(get_seq_features(annotation, sequence))
+
+    assert str(cds.location.start) == "<0"
+    assert str(cds.location.end) == "9"
+
+
+def test_truncation_is_marked_at_the_right_coordinate_on_the_minus_strand():
+    """The 5' end of a minus-strand feature is its upper coordinate, so it takes the >."""
+    sequence = "ATGGCTTAA"
+    annotation = _annotation(
+        segments=[
+            _segment(0, len(sequence), strand="-", truncation={"fivePrime": 30}),
+        ]
+    )
+
+    cds = _only_cds(get_seq_features(annotation, sequence))
+
+    assert str(cds.location.start) == "0"
+    assert str(cds.location.end) == ">9"
+
+
+def test_complete_cds_has_no_partial_markers():
+    sequence = "ATGGCTTAA"
+    annotation = _annotation(segments=[_segment(0, len(sequence))])
+
+    cds = _only_cds(get_seq_features(annotation, sequence))
+
+    assert str(cds.location.start) == "0"
+    assert str(cds.location.end) == "9"
 
 
 def test_translation_excludes_terminal_stop():
