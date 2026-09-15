@@ -1432,7 +1432,8 @@ def test_reformat_authors_from_loculus_to_embl_style():
 
 def test_get_seq_features_translates_minus_strand_cds_correctly():
     # Genomic (plus-strand) slice [3:12) is the reverse complement of the ORF ATG AAA TAA
-    # (Met Lys Stop), so a minus-strand CDS over this range must translate to "MK*".
+    # (Met Lys Stop), so a minus-strand CDS over this range must translate to "MK" (the
+    # /translation qualifier excludes the terminal stop codon).
     sequence_str = "AAA" + "TTATTTCAT" + "CCCC"
     annotation_object = {
         "genes": [
@@ -1451,7 +1452,7 @@ def test_get_seq_features_translates_minus_strand_cds_correctly():
     features = get_seq_features(annotation_object, sequence_str)
     cds_features = [feature for feature in features if feature.type == "CDS"]
     assert len(cds_features) == 1
-    assert cds_features[0].qualifiers["translation"] == "MK*"
+    assert cds_features[0].qualifiers["translation"] == "MK"
 
 
 def test_process_clade_founder_values():
