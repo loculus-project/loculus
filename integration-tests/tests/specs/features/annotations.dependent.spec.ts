@@ -51,7 +51,7 @@ XX
 FH   Key             Location/Qualifiers
 FH
 FT   source          1..910
-FT                   /molecule_type="genomic RNA"
+FT                   /mol_type="genomic RNA"
 FT                   /organism="Sudan ebolavirus"
 FT                   /country="France"
 FT                   /collection_date="2021-05-12"

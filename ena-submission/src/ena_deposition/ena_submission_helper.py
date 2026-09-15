@@ -495,7 +495,7 @@ def create_flatfile(
             seq=Seq(sequence_str),
             id=f"{accession}_{seq_name}" if multi_segment else accession,
             annotations={
-                "molecule_type": seq_io_moleculetype[organism_metadata.molecule_type],
+                "mol_type": seq_io_moleculetype[organism_metadata.molecule_type],
                 "organism": organism,
                 "topology": organism_metadata.topology,
                 "references": [reference],  # type: ignore
@@ -507,7 +507,7 @@ def create_flatfile(
             FeatureLocation(start=0, end=len(sequence_str)),
             type="source",
             qualifiers={
-                "molecule_type": str(organism_metadata.molecule_type),
+                "mol_type": str(organism_metadata.molecule_type),
                 "organism": organism,
                 "country": country,
                 "collection_date": collection_date,
