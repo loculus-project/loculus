@@ -1176,6 +1176,41 @@ def test_errors_when_no_input_field_is_provided() -> None:
     )
 
 
+@pytest.mark.parametrize(
+    ("field_name", "value", "is_insdc_ingest", "expected_warnings"),
+    [
+        # A field without a processing spec and not declared as an extraInputField
+        (
+            "unrecognized_field",
+            "some_value",
+            False,
+            ["Metadata field `unrecognized_field` is not recognized and will be ignored."],
+        ),
+        # extraInputFields are recognized even though they have no processing spec
+        ("extra_input_field", "some_value", False, []),
+        # Nothing is ignored if no value was provided, e.g. an empty column
+        ("unrecognized_field", "", False, []),
+        # The INSDC ingest group submits fields that users may not, and is not checked
+        ("unrecognized_field", "some_value", True, []),
+    ],
+)
+def test_warns_when_unrecognized_field_is_provided(
+    field_name: str, value: str, is_insdc_ingest: bool, expected_warnings: list[str]
+) -> None:
+    config = get_config(NO_ALIGNMENT_CONFIG, ignore_args=True)
+    config.extra_input_fields.append("extra_input_field")
+
+    entry = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={field_name: value},
+        accession_id="0",
+        sequences={"main": None},
+        group_id=config.insdc_ingest_group_id if is_insdc_ingest else 2,
+    )
+    processed_entry = process_all([entry], "temp_dataset_dir", config)[0].processed_entry
+
+    assert [annotation.message for annotation in processed_entry.warnings] == expected_warnings
+
+
 def test_preprocessing_without_consensus_sequences(config: Config) -> None:
     sequence_name = "entry without sequences"
     sequence_entry_data = UnprocessedEntry(
