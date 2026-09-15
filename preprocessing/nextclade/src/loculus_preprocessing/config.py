@@ -33,7 +33,6 @@ PROCESSED_PREFIX = "processed."
 FILES_PREFIX = "files."
 NEXTCLADE_PREFIX = "nextclade."
 ASSIGNED_REFERENCE_PREFIX = "ASSIGNED_REFERENCE"
-INTERNAL_INPUT_PREFIXES = (NEXTCLADE_PREFIX, ASSIGNED_REFERENCE_PREFIX)
 LENGTH: Final = "length"
 LENGTH_PREFIX = f"{LENGTH}_"
 INJECTED_INPUT_FIELDS = ("submitter", "submittedAt", "submissionId", "group_id")
@@ -122,6 +121,7 @@ class Config(BaseModel):
     segments: list[Segment] = Field(default_factory=list)
     processing_spec: dict[str, ProcessingSpec] = Field(default_factory=dict)
     processing_order: tuple[str, ...] = ()
+    extra_input_fields: list[str] = Field(default_factory=list)
 
     alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
     segment_classification_method: SegmentClassificationMethod = SegmentClassificationMethod.ALIGN
@@ -216,11 +216,13 @@ class Config(BaseModel):
             raise Exception
         return datasets[0]
 
+    def is_existing_field(self, field: str) -> bool:
+        return field in self.processing_spec or field in self.extra_input_fields
+
     def is_user_input(self, field: str) -> bool:
         if (spec := self.processing_spec.get(field)) is not None:
             return not spec.no_input
-        # fields without a spec may be `extraInputFields` and therefore still user input
-        return not field.startswith(INTERNAL_INPUT_PREFIXES)
+        return field in self.extra_input_fields
 
 
 def set_sequence_name(

@@ -6,6 +6,7 @@ from datetime import datetime
 
 import pytz
 
+from loculus_preprocessing.config import INJECTED_INPUT_FIELDS
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
     AnnotationSourceType,
@@ -102,7 +103,9 @@ class UnprocessedEntryFactory:
                 ),
                 submissionId=metadata_dict.get("submissionId") or "test_submission_id",
                 group_id=group_id,
-                metadata=metadata_dict,
+                # The backend strips the submission id column from the submitted metadata,
+                # so INJECTED_INPUT_FIELDS never reach `metadata` in production.
+                metadata={k: v for k, v in metadata_dict.items() if k not in INJECTED_INPUT_FIELDS},
                 unalignedNucleotideSequences=sequences,
                 files=files,
             ),
