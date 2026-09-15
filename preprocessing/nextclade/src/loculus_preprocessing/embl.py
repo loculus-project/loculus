@@ -211,10 +211,22 @@ def _cds_location(segments: list[dict[str, Any]]) -> FeatureLocation | CompoundL
     return locations[0] if len(locations) == 1 else CompoundLocation(locations)
 
 
-def _translate_cds(sequence_str: str, location: FeatureLocation | CompoundLocation) -> str:
+def _translate_cds(
+    sequence_str: str,
+    location: FeatureLocation | CompoundLocation,
+    codon_start: int,
+    transl_table: int,
+) -> str:
     # location.extract reverse-complements minus-strand (sub-)locations before concatenating,
     # so this is correct for both single- and multi-segment, plus- and minus-strand CDSes.
-    translation = str(location.extract(Seq(sequence_str)).translate())
+    extracted = location.extract(Seq(sequence_str))
+    # codon_start is the 1-indexed offset of the first complete codon, so drop the leading
+    # codon_start - 1 bases that precede it before translating.
+    extracted = extracted[codon_start - 1 :]
+    # A trailing partial codon (e.g. a CDS truncated at the sequence's 3' end) can't be
+    # translated; trim it explicitly rather than relying on Biopython's warn-and-drop default.
+    extracted = extracted[: len(extracted) - len(extracted) % 3]
+    translation = str(extracted.translate(table=transl_table))
     # The INSDC /translation qualifier excludes the terminal stop codon.
     return translation.removesuffix("*")
 
@@ -227,7 +239,12 @@ def _build_cds_feature(cds: dict[str, Any], sequence_str: str) -> SeqFeature:
     # coding feature can be found, relative to the first base of that feature, in nextclade this
     # is 0-indexed, in EMBL it is 1 indexed (we mapped the phase to codon_start).
     qualifiers["codon_start"] = qualifiers.get("codon_start", 0) + 1
-    qualifiers["translation"] = _translate_cds(sequence_str, location)
+    qualifiers["translation"] = _translate_cds(
+        sequence_str,
+        location,
+        qualifiers["codon_start"],
+        qualifiers.get("transl_table", 1),
+    )
     return SeqFeature(
         location=location,
         type="CDS",
