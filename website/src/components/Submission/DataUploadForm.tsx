@@ -19,7 +19,7 @@ import {
     openDataUseTermsOption,
     restrictedDataUseTermsOption,
 } from '../../types/backend.ts';
-import type { FileCategory, FileSharingConfig, InputField } from '../../types/config.ts';
+import { type FileSharingConfig, type FileCategory, type InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
@@ -213,6 +213,7 @@ const InnerDataUploadForm = ({
                             fileUploadStates={fileUploadStates}
                             setFileUploadStates={setFileUploadStates}
                             fileLinkage={fileLinkage}
+                            fileSharingConfig={fileSharingConfig}
                         />
                         <hr />
                     </>
@@ -400,6 +401,7 @@ export const ExtraFilesUpload = ({
     setFileUploadStates,
     fileLinkage,
     onError,
+    fileSharingConfig,
 }: {
     accessToken: string;
     clientConfig: ClientConfig;
@@ -410,6 +412,7 @@ export const ExtraFilesUpload = ({
     setFileUploadStates: Dispatch<SetStateAction<Map<string, FileUploadState>>>;
     fileLinkage?: FileLinkage;
     onError: (message: string) => void;
+    fileSharingConfig: FileSharingConfig;
 }) => {
     const setCategoryFileUploadState =
         (category: string): Dispatch<SetStateAction<FileUploadState | undefined>> =>
@@ -449,6 +452,7 @@ export const ExtraFilesUpload = ({
                             onError={onError}
                             fileUploadState={fileUploadStates.get(fileCategory.name)}
                             setFileUploadState={setCategoryFileUploadState(fileCategory.name)}
+                            fileSharingConfig={fileSharingConfig}
                         />
                         {inputMode === 'bulk' && (
                             <CategoryLinkageStatus categoryLinkage={fileLinkage?.get(fileCategory.name)} />
