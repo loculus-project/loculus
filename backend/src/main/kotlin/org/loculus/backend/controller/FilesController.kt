@@ -204,11 +204,23 @@ class FilesController(
     ) {
         val fileIdsAndEtags = body.associate { it.fileId to it.etags }
         val multipartUploadIds = filesDatabaseService.getUncompletedMultipartUploadIds(fileIdsAndEtags.keys)
-        val alreadyCompleted = fileIdsAndEtags.keys - multipartUploadIds.map { it.first }.toSet()
-        if (alreadyCompleted.isNotEmpty()) {
-            throw UnprocessableEntityException(
-                "The following files have already been completed: " + alreadyCompleted.joinToString(),
-            )
+        val notPending = fileIdsAndEtags.keys - multipartUploadIds.map { it.first }.toSet()
+        if (notPending.isNotEmpty()) {
+            val nonExistent = filesDatabaseService.getNonExistentFileIds(notPending)
+            val alreadyCompleted = notPending - nonExistent
+            val errors = buildList {
+                if (nonExistent.isNotEmpty()) {
+                    add(
+                        "The following file IDs do not exist, possibly because the upload was previously " +
+                            "rejected (e.g. for exceeding the maximum allowed file size): " +
+                            nonExistent.joinToString(),
+                    )
+                }
+                if (alreadyCompleted.isNotEmpty()) {
+                    add("The following files have already been completed: " + alreadyCompleted.joinToString())
+                }
+            }
+            throw UnprocessableEntityException(errors.joinToString(" "))
         }
         val maxFileSizeBytes = backendConfig.fileSharing.maxFileSizeBytes
         multipartUploadIds.forEach { (fileId, uploadId) ->
