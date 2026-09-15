@@ -71,8 +71,9 @@ class CompleteMultipartUploadFileSizeLimitEndpointTest(
             .headers().map()["etag"]!![0]
         val etag2 = convenienceClient.uploadFile(fileIdAndUrls.presignedWriteUrls[1], DEFAULT_MULTIPART_FILE_PARTS[1])
             .headers().map()["etag"]!![0]
+        val fileIdAndEtags = FileIdAndEtags(fileIdAndUrls.fileId, listOf(etag1, etag2))
 
-        filesClient.completeMultipartUploads(listOf(FileIdAndEtags(fileIdAndUrls.fileId, listOf(etag1, etag2))))
+        filesClient.completeMultipartUploads(listOf(fileIdAndEtags))
             .andExpect(status().isUnprocessableContent)
             .andExpect(
                 content().string(containsString("exceeds the maximum allowed file size of $MAX_FILE_SIZE_BYTES bytes")),
@@ -84,22 +85,6 @@ class CompleteMultipartUploadFileSizeLimitEndpointTest(
         assertTrue(
             filesDatabaseService.getNonExistentFileIds(setOf(fileIdAndUrls.fileId)).contains(fileIdAndUrls.fileId),
         )
-    }
-
-    @Test
-    fun `GIVEN a retry of an already-rejected oversized file THEN the error explains the file no longer exists`() {
-        val fileIdAndUrls = filesClient.requestMultipartUploads(
-            groupId = groupId,
-            numberParts = 2,
-        ).andGetFileIdsAndMultipartUrls()[0]
-        val etag1 = convenienceClient.uploadFile(fileIdAndUrls.presignedWriteUrls[0], DEFAULT_MULTIPART_FILE_PARTS[0])
-            .headers().map()["etag"]!![0]
-        val etag2 = convenienceClient.uploadFile(fileIdAndUrls.presignedWriteUrls[1], DEFAULT_MULTIPART_FILE_PARTS[1])
-            .headers().map()["etag"]!![0]
-        val fileIdAndEtags = FileIdAndEtags(fileIdAndUrls.fileId, listOf(etag1, etag2))
-
-        filesClient.completeMultipartUploads(listOf(fileIdAndEtags))
-            .andExpect(status().isUnprocessableContent)
 
         // A retry with the same (now nonexistent) file ID must not be misreported as "already completed" -
         // that would wrongly suggest the file made it through, when it was actually rejected for its size.
