@@ -83,6 +83,36 @@ def test_spliced_cds_translates_joined_nucleotides():
     assert cds.qualifiers["translation"] == "MA"
 
 
+def test_minus_strand_spliced_cds_keeps_nextclades_segment_order():
+    """Nextclade lists segments in transcription order, not genomic order.
+
+    On the minus strand that runs from the highest coordinate downwards, so each segment
+    is reverse-complemented on its own and the listed order is preserved. Reverse-
+    complementing the joined sequence instead would splice the CDS back to front.
+    """
+    exon_1, exon_2 = "ATGAAAG", "CTGCTTAA"  # together: M K A A stop, junction mid-codon
+    spacer = "GGGGG"
+    sequence = (
+        spacer
+        + str(Seq(exon_2).reverse_complement())
+        + spacer
+        + str(Seq(exon_1).reverse_complement())
+        + spacer
+    )
+    exon_2_begin = len(spacer)
+    exon_1_begin = len(spacer) + len(exon_2) + len(spacer)
+    annotation = _annotation(
+        segments=[
+            _segment(exon_1_begin, exon_1_begin + len(exon_1), strand="-"),
+            _segment(exon_2_begin, exon_2_begin + len(exon_2), strand="-"),
+        ]
+    )
+
+    cds = _only_cds(get_seq_features(annotation, sequence))
+
+    assert cds.qualifiers["translation"] == "MKAA"
+
+
 def test_translation_excludes_terminal_stop():
     """INSDC /translation does not include the terminal stop codon."""
     sequence = "ATG" + "GCT" + "TAA"

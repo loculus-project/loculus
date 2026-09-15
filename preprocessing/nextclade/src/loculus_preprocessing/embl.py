@@ -179,25 +179,27 @@ def get_embl_qualifiers(
 def get_codon_start(segments: Sequence[Mapping[str, Any]]) -> int:
     """EMBL /codon_start: 1-based offset of the first complete codon within the feature.
 
-    Nextclade reports `phase` (0-based) as a field on each segment. The qualifier
-    describes the joined feature, so it comes from whichever segment is transcribed
-    first -- the last one in genomic order when the CDS is on the minus strand.
+    Nextclade reports `phase` (0-based) as a field on each segment, listing segments in
+    transcription order, so the qualifier -- which describes the joined feature -- comes
+    from the first of them.
     """
     if not segments:
         return 1
-    first_transcribed = segments[-1] if is_minus_strand(segments) else segments[0]
-    return int(first_transcribed.get("phase", 0)) + 1
+    return int(segments[0].get("phase", 0)) + 1
 
 
 def get_coding_nucleotides(sequence_str: str, segments: Sequence[Mapping[str, Any]]) -> Seq:
     """The CDS's own nucleotides, read 5' to 3'.
 
-    Segments are joined before any reverse-complementing so a spliced CDS reads across
-    its junctions, where codons straddle the boundary. Reverse-complementing the joined
-    sequence also reverses the segment order, which is what the minus strand requires.
+    Nextclade lists segments in transcription order, which on the minus strand runs from
+    the highest coordinate downwards. Each segment is therefore reverse-complemented on
+    its own and the order is kept; reverse-complementing the joined sequence instead
+    would undo that order and splice the CDS back to front.
     """
-    joined = Seq("".join(sequence_str[s["range"]["begin"] : s["range"]["end"]] for s in segments))
-    return joined.reverse_complement() if is_minus_strand(segments) else joined
+    parts = [sequence_str[s["range"]["begin"] : s["range"]["end"]] for s in segments]
+    if is_minus_strand(segments):
+        parts = [str(Seq(part).reverse_complement()) for part in parts]
+    return Seq("".join(parts))
 
 
 def get_translation(coding_nucleotides: Seq, codon_start: int) -> str:
