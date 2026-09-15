@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import org.junit.jupiter.params.provider.ValueSource
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.Organism
@@ -213,6 +214,32 @@ class SubmitEndpointTest(
             .andExpect(jsonPath("\$.detail", containsString(expectedMessage)))
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = ["SAMPLE_C", "SAMPLE,C(1)"])
+    fun `GIVEN duplicate metadata IDs THEN reports the ID without database details`(id: String) {
+        submissionControllerClient.submit(
+            metadataFile = SubmitFiles.metadataFileWith(
+                content = "submissionId\tfirstColumn\n$id\tvalue\n$id\totherValue",
+            ),
+            sequencesFile = DefaultFiles.sequencesFile,
+            groupId = groupId,
+        )
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(jsonPath("\$.detail").value("Metadata file contains at least one duplicate submissionId: $id"))
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["SAMPLE_C", "SAMPLE,C(1)"])
+    fun `GIVEN duplicate FASTA IDs THEN reports the ID without database details`(id: String) {
+        submissionControllerClient.submit(
+            metadataFile = DefaultFiles.metadataFile,
+            sequencesFile = SubmitFiles.sequenceFileWith(content = ">$id\nAC\n>$id\nAC"),
+            groupId = groupId,
+        )
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(jsonPath("\$.detail").value("Sequence file contains at least one duplicate FASTA ID: $id"))
+    }
+
     @Test
     fun `GIVEN no sequence file for organism that requires one THEN returns bad request`() {
         submissionControllerClient.submit(
@@ -384,39 +411,6 @@ class SubmitEndpointTest(
                     status().isUnprocessableContent,
                     "Unprocessable Content",
                     "The metadata file does not contain either header 'id' or 'submissionId'",
-                    DEFAULT_ORGANISM,
-                    DataUseTerms.Open,
-                ),
-                Arguments.of(
-                    "duplicate headers in metadata file",
-                    SubmitFiles.metadataFileWith(
-                        content = """
-                            id	firstColumn
-                            sameHeader	someValue
-                            sameHeader	someValue2
-                        """.trimIndent(),
-                    ),
-                    DefaultFiles.sequencesFile,
-                    status().isUnprocessableContent,
-                    "Unprocessable Content",
-                    "Metadata file contains at least one duplicate submissionId",
-                    DEFAULT_ORGANISM,
-                    DataUseTerms.Open,
-                ),
-                Arguments.of(
-                    "duplicate headers in sequence file",
-                    DefaultFiles.metadataFile,
-                    SubmitFiles.sequenceFileWith(
-                        content = """
-                            >sameHeader_main
-                            AC
-                            >sameHeader_main
-                            AC
-                        """.trimIndent(),
-                    ),
-                    status().isUnprocessableContent,
-                    "Unprocessable Content",
-                    "Sequence file contains at least one duplicate submissionId",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),

@@ -23,6 +23,7 @@ import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.model.FastaId
 import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.model.SubmissionParams
+import org.loculus.backend.model.UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE
 import org.loculus.backend.service.GenerateAccessionFromNumberService
 import org.loculus.backend.service.datauseterms.DataUseTermsDatabaseService
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
@@ -44,6 +45,7 @@ import org.loculus.backend.utils.FastaEntry
 import org.loculus.backend.utils.MetadataEntry
 import org.loculus.backend.utils.RevisionEntry
 import org.loculus.backend.utils.chunkedForDatabase
+import org.loculus.backend.utils.extractDuplicateRecordId
 import org.loculus.backend.utils.getNextSequenceNumbers
 import org.loculus.backend.utils.processInDatabaseSafeChunks
 import org.springframework.stereotype.Service
@@ -90,21 +92,6 @@ class UploadDatabaseService(
         }
     }
 
-    private val keyDetail =
-        Regex("""Key \((?<cols>[^)]+)\)=\((?<vals>[^)]+)\) already exists""")
-
-    private fun ExposedSQLException.extractDuplicateColumns(): Map<String, String>? {
-        val text = this.cause?.message ?: this.message ?: return null
-        val match = keyDetail.find(text) ?: return null
-
-        val cols = match.groups["cols"]?.value?.split(",")?.map { it.trim() } ?: return null
-        val vals = match.groups["vals"]?.value?.split(",")?.map { it.trim() } ?: return null
-
-        return cols.zip(vals)
-            .filter { (col, _) -> col in listOf("accession", "submission_id") }
-            .toMap()
-    }
-
     fun batchInsertRevisedMetadataInAuxTable(
         uploadId: String,
         authenticatedUser: AuthenticatedUser,
@@ -127,14 +114,17 @@ class UploadDatabaseService(
                 }
             }
         } catch (e: ExposedSQLException) {
-            log.error { "Error inserting revised metadata in aux table: ${e.message}" }
-            val duplicates = e.extractDuplicateColumns() ?: throw UnprocessableEntityException(
-                "Error inserting revised metadata in aux table - please contact an administrator.",
-            )
-            val details = duplicates.entries.joinToString(" ") { (col, value) ->
-                "Duplicate $col found in metadata file: $value"
+            val duplicateId = e.extractDuplicateRecordId(uploadId) ?: run {
+                log.error(e.takeUnless { it.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE }) {
+                    "Error inserting revised metadata for upload $uploadId with SQL state ${e.sqlState}"
+                }
+                throw UnprocessableEntityException(
+                    "Error inserting revised metadata in aux table - please contact an administrator.",
+                )
             }
-            throw UnprocessableEntityException(details)
+            throw UnprocessableEntityException(
+                "Metadata file contains at least one duplicate ${duplicateId.field}: ${duplicateId.value}",
+            )
         }
     }
 
