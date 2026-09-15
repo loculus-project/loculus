@@ -1,7 +1,7 @@
 # ruff: noqa: S101
 
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 
 import pytz
@@ -19,7 +19,6 @@ from loculus_preprocessing.datatypes import (
     ProcessingAnnotationAlignment,
     ProcessingContext,
     SegmentName,
-    UnprocessedData,
     UnprocessedEntry,
 )
 from loculus_preprocessing.external_services import ExternalServices, TaxonomyService
@@ -92,26 +91,25 @@ class ProcessedAlignment:
 @dataclass
 class UnprocessedEntryFactory:
     @staticmethod
-    def create_unprocessed_entry(
+    def create_unprocessed_entry(  # noqa: PLR0913
         metadata_dict: dict[str, str | None],
         accession_id: str,
         sequences: dict[SegmentName, NucleotideSequence | None],
         group_id: int = 2,
+        insdc_ingest_group_id: int = DEFAULT_TEST_CONTEXT.insdc_ingest_group_id,
         files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None = None,
     ) -> UnprocessedEntry:
         return UnprocessedEntry(
-            accessionVersion=f"LOC_{accession_id}.1",
-            data=UnprocessedData(
-                submitter="test_submitter",
-                submittedAt=str(
-                    datetime.strptime("2021-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
-                ),
-                submissionId="test_submission_id",
+            context=replace(
+                DEFAULT_TEST_CONTEXT,
+                accession_version=f"LOC_{accession_id}.1",
                 group_id=group_id,
-                metadata=metadata_dict,
-                unalignedNucleotideSequences=sequences,
-                files=files,
+                insdc_ingest_group_id=insdc_ingest_group_id,
+                submitted_at=ts_from_ymd(2021, 12, 15),
             ),
+            metadata=metadata_dict,
+            unalignedNucleotideSequences=sequences,
+            files=files,
         )
 
 
@@ -209,7 +207,7 @@ class Case:
         )
         expected_output = factory_custom.create_processed_entry(
             metadata_dict=self.expected_metadata,
-            accession=unprocessed_entry.accessionVersion.split(".")[0],
+            accession=unprocessed_entry.accession_version.split(".")[0],
             errors=self.expected_errors or [],
             warnings=self.expected_warnings or [],
             processed_alignment=self.expected_processed_alignment,
