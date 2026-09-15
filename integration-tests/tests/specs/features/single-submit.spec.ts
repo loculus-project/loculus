@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
+import { hoverUntilVisible } from '../../utils/hover-helpers';
 
 test('submit a single sequence', async ({ page, groupId }) => {
     test.setTimeout(90_000);
@@ -51,10 +52,7 @@ test('field description tooltip appears on hover', async ({ page, groupId }) => 
     const infoIcon = page.locator('[data-tooltip-id="field-tooltipsampleCollectionDate"]');
     await expect(infoIcon).toBeVisible();
 
-    await infoIcon.hover();
-
-    // The tooltip should become visible after the hover delay
     const tooltip = page.locator('#field-tooltipsampleCollectionDate');
-    await expect(tooltip).toBeVisible({ timeout: 2000 });
+    await hoverUntilVisible(page, infoIcon, tooltip);
     await expect(tooltip).toContainText('sampleCollectionDate');
 });
