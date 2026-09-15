@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.hamcrest.CoreMatchers.containsString
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.FileIdAndEtags
@@ -18,6 +19,7 @@ import org.loculus.backend.controller.groupmanagement.GroupManagementControllerC
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
+import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -46,6 +48,7 @@ class CompleteMultipartUploadFileSizeLimitEndpointTest(
     @Autowired private val filesClient: FilesClient,
     @Autowired private val convenienceClient: SubmissionConvenienceClient,
     @Autowired private val s3Service: S3Service,
+    @Autowired private val filesDatabaseService: FilesDatabaseService,
 ) {
 
     var groupId: Int = 0
@@ -75,9 +78,11 @@ class CompleteMultipartUploadFileSizeLimitEndpointTest(
             )
             .andExpect(content().string(containsString(fileIdAndUrls.fileId)))
 
-        // The file was never assembled into an object at all - it was only ever uploaded as loose parts,
-        // which the abort just discarded.
+        // The file should be discarded from S3 and the database.
         assertNull(s3Service.getFileSize(fileIdAndUrls.fileId))
+        assertTrue(
+            filesDatabaseService.getNonExistentFileIds(setOf(fileIdAndUrls.fileId)).contains(fileIdAndUrls.fileId),
+        )
     }
 
     @Test
