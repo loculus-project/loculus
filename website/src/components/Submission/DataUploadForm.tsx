@@ -473,7 +473,7 @@ export const ExtraFilesUpload = ({
     setFileUploadStates: Dispatch<SetStateAction<Map<string, FileUploadState>>>;
     fileLinkage?: FileLinkage;
     onError: (message: string) => void;
-    fileSharingConfig?: FileSharingConfig;
+    fileSharingConfig: FileSharingConfig;
 }) => {
     const setCategoryFileUploadState =
         (category: string): Dispatch<SetStateAction<FileUploadState | undefined>> =>

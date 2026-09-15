@@ -32,7 +32,7 @@ type FolderUploadComponentProps = {
     fileUploadState: FileUploadState | undefined;
     setFileUploadState: Dispatch<SetStateAction<FileUploadState | undefined>>;
     onError: (message: string) => void;
-    fileSharingConfig?: FileSharingConfig;
+    fileSharingConfig: FileSharingConfig;
 };
 
 const FileInput = ({
@@ -229,7 +229,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             // Reset the input so the same folder can be selected again
             e.target.value = '';
 
-            const error = isFilesArrayValid(filesArray, inputMode, fileSharingConfig?.maxFileSizeBytes);
+            const error = isFilesArrayValid(filesArray, inputMode, fileSharingConfig.maxFileSizeBytes);
             if (error) {
                 onError(error);
                 return;
@@ -271,7 +271,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             // Reset the input so the same file can be selected again
             e.target.value = '';
 
-            const error = isFilesArrayValid(filesArray, inputMode, fileSharingConfig?.maxFileSizeBytes);
+            const error = isFilesArrayValid(filesArray, inputMode, fileSharingConfig.maxFileSizeBytes);
             if (error) {
                 onError(error);
                 return;

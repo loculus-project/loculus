@@ -65,6 +65,7 @@ const defaultProps = {
     clientConfig: { backendUrl: 'http://test-backend', lapisUrls: {} },
     groupId: 1,
     onError: mockOnError,
+    fileSharingConfig: { disableStrictFilenameValidation: false },
 };
 
 const previousUploadsState = (files: { fileId: string; path: string }[]): FileUploadState => ({
