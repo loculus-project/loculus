@@ -3,7 +3,7 @@ title: Configuring extra file submission
 ---
 
 Loculus supports the handling of arbitrary files associated with sequence entries.
-You can configure Loculus to support the submission of extra files for sequences, as well as providing extra files along with the sequence data and metadata for download. A typical usecase would be for raw reads. The files are stored in [S3](../../reference/glossary#s3-simple-storage-service).
+You can configure Loculus to support the submission of extra files for sequences, as well as providing extra files along with the sequence data and metadata for download. A typical use case would be for raw reads. The files are stored in [S3](../../reference/glossary#s3-simple-storage-service).
 
 To enable this feature you need to configure an S3 bucket for Loculus to use, and then configure the file categories per organism.
 
@@ -72,6 +72,8 @@ Users can submit files along with sequence metadata and sequences (or also inste
 For this, you need to enable the `files` submission type, and configure at least one file category that users can submit:
 
 ```yaml
+fileSharing:
+  maxFileSizeBytes: 5368709120 # 5 GiB
 my-organism:
   schema:
     submissionDataTypes:
@@ -85,6 +87,8 @@ The example above configures the `rawReads` file category.
 
 If a user submits these files, they will be passed along to the processing pipeline as well, and the pipeline can read them, pass them through as output files, or generate additional fields or process them in any other way.
 
+You can also set a maximum accepted file size for your loculus instance in `fileSharing.maxFileSizeBytes`.
+
 :::note
 Files are submitted by adding a `files.<category>` column to the metadata file, e.g. `files.rawReads`.
 The `files.` prefix is therefore reserved: no metadata field may have a name starting with it, as such columns are
@@ -94,11 +98,13 @@ treated as file categories during submission rather than as metadata.
 ### Configuring output files
 
 By default, files are not shown in the sequence detail view as well.
-You need to configure output files as well, and the pipeline needs to set them.
+You need to configure output files as well, and the pipeline needs to be configured to pass them through (or alternatively create and upload new files). You can additionally configure whether the backend should supply file URLs as links to the website or the backend itself using `fileSharing.outputFileUrlType`.
 
 To configure:
 
 ```yaml
+fileSharing:
+  outputFileUrlType: website
 my-organism:
   schema:
     files:
