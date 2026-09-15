@@ -93,27 +93,6 @@ class FileIdAndNameAndReadUrl:
     url: str | None = None
 
 
-@dataclass
-class UnprocessedData:
-    submitter: str
-    group_id: int
-    submittedAt: str  # timestamp  # noqa: N815
-    submissionId: str  # noqa: N815
-    metadata: InputMetadata
-    unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
-    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
-
-
-@dataclass
-class UnprocessedEntry:
-    accessionVersion: AccessionVersion  # {accession}.{version}  # noqa: N815
-    data: UnprocessedData
-
-
-FunctionInputs = dict[ArgName, InputField]
-FunctionArgs = dict[ArgName, ArgValue]
-
-
 @dataclass(frozen=True)
 class ProcessingContext:
     """Runtime context that is the same for every processing function call for a given
@@ -134,6 +113,22 @@ class ProcessingContext:
 
 
 @dataclass
+class UnprocessedEntry:
+    context: ProcessingContext
+    metadata: InputMetadata
+    unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
+    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
+
+    @property
+    def accession_version(self) -> AccessionVersion:  # {accession}.{version}
+        return self.context.accession_version
+
+
+FunctionInputs = dict[ArgName, InputField]
+FunctionArgs = dict[ArgName, ArgValue]
+
+
+@dataclass
 class UnprocessedAfterNextclade:
     inputMetadata: InputMetadata  # noqa: N815
     context: ProcessingContext
@@ -148,6 +143,10 @@ class UnprocessedAfterNextclade:
     sequenceNameToFastaId: dict[SequenceName, FastaId]  # noqa: N815
     errors: list[ProcessingAnnotation]
     warnings: list[ProcessingAnnotation]
+
+    @property
+    def accession_version(self) -> AccessionVersion:  # {accession}.{version}
+        return self.context.accession_version
 
 
 @dataclass
@@ -192,8 +191,8 @@ class SubmissionData:
     but the annotations need to be uploaded separately."""
 
     processed_entry: ProcessedEntry
-    submitter: str | None
-    group_id: int | None = None
+    submitter: str
+    group_id: int
     annotations: dict[str, Any] | None = None
 
 
