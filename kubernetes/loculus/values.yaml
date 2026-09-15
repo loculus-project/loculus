@@ -48,7 +48,7 @@ siloImport:
   siloTimeoutSeconds: 3600
   hardRefreshIntervalSeconds: 3600
   pollIntervalSeconds: 30
-ingestLimitSeconds: 1800
+ingestLimitSeconds: 3600
 getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600
 accessionPrefix: "LOC_"
