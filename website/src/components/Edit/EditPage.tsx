@@ -279,6 +279,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                         fileUploadStates={fileUploadStates}
                         setFileUploadStates={setFileUploadStates}
                         onError={(msg) => toast.error(msg, { position: 'top-center', autoClose: false })}
+                        fileSharingConfig={fileSharingConfig}
                     />
                 </div>
             )}

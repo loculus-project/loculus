@@ -2,6 +2,8 @@ package org.loculus.backend.service
 
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.utils.Accession
+import org.loculus.backend.utils.CODE_POINTS
+import org.loculus.backend.utils.base34Encode
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -9,18 +11,7 @@ import org.springframework.stereotype.Service
 class GenerateAccessionFromNumberService(@Autowired val backendConfig: BackendConfig) {
 
     fun generateCustomId(sequenceNumber: Long): String {
-        val base34Digits: MutableList<Char> = mutableListOf()
-        var remainder: Long = sequenceNumber
-
-        do {
-            val digit = (remainder % 34).toInt()
-            base34Digits.addFirst(CODE_POINTS[digit])
-            remainder /= 34
-        } while (remainder > 0)
-
-        val serialAccessionPart = base34Digits
-            .joinToString("")
-            .padStart(6, '0')
+        val serialAccessionPart = base34Encode(sequenceNumber, 6)
         return backendConfig.accessionPrefix + serialAccessionPart + generateCheckCharacter(serialAccessionPart)
     }
 
@@ -71,7 +62,6 @@ class GenerateAccessionFromNumberService(@Autowired val backendConfig: BackendCo
     }
 
     companion object {
-        const val CODE_POINTS = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ"
         fun getCodePointFromCharacter(character: Char): Int = CODE_POINTS.indexOf(character)
         const val NUMBER_OF_VALID_CHARACTERS = CODE_POINTS.length
     }
