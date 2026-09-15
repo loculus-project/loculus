@@ -376,8 +376,7 @@ def _check_no_input_restrictions(
 ) -> list[ProcessingAnnotation]:
     errors: list[ProcessingAnnotation] = []
     for field_name, value in submitted_metadata.items():
-        spec = config.processing_spec.get(field_name)
-        if spec is None or not spec.no_input or null_per_backend(value):
+        if config.is_user_input(field_name) or null_per_backend(value):
             continue
         message = (
             f"Metadata field `{field_name}` may not be provided as input. "
