@@ -14,7 +14,7 @@ from Bio.SeqFeature import (
 from Bio.SeqRecord import SeqRecord
 from unidecode import unidecode
 
-from loculus_preprocessing.datatypes import MoleculeType, ProcessedMetadata, SubmissionData
+from loculus_preprocessing.datatypes import ProcessedMetadata, SubmissionData
 
 from .config import Config
 
@@ -339,12 +339,6 @@ def create_flatfile(  # noqa: PLR0914
     molecule_type = config.molecule_type
     topology = config.topology
 
-    seqIO_moleculetype = {  # noqa: N806
-        MoleculeType.GENOMIC_DNA: "DNA",
-        MoleculeType.GENOMIC_RNA: "RNA",
-        MoleculeType.VIRAL_CRNA: "cRNA",
-    }
-
     embl_content = []
 
     for seq_name, sequence_str in unaligned_nuc_seq.items():
@@ -358,7 +352,7 @@ def create_flatfile(  # noqa: PLR0914
             Seq(sequence_str),
             id=f"{accession}_{seq_name}" if config.multi_segment else accession,
             annotations={
-                "molecule_type": seqIO_moleculetype.get(molecule_type, "DNA"),
+                "molecule_type": str(molecule_type),
                 "organism": organism,
                 "topology": topology,
                 "references": [reference],  # type: ignore[dict-item]
@@ -370,7 +364,7 @@ def create_flatfile(  # noqa: PLR0914
             FeatureLocation(start=0, end=len(sequence_str)),
             type="source",
             qualifiers={
-                "molecule_type": str(molecule_type),
+                "mol_type": str(molecule_type),
                 "organism": organism,
                 "country": country,
                 "collection_date": collection_date,
