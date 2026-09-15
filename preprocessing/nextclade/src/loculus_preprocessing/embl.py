@@ -172,6 +172,9 @@ def _build_qualifiers(attributes: dict[str, Any], allowed_qualifiers: list[str])
 
 def _build_gene_feature(gene: dict[str, Any]) -> SeqFeature:
     gene_range = gene.get("range")
+    if not gene_range or "begin" not in gene_range or "end" not in gene_range:
+        msg = f"Gene range is missing or incomplete: {gene_range}"
+        raise ValueError(msg)
     qualifiers = _build_qualifiers(
         gene.get("attributes", {}), EMBL_ANNOTATIONS.get("gene_qualifiers", [])
     )
