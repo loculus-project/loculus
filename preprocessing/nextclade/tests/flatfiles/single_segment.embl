@@ -22,9 +22,9 @@ FT                   /gene="NPEbolaSudan"
 FT                   /product="NPEbolaSudan"
 FT   CDS             458..2674
 FT                   /gene="NPEbolaSudan"
+FT                   /note="predominant component of nucleocapsid"
 FT                   /product="nucleoprotein"
 FT                   /protein_id="YP_138520.1"
-FT                   /note="predominant component of nucleocapsid"
 FT                   /codon_start=1
 FT                   /translation="MNKRVRGSWALGGQSEVDLDYHKILTAGLSVQQGIVRQRVIPVYV
 FT                   VSDLEGICQHIIQAFEAGVDFQDNADSFLLLLCLHHAYQGDHRLFLKSDAVQYLEGHGF
@@ -44,10 +44,10 @@ FT                   /gene="VP35EbolaSudan"
 FT                   /product="VP35EbolaSudan"
 FT   CDS             3138..4127
 FT                   /gene="VP35EbolaSudan"
-FT                   /product="polymerase complex protein"
-FT                   /protein_id="YP_138521.1"
 FT                   /note="cofactor in polymerase complex; type I IFN
 FT                   antagonist"
+FT                   /product="polymerase complex protein"
+FT                   /protein_id="YP_138521.1"
 FT                   /codon_start=1
 FT                   /translation="MQQDRTYRHHGPEVSGWFSEQLMTGKIPLTEVFVDVENKPSPAPI
 FT                   TIISKNPKTTRKSDKQVQTDDASSLLTEEVKAAINSVISAVRRQTNAIESLEGRVTTLE
