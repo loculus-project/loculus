@@ -19,6 +19,9 @@ packages = ["src/raw_reads_processing"]
 "test/**" = ["S101"]
 
 [tool.pytest.ini_options]
+# Tests that drive the real readtools jar / deacon binary. Applied automatically
+# in test/conftest.py; deselect with -m "not needs_external_tools".
+markers = ["needs_external_tools: requires readtools or deacon to be installed"]
 # Live logging - show INFO+ during execution
 log_cli = true
 log_cli_level = "INFO"  # Show INFO logs during execution
