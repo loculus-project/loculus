@@ -221,8 +221,6 @@ class Config(BaseModel):
         return datasets[0]
 
     def is_existing_field(self, field: str) -> bool:
-        # If we ever add per-segment metadata fields that should be supplied by
-        # the user, this will erroneously return False
         return field in self.processing_spec or field in self.extra_input_fields
 
     def is_user_input(self, field: str) -> bool:
