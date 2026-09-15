@@ -370,22 +370,40 @@ def _try_compute_length_field(
     return False, None
 
 
-def _check_no_input_restrictions(
+def _check_submitted_metadata(
     submitted_metadata: InputMetadata,
     config: Config,
-) -> list[ProcessingAnnotation]:
+) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
+    """Validates that metadata submitted by the user matches the config:
+    - adds a warning if a user-provided field is not recognized (it will be ignored)
+    - adds an error if a user provided a value for a field marked `noInput`
+
+    For fields without a value validation is skipped (e.g., an empty
+    column in a submitted metadata file).
+    """
     errors: list[ProcessingAnnotation] = []
+    warnings: list[ProcessingAnnotation] = []
     for field_name, value in submitted_metadata.items():
-        if config.is_user_input(field_name) or null_per_backend(value):
+        if null_per_backend(value):
             continue
-        message = (
-            f"Metadata field `{field_name}` may not be provided as input. "
-            "Please remove it from your metadata."
-        )
-        errors.append(
-            ProcessingAnnotation.from_single(field_name, AnnotationSourceType.METADATA, message),
-        )
-    return errors
+        if not config.is_existing_field(field_name):
+            message = f"Metadata field `{field_name}` is not recognized and will be ignored."
+            warnings.append(
+                ProcessingAnnotation.from_single(
+                    field_name, AnnotationSourceType.METADATA, message
+                ),
+            )
+        elif not config.is_user_input(field_name):
+            message = (
+                f"Metadata field `{field_name}` may not be provided as input. "
+                "Please remove it from your metadata."
+            )
+            errors.append(
+                ProcessingAnnotation.from_single(
+                    field_name, AnnotationSourceType.METADATA, message
+                ),
+            )
+    return errors, warnings
 
 
 def get_output_metadata(  # noqa: C901
@@ -400,10 +418,9 @@ def get_output_metadata(  # noqa: C901
     context = unprocessed.context
 
     if not context.is_insdc_ingest_group:
-        errors.extend(_check_no_input_restrictions(unprocessed.metadata, config))
-
-    if not is_insdc_ingest_group:
-        errors.extend(_check_no_input_restrictions(_get_submitted_metadata(unprocessed), config))
+        e, w = _check_submitted_metadata(_get_submitted_metadata(unprocessed), config)
+        errors.extend(e)
+        warnings.extend(w)
 
     for output_field in config.processing_order:
         spec = config.processing_spec[output_field]

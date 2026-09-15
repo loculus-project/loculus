@@ -221,6 +221,9 @@ class Config(BaseModel):
             raise Exception
         return datasets[0]
 
+    def is_existing_field(self, field: str) -> bool:
+        return field in self.processing_spec or field in self.extra_input_fields
+
     def is_user_input(self, field: str) -> bool:
         if (spec := self.processing_spec.get(field)) is not None:
             return not spec.no_input
