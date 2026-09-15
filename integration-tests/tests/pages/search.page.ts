@@ -225,6 +225,14 @@ export class SearchPage {
         return new URL(this.page.url()).searchParams;
     }
 
+    // The table keeps rendering the previous filter's rows while the next request is in
+    // flight, and the sequence count is a separate request that can settle first.
+    async getSingleAccessionVersion(): Promise<string> {
+        const link = this.page.getByRole('link', { name: accessionVersionRegex });
+        await expect(link).toHaveCount(1, { timeout: 30_000 });
+        return (await link.textContent()) ?? '';
+    }
+
     async expectSequenceCount(count: number) {
         await expect(
             this.page.getByText(new RegExp(`Search returned ${count} sequence`)),
