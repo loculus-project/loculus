@@ -1,4 +1,5 @@
 import logging
+from dataclasses import dataclass, field
 from typing import Any
 
 from Bio.Seq import Seq
@@ -6,62 +7,11 @@ from Bio.SeqFeature import CompoundLocation, FeatureLocation, Reference, SeqFeat
 from Bio.SeqRecord import SeqRecord
 from unidecode import unidecode
 
-from loculus_preprocessing.datatypes import MoleculeType, ProcessedMetadata, SubmissionData
+from loculus_preprocessing.datatypes import ProcessedMetadata, SubmissionData
 
 from .config import Config
 
 logger = logging.getLogger(__name__)
-
-# EMBL allowed qualifiers constant
-EMBL_ANNOTATIONS: dict[str, list[str]] = {
-    "cds_qualifiers": [
-        "allele",
-        "artificial_location",
-        "circular_RNA",
-        "codon_start",
-        # "db_xref",  # protein accession of reference
-        "EC_number",
-        "exception",
-        "experiment",
-        "function",
-        "gene",
-        "gene_synonym",
-        "inference",
-        # "locus_tag",  # must be pre-registered with ENA
-        # "old_locus_tag",
-        "map",
-        "note",
-        "number",
-        "operon",
-        "product",
-        "protein_id",
-        "pseudo",
-        "pseudogene",
-        "ribosomal_slippage",
-        "standard_name",
-        "translation",
-    ],
-    "gene_qualifiers": [
-        "allele",
-        # "db_xref",
-        "experiment",
-        "function",
-        "gene",
-        "gene_synonym",
-        "inference",
-        # "locus_tag",
-        # "old_locus_tag",
-        "map",
-        "note",
-        "operon",
-        "product",
-        "pseudo",
-        "pseudogene",
-        "pseudotype",
-        "standard_name",
-        "trans_splicing",
-    ],
-}
 
 
 def get_country(metadata: ProcessedMetadata, config: Config) -> str:
@@ -145,6 +95,63 @@ def get_authors(authors: str) -> str:
         raise ValueError(msg) from err
 
 
+@dataclass(frozen=True)
+class EmblAnnotations:
+    cds_qualifiers: list[str] = field(default_factory=list)
+    gene_qualifiers: list[str] = field(default_factory=list)
+
+
+# EMBL allowed qualifiers constant
+EMBL_ANNOTATIONS = EmblAnnotations(
+    cds_qualifiers=[
+        "allele",
+        "artificial_location",
+        "circular_RNA",
+        "codon_start",
+        # "db_xref",  # protein accession of reference
+        "EC_number",
+        "exception",
+        "experiment",
+        "function",
+        "gene",
+        "gene_synonym",
+        "inference",
+        # "locus_tag",  # must be pre-registered with ENA
+        # "old_locus_tag",
+        "map",
+        "note",
+        "number",
+        "operon",
+        "product",
+        "protein_id",
+        "pseudo",
+        "pseudogene",
+        "ribosomal_slippage",
+        "standard_name",
+        "translation",
+    ],
+    gene_qualifiers=[
+        "allele",
+        # "db_xref",
+        "experiment",
+        "function",
+        "gene",
+        "gene_synonym",
+        "inference",
+        # "locus_tag",
+        # "old_locus_tag",
+        "map",
+        "note",
+        "operon",
+        "product",
+        "pseudo",
+        "pseudogene",
+        "standard_name",
+        "trans_splicing",
+    ],
+)
+
+
 # Map from nextclade attribute names to EMBL attribute names
 NEXTCLADE_TO_EMBL_ATTRIBUTES = {
     # "Dbxref": "db_xref", - # protein accession of reference
@@ -175,9 +182,7 @@ def _build_gene_feature(gene: dict[str, Any]) -> SeqFeature:
     if not gene_range or "begin" not in gene_range or "end" not in gene_range:
         msg = f"Gene range is missing or incomplete: {gene_range}"
         raise ValueError(msg)
-    qualifiers = _build_qualifiers(
-        gene.get("attributes", {}), EMBL_ANNOTATIONS.get("gene_qualifiers", [])
-    )
+    qualifiers = _build_qualifiers(gene.get("attributes", {}), EMBL_ANNOTATIONS.gene_qualifiers)
     # In FeatureLocation start and end are zero based, exclusive end.
     # thus an embl entry of 123..150 (one based counting) becomes a location of [122:150]
     return SeqFeature(
@@ -207,9 +212,7 @@ def _translate_cds(sequence_str: str, location: FeatureLocation | CompoundLocati
 def _build_cds_feature(cds: dict[str, Any], sequence_str: str) -> SeqFeature:
     segments = cds.get("segments", [])
     location = _cds_location(segments)
-    qualifiers = _build_qualifiers(
-        cds.get("attributes", {}), EMBL_ANNOTATIONS.get("cds_qualifiers", [])
-    )
+    qualifiers = _build_qualifiers(cds.get("attributes", {}), EMBL_ANNOTATIONS.cds_qualifiers)
     # codon_start and phase define the offset at which the first complete codon of a coding
     # feature can be found, relative to the first base of that feature.
     # Phase is 0-indexed, codon_start is 1 indexed
@@ -267,12 +270,6 @@ def create_flatfile(  # noqa: PLR0914
     molecule_type = config.molecule_type
     topology = config.topology
 
-    seqIO_moleculetype = {  # noqa: N806
-        MoleculeType.GENOMIC_DNA: "DNA",
-        MoleculeType.GENOMIC_RNA: "RNA",
-        MoleculeType.VIRAL_CRNA: "cRNA",
-    }
-
     embl_content = []
 
     for seq_name, sequence_str in unaligned_nuc_seq.items():
@@ -288,7 +285,7 @@ def create_flatfile(  # noqa: PLR0914
             annotations={
                 # Biopython's EMBL writer reads this specific key to fill in the ID line's
                 # molecule-type token - it is not an INSDC qualifier (that's "mol_type" below).
-                "molecule_type": seqIO_moleculetype.get(molecule_type, "DNA"),
+                "molecule_type": molecule_type.seq_io_value,
                 "organism": organism,
                 "topology": topology,
                 "references": [reference],  # type: ignore[dict-item]
