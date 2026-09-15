@@ -113,6 +113,32 @@ def test_minus_strand_spliced_cds_keeps_nextclades_segment_order():
     assert cds.qualifiers["translation"] == "MKAA"
 
 
+def test_cds_spanning_the_origin_of_a_circular_genome():
+    """On a circular genome a CDS can run off the end and continue at position 1.
+
+    Nextclade lists the two pieces in transcription order, so keeping that order is all
+    that is needed; the EMBL location becomes a join() of the two.
+    """
+    coding = "ATGAAAGCTGCTTAA"  # M K A A stop
+    filler = "GGGGGGGGGG"
+    sequence = coding[11:] + filler + coding[:11]
+    annotation = _annotation(
+        segments=[
+            _segment(len(sequence) - 11, len(sequence)),
+            _segment(0, 4),
+        ],
+        gene_range={"begin": 0, "end": len(sequence)},
+    )
+
+    cds = _only_cds(get_seq_features(annotation, sequence))
+
+    assert cds.qualifiers["translation"] == "MKAA"
+    assert [(int(part.start), int(part.end)) for part in cds.location.parts] == [
+        (len(sequence) - 11, len(sequence)),
+        (0, 4),
+    ]
+
+
 def test_translation_excludes_terminal_stop():
     """INSDC /translation does not include the terminal stop codon."""
     sequence = "ATG" + "GCT" + "TAA"
