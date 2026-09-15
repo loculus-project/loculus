@@ -69,7 +69,7 @@ const getDataToEditEndpoint = makeEndpoint({
     alias: 'getDataToEdit',
     parameters: [authorizationHeader],
     response: sequenceEntryToEdit,
-    errors: [notAuthorizedError],
+    errors: [{ status: 'default', schema: problemDetail }, notAuthorizedError],
 });
 
 const revokeSequencesEndpoint = makeEndpoint({
@@ -101,7 +101,12 @@ const submitReviewedSequenceEndpoint = makeEndpoint({
         },
     ],
     response: z.never(),
-    errors: [notAuthorizedError],
+    errors: [
+        { status: 'default', schema: problemDetail },
+        { status: 400, schema: problemDetail },
+        { status: 422, schema: problemDetail },
+        notAuthorizedError,
+    ],
 });
 
 const getSequencesEndpoint = makeEndpoint({
@@ -137,7 +142,7 @@ const getSequencesEndpoint = makeEndpoint({
         },
     ],
     response: getSequencesResponse,
-    errors: [notAuthorizedError, { status: 404, schema: problemDetail }],
+    errors: [{ status: 'default', schema: problemDetail }, notAuthorizedError, { status: 404, schema: problemDetail }],
 });
 
 const approveProcessedDataEndpoint = makeEndpoint({
@@ -190,7 +195,7 @@ const extractUnprocessedDataEndpoint = makeEndpoint({
         },
     ],
     response: z.union([z.string(), unprocessedData]),
-    errors: [notAuthorizedError],
+    errors: [{ status: 'default', schema: problemDetail }, notAuthorizedError],
 });
 
 const submitProcessedDataEndpoint = makeEndpoint({
