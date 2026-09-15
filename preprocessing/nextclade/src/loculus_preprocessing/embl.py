@@ -128,6 +128,9 @@ EMBL_ANNOTATIONS = EmblAnnotations(
         "pseudogene",
         "ribosomal_slippage",
         "standard_name",
+        "trans_splicing",
+        "transl_except",
+        "transl_table",
         "translation",
     ],
     gene_qualifiers=[
