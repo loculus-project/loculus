@@ -446,9 +446,11 @@ def get_output_metadata(  # noqa: C901, PLR0912
     )
 
     if not is_insdc_ingest_group:
-        e, w = _check_submitted_metadata(_get_submitted_metadata(unprocessed), config)
-        errors.extend(e)
-        warnings.extend(w)
+        new_errors, new_warnings = _check_submitted_metadata(
+            _get_submitted_metadata(unprocessed), config
+        )
+        errors.extend(new_errors)
+        warnings.extend(new_warnings)
 
     for output_field in config.processing_order:
         spec = config.processing_spec[output_field]
