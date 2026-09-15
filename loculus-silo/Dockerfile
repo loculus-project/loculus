@@ -12,7 +12,7 @@ RUN cargo install --git $REPO --rev $COMMIT
 # --- SILO binary download stage ---
 FROM curlimages/curl:8.12.1 AS silo-downloader
 
-ARG SILO_VERSION=0.11.0
+ARG SILO_VERSION=0.13.3
 ARG TARGETARCH
 
 RUN curl -sL "https://github.com/GenSpectrum/LAPIS-SILO/releases/download/v${SILO_VERSION}/silo-linux-${TARGETARCH}.tar.gz" \
