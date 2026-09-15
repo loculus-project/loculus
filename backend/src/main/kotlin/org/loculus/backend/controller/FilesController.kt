@@ -111,14 +111,14 @@ class FilesController(
     @Operation(
         summary = "Request S3 pre-signed URLs for file uploads",
         description =
-            "Requests S3 pre-signed URLs to upload files. The endpoint returns a list of file IDs and URLs. " +
-                    "The URLs should be used to upload the files via HTTP PUT, including all headers listed in the " +
-                    "`headers` field of each response entry. Afterwards, the file IDs can be attached to the metadata " +
-                    "in the `files.<fileCategory>` column, each entry should consist of a space-separated list of files " +
-                    "associated with the entry, supplied as <fileName>:<fileId>. " +
-                    "Note: the presigned URL includes an `If-None-Match: *` condition to prevent accidental " +
-                    "overwrites. If the file ID has already been uploaded to, S3 will return HTTP 412 " +
-                    "(Precondition Failed) - this means the file already exists and cannot be overwritten.",
+        "Requests S3 pre-signed URLs to upload files. The endpoint returns a list of file IDs and URLs. " +
+            "The URLs should be used to upload the files via HTTP PUT, including all headers listed in the " +
+            "`headers` field of each response entry. Afterwards, the file IDs can be attached to the metadata " +
+            "in the `files.<fileCategory>` column, each entry should consist of a space-separated list of files " +
+            "associated with the entry, supplied as <fileName>:<fileId>. " +
+            "Note: the presigned URL includes an `If-None-Match: *` condition to prevent accidental " +
+            "overwrites. If the file ID has already been uploaded to, S3 will return HTTP 412 " +
+            "(Precondition Failed) - this means the file already exists and cannot be overwritten.",
     )
     @ApiResponse(responseCode = "200", description = "Successfully generated pre-signed upload URLs")
     @ApiResponse(responseCode = "400", description = "Invalid request parameters")
@@ -131,7 +131,7 @@ class FilesController(
         authenticatedUser: AuthenticatedUser,
         @Parameter(
             description = "The Group ID of the group which will own the files. " +
-                    "The requesting user must be a member of the group.",
+                "The requesting user must be a member of the group.",
         )
         @RequestParam
         groupId: Int,
@@ -151,10 +151,10 @@ class FilesController(
 
     @Operation(
         description =
-            "Requests S3 pre-signed URLs to upload files using multipart upload. The endpoint returns a list of " +
-                    "file IDs and, for each file ID, a list of URLs. The URLs should be used to upload the parts " +
-                    "and the upload should then be completed using the /complete-multipart-upload endpoint. " +
-                    "Afterwards, the file IDs can be attached to the metadata in the `files.<fileCategory>` column.",
+        "Requests S3 pre-signed URLs to upload files using multipart upload. The endpoint returns a list of " +
+            "file IDs and, for each file ID, a list of URLs. The URLs should be used to upload the parts " +
+            "and the upload should then be completed using the /complete-multipart-upload endpoint. " +
+            "Afterwards, the file IDs can be attached to the metadata in the `files.<fileCategory>` column.",
     )
     @PostMapping("/request-multipart-upload")
     fun requestMultipartUploads(
@@ -162,7 +162,7 @@ class FilesController(
         authenticatedUser: AuthenticatedUser,
         @Parameter(
             description = "The Group ID of the group which will own the files. " +
-                    "The requesting user must be a member of the group.",
+                "The requesting user must be a member of the group.",
         )
         @RequestParam
         groupId: Int,
@@ -190,9 +190,9 @@ class FilesController(
 
     @Operation(
         description =
-            "Completes multipart uploads that have been initiated with the /request-multipart-upload endpoint. " +
-                    "If a maximum file size is configured, uploads exceeding it are aborted (never assembled into a " +
-                    "stored object) and rejected.",
+        "Completes multipart uploads that have been initiated with the /request-multipart-upload endpoint. " +
+            "If a maximum file size is configured, uploads exceeding it are aborted (never assembled into a " +
+            "stored object) and rejected.",
     )
     @PostMapping("/complete-multipart-upload")
     fun completeMultipartUploads(
@@ -224,7 +224,7 @@ class FilesController(
                     s3Service.abortMultipartUpload(fileId, uploadId)
                     log.warn {
                         "Aborted multipart upload for file $fileId: actual size $fileSize bytes exceeds the " +
-                                "maximum allowed file size of $maxFileSizeBytes bytes."
+                            "maximum allowed file size of $maxFileSizeBytes bytes."
                     }
 
                     // Best-effort cleanup: a failure here must not stop the client from
@@ -237,7 +237,7 @@ class FilesController(
 
                     throw UnprocessableEntityException(
                         "File $fileId exceeds the maximum allowed file size of $maxFileSizeBytes bytes " +
-                                "(actual size: $fileSize bytes). The upload has been aborted.",
+                            "(actual size: $fileSize bytes). The upload has been aborted.",
                     )
                 }
             }
