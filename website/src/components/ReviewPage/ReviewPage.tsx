@@ -347,7 +347,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
         <div className='flex flex-col gap-2 py-4 divide-y divide-gray-200'>
             {sequences.map((sequence) => {
                 return (
-                    <div key={sequence.accession}>
+                    <div key={sequence.accession} data-testid={`review-card-${sequence.submissionId}`}>
                         <ReviewCard
                             sequenceEntryStatus={sequence}
                             metadataDisplayNames={metadataDisplayNames}

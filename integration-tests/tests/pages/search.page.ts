@@ -245,6 +245,7 @@ export class SearchPage {
             await getFromLinkTargetAndAssertContent(
                 this.page.getByRole('link', { name: fileName }),
                 fileContent,
+                fileName,
             );
         }
     }
