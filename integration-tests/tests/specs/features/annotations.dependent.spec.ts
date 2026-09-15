@@ -37,7 +37,7 @@ test.describe('Sequence Preview Annotations', () => {
 });
 
 const EMBL_CONTENT = `
-ID   LOC_000002W; ; linear; RNA; ; UNC; 910 BP.
+ID   LOC_000002W; ; linear; genomic RNA; ; UNC; 910 BP.
 XX
 AC   LOC_000002W;
 XX
@@ -51,18 +51,18 @@ XX
 FH   Key             Location/Qualifiers
 FH
 FT   source          1..910
-FT                   /molecule_type="genomic RNA"
+FT                   /mol_type="genomic RNA"
 FT                   /organism="Sudan ebolavirus"
 FT                   /country="France"
 FT                   /collection_date="2021-05-12"
 FT   gene            1..910
 FT                   /gene="NP"
 FT                   /product="NP"
-FT   CDS             1..910
+FT   CDS             1..>910
 FT                   /gene="NP"
+FT                   /note="predominant component of nucleocapsid"
 FT                   /product="nucleoprotein"
 FT                   /protein_id="YP_138520.1"
-FT                   /note="predominant component of nucleocapsid"
 FT                   /codon_start=1
 FT                   /translation="MDKRVRGSWALGGQSEVDLDYHKILTAGLSVQQGIVRQRVIPVYV
 FT                   VSDLEGICQHIIQAFEAGVDFQDNADSFLLLLCLHHAYQGDHRLFLKSDAVQYLEGHGF
