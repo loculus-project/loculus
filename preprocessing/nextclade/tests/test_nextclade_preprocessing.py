@@ -31,7 +31,11 @@ from loculus_preprocessing.datatypes import (
     UnprocessedData,
     UnprocessedEntry,
 )
-from loculus_preprocessing.embl import create_flatfile, reformat_authors_from_loculus_to_embl_style
+from loculus_preprocessing.embl import (
+    create_flatfile,
+    get_seq_features,
+    reformat_authors_from_loculus_to_embl_style,
+)
 from loculus_preprocessing.prepro import get_nested_metadata, process_all
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
@@ -1470,6 +1474,64 @@ def test_create_flatfile():
     embl_str = create_flatfile(config, result[0])
     expected_embl = Path(SINGLE_SEGMENT_EMBL).read_text(encoding="utf-8")
     assert embl_str == expected_embl
+
+
+def nextclade_protein(aligned_translation: str, insertions: list) -> str:
+    """Nextclade's own translation of a CDS, with its alignment artefacts undone.
+
+    Gaps are deletions relative to the reference, and insertions are reported separately
+    rather than kept in the aligned peptide, positioned by the residue they follow.
+    """
+    protein = str(aligned_translation).replace("-", "")
+    for insertion in sorted(insertions, key=lambda i: -i["pos"]):
+        at = insertion["pos"] + 1
+        protein = protein[:at] + insertion["ins"] + protein[at:]
+    return protein.removesuffix("*")
+
+
+def test_embl_translations_match_nextclades_own():
+    """Cross-check the EMBL /translation against Nextclade's translation of the same CDS.
+
+    Nextclade translates each CDS before aligning the peptide, so its output is an
+    independent oracle for the strand, splicing and reading frame that embl.py derives
+    for itself from the annotation's coordinates.
+    """
+    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
+    config.processing_spec.update(get_config(EMBL_METADATA, ignore_args=True).processing_spec)
+    config.processing_order = get_processing_order(config)
+    config.create_embl_file = True
+    sequence_entry_data = UnprocessedEntry(
+        accessionVersion="LOC_01.1",
+        data=UnprocessedData(
+            submitter="test_submitter",
+            group_id=2,
+            submittedAt=ts_from_ymd(2021, 12, 15),
+            submissionId="test_submission_id",
+            metadata={
+                "sampleCollectionDate": "2024-01-01",
+                "geoLocCountry": "Netherlands",
+                "geoLocAdmin1": "North Holland",
+                "geoLocCity": "Amsterdam",
+                "authors": "Smith, Doe A;",
+            },
+            unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
+            files=None,
+        ),
+    )
+
+    submission = process_all([sequence_entry_data], EBOLA_SUDAN_DATASET, config)[0]
+    processed = submission.processed_entry.data
+    sequence_str = processed.unalignedNucleotideSequences["main"]
+    embl_translations = {
+        feature.qualifiers["gene"][0]: feature.qualifiers["translation"]
+        for feature in get_seq_features(submission.annotations["main"], sequence_str)
+        if feature.type == "CDS"
+    }
+
+    assert embl_translations
+    for gene, aligned in processed.alignedAminoAcidSequences.items():
+        expected = nextclade_protein(aligned, processed.aminoAcidInsertions.get(gene, []))
+        assert embl_translations[gene] == expected, gene
 
 
 multi_reference_cases = [
