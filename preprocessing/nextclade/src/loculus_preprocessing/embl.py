@@ -1,4 +1,5 @@
 import logging
+from dataclasses import dataclass, field
 from typing import Any
 
 from Bio.Seq import Seq
@@ -6,62 +7,11 @@ from Bio.SeqFeature import CompoundLocation, FeatureLocation, Reference, SeqFeat
 from Bio.SeqRecord import SeqRecord
 from unidecode import unidecode
 
-from loculus_preprocessing.datatypes import MoleculeType, ProcessedMetadata, SubmissionData
+from loculus_preprocessing.datatypes import ProcessedMetadata, SubmissionData
 
 from .config import Config
 
 logger = logging.getLogger(__name__)
-
-# EMBL allowed qualifiers constant
-EMBL_ANNOTATIONS: dict[str, list[str]] = {
-    "cds_qualifiers": [
-        "allele",
-        "artificial_location",
-        "circular_RNA",
-        "codon_start",
-        # "db_xref",  # protein accession of reference
-        "EC_number",
-        "exception",
-        "experiment",
-        "function",
-        "gene",
-        "gene_synonym",
-        "inference",
-        # "locus_tag",  # must be pre-registered with ENA
-        # "old_locus_tag",
-        "map",
-        "note",
-        "number",
-        "operon",
-        "product",
-        "protein_id",
-        "pseudo",
-        "pseudogene",
-        "ribosomal_slippage",
-        "standard_name",
-        "translation",
-    ],
-    "gene_qualifiers": [
-        "allele",
-        # "db_xref",
-        "experiment",
-        "function",
-        "gene",
-        "gene_synonym",
-        "inference",
-        # "locus_tag",
-        # "old_locus_tag",
-        "map",
-        "note",
-        "operon",
-        "product",
-        "pseudo",
-        "pseudogene",
-        "pseudotype",
-        "standard_name",
-        "trans_splicing",
-    ],
-}
 
 
 def get_country(metadata: ProcessedMetadata, config: Config) -> str:
@@ -145,9 +95,164 @@ def get_authors(authors: str) -> str:
         raise ValueError(msg) from err
 
 
-def get_seq_features(  # noqa: PLR0914
-    annotation_object: dict[str, Any], sequence_str: str
-) -> list[SeqFeature]:
+@dataclass(frozen=True)
+class EmblAnnotations:
+    cds_qualifiers: list[str] = field(default_factory=list)
+    gene_qualifiers: list[str] = field(default_factory=list)
+
+
+# EMBL allowed qualifiers constant
+EMBL_ANNOTATIONS = EmblAnnotations(
+    cds_qualifiers=[
+        "allele",
+        "artificial_location",
+        "circular_RNA",
+        "codon_start",
+        # "db_xref",  # protein accession of reference
+        "EC_number",
+        "exception",
+        "experiment",
+        "function",
+        "gene",
+        "gene_synonym",
+        "inference",
+        # "locus_tag",  # must be pre-registered with ENA
+        # "old_locus_tag",
+        "map",
+        "note",
+        "number",
+        "operon",
+        "product",
+        "protein_id",
+        "pseudo",
+        "pseudogene",
+        "ribosomal_slippage",
+        "standard_name",
+        "trans_splicing",
+        "transl_except",
+        "transl_table",
+        "translation",
+    ],
+    gene_qualifiers=[
+        "allele",
+        # "db_xref",
+        "experiment",
+        "function",
+        "gene",
+        "gene_synonym",
+        "inference",
+        # "locus_tag",
+        # "old_locus_tag",
+        "map",
+        "note",
+        "operon",
+        "product",
+        "pseudo",
+        "pseudogene",
+        "standard_name",
+        "trans_splicing",
+    ],
+)
+
+
+# Map from nextclade attribute names to EMBL attribute names
+NEXTCLADE_TO_EMBL_ATTRIBUTES = {
+    # "Dbxref": "db_xref", - # protein accession of reference
+    "Note": "note",
+    "phase": "codon_start",
+}
+
+
+def nextclade_names_to_embl_names(allowed_qualifiers: list[str]) -> dict[str, str]:
+    """Maps nextclade attribute names to their EMBL qualifier names, restricted to
+    `allowed_qualifiers` plus the renames in `NEXTCLADE_TO_EMBL_ATTRIBUTES`."""
+    mapped_names = {
+        name: name
+        for name in allowed_qualifiers
+        if name not in NEXTCLADE_TO_EMBL_ATTRIBUTES.values()
+    }
+    mapped_names.update(NEXTCLADE_TO_EMBL_ATTRIBUTES)
+    return mapped_names
+
+
+def _build_qualifiers(attributes: dict[str, Any], allowed_qualifiers: list[str]) -> dict[str, Any]:
+    """Filters `attributes` down to the qualifiers EMBL allows, renaming any that have a
+    different name in EMBL (e.g. nextclade's `phase` becomes EMBL's `codon_start`)."""
+    nextclade_to_embl = nextclade_names_to_embl_names(allowed_qualifiers)
+    # Iterate in deterministic order of `nextclade_to_embl`
+    return {
+        embl_name: attributes[key]
+        for key, embl_name in nextclade_to_embl.items()
+        if key in attributes
+    }
+
+
+def _build_gene_feature(gene: dict[str, Any]) -> SeqFeature:
+    gene_range = gene.get("range")
+    if not gene_range or "begin" not in gene_range or "end" not in gene_range:
+        msg = f"Gene range is missing or incomplete: {gene_range}"
+        raise ValueError(msg)
+    qualifiers = _build_qualifiers(gene.get("attributes", {}), EMBL_ANNOTATIONS.gene_qualifiers)
+    # In FeatureLocation start and end are zero based, exclusive end.
+    # thus an embl entry of 123..150 (one based counting) becomes a location of [122:150]
+    return SeqFeature(
+        FeatureLocation(start=gene_range["begin"], end=gene_range["end"]),
+        type="gene",
+        qualifiers=qualifiers,
+    )
+
+
+def _cds_location(segments: list[dict[str, Any]]) -> FeatureLocation | CompoundLocation:
+    strands = [-1 if segment.get("strand") == "-" else +1 for segment in segments]
+    locations = [
+        FeatureLocation(start=segment["range"]["begin"], end=segment["range"]["end"], strand=strand)
+        for segment, strand in zip(segments, strands, strict=False)
+    ]
+    return locations[0] if len(locations) == 1 else CompoundLocation(locations)
+
+
+def _translate_cds(
+    sequence_str: str,
+    location: FeatureLocation | CompoundLocation,
+    codon_start: int,
+    transl_table: int,
+) -> str:
+    # location.extract reverse-complements minus-strand (sub-)locations before concatenating,
+    # so this is correct for both single- and multi-segment, plus- and minus-strand CDSes.
+    extracted = location.extract(Seq(sequence_str))
+    # codon_start is the 1-indexed offset of the first complete codon, so drop the leading
+    # codon_start - 1 bases that precede it before translating.
+    extracted = extracted[codon_start - 1 :]
+    # A trailing partial codon (e.g. a CDS truncated at the sequence's 3' end) can't be
+    # translated; trim it explicitly rather than relying on Biopython's warn-and-drop default.
+    extracted = extracted[: len(extracted) - len(extracted) % 3]
+    translation = str(extracted.translate(table=transl_table))
+    # The INSDC /translation qualifier excludes the terminal stop codon.
+    return translation.removesuffix("*")
+
+
+def _build_cds_feature(cds: dict[str, Any], sequence_str: str) -> SeqFeature:
+    segments = cds.get("segments", [])
+    location = _cds_location(segments)
+    qualifiers = _build_qualifiers(cds.get("attributes", {}), EMBL_ANNOTATIONS.cds_qualifiers)
+    # codon_start (phase in nextclade) defines the offset at which the first complete codon of a
+    # coding feature can be found, relative to the first base of that feature, in nextclade this
+    # is 0-indexed, in EMBL it is 1 indexed (we mapped the phase to codon_start).
+    qualifiers["codon_start"] = qualifiers.get("codon_start", 0) + 1
+    qualifiers["translation"] = _translate_cds(
+        sequence_str,
+        location,
+        qualifiers["codon_start"],
+        qualifiers.get("transl_table", 1),
+    )
+    return SeqFeature(
+        location=location,
+        type="CDS",
+        qualifiers=qualifiers,
+    )
+
+
+def get_seq_features(annotation_object: dict[str, Any], sequence_str: str) -> list[SeqFeature]:
     """
     Takes a dictionary object with the following structure:
     {
@@ -168,66 +273,11 @@ def get_seq_features(  # noqa: PLR0914
     Converts ranges from index-0 to index-1 and makes the ranges [] have an inclusive start and
     inclusive end (the default in nextclade is exclusive end)
     """
-    # Map from nextclade attribute names to EMBL attribute names
-    attribute_map = {
-        # "Dbxref": "db_xref", - # protein accession of reference
-        "Note": "note",
-        "phase": "codon_start",
-    }
     feature_list = []
     for gene in annotation_object.get("genes", []):
-        gene_qualifiers = EMBL_ANNOTATIONS.get("gene_qualifiers", [])
-        gene_attributes_map = {qualifier: qualifier for qualifier in gene_qualifiers}
-        gene_attributes_map.update(attribute_map)
-        gene_range = gene.get("range")
-        attributes = gene.get("attributes", {})
-        qualifiers = {
-            new_key: attributes[old_key]
-            for old_key, new_key in gene_attributes_map.items()
-            if old_key in attributes
-        }
-        # In FeatureLocation start and end are zero based, exclusive end.
-        # thus an embl entry of 123..150 (one based counting) becomes a location of [122:150]
-        feature = SeqFeature(
-            FeatureLocation(start=gene_range["begin"], end=gene_range["end"]),
-            type="gene",
-            qualifiers=qualifiers,
-        )
-        feature_list.append(feature)
+        feature_list.append(_build_gene_feature(gene))
         for cds in gene.get("cdses", []):
-            cds_qualifiers = EMBL_ANNOTATIONS.get("cds_qualifiers", [])
-            cds_attributes_map = {qualifier: qualifier for qualifier in cds_qualifiers}
-            cds_attributes_map.update(attribute_map)
-            segments = cds.get("segments", [])
-            ranges = [segment.get("range") for segment in segments]
-            attributes_cds = cds.get("attributes", {})
-            strands = [-1 if segment.get("strand") == "-" else +1 for segment in segments]
-            locations = [
-                FeatureLocation(start=r["begin"], end=r["end"], strand=s)
-                for r, s in zip(ranges, strands, strict=False)
-            ]
-            compound_location = locations[0] if len(locations) == 1 else CompoundLocation(locations)
-            qualifiers = {
-                new_key: attributes_cds[old_key]
-                for old_key, new_key in cds_attributes_map.items()
-                if old_key in attributes_cds
-            }
-            # codon_start and phase define the offset at which the first complete codon of a coding
-            # feature can be found, relative to the first base of that feature.
-            # Phase is 0-indexed, codon_start is 1 indexed
-            qualifiers["codon_start"] = qualifiers.get("codon_start", 0) + 1
-            qualifiers["translation"] = "".join(
-                [
-                    str(Seq(sequence_str[(range["begin"]) : (range["end"])]).translate())
-                    for range in ranges
-                ]
-            )
-            feature = SeqFeature(
-                location=compound_location,
-                type="CDS",
-                qualifiers=qualifiers,
-            )
-            feature_list.append(feature)
+            feature_list.append(_build_cds_feature(cds, sequence_str))
     return feature_list
 
 
@@ -247,12 +297,6 @@ def create_flatfile(  # noqa: PLR0914
     molecule_type = config.molecule_type
     topology = config.topology
 
-    seqIO_moleculetype = {  # noqa: N806
-        MoleculeType.GENOMIC_DNA: "DNA",
-        MoleculeType.GENOMIC_RNA: "RNA",
-        MoleculeType.VIRAL_CRNA: "cRNA",
-    }
-
     embl_content = []
 
     for seq_name, sequence_str in unaligned_nuc_seq.items():
@@ -266,7 +310,7 @@ def create_flatfile(  # noqa: PLR0914
             Seq(sequence_str),
             id=f"{accession}_{seq_name}" if config.multi_segment else accession,
             annotations={
-                "molecule_type": seqIO_moleculetype.get(molecule_type, "DNA"),
+                "molecule_type": molecule_type.seq_io_value,
                 "organism": organism,
                 "topology": topology,
                 "references": [reference],  # type: ignore[dict-item]
