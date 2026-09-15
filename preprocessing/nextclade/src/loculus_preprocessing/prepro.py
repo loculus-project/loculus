@@ -44,6 +44,7 @@ from .datatypes import (
     ProcessedMetadataValue,
     ProcessingAnnotation,
     ProcessingAnnotationAlignment,
+    ProcessingContext,
     ProcessingResult,
     SegmentClassificationMethod,
     SegmentName,
@@ -53,13 +54,13 @@ from .datatypes import (
     UnprocessedEntry,
 )
 from .embl import create_flatfile
+from .external_services import ExternalServices
 from .nextclade import (
     assign_segment_using_header,
     download_nextclade_dataset,
     enrich_with_nextclade,
 )
 from .processing_functions import (
-    ProcessingContext,
     ProcessingFunctions,
     null_per_backend,
     process_frameshifts,
@@ -251,12 +252,13 @@ def add_input_metadata(
     return InputData(datum=unprocessed.inputMetadata[input_path])
 
 
-def _call_processing_function(
+def _call_processing_function(  # noqa: PLR0913, PLR0917
     spec: ProcessingSpec,
     output_field: str,
     input_data: InputMetadata,
     input_fields: list[str],
     context: ProcessingContext,
+    external_services: ExternalServices,
 ) -> ProcessingResult:
     args = dict(spec.args) if spec.args else {}
 
@@ -268,6 +270,7 @@ def _call_processing_function(
             output_field,
             input_fields,
             context,
+            external_services,
         )
     except Exception as e:
         msg = f"Processing for spec: {spec} with input data: {input_data} failed with {e}"
@@ -322,22 +325,6 @@ def get_sequence_length(
     return len(sequence) if sequence else 0
 
 
-def _get_group_id_and_submitted_at(
-    unprocessed: UnprocessedData | UnprocessedAfterNextclade,
-) -> tuple[int | None, str]:
-    if isinstance(unprocessed, UnprocessedAfterNextclade):
-        group_id = (
-            int(unprocessed.inputMetadata["group_id"])
-            if unprocessed.inputMetadata["group_id"]
-            else None
-        )
-        submitted_at = str(unprocessed.inputMetadata["submittedAt"])
-    else:
-        group_id = unprocessed.group_id
-        submitted_at = unprocessed.submittedAt
-    return group_id, submitted_at
-
-
 def _try_compute_length_field(
     output_field: str,
     spec: ProcessingSpec,
@@ -378,7 +365,7 @@ def _try_compute_length_field(
     return False, None
 
 
-def get_output_metadata(  # noqa: PLR0914
+def get_output_metadata(
     accession_version: AccessionVersion,
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
     config: Config,
@@ -387,13 +374,18 @@ def get_output_metadata(  # noqa: PLR0914
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
 
-    group_id, submitted_at = _get_group_id_and_submitted_at(unprocessed)
-    context = ProcessingContext(
-        accession_version=accession_version,
-        is_insdc_ingest_group=config.insdc_ingest_group_id == group_id,
-        submitted_at=submitted_at,
-        taxonomy_service=config._taxonomy_service,
-    )
+    if isinstance(unprocessed, UnprocessedAfterNextclade):
+        context = unprocessed.context
+    else:
+        context = ProcessingContext(
+            accession_version=accession_version,
+            group_id=unprocessed.group_id,
+            insdc_ingest_group_id=config.insdc_ingest_group_id,
+            submitted_at=unprocessed.submittedAt,
+            submission_id=unprocessed.submissionId,
+            submitter=unprocessed.submitter,
+        )
+    external_services = config._external_services
 
     for output_field in config.processing_order:
         spec = config.processing_spec[output_field]
@@ -441,16 +433,14 @@ def get_output_metadata(  # noqa: PLR0914
             input_data=input_data,
             input_fields=input_fields,
             context=context,
+            external_services=external_services,
         )
 
         output_metadata[output_field] = processing_result.datum
         errors.extend(processing_result.errors)
         warnings.extend(processing_result.warnings)
 
-        if (
-            not null_per_backend(processing_result.datum)
-            or group_id == config.insdc_ingest_group_id
-        ):
+        if not null_per_backend(processing_result.datum) or context.is_insdc_ingest_group:
             # skip requirement checks when the field has a value, or for INSDC ingested data.
             continue
 
@@ -656,8 +646,8 @@ def process_single(
     return SubmissionData(
         processed_entry=processed_entry,
         annotations=unpack_annotations(config, unprocessed.nextcladeMetadata),
-        group_id=int(str(unprocessed.inputMetadata["group_id"])),
-        submitter=str(unprocessed.inputMetadata["submitter"]),
+        group_id=unprocessed.context.group_id,
+        submitter=unprocessed.context.submitter,
     )
 
 
