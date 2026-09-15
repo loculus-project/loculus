@@ -1,3 +1,49 @@
+"""Render a processed sequence and its Nextclade annotation as an EMBL flatfile.
+
+What we take from Nextclade, and what we derive ourselves
+---------------------------------------------------------
+Nextclade owns *where things are on this sequence*; this module owns *what INSDC
+requires*. The annotation object is Nextclade's per-sequence `annotation` field, and the
+contract we rely on is:
+
+- **Coordinates are 0-based and half-open**, like Python slices, and BioPython's
+  `FeatureLocation` uses the same convention, so ranges pass through untouched. EMBL's
+  1-based inclusive form is produced by BioPython at format time, not here.
+- **Coordinates are in query space.** Nextclade projects the reference annotation onto
+  each submitted sequence, so `sequence_str` can be sliced with them directly; a deletion
+  in the query shifts every downstream feature.
+- **A CDS's segments are listed in transcription order (5'->3'), not genomic order.**
+  On the minus strand that runs from the highest coordinate downwards. Each segment is
+  therefore reverse-complemented on its own and the order preserved -- reverse-
+  complementing the joined sequence instead would splice the CDS back to front.
+- **All segments of one CDS share a strand**; Nextclade rejects mixed-strand CDSes.
+- **`phase` is 0-based** and accounts for 5' truncation, so the first transcribed
+  segment's phase is what INSDC's 1-based `/codon_start` is derived from. Note this is
+  Nextclade's own computed phase -- it ignores the GFF3 `phase` column.
+- **Every `attributes` value is a `list[str]`**, because GFF3 attributes are multi-valued.
+  Qualifiers stay lists (BioPython's convention); anything we do arithmetic on must not be
+  read from here, which is what `DERIVED_QUALIFIERS` enforces.
+- **`truncation`** is `"none"` or `{"fivePrime": n}` / `{"threePrime": n}` /
+  `{"both": [n, m]}`, and drives the `<`/`>` partial markers.
+- **A CDS crossing the origin of a circular genome** arrives pre-split into segments, and
+  needs no special handling beyond keeping their order.
+
+Translations are computed here rather than taken from Nextclade's `cds_translation`
+output, because that output is aligned to the reference: insertions are stripped into
+`aminoAcidInsertions`, so it describes the alignment rather than the submitted sequence.
+
+Where the contract can break
+----------------------------
+The ordering invariant is the fragile one: it is really an assumption about the dataset's
+GFF row order, which Nextclade passes through without checking. A coordinate-sorted GFF
+silently yields back-to-front segments for any minus-strand multi-segment CDS -- and that
+corrupts `alignedAminoAcidSequences` too, not just this file. Nextclade also orders the
+parts of an origin-crossing CDS by ascending coordinate regardless of strand, so
+minus-strand wraps are wrong at the source. Neither is defended against here; both are
+upstream bugs. Nothing honours a non-standard genetic code: every translation uses the
+standard table.
+"""
+
 import logging
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any
