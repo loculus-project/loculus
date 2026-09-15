@@ -165,8 +165,7 @@ def _build_qualifiers(attributes: dict[str, Any], allowed_qualifiers: list[str])
     }
     if "codon_start" in qualifiers and "phase" not in attributes:
         # A raw codon_start not derived from nextclade's phase has unknown indexing (EMBL's
-        # codon_start is 1-indexed, phase is 0-indexed) and downstream code assumes it came
-        # from phase, so it's not safe to trust - drop it rather than risk an off-by-one.
+        # codon_start is 1-indexed, phase is 0-indexed) - drop it.
         del qualifiers["codon_start"]
     return qualifiers
 
@@ -197,7 +196,9 @@ def _cds_location(segments: list[dict[str, Any]]) -> FeatureLocation | CompoundL
 def _translate_cds(sequence_str: str, location: FeatureLocation | CompoundLocation) -> str:
     # location.extract reverse-complements minus-strand (sub-)locations before concatenating,
     # so this is correct for both single- and multi-segment, plus- and minus-strand CDSes.
-    return str(location.extract(Seq(sequence_str)).translate())
+    translation = str(location.extract(Seq(sequence_str)).translate())
+    # The INSDC /translation qualifier excludes the terminal stop codon.
+    return translation.removesuffix("*")
 
 
 def _build_cds_feature(cds: dict[str, Any], sequence_str: str) -> SeqFeature:
