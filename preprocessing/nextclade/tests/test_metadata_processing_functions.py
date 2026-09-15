@@ -1085,6 +1085,7 @@ def test_processing_order() -> None:
 
 def test_required_field_message_lists_only_user_input_fields() -> None:
     config = get_config(NO_ALIGNMENT_CONFIG, ignore_args=True)
+    config.extra_input_fields.append("extra_user_input")
     config.processing_spec.update(
         {
             "user_input": ProcessingSpec(function="identity", inputs={"input": "user_input"}),
