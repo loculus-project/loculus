@@ -7,6 +7,7 @@ from typing import Literal
 
 import pytz
 
+from loculus_preprocessing.config import INJECTED_INPUT_FIELDS
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
     AnnotationSourceType,
