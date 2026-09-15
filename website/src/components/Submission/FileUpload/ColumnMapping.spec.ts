@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import { ColumnMapping } from './ColumnMapping';
-import { RawFile } from './fileProcessing';
+import { CompressedFile, RawFile } from './fileProcessing';
 
 describe('ColumnMapping', () => {
     it('should create a mapping from columns', () => {
@@ -112,5 +112,19 @@ describe('ColumnMapping', () => {
         const remappedContent = await remappedFile.text();
 
         expect(remappedContent).toBe('location\tdate\n' + '"U\nS\nA"\t2023-01-01\n' + 'Canada\t2023-01-02');
+    });
+
+    it('should return an error when metadata file can not be read', async () => {
+        const sourceColumns = ['loc'];
+        const inputFields = [{ name: 'location', displayName: 'Location' }];
+        const mapping = ColumnMapping.fromColumns(sourceColumns, inputFields).updateWith('loc', 'location');
+
+        const unreadableFile = new CompressedFile(new File(['not really xz'], 'metadata.tsv.xz'));
+
+        const result = await mapping.applyTo(unreadableFile);
+
+        expect(result._unsafeUnwrapErr().message).toBe(
+            'Could not apply the column mapping to the metadata file: xz files cannot be opened for editing.',
+        );
     });
 });

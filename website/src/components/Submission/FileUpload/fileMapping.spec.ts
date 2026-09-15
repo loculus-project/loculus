@@ -13,7 +13,7 @@ import {
     type SubmissionFile,
     type SubmissionFileMapping,
 } from './fileMapping';
-import { RawFile, type ProcessedFile } from './fileProcessing';
+import { CompressedFile, RawFile, type ProcessedFile } from './fileProcessing';
 import { FILES_HEADER_PREFIX } from '../../../settings';
 
 const RAW_READS = 'rawReads';
@@ -123,6 +123,14 @@ describe('parseSubmissionFileMapping', () => {
             ['e1', '  a.txt   b.txt  '],
         ]);
         expect((await entriesOf(text, 'e1', RAW_READS)).map((f) => f.name)).toEqual(['a.txt', 'b.txt']);
+    });
+
+    it('reports why the metadata file could not be read', async () => {
+        const unreadableFile = new CompressedFile(new File(['not really xz'], 'metadata.tsv.xz'));
+
+        const result = await parseSubmissionFileMapping(unreadableFile, FILE_CATEGORIES);
+
+        expect(errorMessageOf(result)).toBe('Could not read the metadata file: xz files cannot be opened for editing.');
     });
 
     it('rejects entries containing whitespace', async () => {
