@@ -223,9 +223,9 @@ def _build_cds_feature(cds: dict[str, Any], sequence_str: str) -> SeqFeature:
     segments = cds.get("segments", [])
     location = _cds_location(segments)
     qualifiers = _build_qualifiers(cds.get("attributes", {}), EMBL_ANNOTATIONS.cds_qualifiers)
-    # codon_start and phase define the offset at which the first complete codon of a coding
-    # feature can be found, relative to the first base of that feature.
-    # Phase is 0-indexed, codon_start is 1 indexed
+    # codon_start (phase in nextclade) defines the offset at which the first complete codon of a
+    # coding feature can be found, relative to the first base of that feature, in nextclade this
+    # is 0-indexed, in EMBL it is 1 indexed (we mapped the phase to codon_start).
     qualifiers["codon_start"] = qualifiers.get("codon_start", 0) + 1
     qualifiers["translation"] = _translate_cds(sequence_str, location)
     return SeqFeature(
