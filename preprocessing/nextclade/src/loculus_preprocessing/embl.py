@@ -266,6 +266,8 @@ def create_flatfile(  # noqa: PLR0914
             Seq(sequence_str),
             id=f"{accession}_{seq_name}" if config.multi_segment else accession,
             annotations={
+                # Biopython's EMBL writer reads this specific key to fill in the ID line's
+                # molecule-type token - it is not an INSDC qualifier (that's "mol_type" below).
                 "molecule_type": seqIO_moleculetype.get(molecule_type, "DNA"),
                 "organism": organism,
                 "topology": topology,
@@ -278,7 +280,7 @@ def create_flatfile(  # noqa: PLR0914
             FeatureLocation(start=0, end=len(sequence_str)),
             type="source",
             qualifiers={
-                "molecule_type": str(molecule_type),
+                "mol_type": str(molecule_type),
                 "organism": organism,
                 "country": country,
                 "collection_date": collection_date,
