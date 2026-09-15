@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
 import { clearTmpDir } from './tmpdir';
@@ -52,16 +52,19 @@ export async function prepareTmpDirForSingleUpload(
 
 export async function uploadFilesFromTmpDir(
     page: Page,
-    testId: string,
+    fileCategory: string,
     tmpDir: string,
     fileCount: number,
+    timeout = 30_000,
 ) {
     await page.getByRole('heading', { name: 'Extra files' }).scrollIntoViewIfNeeded();
-    // Trigger file upload (don't await) and wait for checkmarks to appear (indicates success)
-    void page.getByTestId(testId).setInputFiles(tmpDir);
-    return Promise.all(
-        Array.from({ length: fileCount }, (_, i) =>
-            page.getByText('✓').nth(i).waitFor({ state: 'visible' }),
-        ),
-    );
+    // Not awaited: playwright sometimes never returns, deflaked in #5462.
+    void page.getByTestId(fileCategory).setInputFiles(tmpDir);
+    await Promise.all([
+        expect(
+            page.getByTestId(new RegExp(`^status_${fileCategory}_`)).filter({ hasText: '✓' }),
+        ).toHaveCount(fileCount, { timeout }),
+        // Enabled only while the category is 'uploadCompleted', which is what submitting requires.
+        expect(page.getByTestId(`add_button_${fileCategory}`)).toBeEnabled({ timeout }),
+    ]);
 }
