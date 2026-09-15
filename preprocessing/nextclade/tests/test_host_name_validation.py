@@ -3,8 +3,8 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from factory_methods import UnprocessedEntryFactory
+
 from loculus_preprocessing import external_services
 from loculus_preprocessing.config import Config, get_config
 from loculus_preprocessing.datatypes import UnprocessedEntry
