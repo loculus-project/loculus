@@ -2,6 +2,7 @@ import { type FC, useState, useRef, useEffect } from 'react';
 
 import { FilesDialog } from './FilesDialog.tsx';
 import { SequencesDialog } from './SequencesDialog.tsx';
+import { routes } from '../../routes/routes.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
     type DataUseTerms,
@@ -34,6 +35,7 @@ import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 import FormkitSubmit from '~icons/formkit/submit';
 import EmptyCircle from '~icons/grommet-icons/empty-circle';
 import Files from '~icons/lucide/files';
+import GitCompare from '~icons/lucide/git-compare-arrows';
 import RiDna from '~icons/mdi/dna';
 import TickOutline from '~icons/mdi/tick-outline';
 
@@ -108,6 +110,11 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                     viewFiles={data && !notProcessed ? () => setFilesDialogOpen(true) : undefined}
                     filesEnabled={filesEnabled}
                     hasFiles={hasFiles}
+                    metadataDiffUrl={routes.revisionDiffPage(
+                        organism,
+                        sequenceEntryStatus.groupId,
+                        sequenceEntryStatus,
+                    )}
                 />
             </div>
 
@@ -149,6 +156,7 @@ type ButtonBarProps = {
     viewFiles?: () => void;
     filesEnabled: boolean;
     hasFiles: boolean;
+    metadataDiffUrl: string;
 };
 
 const ButtonBar: FC<ButtonBarProps> = ({
@@ -160,6 +168,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
     viewFiles,
     filesEnabled,
     hasFiles,
+    metadataDiffUrl,
 }) => {
     const buttonBarClass = (disabled: boolean) =>
         `${disabled ? 'text-gray-300' : 'text-gray-500 hover:text-gray-900 hover:cursor-pointer'} inline-block text-xl`;
@@ -171,6 +180,34 @@ const ButtonBar: FC<ButtonBarProps> = ({
     return (
         <div className='flex mb-auto pt-3.5 items-center'>
             <div className='flex gap-x-4'>
+                {sequenceEntryStatus.version > 1 && !sequenceEntryStatus.isRevocation && (
+                    <>
+                        {notProcessed ? (
+                            <Button
+                                disabled
+                                className={buttonBarClass(true)}
+                                aria-label={`View metadata changes for ${getAccessionVersionString(sequenceEntryStatus)}`}
+                                data-tooltip-id={`metadata-diff-tooltip-${sequenceEntryStatus.accession}`}
+                            >
+                                <GitCompare />
+                            </Button>
+                        ) : (
+                            <Button
+                                as='a'
+                                className={buttonBarClass(false)}
+                                href={metadataDiffUrl}
+                                aria-label={`View metadata changes for ${getAccessionVersionString(sequenceEntryStatus)}`}
+                                data-tooltip-id={`metadata-diff-tooltip-${sequenceEntryStatus.accession}`}
+                            >
+                                <GitCompare />
+                            </Button>
+                        )}
+                        <CustomTooltip
+                            id={`metadata-diff-tooltip-${sequenceEntryStatus.accession}`}
+                            content={notProcessed ? 'Still awaiting preprocessing' : 'View metadata changes'}
+                        />
+                    </>
+                )}
                 {filesEnabled && viewFiles && (
                     <>
                         <Button
