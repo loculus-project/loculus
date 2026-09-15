@@ -4,12 +4,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from factory_methods import UnprocessedEntryFactory
 from loculus_preprocessing import external_services
-from loculus_preprocessing.config import get_config
-from loculus_preprocessing.datatypes import (
-    UnprocessedData,
-    UnprocessedEntry,
-)
+from loculus_preprocessing.config import Config, get_config
+from loculus_preprocessing.datatypes import UnprocessedEntry
 from loculus_preprocessing.prepro import process_all
 
 HOST_PROCESSING_CONFIG = "tests/host_processing_config.yaml"
@@ -27,18 +25,15 @@ def make_response(status_code, json_data):
     return mock
 
 
-def make_entry(metadata: dict, group_id: int) -> UnprocessedEntry:
-    return UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt="2026-01-01",
-            group_id=group_id,
-            metadata=metadata,
-            unalignedNucleotideSequences={},
-            files=None,
-        ),
+def make_entry(metadata: dict, config: Config, *, insdc_ingest: bool) -> UnprocessedEntry:
+    """An entry with no sequences, submitted either by the INSDC ingest group or directly."""
+    insdc_ingest_group_id = config.insdc_ingest_group_id
+    return UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict=metadata,
+        accession_id="01",
+        sequences={},
+        group_id=insdc_ingest_group_id if insdc_ingest else insdc_ingest_group_id + 1,
+        insdc_ingest_group_id=insdc_ingest_group_id,
     )
 
 
@@ -64,7 +59,8 @@ def test_host_processing_tax_id(mock_session: MagicMock) -> None:
 
     entry = make_entry(
         metadata={"host": "7159"},
-        group_id=config.insdc_ingest_group_id + 1,
+        config=config,
+        insdc_ingest=False,
     )
 
     result = process_all([entry], "temp", config)
@@ -90,7 +86,8 @@ def test_host_processing_sci_name(mock_session: MagicMock) -> None:
 
     entry = make_entry(
         metadata={"host": "Aedes aegypti"},
-        group_id=config.insdc_ingest_group_id,
+        config=config,
+        insdc_ingest=True,
     )
 
     result = process_all([entry], "temp", config)
@@ -124,7 +121,8 @@ def test_host_processing_legacy(mock_session: MagicMock) -> None:
             "hostNameCommon": "yellow fever mosquito",
             "hostTaxonId": "7159",
         },
-        group_id=config.insdc_ingest_group_id,
+        config=config,
+        insdc_ingest=True,
     )
 
     result = process_all([entry], "temp", config)
@@ -150,7 +148,8 @@ def test_host_processing_invalid_host_insdc(mock_session: MagicMock) -> None:
 
     entry = make_entry(
         metadata={"host": "not a real species"},
-        group_id=config.insdc_ingest_group_id,
+        config=config,
+        insdc_ingest=True,
     )
 
     result = process_all([entry], "temp", config)
@@ -178,7 +177,8 @@ def test_host_processing_invalid_host_direct(mock_session: MagicMock) -> None:
 
     entry = make_entry(
         metadata={"host": "not a real species"},
-        group_id=config.insdc_ingest_group_id + 1,
+        config=config,
+        insdc_ingest=False,
     )
 
     result = process_all([entry], "temp", config)

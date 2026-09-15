@@ -14,6 +14,7 @@ from factory_methods import (
     ProcessedEntryFactory,
     ProcessingAnnotationHelper,
     ProcessingTestCase,
+    UnprocessedEntryFactory,
     build_processing_annotations,
     on_minus_strand,
     single_cds_annotation,
@@ -31,8 +32,6 @@ from loculus_preprocessing.datatypes import (
     AnnotationSourceType,
     SegmentClassificationMethod,
     SubmissionData,
-    UnprocessedData,
-    UnprocessedEntry,
 )
 from loculus_preprocessing.embl import (
     create_flatfile,
@@ -1283,35 +1282,19 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
     config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
     config.max_sequences_per_entry = 1
 
-    bad_entry = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
-            files=None,
-        ),
+    bad_entry = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={},
+        accession_id="01",
+        sequences={
+            "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+            "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+        },
     )
 
-    good_entry = UnprocessedEntry(
-        accessionVersion="LOC_02.1",
-        data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-            },
-            files=None,
-        ),
+    good_entry = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={},
+        accession_id="02",
+        sequences={"ebola-sudan": sequence_with_mutation("ebola-sudan")},
     )
 
     result = process_all([bad_entry, good_entry], MULTI_EBOLA_DATASET, config)
@@ -1332,20 +1315,13 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
 
 def test_preprocessing_without_metadata() -> None:
     config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
-    sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
-            files=None,
-        ),
+    sequence_entry_data = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={},
+        accession_id="01",
+        sequences={
+            "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+            "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+        },
     )
 
     config.processing_spec = {}
@@ -1640,23 +1616,16 @@ def test_create_flatfile():
     # need to recompute order after updating the spec
     config.processing_order = get_processing_order(config)
     config.create_embl_file = True
-    sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            submitter="test_submitter",
-            group_id=2,
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            submissionId="test_submission_id",
-            metadata={
-                "sampleCollectionDate": "2024-01-01",
-                "geoLocCountry": "Netherlands",
-                "geoLocAdmin1": "North Holland",
-                "geoLocCity": "Amsterdam",
-                "authors": "Smith, Doe A;",
-            },
-            unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
-            files=None,
-        ),
+    sequence_entry_data = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={
+            "sampleCollectionDate": "2024-01-01",
+            "geoLocCountry": "Netherlands",
+            "geoLocAdmin1": "North Holland",
+            "geoLocCity": "Amsterdam",
+            "authors": "Smith, Doe A;",
+        },
+        accession_id="01",
+        sequences={"main": sequence_with_mutation("single")},
     )
 
     result = process_all([sequence_entry_data], EBOLA_SUDAN_DATASET, config)
