@@ -1,0 +1,70 @@
+# Source: loculus/templates/docs-preview.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-docs
+spec:
+  selector:
+    app: loculus
+    component: docs
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+---
+# Source: loculus/templates/docs-preview.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-docs
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: docs
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: docs
+    spec:
+      containers:
+        - name: docs
+          image: "ghcr.io/loculus-project/docs:latest"
+          imagePullPolicy: Always
+          
+          resources:
+            limits:
+              memory: 1Gi
+            requests:
+              cpu: 1m
+              memory: 25Mi
+          ports:
+            - containerPort: 8080
+---
+# Source: loculus/templates/docs-preview.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: loculus-docs-ingress
+spec:
+  rules:
+    - host: "docs-%!s(<nil>)"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: loculus-docs
+                port:
+                  number: 80
+  tls:
+  - hosts:
+    - "docs-%!s(<nil>)"
+---
