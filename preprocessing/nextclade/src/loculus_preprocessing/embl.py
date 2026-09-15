@@ -145,9 +145,80 @@ def get_authors(authors: str) -> str:
         raise ValueError(msg) from err
 
 
-def get_seq_features(  # noqa: PLR0914
-    annotation_object: dict[str, Any], sequence_str: str
-) -> list[SeqFeature]:
+# Map from nextclade attribute names to EMBL attribute names
+NEXTCLADE_TO_EMBL_ATTRIBUTES = {
+    # "Dbxref": "db_xref", - # protein accession of reference
+    "Note": "note",
+    "phase": "codon_start",
+}
+
+
+def _build_qualifiers(attributes: dict[str, Any], allowed_qualifiers: list[str]) -> dict[str, Any]:
+    """Filters `attributes` down to the qualifiers EMBL allows, renaming any that have a
+    different name in EMBL (e.g. nextclade's `phase` becomes EMBL's `codon_start`)."""
+    attributes_map = {qualifier: qualifier for qualifier in allowed_qualifiers}
+    attributes_map.update(NEXTCLADE_TO_EMBL_ATTRIBUTES)
+    qualifiers = {
+        new_key: attributes[old_key]
+        for old_key, new_key in attributes_map.items()
+        if old_key in attributes
+    }
+    if "codon_start" in qualifiers and "phase" not in attributes:
+        # A raw codon_start not derived from nextclade's phase has unknown indexing (EMBL's
+        # codon_start is 1-indexed, phase is 0-indexed) and downstream code assumes it came
+        # from phase, so it's not safe to trust - drop it rather than risk an off-by-one.
+        del qualifiers["codon_start"]
+    return qualifiers
+
+
+def _build_gene_feature(gene: dict[str, Any]) -> SeqFeature:
+    gene_range = gene.get("range")
+    qualifiers = _build_qualifiers(
+        gene.get("attributes", {}), EMBL_ANNOTATIONS.get("gene_qualifiers", [])
+    )
+    # In FeatureLocation start and end are zero based, exclusive end.
+    # thus an embl entry of 123..150 (one based counting) becomes a location of [122:150]
+    return SeqFeature(
+        FeatureLocation(start=gene_range["begin"], end=gene_range["end"]),
+        type="gene",
+        qualifiers=qualifiers,
+    )
+
+
+def _cds_location(segments: list[dict[str, Any]]) -> FeatureLocation | CompoundLocation:
+    strands = [-1 if segment.get("strand") == "-" else +1 for segment in segments]
+    locations = [
+        FeatureLocation(start=segment["range"]["begin"], end=segment["range"]["end"], strand=strand)
+        for segment, strand in zip(segments, strands, strict=False)
+    ]
+    return locations[0] if len(locations) == 1 else CompoundLocation(locations)
+
+
+def _translate_cds(sequence_str: str, location: FeatureLocation | CompoundLocation) -> str:
+    # location.extract reverse-complements minus-strand (sub-)locations before concatenating,
+    # so this is correct for both single- and multi-segment, plus- and minus-strand CDSes.
+    return str(location.extract(Seq(sequence_str)).translate())
+
+
+def _build_cds_feature(cds: dict[str, Any], sequence_str: str) -> SeqFeature:
+    segments = cds.get("segments", [])
+    location = _cds_location(segments)
+    qualifiers = _build_qualifiers(
+        cds.get("attributes", {}), EMBL_ANNOTATIONS.get("cds_qualifiers", [])
+    )
+    # codon_start and phase define the offset at which the first complete codon of a coding
+    # feature can be found, relative to the first base of that feature.
+    # Phase is 0-indexed, codon_start is 1 indexed
+    qualifiers["codon_start"] = qualifiers.get("codon_start", 0) + 1
+    qualifiers["translation"] = _translate_cds(sequence_str, location)
+    return SeqFeature(
+        location=location,
+        type="CDS",
+        qualifiers=qualifiers,
+    )
+
+
+def get_seq_features(annotation_object: dict[str, Any], sequence_str: str) -> list[SeqFeature]:
     """
     Takes a dictionary object with the following structure:
     {
@@ -168,66 +239,11 @@ def get_seq_features(  # noqa: PLR0914
     Converts ranges from index-0 to index-1 and makes the ranges [] have an inclusive start and
     inclusive end (the default in nextclade is exclusive end)
     """
-    # Map from nextclade attribute names to EMBL attribute names
-    attribute_map = {
-        # "Dbxref": "db_xref", - # protein accession of reference
-        "Note": "note",
-        "phase": "codon_start",
-    }
     feature_list = []
     for gene in annotation_object.get("genes", []):
-        gene_qualifiers = EMBL_ANNOTATIONS.get("gene_qualifiers", [])
-        gene_attributes_map = {qualifier: qualifier for qualifier in gene_qualifiers}
-        gene_attributes_map.update(attribute_map)
-        gene_range = gene.get("range")
-        attributes = gene.get("attributes", {})
-        qualifiers = {
-            new_key: attributes[old_key]
-            for old_key, new_key in gene_attributes_map.items()
-            if old_key in attributes
-        }
-        # In FeatureLocation start and end are zero based, exclusive end.
-        # thus an embl entry of 123..150 (one based counting) becomes a location of [122:150]
-        feature = SeqFeature(
-            FeatureLocation(start=gene_range["begin"], end=gene_range["end"]),
-            type="gene",
-            qualifiers=qualifiers,
-        )
-        feature_list.append(feature)
+        feature_list.append(_build_gene_feature(gene))
         for cds in gene.get("cdses", []):
-            cds_qualifiers = EMBL_ANNOTATIONS.get("cds_qualifiers", [])
-            cds_attributes_map = {qualifier: qualifier for qualifier in cds_qualifiers}
-            cds_attributes_map.update(attribute_map)
-            segments = cds.get("segments", [])
-            ranges = [segment.get("range") for segment in segments]
-            attributes_cds = cds.get("attributes", {})
-            strands = [-1 if segment.get("strand") == "-" else +1 for segment in segments]
-            locations = [
-                FeatureLocation(start=r["begin"], end=r["end"], strand=s)
-                for r, s in zip(ranges, strands, strict=False)
-            ]
-            compound_location = locations[0] if len(locations) == 1 else CompoundLocation(locations)
-            qualifiers = {
-                new_key: attributes_cds[old_key]
-                for old_key, new_key in cds_attributes_map.items()
-                if old_key in attributes_cds
-            }
-            # codon_start and phase define the offset at which the first complete codon of a coding
-            # feature can be found, relative to the first base of that feature.
-            # Phase is 0-indexed, codon_start is 1 indexed
-            qualifiers["codon_start"] = qualifiers.get("codon_start", 0) + 1
-            qualifiers["translation"] = "".join(
-                [
-                    str(Seq(sequence_str[(range["begin"]) : (range["end"])]).translate())
-                    for range in ranges
-                ]
-            )
-            feature = SeqFeature(
-                location=compound_location,
-                type="CDS",
-                qualifiers=qualifiers,
-            )
-            feature_list.append(feature)
+            feature_list.append(_build_cds_feature(cds, sequence_str))
     return feature_list
 
 
