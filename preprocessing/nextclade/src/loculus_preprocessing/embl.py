@@ -216,8 +216,9 @@ class NextcladeTruncation(TypedDict, total=False):
     both: list[int]
 
 
-class NextcladeSegment(TypedDict, total=False):
-    range: Required[NextcladeRange]
+class NextcladeSegment(TypedDict):
+    # Nextclade always emits all four; defaulting any of them would silently mistranslate.
+    range: NextcladeRange
     strand: Literal["+", "-"]
     phase: int
     truncation: Literal["none"] | NextcladeTruncation
@@ -255,7 +256,7 @@ GFF_TO_EMBL_QUALIFIER = {"Note": "note"}
 
 def is_minus_strand(segments: Sequence[NextcladeSegment]) -> bool:
     """All segments of a CDS share a strand, so the first answers for the whole CDS."""
-    return segments[0].get("strand") == "-"
+    return segments[0]["strand"] == "-"
 
 
 def get_embl_qualifiers(attributes: GffAttributes, allowed: Iterable[str]) -> dict[str, list[str]]:
@@ -278,7 +279,7 @@ def get_codon_start(segments: Sequence[NextcladeSegment]) -> int:
 
     Segments are in transcription order, so the first listed one is the 5' end.
     """
-    return int(segments[0].get("phase", 0)) + 1
+    return segments[0]["phase"] + 1
 
 
 def get_coding_nucleotides(segments: Sequence[NextcladeSegment], sequence_str: str) -> Seq:
@@ -303,9 +304,12 @@ def get_translation(coding_nucleotides: Seq, codon_start: int) -> str:
 
 def get_gene_feature(gene: NextcladeGene) -> SeqFeature:
     gene_range = gene["range"]
-    # Nextclade reports no strand for a gene, only for a CDS's segments.
+    # The JSON annotation carries a strand only on a CDS's segments, so a gene takes the
+    # strand of its CDSes -- the same way Nextclade derives it for its own GFF and TBL output.
+    cdses = gene.get("cdses", [])
+    strand = (-1 if is_minus_strand(cdses[0]["segments"]) else 1) if cdses else None
     return SeqFeature(
-        FeatureLocation(gene_range["begin"], gene_range["end"]),
+        FeatureLocation(gene_range["begin"], gene_range["end"], strand=strand),
         type="gene",
         qualifiers=get_embl_qualifiers(
             gene.get("attributes", {}), EMBL_ANNOTATIONS["gene_qualifiers"]
@@ -315,7 +319,7 @@ def get_gene_feature(gene: NextcladeGene) -> SeqFeature:
 
 def get_truncation(segment: NextcladeSegment) -> Truncation:
     """How much of this segment the sequence does not show."""
-    truncation = segment.get("truncation")
+    truncation = segment["truncation"]
     if not isinstance(truncation, Mapping):
         return Truncation(0, 0)
     if "both" in truncation:

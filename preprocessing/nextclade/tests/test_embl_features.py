@@ -190,6 +190,19 @@ def test_only_the_outer_segments_of_a_spliced_cds_are_marked_partial():
     assert (str(second.start), str(second.end)) == ("2", ">9")
 
 
+def test_gene_takes_its_strand_from_its_cdses():
+    """Nextclade reports no strand on a gene, so an unstranded gene would read as plus."""
+    protein_coding = Seq("ATG" + "GCT" + "TAA")
+    sequence = str(protein_coding.reverse_complement())
+    annotation = _annotation([_segment(0, len(sequence), strand="-")])
+
+    features = get_seq_features(annotation, sequence)
+    gene = next(f for f in features if f.type == "gene")
+
+    assert gene.location.strand == -1
+    assert gene.location.strand == _only_cds(features).location.strand
+
+
 def test_complete_cds_has_no_partial_markers():
     sequence = "ATGGCTTAA"
     annotation = _annotation([_segment(0, len(sequence))])
