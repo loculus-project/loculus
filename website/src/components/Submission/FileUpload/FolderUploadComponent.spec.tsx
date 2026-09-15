@@ -65,6 +65,7 @@ const defaultProps = {
     clientConfig: { backendUrl: 'http://test-backend', lapisUrls: {} },
     groupId: 1,
     onError: mockOnError,
+    fileSharingConfig: { disableStrictFilenameValidation: false },
 };
 
 const previousUploadsState = (files: { fileId: string; path: string }[]): FileUploadState => ({
@@ -290,6 +291,75 @@ describe('FolderUploadComponent', () => {
             expect(mockOnError).toHaveBeenCalledWith(expect.stringContaining('File'));
             expect(mockOnError).toHaveBeenCalledWith(expect.stringContaining('may not contain whitespace'));
             expect(mockRequestMultipartUpload).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('rejects oversized files', () => {
+        it('rejects a file exceeding maxFileSizeBytes before requesting an upload', async () => {
+            render(
+                <FolderUploadComponentWithState
+                    {...defaultProps}
+                    fileSharingConfig={{ maxFileSizeBytes: 10, disableStrictFilenameValidation: false }}
+                />,
+            );
+
+            const file = new File(['x'.repeat(20)], 'reads.fastq', { type: 'text/plain' });
+            Object.defineProperty(file, 'webkitRelativePath', {
+                value: 'folder/submission1/reads.fastq',
+                writable: false,
+            });
+
+            await userEvent.upload(screen.getByTestId('extraFiles'), file);
+
+            expect(mockOnError).toHaveBeenCalledWith(expect.stringContaining('reads.fastq'));
+            expect(mockOnError).toHaveBeenCalledWith(expect.stringContaining('exceeds the maximum allowed file size'));
+            expect(mockRequestMultipartUpload).not.toHaveBeenCalled();
+        });
+
+        it('allows a file within maxFileSizeBytes', async () => {
+            mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'file-1', urls: ['http://test.com/url1'] }]));
+
+            render(
+                <FolderUploadComponentWithState
+                    {...defaultProps}
+                    fileSharingConfig={{ maxFileSizeBytes: 1000, disableStrictFilenameValidation: false }}
+                />,
+            );
+
+            const file = new File(['x'.repeat(20)], 'reads.fastq', { type: 'text/plain' });
+            Object.defineProperty(file, 'webkitRelativePath', {
+                value: 'folder/submission1/reads.fastq',
+                writable: false,
+            });
+
+            await userEvent.upload(screen.getByTestId('extraFiles'), file);
+
+            await waitFor(() => expect(mockRequestMultipartUpload).toHaveBeenCalled());
+            expect(mockOnError).not.toHaveBeenCalled();
+        });
+
+        it('rejects an oversized file added via the individual file input, leaving existing uploads untouched', async () => {
+            render(
+                <FolderUploadComponentWithState
+                    {...defaultPropsWithFiles}
+                    fileSharingConfig={{ maxFileSizeBytes: 10, disableStrictFilenameValidation: false }}
+                />,
+            );
+
+            const file = new File(['x'.repeat(20)], 'reads.fastq', { type: 'text/plain' });
+            Object.defineProperty(file, 'webkitRelativePath', { value: '', writable: false });
+
+            await userEvent.upload(screen.getByTestId('add_extraFiles'), file);
+
+            expect(mockOnError).toHaveBeenCalledWith(expect.stringContaining('reads.fastq'));
+            expect(mockOnError).toHaveBeenCalledWith(expect.stringContaining('exceeds the maximum allowed file size'));
+            expect(mockRequestMultipartUpload).not.toHaveBeenCalled();
+
+            // The rejected file must not be merged into the existing upload state.
+            expect(screen.queryByText('reads.fastq')).not.toBeInTheDocument();
+            expect(screen.getByText('file-a.txt')).toBeInTheDocument();
+            expect(screen.getByText('file-b.txt')).toBeInTheDocument();
+            expect(screen.getAllByText('(uploaded)')).toHaveLength(2);
         });
     });
 
