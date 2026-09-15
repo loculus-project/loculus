@@ -1455,6 +1455,54 @@ def test_get_seq_features_translates_minus_strand_cds_correctly():
     assert cds_features[0].qualifiers["translation"] == "MK"
 
 
+def test_get_seq_features_maps_phase_to_codon_start():
+    # nextclade's 0-indexed `phase` attribute must become EMBL's 1-indexed `codon_start`.
+    sequence_str = "ATGAAATAA"
+    annotation_object = {
+        "genes": [
+            {
+                "range": {"begin": 0, "end": 9},
+                "attributes": {},
+                "cdses": [
+                    {
+                        "segments": [{"range": {"begin": 0, "end": 9}, "strand": "+"}],
+                        "attributes": {"phase": 2},
+                    }
+                ],
+            }
+        ]
+    }
+    features = get_seq_features(annotation_object, sequence_str)
+    cds_features = [feature for feature in features if feature.type == "CDS"]
+    assert len(cds_features) == 1
+    assert cds_features[0].qualifiers["codon_start"] == 3  # noqa: PLR2004
+
+
+def test_get_seq_features_drops_raw_codon_start_not_derived_from_phase():
+    # A raw `codon_start` attribute not derived from nextclade's `phase` has unknown indexing
+    # (EMBL's codon_start is 1-indexed, phase is 0-indexed), so it must be dropped and
+    # codon_start recomputed as if phase were 0 (i.e. codon_start == 1).
+    sequence_str = "ATGAAATAA"
+    annotation_object = {
+        "genes": [
+            {
+                "range": {"begin": 0, "end": 9},
+                "attributes": {},
+                "cdses": [
+                    {
+                        "segments": [{"range": {"begin": 0, "end": 9}, "strand": "+"}],
+                        "attributes": {"codon_start": 3},
+                    }
+                ],
+            }
+        ]
+    }
+    features = get_seq_features(annotation_object, sequence_str)
+    cds_features = [feature for feature in features if feature.type == "CDS"]
+    assert len(cds_features) == 1
+    assert cds_features[0].qualifiers["codon_start"] == 1
+
+
 def test_process_clade_founder_values():
     json_string = Path(MUTATIONS_FROM_FOUNDER_CLADE).read_text(encoding="utf-8")
     assert (

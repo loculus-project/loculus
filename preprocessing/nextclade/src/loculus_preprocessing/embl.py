@@ -163,21 +163,28 @@ NEXTCLADE_TO_EMBL_ATTRIBUTES = {
 }
 
 
+def nextclade_names_to_embl_names(allowed_qualifiers: list[str]) -> dict[str, str]:
+    """Maps nextclade attribute names to their EMBL qualifier names, restricted to
+    `allowed_qualifiers` plus the renames in `NEXTCLADE_TO_EMBL_ATTRIBUTES`."""
+    mapped_names = {
+        name: name
+        for name in allowed_qualifiers
+        if name not in NEXTCLADE_TO_EMBL_ATTRIBUTES.values()
+    }
+    mapped_names.update(NEXTCLADE_TO_EMBL_ATTRIBUTES)
+    return mapped_names
+
+
 def _build_qualifiers(attributes: dict[str, Any], allowed_qualifiers: list[str]) -> dict[str, Any]:
     """Filters `attributes` down to the qualifiers EMBL allows, renaming any that have a
     different name in EMBL (e.g. nextclade's `phase` becomes EMBL's `codon_start`)."""
-    attributes_map = {qualifier: qualifier for qualifier in allowed_qualifiers}
-    attributes_map.update(NEXTCLADE_TO_EMBL_ATTRIBUTES)
-    qualifiers = {
-        new_key: attributes[old_key]
-        for old_key, new_key in attributes_map.items()
-        if old_key in attributes
+    nextclade_to_embl = nextclade_names_to_embl_names(allowed_qualifiers)
+    # Iterate in deterministic order of `nextclade_to_embl`
+    return {
+        embl_name: attributes[key]
+        for key, embl_name in nextclade_to_embl.items()
+        if key in attributes
     }
-    if "codon_start" in qualifiers and "phase" not in attributes:
-        # A raw codon_start not derived from nextclade's phase has unknown indexing (EMBL's
-        # codon_start is 1-indexed, phase is 0-indexed) - drop it.
-        del qualifiers["codon_start"]
-    return qualifiers
 
 
 def _build_gene_feature(gene: dict[str, Any]) -> SeqFeature:
