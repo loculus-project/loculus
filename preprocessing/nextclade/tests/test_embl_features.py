@@ -1,9 +1,8 @@
 # ruff: noqa: S101
 """Unit tests for translating a Nextclade annotation into EMBL features.
 
-The fixtures mirror the real shape of Nextclade's per-sequence ``annotation`` object:
-ranges are 0-based half-open and in *query* coordinates, and every GFF attribute value
-is a ``list[str]`` (GFF3 attributes are multi-valued).
+The fixtures mirror the real shape of Nextclade's per-sequence `annotation`; see the
+module docstring of `loculus_preprocessing.embl` for the contract they stand in for.
 """
 
 import warnings
@@ -14,7 +13,7 @@ from Bio.Seq import Seq
 from loculus_preprocessing.embl import get_seq_features
 
 
-def _annotation(*, cds_attributes=None, segments, gene_range=None):
+def _annotation(segments, *, cds_attributes=None, gene_range=None):
     segment_list = list(segments)
     begin = min(s["range"]["begin"] for s in segment_list)
     end = max(s["range"]["end"] for s in segment_list)
@@ -23,7 +22,7 @@ def _annotation(*, cds_attributes=None, segments, gene_range=None):
             {
                 "name": "G",
                 "range": gene_range or {"begin": begin, "end": end},
-                "attributes": {"note": ["a gene"]},
+                "attributes": {"Note": ["a gene"]},
                 "cdses": [
                     {
                         "name": "G",
@@ -50,27 +49,28 @@ def _only_cds(features):
     return cds
 
 
-def test_codon_start_from_gff_attribute_does_not_crash():
-    """RSV datasets carry an explicit ``codon_start=1`` GFF attribute.
+def test_codon_start_comes_from_phase_not_the_gff_attribute():
+    """RSV datasets carry a `codon_start` GFF attribute; ours must come from `phase`.
 
-    Nextclade surfaces it as ``["1"]``; it is already 1-based and must not be incremented.
+    The two disagree here on purpose: the attribute is already 1-based, `phase` is not.
     """
-    sequence = "ATG" + "AAA" * 5 + "TAA"
+    phase = 2
+    sequence = "GG" + "ATG" + "GCT" + "TAA"
     annotation = _annotation(
-        segments=[_segment(0, len(sequence))],
+        [_segment(0, len(sequence), phase=phase)],
         cds_attributes={"codon_start": ["1"]},
     )
 
     cds = _only_cds(get_seq_features(annotation, sequence))
 
-    assert cds.qualifiers["codon_start"] == 1
+    assert cds.qualifiers["codon_start"] == phase + 1
+    assert cds.qualifiers["translation"] == "MA"
 
 
 def test_minus_strand_cds_is_reverse_complemented():
-    """A CDS on the minus strand must be translated from the reverse complement."""
     protein_coding = Seq("ATG" + "GCT" * 4 + "TGA")
     sequence = str(protein_coding.reverse_complement())
-    annotation = _annotation(segments=[_segment(0, len(sequence), strand="-")])
+    annotation = _annotation([_segment(0, len(sequence), strand="-")])
 
     cds = _only_cds(get_seq_features(annotation, sequence))
 
@@ -79,9 +79,8 @@ def test_minus_strand_cds_is_reverse_complemented():
 
 def test_spliced_cds_translates_joined_nucleotides():
     """Segment boundaries fall mid-codon, so nucleotides are joined before translating."""
-    # "AT" + "GGCTTGA" -> ATG GCT TGA -> M A stop. Translating each segment alone gives junk.
-    sequence = "AT" + "GGCTTGA"
-    annotation = _annotation(segments=[_segment(0, 2), _segment(2, 9)])
+    sequence = "AT" + "GGCTTGA"  # ATG GCT TGA across a junction after 2 nt
+    annotation = _annotation([_segment(0, 2), _segment(2, 9)])
 
     cds = _only_cds(get_seq_features(annotation, sequence))
 
@@ -89,12 +88,7 @@ def test_spliced_cds_translates_joined_nucleotides():
 
 
 def test_minus_strand_spliced_cds_keeps_nextclades_segment_order():
-    """Nextclade lists segments in transcription order, not genomic order.
-
-    On the minus strand that runs from the highest coordinate downwards, so each segment
-    is reverse-complemented on its own and the listed order is preserved. Reverse-
-    complementing the joined sequence instead would splice the CDS back to front.
-    """
+    """Segments arrive 5'->3', which on the minus strand is descending coordinates."""
     exon_1, exon_2 = "ATGAAAG", "CTGCTTAA"  # together: M K A A stop, junction mid-codon
     spacer = "GGGGG"
     sequence = (
@@ -107,7 +101,7 @@ def test_minus_strand_spliced_cds_keeps_nextclades_segment_order():
     exon_2_begin = len(spacer)
     exon_1_begin = len(spacer) + len(exon_2) + len(spacer)
     annotation = _annotation(
-        segments=[
+        [
             _segment(exon_1_begin, exon_1_begin + len(exon_1), strand="-"),
             _segment(exon_2_begin, exon_2_begin + len(exon_2), strand="-"),
         ]
@@ -118,20 +112,13 @@ def test_minus_strand_spliced_cds_keeps_nextclades_segment_order():
     assert cds.qualifiers["translation"] == "MKAA"
 
 
-def test_cds_spanning_the_origin_of_a_circular_genome():
-    """On a circular genome a CDS can run off the end and continue at position 1.
-
-    Nextclade lists the two pieces in transcription order, so keeping that order is all
-    that is needed; the EMBL location becomes a join() of the two.
-    """
+def test_cds_spanning_the_origin_keeps_listed_segment_order():
+    """On a circular genome the listed order is not ascending coordinates, and still wins."""
     coding = "ATGAAAGCTGCTTAA"  # M K A A stop
     filler = "GGGGGGGGGG"
     sequence = coding[11:] + filler + coding[:11]
     annotation = _annotation(
-        segments=[
-            _segment(len(sequence) - 11, len(sequence)),
-            _segment(0, 4),
-        ],
+        [_segment(len(sequence) - 11, len(sequence)), _segment(0, 4)],
         gene_range={"begin": 0, "end": len(sequence)},
     )
 
@@ -147,7 +134,7 @@ def test_cds_spanning_the_origin_of_a_circular_genome():
 def test_truncated_cds_is_marked_partial():
     """INSDC marks an unknown boundary with < or >; a partial genome truncates CDSes."""
     sequence = "ATGGCTTAA"
-    annotation = _annotation(segments=[_segment(0, len(sequence), truncation={"fivePrime": 30})])
+    annotation = _annotation([_segment(0, len(sequence), truncation={"fivePrime": 30})])
 
     cds = _only_cds(get_seq_features(annotation, sequence))
 
@@ -155,14 +142,9 @@ def test_truncated_cds_is_marked_partial():
     assert str(cds.location.end) == "9"
 
 
-def test_truncation_is_marked_at_the_right_coordinate_on_the_minus_strand():
-    """The 5' end of a minus-strand feature is its upper coordinate, so it takes the >."""
+def test_three_prime_truncation_marks_the_upper_coordinate():
     sequence = "ATGGCTTAA"
-    annotation = _annotation(
-        segments=[
-            _segment(0, len(sequence), strand="-", truncation={"fivePrime": 30}),
-        ]
-    )
+    annotation = _annotation([_segment(0, len(sequence), truncation={"threePrime": 30})])
 
     cds = _only_cds(get_seq_features(annotation, sequence))
 
@@ -170,9 +152,47 @@ def test_truncation_is_marked_at_the_right_coordinate_on_the_minus_strand():
     assert str(cds.location.end) == ">9"
 
 
+def test_truncation_at_both_ends_marks_both_coordinates():
+    sequence = "ATGGCTTAA"
+    annotation = _annotation([_segment(0, len(sequence), truncation={"both": [30, 60]})])
+
+    cds = _only_cds(get_seq_features(annotation, sequence))
+
+    assert str(cds.location.start) == "<0"
+    assert str(cds.location.end) == ">9"
+
+
+def test_truncation_marks_the_upper_coordinate_on_the_minus_strand():
+    """The 5' end of a minus-strand feature is its upper coordinate, so it takes the >."""
+    sequence = "ATGGCTTAA"
+    annotation = _annotation([_segment(0, len(sequence), strand="-", truncation={"fivePrime": 30})])
+
+    cds = _only_cds(get_seq_features(annotation, sequence))
+
+    assert str(cds.location.start) == "0"
+    assert str(cds.location.end) == ">9"
+
+
+def test_only_the_outer_segments_of_a_spliced_cds_are_marked_partial():
+    """A junction between segments is a known boundary, however truncated the CDS is."""
+    sequence = "AT" + "GGCTTGA"
+    annotation = _annotation(
+        [
+            _segment(0, 2, truncation={"fivePrime": 30}),
+            _segment(2, 9, truncation={"threePrime": 30}),
+        ]
+    )
+
+    cds = _only_cds(get_seq_features(annotation, sequence))
+    first, second = cds.location.parts
+
+    assert (str(first.start), str(first.end)) == ("<0", "2")
+    assert (str(second.start), str(second.end)) == ("2", ">9")
+
+
 def test_complete_cds_has_no_partial_markers():
     sequence = "ATGGCTTAA"
-    annotation = _annotation(segments=[_segment(0, len(sequence))])
+    annotation = _annotation([_segment(0, len(sequence))])
 
     cds = _only_cds(get_seq_features(annotation, sequence))
 
@@ -183,40 +203,36 @@ def test_complete_cds_has_no_partial_markers():
 def test_translation_excludes_terminal_stop():
     """INSDC /translation does not include the terminal stop codon."""
     sequence = "ATG" + "GCT" + "TAA"
-    annotation = _annotation(segments=[_segment(0, len(sequence))])
+    annotation = _annotation([_segment(0, len(sequence))])
 
     cds = _only_cds(get_seq_features(annotation, sequence))
 
     assert cds.qualifiers["translation"] == "MA"
 
 
-def test_partial_cds_does_not_translate_a_dangling_codon():
-    """A truncated CDS is trimmed to whole codons rather than warning on a partial one."""
+def test_trailing_partial_codon_is_trimmed_rather_than_warned_about():
+    """BioPython would translate a dangling codon and warn; the trim pre-empts that."""
     sequence = "ATGGCTTA"  # 8 nt: two whole codons plus a dangling "TA"
-    annotation = _annotation(segments=[_segment(0, len(sequence))])
+    annotation = _annotation([_segment(0, len(sequence))])
 
-    cds = _only_cds(get_seq_features(annotation, sequence))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", BiopythonWarning)
+        cds = _only_cds(get_seq_features(annotation, sequence))
 
     assert cds.qualifiers["translation"] == "MA"
 
 
-def test_qualifiers_are_copied_as_lists():
-    """BioPython's qualifier convention is list-valued, and GFF attributes already are."""
+def test_qualifiers_are_copied_as_lists_and_renamed():
+    """BioPython's qualifier convention is list-valued, and GFF attributes already are.
+
+    `Note` is admitted because it maps to `note`, which is the legal EMBL name.
+    """
     sequence = "ATG" + "GCT" + "TAA"
-    annotation = _annotation(segments=[_segment(0, len(sequence))])
+    annotation = _annotation([_segment(0, len(sequence))])
 
     features = get_seq_features(annotation, sequence)
 
     gene = next(f for f in features if f.type == "gene")
     assert gene.qualifiers["note"] == ["a gene"]
+    assert "Note" not in gene.qualifiers
     assert _only_cds(features).qualifiers["gene"] == ["G"]
-
-
-def test_partial_codon_does_not_warn():
-    """The dangling-codon trim exists to keep BioPython from warning on every CDS."""
-    sequence = "ATGGCTTA"
-    annotation = _annotation(segments=[_segment(0, len(sequence))])
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", BiopythonWarning)
-        get_seq_features(annotation, sequence)
