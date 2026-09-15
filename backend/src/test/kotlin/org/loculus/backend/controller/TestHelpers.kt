@@ -20,6 +20,7 @@ import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.Status
 import org.loculus.backend.utils.DateProvider
+import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.ResultMatcher
@@ -88,6 +89,9 @@ fun awaitResponse(result: MvcResult): String {
 
     return result.response.contentAsString
 }
+
+/** Reads a streamed response's headers only after its async body finished, so no stream is left in flight. */
+fun ResultActions.awaitedResponse(): MockHttpServletResponse = andReturn().also { awaitResponse(it) }.response
 
 fun SequenceEntryStatus.assertStatusIs(status: Status): SequenceEntryStatus {
     assertThat(this.status, `is`(status))
