@@ -39,6 +39,7 @@ disableEnaSubmission: true
 disableTaxonomyService: false
 disableRawReadsProcessingService: true
 readOnlyMode: false
+backendMaxRamPercentage: 75
 website:
   websiteConfig:
     enableLoginNavigationItem: true
