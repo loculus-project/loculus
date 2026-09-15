@@ -1,0 +1,20 @@
+diff --git a/backend/Dockerfile b/backend/Dockerfile
+index 1f2f226f5..edf1a37ee 100644
+--- a/backend/Dockerfile
++++ b/backend/Dockerfile
+@@ -1,4 +1,4 @@
+-FROM eclipse-temurin:25-jre-alpine
++FROM eclipse-temurin:25-jre-alpine@sha256:28db6fdf60e38945e43d840c0333aeaec66c15943070104f7586fd3c9d1665b0
+ 
+ WORKDIR /app
+ 
+diff --git a/preprocessing/nextclade/Dockerfile b/preprocessing/nextclade/Dockerfile
+index e3629d0e9..c6dc5966c 100644
+--- a/preprocessing/nextclade/Dockerfile
++++ b/preprocessing/nextclade/Dockerfile
+@@ -1,4 +1,4 @@
+-FROM mambaorg/micromamba:2.8.1-ubuntu24.04
++FROM mambaorg/micromamba:2.8.1-ubuntu24.04@sha256:03db99fe842d9b132f7b1bbbfbabaa8e73759ec5311c420ccdb7febf6eb1eba0
+ 
+ COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yml /tmp/env.yaml
+ COPY --chown=$MAMBA_USER:$MAMBA_USER .mambarc /tmp/.mambarc
