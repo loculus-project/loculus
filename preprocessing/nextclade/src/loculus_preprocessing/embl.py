@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Iterable, Mapping, Sequence
 from typing import Any
 
 from Bio.Seq import Seq
@@ -145,90 +146,128 @@ def get_authors(authors: str) -> str:
         raise ValueError(msg) from err
 
 
-def get_seq_features(  # noqa: PLR0914
-    annotation_object: dict[str, Any], sequence_str: str
-) -> list[SeqFeature]:
+# Qualifiers this module derives from the annotation's structure rather than copying from
+# its GFF attributes. codon_start especially must never be copied: the GFF attribute is
+# already 1-based, whereas the value derived from Nextclade's 0-based `phase` is not.
+DERIVED_QUALIFIERS = frozenset({"codon_start", "translation"})
+
+# GFF attribute names that differ from the EMBL qualifier they become.
+RENAMED_ATTRIBUTES = {"Note": "note"}
+
+
+def is_minus_strand(segments: Sequence[Mapping[str, Any]]) -> bool:
+    return bool(segments) and segments[0].get("strand") == "-"
+
+
+def get_embl_qualifiers(
+    attributes: Mapping[str, list[str]], allowed: Iterable[str]
+) -> dict[str, list[str]]:
+    """Copy the GFF attributes that are legal EMBL qualifiers, renaming where they differ.
+
+    Values stay lists because that is BioPython's qualifier convention -- Nextclade
+    reports every GFF attribute as a `list[str]`, since GFF3 attributes are multi-valued.
     """
-    Takes a dictionary object with the following structure:
-    {
-        "genes": [
-            {
-            "range": {"begin": ..., "end": ...},
-            "attributes": {"gene": ..., ...},
-            "cdses": [
-                {"segments": [{"range": {"begin": 1, "end": 10}, "strand": "+", "frame": ...}],
-                "attributes": {"gene": ..., ...},
-                "gffFeatureType": ...,
-                },...]
-        },..]
+    names = {name: name for name in allowed if name not in DERIVED_QUALIFIERS}
+    names.update(RENAMED_ATTRIBUTES)
+    return {
+        embl_name: attributes[gff_name]
+        for gff_name, embl_name in names.items()
+        if gff_name in attributes
     }
-    Creates a list of gene and CDS SeqFeature using:
-    - https://www.ebi.ac.uk/ena/WebFeat/
-    - https://www.insdc.org/submitting-standards/feature-table/
-    Converts ranges from index-0 to index-1 and makes the ranges [] have an inclusive start and
-    inclusive end (the default in nextclade is exclusive end)
+
+
+def get_codon_start(segments: Sequence[Mapping[str, Any]]) -> int:
+    """EMBL /codon_start: 1-based offset of the first complete codon within the feature.
+
+    Nextclade reports `phase` (0-based) as a field on each segment. The qualifier
+    describes the joined feature, so it comes from whichever segment is transcribed
+    first -- the last one in genomic order when the CDS is on the minus strand.
     """
-    # Map from nextclade attribute names to EMBL attribute names
-    attribute_map = {
-        # "Dbxref": "db_xref", - # protein accession of reference
-        "Note": "note",
-        "phase": "codon_start",
-    }
-    feature_list = []
-    for gene in annotation_object.get("genes", []):
-        gene_qualifiers = EMBL_ANNOTATIONS.get("gene_qualifiers", [])
-        gene_attributes_map = {qualifier: qualifier for qualifier in gene_qualifiers}
-        gene_attributes_map.update(attribute_map)
-        gene_range = gene.get("range")
-        attributes = gene.get("attributes", {})
-        qualifiers = {
-            new_key: attributes[old_key]
-            for old_key, new_key in gene_attributes_map.items()
-            if old_key in attributes
-        }
-        # In FeatureLocation start and end are zero based, exclusive end.
-        # thus an embl entry of 123..150 (one based counting) becomes a location of [122:150]
-        feature = SeqFeature(
-            FeatureLocation(start=gene_range["begin"], end=gene_range["end"]),
-            type="gene",
-            qualifiers=qualifiers,
+    if not segments:
+        return 1
+    first_transcribed = segments[-1] if is_minus_strand(segments) else segments[0]
+    return int(first_transcribed.get("phase", 0)) + 1
+
+
+def get_coding_nucleotides(sequence_str: str, segments: Sequence[Mapping[str, Any]]) -> Seq:
+    """The CDS's own nucleotides, read 5' to 3'.
+
+    Segments are joined before any reverse-complementing so a spliced CDS reads across
+    its junctions, where codons straddle the boundary. Reverse-complementing the joined
+    sequence also reverses the segment order, which is what the minus strand requires.
+    """
+    joined = Seq("".join(sequence_str[s["range"]["begin"] : s["range"]["end"]] for s in segments))
+    return joined.reverse_complement() if is_minus_strand(segments) else joined
+
+
+def get_translation(coding_nucleotides: Seq, codon_start: int) -> str:
+    """EMBL /translation: whole codons from the first complete one, no terminal stop."""
+    in_frame = coding_nucleotides[codon_start - 1 :]
+    # A partial genome can end mid-codon; trimming avoids translating a dangling one.
+    whole_codons = in_frame[: len(in_frame) - len(in_frame) % 3]
+    return str(whole_codons.translate()).removesuffix("*")
+
+
+def get_gene_feature(gene: Mapping[str, Any]) -> SeqFeature:
+    """One EMBL `gene` feature.
+
+    Nextclade ranges and BioPython locations are both 0-based with an exclusive end, so
+    they pass through unchanged; BioPython converts to EMBL's 1-based inclusive form when
+    it formats the flatfile.
+    """
+    gene_range = gene["range"]
+    return SeqFeature(
+        FeatureLocation(start=gene_range["begin"], end=gene_range["end"]),
+        type="gene",
+        qualifiers=get_embl_qualifiers(
+            gene.get("attributes", {}), EMBL_ANNOTATIONS.get("gene_qualifiers", [])
+        ),
+    )
+
+
+def get_cds_feature(cds: Mapping[str, Any], sequence_str: str) -> SeqFeature:
+    """One EMBL `CDS` feature, spanning several segments when the CDS is spliced."""
+    segments = cds.get("segments", [])
+    strand = -1 if is_minus_strand(segments) else 1
+    locations = [
+        FeatureLocation(start=s["range"]["begin"], end=s["range"]["end"], strand=strand)
+        for s in segments
+    ]
+    codon_start = get_codon_start(segments)
+    return SeqFeature(
+        location=locations[0] if len(locations) == 1 else CompoundLocation(locations),
+        type="CDS",
+        qualifiers={
+            **get_embl_qualifiers(
+                cds.get("attributes", {}), EMBL_ANNOTATIONS.get("cds_qualifiers", [])
+            ),
+            "codon_start": codon_start,
+            "translation": get_translation(
+                get_coding_nucleotides(sequence_str, segments), codon_start
+            ),
+        },
+    )
+
+
+def get_seq_features(annotation_object: Mapping[str, Any], sequence_str: str) -> list[SeqFeature]:
+    """Convert one sequence's Nextclade annotation into EMBL gene and CDS features.
+
+    `annotation_object` is Nextclade's per-sequence `annotation`, shaped as
+    `{"genes": [{"range": ..., "attributes": ..., "cdses": [...]}, ...]}`. Its ranges are
+    in the coordinates of `sequence_str` itself -- Nextclade projects the reference
+    annotation onto each query -- so the sequence can be sliced with them directly.
+
+    Qualifier vocabulary: https://www.ebi.ac.uk/ena/WebFeat/ and
+    https://www.insdc.org/submitting-standards/feature-table/
+    """
+    return [
+        feature
+        for gene in annotation_object.get("genes", [])
+        for feature in (
+            get_gene_feature(gene),
+            *(get_cds_feature(cds, sequence_str) for cds in gene.get("cdses", [])),
         )
-        feature_list.append(feature)
-        for cds in gene.get("cdses", []):
-            cds_qualifiers = EMBL_ANNOTATIONS.get("cds_qualifiers", [])
-            cds_attributes_map = {qualifier: qualifier for qualifier in cds_qualifiers}
-            cds_attributes_map.update(attribute_map)
-            segments = cds.get("segments", [])
-            ranges = [segment.get("range") for segment in segments]
-            attributes_cds = cds.get("attributes", {})
-            strands = [-1 if segment.get("strand") == "-" else +1 for segment in segments]
-            locations = [
-                FeatureLocation(start=r["begin"], end=r["end"], strand=s)
-                for r, s in zip(ranges, strands, strict=False)
-            ]
-            compound_location = locations[0] if len(locations) == 1 else CompoundLocation(locations)
-            qualifiers = {
-                new_key: attributes_cds[old_key]
-                for old_key, new_key in cds_attributes_map.items()
-                if old_key in attributes_cds
-            }
-            # codon_start and phase define the offset at which the first complete codon of a coding
-            # feature can be found, relative to the first base of that feature.
-            # Phase is 0-indexed, codon_start is 1 indexed
-            qualifiers["codon_start"] = qualifiers.get("codon_start", 0) + 1
-            qualifiers["translation"] = "".join(
-                [
-                    str(Seq(sequence_str[(range["begin"]) : (range["end"])]).translate())
-                    for range in ranges
-                ]
-            )
-            feature = SeqFeature(
-                location=compound_location,
-                type="CDS",
-                qualifiers=qualifiers,
-            )
-            feature_list.append(feature)
-    return feature_list
+    ]
 
 
 def create_flatfile(  # noqa: PLR0914
