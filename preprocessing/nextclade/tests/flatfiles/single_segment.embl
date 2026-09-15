@@ -55,6 +55,26 @@ FT                   ASLKPVQDMAKTISSLNRSCAEMVAKYDLLVMTTGRATATAAATEAYWNEHGQAPPGPS
 FT                   LYEDDAIKAKLKDPNGKVPESVKQAYINLDSTSALNEENFGRPYISAKDLKEIIYDHLP
 FT                   GFGTAFHQLVQVICKIGKDNNILDIIHAEFQASLAEGDSPQCALIQITKRIPAFQDASP
 FT                   PIVHIKSRGDIPKACQKSLRPVPPSPKIDRGWVCIFQFQDGKALGLKI"
+FT   gene            5883..8241
+FT                   /gene="GP"
+FT                   /product="GP"
+FT   CDS             join(5998..6881,6883..6955)
+FT                   /exception="RNA editing"
+FT                   /gene="GP"
+FT                   /product="second secreted glycoprotein"
+FT                   /protein_id="YP_009246341.1"
+FT                   /note="second non-structural secreted glycoprotein; super
+FT                   small secreted glycoprotein; secreted in a monomeric form;
+FT                   one A residue is deleted or two additional A residues are
+FT                   inserted at the editing site during transcription of the GP
+FT                   gene"
+FT                   /codon_start=1
+FT                   /translation="MGGLSLLQLPRDKFRKSSFFVWVIILFQKAFSMPLGVVTNSTLEV
+FT                   TEIDQLVCKDHLASTDQLKSVGLNLEGSGVSTDIPSATKRWGFRSGVPPKVVSYEAGEW
+FT                   AENCYNLEIKKPDGSECLPPPPDGVRGFPRCRYVHKAQGTGPCPGDYAFHKDGAFFLYD
+FT                   RLASTVIYRGVNFAEGVIAFLILAKPKETFLQSPPIREAVNYTENTSSYYATSYLEYEI
+FT                   ENFGAQHSTTLFKIDNNTFVRLDRPHTPQFLFQLNDTIHLHQQLSNTTGRLIWTLDANI
+FT                   NADIGEWAFWENKKSLRTTTWRRAVFRSFIAQRDRRR"
 XX
 SQ   
      cggacacaca aaaagaaaga aaagtttttt atactttttg tgtgcgaata actatgagga        60
