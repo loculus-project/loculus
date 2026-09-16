@@ -87,7 +87,7 @@ The example above configures the `rawReads` file category.
 
 If a user submits these files, they will be passed along to the processing pipeline as well, and the pipeline can read them, pass them through as output files, or generate additional fields or process them in any other way.
 
-You can also set a maximum accepted file size for your loculus instance in `fileSharing.maxFileSizeBytes`.
+You can also set a maximum accepted file size for your loculus instance in `fileSharing.maxFileSizeBytes`. Files exceeding this size are rejected by the website and by the backend for multipart uploads (note for single part uploads the default maximum size limit of 5GB cannot be modified and even if a lower `maxFileSizeBytes` threshold is configured it cannot be enforced for single part uploads). If unset, the website does not enforce a limit and multi-part uploads use the configured S3 service limit."
 
 :::note
 Files are submitted by adding a `files.<category>` column to the metadata file, e.g. `files.rawReads`.
