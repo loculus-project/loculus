@@ -207,7 +207,7 @@ class Case:
         )
         expected_output = factory_custom.create_processed_entry(
             metadata_dict=self.expected_metadata,
-            accession=unprocessed_entry.accession_version.split(".")[0],
+            accession=unprocessed_entry.context.accession_version.split(".")[0],
             errors=self.expected_errors or [],
             warnings=self.expected_warnings or [],
             processed_alignment=self.expected_processed_alignment,
