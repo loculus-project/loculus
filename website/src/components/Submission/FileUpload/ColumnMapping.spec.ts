@@ -114,6 +114,18 @@ describe('ColumnMapping', () => {
         expect(remappedContent).toBe('location\tdate\n' + '"U\nS\nA"\t2023-01-01\n' + 'Canada\t2023-01-02');
     });
 
+    it('should return an error when the file is empty', async () => {
+        const sourceColumns = ['loc'];
+        const inputFields = [{ name: 'location', displayName: 'Location' }];
+        const mapping = ColumnMapping.fromColumns(sourceColumns, inputFields).updateWith('loc', 'location');
+
+        const emptyFile = new RawFile(new File([''], 'metadata.tsv'));
+
+        const result = await mapping.applyTo(emptyFile);
+
+        expect(result._unsafeUnwrapErr().message).toContain('please provide a non-empty file.');
+    });
+
     it('should return an error when metadata file can not be read', async () => {
         const sourceColumns = ['loc'];
         const inputFields = [{ name: 'location', displayName: 'Location' }];
