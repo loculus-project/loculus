@@ -119,19 +119,19 @@ describe('ColumnMapping', () => {
         const inputFields = [{ name: 'location', displayName: 'Location' }];
         const mapping = ColumnMapping.fromColumns(sourceColumns, inputFields).updateWith('loc', 'location');
 
-        const emptyFile = new RawFile(new File([''], 'metadata.tsv'));
+        const emptyFile = new RawFile(new File([''], 'file.tsv'));
 
         const result = await mapping.applyTo(emptyFile);
 
         expect(result._unsafeUnwrapErr().message).toContain('please provide a non-empty file.');
     });
 
-    it('should return an error when metadata file can not be read', async () => {
+    it('should return an error when the file cannot be read', async () => {
         const sourceColumns = ['loc'];
         const inputFields = [{ name: 'location', displayName: 'Location' }];
         const mapping = ColumnMapping.fromColumns(sourceColumns, inputFields).updateWith('loc', 'location');
 
-        const unreadableFile = new CompressedFile(new File(['not really xz'], 'metadata.tsv.xz'));
+        const unreadableFile = new CompressedFile(new File(['not really xz'], 'file.tsv.xz'));
 
         const result = await mapping.applyTo(unreadableFile);
 
