@@ -11,13 +11,15 @@ from Bio import BiopythonWarning
 from Bio.Seq import Seq
 
 from loculus_preprocessing.embl import get_seq_features
+from loculus_preprocessing.nextclade_annotation import NextcladeAnnotation
 
 
 def _annotation(segments, *, cds_attributes=None, gene_range=None):
+    """Validate the fixture the way the pipeline validates Nextclade's own JSON."""
     segment_list = list(segments)
     begin = min(s["range"]["begin"] for s in segment_list)
     end = max(s["range"]["end"] for s in segment_list)
-    return {
+    return NextcladeAnnotation.model_validate({
         "genes": [
             {
                 "name": "G",
@@ -32,7 +34,7 @@ def _annotation(segments, *, cds_attributes=None, gene_range=None):
                 ],
             }
         ]
-    }
+    })
 
 
 def _segment(begin, end, strand="+", phase=0, truncation=None):

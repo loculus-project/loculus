@@ -1,0 +1,945 @@
+{
+  "genes": [
+    {
+      "index": 0,
+      "id": "gene-PLAIN",
+      "name": "PLAIN",
+      "range": {
+        "begin": 0,
+        "end": 30
+      },
+      "cdses": [
+        {
+          "id": "cds-PLAIN",
+          "name": "PLAIN",
+          "product": "hypothetical protein",
+          "segments": [
+            {
+              "index": 0,
+              "id": "cds-PLAIN",
+              "name": "PLAIN",
+              "range": {
+                "begin": 0,
+                "end": 30
+              },
+              "rangeLocal": {
+                "begin": 0,
+                "end": 30
+              },
+              "landmark": {
+                "index": 0,
+                "id": "REF_FULL_RANGE:1..400",
+                "name": "REF_FULL_RANGE:1..400",
+                "range": {
+                  "begin": 0,
+                  "end": 400
+                },
+                "strand": "+",
+                "isCircular": true
+              },
+              "wrappingPart": "non-wrapping",
+              "strand": "+",
+              "frame": 0,
+              "phase": 0,
+              "truncation": "none",
+              "exceptions": [],
+              "attributes": {
+                "gene": [
+                  "PLAIN"
+                ],
+                "ID": [
+                  "CDS-0-PLAIN"
+                ]
+              },
+              "compatIsGene": false,
+              "color": "#4477aa",
+              "gffSeqid": "REF_FULL_RANGE",
+              "gffSource": "RefSeq",
+              "gffFeatureType": "CDS"
+            }
+          ],
+          "proteins": [],
+          "exceptions": [],
+          "attributes": {
+            "gene": [
+              "PLAIN"
+            ],
+            "product": [
+              "hypothetical protein"
+            ]
+          },
+          "compatIsGene": false,
+          "color": "#4477aa"
+        }
+      ],
+      "exceptions": [],
+      "attributes": {
+        "gene": [
+          "PLAIN"
+        ],
+        "Name": [
+          "PLAIN"
+        ]
+      },
+      "compatIsCds": false,
+      "color": "#4477aa",
+      "gffSeqid": "REF_FULL_RANGE",
+      "gffSource": "RefSeq",
+      "gffFeatureType": "gene"
+    },
+    {
+      "index": 1,
+      "id": "gene-TRUNC5",
+      "name": "TRUNC5",
+      "range": {
+        "begin": 40,
+        "end": 70
+      },
+      "cdses": [
+        {
+          "id": "cds-TRUNC5",
+          "name": "TRUNC5",
+          "product": "hypothetical protein",
+          "segments": [
+            {
+              "index": 0,
+              "id": "cds-TRUNC5",
+              "name": "TRUNC5",
+              "range": {
+                "begin": 40,
+                "end": 70
+              },
+              "rangeLocal": {
+                "begin": 0,
+                "end": 30
+              },
+              "landmark": {
+                "index": 0,
+                "id": "REF_FULL_RANGE:1..400",
+                "name": "REF_FULL_RANGE:1..400",
+                "range": {
+                  "begin": 0,
+                  "end": 400
+                },
+                "strand": "+",
+                "isCircular": true
+              },
+              "wrappingPart": "non-wrapping",
+              "strand": "+",
+              "frame": 1,
+              "phase": 1,
+              "truncation": {
+                "fivePrime": 5
+              },
+              "exceptions": [],
+              "attributes": {
+                "gene": [
+                  "TRUNC5"
+                ],
+                "ID": [
+                  "CDS-0-TRUNC5"
+                ]
+              },
+              "compatIsGene": false,
+              "color": "#4477aa",
+              "gffSeqid": "REF_FULL_RANGE",
+              "gffSource": "RefSeq",
+              "gffFeatureType": "CDS"
+            }
+          ],
+          "proteins": [],
+          "exceptions": [],
+          "attributes": {
+            "gene": [
+              "TRUNC5"
+            ],
+            "product": [
+              "hypothetical protein"
+            ]
+          },
+          "compatIsGene": false,
+          "color": "#4477aa"
+        }
+      ],
+      "exceptions": [],
+      "attributes": {
+        "gene": [
+          "TRUNC5"
+        ],
+        "Name": [
+          "TRUNC5"
+        ]
+      },
+      "compatIsCds": false,
+      "color": "#4477aa",
+      "gffSeqid": "REF_FULL_RANGE",
+      "gffSource": "RefSeq",
+      "gffFeatureType": "gene"
+    },
+    {
+      "index": 2,
+      "id": "gene-TRUNC3",
+      "name": "TRUNC3",
+      "range": {
+        "begin": 80,
+        "end": 110
+      },
+      "cdses": [
+        {
+          "id": "cds-TRUNC3",
+          "name": "TRUNC3",
+          "product": "hypothetical protein",
+          "segments": [
+            {
+              "index": 0,
+              "id": "cds-TRUNC3",
+              "name": "TRUNC3",
+              "range": {
+                "begin": 80,
+                "end": 110
+              },
+              "rangeLocal": {
+                "begin": 0,
+                "end": 30
+              },
+              "landmark": {
+                "index": 0,
+                "id": "REF_FULL_RANGE:1..400",
+                "name": "REF_FULL_RANGE:1..400",
+                "range": {
+                  "begin": 0,
+                  "end": 400
+                },
+                "strand": "+",
+                "isCircular": true
+              },
+              "wrappingPart": "non-wrapping",
+              "strand": "+",
+              "frame": 2,
+              "phase": 0,
+              "truncation": {
+                "threePrime": 8
+              },
+              "exceptions": [],
+              "attributes": {
+                "gene": [
+                  "TRUNC3"
+                ],
+                "ID": [
+                  "CDS-0-TRUNC3"
+                ]
+              },
+              "compatIsGene": false,
+              "color": "#4477aa",
+              "gffSeqid": "REF_FULL_RANGE",
+              "gffSource": "RefSeq",
+              "gffFeatureType": "CDS"
+            }
+          ],
+          "proteins": [],
+          "exceptions": [],
+          "attributes": {
+            "gene": [
+              "TRUNC3"
+            ],
+            "product": [
+              "hypothetical protein"
+            ]
+          },
+          "compatIsGene": false,
+          "color": "#4477aa"
+        }
+      ],
+      "exceptions": [],
+      "attributes": {
+        "gene": [
+          "TRUNC3"
+        ],
+        "Name": [
+          "TRUNC3"
+        ]
+      },
+      "compatIsCds": false,
+      "color": "#4477aa",
+      "gffSeqid": "REF_FULL_RANGE",
+      "gffSource": "RefSeq",
+      "gffFeatureType": "gene"
+    },
+    {
+      "index": 3,
+      "id": "gene-TRUNCBOTH",
+      "name": "TRUNCBOTH",
+      "range": {
+        "begin": 120,
+        "end": 150
+      },
+      "cdses": [
+        {
+          "id": "cds-TRUNCBOTH",
+          "name": "TRUNCBOTH",
+          "product": "hypothetical protein",
+          "segments": [
+            {
+              "index": 0,
+              "id": "cds-TRUNCBOTH",
+              "name": "TRUNCBOTH",
+              "range": {
+                "begin": 120,
+                "end": 150
+              },
+              "rangeLocal": {
+                "begin": 0,
+                "end": 30
+              },
+              "landmark": {
+                "index": 0,
+                "id": "REF_FULL_RANGE:1..400",
+                "name": "REF_FULL_RANGE:1..400",
+                "range": {
+                  "begin": 0,
+                  "end": 400
+                },
+                "strand": "+",
+                "isCircular": true
+              },
+              "wrappingPart": "non-wrapping",
+              "strand": "-",
+              "frame": 0,
+              "phase": 2,
+              "truncation": {
+                "both": [
+                  4,
+                  7
+                ]
+              },
+              "exceptions": [],
+              "attributes": {
+                "gene": [
+                  "TRUNCBOTH"
+                ],
+                "ID": [
+                  "CDS-0-TRUNCBOTH"
+                ]
+              },
+              "compatIsGene": false,
+              "color": "#4477aa",
+              "gffSeqid": "REF_FULL_RANGE",
+              "gffSource": "RefSeq",
+              "gffFeatureType": "CDS"
+            }
+          ],
+          "proteins": [],
+          "exceptions": [],
+          "attributes": {
+            "gene": [
+              "TRUNCBOTH"
+            ],
+            "product": [
+              "hypothetical protein"
+            ]
+          },
+          "compatIsGene": false,
+          "color": "#4477aa"
+        }
+      ],
+      "exceptions": [],
+      "attributes": {
+        "gene": [
+          "TRUNCBOTH"
+        ],
+        "Name": [
+          "TRUNCBOTH"
+        ]
+      },
+      "compatIsCds": false,
+      "color": "#4477aa",
+      "gffSeqid": "REF_FULL_RANGE",
+      "gffSource": "RefSeq",
+      "gffFeatureType": "gene"
+    },
+    {
+      "index": 4,
+      "id": "gene-SPLICED",
+      "name": "SPLICED",
+      "range": {
+        "begin": 160,
+        "end": 220
+      },
+      "cdses": [
+        {
+          "id": "cds-SPLICED",
+          "name": "SPLICED",
+          "product": "hypothetical protein",
+          "segments": [
+            {
+              "index": 0,
+              "id": "cds-SPLICED",
+              "name": "SPLICED",
+              "range": {
+                "begin": 160,
+                "end": 190
+              },
+              "rangeLocal": {
+                "begin": 0,
+                "end": 30
+              },
+              "landmark": {
+                "index": 0,
+                "id": "REF_FULL_RANGE:1..400",
+                "name": "REF_FULL_RANGE:1..400",
+                "range": {
+                  "begin": 0,
+                  "end": 400
+                },
+                "strand": "+",
+                "isCircular": true
+              },
+              "wrappingPart": "non-wrapping",
+              "strand": "+",
+              "frame": 1,
+              "phase": 0,
+              "truncation": "none",
+              "exceptions": [],
+              "attributes": {
+                "gene": [
+                  "SPLICED"
+                ],
+                "ID": [
+                  "CDS-0-SPLICED"
+                ]
+              },
+              "compatIsGene": false,
+              "color": "#4477aa",
+              "gffSeqid": "REF_FULL_RANGE",
+              "gffSource": "RefSeq",
+              "gffFeatureType": "CDS"
+            },
+            {
+              "index": 1,
+              "id": "cds-SPLICED",
+              "name": "SPLICED",
+              "range": {
+                "begin": 196,
+                "end": 220
+              },
+              "rangeLocal": {
+                "begin": 30,
+                "end": 54
+              },
+              "landmark": {
+                "index": 0,
+                "id": "REF_FULL_RANGE:1..400",
+                "name": "REF_FULL_RANGE:1..400",
+                "range": {
+                  "begin": 0,
+                  "end": 400
+                },
+                "strand": "+",
+                "isCircular": true
+              },
+              "wrappingPart": "non-wrapping",
+              "strand": "+",
+              "frame": 1,
+              "phase": 0,
+              "truncation": "none",
+              "exceptions": [],
+              "attributes": {
+                "gene": [
+                  "SPLICED"
+                ],
+                "ID": [
+                  "CDS-0-SPLICED"
+                ]
+              },
+              "compatIsGene": false,
+              "color": "#4477aa",
+              "gffSeqid": "REF_FULL_RANGE",
+              "gffSource": "RefSeq",
+              "gffFeatureType": "CDS"
+            }
+          ],
+          "proteins": [],
+          "exceptions": [],
+          "attributes": {
+            "gene": [
+              "SPLICED"
+            ],
+            "product": [
+              "hypothetical protein"
+            ]
+          },
+          "compatIsGene": false,
+          "color": "#4477aa"
+        }
+      ],
+      "exceptions": [],
+      "attributes": {
+        "gene": [
+          "SPLICED"
+        ],
+        "Name": [
+          "SPLICED"
+        ]
+      },
+      "compatIsCds": false,
+      "color": "#4477aa",
+      "gffSeqid": "REF_FULL_RANGE",
+      "gffSource": "RefSeq",
+      "gffFeatureType": "gene"
+    },
+    {
+      "index": 5,
+      "id": "gene-SPLICEDMINUS",
+      "name": "SPLICEDMINUS",
+      "range": {
+        "begin": 230,
+        "end": 290
+      },
+      "cdses": [
+        {
+          "id": "cds-SPLICEDMINUS",
+          "name": "SPLICEDMINUS",
+          "product": "hypothetical protein",
+          "segments": [
+            {
+              "index": 0,
+              "id": "cds-SPLICEDMINUS",
+              "name": "SPLICEDMINUS",
+              "range": {
+                "begin": 260,
+                "end": 290
+              },
+              "rangeLocal": {
+                "begin": 0,
+                "end": 30
+              },
+              "landmark": {
+                "index": 0,
+                "id": "REF_FULL_RANGE:1..400",
+                "name": "REF_FULL_RANGE:1..400",
+                "range": {
+                  "begin": 0,
+                  "end": 400
+                },
+                "strand": "+",
+                "isCircular": true
+              },
+              "wrappingPart": "non-wrapping",
+              "strand": "-",
+              "frame": 2,
+              "phase": 0,
+              "truncation": "none",
+              "exceptions": [],
+              "attributes": {
+                "gene": [
+                  "SPLICEDMINUS"
+                ],
+                "ID": [
+                  "CDS-0-SPLICEDMINUS"
+                ]
+              },
+              "compatIsGene": false,
+              "color": "#4477aa",
+              "gffSeqid": "REF_FULL_RANGE",
+              "gffSource": "RefSeq",
+              "gffFeatureType": "CDS"
+            },
+            {
+              "index": 1,
+              "id": "cds-SPLICEDMINUS",
+              "name": "SPLICEDMINUS",
+              "range": {
+                "begin": 230,
+                "end": 254
+              },
+              "rangeLocal": {
+                "begin": 30,
+                "end": 54
+              },
+              "landmark": {
+                "index": 0,
+                "id": "REF_FULL_RANGE:1..400",
+                "name": "REF_FULL_RANGE:1..400",
+                "range": {
+                  "begin": 0,
+                  "end": 400
+                },
+                "strand": "+",
+                "isCircular": true
+              },
+              "wrappingPart": "non-wrapping",
+              "strand": "-",
+              "frame": 2,
+              "phase": 0,
+              "truncation": "none",
+              "exceptions": [],
+              "attributes": {
+                "gene": [
+                  "SPLICEDMINUS"
+                ],
+                "ID": [
+                  "CDS-0-SPLICEDMINUS"
+                ]
+              },
+              "compatIsGene": false,
+              "color": "#4477aa",
+              "gffSeqid": "REF_FULL_RANGE",
+              "gffSource": "RefSeq",
+              "gffFeatureType": "CDS"
+            }
+          ],
+          "proteins": [],
+          "exceptions": [],
+          "attributes": {
+            "gene": [
+              "SPLICEDMINUS"
+            ],
+            "product": [
+              "hypothetical protein"
+            ]
+          },
+          "compatIsGene": false,
+          "color": "#4477aa"
+        }
+      ],
+      "exceptions": [],
+      "attributes": {
+        "gene": [
+          "SPLICEDMINUS"
+        ],
+        "Name": [
+          "SPLICEDMINUS"
+        ]
+      },
+      "compatIsCds": false,
+      "color": "#4477aa",
+      "gffSeqid": "REF_FULL_RANGE",
+      "gffSource": "RefSeq",
+      "gffFeatureType": "gene"
+    },
+    {
+      "index": 6,
+      "id": "gene-TWOCDS",
+      "name": "TWOCDS",
+      "range": {
+        "begin": 300,
+        "end": 340
+      },
+      "cdses": [
+        {
+          "id": "cds-TWOCDSA",
+          "name": "TWOCDSA",
+          "product": "hypothetical protein",
+          "segments": [
+            {
+              "index": 0,
+              "id": "cds-TWOCDSA",
+              "name": "TWOCDSA",
+              "range": {
+                "begin": 300,
+                "end": 318
+              },
+              "rangeLocal": {
+                "begin": 0,
+                "end": 18
+              },
+              "landmark": {
+                "index": 0,
+                "id": "REF_FULL_RANGE:1..400",
+                "name": "REF_FULL_RANGE:1..400",
+                "range": {
+                  "begin": 0,
+                  "end": 400
+                },
+                "strand": "+",
+                "isCircular": true
+              },
+              "wrappingPart": "non-wrapping",
+              "strand": "+",
+              "frame": 0,
+              "phase": 0,
+              "truncation": "none",
+              "exceptions": [],
+              "attributes": {
+                "gene": [
+                  "TWOCDSA"
+                ],
+                "ID": [
+                  "CDS-0-TWOCDSA"
+                ]
+              },
+              "compatIsGene": false,
+              "color": "#4477aa",
+              "gffSeqid": "REF_FULL_RANGE",
+              "gffSource": "RefSeq",
+              "gffFeatureType": "CDS"
+            }
+          ],
+          "proteins": [],
+          "exceptions": [],
+          "attributes": {
+            "gene": [
+              "TWOCDSA"
+            ],
+            "Note": [
+              "first note",
+              "second note"
+            ],
+            "codon_start": [
+              "1"
+            ],
+            "Dbxref": [
+              "GenBank:YP_000001.1",
+              "GeneID:1"
+            ],
+            "gbkey": [
+              "CDS"
+            ]
+          },
+          "compatIsGene": false,
+          "color": "#4477aa"
+        },
+        {
+          "id": "cds-TWOCDSB",
+          "name": "TWOCDSB",
+          "product": "hypothetical protein",
+          "segments": [
+            {
+              "index": 0,
+              "id": "cds-TWOCDSB",
+              "name": "TWOCDSB",
+              "range": {
+                "begin": 322,
+                "end": 340
+              },
+              "rangeLocal": {
+                "begin": 0,
+                "end": 18
+              },
+              "landmark": {
+                "index": 0,
+                "id": "REF_FULL_RANGE:1..400",
+                "name": "REF_FULL_RANGE:1..400",
+                "range": {
+                  "begin": 0,
+                  "end": 400
+                },
+                "strand": "+",
+                "isCircular": true
+              },
+              "wrappingPart": "non-wrapping",
+              "strand": "+",
+              "frame": 1,
+              "phase": 0,
+              "truncation": "none",
+              "exceptions": [],
+              "attributes": {
+                "gene": [
+                  "TWOCDSB"
+                ],
+                "ID": [
+                  "CDS-0-TWOCDSB"
+                ]
+              },
+              "compatIsGene": false,
+              "color": "#4477aa",
+              "gffSeqid": "REF_FULL_RANGE",
+              "gffSource": "RefSeq",
+              "gffFeatureType": "CDS"
+            }
+          ],
+          "proteins": [],
+          "exceptions": [],
+          "attributes": {
+            "gene": [
+              "TWOCDSB"
+            ],
+            "product": [
+              "hypothetical protein"
+            ]
+          },
+          "compatIsGene": false,
+          "color": "#4477aa"
+        }
+      ],
+      "exceptions": [],
+      "attributes": {
+        "gene": [
+          "TWOCDS"
+        ],
+        "Name": [
+          "TWOCDS"
+        ]
+      },
+      "compatIsCds": false,
+      "color": "#4477aa",
+      "gffSeqid": "REF_FULL_RANGE",
+      "gffSource": "RefSeq",
+      "gffFeatureType": "gene"
+    },
+    {
+      "index": 7,
+      "id": "gene-NOCDS",
+      "name": "NOCDS",
+      "range": {
+        "begin": 350,
+        "end": 370
+      },
+      "cdses": [],
+      "exceptions": [],
+      "attributes": {},
+      "compatIsCds": false,
+      "color": "#4477aa",
+      "gffSeqid": "REF_FULL_RANGE",
+      "gffSource": "RefSeq",
+      "gffFeatureType": "gene"
+    },
+    {
+      "index": 8,
+      "id": "gene-WRAP",
+      "name": "WRAP",
+      "range": {
+        "begin": 0,
+        "end": 400
+      },
+      "cdses": [
+        {
+          "id": "cds-WRAP",
+          "name": "WRAP",
+          "product": "hypothetical protein",
+          "segments": [
+            {
+              "index": 0,
+              "id": "cds-WRAP",
+              "name": "WRAP",
+              "range": {
+                "begin": 395,
+                "end": 400
+              },
+              "rangeLocal": {
+                "begin": 0,
+                "end": 5
+              },
+              "landmark": null,
+              "wrappingPart": "wrapping-start",
+              "strand": "+",
+              "frame": 2,
+              "phase": 0,
+              "truncation": "none",
+              "exceptions": [],
+              "attributes": {
+                "gene": [
+                  "WRAP"
+                ],
+                "ID": [
+                  "CDS-0-WRAP"
+                ]
+              },
+              "compatIsGene": false,
+              "color": "#4477aa",
+              "gffSeqid": "REF_FULL_RANGE",
+              "gffSource": "RefSeq",
+              "gffFeatureType": "CDS"
+            },
+            {
+              "index": 1,
+              "id": "cds-WRAP",
+              "name": "WRAP",
+              "range": {
+                "begin": 0,
+                "end": 400
+              },
+              "rangeLocal": {
+                "begin": 5,
+                "end": 405
+              },
+              "landmark": null,
+              "wrappingPart": {
+                "wrapping-central": 1
+              },
+              "strand": "+",
+              "frame": 0,
+              "phase": 0,
+              "truncation": "none",
+              "exceptions": [],
+              "attributes": {
+                "gene": [
+                  "WRAP"
+                ],
+                "ID": [
+                  "CDS-0-WRAP"
+                ]
+              },
+              "compatIsGene": false,
+              "color": "#4477aa",
+              "gffSeqid": "REF_FULL_RANGE",
+              "gffSource": "RefSeq",
+              "gffFeatureType": "CDS"
+            },
+            {
+              "index": 2,
+              "id": "cds-WRAP",
+              "name": "WRAP",
+              "range": {
+                "begin": 0,
+                "end": 10
+              },
+              "rangeLocal": {
+                "begin": 405,
+                "end": 415
+              },
+              "landmark": null,
+              "wrappingPart": {
+                "wrapping-end": 2
+              },
+              "strand": "+",
+              "frame": 0,
+              "phase": 0,
+              "truncation": "none",
+              "exceptions": [],
+              "attributes": {
+                "gene": [
+                  "WRAP"
+                ],
+                "ID": [
+                  "CDS-0-WRAP"
+                ]
+              },
+              "compatIsGene": false,
+              "color": "#4477aa",
+              "gffSeqid": "REF_FULL_RANGE",
+              "gffSource": "RefSeq",
+              "gffFeatureType": "CDS"
+            }
+          ],
+          "proteins": [],
+          "exceptions": [],
+          "attributes": {
+            "gene": [
+              "WRAP"
+            ],
+            "product": [
+              "hypothetical protein"
+            ]
+          },
+          "compatIsGene": false,
+          "color": "#4477aa"
+        }
+      ],
+      "exceptions": [],
+      "attributes": {
+        "gene": [
+          "WRAP"
+        ],
+        "Name": [
+          "WRAP"
+        ]
+      },
+      "compatIsCds": false,
+      "color": "#4477aa",
+      "gffSeqid": "REF_FULL_RANGE",
+      "gffSource": "RefSeq",
+      "gffFeatureType": "gene"
+    }
+  ]
+}

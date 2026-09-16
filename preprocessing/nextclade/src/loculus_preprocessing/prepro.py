@@ -5,6 +5,8 @@ from collections.abc import Sequence
 from tempfile import TemporaryDirectory
 from typing import Any
 
+from pydantic import ValidationError
+
 from .backend import (
     download_diamond_db,
     download_minimizer,
@@ -51,6 +53,7 @@ from .datatypes import (
     UnprocessedAfterNextclade,
     UnprocessedData,
     UnprocessedEntry,
+    _internal_error_message,
 )
 from .embl import create_flatfile
 from .nextclade import (
@@ -58,6 +61,7 @@ from .nextclade import (
     download_nextclade_dataset,
     enrich_with_nextclade,
 )
+from .nextclade_annotation import NextcladeAnnotation
 from .processing_functions import (
     ProcessingContext,
     ProcessingFunctions,
@@ -585,17 +589,50 @@ def alignment_errors_warnings(
     return (errors, warnings)
 
 
-def unpack_annotations(config, nextclade_metadata: dict[str, Any] | None) -> dict[str, Any] | None:
+def unpack_annotations(
+    config: Config,
+    accession_version: AccessionVersion,
+    nextclade_metadata: dict[str, Any] | None,
+) -> tuple[dict[SequenceName, NextcladeAnnotation | None] | None, list[ProcessingAnnotation]]:
+    """Lift the annotation the EMBL renderer needs out of Nextclade's raw result.
+
+    This is the only place the raw JSON becomes a typed object, so it is also where the
+    shape is checked. An annotation that does not match is reported against the sequence
+    it came from and dropped: the entry keeps its processed metadata and gains an error,
+    rather than losing a flatfile without saying so.
+    """
     if not config.create_embl_file or not nextclade_metadata:
-        return None
-    annotations: dict[SequenceName, Any] = {}
+        return None, []
+    annotations: dict[SequenceName, NextcladeAnnotation | None] = {}
+    errors: list[ProcessingAnnotation] = []
     for sequence_and_dataset in config.nextclade_sequence_and_datasets:
         name = sequence_and_dataset.name
-        if name in nextclade_metadata:
-            annotations[name] = None
-            if nextclade_metadata[name]:
-                annotations[name] = nextclade_metadata[name].get("annotation", None)
-    return annotations
+        if name not in nextclade_metadata:
+            continue
+        annotations[name] = None
+        raw = (nextclade_metadata[name] or {}).get("annotation")
+        if raw is None:
+            continue
+        try:
+            annotations[name] = NextcladeAnnotation.model_validate(raw)
+        except ValidationError as error:
+            logger.error(
+                "Nextclade annotation for %s sequence %s does not match the expected shape: %s",
+                accession_version,
+                name,
+                error,
+            )
+            errors.append(
+                ProcessingAnnotation.from_single(
+                    name,
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    _internal_error_message(
+                        f"Nextclade's annotation of sequence {name} could not be read, "
+                        "so no annotated flatfile was produced."
+                    ),
+                )
+            )
+    return annotations, errors
 
 
 def process_single(
@@ -627,6 +664,10 @@ def process_single(
         accession_version, unprocessed, config
     )
 
+    annotations, annotation_errors = unpack_annotations(
+        config, accession_version, unprocessed.nextcladeMetadata
+    )
+
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
         version=version_from_str(accession_version),
@@ -648,6 +689,7 @@ def process_single(
                 + alignment_errors
                 + metadata_errors
                 + file_errors
+                + annotation_errors
             )
         ),
         warnings=list(set(unprocessed.warnings + alignment_warnings + metadata_warnings)),
@@ -655,7 +697,7 @@ def process_single(
 
     return SubmissionData(
         processed_entry=processed_entry,
-        annotations=unpack_annotations(config, unprocessed.nextcladeMetadata),
+        annotations=annotations,
         group_id=int(str(unprocessed.inputMetadata["group_id"])),
         submitter=str(unprocessed.inputMetadata["submitter"]),
     )
@@ -775,7 +817,9 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             )
             submission_data.processed_entry.data.files = processed_files
         except Exception as e:
-            logger.error("Error creating or uploading EMBL file: %s", e)
+            logger.error(
+                "Error creating or uploading EMBL file for %s.%s: %s", accession, version, e
+            )
             submission_data.processed_entry.errors.append(
                 ProcessingAnnotation(
                     unprocessedFields=[

@@ -23,8 +23,9 @@ contract we rely on is:
 - **Every `attributes` value is a `list[str]`**, because GFF3 attributes are multi-valued.
   Qualifiers stay lists (BioPython's convention); `DERIVED_QUALIFIERS` names the two we
   compute instead of copying.
-- **`truncation`** is `"none"` or `{"fivePrime": n}` / `{"threePrime": n}` /
-  `{"both": [n, m]}`, and drives the `<`/`>` partial markers.
+- **`truncation`** says how far the feature runs past what the sequence shows, and drives
+  the `<`/`>` partial markers. Nextclade's tagged form is flattened into a pair of counts
+  by `nextclade_annotation.py`, which is also where the shape is validated.
 - **A CDS crossing the origin of a circular genome** arrives pre-split into segments; on
   the plus strand, keeping their order is all that is needed (but see below).
 
@@ -45,8 +46,7 @@ table.
 """
 
 import logging
-from collections.abc import Iterable, Mapping, Sequence
-from typing import Literal, NamedTuple, Required, TypedDict
+from collections.abc import Iterable, Sequence
 
 from Bio.Seq import Seq
 from Bio.SeqFeature import (
@@ -63,11 +63,15 @@ from unidecode import unidecode
 from loculus_preprocessing.datatypes import ProcessedMetadata, SubmissionData
 
 from .config import Config
+from .nextclade_annotation import (
+    GffAttributes,
+    NextcladeAnnotation,
+    NextcladeCds,
+    NextcladeGene,
+    NextcladeSegment,
+)
 
 logger = logging.getLogger(__name__)
-
-# GFF3 attributes are multi-valued, so Nextclade reports every value as a list.
-GffAttributes = Mapping[str, list[str]]
 
 # EMBL allowed qualifiers constant
 EMBL_ANNOTATIONS: dict[str, list[str]] = {
@@ -202,50 +206,6 @@ def get_authors(authors: str) -> str:
         raise ValueError(msg) from err
 
 
-# Qualifiers this module derives from the annotation's structure rather than copying from
-# its GFF attributes. codon_start especially must never be copied: the GFF attribute is
-# already 1-based, whereas the value derived from Nextclade's 0-based `phase` is not.
-class NextcladeRange(TypedDict):
-    begin: int
-    end: int
-
-
-class NextcladeTruncation(TypedDict, total=False):
-    fivePrime: int
-    threePrime: int
-    both: list[int]
-
-
-class NextcladeSegment(TypedDict):
-    # Nextclade always emits all four; defaulting any of them would silently mistranslate.
-    range: NextcladeRange
-    strand: Literal["+", "-"]
-    phase: int
-    truncation: Literal["none"] | NextcladeTruncation
-
-
-class NextcladeCds(TypedDict, total=False):
-    segments: Required[list[NextcladeSegment]]
-    attributes: GffAttributes
-
-
-class NextcladeGene(TypedDict, total=False):
-    range: Required[NextcladeRange]
-    cdses: list[NextcladeCds]
-    attributes: GffAttributes
-
-
-class NextcladeAnnotation(TypedDict, total=False):
-    genes: list[NextcladeGene]
-
-
-class Truncation(NamedTuple):
-    """Nucleotides missing from a segment at each end."""
-
-    five_prime: int
-    three_prime: int
-
-
 # Qualifiers derived from the annotation's structure, never copied from its GFF attributes:
 # the GFF's own codon_start is already 1-based, while ours comes from a 0-based phase.
 DERIVED_QUALIFIERS = frozenset({"codon_start", "translation"})
@@ -256,7 +216,7 @@ GFF_TO_EMBL_QUALIFIER = {"Note": "note"}
 
 def is_minus_strand(segments: Sequence[NextcladeSegment]) -> bool:
     """All segments of a CDS share a strand, so the first answers for the whole CDS."""
-    return segments[0]["strand"] == "-"
+    return segments[0].strand == "-"
 
 
 def get_embl_qualifiers(attributes: GffAttributes, allowed: Iterable[str]) -> dict[str, list[str]]:
@@ -279,7 +239,7 @@ def get_codon_start(segments: Sequence[NextcladeSegment]) -> int:
 
     Segments are in transcription order, so the first listed one is the 5' end.
     """
-    return segments[0]["phase"] + 1
+    return segments[0].phase + 1
 
 
 def get_coding_nucleotides(segments: Sequence[NextcladeSegment], sequence_str: str) -> Seq:
@@ -288,7 +248,7 @@ def get_coding_nucleotides(segments: Sequence[NextcladeSegment], sequence_str: s
     Segments arrive in transcription order, so each is reverse-complemented on its own and
     the order kept; reverse-complementing the joined sequence would splice it back to front.
     """
-    parts = [Seq(sequence_str[s["range"]["begin"] : s["range"]["end"]]) for s in segments]
+    parts = [Seq(sequence_str[s.range.begin : s.range.end]) for s in segments]
     if is_minus_strand(segments):
         parts = [part.reverse_complement() for part in parts]
     return Seq("").join(parts)
@@ -303,29 +263,15 @@ def get_translation(coding_nucleotides: Seq, codon_start: int) -> str:
 
 
 def get_gene_feature(gene: NextcladeGene) -> SeqFeature:
-    gene_range = gene["range"]
+    gene_range = gene.range
     # The JSON annotation carries a strand only on a CDS's segments, so a gene takes the
     # strand of its CDSes -- the same way Nextclade derives it for its own GFF and TBL output.
-    cdses = gene.get("cdses", [])
-    strand = (-1 if is_minus_strand(cdses[0]["segments"]) else 1) if cdses else None
+    strand = (-1 if is_minus_strand(gene.cdses[0].segments) else 1) if gene.cdses else None
     return SeqFeature(
-        FeatureLocation(gene_range["begin"], gene_range["end"], strand=strand),
+        FeatureLocation(gene_range.begin, gene_range.end, strand=strand),
         type="gene",
-        qualifiers=get_embl_qualifiers(
-            gene.get("attributes", {}), EMBL_ANNOTATIONS["gene_qualifiers"]
-        ),
+        qualifiers=get_embl_qualifiers(gene.attributes, EMBL_ANNOTATIONS["gene_qualifiers"]),
     )
-
-
-def get_truncation(segment: NextcladeSegment) -> Truncation:
-    """How much of this segment the sequence does not show."""
-    truncation = segment["truncation"]
-    if not isinstance(truncation, Mapping):
-        return Truncation(0, 0)
-    if "both" in truncation:
-        five_prime, three_prime = truncation["both"]
-        return Truncation(int(five_prime), int(three_prime))
-    return Truncation(int(truncation.get("fivePrime", 0)), int(truncation.get("threePrime", 0)))
 
 
 def with_partial_boundaries(
@@ -350,15 +296,15 @@ def with_partial_boundaries(
 
 def get_cds_feature(cds: NextcladeCds, sequence_str: str) -> SeqFeature:
     """One EMBL `CDS` feature, spanning several segments when the CDS is spliced."""
-    segments = cds["segments"]
+    segments = cds.segments
     strand = -1 if is_minus_strand(segments) else 1
     # First segment in transcription order carries any 5' truncation, the last any 3'.
-    five_prime_truncated = get_truncation(segments[0]).five_prime > 0
-    three_prime_truncated = get_truncation(segments[-1]).three_prime > 0
+    five_prime_truncated = segments[0].truncation.five_prime > 0
+    three_prime_truncated = segments[-1].truncation.three_prime > 0
     last = len(segments) - 1
     locations = [
         with_partial_boundaries(
-            FeatureLocation(segment["range"]["begin"], segment["range"]["end"], strand=strand),
+            FeatureLocation(segment.range.begin, segment.range.end, strand=strand),
             five_prime_truncated=five_prime_truncated and index == 0,
             three_prime_truncated=three_prime_truncated and index == last,
         )
@@ -371,7 +317,7 @@ def get_cds_feature(cds: NextcladeCds, sequence_str: str) -> SeqFeature:
         location=locations[0] if len(locations) == 1 else CompoundLocation(locations),
         type="CDS",
         qualifiers={
-            **get_embl_qualifiers(cds.get("attributes", {}), EMBL_ANNOTATIONS["cds_qualifiers"]),
+            **get_embl_qualifiers(cds.attributes, EMBL_ANNOTATIONS["cds_qualifiers"]),
             "codon_start": codon_start,
             "translation": get_translation(coding_nucleotides, codon_start),
         },
@@ -381,9 +327,9 @@ def get_cds_feature(cds: NextcladeCds, sequence_str: str) -> SeqFeature:
 def get_seq_features(annotation: NextcladeAnnotation, sequence_str: str) -> list[SeqFeature]:
     """Convert one sequence's Nextclade annotation into EMBL gene and CDS features."""
     features: list[SeqFeature] = []
-    for gene in annotation.get("genes", []):
+    for gene in annotation.genes:
         features.append(get_gene_feature(gene))
-        features.extend(get_cds_feature(cds, sequence_str) for cds in gene.get("cdses", []))
+        features.extend(get_cds_feature(cds, sequence_str) for cds in gene.cdses)
     return features
 
 
@@ -435,10 +381,9 @@ def create_flatfile(  # noqa: PLR0914
             },
         )
         sequence.features.append(source_feature)
-        if annotation_object and annotation_object.get(seq_name, None):
-            seq_feature_list = get_seq_features(annotation_object[seq_name], sequence_str)
-            for feature in seq_feature_list:
-                sequence.features.append(feature)
+        annotation = annotation_object.get(seq_name) if annotation_object else None
+        if annotation:
+            sequence.features.extend(get_seq_features(annotation, sequence_str))
 
         embl_content.append(sequence.format("embl"))
 
