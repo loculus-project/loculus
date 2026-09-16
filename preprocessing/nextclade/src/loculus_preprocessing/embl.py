@@ -107,7 +107,6 @@ EMBL_ANNOTATIONS = EmblAnnotations(
         "allele",
         "artificial_location",
         "circular_RNA",
-        "codon_start",
         # "db_xref",  # protein accession of reference
         "EC_number",
         "exception",
@@ -130,7 +129,7 @@ EMBL_ANNOTATIONS = EmblAnnotations(
         "standard_name",
         "trans_splicing",
         "transl_except",
-        "transl_table",
+        # "transl_table",  # nextclade uses the standard transl_table 1
         "translation",
     ],
     gene_qualifiers=[
@@ -155,36 +154,25 @@ EMBL_ANNOTATIONS = EmblAnnotations(
 )
 
 
-# Map from nextclade attribute names to EMBL attribute names
-NEXTCLADE_TO_EMBL_ATTRIBUTES = {
-    # "Dbxref": "db_xref", - # protein accession of reference
-    "Note": "note",
-    "phase": "codon_start",
+EMBL_TO_NEXTCLADE_ATTRIBUTES = {
+    "note": "Note",
 }
 
 
-def nextclade_names_to_embl_names(allowed_qualifiers: list[str]) -> dict[str, str]:
-    """Maps nextclade attribute names to their EMBL qualifier names, restricted to
-    `allowed_qualifiers` plus the renames in `NEXTCLADE_TO_EMBL_ATTRIBUTES`."""
-    mapped_names = {
-        name: name
-        for name in allowed_qualifiers
-        if name not in NEXTCLADE_TO_EMBL_ATTRIBUTES.values()
-    }
-    mapped_names.update(NEXTCLADE_TO_EMBL_ATTRIBUTES)
-    return mapped_names
+def _build_qualifiers(
+    attributes: dict[str, Any],
+    allowed_qualifiers: list[str],
+) -> dict[str, Any]:
+    """Return allowed EMBL qualifiers in deterministic order."""
+    qualifiers = {}
 
+    for qualifier in allowed_qualifiers:
+        if qualifier in attributes:
+            qualifiers[qualifier] = attributes[qualifier]
+        elif (source := EMBL_TO_NEXTCLADE_ATTRIBUTES.get(qualifier)) and source in attributes:
+            qualifiers[qualifier] = attributes[source]
 
-def _build_qualifiers(attributes: dict[str, Any], allowed_qualifiers: list[str]) -> dict[str, Any]:
-    """Filters `attributes` down to the qualifiers EMBL allows, renaming any that have a
-    different name in EMBL (e.g. nextclade's `phase` becomes EMBL's `codon_start`)."""
-    nextclade_to_embl = nextclade_names_to_embl_names(allowed_qualifiers)
-    # Iterate in deterministic order of `nextclade_to_embl`
-    return {
-        embl_name: attributes[key]
-        for key, embl_name in nextclade_to_embl.items()
-        if key in attributes
-    }
+    return qualifiers
 
 
 def _build_gene_feature(gene: dict[str, Any]) -> SeqFeature:
@@ -215,7 +203,6 @@ def _translate_cds(
     sequence_str: str,
     location: FeatureLocation | CompoundLocation,
     codon_start: int,
-    transl_table: int,
 ) -> str:
     # location.extract reverse-complements minus-strand (sub-)locations before concatenating,
     # so this is correct for both single- and multi-segment, plus- and minus-strand CDSes.
@@ -226,7 +213,7 @@ def _translate_cds(
     # A trailing partial codon (e.g. a CDS truncated at the sequence's 3' end) can't be
     # translated; trim it explicitly rather than relying on Biopython's warn-and-drop default.
     extracted = extracted[: len(extracted) - len(extracted) % 3]
-    translation = str(extracted.translate(table=transl_table))
+    translation = str(extracted.translate())
     # The INSDC /translation qualifier excludes the terminal stop codon.
     return translation.removesuffix("*")
 
@@ -237,14 +224,9 @@ def _build_cds_feature(cds: dict[str, Any], sequence_str: str) -> SeqFeature:
     qualifiers = _build_qualifiers(cds.get("attributes", {}), EMBL_ANNOTATIONS.cds_qualifiers)
     # codon_start (phase in nextclade) defines the offset at which the first complete codon of a
     # coding feature can be found, relative to the first base of that feature, in nextclade this
-    # is 0-indexed, in EMBL it is 1 indexed (we mapped the phase to codon_start).
-    qualifiers["codon_start"] = qualifiers.get("codon_start", 0) + 1
-    qualifiers["translation"] = _translate_cds(
-        sequence_str,
-        location,
-        qualifiers["codon_start"],
-        qualifiers.get("transl_table", 1),
-    )
+    # is 0-indexed, in EMBL it is 1 indexed.
+    qualifiers["codon_start"] = cds.get("phase", 0) + 1
+    qualifiers["translation"] = _translate_cds(sequence_str, location, qualifiers["codon_start"])
     return SeqFeature(
         location=location,
         type="CDS",
