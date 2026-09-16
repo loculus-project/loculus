@@ -8,7 +8,7 @@ from typing import Any, Final
 
 logger = logging.getLogger(__name__)
 
-AccessionVersion = str
+AccessionVersion = str  # {accession}.{version}
 GeneName = str
 SegmentName = str
 SequenceName = str
@@ -22,7 +22,7 @@ ArgName = str  # Name of argument present in processing_functions
 ArgValue = (
     list[str] | str | bool | int | float | None
 )  # Value of an argument passed to processing_functions
-InputField = str  # Name of field in input data, either inputMetadata or NextcladeMetadata
+InputField = str  # Name of field in input data, either submitted metadata or NextcladeMetadata
 ProcessedMetadataValue = str | int | float | bool | None
 ProcessedMetadata = dict[str, ProcessedMetadataValue]
 InputMetadataValue = str | None
@@ -93,27 +93,6 @@ class FileIdAndNameAndReadUrl:
     url: str | None = None
 
 
-@dataclass
-class UnprocessedData:
-    submitter: str
-    group_id: int
-    submittedAt: str  # timestamp  # noqa: N815
-    submissionId: str  # noqa: N815
-    metadata: InputMetadata
-    unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
-    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
-
-
-@dataclass
-class UnprocessedEntry:
-    accessionVersion: AccessionVersion  # {accession}.{version}  # noqa: N815
-    data: UnprocessedData
-
-
-FunctionInputs = dict[ArgName, InputField]
-FunctionArgs = dict[ArgName, ArgValue]
-
-
 @dataclass(frozen=True)
 class ProcessingContext:
     """Runtime context that is the same for every processing function call for a given
@@ -134,8 +113,20 @@ class ProcessingContext:
 
 
 @dataclass
+class UnprocessedEntry:
+    context: ProcessingContext
+    metadata: InputMetadata
+    unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
+    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
+
+
+FunctionInputs = dict[ArgName, InputField]
+FunctionArgs = dict[ArgName, ArgValue]
+
+
+@dataclass
 class UnprocessedAfterNextclade:
-    inputMetadata: InputMetadata  # noqa: N815
+    metadata: InputMetadata
     context: ProcessingContext
     files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
     # Derived metadata produced by Nextclade
@@ -192,8 +183,8 @@ class SubmissionData:
     but the annotations need to be uploaded separately."""
 
     processed_entry: ProcessedEntry
-    submitter: str | None
-    group_id: int | None = None
+    submitter: str
+    group_id: int
     annotations: dict[str, Any] | None = None
 
 

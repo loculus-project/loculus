@@ -50,7 +50,6 @@ from .datatypes import (
     SegmentName,
     SubmissionData,
     UnprocessedAfterNextclade,
-    UnprocessedData,
     UnprocessedEntry,
 )
 from .embl import create_flatfile
@@ -247,9 +246,9 @@ def add_input_metadata(
     if input_path.startswith(NEXTCLADE_PREFIX):
         nextclade_path = input_path[len(NEXTCLADE_PREFIX) :]
         return add_nextclade_metadata(spec, unprocessed, nextclade_path, config=config)
-    if input_path not in unprocessed.inputMetadata:
+    if input_path not in unprocessed.metadata:
         return InputData(datum=None)
-    return InputData(datum=unprocessed.inputMetadata[input_path])
+    return InputData(datum=unprocessed.metadata[input_path])
 
 
 def _call_processing_function(  # noqa: PLR0913, PLR0917
@@ -279,9 +278,8 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     return processing_result
 
 
-def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
-    accession_version: AccessionVersion,
-    unprocessed: UnprocessedData,
+def processed_entry_no_alignment(
+    unprocessed: UnprocessedEntry,
     output_metadata: ProcessedMetadata,
     errors: list[ProcessingAnnotation],
     warnings: list[ProcessingAnnotation],
@@ -293,6 +291,8 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
     aligned_aminoacid_sequences: dict[GeneName, AminoAcidSequence | None] = {}
     nucleotide_insertions: dict[SequenceName, list[NucleotideInsertion]] = {}
     amino_acid_insertions: dict[GeneName, list[AminoAcidInsertion]] = {}
+
+    accession_version = unprocessed.context.accession_version
 
     return SubmissionData(
         processed_entry=ProcessedEntry(
@@ -311,7 +311,8 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
             errors=errors,
             warnings=warnings,
         ),
-        submitter=unprocessed.submitter,
+        group_id=unprocessed.context.group_id,
+        submitter=unprocessed.context.submitter,
     )
 
 
@@ -328,7 +329,7 @@ def get_sequence_length(
 def _try_compute_length_field(
     output_field: str,
     spec: ProcessingSpec,
-    unprocessed: UnprocessedData | UnprocessedAfterNextclade,
+    unprocessed: UnprocessedEntry | UnprocessedAfterNextclade,
     config: Config,
 ) -> tuple[bool, int | None]:
     """Compute the output_metadata value for a `length` or `length_<segment>` field.
@@ -366,26 +367,15 @@ def _try_compute_length_field(
 
 
 def get_output_metadata(
-    accession_version: AccessionVersion,
-    unprocessed: UnprocessedData | UnprocessedAfterNextclade,
+    unprocessed: UnprocessedEntry | UnprocessedAfterNextclade,
     config: Config,
 ) -> tuple[ProcessedMetadata, list[ProcessingAnnotation], list[ProcessingAnnotation]]:
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
 
-    if isinstance(unprocessed, UnprocessedAfterNextclade):
-        context = unprocessed.context
-    else:
-        context = ProcessingContext(
-            accession_version=accession_version,
-            group_id=unprocessed.group_id,
-            insdc_ingest_group_id=config.insdc_ingest_group_id,
-            submitted_at=unprocessed.submittedAt,
-            submission_id=unprocessed.submissionId,
-            submitter=unprocessed.submitter,
-        )
     external_services = config._external_services
+    context = unprocessed.context
 
     for output_field in config.processing_order:
         spec = config.processing_spec[output_field]
@@ -400,32 +390,20 @@ def get_output_metadata(
             continue
 
         for arg_name, input_path in spec.inputs.items():
-            get_from_processed = False
-            if input_path.startswith(PROCESSED_PREFIX):
-                resolved_path = input_path.removeprefix(PROCESSED_PREFIX)
-                get_from_processed = True
-            else:
-                resolved_path = input_path
+            get_from_processed = input_path.startswith(PROCESSED_PREFIX)
+            resolved_path = input_path.removeprefix(PROCESSED_PREFIX)
 
-            if isinstance(unprocessed, UnprocessedAfterNextclade):
-                if get_from_processed:
-                    input_data[arg_name] = output_metadata.get(resolved_path)  # type: ignore
-                else:
-                    input_metadata = add_input_metadata(
-                        spec, unprocessed, resolved_path, config=config
-                    )
-                    input_data[arg_name] = input_metadata.datum
-                    errors.extend(input_metadata.errors)
-                    warnings.extend(input_metadata.warnings)
-
-                input_fields.append(resolved_path)
+            if get_from_processed:
+                input_data[arg_name] = output_metadata.get(resolved_path)  # type: ignore
+            elif isinstance(unprocessed, UnprocessedAfterNextclade):
+                input_metadata = add_input_metadata(spec, unprocessed, resolved_path, config=config)
+                input_data[arg_name] = input_metadata.datum
+                errors.extend(input_metadata.errors)
+                warnings.extend(input_metadata.warnings)
             else:
-                input_data[arg_name] = (  # type: ignore
-                    output_metadata.get(resolved_path)  # type: ignore
-                    if get_from_processed
-                    else unprocessed.metadata.get(resolved_path)
-                )
-                input_fields.append(resolved_path)
+                input_data[arg_name] = unprocessed.metadata.get(resolved_path)
+
+            input_fields.append(resolved_path)
 
         processing_result = _call_processing_function(
             spec=spec,
@@ -468,7 +446,7 @@ def get_output_metadata(
             for msg in requirement_errors
         )
 
-    logger.debug(f"Processed {accession_version}: {output_metadata}")
+    logger.debug(f"Processed {context.accession_version}: {output_metadata}")
     return output_metadata, errors, warnings
 
 
@@ -486,14 +464,9 @@ def build_missing_required_msg(output_field: str, input_fields: list[str], confi
 def check_required_when_condition(
     condition: str,
     output_field: str,
-    unprocessed: UnprocessedData | UnprocessedAfterNextclade,
+    unprocessed: UnprocessedEntry | UnprocessedAfterNextclade,
     output_metadata: ProcessedMetadata,
 ) -> str | None:
-    input_metadata = (
-        unprocessed.inputMetadata
-        if isinstance(unprocessed, UnprocessedAfterNextclade)
-        else unprocessed.metadata
-    )
     error_message = None
     if condition.startswith(FILES_PREFIX):
         file_category = FileCategory(condition.removeprefix(FILES_PREFIX))
@@ -508,7 +481,7 @@ def check_required_when_condition(
             error_message = (
                 f"Metadata field `{output_field}` is required when `{field_name}` exists."
             )
-    elif not null_per_backend(input_metadata.get(condition)):
+    elif not null_per_backend(unprocessed.metadata.get(condition)):
         error_message = (
             f"Metadata field `{output_field}` is required when `{condition}` is provided."
         )
@@ -589,11 +562,12 @@ def unpack_annotations(config, nextclade_metadata: dict[str, Any] | None) -> dic
 
 
 def process_single(
-    accession_version: AccessionVersion,
     unprocessed: UnprocessedAfterNextclade,
     config: Config,
 ) -> SubmissionData:
     """Process a single sequence per config"""
+    accession_version = unprocessed.context.accession_version
+
     # process files first as S3 read URLs have a limited lifetime
     file_errors = []
     if unprocessed.files and any(unprocessed.files.values()):
@@ -613,9 +587,7 @@ def process_single(
         config,
     )
 
-    output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
-        accession_version, unprocessed, config
-    )
+    output_metadata, metadata_errors, metadata_warnings = get_output_metadata(unprocessed, config)
 
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
@@ -652,8 +624,7 @@ def process_single(
 
 
 def process_single_unaligned(
-    accession_version: AccessionVersion,
-    unprocessed: UnprocessedData,
+    unprocessed: UnprocessedEntry,
     config: Config,
 ) -> SubmissionData:
     """Process a single sequence per config"""
@@ -661,7 +632,7 @@ def process_single_unaligned(
     file_errors = []
     if unprocessed.files and any(unprocessed.files.values()):
         file_errors = config._file_processing_service.process_files(
-            unprocessed.files, accession_version=accession_version
+            unprocessed.files, accession_version=unprocessed.context.accession_version
         )
 
     segment_assignment = assign_segment_using_header(
@@ -671,12 +642,9 @@ def process_single_unaligned(
     unprocessed.unalignedNucleotideSequences = segment_assignment.unalignedNucleotideSequences
     iupac_errors = errors_if_non_iupac(unprocessed.unalignedNucleotideSequences)
 
-    output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
-        accession_version, unprocessed, config
-    )
+    output_metadata, metadata_errors, metadata_warnings = get_output_metadata(unprocessed, config)
 
     return processed_entry_no_alignment(
-        accession_version=accession_version,
         unprocessed=unprocessed,
         output_metadata=output_metadata,
         errors=list(
@@ -687,11 +655,12 @@ def process_single_unaligned(
     )
 
 
-def processed_entry_with_errors(id) -> SubmissionData:
+def processed_entry_with_errors(context: ProcessingContext) -> SubmissionData:
+    accession_version = context.accession_version
     return SubmissionData(
         processed_entry=ProcessedEntry(
-            accession=accession_from_str(id),
-            version=version_from_str(id),
+            accession=accession_from_str(accession_version),
+            version=version_from_str(accession_version),
             data=ProcessedData(
                 metadata=dict[str, ProcessedMetadataValue](),
                 files=None,
@@ -707,14 +676,16 @@ def processed_entry_with_errors(id) -> SubmissionData:
                     "unknown",
                     AnnotationSourceType.METADATA,
                     message=(
-                        f"Failed to process submission with id: {id} - please review your "
-                        "submission or reach out to an administrator if this error persists."
+                        f"Failed to process submission with id: {accession_version} - please "
+                        "review your submission or reach out to an administrator if "
+                        "this error persists."
                     ),
                 ),
             ],
             warnings=[],
         ),
-        submitter=None,
+        group_id=context.group_id,
+        submitter=context.submitter,
     )
 
 
@@ -725,22 +696,24 @@ def process_all(
     logger.debug(f"Processing {len(unprocessed)} unprocessed sequences")
     if config.alignment_requirement != AlignmentRequirement.NONE:
         nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
-        for id, result in nextclade_results.items():
+        for result in nextclade_results.values():
             try:
-                processed_single = process_single(id, result, config)
+                processed_single = process_single(result, config)
             except Exception as e:
-                logger.error(f"Processing failed for {id} with error: {e}")
-                processed_single = processed_entry_with_errors(id)
+                logger.error(
+                    f"Processing failed for {result.context.accession_version} with error: {e}"
+                )
+                processed_single = processed_entry_with_errors(result.context)
             processed_results.append(processed_single)
     else:
         for entry in unprocessed:
             try:
-                processed_single = process_single_unaligned(
-                    entry.accessionVersion, entry.data, config
-                )
+                processed_single = process_single_unaligned(entry, config)
             except Exception as e:
-                logger.error(f"Processing failed for {entry.accessionVersion} with error: {e}")
-                processed_single = processed_entry_with_errors(entry.accessionVersion)
+                logger.error(
+                    f"Processing failed for {entry.context.accession_version} with error: {e}"
+                )
+                processed_single = processed_entry_with_errors(entry.context)
             processed_results.append(processed_single)
 
     return processed_results
@@ -751,10 +724,9 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
         accession = submission_data.processed_entry.accession
         version = submission_data.processed_entry.version
         try:
-            if submission_data.group_id is None:
-                msg = "Group ID is required for EMBL file upload"
-                raise ValueError(msg)
             file_content = create_flatfile(config, submission_data)
+            if not file_content:
+                continue
             file_name = f"{accession}.{version}.embl"
             upload_info = request_upload(submission_data.group_id, 1, config)[0]
             file_id = upload_info.fileId
