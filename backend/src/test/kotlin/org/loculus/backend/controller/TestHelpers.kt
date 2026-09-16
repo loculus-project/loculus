@@ -11,6 +11,7 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsInAnyOrder
+import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasEntry
 import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.not
@@ -63,6 +64,21 @@ fun jsonContainsAccessionVersionsInAnyOrder(expectedVersions: List<AccessionVers
     jsonPath("\$[*]", containsInAnyOrder(expectedVersions.toAccessionVersionMatcher()))
 
 fun addOrganismToPath(path: String, organism: String = DEFAULT_ORGANISM) = "/$organism/${path.trimStart('/')}"
+
+private val databaseInternals = listOf(
+    "org.postgresql",
+    "PSQLException",
+    "violates unique constraint",
+    "Detail: Key",
+    "_aux_table",
+)
+
+fun containsNoDatabaseInternals(): ResultMatcher = ResultMatcher { result ->
+    val body = result.response.contentAsString
+    databaseInternals.forEach { marker ->
+        assertThat("Response leaks database internals ($marker): $body", body, not(containsString(marker)))
+    }
+}
 
 val jacksonObjectMapper: ObjectMapper = jacksonObjectMapper().findAndRegisterModules()
 

@@ -28,6 +28,7 @@ import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.controller.SUPER_USER_NAME
 import org.loculus.backend.controller.assertStatusIs
+import org.loculus.backend.controller.containsNoDatabaseInternals
 import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.files.FilesClient
@@ -484,6 +485,7 @@ class ReviseEndpointTest(
             .andExpect(expectedStatus)
             .andExpect(jsonPath("\$.title").value(expectedTitle))
             .andExpect(jsonPath("\$.detail", containsString(expectedMessage)))
+            .andExpect(containsNoDatabaseInternals())
     }
 
     @Test

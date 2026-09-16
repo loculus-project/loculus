@@ -334,10 +334,8 @@ class SubmitModel(
             }
         } catch (e: ExposedSQLException) {
             if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
-                val duplicateId = e.extractDuplicateRecordId(uploadId)?.value
                 throw DuplicateKeyException(
-                    "Metadata file contains at least one duplicate submissionId" +
-                        (duplicateId?.let { ": $it" } ?: ""),
+                    "Metadata file contains at least one duplicate submissionId" + e.duplicateIdSuffix(uploadId),
                 )
             }
             throw e
@@ -357,15 +355,24 @@ class SubmitModel(
                 )
             } catch (e: ExposedSQLException) {
                 if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
-                    val duplicateId = e.extractDuplicateRecordId(uploadId)?.value
                     throw DuplicateKeyException(
-                        "Sequence file contains at least one duplicate FASTA ID" +
-                            (duplicateId?.let { ": $it" } ?: ""),
+                        "Sequence file contains at least one duplicate FASTA ID" + e.duplicateIdSuffix(uploadId),
                     )
                 }
                 throw e
             }
         }
+    }
+
+    private fun ExposedSQLException.duplicateIdSuffix(uploadId: String): String {
+        val duplicateId = extractDuplicateRecordId(uploadId)
+        if (duplicateId == null) {
+            log.error(this) {
+                "Could not extract the duplicate ID from unique constraint violation for upload $uploadId"
+            }
+            return ""
+        }
+        return ": ${duplicateId.value}"
     }
 
     private fun getFileType(file: MultipartFile, expectedFileType: ValidExtension): CompressionAlgorithm {

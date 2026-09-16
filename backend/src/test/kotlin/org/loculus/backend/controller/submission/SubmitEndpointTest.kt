@@ -22,6 +22,7 @@ import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.containsNoDatabaseInternals
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
@@ -212,6 +213,7 @@ class SubmitEndpointTest(
             .andExpect(expectedStatus)
             .andExpect(jsonPath("\$.title").value(expectedTitle))
             .andExpect(jsonPath("\$.detail", containsString(expectedMessage)))
+            .andExpect(containsNoDatabaseInternals())
     }
 
     @ParameterizedTest

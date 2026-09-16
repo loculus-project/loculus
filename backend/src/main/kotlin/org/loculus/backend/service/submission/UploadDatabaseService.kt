@@ -23,7 +23,6 @@ import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.model.FastaId
 import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.model.SubmissionParams
-import org.loculus.backend.model.UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE
 import org.loculus.backend.service.GenerateAccessionFromNumberService
 import org.loculus.backend.service.datauseterms.DataUseTermsDatabaseService
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
@@ -115,9 +114,7 @@ class UploadDatabaseService(
             }
         } catch (e: ExposedSQLException) {
             val duplicateId = e.extractDuplicateRecordId(uploadId) ?: run {
-                log.error(e.takeUnless { it.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE }) {
-                    "Error inserting revised metadata for upload $uploadId with SQL state ${e.sqlState}"
-                }
+                log.error(e) { "Error inserting revised metadata for upload $uploadId with SQL state ${e.sqlState}" }
                 throw UnprocessableEntityException(
                     "Error inserting revised metadata in aux table - please contact an administrator.",
                 )
