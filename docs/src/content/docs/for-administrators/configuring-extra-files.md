@@ -99,7 +99,7 @@ For AWS, attach a policy like this to the IAM user (replace `my-loculus-bucket` 
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": ["s3:GetObject", "s3:PutObject", "s3:PutObjectTagging", "s3:DeleteObject"],
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:PutObjectTagging", "s3:DeleteObject", "s3:AbortMultipartUpload"],
       "Resource": "arn:aws:s3:::my-loculus-bucket/*"
     },
     {
