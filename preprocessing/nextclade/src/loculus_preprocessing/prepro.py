@@ -761,6 +761,8 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
         version = submission_data.processed_entry.version
         try:
             file_content = create_flatfile(config, submission_data)
+            if not file_content:
+                continue
             file_name = f"{accession}.{version}.embl"
             upload_info = request_upload(submission_data.group_id, 1, config)[0]
             file_id = upload_info.fileId
