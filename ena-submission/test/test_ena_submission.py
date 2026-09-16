@@ -805,31 +805,18 @@ class DownloadFastqFilesTests(unittest.TestCase):
         self.assertEqual(Path(path).name, f"{self.FILE_ID}.fastq.gz")
         self.assertEqual(Path(path).read_bytes(), gzipped)
 
-    def test_uncompressed_input_is_gzipped(self):
-        (path,) = self._download("reads.fastq")
-        self.assertEqual(Path(path).name, f"{self.FILE_ID}.fastq.gz")
-        with gzip.open(path, "rb") as f:
-            self.assertEqual(f.read(), self.CONTENT)
-        # the uncompressed intermediate is not left behind
-        self.assertFalse(Path(self.tmp_dir, f"{self.FILE_ID}.fastq").exists())
-
-    def test_uncompressed_fq_is_gzipped(self):
-        (path,) = self._download("reads.fq")
-        self.assertEqual(Path(path).name, f"{self.FILE_ID}.fq.gz")
-
     def test_unaccepted_extension_raises_before_download(self):
-        with (
-            mock.patch("ena_deposition.call_loculus.requests.get") as get,
-            self.assertRaises(RuntimeError),
-        ):
-            download_fastq_files(
-                self.config,
-                self._metadata("reads.fastq.zst"),
-                "LOC_0001TLY",
-                self.tmp_dir,
-            )
+        for name in ("reads.fastq", "reads.fq", "reads.fastq.bz2", "reads.fastq.zst"):
+            with self.subTest(name=name):
+                with (
+                    mock.patch("ena_deposition.call_loculus.requests.get") as get,
+                    self.assertRaises(RuntimeError),
+                ):
+                    download_fastq_files(
+                        self.config, self._metadata(name), "LOC_0001TLY", self.tmp_dir
+                    )
 
-        get.assert_not_called()
+                get.assert_not_called()
 
     def test_missing_raw_reads_field_raises(self):
         with self.assertRaises(RuntimeError):

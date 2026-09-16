@@ -1,8 +1,6 @@
-import gzip
 import json
 import logging
 import os
-import shutil
 import traceback
 import uuid
 from collections.abc import Iterator
@@ -221,7 +219,7 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
 # Kept in sync with ACCEPTED_FASTQ_EXTENSIONS in
 # raw-reads-processing/src/raw_reads_processing/file_format_validation.py, which rejects
 # anything else at submission time. Separate deployables, hence the duplication.
-ACCEPTED_FASTQ_EXTENSIONS = (".fastq.gz", ".fq.gz", ".fastq", ".fq")
+ACCEPTED_FASTQ_EXTENSIONS = (".fastq.gz", ".fq.gz")
 
 
 def canonical_fastq_extension(file_name: str) -> str:
@@ -291,15 +289,6 @@ def download_fastq_files(
         file_path = os.path.join(dir, file_name + file_extension)
 
         download_file(file_entry["url"], file_path, config.s3_request_timeout_seconds)
-
-        # webin-cli rejects any FASTQ whose name does not end in .gz or .bz2, upstream only accepts
-        # .gz, so gzip the two accepted uncompressed extensions.
-        if not file_extension.endswith(".gz"):
-            compressed_path = file_path + ".gz"
-            with open(file_path, "rb") as src, gzip.open(compressed_path, "wb") as dst:
-                shutil.copyfileobj(src, dst)
-            os.remove(file_path)
-            file_path = compressed_path
 
         fastq_files.append(file_path)
 

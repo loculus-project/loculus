@@ -164,7 +164,7 @@ The cell value for a given submission ID is a space-separated list of `fileName:
 
 ```
 files.rawReads
-reads_1.fq:FILE_2K7Q reads_2.fq:FILE_2K7R
+reads_1.fq.gz:FILE_2K7Q reads_2.fq.gz:FILE_2K7R
 ```
 
 - The `fileId` is the ID received in the previous step, which identifies the actual file.
