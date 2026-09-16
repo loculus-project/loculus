@@ -282,7 +282,7 @@ def create_flatfile(  # noqa: PLR0914
             qualifiers={
                 "mol_type": str(molecule_type),
                 "organism": organism,
-                "country": country,
+                "geo_loc_name": country,
                 "collection_date": collection_date,
             },
         )

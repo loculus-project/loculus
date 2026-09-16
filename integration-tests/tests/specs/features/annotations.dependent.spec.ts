@@ -53,7 +53,7 @@ FH
 FT   source          1..910
 FT                   /mol_type="genomic RNA"
 FT                   /organism="Sudan ebolavirus"
-FT                   /country="France"
+FT                   /geo_loc_name="France"
 FT                   /collection_date="2021-05-12"
 FT   gene            1..910
 FT                   /gene="NP"

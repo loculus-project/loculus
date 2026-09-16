@@ -511,7 +511,7 @@ def create_flatfile(
             qualifiers={
                 "mol_type": str(organism_metadata.molecule_type),
                 "organism": organism,
-                "country": country,
+                "geo_loc_name": country,
                 "collection_date": collection_date,
             },
         )
