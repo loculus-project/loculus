@@ -190,6 +190,8 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
 
                         if (extraFilesEnabled) {
                             // Parse submission file mapping from the metadata
+                            // Re-deriving the file mapping at submit prevents race conditions in CI
+                            // See #7270 PR description
                             const submissionFileMapping = await parseSubmissionFileMapping(
                                 mFile,
                                 submissionDataTypes.files?.categories?.map((category) => category.name) ?? [],
