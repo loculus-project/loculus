@@ -22,9 +22,9 @@ FT                   /gene="NPEbolaSudan"
 FT                   /product="NPEbolaSudan"
 FT   CDS             458..2674
 FT                   /gene="NPEbolaSudan"
+FT                   /note="predominant component of nucleocapsid"
 FT                   /product="nucleoprotein"
 FT                   /protein_id="YP_138520.1"
-FT                   /note="predominant component of nucleocapsid"
 FT                   /codon_start=1
 FT                   /translation="MNKRVRGSWALGGQSEVDLDYHKILTAGLSVQQGIVRQRVIPVYV
 FT                   VSDLEGICQHIIQAFEAGVDFQDNADSFLLLLCLHHAYQGDHRLFLKSDAVQYLEGHGF
@@ -44,10 +44,10 @@ FT                   /gene="VP35EbolaSudan"
 FT                   /product="VP35EbolaSudan"
 FT   CDS             3138..4127
 FT                   /gene="VP35EbolaSudan"
-FT                   /product="polymerase complex protein"
-FT                   /protein_id="YP_138521.1"
 FT                   /note="cofactor in polymerase complex; type I IFN
 FT                   antagonist"
+FT                   /product="polymerase complex protein"
+FT                   /protein_id="YP_138521.1"
 FT                   /codon_start=1
 FT                   /translation="MQQDRTYRHHGPEVSGWFSEQLMTGKIPLTEVFVDVENKPSPAPI
 FT                   TIISKNPKTTRKSDKQVQTDDASSLLTEEVKAAINSVISAVRRQTNAIESLEGRVTTLE
@@ -61,13 +61,13 @@ FT                   /product="GP"
 FT   CDS             join(5998..6881,6883..6955)
 FT                   /exception="RNA editing"
 FT                   /gene="GP"
-FT                   /product="second secreted glycoprotein"
-FT                   /protein_id="YP_009246341.1"
 FT                   /note="second non-structural secreted glycoprotein; super
 FT                   small secreted glycoprotein; secreted in a monomeric form;
 FT                   one A residue is deleted or two additional A residues are
 FT                   inserted at the editing site during transcription of the GP
 FT                   gene"
+FT                   /product="second secreted glycoprotein"
+FT                   /protein_id="YP_009246341.1"
 FT                   /codon_start=1
 FT                   /translation="MGGLSLLQLPRDKFRKSSFFVWVIILFQKAFSMPLGVVTNSTLEV
 FT                   TEIDQLVCKDHLASTDQLKSVGLNLEGSGVSTDIPSATKRWGFRSGVPPKVVSYEAGEW
