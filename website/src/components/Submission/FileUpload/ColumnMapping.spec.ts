@@ -123,8 +123,7 @@ describe('ColumnMapping', () => {
 
         const result = await mapping.applyTo(unreadableFile);
 
-        expect(result._unsafeUnwrapErr().message).toBe(
-            'Could not apply the column mapping to the metadata file: xz files cannot be opened for editing.',
-        );
+        expect(result._unsafeUnwrapErr().message).toContain('Could not apply the column mapping');
+        expect(result._unsafeUnwrapErr().message).toContain('xz files cannot be opened for editing');
     });
 });

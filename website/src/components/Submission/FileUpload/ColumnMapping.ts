@@ -92,12 +92,13 @@ export class ColumnMapping {
 
     /* Apply this mapping to a TSV file, returning a new file with remapped columns. */
     public async applyTo(tsvFile: ProcessedFile): Promise<Result<ProcessedFile, Error>> {
+        const fileName = tsvFile.handle().name;
         try {
             const text = await tsvFile.text();
             const parsed = Papa.parse<string[]>(text, { delimiter: '\t', skipEmptyLines: true });
             const inputRows: string[][] = parsed.data;
             if (inputRows.length === 0) {
-                return err(new Error('Please provide a non-empty metadata file.'));
+                return err(new Error(`File '${fileName}' is empty: please provide a non-empty file.`));
             }
             const headersInFile = inputRows.splice(0, 1)[0];
             const headers: string[] = [];
@@ -114,7 +115,7 @@ export class ColumnMapping {
         } catch (error) {
             return err(
                 new Error(
-                    'Could not apply the column mapping to the metadata file: ' +
+                    `Could not apply the column mapping to file '${fileName}': ` +
                         (error instanceof Error ? error.message : String(error)),
                 ),
             );
