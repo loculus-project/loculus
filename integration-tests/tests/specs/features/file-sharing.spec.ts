@@ -79,10 +79,8 @@ const contaminatedReads = () =>
     readFileSync(join(__dirname, '../../test-data/contaminated.fastq'), 'utf-8');
 
 /**
- * Every way a raw-reads submission can be rejected after it reaches the backend. They share
- * one bulk submission because the submission itself, not the validation, is what costs time.
- * A string is gzipped if its name says `.gz`; a Buffer is uploaded byte for byte, which is
- * how the deliberately malformed gzips are expressed.
+ * Expected validation failures for raw read submissions. 
+ * All failures done in a single submission to be fast and efficient.
  */
 const RAW_READS_FAILURES: { id: string; files: Record<string, string | Buffer>; error: RegExp }[] =
     [
@@ -132,7 +130,7 @@ const RAW_READS_FAILURES: { id: string; files: Record<string, string | Buffer>; 
         },
     ];
 
-test('reject every kind of invalid raw_reads submission', async ({ page, groupId, tmpDir }) => {
+test('reject invalid raw_reads submissions with helpful errors', async ({ page, groupId, tmpDir }) => {
     test.setTimeout(400_000);
     void groupId;
 
