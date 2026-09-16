@@ -358,7 +358,7 @@ def write_nextclade_input_fasta(
     os.makedirs(os.path.dirname(input_file), exist_ok=True)
     with open(input_file, "w", encoding="utf-8") as f:
         for entry in unprocessed:
-            accession_version = entry.accession_version
+            accession_version = entry.context.accession_version
             for fasta_id, seq in entry.unalignedNucleotideSequences.items():
                 id = f"{accession_version}__{fasta_id}"
                 id_map[accession_version, fasta_id] = id
@@ -397,7 +397,7 @@ def assign_segment(
     sequence_assignment = SequenceAssignment()
 
     for fasta_id in entry.unalignedNucleotideSequences:
-        seq_id = id_map[entry.accession_version, fasta_id]
+        seq_id = id_map[entry.context.accession_version, fasta_id]
         if seq_id not in best_hits[SequenceIdentifier].unique():
             method = config.segment_classification_method.display_name
             annotation = sequence_annotation(
@@ -500,7 +500,7 @@ def assign_segment_with_nextclade_align(
             best_hits,
             config,
         )
-        accession_version = entry.accession_version
+        accession_version = entry.context.accession_version
         batch.sequenceNameToFastaId[accession_version] = sequence_assignment.sequenceNameToFastaId
         batch.unalignedNucleotideSequences[accession_version] = (
             sequence_assignment.unalignedNucleotideSequences
@@ -543,7 +543,7 @@ def assign_segment_with_nextclade_sort(
             best_hits,
             config,
         )
-        accession_version = entry.accession_version
+        accession_version = entry.context.accession_version
         batch.sequenceNameToFastaId[accession_version] = sequence_assignment.sequenceNameToFastaId
         batch.unalignedNucleotideSequences[accession_version] = (
             sequence_assignment.unalignedNucleotideSequences
@@ -585,7 +585,7 @@ def assign_segment_with_diamond(
             best_hits,
             config,
         )
-        accession_version = entry.accession_version
+        accession_version = entry.context.accession_version
         batch.sequenceNameToFastaId[accession_version] = sequence_assignment.sequenceNameToFastaId
         batch.unalignedNucleotideSequences[accession_version] = (
             sequence_assignment.unalignedNucleotideSequences
@@ -623,7 +623,7 @@ def assign_all_single_segments(
 ) -> SequenceAssignmentBatch:
     batch = SequenceAssignmentBatch()
     for entry in unprocessed:
-        accession_version = entry.accession_version
+        accession_version = entry.context.accession_version
         sequence_assignment = assign_single_segment(
             entry.unalignedNucleotideSequences,
             config=config,
@@ -747,7 +747,7 @@ def assign_segment_for_alignment(
 ) -> SequenceAssignmentBatch:
     errors = {}
     for entry in unprocessed:
-        errors[entry.accession_version] = error_on_excess_sequences(
+        errors[entry.context.accession_version] = error_on_excess_sequences(
             len(entry.unalignedNucleotideSequences),
             config,
         )
@@ -784,7 +784,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
     For each unprocessed segment of each unprocessed sequence use nextclade run to perform alignment
     and QC. The result is a mapping from each AccessionVersion to an
     `UnprocessedAfterNextclade(
-            inputMetadata: InputMetadata
+            metadata: InputMetadata
             nextcladeMetadata: dict[SegmentName, Any] | None
             unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]
             alignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]
@@ -795,14 +795,14 @@ def enrich_with_nextclade(  # noqa: PLR0914
     )` object.
     """
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {
-        entry.accession_version: dict(entry.metadata) for entry in unprocessed
+        entry.context.accession_version: dict(entry.metadata) for entry in unprocessed
     }
     context: dict[AccessionVersion, ProcessingContext] = {
-        entry.accession_version: entry.context for entry in unprocessed
+        entry.context.accession_version: entry.context for entry in unprocessed
     }
     input_files: dict[
         AccessionVersion, dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
-    ] = {entry.accession_version: entry.files for entry in unprocessed}
+    ] = {entry.context.accession_version: entry.files for entry in unprocessed}
 
     batch = assign_segment_for_alignment(unprocessed, config=config, dataset_dir=dataset_dir)
     unaligned_nucleotide_sequences = batch.unalignedNucleotideSequences
@@ -894,7 +894,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
 
     return {
         id: UnprocessedAfterNextclade(
-            inputMetadata=input_metadata[id],
+            metadata=input_metadata[id],
             context=context[id],
             files=input_files[id],
             nextcladeMetadata=nextclade_metadata[id],

@@ -10,7 +10,7 @@ from .nextclade_annotation import NextcladeAnnotation
 
 logger = logging.getLogger(__name__)
 
-AccessionVersion = str
+AccessionVersion = str  # {accession}.{version}
 GeneName = str
 SegmentName = str
 SequenceName = str
@@ -24,7 +24,7 @@ ArgName = str  # Name of argument present in processing_functions
 ArgValue = (
     list[str] | str | bool | int | float | None
 )  # Value of an argument passed to processing_functions
-InputField = str  # Name of field in input data, either inputMetadata or NextcladeMetadata
+InputField = str  # Name of field in input data, either submitted metadata or NextcladeMetadata
 ProcessedMetadataValue = str | int | float | bool | None
 ProcessedMetadata = dict[str, ProcessedMetadataValue]
 InputMetadataValue = str | None
@@ -121,10 +121,6 @@ class UnprocessedEntry:
     unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
     files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
 
-    @property
-    def accession_version(self) -> AccessionVersion:  # {accession}.{version}
-        return self.context.accession_version
-
 
 FunctionInputs = dict[ArgName, InputField]
 FunctionArgs = dict[ArgName, ArgValue]
@@ -132,7 +128,7 @@ FunctionArgs = dict[ArgName, ArgValue]
 
 @dataclass
 class UnprocessedAfterNextclade:
-    inputMetadata: InputMetadata  # noqa: N815
+    metadata: InputMetadata
     context: ProcessingContext
     files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
     # Derived metadata produced by Nextclade
@@ -145,10 +141,6 @@ class UnprocessedAfterNextclade:
     sequenceNameToFastaId: dict[SequenceName, FastaId]  # noqa: N815
     errors: list[ProcessingAnnotation]
     warnings: list[ProcessingAnnotation]
-
-    @property
-    def accession_version(self) -> AccessionVersion:  # {accession}.{version}
-        return self.context.accession_version
 
 
 @dataclass
