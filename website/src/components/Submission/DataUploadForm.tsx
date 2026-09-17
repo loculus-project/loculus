@@ -23,7 +23,7 @@ import { type FileSharingConfig, type FileCategory, type InputField } from '../.
 import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
-import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
+import { formatErrorMessage } from '../../utils/formatErrorMessage.ts';
 import { dateTimeInMonths } from '../../utils/utcDates.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES } from '../SearchPage/DownloadDialog/DownloadSubmittedDataButton.tsx';
@@ -620,7 +620,7 @@ function useSubmitFiles(
 
 function handleError(onError: (message: string) => void, action: UploadAction) {
     return (error: unknown | AxiosError) => {
-        void logger.error(`Received error from backend: ${stringifyMaybeAxiosError(error)}`);
+        void logger.error(`Received error from backend: ${formatErrorMessage(error)}`);
         if (isErrorFromAlias(backendApi, action, error)) {
             switch (error.response.status) {
                 case 400:
@@ -634,6 +634,6 @@ function handleError(onError: (message: string) => void, action: UploadAction) {
                     return;
             }
         }
-        onError('Received unexpected message from backend: ' + stringifyMaybeAxiosError(error));
+        onError('Received unexpected message from backend: ' + formatErrorMessage(error));
     };
 }

@@ -1,4 +1,3 @@
-import { isErrorFromAlias } from '@zodios/core';
 import { type FC, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
@@ -7,7 +6,6 @@ import { EditableMetadata, MetadataForm, SubmissionIdRow, Subtitle } from './Met
 import { SequencesForm } from './SequencesForm.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
-import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { type FilesByCategory, type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
 import { type FileSharingConfig, type InputField, type SubmissionDataTypes } from '../../types/config.ts';
@@ -19,6 +17,7 @@ import {
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString, parseAccessionVersionFromString } from '../../utils/extractAccessionVersion.ts';
+import { formatErrorMessage } from '../../utils/formatErrorMessage.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu.tsx';
 import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
@@ -51,19 +50,6 @@ type EditPageProps = {
 };
 
 const logger = getClientLogger('EditPage');
-
-/**
- * Extracts the detail field from a backend error response
- */
-function getErrorDetail(error: unknown): string {
-    if (
-        isErrorFromAlias(backendApi, 'revise', error) ||
-        isErrorFromAlias(backendApi, 'submitReviewedSequence', error)
-    ) {
-        return error.response.data.detail;
-    }
-    return JSON.stringify(error);
-}
 
 const InnerEditPage: FC<EditPageProps> = ({
     organism,
@@ -314,7 +300,7 @@ function useSubmitRevision(
                 location.href = routes.userSequenceReviewPage(organism, reviewData.groupId);
             },
             onError: async (error) => {
-                const errorDetail = getErrorDetail(error);
+                const errorDetail = formatErrorMessage(error);
                 const message = `Failed to submit revision for ${getAccessionVersionString(
                     reviewData,
                 )}: ${errorDetail}`;
@@ -343,7 +329,7 @@ function useSubmitEdit(
                 location.href = routes.userSequenceReviewPage(organism, reviewData.groupId);
             },
             onError: async (error) => {
-                const errorDetail = getErrorDetail(error);
+                const errorDetail = formatErrorMessage(error);
                 const message = `Failed to submit edited data for ${getAccessionVersionString(
                     reviewData,
                 )}: ${errorDetail}`;

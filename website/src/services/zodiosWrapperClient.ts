@@ -6,6 +6,7 @@ import { type Err, err, ok, type Result } from 'neverthrow';
 
 import { type InstanceLogger } from '../logger.ts';
 import { problemDetail, type ProblemDetail } from '../types/backend.ts';
+import { formatErrorMessage } from '../utils/formatErrorMessage.ts';
 
 type ZodiosMethods<Api extends ZodiosEndpointDefinitions> = Aliases<Api>;
 
@@ -95,7 +96,7 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
             return problemDetailResponse;
         }
 
-        this.logger.error(`Unknown error from ${this.serviceName}: ${JSON.stringify(error)}`);
+        this.logger.error(`Unknown error from ${this.serviceName}: ${formatErrorMessage(error)}`);
         return {
             type: 'about:blank',
             title: error.message,
