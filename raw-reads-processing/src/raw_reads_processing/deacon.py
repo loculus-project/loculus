@@ -149,7 +149,7 @@ def run_deacon_filter(
 # TODO: Add a link to the documentation for removing host reads
 DEACON_ERROR_PROMPT = (
     "We cannot accept files with a high proportion of human reads, as they may contain "
-    "sensitive human genetic information. Please remove host reads from your data and resubmit."
+    "sensitive human genetic information. Please remove host reads from your data and resubmit. "
     "Please see our documentation for more information on how to remove host reads from your data."
 )
 

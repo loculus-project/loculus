@@ -1,7 +1,7 @@
 ---
 import { EditPage } from '../../../../../components/Edit/EditPage';
 import { cleanOrganism } from '../../../../../components/Navigation/cleanOrganism';
-import { getGroupedInputFields, getRuntimeConfig, getSchema } from '../../../../../config';
+import { getFileSharingConfig, getGroupedInputFields, getRuntimeConfig, getSchema } from '../../../../../config';
 import BaseLayout from '../../../../../layouts/BaseLayout.astro';
 import { createBackendClient } from '../../../../../services/backendClientFactory';
 import { getAccessToken } from '../../../../../utils/getAccessToken';
@@ -38,6 +38,7 @@ const dataToEdit = await createBackendClient().getDataToEdit(organism, accessTok
                     clientConfig={clientConfig}
                     groupedInputFields={groupedInputFields}
                     submissionDataTypes={schema.submissionDataTypes}
+                    fileSharingConfig={getFileSharingConfig()}
                     client:load
                 />
             ),

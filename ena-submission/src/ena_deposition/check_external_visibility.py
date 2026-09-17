@@ -19,11 +19,17 @@ from http import HTTPStatus
 import pytz
 import requests
 from sqlalchemy import Engine
+from tenacity import Retrying, retry_if_exception_type, stop_after_attempt, wait_fixed
 
-from ena_deposition.config import Config
+from ena_deposition.config import (
+    Config,
+    EnaResultField,
+)
+from ena_deposition.ena_submission_helper import log_before_retry
 from ena_deposition.submission_db_helper import (
     AssemblyTableEntry,
     ProjectTableEntry,
+    RawReadsTableEntry,
     SampleTableEntry,
     Status,
     db_init,
@@ -38,13 +44,16 @@ class EntityType(Enum):
     PROJECT = "project"
     SAMPLE = "sample"
     ASSEMBLY = "assembly"
+    RAW_READS = "raw_reads"
 
 
 @dataclass
 class ColumnCheckConfig:
     """Configuration for checking a specific table column"""
 
-    entry_class: type[ProjectTableEntry | SampleTableEntry | AssemblyTableEntry]
+    entry_class: type[
+        ProjectTableEntry | SampleTableEntry | AssemblyTableEntry | RawReadsTableEntry
+    ]
     visibility_column: str
     accession_field_name_prefix: str  # Field prefix in result dict (e.g. "insdc_accession_full")
     checker_class: type  # Which visibility checker to use
@@ -62,7 +71,11 @@ class ENAVisibilityChecker(VisibilityChecker):
     """Checker for ENA visibility"""
 
     def check_visibility(self, config: Config, accession: str) -> datetime | None:
-        file_type = "xml" if accession.startswith(("PRJ", "SAM", "GCA")) else "embl"
+        file_type = (
+            "xml"
+            if accession.startswith(("PRJ", "SAM", "GCA", "ERR", "ERX", "SRR", "SRX", "DRR", "DRX"))
+            else "embl"
+        )
         response = requests.get(
             f"https://www.ebi.ac.uk/ena/browser/api/{file_type}/{accession}",
             allow_redirects=False,
@@ -73,24 +86,91 @@ class ENAVisibilityChecker(VisibilityChecker):
         return None
 
 
+class TransientNCBIError(Exception):
+    """Raised for a retryable (rate-limited/server) error from NCBI's E-utilities."""
+
+
 class NCBIVisibilityChecker(VisibilityChecker):
     """Checker for NCBI visibility"""
 
     def check_visibility(self, config: Config, accession: str) -> datetime | None:
+        """
+        Check the visibility of an accession in the NCBI database.
+        esearch resolves the accession to internal UID(s); an empty result means the
+        accession is not (yet) in NCBI.
+
+        Note suppressed accessions will return a UID and will be marked as live.
+        """
         if accession.startswith("PRJ"):
-            path = "bioproject"
+            db = "bioproject"
         elif accession.startswith("SAM"):
-            path = "biosample"
+            db = "biosample"
+        elif accession.startswith(("ERR", "ERX", "SRR", "SRX", "DRR", "DRX")):
+            db = "sra"
         else:
-            path = "nuccore"
-        response = requests.get(
-            f"https://www.ncbi.nlm.nih.gov/{path}/{accession}/",
-            allow_redirects=False,
-            timeout=config.ncbi_public_search_timeout_seconds,
+            db = "nuccore"
+
+        esearch = self._eutils_get_json(
+            config,
+            {"db": db, "term": accession, "retmode": "json"},
+            accession,
         )
-        if response.status_code == HTTPStatus.OK:
-            return datetime.now(pytz.UTC)
-        return None
+        if esearch is None:
+            return None
+        uids = esearch.get("esearchresult", {}).get("idlist", [])
+        if not uids:
+            return None
+        return datetime.now(pytz.UTC)
+
+    def _eutils_get_json(
+        self,
+        config: Config,
+        params: dict[str, str],
+        accession: str,
+    ) -> dict | None:
+        """GET an E-utilities endpoint and return the parsed JSON body, or None on a
+        non-OK / non-JSON response. E-utilities rate-limits unauthenticated requests to
+        3/second per IP, so retry on timeouts and transient (429/5xx) errors."""
+
+        def _do_get() -> requests.Response:
+            response = requests.get(
+                "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi",
+                params=params,
+                timeout=config.ncbi_public_search_timeout_seconds,
+            )
+            is_transient = response.status_code == HTTPStatus.TOO_MANY_REQUESTS or (
+                response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR
+            )
+            if is_transient:
+                logger.info(
+                    f"NCBI esearch request failed for {accession}: "
+                    f"HTTP {response.status_code} - {response.text}"
+                )
+                msg = f"Transient NCBI esearch error {response.status_code} for {accession}"
+                raise TransientNCBIError(msg)
+            return response
+
+        retryer = Retrying(
+            stop=stop_after_attempt(config.ncbi_http_get_retry_attempts),
+            wait=wait_fixed(2),
+            retry=retry_if_exception_type((requests.exceptions.Timeout, TransientNCBIError)),
+            reraise=True,
+            before_sleep=log_before_retry,
+        )
+        response = retryer(_do_get)
+        if response.status_code != HTTPStatus.OK:
+            logger.info(
+                f"NCBI esearch request failed for {accession}: "
+                f"HTTP {response.status_code} - {response.text}"
+            )
+            return None
+        try:
+            return response.json()
+        except ValueError:
+            logger.info(
+                f"NCBI esearch returned a non-JSON response for {accession}: {response.text[:500]}"
+            )
+            return None
 
 
 # Configuration mapping: (EntityType, column_name) -> ColumnCheckConfig
@@ -98,53 +178,77 @@ COLUMN_CONFIGS = {
     (EntityType.PROJECT, "ena_first_publicly_visible"): ColumnCheckConfig(
         entry_class=ProjectTableEntry,
         visibility_column="ena_first_publicly_visible",
-        accession_field_name_prefix="bioproject_accession",
+        accession_field_name_prefix=EnaResultField.BIOPROJECT,
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.PROJECT, "ncbi_first_publicly_visible"): ColumnCheckConfig(
         entry_class=ProjectTableEntry,
         visibility_column="ncbi_first_publicly_visible",
-        accession_field_name_prefix="bioproject_accession",
+        accession_field_name_prefix=EnaResultField.BIOPROJECT,
         checker_class=NCBIVisibilityChecker,
     ),
     (EntityType.SAMPLE, "ena_first_publicly_visible"): ColumnCheckConfig(
         entry_class=SampleTableEntry,
         visibility_column="ena_first_publicly_visible",
-        accession_field_name_prefix="biosample_accession",
+        accession_field_name_prefix=EnaResultField.BIOSAMPLE,
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.SAMPLE, "ncbi_first_publicly_visible"): ColumnCheckConfig(
         entry_class=SampleTableEntry,
         visibility_column="ncbi_first_publicly_visible",
-        accession_field_name_prefix="biosample_accession",
+        accession_field_name_prefix=EnaResultField.BIOSAMPLE,
         checker_class=NCBIVisibilityChecker,
     ),
     # Assemblies - ENA nucleotide accessions
     (EntityType.ASSEMBLY, "ena_nucleotide_first_publicly_visible"): ColumnCheckConfig(
         entry_class=AssemblyTableEntry,
         visibility_column="ena_nucleotide_first_publicly_visible",
-        accession_field_name_prefix="insdc_accession_full",  # Prefix for multi-segment accessions
+        accession_field_name_prefix=EnaResultField.INSDC_ACCESSION_FULL_PREFIX,
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.ASSEMBLY, "ncbi_nucleotide_first_publicly_visible"): ColumnCheckConfig(
         entry_class=AssemblyTableEntry,
         visibility_column="ncbi_nucleotide_first_publicly_visible",
-        accession_field_name_prefix="insdc_accession_full",  # Prefix for multi-segment accessions
+        accession_field_name_prefix=EnaResultField.INSDC_ACCESSION_FULL_PREFIX,
         checker_class=NCBIVisibilityChecker,
     ),
     # Assemblies - ENA GCA accessions
     (EntityType.ASSEMBLY, "ena_gca_first_publicly_visible"): ColumnCheckConfig(
         entry_class=AssemblyTableEntry,
         visibility_column="ena_gca_first_publicly_visible",
-        accession_field_name_prefix="gca_accession",
+        accession_field_name_prefix=EnaResultField.GCA,
         checker_class=ENAVisibilityChecker,
+    ),
+    (EntityType.RAW_READS, "ena_run_first_publicly_visible"): ColumnCheckConfig(
+        entry_class=RawReadsTableEntry,
+        visibility_column="ena_run_first_publicly_visible",
+        accession_field_name_prefix=EnaResultField.RUN,
+        checker_class=ENAVisibilityChecker,
+    ),
+    (EntityType.RAW_READS, "ncbi_run_first_publicly_visible"): ColumnCheckConfig(
+        entry_class=RawReadsTableEntry,
+        visibility_column="ncbi_run_first_publicly_visible",
+        accession_field_name_prefix=EnaResultField.RUN,
+        checker_class=NCBIVisibilityChecker,
+    ),
+    (EntityType.RAW_READS, "ena_experiment_first_publicly_visible"): ColumnCheckConfig(
+        entry_class=RawReadsTableEntry,
+        visibility_column="ena_experiment_first_publicly_visible",
+        accession_field_name_prefix=EnaResultField.EXPERIMENT,
+        checker_class=ENAVisibilityChecker,
+    ),
+    (EntityType.RAW_READS, "ncbi_experiment_first_publicly_visible"): ColumnCheckConfig(
+        entry_class=RawReadsTableEntry,
+        visibility_column="ncbi_experiment_first_publicly_visible",
+        accession_field_name_prefix=EnaResultField.EXPERIMENT,
+        checker_class=NCBIVisibilityChecker,
     ),
 }
 
 
 def get_entities_needing_column_check(
     db_engine: Engine, column_config: ColumnCheckConfig
-) -> list[SampleTableEntry | ProjectTableEntry | AssemblyTableEntry]:
+) -> list[SampleTableEntry | ProjectTableEntry | AssemblyTableEntry | RawReadsTableEntry]:
     """Get entities that don't have a timestamp for a specific visibility column"""
     return find_conditions_in_db(
         db_engine,
@@ -157,7 +261,7 @@ def get_entities_needing_column_check(
 
 
 def get_accessions_to_check(
-    entity: SampleTableEntry | ProjectTableEntry | AssemblyTableEntry,
+    entity: SampleTableEntry | ProjectTableEntry | AssemblyTableEntry | RawReadsTableEntry,
     column_config: ColumnCheckConfig,
 ) -> set[str]:
     """
@@ -223,11 +327,13 @@ def check_and_update_visibility_for_column(
         # Check all accessions - mark as visible when ALL are visible
         all_visible = True
         first_visible_timestamp = None
+        visible_count = 0
 
         for accession in accessions:
             visible_timestamp = visibility_checker.check_visibility(config, accession)
 
             if visible_timestamp:
+                visible_count += 1
                 if first_visible_timestamp is None:
                     first_visible_timestamp = visible_timestamp
                 logger.debug(f"Accession {accession} is publicly visible")
@@ -256,9 +362,6 @@ def check_and_update_visibility_for_column(
                     f"Failed to update {column_name} for {entity_type.value} {entity_id}"
                 )
         else:
-            visible_count = sum(
-                1 for acc in accessions if visibility_checker.check_visibility(config, acc)
-            )
             logger.debug(
                 f"{entity_type.value.title()} {entity_id}: {visible_count}/{len(accessions)} "
                 "accessions are publicly visible (waiting for all)"
