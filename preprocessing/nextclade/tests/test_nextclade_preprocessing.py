@@ -37,6 +37,7 @@ from loculus_preprocessing.embl import (
     get_seq_features,
     reformat_authors_from_loculus_to_embl_style,
 )
+from loculus_preprocessing.nextclade_annotation import NextcladeAnnotation
 from loculus_preprocessing.prepro import get_nested_metadata, process_all
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
@@ -1438,20 +1439,29 @@ def test_get_seq_features_translates_minus_strand_cds_correctly():
     # (Met Lys Stop), so a minus-strand CDS over this range must translate to "MK" (the
     # /translation qualifier excludes the terminal stop codon).
     sequence_str = "AAA" + "TTATTTCAT" + "CCCC"
-    annotation_object = {
-        "genes": [
-            {
-                "range": {"begin": 3, "end": 12},
-                "attributes": {},
-                "cdses": [
-                    {
-                        "segments": [{"range": {"begin": 3, "end": 12}, "strand": "-"}],
-                        "attributes": {},
-                    }
-                ],
-            }
-        ]
-    }
+    annotation_object = NextcladeAnnotation.model_validate(
+        {
+            "genes": [
+                {
+                    "range": {"begin": 3, "end": 12},
+                    "attributes": {},
+                    "cdses": [
+                        {
+                            "segments": [
+                                {
+                                    "range": {"begin": 3, "end": 12},
+                                    "strand": "-",
+                                    "phase": 0,
+                                    "truncation": "none",
+                                }
+                            ],
+                            "attributes": {},
+                        }
+                    ],
+                }
+            ]
+        }
+    )
     features = get_seq_features(annotation_object, sequence_str)
     cds_features = [feature for feature in features if feature.type == "CDS"]
     assert len(cds_features) == 1
@@ -1464,20 +1474,29 @@ def test_get_seq_features_maps_phase_to_codon_start():
     # bases ("TT") are a partial codon left over from outside this feature, so the first complete
     # codon is GAA (Glu), followed by ATA (Ile) and the stop codon TAA.
     sequence_str = "TT" + "GAAATATAA"
-    annotation_object = {
-        "genes": [
-            {
-                "range": {"begin": 0, "end": 11},
-                "attributes": {},
-                "cdses": [
-                    {
-                        "segments": [{"range": {"begin": 0, "end": 11}, "strand": "+", "phase": 2}],
-                        "attributes": {},
-                    }
-                ],
-            }
-        ]
-    }
+    annotation_object = NextcladeAnnotation.model_validate(
+        {
+            "genes": [
+                {
+                    "range": {"begin": 0, "end": 11},
+                    "attributes": {},
+                    "cdses": [
+                        {
+                            "segments": [
+                                {
+                                    "range": {"begin": 0, "end": 11},
+                                    "strand": "+",
+                                    "phase": 2,
+                                    "truncation": "none",
+                                }
+                            ],
+                            "attributes": {},
+                        }
+                    ],
+                }
+            ]
+        }
+    )
     features = get_seq_features(annotation_object, sequence_str)
     cds_features = [feature for feature in features if feature.type == "CDS"]
     assert len(cds_features) == 1
@@ -1487,9 +1506,11 @@ def test_get_seq_features_maps_phase_to_codon_start():
 
 def test_get_seq_features_handles_real_reverse_complemented_cchf_annotation():
     sequence_str = str(SeqIO.read(CCHF_REVERSE_COMPLEMENTED_FASTA, "fasta").seq)
-    annotation_object = json.loads(
-        Path(CCHF_REVERSE_COMPLEMENTED_ANNOTATION).read_text(encoding="utf-8")
-    )["annotation"]
+    annotation_object = NextcladeAnnotation.model_validate(
+        json.loads(Path(CCHF_REVERSE_COMPLEMENTED_ANNOTATION).read_text(encoding="utf-8"))[
+            "annotation"
+        ]
+    )
 
     features = get_seq_features(annotation_object, sequence_str)
     cds_features = [feature for feature in features if feature.type == "CDS"]
@@ -1509,20 +1530,29 @@ def test_get_seq_features_trims_trailing_partial_codon():
     # the dangling 1-2 bases can't be translated and must be dropped rather than raising or
     # producing a Biopython warning.
     sequence_str = "ATGAAATA"  # ATG AAA TA(missing base)
-    annotation_object = {
-        "genes": [
-            {
-                "range": {"begin": 0, "end": 8},
-                "attributes": {},
-                "cdses": [
-                    {
-                        "segments": [{"range": {"begin": 0, "end": 8}, "strand": "+"}],
-                        "attributes": {},
-                    }
-                ],
-            }
-        ]
-    }
+    annotation_object = NextcladeAnnotation.model_validate(
+        {
+            "genes": [
+                {
+                    "range": {"begin": 0, "end": 8},
+                    "attributes": {},
+                    "cdses": [
+                        {
+                            "segments": [
+                                {
+                                    "range": {"begin": 0, "end": 8},
+                                    "strand": "+",
+                                    "phase": 0,
+                                    "truncation": "none",
+                                }
+                            ],
+                            "attributes": {},
+                        }
+                    ],
+                }
+            ]
+        }
+    )
     features = get_seq_features(annotation_object, sequence_str)
     cds_features = [feature for feature in features if feature.type == "CDS"]
     assert len(cds_features) == 1
@@ -1534,20 +1564,29 @@ def test_get_seq_features_drops_raw_codon_start_not_derived_from_phase():
     # (EMBL's codon_start is 1-indexed, phase is 0-indexed), so it must be dropped and
     # codon_start recomputed as if phase were 0 (i.e. codon_start == 1).
     sequence_str = "ATGAAATAA"
-    annotation_object = {
-        "genes": [
-            {
-                "range": {"begin": 0, "end": 9},
-                "attributes": {},
-                "cdses": [
-                    {
-                        "segments": [{"range": {"begin": 0, "end": 9}, "strand": "+"}],
-                        "attributes": {"codon_start": 3},
-                    }
-                ],
-            }
-        ]
-    }
+    annotation_object = NextcladeAnnotation.model_validate(
+        {
+            "genes": [
+                {
+                    "range": {"begin": 0, "end": 9},
+                    "attributes": {},
+                    "cdses": [
+                        {
+                            "segments": [
+                                {
+                                    "range": {"begin": 0, "end": 9},
+                                    "strand": "+",
+                                    "phase": 0,
+                                    "truncation": "none",
+                                }
+                            ],
+                            "attributes": {"codon_start": ["3"]},
+                        }
+                    ],
+                }
+            ]
+        }
+    )
     features = get_seq_features(annotation_object, sequence_str)
     cds_features = [feature for feature in features if feature.type == "CDS"]
     assert len(cds_features) == 1

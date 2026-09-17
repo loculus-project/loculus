@@ -2,7 +2,6 @@
 
 import logging
 from dataclasses import dataclass
-from typing import Any
 
 from Bio.Seq import Seq
 from Bio.SeqFeature import (
@@ -19,6 +18,13 @@ from unidecode import unidecode
 from loculus_preprocessing.datatypes import ProcessedMetadata, SubmissionData
 
 from .config import Config
+from .nextclade_annotation import (
+    GffAttributes,
+    NextcladeAnnotation,
+    NextcladeCds,
+    NextcladeGene,
+    NextcladeSegment,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -169,9 +175,9 @@ EMBL_TO_NEXTCLADE_ATTRIBUTES = {
 
 
 def _build_qualifiers(
-    attributes: dict[str, Any],
+    attributes: GffAttributes,
     allowed_qualifiers: tuple[str, ...],
-) -> dict[str, Any]:
+) -> dict[str, list[str]]:
     """Return allowed EMBL qualifiers in deterministic order."""
     qualifiers = {}
 
@@ -184,54 +190,37 @@ def _build_qualifiers(
     return qualifiers
 
 
-def _build_gene_feature(gene: dict[str, Any]) -> SeqFeature:
-    gene_range = gene.get("range")
-    if not gene_range or "begin" not in gene_range or "end" not in gene_range:
-        msg = f"Gene range is missing or incomplete: {gene_range}"
-        raise ValueError(msg)
-    qualifiers = _build_qualifiers(gene.get("attributes", {}), EMBL_ANNOTATIONS.gene_qualifiers)
+def _build_gene_feature(gene: NextcladeGene) -> SeqFeature:
+    qualifiers = _build_qualifiers(gene.attributes, EMBL_ANNOTATIONS.gene_qualifiers)
     # The annotation carries a strand only on a CDS's segments, so a gene takes its CDSes'.
-    cdses = gene.get("cdses", [])
     strand = None
-    if cdses and cdses[0].get("segments"):
-        strand = -1 if cdses[0]["segments"][0].get("strand") == "-" else 1
+    if gene.cdses:
+        strand = -1 if gene.cdses[0].segments[0].strand == "-" else 1
     # In FeatureLocation start and end are zero based, exclusive end.
     # thus an embl entry of 123..150 (one based counting) becomes a location of [122:150]
     return SeqFeature(
-        FeatureLocation(start=gene_range["begin"], end=gene_range["end"], strand=strand),
+        FeatureLocation(start=gene.range.begin, end=gene.range.end, strand=strand),
         type="gene",
         qualifiers=qualifiers,
     )
 
 
-def _segment_truncation(segment: dict[str, Any]) -> tuple[int, int]:
-    """Nucleotides of this segment (5', 3') that the sequence does not show."""
-    truncation = segment.get("truncation")
-    if not isinstance(truncation, dict):
-        return 0, 0
-    if "both" in truncation:
-        five_prime, three_prime = truncation["both"]
-        return int(five_prime), int(three_prime)
-    return int(truncation.get("fivePrime", 0)), int(truncation.get("threePrime", 0))
-
-
-def _cds_location(segments: list[dict[str, Any]]) -> FeatureLocation | CompoundLocation:
-    strands = [-1 if segment.get("strand") == "-" else +1 for segment in segments]
+def _cds_location(segments: list[NextcladeSegment]) -> FeatureLocation | CompoundLocation:
     # Only the outer segments can run past the sequence; a splice junction is a known boundary.
-    five_truncated = _segment_truncation(segments[0])[0] > 0
-    three_truncated = _segment_truncation(segments[-1])[1] > 0
+    five_truncated = segments[0].truncation.five_prime > 0
+    three_truncated = segments[-1].truncation.three_prime > 0
     last = len(segments) - 1
     locations = []
-    for index, (segment, strand) in enumerate(zip(segments, strands, strict=False)):
-        start, end = segment["range"]["begin"], segment["range"]["end"]
+    for index, segment in enumerate(segments):
+        strand = -1 if segment.strand == "-" else +1
         # INSDC marks the coordinate, not the protein end: on the minus strand 5' is upper.
         lower, upper = five_truncated and index == 0, three_truncated and index == last
         if strand == -1:
             lower, upper = upper, lower
         locations.append(
             FeatureLocation(
-                BeforePosition(start) if lower else start,
-                AfterPosition(end) if upper else end,
+                BeforePosition(segment.range.begin) if lower else segment.range.begin,
+                AfterPosition(segment.range.end) if upper else segment.range.end,
                 strand=strand,
             )
         )
@@ -257,17 +246,16 @@ def _translate_cds(
     return translation.removesuffix("*")
 
 
-def _build_cds_feature(cds: dict[str, Any], sequence_str: str) -> SeqFeature:
-    segments = cds.get("segments", [])
+def _build_cds_feature(cds: NextcladeCds, sequence_str: str) -> SeqFeature:
+    segments = cds.segments
     location = _cds_location(segments)
-    qualifiers = _build_qualifiers(cds.get("attributes", {}), EMBL_ANNOTATIONS.cds_qualifiers)
+    qualifiers = _build_qualifiers(cds.attributes, EMBL_ANNOTATIONS.cds_qualifiers)
     # codon_start (phase in nextclade) defines the offset at which the first complete codon of a
     # coding feature can be found, relative to the first base of that feature, in nextclade this
     # is 0-indexed, in EMBL it is 1 indexed. nextclade puts `phase` on each segment, not on the
     # cds itself; only the first segment's phase is relevant, since EMBL's codon_start only
     # applies to the first base of a (possibly joined) feature.
-    first_segment_phase = segments[0].get("phase", 0) if segments else 0
-    qualifiers["codon_start"] = first_segment_phase + 1
+    qualifiers["codon_start"] = segments[0].phase + 1
     qualifiers["translation"] = _translate_cds(sequence_str, location, qualifiers["codon_start"])
     return SeqFeature(
         location=location,
@@ -276,7 +264,7 @@ def _build_cds_feature(cds: dict[str, Any], sequence_str: str) -> SeqFeature:
     )
 
 
-def get_seq_features(annotation_object: dict[str, Any], sequence_str: str) -> list[SeqFeature]:
+def get_seq_features(annotation: NextcladeAnnotation, sequence_str: str) -> list[SeqFeature]:
     """
     Takes a dictionary object with the following structure:
     {
@@ -298,9 +286,9 @@ def get_seq_features(annotation_object: dict[str, Any], sequence_str: str) -> li
     inclusive end (the default in nextclade is exclusive end)
     """
     feature_list = []
-    for gene in annotation_object.get("genes", []):
+    for gene in annotation.genes:
         feature_list.append(_build_gene_feature(gene))
-        for cds in gene.get("cdses", []):
+        for cds in gene.cdses:
             feature_list.append(_build_cds_feature(cds, sequence_str))
     return feature_list
 

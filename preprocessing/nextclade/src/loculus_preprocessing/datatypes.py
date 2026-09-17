@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from enum import StrEnum, unique
 from typing import Any, Final
 
+from .nextclade_annotation import NextcladeAnnotation
+
 logger = logging.getLogger(__name__)
 
 AccessionVersion = str
@@ -172,7 +174,7 @@ class SubmissionData:
     processed_entry: ProcessedEntry
     submitter: str | None
     group_id: int | None = None
-    annotations: dict[str, Any] | None = None
+    annotations: dict[SequenceName, NextcladeAnnotation | None] | None = None
 
 
 @dataclass
