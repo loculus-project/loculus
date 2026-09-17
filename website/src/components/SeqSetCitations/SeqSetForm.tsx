@@ -10,6 +10,7 @@ import type { ProblemDetail } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
+import { formatErrorMessage } from '../../utils/formatErrorMessage.ts';
 import { deserializeAccessionInput, serializeSeqSetRecords } from '../../utils/parseAccessionInput';
 import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';
@@ -230,7 +231,7 @@ function useActionHooks(
                 location.href = redirectUrl;
             },
             onError: async (error: unknown) => {
-                await logger.info(`Failed to create seqSet. Error: '${JSON.stringify(error)})}'`);
+                await logger.info(`Failed to create seqSet. Error: '${formatErrorMessage(error)})}'`);
                 if (error instanceof AxiosError) {
                     const responseData = error.response?.data as ProblemDetail | undefined;
                     if (responseData !== undefined) {
@@ -249,7 +250,7 @@ function useActionHooks(
                 location.href = redirectUrl;
             },
             onError: async (error) => {
-                await logger.info(`Failed to update seqSet. Error: '${JSON.stringify(error)})}'`);
+                await logger.info(`Failed to update seqSet. Error: '${formatErrorMessage(error)})}'`);
                 if (error instanceof AxiosError) {
                     const responseData = error.response?.data as ProblemDetail | undefined;
                     if (responseData !== undefined) {
@@ -266,7 +267,7 @@ function useActionHooks(
                 setSeqSetRecordValidation('');
             },
             onError: async (error) => {
-                await logger.info(`Failed to validate seqSet records. Error: '${JSON.stringify(error)})}'`);
+                await logger.info(`Failed to validate seqSet records. Error: '${formatErrorMessage(error)})}'`);
                 if (error instanceof AxiosError && error.response?.data !== undefined) {
                     const responseData = error.response.data as ProblemDetail;
                     const message = `${responseData.title}. ${responseData.detail}`;

@@ -7,6 +7,7 @@ import NeedToLogin from '../../components/common/NeedToLogin.astro';
 import { getRuntimeConfig, seqSetsAreEnabled } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SeqSetCitationClient } from '../../services/seqSetCitationClient.ts';
+import { formatErrorMessage } from '../../utils/formatErrorMessage';
 import { getAccessToken } from '../../utils/getAccessToken';
 import { getUrlForKeycloakAccountPage } from '../../utils/getAuthUrl.ts';
 
@@ -47,7 +48,7 @@ const editAccountUrl = (await getUrlForKeycloakAccountPage()) + '/#/personal-inf
                             ),
                             (error) => (
                                 <ErrorFeedback
-                                    message={'Error while fetching author profile: ' + JSON.stringify(error)}
+                                    message={'Error while fetching author profile: ' + formatErrorMessage(error)}
                                     client:load
                                 />
                             ),
@@ -78,7 +79,7 @@ const editAccountUrl = (await getUrlForKeycloakAccountPage()) + '/#/personal-inf
                                     ),
                                     (error) => (
                                         <ErrorFeedback
-                                            message={'Error while fetching seqSets: ' + JSON.stringify(error)}
+                                            message={'Error while fetching seqSets: ' + formatErrorMessage(error)}
                                             client:load
                                         />
                                     ),

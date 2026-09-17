@@ -6,6 +6,7 @@ import { type Err, err, ok, type Result } from 'neverthrow';
 
 import { type InstanceLogger } from '../logger.ts';
 import { problemDetail, type ProblemDetail } from '../types/backend.ts';
+import { formatErrorMessage } from '../utils/formatErrorMessage.ts';
 
 type ZodiosMethods<Api extends ZodiosEndpointDefinitions> = Aliases<Api>;
 
@@ -68,40 +69,33 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
             };
         }
 
-        const message = error.message;
-        if (error.response !== undefined) {
-            const requestId =
-                error.response.headers['x-request-id'] !== undefined
-                    ? `(request id ${error.response.headers['x-request-id']}) `
-                    : '';
-
-            let problemDetailResponse;
-            try {
-                problemDetailResponse = problemDetail.parse(this.tryToExtractProblemDetail(error.response));
-            } catch (_) {
-                this.logger.error(
-                    `Unknown error from ${this.serviceName} ${requestId}: ${JSON.stringify(error.response.data)}`,
-                );
-                return {
-                    type: 'about:blank',
-                    title: error.message,
-                    status: 0,
-                    detail: `Unknown error from ${this.serviceName}`,
-                    instance: method,
-                };
-            }
-
-            this.logger.info(`${requestId}${message}: ${problemDetailResponse.detail}`);
-            return problemDetailResponse;
-        }
-
-        this.logger.error(`Unknown error from ${this.serviceName}: ${JSON.stringify(error)}`);
-        return {
+        // Deliberately not asProblemDetail: a body this client cannot parse is reported as coming
+        // from the service rather than surfaced raw, so the fallback wording differs.
+        const unknownError = {
             type: 'about:blank',
             title: error.message,
             status: 0,
             detail: `Unknown error from ${this.serviceName}`,
             instance: method,
         };
+
+        if (error.response === undefined) {
+            this.logger.error(`Unknown error from ${this.serviceName}: ${formatErrorMessage(error)}`);
+            return unknownError;
+        }
+
+        const requestId =
+            error.response.headers['x-request-id'] !== undefined
+                ? `(request id ${error.response.headers['x-request-id']}) `
+                : '';
+
+        const parsed = problemDetail.safeParse(this.tryToExtractProblemDetail(error.response));
+        if (!parsed.success) {
+            this.logger.error(`Unknown error from ${this.serviceName} ${requestId}: ${formatErrorMessage(error)}`);
+            return unknownError;
+        }
+
+        this.logger.info(`${requestId}${error.message}: ${parsed.data.detail}`);
+        return parsed.data;
     }
 }
