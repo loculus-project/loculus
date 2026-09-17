@@ -278,25 +278,11 @@ def _build_cds_feature(cds: NextcladeCds, sequence_str: str) -> SeqFeature:
 
 
 def get_seq_features(annotation: NextcladeAnnotation, sequence_str: str) -> list[SeqFeature]:
-    """
-    Takes a dictionary object with the following structure:
-    {
-        "genes": [
-            {
-            "range": {"begin": ..., "end": ...},
-            "attributes": {"gene": ..., ...},
-            "cdses": [
-                {"segments": [{"range": {"begin": 1, "end": 10}, "strand": "+", "frame": ...}],
-                "attributes": {"gene": ..., ...},
-                "gffFeatureType": ...,
-                },...]
-        },..]
-    }
-    Creates a list of gene and CDS SeqFeature using:
-    - https://www.ebi.ac.uk/ena/WebFeat/
-    - https://www.insdc.org/submitting-standards/feature-table/
-    Converts ranges from index-0 to index-1 and makes the ranges [] have an inclusive start and
-    inclusive end (the default in nextclade is exclusive end)
+    """One gene feature per gene, each followed by its CDS features.
+
+    Qualifiers are those allowed by https://www.ebi.ac.uk/ena/WebFeat/ and
+    https://www.insdc.org/submitting-standards/feature-table/. Locations stay 0-based with an
+    exclusive end here; Biopython's EMBL writer renders them as 1-based inclusive ranges.
     """
     feature_list = []
     for gene in annotation.genes:
