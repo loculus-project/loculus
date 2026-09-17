@@ -13,9 +13,5 @@ fun generateFileId(sequenceNumber: Long): FileId {
     return FILE_ID_PREFIX + serialFileIdPart + generateCheckCharacter(serialFileIdPart)
 }
 
-fun validateFileId(fileId: FileId): Boolean {
-    if (!fileId.startsWith(FILE_ID_PREFIX)) {
-        return false
-    }
-    return validateCheckCharacter(fileId.removePrefix(FILE_ID_PREFIX))
-}
+fun validateFileId(fileId: FileId): Boolean =
+    fileId.startsWith(FILE_ID_PREFIX) && validateCheckCharacter(fileId.removePrefix(FILE_ID_PREFIX))
