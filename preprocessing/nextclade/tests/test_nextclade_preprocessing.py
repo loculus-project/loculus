@@ -1471,9 +1471,7 @@ def test_get_seq_features_maps_phase_to_codon_start():
                 "attributes": {},
                 "cdses": [
                     {
-                        "segments": [
-                            {"range": {"begin": 0, "end": 11}, "strand": "+", "phase": 2}
-                        ],
+                        "segments": [{"range": {"begin": 0, "end": 11}, "strand": "+", "phase": 2}],
                         "attributes": {},
                     }
                 ],
