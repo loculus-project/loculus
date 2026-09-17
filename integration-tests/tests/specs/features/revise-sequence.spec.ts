@@ -139,7 +139,9 @@ groupTest.describe('Bulk sequence revision', () => {
                 await revisionPage.acceptTerms();
                 await revisionPage.clickSubmit();
 
-                await expect(page.getByText(/are not in one of the states/)).toBeVisible();
+                await expect(
+                    page.getByText(/The submitted file content was invalid: Accession versions are not in one of the states/),
+                ).toBeVisible();
                 await expect(
                     page.getByText(/Received unexpected message from backend/),
                 ).toHaveCount(0);
