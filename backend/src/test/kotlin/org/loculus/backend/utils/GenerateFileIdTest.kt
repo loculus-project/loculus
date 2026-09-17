@@ -55,7 +55,9 @@ class GenerateFileIdTest {
     }
 
     companion object {
-        data class FileIdCase(val description: String, val fileId: String, val expectedValidationResult: Boolean)
+        data class FileIdCase(val description: String, val fileId: String, val expectedValidationResult: Boolean) {
+            override fun toString() = description
+        }
 
         @JvmStatic
         fun invalidFileIdCases(): List<FileIdCase> = listOf(
