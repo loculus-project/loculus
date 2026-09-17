@@ -1,3 +1,24 @@
+"""Build EMBL features from a Nextclade annotation.
+
+What the annotation guarantees, and what it does not -- breaking one of the latter
+gives wrong output silently rather than an error:
+
+- Coordinates are 0-based half-open in the submitted sequence's own frame, so they
+  index `sequence_str` directly. This still holds when Nextclade auto-reverse-
+  complements a submission (--retry-reverse-complement, which preprocessing enables):
+  it mirrors the coordinates and reports strand `-`, so honouring the strand is what
+  keeps those entries correct.
+- `strand`, `phase` and `truncation` sit on a CDS's *segments*, never in `attributes`.
+  Taking `phase` from the attributes instead yields codon_start 1 for every CDS and
+  mistranslates any 5'-truncated one. Use `phase`, not `frame`; they differ.
+- Every `attributes` value is a `list[str]` -- GFF3 attributes are multi-valued. Values
+  used as numbers need converting, and a repeated value becomes a repeated qualifier.
+- Segments are listed in GFF row order, which is not necessarily transcription order: a
+  coordinate-sorted GFF splices a minus-strand multi-exon CDS back to front. Nextclade's
+  own translations share the bug, so such a dataset must list minus-strand exons 5'->3'.
+- Translations always use the standard genetic code; /transl_table is not honoured.
+"""
+
 import logging
 from dataclasses import dataclass
 from typing import Any
