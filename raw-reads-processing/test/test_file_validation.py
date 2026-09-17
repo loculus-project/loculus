@@ -273,13 +273,12 @@ def _gz(tmp_path: Path, name: str, payload: bytes) -> Path:
     return path
 
 
-def test_compression_matching_name_and_content_passes(tmp_path):
-    plain = tmp_path / "reads.fastq"
-    plain.write_text(VALID_SINGLE_END)
-    gzipped = _gz(tmp_path, "reads2.fastq.gz", VALID_SINGLE_END.encode())
+def test_gzipped_files_pass(tmp_path):
+    first = _gz(tmp_path, "reads.fastq.gz", VALID_SINGLE_END.encode())
+    second = _gz(tmp_path, "reads2.fastq.gz", VALID_SINGLE_END.encode())
     assert (
         validate_compression(
-            {"reads.fastq": plain, "reads2.fastq.gz": gzipped}, FileFormat.FASTQ
+            {"reads.fastq.gz": first, "reads2.fastq.gz": second}, FileFormat.FASTQ
         )
         is None
     )
@@ -293,25 +292,12 @@ def test_plain_file_named_gz_is_rejected(tmp_path):
     assert "named as gzip-compressed" in exc_info.value.error.message
 
 
-def test_gzipped_file_not_named_gz_is_rejected(tmp_path):
-    """This is the one that used to reach ENA and get gzipped a second time."""
-    path = _gz(tmp_path, "stored", VALID_SINGLE_END.encode())
-    with pytest.raises(InvalidSubmission) as exc_info:
-        validate_compression({"reads.fastq": path}, FileFormat.FASTQ)
-    assert "does not end in '.gz'" in exc_info.value.error.message
-
-
 def test_double_gzipped_file_is_rejected(tmp_path):
     inner = gzip.compress(VALID_SINGLE_END.encode())
     path = _gz(tmp_path, "stored", inner)
     with pytest.raises(InvalidSubmission) as exc_info:
         validate_compression({"reads.fastq.gz": path}, FileFormat.FASTQ)
     assert "more than once" in exc_info.value.error.message
-
-
-def test_compression_check_is_case_insensitive_about_the_name(tmp_path):
-    path = _gz(tmp_path, "stored", VALID_SINGLE_END.encode())
-    assert validate_compression({"READS.FASTQ.GZ": path}, FileFormat.FASTQ) is None
 
 
 def test_truncated_gzip_is_reported_as_invalid_submission(tmp_path):
@@ -485,20 +471,33 @@ def test_validation_timeout_is_reported_as_error(tmp_path, monkeypatch):
     assert "1 second" in str(exc_info.value)
 
 
-@pytest.mark.parametrize(
-    "file_name",
-    ["reads.fastq", "reads.fq", "reads.fastq.gz", "reads.fq.gz"],
-)
+@pytest.mark.parametrize("file_name", ["reads.fastq.gz", "reads.fq.gz"])
 def test_accepted_fastq_extensions(file_name):
     assert validate_file_extensions([file_name]) == FileFormat.FASTQ
 
 
 @pytest.mark.parametrize(
     "file_name",
-    ["READS.FASTQ.GZ", "reads.Fq.Gz", "Reads.FastQ"],
+    ["READS.FASTQ.GZ", "reads.Fq.Gz", "Reads.FastQ.gz"],
 )
 def test_fastq_extension_matching_is_case_insensitive(file_name):
     assert validate_file_extensions([file_name]) == FileFormat.FASTQ
+
+
+@pytest.mark.parametrize("file_name", ["reads.fastq", "reads.fq", "READS.FASTQ"])
+def test_uncompressed_fastq_is_rejected(file_name):
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_file_extensions([file_name])
+    assert "must be gzip-compressed" in exc_info.value.error.message
+    assert ".fastq.gz, .fq.gz" in exc_info.value.error.message
+    assert exc_info.value.error.fileNames == [file_name]
+
+
+def test_uncompressed_fastq_is_reported_even_when_mixed_with_a_valid_file():
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_file_extensions(["reads_1.fastq.gz", "reads_2.fastq"])
+    assert "must be gzip-compressed" in exc_info.value.error.message
+    assert exc_info.value.error.fileNames == ["reads_2.fastq"]
 
 
 @pytest.mark.parametrize("file_name", ["reads.fastq.zst", "reads.fastq.bz2"])
@@ -512,12 +511,13 @@ def test_unsupported_extension_is_rejected():
     with pytest.raises(InvalidSubmission) as exc_info:
         validate_file_extensions(["file.txt"])
     assert "File is not in accepted format" in exc_info.value.error.message
+    assert "Accepted file extensions: .fastq.gz, .fq.gz" in exc_info.value.error.message
 
 
 def test_mixed_formats_are_rejected_():
     with pytest.raises(InvalidSubmission) as exc_info:
         validate_file_extensions(
-            ["reads.fastq", "reads.bam"],
+            ["reads.fastq.gz", "reads.bam"],
             accepted_formats=[FileFormat.FASTQ, FileFormat.BAM],
         )
     assert "mixed formats" in exc_info.value.error.message
@@ -527,7 +527,7 @@ def test_too_many_fastq_files_are_rejected():
     with pytest.raises(InvalidSubmission) as exc_info:
         validate_file_numbers(
             FileFormat.FASTQ,
-            ["reads1.fastq", "reads2.fastq", "reads3.fastq"],
+            ["reads1.fastq.gz", "reads2.fastq.gz", "reads3.fastq.gz"],
         )
     assert "Too many FASTQ files" in exc_info.value.error.message
 

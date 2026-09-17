@@ -1,6 +1,10 @@
 import { expect, Page } from '@playwright/test';
 import { ReviewPage } from './review.page';
-import { prepareTmpDirForSingleUpload, uploadFilesFromTmpDir } from '../utils/file-upload-helpers';
+import {
+    contentForUpload,
+    prepareTmpDirForSingleUpload,
+    uploadFilesFromTmpDir,
+} from '../utils/file-upload-helpers';
 import { waitForUrlReportingAlerts } from '../utils/navigation-helpers';
 
 export class EditPage {
@@ -52,7 +56,7 @@ export class EditPage {
         await this.page.getByTestId(`add_${fileCategory}`).setInputFiles({
             name: fileName,
             mimeType: 'text/plain',
-            buffer: Buffer.from(content),
+            buffer: Buffer.from(contentForUpload(fileName, content)),
         });
     }
 
