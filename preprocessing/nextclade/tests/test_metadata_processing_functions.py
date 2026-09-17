@@ -3,6 +3,7 @@ from dataclasses import dataclass, field, replace
 from unittest import mock
 
 import pytest
+import requests
 from factory_methods import (
     DEFAULT_EXTERNAL_SERVICES,
     DEFAULT_TEST_CONTEXT,
@@ -16,6 +17,7 @@ from factory_methods import (
     verify_processed_entry,
 )
 
+from loculus_preprocessing import external_services
 from loculus_preprocessing.config import Config, ProcessingSpec, get_config, get_processing_order
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
@@ -1773,6 +1775,102 @@ def test_call_function_converts_raw_errors_to_annotations() -> None:
     assert annotation.unprocessedFields == (
         AnnotationSource(name="myField", type=AnnotationSourceType.METADATA),
     )
+
+
+@dataclass
+class EnaAccessionCase:
+    name: str
+    accession: str
+    # How ENA responds: an HTTP status code, or an exception raised by the session.
+    # None means ENA must not be contacted at all.
+    ena_response: int | Exception | None = None
+    is_insdc_ingest_group: bool = False
+    expected_datum: str | None = None
+    expected_error: str | None = None
+    expected_url: str | None = None
+
+
+ena_accession_cases = [
+    EnaAccessionCase(
+        name="public_bioproject_is_accepted",
+        accession="PRJEB12345",
+        ena_response=200,
+        expected_datum="PRJEB12345",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB12345",
+    ),
+    EnaAccessionCase(
+        name="nucleotide_accession_uses_embl_endpoint",
+        accession="OZ123456",
+        ena_response=200,
+        expected_datum="OZ123456",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/embl/OZ123456",
+    ),
+    EnaAccessionCase(
+        name="unknown_accession_is_rejected",
+        accession="PRJEB99999",
+        ena_response=404,
+        expected_error="does not exist on ENA",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB99999",
+    ),
+    EnaAccessionCase(
+        name="server_error_asks_submitter_to_retry",
+        # 501 is not in the session's status_forcelist, so it arrives as a response
+        accession="PRJEB12345",
+        ena_response=501,
+        expected_error="could not reach ENA",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB12345",
+    ),
+    EnaAccessionCase(
+        name="exhausted_retries_ask_submitter_to_retry",
+        # what urllib3 raises once the retries for 429/5xx in status_forcelist run out
+        accession="PRJEB12345",
+        ena_response=requests.exceptions.RetryError(),
+        expected_error="could not reach ENA",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB12345",
+    ),
+    EnaAccessionCase(
+        name="missing_accession_is_not_checked",
+        accession="",
+    ),
+    EnaAccessionCase(
+        name="insdc_ingested_accession_is_not_checked",
+        # ingest joins multiple bioprojects with commas, which ENA cannot resolve
+        accession="PRJNA123,PRJNA456",
+        is_insdc_ingest_group=True,
+        expected_datum="PRJNA123,PRJNA456",
+    ),
+]
+
+
+@pytest.mark.parametrize("case", ena_accession_cases, ids=lambda c: c.name)
+def test_check_ena_accession(case: EnaAccessionCase) -> None:
+    external_services.ena_cache.clear()
+    with mock.patch.object(external_services.ena_cache, "session") as mock_session:
+        if isinstance(case.ena_response, Exception):
+            mock_session.get.side_effect = case.ena_response
+        else:
+            mock_session.get.return_value = mock.MagicMock(status_code=case.ena_response)
+
+        result = ProcessingFunctions.check_ena_accession(
+            input_data={"accession": case.accession},
+            output_field="bioprojectAccession",
+            input_fields=["bioprojectAccession"],
+            args={},
+            context=replace(DEFAULT_TEST_CONTEXT, is_insdc_ingest_group=case.is_insdc_ingest_group),
+        )
+
+        assert result.datum == case.expected_datum
+        if case.expected_error is None:
+            assert result.errors == []
+        else:
+            assert len(result.errors) == 1
+            assert case.expected_error in result.errors[0]
+
+        if case.expected_url is None:
+            assert mock_session.get.call_count == 0
+        else:
+            mock_session.get.assert_called_once()
+            assert mock_session.get.call_args.args[0] == case.expected_url
 
 
 if __name__ == "__main__":
