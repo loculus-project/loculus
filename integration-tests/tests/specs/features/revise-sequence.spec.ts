@@ -83,6 +83,8 @@ groupTest.describe('Revision page template downloads', () => {
 groupTest.describe('Bulk sequence revision', () => {
     groupTest('can revise multiple sequences via file upload', async ({ page, groupId }) => {
         groupTest.setTimeout(200_000);
+        // The second revision below must fail; the browser logs that 422 itself.
+        groupTest.info().annotations.push({ type: 'allow-console-error', description: '422' });
 
         const submissionPage = new SingleSequenceSubmissionPage(page);
         const timestamp = Date.now();

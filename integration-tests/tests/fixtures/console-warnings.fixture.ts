@@ -1,7 +1,7 @@
 import { test as base, ConsoleMessage, expect } from '@playwright/test';
 
 export const test = base.extend({
-    page: async ({ page, browserName }, use) => {
+    page: async ({ page, browserName }, use, testInfo) => {
         const handleConsole = (msg: ConsoleMessage) => {
             if (msg.type() === 'warning' || msg.type() === 'error') {
                 const messageText = msg.text();
@@ -14,9 +14,15 @@ export const test = base.extend({
                     'has been externalized for browser compatibility.',
                 ];
 
-                const isHarmless = harmlessMessages.some((harmless) =>
-                    messageText.includes(harmless),
-                );
+                // A test that must provoke a failed request annotates itself: the browser logs
+                // "Failed to load resource" for any non-2xx response, which no code here emits.
+                const isHarmless =
+                    harmlessMessages.some((harmless) => messageText.includes(harmless)) ||
+                    testInfo.annotations.some(
+                        (annotation) =>
+                            annotation.type === 'allow-console-error' &&
+                            messageText.includes(annotation.description ?? ''),
+                    );
 
                 if (!isHarmless && browserName === 'chromium') {
                     expect(false, `Unexpected console ${msg.type()}: ${messageText}`).toBe(true);
