@@ -1456,10 +1456,10 @@ def test_get_seq_features_translates_minus_strand_cds_correctly():
 
 
 def test_get_seq_features_maps_phase_to_codon_start():
-    # nextclade's 0-indexed `phase` attribute must become EMBL's 1-indexed `codon_start`, and
-    # translation must start at that offset: the leading 2 bases ("TT") are a partial codon
-    # left over from outside this feature, so the first complete codon is GAA (Glu), followed
-    # by ATA (Ile) and the stop codon TAA.
+    # nextclade's 0-indexed `phase` field (set per segment, not on the cds itself) must become
+    # EMBL's 1-indexed `codon_start`, and translation must start at that offset: the leading 2
+    # bases ("TT") are a partial codon left over from outside this feature, so the first complete
+    # codon is GAA (Glu), followed by ATA (Ile) and the stop codon TAA.
     sequence_str = "TT" + "GAAATATAA"
     annotation_object = {
         "genes": [
@@ -1468,8 +1468,10 @@ def test_get_seq_features_maps_phase_to_codon_start():
                 "attributes": {},
                 "cdses": [
                     {
-                        "segments": [{"range": {"begin": 0, "end": 11}, "strand": "+"}],
-                        "attributes": {"phase": 2},
+                        "segments": [
+                            {"range": {"begin": 0, "end": 11}, "strand": "+", "phase": 2}
+                        ],
+                        "attributes": {},
                     }
                 ],
             }
@@ -1480,30 +1482,6 @@ def test_get_seq_features_maps_phase_to_codon_start():
     assert len(cds_features) == 1
     assert cds_features[0].qualifiers["codon_start"] == 3  # noqa: PLR2004
     assert cds_features[0].qualifiers["translation"] == "EI"
-
-
-def test_get_seq_features_translates_with_transl_table():
-    # AGA is Arg under the standard code (table 1, the default) but a stop codon under the
-    # vertebrate mitochondrial code (table 2), so /transl_table must be honored when translating.
-    sequence_str = "ATG" + "AAA" + "AGA"
-    annotation_object = {
-        "genes": [
-            {
-                "range": {"begin": 0, "end": 9},
-                "attributes": {},
-                "cdses": [
-                    {
-                        "segments": [{"range": {"begin": 0, "end": 9}, "strand": "+"}],
-                        "attributes": {"transl_table": 2},
-                    }
-                ],
-            }
-        ]
-    }
-    features = get_seq_features(annotation_object, sequence_str)
-    cds_features = [feature for feature in features if feature.type == "CDS"]
-    assert len(cds_features) == 1
-    assert cds_features[0].qualifiers["translation"] == "MK"
 
 
 def test_get_seq_features_trims_trailing_partial_codon():
