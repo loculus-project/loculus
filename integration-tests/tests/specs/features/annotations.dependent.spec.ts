@@ -28,11 +28,12 @@ test.describe('Sequence Preview Annotations', () => {
             page.getByTestId('sequence-preview-modal').getByText('Annotations'),
         ).toBeVisible();
 
-        const emblLink = page.getByRole('link', { name: `${accessionVersion}.embl` });
+        const emblFileName = `${accessionVersion}.embl`;
+        const emblLink = page.getByRole('link', { name: emblFileName });
         await expect(emblLink).toBeVisible();
 
         const expected_content = EMBL_CONTENT.replace(/LOC_\w{6,10}/g, accession);
-        await getFromLinkTargetAndAssertContent(emblLink, expected_content);
+        await getFromLinkTargetAndAssertContent(emblLink, expected_content, emblFileName);
     });
 });
 
