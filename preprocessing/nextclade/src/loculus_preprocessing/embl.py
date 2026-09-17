@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from Bio.Seq import Seq
@@ -97,13 +97,13 @@ def get_authors(authors: str) -> str:
 
 @dataclass(frozen=True)
 class EmblAnnotations:
-    cds_qualifiers: list[str] = field(default_factory=list)
-    gene_qualifiers: list[str] = field(default_factory=list)
+    cds_qualifiers: tuple[str, ...] = ()
+    gene_qualifiers: tuple[str, ...] = ()
 
 
 # EMBL allowed qualifiers constant
 EMBL_ANNOTATIONS = EmblAnnotations(
-    cds_qualifiers=[
+    cds_qualifiers=(
         "allele",
         "artificial_location",
         "circular_RNA",
@@ -131,8 +131,8 @@ EMBL_ANNOTATIONS = EmblAnnotations(
         "transl_except",
         # "transl_table",  # nextclade uses the standard transl_table 1
         "translation",
-    ],
-    gene_qualifiers=[
+    ),
+    gene_qualifiers=(
         "allele",
         # "db_xref",
         "experiment",
@@ -150,7 +150,7 @@ EMBL_ANNOTATIONS = EmblAnnotations(
         "pseudogene",
         "standard_name",
         "trans_splicing",
-    ],
+    ),
 )
 
 
@@ -161,7 +161,7 @@ EMBL_TO_NEXTCLADE_ATTRIBUTES = {
 
 def _build_qualifiers(
     attributes: dict[str, Any],
-    allowed_qualifiers: list[str],
+    allowed_qualifiers: tuple[str, ...],
 ) -> dict[str, Any]:
     """Return allowed EMBL qualifiers in deterministic order."""
     qualifiers = {}
