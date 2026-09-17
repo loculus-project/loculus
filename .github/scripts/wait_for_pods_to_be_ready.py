@@ -9,13 +9,12 @@ import time
 def main(timeout=480):
     end_time = time.time() + timeout
 
-    wait_for_generated_secrets(end_time)
-
     while True:
         pods = get_pods()
 
         if time.time() > end_time:
             print("Aborting, timeout reached")
+            report_unreconciled_secrets()
             exit(1)
 
         try:
@@ -29,38 +28,25 @@ def main(timeout=480):
         time.sleep(5)
 
 
-def wait_for_generated_secrets(end_time):
-    # StringSecret publishes no Ready condition; status.secret is set only once the
-    # generator has created the Secret, so it is the reconciled signal.
-    while True:
-        result = subprocess.run(
-            ["kubectl", "get", "stringsecrets", "-o", "json"],
-            capture_output=True,
-            text=True,
-        )
-        if result.returncode != 0:
-            # No CRD means nothing will ever be generated; let the pod wait report it.
-            print("Could not list StringSecrets:", result.stderr.strip())
-            return
+def report_unreconciled_secrets():
+    # StringSecret has no Ready condition; status.secret is set only once the generator
+    # has created the Secret. Pods mount these, so an unreconciled CR is why they are
+    # stuck in Init:CreateContainerConfigError.
+    result = subprocess.run(
+        ["kubectl", "get", "stringsecrets", "-o", "json"],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return
 
-        pending = [
-            item["metadata"]["name"]
-            for item in json.loads(result.stdout)["items"]
-            if not item.get("status", {}).get("secret")
-        ]
-        if not pending:
-            return
-
-        if time.time() > end_time:
-            print(
-                "Aborting, secret generator never reconciled:",
-                ", ".join(pending),
-                "- pods depending on these cannot start",
-            )
-            exit(1)
-
-        print("Waiting for generated secrets:", ", ".join(pending))
-        time.sleep(5)
+    pending = [
+        item["metadata"]["name"]
+        for item in json.loads(result.stdout)["items"]
+        if not item.get("status", {}).get("secret")
+    ]
+    if pending:
+        print("Secret generator never reconciled:", ", ".join(pending))
 
 
 def get_pods():
