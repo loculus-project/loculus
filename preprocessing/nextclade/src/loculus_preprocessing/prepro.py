@@ -6,6 +6,7 @@ from tempfile import TemporaryDirectory
 from typing import Any
 
 from pydantic import ValidationError
+from loculus_preprocessing.external_services import ENAVisibilityChecker
 
 from .backend import (
     download_diamond_db,

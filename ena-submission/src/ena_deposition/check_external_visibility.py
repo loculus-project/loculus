@@ -68,7 +68,13 @@ class VisibilityChecker(ABC):
 
 
 class ENAVisibilityChecker(VisibilityChecker):
-    """Checker for ENA visibility"""
+    """Checker for ENA visibility
+
+    This class is adapted and re-used in
+    preprocessing/nextclade/src/loculus_preprocessing/processing_functions.py
+    If you change anything here, check if the update needs to be applied there
+    as well.
+    """
 
     def check_visibility(self, config: Config, accession: str) -> datetime | None:
         file_type = (

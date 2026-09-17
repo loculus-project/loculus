@@ -2,6 +2,7 @@ import logging
 import urllib.parse
 from collections import OrderedDict
 from dataclasses import dataclass
+from http import HTTPStatus
 
 import requests
 from pydantic import BaseModel, Field, ValidationError
@@ -17,6 +18,7 @@ from loculus_preprocessing.datatypes import (
     ProcessingAnnotation,
     RawProcessingResult,
     _internal_error_message,
+    processing_error,
     raw_internal_error,
 )
 
@@ -316,3 +318,43 @@ class FileProcessingService:
         if not internal_error:
             return ProcessingAnnotation([source], [source], message)
         return ProcessingAnnotation([source], [source], _internal_error_message(message))
+
+
+ena_cache = RequestCache(1024)
+
+
+class ENAVisibilityChecker:
+    """Used to check ENA visibility
+
+    Adapted from the ENAVisibilityChecker in
+    ena-submission/src/ena_deposition/check_external_visibility.py.
+    If anything changes in that class, check whether the update needs to
+    be applied here as well.
+    """
+
+    def __init__(
+        self,
+        timeout_seconds: int = 30,
+    ):
+        self.timeout_seconds = timeout_seconds
+
+    def check_visibility(self, accession: str) -> RawProcessingResult:
+        file_type = (
+            "xml"
+            if accession.startswith(("PRJ", "SAM", "GCA", "ERR", "ERX", "SRR", "SRX", "DRR", "DRX"))
+            else "embl"
+        )
+        url = f"https://www.ebi.ac.uk/ena/browser/api/{file_type}/{accession}"
+        ena_error_message = (
+            f"unable to validate accession '{accession}': could not reach ENA, "
+            "please try resubmitting later"
+        )
+        try:
+            response = ena_cache.get_or_fetch(url, timeout=self.timeout_seconds)
+        except requests.RequestException:
+            return processing_error(ena_error_message)
+        if response.status_code == HTTPStatus.OK:
+            return RawProcessingResult(datum=accession)
+        if response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
+            return processing_error(ena_error_message)
+        return processing_error(f"accession '{accession}' does not exist on ENA")
