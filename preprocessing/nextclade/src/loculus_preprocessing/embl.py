@@ -1,5 +1,4 @@
-"""Build EMBL features from a Nextclade annotation.
-"""
+"""Build EMBL features from a Nextclade annotation."""
 
 import logging
 from dataclasses import dataclass
