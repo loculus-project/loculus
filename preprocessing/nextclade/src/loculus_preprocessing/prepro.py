@@ -595,11 +595,6 @@ def unpack_annotations(
     nextclade_metadata: dict[str, Any] | None,
 ) -> tuple[dict[SequenceName, NextcladeAnnotation | None] | None, list[ProcessingAnnotation]]:
     """Lift the annotation the EMBL renderer needs out of Nextclade's raw result.
-
-    This is the only place the raw JSON becomes a typed object, so it is also where the
-    shape is checked. An annotation that does not match is reported against the sequence
-    it came from and dropped: the entry keeps its processed metadata and gains an error,
-    rather than losing a flatfile without saying so.
     """
     if not config.create_embl_file or not nextclade_metadata:
         return None, []
