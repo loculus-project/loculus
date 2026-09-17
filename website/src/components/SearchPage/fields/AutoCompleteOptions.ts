@@ -90,9 +90,7 @@ const createGenericOptionsHook = (
         return {
             options,
             isPending,
-            error: error
-                ? `Error while loading options for field "${fieldName}": ${formatErrorMessage(error)}`
-                : null,
+            error: error ? `Error while loading options for field "${fieldName}": ${formatErrorMessage(error)}` : null,
             load: () => mutate(lapisParams),
         };
     };
@@ -238,8 +236,7 @@ const createLineageOptionsHook = (
 
         const errors = [
             aggregatedEndpointError && `aggregated endpoint: ${formatErrorMessage(aggregatedEndpointError)}`,
-            definitionEndpointError &&
-                `lineage definition endpoint: ${formatErrorMessage(definitionEndpointError)}`,
+            definitionEndpointError && `lineage definition endpoint: ${formatErrorMessage(definitionEndpointError)}`,
         ].filter(Boolean);
 
         return {
