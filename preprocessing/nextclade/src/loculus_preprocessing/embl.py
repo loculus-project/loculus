@@ -192,14 +192,23 @@ def _build_qualifiers(
 
 def _build_gene_feature(gene: NextcladeGene) -> SeqFeature:
     qualifiers = _build_qualifiers(gene.attributes, EMBL_ANNOTATIONS.gene_qualifiers)
-    # The annotation carries a strand only on a CDS's segments, so a gene takes its CDSes'.
+    # The annotation carries strand and truncation only on a CDS's segments, so a gene takes
+    # both from its CDSes: INSDC marks a gene holding a truncated CDS partial too.
     strand = None
+    start, end = gene.range.begin, gene.range.end
     if gene.cdses:
-        strand = -1 if gene.cdses[0].segments[0].strand == "-" else 1
+        segments = gene.cdses[0].segments
+        strand = -1 if segments[0].strand == "-" else 1
+        lower = segments[0].truncation.five_prime > 0
+        upper = segments[-1].truncation.three_prime > 0
+        if strand == -1:
+            lower, upper = upper, lower
+        start = BeforePosition(start) if lower else start
+        end = AfterPosition(end) if upper else end
     # In FeatureLocation start and end are zero based, exclusive end.
     # thus an embl entry of 123..150 (one based counting) becomes a location of [122:150]
     return SeqFeature(
-        FeatureLocation(start=gene.range.begin, end=gene.range.end, strand=strand),
+        FeatureLocation(start=start, end=end, strand=strand),
         type="gene",
         qualifiers=qualifiers,
     )
@@ -326,6 +335,8 @@ def create_flatfile(  # noqa: PLR0914
             Seq(sequence_str),
             id=f"{accession}_{seq_name}" if config.multi_segment else accession,
             annotations={
+                # Biopython's EMBL writer reads this specific key to fill in the ID line's
+                # molecule-type token - it is not an INSDC qualifier (that's "mol_type" below).
                 "molecule_type": str(molecule_type),
                 "organism": organism,
                 "topology": topology,
@@ -340,7 +351,7 @@ def create_flatfile(  # noqa: PLR0914
             qualifiers={
                 "mol_type": str(molecule_type),
                 "organism": organism,
-                "country": country,
+                "geo_loc_name": country,
                 "collection_date": collection_date,
             },
         )

@@ -28,11 +28,12 @@ test.describe('Sequence Preview Annotations', () => {
             page.getByTestId('sequence-preview-modal').getByText('Annotations'),
         ).toBeVisible();
 
-        const emblLink = page.getByRole('link', { name: `${accessionVersion}.embl` });
+        const emblFileName = `${accessionVersion}.embl`;
+        const emblLink = page.getByRole('link', { name: emblFileName });
         await expect(emblLink).toBeVisible();
 
         const expected_content = EMBL_CONTENT.replace(/LOC_\w{6,10}/g, accession);
-        await getFromLinkTargetAndAssertContent(emblLink, expected_content);
+        await getFromLinkTargetAndAssertContent(emblLink, expected_content, emblFileName);
     });
 });
 
@@ -53,9 +54,9 @@ FH
 FT   source          1..910
 FT                   /mol_type="genomic RNA"
 FT                   /organism="Sudan ebolavirus"
-FT                   /country="France"
+FT                   /geo_loc_name="France"
 FT                   /collection_date="2021-05-12"
-FT   gene            1..910
+FT   gene            1..>910
 FT                   /gene="NP"
 FT                   /product="NP"
 FT   CDS             1..>910

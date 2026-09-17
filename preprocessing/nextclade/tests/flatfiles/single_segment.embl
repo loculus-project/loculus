@@ -15,7 +15,7 @@ FH
 FT   source          1..18875
 FT                   /mol_type="genomic RNA"
 FT                   /organism="Test Ebola Sudan Virus"
-FT                   /country="Netherlands: North Holland, Amsterdam"
+FT                   /geo_loc_name="Netherlands: North Holland, Amsterdam"
 FT                   /collection_date="2024-01-01"
 FT   gene            56..3007
 FT                   /gene="NPEbolaSudan"

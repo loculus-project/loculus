@@ -45,6 +45,13 @@ def _write_fastq(path: Path, records: list[tuple[str, str]]) -> None:
     path.write_text("\n".join(lines) + "\n")
 
 
+def _write_fastq_gz(path: Path, records: list[tuple[str, str]]) -> None:
+    lines = []
+    for i, (seq, qual) in enumerate(records):
+        lines += [f"@read{i}", seq, "+", qual]
+    path.write_bytes(gzip.compress(("\n".join(lines) + "\n").encode()))
+
+
 def _file(name: str, url: str) -> FileIdAndNameAndReadUrl:
     return FileIdAndNameAndReadUrl(fileId="f1", name=name, url=url)
 
@@ -143,11 +150,11 @@ def test_host_reads_above_threshold_is_an_error(tmp_path):
     # deacon.idx; config's deacon_max_host_reads_proportion is 0.05, so 75% > 5%.
     host_reads = _parse_fastq_records(FIXTURES_DIR / "test_small_1.fastq")[:3]
     non_host_read = _random_read()
-    reads = tmp_path / "reads.fastq"
-    _write_fastq(reads, [*host_reads, non_host_read])
+    reads = tmp_path / "reads.fastq.gz"
+    _write_fastq_gz(reads, [*host_reads, non_host_read])
     files = RequestWithFiles(
         accessionVersion="accession.1",
-        files=[_file("reads.fastq", url=str(reads))],
+        files=[_file("reads.fastq.gz", url=str(reads))],
     )
     with pytest.raises(InvalidSubmission) as exc_info:
         process_files.validate_raw_reads_submission(_config(), files)
@@ -161,11 +168,11 @@ def test_host_reads_at_or_below_threshold_passes(tmp_path):
     # lands exactly at the threshold: not > 0.05, so no error should be raised.
     host_reads = _parse_fastq_records(FIXTURES_DIR / "test_small_1.fastq")[:1]
     non_host_reads = [_random_read() for _ in range(19)]
-    reads = tmp_path / "reads.fastq"
-    _write_fastq(reads, [*host_reads, *non_host_reads])
+    reads = tmp_path / "reads.fastq.gz"
+    _write_fastq_gz(reads, [*host_reads, *non_host_reads])
     files = RequestWithFiles(
         accessionVersion="accession.1",
-        files=[_file("reads.fastq", url=str(reads))],
+        files=[_file("reads.fastq.gz", url=str(reads))],
     )
     result = process_files.validate_raw_reads_submission(_config(), files)
     assert result is None  # no error raised
