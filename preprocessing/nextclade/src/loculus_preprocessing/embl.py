@@ -2,6 +2,7 @@
 
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 from Bio.Seq import Seq
 from Bio.SeqFeature import (
@@ -249,14 +250,17 @@ def _translate_cds(
 def _build_cds_feature(cds: NextcladeCds, sequence_str: str) -> SeqFeature:
     segments = cds.segments
     location = _cds_location(segments)
-    qualifiers = _build_qualifiers(cds.attributes, EMBL_ANNOTATIONS.cds_qualifiers)
     # codon_start (phase in nextclade) defines the offset at which the first complete codon of a
     # coding feature can be found, relative to the first base of that feature, in nextclade this
     # is 0-indexed, in EMBL it is 1 indexed. nextclade puts `phase` on each segment, not on the
     # cds itself; only the first segment's phase is relevant, since EMBL's codon_start only
     # applies to the first base of a (possibly joined) feature.
-    qualifiers["codon_start"] = segments[0].phase + 1
-    qualifiers["translation"] = _translate_cds(sequence_str, location, qualifiers["codon_start"])
+    codon_start = segments[0].phase + 1
+    qualifiers: dict[str, Any] = {
+        **_build_qualifiers(cds.attributes, EMBL_ANNOTATIONS.cds_qualifiers),
+        "codon_start": codon_start,
+        "translation": _translate_cds(sequence_str, location, codon_start),
+    }
     return SeqFeature(
         location=location,
         type="CDS",
@@ -341,9 +345,9 @@ def create_flatfile(  # noqa: PLR0914
             },
         )
         sequence.features.append(source_feature)
-        if annotation_object and annotation_object.get(seq_name, None):
-            seq_feature_list = get_seq_features(annotation_object[seq_name], sequence_str)
-            for feature in seq_feature_list:
+        annotation = annotation_object.get(seq_name) if annotation_object else None
+        if annotation:
+            for feature in get_seq_features(annotation, sequence_str):
                 sequence.features.append(feature)
 
         embl_content.append(sequence.format("embl"))

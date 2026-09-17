@@ -594,8 +594,7 @@ def unpack_annotations(
     accession_version: AccessionVersion,
     nextclade_metadata: dict[str, Any] | None,
 ) -> tuple[dict[SequenceName, NextcladeAnnotation | None] | None, list[ProcessingAnnotation]]:
-    """Lift the annotation the EMBL renderer needs out of Nextclade's raw result.
-    """
+    """Lift the annotation the EMBL renderer needs out of Nextclade's raw result."""
     if not config.create_embl_file or not nextclade_metadata:
         return None, []
     annotations: dict[SequenceName, NextcladeAnnotation | None] = {}
