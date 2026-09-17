@@ -3,7 +3,14 @@ from dataclasses import dataclass
 from typing import Any
 
 from Bio.Seq import Seq
-from Bio.SeqFeature import CompoundLocation, FeatureLocation, Reference, SeqFeature
+from Bio.SeqFeature import (
+    AfterPosition,
+    BeforePosition,
+    CompoundLocation,
+    FeatureLocation,
+    Reference,
+    SeqFeature,
+)
 from Bio.SeqRecord import SeqRecord
 from unidecode import unidecode
 
@@ -181,21 +188,51 @@ def _build_gene_feature(gene: dict[str, Any]) -> SeqFeature:
         msg = f"Gene range is missing or incomplete: {gene_range}"
         raise ValueError(msg)
     qualifiers = _build_qualifiers(gene.get("attributes", {}), EMBL_ANNOTATIONS.gene_qualifiers)
+    # The annotation carries a strand only on a CDS's segments, so a gene takes its CDSes'.
+    cdses = gene.get("cdses", [])
+    strand = None
+    if cdses and cdses[0].get("segments"):
+        strand = -1 if cdses[0]["segments"][0].get("strand") == "-" else 1
     # In FeatureLocation start and end are zero based, exclusive end.
     # thus an embl entry of 123..150 (one based counting) becomes a location of [122:150]
     return SeqFeature(
-        FeatureLocation(start=gene_range["begin"], end=gene_range["end"]),
+        FeatureLocation(start=gene_range["begin"], end=gene_range["end"], strand=strand),
         type="gene",
         qualifiers=qualifiers,
     )
 
 
+def _segment_truncation(segment: dict[str, Any]) -> tuple[int, int]:
+    """Nucleotides of this segment (5', 3') that the sequence does not show."""
+    truncation = segment.get("truncation")
+    if not isinstance(truncation, dict):
+        return 0, 0
+    if "both" in truncation:
+        five_prime, three_prime = truncation["both"]
+        return int(five_prime), int(three_prime)
+    return int(truncation.get("fivePrime", 0)), int(truncation.get("threePrime", 0))
+
+
 def _cds_location(segments: list[dict[str, Any]]) -> FeatureLocation | CompoundLocation:
     strands = [-1 if segment.get("strand") == "-" else +1 for segment in segments]
-    locations = [
-        FeatureLocation(start=segment["range"]["begin"], end=segment["range"]["end"], strand=strand)
-        for segment, strand in zip(segments, strands, strict=False)
-    ]
+    # Only the outer segments can run past the sequence; a splice junction is a known boundary.
+    five_truncated = _segment_truncation(segments[0])[0] > 0
+    three_truncated = _segment_truncation(segments[-1])[1] > 0
+    last = len(segments) - 1
+    locations = []
+    for index, (segment, strand) in enumerate(zip(segments, strands, strict=False)):
+        start, end = segment["range"]["begin"], segment["range"]["end"]
+        # INSDC marks the coordinate, not the protein end: on the minus strand 5' is upper.
+        lower, upper = five_truncated and index == 0, three_truncated and index == last
+        if strand == -1:
+            lower, upper = upper, lower
+        locations.append(
+            FeatureLocation(
+                BeforePosition(start) if lower else start,
+                AfterPosition(end) if upper else end,
+                strand=strand,
+            )
+        )
     return locations[0] if len(locations) == 1 else CompoundLocation(locations)
 
 
@@ -295,7 +332,7 @@ def create_flatfile(  # noqa: PLR0914
             Seq(sequence_str),
             id=f"{accession}_{seq_name}" if config.multi_segment else accession,
             annotations={
-                "molecule_type": molecule_type.seq_io_value,
+                "molecule_type": str(molecule_type),
                 "organism": organism,
                 "topology": topology,
                 "references": [reference],  # type: ignore[dict-item]
@@ -307,7 +344,7 @@ def create_flatfile(  # noqa: PLR0914
             FeatureLocation(start=0, end=len(sequence_str)),
             type="source",
             qualifiers={
-                "molecule_type": str(molecule_type),
+                "mol_type": str(molecule_type),
                 "organism": organism,
                 "country": country,
                 "collection_date": collection_date,

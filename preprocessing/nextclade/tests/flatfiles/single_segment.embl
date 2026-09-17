@@ -1,4 +1,4 @@
-ID   LOC_01; ; linear; RNA; ; UNC; 18875 BP.
+ID   LOC_01; ; linear; genomic RNA; ; UNC; 18875 BP.
 XX
 AC   LOC_01;
 XX
@@ -13,7 +13,7 @@ XX
 FH   Key             Location/Qualifiers
 FH
 FT   source          1..18875
-FT                   /molecule_type="genomic RNA"
+FT                   /mol_type="genomic RNA"
 FT                   /organism="Test Ebola Sudan Virus"
 FT                   /country="Netherlands: North Holland, Amsterdam"
 FT                   /collection_date="2024-01-01"

@@ -1495,7 +1495,7 @@ def test_get_seq_features_handles_real_reverse_complemented_cchf_annotation():
     cds_features = [feature for feature in features if feature.type == "CDS"]
     assert len(cds_features) == 1
     cds_feature = cds_features[0]
-    assert str(cds_feature.location) == "[0:466](-)"
+    assert str(cds_feature.location) == "[<0:>466](-)"
     assert cds_feature.qualifiers["codon_start"] == 3  # noqa: PLR2004
     assert cds_feature.qualifiers["translation"] == (
         "NGYLDKHRDEVDKASADSMITNLLKHIAKAQELYKNSSALRAQGAQIDTPFSSFYWLYKAGVTPETFPTISQ"
