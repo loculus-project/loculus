@@ -14,7 +14,6 @@ def main(timeout=480):
 
         if time.time() > end_time:
             print("Aborting, timeout reached")
-            report_unreconciled_secrets()
             exit(1)
 
         try:
@@ -26,27 +25,6 @@ def main(timeout=480):
 
         print("Sleeping for 5 seconds...")
         time.sleep(5)
-
-
-def report_unreconciled_secrets():
-    # StringSecret has no Ready condition; status.secret is set only once the generator
-    # has created the Secret. Pods mount these, so an unreconciled CR is why they are
-    # stuck in Init:CreateContainerConfigError.
-    result = subprocess.run(
-        ["kubectl", "get", "stringsecrets", "-o", "json"],
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
-        return
-
-    pending = [
-        item["metadata"]["name"]
-        for item in json.loads(result.stdout)["items"]
-        if not item.get("status", {}).get("secret")
-    ]
-    if pending:
-        print("Secret generator never reconciled:", ", ".join(pending))
 
 
 def get_pods():
