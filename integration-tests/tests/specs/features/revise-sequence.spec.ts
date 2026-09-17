@@ -131,7 +131,7 @@ groupTest.describe('Bulk sequence revision', () => {
         expect(overview.total).toBeGreaterThanOrEqual(SEQUENCES_TO_REVISE);
 
         await groupTest.step(
-            "reject second revision before approval, error message displayed correctly",
+            'reject second revision before approval, error message displayed correctly',
             async () => {
                 await revisionPage.goto(TEST_ORGANISM, groupId);
                 await revisionPage.uploadMetadataFile('revision_metadata.tsv', revisionMetadata);
