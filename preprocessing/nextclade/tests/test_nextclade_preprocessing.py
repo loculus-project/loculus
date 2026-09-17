@@ -15,6 +15,8 @@ from factory_methods import (
     ProcessingAnnotationHelper,
     ProcessingTestCase,
     build_processing_annotations,
+    on_minus_strand,
+    single_cds_annotation,
     ts_from_ymd,
     verify_processed_entry,
 )
@@ -1439,29 +1441,8 @@ def test_get_seq_features_translates_minus_strand_cds_correctly():
     # (Met Lys Stop), so a minus-strand CDS over this range must translate to "MK" (the
     # /translation qualifier excludes the terminal stop codon).
     sequence_str = "AAA" + "TTATTTCAT" + "CCCC"
-    annotation_object = NextcladeAnnotation.model_validate(
-        {
-            "genes": [
-                {
-                    "range": {"begin": 3, "end": 12},
-                    "attributes": {},
-                    "cdses": [
-                        {
-                            "segments": [
-                                {
-                                    "range": {"begin": 3, "end": 12},
-                                    "strand": "-",
-                                    "phase": 0,
-                                    "truncation": "none",
-                                }
-                            ],
-                            "attributes": {},
-                        }
-                    ],
-                }
-            ]
-        }
-    )
+    annotation_object = single_cds_annotation(3, 12, strand="-")
+
     features = get_seq_features(annotation_object, sequence_str)
     cds_features = [feature for feature in features if feature.type == "CDS"]
     assert len(cds_features) == 1
@@ -1474,29 +1455,8 @@ def test_get_seq_features_maps_phase_to_codon_start():
     # bases ("TT") are a partial codon left over from outside this feature, so the first complete
     # codon is GAA (Glu), followed by ATA (Ile) and the stop codon TAA.
     sequence_str = "TT" + "GAAATATAA"
-    annotation_object = NextcladeAnnotation.model_validate(
-        {
-            "genes": [
-                {
-                    "range": {"begin": 0, "end": 11},
-                    "attributes": {},
-                    "cdses": [
-                        {
-                            "segments": [
-                                {
-                                    "range": {"begin": 0, "end": 11},
-                                    "strand": "+",
-                                    "phase": 2,
-                                    "truncation": "none",
-                                }
-                            ],
-                            "attributes": {},
-                        }
-                    ],
-                }
-            ]
-        }
-    )
+    annotation_object = single_cds_annotation(0, 11, phase=2)
+
     features = get_seq_features(annotation_object, sequence_str)
     cds_features = [feature for feature in features if feature.type == "CDS"]
     assert len(cds_features) == 1
@@ -1530,29 +1490,8 @@ def test_get_seq_features_trims_trailing_partial_codon():
     # the dangling 1-2 bases can't be translated and must be dropped rather than raising or
     # producing a Biopython warning.
     sequence_str = "ATGAAATA"  # ATG AAA TA(missing base)
-    annotation_object = NextcladeAnnotation.model_validate(
-        {
-            "genes": [
-                {
-                    "range": {"begin": 0, "end": 8},
-                    "attributes": {},
-                    "cdses": [
-                        {
-                            "segments": [
-                                {
-                                    "range": {"begin": 0, "end": 8},
-                                    "strand": "+",
-                                    "phase": 0,
-                                    "truncation": "none",
-                                }
-                            ],
-                            "attributes": {},
-                        }
-                    ],
-                }
-            ]
-        }
-    )
+    annotation_object = single_cds_annotation(0, 8)
+
     features = get_seq_features(annotation_object, sequence_str)
     cds_features = [feature for feature in features if feature.type == "CDS"]
     assert len(cds_features) == 1
@@ -1564,29 +1503,8 @@ def test_get_seq_features_drops_raw_codon_start_not_derived_from_phase():
     # (EMBL's codon_start is 1-indexed, phase is 0-indexed), so it must be dropped and
     # codon_start recomputed as if phase were 0 (i.e. codon_start == 1).
     sequence_str = "ATGAAATAA"
-    annotation_object = NextcladeAnnotation.model_validate(
-        {
-            "genes": [
-                {
-                    "range": {"begin": 0, "end": 9},
-                    "attributes": {},
-                    "cdses": [
-                        {
-                            "segments": [
-                                {
-                                    "range": {"begin": 0, "end": 9},
-                                    "strand": "+",
-                                    "phase": 0,
-                                    "truncation": "none",
-                                }
-                            ],
-                            "attributes": {"codon_start": ["3"]},
-                        }
-                    ],
-                }
-            ]
-        }
-    )
+    annotation_object = single_cds_annotation(0, 9, attributes={"codon_start": ["3"]})
+
     features = get_seq_features(annotation_object, sequence_str)
     cds_features = [feature for feature in features if feature.type == "CDS"]
     assert len(cds_features) == 1
@@ -1608,56 +1526,11 @@ def test_process_labeled_mutations():
 
 def test_get_seq_features_marks_the_truncated_end_by_its_coordinate_not_its_strand():
     # INSDC marks an unknown boundary by the coordinate it lies at, not by which end of the
-    # protein it is. A CDS missing bases at its 5' end therefore takes `<` on the lower
-    # coordinate when it is on the plus strand, and `>` on the upper one when it is on the
-    # minus strand. Both directions are asserted because a swapped test passes either way.
+    # protein it is, so the same 5' truncation takes `<` on the lower coordinate on the plus
+    # strand and `>` on the upper one on the minus strand.
     sequence_str = "ATGGCTTAA"
-    plus = NextcladeAnnotation.model_validate(
-        {
-            "genes": [
-                {
-                    "range": {"begin": 0, "end": 9},
-                    "attributes": {},
-                    "cdses": [
-                        {
-                            "segments": [
-                                {
-                                    "range": {"begin": 0, "end": 9},
-                                    "strand": "+",
-                                    "phase": 0,
-                                    "truncation": {"fivePrime": 30},
-                                }
-                            ],
-                            "attributes": {},
-                        }
-                    ],
-                }
-            ]
-        }
-    )
-    minus = NextcladeAnnotation.model_validate(
-        {
-            "genes": [
-                {
-                    "range": {"begin": 0, "end": 9},
-                    "attributes": {},
-                    "cdses": [
-                        {
-                            "segments": [
-                                {
-                                    "range": {"begin": 0, "end": 9},
-                                    "strand": "-",
-                                    "phase": 0,
-                                    "truncation": {"fivePrime": 30},
-                                }
-                            ],
-                            "attributes": {},
-                        }
-                    ],
-                }
-            ]
-        }
-    )
+    plus = single_cds_annotation(0, 9, truncation={"fivePrime": 30})
+    minus = on_minus_strand(plus)
 
     plus_cds = next(f for f in get_seq_features(plus, sequence_str) if f.type == "CDS")
     minus_cds = next(f for f in get_seq_features(minus, sequence_str) if f.type == "CDS")
@@ -1670,29 +1543,7 @@ def test_get_seq_features_gives_a_gene_the_strand_of_its_cdses():
     # The annotation reports a strand only on a CDS's segments, so an unstranded gene would
     # render as a plus-strand range even when its CDSes are on the minus strand.
     sequence_str = "ATGGCTTAA"
-    annotation_object = NextcladeAnnotation.model_validate(
-        {
-            "genes": [
-                {
-                    "range": {"begin": 0, "end": 9},
-                    "attributes": {},
-                    "cdses": [
-                        {
-                            "segments": [
-                                {
-                                    "range": {"begin": 0, "end": 9},
-                                    "strand": "-",
-                                    "phase": 0,
-                                    "truncation": "none",
-                                }
-                            ],
-                            "attributes": {},
-                        }
-                    ],
-                }
-            ]
-        }
-    )
+    annotation_object = on_minus_strand(single_cds_annotation(0, 9))
 
     features = get_seq_features(annotation_object, sequence_str)
     gene = next(f for f in features if f.type == "gene")
