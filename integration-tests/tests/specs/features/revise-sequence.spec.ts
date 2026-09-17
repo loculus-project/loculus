@@ -135,7 +135,7 @@ groupTest.describe('Bulk sequence revision', () => {
             'reject second revision before approval, error message displayed correctly',
             async () => {
                 // This revision must fail; the browser logs the 422 itself.
-                allowConsoleError(groupTest, '422');
+                allowConsoleError(groupTest, 'responded with a status of 422');
 
                 await revisionPage.goto(TEST_ORGANISM, groupId);
                 await revisionPage.uploadMetadataFile('revision_metadata.tsv', revisionMetadata);
