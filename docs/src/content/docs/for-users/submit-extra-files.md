@@ -52,8 +52,8 @@ The endpoint returns an array of file IDs and pre-signed URLs to use to upload t
 ```json
 [
   {
-    "fileId": "FILE_2K7Q",
-    "url": "https://dummyendpoint.com/dummybucket/files/FILE_2K7Q?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=dummyaccesskey%2F20250330%2Fdummyregion%2Fs3%2Faws4_request&X-Amz-Date=20250330T184050Z&X-Amz-Expires=1800&X-Amz-SignedHeaders=host&X-Amz-Signature=9717e8d8c8242d0d266f816c665d78b1d842de5286fb59e37329f090e9bb0b9e"
+    "fileId": "FILE_000001Y",
+    "url": "https://dummyendpoint.com/dummybucket/files/FILE_000001Y?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=dummyaccesskey%2F20250330%2Fdummyregion%2Fs3%2Faws4_request&X-Amz-Date=20250330T184050Z&X-Amz-Expires=1800&X-Amz-SignedHeaders=host&X-Amz-Signature=9717e8d8c8242d0d266f816c665d78b1d842de5286fb59e37329f090e9bb0b9e"
   },
   ...
 ]
@@ -94,11 +94,11 @@ The endpoint returns an array with file IDs and presigned URLs for each part:
 ```json
 [
   {
-    "fileId": "FILE_2K7Q",
+    "fileId": "FILE_000001Y",
     "urls": [
-      "https://dummyendpoint.com/dummybucket/files/FILE_2K7Q?partNumber=1&X-Amz-Algorithm=...",
-      "https://dummyendpoint.com/dummybucket/files/FILE_2K7Q?partNumber=2&X-Amz-Algorithm=...",
-      "https://dummyendpoint.com/dummybucket/files/FILE_2K7Q?partNumber=3&X-Amz-Algorithm=..."
+      "https://dummyendpoint.com/dummybucket/files/FILE_000001Y?partNumber=1&X-Amz-Algorithm=...",
+      "https://dummyendpoint.com/dummybucket/files/FILE_000001Y?partNumber=2&X-Amz-Algorithm=...",
+      "https://dummyendpoint.com/dummybucket/files/FILE_000001Y?partNumber=3&X-Amz-Algorithm=..."
     ]
   }
 ]
@@ -140,7 +140,7 @@ curl -X POST \
   -H 'Content-Type: application/json' \
   -d '[
     {
-      "fileId": "FILE_2K7Q",
+      "fileId": "FILE_000001Y",
       "etags": [
         "d41d8cd98f00b204e9800998ecf8427e",
         "098f6bcd4621d373cade4e832627b4f6",
@@ -164,7 +164,7 @@ The cell value for a given submission ID is a space-separated list of `fileName:
 
 ```
 files.rawReads
-reads_1.fq:FILE_2K7Q reads_2.fq:FILE_2K7R
+reads_1.fq.gz:FILE_000001Y reads_2.fq.gz:FILE_000013T
 ```
 
 - The `fileId` is the ID received in the previous step, which identifies the actual file.

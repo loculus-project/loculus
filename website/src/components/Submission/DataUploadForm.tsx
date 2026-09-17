@@ -32,14 +32,10 @@ import { Checkbox } from '../common/Checkbox';
 import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import {
-    applyFileMappings,
     resolveFileMappings,
-    getLinkageErrors,
-    getSingleSubmissionFileMapping,
     type CategoryLinkage,
     type FileLinkage,
     type SubmissionFileMapping,
-    validateSubmissionFileMapping,
 } from './FileUpload/fileMapping.ts';
 import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
 
@@ -105,14 +101,20 @@ const InnerDataUploadForm = ({
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
 
-        const sequenceDataResult = await fileFactory!();
-
-        if (sequenceDataResult.type === 'error') {
-            onError(sequenceDataResult.errorMessage);
+        const fileUploadStateResult = validateFileUploadStates(fileUploadStates);
+        if (fileUploadStateResult.isErr()) {
+            onError(fileUploadStateResult.error.message);
             return;
         }
 
-        const { metadataFile, sequenceFile, submissionId } = sequenceDataResult;
+        const sequenceDataResult = await fileFactory!();
+
+        if (sequenceDataResult.isErr()) {
+            onError(sequenceDataResult.error.message);
+            return;
+        }
+
+        const { metadataFile, sequenceFile, submissionId } = sequenceDataResult.value;
 
         if (submissionId === undefined && inputMode === 'form') {
             onError('No ID specified.');
@@ -131,77 +133,12 @@ const InnerDataUploadForm = ({
             return;
         }
 
-        const fileUploadStateResult = validateFileUploadStates(fileUploadStates);
-        if (fileUploadStateResult.isErr()) {
-            onError(fileUploadStateResult.error.message);
-            return;
-        }
-
-        let finalMetadataFile = metadataFile;
-
-        if (extraFilesEnabled) {
-            if (inputMode === 'form') {
-                if (fileMapping !== undefined) {
-                    const finalSubmissionFileMapping = getSingleSubmissionFileMapping(submissionId!, fileMapping);
-
-                    const validationResult = validateSubmissionFileMapping(
-                        finalSubmissionFileMapping,
-                        fileSharingConfig,
-                    );
-                    if (validationResult.isErr()) {
-                        onError(validationResult.error.message);
-                        return;
-                    }
-
-                    const finalMetadataFileResult = await applyFileMappings(metadataFile, finalSubmissionFileMapping);
-                    if (finalMetadataFileResult.isErr()) {
-                        onError(finalMetadataFileResult.error.message);
-                        return;
-                    }
-                    finalMetadataFile = finalMetadataFileResult.value;
-                }
-            } else {
-                if (submissionFileMapping === undefined) {
-                    onError('Cannot submit: metadata file is still being processed.');
-                    return;
-                }
-
-                if (submissionFileMapping.isErr()) {
-                    onError(submissionFileMapping.error.message);
-                    return;
-                }
-
-                const validationResult = validateSubmissionFileMapping(submissionFileMapping.value, fileSharingConfig);
-                if (validationResult.isErr()) {
-                    onError(validationResult.error.message);
-                    return;
-                }
-
-                const { submissionFileMapping: resolvedSubmissionFileMapping, fileLinkage } = resolveFileMappings(
-                    submissionFileMapping.value,
-                    fileMapping,
-                );
-
-                const linkageErrors = getLinkageErrors(fileLinkage);
-                if (linkageErrors !== undefined) {
-                    onError(linkageErrors);
-                    return;
-                }
-                const finalMetadataFileResult = await applyFileMappings(metadataFile, resolvedSubmissionFileMapping);
-                if (finalMetadataFileResult.isErr()) {
-                    onError(finalMetadataFileResult.error.message);
-                    return;
-                }
-                finalMetadataFile = finalMetadataFileResult.value;
-            }
-        }
-
         const submitSequenceData = () => {
             switch (action) {
                 case 'submit': {
                     const groupId = group.groupId;
                     submit({
-                        metadataFile: finalMetadataFile,
+                        metadataFile: metadataFile,
                         sequenceFile: sequenceFile,
                         groupId,
                         dataUseTermsType,
@@ -214,7 +151,7 @@ const InnerDataUploadForm = ({
                 }
                 case 'revise':
                     revise({
-                        metadataFile: finalMetadataFile,
+                        metadataFile: metadataFile,
                         sequenceFile: sequenceFile,
                     });
                     break;
@@ -260,6 +197,8 @@ const InnerDataUploadForm = ({
                     metadataTemplateFields={metadataTemplateFields}
                     submissionDataTypes={submissionDataTypes}
                     onError={onError}
+                    fileSharingConfig={fileSharingConfig}
+                    fileMapping={fileMapping}
                 />
                 <hr />
                 {extraFilesEnabled && (

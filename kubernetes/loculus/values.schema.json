@@ -1862,7 +1862,7 @@
           "type": "integer",
           "minimum": 1,
           "groups": ["general"],
-          "description": "The maximum allowed size, in bytes, of an individual uploaded file. Files exceeding this size are rejected by the website. If unset, no limit is enforced."
+          "description": "The maximum allowed size, in bytes, of an individual uploaded file. Files exceeding this size are rejected by the website and by the backend for multipart uploads (note for single part uploads the default maximum size limit of 5GB cannot be modified and even if a lower `maxFileSizeBytes` threshold is configured it cannot be enforced for single part uploads). If unset, the website does not enforce a limit and multi-part uploads use the configured S3 service limit."
         }
       },
       "required": ["outputFileUrlType"],
