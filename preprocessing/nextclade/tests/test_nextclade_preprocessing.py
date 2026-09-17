@@ -1,6 +1,7 @@
 # ruff: noqa: S101
 
 
+import json
 from pathlib import Path
 from typing import Literal
 
@@ -59,6 +60,8 @@ MULTI_EBOLA_DATASET = "tests/ebola-multipath-dataset"
 CCHF_DATASET = "tests/cchfv"
 
 SINGLE_SEGMENT_EMBL = "tests/flatfiles/single_segment.embl"
+CCHF_REVERSE_COMPLEMENTED_FASTA = "tests/flatfiles/AY049081.1"
+CCHF_REVERSE_COMPLEMENTED_ANNOTATION = "tests/flatfiles/annotation-cchf-reverse-complemented.json"
 MUTATIONS_FROM_FOUNDER_CLADE = "tests/mutationsFromFounderClade.json"
 LABELED_PRIVATE_MUTATIONS = "tests/labeledPrivateMutations.json"
 
@@ -1482,6 +1485,25 @@ def test_get_seq_features_maps_phase_to_codon_start():
     assert len(cds_features) == 1
     assert cds_features[0].qualifiers["codon_start"] == 3  # noqa: PLR2004
     assert cds_features[0].qualifiers["translation"] == "EI"
+
+
+def test_get_seq_features_handles_real_reverse_complemented_cchf_annotation():
+    sequence_str = str(SeqIO.read(CCHF_REVERSE_COMPLEMENTED_FASTA, "fasta").seq)
+    annotation_object = json.loads(
+        Path(CCHF_REVERSE_COMPLEMENTED_ANNOTATION).read_text(encoding="utf-8")
+    )["annotation"]
+
+    features = get_seq_features(annotation_object, sequence_str)
+    cds_features = [feature for feature in features if feature.type == "CDS"]
+    assert len(cds_features) == 1
+    cds_feature = cds_features[0]
+    assert str(cds_feature.location) == "[0:466](-)"
+    assert cds_feature.qualifiers["codon_start"] == 3  # noqa: PLR2004
+    assert cds_feature.qualifiers["translation"] == (
+        "NGYLDKHRDEVDKASADSMITNLLKHIAKAQELYKNSSALRAQGAQIDTPFSSFYWLYKAGVTPETFPTISQ"
+        "FLFELGKQPRGTKKMKKALLSTPMKWGKKLYELFADDSFQQNRIYMHPAVLTAGRISEMGVCFGTIPVANPD"
+        "DAAQGSGHTK"
+    )
 
 
 def test_get_seq_features_trims_trailing_partial_codon():
