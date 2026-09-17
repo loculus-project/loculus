@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.headers.Header
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.servlet.http.HttpServletRequest
+import mu.KotlinLogging
 import org.apache.http.HttpStatus
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.FileIdAndEtags
@@ -14,13 +15,14 @@ import org.loculus.backend.api.FileIdAndWriteUrl
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.auth.User
+import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.FilesPreconditionValidator
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
-import org.loculus.backend.utils.generateFileId
+import org.loculus.backend.utils.generateFileIds
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.ResponseEntity
@@ -35,6 +37,8 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.net.URI
 
+private val log = KotlinLogging.logger {}
+
 @RestController
 @RequestMapping("/files")
 @Validated
@@ -45,6 +49,7 @@ class FilesController(
     private val filesPreconditionValidator: FilesPreconditionValidator,
     private val submissionDatabaseService: SubmissionDatabaseService,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
+    private val backendConfig: BackendConfig,
 ) {
 
     @Operation(
@@ -134,18 +139,14 @@ class FilesController(
         @RequestParam
         numberFiles: Int = 1,
     ): List<FileIdAndWriteUrl> {
+        filesPreconditionValidator.validateNumberFiles(numberFiles)
         filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
-        val response = mutableListOf<FileIdAndWriteUrl>()
-        if (numberFiles < 1) {
-            throw BadRequestException("Number of files must be at least 1")
+
+        val fileIds = generateFileIds(numberFiles)
+        filesDatabaseService.createFileEntries(fileIds, authenticatedUser.username, groupId)
+        return fileIds.map { fileId ->
+            FileIdAndWriteUrl(fileId, s3Service.createUrlToUploadPrivateFile(fileId))
         }
-        repeat(numberFiles) {
-            val fileId = generateFileId()
-            val presignedUploadUrl = s3Service.createUrlToUploadPrivateFile(fileId)
-            filesDatabaseService.createFileEntry(fileId, authenticatedUser.username, groupId)
-            response.add(FileIdAndWriteUrl(fileId, presignedUploadUrl))
-        }
-        return response
     }
 
     @Operation(
@@ -172,10 +173,10 @@ class FilesController(
         @RequestParam
         numberParts: Int = 1,
     ): List<FileIdAndMultipartWriteUrl> {
+        filesPreconditionValidator.validateNumberFiles(numberFiles)
         filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
-        val response = mutableListOf<FileIdAndMultipartWriteUrl>()
-        repeat(numberFiles) {
-            val fileId = generateFileId()
+
+        return generateFileIds(numberFiles).map { fileId ->
             val multipartUploadHandler = s3Service.initiateMultipartUploadAndCreateUrlsToUpload(fileId, numberParts)
             filesDatabaseService.createFileEntry(
                 fileId,
@@ -183,14 +184,15 @@ class FilesController(
                 groupId,
                 multipartUploadHandler.uploadId,
             )
-            response.add(FileIdAndMultipartWriteUrl(fileId, multipartUploadHandler.presignedUrls))
+            FileIdAndMultipartWriteUrl(fileId, multipartUploadHandler.presignedUrls)
         }
-        return response
     }
 
     @Operation(
         description =
-        "Completes multipart uploads that have been initiated with the /request-multipart-upload endpoint",
+        "Completes multipart uploads that have been initiated with the /request-multipart-upload endpoint. " +
+            "If a maximum file size is configured, uploads exceeding it are aborted (never assembled into a " +
+            "stored object) and rejected.",
     )
     @PostMapping("/complete-multipart-upload")
     fun completeMultipartUploads(
@@ -202,17 +204,56 @@ class FilesController(
     ) {
         val fileIdsAndEtags = body.associate { it.fileId to it.etags }
         val multipartUploadIds = filesDatabaseService.getUncompletedMultipartUploadIds(fileIdsAndEtags.keys)
-        val alreadyCompleted = fileIdsAndEtags.keys - multipartUploadIds.map { it.first }.toSet()
-        if (alreadyCompleted.isNotEmpty()) {
-            throw UnprocessableEntityException(
-                "The following files have already been completed: " + alreadyCompleted.joinToString(),
-            )
+        val notPending = fileIdsAndEtags.keys - multipartUploadIds.map { it.first }.toSet()
+        if (notPending.isNotEmpty()) {
+            val nonExistent = filesDatabaseService.getNonExistentFileIds(notPending)
+            val alreadyCompleted = notPending - nonExistent
+            val errors = buildList {
+                if (nonExistent.isNotEmpty()) {
+                    add(
+                        "The following file IDs do not exist, possibly because the upload was previously " +
+                            "rejected (e.g. for exceeding the maximum allowed file size): " +
+                            nonExistent.joinToString(),
+                    )
+                }
+                if (alreadyCompleted.isNotEmpty()) {
+                    add("The following files have already been completed: " + alreadyCompleted.joinToString())
+                }
+            }
+            throw UnprocessableEntityException(errors.joinToString(" "))
         }
+        val maxFileSizeBytes = backendConfig.fileSharing.maxFileSizeBytes
         multipartUploadIds.forEach { (fileId, uploadId) ->
             val etags = fileIdsAndEtags[fileId]
             if (etags == null || etags.isEmpty()) {
                 throw UnprocessableEntityException("No etags provided for file ID $fileId.")
             }
+
+            if (maxFileSizeBytes != null) {
+                val fileSize = s3Service.getMultipartUploadSize(fileId, uploadId)
+                if (fileSize > maxFileSizeBytes) {
+                    // Abort so the oversized file is never assembled into an object in storage.
+                    s3Service.abortMultipartUpload(fileId, uploadId)
+                    log.warn {
+                        "Aborted multipart upload for file $fileId: actual size $fileSize bytes exceeds the " +
+                            "maximum allowed file size of $maxFileSizeBytes bytes."
+                    }
+
+                    // Best-effort cleanup: a failure here must not stop the client from
+                    // being told the actual reason for the rejection below.
+                    try {
+                        filesDatabaseService.deleteFileEntry(fileId)
+                    } catch (e: Exception) {
+                        log.warn(e) { "Failed to delete database entry for oversized file $fileId" }
+                    }
+
+                    throw UnprocessableEntityException(
+                        "File $fileId exceeds the maximum allowed file size of $maxFileSizeBytes bytes " +
+                            "(actual size: $fileSize bytes). The upload has been aborted.",
+                    )
+                }
+            }
+
             s3Service.completeMultipartUpload(fileId, uploadId, etags)
             filesDatabaseService.completeMultipartUpload(fileId)
         }

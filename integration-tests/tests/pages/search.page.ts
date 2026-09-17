@@ -1,6 +1,7 @@
 import { type Locator, type Page, expect } from '@playwright/test';
 import { getFromLinkTargetAndAssertContent } from '../utils/link-helpers';
 import { EditPage } from './edit.page';
+import { reloadAndPoll, reloadUntil, reloadUntilVisible } from '../utils/reload-helpers';
 
 function makeAccessionVersion({
     accession,
@@ -162,30 +163,30 @@ export class SearchPage {
         await this.getSequenceRows().filter({ hasText: accessionVersion }).click();
     }
 
-    /**
-     * Clicks a control (button/link) in the "Sequence management" panel of the details view.
-     *
-     * The panel re-renders as sequence data loads, which can cause a click to be silently dropped:
-     * React delegates events to the island root and can't resolve a handler for a DOM node that was
-     * just re-rendered out from under the click. Waiting for the sequence viewer to render first
-     * ensures the panel has settled before we click. See #5447.
-     */
-    private async clickSettledManagementControl(control: Locator) {
-        await expect(this.page.getByTestId('fixed-length-text-viewer')).toBeVisible();
+    private async clickSequenceManagementControl(control: Locator) {
+        // The panel re-renders as sequence data loads, which can cause a click to be silently dropped:
+        // React delegates events to the island root and can't resolve a handler for a DOM node that was
+        // just re-rendered out from under the click. Waiting for the page content to render first
+        // ensures the panel has settled before we click - see #5447.
+        // Revocation versions have no sequence data, so we wait for the revocation banner instead.
+        const pageContent = this.page
+            .getByTestId('fixed-length-text-viewer')
+            .or(this.page.getByText('This is a revocation version.'));
+        await expect(pageContent.first()).toBeVisible();
         await expect(control).toBeVisible();
         await control.click();
     }
 
     async reviseSequence() {
         const reviseButton = this.page.getByRole('link', { name: 'Revise this sequence' });
-        await this.clickSettledManagementControl(reviseButton);
+        await this.clickSequenceManagementControl(reviseButton);
         await expect(this.page.getByText(/^Create new revision from LOC_\w+\.\d+$/)).toBeVisible();
         return new EditPage(this.page);
     }
 
     async revokeSequence(revocationReason: string = 'Test revocation') {
         const revokeButton = this.page.getByRole('button', { name: 'Revoke this sequence' });
-        await this.clickSettledManagementControl(revokeButton);
+        await this.clickSequenceManagementControl(revokeButton);
 
         await expect(
             this.page.getByText('Are you sure you want to revoke this sequence?'),
@@ -194,6 +195,23 @@ export class SearchPage {
         await this.page.getByRole('button', { name: 'Confirm' }).click();
 
         await expect(this.page.getByText('Sequence revoked successfully.')).toBeVisible();
+    }
+
+    async restoreSequence() {
+        const restoreButton = this.page.getByRole('link', { name: 'Restore this sequence' });
+        await this.clickSequenceManagementControl(restoreButton);
+        await expect(this.page.getByText(/^Create new revision from LOC_\w+\.\d+$/)).toBeVisible();
+        return new EditPage(this.page);
+    }
+
+    async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string> {
+        const rows = this.getSequenceRows();
+        const row = rows.nth(rowIndex);
+        const rowText = await row.innerText();
+        const accessionVersionMatch = rowText.match(accessionVersionRegex);
+        const accessionVersion = accessionVersionMatch ? accessionVersionMatch[0] : null;
+        await row.click();
+        return accessionVersion;
     }
 
     getSequencePreviewModal() {
@@ -252,7 +270,7 @@ export class SearchPage {
     }
 
     async waitForAndOpenModalByRoleAndName(role: 'link' | 'cell', name: string | RegExp) {
-        await this.waitForSequences(role, name);
+        await reloadUntilVisible(this.page, this.page.getByRole(role, { name: name }));
         await this.openModalByRoleAndName(role, name);
     }
 
@@ -261,6 +279,7 @@ export class SearchPage {
             await getFromLinkTargetAndAssertContent(
                 this.page.getByRole('link', { name: fileName }),
                 fileContent,
+                fileName,
             );
         }
     }
@@ -310,42 +329,23 @@ export class SearchPage {
         minCount: number,
         timeoutMs: number = 60000,
     ): Promise<AccessionVersion[]> {
-        let accessions: AccessionVersion[] = [];
-        await expect
-            .poll(
-                async () => {
-                    await this.page.reload();
-                    accessions = await this.getAccessionVersions();
-                    return accessions.length;
-                },
-                {
-                    message: `Expected at least ${minCount} sequences to appear in search results`,
-                    timeout: timeoutMs,
-                    intervals: [2000, 5000],
-                },
-            )
-            .toBeGreaterThanOrEqual(minCount);
-        return accessions;
+        return reloadUntil(
+            this.page,
+            () => this.getAccessionVersions(),
+            (accessions) => accessions.length >= minCount,
+            {
+                message: `Expected at least ${minCount} sequences to appear in search results.`,
+                timeout: timeoutMs,
+            },
+        );
     }
 
     async waitForAccessionVersionInSearch(expectedAccession: string, expectedVersion: number) {
-        await expect
-            .poll(
-                async () => {
-                    await this.page.reload();
-                    const accessionVersions = await this.getAccessionVersions();
-                    return accessionVersions.some(
-                        ({ accession, version }) =>
-                            accession === expectedAccession && version === expectedVersion,
-                    );
-                },
-                {
-                    message: `Did not find accession version ${expectedAccession}.${expectedVersion} in search results`,
-                    timeout: 60000,
-                    intervals: [2000, 5000],
-                },
-            )
-            .toBeTruthy();
+        await reloadAndPoll(
+            this.page,
+            async () => (await this.getAccessionVersions()).map((it) => it.accessionVersion),
+            { timeout: 60_000 },
+        ).toContain(`${expectedAccession}.${expectedVersion}`);
     }
 
     async expectResultTableCellText(text: string) {
