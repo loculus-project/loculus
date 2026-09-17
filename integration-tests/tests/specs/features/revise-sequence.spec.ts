@@ -1,4 +1,5 @@
 import { test as sequenceTest } from '../../fixtures/sequence.fixture';
+import { allowConsoleError } from '../../fixtures/console-warnings.fixture';
 import { test as groupTest } from '../../fixtures/group.fixture';
 import { expect } from '@playwright/test';
 import { SearchPage } from '../../pages/search.page';
@@ -83,8 +84,6 @@ groupTest.describe('Revision page template downloads', () => {
 groupTest.describe('Bulk sequence revision', () => {
     groupTest('can revise multiple sequences via file upload', async ({ page, groupId }) => {
         groupTest.setTimeout(200_000);
-        // The second revision below must fail; the browser logs that 422 itself.
-        groupTest.info().annotations.push({ type: 'allow-console-error', description: '422' });
 
         const submissionPage = new SingleSequenceSubmissionPage(page);
         const timestamp = Date.now();
@@ -135,6 +134,9 @@ groupTest.describe('Bulk sequence revision', () => {
         await groupTest.step(
             'reject second revision before approval, error message displayed correctly',
             async () => {
+                // This revision must fail; the browser logs the 422 itself.
+                allowConsoleError(groupTest, '422');
+
                 await revisionPage.goto(TEST_ORGANISM, groupId);
                 await revisionPage.uploadMetadataFile('revision_metadata.tsv', revisionMetadata);
                 await revisionPage.uploadSequenceFile('revised_sequences.fasta', fastaContent);

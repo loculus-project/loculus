@@ -1,4 +1,8 @@
-import { test as base, ConsoleMessage, expect } from '@playwright/test';
+import { test as base, ConsoleMessage, expect, type TestInfo } from '@playwright/test';
+
+/** Permits console errors containing `description` for the rest of the test. */
+export const allowConsoleError = (test: { info: () => TestInfo }, description: string) =>
+    test.info().annotations.push({ type: 'allow-console-error', description });
 
 export const test = base.extend({
     page: async ({ page, browserName }, use, testInfo) => {
