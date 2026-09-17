@@ -4,7 +4,6 @@ import { cleanOrganism } from '../../../../../components/Navigation/cleanOrganis
 import { getFileSharingConfig, getGroupedInputFields, getRuntimeConfig, getSchema } from '../../../../../config';
 import BaseLayout from '../../../../../layouts/BaseLayout.astro';
 import { createBackendClient } from '../../../../../services/backendClientFactory';
-import { formatErrorMessage } from '../../../../../utils/formatErrorMessage';
 import { getAccessToken } from '../../../../../utils/getAccessToken';
 
 const version = Astro.params.version!;
@@ -50,7 +49,7 @@ const dataToEdit = await createBackendClient().getDataToEdit(organism, accessTok
                             Error while fetching edited data for accession version: {accession}.{version}
                         </h1>
                     </div>
-                    <div>{formatErrorMessage(error)}</div>
+                    <div>{error.detail}</div>
                 </>
             ),
         )
