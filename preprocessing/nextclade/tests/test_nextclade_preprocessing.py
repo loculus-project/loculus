@@ -38,7 +38,7 @@ from loculus_preprocessing.embl import (
     reformat_authors_from_loculus_to_embl_style,
 )
 from loculus_preprocessing.nextclade_annotation import NextcladeAnnotation
-from loculus_preprocessing.prepro import get_nested_metadata, process_all
+from loculus_preprocessing.prepro import get_nested_metadata, process_all, unpack_annotations
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
     format_stop_codon,
@@ -1604,6 +1604,116 @@ def test_process_clade_founder_values():
 def test_process_labeled_mutations():
     json_string = Path(LABELED_PRIVATE_MUTATIONS).read_text(encoding="utf-8")
     assert process_labeled_mutations(json_string, {}).datum == "NA:H275Y"
+
+
+def test_get_seq_features_marks_the_truncated_end_by_its_coordinate_not_its_strand():
+    # INSDC marks an unknown boundary by the coordinate it lies at, not by which end of the
+    # protein it is. A CDS missing bases at its 5' end therefore takes `<` on the lower
+    # coordinate when it is on the plus strand, and `>` on the upper one when it is on the
+    # minus strand. Both directions are asserted because a swapped test passes either way.
+    sequence_str = "ATGGCTTAA"
+    plus = NextcladeAnnotation.model_validate(
+        {
+            "genes": [
+                {
+                    "range": {"begin": 0, "end": 9},
+                    "attributes": {},
+                    "cdses": [
+                        {
+                            "segments": [
+                                {
+                                    "range": {"begin": 0, "end": 9},
+                                    "strand": "+",
+                                    "phase": 0,
+                                    "truncation": {"fivePrime": 30},
+                                }
+                            ],
+                            "attributes": {},
+                        }
+                    ],
+                }
+            ]
+        }
+    )
+    minus = NextcladeAnnotation.model_validate(
+        {
+            "genes": [
+                {
+                    "range": {"begin": 0, "end": 9},
+                    "attributes": {},
+                    "cdses": [
+                        {
+                            "segments": [
+                                {
+                                    "range": {"begin": 0, "end": 9},
+                                    "strand": "-",
+                                    "phase": 0,
+                                    "truncation": {"fivePrime": 30},
+                                }
+                            ],
+                            "attributes": {},
+                        }
+                    ],
+                }
+            ]
+        }
+    )
+
+    plus_cds = next(f for f in get_seq_features(plus, sequence_str) if f.type == "CDS")
+    minus_cds = next(f for f in get_seq_features(minus, sequence_str) if f.type == "CDS")
+
+    assert str(plus_cds.location) == "[<0:9](+)"
+    assert str(minus_cds.location) == "[0:>9](-)"
+
+
+def test_get_seq_features_gives_a_gene_the_strand_of_its_cdses():
+    # The annotation reports a strand only on a CDS's segments, so an unstranded gene would
+    # render as a plus-strand range even when its CDSes are on the minus strand.
+    sequence_str = "ATGGCTTAA"
+    annotation_object = NextcladeAnnotation.model_validate(
+        {
+            "genes": [
+                {
+                    "range": {"begin": 0, "end": 9},
+                    "attributes": {},
+                    "cdses": [
+                        {
+                            "segments": [
+                                {
+                                    "range": {"begin": 0, "end": 9},
+                                    "strand": "-",
+                                    "phase": 0,
+                                    "truncation": "none",
+                                }
+                            ],
+                            "attributes": {},
+                        }
+                    ],
+                }
+            ]
+        }
+    )
+
+    features = get_seq_features(annotation_object, sequence_str)
+    gene = next(f for f in features if f.type == "gene")
+    cds_feature = next(f for f in features if f.type == "CDS")
+
+    assert gene.location.strand == -1
+    assert gene.location.strand == cds_feature.location.strand
+
+
+def test_unpack_annotations_reports_a_bad_annotation_instead_of_raising():
+    # process_single runs inside process_all's per-entry handler, but enrich_with_nextclade
+    # does not: raising here would fail the whole batch, which the backend then re-queues.
+    # A malformed annotation must cost one entry its flatfile and nothing more.
+    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
+    config.create_embl_file = True
+    nextclade_metadata = {"main": {"annotation": {"genes": [{"range": {"begin": 5, "end": 1}}]}}}
+
+    annotations, errors = unpack_annotations(config, "LOC_01.1", nextclade_metadata)
+
+    assert annotations == {"main": None}
+    assert len(errors) == 1
 
 
 def test_create_flatfile():
