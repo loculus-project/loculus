@@ -7,6 +7,11 @@ collect_logs() {
   local pods
   pods=$(kubectl get pods -l "$selector" -o jsonpath='{.items[*].metadata.name}' || true)
 
+  if [ -z "$pods" ]; then
+    echo "No pods matched $selector"
+    return
+  fi
+
   echo "Collecting logs from pods: $pods"
 
   for pod in $pods; do
@@ -20,9 +25,8 @@ collect_logs() {
   done
 }
 
-collect_logs app=loculus
+collect_logs "app=loculus"
 
-# The secret generator does not carry the app=loculus label, but when it fails to
-# generate a secret every pod depending on it is stuck in Init:CreateContainerConfigError
-# and its reconcile errors are the only place the cause is visible.
-collect_logs app.kubernetes.io/name=kubernetes-secret-generator
+# The secret generator carries no app=loculus label, and its reconcile errors are the
+# only place a failed secret generation is visible.
+collect_logs "app.kubernetes.io/name=kubernetes-secret-generator"
