@@ -61,9 +61,9 @@ FT                   /gene="NP"
 FT                   /product="NP"
 FT   CDS             1..910
 FT                   /gene="NP"
+FT                   /note="predominant component of nucleocapsid"
 FT                   /product="nucleoprotein"
 FT                   /protein_id="YP_138520.1"
-FT                   /note="predominant component of nucleocapsid"
 FT                   /codon_start=1
 FT                   /translation="MDKRVRGSWALGGQSEVDLDYHKILTAGLSVQQGIVRQRVIPVYV
 FT                   VSDLEGICQHIIQAFEAGVDFQDNADSFLLLLCLHHAYQGDHRLFLKSDAVQYLEGHGF
