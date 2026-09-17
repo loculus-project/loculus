@@ -1554,6 +1554,37 @@ def test_get_seq_features_drops_raw_codon_start_not_derived_from_phase():
     assert cds_features[0].qualifiers["codon_start"] == 1
 
 
+def test_get_seq_features_marks_a_gene_partial_when_its_cds_is_truncated():
+    # INSDC marks the gene holding a truncated CDS partial as well, e.g. QB011581.1 has both
+    # `gene <27762..27788` and `CDS <27762..27788`; a bare `gene` beside a `CDS <` is invalid.
+    sequence_str = "ATGAAATAA"
+    annotation_object = {
+        "genes": [
+            {
+                "range": {"begin": 0, "end": 9},
+                "attributes": {},
+                "cdses": [
+                    {
+                        "segments": [
+                            {
+                                "range": {"begin": 0, "end": 9},
+                                "strand": "+",
+                                "truncation": {"fivePrime": 30},
+                            }
+                        ],
+                        "attributes": {},
+                    }
+                ],
+            }
+        ]
+    }
+    features = get_seq_features(annotation_object, sequence_str)
+    gene_feature = next(feature for feature in features if feature.type == "gene")
+    cds_feature = next(feature for feature in features if feature.type == "CDS")
+    assert str(gene_feature.location) == "[<0:9](+)"
+    assert str(cds_feature.location) == "[<0:9](+)"
+
+
 def test_process_clade_founder_values():
     json_string = Path(MUTATIONS_FROM_FOUNDER_CLADE).read_text(encoding="utf-8")
     assert (

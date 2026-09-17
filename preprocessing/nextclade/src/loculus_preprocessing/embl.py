@@ -190,15 +190,22 @@ def _build_gene_feature(gene: dict[str, Any]) -> SeqFeature:
         msg = f"Gene range is missing or incomplete: {gene_range}"
         raise ValueError(msg)
     qualifiers = _build_qualifiers(gene.get("attributes", {}), EMBL_ANNOTATIONS.gene_qualifiers)
-    # The annotation carries a strand only on a CDS's segments, so a gene takes its CDSes'.
+    # The annotation carries strand and truncation only on a CDS's segments, so a gene takes
+    # both from its CDSes: INSDC marks a gene holding a truncated CDS partial too.
     cdses = gene.get("cdses", [])
     strand = None
-    if cdses and cdses[0].get("segments"):
-        strand = -1 if cdses[0]["segments"][0].get("strand") == "-" else 1
+    start, end = gene_range["begin"], gene_range["end"]
+    if cdses and (segments := cdses[0].get("segments")):
+        strand = -1 if segments[0].get("strand") == "-" else 1
+        lower, upper = _segment_truncation(segments[0])[0], _segment_truncation(segments[-1])[1]
+        if strand == -1:
+            lower, upper = upper, lower
+        start = BeforePosition(start) if lower else start
+        end = AfterPosition(end) if upper else end
     # In FeatureLocation start and end are zero based, exclusive end.
     # thus an embl entry of 123..150 (one based counting) becomes a location of [122:150]
     return SeqFeature(
-        FeatureLocation(start=gene_range["begin"], end=gene_range["end"], strand=strand),
+        FeatureLocation(start=start, end=end, strand=strand),
         type="gene",
         qualifiers=qualifiers,
     )

@@ -56,7 +56,7 @@ FT                   /mol_type="genomic RNA"
 FT                   /organism="Sudan ebolavirus"
 FT                   /geo_loc_name="France"
 FT                   /collection_date="2021-05-12"
-FT   gene            1..910
+FT   gene            1..>910
 FT                   /gene="NP"
 FT                   /product="NP"
 FT   CDS             1..>910
