@@ -3,6 +3,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Literal
 
 import pytz
 
@@ -299,9 +300,9 @@ def single_cds_annotation(
     begin: int,
     end: int,
     *,
-    strand: str = "+",
-    phase: int = 0,
-    truncation: object = "none",
+    strand: Literal["+", "-"] = "+",
+    phase: Literal[0, 1, 2] = 0,
+    truncation: Literal["none"] | dict[str, int | list[int]] = "none",
     attributes: GffAttributes | None = None,
 ) -> NextcladeAnnotation:
     """One gene holding one unspliced CDS, both spanning `begin`..`end`."""

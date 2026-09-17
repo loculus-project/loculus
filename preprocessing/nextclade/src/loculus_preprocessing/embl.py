@@ -2,7 +2,6 @@
 
 import logging
 from dataclasses import dataclass
-from typing import Any
 
 from Bio.Seq import Seq
 from Bio.SeqFeature import (
@@ -256,7 +255,8 @@ def _build_cds_feature(cds: NextcladeCds, sequence_str: str) -> SeqFeature:
     # cds itself; only the first segment's phase is relevant, since EMBL's codon_start only
     # applies to the first base of a (possibly joined) feature.
     codon_start = segments[0].phase + 1
-    qualifiers: dict[str, Any] = {
+    # Copied GFF attributes are lists, codon_start is a count, translation is one string.
+    qualifiers: dict[str, list[str] | int | str] = {
         **_build_qualifiers(cds.attributes, EMBL_ANNOTATIONS.cds_qualifiers),
         "codon_start": codon_start,
         "translation": _translate_cds(sequence_str, location, codon_start),
