@@ -20,23 +20,10 @@ fun generateCheckCharacter(input: String): Char {
 }
 
 fun validateCheckCharacter(input: String): Boolean {
-    var factor = 1
-    var sum = 0
-
-    for (i in input.length - 1 downTo 0) {
-        val codePoint = getCodePointFromCharacter(input[i])
-        var addend = factor * codePoint
-
-        factor = when (factor) {
-            2 -> 1
-            else -> 2
-        }
-
-        addend = addend / CODE_POINTS.length + addend % CODE_POINTS.length
-        sum += addend
+    if (input.isEmpty() || input.any { it !in CODE_POINTS }) {
+        return false
     }
-    val remainder = sum % CODE_POINTS.length
-    return remainder == 0
+    return generateCheckCharacter(input.dropLast(1)) == input.last()
 }
 
-fun getCodePointFromCharacter(character: Char): Int = CODE_POINTS.indexOf(character)
+private fun getCodePointFromCharacter(character: Char): Int = CODE_POINTS.indexOf(character)

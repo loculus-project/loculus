@@ -3,6 +3,8 @@ package org.loculus.backend.utils
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 import java.lang.Math.random
 import kotlin.math.pow
 
@@ -52,10 +54,49 @@ class GenerateFileIdTest {
         assertThat(validateFileId(fileIdWithoutPrefix), `is`(false))
     }
 
-    @Test
-    fun `GIVEN an invalid file id THEN the validation fails`() {
-        val invalidFileId = "FILE_Not a valid file id"
+    companion object {
+        data class FileIdCase(val description: String, val fileId: String, val expectedValidationResult: Boolean)
 
-        assertThat(validateFileId(invalidFileId), `is`(false))
+        @JvmStatic
+        fun invalidFileIdCases(): List<FileIdCase> = listOf(
+            FileIdCase(
+                description = "a non-alphanumeric garbage string",
+                fileId = "FILE_Not a valid file id",
+                expectedValidationResult = false,
+            ),
+            FileIdCase(
+                description = "a single-character typo in an otherwise valid id",
+                fileId = "FILE_000002Y",
+                expectedValidationResult = false,
+            ),
+            FileIdCase(
+                description = "two adjacent characters transposed",
+                fileId = "FILE_000031T",
+                expectedValidationResult = false,
+            ),
+            FileIdCase(
+                description = "a character outside the alphabet",
+                fileId = "FILE_2ZI",
+                expectedValidationResult = false,
+            ),
+            FileIdCase(
+                description = "an empty serial part",
+                fileId = "FILE_",
+                expectedValidationResult = false,
+            ),
+            FileIdCase(
+                description = "an old-format file id without a check character",
+                fileId = "FILE_2K7Q",
+                // Old-format ids predate the check character and are not specially recognized,
+                // so they are not backward-compatible with the current validation.
+                expectedValidationResult = false,
+            ),
+        )
+    }
+
+    @ParameterizedTest(name = "GIVEN {0} THEN validation returns the expected result")
+    @MethodSource("invalidFileIdCases")
+    fun `GIVEN a potentially invalid file id THEN the validation returns the expected result`(case: FileIdCase) {
+        assertThat(validateFileId(case.fileId), `is`(case.expectedValidationResult))
     }
 }
