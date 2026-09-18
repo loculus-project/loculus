@@ -9,7 +9,7 @@ import contextlib
 from collections.abc import Mapping
 from typing import Annotated, Literal, NamedTuple
 
-from pydantic import BaseModel, BeforeValidator, Field, model_validator
+from pydantic import BaseModel, BeforeValidator, Field, PlainSerializer, model_validator
 
 # GFF3 attributes are multi-valued, so Nextclade reports every value as a list.
 GffAttributes = dict[str, list[str]]
@@ -60,13 +60,27 @@ def _flatten_truncation(value: object) -> object:
     raise ValueError(msg)
 
 
+def _expand_truncation(value: Truncation) -> object:
+    """Inverse of `_flatten_truncation`, so a parsed annotation dumps back to Nextclade's shape."""
+    five_prime, three_prime = value
+    if five_prime and three_prime:
+        return {"both": [five_prime, three_prime]}
+    if five_prime:
+        return {"fivePrime": five_prime}
+    if three_prime:
+        return {"threePrime": three_prime}
+    return "none"
+
+
 class NextcladeSegment(BaseModel):
     """One contiguous stretch of a CDS; a spliced CDS has several."""
 
     range: NextcladeRange
     strand: Literal["+", "-"]
     phase: Literal[0, 1, 2]
-    truncation: Annotated[Truncation, BeforeValidator(_flatten_truncation)]
+    truncation: Annotated[
+        Truncation, BeforeValidator(_flatten_truncation), PlainSerializer(_expand_truncation)
+    ]
 
 
 class NextcladeCds(BaseModel):

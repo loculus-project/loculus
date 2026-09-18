@@ -1594,41 +1594,18 @@ def test_unpack_annotations_reports_a_bad_annotation_instead_of_raising():
     assert len(errors) == 1
 
 
-def _raw_annotation(truncation="none"):
-    """The wire shape Nextclade emits, which the model collapses but does not round-trip."""
-    return {
-        "genes": [
-            {
-                "range": {"begin": 0, "end": 9},
-                "attributes": {"gene": ["G"]},
-                "cdses": [
-                    {
-                        "attributes": {"gene": ["G"]},
-                        "segments": [
-                            {
-                                "range": {"begin": 0, "end": 9},
-                                "strand": "+",
-                                "phase": 0,
-                                "truncation": truncation,
-                            }
-                        ],
-                    }
-                ],
-            }
-        ]
-    }
-
-
 def test_unpack_annotations_returns_the_parsed_annotation():
     config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
     config.create_embl_file = True
-    raw = _raw_annotation()
+    begin, end = 0, 9
+    raw = single_cds_annotation(begin, end).model_dump()
 
     annotations, errors = unpack_annotations(config, "LOC_01.1", {"main": {"annotation": raw}})
 
     assert errors == []
     assert isinstance(annotations["main"], NextcladeAnnotation)
-    assert annotations["main"].genes[0].cdses[0].segments[0].range.end == 9
+    segment = annotations["main"].genes[0].cdses[0].segments[0]
+    assert (segment.range.begin, segment.range.end) == (begin, end)
 
 
 def test_unpack_annotations_does_nothing_when_no_flatfile_is_wanted():
@@ -1647,7 +1624,8 @@ def test_unpack_annotations_contains_a_malformed_truncation_arm(truncation):
     # TypeError through, so an arm that cannot be unpacked has to be rejected, not unpacked.
     config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
     config.create_embl_file = True
-    raw = _raw_annotation(truncation)
+    raw = single_cds_annotation(0, 9).model_dump()
+    raw["genes"][0]["cdses"][0]["segments"][0]["truncation"] = truncation
 
     annotations, errors = unpack_annotations(config, "LOC_01.1", {"main": {"annotation": raw}})
 
