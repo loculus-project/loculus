@@ -235,6 +235,8 @@ def _cds_location(segments: list[dict[str, Any]]) -> FeatureLocation | CompoundL
         lower, upper = five_truncated and index == 0, three_truncated and index == last
         if strand == -1:
             lower, upper = upper, lower
+        # FeatureLocation converts ranges from index-0 to index-1 and makes the ranges [] have an
+        # inclusive start and inclusive end (the default in nextclade is exclusive end).
         locations.append(
             FeatureLocation(
                 BeforePosition(start) if lower else start,
@@ -292,7 +294,7 @@ def get_seq_features(annotation_object: dict[str, Any], sequence_str: str) -> li
             "range": {"begin": ..., "end": ...},
             "attributes": {"gene": ..., ...},
             "cdses": [
-                {"segments": [{"range": {"begin": 1, "end": 10}, "strand": "+", "frame": ...}],
+                {"segments": [{"range": {"begin": 1, "end": 10}, "strand": "+", "phase": 0}, ...],
                 "attributes": {"gene": ..., ...},
                 "gffFeatureType": ...,
                 },...]
@@ -301,8 +303,6 @@ def get_seq_features(annotation_object: dict[str, Any], sequence_str: str) -> li
     Creates a list of gene and CDS SeqFeature using:
     - https://www.ebi.ac.uk/ena/WebFeat/
     - https://www.insdc.org/submitting-standards/feature-table/
-    Converts ranges from index-0 to index-1 and makes the ranges [] have an inclusive start and
-    inclusive end (the default in nextclade is exclusive end)
     """
     feature_list = []
     for gene in annotation_object.get("genes", []):
