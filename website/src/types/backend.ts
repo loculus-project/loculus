@@ -275,12 +275,15 @@ export const submitFiles = uploadFiles.merge(
     }),
 );
 
+// Technically RFC 9457 also doesn't guarantee title/status/detail
+// to be non-null, but in practice our backend emits those
+// so this allows us to avoid some verbose null handling.
 export const problemDetail = z.object({
-    type: z.string(),
+    type: z.string().nullable().optional(),
     title: z.string(),
     status: z.number(),
     detail: z.string(),
-    instance: z.string().optional(),
+    instance: z.string().nullable().optional(),
 });
 export type ProblemDetail = z.infer<typeof problemDetail>;
 
