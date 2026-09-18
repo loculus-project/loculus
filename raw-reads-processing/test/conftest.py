@@ -55,12 +55,23 @@ def _find_jar() -> str | None:
             return str(candidate)
     return None
 
-
 @pytest.fixture
-def readtools_jar(monkeypatch):
+def readtools_jar(request, monkeypatch):
     jar_path = _find_jar()
     if jar_path is None:
-        pytest.skip(
+        message = (
             "readtools jar not found; set READTOOLS_JAR to its path to run this test"
         )
+        if request.config.getoption("--skip-missing-deps"):
+            pytest.skip(message)
+        pytest.fail(message)
     monkeypatch.setattr(file_format_validation, "VALIDATION_JAR_PATH", jar_path)
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--skip-missing-deps",
+        action="store_true",
+        default=False,
+        help="Skip tests that need external tools (deacon binary, readtools "
+        "jar) instead of failing them when those tools aren't available.",
+    )
