@@ -1,4 +1,4 @@
-name: Format Check - integration tests
+name: Check format and types - integration tests
 
 on:
   push:
@@ -7,15 +7,15 @@ on:
   pull_request:
     paths:
       - 'integration-tests/**'
-      - '.github/workflows/format-integration-tests.yml'
+      - '.github/workflows/check-format-and-types-integration-tests.yml'
   workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-format-integration-tests
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-check-format-and-types-integration-tests
   cancel-in-progress: true
 
 jobs:
-  format:
+  check-format-and-types:
     runs-on: ubuntu-latest
     
     defaults:
