@@ -222,6 +222,7 @@ def _cds_location(segments: list[NextcladeSegment]) -> FeatureLocation | Compoun
     locations = []
     for index, segment in enumerate(segments):
         strand = -1 if segment.strand == "-" else +1
+        # A truncated end renders as `<`/`>`: the gene extends past what was sequenced.
         # INSDC marks the coordinate, not the protein end: on the minus strand 5' is upper.
         lower, upper = five_truncated and index == 0, three_truncated and index == last
         if strand == -1:
