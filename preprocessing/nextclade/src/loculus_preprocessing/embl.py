@@ -282,8 +282,9 @@ def get_seq_features(annotation: NextcladeAnnotation, sequence_str: str) -> list
     """One gene feature per gene, each followed by its CDS features.
 
     Qualifiers are those allowed by https://www.ebi.ac.uk/ena/WebFeat/ and
-    https://www.insdc.org/submitting-standards/feature-table/. Locations stay 0-based with an
-    exclusive end here; Biopython's EMBL writer renders them as 1-based inclusive ranges.
+    https://www.insdc.org/submitting-standards/feature-table/. The EMBL writer converts ranges
+    from index-0 to index-1 and makes them inclusive at both ends (nextclade's end is
+    exclusive), so begin=0, end=10 is written `1..10`.
     """
     feature_list = []
     for gene in annotation.genes:

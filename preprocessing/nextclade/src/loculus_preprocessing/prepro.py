@@ -622,7 +622,7 @@ def unpack_annotations(
                     AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                     _internal_error_message(
                         f"Nextclade's annotation of sequence {name} could not be read, "
-                        "so no annotated flatfile was produced."
+                        "so its flatfile has no gene or CDS features."
                     ),
                 )
             )
