@@ -49,7 +49,7 @@ const dataToEdit = await createBackendClient().getDataToEdit(organism, accessTok
                             Error while fetching edited data for accession version: {accession}.{version}
                         </h1>
                     </div>
-                    <div>{JSON.stringify(error)}</div>
+                    <div>{error.detail}</div>
                 </>
             ),
         )

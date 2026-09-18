@@ -47,7 +47,7 @@ const editAccountUrl = (await getUrlForKeycloakAccountPage()) + '/#/personal-inf
                             ),
                             (error) => (
                                 <ErrorFeedback
-                                    message={'Error while fetching author profile: ' + JSON.stringify(error)}
+                                    message={'Error while fetching author profile: ' + error.detail}
                                     client:load
                                 />
                             ),
@@ -78,7 +78,7 @@ const editAccountUrl = (await getUrlForKeycloakAccountPage()) + '/#/personal-inf
                                     ),
                                     (error) => (
                                         <ErrorFeedback
-                                            message={'Error while fetching seqSets: ' + JSON.stringify(error)}
+                                            message={'Error while fetching seqSets: ' + error.detail}
                                             client:load
                                         />
                                     ),
