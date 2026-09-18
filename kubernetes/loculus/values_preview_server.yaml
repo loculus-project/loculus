@@ -77,6 +77,9 @@ auth:
   identityProviders:
     orcid:
       clientId: "APP-P1P7N7T9YVBHQ4EH"
+fileSharing:
+  outputFileUrlType: website
+  maxFileSizeBytes: 2147483648 # 2 GiB
 resources:
   website:
     requests:

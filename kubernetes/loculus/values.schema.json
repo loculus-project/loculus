@@ -1750,9 +1750,10 @@
     "organisms": {
       "groups": ["organism-conf"],
       "type": "object",
-      "description": "An object where the keys are the organism IDs and values are an [Organism (type)](#organism-type)",
+      "description": "An object where the keys are the organism IDs and values are an [Organism (type)](#organism-type). Keys are used verbatim in per-organism Kubernetes resource names (Services included), so each key must be a valid RFC 1123 DNS label: lower-case alphanumeric characters or '-', starting and ending with an alphanumeric character.",
+      "additionalProperties": false,
       "patternProperties": {
-        "^[a-z0-9-]+$": { "$ref": "#/definitions/organism" }
+        "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$": { "$ref": "#/definitions/organism" }
       }
     },
     "defaultOrganismConfig": {
@@ -1760,8 +1761,9 @@
     },
     "defaultOrganisms": {
       "type": "object",
+      "additionalProperties": false,
       "patternProperties": {
-        "^[a-z0-9-]+$": { "$ref": "#/definitions/organism" }
+        "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$": { "$ref": "#/definitions/organism" }
       }
     },
     "lineageSystemDefinitions": {
@@ -1855,6 +1857,12 @@
           "groups": ["general"],
           "default": false,
           "description": "If true, only base filename restrictions are enforced; the stricter character allowlist (alphanumerics, underscores, periods, hyphens) is not applied. Not officially supported and may result in unexpected behaviour."
+        },
+        "maxFileSizeBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "groups": ["general"],
+          "description": "The maximum allowed size, in bytes, of an individual uploaded file. Files exceeding this size are rejected by the website and by the backend for multipart uploads (note for single part uploads the default maximum size limit of 5GB cannot be modified and even if a lower `maxFileSizeBytes` threshold is configured it cannot be enforced for single part uploads). If unset, the website does not enforce a limit and multi-part uploads use the configured S3 service limit."
         }
       },
       "required": ["outputFileUrlType"],

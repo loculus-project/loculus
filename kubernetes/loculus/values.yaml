@@ -61,7 +61,8 @@ dataUseTerms:
     open: https://#TODO-MVP/open
     restricted: https://#TODO-MVP/restricted
 fileSharing:
-  outputFileUrlType: backend
+  outputFileUrlType: website
+  maxFileSizeBytes: 5368709120 # 5 GiB
 s3:
   enabled: true
   gcInitialDelayMinutes: 15
