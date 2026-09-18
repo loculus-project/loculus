@@ -82,9 +82,10 @@ def deacon_server(request):
     tests exercise the actual threshold/warning boundary logic end-to-end.
     """
     if shutil.which("deacon") is None:
+        message = "deacon binary not found on PATH"
         if request.config.getoption("--skip-missing-deps"):
-            pytest.skip("deacon binary not found on PATH")
-        pytest.fail("deacon binary not found on PATH")
+            pytest.skip(message)
+        pytest.fail(message)
     proc = deacon_module.start_deacon_server()
     time.sleep(1)  # give the server a moment to start listening
     try:
