@@ -1512,16 +1512,23 @@ def test_get_seq_features_drops_raw_codon_start_not_derived_from_phase():
 
 
 @pytest.mark.parametrize(
-    ("strand", "expected"),
-    [("+", "[<0:9](+)"), ("-", "[0:>9](-)")],
+    ("truncation", "strand", "expected"),
+    [
+        ({"fivePrime": 30}, "+", "[<0:9](+)"),
+        ({"fivePrime": 30}, "-", "[0:>9](-)"),
+        ({"threePrime": 30}, "+", "[0:>9](+)"),
+        ({"threePrime": 30}, "-", "[<0:9](-)"),
+    ],
 )
-def test_get_seq_features_marks_a_gene_partial_when_its_cds_is_truncated(strand, expected):
+def test_get_seq_features_marks_a_gene_partial_when_its_cds_is_truncated(
+    truncation, strand, expected
+):
     # INSDC marks the gene holding a truncated CDS partial as well, e.g. QB011581.1 has both
     # `gene <27762..27788` and `CDS <27762..27788`; a bare `gene` beside a `CDS <` is invalid.
     # The marker names the coordinate, not the protein end, so the same 5' truncation sits on
     # the lower coordinate on the plus strand and the upper one on the minus strand.
     sequence_str = "ATGAAATAA"
-    annotation_object = single_cds_annotation(0, 9, strand=strand, truncation={"fivePrime": 30})
+    annotation_object = single_cds_annotation(0, 9, strand=strand, truncation=truncation)
 
     features = get_seq_features(annotation_object, sequence_str)
     gene_feature = next(feature for feature in features if feature.type == "gene")
@@ -1582,6 +1589,67 @@ def test_unpack_annotations_reports_a_bad_annotation_instead_of_raising():
     nextclade_metadata = {"main": {"annotation": {"genes": [{"range": {"begin": 5, "end": 1}}]}}}
 
     annotations, errors = unpack_annotations(config, "LOC_01.1", nextclade_metadata)
+
+    assert annotations == {"main": None}
+    assert len(errors) == 1
+
+
+def _raw_annotation(truncation="none"):
+    """The wire shape Nextclade emits, which the model collapses but does not round-trip."""
+    return {
+        "genes": [
+            {
+                "range": {"begin": 0, "end": 9},
+                "attributes": {"gene": ["G"]},
+                "cdses": [
+                    {
+                        "attributes": {"gene": ["G"]},
+                        "segments": [
+                            {
+                                "range": {"begin": 0, "end": 9},
+                                "strand": "+",
+                                "phase": 0,
+                                "truncation": truncation,
+                            }
+                        ],
+                    }
+                ],
+            }
+        ]
+    }
+
+
+def test_unpack_annotations_returns_the_parsed_annotation():
+    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
+    config.create_embl_file = True
+    raw = _raw_annotation()
+
+    annotations, errors = unpack_annotations(config, "LOC_01.1", {"main": {"annotation": raw}})
+
+    assert errors == []
+    assert isinstance(annotations["main"], NextcladeAnnotation)
+    assert annotations["main"].genes[0].cdses[0].segments[0].range.end == 9
+
+
+def test_unpack_annotations_does_nothing_when_no_flatfile_is_wanted():
+    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
+    config.create_embl_file = False
+
+    assert unpack_annotations(config, "LOC_01.1", {"main": {"annotation": {"genes": []}}}) == (
+        None,
+        [],
+    )
+
+
+@pytest.mark.parametrize("truncation", [{"both": 5}, {"both": [1, 2, 3]}, {"sideways": 1}])
+def test_unpack_annotations_contains_a_malformed_truncation_arm(truncation):
+    # pydantic turns a ValueError raised in a validator into a ValidationError but lets a
+    # TypeError through, so an arm that cannot be unpacked has to be rejected, not unpacked.
+    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
+    config.create_embl_file = True
+    raw = _raw_annotation(truncation)
+
+    annotations, errors = unpack_annotations(config, "LOC_01.1", {"main": {"annotation": raw}})
 
     assert annotations == {"main": None}
     assert len(errors) == 1

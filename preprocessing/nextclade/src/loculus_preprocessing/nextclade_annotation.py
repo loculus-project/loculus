@@ -5,6 +5,7 @@ The shapes follow `packages/nextclade-schemas/output-json.schema.json` in nextcl
 generated from the Rust types and is the authority for what may appear here.
 """
 
+import contextlib
 from collections.abc import Mapping
 from typing import Annotated, Literal, NamedTuple
 
@@ -49,8 +50,12 @@ def _flatten_truncation(value: object) -> object:
         if arm == "threePrime":
             return Truncation(0, amount)
         if arm == "both":
-            five_prime, three_prime = amount
-            return Truncation(five_prime, three_prime)
+            # pydantic turns a validator's ValueError into a ValidationError but lets a
+            # TypeError escape, so an amount that will not unpack falls through to the
+            # ValueError below rather than crashing out of model_validate.
+            with contextlib.suppress(TypeError):
+                five_prime, three_prime = amount
+                return Truncation(five_prime, three_prime)
     msg = f"expected 'none' or one of fivePrime/threePrime/both, got {value!r}"
     raise ValueError(msg)
 
