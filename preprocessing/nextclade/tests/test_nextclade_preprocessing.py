@@ -60,6 +60,7 @@ MULTI_EBOLA_DATASET = "tests/ebola-multipath-dataset"
 CCHF_DATASET = "tests/cchfv"
 
 SINGLE_SEGMENT_EMBL = "tests/flatfiles/single_segment.embl"
+SINGLE_SEGMENT_REVERSE_COMPLEMENT_EMBL = "tests/flatfiles/single_segment_reverse_complement.embl"
 CCHF_REVERSE_COMPLEMENTED_FASTA = "tests/flatfiles/AY049081.1"
 CCHF_REVERSE_COMPLEMENTED_ANNOTATION = "tests/flatfiles/annotation-cchf-reverse-complemented.json"
 MUTATIONS_FROM_FOUNDER_CLADE = "tests/mutationsFromFounderClade.json"
@@ -1604,7 +1605,22 @@ def test_process_labeled_mutations():
     assert process_labeled_mutations(json_string, {}).datum == "NA:H275Y"
 
 
-def test_create_flatfile():
+@pytest.mark.parametrize(
+    ("sequence", "expected_embl_path"),
+    [
+        pytest.param(
+            sequence_with_mutation("single"),
+            SINGLE_SEGMENT_EMBL,
+            id="forward",
+        ),
+        pytest.param(
+            str(Seq(sequence_with_mutation("single")).reverse_complement()),
+            SINGLE_SEGMENT_REVERSE_COMPLEMENT_EMBL,
+            id="reverse complement",
+        ),
+    ],
+)
+def test_create_flatfile(sequence: str, expected_embl_path: str):
     config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
     embl_fields = get_config(EMBL_METADATA, ignore_args=True).processing_spec
     config.processing_spec.update(embl_fields)
@@ -1625,7 +1641,7 @@ def test_create_flatfile():
                 "geoLocCity": "Amsterdam",
                 "authors": "Smith, Doe A;",
             },
-            unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
+            unalignedNucleotideSequences={"main": sequence},
             files=None,
         ),
     )
@@ -1633,7 +1649,7 @@ def test_create_flatfile():
     result = process_all([sequence_entry_data], EBOLA_SUDAN_DATASET, config)
 
     embl_str = create_flatfile(config, result[0])
-    expected_embl = Path(SINGLE_SEGMENT_EMBL).read_text(encoding="utf-8")
+    expected_embl = Path(expected_embl_path).read_text(encoding="utf-8")
     assert embl_str == expected_embl
 
 
