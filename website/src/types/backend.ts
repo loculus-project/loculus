@@ -251,13 +251,13 @@ export const mapErrorsAndWarnings = (
 ): { errors: string[]; warnings: string[] } => ({
     errors: (editedData.errors ?? [])
         .filter(
-            (error) => error.processedFields.find((field) => field.name === key && field.type === type) !== undefined,
+            (error) => error.unprocessedFields.find((field) => field.name === key && field.type === type) !== undefined,
         )
         .map((error) => error.message),
     warnings: (editedData.warnings ?? [])
         .filter(
             (warning) =>
-                warning.processedFields.find((field) => field.name === key && field.type === type) !== undefined,
+                warning.unprocessedFields.find((field) => field.name === key && field.type === type) !== undefined,
         )
         .map((warning) => warning.message),
 });
