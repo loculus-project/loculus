@@ -1,9 +1,18 @@
+"""Build EMBL features from a Nextclade annotation."""
+
 import logging
 from dataclasses import dataclass
 from typing import Any
 
 from Bio.Seq import Seq
-from Bio.SeqFeature import CompoundLocation, FeatureLocation, Reference, SeqFeature
+from Bio.SeqFeature import (
+    AfterPosition,
+    BeforePosition,
+    CompoundLocation,
+    FeatureLocation,
+    Reference,
+    SeqFeature,
+)
 from Bio.SeqRecord import SeqRecord
 from unidecode import unidecode
 
@@ -181,23 +190,60 @@ def _build_gene_feature(gene: dict[str, Any]) -> SeqFeature:
         msg = f"Gene range is missing or incomplete: {gene_range}"
         raise ValueError(msg)
     qualifiers = _build_qualifiers(gene.get("attributes", {}), EMBL_ANNOTATIONS.gene_qualifiers)
+    # The annotation carries strand and truncation only on a CDS's segments, so a gene takes
+    # both from its CDSes: INSDC marks a gene holding a truncated CDS partial too.
+    cdses = gene.get("cdses", [])
+    strand = None
+    start, end = gene_range["begin"], gene_range["end"]
+    if cdses and (segments := cdses[0].get("segments")):
+        strand = -1 if segments[0].get("strand") == "-" else 1
+        lower, upper = _segment_truncation(segments[0])[0], _segment_truncation(segments[-1])[1]
+        if strand == -1:
+            lower, upper = upper, lower
+        start = BeforePosition(start) if lower else start
+        end = AfterPosition(end) if upper else end
     # In FeatureLocation start and end are zero based, exclusive end.
     # thus an embl entry of 123..150 (one based counting) becomes a location of [122:150]
     return SeqFeature(
-        FeatureLocation(start=gene_range["begin"], end=gene_range["end"]),
+        FeatureLocation(start=start, end=end, strand=strand),
         type="gene",
         qualifiers=qualifiers,
     )
 
 
+def _segment_truncation(segment: dict[str, Any]) -> tuple[int, int]:
+    """If a (5' to 3') segment is truncated (i.e. the gene would extend outside of the sequenced portion) we need to add `>` or `<` to the side where the truncation occured."""
+    truncation = segment.get("truncation")
+    if not isinstance(truncation, dict):
+        return 0, 0
+    if "both" in truncation:
+        five_prime, three_prime = truncation["both"]
+        return int(five_prime), int(three_prime)
+    return int(truncation.get("fivePrime", 0)), int(truncation.get("threePrime", 0))
+
+
 def _cds_location(segments: list[dict[str, Any]]) -> FeatureLocation | CompoundLocation:
     strands = [-1 if segment.get("strand") == "-" else +1 for segment in segments]
-    # FeatureLocation converts ranges from index-0 to index-1 and makes the ranges [] have an
-    # inclusive start and inclusive end (the default in nextclade is exclusive end).
-    locations = [
-        FeatureLocation(start=segment["range"]["begin"], end=segment["range"]["end"], strand=strand)
-        for segment, strand in zip(segments, strands, strict=False)
-    ]
+    # Only the outer segments can run past the sequence; a splice junction is a known boundary.
+    five_truncated = _segment_truncation(segments[0])[0] > 0
+    three_truncated = _segment_truncation(segments[-1])[1] > 0
+    last = len(segments) - 1
+    locations = []
+    for index, (segment, strand) in enumerate(zip(segments, strands, strict=False)):
+        start, end = segment["range"]["begin"], segment["range"]["end"]
+        # INSDC marks the coordinate, not the protein end: on the minus strand 5' is upper.
+        lower, upper = five_truncated and index == 0, three_truncated and index == last
+        if strand == -1:
+            lower, upper = upper, lower
+        # FeatureLocation converts ranges from index-0 to index-1 and makes the ranges [] have an
+        # inclusive start and inclusive end (the default in nextclade is exclusive end).
+        locations.append(
+            FeatureLocation(
+                BeforePosition(start) if lower else start,
+                AfterPosition(end) if upper else end,
+                strand=strand,
+            )
+        )
     return locations[0] if len(locations) == 1 else CompoundLocation(locations)
 
 
@@ -297,7 +343,7 @@ def create_flatfile(  # noqa: PLR0914
             annotations={
                 # Biopython's EMBL writer reads this specific key to fill in the ID line's
                 # molecule-type token - it is not an INSDC qualifier (that's "mol_type" below).
-                "molecule_type": molecule_type.seq_io_value,
+                "molecule_type": str(molecule_type),
                 "organism": organism,
                 "topology": topology,
                 "references": [reference],  # type: ignore[dict-item]
