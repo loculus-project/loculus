@@ -1495,7 +1495,7 @@ def test_get_seq_features_handles_real_reverse_complemented_cchf_annotation():
     cds_features = [feature for feature in features if feature.type == "CDS"]
     assert len(cds_features) == 1
     cds_feature = cds_features[0]
-    assert str(cds_feature.location) == "[0:466](-)"
+    assert str(cds_feature.location) == "[<0:>466](-)"
     assert cds_feature.qualifiers["codon_start"] == 3  # noqa: PLR2004
     assert cds_feature.qualifiers["translation"] == (
         "NGYLDKHRDEVDKASADSMITNLLKHIAKAQELYKNSSALRAQGAQIDTPFSSFYWLYKAGVTPETFPTISQ"
@@ -1552,6 +1552,43 @@ def test_get_seq_features_drops_raw_codon_start_not_derived_from_phase():
     cds_features = [feature for feature in features if feature.type == "CDS"]
     assert len(cds_features) == 1
     assert cds_features[0].qualifiers["codon_start"] == 1
+
+
+@pytest.mark.parametrize(
+    ("strand", "expected"),
+    [("+", "[<0:9](+)"), ("-", "[0:>9](-)")],
+)
+def test_get_seq_features_marks_a_gene_partial_when_its_cds_is_truncated(strand, expected):
+    # INSDC marks the gene holding a truncated CDS partial as well, e.g. QB011581.1 has both
+    # `gene <27762..27788` and `CDS <27762..27788`; a bare `gene` beside a `CDS <` is invalid.
+    # The marker names the coordinate, not the protein end, so the same 5' truncation sits on
+    # the lower coordinate on the plus strand and the upper one on the minus strand.
+    sequence_str = "ATGAAATAA"
+    annotation_object = {
+        "genes": [
+            {
+                "range": {"begin": 0, "end": 9},
+                "attributes": {},
+                "cdses": [
+                    {
+                        "segments": [
+                            {
+                                "range": {"begin": 0, "end": 9},
+                                "strand": strand,
+                                "truncation": {"fivePrime": 30},
+                            }
+                        ],
+                        "attributes": {},
+                    }
+                ],
+            }
+        ]
+    }
+    features = get_seq_features(annotation_object, sequence_str)
+    gene_feature = next(feature for feature in features if feature.type == "gene")
+    cds_feature = next(feature for feature in features if feature.type == "CDS")
+    assert str(gene_feature.location) == expected
+    assert str(gene_feature.location) == str(cds_feature.location)
 
 
 def test_process_clade_founder_values():
