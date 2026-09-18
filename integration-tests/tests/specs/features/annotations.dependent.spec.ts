@@ -18,8 +18,8 @@ test.describe('Sequence Preview Annotations', () => {
         await searchPage.fill('Submission ID', 'foobar');
         await searchPage.fill('Author affiliations', 'Patho Institute, Paris');
 
-        const accessionVersion = await searchPage.clickOnSequenceAndGetAccession(0);
-        const accession = accessionVersion.split('.')[0];
+        const { accession, accessionVersion } = await searchPage.getUniqueAccessionVersion();
+        await searchPage.clickOnSequence();
 
         await expect(page.getByTestId('sequence-preview-modal')).toBeVisible();
 
@@ -28,11 +28,12 @@ test.describe('Sequence Preview Annotations', () => {
             page.getByTestId('sequence-preview-modal').getByText('Annotations'),
         ).toBeVisible();
 
-        const emblLink = page.getByRole('link', { name: `${accessionVersion}.embl` });
+        const emblFileName = `${accessionVersion}.embl`;
+        const emblLink = page.getByRole('link', { name: emblFileName });
         await expect(emblLink).toBeVisible();
 
         const expected_content = EMBL_CONTENT.replace(/LOC_\w{6,10}/g, accession);
-        await getFromLinkTargetAndAssertContent(emblLink, expected_content);
+        await getFromLinkTargetAndAssertContent(emblLink, expected_content, emblFileName);
     });
 });
 
@@ -51,9 +52,9 @@ XX
 FH   Key             Location/Qualifiers
 FH
 FT   source          1..910
-FT                   /molecule_type="genomic RNA"
+FT                   /mol_type="genomic RNA"
 FT                   /organism="Sudan ebolavirus"
-FT                   /country="France"
+FT                   /geo_loc_name="France"
 FT                   /collection_date="2021-05-12"
 FT   gene            1..910
 FT                   /gene="NP"
