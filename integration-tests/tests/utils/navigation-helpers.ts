@@ -19,6 +19,9 @@ export async function waitForUrlReportingAlerts(
         if (alerts.length === 0) {
             throw error;
         }
-        throw new Error(`Did not navigate to ${url.toString()}: ${alerts.join(' | ')}`);
+        const originalMessage = error instanceof Error ? error.message : String(error);
+        throw new Error(
+            `Did not navigate to ${url.toString()}: ${alerts.join(' | ')}\n\nOriginating error: ${originalMessage}`,
+        );
     }
 }
