@@ -17,9 +17,9 @@ export async function waitForUrlReportingAlerts(
             .map((text) => text.replace(/\s+/g, ' ').trim())
             .filter((text) => text.length > 0);
         const alertText = alerts.length > 0 ? `: ${alerts.join(' | ')}` : '';
-        const originalMessage = error instanceof Error ? error.message : String(error);
-        throw new Error(
-            `Did not navigate to ${url.toString()}${alertText}\n\nOriginating error: ${originalMessage}`,
-        );
+        if (error instanceof Error) {
+            error.message = `Did not navigate to ${url.toString()}${alertText}\n\n${error.message}`;
+        }
+        throw error;
     }
 }
