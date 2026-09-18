@@ -275,9 +275,9 @@ export const submitFiles = uploadFiles.merge(
     }),
 );
 
-// Not a full RFC 9457 model but the predicate for "can the website display this error": the RFC
-// makes every member optional, so requiring `type` or `instance`, which are never shown, only
-// rejects valid responses. The three that are shown stay required so callers never render undefined.
+// Technically RFC 9457 also doesn't guarantee title/status/detail
+// to be non-null, but in practice our backend emits those
+// so this allows us to avoid some verbose null handling.
 export const problemDetail = z.object({
     type: z.string().nullable().optional(),
     title: z.string(),
