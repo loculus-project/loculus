@@ -5,6 +5,7 @@ import {
     prepareTmpDirForSingleUpload,
     uploadFilesFromTmpDir,
 } from '../utils/file-upload-helpers';
+import { waitForUrlReportingAlerts } from '../utils/navigation-helpers';
 
 export class EditPage {
     constructor(private page: Page) {}
@@ -37,7 +38,7 @@ export class EditPage {
         await this.page.getByRole('button', { name: /proceed to Approval/ }).click();
         await expect(this.page.getByText('Do you really want to submit?')).toBeVisible();
         await this.page.getByRole('button', { name: 'Confirm' }).click();
-        await this.page.waitForURL('**/review', { timeout: 15_000 });
+        await waitForUrlReportingAlerts(this.page, '**/review', { timeout: 15_000 });
         return new ReviewPage(this.page);
     }
 
