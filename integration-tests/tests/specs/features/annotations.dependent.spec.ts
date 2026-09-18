@@ -18,8 +18,8 @@ test.describe('Sequence Preview Annotations', () => {
         await searchPage.fill('Submission ID', 'foobar');
         await searchPage.fill('Author affiliations', 'Patho Institute, Paris');
 
-        const accessionVersion = await searchPage.clickOnSequenceAndGetAccession(0);
-        const accession = accessionVersion.split('.')[0];
+        const { accession, accessionVersion } = await searchPage.getUniqueAccessionVersion();
+        await searchPage.clickOnSequence();
 
         await expect(page.getByTestId('sequence-preview-modal')).toBeVisible();
 
@@ -61,9 +61,9 @@ FT                   /gene="NP"
 FT                   /product="NP"
 FT   CDS             1..910
 FT                   /gene="NP"
+FT                   /note="predominant component of nucleocapsid"
 FT                   /product="nucleoprotein"
 FT                   /protein_id="YP_138520.1"
-FT                   /note="predominant component of nucleocapsid"
 FT                   /codon_start=1
 FT                   /translation="MDKRVRGSWALGGQSEVDLDYHKILTAGLSVQQGIVRQRVIPVYV
 FT                   VSDLEGICQHIIQAFEAGVDFQDNADSFLLLLCLHHAYQGDHRLFLKSDAVQYLEGHGF
