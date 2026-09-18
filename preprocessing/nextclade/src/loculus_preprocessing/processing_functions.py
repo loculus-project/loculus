@@ -1305,7 +1305,7 @@ class ProcessingFunctions:
         input_fields: list[str],
         args: FunctionArgs,
         context: ProcessingContext,
-    ):
+    ) -> RawProcessingResult:
         accession: str | None = input_data.get("accession")
         if not accession:
             return RawProcessingResult()
