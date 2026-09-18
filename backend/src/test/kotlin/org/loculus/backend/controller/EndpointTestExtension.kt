@@ -130,6 +130,8 @@ private val env = TestEnvironment()
 
 private var startupFailure: Throwable? = null
 
+private val NAMESPACE = ExtensionContext.Namespace.create(EndpointTestExtension::class.java)
+
 class EndpointTestExtension :
     BeforeAllCallback,
     BeforeEachCallback {
@@ -138,7 +140,7 @@ class EndpointTestExtension :
         startupFailure?.let { throw it }
         try {
             context.root
-                .getStore(ExtensionContext.Namespace.GLOBAL)
+                .getStore(NAMESPACE)
                 .computeIfAbsent(TestInfrastructure::class.java)
         } catch (e: Throwable) {
             runCatching { env.stop() }.onFailure(e::addSuppressed)
