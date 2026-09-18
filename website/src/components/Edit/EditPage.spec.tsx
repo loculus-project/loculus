@@ -124,6 +124,27 @@ describe('EditPage', () => {
         expect(document.querySelector('[data-tooltip-content="warningMessage"]')).toBeTruthy();
     });
 
+    test('shows validation errors and warnings on their submitted input field', async () => {
+        const annotation = {
+            unprocessedFields: [{ name: metadataKey, type: 'Metadata' as const }],
+            processedFields: [{ name: 'hostTaxonId', type: 'Metadata' as const }],
+            message: "'Goose' is not a valid host.",
+        };
+        renderEditPage({
+            editedData: {
+                ...defaultReviewData,
+                errors: [annotation],
+                warnings: [{ ...annotation, message: 'Host warning' }],
+            },
+        });
+
+        expect(document.querySelector(`[data-tooltip-content="${annotation.message}"]`)).toBeTruthy();
+        expect(document.querySelector('[data-tooltip-content="Host warning"]')).toBeTruthy();
+        await userEvent.click(screen.getByDisplayValue(editableEntry));
+        expect(screen.getByText(annotation.message)).toBeInTheDocument();
+        expect(screen.getByText('Host warning')).toBeInTheDocument();
+    });
+
     test('should edit, show errors and undo input', async () => {
         renderEditPage();
 

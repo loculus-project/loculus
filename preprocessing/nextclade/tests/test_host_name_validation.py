@@ -7,6 +7,8 @@ import pytest
 from loculus_preprocessing import external_services
 from loculus_preprocessing.config import get_config
 from loculus_preprocessing.datatypes import (
+    AnnotationSource,
+    AnnotationSourceType,
     UnprocessedData,
     UnprocessedEntry,
 )
@@ -163,7 +165,7 @@ def test_host_processing_invalid_host_insdc(mock_session: MagicMock) -> None:
     assert mock_session.get.call_count == 1
     assert result[0].processed_entry.errors == []
     assert len(result[0].processed_entry.warnings) == 1
-    assert "Host validation for" in result[0].processed_entry.warnings[0].message
+    assert "is not a valid host" in result[0].processed_entry.warnings[0].message
 
 
 @patch.object(external_services.taxonomy_cache, "session")
@@ -191,4 +193,41 @@ def test_host_processing_invalid_host_direct(mock_session: MagicMock) -> None:
     assert mock_session.get.call_count == 1
     assert result[0].processed_entry.warnings == []
     assert len(result[0].processed_entry.errors) == 1
-    assert "Host validation for" in result[0].processed_entry.errors[0].message
+    assert "is not a valid host" in result[0].processed_entry.errors[0].message
+
+
+@pytest.mark.parametrize("requirement", ["optional", "required", "conditional"])
+@patch.object(external_services.taxonomy_cache, "session")
+def test_invalid_host_has_one_actionable_error(mock_session: MagicMock, requirement: str) -> None:
+    mock_session.get.return_value = make_response(404, {"detail": "not found"})
+    config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
+    config.processing_spec["hostTaxonId"].required = requirement == "required"
+    if requirement == "conditional":
+        config.processing_spec["hostTaxonId"].required_when = ["host"]
+    entry = make_entry({"host": "Goose"}, config.insdc_ingest_group_id + 1)
+
+    result = process_all([entry], "temp", config)[0].processed_entry
+
+    assert len(result.errors) == 1
+    error = result.errors[0]
+    assert error.message == (
+        "'Goose' is not a valid host. Please provide an NCBI taxon ID or scientific name. "
+        "Find valid hosts in NCBI Taxonomy: https://www.ncbi.nlm.nih.gov/taxonomy."
+    )
+    assert (
+        AnnotationSource(name="host", type=AnnotationSourceType.METADATA) in error.unprocessedFields
+    )
+    assert result.warnings == []
+
+
+@patch.object(external_services.taxonomy_cache, "session")
+def test_missing_required_host_still_reports_requirement(mock_session: MagicMock) -> None:
+    config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
+    config.processing_spec["hostTaxonId"].required = True
+    entry = make_entry({}, config.insdc_ingest_group_id + 1)
+
+    result = process_all([entry], "temp", config)[0].processed_entry
+
+    assert len(result.errors) == 1
+    assert "is required" in result.errors[0].message
+    mock_session.get.assert_not_called()
