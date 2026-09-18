@@ -141,7 +141,7 @@ class EndpointTestExtension :
                 .getStore(ExtensionContext.Namespace.GLOBAL)
                 .computeIfAbsent(TestInfrastructure::class.java)
         } catch (e: Throwable) {
-            runCatching { env.stop() }
+            runCatching { env.stop() }.onFailure(e::addSuppressed)
             startupFailure = e
             throw e
         }
@@ -186,14 +186,16 @@ internal class TestInfrastructure : AutoCloseable {
     }
 
     override fun close() {
-        env.stop()
-
-        System.clearProperty(BackendSpringProperty.S3_ENABLED)
-        System.clearProperty(BackendSpringProperty.S3_BUCKET_ENDPOINT)
-        System.clearProperty(BackendSpringProperty.S3_BUCKET_REGION)
-        System.clearProperty(BackendSpringProperty.S3_BUCKET_BUCKET)
-        System.clearProperty(BackendSpringProperty.S3_BUCKET_ACCESS_KEY)
-        System.clearProperty(BackendSpringProperty.S3_BUCKET_SECRET_KEY)
+        try {
+            env.stop()
+        } finally {
+            System.clearProperty(BackendSpringProperty.S3_ENABLED)
+            System.clearProperty(BackendSpringProperty.S3_BUCKET_ENDPOINT)
+            System.clearProperty(BackendSpringProperty.S3_BUCKET_REGION)
+            System.clearProperty(BackendSpringProperty.S3_BUCKET_BUCKET)
+            System.clearProperty(BackendSpringProperty.S3_BUCKET_ACCESS_KEY)
+            System.clearProperty(BackendSpringProperty.S3_BUCKET_SECRET_KEY)
+        }
     }
 }
 

@@ -64,8 +64,7 @@ class LocalPostgres : PostgresProvider {
     }
 
     override fun stop() {
-        // Stopping a server that never came up is not an error, and throwing here would skip the rest of the cleanup.
-        runAsUser(binDir.resolve("pg_ctl").toString(), "-D", dataDir.toString(), "-w", "stop", allowFailure = true)
+        runAsUser(binDir.resolve("pg_ctl").toString(), "-D", dataDir.toString(), "-w", "stop")
     }
 
     override fun exec(sql: String) {
