@@ -27,6 +27,7 @@ data class DataUseTermsUrls(val open: String, val restricted: String)
 data class FileSharing(
     val outputFileUrlType: FileUrlType = FileUrlType.WEBSITE,
     val disableStrictFilenameValidation: Boolean = false,
+    val maxFileSizeBytes: Long? = null,
 )
 
 /**

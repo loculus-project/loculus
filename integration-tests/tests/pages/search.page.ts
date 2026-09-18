@@ -17,6 +17,15 @@ export type AccessionVersion = { accession: string; version: number; accessionVe
 
 const accessionVersionRegex = /LOC_[A-Z0-9]+\.[0-9]+/;
 
+function parseAccessionVersion(rowText: string): AccessionVersion | undefined {
+    const match = rowText.match(accessionVersionRegex);
+    if (!match) {
+        return undefined;
+    }
+    const [accession, version] = match[0].split('.');
+    return makeAccessionVersion({ accession, version: Number.parseInt(version, 10) });
+}
+
 export class SearchPage {
     constructor(private page: Page) {}
 
@@ -225,18 +234,35 @@ export class SearchPage {
         return new URL(this.page.url()).searchParams;
     }
 
-    // The table keeps rendering the previous filter's rows while the next request is in
-    // flight, and the sequence count is a separate request that can settle first.
-    async getSingleAccessionVersion(): Promise<string> {
-        const link = this.page.getByRole('link', { name: accessionVersionRegex });
-        await expect(link).toHaveCount(1, { timeout: 30_000 });
-        return (await link.textContent()) ?? '';
-    }
-
     async expectSequenceCount(count: number) {
         await expect(
             this.page.getByText(new RegExp(`Search returned ${count} sequence`)),
         ).toBeVisible();
+    }
+
+    /**
+     * Waits for the result table to settle on exactly one row and returns that row's
+     * accession/version. The table keeps showing the previous results while a query is in flight,
+     * so this only catches a stale read when the previous result set had a different row count.
+     * The timeout covers the LAPIS round trip, so it must exceed the default 5s expect timeout.
+     */
+    async getUniqueAccessionVersion(): Promise<AccessionVersion> {
+        const rows = this.getSequenceRows();
+        await expect(rows).toHaveCount(1, { timeout: 30_000 });
+
+        const rowText = await rows.first().innerText();
+        const accessionVersion = parseAccessionVersion(rowText);
+        if (!accessionVersion) {
+            throw new Error(`Expected an accession version in the result row, got: ${rowText}`);
+        }
+        return accessionVersion;
+    }
+
+    async waitForSequences(role: 'link' | 'cell', name: string | RegExp) {
+        while (!(await this.page.getByRole(role, { name: name }).isVisible())) {
+            await this.page.reload();
+            await this.page.waitForTimeout(2000);
+        }
     }
 
     async openModalByRoleAndName(role: 'link' | 'cell', name: string | RegExp) {
@@ -253,6 +279,7 @@ export class SearchPage {
             await getFromLinkTargetAndAssertContent(
                 this.page.getByRole('link', { name: fileName }),
                 fileContent,
+                fileName,
             );
         }
     }
@@ -283,19 +310,12 @@ export class SearchPage {
         const rows = this.getSequenceRows();
         const count = await rows.count();
 
-        if (count === 0) {
-            return [];
-        }
-
         const accessions: AccessionVersion[] = [];
         for (let i = 0; i < count; i++) {
             const rowText = await rows.nth(i).innerText();
-            const match = rowText.match(accessionVersionRegex);
-            if (match) {
-                const [accession, version] = match[0].split('.');
-                accessions.push(
-                    makeAccessionVersion({ accession, version: Number.parseInt(version) }),
-                );
+            const accessionVersion = parseAccessionVersion(rowText);
+            if (accessionVersion) {
+                accessions.push(accessionVersion);
             }
         }
 

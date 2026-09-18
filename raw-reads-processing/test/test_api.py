@@ -13,8 +13,8 @@ VALID_PAYLOAD = {
     "files": [
         {
             "fileId": "1",
-            "name": "reads.fastq",
-            "url": "http://example.com/reads.fastq",
+            "name": "reads.fastq.gz",
+            "url": "http://example.com/reads.fastq.gz",
         }
     ],
     "accessionVersion": "LOC_0001.1",
@@ -48,7 +48,7 @@ def test_successful_submission_returns_empty_validation_result(client, monkeypat
 
 def test_invalid_submission_is_returned_as_validation_result(client, monkeypatch):
     error = Annotation(
-        fileNames=["reads.fastq"],
+        fileNames=["reads.fastq.gz"],
         message="File is not in accepted format.",
     )
 

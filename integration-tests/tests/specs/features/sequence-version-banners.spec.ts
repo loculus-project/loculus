@@ -85,8 +85,7 @@ test.describe('Sequence version banners', () => {
         await search.select('Collection country', 'France');
 
         // Get the accession of the sequence to revise
-        const toReviseId = await search.getSingleAccessionVersion();
-        const toReviseAccession = toReviseId.split('.')[0];
+        const { accession: toReviseAccession } = await search.getUniqueAccessionVersion();
 
         // Click on the sequence and revise it
         await page.getByRole('cell', { name: 'France' }).click();
@@ -103,8 +102,7 @@ test.describe('Sequence version banners', () => {
         await search.select('Collection country', 'Germany');
 
         // Get the accession of the sequence to revoke
-        const toRevokeId = await search.getSingleAccessionVersion();
-        const toRevokeAccession = toRevokeId.split('.')[0];
+        const { accession: toRevokeAccession } = await search.getUniqueAccessionVersion();
 
         // Click on the sequence and revoke it (auto-approves on confirmation)
         await page.getByRole('cell', { name: 'Germany' }).click();
@@ -201,8 +199,7 @@ test.describe('Sequence version banners', () => {
         await search.enableSearchFields('Author affiliations');
         await search.fill('Author affiliations', uuid);
 
-        const seqId = await search.getSingleAccessionVersion();
-        const accession = seqId.split('.')[0];
+        const { accession } = await search.getUniqueAccessionVersion();
 
         // Revise the sequence
         await page.getByRole('cell', { name: 'Spain' }).click();

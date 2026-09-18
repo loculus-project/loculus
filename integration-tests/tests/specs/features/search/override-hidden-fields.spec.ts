@@ -68,8 +68,7 @@ test('Override hidden fields', async ({ page, groupId }) => {
     await search.select('Collection country', 'Uganda');
     await search.enableSearchFields('Author affiliations');
     await search.fill('Author affiliations', uuid);
-    const revokedId = await search.getSingleAccessionVersion();
-    const revokedAccession = revokedId.split('.')[0];
+    const { accession: revokedAccession } = await search.getUniqueAccessionVersion();
     const expectedRevocationAccessionVersion = `${revokedAccession}.2`;
     await page.getByRole('cell', { name: 'Uganda' }).click();
     await search.revokeSequence();
