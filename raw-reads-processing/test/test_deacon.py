@@ -73,13 +73,15 @@ def mock_downstream(monkeypatch):
 
 
 @pytest.fixture
-def deacon_server():
+def deacon_server(request):
     """Run validate_raw_reads_submission's deacon step against the real deacon
     binary and the checked-in fixture index, instead of mocking it, so these
     tests exercise the actual threshold/warning boundary logic end-to-end.
     """
     if shutil.which("deacon") is None:
-        pytest.skip("deacon binary not found on PATH")
+        if request.config.getoption("--skip-missing-deps"):
+            pytest.skip("deacon binary not found on PATH")
+        pytest.fail("deacon binary not found on PATH")
     proc = deacon_module.start_deacon_server()
     time.sleep(1)  # give the server a moment to start listening
     try:
