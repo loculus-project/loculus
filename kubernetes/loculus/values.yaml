@@ -2867,7 +2867,7 @@ images:
     pullPolicy: Always
   deaconIndex:
     repository: "ghcr.io/loculus-project/deacon-index"
-    tag: "latest"
+    tag: "2026-08-28-13-33"
     pullPolicy: IfNotPresent
 silo:
   apiThreadsForHttpConnections: 16
