@@ -34,6 +34,7 @@ from .datatypes import (
     NucleotideSequence,
     ProcessingAnnotation,
     ProcessingAnnotationAlignment,
+    ProcessingContext,
     SegmentClassificationMethod,
     SegmentName,
     SequenceAssignment,
@@ -794,13 +795,17 @@ def enrich_with_nextclade(  # noqa: PLR0914
     )` object.
     """
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {
-        entry.accessionVersion: {
-            **entry.data.metadata,
-            "submitter": entry.data.submitter,
-            "submittedAt": entry.data.submittedAt,
-            "submissionId": entry.data.submissionId,
-            "group_id": entry.data.group_id,
-        }
+        entry.accessionVersion: dict(entry.data.metadata) for entry in unprocessed
+    }
+    context: dict[AccessionVersion, ProcessingContext] = {
+        entry.accessionVersion: ProcessingContext(
+            accession_version=entry.accessionVersion,
+            group_id=entry.data.group_id,
+            insdc_ingest_group_id=config.insdc_ingest_group_id,
+            submitted_at=entry.data.submittedAt,
+            submission_id=entry.data.submissionId,
+            submitter=entry.data.submitter,
+        )
         for entry in unprocessed
     }
     input_files: dict[
@@ -898,6 +903,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
     return {
         id: UnprocessedAfterNextclade(
             inputMetadata=input_metadata[id],
+            context=context[id],
             files=input_files[id],
             nextcladeMetadata=nextclade_metadata[id],
             unalignedNucleotideSequences=unaligned_nucleotide_sequences[id],
