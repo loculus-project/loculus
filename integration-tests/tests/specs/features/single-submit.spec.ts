@@ -53,6 +53,6 @@ test('field description tooltip appears on hover', async ({ page, groupId }) => 
     await expect(infoIcon).toBeVisible();
 
     const tooltip = page.locator('#field-tooltipsampleCollectionDate');
-    await hoverUntilVisible(page, infoIcon, tooltip);
+    await hoverUntilVisible(infoIcon, tooltip);
     await expect(tooltip).toContainText('sampleCollectionDate');
 });
