@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import { execSync } from 'child_process';
 import fs, { readFileSync } from 'fs';
+import { gzipSync } from 'zlib';
 import os from 'os';
 import path, { join } from 'path';
 import { test } from '../../fixtures/tmpdir.fixture';
@@ -31,10 +32,10 @@ const COUNTRY_2 = 'Uganda';
 const SEQUENCING_INSTRUMENT = 'Illumina MiSeq';
 const ID_1 = 'sub1';
 const ID_2 = 'sub2';
-const FILES_SINGLE = { 'testfile.fastq': EBOLA_SUDAN_SMALL_FASTQ(1) };
+const FILES_SINGLE = { 'testfile.fastq.gz': EBOLA_SUDAN_SMALL_FASTQ(1) };
 const FILES_DOUBLE: Record<string, string> = {
-    'file1.fastq': EBOLA_SUDAN_SMALL_FASTQ(1),
-    'file2.fastq': EBOLA_SUDAN_SMALL_FASTQ(2),
+    'file1.fastq.gz': EBOLA_SUDAN_SMALL_FASTQ(1),
+    'file2.fastq.gz': EBOLA_SUDAN_SMALL_FASTQ(2),
 };
 
 // File cells can be formatted either as a list of file names,
@@ -69,61 +70,99 @@ test('submit single seq w/ 2 FASTQ files thru single seq submission form', async
     await searchPage.checkAllFileContents(FILES_DOUBLE);
 });
 
-test('reject non-FASTQ raw_reads file with a format-validation error', async ({
-    page,
-    groupId,
-    tmpDir,
-}) => {
-    test.setTimeout(200_000);
-    void groupId;
-    const submissionPage = new SingleSequenceSubmissionPage(page);
-    await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
-    await submissionPage.fillSubmissionForm({
-        submissionId: 'invalid-format',
-        collectionCountry: COUNTRY_1,
-        collectionDate: '2023-11-01',
-        authorAffiliations: AUTHOR_AFFILIATIONS,
-        sequencingInstrument: SEQUENCING_INSTRUMENT,
-    });
-    await submissionPage.fillSequenceData({ main: EBOLA_SUDAN_SHORT_SEQUENCE });
-    await submissionPage.uploadExternalFiles(
-        RAW_READS,
-        { 'reads.fastq': 'This is not a FASTQ file.' },
-        tmpDir,
-    );
-    const reviewPage = await submissionPage.submitAndWaitForProcessingDone(180_000);
-    await reviewPage.expectFileProcessingError(/This is not a FASTQ file./i);
-    await reviewPage.expectNoValidSequencesToApprove();
-});
+// Two mates sharing a read name, as an interleaved FASTQ downloaded from INSDC has.
+const INTERLEAVED_FASTQ =
+    `@read1\nACGTACGTAC\n+\nIIIIIIIIII\n@read1\nTGCATGCATG\n+\nIIIIIIIIII\n` +
+    `@read2\nACGTACGTAC\n+\nIIIIIIIIII\n@read2\nTGCATGCATG\n+\nIIIIIIIIII\n`;
 
-test('reject FASTQ raw_reads file with human host reads with a deacon validation error', async ({
+const contaminatedReads = () =>
+    readFileSync(join(__dirname, '../../test-data/contaminated.fastq'), 'utf-8');
+
+/**
+ * Expected validation failures for raw read submissions.
+ * All failures done in a single submission to be fast and efficient.
+ */
+const RAW_READS_FAILURES: { id: string; files: Record<string, string | Buffer>; error: RegExp }[] =
+    [
+        {
+            id: 'invalid-fastq',
+            files: { 'reads.fastq.gz': 'This is not a FASTQ file.' },
+            error: /This is not a FASTQ file./i,
+        },
+        {
+            id: 'uncompressed',
+            files: { 'reads.fastq': EBOLA_SUDAN_SMALL_FASTQ(1) },
+            error: /must be gzip-compressed/i,
+        },
+        {
+            id: 'not-gzipped',
+            files: { 'reads.fastq.gz': Buffer.from(EBOLA_SUDAN_SMALL_FASTQ(1)) },
+            error: /contents are not gzip-compressed/i,
+        },
+        {
+            id: 'double-gzipped',
+            files: { 'reads.fastq.gz': gzipSync(gzipSync(EBOLA_SUDAN_SMALL_FASTQ(1))) },
+            error: /gzip-compressed more than once/i,
+        },
+        {
+            id: 'truncated-gzip',
+            files: { 'reads.fastq.gz': gzipSync(EBOLA_SUDAN_SMALL_FASTQ(1)).subarray(0, 10) },
+            error: /truncated|corrupt/i,
+        },
+        {
+            id: 'too-many-files',
+            files: {
+                'reads_1.fastq.gz': EBOLA_SUDAN_SMALL_FASTQ(1),
+                'reads_2.fastq.gz': EBOLA_SUDAN_SMALL_FASTQ(2),
+                'reads_3.fastq.gz': EBOLA_SUDAN_SMALL_FASTQ(1, 2),
+            },
+            error: /Too many FASTQ files/i,
+        },
+        {
+            id: 'interleaved',
+            files: { 'reads.fastq.gz': INTERLEAVED_FASTQ },
+            error: /same read name appears more than once/i,
+        },
+        {
+            id: 'host-contaminated',
+            files: { 'reads.fastq.gz': contaminatedReads() },
+            error: /high proportion of human reads/i,
+        },
+    ];
+
+test('reject invalid raw_reads submissions with helpful errors', async ({
     page,
     groupId,
     tmpDir,
 }) => {
-    test.setTimeout(200_000);
+    test.setTimeout(400_000);
     void groupId;
-    const contaminatedReads = readFileSync(
-        join(__dirname, '../../test-data/contaminated.fastq'),
-        'utf-8',
-    );
-    const submissionPage = new SingleSequenceSubmissionPage(page);
+
+    const submissionPage = new BulkSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
-    await submissionPage.fillSubmissionForm({
-        submissionId: 'host-contaminated',
-        collectionCountry: COUNTRY_1,
-        collectionDate: '2023-11-02',
-        authorAffiliations: AUTHOR_AFFILIATIONS,
-        sequencingInstrument: SEQUENCING_INSTRUMENT,
-    });
-    await submissionPage.fillSequenceData({ main: EBOLA_SUDAN_SHORT_SEQUENCE });
+    await submissionPage.uploadMetadataFile(
+        [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
+        RAW_READS_FAILURES.map(({ id, files }) => [
+            id,
+            COUNTRY_1,
+            '2023-11-01',
+            SEQUENCING_INSTRUMENT,
+            filesColumnCell(Object.keys(files), id),
+        ]),
+    );
+    await submissionPage.uploadSequencesFile(
+        Object.fromEntries(RAW_READS_FAILURES.map(({ id }) => [id, EBOLA_SUDAN_SHORT_SEQUENCE])),
+    );
     await submissionPage.uploadExternalFiles(
         RAW_READS,
-        { 'reads.fastq': contaminatedReads },
+        Object.fromEntries(RAW_READS_FAILURES.map(({ id, files }) => [id, files])),
         tmpDir,
     );
-    const reviewPage = await submissionPage.submitAndWaitForProcessingDone(180_000);
-    await reviewPage.expectFileProcessingError(/high proportion of human reads/i);
+
+    const reviewPage = await submissionPage.submitAndWaitForProcessingDone(300_000);
+    for (const { id, error } of RAW_READS_FAILURES) {
+        await reviewPage.expectFileProcessingError(error, id);
+    }
     await reviewPage.expectNoValidSequencesToApprove();
 });
 
@@ -214,7 +253,7 @@ test('bulk submit 1 seq with a 35 MB FASTQ file', async ({ page, groupId, tmpDir
     for (let i = 0; i < REPEATS; i++) {
         largeFileContent.push(EBOLA_SUDAN_SMALL_FASTQ(1, i + 1));
     }
-    const LARGE_FILE = { 'large_file.fastq': largeFileContent.join('') };
+    const LARGE_FILE = { 'large_file.fastq.gz': largeFileContent.join('') };
 
     const submissionPage = new BulkSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
@@ -231,7 +270,9 @@ test('bulk submit 1 seq with a 35 MB FASTQ file', async ({ page, groupId, tmpDir
         ],
     );
     await submissionPage.uploadSequencesFile({ [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE });
-    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: LARGE_FILE }, tmpDir);
+    // Level 0 (store, no compression): these reads are repetitive and would otherwise gzip
+    // down to a few KB, leaving nothing for the multipart upload to split.
+    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: LARGE_FILE }, tmpDir, 0);
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone(240_000);
     const searchPage = await reviewPage.releaseAndGoToReleasedSequences();
     await searchPage.checkFileContentInModal('cell', COUNTRY_1, LARGE_FILE);
@@ -300,6 +341,47 @@ test('bulk submit blocks a submission with errors in file linkage or parsing', a
     }
 });
 
+test('bulk submit blocks a submission with an invalid file name', async ({
+    page,
+    groupId,
+    tmpDir,
+}) => {
+    test.setTimeout(180_000);
+    void groupId;
+
+    const VALID_FILE_NAME = 'testfile.fastq.gz';
+    const INVALID_FILE_NAME = 'CON.fastq.gz';
+    const FILES = {
+        [VALID_FILE_NAME]: EBOLA_SUDAN_SMALL_FASTQ(1),
+        [INVALID_FILE_NAME]: EBOLA_SUDAN_SMALL_FASTQ(2),
+    };
+
+    const submissionPage = new BulkSubmissionPage(page);
+    await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
+    await submissionPage.acceptTerms();
+    await submissionPage.uploadMetadataFile(
+        [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
+        [
+            [
+                ID_1,
+                COUNTRY_1,
+                '2023-01-01',
+                SEQUENCING_INSTRUMENT,
+                filesColumnCell(Object.keys(FILES), ID_1),
+            ],
+        ],
+    );
+    await submissionPage.uploadSequencesFile({ [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE });
+    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES }, tmpDir);
+
+    await submissionPage.clickSubmit();
+
+    await expect(page.getByText(`Invalid filename '${INVALID_FILE_NAME}'`).first()).toBeVisible();
+    await expect(page.getByText(`Invalid filename '${VALID_FILE_NAME}'`)).toHaveCount(0);
+    // A blocked submission returns before the data use terms dialog is shown
+    await expect(page.getByRole('button', { name: 'Continue under Open terms' })).toHaveCount(0);
+});
+
 const REVISION_METADATA_HEADERS = [
     'accession',
     'submissionId',
@@ -307,8 +389,8 @@ const REVISION_METADATA_HEADERS = [
     'sampleCollectionDate',
     'sequencingInstrument',
 ];
-const REVISION_FILES = { 'revised_file.fastq': EBOLA_SUDAN_MEDIUM_FASTQ(1) };
-const REVISION_FILES_2 = { 'another_file.fastq': EBOLA_SUDAN_MEDIUM_FASTQ(2) };
+const REVISION_FILES = { 'revised_file.fastq.gz': EBOLA_SUDAN_MEDIUM_FASTQ(1) };
+const REVISION_FILES_2 = { 'another_file.fastq.gz': EBOLA_SUDAN_MEDIUM_FASTQ(2) };
 
 test('bulk revise 2 seqs with files', async ({ page, groupId, tmpDir }) => {
     test.setTimeout(400_000);
@@ -498,7 +580,7 @@ test('single revise seq via edit page reuses, replaces, discards and adds files'
     });
 
     // Step 4: A second revision discards the reused file and adds a new one
-    const addedFileName = 'file3.fastq';
+    const addedFileName = 'file3.fastq.gz';
     await editPage.goto(ORGANISM_URL_NAME, accession, version + 1);
 
     await editPage.discardExtraFile(RAW_READS, file1Name);
@@ -601,7 +683,7 @@ test('bulk revise can reuse, replace, discard and add files', async ({ page, gro
     // The second entry reuses one file, discards the other and adds a new one
     const [file1Name, file2Name] = Object.keys(FILES_DOUBLE);
     const REPLACED_FILE = { [file2Name]: EBOLA_SUDAN_SMALL_FASTQ(3) };
-    const ADDED_FILE = { 'file3.fastq': EBOLA_SUDAN_SMALL_FASTQ(2) };
+    const ADDED_FILE = { 'file3.fastq.gz': EBOLA_SUDAN_SMALL_FASTQ(2) };
     const uploadedFiles: Record<string, string | Record<string, string>> = {
         // First entry replaces an existing file, uploaded in its submission ID subfolder
         [ID_1]: REPLACED_FILE,

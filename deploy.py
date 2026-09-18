@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# ruff: file-ignore[hardcoded-password-string]
+
 import argparse
 import json
 import os
@@ -541,21 +543,16 @@ def get_codespace_params(codespace_name):
 
 
 def install_secret_generator():
-    add_helm_repo_command = [
-        "helm",
-        "repo",
-        "add",
-        "mittwald",
-        "https://helm.mittwald.de",
-    ]
-    run_command(add_helm_repo_command)
-    print("Mittwald repository added to Helm.")
-
-    update_helm_repo_command = ["helm", "repo", "update"]
-    run_command(update_helm_repo_command)
-    print("Helm repositories updated.")
-
-    secret_generator_chart = "mittwald/kubernetes-secret-generator"  # noqa: S105
+    """
+    To refresh the mirror of the helm chart after upstream version bump:
+      VERSION=<version>
+      helm pull kubernetes-secret-generator --repo https://helm.mittwald.de --version $VERSION
+      gh auth refresh -h github.com -s write:packages
+      gh auth token | helm registry login ghcr.io -u <github-username> --password-stdin
+      helm push kubernetes-secret-generator-$VERSION.tgz oci://ghcr.io/loculus-project
+    """
+    secret_generator_chart = "oci://ghcr.io/loculus-project/kubernetes-secret-generator"
+    secret_generator_version = "3.4.1"
     print("Installing Kubernetes Secret Generator...")
     helm_install_command = [
         "helm",
@@ -563,6 +560,8 @@ def install_secret_generator():
         "--install",
         "kubernetes-secret-generator",
         secret_generator_chart,
+        "--version",
+        secret_generator_version,
         "--set",
         "secretLength=32",
         "--set",

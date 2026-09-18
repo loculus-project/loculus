@@ -265,6 +265,15 @@ class MoleculeType(StrEnum):
     GENOMIC_RNA = "genomic RNA"
     VIRAL_CRNA = "viral cRNA"
 
+    @property
+    def seq_io_value(self) -> str:
+        """The molecule_type value Biopython's SeqIO/EMBL writer expects."""
+        return {
+            MoleculeType.GENOMIC_DNA: "DNA",
+            MoleculeType.GENOMIC_RNA: "RNA",
+            MoleculeType.VIRAL_CRNA: "cRNA",
+        }[self]
+
 
 class Topology(StrEnum):
     LINEAR = "linear"

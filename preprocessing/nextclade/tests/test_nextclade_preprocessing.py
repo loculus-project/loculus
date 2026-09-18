@@ -1,6 +1,7 @@
 # ruff: noqa: S101
 
 
+import json
 from pathlib import Path
 from typing import Literal
 
@@ -31,7 +32,11 @@ from loculus_preprocessing.datatypes import (
     UnprocessedData,
     UnprocessedEntry,
 )
-from loculus_preprocessing.embl import create_flatfile, reformat_authors_from_loculus_to_embl_style
+from loculus_preprocessing.embl import (
+    create_flatfile,
+    get_seq_features,
+    reformat_authors_from_loculus_to_embl_style,
+)
 from loculus_preprocessing.prepro import get_nested_metadata, process_all
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
@@ -55,6 +60,8 @@ MULTI_EBOLA_DATASET = "tests/ebola-multipath-dataset"
 CCHF_DATASET = "tests/cchfv"
 
 SINGLE_SEGMENT_EMBL = "tests/flatfiles/single_segment.embl"
+CCHF_REVERSE_COMPLEMENTED_FASTA = "tests/flatfiles/AY049081.1"
+CCHF_REVERSE_COMPLEMENTED_ANNOTATION = "tests/flatfiles/annotation-cchf-reverse-complemented.json"
 MUTATIONS_FROM_FOUNDER_CLADE = "tests/mutationsFromFounderClade.json"
 LABELED_PRIVATE_MUTATIONS = "tests/labeledPrivateMutations.json"
 
@@ -1424,6 +1431,127 @@ def test_reformat_authors_from_loculus_to_embl_style():
     result_extended = reformat_authors_from_loculus_to_embl_style(extended_latin_authors)
     desired_result_extended = "Perez J., Bailley F., Moller A., Walesa L."
     assert result_extended == desired_result_extended
+
+
+def test_get_seq_features_translates_minus_strand_cds_correctly():
+    # Genomic (plus-strand) slice [3:12) is the reverse complement of the ORF ATG AAA TAA
+    # (Met Lys Stop), so a minus-strand CDS over this range must translate to "MK" (the
+    # /translation qualifier excludes the terminal stop codon).
+    sequence_str = "AAA" + "TTATTTCAT" + "CCCC"
+    annotation_object = {
+        "genes": [
+            {
+                "range": {"begin": 3, "end": 12},
+                "attributes": {},
+                "cdses": [
+                    {
+                        "segments": [{"range": {"begin": 3, "end": 12}, "strand": "-"}],
+                        "attributes": {},
+                    }
+                ],
+            }
+        ]
+    }
+    features = get_seq_features(annotation_object, sequence_str)
+    cds_features = [feature for feature in features if feature.type == "CDS"]
+    assert len(cds_features) == 1
+    assert cds_features[0].qualifiers["translation"] == "MK"
+
+
+def test_get_seq_features_maps_phase_to_codon_start():
+    # nextclade's 0-indexed `phase` field (set per segment, not on the cds itself) must become
+    # EMBL's 1-indexed `codon_start`, and translation must start at that offset: the leading 2
+    # bases ("TT") are a partial codon left over from outside this feature, so the first complete
+    # codon is GAA (Glu), followed by ATA (Ile) and the stop codon TAA.
+    sequence_str = "TT" + "GAAATATAA"
+    annotation_object = {
+        "genes": [
+            {
+                "range": {"begin": 0, "end": 11},
+                "attributes": {},
+                "cdses": [
+                    {
+                        "segments": [{"range": {"begin": 0, "end": 11}, "strand": "+", "phase": 2}],
+                        "attributes": {},
+                    }
+                ],
+            }
+        ]
+    }
+    features = get_seq_features(annotation_object, sequence_str)
+    cds_features = [feature for feature in features if feature.type == "CDS"]
+    assert len(cds_features) == 1
+    assert cds_features[0].qualifiers["codon_start"] == 3  # noqa: PLR2004
+    assert cds_features[0].qualifiers["translation"] == "EI"
+
+
+def test_get_seq_features_handles_real_reverse_complemented_cchf_annotation():
+    sequence_str = str(SeqIO.read(CCHF_REVERSE_COMPLEMENTED_FASTA, "fasta").seq)
+    annotation_object = json.loads(
+        Path(CCHF_REVERSE_COMPLEMENTED_ANNOTATION).read_text(encoding="utf-8")
+    )["annotation"]
+
+    features = get_seq_features(annotation_object, sequence_str)
+    cds_features = [feature for feature in features if feature.type == "CDS"]
+    assert len(cds_features) == 1
+    cds_feature = cds_features[0]
+    assert str(cds_feature.location) == "[0:466](-)"
+    assert cds_feature.qualifiers["codon_start"] == 3  # noqa: PLR2004
+    assert cds_feature.qualifiers["translation"] == (
+        "NGYLDKHRDEVDKASADSMITNLLKHIAKAQELYKNSSALRAQGAQIDTPFSSFYWLYKAGVTPETFPTISQ"
+        "FLFELGKQPRGTKKMKKALLSTPMKWGKKLYELFADDSFQQNRIYMHPAVLTAGRISEMGVCFGTIPVANPD"
+        "DAAQGSGHTK"
+    )
+
+
+def test_get_seq_features_trims_trailing_partial_codon():
+    # A CDS truncated at the sequence's 3' end (e.g. an incomplete assembly) can end mid-codon;
+    # the dangling 1-2 bases can't be translated and must be dropped rather than raising or
+    # producing a Biopython warning.
+    sequence_str = "ATGAAATA"  # ATG AAA TA(missing base)
+    annotation_object = {
+        "genes": [
+            {
+                "range": {"begin": 0, "end": 8},
+                "attributes": {},
+                "cdses": [
+                    {
+                        "segments": [{"range": {"begin": 0, "end": 8}, "strand": "+"}],
+                        "attributes": {},
+                    }
+                ],
+            }
+        ]
+    }
+    features = get_seq_features(annotation_object, sequence_str)
+    cds_features = [feature for feature in features if feature.type == "CDS"]
+    assert len(cds_features) == 1
+    assert cds_features[0].qualifiers["translation"] == "MK"
+
+
+def test_get_seq_features_drops_raw_codon_start_not_derived_from_phase():
+    # A raw `codon_start` attribute not derived from nextclade's `phase` has unknown indexing
+    # (EMBL's codon_start is 1-indexed, phase is 0-indexed), so it must be dropped and
+    # codon_start recomputed as if phase were 0 (i.e. codon_start == 1).
+    sequence_str = "ATGAAATAA"
+    annotation_object = {
+        "genes": [
+            {
+                "range": {"begin": 0, "end": 9},
+                "attributes": {},
+                "cdses": [
+                    {
+                        "segments": [{"range": {"begin": 0, "end": 9}, "strand": "+"}],
+                        "attributes": {"codon_start": 3},
+                    }
+                ],
+            }
+        ]
+    }
+    features = get_seq_features(annotation_object, sequence_str)
+    cds_features = [feature for feature in features if feature.type == "CDS"]
+    assert len(cds_features) == 1
+    assert cds_features[0].qualifiers["codon_start"] == 1
 
 
 def test_process_clade_founder_values():
