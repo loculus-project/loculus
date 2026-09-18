@@ -212,7 +212,7 @@ def _build_gene_feature(gene: dict[str, Any]) -> SeqFeature:
 
 
 def _segment_truncation(segment: dict[str, Any]) -> tuple[int, int]:
-    """Nucleotides of this segment (5', 3') that the sequence does not show."""
+    """If a (5' to 3') segment is truncated (i.e. the gene would extend outside of the sequenced portion) we need to add `>` or `<` to the side where the truncation occured."""
     truncation = segment.get("truncation")
     if not isinstance(truncation, dict):
         return 0, 0
