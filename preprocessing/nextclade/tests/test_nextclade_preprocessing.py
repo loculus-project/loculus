@@ -2,6 +2,7 @@
 
 
 import json
+from io import StringIO
 from pathlib import Path
 from typing import Literal
 
@@ -1604,7 +1605,7 @@ def test_process_labeled_mutations():
     assert process_labeled_mutations(json_string, {}).datum == "NA:H275Y"
 
 
-def test_create_flatfile():
+def _create_single_segment_flatfile(sequence: str) -> str:
     config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
     embl_fields = get_config(EMBL_METADATA, ignore_args=True).processing_spec
     config.processing_spec.update(embl_fields)
@@ -1625,16 +1626,51 @@ def test_create_flatfile():
                 "geoLocCity": "Amsterdam",
                 "authors": "Smith, Doe A;",
             },
-            unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
+            unalignedNucleotideSequences={"main": sequence},
             files=None,
         ),
     )
 
     result = process_all([sequence_entry_data], EBOLA_SUDAN_DATASET, config)
+    return create_flatfile(config, result[0])
 
-    embl_str = create_flatfile(config, result[0])
+
+def test_create_flatfile():
+    embl_str = _create_single_segment_flatfile(sequence_with_mutation("single"))
     expected_embl = Path(SINGLE_SEGMENT_EMBL).read_text(encoding="utf-8")
     assert embl_str == expected_embl
+
+
+def test_create_flatfile_reverse_complement():
+    # Derive the expected reverse complement record from the original EMBL file
+    forward_record = SeqIO.read(SINGLE_SEGMENT_EMBL, "embl")
+    # SeqRecord.reverse_complement() reads molecule_type back from annotations and, since it
+    # contains "RNA", transcribes T->U; neutralize that so sequences compare letter-for-letter.
+    forward_record.annotations["molecule_type"] = "DNA"
+    expected_record = forward_record.reverse_complement(features=True)
+
+    reverse_sequence = str(Seq(sequence_with_mutation("single")).reverse_complement())
+    embl_str = _create_single_segment_flatfile(reverse_sequence)
+    actual_record = SeqIO.read(StringIO(embl_str), "embl")
+
+    assert str(actual_record.seq) == str(expected_record.seq)
+
+    # create_flatfile re-sorts features by position on the (now reverse-complemented) strand,
+    # whereas SeqRecord.reverse_complement() only flips each feature's own location in place
+    # and keeps the original list order, so sort both the same way before comparing pairwise.
+    actual_features = sorted(actual_record.features, key=lambda f: int(f.location.start))
+    expected_features = sorted(expected_record.features, key=lambda f: int(f.location.start))
+    assert len(actual_features) == len(expected_features)
+    for actual_feature, expected_feature in zip(actual_features, expected_features, strict=True):
+        assert actual_feature.type == expected_feature.type
+        assert actual_feature.qualifiers == expected_feature.qualifiers
+        if actual_feature.type == "source":
+            # The source feature spans the whole molecule and is written fresh rather than
+            # derived from the input's strand, so it's never wrapped in complement().
+            assert int(actual_feature.location.start) == int(expected_feature.location.start)
+            assert int(actual_feature.location.end) == int(expected_feature.location.end)
+        else:
+            assert str(actual_feature.location) == str(expected_feature.location)
 
 
 multi_reference_cases = [
