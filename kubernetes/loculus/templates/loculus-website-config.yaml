@@ -29,7 +29,8 @@ data:
         "public": {
           {{- template "loculus.publicRuntimeConfig" . -}}
         },
-        "backendKeycloakClientSecret" : "[[backendKeycloakClientSecret]]"
+        "backendKeycloakClientSecret" : "[[backendKeycloakClientSecret]]",
+        "oidcTransactionCookieSecret" : {{ if .Values.testconfig }}"test-oidc-transaction-cookie-secret"{{ else }}"[[oidcTransactionCookieSecret]]"{{ end }}
     }
 {{- range $key, $organismConfig := $organisms }}
 ---

@@ -2,6 +2,33 @@
 
 This shows some selected runtime scenarios.
 
+## Browser Login
+
+The Loculus website initiates browser login and validates the result; the browser does not construct an authentication request or exchange an authorization code itself.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant Browser
+    participant Website as Loculus website (Astro)
+    participant Keycloak
+
+    User->>Browser: Open protected page
+    Browser->>Website: Request page
+    Website-->>Browser: Set protected transaction cookie and redirect
+    Browser->>Keycloak: Send state, nonce and PKCE challenge
+    User->>Keycloak: Sign in
+    Keycloak-->>Browser: Return code and state
+    Browser->>Website: Call fixed /auth/callback
+    Website->>Website: Match and consume transaction
+    Website->>Keycloak: Exchange code with PKCE verifier
+    Keycloak-->>Website: Return tokens
+    Website-->>Browser: Establish session and redirect
+```
+
+The transaction is bound to the initiating browser through an encrypted, HTTP-only cookie. The website validates `state`, `nonce` and PKCE, and permits only a same-origin final destination. See the [browser authentication flow](../docs/src/content/docs/reference/browser-authentication-flow.md) for the protocol details and failure modes.
+
 ## Sequence Entry Lifecycle
 
 The following diagram shows a prototypical lifecycle of sequence data in Loculus:
