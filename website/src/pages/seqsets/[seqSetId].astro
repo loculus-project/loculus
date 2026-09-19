@@ -2,6 +2,8 @@
 import { getRuntimeConfig, seqSetsAreEnabled } from '../../config';
 import { getInstanceLogger } from '../../logger';
 import { seqSets } from '../../types/seqSetCitation';
+import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
+import { getAccessToken } from '../../utils/getAccessToken';
 
 const logger = getInstanceLogger('seqSetRedirect');
 
@@ -11,9 +13,12 @@ if (!seqSetsAreEnabled()) {
 
 const { seqSetId = '' } = Astro.params;
 const backendUrl = getRuntimeConfig().serverSide.backendUrl;
+const accessToken = getAccessToken(Astro.locals.session);
 
 try {
-    const response = await fetch(`${backendUrl}/get-seqset?seqSetId=${encodeURIComponent(seqSetId)}`);
+    const response = await fetch(`${backendUrl}/get-seqset?seqSetId=${encodeURIComponent(seqSetId)}`, {
+        headers: createAuthorizationHeader(accessToken),
+    });
     if (response.ok) {
         const versions = seqSets.parse(await response.json());
         if (versions.length > 0) {

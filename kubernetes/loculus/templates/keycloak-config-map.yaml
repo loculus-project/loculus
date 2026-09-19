@@ -170,6 +170,32 @@ data:
             }
           },
           {
+            "username": "silo_import",
+            "enabled": true,
+            "email": "silo_import@void.o",
+            "emailVerified" : true,
+            "firstName": "Dummy",
+            "lastName": "Silo Import",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "[[siloImportPassword]]"
+              }
+            ],
+            "realmRoles": [
+              "get_released_data",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
             "username": "external_metadata_updater",
             "enabled": true,
             "email": "external_metadata_updater@void.o",

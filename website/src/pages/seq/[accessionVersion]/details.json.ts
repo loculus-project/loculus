@@ -6,7 +6,9 @@ import { getRuntimeConfig, getSchema, loginIsRequired, seqSetsAreEnabled } from 
 import { getInstanceLogger } from '../../../logger.ts';
 import { SeqSetCitationClient } from '../../../services/seqSetCitationClient.ts';
 import type { DetailsJson } from '../../../types/detailsJson';
+import { createAuthorizationHeader } from '../../../utils/createAuthorizationHeader.ts';
 import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion.ts';
+import { getAccessToken } from '../../../utils/getAccessToken.ts';
 
 const logger = getInstanceLogger('details.json');
 
@@ -15,13 +17,16 @@ export const GET: APIRoute = async (req) => {
     const { accessionVersion } = params;
     const { accession } = parseAccessionVersionFromString(accessionVersion);
 
+    const accessToken = getAccessToken(req.locals.session);
+
     const sequenceCitationsPromise = seqSetsAreEnabled()
         ? SeqSetCitationClient.create().call('getSequenceCitations', {
               params: { accession }, // Display citations across all accession versions
+              headers: createAuthorizationHeader(accessToken),
           })
         : undefined;
 
-    const sequenceDetailsTableData = await findOrganismAndData(accessionVersion);
+    const sequenceDetailsTableData = await findOrganismAndData(accessionVersion, accessToken);
 
     if (sequenceDetailsTableData.isErr()) {
         logger.warn(
