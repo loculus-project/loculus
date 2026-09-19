@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from conftest import missing_dependency
 
 from raw_reads_processing import file_format_validation
 from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
@@ -126,8 +127,7 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 def _find_jar() -> str | None:
     """Locate the readtools jar for integration tests.
 
-    Set READTOOLS_JAR to point at a downloaded copy (see README) to run
-    these; they're skipped otherwise since the jar isn't checked in.
+    Set READTOOLS_JAR to point at a downloaded copy (see README).
     """
     env_jar = os.environ.get("READTOOLS_JAR")
     if env_jar and Path(env_jar).is_file():
@@ -140,11 +140,12 @@ def _find_jar() -> str | None:
 
 
 @pytest.fixture
-def readtools_jar(monkeypatch):
+def readtools_jar(request, monkeypatch):
     jar_path = _find_jar()
     if jar_path is None:
-        pytest.skip(
-            "readtools jar not found; set READTOOLS_JAR to its path to run this test"
+        missing_dependency(
+            request,
+            "readtools jar not found; set READTOOLS_JAR to its path to run this test",
         )
     monkeypatch.setattr(file_format_validation, "VALIDATION_JAR_PATH", jar_path)
 
