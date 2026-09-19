@@ -1349,8 +1349,8 @@
     },
     "robotsNoindexHeader": {
       "groups": ["general"],
-      "type": "boolean",
-      "description": "If true, adds a noindex header to prevent search engine indexing"
+      "type": ["boolean", "null"],
+      "description": "If true, adds a noindex header to prevent search engine indexing. Leave unset to follow requireLogin: a private instance is not worth indexing."
     },
     "seqSets": {
       "groups": ["general"],
@@ -1634,9 +1634,8 @@
         },
         "registrationAllowed": {
           "groups": ["auth"],
-          "type": "boolean",
-          "default": true,
-          "description": "If true, allows users to register new accounts in Keycloak."
+          "type": ["boolean", "null"],
+          "description": "If true, allows users to register new accounts in Keycloak. Leave unset to follow requireLogin: a private instance disables self registration, so that accounts are created by an administrator. Set it to true explicitly to keep open sign-up on a private instance."
         },
         "identityProviders": {
           "type": "object",
@@ -1746,6 +1745,12 @@
       "type": "boolean",
       "default": false,
       "description": "If true, the instance runs in read-only mode: the backend rejects write requests (POST/PUT/DELETE/PATCH) with 503 Service Unavailable, and the website hides login/submission entry points and shows a read-only banner."
+    },
+    "requireLogin": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, sequence data is only readable by logged in users. The browser then queries LAPIS through the website's same-origin /lapis/<organism>/ proxy, which requires a session, instead of querying LAPIS directly. Note that this only takes effect once LAPIS is no longer reachable from the internet directly."
     },
     "organisms": {
       "groups": ["organism-conf"],
