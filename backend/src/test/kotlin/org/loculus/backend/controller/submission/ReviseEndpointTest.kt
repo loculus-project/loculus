@@ -28,6 +28,7 @@ import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.controller.SUPER_USER_NAME
 import org.loculus.backend.controller.assertStatusIs
+import org.loculus.backend.controller.containsNoDatabaseInternals
 import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.files.FilesClient
@@ -210,7 +211,7 @@ class ReviseEndpointTest(
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Duplicate accession found in metadata file: ${accessions.first()}",
+                    "Metadata file contains at least one duplicate accession: ${accessions.first()}",
                 ),
             )
     }
@@ -484,6 +485,7 @@ class ReviseEndpointTest(
             .andExpect(expectedStatus)
             .andExpect(jsonPath("\$.title").value(expectedTitle))
             .andExpect(jsonPath("\$.detail", containsString(expectedMessage)))
+            .andExpect(containsNoDatabaseInternals())
     }
 
     @Test
@@ -589,14 +591,14 @@ class ReviseEndpointTest(
                 SubmitFiles.revisedMetadataFileWith(
                     content = """
                             accession	submissionId	firstColumn
-                            1	sameHeader	someValue
-                            2	sameHeader	someValue2
+                            1	same,Header(1)	someValue
+                            2	same,Header(1)	someValue2
                     """.trimIndent(),
                 ),
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableContent,
                 "Unprocessable Content",
-                "Duplicate submission_id found in metadata file: sameHeader",
+                "Metadata file contains at least one duplicate submissionId: same,Header(1)",
             ),
             Arguments.of(
                 "duplicate headers in sequence file",
@@ -611,7 +613,7 @@ class ReviseEndpointTest(
                 ),
                 status().isUnprocessableContent,
                 "Unprocessable Content",
-                "Sequence file contains at least one duplicate submissionId",
+                "Sequence file contains at least one duplicate FASTA ID: sameHeader_main",
             ),
             Arguments.of(
                 "metadata file misses headers",
