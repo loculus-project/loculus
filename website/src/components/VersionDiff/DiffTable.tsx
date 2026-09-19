@@ -9,8 +9,8 @@ type DiffTableProps = {
     version1: number;
     version2: number;
     hideUnchangedFields: boolean;
-    mutationsDiffOnly: boolean;
-    setMutationsDiffOnly: (value: boolean) => void;
+    mutationsDiffOnly?: boolean;
+    setMutationsDiffOnly?: (value: boolean) => void;
 };
 
 function FieldRow({ field, mutationsDiffOnly }: { field: FieldComparison; mutationsDiffOnly: boolean }) {
@@ -48,9 +48,8 @@ function FieldGroup({
     header: string;
     fields: FieldComparison[];
     mutationsDiffOnly: boolean;
-    setMutationsDiffOnly: (value: boolean) => void;
-    // Render the "hide shared substitutions/indels" control on this section header. Set
-    // only on the first mutation section so the control sits right next to where it acts.
+    setMutationsDiffOnly?: (value: boolean) => void;
+    // Show the toggle only on the first mutation section.
     showMutationToggle: boolean;
 }) {
     return (
@@ -59,7 +58,7 @@ function FieldGroup({
                 <td colSpan={3} className='bg-gray-100 px-4 py-2 font-semibold'>
                     <div className='flex items-center justify-between gap-4'>
                         <span>{header}</span>
-                        {showMutationToggle && (
+                        {showMutationToggle && setMutationsDiffOnly !== undefined && (
                             <label className='flex items-center gap-2 cursor-pointer font-normal text-sm'>
                                 <span>Hide shared substitutions/indels</span>
                                 <Checkbox
@@ -84,7 +83,7 @@ export function DiffTable({
     version1,
     version2,
     hideUnchangedFields,
-    mutationsDiffOnly,
+    mutationsDiffOnly = false,
     setMutationsDiffOnly,
 }: DiffTableProps) {
     // Prepare fields to display
@@ -108,9 +107,10 @@ export function DiffTable({
         (a, b) => headerSectionRank(a.header) - headerSectionRank(b.header),
     );
 
-    // The first mutation section (if any) hosts the "hide shared substitutions/indels"
-    // control, so it sits next to the mutations it affects rather than at the top.
-    const firstMutationSectionHeader = groupedFields.find(({ header }) => headerSectionRank(header) === 2)?.header;
+    // Detect mutation sections by their fields, since headers can be customized.
+    const firstMutationSectionHeader = groupedFields.find(({ rows }) =>
+        rows.some((field) => (field.entry1 ?? field.entry2)?.type.kind === 'mutation'),
+    )?.header;
 
     // If no fields to display
     if (fieldsToDisplay.length === 0) {
@@ -123,7 +123,7 @@ export function DiffTable({
 
     return (
         <div className='overflow-x-auto'>
-            <table className='table-fixed w-full border-collapse border'>
+            <table className='table-fixed w-full min-w-[40rem] border-collapse border'>
                 <thead>
                     <tr className='bg-gray-200'>
                         <th className='border px-4 py-2 text-left w-[20ch]'>Field</th>
