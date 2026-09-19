@@ -1,5 +1,6 @@
 enableServiceMonitor: true
 createTestAccounts: true
+backendExtraJvmOpts: "-XX:MaxRAMPercentage=25"
 secrets:
   smtp-password:
     type: sealedsecret
