@@ -101,7 +101,36 @@ links all work with no CORS handling, no cross-subdomain `SameSite=None`
 cookies, and no changes to React components. Token refresh already happens in
 the middleware the proxy sits behind.
 
-Constraint: the proxy must stream rather than buffer.
+Constraint: response bodies must stream rather than buffer. Request bodies are
+small JSON query documents and are buffered.
+
+**Implemented** (proof of concept):
+
+- `website/src/pages/lapis/[organism]/[...path].ts` — the proxy, plus a spec
+  alongside it.
+- `requireLogin` flag: `website/src/types/config.ts`, `loginIsRequired()` in
+  `website/src/config.ts`, `kubernetes/loculus/values.yaml`,
+  `values.schema.json`, and the website config block of `_common-metadata.tpl`.
+- `loculus.publicRuntimeConfig` sets the public LAPIS URL template to
+  `<websiteUrl>/lapis/%organism%` when `requireLogin` is set. An explicit
+  `public.lapisUrlTemplate` still takes precedence.
+
+The Helm templates have not been rendered — `helm template --set
+requireLogin=true` must be run before relying on them.
+
+#### Content encoding
+
+Node's `fetch` decodes gzip, deflate and br transparently — including when the
+request sends `Accept-Encoding: identity` — while leaving the upstream
+`content-encoding` and `content-length` headers on the response. It does not
+decode zstd. Forwarding response headers verbatim therefore labels an already
+decoded body as compressed.
+
+The proxy requests `identity` from LAPIS, always drops `content-length`, and
+drops `content-encoding` only for the encodings `fetch` decodes. zstd passes
+through with its header intact, which is what the download dialog's
+`compression=zstd` option relies on. The edge (Traefik
+`compression-middleware`) compresses the response to the browser.
 
 ### Phase 2 — close the direct routes
 
@@ -163,16 +192,17 @@ For a pure scoping spike, an env-gated `testIgnore` array in
 
 ## 5. Effort
 
-| Item | Effort |
-| --- | --- |
-| Disable S3 | 1 Helm value |
-| Website LAPIS proxy route (streaming) | 2–3 d |
-| Website middleware flag | 0.5 d |
-| Helm: `lapisUrlTemplate`, guard `lapis-ingress`, CORS, new value + schema | 1–1.5 d |
-| Backend `SecurityConfig` flag | 0.5–1 d |
-| SILO importer service-account token | 1–1.5 d |
-| Keycloak registration policy | 0.5 d (config only) |
-| Playwright `storageState` + 4 skips | 1–2 d |
+| Item | Effort | Status |
+| --- | --- | --- |
+| Disable S3 | 1 Helm value | |
+| Website LAPIS proxy route (streaming) | 2–3 d | done |
+| Website middleware flag | 0.5 d | |
+| Helm: `lapisUrlTemplate`, new value + schema | 1 d | done, unrendered |
+| Helm: guard `lapis-ingress`, CORS | 0.5 d | |
+| Backend `SecurityConfig` flag | 0.5–1 d | |
+| SILO importer service-account token | 1–1.5 d | |
+| Keycloak registration policy | 0.5 d (config only) | |
+| Playwright `storageState` + 4 skips | 1–2 d | |
 
 **Total: 1.5–2 weeks** for a flag-guarded implementation with the integration
 suite green. **1.5–2 days** for a spike proving the proxy end to end.
@@ -183,10 +213,19 @@ edge, so `loculus get` continues to work.
 
 ## 6. Risks
 
-- **Streaming large downloads through the Node website process** is untested
-  and is the assumption most likely to fail. Validate it on day one of the
-  spike. Fallback is edge-proxying with `SameSite=None` cookies and
-  credentialed CORS, which is noticeably more fiddly.
+- **Streaming large downloads through the Node website process** is still
+  unvalidated against a live LAPIS. The proxy streams response bodies, but no
+  multi-gigabyte download has been exercised. Fallback is edge-proxying with
+  `SameSite=None` cookies and credentialed CORS, which is noticeably more
+  fiddly.
+- **`requireLogin` and `readOnlyMode` are mutually exclusive.** Read-only mode
+  makes the auth middleware force `isLoggedIn: false`, so the proxy would
+  reject every query. The chart should refuse the combination.
+- **`deploy.py generate-config --from-live`** sets
+  `usePublicRuntimeConfigAsServerSide`, which points a locally run website's
+  server-side LAPIS URL at the remote instance's proxy, with no session
+  attached. That development workflow does not work against a `requireLogin`
+  instance.
 - **Access is all-or-nothing.** SILO has no row-level security and no concept
   of a user; every authenticated user sees every released sequence. Per-user or
   per-group visibility of released data would be a fundamentally larger
