@@ -12,6 +12,7 @@ def pytest_addoption(parser):
         "jar) instead of failing them when those tools aren't available.",
     )
 
+
 def missing_dependency(request, message: str) -> NoReturn:
     if request.config.getoption("--skip-missing-deps"):
         pytest.skip(message)

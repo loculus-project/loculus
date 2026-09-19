@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from conftest import missing_dependency
 
 from raw_reads_processing import file_format_validation
 from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
@@ -145,9 +146,7 @@ def readtools_jar(request, monkeypatch):
         message = (
             "readtools jar not found; set READTOOLS_JAR to its path to run this test"
         )
-        if request.config.getoption("--skip-missing-deps"):
-            pytest.skip(message)
-        pytest.fail(message)
+        missing_dependency(request, message)
     monkeypatch.setattr(file_format_validation, "VALIDATION_JAR_PATH", jar_path)
 
 
