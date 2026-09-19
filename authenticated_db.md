@@ -136,9 +136,56 @@ through with its header intact, which is what the download dialog's
 
 - Drop the `lapis-ingress.yaml` host, or place Traefik forward-auth +
   oauth2-proxy in front of it if a machine-usable API endpoint is required.
+- Gate the pages that render sequence data server side.
 - Tighten the `*` CORS headers in `createDownloadAPIRoute.ts` and the
   `cors-all-origins` middleware.
 - Review `Cache-Control: public` responses.
+
+**Implemented** (proof of concept), all guarded by `requireLogin`:
+
+- `lapis-ingress.yaml` renders nothing, so LAPIS has no public host and the
+  `cors-all-origins` middleware that carried `Access-Control-Allow-Origin: *`
+  is gone with it. Nothing else references the middlewares defined there.
+- `shouldMiddlewareEnforceLogin` takes a third `requireLogin` argument. When it
+  is set, every route is gated except an explicit allowlist in
+  `ROUTES_THAT_STAY_PUBLIC`: the error pages, `/logout`, the client log
+  endpoint, `/loculus-info`, `/api-documentation`, `/docs`, `/about` and static
+  assets. That list is the entire access policy of a private instance. One
+  visible consequence: an unmatched URL sends a logged out visitor to the login
+  rather than to the 404 page.
+- `isApiRoute` marks the endpoints that code fetches — the LAPIS proxy,
+  `/seq/<av>.fa`, `/seq/<av>.tsv`, `/seq/<av>/details.json`. `authMiddleware`
+  answers 401 for those instead of redirecting, so a caller does not receive an
+  HTML login page under a `.fa` file name.
+- `createDownloadAPIRoute.ts` and `details.json.ts` only send
+  `Access-Control-Allow-Origin: *` on instances whose data is public.
+
+#### Server-side rendering is itself an egress path
+
+Closing the LAPIS host is not sufficient on its own.
+`[organism]/search/index.astro` calls `performLapisSearchQueries` during server
+side rendering, over the internal cluster URL, with no reference to the
+session. The same applies to the sequence details pages and to the landing
+page, which renders per organism sequence counts through
+`getOrganismStatisticsMap`. Without page gating, an anonymous visitor still
+receives rendered data from a website whose LAPIS is off the internet.
+
+This is why page gating belongs in this phase rather than being an independent
+line item.
+
+#### Not closed by this phase
+
+The backend keeps its public host and its public GET endpoints, including
+`/*/get-released-data`, which returns everything released. Until phase 3 lands,
+the data remains readable without a session.
+
+`Cache-Control: public` on `/search-index.json` needs no change: the index is
+built from `pages/docs/**` and `pages/about/**` only, so it holds no instance
+data.
+
+The `Access-Control-Allow-Origin: *` in
+`seq/[accessionVersion]/[fileCategory]/[fileName].ts` is untouched, since S3
+file sharing is disabled and out of scope.
 
 ### Phase 3 — backend
 
@@ -196,9 +243,9 @@ For a pure scoping spike, an env-gated `testIgnore` array in
 | --- | --- | --- |
 | Disable S3 | 1 Helm value | |
 | Website LAPIS proxy route (streaming) | 2–3 d | done |
-| Website middleware flag | 0.5 d | |
+| Website middleware flag | 0.5 d | done |
 | Helm: `lapisUrlTemplate`, new value + schema | 1 d | done, unrendered |
-| Helm: guard `lapis-ingress`, CORS | 0.5 d | |
+| Helm: guard `lapis-ingress`, CORS | 0.5 d | done, unrendered |
 | Backend `SecurityConfig` flag | 0.5–1 d | |
 | SILO importer service-account token | 1–1.5 d | |
 | Keycloak registration policy | 0.5 d (config only) | |
