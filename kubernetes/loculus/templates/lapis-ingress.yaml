@@ -1,3 +1,7 @@
+{{/* When requireLogin is set, LAPIS gets no public host: the browser reaches it through the
+     website's same-origin proxy (website/src/pages/lapis/), which requires a session. Exposing
+     it here as well would leave the data readable without logging in. */}}
+{{- if not $.Values.requireLogin }}
 {{- $lapisHost := printf "lapis%s%s" .Values.subdomainSeparator .Values.host }}
 {{- $traefikApiVersion := ternary "traefik.io/v1alpha1" "traefik.containo.us/v1alpha1" (eq (int $.Values.traefikVersion) 3) -}}
 {{- $enabledOrganismsResult := (include "loculus.enabledOrganisms" . | fromJson) }}
@@ -103,3 +107,4 @@ spec:
             port:
               number: 8080
       {{- end }}
+{{- end }}

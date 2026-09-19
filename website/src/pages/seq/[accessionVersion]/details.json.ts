@@ -2,7 +2,7 @@ import { type APIRoute } from 'astro';
 
 import { findOrganismAndData } from './findOrganismAndData';
 import { SequenceDetailsTableResultType } from './getSequenceDetailsTableData';
-import { getRuntimeConfig, getSchema, seqSetsAreEnabled } from '../../../config';
+import { getRuntimeConfig, getSchema, loginIsRequired, seqSetsAreEnabled } from '../../../config';
 import { getInstanceLogger } from '../../../logger.ts';
 import { SeqSetCitationClient } from '../../../services/seqSetCitationClient.ts';
 import type { DetailsJson } from '../../../types/detailsJson';
@@ -59,10 +59,13 @@ export const GET: APIRoute = async (req) => {
         sequenceCitations,
     };
 
-    return new Response(JSON.stringify(detailsDataUIProps), {
-        headers: {
-            'Content-Type': 'application/json', // eslint-disable-line @typescript-eslint/naming-convention
-            'Access-Control-Allow-Origin': '*', // eslint-disable-line @typescript-eslint/naming-convention
-        },
-    });
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json', // eslint-disable-line @typescript-eslint/naming-convention
+    };
+    if (!loginIsRequired()) {
+        // Only instances whose data is public share it with other origins.
+        headers['Access-Control-Allow-Origin'] = '*';
+    }
+
+    return new Response(JSON.stringify(detailsDataUIProps), { headers });
 };
