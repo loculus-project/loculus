@@ -126,8 +126,7 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 def _find_jar() -> str | None:
     """Locate the readtools jar for integration tests.
 
-    Set READTOOLS_JAR to point at a downloaded copy (see README) to run
-    these; they're skipped otherwise since the jar isn't checked in.
+    Set READTOOLS_JAR to point at a downloaded copy (see README).
     """
     env_jar = os.environ.get("READTOOLS_JAR")
     if env_jar and Path(env_jar).is_file():

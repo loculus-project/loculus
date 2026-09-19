@@ -6,7 +6,10 @@ import time
 from pathlib import Path
 
 import pytest
-from raw_reads_processing import deacon as deacon_module, process_files
+from conftest import missing_dependency
+
+from raw_reads_processing import deacon as deacon_module
+from raw_reads_processing import process_files
 from raw_reads_processing.config import Config
 from raw_reads_processing.datatypes import (
     FileIdAndNameAndReadUrl,
@@ -79,10 +82,7 @@ def deacon_server(request):
     tests exercise the actual threshold/warning boundary logic end-to-end.
     """
     if shutil.which("deacon") is None:
-        message = "deacon binary not found on PATH"
-        if request.config.getoption("--skip-missing-deps"):
-            pytest.skip(message)
-        pytest.fail(message)
+        missing_dependency(request, "deacon binary not found on PATH")
     proc = deacon_module.start_deacon_server()
     time.sleep(1)  # give the server a moment to start listening
     try:
