@@ -8,7 +8,8 @@ podScheduling:
   affinity: {}
 
 localHost: localhost
-robotsNoindexHeader: false
+# Unset so that it follows requireLogin; set explicitly to override.
+robotsNoindexHeader: null
 seqSets:
   enabled: true
   fieldsToDisplay:
@@ -2847,7 +2848,8 @@ defaultOrganisms:
 auth:
   verifyEmail: false
   resetPasswordAllowed: true
-  registrationAllowed: true
+  # Unset so that it follows requireLogin; set explicitly to override.
+  registrationAllowed: null
 insecureCookies: false
 bannerMessage: "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly."
 welcomeMessageHTML: null

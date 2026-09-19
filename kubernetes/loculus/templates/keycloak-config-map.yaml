@@ -27,7 +27,7 @@ data:
         "password": "[[smtpPassword]]"
       },
       {{- end }}
-      "registrationAllowed": {{ $.Values.auth.registrationAllowed }},
+      "registrationAllowed": {{ include "loculus.registrationAllowed" $ }},
       "accessTokenLifespan": 36000,
       "ssoSessionIdleTimeout": 36000,
       "actionTokenGeneratedByUserLifespan": 1800,
