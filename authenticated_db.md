@@ -252,6 +252,48 @@ Set `auth.registrationAllowed: false` and `robotsNoindexHeader: true` — both
 existing Helm values, no code. Decide between invite and admin-approval for
 account creation.
 
+**Implemented** (proof of concept), Helm only:
+
+- `auth.registrationAllowed` and `robotsNoindexHeader` are unset in
+  `values.yaml` and derived in `_access-policy.tpl`: unset means
+  `not requireLogin` and `requireLogin` respectively. Both stay overridable, so
+  an instance that gates its data but still wants open sign-up can say so.
+  Helm's `default` is unusable here because it treats an explicit `false` as
+  unset, hence the `kindIs "invalid"` checks.
+- `validate-access-policy.yaml` renders nothing and exists so that
+  `loculus.validateAccessPolicy` runs on every render. It fails the chart on
+  `requireLogin` with `readOnlyMode`, which forces every session logged out, and
+  on `requireLogin` with `disableWebsite`, which removes the `/lapis` proxy that
+  is the only remaining way in to LAPIS. The first was recorded as a risk in
+  phase 1 and is now enforced.
+
+`values_e2e_and_dev.yaml` sets neither, so with `requireLogin` off it resolves
+to exactly today's behaviour and the integration tests that register accounts
+keep working. `values_preview_server.yaml` sets both explicitly and is
+unaffected.
+
+#### No website change is needed
+
+Keycloakify's `Login.tsx` already hides the registration link behind
+`realm.registrationAllowed`, so the login screen is correct once the realm flag
+is off.
+
+The website's only "Login or register" text is `NeedToLogin.astro`, and its four
+call sites are all on pages that phase 2 gates. A logged out visitor is sent to
+Keycloak before any of them render, so the label is unreachable on a private
+instance and does not need to become conditional.
+
+#### Account creation
+
+With self registration off, accounts are created by an administrator in the
+Keycloak console. That needs no code and is where this leaves things.
+
+An invite flow or self service with admin approval is a separate piece of work:
+Keycloak has no built-in invite, so it means either a Keycloak extension or a
+backend endpoint that creates users through the admin API, plus the token
+handling and the emails around it. Worth scoping on its own rather than
+folding into this change.
+
 ## 4. Disabling tests for scoping
 
 If the change is flag-guarded, the default path stays green and most suites
@@ -299,7 +341,7 @@ For a pure scoping spike, an env-gated `testIgnore` array in
 | Helm: guard `lapis-ingress`, CORS | 0.5 d | done, unrendered |
 | Backend `SecurityConfig` flag | 0.5–1 d | done, not compiled |
 | SILO importer service-account token | 1–1.5 d | done, not run |
-| Keycloak registration policy | 0.5 d (config only) | |
+| Keycloak registration policy | 0.5 d (config only) | done, unrendered |
 | Playwright `storageState` + 4 skips | 1–2 d | |
 
 **Total: 1.5–2 weeks** for a flag-guarded implementation with the integration
@@ -324,7 +366,7 @@ edge, so `loculus get` continues to work.
   fiddly.
 - **`requireLogin` and `readOnlyMode` are mutually exclusive.** Read-only mode
   makes the auth middleware force `isLoggedIn: false`, so the proxy would
-  reject every query. The chart should refuse the combination.
+  reject every query. The chart refuses the combination since phase 4.
 - **`deploy.py generate-config --from-live`** sets
   `usePublicRuntimeConfigAsServerSide`, which points a locally run website's
   server-side LAPIS URL at the remote instance's proxy, with no session
