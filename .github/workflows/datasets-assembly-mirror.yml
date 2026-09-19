@@ -4,7 +4,7 @@ on:
   schedule:
     - cron: '12 2 * * *' # Runs daily at 02:12 UTC
 jobs:
-  download-and-upload:
+  datasets-assembly-download-and-upload:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -71,8 +71,8 @@ jobs:
           for file in ${{ matrix.taxon_id }}-assembly-refseq.tar.zst ${{ matrix.taxon_id }}-assembly-genbank.tar.zst ; do
             s3cmd put "${file}" s3://loculus-public/mirror/"${file}"
           done
-  notify_on_failure:  # Runs only if 'build' job fails
-    needs: download-and-upload
+  datasets-assembly-notify-on-failure:  # Runs only if the download-and-upload job fails
+    needs: datasets-assembly-download-and-upload
     runs-on: ubuntu-latest
     if: failure()
     steps:
