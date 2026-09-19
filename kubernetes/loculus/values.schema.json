@@ -1747,6 +1747,12 @@
       "default": false,
       "description": "If true, the instance runs in read-only mode: the backend rejects write requests (POST/PUT/DELETE/PATCH) with 503 Service Unavailable, and the website hides login/submission entry points and shows a read-only banner."
     },
+    "requireLogin": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, sequence data is only readable by logged in users. The browser then queries LAPIS through the website's same-origin /lapis/<organism>/ proxy, which requires a session, instead of querying LAPIS directly. Note that this only takes effect once LAPIS is no longer reachable from the internet directly."
+    },
     "organisms": {
       "groups": ["organism-conf"],
       "type": "object",

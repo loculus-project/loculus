@@ -228,6 +228,7 @@ enableLoginNavigationItem: {{ $.Values.website.websiteConfig.enableLoginNavigati
 enableSubmissionNavigationItem: {{ $.Values.website.websiteConfig.enableSubmissionNavigationItem }}
 enableSubmissionPages: {{ $.Values.website.websiteConfig.enableSubmissionPages }}
 readOnlyMode: {{ $.Values.readOnlyMode | default false }}
+requireLogin: {{ $.Values.requireLogin | default false }}
 enableSeqSets: {{ $.Values.seqSets.enabled }}
 {{- if $.Values.seqSets.fieldsToDisplay }}
 seqSetsFieldsToDisplay: {{ $.Values.seqSets.fieldsToDisplay | toJson }}
@@ -623,6 +624,10 @@ fields:
 {{- $lapisUrlTemplate := "" }}
 {{- if $publicRuntimeConfig.lapisUrlTemplate }}
   {{- $lapisUrlTemplate = $publicRuntimeConfig.lapisUrlTemplate }}
+{{- else if $.Values.requireLogin }}
+  {{/* Sequence data is behind the login: the browser reaches LAPIS through the website's
+       same-origin proxy, so that the session cookie authenticates the request. */}}
+  {{- $lapisUrlTemplate = printf "%s/lapis/%s" (include "loculus.websiteUrl" .) "%organism%" }}
 {{- else if eq $.Values.environment "server" }}
   {{- $lapisUrlTemplate = printf "https://lapis%s%s/%s" $.Values.subdomainSeparator $.Values.host "%organism%" }}
 {{- else }}
