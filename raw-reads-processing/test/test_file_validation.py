@@ -143,10 +143,10 @@ def _find_jar() -> str | None:
 def readtools_jar(request, monkeypatch):
     jar_path = _find_jar()
     if jar_path is None:
-        message = (
-            "readtools jar not found; set READTOOLS_JAR to its path to run this test"
+        missing_dependency(
+            request,
+            "readtools jar not found; set READTOOLS_JAR to its path to run this test",
         )
-        missing_dependency(request, message)
     monkeypatch.setattr(file_format_validation, "VALIDATION_JAR_PATH", jar_path)
 
 
