@@ -4,8 +4,10 @@ import { routes } from '../../routes/routes';
 import { backendClientHooks } from '../../services/serviceHooks';
 import { inProcessingStatus, processedStatus, receivedStatus, type AccessionVersion } from '../../types/backend';
 import type { Metadata } from '../../types/config';
+import type { ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
+import { lapisNameToDisplayName } from '../../utils/sequenceTypeHelpers';
 import { getMetadataTableData } from '../SequenceDetailsPage/getMetadataTableData';
 import { DiffTable } from '../VersionDiff/DiffTable';
 import { compareVersionData } from '../VersionDiff/compareVersions';
@@ -22,9 +24,28 @@ type Props = {
     clientConfig: ClientConfig;
     accessToken: string;
     groupId: number;
+    referenceGenomesInfo: ReferenceGenomesInfo;
 };
 
-function RevisionDiffPageInner({ accessionVersion, metadata, organism, clientConfig, accessToken, groupId }: Props) {
+function compareNucleotideSequences(
+    previous: Record<string, string | null>,
+    current: Record<string, string | null>,
+    displayNames: Map<string, string | undefined>,
+) {
+    return Object.keys({ ...previous, ...current })
+        .filter((name) => (previous[name] ?? current[name] ?? null) !== null)
+        .map((name) => ({ name, label: displayNames.get(name), changed: previous[name] !== current[name] }));
+}
+
+function RevisionDiffPageInner({
+    accessionVersion,
+    metadata,
+    organism,
+    clientConfig,
+    accessToken,
+    groupId,
+    referenceGenomesInfo,
+}: Props) {
     const { accession, version } = accessionVersion;
     const [hideUnchangedFields, setHideUnchangedFields] = useState(true);
     const hooks = backendClientHooks(clientConfig);
@@ -63,6 +84,14 @@ function RevisionDiffPageInner({ accessionVersion, metadata, organism, clientCon
                   { tableData: getMetadataTableData(metadata, current.data.processedData.metadata) },
               )
             : undefined;
+    const sequenceChanges =
+        comparison && current.data && previous.data
+            ? compareNucleotideSequences(
+                  previous.data.processedData.unalignedNucleotideSequences,
+                  current.data.processedData.unalignedNucleotideSequences,
+                  lapisNameToDisplayName(referenceGenomesInfo),
+              )
+            : [];
     const retry = () => {
         void current.refetch();
         void previous.refetch();
@@ -110,6 +139,18 @@ function RevisionDiffPageInner({ accessionVersion, metadata, organism, clientCon
                 </p>
             ) : comparison !== undefined ? (
                 <>
+                    {sequenceChanges.length > 0 && (
+                        <ul className='text-sm text-gray-600 mb-4'>
+                            {sequenceChanges.map(({ name, label, changed }) => (
+                                <li key={name}>
+                                    {label === undefined ? 'Nucleotide sequence' : `Segment ${label}`}:{' '}
+                                    <span className={changed ? 'font-medium text-amber-700' : undefined}>
+                                        {changed ? 'changed' : 'unchanged'}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                     <label className='flex justify-end items-center gap-2 mb-4 cursor-pointer'>
                         <span className='text-sm'>Hide unchanged fields ({comparison.unchangedFields.length})</span>
                         <Checkbox

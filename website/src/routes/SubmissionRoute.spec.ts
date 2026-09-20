@@ -51,6 +51,7 @@ describe('SubmissionRouteUtils', () => {
         expect(SubmissionRouteUtils.toUrl({ ...route!, groupId: 456 })).toBe('/cchf/submission/456/review');
         expect(SubmissionRouteUtils.parseToRoute('/cchf/submission/123/submit/LOC_TEST.2', '')).toBeUndefined();
         expect(SubmissionRouteUtils.parseToRoute('/cchf/submission/123/review/LOC_TEST.2/extra', '')).toBeUndefined();
+        expect(SubmissionRouteUtils.parseToRoute('/cchf/submission/123/review/garbage', '')).toBeUndefined();
     });
 
     test('toUrl - portal route', () => {

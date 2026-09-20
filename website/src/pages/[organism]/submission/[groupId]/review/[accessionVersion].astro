@@ -2,7 +2,7 @@
 import { cleanOrganism } from '../../../../../components/Navigation/cleanOrganism';
 import { RevisionDiffPage } from '../../../../../components/ReviewPage/RevisionDiffPage';
 import SubmissionPageWrapper from '../../../../../components/Submission/SubmissionPageWrapper.astro';
-import { getRuntimeConfig, getSchema } from '../../../../../config';
+import { getReferenceGenomes, getRuntimeConfig, getSchema } from '../../../../../config';
 import { parseAccessionVersionFromString } from '../../../../../utils/extractAccessionVersion';
 import { getAccessToken } from '../../../../../utils/getAccessToken';
 import { getGroupsAndCurrentGroup } from '../../../../../utils/submissionPages';
@@ -34,6 +34,7 @@ Astro.response.headers.append('Cache-Control', 'no-cache, no-store, must-revalid
                     organism={organism.key}
                     clientConfig={getRuntimeConfig().public}
                     accessToken={getAccessToken(Astro.locals.session)!}
+                    referenceGenomesInfo={getReferenceGenomes(organism.key)}
                     client:load
                 />
             ),
