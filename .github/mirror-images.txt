@@ -1,4 +1,4 @@
-postgres:15.12
+postgres:15.19
 busybox:1.38.0
 alpine:3.24
 alpine/kubectl:1.36.0

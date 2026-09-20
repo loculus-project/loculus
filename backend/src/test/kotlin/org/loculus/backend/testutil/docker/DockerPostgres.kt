@@ -7,7 +7,7 @@ import java.io.File
 
 class DockerPostgres : PostgresProvider {
     private val postgresImage = DockerImageName
-        .parse("ghcr.io/loculus-project/mirror/postgres:15.12")
+        .parse("ghcr.io/loculus-project/mirror/postgres:15.19")
         .asCompatibleSubstituteFor("postgres")
     private val container = PostgreSQLContainer(postgresImage)
 

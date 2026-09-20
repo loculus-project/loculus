@@ -27,7 +27,7 @@ spec:
       {{- include "loculus.podScheduling" . | nindent 6 }}
       containers:
       - name: database
-        image: ghcr.io/loculus-project/mirror/postgres:15.12
+        image: ghcr.io/loculus-project/mirror/postgres:15.19
         args:
           - "-c"
           - "shared_preload_libraries=pg_stat_statements"

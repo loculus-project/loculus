@@ -19,7 +19,7 @@ jobs:
 
     services:
       postgres:
-        image: ghcr.io/loculus-project/mirror/postgres:15.12
+        image: ghcr.io/loculus-project/mirror/postgres:15.19
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: postgres
