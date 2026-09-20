@@ -25,7 +25,7 @@ spec:
       {{- include "loculus.podScheduling" $ | nindent 6 }}
       initContainers:
         - name: download-taxonomy-db
-          image: alpine:3
+          image: ghcr.io/loculus-project/mirror/alpine:3.24
           command: ["sh", "-c"]
           args:
             - |

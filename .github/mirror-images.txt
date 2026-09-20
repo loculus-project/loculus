@@ -1,0 +1,8 @@
+postgres:15.12
+busybox:1.38.0
+alpine:3.24
+alpine/kubectl:1.36.0
+quay.io/keycloak/keycloak:23.0
+quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+postgres:16.15
+flyway/flyway:10.22.0-alpine
