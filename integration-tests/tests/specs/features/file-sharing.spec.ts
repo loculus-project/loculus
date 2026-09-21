@@ -129,6 +129,11 @@ const RAW_READS_FAILURES: { id: string; files: Record<string, string | Buffer>; 
             error: /high proportion of human reads/i,
         },
         {
+            id: 'bam-renamed-as-fastq',
+            files: { 'reads.fastq.gz': readFileSync(join(__dirname, '../../test-data/valid.bam')) },
+            error: /Sequence header must start with @: BAM/i,
+        },
+        {
             id: 'null-byte',
             files: { 'reads.fastq.gz': gzipSync(Buffer.from('notes\x00more\n')) },
             error: /Sequence header must start with @: notes<NUL>more/i,
