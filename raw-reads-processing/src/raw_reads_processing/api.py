@@ -4,11 +4,7 @@ import subprocess  # noqa: S404
 from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
 import uvicorn
 from fastapi import FastAPI, HTTPException
-from raw_reads_processing.datatypes import (
-    RequestWithFiles,
-    ValidationResult,
-    sanitize_for_json,
-)
+from raw_reads_processing.datatypes import RequestWithFiles, ValidationResult
 from raw_reads_processing.process_files import validate_raw_reads_submission
 
 from .config import Config
@@ -44,10 +40,7 @@ def process_files(
     except InvalidSubmission as e:
         return ValidationResult(errors=[e.error])
     except ProcessingFailure as e:
-        # Preprocessing turns this detail into an annotation of its own, so it
-        # reaches Postgres just like a validation message and needs the same
-        # sanitizing.
-        raise HTTPException(status_code=500, detail=sanitize_for_json(str(e))) from e
+        raise HTTPException(status_code=500, detail=str(e)) from e
     except Exception as e:
         # A bug on our side: report it as internal rather than blaming the submission.
         logger.exception("Unexpected error validating %s", payload.accessionVersion)

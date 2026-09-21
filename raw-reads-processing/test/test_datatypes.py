@@ -7,6 +7,7 @@ from raw_reads_processing.datatypes import (
     ValidationResult,
     sanitize_for_json,
 )
+from raw_reads_processing.errors import ProcessingFailure
 
 
 @pytest.mark.parametrize(
@@ -43,3 +44,12 @@ def test_serialized_validation_result_carries_nothing_postgres_rejects():
 
     assert "\\u0000" not in serialized
     assert "\\ud" not in serialized
+
+
+def test_processing_failure_sanitizes_its_message():
+    """Preprocessing turns this message into an annotation of its own, so it
+    reaches Postgres on the same path as a validation message.
+    """
+    failure = ProcessingFailure("Error downloading 'reads\x00.fq.gz' from S3")
+
+    assert str(failure) == "Error downloading 'reads<NUL>.fq.gz' from S3"
