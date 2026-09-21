@@ -124,6 +124,21 @@ const RAW_READS_FAILURES: { id: string; files: Record<string, string | Buffer>; 
             error: /same read name appears more than once/i,
         },
         {
+            id: 'qual-length-mismatch',
+            files: { 'reads.fastq.gz': '@read1\nACGTACGTAC\n+\nIIIIIIIII\n' },
+            error: /Sequence and quality line must be the same length/i,
+        },
+        {
+            id: 'truncated-final-record',
+            files: { 'reads.fastq.gz': '@read1\n' },
+            error: /File is too short - missing Sequence Line/i,
+        },
+        {
+            id: 'empty-record',
+            files: { 'reads.fastq.gz': '@read1\n\n+\n\n' },
+            error: /File is too short - missing Quality Header/i,
+        },
+        {
             id: 'host-contaminated',
             files: { 'reads.fastq.gz': contaminatedReads() },
             error: /high proportion of human reads/i,
