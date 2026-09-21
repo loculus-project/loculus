@@ -1,4 +1,16 @@
 {{- $keycloakHost := (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
+{{- $browserRedirectUris := list }}
+{{- $postLogoutRedirectUris := list }}
+{{- if $.Values.host }}
+{{- $browserRedirectUris = append $browserRedirectUris (printf "https://%s/auth/callback" $.Values.host) }}
+{{- $postLogoutRedirectUris = append $postLogoutRedirectUris (printf "https://%s/logout" $.Values.host) }}
+{{- if $.Values.insecureCookies }}
+{{- $browserRedirectUris = append $browserRedirectUris (printf "http://%s/auth/callback" $.Values.host) }}
+{{- $postLogoutRedirectUris = append $postLogoutRedirectUris (printf "http://%s/logout" $.Values.host) }}
+{{- end }}
+{{- end }}
+{{- $browserRedirectUris = append $browserRedirectUris "http://localhost:3000/auth/callback" | uniq }}
+{{- $postLogoutRedirectUris = append $postLogoutRedirectUris "http://localhost:3000/logout" | uniq }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -256,14 +268,10 @@ data:
           "enabled": true,
           "publicClient": true,
           "directAccessGrantsEnabled": true,
-          "redirectUris": [
-            "https://{{$.Values.host}}/auth/callback"{{ if $.Values.insecureCookies }},
-            "http://{{$.Values.host}}/auth/callback",
-            "http://localhost:3000/auth/callback"{{ end }}
-          ],
+          "redirectUris": {{ $browserRedirectUris | toJson }},
           "attributes": {
             "pkce.code.challenge.method": "S256",
-            "post.logout.redirect.uris": "https://{{$.Values.host}}/logout{{ if $.Values.insecureCookies }}##http://{{$.Values.host}}/logout##http://localhost:3000/logout{{ end }}"
+            "post.logout.redirect.uris": {{ $postLogoutRedirectUris | join "##" | quote }}
           }
         },
         {

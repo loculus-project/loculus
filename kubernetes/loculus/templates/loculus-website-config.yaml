@@ -30,7 +30,8 @@ data:
           {{- template "loculus.publicRuntimeConfig" . -}}
         },
         "backendKeycloakClientSecret" : "[[backendKeycloakClientSecret]]",
-        "oidcTransactionCookieSecret" : {{ if .Values.testconfig }}"test-oidc-transaction-cookie-secret"{{ else }}"[[oidcTransactionCookieSecret]]"{{ end }}
+        {{/* Local config generation sets disableWebsite because it renders config without deploying the website. */}}
+        "oidcTransactionCookieSecret" : {{ if or .Values.testconfig .Values.disableWebsite }}"test-oidc-transaction-cookie-secret"{{ else }}"[[oidcTransactionCookieSecret]]"{{ end }}
     }
 {{- range $key, $organismConfig := $organisms }}
 ---
