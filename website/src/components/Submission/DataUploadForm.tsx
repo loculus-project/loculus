@@ -13,6 +13,7 @@ import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { routes } from '../../routes/routes.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
+import { FILES_HEADER_PREFIX } from '../../settings.ts';
 import {
     type DataUseTermsOption,
     type Group,
@@ -434,7 +435,7 @@ export const ExtraFilesUpload = ({
                 <h2 className='font-medium text-lg'>{singleFileCategoryDisplayName ?? 'Extra files'}</h2>
                 <p className='text-gray-500 text-sm'>
                     {inputMode === 'bulk'
-                        ? `Upload a folder of files or individual files for your sequences. Each file must be referenced by its name in the ${singleFileCategory?.name ?? 'corresponding file category'} column of your metadata.`
+                        ? `Upload a folder of files or individual files for your sequences. Each file must be referenced by its name in the ${singleFileCategory ? `${FILES_HEADER_PREFIX}${singleFileCategory.name}` : 'corresponding file category'} column of your metadata.`
                         : 'Upload a folder of files or individual files for this sequence.'}{' '}
                     For more information please refer to the{' '}
                     <a href={extraFilesUploadDocsUrl} target='_blank' className='text-primary-600 hover:underline'>
@@ -456,7 +457,7 @@ export const ExtraFilesUpload = ({
                             fileUploadState={fileUploadStates.get(fileCategory.name)}
                             setFileUploadState={setCategoryFileUploadState(fileCategory.name)}
                             fileSharingConfig={fileSharingConfig}
-                            showCategoryHeading={singleFileCategory === undefined}
+                            showCategoryHeading={fileCategories.length > 1}
                         />
                         {inputMode === 'bulk' && (
                             <CategoryLinkageStatus categoryLinkage={fileLinkage?.get(fileCategory.name)} />

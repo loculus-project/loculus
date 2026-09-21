@@ -39,7 +39,9 @@ describe('ExtraFilesUpload', () => {
         );
 
         expect(
-            screen.getByText(/Each file must be referenced by its name in the rawReads column of your metadata\./),
+            screen.getByText(
+                /Each file must be referenced by its name in the files\.rawReads column of your metadata\./,
+            ),
         ).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'raw reads documentation' })).toBeInTheDocument();
     });
