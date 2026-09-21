@@ -8,7 +8,12 @@ from enum import StrEnum
 from pathlib import Path
 
 from raw_reads_processing.datatypes import Annotation, FileName
-from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
+from raw_reads_processing.errors import (
+    DECOMPRESSION_ERRORS,
+    FALSE_POSITIVE_HINT,
+    InvalidSubmission,
+    ProcessingFailure,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -203,15 +208,6 @@ def validate_file_numbers(file_format: FileFormat, file_names: list[FileName]) -
 
 GZIP_MAGIC = b"\x1f\x8b"
 
-_FALSE_POSITIVE_HINT = (
-    "If you believe this file is valid, please contact the administrators."
-)
-_DECOMPRESSION_ERRORS = {
-    gzip.BadGzipFile: "is named as gzip-compressed but is not a valid gzip file.",
-    EOFError: "appears to be truncated - the gzip stream ends early.",
-    zlib.error: "appears to be corrupt - its compressed data could not be read.",
-}
-
 
 def _is_gzip(path: Path) -> bool:
     with path.open("rb") as f:
@@ -244,13 +240,11 @@ def validate_compression(
         # temp file, a disk error) is ours and must not be blamed on them.
         except (gzip.BadGzipFile, EOFError, zlib.error) as error:
             logger.exception("Could not decompress '%s'", file_name)
-            reason = _DECOMPRESSION_ERRORS.get(
-                type(error), "could not be decompressed."
-            )
+            reason = DECOMPRESSION_ERRORS.get(type(error), "could not be decompressed.")
             raise InvalidSubmission(
                 error=Annotation(
                     fileNames=[file_name],
-                    message=f"File '{file_name}' {reason} {_FALSE_POSITIVE_HINT}",
+                    message=f"File '{file_name}' {reason} {FALSE_POSITIVE_HINT}",
                 )
             ) from error
         if inner_is_gzip:
