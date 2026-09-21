@@ -69,11 +69,20 @@ def median_read_length(
     Read length should be homogeneous within a sequencing run, so a small sample from
     the start of the file is representative and costs only a few milliseconds.
     """
-    with xopen(path, "rt", threads=0) as fh:
-        lengths = [
-            len(seq)
-            for _, seq, _ in itertools.islice(FastqGeneralIterator(fh), sample_size)
-        ]
+    try:
+        with xopen(path, "rt", threads=0) as fh:
+            lengths = [
+                len(seq)
+                for _, seq, _ in itertools.islice(FastqGeneralIterator(fh), sample_size)
+            ]
+    except ValueError as error:
+        # Biopython raises ValueError on a malformed record. Without this the
+        # submitter gets an "Internal error" annotation blaming us for their file.
+        message = f"Failed to parse file '{file_name}': {error}"
+        logger.error(message)
+        raise InvalidSubmission(
+            Annotation(fileNames=[file_name], message=message)
+        ) from error
     if not lengths:
         message = f"Failed to determine median read length for file '{file_name}'. File may be empty or corrupted."
         logging.error(message)

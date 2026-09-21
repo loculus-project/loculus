@@ -223,3 +223,13 @@ def test_unparsable_fastq_does_not_take_the_deacon_server_down(tmp_path):
         {"good.fastq.gz": good}, str(tmp_path), _config()
     )
     assert summary.bp_in == 10 * 150
+
+
+def test_median_read_length_reports_a_malformed_record_as_a_submission_error(tmp_path):
+    reads = tmp_path / "reads.fastq"
+    reads.write_text("@read0\n" + "A" * 151 + "\n+\n" + "I" * 150 + "\n")
+
+    with pytest.raises(InvalidSubmission) as exc_info:
+        deacon_module.median_read_length(reads, "reads.fastq")
+    assert exc_info.value.error.fileNames == ["reads.fastq"]
+    assert "Failed to parse file" in exc_info.value.error.message
