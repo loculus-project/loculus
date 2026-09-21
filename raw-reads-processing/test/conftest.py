@@ -44,17 +44,14 @@ def _every_error_stays_storable(monkeypatch):
 
 
 def _find_jar() -> str | None:
-    """Locate the readtools jar for integration tests.
-
-    Set READTOOLS_JAR to point at a downloaded copy (see README) to run
-    these; they're skipped otherwise since the jar isn't checked in.
-    """
-    env_jar = os.environ.get("READTOOLS_JAR")
-    if env_jar and Path(env_jar).is_file():
-        return env_jar
-    repo_root = Path(__file__).parent.parent
-    for candidate in (repo_root / "readtools.jar", Path("/opt/app/lib/readtools.jar")):
-        if candidate.is_file():
+    service_dir = Path(__file__).parent.parent
+    candidates = (
+        os.environ.get("READTOOLS_JAR"),
+        service_dir / "readtools.jar",
+        file_format_validation.VALIDATION_JAR_PATH,
+    )
+    for candidate in candidates:
+        if candidate and Path(candidate).is_file():
             return str(candidate)
     return None
 
