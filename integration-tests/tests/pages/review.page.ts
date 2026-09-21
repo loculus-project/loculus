@@ -244,6 +244,20 @@ export class ReviewPage {
         ).toBeVisible();
     }
 
+    async expectValidSequencesToApprove(count: number) {
+        await expect(
+            this.page.getByRole('button', {
+                name: new RegExp(`Approve ${count} valid sequence`),
+            }),
+        ).toBeVisible();
+    }
+
+    async expectNoFileProcessingError(submissionId: string) {
+        await expect(
+            this.page.getByTestId(`review-card-${submissionId}`).getByTestId('processing-error'),
+        ).toBeHidden();
+    }
+
     async expectNoValidSequencesToApprove() {
         await expect(
             this.page.getByRole('button', { name: /Approve \d+ valid sequence/ }),

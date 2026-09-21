@@ -166,6 +166,66 @@ test('reject invalid raw_reads submissions with helpful errors', async ({
     await reviewPage.expectNoValidSequencesToApprove();
 });
 
+// Windows line endings and no terminator after the last quality line. The final
+// sequence line keeps its \r while the final quality line has no line ending at
+// all, so their lengths differ by one. deacon 0.17.0 aborted on that and took the
+// shared server down with it, failing every other entry being validated at the
+// time; 0.17.1 parses it correctly. See loculus#7359, bede/deacon#100 and #101.
+const CRLF_FASTQ_WITHOUT_FINAL_NEWLINE = EBOLA_SUDAN_SMALL_FASTQ(1)
+    .trimEnd()
+    .replace(/\n/g, '\r\n');
+
+test('one raw_reads entry deacon rejects does not affect the rest of the batch', async ({
+    page,
+    groupId,
+    tmpDir,
+}) => {
+    test.setTimeout(400_000);
+    void groupId;
+
+    const entries: { id: string; files: Record<string, string> }[] = [
+        { id: 'host-reads', files: { 'reads.fastq.gz': contaminatedReads() } },
+        {
+            id: 'crlf-no-final-newline',
+            files: { 'reads.fastq.gz': CRLF_FASTQ_WITHOUT_FINAL_NEWLINE },
+        },
+        { id: 'plain-valid', files: { 'reads.fastq.gz': EBOLA_SUDAN_SMALL_FASTQ(1) } },
+    ];
+    const validIds = ['crlf-no-final-newline', 'plain-valid'];
+
+    const submissionPage = new BulkSubmissionPage(page);
+    await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
+    await submissionPage.uploadMetadataFile(
+        [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
+        entries.map(({ id, files }) => [
+            id,
+            COUNTRY_1,
+            '2023-11-01',
+            SEQUENCING_INSTRUMENT,
+            filesColumnCell(Object.keys(files), id),
+        ]),
+    );
+    await submissionPage.uploadSequencesFile(
+        Object.fromEntries(entries.map(({ id }) => [id, EBOLA_SUDAN_SHORT_SEQUENCE])),
+    );
+    await submissionPage.uploadExternalFiles(
+        RAW_READS,
+        Object.fromEntries(entries.map(({ id, files }) => [id, files])),
+        tmpDir,
+    );
+
+    const reviewPage = await submissionPage.submitAndWaitForProcessingDone(300_000);
+
+    // The rejected entry gets its own error, naming what is wrong with it.
+    await reviewPage.expectFileProcessingError(/high proportion of human reads/i, 'host-reads');
+
+    // The other entries in the same batch are unaffected and approvable.
+    for (const id of validIds) {
+        await reviewPage.expectNoFileProcessingError(id);
+    }
+    await reviewPage.expectValidSequencesToApprove(validIds.length);
+});
+
 test('bulk submit 2 seqs with 1 & 2 FASTQ files respectively', async ({
     page,
     groupId,
