@@ -249,7 +249,6 @@ def test_median_read_length_rejects_a_file_with_invalid_unicode(tmp_path):
     assert "invalid Unicode" in message
     assert "0xff" in message
     assert FALSE_POSITIVE_HINT in message
-    # Named, never echoed, so the message cannot carry submitter bytes.
     assert "\xff" not in message
 
 
