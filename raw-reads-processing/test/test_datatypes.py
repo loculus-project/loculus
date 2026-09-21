@@ -12,7 +12,10 @@ from raw_reads_processing.errors import ProcessingFailure
         ("", ""),
         ("plain ascii", "plain ascii"),
         ("Grüße", "Grüße"),
-        ("emoji 😀 and BOM ﻿ pass through", "emoji 😀 and BOM ﻿ pass through"),
+        (
+            "emoji 😀 and BOM \ufeff pass through",
+            "emoji 😀 and BOM \ufeff pass through",
+        ),
         ("control \x01 chars pass through", "control \x01 chars pass through"),
         ("notes\x00more", "notes<NUL>more"),
         ("\x00", "<NUL>"),

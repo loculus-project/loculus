@@ -22,23 +22,17 @@ class RequestWithFiles(BaseModel):
 
 
 NULL_BYTE_PLACEHOLDER = "<NUL>"
-UNDECODABLE_PLACEHOLDER = "�"
+UNDECODABLE_PLACEHOLDER = "\ufffd"
+
+_SANITIZE_TABLE = {0x00: NULL_BYTE_PLACEHOLDER} | dict.fromkeys(
+    range(0xD800, 0xE000), UNDECODABLE_PLACEHOLDER
+)
 
 
 def sanitize_for_json(text: str) -> str:
     """Replace the characters Postgres rejects inside jsonb: U+0000 and lone
     surrogates."""
-    if text.isascii() and "\x00" not in text:
-        return text
-    return "".join(_replacement(char) for char in text)
-
-
-def _replacement(char: str) -> str:
-    if char == "\x00":
-        return NULL_BYTE_PLACEHOLDER
-    if "\ud800" <= char <= "\udfff":
-        return UNDECODABLE_PLACEHOLDER
-    return char
+    return text.translate(_SANITIZE_TABLE)
 
 
 SanitizedText = Annotated[str, AfterValidator(sanitize_for_json)]
