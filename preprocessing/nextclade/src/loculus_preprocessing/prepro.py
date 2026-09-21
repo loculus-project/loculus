@@ -770,7 +770,13 @@ def process_all(
     processed_results = []
     logger.debug(f"Processing {len(unprocessed)} unprocessed sequences")
     if config.alignment_requirement != AlignmentRequirement.NONE:
-        nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
+        try:
+            nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
+        except Exception as e:
+            logger.error(f"Error occurred while enriching with nextclade: {e}")
+            for entry in unprocessed:
+                processed_results.append(processed_entry_with_errors(entry.context))
+            return processed_results
         for id, result in nextclade_results.items():
             try:
                 processed_single = process_single(id, result, config)
