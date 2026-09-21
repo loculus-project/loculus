@@ -775,7 +775,7 @@ def process_all(
         except Exception as e:
             logger.error(f"Error occurred while enriching with nextclade: {e}")
             for entry in unprocessed:
-                processed_results.append(processed_entry_with_errors(entry.context))
+                processed_results.append(processed_entry_with_errors(entry.accessionVersion))
             return processed_results
         for id, result in nextclade_results.items():
             try:
