@@ -27,7 +27,7 @@ If you also host a Loculus instance and would like it to be added to this list, 
 
 ## Development
 
-Additional documentation for development is available in each folder's README. This file contains a high-level overview of the project and shared development information that is best kept in one place.
+Additional documentation for development is available in each folder's README. This file contains a high-level overview of the project and shared development information that is best kept in one place. Further documentation of standard operating procedures for maintainers can be found in [./maintainer-docs/README.md](./maintainer-docs/README.md).
 
 If you would like to develop with a full local loculus instance for development you need to:
 
@@ -93,3 +93,6 @@ For testing we added all users declared above to the group `testGroup`.
 Contributions are very welcome!
 Please see [`CONTRIBUTING.md`](https://github.com/loculus-project/loculus/blob/main/CONTRIBUTING.md)
 for more information or ping us in case you need help.
+
+To report a security vulnerability, please follow our [security policy](./SECURITY.md)
+rather than opening a public issue.

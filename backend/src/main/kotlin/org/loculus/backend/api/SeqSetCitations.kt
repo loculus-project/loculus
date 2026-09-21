@@ -30,7 +30,7 @@ data class SubmittedSeqSet(val name: String, val description: String?, val recor
 data class SubmittedSeqSetUpdate(
     val seqSetId: String,
     val name: String,
-    val description: String,
+    val description: String?,
     val records: List<SubmittedSeqSetRecord>,
 )
 

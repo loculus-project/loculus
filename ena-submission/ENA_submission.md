@@ -524,6 +524,13 @@ However, unlike the alias a NEW `ASSEMBLYNAME` is required (cannot be the same a
 
 Currently we automate revision of studies and assemblies, if a manifest update is required the pipeline will not update the assembly but set the state of assembly submission to `HAS_ERRORS` and document the reason for the errors in the database. We will then receive a slack notification and will have to manually send an email to ENA to update the manifest.
 
+The `RUN_REF` in the assembly manifest is taken from the `raw_reads_table` (the run accession deposited for the same accession version), not from the sequence metadata. If a revision replaces or adds raw read files, a new run accession is created and the `RUN_REF` changes even if the consensus sequence and all other metadata are unchanged. This is treated like any other manifest change: with `allow_revision_with_manifest_changes` enabled the assembly is resubmitted with the new `RUN_REF`, otherwise the assembly is set to `HAS_ERRORS` for manual revision. The previous assembly result is only reused if the `RUN_REF` is unchanged as well.
+
+## 3. [Revising Raw Reads](https://ena-docs.readthedocs.io/en/latest/update/metadata/programmatic-read.html)
+
+It is not possible to revise run files after they have been submitted, see [docs](https://ena-docs.readthedocs.io/en/latest/update/metadata/interactive.html#common-run-updates). 
+ENA allows the automated revision of run and experiment metadata submitted as XMLs - [docs](https://ena-docs.readthedocs.io/en/latest/update/metadata/programmatic-read.html), we opted to submit raw reads using the webin-cli which creates these XMLs for us - thus we cannot yet revise raw reads metadata fields. Revision requirements for the alias are: `Please note that the new experiment or run XML must either contain the original alias or the assigned accession number for the correct object to be updated.`
+
 ## Promises made to ENA
 
 - "I confirm that the data submitted through this account is NOT sensitive, restricted-access or human-identifiable." -> We will want to mirror this into Pathoplexus submissions, at least the sensitive and human-identifiable parts.

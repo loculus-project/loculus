@@ -5,6 +5,8 @@ from collections.abc import Sequence
 from tempfile import TemporaryDirectory
 from typing import Any
 
+from pydantic import ValidationError
+
 from .backend import (
     download_diamond_db,
     download_minimizer,
@@ -16,6 +18,8 @@ from .backend import (
 from .config import (
     ASSIGNED_REFERENCE_PREFIX,
     FILES_PREFIX,
+    LENGTH,
+    LENGTH_PREFIX,
     NEXTCLADE_PREFIX,
     PROCESSED_PREFIX,
     AlignmentRequirement,
@@ -49,6 +53,7 @@ from .datatypes import (
     UnprocessedAfterNextclade,
     UnprocessedData,
     UnprocessedEntry,
+    _internal_error_message,
 )
 from .embl import create_flatfile
 from .nextclade import (
@@ -56,7 +61,9 @@ from .nextclade import (
     download_nextclade_dataset,
     enrich_with_nextclade,
 )
+from .nextclade_annotation import NextcladeAnnotation
 from .processing_functions import (
+    ProcessingContext,
     ProcessingFunctions,
     null_per_backend,
     process_frameshifts,
@@ -248,21 +255,14 @@ def add_input_metadata(
     return InputData(datum=unprocessed.inputMetadata[input_path])
 
 
-def _call_processing_function(  # noqa: PLR0913, PLR0917
-    accession_version: AccessionVersion,
+def _call_processing_function(
     spec: ProcessingSpec,
     output_field: str,
-    group_id: int | None,
-    submitted_at: str | None,
     input_data: InputMetadata,
     input_fields: list[str],
-    config: Config,
+    context: ProcessingContext,
 ) -> ProcessingResult:
     args = dict(spec.args) if spec.args else {}
-    args["is_insdc_ingest_group"] = config.insdc_ingest_group_id == group_id
-    args["submittedAt"] = submitted_at
-    args["ACCESSION_VERSION"] = accession_version
-    args["taxonomy_service"] = config._taxonomy_service  # type: ignore
 
     try:
         processing_result = ProcessingFunctions.call_function(
@@ -271,6 +271,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
             input_data,
             output_field,
             input_fields,
+            context,
         )
     except Exception as e:
         msg = f"Processing for spec: {spec} with input data: {input_data} failed with {e}"
@@ -325,7 +326,63 @@ def get_sequence_length(
     return len(sequence) if sequence else 0
 
 
-def get_output_metadata(  # noqa: C901, PLR0912, PLR0914, PLR0915
+def _get_group_id_and_submitted_at(
+    unprocessed: UnprocessedData | UnprocessedAfterNextclade,
+) -> tuple[int | None, str]:
+    if isinstance(unprocessed, UnprocessedAfterNextclade):
+        group_id = (
+            int(unprocessed.inputMetadata["group_id"])
+            if unprocessed.inputMetadata["group_id"]
+            else None
+        )
+        submitted_at = str(unprocessed.inputMetadata["submittedAt"])
+    else:
+        group_id = unprocessed.group_id
+        submitted_at = unprocessed.submittedAt
+    return group_id, submitted_at
+
+
+def _try_compute_length_field(
+    output_field: str,
+    spec: ProcessingSpec,
+    unprocessed: UnprocessedData | UnprocessedAfterNextclade,
+    config: Config,
+) -> tuple[bool, int | None]:
+    """Compute the output_metadata value for a `length` or `length_<segment>` field.
+
+    Returns (True, value) if `output_field` is a length field (value may be None on error).
+    Returns (False, None) if `output_field` is not a length field, so the caller should fall
+    through to normal processing_spec-based handling.
+    """
+    if output_field == LENGTH:
+        try:
+            segment = spec.args.get("segment", "main") if spec.args else "main"
+            if not isinstance(segment, str):
+                msg = f"get_output_metadata: segment must be str, got {type(segment)}"
+                raise TypeError(msg)
+            sequence_name = get_dataset_name(
+                segment, unprocessed.unalignedNucleotideSequences, config
+            )
+        except MultipleSequencesPerSegmentError as e:
+            error_annotation = e.get_processing_annotation(
+                processed_field_name=output_field, organism=config.organism
+            )
+            logger.error(error_annotation.message)
+            return True, None
+        return True, get_sequence_length(unprocessed.unalignedNucleotideSequences, sequence_name)
+
+    if output_field.startswith(LENGTH_PREFIX):
+        sequence_name = get_dataset_name(
+            output_field.removeprefix(LENGTH_PREFIX),
+            unprocessed.unalignedNucleotideSequences,
+            config,
+        )
+        return True, get_sequence_length(unprocessed.unalignedNucleotideSequences, sequence_name)
+
+    return False, None
+
+
+def get_output_metadata(  # noqa: PLR0914
     accession_version: AccessionVersion,
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
     config: Config,
@@ -334,39 +391,24 @@ def get_output_metadata(  # noqa: C901, PLR0912, PLR0914, PLR0915
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
 
+    group_id, submitted_at = _get_group_id_and_submitted_at(unprocessed)
+    context = ProcessingContext(
+        accession_version=accession_version,
+        is_insdc_ingest_group=config.insdc_ingest_group_id == group_id,
+        submitted_at=submitted_at,
+        taxonomy_service=config._taxonomy_service,
+    )
+
     for output_field in config.processing_order:
         spec = config.processing_spec[output_field]
         input_data: InputMetadata = {}
         input_fields: list[str] = []
-        if output_field == "length":
-            try:
-                segment = spec.args.get("segment", "main") if spec.args else "main"
-                if not isinstance(segment, str):
-                    msg = f"get_output_metadata: segment must be str, got {type(segment)}"
-                    raise TypeError(msg)
-                sequence_name = get_dataset_name(
-                    segment, unprocessed.unalignedNucleotideSequences, config
-                )
-            except MultipleSequencesPerSegmentError as e:
-                error_annotation = e.get_processing_annotation(
-                    processed_field_name=output_field, organism=config.organism
-                )
-                logger.error(error_annotation.message)
-                output_metadata[output_field] = None
-                continue
 
-            output_metadata[output_field] = get_sequence_length(
-                unprocessed.unalignedNucleotideSequences, sequence_name
-            )
-            continue
-
-        if output_field.startswith("length_"):
-            sequence_name = get_dataset_name(
-                output_field[7:], unprocessed.unalignedNucleotideSequences, config
-            )
-            output_metadata[output_field] = get_sequence_length(
-                unprocessed.unalignedNucleotideSequences, sequence_name
-            )
+        is_length_field, length_value = _try_compute_length_field(
+            output_field, spec, unprocessed, config
+        )
+        if is_length_field:
+            output_metadata[output_field] = length_value
             continue
 
         for arg_name, input_path in spec.inputs.items():
@@ -389,12 +431,6 @@ def get_output_metadata(  # noqa: C901, PLR0912, PLR0914, PLR0915
                     warnings.extend(input_metadata.warnings)
 
                 input_fields.append(resolved_path)
-                group_id = (
-                    int(unprocessed.inputMetadata["group_id"])
-                    if unprocessed.inputMetadata["group_id"]
-                    else None
-                )
-                submitted_at = unprocessed.inputMetadata["submittedAt"]
             else:
                 input_data[arg_name] = (  # type: ignore
                     output_metadata.get(resolved_path)  # type: ignore
@@ -402,18 +438,13 @@ def get_output_metadata(  # noqa: C901, PLR0912, PLR0914, PLR0915
                     else unprocessed.metadata.get(resolved_path)
                 )
                 input_fields.append(resolved_path)
-                group_id = unprocessed.group_id
-                submitted_at = unprocessed.submittedAt
 
         processing_result = _call_processing_function(
-            accession_version=accession_version,
             spec=spec,
             output_field=output_field,
-            group_id=group_id,
-            submitted_at=submitted_at,
             input_data=input_data,
             input_fields=input_fields,
-            config=config,
+            context=context,
         )
 
         output_metadata[output_field] = processing_result.datum
@@ -558,17 +589,44 @@ def alignment_errors_warnings(
     return (errors, warnings)
 
 
-def unpack_annotations(config, nextclade_metadata: dict[str, Any] | None) -> dict[str, Any] | None:
+def unpack_annotations(
+    config: Config,
+    accession_version: AccessionVersion,
+    nextclade_metadata: dict[str, Any] | None,
+) -> tuple[dict[SequenceName, NextcladeAnnotation | None] | None, list[ProcessingAnnotation]]:
+    """Lift the annotation the EMBL renderer needs out of Nextclade's raw result."""
     if not config.create_embl_file or not nextclade_metadata:
-        return None
-    annotations: dict[SequenceName, Any] = {}
+        return None, []
+    annotations: dict[SequenceName, NextcladeAnnotation | None] = {}
+    errors: list[ProcessingAnnotation] = []
     for sequence_and_dataset in config.nextclade_sequence_and_datasets:
         name = sequence_and_dataset.name
-        if name in nextclade_metadata:
-            annotations[name] = None
-            if nextclade_metadata[name]:
-                annotations[name] = nextclade_metadata[name].get("annotation", None)
-    return annotations
+        if name not in nextclade_metadata:
+            continue
+        annotations[name] = None
+        raw = (nextclade_metadata[name] or {}).get("annotation")
+        if raw is None:
+            continue
+        try:
+            annotations[name] = NextcladeAnnotation.model_validate(raw)
+        except ValidationError as error:
+            logger.error(
+                "Nextclade annotation for %s sequence %s does not match the expected shape: %s",
+                accession_version,
+                name,
+                error,
+            )
+            errors.append(
+                ProcessingAnnotation.from_single(
+                    name,
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    _internal_error_message(
+                        f"Nextclade's annotation of sequence {name} could not be read, "
+                        "so its flatfile has no gene or CDS features."
+                    ),
+                )
+            )
+    return annotations, errors
 
 
 def process_single(
@@ -600,6 +658,10 @@ def process_single(
         accession_version, unprocessed, config
     )
 
+    annotations, annotation_errors = unpack_annotations(
+        config, accession_version, unprocessed.nextcladeMetadata
+    )
+
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
         version=version_from_str(accession_version),
@@ -621,6 +683,7 @@ def process_single(
                 + alignment_errors
                 + metadata_errors
                 + file_errors
+                + annotation_errors
             )
         ),
         warnings=list(set(unprocessed.warnings + alignment_warnings + metadata_warnings)),
@@ -628,7 +691,7 @@ def process_single(
 
     return SubmissionData(
         processed_entry=processed_entry,
-        annotations=unpack_annotations(config, unprocessed.nextcladeMetadata),
+        annotations=annotations,
         group_id=int(str(unprocessed.inputMetadata["group_id"])),
         submitter=str(unprocessed.inputMetadata["submitter"]),
     )
@@ -748,7 +811,9 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             )
             submission_data.processed_entry.data.files = processed_files
         except Exception as e:
-            logger.error("Error creating or uploading EMBL file: %s", e)
+            logger.error(
+                "Error creating or uploading EMBL file for %s.%s: %s", accession, version, e
+            )
             submission_data.processed_entry.errors.append(
                 ProcessingAnnotation(
                     unprocessedFields=[

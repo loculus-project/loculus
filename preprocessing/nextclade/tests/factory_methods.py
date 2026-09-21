@@ -3,6 +3,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Literal
 
 import pytz
 
@@ -20,6 +21,19 @@ from loculus_preprocessing.datatypes import (
     SegmentName,
     UnprocessedData,
     UnprocessedEntry,
+)
+from loculus_preprocessing.external_services import TaxonomyService
+from loculus_preprocessing.nextclade_annotation import GffAttributes, NextcladeAnnotation
+from loculus_preprocessing.processing_functions import ProcessingContext
+
+# Default ProcessingContext for tests that don't care about its contents (no taxonomy
+# service, no INSDC ingest group, no submittedAt). Tests that do care about specific
+# field(s) should use `dataclasses.replace(DEFAULT_TEST_CONTEXT, ...)`.
+DEFAULT_TEST_CONTEXT = ProcessingContext(
+    accession_version="accession.1",
+    is_insdc_ingest_group=False,
+    submitted_at="",
+    taxonomy_service=TaxonomyService(None),
 )
 
 
@@ -280,3 +294,48 @@ def verify_processed_entry(
     assert actual.files == expected.files, (
         f"{test_name}: files '{actual.files}' do not match expectation '{expected.files}'."
     )
+
+
+def single_cds_annotation(
+    begin: int,
+    end: int,
+    *,
+    strand: Literal["+", "-"] = "+",
+    phase: Literal[0, 1, 2] = 0,
+    truncation: Literal["none"] | dict[str, int | list[int]] = "none",
+    attributes: GffAttributes | None = None,
+) -> NextcladeAnnotation:
+    """One gene holding one unspliced CDS, both spanning `begin`..`end`."""
+    return NextcladeAnnotation.model_validate(
+        {
+            "genes": [
+                {
+                    "range": {"begin": begin, "end": end},
+                    "attributes": {},
+                    "cdses": [
+                        {
+                            "segments": [
+                                {
+                                    "range": {"begin": begin, "end": end},
+                                    "strand": strand,
+                                    "phase": phase,
+                                    "truncation": truncation,
+                                }
+                            ],
+                            "attributes": attributes or {},
+                        }
+                    ],
+                }
+            ]
+        }
+    )
+
+
+def on_minus_strand(annotation: NextcladeAnnotation) -> NextcladeAnnotation:
+    """The same annotation with every CDS segment flipped to the minus strand."""
+    flipped = annotation.model_copy(deep=True)
+    for gene in flipped.genes:
+        for cds in gene.cdses:
+            for segment in cds.segments:
+                segment.strand = "-"
+    return flipped
