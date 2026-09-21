@@ -76,19 +76,12 @@ def median_read_length(
                 len(seq)
                 for _, seq, _ in itertools.islice(FastqGeneralIterator(fh), sample_size)
             ]
-    # Before ValueError: UnicodeDecodeError is a subclass of it, and the two mean very
-    # different things to the submitter. Cock 2010 restricts no character on the title
-    # line, so a non-UTF-8 byte there is not strictly a spec violation, but the spec
-    # predates Unicode and real read names are ASCII - such a byte indicates a damaged
-    # file rather than an intended one, so say so instead of quietly reading past it.
+    # A damaged file rather than a malformed record; subclasses ValueError.
     except UnicodeDecodeError as error:
-        # Name the byte but not its position: the position is an offset into whichever
-        # chunk the decoder was filling, not into the file, so it would mislead.
+        # The position is an offset into the decoder's chunk, not into the file.
         message = (
-            f"File '{file_name}' is not valid UTF-8 text "
-            f"(byte 0x{error.object[error.start]:02x}: {error.reason}). FASTQ is expected "
-            "to be ASCII text, so this usually means the file is corrupt, was truncated "
-            "or badly concatenated, or is not a FASTQ file at all. "
+            f"File '{file_name}' contains invalid Unicode "
+            f"(byte 0x{error.object[error.start]:02x}: {error.reason}). "
             f"{FALSE_POSITIVE_HINT}"
         )
         logger.error(message)
@@ -96,8 +89,7 @@ def median_read_length(
             Annotation(fileNames=[file_name], message=message)
         ) from error
     except ValueError as error:
-        # Biopython raises ValueError on a malformed record. Without this the
-        # submitter gets an "Internal error" annotation blaming us for their file.
+        # Otherwise the submitter gets an "Internal error" that blames us for their file.
         message = f"Failed to parse file '{file_name}': {error} {FALSE_POSITIVE_HINT}"
         logger.error(message)
         raise InvalidSubmission(
