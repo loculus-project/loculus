@@ -1844,8 +1844,8 @@ ena_accession_cases = [
 
 @pytest.mark.parametrize("case", ena_accession_cases, ids=lambda c: c.name)
 def test_check_ena_accession(case: EnaAccessionCase) -> None:
-    external_services.ena_cache.clear()
-    with mock.patch.object(external_services.ena_cache, "session") as mock_session:
+    external_services.bioproject_cache.clear()
+    with mock.patch.object(external_services.bioproject_cache, "session") as mock_session:
         if isinstance(case.ena_response, Exception):
             mock_session.get.side_effect = case.ena_response
         else:
