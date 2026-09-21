@@ -203,7 +203,7 @@ def validate_file_numbers(file_format: FileFormat, file_names: list[FileName]) -
 
 GZIP_MAGIC = b"\x1f\x8b"
 
-_FALSE_POSITIVE_HINT = (
+FALSE_POSITIVE_HINT = (
     "If you believe this file is valid, please contact the administrators."
 )
 _DECOMPRESSION_ERRORS = {
@@ -250,7 +250,7 @@ def validate_compression(
             raise InvalidSubmission(
                 error=Annotation(
                     fileNames=[file_name],
-                    message=f"File '{file_name}' {reason} {_FALSE_POSITIVE_HINT}",
+                    message=f"File '{file_name}' {reason} {FALSE_POSITIVE_HINT}",
                 )
             ) from error
         if inner_is_gzip:

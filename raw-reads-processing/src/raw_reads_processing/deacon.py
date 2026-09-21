@@ -12,6 +12,7 @@ from xopen import xopen
 from raw_reads_processing.config import Config
 from raw_reads_processing.datatypes import Annotation, DeaconSummary, FileName
 from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
+from raw_reads_processing.file_format_validation import FALSE_POSITIVE_HINT
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +71,11 @@ def median_read_length(
     the start of the file is representative and costs only a few milliseconds.
     """
     try:
-        with xopen(path, "rt", threads=0) as fh:
+        # The FASTQ spec restricts no character on the title line, so an undecodable
+        # byte there is legal and readtools accepts it - replace such bytes instead of
+        # rejecting the file. That also leaves a malformed record as the only thing a
+        # ValueError from this block can mean.
+        with xopen(path, "rt", threads=0, errors="replace") as fh:
             lengths = [
                 len(seq)
                 for _, seq, _ in itertools.islice(FastqGeneralIterator(fh), sample_size)
@@ -78,13 +83,16 @@ def median_read_length(
     except ValueError as error:
         # Biopython raises ValueError on a malformed record. Without this the
         # submitter gets an "Internal error" annotation blaming us for their file.
-        message = f"Failed to parse file '{file_name}': {error}"
+        message = f"Failed to parse file '{file_name}': {error} {FALSE_POSITIVE_HINT}"
         logger.error(message)
         raise InvalidSubmission(
             Annotation(fileNames=[file_name], message=message)
         ) from error
     if not lengths:
-        message = f"Failed to determine median read length for file '{file_name}'. File may be empty or corrupted."
+        message = (
+            f"Failed to determine median read length for file '{file_name}'. "
+            f"File may be empty or corrupted. {FALSE_POSITIVE_HINT}"
+        )
         logging.error(message)
         raise InvalidSubmission(Annotation(fileNames=[file_name], message=message))
     return statistics.median(lengths)
