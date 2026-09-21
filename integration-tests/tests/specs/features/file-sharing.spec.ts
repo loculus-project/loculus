@@ -128,6 +128,13 @@ const RAW_READS_FAILURES: { id: string; files: Record<string, string | Buffer>; 
             files: { 'reads.fastq.gz': contaminatedReads() },
             error: /high proportion of human reads/i,
         },
+        {
+            // Demonstration only: no assertion on the message, because processing
+            // never finishes. See the PR description.
+            id: 'null-byte',
+            files: { 'reads.fastq.gz': gzipSync(Buffer.from('notes\x00more\n')) },
+            error: /.*/,
+        },
     ];
 
 test('reject invalid raw_reads submissions with helpful errors', async ({
