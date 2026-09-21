@@ -12,9 +12,6 @@ from raw_reads_processing.errors import ProcessingFailure
 
 
 def assert_storable(payload: str) -> None:
-    """Postgres refuses U+0000 and lone surrogates inside jsonb, and one of them
-    rolls back the whole batch the backend is writing.
-    """
     stack = [json.loads(payload)]
     while stack:
         node = stack.pop()
@@ -31,7 +28,6 @@ def assert_storable(payload: str) -> None:
 
 @pytest.fixture(autouse=True)
 def _every_error_stays_storable(monkeypatch):
-    """Assert it of every error any test builds, not just the dedicated ones."""
     annotation_init = Annotation.__init__
     failure_init = ProcessingFailure.__init__
 
@@ -48,7 +44,11 @@ def _every_error_stays_storable(monkeypatch):
 
 
 def _find_jar() -> str | None:
-    """Set READTOOLS_JAR to a downloaded copy (see README); the jar isn't checked in."""
+    """Locate the readtools jar for integration tests.
+
+    Set READTOOLS_JAR to point at a downloaded copy (see README) to run
+    these; they're skipped otherwise since the jar isn't checked in.
+    """
     env_jar = os.environ.get("READTOOLS_JAR")
     if env_jar and Path(env_jar).is_file():
         return env_jar

@@ -26,19 +26,8 @@ UNDECODABLE_PLACEHOLDER = "�"
 
 
 def sanitize_for_json(text: str) -> str:
-    r"""Replace characters that Postgres rejects inside jsonb.
-
-    Anything we quote back to the submitter can carry bytes from their file:
-    readtools echoes the offending line verbatim, and file names come from the
-    submission. Two kinds of character survive as a Python `str` but make
-    Postgres reject the `jsonb` insert with "unsupported Unicode escape
-    sequence": U+0000 (serialized as `\u0000`) and lone surrogates (serialized
-    as `\udcXX`). The backend writes a whole batch in one transaction, so one
-    such character wedges every entry in it, not just the offending one.
-
-    Both are replaced with a visible placeholder so the message still says
-    what was wrong with the file.
-    """
+    """Replace the characters Postgres rejects inside jsonb: U+0000 and lone
+    surrogates."""
     if text.isascii() and "\x00" not in text:
         return text
     return "".join(_replacement(char) for char in text)
