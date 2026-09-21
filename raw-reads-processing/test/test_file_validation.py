@@ -2,6 +2,7 @@
 
 import gzip
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -528,13 +529,21 @@ def test_null_byte_in_quoted_line_does_not_reach_the_error_message(tmp_path):
     assert "\\u0000" not in error.model_dump_json()
 
 
-@pytest.mark.usefixtures("readtools_jar")
-def test_undecodable_bytes_in_quoted_line_do_not_reach_the_error_message(tmp_path):
-    gz_path = tmp_path / "reads.fastq.gz"
-    with gzip.open(gz_path, "wb") as f:
-        f.write(b"notes\xff\xfemore\n")
+def test_invalid_utf8_in_readtools_output_is_replaced(tmp_path, monkeypatch):
+    reads = _write(tmp_path, "reads.fastq", VALID_SINGLE_END)
+    real_run = subprocess.run
+    script = (
+        "import sys; "
+        r"sys.stdout.buffer.write(b'RESULT: INVALID\n  bad byte \xff in header\n'); "
+        "sys.exit(1)"
+    )
 
+    def fake_run(args, **kwargs):
+        return real_run([sys.executable, "-c", script], **kwargs)
+
+    monkeypatch.setattr(file_format_validation.subprocess, "run", fake_run)
     with pytest.raises(InvalidSubmission) as exc_info:
-        validate_with_readtools({"reads.fastq.gz": gz_path}, FileFormat.FASTQ)
+        validate_with_readtools({"reads.fastq": Path(reads)}, FileFormat.FASTQ)
 
+    assert "bad byte \ufffd in header" in exc_info.value.error.message
     assert "\\ud" not in exc_info.value.error.model_dump_json()
