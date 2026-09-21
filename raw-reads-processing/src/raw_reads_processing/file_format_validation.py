@@ -47,6 +47,15 @@ _DUPLICATE_READ_NAME_RE = re.compile(
     r'Multiple \(\d+\) occurrences of read name "([^"]*)"'
 )
 
+# readtools quotes offending line verbatim, remove unsafe characters to avoid log injection and other issues
+_UNSAFE_CHARS_RE = re.compile(
+    "[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f\ud800-\udfff]"
+)
+
+
+def _sanitize_readtools_output(text: str) -> str:
+    return _UNSAFE_CHARS_RE.sub("", text)
+
 
 def _condense_duplicate_read_name_errors(details: str) -> str:
     """Collapse readtools' per-read duplicate-name complaints into one hint.
@@ -86,6 +95,8 @@ def _parse_validation_error(stdout: str, stderr: str) -> str:
     to stdout (sometimes as "RESULT: INVALID (file structure / parse error)");
     fall back to stderr if that line is missing.
     """
+    stdout = _sanitize_readtools_output(stdout)
+    stderr = _sanitize_readtools_output(stderr)
     marker_pos = stdout.find("RESULT: INVALID")
 
     if marker_pos == -1:

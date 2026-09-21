@@ -374,6 +374,37 @@ def test_parse_validation_error_extracts_detail_after_result_line():
     )
 
 
+@pytest.mark.parametrize(
+    "unsafe_char",
+    [
+        "\x00",  # NUL
+        "\x01",  # other C0 control char
+        "\x7f",  # DEL
+        "\x9c",  # C1 control char
+        "\ud83d",  # lone UTF-16 surrogate (from a mis-decoded byte sequence)
+    ],
+)
+def test_parse_validation_error_strips_other_unsafe_control_chars(unsafe_char):
+    """A corrupt or mislabeled file (e.g. binary data saved as .fastq.gz)
+    can make readtools quote arbitrary control bytes back at us; make sure
+    we strip those too, not just NUL.
+    """
+    message = _parse_validation_error(
+        f"RESULT: INVALID\n  bad byte {unsafe_char} in header\n", ""
+    )
+    assert unsafe_char not in message
+    assert "bad byte  in header" in message
+
+
+def test_parse_validation_error_keeps_meaningful_whitespace():
+    """Tabs (and the newlines/carriage returns splitlines() relies on)
+    should survive sanitization."""
+    message = _parse_validation_error(
+        "RESULT: INVALID\n  bad\tvalue in header\n", ""
+    )
+    assert "bad\tvalue in header" in message
+
+
 def test_parse_validation_error_handles_qualified_result_line():
     """BAM/CRAM structural errors append a qualifier to the RESULT line, e.g.
     "RESULT: INVALID (file structure / parse error)" instead of the plain
