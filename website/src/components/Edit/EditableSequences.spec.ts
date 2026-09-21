@@ -284,6 +284,34 @@ describe('EditableSequences', () => {
         expect(editableSequences.getFastaIds()).toEqual(OTHER_FASTAHEADER);
     });
 
+    test('GIVEN a single-segmented organism WHEN re-uploading an edited sequence with the same fastaId onto its own field THEN the sequence is updated without a false duplicate-fastaId error', () => {
+        // Regression test for a bug where downloading a sequence, editing it while keeping
+        // the fasta header unchanged, and dragging it back onto the same field falsely
+        // triggered a "fastaID already exists" error because the field compared its own
+        // fastaHeader against itself, and then silently kept the old sequence value.
+        const MAX_SEQUENCES_PER_ENTRY = 1;
+        let editableSequences = EditableSequences.fromInitialData(defaultReviewData, MAX_SEQUENCES_PER_ENTRY);
+
+        const key = editableSequences.rows[0].key;
+        const fastaId = defaultReviewData.submissionId;
+        expect(editableSequences.rows[0].fastaHeader).toEqual(fastaId);
+        expect(editableSequences.rows[0].value).toEqual(originalUnalignedNucleotideSequenceValue);
+
+        editableSequences = editableSequences.update(key, OTHER_SEQUENCE, fastaId, fastaId);
+
+        expect(toast.error).not.toHaveBeenCalled();
+        expect(editableSequences.rows).toEqual([
+            {
+                label: fastaId,
+                value: OTHER_SEQUENCE,
+                initialValue: originalUnalignedNucleotideSequenceValue,
+                fastaHeader: fastaId,
+                key,
+            },
+        ]);
+        expect(editableSequences.getSequenceRecord()).deep.equals({ [fastaId]: OTHER_SEQUENCE });
+    });
+
     test('GIVEN initial segment data that is then deleted as an edit THEN the edit record does not contain the segment key but input field is kept', () => {
         const MAX_SEQUENCES_PER_ENTRY = 2;
         let editableSequences = EditableSequences.fromInitialData(defaultReviewData, MAX_SEQUENCES_PER_ENTRY);
