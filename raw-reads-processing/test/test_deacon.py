@@ -57,8 +57,11 @@ def _file(name: str, url: str) -> FileIdAndNameAndReadUrl:
 
 
 @pytest.fixture
-def mock_download(monkeypatch):
-    """Treat `url` as a local fixture path."""
+def mock_downstream(monkeypatch):
+    """Stub out file download by treating `url` as a local fixture path, and skip
+    readtools (already covered by test_file_validation.py) so these tests only
+    exercise the deacon host-content threshold logic in validate_raw_reads_submission.
+    """
     monkeypatch.setattr(
         process_files,
         "download_file",
@@ -66,13 +69,6 @@ def mock_download(monkeypatch):
             Path(file.url).read_bytes()
         ),
     )
-
-
-@pytest.fixture
-def mock_downstream(monkeypatch, mock_download):
-    """Also skip readtools, covered by test_file_validation.py, so these tests
-    exercise only the deacon threshold logic in validate_raw_reads_submission.
-    """
     monkeypatch.setattr(process_files, "validate_with_readtools", lambda *a, **k: None)
 
 
@@ -180,36 +176,3 @@ def test_host_reads_at_or_below_threshold_passes(tmp_path):
     )
     result = process_files.validate_raw_reads_submission(_config(), files)
     assert result is None  # no error raised
-
-
-def _write_fastq_gz_with_undecodable_names(path: Path, count: int) -> None:
-    seq, qual = _random_read()
-    path.write_bytes(
-        gzip.compress(
-            b"".join(
-                b"@read\xff%d\n%s\n+\n%s\n" % (i, seq.encode(), qual.encode())
-                for i in range(count)
-            )
-        )
-    )
-
-
-def test_median_read_length_tolerates_undecodable_bytes(tmp_path):
-    reads = tmp_path / "reads.fastq.gz"
-    _write_fastq_gz_with_undecodable_names(reads, 3)
-
-    assert deacon_module.median_read_length(reads, "reads.fastq.gz") == pytest.approx(
-        150.0
-    )
-
-
-@pytest.mark.usefixtures("mock_download", "readtools_jar", "deacon_index")
-def test_undecodable_bytes_survive_the_whole_pipeline(tmp_path):
-    reads = tmp_path / "reads.fastq.gz"
-    _write_fastq_gz_with_undecodable_names(reads, 20)
-    files = RequestWithFiles(
-        accessionVersion="accession.1",
-        files=[_file("reads.fastq.gz", url=str(reads))],
-    )
-
-    assert process_files.validate_raw_reads_submission(_config(), files) is None

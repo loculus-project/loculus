@@ -68,11 +68,8 @@ def median_read_length(
 
     Read length should be homogeneous within a sequencing run, so a small sample from
     the start of the file is representative and costs only a few milliseconds.
-
-    A FASTQ readtools accepts need not be valid UTF-8, and the sample only picks
-    deacon's -a threshold, so decode with replacement rather than failing.
     """
-    with xopen(path, "rt", threads=0, errors="replace") as fh:
+    with xopen(path, "rt", threads=0) as fh:
         lengths = [
             len(seq)
             for _, seq, _ in itertools.islice(FastqGeneralIterator(fh), sample_size)

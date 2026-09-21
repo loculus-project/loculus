@@ -130,6 +130,7 @@ def test_null_bytes_never_reach_the_response_body(
 def test_null_byte_in_a_submitted_file_survives_the_whole_service(
     client, monkeypatch, tmp_path
 ):
+    """HTTP in, real readtools, HTTP out - the trigger from the issue."""
     gz_path = tmp_path / "reads.fastq.gz"
     with gzip.open(gz_path, "wb") as f:
         f.write(b"notes\x00more\n")
@@ -145,5 +146,5 @@ def test_null_byte_in_a_submitted_file_survives_the_whole_service(
     assert response.status_code == 200
     assert_storable(response.text)
     message = response.json()["errors"][0]["message"]
-    assert "readtools" in message
+    assert "readtools" in message  # the jar really ran
     assert "notes<NUL>more" in message
