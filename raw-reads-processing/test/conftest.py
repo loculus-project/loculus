@@ -12,9 +12,7 @@ from raw_reads_processing.errors import ProcessingFailure
 
 
 def assert_storable(payload: str) -> None:
-    """Postgres refuses U+0000 and lone surrogates inside jsonb, and one of them
-    rolls back the whole batch the backend is writing.
-    """
+    """Postgres refuses U+0000 and lone surrogates inside jsonb."""
     stack = [json.loads(payload)]
     while stack:
         node = stack.pop()
@@ -31,7 +29,6 @@ def assert_storable(payload: str) -> None:
 
 @pytest.fixture(autouse=True)
 def _every_error_stays_storable(monkeypatch):
-    """Assert it of every error any test builds, not just the dedicated ones."""
     annotation_init = Annotation.__init__
     failure_init = ProcessingFailure.__init__
 

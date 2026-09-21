@@ -517,10 +517,6 @@ def test_too_many_bam_files_are_rejected():
 
 @pytest.mark.usefixtures("readtools_jar")
 def test_null_byte_in_quoted_line_does_not_reach_the_error_message(tmp_path):
-    """readtools quotes the offending line back verbatim, so a null byte in
-    the submitter's file used to end up in the error we return - and Postgres
-    rejects the whole batch that carries it.
-    """
     gz_path = tmp_path / "reads.fastq.gz"
     with gzip.open(gz_path, "wb") as f:
         f.write(b"notes\x00more\n")
@@ -535,10 +531,6 @@ def test_null_byte_in_quoted_line_does_not_reach_the_error_message(tmp_path):
 
 @pytest.mark.usefixtures("readtools_jar")
 def test_undecodable_bytes_in_quoted_line_do_not_reach_the_error_message(tmp_path):
-    """Bytes that are not valid UTF-8 must not end up as lone surrogates, which
-    Postgres rejects exactly as it rejects a null byte. readtools substitutes
-    U+FFFD itself, and `errors="replace"` keeps that true if it ever stops.
-    """
     gz_path = tmp_path / "reads.fastq.gz"
     with gzip.open(gz_path, "wb") as f:
         f.write(b"notes\xff\xfemore\n")
