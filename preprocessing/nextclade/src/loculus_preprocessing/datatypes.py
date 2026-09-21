@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from enum import StrEnum, unique
 from typing import Any, Final
 
+from .nextclade_annotation import NextcladeAnnotation
+
 logger = logging.getLogger(__name__)
 
 AccessionVersion = str
@@ -172,7 +174,7 @@ class SubmissionData:
     processed_entry: ProcessedEntry
     submitter: str | None
     group_id: int | None = None
-    annotations: dict[str, Any] | None = None
+    annotations: dict[SequenceName, NextcladeAnnotation | None] | None = None
 
 
 @dataclass
@@ -264,15 +266,6 @@ class MoleculeType(StrEnum):
     GENOMIC_DNA = "genomic DNA"
     GENOMIC_RNA = "genomic RNA"
     VIRAL_CRNA = "viral cRNA"
-
-    @property
-    def seq_io_value(self) -> str:
-        """The molecule_type value Biopython's SeqIO/EMBL writer expects."""
-        return {
-            MoleculeType.GENOMIC_DNA: "DNA",
-            MoleculeType.GENOMIC_RNA: "RNA",
-            MoleculeType.VIRAL_CRNA: "cRNA",
-        }[self]
 
 
 class Topology(StrEnum):
