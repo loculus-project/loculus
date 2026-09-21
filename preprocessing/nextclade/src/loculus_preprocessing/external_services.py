@@ -321,7 +321,7 @@ class FileProcessingService:
 # Rarely, a bioproject XML can reach ~10 MB (e.g., PRJNA591860)
 # so keeping the cache small. Should still have high hit rate when
 # all submissions for a batch have the same project
-ena_cache = RequestCache(max_size=16)
+bioproject_cache = RequestCache(max_size=16)
 PROJECT_PREFIX = "PRJ"
 XML_PREFIXES = (
     PROJECT_PREFIX,
@@ -359,9 +359,8 @@ class ENAVisibilityChecker:
             "please try resubmitting later"
         )
         try:
-            # Only cache bioprojects as they're the only thing
-            # likely to be shared across submissions
-            response = ena_cache.get_or_fetch(
+            # Only cache bioprojects as they're what's likely to be shared across submissions
+            response = bioproject_cache.get_or_fetch(
                 url, timeout=self.timeout_seconds, use_cache=accession.startswith(PROJECT_PREFIX)
             )
         except requests.RequestException:
