@@ -9,5 +9,3 @@ set of rules applies, and the two disagree in both directions. CI (`raw-reads-pr
 runs from this directory with the ruff version pinned in `environment.yml`, so a newer
 ruff will report findings CI does not.
 
-The readtools tests are skipped unless `READTOOLS_JAR` points at a downloaded jar (see
-README); the deacon tests are skipped unless `deacon` is on PATH.
