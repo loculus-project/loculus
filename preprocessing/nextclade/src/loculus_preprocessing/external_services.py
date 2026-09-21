@@ -54,19 +54,24 @@ class RequestCache:
         if len(self.cache) > self.max_size:
             self.cache.popitem(last=False)
 
-    def get_or_fetch(self, url: str, timeout: int = 15) -> requests.Response:
+    def get_or_fetch(
+        self, url: str, timeout: int = 15, use_cache: bool = True
+    ) -> requests.Response:
         """
         Check if `url` already exists in the cache and return the cached Response if it does.
 
         If `url` is not in the cache, make the actual request (with timeout and retries).
         Add the Response to the cache (if status code in the 200s), and return the Response.
 
+        With `use_cache=False` the request is always made, and the cache is neither read nor
+        written to.
+
         The caller should wrap this in a try/except block and handle errors.
         """
-        response = self.get(url)
+        response = self.get(url) if use_cache else None
         if response is None:
             response = self.session.get(url, timeout=timeout)
-            if 200 <= response.status_code < 300:  # noqa: PLR2004
+            if use_cache and 200 <= response.status_code < 300:  # noqa: PLR2004
                 self.set(url, response)
         return response
 
@@ -313,7 +318,22 @@ class FileProcessingService:
         return ProcessingAnnotation([source], [source], _internal_error_message(message))
 
 
-ena_cache = RequestCache(1024)
+# Rarely, a bioproject XML can reach ~10 MB (e.g., PRJNA591860)
+# so keeping the cache small. Should still have high hit rate when
+# all submissions for a batch have the same project
+ena_cache = RequestCache(max_size=16)
+PROJECT_PREFIX = "PRJ"
+XML_PREFIXES = (
+    PROJECT_PREFIX,
+    "SAM",
+    "GCA",
+    "ERR",
+    "ERX",
+    "SRR",
+    "SRX",
+    "DRR",
+    "DRX",
+)
 
 
 class ENAVisibilityChecker:
@@ -332,20 +352,21 @@ class ENAVisibilityChecker:
         self.timeout_seconds = timeout_seconds
 
     def check_visibility(self, accession: str) -> RawProcessingResult:
-        file_type = (
-            "xml"
-            if accession.startswith(("PRJ", "SAM", "GCA", "ERR", "ERX", "SRR", "SRX", "DRR", "DRX"))
-            else "embl"
-        )
+        file_type = "xml" if accession.startswith(XML_PREFIXES) else "embl"
         url = f"https://www.ebi.ac.uk/ena/browser/api/{file_type}/{accession}"
         ena_error_message = (
             f"unable to validate accession '{accession}': could not reach ENA, "
             "please try resubmitting later"
         )
         try:
-            response = ena_cache.get_or_fetch(url, timeout=self.timeout_seconds)
+            # Only cache bioprojects as they're the only thing
+            # likely to be shared across submissions
+            response = ena_cache.get_or_fetch(
+                url, timeout=self.timeout_seconds, use_cache=accession.startswith(PROJECT_PREFIX)
+            )
         except requests.RequestException:
             return processing_error(ena_error_message)
+
         if response.status_code == HTTPStatus.OK:
             return RawProcessingResult(datum=accession)
         if response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
