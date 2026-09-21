@@ -119,7 +119,11 @@ export function consumeAuthRequest(cookies: AstroCookies, state: string | undefi
         return undefined;
     }
 
-    const transaction = store[state];
+    // `state` is attacker-controlled and `store` inherits from Object.prototype, so a plain
+    // `store[state]` lookup would match inherited keys (`constructor`, `__proto__`, `toString`, ...)
+    // and wave through a callback whose state was never issued. Only own properties are real
+    // transactions.
+    const transaction = Object.prototype.hasOwnProperty.call(store, state) ? store[state] : undefined;
     delete store[state];
     writeStore(cookies, store);
     if (transaction === undefined) {

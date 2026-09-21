@@ -77,6 +77,24 @@ describe('OIDC authentication transaction store', () => {
         expect(consumeAuthRequest(cookies, 'other-state')).toBeUndefined();
     });
 
+    test.each(['constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf'])(
+        'rejects the prototype-chain state %s that was never issued',
+        (state) => {
+            expect(consumeAuthRequest(cookies, state)).toBeUndefined();
+        },
+    );
+
+    test('a prototype-chain state does not consume or clobber a real transaction', () => {
+        addAuthRequest(cookies, 'real-state', 'nonce', 'verifier', 'https://loculus.test/real');
+
+        expect(consumeAuthRequest(cookies, 'constructor')).toBeUndefined();
+        expect(consumeAuthRequest(cookies, 'real-state')).toEqual({
+            nonce: 'nonce',
+            codeVerifier: 'verifier',
+            returnTo: 'https://loculus.test/real',
+        });
+    });
+
     test('produces a safe stable correlation identifier without revealing state', () => {
         expect(authTransactionId('secret-state')).toBe(authTransactionId('secret-state'));
         expect(authTransactionId('secret-state')).not.toContain('secret-state');
