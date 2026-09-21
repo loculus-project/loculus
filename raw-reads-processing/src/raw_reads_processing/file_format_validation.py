@@ -47,8 +47,12 @@ _DUPLICATE_READ_NAME_RE = re.compile(
     r'Multiple \(\d+\) occurrences of read name "([^"]*)"'
 )
 
-# readtools quotes offending line verbatim, remove unsafe characters to avoid log injection and other issues
-_UNSAFE_CHARS_RE = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f\ud800-\udfff]")
+# readtools quotes the offending line verbatim. Strip characters PostgreSQL cannot
+# store (NUL) plus control characters that corrupt logs, terminals and XML
+# downstream. \t \n \r are kept: _parse_validation_error relies on newlines.
+# Ranges are intentionally wide (C0 controls, DEL/C1 controls, lone UTF-16
+# surrogates), see https://github.com/loculus-project/loculus/issues/7358.
+_UNSAFE_CHARS_RE = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f\ud800-\udfff]")  # codeql[py/overly-large-range]
 
 
 def _sanitize_readtools_output(text: str) -> str:
