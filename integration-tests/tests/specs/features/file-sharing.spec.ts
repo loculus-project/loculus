@@ -129,8 +129,6 @@ const RAW_READS_FAILURES: { id: string; files: Record<string, string | Buffer>; 
             error: /high proportion of human reads/i,
         },
         {
-            // A null byte reaching the backend rolls back the whole batch, so a
-            // regression here fails every case above by timing out (#7358).
             id: 'null-byte',
             files: { 'reads.fastq.gz': gzipSync(Buffer.from('notes\x00more\n')) },
             error: /Sequence header must start with @: notes<NUL>more/i,
