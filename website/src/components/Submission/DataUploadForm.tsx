@@ -432,7 +432,11 @@ export const ExtraFilesUpload = ({
     return (
         <div className='grid sm:grid-cols-3 gap-x-16 gap-y-4'>
             <div>
-                <h2 className='font-medium text-lg'>{singleFileCategoryDisplayName ?? 'Extra files'}</h2>
+                <h2 className='font-medium text-lg'>
+                    {singleFileCategoryDisplayName !== undefined
+                        ? `${singleFileCategoryDisplayName} (optional)`
+                        : 'Extra files'}
+                </h2>
                 <p className='text-gray-500 text-sm'>
                     {inputMode === 'bulk'
                         ? `Upload a folder of files or individual files for your sequences. Each file must be referenced by its name in the ${singleFileCategory ? `${FILES_HEADER_PREFIX}${singleFileCategory.name}` : 'corresponding file category'} column of your metadata.`

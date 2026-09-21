@@ -23,7 +23,7 @@ describe('ExtraFilesUpload', () => {
             />,
         );
 
-        expect(screen.getByRole('heading', { level: 2, name: 'Microscopy images' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 2, name: 'Microscopy images (optional)' })).toBeInTheDocument();
         expect(screen.queryByRole('heading', { level: 3, name: 'Microscopy images' })).not.toBeInTheDocument();
         expect(screen.queryByRole('heading', { name: 'Extra files' })).not.toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'microscopy images documentation' })).toBeInTheDocument();
