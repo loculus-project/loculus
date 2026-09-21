@@ -18,7 +18,6 @@ from factory_methods import (
     build_processing_annotations,
     on_minus_strand,
     single_cds_annotation,
-    ts_from_ymd,
     verify_processed_entry,
 )
 

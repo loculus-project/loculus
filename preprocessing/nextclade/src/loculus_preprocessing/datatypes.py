@@ -187,7 +187,7 @@ class SubmissionData:
     processed_entry: ProcessedEntry
     submitter: str
     group_id: int
-    annotations: dict[str, Any] | None = None
+    annotations: dict[SequenceName, NextcladeAnnotation | None] | None = None
 
 
 @dataclass
