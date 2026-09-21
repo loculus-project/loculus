@@ -11,8 +11,12 @@ from xopen import xopen
 
 from raw_reads_processing.config import Config
 from raw_reads_processing.datatypes import Annotation, DeaconSummary, FileName
-from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
-from raw_reads_processing.file_format_validation import FALSE_POSITIVE_HINT
+from raw_reads_processing.errors import (
+    DECOMPRESSION_ERRORS,
+    FALSE_POSITIVE_HINT,
+    InvalidSubmission,
+    ProcessingFailure,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +92,15 @@ def median_read_length(
         raise InvalidSubmission(
             Annotation(fileNames=[file_name], message=message)
         ) from error
+    # readtools reads only the start of the file, so a stream that ends early
+    # further in reaches us intact.
+    except tuple(DECOMPRESSION_ERRORS) as error:
+        reason = DECOMPRESSION_ERRORS.get(type(error), "could not be decompressed.")
+        message = f"File '{file_name}' {reason} {FALSE_POSITIVE_HINT}"
+        logger.error(message)
+        raise InvalidSubmission(
+            Annotation(fileNames=[file_name], message=message)
+        ) from error
     except ValueError as error:
         # Otherwise the submitter gets an "Internal error" that blames us for their file.
         message = f"Failed to parse file '{file_name}': {error} {FALSE_POSITIVE_HINT}"
@@ -100,7 +113,7 @@ def median_read_length(
             f"Failed to determine median read length for file '{file_name}'. "
             f"File may be empty or corrupted. {FALSE_POSITIVE_HINT}"
         )
-        logging.error(message)
+        logger.error(message)
         raise InvalidSubmission(Annotation(fileNames=[file_name], message=message))
     return statistics.median(lengths)
 

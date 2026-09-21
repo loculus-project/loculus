@@ -13,7 +13,7 @@ from raw_reads_processing.datatypes import (
     RequestWithFiles,
 )
 from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
-from raw_reads_processing.file_format_validation import FALSE_POSITIVE_HINT
+from raw_reads_processing.errors import FALSE_POSITIVE_HINT
 
 
 def _config() -> Config:
@@ -251,3 +251,18 @@ def test_median_read_length_rejects_a_file_with_invalid_unicode(tmp_path):
     assert FALSE_POSITIVE_HINT in message
     # Named, never echoed, so the message cannot carry submitter bytes.
     assert "\xff" not in message
+
+
+def test_median_read_length_reports_a_truncated_gzip_as_a_submission_error(tmp_path):
+    reads = tmp_path / "reads.fastq.gz"
+    full = gzip.compress(
+        b"".join(
+            b"@read%d\n%s\n+\n%s\n" % (i, b"ACGT" * 40, b"I" * 160) for i in range(50)
+        )
+    )
+    reads.write_bytes(full[: len(full) // 2])
+
+    with pytest.raises(InvalidSubmission) as exc_info:
+        deacon_module.median_read_length(reads, "reads.fastq.gz")
+    assert "truncated" in exc_info.value.error.message
+    assert FALSE_POSITIVE_HINT in exc_info.value.error.message
