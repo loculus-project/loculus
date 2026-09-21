@@ -238,13 +238,19 @@ def test_median_read_length_reports_a_malformed_record_as_a_submission_error(tmp
     assert FALSE_POSITIVE_HINT in exc_info.value.error.message
 
 
-def test_median_read_length_tolerates_an_undecodable_byte_in_a_read_name(tmp_path):
-    """The FASTQ spec puts no character restriction on the title line, and
-    readtools accepts such a file, so we must not reject it either.
+def test_median_read_length_rejects_a_file_that_is_not_utf8(tmp_path):
+    """A non-UTF-8 byte means a damaged file, and gets its own message rather than
+    being reported as a malformed record.
     """
     reads = tmp_path / "reads.fastq"
     reads.write_bytes(b"@read\xff0\n" + b"A" * 150 + b"\n+\n" + b"I" * 150 + b"\n")
 
-    assert deacon_module.median_read_length(reads, "reads.fastq") == pytest.approx(
-        150.0
-    )
+    with pytest.raises(InvalidSubmission) as exc_info:
+        deacon_module.median_read_length(reads, "reads.fastq")
+    message = exc_info.value.error.message
+    assert exc_info.value.error.fileNames == ["reads.fastq"]
+    assert "not valid UTF-8" in message
+    assert "0xff" in message
+    assert FALSE_POSITIVE_HINT in message
+    # The byte is named, never echoed, so this message cannot carry submitter bytes.
+    assert "\xff" not in message

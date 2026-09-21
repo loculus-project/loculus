@@ -71,15 +71,30 @@ def median_read_length(
     the start of the file is representative and costs only a few milliseconds.
     """
     try:
-        # The FASTQ spec restricts no character on the title line, so an undecodable
-        # byte there is legal and readtools accepts it - replace such bytes instead of
-        # rejecting the file. That also leaves a malformed record as the only thing a
-        # ValueError from this block can mean.
-        with xopen(path, "rt", threads=0, errors="replace") as fh:
+        with xopen(path, "rt", threads=0) as fh:
             lengths = [
                 len(seq)
                 for _, seq, _ in itertools.islice(FastqGeneralIterator(fh), sample_size)
             ]
+    # Before ValueError: UnicodeDecodeError is a subclass of it, and the two mean very
+    # different things to the submitter. Cock 2010 restricts no character on the title
+    # line, so a non-UTF-8 byte there is not strictly a spec violation, but the spec
+    # predates Unicode and real read names are ASCII - such a byte indicates a damaged
+    # file rather than an intended one, so say so instead of quietly reading past it.
+    except UnicodeDecodeError as error:
+        # Name the byte but not its position: the position is an offset into whichever
+        # chunk the decoder was filling, not into the file, so it would mislead.
+        message = (
+            f"File '{file_name}' is not valid UTF-8 text "
+            f"(byte 0x{error.object[error.start]:02x}: {error.reason}). FASTQ is expected "
+            "to be ASCII text, so this usually means the file is corrupt, was truncated "
+            "or badly concatenated, or is not a FASTQ file at all. "
+            f"{FALSE_POSITIVE_HINT}"
+        )
+        logger.error(message)
+        raise InvalidSubmission(
+            Annotation(fileNames=[file_name], message=message)
+        ) from error
     except ValueError as error:
         # Biopython raises ValueError on a malformed record. Without this the
         # submitter gets an "Internal error" annotation blaming us for their file.
