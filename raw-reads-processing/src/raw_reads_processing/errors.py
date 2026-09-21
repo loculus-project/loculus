@@ -1,7 +1,7 @@
 import gzip
 import zlib
 
-from raw_reads_processing.datatypes import Annotation
+from raw_reads_processing.datatypes import Annotation, sanitize_for_json
 
 FALSE_POSITIVE_HINT = (
     "If you believe this file is valid, please contact the administrators."
@@ -21,3 +21,6 @@ class InvalidSubmission(Exception):
 
 class ProcessingFailure(Exception):
     """Download, timeout, missing executable, JVM crash, etc."""
+
+    def __init__(self, message: str):
+        super().__init__(sanitize_for_json(message))

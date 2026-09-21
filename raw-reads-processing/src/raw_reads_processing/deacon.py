@@ -165,7 +165,8 @@ def run_deacon_filter(
             args,
             check=True,
             capture_output=True,
-            text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=config.deacon_filter_timeout_seconds,
         )
         return DeaconSummary.from_json(summary_json_path)
