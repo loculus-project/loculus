@@ -302,6 +302,11 @@ def validate_with_readtools(
             check=True,
             capture_output=True,
             text=True,
+            # readtools can echo corrupted raw bytes back.
+            # With the default "strict" error handler, bytes that
+            # aren't valid UTF-8 would raise UnicodeDecodeError here,
+            # instead we use "replace" (each bad byte -> U+FFFD)
+            errors="replace",
             timeout=timeout_seconds,
         )
     except subprocess.TimeoutExpired:

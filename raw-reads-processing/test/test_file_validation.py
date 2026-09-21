@@ -3,6 +3,7 @@
 import gzip
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -498,6 +499,28 @@ def test_validation_timeout_is_reported_as_error(tmp_path, monkeypatch):
         )
     assert "timed out" in str(exc_info.value)
     assert "1 second" in str(exc_info.value)
+
+
+def test_validate_with_readtools_handles_invalid_utf8_output(tmp_path, monkeypatch):
+    reads = _write(tmp_path, "reads.fastq", VALID_SINGLE_END)
+    real_run = subprocess.run
+    script = (
+        "import sys; "
+        r"sys.stdout.buffer.write(b'RESULT: INVALID\n  bad byte \xff in header\n'); "
+        "sys.exit(1)"
+    )
+
+    def fake_run(args, **kwargs):
+        return real_run([sys.executable, "-c", script], **kwargs)
+
+    monkeypatch.setattr(file_format_validation.subprocess, "run", fake_run)
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_with_readtools({"reads.fastq": Path(reads)}, FileFormat.FASTQ)
+    message = exc_info.value.error.message
+    # The invalid byte becomes U+FFFD (the replacement character), not a
+    # lone surrogate, and is left in place rather than stripped.
+    assert "bad byte � in header" in message
+    assert "\udcff" not in message
 
 
 @pytest.mark.parametrize("file_name", ["reads.fastq.gz", "reads.fq.gz"])
