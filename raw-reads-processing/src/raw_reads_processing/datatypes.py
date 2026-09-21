@@ -24,14 +24,25 @@ class RequestWithFiles(BaseModel):
 NULL_BYTE_PLACEHOLDER = "<NUL>"
 UNDECODABLE_PLACEHOLDER = "\ufffd"
 
+_CONTROL_CHARS = [
+    *range(0x01, 0x09),  # C0 controls before tab
+    0x0B,  # vertical tab
+    0x0C,  # form feed
+    *range(0x0E, 0x20),  # C0 controls after carriage return, including ESC
+    0x7F,  # DEL
+    *range(0x80, 0xA0),  # C1 controls
+    *range(0xD800, 0xE000),  # lone surrogates
+]
+
 _SANITIZE_TABLE = {0x00: NULL_BYTE_PLACEHOLDER} | dict.fromkeys(
-    range(0xD800, 0xE000), UNDECODABLE_PLACEHOLDER
+    _CONTROL_CHARS, UNDECODABLE_PLACEHOLDER
 )
 
 
 def sanitize_for_json(text: str) -> str:
-    """Replace the characters Postgres rejects inside jsonb: U+0000 and lone
-    surrogates."""
+    """Replace what Postgres rejects inside jsonb (U+0000, lone surrogates) and
+    control characters, which reach a terminal through the logs. Tab, newline
+    and carriage return are kept."""
     return text.translate(_SANITIZE_TABLE)
 
 

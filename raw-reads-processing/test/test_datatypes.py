@@ -16,10 +16,14 @@ from raw_reads_processing.errors import ProcessingFailure
             "emoji 😀 and BOM \ufeff pass through",
             "emoji 😀 and BOM \ufeff pass through",
         ),
-        ("control \x01 chars pass through", "control \x01 chars pass through"),
+        ("tab\tnewline\nreturn\r kept", "tab\tnewline\nreturn\r kept"),
+        ("escape \x1b[2J", "escape \ufffd[2J"),
+        ("form feed \x0c", "form feed \ufffd"),
+        ("delete \x7f", "delete \ufffd"),
+        ("c1 \x9d", "c1 \ufffd"),
         ("notes\x00more", "notes<NUL>more"),
         ("\x00", "<NUL>"),
-        ("a\udcffb", "a�b"),
+        ("a\udcffb", "a\ufffdb"),
     ],
 )
 def test_sanitize_for_json(raw, expected):
