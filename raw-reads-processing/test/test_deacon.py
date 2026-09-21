@@ -46,11 +46,13 @@ def _write_fastq(path: Path, records: list[tuple[str, str]]) -> None:
     path.write_text("\n".join(lines) + "\n")
 
 
-def _write_fastq_gz(path: Path, records: list[tuple[str, str]]) -> None:
+def _write_fastq_gz(
+    path: Path, records: list[tuple[str, str]], newline: str = "\n"
+) -> None:
     lines = []
     for i, (seq, qual) in enumerate(records):
         lines += [f"@read{i}", seq, "+", qual]
-    path.write_bytes(gzip.compress(("\n".join(lines) + "\n").encode()))
+    path.write_bytes(gzip.compress((newline.join(lines) + newline).encode()))
 
 
 def _file(name: str, url: str) -> FileIdAndNameAndReadUrl:
@@ -84,7 +86,7 @@ def deacon_server():
     proc = deacon_module.start_deacon_server()
     time.sleep(1)  # give the server a moment to start listening
     try:
-        yield
+        yield proc
     finally:
         deacon_module.stop_deacon_server(proc)
 
@@ -180,10 +182,7 @@ def test_host_reads_at_or_below_threshold_passes(tmp_path):
 
 
 def _write_fastq_gz_crlf(path: Path, records: list[tuple[str, str]]) -> None:
-    lines = []
-    for i, (seq, qual) in enumerate(records):
-        lines += [f"@read{i}", seq, "+", qual]
-    path.write_bytes(gzip.compress(("\r\n".join(lines) + "\r\n").encode()))
+    _write_fastq_gz(path, records, newline="\r\n")
 
 
 @pytest.mark.usefixtures("deacon_index")
@@ -202,7 +201,7 @@ def test_crlf_fastq_is_not_counted_as_an_extra_base(tmp_path):
 
 
 @pytest.mark.usefixtures("deacon_index")
-def test_unparsable_fastq_does_not_take_the_deacon_server_down(tmp_path):
+def test_unparsable_fastq_does_not_take_the_deacon_server_down(tmp_path, deacon_server):
     """A malformed record makes deacon report an error for that request only.
     In deacon 0.17.0 it exited the shared server instead, so every other
     submission in flight failed until Kubernetes restarted the pod.
@@ -217,6 +216,7 @@ def test_unparsable_fastq_does_not_take_the_deacon_server_down(tmp_path):
     bad.write_text(good_records + "@bad\n" + "A" * 151 + "\n+\n" + "I" * 150 + "\n")
     with pytest.raises(ProcessingFailure):
         deacon_module.run_deacon_filter({"bad.fastq": bad}, str(tmp_path), _config())
+    assert deacon_server.poll() is None, "deacon server exited on a malformed request"
 
     good = tmp_path / "good.fastq.gz"
     _write_fastq_gz(good, [_random_read(150) for _ in range(10)])
