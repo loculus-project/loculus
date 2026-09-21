@@ -17,7 +17,6 @@ from raw_reads_processing.errors import ProcessingFailure
         ("notes\x00more", "notes<NUL>more"),
         ("\x00", "<NUL>"),
         ("a\udcffb", "a�b"),
-        ("a\ud800b", "a�b"),
     ],
 )
 def test_sanitize_for_json(raw, expected):

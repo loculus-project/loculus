@@ -1,11 +1,10 @@
-# ruff: noqa: S101
 import gzip
 from unittest.mock import Mock
 
 import pytest
+from conftest import assert_storable
 from fastapi.testclient import TestClient
 
-from conftest import assert_storable
 from raw_reads_processing import api, process_files
 from raw_reads_processing.config import Config
 from raw_reads_processing.datatypes import Annotation
