@@ -41,8 +41,7 @@ _SANITIZE_TABLE = {0x00: NULL_BYTE_PLACEHOLDER} | dict.fromkeys(
 
 def sanitize_for_json(text: str) -> str:
     """Replace what Postgres rejects inside jsonb (U+0000, lone surrogates) and
-    control characters, which reach a terminal through the logs. Tab, newline
-    and carriage return are kept."""
+    control characters"""
     return text.translate(_SANITIZE_TABLE)
 
 
