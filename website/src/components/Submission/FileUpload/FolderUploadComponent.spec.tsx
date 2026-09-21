@@ -96,6 +96,12 @@ describe('FolderUploadComponent', () => {
     });
 
     describe('folder upload', () => {
+        it('can hide the file category heading', () => {
+            render(<FolderUploadComponentWithState {...defaultProps} showCategoryHeading={false} />);
+
+            expect(screen.queryByRole('heading', { name: 'Extra Files' })).not.toBeInTheDocument();
+        });
+
         it('renders upload folder button', () => {
             render(<FolderUploadComponentWithState {...defaultProps} />);
             expect(screen.getByText('Upload folder')).toBeInTheDocument();

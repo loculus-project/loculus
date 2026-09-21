@@ -414,6 +414,8 @@ export const ExtraFilesUpload = ({
     onError: (message: string) => void;
     fileSharingConfig: FileSharingConfig;
 }) => {
+    const hasSingleFileCategory = fileCategories.length === 1;
+
     const setCategoryFileUploadState =
         (category: string): Dispatch<SetStateAction<FileUploadState | undefined>> =>
         (update) =>
@@ -428,7 +430,9 @@ export const ExtraFilesUpload = ({
     return (
         <div className='grid sm:grid-cols-3 gap-x-16 gap-y-4'>
             <div>
-                <h2 className='font-medium text-lg'>Extra files</h2>
+                <h2 className='font-medium text-lg'>
+                    {hasSingleFileCategory ? (fileCategories[0].displayName ?? fileCategories[0].name) : 'Extra files'}
+                </h2>
                 <p className='text-gray-500 text-sm'>
                     {inputMode === 'bulk'
                         ? 'Upload a folder of files or individual files for your sequences. Each file must be referenced by its name in the corresponding file category column of your metadata.'
@@ -453,6 +457,7 @@ export const ExtraFilesUpload = ({
                             fileUploadState={fileUploadStates.get(fileCategory.name)}
                             setFileUploadState={setCategoryFileUploadState(fileCategory.name)}
                             fileSharingConfig={fileSharingConfig}
+                            showCategoryHeading={!hasSingleFileCategory}
                         />
                         {inputMode === 'bulk' && (
                             <CategoryLinkageStatus categoryLinkage={fileLinkage?.get(fileCategory.name)} />
