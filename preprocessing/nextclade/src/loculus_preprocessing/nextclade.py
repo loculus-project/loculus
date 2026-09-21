@@ -616,8 +616,9 @@ def assign_single_segment(
             alert=Alert(
                 errors=[
                     sequence_annotation(
-                        f"No sequence data found, but organism: {config.organism} requires sequence"
-                        "data. Please check that your metadata and sequences are annotated correctly."
+                        f"No sequence data found, but organism: {config.organism} requires "
+                        "sequence data. Please check that your metadata and sequences are "
+                        "annotated correctly."
                     )
                 ],
             ),
