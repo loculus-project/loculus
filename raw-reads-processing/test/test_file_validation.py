@@ -1,7 +1,6 @@
 # ruff: noqa: S101
 
 import gzip
-import os
 import subprocess
 from pathlib import Path
 
