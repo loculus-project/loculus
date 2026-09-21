@@ -48,9 +48,7 @@ _DUPLICATE_READ_NAME_RE = re.compile(
 )
 
 # readtools quotes offending line verbatim, remove unsafe characters to avoid log injection and other issues
-_UNSAFE_CHARS_RE = re.compile(
-    "[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f\ud800-\udfff]"
-)
+_UNSAFE_CHARS_RE = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f\ud800-\udfff]")
 
 
 def _sanitize_readtools_output(text: str) -> str:

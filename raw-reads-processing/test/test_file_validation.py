@@ -399,9 +399,7 @@ def test_parse_validation_error_strips_other_unsafe_control_chars(unsafe_char):
 def test_parse_validation_error_keeps_meaningful_whitespace():
     """Tabs (and the newlines/carriage returns splitlines() relies on)
     should survive sanitization."""
-    message = _parse_validation_error(
-        "RESULT: INVALID\n  bad\tvalue in header\n", ""
-    )
+    message = _parse_validation_error("RESULT: INVALID\n  bad\tvalue in header\n", "")
     assert "bad\tvalue in header" in message
 
 
