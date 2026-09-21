@@ -12,7 +12,7 @@ from raw_reads_processing.datatypes import (
     FileIdAndNameAndReadUrl,
     RequestWithFiles,
 )
-from raw_reads_processing.errors import InvalidSubmission
+from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
 
 
 def _config() -> Config:
@@ -176,3 +176,50 @@ def test_host_reads_at_or_below_threshold_passes(tmp_path):
     )
     result = process_files.validate_raw_reads_submission(_config(), files)
     assert result is None  # no error raised
+
+
+def _write_fastq_gz_crlf(path: Path, records: list[tuple[str, str]]) -> None:
+    lines = []
+    for i, (seq, qual) in enumerate(records):
+        lines += [f"@read{i}", seq, "+", qual]
+    path.write_bytes(gzip.compress(("\r\n".join(lines) + "\r\n").encode()))
+
+
+@pytest.mark.usefixtures("deacon_index")
+def test_crlf_fastq_is_not_counted_as_an_extra_base(tmp_path):
+    """deacon < 0.17.1 kept the `\\r` and counted it as a base, inflating bp_in by
+    one per read and making it an ambiguous base for minimizer selection.
+    """
+    reads = tmp_path / "reads.fastq.gz"
+    _write_fastq_gz_crlf(reads, [_random_read(150) for _ in range(10)])
+
+    summary = deacon_module.run_deacon_filter(
+        {"reads.fastq.gz": reads}, str(tmp_path), _config()
+    )
+
+    assert summary.bp_in == 10 * 150
+
+
+@pytest.mark.usefixtures("deacon_index")
+def test_unparsable_fastq_does_not_take_the_deacon_server_down(tmp_path):
+    """A malformed record makes deacon report an error for that request only.
+    In deacon 0.17.0 it exited the shared server instead, so every other
+    submission in flight failed until Kubernetes restarted the pod.
+    """
+    bad = tmp_path / "bad.fastq"
+    # A quality line one character shorter than its sequence, placed past the
+    # reads median_read_length samples so that deacon is the one to reject it.
+    good_records = "".join(
+        f"@read{i}\n{'A' * 150}\n+\n{'I' * 150}\n"
+        for i in range(deacon_module._READ_LENGTH_SAMPLE_SIZE)
+    )
+    bad.write_text(good_records + "@bad\n" + "A" * 151 + "\n+\n" + "I" * 150 + "\n")
+    with pytest.raises(ProcessingFailure):
+        deacon_module.run_deacon_filter({"bad.fastq": bad}, str(tmp_path), _config())
+
+    good = tmp_path / "good.fastq.gz"
+    _write_fastq_gz(good, [_random_read(150) for _ in range(10)])
+    summary = deacon_module.run_deacon_filter(
+        {"good.fastq.gz": good}, str(tmp_path), _config()
+    )
+    assert summary.bp_in == 10 * 150
