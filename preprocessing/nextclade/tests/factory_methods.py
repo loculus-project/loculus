@@ -23,9 +23,8 @@ from loculus_preprocessing.datatypes import (
     UnprocessedData,
     UnprocessedEntry,
 )
-from loculus_preprocessing.external_services import TaxonomyService
+from loculus_preprocessing.external_services import ExternalServices, TaxonomyService
 from loculus_preprocessing.nextclade_annotation import GffAttributes, NextcladeAnnotation
-from loculus_preprocessing.processing_functions import ProcessingContext
 
 # Default ProcessingContext for tests that don't care about its contents (no INSDC
 # ingest group, no submittedAt). Tests that do care about specific field(s) should use
