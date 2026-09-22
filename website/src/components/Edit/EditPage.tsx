@@ -106,6 +106,7 @@ const InnerEditPage: FC<EditPageProps> = ({
     );
 
     const submitEditedDataForAccessionVersion = async () => {
+        const missingSequencesError = `Submissions for organism '${organism}' must contain at least one consensus sequence.`;
         if (isCreatingRevision) {
             const fastaIds = submissionDataTypes.consensusSequences ? editableSequences.getFastaIds() : undefined;
             const metadataFile = editableMetadata.getMetadataTsv(
@@ -145,7 +146,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                 return;
             }
             if (editableSequences.hasNoSequences()) {
-                toast.error('Please enter a sequence.', {
+                toast.error(missingSequencesError, {
                     position: 'top-center',
                     autoClose: false,
                 });
@@ -175,7 +176,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                 );
             }
             if (submissionDataTypes.consensusSequences && editableSequences.hasNoSequences()) {
-                toast.error('Please enter a sequence.', {
+                toast.error(missingSequencesError, {
                     position: 'top-center',
                     autoClose: false,
                 });

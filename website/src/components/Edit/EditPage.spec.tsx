@@ -154,7 +154,7 @@ describe('EditPage', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Submit edits and proceed to Approval' }));
         await userEvent.click(screen.getByRole('button', { name: 'Confirm' }));
 
-        expect(await screen.findByText('Please enter a sequence.')).toBeVisible();
+        expect(await screen.findByText(`Submissions for organism '${testOrganism}' must contain at least one consensus sequence.`)).toBeVisible();
     });
 
     test('shows the revoked warning when revising an entry whose latest version is a revocation', () => {
