@@ -1277,7 +1277,7 @@ class SubmissionDatabaseService(
 
         if (backendConfig.requiresConsensusSequenceFile(organism)) {
             val hasConsensusSequence = editedSequenceEntryData.data.unalignedNucleotideSequences.values
-                .any { !it.isNullOrEmpty() }
+                .any { !it.isNullOrBlank() }
             if (!hasConsensusSequence) {
                 throw UnprocessableEntityException(
                     "Edited data for accession version " +
