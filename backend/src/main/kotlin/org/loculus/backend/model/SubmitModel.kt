@@ -134,7 +134,7 @@ class SubmitModel(
                 )
             }
 
-            if (requiresConsensusSequenceFile(submissionParams.organism)) {
+            if (backendConfig.requiresConsensusSequenceFile(submissionParams.organism)) {
                 submissionMetrics.timeWritePhase(endpoint, organism, VALIDATE_CONSENSUS_SEQUENCES_PHASE) {
                     log.debug { "Validating submission with uploadId $uploadId" }
                     val metadataFastaIds = uploadDatabaseService.getFastaIdsForMetadata(uploadId).flatten()
@@ -215,7 +215,7 @@ class SubmitModel(
             metadataFileTypes,
             metadataTempFileToDelete,
         )
-        val requireConsensusSequence = requiresConsensusSequenceFile(submissionParams.organism)
+        val requireConsensusSequence = backendConfig.requiresConsensusSequenceFile(submissionParams.organism)
         try {
             uploadMetadata(uploadId, submissionParams, metadataStream, batchSize)
         } finally {
@@ -444,11 +444,6 @@ class SubmitModel(
             }
         }
     }
-
-    private fun requiresConsensusSequenceFile(organism: Organism): Boolean = backendConfig.getInstanceConfig(organism)
-        .schema
-        .submissionDataTypes
-        .consensusSequences
 
     private fun UploadType.metricEndpoint() = when (this) {
         UploadType.ORIGINAL -> SUBMIT_ENDPOINT
