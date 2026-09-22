@@ -45,10 +45,6 @@ export const SubmissionRouteUtils = {
         if (subpage === undefined) {
             return { ...baseRoute, name: 'portal' };
         }
-        // Switching groups returns to review because this revision belongs to the original group.
-        if (subpage === 'review' && remaining2.length === 1 && /^.+\.\d+$/.test(remaining2[0])) {
-            return { ...baseRoute, name: 'review' };
-        }
         if (remaining2.length > 0) {
             return undefined;
         }

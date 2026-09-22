@@ -1,8 +1,8 @@
 import { type FC, useState, useRef, useEffect } from 'react';
 
 import { FilesDialog } from './FilesDialog.tsx';
+import { RevisionDiff } from './RevisionDiff.tsx';
 import { SequencesDialog } from './SequencesDialog.tsx';
-import { routes } from '../../routes/routes.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
     type DataUseTerms,
@@ -17,7 +17,7 @@ import {
     errorsProcessingResult,
     warningsProcessingResult,
 } from '../../types/backend.ts';
-import type { FileCategory } from '../../types/config.ts';
+import type { FileCategory, Metadata } from '../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { CustomTooltip } from '../../utils/CustomTooltip.tsx';
@@ -41,6 +41,7 @@ import TickOutline from '~icons/mdi/tick-outline';
 
 type ReviewCardProps = {
     sequenceEntryStatus: SequenceEntryStatus;
+    metadata: Metadata[];
     metadataDisplayNames: Map<string, string>;
     deleteAccessionVersion: () => void;
     approveAccessionVersion: () => void;
@@ -54,6 +55,7 @@ type ReviewCardProps = {
 
 export const ReviewCard: FC<ReviewCardProps> = ({
     sequenceEntryStatus,
+    metadata,
     metadataDisplayNames,
     approveAccessionVersion,
     deleteAccessionVersion,
@@ -66,6 +68,8 @@ export const ReviewCard: FC<ReviewCardProps> = ({
 }) => {
     const [isSequencesDialogOpen, setSequencesDialogOpen] = useState(false);
     const [isFilesDialogOpen, setFilesDialogOpen] = useState(false);
+    const isRevision = sequenceEntryStatus.version > 1 && !sequenceEntryStatus.isRevocation;
+    const [isDiffOpen, setDiffOpen] = useState(isRevision);
     const { isLoading, data } = useGetMetadataAndAnnotations(organism, clientConfig, accessToken, sequenceEntryStatus);
     const filesEnabled = outputFileCategories !== undefined && outputFileCategories.length > 0;
     const hasFiles = Object.entries(data?.processedData.files ?? {}).length > 0;
@@ -110,11 +114,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                     viewFiles={data && !notProcessed ? () => setFilesDialogOpen(true) : undefined}
                     filesEnabled={filesEnabled}
                     hasFiles={hasFiles}
-                    metadataDiffUrl={routes.revisionDiffPage(
-                        organism,
-                        sequenceEntryStatus.groupId,
-                        sequenceEntryStatus,
-                    )}
+                    diffAccessionVersion={isRevision ? () => setDiffOpen((open) => !open) : undefined}
                 />
             </div>
 
@@ -127,6 +127,16 @@ export const ReviewCard: FC<ReviewCardProps> = ({
             )}
             {data?.warnings?.length !== undefined && data.warnings.length > 0 && (
                 <Warnings warnings={data.warnings} accession={sequenceEntryStatus.accession} />
+            )}
+            {isDiffOpen && data !== undefined && (
+                <RevisionDiff
+                    current={data}
+                    metadata={metadata}
+                    organism={organism}
+                    clientConfig={clientConfig}
+                    accessToken={accessToken}
+                    referenceGenomesInfo={referenceGenomesInfo}
+                />
             )}
 
             <SequencesDialog
@@ -156,7 +166,7 @@ type ButtonBarProps = {
     viewFiles?: () => void;
     filesEnabled: boolean;
     hasFiles: boolean;
-    metadataDiffUrl: string;
+    diffAccessionVersion?: () => void;
 };
 
 const ButtonBar: FC<ButtonBarProps> = ({
@@ -168,7 +178,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
     viewFiles,
     filesEnabled,
     hasFiles,
-    metadataDiffUrl,
+    diffAccessionVersion,
 }) => {
     const buttonBarClass = (disabled: boolean) =>
         `${disabled ? 'text-gray-300' : 'text-gray-500 hover:text-gray-900 hover:cursor-pointer'} inline-block text-xl`;
@@ -180,28 +190,17 @@ const ButtonBar: FC<ButtonBarProps> = ({
     return (
         <div className='flex mb-auto pt-3.5 items-center'>
             <div className='flex gap-x-4'>
-                {sequenceEntryStatus.version > 1 && !sequenceEntryStatus.isRevocation && (
+                {diffAccessionVersion && (
                     <>
-                        {notProcessed ? (
-                            <Button
-                                disabled
-                                className={buttonBarClass(true)}
-                                aria-label={`View metadata changes for ${getAccessionVersionString(sequenceEntryStatus)}`}
-                                data-tooltip-id={`metadata-diff-tooltip-${sequenceEntryStatus.accession}`}
-                            >
-                                <GitCompare />
-                            </Button>
-                        ) : (
-                            <Button
-                                as='a'
-                                className={buttonBarClass(false)}
-                                href={metadataDiffUrl}
-                                aria-label={`View metadata changes for ${getAccessionVersionString(sequenceEntryStatus)}`}
-                                data-tooltip-id={`metadata-diff-tooltip-${sequenceEntryStatus.accession}`}
-                            >
-                                <GitCompare />
-                            </Button>
-                        )}
+                        <Button
+                            className={buttonBarClass(notProcessed)}
+                            onClick={diffAccessionVersion}
+                            disabled={notProcessed}
+                            aria-label={`View metadata changes for ${getAccessionVersionString(sequenceEntryStatus)}`}
+                            data-tooltip-id={`metadata-diff-tooltip-${sequenceEntryStatus.accession}`}
+                        >
+                            <GitCompare />
+                        </Button>
                         <CustomTooltip
                             id={`metadata-diff-tooltip-${sequenceEntryStatus.accession}`}
                             content={notProcessed ? 'Still awaiting preprocessing' : 'View metadata changes'}

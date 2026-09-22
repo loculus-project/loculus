@@ -33,6 +33,7 @@ const referenceGenomesInfo = getReferenceGenomes(organism);
                     organism={organism}
                     group={group}
                     accessToken={getAccessToken(Astro.locals.session)!}
+                    metadata={schema.metadata}
                     metadataDisplayNames={metadataDisplayNames}
                     outputFileCategories={schema.files}
                     referenceGenomesInfo={referenceGenomesInfo}
