@@ -81,6 +81,7 @@ import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.api.fileIds
 import org.loculus.backend.api.getFileId
 import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.ProcessingValidationException
@@ -123,6 +124,7 @@ class SubmissionDatabaseService(
     private val processedSequenceEntryValidatorFactory: ProcessedSequenceEntryValidatorFactory,
     private val externalMetadataValidatorFactory: ExternalMetadataValidatorFactory,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
+    private val backendConfig: BackendConfig,
     private val fileMappingPreconditionValidator: FileMappingPreconditionValidator,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val groupManagementDatabaseService: GroupManagementDatabaseService,
@@ -1271,6 +1273,22 @@ class SubmissionDatabaseService(
                 .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
                 .andThatSequenceEntriesAreInStates(listOf(Status.PROCESSED))
                 .andThatOrganismIs(organism)
+        }
+
+        val hasConsensusSequence = editedSequenceEntryData.data.unalignedNucleotideSequences.values
+            .any { !it.isNullOrBlank() }
+        if (backendConfig.consensusSequencesEnabled(organism)) {
+            if (!hasConsensusSequence) {
+                throw UnprocessableEntityException(
+                    "Edited data for accession version " +
+                        "${editedSequenceEntryData.displayAccessionVersion()} of organism ${organism.name} " +
+                        "must contain at least one consensus sequence.",
+                )
+            }
+        } else if (hasConsensusSequence) {
+            throw UnprocessableEntityException(
+                "Sequence uploads are not allowed for organism ${organism.name}.",
+            )
         }
 
         editedSequenceEntryData.data.files?.let { fileMapping ->
