@@ -7,6 +7,8 @@ import {
 } from '../utils/file-upload-helpers';
 import { waitForUrlReportingAlerts } from '../utils/navigation-helpers';
 
+const CONFIRMATION_DIALOG_TEXT = 'Do you really want to submit?';
+
 export class EditPage {
     constructor(private page: Page) {}
 
@@ -34,10 +36,14 @@ export class EditPage {
         await this.page.getByRole('textbox', { name: fieldName }).fill(value);
     }
 
-    async submitChanges() {
+    private async clickSubmitAndConfirm() {
         await this.page.getByRole('button', { name: /proceed to Approval/ }).click();
-        await expect(this.page.getByText('Do you really want to submit?')).toBeVisible();
+        await expect(this.page.getByText(CONFIRMATION_DIALOG_TEXT)).toBeVisible();
         await this.page.getByRole('button', { name: 'Confirm' }).click();
+    }
+
+    async submitChanges() {
+        await this.clickSubmitAndConfirm();
         await waitForUrlReportingAlerts(this.page, '**/review', { timeout: 15_000 });
         return new ReviewPage(this.page);
     }
@@ -47,15 +53,13 @@ export class EditPage {
      * Dismisses the toast, which is shown with autoClose disabled, and stays on the edit page.
      */
     async submitChangesExpectingError(error: string | RegExp) {
-        await this.page.getByRole('button', { name: /proceed to Approval/ }).click();
-        await expect(this.page.getByText('Do you really want to submit?')).toBeVisible();
-        await this.page.getByRole('button', { name: 'Confirm' }).click();
+        await this.clickSubmitAndConfirm();
 
         const toast = this.page.getByRole('alert').filter({ hasText: error });
         await expect(toast).toBeVisible();
         await toast.getByLabel('close').click();
         await expect(toast).toHaveCount(0);
-        await expect(this.page.getByText('Do you really want to submit?')).toHaveCount(0);
+        await expect(this.page.getByText(CONFIRMATION_DIALOG_TEXT)).toHaveCount(0);
     }
 
     async uploadExternalFiles(
