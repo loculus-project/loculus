@@ -1275,9 +1275,9 @@ class SubmissionDatabaseService(
                 .andThatOrganismIs(organism)
         }
 
+        val hasConsensusSequence = editedSequenceEntryData.data.unalignedNucleotideSequences.values
+            .any { !it.isNullOrBlank() }
         if (backendConfig.requiresConsensusSequenceFile(organism)) {
-            val hasConsensusSequence = editedSequenceEntryData.data.unalignedNucleotideSequences.values
-                .any { !it.isNullOrBlank() }
             if (!hasConsensusSequence) {
                 throw UnprocessableEntityException(
                     "Edited data for accession version " +
@@ -1285,6 +1285,10 @@ class SubmissionDatabaseService(
                         "must contain at least one consensus sequence.",
                 )
             }
+        } else if (hasConsensusSequence) {
+            throw UnprocessableEntityException(
+                "Sequence uploads are not allowed for organism ${organism.name}.",
+            )
         }
 
         editedSequenceEntryData.data.files?.let { fileMapping ->

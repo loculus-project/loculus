@@ -255,6 +255,38 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     }
 
     @Test
+    fun `GIVEN organism does not require consensus sequences WHEN editing with a sequence THEN returns error`() {
+        val accessions = convenienceClient.prepareDataTo(
+            Status.PROCESSED,
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+        ).map { it.accession }
+
+        val editedData = EditedSequenceEntryData(
+            accession = accessions.first(),
+            version = 1,
+            data = emptySubmittedData.copy(unalignedNucleotideSequences = mapOf("main" to "ACTG")),
+        )
+
+        client.submitEditedSequenceEntryVersion(editedData, organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES)
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                    containsString(
+                        "Sequence uploads are not allowed for organism $ORGANISM_WITHOUT_CONSENSUS_SEQUENCES.",
+                    ),
+                ),
+            )
+
+        convenienceClient.getSequenceEntry(
+            accession = accessions.first(),
+            version = 1,
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+        )
+            .assertStatusIs(Status.PROCESSED)
+    }
+
+    @Test
     fun `WHEN submitting files with duplicate names THEN an error is returned`() {
         val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
 
