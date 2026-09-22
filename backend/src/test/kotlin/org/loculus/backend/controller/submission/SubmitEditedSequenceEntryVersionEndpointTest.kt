@@ -7,6 +7,9 @@ import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.FileIdAndName
@@ -210,14 +213,27 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             .assertStatusIs(Status.RECEIVED)
     }
 
-    @Test
-    fun `GIVEN organism requires consensus sequences WHEN editing with no sequence THEN returns error`() {
+    companion object {
+        @JvmStatic
+        fun sequenceLessShapes(): List<Arguments> = listOf(
+            Arguments.of("no fasta entries at all", emptyMap<String, String?>()),
+            Arguments.of("a blank sequence", mapOf("main" to "")),
+            Arguments.of("a null sequence", mapOf("main" to null)),
+        )
+    }
+
+    @ParameterizedTest(name = "GIVEN organism requires consensus sequences WHEN editing with {0} THEN returns error")
+    @MethodSource("sequenceLessShapes")
+    fun `GIVEN organism requires consensus sequences WHEN editing with no sequence THEN returns error`(
+        @Suppress("UNUSED_PARAMETER") description: String,
+        unalignedNucleotideSequences: Map<String, String?>,
+    ) {
         val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
 
         val editedData = EditedSequenceEntryData(
             accession = accessions.first(),
             version = 1,
-            data = emptySubmittedData,
+            data = emptySubmittedData.copy(unalignedNucleotideSequences = unalignedNucleotideSequences),
         )
 
         client.submitEditedSequenceEntryVersion(editedData)
@@ -228,6 +244,24 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.PROCESSED)
+    }
+
+    @Test
+    fun `GIVEN multi-segmented organism WHEN editing with only one segment filled THEN succeeds`() {
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED, organism = OTHER_ORGANISM)
+            .map { it.accession }
+
+        val editedData = EditedSequenceEntryData(
+            accession = accessions.first(),
+            version = 1,
+            data = emptySubmittedData.copy(unalignedNucleotideSequences = mapOf("notOnlySegment" to "ACTG")),
+        )
+
+        client.submitEditedSequenceEntryVersion(editedData, organism = OTHER_ORGANISM)
+            .andExpect(status().isNoContent)
+
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1, organism = OTHER_ORGANISM)
+            .assertStatusIs(Status.RECEIVED)
     }
 
     @Test
