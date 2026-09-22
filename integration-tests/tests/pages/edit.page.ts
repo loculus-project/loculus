@@ -42,6 +42,22 @@ export class EditPage {
         return new ReviewPage(this.page);
     }
 
+    /**
+     * Attempts to submit, expecting the submission to be refused client-side with an error toast.
+     * Dismisses the toast, which is shown with autoClose disabled, and stays on the edit page.
+     */
+    async submitChangesExpectingError(error: string | RegExp) {
+        await this.page.getByRole('button', { name: /proceed to Approval/ }).click();
+        await expect(this.page.getByText('Do you really want to submit?')).toBeVisible();
+        await this.page.getByRole('button', { name: 'Confirm' }).click();
+
+        const toast = this.page.getByRole('alert').filter({ hasText: error });
+        await expect(toast).toBeVisible();
+        await toast.getByLabel('close').click();
+        await expect(toast).toHaveCount(0);
+        await expect(this.page.getByText('Do you really want to submit?')).toHaveCount(0);
+    }
+
     async uploadExternalFiles(
         fileId: string,
         fileContents: Record<string, string>,
