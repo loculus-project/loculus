@@ -26,15 +26,12 @@ from .datatypes import (
     AminoAcidSequence,
     AnnotationSourceType,
     FastaId,
-    FileCategory,
-    FileIdAndNameAndReadUrl,
     GeneName,
     GenericSequence,
     NucleotideInsertion,
     NucleotideSequence,
     ProcessingAnnotation,
     ProcessingAnnotationAlignment,
-    ProcessingContext,
     SegmentClassificationMethod,
     SegmentName,
     SequenceAssignment,
@@ -794,16 +791,6 @@ def enrich_with_nextclade(  # noqa: PLR0914
             sequenceNameToFastaId: dict[SegmentName, str]
     )` object.
     """
-    input_metadata: dict[AccessionVersion, dict[str, Any]] = {
-        entry.context.accession_version: dict(entry.metadata) for entry in unprocessed
-    }
-    context: dict[AccessionVersion, ProcessingContext] = {
-        entry.context.accession_version: entry.context for entry in unprocessed
-    }
-    input_files: dict[
-        AccessionVersion, dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
-    ] = {entry.context.accession_version: entry.files for entry in unprocessed}
-
     batch = assign_segment_for_alignment(unprocessed, config=config, dataset_dir=dataset_dir)
     unaligned_nucleotide_sequences = batch.unalignedNucleotideSequences
     segment_assignment_map = batch.sequenceNameToFastaId
@@ -892,11 +879,13 @@ def enrich_with_nextclade(  # noqa: PLR0914
                 sequence_and_dataset,
             )
 
-    return {
-        id: UnprocessedAfterNextclade(
-            metadata=input_metadata[id],
-            context=context[id],
-            files=input_files[id],
+    enriched: dict[AccessionVersion, UnprocessedAfterNextclade] = {}
+    for entry in unprocessed:
+        id = entry.context.accession_version
+        enriched[id] = UnprocessedAfterNextclade(
+            metadata=dict(entry.metadata),
+            context=entry.context,
+            files=entry.files,
             nextcladeMetadata=nextclade_metadata[id],
             unalignedNucleotideSequences=unaligned_nucleotide_sequences[id],
             alignedNucleotideSequences=aligned_nucleotide_sequences[id],
@@ -907,8 +896,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
             errors=alerts[id].errors,
             warnings=alerts[id].warnings,
         )
-        for id in input_metadata
-    }
+    return enriched
 
 
 def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
