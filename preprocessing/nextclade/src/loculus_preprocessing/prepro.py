@@ -316,7 +316,6 @@ def processed_entry_no_alignment(
             warnings=warnings,
         ),
         group_id=unprocessed.context.group_id,
-        submitter=unprocessed.context.submitter,
     )
 
 
@@ -655,7 +654,6 @@ def process_single(
         processed_entry=processed_entry,
         annotations=annotations,
         group_id=unprocessed.context.group_id,
-        submitter=unprocessed.context.submitter,
     )
 
 
@@ -721,7 +719,6 @@ def processed_entry_with_errors(context: ProcessingContext) -> SubmissionData:
             warnings=[],
         ),
         group_id=context.group_id,
-        submitter=context.submitter,
     )
 
 

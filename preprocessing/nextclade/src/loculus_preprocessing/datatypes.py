@@ -104,7 +104,6 @@ class ProcessingContext:
 
     accession_version: AccessionVersion
     submission_id: str
-    submitter: str
     group_id: int
     insdc_ingest_group_id: int
     submitted_at: str
@@ -185,7 +184,6 @@ class SubmissionData:
     but the annotations need to be uploaded separately."""
 
     processed_entry: ProcessedEntry
-    submitter: str
     group_id: int
     annotations: dict[SequenceName, NextcladeAnnotation | None] | None = None
 

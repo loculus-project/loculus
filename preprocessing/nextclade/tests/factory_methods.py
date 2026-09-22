@@ -34,7 +34,6 @@ DEFAULT_TEST_CONTEXT = ProcessingContext(
     insdc_ingest_group_id=1,
     submitted_at="",
     submission_id="test_submission_id",
-    submitter="test_submitter",
 )
 
 # Default ExternalServices for tests that don't care about its contents (no taxonomy
