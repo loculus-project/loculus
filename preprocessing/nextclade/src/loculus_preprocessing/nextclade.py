@@ -611,6 +611,16 @@ def assign_single_segment(
                 ],
             ),
         )
+    if not input_unaligned_sequences:
+        return SequenceAssignment(
+            alert=Alert(
+                errors=[
+                    sequence_annotation(
+                        "No sequence data found - check segments are annotated correctly."
+                    )
+                ],
+            ),
+        )
     return SequenceAssignment(
         unalignedNucleotideSequences={"main": next(iter(input_unaligned_sequences.values()))},
         sequenceNameToFastaId={"main": next(iter(input_unaligned_sequences.keys()))},
@@ -776,6 +786,17 @@ def assign_segment_for_alignment(
     return batch
 
 
+def input_metadata_for(entry: UnprocessedEntry) -> dict[str, Any]:
+    """The submitted metadata, plus the submission details the processing functions can read."""
+    return {
+        **entry.data.metadata,
+        "submitter": entry.data.submitter,
+        "submittedAt": entry.data.submittedAt,
+        "submissionId": entry.data.submissionId,
+        "group_id": entry.data.group_id,
+    }
+
+
 def enrich_with_nextclade(  # noqa: PLR0914
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
@@ -794,14 +815,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
     )` object.
     """
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {
-        entry.accessionVersion: {
-            **entry.data.metadata,
-            "submitter": entry.data.submitter,
-            "submittedAt": entry.data.submittedAt,
-            "submissionId": entry.data.submissionId,
-            "group_id": entry.data.group_id,
-        }
-        for entry in unprocessed
+        entry.accessionVersion: input_metadata_for(entry) for entry in unprocessed
     }
     input_files: dict[
         AccessionVersion, dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
@@ -911,6 +925,74 @@ def enrich_with_nextclade(  # noqa: PLR0914
         )
         for id in input_metadata
     }
+
+
+def nextclade_failure(entry: UnprocessedEntry) -> UnprocessedAfterNextclade:
+    """What an entry looks like when Nextclade itself blew up on it.
+
+    The sequence fields are left empty on purpose: `alignment_errors_warnings` then keeps
+    quiet, so the entry carries this one error rather than a second, misleading one about an
+    unknown internal alignment error. The metadata is still there, so it is still processed.
+    """
+    return UnprocessedAfterNextclade(
+        inputMetadata=input_metadata_for(entry),
+        files=entry.data.files,
+        nextcladeMetadata={},
+        unalignedNucleotideSequences={},
+        alignedNucleotideSequences={},
+        nucleotideInsertions={},
+        alignedAminoAcidSequences={},
+        aminoAcidInsertions={},
+        sequenceNameToFastaId={},
+        errors=[
+            sequence_annotation(
+                "Nextclade failed on this entry, so its sequences could not be aligned. "
+                "Please check that the submitted sequences are valid, or contact the "
+                "administrator if this persists."
+            )
+        ],
+        warnings=[],
+    )
+
+
+def enrich_with_nextclade_isolating_failures(
+    unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
+) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
+    """Enrich the whole batch at once; if that fails, retry entry by entry.
+
+    `enrich_with_nextclade` runs Nextclade once for the batch, so anything it raises would
+    otherwise cost every entry in the batch its results - and the backend, which has no retry
+    budget, just hands the same entries out again. Retrying individually costs only the
+    entries that actually break Nextclade, and names them.
+
+    If every entry of a batch of several fails, the pipeline is the more likely culprit than
+    the data, so this re-raises rather than telling all of those submitters their sequences
+    are bad. The batch is then dropped and re-queued, as it was before there was a fallback.
+    """
+    try:
+        return enrich_with_nextclade(unprocessed, dataset_dir, config)
+    except Exception:
+        logger.exception(
+            "Nextclade failed for a batch of %d entries, retrying them one at a time",
+            len(unprocessed),
+        )
+    results: dict[AccessionVersion, UnprocessedAfterNextclade] = {}
+    failures = 0
+    for entry in unprocessed:
+        try:
+            results |= enrich_with_nextclade([entry], dataset_dir, config)
+        except Exception:
+            logger.exception("Nextclade failed for %s", entry.accessionVersion)
+            results[entry.accessionVersion] = nextclade_failure(entry)
+            failures += 1
+    if len(unprocessed) > 1 and failures == len(unprocessed):
+        msg = (
+            f"Nextclade failed for every one of the {failures} entries in the batch, which "
+            "points at the pipeline rather than at the data, so they are not being reported as "
+            "failed sequences"
+        )
+        raise RuntimeError(msg)
+    return results
 
 
 def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:

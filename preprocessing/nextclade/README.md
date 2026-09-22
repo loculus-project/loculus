@@ -9,6 +9,7 @@ This preprocessing pipeline has been developed by the Loculus team. It requests 
 1. Put sequences into temporary directory
 1. Run Nextclade on sequences
 1. Parse Nextclade results
+1. If either step failed, retry the batch one entry at a time, so only the entries that actually break Nextclade are reported as failed and the rest of the batch is still processed. If every entry of a batch of several fails, the pipeline rather than the data is the likely cause, so the batch is dropped instead and the backend re-queues it.
 1. Delete temporary directory
 1. Perform other metadata checks and formatting (see [Preprocessing Checks](#preprocessing-checks))
 1. Submit results to server
