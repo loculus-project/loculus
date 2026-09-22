@@ -16,6 +16,7 @@ import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.controller.assertHasError
@@ -210,6 +211,50 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     }
 
     @Test
+    fun `GIVEN organism requires consensus sequences WHEN editing with no sequence THEN returns error`() {
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
+
+        val editedData = EditedSequenceEntryData(
+            accession = accessions.first(),
+            version = 1,
+            data = emptySubmittedData,
+        )
+
+        client.submitEditedSequenceEntryVersion(editedData)
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(
+                jsonPath("\$.detail", containsString("must contain at least one consensus sequence")),
+            )
+
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
+            .assertStatusIs(Status.PROCESSED)
+    }
+
+    @Test
+    fun `GIVEN organism does not require consensus sequences WHEN editing with no sequence THEN succeeds`() {
+        val accessions = convenienceClient.prepareDataTo(
+            Status.PROCESSED,
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+        ).map { it.accession }
+
+        val editedData = EditedSequenceEntryData(
+            accession = accessions.first(),
+            version = 1,
+            data = emptySubmittedData,
+        )
+
+        client.submitEditedSequenceEntryVersion(editedData, organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES)
+            .andExpect(status().isNoContent)
+
+        convenienceClient.getSequenceEntry(
+            accession = accessions.first(),
+            version = 1,
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+        )
+            .assertStatusIs(Status.RECEIVED)
+    }
+
+    @Test
     fun `WHEN submitting files with duplicate names THEN an error is returned`() {
         val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
 
@@ -218,7 +263,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             version = 1,
             data = SubmittedData(
                 metadata = emptyMap(),
-                unalignedNucleotideSequences = emptyMap(),
+                unalignedNucleotideSequences = mapOf("main" to "ACTG"),
                 files = mapOf(
                     "myFileCategory" to
                         listOf(
@@ -246,7 +291,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             version = 1,
             data = SubmittedData(
                 metadata = emptyMap(),
-                unalignedNucleotideSequences = emptyMap(),
+                unalignedNucleotideSequences = mapOf("main" to "ACTG"),
                 files = mapOf(
                     "myFileCategory" to
                         listOf(
@@ -279,7 +324,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             version = 1,
             data = SubmittedData(
                 metadata = emptyMap(),
-                unalignedNucleotideSequences = emptyMap(),
+                unalignedNucleotideSequences = mapOf("main" to "ACTG"),
                 files = mapOf(
                     "unknownCategory" to
                         listOf(
@@ -309,7 +354,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             version = 1,
             data = SubmittedData(
                 metadata = emptyMap(),
-                unalignedNucleotideSequences = emptyMap(),
+                unalignedNucleotideSequences = mapOf("main" to "ACTG"),
                 files = mapOf(
                     "myFileCategory" to
                         listOf(
@@ -343,7 +388,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             version = 1,
             data = SubmittedData(
                 metadata = emptyMap(),
-                unalignedNucleotideSequences = emptyMap(),
+                unalignedNucleotideSequences = mapOf("main" to "ACTG"),
                 files = mapOf(
                     "myFileCategory" to
                         listOf(
@@ -376,7 +421,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             version = accessionVersion.version,
             data = SubmittedData(
                 metadata = emptyMap(),
-                unalignedNucleotideSequences = emptyMap(),
+                unalignedNucleotideSequences = mapOf("main" to "ACTG"),
                 files = mapOf("myFileCategory" to listOf(FileIdAndName(fileIdAndUrl.fileId, "foo.txt"))),
             ),
         )
@@ -411,7 +456,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             version = accessionVersion.version,
             data = SubmittedData(
                 metadata = emptyMap(),
-                unalignedNucleotideSequences = emptyMap(),
+                unalignedNucleotideSequences = mapOf("main" to "ACTG"),
                 files = mapOf("myFileCategory" to listOf(FileIdAndName(otherGroupFileIdAndUrl.fileId, "foo.txt"))),
             ),
         )
@@ -432,6 +477,6 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     private fun generateEditedData(accession: String, version: Long = 1) = EditedSequenceEntryData(
         accession = accession,
         version = version,
-        data = emptySubmittedData,
+        data = emptySubmittedData.copy(unalignedNucleotideSequences = mapOf("main" to "ACTG")),
     )
 }
