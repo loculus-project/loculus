@@ -19,7 +19,7 @@ data class BackendConfig(
         "Organism: ${organism.name} not found in backend config. Available organisms: ${organisms.keys}",
     )
 
-    fun requiresConsensusSequenceFile(organism: Organism): Boolean =
+    fun consensusSequencesEnabled(organism: Organism): Boolean =
         getInstanceConfig(organism).schema.submissionDataTypes.consensusSequences
 }
 

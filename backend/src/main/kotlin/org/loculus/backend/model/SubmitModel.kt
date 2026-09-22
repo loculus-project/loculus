@@ -134,7 +134,7 @@ class SubmitModel(
                 )
             }
 
-            if (backendConfig.requiresConsensusSequenceFile(submissionParams.organism)) {
+            if (backendConfig.consensusSequencesEnabled(submissionParams.organism)) {
                 submissionMetrics.timeWritePhase(endpoint, organism, VALIDATE_CONSENSUS_SEQUENCES_PHASE) {
                     log.debug { "Validating submission with uploadId $uploadId" }
                     val metadataFastaIds = uploadDatabaseService.getFastaIdsForMetadata(uploadId).flatten()
@@ -215,7 +215,7 @@ class SubmitModel(
             metadataFileTypes,
             metadataTempFileToDelete,
         )
-        val requireConsensusSequence = backendConfig.requiresConsensusSequenceFile(submissionParams.organism)
+        val consensusSequenceEnabled = backendConfig.consensusSequencesEnabled(submissionParams.organism)
         try {
             uploadMetadata(uploadId, submissionParams, metadataStream, batchSize)
         } finally {
@@ -224,14 +224,14 @@ class SubmitModel(
 
         val sequenceFile = submissionParams.sequenceFile
         if (sequenceFile == null) {
-            if (requireConsensusSequence) {
+            if (consensusSequenceEnabled) {
                 throw BadRequestException(
                     "Submissions for organism ${submissionParams.organism.name} require a sequence file.",
                 )
             }
             return
         }
-        if (!requireConsensusSequence) {
+        if (!consensusSequenceEnabled) {
             throw BadRequestException(
                 "Sequence uploads are not allowed for organism ${submissionParams.organism.name}.",
             )
