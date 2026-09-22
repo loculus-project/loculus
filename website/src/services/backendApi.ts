@@ -101,7 +101,7 @@ const submitReviewedSequenceEndpoint = makeEndpoint({
         },
     ],
     response: z.never(),
-    errors: [notAuthorizedError],
+    errors: [{ status: 'default', schema: problemDetail }, { status: 422, schema: problemDetail }, notAuthorizedError],
 });
 
 const getSequencesEndpoint = makeEndpoint({
