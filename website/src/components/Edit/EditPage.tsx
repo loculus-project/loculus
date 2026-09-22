@@ -175,12 +175,20 @@ const InnerEditPage: FC<EditPageProps> = ({
                     ]),
                 );
             }
+            const sequenceRecord = editableSequences.getSequenceRecord();
+            if (submissionDataTypes.consensusSequences && Object.keys(sequenceRecord).length === 0) {
+                toast.error('Please enter a sequence.', {
+                    position: 'top-center',
+                    autoClose: false,
+                });
+                return;
+            }
             submitEdit({
                 accession: dataToEdit.accession,
                 version: dataToEdit.version,
                 data: {
                     metadata: editableMetadata.getMetadataRecord(),
-                    unalignedNucleotideSequences: editableSequences.getSequenceRecord(),
+                    unalignedNucleotideSequences: sequenceRecord,
                     files: fileMappingForEdit,
                 },
             });

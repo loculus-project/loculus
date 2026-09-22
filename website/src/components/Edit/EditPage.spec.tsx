@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ToastContainer } from 'react-toastify';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import { EditPage } from './EditPage.tsx';
@@ -81,6 +82,7 @@ function renderEditPage({
                 sequenceEntryHistory={sequenceEntryHistory}
                 fileSharingConfig={{ disableStrictFilenameValidation: false }}
             />
+            <ToastContainer />
         </QueryClientProvider>,
     );
 }
@@ -143,6 +145,16 @@ describe('EditPage', () => {
 
         await userEvent.click(undoButton!);
         expectTextInSequenceData.unprocessedMetadata(defaultReviewData.submittedData.metadata);
+    });
+
+    test('should refuse to submit edits when the sequence was discarded', async () => {
+        renderEditPage();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Discard file' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Submit edits and proceed to Approval' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+
+        expect(await screen.findByText('Please enter a sequence.')).toBeVisible();
     });
 
     test('shows the revoked warning when revising an entry whose latest version is a revocation', () => {
