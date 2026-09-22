@@ -144,8 +144,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                 });
                 return;
             }
-            const sequenceFile = editableSequences.getSequenceFasta();
-            if (!sequenceFile) {
+            if (editableSequences.hasNoSequences()) {
                 toast.error('Please enter a sequence.', {
                     position: 'top-center',
                     autoClose: false,
@@ -154,7 +153,7 @@ const InnerEditPage: FC<EditPageProps> = ({
             }
             submitRevision({
                 metadataFile: mFile.inner(),
-                sequenceFile,
+                sequenceFile: editableSequences.getSequenceFasta(),
             });
         } else {
             let fileMappingForEdit: FilesByCategory | null = null;
@@ -175,8 +174,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                     ]),
                 );
             }
-            const sequenceRecord = editableSequences.getSequenceRecord();
-            if (submissionDataTypes.consensusSequences && Object.keys(sequenceRecord).length === 0) {
+            if (submissionDataTypes.consensusSequences && editableSequences.hasNoSequences()) {
                 toast.error('Please enter a sequence.', {
                     position: 'top-center',
                     autoClose: false,
@@ -188,7 +186,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                 version: dataToEdit.version,
                 data: {
                     metadata: editableMetadata.getMetadataRecord(),
-                    unalignedNucleotideSequences: sequenceRecord,
+                    unalignedNucleotideSequences: editableSequences.getSequenceRecord(),
                     files: fileMappingForEdit,
                 },
             });
