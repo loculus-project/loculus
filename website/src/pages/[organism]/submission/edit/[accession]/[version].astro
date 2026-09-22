@@ -31,16 +31,20 @@ const dataToEdit = await createBackendClient().getDataToEdit(organism, accessTok
     {
         dataToEdit.match(
             (dataToEdit) => (
-                <EditPage
-                    organism={organism}
-                    accessToken={accessToken}
-                    dataToEdit={dataToEdit}
-                    clientConfig={clientConfig}
-                    groupedInputFields={groupedInputFields}
-                    submissionDataTypes={schema.submissionDataTypes}
-                    fileSharingConfig={getFileSharingConfig()}
-                    client:load
-                />
+                <div class='flex flex-col items-center'>
+                    <div class='text-left mt-3 max-w-4xl mb-3 w-full'>
+                        <EditPage
+                            organism={organism}
+                            accessToken={accessToken}
+                            dataToEdit={dataToEdit}
+                            clientConfig={clientConfig}
+                            groupedInputFields={groupedInputFields}
+                            submissionDataTypes={schema.submissionDataTypes}
+                            fileSharingConfig={getFileSharingConfig()}
+                            client:load
+                        />
+                    </div>
+                </div>
             ),
             (error) => (
                 <>
