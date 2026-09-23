@@ -18,7 +18,6 @@ from .backend import (
 from .config import (
     ASSIGNED_REFERENCE_PREFIX,
     FILES_PREFIX,
-    INJECTED_INPUT_FIELDS,
     LENGTH,
     LENGTH_PREFIX,
     NEXTCLADE_PREFIX,
@@ -370,15 +369,6 @@ def _try_compute_length_field(
     return False, None
 
 
-def _get_submitted_metadata(
-    unprocessed: UnprocessedEntry | UnprocessedAfterNextclade,
-) -> InputMetadata:
-    if isinstance(unprocessed, UnprocessedAfterNextclade):
-        #  INJECTED_INPUT_FIELDS are not submitted metadata: they're added in enrich_with_nextclade
-        return {k: v for k, v in unprocessed.metadata.items() if k not in INJECTED_INPUT_FIELDS}
-    return unprocessed.metadata
-
-
 def _check_no_input_restrictions(
     submitted_metadata: InputMetadata,
     config: Config,
@@ -398,7 +388,7 @@ def _check_no_input_restrictions(
     return errors
 
 
-def get_output_metadata(
+def get_output_metadata(  # noqa: C901
     unprocessed: UnprocessedEntry | UnprocessedAfterNextclade,
     config: Config,
 ) -> tuple[ProcessedMetadata, list[ProcessingAnnotation], list[ProcessingAnnotation]]:
@@ -409,8 +399,8 @@ def get_output_metadata(
     external_services = config._external_services
     context = unprocessed.context
 
-    if not is_insdc_ingest_group:
-        errors.extend(_check_no_input_restrictions(_get_submitted_metadata(unprocessed), config))
+    if not context.is_insdc_ingest_group:
+        errors.extend(_check_no_input_restrictions(unprocessed.metadata, config))
 
     for output_field in config.processing_order:
         spec = config.processing_spec[output_field]
