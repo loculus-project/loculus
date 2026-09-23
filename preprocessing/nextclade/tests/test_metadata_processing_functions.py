@@ -111,6 +111,27 @@ test_case_definitions = [
         ),
     ),
     Case(
+        name="invalid_value_for_required_field_only_reports_invalid_value",
+        input_metadata={
+            "name_required": "name",
+            "ncbi_required_collection_date": "not a date",
+        },
+        accession_id="22",
+        expected_metadata={
+            "name_required": "name",
+            "concatenated_string": "LOC_22.1",
+        },
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["ncbi_required_collection_date"],
+                    ["required_collection_date"],
+                    "Metadata field required_collection_date: Date format is not recognized.",
+                ),
+            ]
+        ),
+    ),
+    Case(
         name="collection_date_in_future",
         input_metadata={
             "collection_date": "2088-12-01",
