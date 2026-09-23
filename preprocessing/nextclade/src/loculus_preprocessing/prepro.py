@@ -468,7 +468,7 @@ def get_output_metadata(  # noqa: C901
             or context.is_insdc_ingest_group
         ):
             # skip requirement checks when the field has a value, when processing already
-            # reported why the value is missing (e.g. not in the list of options),
+            # reported why the value is missing in output (e.g. not in the list of options),
             # or for INSDC ingested data.
             continue
 
