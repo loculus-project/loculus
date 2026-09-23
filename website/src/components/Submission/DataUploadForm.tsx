@@ -454,7 +454,12 @@ export const ExtraFilesUpload = ({
                         </>
                     )}
                     For more information please refer to the{' '}
-                    <a href={extraFilesUploadDocsUrl} target='_blank' className='text-primary-700 opacity-90'>
+                    <a
+                        href={extraFilesUploadDocsUrl}
+                        target='_blank'
+                        rel='noreferrer'
+                        className='text-primary-700 opacity-90'
+                    >
                         {singleFileCategoryDisplayName?.toLowerCase() ?? 'extra files'} documentation
                     </a>
                     .
