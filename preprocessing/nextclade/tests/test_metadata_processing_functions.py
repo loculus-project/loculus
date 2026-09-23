@@ -1054,6 +1054,7 @@ def test_processing_order() -> None:
 
 def test_required_field_message_lists_only_user_input_fields() -> None:
     config = get_config(NO_ALIGNMENT_CONFIG, ignore_args=True)
+    config.extra_input_fields.append("extra_user_input")
     config.processing_spec.update(
         {
             "user_input": ProcessingSpec(function="identity", inputs={"input": "user_input"}),
@@ -1094,9 +1095,49 @@ def test_required_field_message_lists_only_user_input_fields() -> None:
     )
 
 
-@pytest.mark.parametrize("is_insdc", [False, True])
-def test_errors_when_no_input_field_is_provided(is_insdc: bool) -> None:
+@pytest.mark.parametrize(
+    ("field_name", "value", "is_insdc_ingest", "expected_errors", "expected_warnings"),
+    [
+        # A field marked `noInput` may not be provided by the user
+        (
+            "non_user_input",
+            "illegal_user_input",
+            False,
+            [
+                (
+                    "Metadata field `non_user_input` may not be provided as input. "
+                    "Please remove it from your metadata."
+                )
+            ],
+            [],
+        ),
+        # A field without a processing spec and not declared as an extraInputField
+        (
+            "unrecognized_field",
+            "some_value",
+            False,
+            [],
+            ["Metadata field `unrecognized_field` is not recognized and will be ignored."],
+        ),
+        # extraInputFields are recognized even though they have no processing spec
+        ("extra_input_field", "some_value", False, [], []),
+        # Nothing is checked if no value was provided, e.g. an empty column
+        ("non_user_input", "", False, [], []),
+        ("unrecognized_field", "", False, [], []),
+        # The INSDC ingest group submits fields that users may not, and is not checked
+        ("non_user_input", "illegal_user_input", True, [], []),
+        ("unrecognized_field", "some_value", True, [], []),
+    ],
+)
+def test_submitted_metadata_is_checked_against_config(
+    field_name: str,
+    value: str,
+    is_insdc_ingest: bool,
+    expected_errors: list[str],
+    expected_warnings: list[str],
+) -> None:
     config = get_config(NO_ALIGNMENT_CONFIG, ignore_args=True)
+    config.extra_input_fields.append("extra_input_field")
     config.processing_spec["non_user_input"] = ProcessingSpec(
         function="identity",
         inputs={"input": "non_user_input"},
@@ -1105,26 +1146,21 @@ def test_errors_when_no_input_field_is_provided(is_insdc: bool) -> None:
     config.processing_order = get_processing_order(config)
 
     entry = UnprocessedEntryFactory.create_unprocessed_entry(
-        metadata_dict={"non_user_input": "illegal_user_input"},
+        metadata_dict={field_name: value},
         accession_id="0",
         sequences={"main": None},
-        group_id=config.insdc_ingest_group_id if is_insdc else config.insdc_ingest_group_id + 1,
+        group_id=config.insdc_ingest_group_id if is_insdc_ingest else 2,
     )
-    processed = process_all([entry], "temp_dataset_dir", config)[0].processed_entry
+    processed_entry = process_all([entry], "temp_dataset_dir", config)[0].processed_entry
 
-    messages = {
-        annotation.processedFields[0].name: annotation.message
-        for annotation in processed.errors
-        if annotation.processedFields
-    }
-
-    if is_insdc:
-        assert "non_user_input" not in messages
-    else:
-        assert messages["non_user_input"] == (
-            "Metadata field `non_user_input` may not be provided as input. "
-            "Please remove it from your metadata."
-        )
+    # Other errors (e.g. missing required fields) are unrelated to the submitted field
+    errors = [
+        annotation.message
+        for annotation in processed_entry.errors
+        if annotation.processedFields and annotation.processedFields[0].name == field_name
+    ]
+    assert errors == expected_errors
+    assert [annotation.message for annotation in processed_entry.warnings] == expected_warnings
 
 
 def test_preprocessing_without_consensus_sequences(config: Config) -> None:
