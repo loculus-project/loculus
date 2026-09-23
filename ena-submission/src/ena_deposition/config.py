@@ -24,6 +24,7 @@ class EnaResultField(StrEnum):
     BIOPROJECT = "bioproject_accession"
     GCA = "gca_accession"
     RUN = "run_accession"
+    EXPERIMENT = "erx_accession"
     INSDC_ACCESSION_PREFIX = "insdc_accession"
     INSDC_ACCESSION_FULL_PREFIX = "insdc_accession_full"
 
@@ -131,9 +132,13 @@ class Config(BaseModel):
 
     enaOrganisms: dict[EnaOrganismName, EnaOrganismDetails]  # noqa: N815
     unique_project_suffix: str
+    unique_raw_reads_suffix: str
+    # Name of the Loculus metadata field that holds the JSON-encoded list of raw read files
+    raw_reads_metadata_field: str
     metadata_mapping: dict[str, MetadataMapping]
     metadata_fallback_fields: dict[str, str]
     assembly_manifest_fields_mapping: dict[str, ManifestFieldDetails]
+    raw_reads_manifest_fields_mapping: dict[str, ManifestFieldDetails]
     loculus_accession_fields: LoculusAccessionFieldNames
     ingest_pipeline_submission_group: int
     ena_checklist: str | None = None
@@ -144,6 +149,7 @@ class Config(BaseModel):
     ena_http_timeout_seconds: int = 60
     ena_public_search_timeout_seconds: int = 120
     ncbi_public_search_timeout_seconds: int = 120
+    ena_webin_cli_timeout_seconds: int = 300
     ena_http_get_retry_attempts: int = 3
     ncbi_http_get_retry_attempts: int = 3
     # By default, don't retry HTTP post requests to ENA
@@ -160,6 +166,9 @@ class Config(BaseModel):
     slack_retry_threshold_min: int = 720
     submitting_time_threshold_min: int = 15
     waiting_threshold_hours: int = 48
+
+    s3_request_timeout_seconds: int = 600
+    get_released_data_timeout_seconds: int = 600
 
 
 def secure_ena_connection(config: Config):

@@ -18,6 +18,9 @@ data class BackendConfig(
     fun getInstanceConfig(organism: Organism) = organisms[organism.name] ?: throw IllegalArgumentException(
         "Organism: ${organism.name} not found in backend config. Available organisms: ${organisms.keys}",
     )
+
+    fun consensusSequencesEnabled(organism: Organism): Boolean =
+        getInstanceConfig(organism).schema.submissionDataTypes.consensusSequences
 }
 
 data class DataUseTerms(val enabled: Boolean, val urls: DataUseTermsUrls?)
@@ -27,6 +30,7 @@ data class DataUseTermsUrls(val open: String, val restricted: String)
 data class FileSharing(
     val outputFileUrlType: FileUrlType = FileUrlType.WEBSITE,
     val disableStrictFilenameValidation: Boolean = false,
+    val maxFileSizeBytes: Long? = null,
 )
 
 /**

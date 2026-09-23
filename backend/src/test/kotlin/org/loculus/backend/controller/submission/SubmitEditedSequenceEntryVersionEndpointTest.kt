@@ -7,6 +7,9 @@ import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.FileIdAndName
@@ -16,6 +19,7 @@ import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.controller.assertHasError
@@ -28,10 +32,10 @@ import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForSuperUser
+import org.loculus.backend.service.files.dummyFileId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.util.UUID
 
 @EndpointTest(
     properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
@@ -209,6 +213,113 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             .assertStatusIs(Status.RECEIVED)
     }
 
+    companion object {
+        @JvmStatic
+        fun sequenceLessShapes(): List<Arguments> = listOf(
+            Arguments.of("no fasta entries at all", emptyMap<String, String?>()),
+            Arguments.of("a blank sequence", mapOf("main" to "")),
+            Arguments.of("a null sequence", mapOf("main" to null)),
+        )
+    }
+
+    @ParameterizedTest(name = "GIVEN organism requires consensus sequences WHEN editing with {0} THEN returns error")
+    @MethodSource("sequenceLessShapes")
+    fun `GIVEN organism requires consensus sequences WHEN editing with no sequence THEN returns error`(
+        @Suppress("UNUSED_PARAMETER") description: String,
+        unalignedNucleotideSequences: Map<String, String?>,
+    ) {
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
+
+        val editedData = EditedSequenceEntryData(
+            accession = accessions.first(),
+            version = 1,
+            data = emptySubmittedData.copy(unalignedNucleotideSequences = unalignedNucleotideSequences),
+        )
+
+        client.submitEditedSequenceEntryVersion(editedData)
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(
+                jsonPath("\$.detail", containsString("must contain at least one consensus sequence")),
+            )
+
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
+            .assertStatusIs(Status.PROCESSED)
+    }
+
+    @Test
+    fun `GIVEN multi-segmented organism WHEN editing with only one segment filled THEN succeeds`() {
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED, organism = OTHER_ORGANISM)
+            .map { it.accession }
+
+        val editedData = EditedSequenceEntryData(
+            accession = accessions.first(),
+            version = 1,
+            data = emptySubmittedData.copy(unalignedNucleotideSequences = mapOf("notOnlySegment" to "ACTG")),
+        )
+
+        client.submitEditedSequenceEntryVersion(editedData, organism = OTHER_ORGANISM)
+            .andExpect(status().isNoContent)
+
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1, organism = OTHER_ORGANISM)
+            .assertStatusIs(Status.RECEIVED)
+    }
+
+    @Test
+    fun `GIVEN organism does not require consensus sequences WHEN editing with no sequence THEN succeeds`() {
+        val accessions = convenienceClient.prepareDataTo(
+            Status.PROCESSED,
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+        ).map { it.accession }
+
+        val editedData = EditedSequenceEntryData(
+            accession = accessions.first(),
+            version = 1,
+            data = emptySubmittedData,
+        )
+
+        client.submitEditedSequenceEntryVersion(editedData, organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES)
+            .andExpect(status().isNoContent)
+
+        convenienceClient.getSequenceEntry(
+            accession = accessions.first(),
+            version = 1,
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+        )
+            .assertStatusIs(Status.RECEIVED)
+    }
+
+    @Test
+    fun `GIVEN organism does not require consensus sequences WHEN editing with a sequence THEN returns error`() {
+        val accessions = convenienceClient.prepareDataTo(
+            Status.PROCESSED,
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+        ).map { it.accession }
+
+        val editedData = EditedSequenceEntryData(
+            accession = accessions.first(),
+            version = 1,
+            data = emptySubmittedData.copy(unalignedNucleotideSequences = mapOf("main" to "ACTG")),
+        )
+
+        client.submitEditedSequenceEntryVersion(editedData, organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES)
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                    containsString(
+                        "Sequence uploads are not allowed for organism $ORGANISM_WITHOUT_CONSENSUS_SEQUENCES.",
+                    ),
+                ),
+            )
+
+        convenienceClient.getSequenceEntry(
+            accession = accessions.first(),
+            version = 1,
+            organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+        )
+            .assertStatusIs(Status.PROCESSED)
+    }
+
     @Test
     fun `WHEN submitting files with duplicate names THEN an error is returned`() {
         val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
@@ -218,12 +329,12 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             version = 1,
             data = SubmittedData(
                 metadata = emptyMap(),
-                unalignedNucleotideSequences = emptyMap(),
+                unalignedNucleotideSequences = mapOf("main" to "ACTG"),
                 files = mapOf(
                     "myFileCategory" to
                         listOf(
-                            FileIdAndName(UUID.randomUUID(), "foo.txt"),
-                            FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                            FileIdAndName(dummyFileId(), "foo.txt"),
+                            FileIdAndName(dummyFileId(), "foo.txt"),
                         ),
                 ),
             ),
@@ -237,6 +348,40 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     }
 
     @Test
+    fun `WHEN submitting files with duplicate file IDs THEN an error is returned`() {
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
+
+        val reusedFileId = dummyFileId()
+        val editedData = EditedSequenceEntryData(
+            accession = accessions.first(),
+            version = 1,
+            data = SubmittedData(
+                metadata = emptyMap(),
+                unalignedNucleotideSequences = mapOf("main" to "ACTG"),
+                files = mapOf(
+                    "myFileCategory" to
+                        listOf(
+                            FileIdAndName(reusedFileId, "foo.txt"),
+                            FileIdAndName(reusedFileId, "bar.txt"),
+                        ),
+                ),
+            ),
+        )
+
+        client.submitEditedSequenceEntryVersion(editedData)
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                    allOf(
+                        containsString("reuse the same file ID more than once"),
+                        containsString(reusedFileId.toString()),
+                    ),
+                ),
+            )
+    }
+
+    @Test
     fun `WHEN submitting unknown file categories THEN an error is returned`() {
         val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
 
@@ -245,11 +390,11 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             version = 1,
             data = SubmittedData(
                 metadata = emptyMap(),
-                unalignedNucleotideSequences = emptyMap(),
+                unalignedNucleotideSequences = mapOf("main" to "ACTG"),
                 files = mapOf(
                     "unknownCategory" to
                         listOf(
-                            FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                            FileIdAndName(dummyFileId(), "foo.txt"),
                         ),
                 ),
             ),
@@ -267,7 +412,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
     @Test
     fun `WHEN submitting a non-existing file ID THEN an error is returned`() {
-        val randomFileId = UUID.randomUUID()
+        val randomFileId = dummyFileId()
         val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
 
         val editedData = EditedSequenceEntryData(
@@ -275,7 +420,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             version = 1,
             data = SubmittedData(
                 metadata = emptyMap(),
-                unalignedNucleotideSequences = emptyMap(),
+                unalignedNucleotideSequences = mapOf("main" to "ACTG"),
                 files = mapOf(
                     "myFileCategory" to
                         listOf(
@@ -309,7 +454,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             version = 1,
             data = SubmittedData(
                 metadata = emptyMap(),
-                unalignedNucleotideSequences = emptyMap(),
+                unalignedNucleotideSequences = mapOf("main" to "ACTG"),
                 files = mapOf(
                     "myFileCategory" to
                         listOf(
@@ -342,7 +487,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             version = accessionVersion.version,
             data = SubmittedData(
                 metadata = emptyMap(),
-                unalignedNucleotideSequences = emptyMap(),
+                unalignedNucleotideSequences = mapOf("main" to "ACTG"),
                 files = mapOf("myFileCategory" to listOf(FileIdAndName(fileIdAndUrl.fileId, "foo.txt"))),
             ),
         )
@@ -377,7 +522,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             version = accessionVersion.version,
             data = SubmittedData(
                 metadata = emptyMap(),
-                unalignedNucleotideSequences = emptyMap(),
+                unalignedNucleotideSequences = mapOf("main" to "ACTG"),
                 files = mapOf("myFileCategory" to listOf(FileIdAndName(otherGroupFileIdAndUrl.fileId, "foo.txt"))),
             ),
         )
@@ -398,6 +543,6 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     private fun generateEditedData(accession: String, version: Long = 1) = EditedSequenceEntryData(
         accession = accession,
         version = version,
-        data = emptySubmittedData,
+        data = emptySubmittedData.copy(unalignedNucleotideSequences = mapOf("main" to "ACTG")),
     )
 }

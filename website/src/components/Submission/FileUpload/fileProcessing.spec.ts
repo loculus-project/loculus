@@ -4,7 +4,7 @@ import { promises as fs } from 'fs';
 import ExcelJS from 'exceljs';
 import { describe, expect, test } from 'vitest';
 
-import { METADATA_FILE_KIND, PLAIN_SEGMENT_KIND } from './fileProcessing';
+import { FASTA_FILE_KIND, METADATA_FILE_KIND, PLAIN_SEGMENT_KIND } from './fileProcessing';
 
 async function buildWorkbookFile(extraSheetNames: string[]): Promise<File> {
     const workbook = new ExcelJS.Workbook();
@@ -138,5 +138,16 @@ describe('fileProcessing', () => {
         const text = await processedFile.text();
         expect(text.split('\n')[0]).toContain('submissionId'); // parsed Data...
         expect(text).not.toContain('Field name'); // ...not the Guidance reference sheet
+    });
+
+    test.each([
+        ['metadata.tsv', true],
+        ['metadata.xlsx.gz', true],
+        ['sequences.fasta.zst', false],
+        ['sequences.txt', false],
+    ])('sequence file field rejects %s: %s', async (fileName, isRejected) => {
+        const processingResult = await FASTA_FILE_KIND.processRawFile(new File(['content'], fileName));
+
+        expect(processingResult.isErr()).toBe(isRejected);
     });
 });

@@ -3,10 +3,12 @@ import { ReviewPage } from './review.page';
 import Papa from 'papaparse';
 import { NavigationPage } from './navigation.page';
 import {
+    isSingleFile,
     prepareTmpDirForBulkUpload,
     prepareTmpDirForSingleUpload,
     uploadFilesFromTmpDir,
 } from '../utils/file-upload-helpers';
+import { waitForUrlReportingAlerts } from '../utils/navigation-helpers';
 
 class SubmissionPage {
     protected page: Page;
@@ -66,7 +68,7 @@ class SubmissionPage {
             .click({ timeout: 3_000 })
             .catch(() => {});
 
-        await this.page.waitForURL('**/review', { timeout: 15_000 });
+        await waitForUrlReportingAlerts(this.page, '**/review', { timeout: 15_000 });
         return new ReviewPage(this.page);
     }
 
@@ -207,12 +209,13 @@ export class BulkSubmissionPage extends SubmissionPage {
 
     async uploadExternalFiles(
         fileId: string,
-        fileContents: Record<string, string | Record<string, string>>,
+        fileContents: Record<string, string | Buffer | Record<string, string | Buffer>>,
         tmpDir: string,
+        gzipLevel?: number,
     ) {
-        await prepareTmpDirForBulkUpload(fileContents, tmpDir);
+        await prepareTmpDirForBulkUpload(fileContents, tmpDir, gzipLevel);
         const fileCount = Object.values(fileContents).reduce(
-            (total, files) => total + (typeof files === 'string' ? 1 : Object.keys(files).length),
+            (total, files) => total + (isSingleFile(files) ? 1 : Object.keys(files).length),
             0,
         );
         await uploadFilesFromTmpDir(this.page, fileId, tmpDir, fileCount);
