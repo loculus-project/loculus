@@ -1094,54 +1094,37 @@ def test_required_field_message_lists_only_user_input_fields() -> None:
     )
 
 
-def test_errors_when_no_input_field_is_provided() -> None:
+@pytest.mark.parametrize("is_insdc", [False, True])
+def test_errors_when_no_input_field_is_provided(is_insdc: bool) -> None:
     config = get_config(NO_ALIGNMENT_CONFIG, ignore_args=True)
-    config.processing_spec.update(
-        {
-            "non_user_input": ProcessingSpec(
-                function="identity", inputs={"input": "non_user_input"}, no_input=True
-            ),
-        }
+    config.processing_spec["non_user_input"] = ProcessingSpec(
+        function="identity",
+        inputs={"input": "non_user_input"},
+        no_input=True,
     )
     config.processing_order = get_processing_order(config)
 
-    entries = [
-        UnprocessedEntryFactory.create_unprocessed_entry(
-            metadata_dict={
-                "non_user_input": "illegal_user_input",
-            },
-            accession_id="0",
-            sequences={"main": None},
-        ),
-        UnprocessedEntryFactory.create_unprocessed_entry(
-            metadata_dict={
-                "non_user_input": "illegal_user_input",
-            },
-            accession_id="1",
-            sequences={"main": None},
-            group_id=config.insdc_ingest_group_id,
-        ),
-    ]
-    processed_entries = process_all(entries, "temp_dataset_dir", config)
-    (processed_non_insdc, processed_insdc) = (
-        processed_entries[0].processed_entry,
-        processed_entries[1].processed_entry,
+    entry = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={"non_user_input": "illegal_user_input"},
+        accession_id="0",
+        sequences={"main": None},
+        group_id=config.insdc_ingest_group_id if is_insdc else config.insdc_ingest_group_id + 1,
     )
+    processed = process_all([entry], "temp_dataset_dir", config)[0].processed_entry
 
     messages = {
         annotation.processedFields[0].name: annotation.message
-        for annotation in processed_non_insdc.errors
+        for annotation in processed.errors
         if annotation.processedFields
     }
-    assert messages["non_user_input"] == (
-        "Metadata field `non_user_input` may not be provided as input. "
-        "Please remove it from your metadata."
-    )
-    assert not any(
-        field.name == "non_user_input"
-        for annotation in processed_insdc.errors
-        for field in annotation.processedFields
-    )
+
+    if is_insdc:
+        assert "non_user_input" not in messages
+    else:
+        assert messages["non_user_input"] == (
+            "Metadata field `non_user_input` may not be provided as input. "
+            "Please remove it from your metadata."
+        )
 
 
 def test_preprocessing_without_consensus_sequences(config: Config) -> None:
