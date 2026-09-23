@@ -2,6 +2,7 @@
 
 
 import json
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Literal
 
@@ -21,6 +22,7 @@ from factory_methods import (
     verify_processed_entry,
 )
 
+from loculus_preprocessing import nextclade
 from loculus_preprocessing.config import (
     AlignmentRequirement,
     Config,
@@ -29,6 +31,7 @@ from loculus_preprocessing.config import (
 )
 from loculus_preprocessing.datatypes import (
     AnnotationSourceType,
+    ProcessedEntry,
     SegmentClassificationMethod,
     SubmissionData,
     UnprocessedData,
@@ -39,8 +42,14 @@ from loculus_preprocessing.embl import (
     get_seq_features,
     reformat_authors_from_loculus_to_embl_style,
 )
+from loculus_preprocessing.nextclade import nextclade_failure
 from loculus_preprocessing.nextclade_annotation import NextcladeAnnotation
-from loculus_preprocessing.prepro import get_nested_metadata, process_all, unpack_annotations
+from loculus_preprocessing.prepro import (
+    get_nested_metadata,
+    process_all,
+    process_single,
+    unpack_annotations,
+)
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
     format_stop_codon,
@@ -1277,41 +1286,65 @@ def test_preprocessing_multi_segment_none_requirement(test_case_def: Case):
     )
 
 
+def unprocessed_entry(accession_version: str, sequences: dict[str, str | None]) -> UnprocessedEntry:
+    return UnprocessedEntry(
+        accessionVersion=accession_version,
+        data=UnprocessedData(
+            group_id=2,
+            submitter="test_submitter",
+            submissionId="test_submission_id",
+            submittedAt=ts_from_ymd(2021, 12, 15),
+            metadata={},
+            unalignedNucleotideSequences=sequences,
+            files=None,
+        ),
+    )
+
+
+def fail_nextclade_for(monkeypatch, accession_versions: set[str]) -> list[list[str]]:
+    """Make `enrich_with_nextclade` blow up on any batch containing one of these entries.
+
+    `enrich_with_nextclade_isolating_failures` looks the name up in its own module at call
+    time, so patching it there is what the fallback sees. Returns a log of the accession
+    versions each call was given, newest last.
+    """
+    real_enrich_with_nextclade = nextclade.enrich_with_nextclade
+    batches: list[list[str]] = []
+
+    def failing_enrich_with_nextclade(unprocessed, dataset_dir, config):
+        batch = [entry.accessionVersion for entry in unprocessed]
+        batches.append(batch)
+        if accession_versions & set(batch):
+            msg = "nextclade failed with exit code 1"
+            raise Exception(msg)
+        return real_enrich_with_nextclade(unprocessed, dataset_dir, config)
+
+    monkeypatch.setattr(nextclade, "enrich_with_nextclade", failing_enrich_with_nextclade)
+    return batches
+
+
+def processed_by_accession(result: Sequence[SubmissionData]) -> dict[str, ProcessedEntry]:
+    return {
+        submission_data.processed_entry.accession: submission_data.processed_entry
+        for submission_data in result
+    }
+
+
 def test_max_sequences_per_entry_batch_isolation() -> None:
     """If one entry in a batch exceeds maxSequencesPerEntry, only that entry is flagged;
     other entries in the same batch should succeed without max-sequence errors."""
     config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
     config.max_sequences_per_entry = 1
 
-    bad_entry = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
-            files=None,
-        ),
+    bad_entry = unprocessed_entry(
+        "LOC_01.1",
+        {
+            "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+            "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+        },
     )
-
-    good_entry = UnprocessedEntry(
-        accessionVersion="LOC_02.1",
-        data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-            },
-            files=None,
-        ),
+    good_entry = unprocessed_entry(
+        "LOC_02.1", {"ebola-sudan": sequence_with_mutation("ebola-sudan")}
     )
 
     result = process_all([bad_entry, good_entry], MULTI_EBOLA_DATASET, config)
@@ -1330,22 +1363,148 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
     assert len(good_max_errors) == 0
 
 
+def test_an_entry_nextclade_cannot_handle_only_costs_itself(monkeypatch) -> None:
+    # Nextclade runs once for the whole batch, so without the fallback a single entry that
+    # makes it exit non-zero would cost every other entry in the batch its results too.
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    config.processing_spec = {}
+    config.processing_order = ()
+    bad_entry = unprocessed_entry(
+        "LOC_01.1", {"ebola-sudan": sequence_with_mutation("ebola-sudan")}
+    )
+    good_entry = unprocessed_entry(
+        "LOC_02.1", {"ebola-sudan": sequence_with_mutation("ebola-sudan")}
+    )
+    fail_nextclade_for(monkeypatch, {"LOC_01.1"})
+
+    processed = processed_by_accession(
+        process_all([bad_entry, good_entry], MULTI_EBOLA_DATASET, config)
+    )
+
+    assert processed["LOC_01"].errors == nextclade_failure(bad_entry).errors
+    assert processed["LOC_02"].errors == []
+    assert processed["LOC_02"].data.alignedNucleotideSequences["ebola-sudan"]
+
+
+def test_the_fallback_reruns_nextclade_once_per_entry(monkeypatch) -> None:
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    config.processing_spec = {}
+    config.processing_order = ()
+    entries = [
+        unprocessed_entry(f"LOC_0{i}.1", {"ebola-sudan": sequence_with_mutation("ebola-sudan")})
+        for i in range(1, 5)
+    ]
+    batches = fail_nextclade_for(monkeypatch, {"LOC_01.1"})
+
+    processed = processed_by_accession(process_all(entries, MULTI_EBOLA_DATASET, config))
+
+    assert batches == [
+        ["LOC_01.1", "LOC_02.1", "LOC_03.1", "LOC_04.1"],
+        ["LOC_01.1"],
+        ["LOC_02.1"],
+        ["LOC_03.1"],
+        ["LOC_04.1"],
+    ]
+    assert set(processed) == {"LOC_01", "LOC_02", "LOC_03", "LOC_04"}
+
+
+def test_a_failure_that_only_happens_in_a_batch_leaves_no_entry_blamed(monkeypatch) -> None:
+    # Not every failure is one entry's fault. If nothing reproduces on its own, every entry
+    # is processed normally and no one is told their sequence is bad.
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    config.processing_spec = {}
+    config.processing_order = ()
+    entries = [
+        unprocessed_entry(f"LOC_0{i}.1", {"ebola-sudan": sequence_with_mutation("ebola-sudan")})
+        for i in range(1, 3)
+    ]
+    real_enrich_with_nextclade = nextclade.enrich_with_nextclade
+
+    def failing_on_batches(unprocessed, dataset_dir, config):
+        if len(unprocessed) > 1:
+            msg = "nextclade failed with exit code 1"
+            raise Exception(msg)
+        return real_enrich_with_nextclade(unprocessed, dataset_dir, config)
+
+    monkeypatch.setattr(nextclade, "enrich_with_nextclade", failing_on_batches)
+
+    processed = processed_by_accession(process_all(entries, MULTI_EBOLA_DATASET, config))
+
+    assert [entry.errors for entry in processed.values()] == [[], []]
+
+
+def test_a_batch_where_every_entry_fails_is_not_blamed_on_the_data(monkeypatch) -> None:
+    # Disk full, a broken dataset directory, a Nextclade upgrade the parsers do not expect:
+    # whatever it is, it is the pipeline's fault, and marking everyone's sequences as failed
+    # would be durable, user-visible damage. Fail the batch instead and let it be re-queued.
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    entries = [
+        unprocessed_entry(f"LOC_0{i}.1", {"ebola-sudan": sequence_with_mutation("ebola-sudan")})
+        for i in range(1, 3)
+    ]
+    fail_nextclade_for(monkeypatch, {"LOC_01.1", "LOC_02.1"})
+
+    with pytest.raises(RuntimeError, match="points at the pipeline"):
+        process_all(entries, MULTI_EBOLA_DATASET, config)
+
+
+def test_a_lone_failing_entry_is_still_reported(monkeypatch) -> None:
+    # A batch of one gives no evidence either way, and refusing to report it would leave the
+    # entry stuck in the queue forever, which is what the fallback exists to stop.
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    config.processing_spec = {}
+    config.processing_order = ()
+    entry = unprocessed_entry("LOC_01.1", {"ebola-sudan": sequence_with_mutation("ebola-sudan")})
+    fail_nextclade_for(monkeypatch, {"LOC_01.1"})
+
+    processed = processed_by_accession(process_all([entry], MULTI_EBOLA_DATASET, config))
+
+    assert processed["LOC_01"].errors == nextclade_failure(entry).errors
+
+
+def test_nextclade_failure_keeps_the_metadata_and_adds_no_other_annotation() -> None:
+    # The sequence fields are left empty so that alignment_errors_warnings stays quiet and
+    # the entry carries this one error rather than a second one about an internal error.
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    config.processing_spec = {}
+    config.processing_order = ()
+    entry = unprocessed_entry("LOC_01.1", {"ebola-sudan": sequence_with_mutation("ebola-sudan")})
+
+    failure = nextclade_failure(entry)
+
+    assert len(failure.errors) == 1
+    assert failure.warnings == []
+    assert failure.unalignedNucleotideSequences == {}
+    assert failure.inputMetadata["submissionId"] == "test_submission_id"
+    assert process_single("LOC_01.1", failure, config).processed_entry.errors == failure.errors
+
+
+def test_an_entry_without_sequences_is_reported_instead_of_failing_the_batch() -> None:
+    # assign_single_segment used to reach `next(iter(...))` with nothing to take.
+    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
+    config.processing_spec = {}
+    config.processing_order = ()
+    empty_entry = unprocessed_entry("LOC_01.1", {})
+    good_entry = unprocessed_entry("LOC_02.1", {"main": sequence_with_mutation("single")})
+
+    processed = processed_by_accession(
+        process_all([empty_entry, good_entry], EBOLA_SUDAN_DATASET, config)
+    )
+
+    assert [error.message for error in processed["LOC_01"].errors] == [
+        "No sequence data found - check segments are annotated correctly."
+    ]
+    assert processed["LOC_02"].errors == []
+
+
 def test_preprocessing_without_metadata() -> None:
     config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
-    sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
-            files=None,
-        ),
+    sequence_entry_data = unprocessed_entry(
+        "LOC_01.1",
+        {
+            "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+            "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+        },
     )
 
     config.processing_spec = {}
