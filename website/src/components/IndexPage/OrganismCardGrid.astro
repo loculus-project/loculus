@@ -1,0 +1,35 @@
+---
+import OrganismCard from './OrganismCard.astro';
+import type { OrganismStatistics } from './getOrganismStatistics';
+
+interface Props {
+    organisms: { key: string; displayName: string; image?: string }[];
+    organismStatisticsMap: Map<string, OrganismStatistics>;
+    numberDaysAgoStatistics: number;
+}
+
+const { organisms, organismStatisticsMap, numberDaysAgoStatistics } = Astro.props;
+
+// With only a few organisms, cap the column count and width so the cards stay centered
+// at a sensible size instead of stretching across the page.
+const layoutByCount: Record<number, string> = {
+    1: 'grid-cols-1 max-w-xs',
+    2: 'grid-cols-2 max-w-xl',
+    3: 'grid-cols-2 sm:grid-cols-3 max-w-4xl',
+};
+const layout = layoutByCount[organisms.length] ?? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4';
+---
+
+<div class={`mx-auto grid gap-4 sm:gap-5 ${layout}`}>
+    {
+        organisms.map(({ key, displayName, image }) => (
+            <OrganismCard
+                organismKey={key}
+                image={image}
+                displayName={displayName}
+                organismStatistics={organismStatisticsMap.get(key)}
+                numberDaysAgoStatistics={numberDaysAgoStatistics}
+            />
+        ))
+    }
+</div>

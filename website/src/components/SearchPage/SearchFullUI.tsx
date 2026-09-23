@@ -246,7 +246,7 @@ const InnerSearchFullUI = ({
     const showMutationSearch = schema.submissionDataTypes.consensusSequences;
 
     return (
-        <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
+        <div className='flex flex-col md:flex-row gap-4'>
             <TableColumnSelectorModal
                 isOpen={isColumnModalOpen}
                 onClose={() => setIsColumnModalOpen(!isColumnModalOpen)}

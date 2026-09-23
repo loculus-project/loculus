@@ -19,99 +19,104 @@ const organismToDisplayName = Object.fromEntries(
 );
 
 const BUTTON_CLASS =
-    'inline-block px-6 py-3 bg-primary-400 text-white font-semibold rounded-lg shadow-md hover:bg-primary-500 hover:no-underline';
+    'inline-flex items-center gap-1.5 px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-md shadow-xs hover:bg-primary-700 hover:text-white hover:no-underline';
+const LINK_CLASS = 'underline text-primary-700 hover:text-primary-800';
+const SECTION_CLASS = 'rounded-xl border border-gray-200 bg-white p-5 sm:p-6';
+const HEADING_CLASS = 'text-lg font-semibold text-primary-700 mb-3';
+const CODE_CLASS = 'rounded bg-gray-100 px-1.5 py-0.5 text-[0.8125rem] text-gray-800 break-all';
 ---
 
 <BaseLayout title='API documentation'>
-    <div class='container mx-auto p-8'>
+    <div class='max-w-5xl mx-auto py-4 sm:py-8'>
         <h1 class='title'>API documentation</h1>
 
-        <div class='mb-10'>
-            <p class='mt-4 mb-4'>
+        <div class='mt-4 mb-8 space-y-3 text-gray-700'>
+            <p>
                 There is a{' '}
-                <a
-                    href='https://swagger.io/tools/swagger-ui/'
-                    class='underline text-primary-900 hover:text-primary-800 hover:no-underline'
-                >
-                    Swagger UI
-                </a>{' '}
+                <a href='https://swagger.io/tools/swagger-ui/' class={LINK_CLASS}> Swagger UI </a>{' '}
                 for documentation and direct interaction with the APIs. For more tips on how to use the API, it is recommended
                 to start with the{' '}
-                <a
-                    href={authenticationApiDocsUrl}
-                    class='underline text-primary-900 hover:text-primary-800 hover:no-underline'
-                >
-                    API Authentication documentation.
-                </a>
-            </p>
-            <p class='mt-4 mb-4'>
-                WARNING: Swagger incorrectly displays NDJSON examples in JSON format. For endpoints that require NDJSON
-                as input you must convert the JSON examples to NDJSON (e.g. by removing new lines) prior to testing.
+                <a href={authenticationApiDocsUrl} class={LINK_CLASS}> API Authentication documentation </a>
+                .
             </p>
             {
                 dataUseTermsAreEnabled() && (
-                    <p class='mt-4 mb-4'>
+                    <p>
                         By using our API you agree to our{' '}
-                        <a
-                            href={routes.datauseTermsPage()}
-                            class='underline text-primary-900 hover:text-primary-800 hover:no-underline'
-                        >
+                        <a href={routes.datauseTermsPage()} class={LINK_CLASS}>
                             Data use terms
                         </a>
                         .
                     </p>
                 )
             }
+            <p class='rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900'>
+                <span class='font-semibold'>Note:</span> Swagger incorrectly displays NDJSON examples in JSON format. For
+                endpoints that require NDJSON as input you must convert the JSON examples to NDJSON (e.g. by removing new
+                lines) prior to testing.
+            </p>
         </div>
 
-        <div class='mb-10'>
-            <h2 class='text-xl font-semibold text-primary-400 mb-4'>Backend server</h2>
-            <div class='mb-4'>
-                Please note that Loculus is under continuous development and the endpoints are subject to change.
-            </div>
-            <a class={BUTTON_CLASS} href={clientConfig.backendUrl + '/swagger-ui/index.html'}>
-                View backend API documentation
-            </a>
-            <div class='mt-8'>
-                <span class='font-medium'>URL of backend server: </span>
-                <code>{clientConfig.backendUrl}</code>
-            </div>
-        </div>
+        <div class='space-y-6'>
+            <section class={SECTION_CLASS}>
+                <h2 class={HEADING_CLASS}>Backend server</h2>
+                <p class='mb-4 text-gray-700'>
+                    Please note that Loculus is under continuous development and the endpoints are subject to change.
+                </p>
+                <div class='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+                    <div class='text-sm min-w-0'>
+                        <span class='font-medium'>URL: </span>
+                        <code class={CODE_CLASS}>{clientConfig.backendUrl}</code>
+                    </div>
+                    <a
+                        class={`${BUTTON_CLASS} self-start sm:self-auto shrink-0`}
+                        href={clientConfig.backendUrl + '/swagger-ui/index.html'}
+                    >
+                        View backend API documentation
+                    </a>
+                </div>
+            </section>
 
-        <div class='mb-10'>
-            <h2 class='text-xl font-semibold text-primary-400 mb-4'>LAPIS query engines</h2>
-            <div class='flex flex-wrap gap-x-2 gap-y-4'>
-                {
-                    Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
-                        <a class={BUTTON_CLASS} href={url + '/swagger-ui/index.html'}>
-                            {organismToDisplayName[organism]} LAPIS API documentation
-                        </a>
-                    ))
-                }
-            </div>
-            <div class='mt-8'>
-                <span class='font-medium'>URLs of LAPIS query engines:</span>
-                <ul class='list-disc ml-6'>
+            <section class={SECTION_CLASS}>
+                <h2 class={HEADING_CLASS}>LAPIS query engines</h2>
+                <p class='mb-4 text-gray-700'>
+                    Each organism has its own LAPIS instance for querying sequences and metadata.
+                </p>
+                <ul class='divide-y divide-gray-200 border-y border-gray-200'>
                     {
                         Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
-                            <li>
-                                {organismToDisplayName[organism]}: <code>{url}</code>
+                            <li class='flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:gap-4'>
+                                <div class='font-medium text-gray-900 sm:w-64 sm:shrink-0'>
+                                    {organismToDisplayName[organism]}
+                                </div>
+                                <div class='min-w-0 grow text-sm'>
+                                    <code class={CODE_CLASS}>{url}</code>
+                                </div>
+                                <a
+                                    class='shrink-0 text-sm font-medium text-primary-700 hover:text-primary-800 hover:underline'
+                                    href={url + '/swagger-ui/index.html'}
+                                    aria-label={`${organismToDisplayName[organism]} LAPIS API documentation`}
+                                >
+                                    API documentation →
+                                </a>
                             </li>
                         ))
                     }
                 </ul>
-            </div>
-        </div>
+            </section>
 
-        <div>
-            <h2 class='text-xl font-semibold text-primary-400 mb-4'>Keycloak server</h2>
-            <div>
-                We use the open source software <a href='https://www.keycloak.org/'>Keycloak</a> for authentication.
-            </div>
-            <div class='mt-2'>
-                <span class='font-medium'>URL of Keycloak server: </span>
-                <code>{keycloakUrl}</code>
-            </div>
+            <section class={SECTION_CLASS}>
+                <h2 class={HEADING_CLASS}>Keycloak server</h2>
+                <p class='mb-3 text-gray-700'>
+                    We use the open source software{' '}
+                    <a href='https://www.keycloak.org/' class={LINK_CLASS}> Keycloak </a>{' '}
+                    for authentication.
+                </p>
+                <div class='text-sm'>
+                    <span class='font-medium'>URL: </span>
+                    <code class={CODE_CLASS}>{keycloakUrl}</code>
+                </div>
+            </section>
         </div>
     </div>
 </BaseLayout>

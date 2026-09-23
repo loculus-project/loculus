@@ -19,15 +19,15 @@ export const DownloadDialogButton: FC<DownloadDialogButtonProps> = ({ onClick, s
     const sequenceCount = sequenceFilter.sequenceCount();
     if (sequenceCount === undefined) {
         buttonText = 'Download all entries';
-        buttonWidthClass = 'w-44';
+        buttonWidthClass = 'min-w-44';
     } else {
         const formattedCount = formatNumberWithDefaultLocale(sequenceCount);
         const entries = sequenceCount === 1 ? 'entry' : 'entries';
         buttonText = `Download ${formattedCount} selected ${entries}`;
-        buttonWidthClass = 'w-60'; // this width is fine for up to two digit numbers
+        buttonWidthClass = 'min-w-60'; // this width is fine for up to two digit numbers
     }
     return (
-        <Button variant='outline' className={buttonWidthClass} onClick={onClick}>
+        <Button variant='outline' className={`${buttonWidthClass} whitespace-nowrap`} onClick={onClick}>
             {buttonText}
         </Button>
     );
