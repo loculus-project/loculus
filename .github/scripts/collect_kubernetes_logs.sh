@@ -2,9 +2,6 @@
 
 set -e
 
-# Every pod in these namespaces, not just app=loculus: the secret generator carries no
-# app=loculus label, and its reconcile errors are the only place a failed secret
-# generation is visible.
 namespaces="default"
 
 mkdir -p kubernetes_logs
