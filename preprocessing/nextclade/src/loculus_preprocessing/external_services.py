@@ -109,7 +109,13 @@ class TaxonomyService:
                 e=e,
             )
         if response.status_code != requests.codes.ok:
-            message = f"Host validation for '{unvalidated_host}' failed."
+            message = (
+                f"'{unvalidated_host}' is not a valid host. "
+                "Please provide an NCBI taxon ID or scientific name. "
+                "Find valid hosts in NCBI Taxonomy: https://www.ncbi.nlm.nih.gov/taxonomy."
+                if response.status_code == requests.codes.not_found
+                else f"Host validation for '{unvalidated_host}' failed."
+            )
             details = f"with code {response.status_code}: {body.get('detail', '')}"
             logger.error(message + details)
             return RawProcessingResult(

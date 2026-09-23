@@ -454,8 +454,10 @@ def get_output_metadata(  # noqa: PLR0914
         if (
             not null_per_backend(processing_result.datum)
             or group_id == config.insdc_ingest_group_id
+            or processing_result.errors
         ):
-            # skip requirement checks when the field has a value, or for INSDC ingested data.
+            # A failed validation already explains why the output is missing.
+            # Otherwise skip when the field has a value, or for INSDC ingested data.
             continue
 
         requirement_errors: list[str] = []
