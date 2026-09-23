@@ -14,7 +14,7 @@ export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentO
     const displayName = 'Organisms';
 
     return (
-        <Menu as='div' className='group relative' id='organism-menu'>
+        <Menu as='div' className='group' id='organism-menu'>
             <MenuButton
                 as={NavigationTab}
                 isActive={!!currentOrganism}
@@ -44,6 +44,7 @@ export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentO
              * Prevents: https://github.com/loculus-project/loculus/issues/7388
              */}
             <MenuItems
+                id='organism-menu-items'
                 anchor={{ to: 'bottom start', gap: 4, padding: 8 }}
                 transition
                 className='w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50 focus:outline-hidden origin-top transition ease-out duration-100 data-closed:scale-95 data-closed:opacity-0 data-leave:duration-75 data-leave:ease-in'

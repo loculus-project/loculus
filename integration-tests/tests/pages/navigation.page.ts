@@ -12,9 +12,11 @@ export class NavigationPage {
     }
 
     private organismOption(name: string) {
-        // The open menu is rendered in a portal at the end of <body>, so scope to it rather than
-        // matching the first link on the page with this name.
-        return this.page.getByRole('menu').getByRole('menuitem', { name, exact: true });
+        // The open menu is rendered in a portal at the end of <body>, so scope to the organism
+        // menu itself rather than matching the first link on the page with this name.
+        return this.page
+            .locator('#organism-menu-items')
+            .getByRole('menuitem', { name, exact: true });
     }
 
     async selectOrganism(name: string) {
