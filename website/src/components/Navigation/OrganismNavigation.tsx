@@ -1,5 +1,5 @@
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { NavigationTab } from './NavigationTab';
 import type { Organism } from '../../config';
@@ -10,8 +10,33 @@ interface OrganismNavigationProps {
     knownOrganisms: Organism[];
 }
 
+/**
+ * Whether the element has more content below its visible area. The anchored menu panel gets its max-height
+ * from floating-ui after it mounts, so this is recomputed when the panel resizes as well as when it scrolls.
+ */
+const useCanScrollDown = (element: HTMLElement | null) => {
+    const [canScrollDown, setCanScrollDown] = useState(false);
+
+    useEffect(() => {
+        if (element === null) return;
+        const update = () => setCanScrollDown(element.scrollTop + element.clientHeight < element.scrollHeight - 1);
+        update();
+        element.addEventListener('scroll', update, { passive: true });
+        const resizeObserver = new ResizeObserver(update);
+        resizeObserver.observe(element);
+        return () => {
+            element.removeEventListener('scroll', update);
+            resizeObserver.disconnect();
+        };
+    }, [element]);
+
+    return canScrollDown;
+};
+
 export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentOrganism, knownOrganisms }) => {
     const displayName = 'Organisms';
+    const [menuItemsElement, setMenuItemsElement] = useState<HTMLElement | null>(null);
+    const canScrollDown = useCanScrollDown(menuItemsElement);
 
     return (
         <Menu as='div' className='group' id='organism-menu'>
@@ -44,6 +69,7 @@ export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentO
              * Prevents: https://github.com/loculus-project/loculus/issues/7388
              */}
             <MenuItems
+                ref={setMenuItemsElement}
                 id='organism-menu-items'
                 anchor={{ to: 'bottom start', gap: 4, padding: 8 }}
                 transition
@@ -90,6 +116,11 @@ export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentO
                         );
                     })}
                 </div>
+                {/* Fades out the bottom of the list while there is more to scroll to, hinting that it scrolls. */}
+                <div
+                    aria-hidden='true'
+                    className={`pointer-events-none sticky bottom-0 -mt-10 h-10 bg-linear-to-t from-white transition-opacity duration-150 ${canScrollDown ? 'opacity-100' : 'opacity-0'}`}
+                />
             </MenuItems>
         </Menu>
     );
