@@ -1,4 +1,5 @@
 import { test } from '../../fixtures/auth.fixture';
+import { expect } from '@playwright/test';
 import { NavigationPage } from '../../pages/navigation.page';
 
 const organismName = 'Test Dummy Organism';
@@ -34,5 +35,26 @@ test.describe('Top navigation', () => {
             await navigation.clickLink(link);
             await navigation.expectTitle(title.replace('[Organism]', organismName));
         }
+    });
+});
+
+test.describe('Organism menu', () => {
+    // Prevents: https://github.com/loculus-project/loculus/issues/7388
+    test('fits in a short window and scrolls to reach every organism', async ({ page }) => {
+        await page.setViewportSize({ width: 1280, height: 400 });
+        await page.goto('/');
+
+        const navigation = new NavigationPage(page);
+        await navigation.openOrganismNavigation();
+
+        const menu = page.getByRole('menu');
+        await expect(menu).toBeVisible();
+        const menuBox = await menu.boundingBox();
+        expect(menuBox).not.toBeNull();
+        expect(menuBox.y + menuBox.height).toBeLessThanOrEqual(400);
+
+        const lastOrganism = menu.getByRole('menuitem').last();
+        await lastOrganism.scrollIntoViewIfNeeded();
+        await expect(lastOrganism).toBeInViewport();
     });
 });
