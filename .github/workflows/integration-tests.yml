@@ -60,7 +60,7 @@ jobs:
     env:
       sha: ${{ github.event.pull_request.head.sha || github.sha }}
       wait_timeout: ${{ github.ref == 'refs/heads/main' && 900 || 600 }}
-      PLAYWRIGHT_WORKERS: 3
+      PLAYWRIGHT_WORKERS: 4
     steps:
       - name: Shorten sha
         run: echo "sha=${sha::7}" >> $GITHUB_ENV
