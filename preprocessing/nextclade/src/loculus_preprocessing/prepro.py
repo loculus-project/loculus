@@ -377,7 +377,7 @@ def _check_submitted_metadata(
     - adds a warning if a user-provided field is not recognized (it will be ignored)
     - adds an error if a user provided a value for a field marked `noInput`
 
-    For fields without a value validation is skipped (e.g., an empty
+    For fields without a value, validation is skipped (e.g. an empty
     column in a submitted metadata file).
     """
     errors: list[ProcessingAnnotation] = []
