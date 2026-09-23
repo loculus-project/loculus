@@ -462,8 +462,14 @@ def get_output_metadata(  # noqa: C901
         errors.extend(processing_result.errors)
         warnings.extend(processing_result.warnings)
 
-        if not null_per_backend(processing_result.datum) or context.is_insdc_ingest_group:
-            # skip requirement checks when the field has a value, or for INSDC ingested data.
+        if (
+            not null_per_backend(processing_result.datum)
+            or processing_result.errors
+            or context.is_insdc_ingest_group
+        ):
+            # skip requirement checks when the field has a value, when processing already
+            # reported why the value is missing in output (e.g. not in the list of options),
+            # or for INSDC ingested data.
             continue
 
         requirement_errors: list[str] = []
