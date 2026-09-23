@@ -6,7 +6,6 @@ import sys
 from pathlib import Path
 
 import pytest
-from conftest import missing_dependency
 
 from raw_reads_processing import file_format_validation
 from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
