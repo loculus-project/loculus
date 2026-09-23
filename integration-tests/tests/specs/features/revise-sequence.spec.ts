@@ -1,4 +1,5 @@
 import { test as sequenceTest } from '../../fixtures/sequence.fixture';
+import { allowConsoleError } from '../../fixtures/console-warnings.fixture';
 import { test as groupTest } from '../../fixtures/group.fixture';
 import { expect } from '@playwright/test';
 import { SearchPage } from '../../pages/search.page';
@@ -130,6 +131,29 @@ groupTest.describe('Bulk sequence revision', () => {
 
         const overview = await reviewPage.getReviewPageOverview();
         expect(overview.total).toBeGreaterThanOrEqual(SEQUENCES_TO_REVISE);
+
+        await groupTest.step(
+            'reject second revision before approval, error message displayed correctly',
+            async () => {
+                // This revision must fail; the browser logs the 422 itself.
+                allowConsoleError(groupTest, 'responded with a status of 422');
+
+                await revisionPage.goto(TEST_ORGANISM, groupId);
+                await revisionPage.uploadMetadataFile('revision_metadata.tsv', revisionMetadata);
+                await revisionPage.uploadSequenceFile('revised_sequences.fasta', fastaContent);
+                await revisionPage.acceptTerms();
+                await revisionPage.clickSubmit();
+
+                await expect(
+                    page.getByText(
+                        /The submitted file content was invalid: Accession versions are not in one of the states/,
+                    ),
+                ).toBeVisible();
+                await expect(
+                    page.getByText(/Received unexpected message from backend/),
+                ).toHaveCount(0);
+            },
+        );
     });
 });
 
