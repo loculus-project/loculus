@@ -36,7 +36,6 @@ NEXTCLADE_PREFIX = "nextclade."
 ASSIGNED_REFERENCE_PREFIX = "ASSIGNED_REFERENCE"
 LENGTH: Final = "length"
 LENGTH_PREFIX = f"{LENGTH}_"
-INJECTED_INPUT_FIELDS = ("submitter", "submittedAt", "submissionId", "group_id")
 
 
 class EmblInfoMetadataPropertyNames(BaseModel):

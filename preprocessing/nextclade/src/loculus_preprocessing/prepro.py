@@ -18,7 +18,6 @@ from .backend import (
 from .config import (
     ASSIGNED_REFERENCE_PREFIX,
     FILES_PREFIX,
-    INJECTED_INPUT_FIELDS,
     LENGTH,
     LENGTH_PREFIX,
     NEXTCLADE_PREFIX,
@@ -418,9 +417,7 @@ def get_output_metadata(  # noqa: C901
     context = unprocessed.context
 
     if not context.is_insdc_ingest_group:
-        new_errors, new_warnings = _check_submitted_metadata(
-            _get_submitted_metadata(unprocessed), config
-        )
+        new_errors, new_warnings = _check_submitted_metadata(unprocessed.metadata, config)
         errors.extend(new_errors)
         warnings.extend(new_warnings)
 
