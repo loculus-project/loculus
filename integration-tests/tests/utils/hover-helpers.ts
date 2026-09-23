@@ -9,7 +9,7 @@ type HoverOptions = { timeout?: number };
  * has hydrated is lost for good, because the pointer is already inside it when the listener is
  * attached; moving away and back re-delivers it.
  */
-export async function hoverUntilVisible(
+export async function hoverRepeatedlyUntilVisible(
     anchor: Locator,
     target: Locator,
     { timeout = defaultTimeout }: HoverOptions = {},
