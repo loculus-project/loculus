@@ -62,12 +62,6 @@ export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentO
                 </svg>
             </MenuButton>
 
-            {/*
-             * `anchor` positions the panel with floating-ui, which keeps it inside the viewport and caps its
-             * height (making it scrollable) when there isn't enough room below the button. Without it, the list
-             * runs off the bottom of short windows, and the page can't be scrolled while the menu is open.
-             * Prevents: https://github.com/loculus-project/loculus/issues/7388
-             */}
             <MenuItems
                 ref={setMenuItemsElement}
                 id='organism-menu-items'
