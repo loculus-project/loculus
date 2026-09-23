@@ -1,8 +1,7 @@
-# ruff: noqa: S101
-
 import json
 import os
 from pathlib import Path
+from typing import NoReturn
 
 import pytest
 
@@ -57,10 +56,27 @@ def _find_jar() -> str | None:
 
 
 @pytest.fixture
-def readtools_jar(monkeypatch):
+def readtools_jar(request, monkeypatch):
     jar_path = _find_jar()
     if jar_path is None:
-        pytest.skip(
-            "readtools jar not found; set READTOOLS_JAR to its path to run this test"
+        missing_dependency(
+            request,
+            "readtools jar not found; set READTOOLS_JAR to its path to run this test",
         )
     monkeypatch.setattr(file_format_validation, "VALIDATION_JAR_PATH", jar_path)
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--skip-missing-deps",
+        action="store_true",
+        default=False,
+        help="Skip tests that need external tools (deacon binary, readtools "
+        "jar) instead of failing them when those tools aren't available.",
+    )
+
+
+def missing_dependency(request, message: str) -> NoReturn:
+    if request.config.getoption("--skip-missing-deps"):
+        pytest.skip(message)
+    pytest.fail(message, pytrace=False)
