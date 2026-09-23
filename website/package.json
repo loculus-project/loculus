@@ -70,7 +70,7 @@
         "@iconify/json": "^2.2.528",
         "@tailwindcss/forms": "^0.5.11",
         "@tailwindcss/vite": "^4.3.3",
-        "@tanstack/eslint-plugin-query": "^5.102.8",
+        "@tanstack/eslint-plugin-query": "^5.103.1",
         "@testing-library/dom": "^10.4.2",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/react": "^16.3.3",
