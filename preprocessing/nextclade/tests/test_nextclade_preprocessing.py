@@ -1011,6 +1011,30 @@ segment_validation_tests_single_segment = [
             sequenceNameToFastaId={},
         ),
     ),
+    Case(
+        name="no sequence data found for single segment",
+        input_metadata={},
+        input_sequence={},
+        accession_id="3",
+        expected_metadata={"length": 0},
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper.sequence_annotation_helper(
+                    "No sequence data found, but organism: ebola-sudan-test requires sequence "
+                    "data. Please check that your metadata and sequences are annotated correctly.",
+                ),
+            ]
+        ),
+        expected_warnings=[],
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={},
+            alignedNucleotideSequences={},
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={},
+            aminoAcidInsertions={},
+            sequenceNameToFastaId={},
+        ),
+    ),
 ]
 
 segment_validation_tests_multi_segments = [
@@ -1357,6 +1381,49 @@ def test_preprocessing_without_metadata() -> None:
     assert processed_entry.errors == []
     assert processed_entry.warnings == []
     assert processed_entry.data.metadata == {}
+
+
+def test_process_all_reports_errors_for_all_entries_when_enrich_with_nextclade_raises(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # enrich_with_nextclade runs once for the whole batch, outside the per-entry try/except
+    # in process_all: if it raises, every entry in the batch must still come back as an
+    # errored SubmissionData with its own accession/version, instead of failing the batch.
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+
+    def raise_error(unprocessed, dataset_dir, config):
+        message = "boom"
+        raise RuntimeError(message)
+
+    monkeypatch.setattr("loculus_preprocessing.prepro.enrich_with_nextclade", raise_error)
+
+    entries = [
+        UnprocessedEntry(
+            accessionVersion=f"LOC_0{i}.1",
+            data=UnprocessedData(
+                group_id=2,
+                submitter="test_submitter",
+                submissionId="test_submission_id",
+                submittedAt=ts_from_ymd(2021, 12, 15),
+                metadata={},
+                unalignedNucleotideSequences={
+                    "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+                },
+                files=None,
+            ),
+        )
+        for i in (1, 2)
+    ]
+
+    result = process_all(entries, MULTI_EBOLA_DATASET, config)
+
+    assert len(result) == len(entries)
+    for entry, submission_data in zip(entries, result, strict=True):
+        processed_entry = submission_data.processed_entry
+        assert processed_entry.accession == entry.accessionVersion.split(".")[0]
+        assert processed_entry.version == int(entry.accessionVersion.split(".")[1])
+        assert len(processed_entry.errors) == 1
+        assert entry.accessionVersion in processed_entry.errors[0].message
 
 
 def test_format_frameshift():

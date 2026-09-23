@@ -611,6 +611,18 @@ def assign_single_segment(
                 ],
             ),
         )
+    if len(input_unaligned_sequences) == 0:
+        return SequenceAssignment(
+            alert=Alert(
+                errors=[
+                    sequence_annotation(
+                        f"No sequence data found, but organism: {config.organism} requires "
+                        "sequence data. Please check that your metadata and sequences are "
+                        "annotated correctly."
+                    )
+                ],
+            ),
+        )
     return SequenceAssignment(
         unalignedNucleotideSequences={"main": next(iter(input_unaligned_sequences.values()))},
         sequenceNameToFastaId={"main": next(iter(input_unaligned_sequences.keys()))},
