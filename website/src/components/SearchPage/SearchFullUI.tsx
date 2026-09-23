@@ -283,6 +283,7 @@ const InnerSearchFullUI = ({
                     lapisSearchParameters={lapisSearchParameters}
                     showMutationSearch={showMutationSearch}
                     referenceSelection={referenceSelection}
+                    resultCount={totalSequences}
                 />
             </div>
             <div
@@ -429,7 +430,7 @@ const InnerSearchFullUI = ({
                     />
 
                     <div className='mt-4 flex justify-center'>
-                        {totalSequences !== undefined && (
+                        {totalSequences !== undefined && totalSequences > 0 && (
                             <SearchPagination
                                 count={Math.ceil(totalSequences / pageSize)}
                                 page={page}

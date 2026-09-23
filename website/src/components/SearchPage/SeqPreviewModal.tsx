@@ -154,7 +154,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
         <Transition appear show={isOpen} as={React.Fragment}>
             {isHalfScreen ? (
                 <div
-                    className='fixed bottom-0 w-full left-0 z-40 bg-white p-6 border-t border-gray-400'
+                    className='fixed bottom-0 w-full left-0 z-40 bg-white p-6 border-t border-gray-300 shadow-[0_-12px_32px_rgba(0,0,0,0.2)]'
                     data-testid='half-screen-preview'
                 >
                     {controls}

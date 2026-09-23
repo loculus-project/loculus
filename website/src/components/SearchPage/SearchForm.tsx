@@ -28,6 +28,7 @@ import type {
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
+import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import { getReferenceIdentifier, type ReferenceSelection } from '../../utils/referenceSelection.ts';
 import { type MetadataFilterSchema, MetadataVisibility, MUTATION_KEY } from '../../utils/search.ts';
 import {
@@ -39,6 +40,7 @@ import DisabledUntilHydrated from '../DisabledUntilHydrated.tsx';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { type FieldItem, FieldSelectorModal, getDisplayState } from '../common/FieldSelectorModal.tsx';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
+import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import MaterialSymbolsTune from '~icons/material-symbols/tune';
@@ -93,6 +95,8 @@ interface SearchFormProps {
     lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
     referenceSelection: ReferenceSelection;
+    /** Shown on the mobile "Show results" button, if known. */
+    resultCount?: number;
 }
 
 const MetadataFilterItemKind = {
@@ -118,6 +122,7 @@ export const SearchForm = ({
     lapisSearchParameters,
     showMutationSearch,
     referenceSelection,
+    resultCount,
 }: SearchFormProps) => {
     const excluded = new Set<string>([
         ACCESSION_FIELD,
@@ -304,7 +309,12 @@ export const SearchForm = ({
                       md:translate-y-0 md:static md:h-auto md:overflow-visible md:min-w-72`}
             >
                 <div className='shadow-xl rounded-r-lg px-4 pt-4'>
-                    <h2 className='text-lg font-semibold flex-1 md:hidden mb-2'>Search query</h2>
+                    <div className='sticky top-0 z-10 -mx-4 -mt-4 mb-2 flex items-center justify-between bg-white px-4 pt-4 pb-2 md:hidden'>
+                        <h2 className='text-lg font-semibold'>Search query</h2>
+                        <Button variant='ghost' circle size='sm' onClick={closeOnMobile} aria-label='Hide search query'>
+                            <MaterialSymbolsClose className='h-5 w-5' aria-hidden='true' />
+                        </Button>
+                    </div>
                     <div className='flex flex-col gap-2 mb-2 pb-2 px-3 text-primary-700 text-sm border-b border-gray-300'>
                         <div className='flex items-center justify-between'>
                             <Button className='hover:underline' onClick={toggleFieldSelector}>
@@ -413,6 +423,13 @@ export const SearchForm = ({
                                 )}
                             </CollapsibleSection>
                         </section>
+                    </div>
+                    <div className='sticky bottom-0 -mx-4 border-t border-gray-200 bg-white px-4 py-3 md:hidden'>
+                        <Button variant='primary' className='w-full' onClick={closeOnMobile}>
+                            {resultCount === undefined
+                                ? 'Show results'
+                                : `Show ${formatNumberWithDefaultLocale(resultCount)} result${resultCount === 1 ? '' : 's'}`}
+                        </Button>
                     </div>
                 </div>
             </div>
