@@ -438,11 +438,14 @@ export const ExtraFilesUpload = ({
                         : 'Extra files'}
                 </h2>
                 <p className='text-gray-500 text-sm'>
-                    {inputMode === 'bulk'
-                        ? `Upload a folder of files or individual files for your sequences. Each file must be referenced by its name in the ${singleFileCategory ? `${FILES_HEADER_PREFIX}${singleFileCategory.name}` : 'corresponding file category'} column of your metadata.`
-                        : 'Upload a folder of files or individual files for this sequence.'}{' '}
+                    Upload a folder of files or individual files for{' '}
+                    {inputMode === 'bulk' ? 'your sequences' : 'this sequence'}.
+                </p>
+                <p className='text-gray-400 text-xs mt-5'>
+                    {inputMode === 'bulk' &&
+                        `Each file must be referenced by its name in the ${singleFileCategory ? `${FILES_HEADER_PREFIX}${singleFileCategory.name}` : 'corresponding file category'} column of your metadata. `}
                     For more information please refer to the{' '}
-                    <a href={extraFilesUploadDocsUrl} target='_blank' className='text-primary-600 hover:underline'>
+                    <a href={extraFilesUploadDocsUrl} target='_blank' className='text-primary-700 opacity-90'>
                         {singleFileCategoryDisplayName?.toLowerCase() ?? 'extra files'} documentation
                     </a>
                     .
