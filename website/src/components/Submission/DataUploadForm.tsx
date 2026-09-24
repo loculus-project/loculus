@@ -439,7 +439,7 @@ export const ExtraFilesUpload = ({
                 </h2>
                 <p className='text-gray-500 text-sm'>
                     Upload a folder of files or individual files for{' '}
-                    {inputMode === 'bulk' ? 'your sequences' : 'this sequence'}.
+                    {inputMode === 'bulk' ? 'your sequences' : 'this sequence'}
                 </p>
                 <p className='text-gray-400 text-xs mt-5'>
                     {inputMode === 'bulk' && (
