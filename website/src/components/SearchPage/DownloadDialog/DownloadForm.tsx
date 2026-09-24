@@ -187,7 +187,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                 ) : undefined,
             },
             {
-                label: <>Aligned amino acid sequences</>,
+                label: <>Reference-aligned amino acid sequences</>,
                 subOptions:
                     geneInfos.length > 0 ? (
                         <div className='px-8'>

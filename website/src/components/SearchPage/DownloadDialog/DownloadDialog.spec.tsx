@@ -147,7 +147,7 @@ describe('DownloadDialog', () => {
 
     const rawNucleotideSequencesLabel = /^Sequences$/;
     const alignedNucleotideSequencesLabel = /Reference-aligned nucleotide sequences/;
-    const alignedAminoAcidSequencesLabel = /Aligned amino acid sequences/;
+    const alignedAminoAcidSequencesLabel = /Reference-aligned amino acid sequences/;
     const gzipCompressionLabel = /Gzip/;
     const displayNameFastaHeaderStyleLabel = /Display name/;
 

@@ -107,7 +107,7 @@ describe('SequencesContainer', () => {
                 expect(screen.getByRole(TAB_ROLE, { name: 'Nucleotide sequences' })).toBeVisible();
             });
             expect(screen.getByRole(TAB_ROLE, { name: 'Reference-aligned nucleotide sequences' })).toBeVisible();
-            expect(screen.getByRole(TAB_ROLE, { name: 'Aligned amino acid sequences' })).toBeVisible();
+            expect(screen.getByRole(TAB_ROLE, { name: 'Reference-aligned amino acid sequences' })).toBeVisible();
 
             click('Nucleotide sequences');
 
@@ -169,7 +169,7 @@ describe('SequencesContainer', () => {
                 expect(screen.getByRole(TAB_ROLE, { name: 'Nucleotide sequences' })).toBeVisible();
             });
             expect(screen.getByRole(TAB_ROLE, { name: 'Reference-aligned nucleotide sequences' })).toBeVisible();
-            expect(screen.getByRole(TAB_ROLE, { name: 'Aligned amino acid sequences' })).toBeVisible();
+            expect(screen.getByRole(TAB_ROLE, { name: 'Reference-aligned amino acid sequences' })).toBeVisible();
 
             click('Reference-aligned nucleotide sequences');
 
