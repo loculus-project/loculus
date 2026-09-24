@@ -107,7 +107,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         };
 
         const rawNucleotideSequencesOption = {
-            label: <>Raw nucleotide sequences</>,
+            label: <>Sequences</>,
             subOptions: (
                 <div className='px-8'>
                     {referenceGenomesInfo.isMultiSegmented ? (
@@ -164,7 +164,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             metadataOption,
             rawNucleotideSequencesOption,
             {
-                label: <>Aligned nucleotide sequences</>,
+                label: <>Reference-aligned nucleotide sequences</>,
                 subOptions: referenceGenomesInfo.isMultiSegmented ? (
                     <div className='px-8'>
                         <DropdownOptionBlock
@@ -259,7 +259,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                 {!referenceSelected && referenceIdentifierField !== undefined && (
                     <div className='text-sm text-gray-400 mt-4 max-w-60'>
                         Select a {referenceIdentifierField}
-                        {notSelectedSegmentsText} with the search UI to enable download of aligned sequences.
+                        {notSelectedSegmentsText} with the search UI to enable download of reference-aligned sequences.
                     </div>
                 )}
                 {referenceSelected &&
@@ -267,7 +267,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                     referenceIdentifierField !== undefined && (
                         <div className='text-sm text-gray-400 mt-4 max-w-60'>
                             No {referenceIdentifierField} has been selected{notSelectedSegmentsText}. Select one in the
-                            search UI to enable download of aligned sequences for these segments.
+                            search UI to enable download of reference-aligned sequences for these segments.
                         </div>
                     )}
             </div>

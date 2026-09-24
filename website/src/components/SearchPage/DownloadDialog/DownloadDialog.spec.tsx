@@ -145,8 +145,8 @@ describe('DownloadDialog', () => {
         expect(getDownloadHref()).toMatch(new RegExp(`^${defaultLapisUrl}`));
     });
 
-    const rawNucleotideSequencesLabel = /Raw nucleotide sequences/;
-    const alignedNucleotideSequencesLabel = /Aligned nucleotide sequences/;
+    const rawNucleotideSequencesLabel = /^Sequences$/;
+    const alignedNucleotideSequencesLabel = /Reference-aligned nucleotide sequences/;
     const alignedAminoAcidSequencesLabel = /Aligned amino acid sequences/;
     const gzipCompressionLabel = /Gzip/;
     const displayNameFastaHeaderStyleLabel = /Display name/;
@@ -382,7 +382,7 @@ describe('DownloadDialog', () => {
             });
 
             expect(
-                screen.getByText('Select a genotype with the search UI to enable download of aligned sequences.', {
+                screen.getByText('Select a genotype with the search UI to enable download of reference-aligned sequences.', {
                     exact: false,
                 }),
             ).toBeVisible();
@@ -400,7 +400,7 @@ describe('DownloadDialog', () => {
 
             expect(
                 screen.getByText(
-                    'No genotype has been selected for the segment: L (segment). Select one in the search UI to enable download of aligned sequences for these segments.',
+                    'No genotype has been selected for the segment: L (segment). Select one in the search UI to enable download of reference-aligned sequences for these segments.',
                     { exact: false },
                 ),
             ).toBeVisible();

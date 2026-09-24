@@ -21,7 +21,7 @@ type ReferenceSelectorProps = {
 
 /**
  * In the multi pathogen case, this is a prominent selector at the top to choose the reference.
- * Choosing a value here is required e.g. to enable mutation search and download of aligned sequences.
+ * Choosing a value here is required e.g. to enable mutation search and download of reference-aligned sequences.
  *
  * Does nothing in the single pathogen case.
  */
@@ -70,7 +70,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
             />
 
             <p className='text-xs text-gray-600 mt-2'>
-                Select a {formatLabel(label ?? '')} to enable mutation search and download of aligned sequences
+                Select a {formatLabel(label ?? '')} to enable mutation search and download of reference-aligned sequences
             </p>
         </div>
     );
