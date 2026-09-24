@@ -210,17 +210,6 @@ class TaxonomyService:
         return RawProcessingResult(datum=common_name)
 
 
-@dataclass(frozen=True)
-class ExternalServices:
-    """External services available to processing functions.
-
-    Kept separate from `ProcessingContext` since these don't vary per accession, unlike
-    `ProcessingContext`'s fields.
-    """
-
-    taxonomy_service: TaxonomyService
-
-
 FileName = str
 
 
@@ -371,3 +360,15 @@ class ENAVisibilityChecker:
         if response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
             return processing_error(ena_error_message)
         return processing_error(f"accession '{accession}' does not exist on ENA")
+
+
+@dataclass(frozen=True)
+class ExternalServices:
+    """External services available to processing functions.
+
+    Kept separate from `ProcessingContext` since these don't vary per accession, unlike
+    `ProcessingContext`'s fields.
+    """
+
+    taxonomy_service: TaxonomyService
+    ena_visibility_checker: ENAVisibilityChecker
