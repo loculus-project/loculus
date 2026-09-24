@@ -22,10 +22,12 @@ from loculus_preprocessing.datatypes import (
     SegmentName,
     UnprocessedEntry,
 )
-from loculus_preprocessing.external_services import ExternalServices, TaxonomyService
+from loculus_preprocessing.external_services import (
+    ENAVisibilityChecker,
+    ExternalServices,
+    TaxonomyService,
+)
 from loculus_preprocessing.nextclade_annotation import GffAttributes, NextcladeAnnotation
-from loculus_preprocessing.external_services import ENAVisibilityChecker, TaxonomyService
-from loculus_preprocessing.processing_functions import ProcessingContext
 
 # Default ProcessingContext for tests that don't care about its contents (no INSDC
 # ingest group, no submittedAt). Tests that do care about specific field(s) should use
@@ -40,7 +42,9 @@ DEFAULT_TEST_CONTEXT = ProcessingContext(
 
 # Default ExternalServices for tests that don't care about its contents (no taxonomy
 # service URL configured).
-DEFAULT_EXTERNAL_SERVICES = ExternalServices(taxonomy_service=TaxonomyService(None))
+DEFAULT_EXTERNAL_SERVICES = ExternalServices(
+    taxonomy_service=TaxonomyService(None), ena_visibility_checker=ENAVisibilityChecker()
+)
 
 
 def ts_from_ymd(year: int, month: int, day: int) -> str:

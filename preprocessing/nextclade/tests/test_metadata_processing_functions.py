@@ -1843,7 +1843,7 @@ ena_accession_cases = [
 
 
 @pytest.mark.parametrize("case", ena_accession_cases, ids=lambda c: c.name)
-def test_check_ena_accession(case: EnaAccessionCase) -> None:
+def test_check_ena_accession(case: EnaAccessionCase, config: Config) -> None:
     external_services.bioproject_cache.clear()
     with mock.patch.object(external_services.bioproject_cache, "session") as mock_session:
         if isinstance(case.ena_response, Exception):
@@ -1856,7 +1856,13 @@ def test_check_ena_accession(case: EnaAccessionCase) -> None:
             output_field="bioprojectAccession",
             input_fields=["bioprojectAccession"],
             args={},
-            context=replace(DEFAULT_TEST_CONTEXT, is_insdc_ingest_group=case.is_insdc_ingest_group),
+            context=replace(
+                DEFAULT_TEST_CONTEXT,
+                group_id=config.insdc_ingest_group_id
+                if case.is_insdc_ingest_group
+                else config.insdc_ingest_group_id + 1,
+            ),
+            external_services=DEFAULT_EXTERNAL_SERVICES,
         )
 
         assert result.datum == case.expected_datum

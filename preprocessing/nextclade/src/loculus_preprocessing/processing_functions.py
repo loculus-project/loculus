@@ -18,7 +18,6 @@ import dateutil.parser as dateutil
 import pytz
 
 from loculus_preprocessing.external_services import ExternalServices
-from loculus_preprocessing.external_services import ENAVisibilityChecker, TaxonomyService
 
 from .datatypes import (
     AnnotationSourceType,
@@ -1279,19 +1278,20 @@ class ProcessingFunctions:
         return external_services.taxonomy_service.get_common_name(tax_id)
 
     @staticmethod
-    def check_ena_accession(
+    def check_ena_accession(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
         context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         accession: str | None = input_data.get("accession")
         if not accession:
             return RawProcessingResult()
         if context.is_insdc_ingest_group:
             return RawProcessingResult(datum=accession)
-        return context.ena_checker.check_visibility(accession)
+        return external_services.ena_visibility_checker.check_visibility(accession)
 
 
 def single_metadata_annotation(
