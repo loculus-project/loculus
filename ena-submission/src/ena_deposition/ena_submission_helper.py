@@ -574,11 +574,15 @@ def create_manifest(
 
 
 def resolve_manifest_field(
-    field_details: ManifestFieldDetails, metadata: dict[str, Any]
+    field_details: ManifestFieldDetails,
+    metadata: dict[str, Any],
+    molecule_type: MoleculeType | None = None,
 ) -> str | None:
-    """Resolve an assembly manifest field's value from Loculus metadata per
-    config.assembly_manifest_fields_mapping, falling back to field_details.default if the
-    mapped Loculus fields are absent or empty."""
+    """Resolve a manifest field's value from Loculus metadata per
+    config.assembly_manifest_fields_mapping or config.raw_reads_manifest_fields_mapping.
+    If the mapped Loculus fields are absent or empty, derive the value from the
+    `derive_from` field (for the organism's molecule_type) if configured, and otherwise
+    fall back to field_details.default."""
     values = [metadata.get(loculus_field) for loculus_field in field_details.loculus_fields]
 
     if field_details.function == "reformat_authors":
@@ -588,7 +592,28 @@ def resolve_manifest_field(
 
     if value is not None:
         return value
+    derived_value = derive_manifest_field(field_details, metadata, molecule_type)
+    if derived_value is not None:
+        return derived_value
     return field_details.default
+
+
+def derive_manifest_field(
+    field_details: ManifestFieldDetails,
+    metadata: dict[str, Any],
+    molecule_type: MoleculeType | None,
+) -> str | None:
+    if not field_details.derive_from or molecule_type is None:
+        return None
+    derive_from_value = metadata.get(field_details.derive_from)
+    if not derive_from_value:
+        return None
+    nucleic_acid = "DNA" if molecule_type == MoleculeType.GENOMIC_DNA else "RNA"
+    derived_values = {
+        key.strip().lower(): value
+        for key, value in field_details.derived_values.get(nucleic_acid, {}).items()
+    }
+    return derived_values.get(str(derive_from_value).strip().lower())
 
 
 def resolve_required_manifest_field(
@@ -609,12 +634,15 @@ def manifest_fields_diff(
     assembly_manifest_fields_mapping: dict[str, ManifestFieldDetails],
     submission_row: SubmissionTableEntry,
     last_version_entry: SubmissionTableEntry,
+    molecule_type: MoleculeType | None = None,
 ) -> dict[str, str]:
     differing_fields = {}
     for field, mapping in assembly_manifest_fields_mapping.items():
         try:
-            last_value = resolve_manifest_field(mapping, last_version_entry.seq_metadata)
-            new_value = resolve_manifest_field(mapping, submission_row.seq_metadata)
+            last_value = resolve_manifest_field(
+                mapping, last_version_entry.seq_metadata, molecule_type
+            )
+            new_value = resolve_manifest_field(mapping, submission_row.seq_metadata, molecule_type)
         except Exception as e:
             logger.error(
                 f"Error resolving manifest field {field} for comparison: {e}. "

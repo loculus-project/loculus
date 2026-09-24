@@ -611,6 +611,64 @@ class RawReadsCreationTests(unittest.TestCase):
         self.assertEqual(manifest.library_selection, LibrarySelection.RT_PCR)
         self.assertEqual(manifest.library_strategy, LibraryStrategy.AMPLICON)
 
+    def _manifest_for(self, metadata, molecule_type=MoleculeType.GENOMIC_RNA):
+        config = mock_config()
+        config.enaOrganisms["Test organism"].molecule_type = molecule_type
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {**submission_row.seq_metadata, **metadata}
+        return create_raw_reads_manifest_object(
+            config,
+            "Test Sample Accession",
+            "Test Study Accession",
+            submission_row,
+            self.fastq_files,
+        )
+
+    def test_create_manifest_library_fields_derived_from_approach_rna(self):
+        manifest = self._manifest_for({"sequencingApproach": "tiled amplicon"})
+        self.assertEqual(manifest.library_source, LibrarySource.VIRAL_RNA)
+        self.assertEqual(manifest.library_selection, LibrarySelection.RT_PCR)
+        self.assertEqual(manifest.library_strategy, LibraryStrategy.AMPLICON)
+
+    def test_create_manifest_library_fields_derived_from_approach_dna(self):
+        manifest = self._manifest_for(
+            {"sequencingApproach": "Shotgun metagenomic"}, MoleculeType.GENOMIC_DNA
+        )
+        self.assertEqual(manifest.library_source, LibrarySource.METAGENOMIC)
+        self.assertEqual(manifest.library_selection, LibrarySelection.RANDOM)
+        self.assertEqual(manifest.library_strategy, LibraryStrategy.WGS)
+
+    def test_create_manifest_submitted_library_field_wins_over_approach(self):
+        manifest = self._manifest_for(
+            {"sequencingApproach": "Tiled amplicon", "sequencingLibrarySelection": "RANDOM PCR"}
+        )
+        self.assertEqual(manifest.library_source, LibrarySource.VIRAL_RNA)
+        self.assertEqual(manifest.library_selection, LibrarySelection.RANDOM_PCR)
+        self.assertEqual(manifest.library_strategy, LibraryStrategy.AMPLICON)
+
+    def test_create_manifest_unmapped_approach_uses_defaults(self):
+        manifest = self._manifest_for({"sequencingApproach": "Other"})
+        self.assertEqual(manifest.library_source, LibrarySource.OTHER)
+        self.assertEqual(manifest.library_selection, LibrarySelection.UNSPECIFIED)
+        self.assertEqual(manifest.library_strategy, LibraryStrategy.OTHER)
+
+    def test_manifest_diff_detects_derived_field_change(self):
+        last_version_entry = sample_data_in_submission_table()
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "sequencingApproach": "Tiled amplicon",
+        }
+        differing_fields = manifest_fields_diff(
+            MOCK_CONFIG.raw_reads_manifest_fields_mapping,
+            submission_row,
+            last_version_entry,
+            molecule_type=MoleculeType.GENOMIC_RNA,
+        )
+        self.assertEqual(
+            set(differing_fields), {"library_source", "library_selection", "library_strategy"}
+        )
+
     def test_create_manifest_insert_size_ignored_for_single_end(self):
         config = mock_config()
         submission_row = sample_data_in_submission_table()
