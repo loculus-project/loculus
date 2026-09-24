@@ -283,7 +283,6 @@ const InnerSearchFullUI = ({
                     lapisSearchParameters={lapisSearchParameters}
                     showMutationSearch={showMutationSearch}
                     referenceSelection={referenceSelection}
-                    resultCount={totalSequences}
                 />
             </div>
             <div
