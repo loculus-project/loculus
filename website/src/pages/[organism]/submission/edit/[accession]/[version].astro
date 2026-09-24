@@ -48,7 +48,10 @@ const dataToEdit = await createBackendClient().getDataToEdit(organism, accessTok
                 </div>
             ),
             (error) => (
-                <ErrorBox title={`Error while fetching edited data for accession version: ${accession}.${version}`} className='mb-6'>
+                <ErrorBox
+                    title={`Error while fetching edited data for accession version: ${accession}.${version}`}
+                    className='mb-6'
+                >
                     {error.detail}
                 </ErrorBox>
             ),
