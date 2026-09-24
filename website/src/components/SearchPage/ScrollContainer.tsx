@@ -16,6 +16,7 @@ const TRACK_INSET = 5;
  */
 const ScrollContainer: React.FC<ScrollContainerProps> = ({ children }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
     const [scrollLeft, setScrollLeft] = useState(0);
     const [maxScroll, setMaxScroll] = useState(0);
     const [handleWidth, setHandleWidth] = useState(0);
@@ -49,13 +50,14 @@ const ScrollContainer: React.FC<ScrollContainerProps> = ({ children }) => {
         window.addEventListener('resize', updatePositions);
         window.addEventListener('scroll', updatePositions);
 
-        // The content changes size when data loads or columns change, without a window event.
+        // The content changes size when data loads, columns change or the table is swapped for the
+        // empty state, without a window event. Observe a stable wrapper that sizes to its content.
         const resizeObserver = new ResizeObserver(updatePositions);
         if (scrollRef.current) {
             resizeObserver.observe(scrollRef.current);
-            for (const child of Array.from(scrollRef.current.children)) {
-                resizeObserver.observe(child);
-            }
+        }
+        if (contentRef.current) {
+            resizeObserver.observe(contentRef.current);
         }
 
         return () => {
@@ -132,7 +134,9 @@ const ScrollContainer: React.FC<ScrollContainerProps> = ({ children }) => {
         <div>
             <div className='relative'>
                 <div ref={scrollRef} onScroll={handleScroll} className='overflow-x-scroll hide-scrollbar'>
-                    {children}
+                    <div ref={contentRef} className='w-fit min-w-full'>
+                        {children}
+                    </div>
                 </div>
                 <div
                     aria-hidden='true'

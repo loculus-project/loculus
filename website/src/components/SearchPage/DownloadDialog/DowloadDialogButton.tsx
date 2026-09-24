@@ -24,7 +24,7 @@ export const DownloadDialogButton: FC<DownloadDialogButtonProps> = ({ onClick, s
         const formattedCount = formatNumberWithDefaultLocale(sequenceCount);
         const entries = sequenceCount === 1 ? 'entry' : 'entries';
         buttonText = `Download ${formattedCount} selected ${entries}`;
-        buttonWidthClass = 'min-w-60'; // this width is fine for up to two digit numbers
+        buttonWidthClass = 'min-w-60'; // avoids a width jump for up to two digit numbers; grows beyond that
     }
     return (
         <Button variant='outline' className={`${buttonWidthClass} whitespace-nowrap`} onClick={onClick}>
