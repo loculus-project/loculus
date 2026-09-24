@@ -4,46 +4,51 @@ import { routes } from '../../routes/routes';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber';
 
 interface Props {
-    key: string;
+    organismKey: string;
     image: string | undefined;
     displayName: string;
-    organismStatistics: OrganismStatistics;
+    organismStatistics: OrganismStatistics | undefined;
     numberDaysAgoStatistics: number;
 }
 
-const { key, image, displayName, organismStatistics, numberDaysAgoStatistics } = Astro.props;
+const { organismKey, image, displayName, organismStatistics, numberDaysAgoStatistics } = Astro.props;
 ---
 
 <a
-    href={routes.organismStartPage(key)}
-    class='shadow-[0_3px_10px_rgb(0,0,0,0.1)]
-    block rounded-lg m-2 w-60
-    hover:brightness-115
-    hover:shadow-[0_3px_10px_rgb(0,0,0,0.2)]
-    hover:no-underline
-    transition-all duration-200 ease-in-out
-    mx-auto sm:mx-0'
+    href={routes.organismStartPage(organismKey)}
+    class='group flex flex-col overflow-hidden rounded-xl border border-gray-200/70 bg-white shadow-[0_3px_10px_rgb(0,0,0,0.08)] transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgb(0,0,0,0.14)] hover:no-underline! focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/40'
 >
-    {image !== undefined && <img src={image} class='h-40 w-full object-cover rounded-t-[8px]' alt={displayName} />}
-    <div class='my-4 mx-4 h-28 flex flex-col justify-between text-slate-900'>
-        <h3 class='font-semibold mb-2'>{displayName}</h3>
-        <p class='text-sm leading-7'>
-            <span class='font-bold'>
-                {formatNumberWithDefaultLocale(organismStatistics.totalSequences)}
-            </span> sequences
-            <br />
-            <span class='text-slate-400 text-sm'>
-                <span class='text-slate-500'>
-                    +{formatNumberWithDefaultLocale(organismStatistics.recentSequences)}
-                </span> in last {numberDaysAgoStatistics} days
-            </span>
-            <span class='hidden'
-                >{
-                    organismStatistics.lastUpdatedAt && (
-                        <>Last updated {organismStatistics.lastUpdatedAt.toRelative()}</>
-                    )
-                }</span
-            >
-        </p>
+    {
+        image !== undefined && (
+            <div class='aspect-[3/2] overflow-hidden bg-gray-100'>
+                <img
+                    src={image}
+                    class='h-full w-full object-cover transition-all duration-300 group-hover:scale-[1.03] group-hover:brightness-110'
+                    alt={displayName}
+                    loading='lazy'
+                />
+            </div>
+        )
+    }
+    <div class='flex grow flex-col justify-between gap-3 p-3 sm:p-4 text-slate-900'>
+        <h3 class='text-sm font-semibold leading-snug sm:text-base'>{displayName}</h3>
+        {
+            organismStatistics !== undefined && (
+                <p class='text-xs leading-5 sm:text-sm sm:leading-6'>
+                    <span class='font-bold'>{formatNumberWithDefaultLocale(organismStatistics.totalSequences)}</span>{' '}
+                    sequences
+                    <br />
+                    <span class='text-slate-500'>
+                        +{formatNumberWithDefaultLocale(organismStatistics.recentSequences)}{' '}
+                        <span class='text-slate-400'>in last {numberDaysAgoStatistics} days</span>
+                    </span>
+                    <span class='hidden'>
+                        {organismStatistics.lastUpdatedAt && (
+                            <>Last updated {organismStatistics.lastUpdatedAt.toRelative()}</>
+                        )}
+                    </span>
+                </p>
+            )
+        }
     </div>
 </a>

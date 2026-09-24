@@ -16,7 +16,7 @@ const DataTableComponent: React.FC<Props> = ({ data, dataUseTermsHistory, refere
     return (
         <>
             {type.kind === 'metadata' && (
-                <div className='text-sm grid my-1' style={{ gridTemplateColumns: '200px 1fr' }}>
+                <div className='text-sm grid my-1 grid-cols-[9rem_minmax(0,1fr)] sm:grid-cols-[200px_minmax(0,1fr)]'>
                     <div className='font-medium text-gray-900 break-inside-avoid pr-4'>{label}</div>
                     <DataTableEntryValue
                         data={data}

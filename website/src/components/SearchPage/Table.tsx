@@ -10,6 +10,7 @@ import type { Metadatum, OrderBy, OrderDirection } from '../../types/lapis.ts';
 import { deduplicateSemicolonSeparated } from '../../utils/deduplicateSemicolonSeparated';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
+import MaterialSymbolsSearchOff from '~icons/material-symbols/search-off';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
 
@@ -216,7 +217,7 @@ export const Table: FC<TableProps> = ({
                                 </th>
                                 <th
                                     onClick={() => handleSort(primaryKey)}
-                                    className='px-2 py-2 md:pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-left'
+                                    className='px-2 py-2 md:pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-left hover:text-gray-800'
                                 >
                                     {capitalCase(primaryKey)} {orderBy.field === primaryKey && orderIcon}
                                 </th>
@@ -224,7 +225,7 @@ export const Table: FC<TableProps> = ({
                                     <th
                                         key={c.field}
                                         onClick={() => handleSort(c.field)}
-                                        className='px-2 py-2 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer box-content last:pr-6 text-left'
+                                        className='px-2 py-2 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer box-content last:pr-6 text-left hover:text-gray-800'
                                         style={{
                                             minWidth: getColumnWidthStyle(c.columnWidth),
                                         }}
@@ -323,7 +324,13 @@ export const Table: FC<TableProps> = ({
                         </tbody>
                     </table>
                 ) : (
-                    <div className='flex justify-center font-bold text-xl my-8'>No data</div>
+                    <div className='flex flex-col items-center py-16 text-center'>
+                        <MaterialSymbolsSearchOff className='h-10 w-10 text-gray-300' aria-hidden='true' />
+                        <p className='mt-3 text-base font-semibold text-gray-800'>No matching sequences</p>
+                        <p className='mt-1 max-w-sm text-sm text-gray-500'>
+                            Try removing some filters or broadening your search.
+                        </p>
+                    </div>
                 )}
             </ScrollContainer>
         </div>
