@@ -73,23 +73,70 @@ export function getColor(code: string): string {
 
 const MAX_INITIAL_NUMBER_BADGES = 20;
 
+/**
+ * Lays out per-segment/gene groups compactly: the group name in a narrow left column and its
+ * contents wrapping to the right, one row per group. When `maxInitialGroups` is set and there
+ * are more groups than that, the rest are hidden behind a "Show all" toggle.
+ */
+const SegmentGroups = ({
+    groups,
+    maxInitialGroups,
+}: {
+    groups: { key: string; name: string; content: ReactElement }[];
+    maxInitialGroups?: number;
+}) => {
+    const [showAll, setShowAll] = useState(false);
+
+    const unnamed = groups.length === 1 && groups[0].name === '';
+    if (unnamed) {
+        return groups[0].content;
+    }
+
+    const collapsible = maxInitialGroups !== undefined && groups.length > maxInitialGroups;
+    const visibleGroups = collapsible && !showAll ? groups.slice(0, maxInitialGroups) : groups;
+
+    return (
+        <div>
+            <dl className='divide-y divide-gray-100'>
+                {visibleGroups.map(({ key, name, content }) => (
+                    <div
+                        key={key}
+                        className='grid grid-cols-1 gap-x-4 gap-y-1 py-1.5 sm:grid-cols-[8rem_minmax(0,1fr)]'
+                    >
+                        <dt className='truncate text-xs font-semibold leading-6 text-gray-700' title={name}>
+                            {name}
+                        </dt>
+                        <dd className='min-w-0'>{content}</dd>
+                    </div>
+                ))}
+            </dl>
+            {collapsible && (
+                <Button onClick={() => setShowAll(!showAll)} className='mt-2 text-sm text-primary-700 underline'>
+                    {showAll ? 'Show fewer' : `Show all ${groups.length}`}
+                </Button>
+            )}
+        </div>
+    );
+};
+
 export const SubstitutionsContainers = ({
     values,
     segmentDisplayNameMap,
+    maxInitialGroups,
 }: {
     values: SegmentedMutations[];
     segmentDisplayNameMap?: Record<string, string>;
-}) => {
-    return values.map(({ segment, mutations }) => {
-        const segmentName = segmentDisplayNameMap?.[segment] ?? segment;
-        return (
-            <div key={segment}>
-                {segmentName !== '' && <h2 className='py-1 my-1 font-semibold border-b'>{segmentName}</h2>}
-                <SubstitutionsContainer values={mutations} />
-            </div>
-        );
-    });
-};
+    maxInitialGroups?: number;
+}) => (
+    <SegmentGroups
+        maxInitialGroups={maxInitialGroups}
+        groups={values.map(({ segment, mutations }) => ({
+            key: segment,
+            name: segmentDisplayNameMap?.[segment] ?? segment,
+            content: <SubstitutionsContainer values={mutations} />,
+        }))}
+    />
+);
 
 export type Props = {
     values: MutationBadgeData[];
@@ -147,17 +194,22 @@ export const SubstitutionsContainer: FC<Props> = ({ values }) => {
 export const MutationStringContainers = ({
     values,
     segmentDisplayNameMap,
+    maxInitialGroups,
 }: {
     values: SegmentedMutationStrings[];
     segmentDisplayNameMap?: Record<string, string>;
-}) => {
-    return values.map(({ segment, mutations }) => {
-        const segmentName = segmentDisplayNameMap?.[segment] ?? segment;
-        return (
-            <div key={segment}>
-                {segmentName !== '' && <h2 className='py-1 my-1 font-semibold border-b'>{segmentName}</h2>}
-                <PlainValueDisplay value={mutations.flat().join(', ')} />
-            </div>
-        );
-    });
-};
+    maxInitialGroups?: number;
+}) => (
+    <SegmentGroups
+        maxInitialGroups={maxInitialGroups}
+        groups={values.map(({ segment, mutations }) => ({
+            key: segment,
+            name: segmentDisplayNameMap?.[segment] ?? segment,
+            content: (
+                <div className='text-sm leading-6'>
+                    <PlainValueDisplay value={mutations.flat().join(', ')} />
+                </div>
+            ),
+        }))}
+    />
+);

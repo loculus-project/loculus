@@ -92,7 +92,7 @@ export const SequenceDataUI: FC<Props> = ({
                 sequenceCitations={isRevocation ? undefined : sequenceCitations}
             />
             {schema.submissionDataTypes.consensusSequences && !isRevocation && (
-                <div className='mt-10'>
+                <div className='mt-6'>
                     <SequencesContainer
                         organism={organism}
                         segmentReferences={segmentReferences}
@@ -116,15 +116,12 @@ export const SequenceDataUI: FC<Props> = ({
                 onRevokeSuccess={onRevokeSuccess}
             />
             {reportUrl !== undefined && (
-                <>
-                    <hr className='my-4' />
-                    <div className='my-8'>
-                        <h2 className='text-xl font-bold mb-3'>Report an issue with this sequence or metadata</h2>
-                        <Button as='a' size='sm' href={reportUrl}>
-                            Create GitHub issue
-                        </Button>
-                    </div>
-                </>
+                <div className='mt-10 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-gray-200 pt-6 text-sm text-gray-600'>
+                    <span>Found a problem with this sequence or its metadata?</span>
+                    <Button as='a' size='sm' variant='outline-neutral' href={reportUrl}>
+                        Create GitHub issue
+                    </Button>
+                </div>
             )}
         </>
     );

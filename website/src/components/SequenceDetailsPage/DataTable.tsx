@@ -64,140 +64,117 @@ const DataTableComponent: React.FC<Props> = ({
     );
     const hasSequenceCitations = sequenceCitations !== undefined && sequenceCitations.length > 0;
 
-    return (
-        <div>
-            {dataTableData.topmatter.sequenceDisplayName !== undefined && (
-                <div className='pr-6 mb-4 italic'>{dataTableData.topmatter.sequenceDisplayName}</div>
-            )}
-            {dataTableData.topmatter.authors !== undefined && dataTableData.topmatter.authors.length > 0 && (
-                <div className='pr-6 mb-4'>
-                    <AuthorList authors={dataTableData.topmatter.authors} />
-                    {authorSection
-                        .flatMap(({ rows }) => rows)
-                        .map((entry: TableDataEntry, index: number) => (
-                            <h4 key={index} className='text-sm text-gray-500 mt-1' title={entry.label}>
-                                {typeof entry.value === 'string'
-                                    ? deduplicateSemicolonSeparated(entry.value)
-                                    : entry.value}
-                            </h4>
-                        ))}
-                </div>
-            )}
+    const renderRows = (rows: TableDataEntry[]) =>
+        rows.map((entry: TableDataEntry, index: number) => (
+            <DataTableEntry
+                key={index}
+                data={entry}
+                dataUseTermsHistory={dataUseTermsHistory}
+                referenceGenomesInfo={referenceGenomesInfo}
+            />
+        ));
 
-            {(generalSections.length > 0 || hasSequenceCitations) && (
-                <div
-                    className='grid gap-x-6'
-                    style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 32rem), 1fr))' }}
-                >
-                    {generalSections.map(({ header, rows }) => (
-                        <div key={header} className='p-4 pl-0'>
-                            <div className='flex flex-row'>
-                                <h1 className='py-2 text-lg font-semibold border-b mr-2'>{header}</h1>
-                            </div>
-                            <div className='mt-4'>
-                                {rows.map((entry: TableDataEntry, index: number) => (
-                                    <DataTableEntry
-                                        key={index}
-                                        data={entry}
-                                        dataUseTermsHistory={dataUseTermsHistory}
-                                        referenceGenomesInfo={referenceGenomesInfo}
-                                    />
-                                ))}
-                            </div>
+    return (
+        <div className='space-y-6'>
+            {(dataTableData.topmatter.sequenceDisplayName !== undefined ||
+                (dataTableData.topmatter.authors !== undefined && dataTableData.topmatter.authors.length > 0)) && (
+                <div className='max-w-5xl space-y-3'>
+                    {dataTableData.topmatter.sequenceDisplayName !== undefined && (
+                        <div className='text-lg italic text-gray-700'>
+                            {dataTableData.topmatter.sequenceDisplayName}
                         </div>
-                    ))}
-                    {hasSequenceCitations && (
-                        <div className='p-4 pl-0'>
-                            <div className='flex flex-row'>
-                                <h1 className='py-2 text-lg font-semibold border-b mr-2'>Cited in</h1>
-                            </div>
-                            <div className='mt-4'>
-                                <CitationList
-                                    citations={sequenceCitations}
-                                    maxDisplayedCitations={3}
-                                    modalTitle='Sequence Citations'
-                                />
-                            </div>
+                    )}
+                    {dataTableData.topmatter.authors !== undefined && dataTableData.topmatter.authors.length > 0 && (
+                        <div className='text-gray-900'>
+                            <AuthorList authors={dataTableData.topmatter.authors} />
+                            {authorSection
+                                .flatMap(({ rows }) => rows)
+                                .map((entry: TableDataEntry, index: number) => (
+                                    <h4 key={index} className='text-sm text-gray-500 mt-1' title={entry.label}>
+                                        {typeof entry.value === 'string'
+                                            ? deduplicateSemicolonSeparated(entry.value)
+                                            : entry.value}
+                                    </h4>
+                                ))}
                         </div>
                     )}
                 </div>
             )}
 
-            {alignmentSections.length > 0 && <hr className='my-8 border-t-2 border-gray-200' />}
-
-            {alignmentSections.length > 0 && (
-                <div>
-                    <h2 className='text-xl font-bold mb-2'>Alignment and QC</h2>
-                </div>
-            )}
-
-            {alignmentSections.length > 0 && (
-                <div
-                    className={alignmentSections.length === 1 ? '' : 'grid gap-x-6'}
-                    style={
-                        alignmentSections.length === 1
-                            ? undefined
-                            : { gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 20rem), 1fr))' }
-                    }
-                >
-                    {alignmentSections.map(({ header, rows }) => (
-                        <div key={header} className='p-4 pl-0'>
-                            <div className='flex flex-row'></div>
-                            <div className='mt-4'>
-                                {rows.map((entry: TableDataEntry, index: number) => (
-                                    <DataTableEntry
-                                        key={index}
-                                        data={entry}
-                                        dataUseTermsHistory={dataUseTermsHistory}
-                                        referenceGenomesInfo={referenceGenomesInfo}
-                                    />
-                                ))}
-                            </div>
-                        </div>
+            {(generalSections.length > 0 || hasSequenceCitations) && (
+                <div className='columns-1 gap-6 lg:columns-2'>
+                    {generalSections.map(({ header, rows }) => (
+                        <SectionCard key={header} title={header} className='mb-6 break-inside-avoid'>
+                            {renderRows(rows)}
+                        </SectionCard>
                     ))}
+                    {hasSequenceCitations && (
+                        <SectionCard title='Cited in' className='mb-6 break-inside-avoid'>
+                            <CitationList
+                                citations={sequenceCitations}
+                                maxDisplayedCitations={3}
+                                modalTitle='Sequence Citations'
+                            />
+                        </SectionCard>
+                    )}
                 </div>
             )}
 
-            {mutationSections.length > 0 && <hr className='my-8 border-t-2 border-gray-200' />}
-
-            {mutationSections.length > 0 && (
+            {alignmentSections.length === 1 && (
+                <SectionCard title={alignmentSections[0].header}>
+                    <div className='gap-x-10 lg:columns-2 [&>*]:break-inside-avoid'>
+                        {renderRows(alignmentSections[0].rows)}
+                    </div>
+                </SectionCard>
+            )}
+            {alignmentSections.length > 1 && (
                 <div
-                    className='grid gap-x-6'
+                    className='grid gap-6'
                     style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 32rem), 1fr))' }}
                 >
-                    {mutationSections.map(({ header, rows }) => (
-                        <div key={header} className='p-4 pl-0'>
-                            <div className='flex flex-row'>
-                                <h1 className='py-2 text-lg font-semibold border-b mr-2'>{header}</h1>
-                            </div>
-                            {hasReferenceAccession &&
-                                (header === DEFAULT_NUC_MUTATION_DETAILS_HEADER ||
-                                    header === DEFAULT_AA_MUTATION_DETAILS_HEADER) && (
-                                    <h2 className='pt-2 text-xs text-gray-500'>
-                                        <AkarInfo className='inline-block h-4 w-4 mr-1 -mt-0.5' />
-                                        {header === DEFAULT_AA_MUTATION_DETAILS_HEADER
-                                            ? 'Substitutions'
-                                            : 'Mutations'}{' '}
-                                        called relative to the <ReferenceDisplay reference={references} /> reference
-                                        {references.length > 1 ? 's' : ''}
-                                    </h2>
-                                )}
-                            <div className='mt-4'>
-                                {rows.map((entry: TableDataEntry, index: number) => (
-                                    <DataTableEntry
-                                        key={index}
-                                        data={entry}
-                                        dataUseTermsHistory={dataUseTermsHistory}
-                                        referenceGenomesInfo={referenceGenomesInfo}
-                                    />
-                                ))}
-                            </div>
-                        </div>
+                    {alignmentSections.map(({ header, rows }) => (
+                        <SectionCard key={header} title={header}>
+                            {renderRows(rows)}
+                        </SectionCard>
                     ))}
                 </div>
             )}
+
+            {mutationSections.map(({ header, rows }) => (
+                <SectionCard
+                    key={header}
+                    title={header}
+                    subtitle={
+                        hasReferenceAccession && (
+                            <>
+                                <AkarInfo className='inline-block h-4 w-4 mr-1 -mt-0.5' />
+                                {header === DEFAULT_AA_MUTATION_DETAILS_HEADER ? 'Substitutions' : 'Mutations'} called
+                                relative to the <ReferenceDisplay reference={references} /> reference
+                                {references.length > 1 ? 's' : ''}
+                            </>
+                        )
+                    }
+                >
+                    {renderRows(rows)}
+                </SectionCard>
+            ))}
         </div>
     );
 };
+
+const SectionCard: React.FC<{
+    title: string;
+    subtitle?: React.ReactNode;
+    className?: string;
+    children: React.ReactNode;
+}> = ({ title, subtitle, className = '', children }) => (
+    <section className={`rounded-xl border border-gray-200 bg-white ${className}`}>
+        <div className='border-b border-gray-200 px-5 py-3'>
+            <h2 className='text-base font-semibold text-gray-900'>{title}</h2>
+            {subtitle !== undefined && subtitle !== false && <p className='mt-0.5 text-xs text-gray-500'>{subtitle}</p>}
+        </div>
+        <div className='px-5 py-3'>{children}</div>
+    </section>
+);
 
 export default DataTableComponent;

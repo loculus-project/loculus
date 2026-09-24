@@ -59,14 +59,15 @@ export const SequenceManagement: FC<Props> = ({
 
     return (
         <>
-            <hr className='my-4' />
-            <div className='my-8'>
-                <h2 className='text-xl font-bold mb-3'>Sequence management</h2>
-                <div className='text-sm text-gray-400 mb-4 block'>
-                    <MdiEye className='w-6 h-6 inline-block mr-2' />
-                    Only visible to group members
+            <section className='mt-6 rounded-xl border border-gray-200 bg-white'>
+                <div className='border-b border-gray-200 px-5 py-3'>
+                    <h2 className='text-base font-semibold text-gray-900'>Sequence management</h2>
+                    <p className='mt-0.5 text-xs text-gray-500'>
+                        <MdiEye className='w-4 h-4 inline-block mr-1 -mt-0.5' />
+                        Only visible to group members
+                    </p>
                 </div>
-                <div className='flex flex-wrap gap-3'>
+                <div className='flex flex-wrap gap-3 px-5 py-4'>
                     {isRevocation ? (
                         <Button as='a' size='sm' href={routes.revisePage(organism, groupId, 'form', accession)}>
                             Restore this sequence
@@ -101,7 +102,7 @@ export const SequenceManagement: FC<Props> = ({
                         </>
                     )}
                 </div>
-            </div>
+            </section>
         </>
     );
 };

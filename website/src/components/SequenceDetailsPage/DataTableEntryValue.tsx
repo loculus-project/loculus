@@ -191,11 +191,14 @@ export function parseMutations(input: string): MutationBadgeData[] {
         .filter((m): m is MutationBadgeData => m !== null);
 }
 
+/** Genes/segments shown before a "Show all" toggle in mutation and indel lists. */
+const MAX_INITIAL_GROUPS = 12;
+
 const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, referenceGenomesInfo }) => {
     const { value, customDisplay } = data;
 
     return (
-        <div className='min-w-0 whitespace-normal wrap-break-word text-gray-600 break-inside-avoid'>
+        <div className='min-w-0 whitespace-normal wrap-break-word text-gray-900 break-inside-avoid'>
             <div>
                 {!customDisplay && <PlainValueDisplay value={value} />}
                 {customDisplay?.type === 'percentage' && typeof value === 'number' && `${(100 * value).toFixed(2)}%`}
@@ -203,13 +206,13 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, re
                     (customDisplay.badge === undefined || customDisplay.badge.length == 0 ? (
                         <span className='italic'>N/A</span>
                     ) : (
-                        <SubstitutionsContainers values={customDisplay.badge} />
+                        <SubstitutionsContainers values={customDisplay.badge} maxInitialGroups={MAX_INITIAL_GROUPS} />
                     ))}
                 {customDisplay?.type === 'list' &&
                     (customDisplay.list === undefined || customDisplay.list.length == 0 ? (
                         <span className='italic'>N/A</span>
                     ) : (
-                        <MutationStringContainers values={customDisplay.list} />
+                        <MutationStringContainers values={customDisplay.list} maxInitialGroups={MAX_INITIAL_GROUPS} />
                     ))}
                 {customDisplay?.type === 'generatedBadge' &&
                     typeof value === 'string' &&

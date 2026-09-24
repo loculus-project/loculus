@@ -15,12 +15,12 @@ interface Props {
 const { sequenceEntryHistory, accessionVersion, showDownload, showFastaDownloadButton } = Astro.props;
 ---
 
-<div class='flex justify-between flex-wrap'>
-    <div class='flex flex-row pb-6'>
+<div class='flex justify-between flex-wrap gap-4 pb-4'>
+    <div class='flex flex-row'>
         <h1 class='title'>{accessionVersion}</h1>
     </div>
 
-    <div class='pt-2'>
+    <div class='flex items-center gap-3'>
         {
             sequenceEntryHistory !== undefined && sequenceEntryHistory.length > 1 && (
                 <SequenceEntryHistoryMenu
@@ -34,19 +34,21 @@ const { sequenceEntryHistory, accessionVersion, showDownload, showFastaDownloadB
                 <div class='inline-block relative group'>
                     <label
                         tabindex='0'
-                        class='hidden sm:block py-1 text-primary-700 cursor-pointer'
+                        class='hidden sm:inline-flex items-center gap-1.5 rounded-md border border-primary-600/60 bg-white px-3 py-1.5 text-sm font-medium text-primary-700 cursor-pointer transition-colors hover:bg-primary-50'
                         data-testid='metadata-download-dropdown'
                     >
+                        <IcBaselineDownload className='h-4 w-4' />
                         Download
-                        <span class='text-primary'>
-                            {' '}
-                            <IwwaArrowDown className='inline-block -mt-1 ml-1 h-4 w-4' />
-                        </span>
+                        <IwwaArrowDown className='h-4 w-4' />
                     </label>
-                    <span tabindex='0' class='sm:hidden inline text-xl cursor-pointer'>
+                    <span
+                        tabindex='0'
+                        class='sm:hidden inline-flex items-center justify-center rounded-md border border-primary-600/60 p-1.5 text-lg text-primary-700 cursor-pointer'
+                        aria-label='Download'
+                    >
                         <IcBaselineDownload />
                     </span>
-                    <ul class='invisible absolute z-20 opacity-0 transition-opacity duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 flex flex-col gap-px bg-base-100 rounded-lg shadow-sm p-1 top-full -left-44 sm:-left-24 w-52'>
+                    <ul class='invisible absolute z-20 opacity-0 transition-opacity duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 flex flex-col gap-px bg-base-100 rounded-lg shadow-md border border-gray-200 p-1 top-full right-0 mt-1 w-52'>
                         {showFastaDownloadButton && (
                             <li>
                                 <a
