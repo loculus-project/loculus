@@ -382,9 +382,12 @@ describe('DownloadDialog', () => {
             });
 
             expect(
-                screen.getByText('Select a genotype with the search UI to enable download of reference-aligned sequences.', {
-                    exact: false,
-                }),
+                screen.getByText(
+                    'Select a genotype with the search UI to enable download of reference-aligned sequences.',
+                    {
+                        exact: false,
+                    },
+                ),
             ).toBeVisible();
             expect(screen.queryByLabelText(alignedNucleotideSequencesLabel)).not.toBeInTheDocument();
             expect(screen.queryByLabelText(alignedAminoAcidSequencesLabel)).not.toBeInTheDocument();

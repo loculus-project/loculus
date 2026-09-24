@@ -70,7 +70,8 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
             />
 
             <p className='text-xs text-gray-600 mt-2'>
-                Select a {formatLabel(label ?? '')} to enable mutation search and download of reference-aligned sequences
+                Select a {formatLabel(label ?? '')} to enable mutation search and download of reference-aligned
+                sequences
             </p>
         </div>
     );
