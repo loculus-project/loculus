@@ -582,7 +582,11 @@ def resolve_manifest_field(
     config.assembly_manifest_fields_mapping or config.raw_reads_manifest_fields_mapping.
     If the mapped Loculus fields are absent or empty, derive the value from the
     `derive_from` field (for the organism's molecule_type) if configured, and otherwise
-    fall back to field_details.default."""
+    fall back to field_details.default. With `prefer_derived`, the derived value is used
+    even if the mapped Loculus fields have a value."""
+    derived_value = derive_manifest_field(field_details, metadata, molecule_type)
+    if field_details.prefer_derived and derived_value is not None:
+        return derived_value
     values = [metadata.get(loculus_field) for loculus_field in field_details.loculus_fields]
 
     if field_details.function == "reformat_authors":
@@ -592,7 +596,6 @@ def resolve_manifest_field(
 
     if value is not None:
         return value
-    derived_value = derive_manifest_field(field_details, metadata, molecule_type)
     if derived_value is not None:
         return derived_value
     return field_details.default

@@ -646,6 +646,16 @@ class RawReadsCreationTests(unittest.TestCase):
         self.assertEqual(manifest.library_selection, LibrarySelection.RANDOM_PCR)
         self.assertEqual(manifest.library_strategy, LibraryStrategy.AMPLICON)
 
+    def test_create_manifest_derived_strategy_wins_over_assay_type(self):
+        manifest = self._manifest_for(
+            {"sequencingApproach": "Tiled amplicon", "sequencingAssayType": "WGS"}
+        )
+        self.assertEqual(manifest.library_strategy, LibraryStrategy.AMPLICON)
+
+    def test_create_manifest_assay_type_used_without_mapped_approach(self):
+        manifest = self._manifest_for({"sequencingApproach": "Other", "sequencingAssayType": "WGS"})
+        self.assertEqual(manifest.library_strategy, LibraryStrategy.WGS)
+
     def test_create_manifest_unmapped_approach_uses_defaults(self):
         manifest = self._manifest_for({"sequencingApproach": "Other"})
         self.assertEqual(manifest.library_source, LibrarySource.OTHER)

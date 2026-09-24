@@ -89,6 +89,9 @@ raw_reads_manifest_fields_mapping:
   library_strategy:
     loculus_fields: [sequencingAssayType]
     derive_from: sequencingApproach
+    # sequencingAssayType is often set to WGS for amplicon or capture sequencing,
+    # so the value derived from sequencingApproach wins if there is one
+    prefer_derived: true
     derived_values:
       RNA:
         Tiled amplicon: AMPLICON

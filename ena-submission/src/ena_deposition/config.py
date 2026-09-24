@@ -50,6 +50,8 @@ class ManifestFieldDetails(BaseModel):
     # derived_values[nucleic acid of the organism ("DNA" or "RNA")] before using the default
     derive_from: str | None = None
     derived_values: dict[str, dict[str, str]] = field(default_factory=dict)
+    # If true, a derived value takes precedence over the value of loculus_fields
+    prefer_derived: bool = False
     default: str | None = None
 
 
