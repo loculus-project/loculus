@@ -17,7 +17,7 @@ class SiloRunner:
         try:  # ruff:ignore[too-many-statements-in-try-clause]
             result = subprocess.run(  # ruff:ignore[subprocess-without-shell-equals-true]
                 [str(self._silo_binary), "preprocessing"],
-                env={"SILO_PREPROCESSING_CONFIG": str(self._preprocessing_config)},
+                env={"RHYDB_PREPROCESSING_CONFIG": str(self._preprocessing_config)},
                 capture_output=True,
                 text=True,
                 timeout=timeout_seconds,
