@@ -945,44 +945,6 @@ class ProcessingFunctions:
         return RawProcessingResult(datum=output_datum)
 
     @staticmethod
-    def process_options_or_map(  # noqa: PLR0913, PLR0917
-        input_data: InputMetadata,
-        output_field: str,
-        input_fields: list[str],
-        args: FunctionArgs,
-        context: ProcessingContext,
-        external_services: ExternalServices,
-    ) -> RawProcessingResult:
-        """Like process_options, but if `input` is empty derive the value from `mapFrom`
-        using `args.mapping` (a dict of mapFrom option -> option of this field)"""
-        if input_data.get("input"):
-            return ProcessingFunctions.process_options(
-                input_data, output_field, input_fields, args, context, external_services
-            )
-        mapping = args.get("mapping")
-        options = args.get("options")
-        if not isinstance(mapping, dict) or not isinstance(options, list):
-            return processing_error(
-                "Website configuration error: no mapping or options specified for field "
-                f"{output_field}, please contact an administrator."
-            )
-        map_from = input_data.get("mapFrom")
-        if not map_from:
-            return RawProcessingResult()
-        standardized_mapping = {standardize_option(k): v for k, v in mapping.items()}
-        mapped_value = standardized_mapping.get(standardize_option(map_from))
-        if mapped_value is None:
-            return RawProcessingResult()
-        if standardize_option(mapped_value) not in map(standardize_option, options):
-            return processing_error(
-                f"Website configuration error: mapping for field {output_field} contains "
-                f"'{mapped_value}', which is not an option, please contact an administrator."
-            )
-        return ProcessingFunctions.process_options(
-            {"input": mapped_value}, output_field, input_fields, args, context, external_services
-        )
-
-    @staticmethod
     def is_above_threshold(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,

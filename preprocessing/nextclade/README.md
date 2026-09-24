@@ -126,21 +126,6 @@ However, the `preprocessing` field can be customized to take an arbitrary number
 6. `process_options`: Only accept input that is in `args.options`, this check is case-insensitive. If input value is not in options raise an error, or return null if the submitter is in the "insdc_ingest" group.
 7. `check_regex`: Validate that the input field matches the pattern in `args.pattern`.
 8. `extract_regex`: Extracts a substring from input field using the provided regex `args.pattern` with a `args.capture_group`. For example the pattern `^(?P<segment>[^-]+)-(?P<subtype>[^-]+)$` with capture group `subtype` would extract `HA` from the field `seg1-HA`. Returns an error if the pattern does not match (and internal error if capture group does not exist in pattern). If `arg.uppercase` is added the extracted string will be capitalized.
-9. `process_options_or_map`: Like `process_options`, but if the `input` field is empty the value is derived from a second input field `mapFrom` via `args.mapping` (a dictionary from `mapFrom` values to options of this field, matched case-insensitively). A submitted value always takes precedence over the derived one; if `mapFrom` is empty or not in the mapping the result is null. Use `processed.<field>` for `mapFrom` to map from the standardized value of another options field, e.g.:
-
-   ```yaml
-   - name: sequencingAssayType
-     options: [...]
-     preprocessing:
-       function: process_options_or_map
-       inputs:
-         input: sequencingAssayType
-         mapFrom: processed.sequencingApproach
-       args:
-         mapping:
-           Tiled amplicon: AMPLICON
-           Metagenomic: RNA-Seq
-   ```
 
 Additionally, certain functions require external services to be running. We have various functions related to validating host which require a `taxonomyService` to be running, this can be configured in the `values.yaml` as:
 
@@ -151,9 +136,9 @@ taxonomyService:
   taxonomy_service_url: http://loculus-taxonomy-service:5000
 ```
 
-10. `resolve_host_taxon_id`: Validates that a host taxon ID or scientific name exists in the NCBI taxonomy, returning the taxon ID if validation is successful. Requires an input field called `host` (entries ingested from the INSDC do not error).
-11. `scientific_name_from_id`: Returns a scientific name for a taxon given a taxon ID `hostTaxonId` as input (entries ingested from the INSDC do not error).
-12. `common_name_from_id`: Returns a common name for a taxon given a taxon ID `hostTaxonId` as input (entries ingested from the INSDC do not error).
+9. `resolve_host_taxon_id`: Validates that a host taxon ID or scientific name exists in the NCBI taxonomy, returning the taxon ID if validation is successful. Requires an input field called `host` (entries ingested from the INSDC do not error).
+10. `scientific_name_from_id`: Returns a scientific name for a taxon given a taxon ID `hostTaxonId` as input (entries ingested from the INSDC do not error).
+11. `common_name_from_id`: Returns a common name for a taxon given a taxon ID `hostTaxonId` as input (entries ingested from the INSDC do not error).
 
 Using these functions in your `values.yaml` will look like:
 

@@ -88,39 +88,6 @@ test_case_definitions = [
         group_id=1,
     ),
     Case(
-        name="option_derived_from_processed_mapping_source",
-        input_metadata={
-            "continent": "oceania",
-            "name_required": "name",
-            "ncbi_required_collection_date": "2022-11-01",
-        },
-        accession_id="100",
-        expected_metadata={
-            "continent": "Oceania",
-            "hemisphere": "Southern",
-            "name_required": "name",
-            "required_collection_date": "2022-11-01",
-            "concatenated_string": "oceania/LOC_100.1/2022-11-01",
-        },
-    ),
-    Case(
-        name="submitted_option_overrides_mapping",
-        input_metadata={
-            "continent": "Europe",
-            "hemisphere": "southern",
-            "name_required": "name",
-            "ncbi_required_collection_date": "2022-11-01",
-        },
-        accession_id="101",
-        expected_metadata={
-            "continent": "Europe",
-            "hemisphere": "Southern",
-            "name_required": "name",
-            "required_collection_date": "2022-11-01",
-            "concatenated_string": "Europe/LOC_101.1/2022-11-01",
-        },
-    ),
-    Case(
         name="invalid_option",
         input_metadata={
             "continent": "Afrika",
@@ -1773,72 +1740,6 @@ def test_display_name_construction(case: DisplayNameCase) -> None:
     _assert_display_name_warnings(res.warnings, case.warning_regular)
     _assert_display_name_warnings(res_insdc.warnings, case.warning_insdc)
     _assert_display_name_warnings(res_prefix.warnings, case.warning_prefix)
-
-
-@dataclass
-class OptionsOrMapCase:
-    name: str
-    input_data: InputMetadata
-    expected: str | None
-    error: str | None = None
-    mapping: dict[str, str] = field(
-        default_factory=lambda: {"Tiled amplicon": "AMPLICON", "Metagenomic": "RNA-Seq"}
-    )
-
-
-options_or_map_cases = [
-    OptionsOrMapCase(
-        name="explicit_value_wins_over_mapping",
-        input_data={"input": "wgs", "mapFrom": "Tiled amplicon"},
-        expected="WGS",
-    ),
-    OptionsOrMapCase(
-        name="empty_input_is_derived_case_insensitively",
-        input_data={"input": "", "mapFrom": "tiled  AMPLICON"},
-        expected="AMPLICON",
-    ),
-    OptionsOrMapCase(
-        name="unmapped_value_gives_null",
-        input_data={"input": None, "mapFrom": "Other"},
-        expected=None,
-    ),
-    OptionsOrMapCase(
-        name="nothing_provided_gives_null",
-        input_data={"input": None, "mapFrom": None},
-        expected=None,
-    ),
-    OptionsOrMapCase(
-        name="explicit_invalid_value_errors",
-        input_data={"input": "NotAnOption", "mapFrom": "Tiled amplicon"},
-        expected=None,
-        error="not in list of accepted options",
-    ),
-    OptionsOrMapCase(
-        name="mapping_to_invalid_option_is_config_error",
-        input_data={"input": None, "mapFrom": "Tiled amplicon"},
-        mapping={"Tiled amplicon": "NotAnOption"},
-        expected=None,
-        error="Website configuration error",
-    ),
-]
-
-
-@pytest.mark.parametrize("case", options_or_map_cases, ids=lambda c: c.name)
-def test_process_options_or_map(case: OptionsOrMapCase) -> None:
-    result = ProcessingFunctions.process_options_or_map(
-        input_data=case.input_data,
-        output_field=f"sequencingAssayType_{case.name}",
-        input_fields=["sequencingAssayType", "sequencingApproach"],
-        args={"options": ["WGS", "AMPLICON", "RNA-Seq"], "mapping": case.mapping},
-        context=DEFAULT_TEST_CONTEXT,
-        external_services=DEFAULT_EXTERNAL_SERVICES,
-    )
-    assert result.datum == case.expected
-    if case.error:
-        assert len(result.errors) == 1
-        assert case.error in result.errors[0]
-    else:
-        assert result.errors == []
 
 
 def test_call_function_converts_raw_errors_to_annotations() -> None:
