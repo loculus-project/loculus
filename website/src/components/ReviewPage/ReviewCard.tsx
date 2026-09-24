@@ -72,8 +72,8 @@ export const ReviewCard: FC<ReviewCardProps> = ({
 
     return (
         <div className='px-3 py-2 relative transition-all duration-500'>
-            <div className='flex'>
-                <div className='flex grow flex-wrap '>
+            <div className='flex flex-col sm:flex-row'>
+                <div className='flex grow flex-wrap'>
                     <StatusIcon
                         status={sequenceEntryStatus.status}
                         dataUseTerms={sequenceEntryStatus.dataUseTerms}
