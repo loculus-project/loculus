@@ -14,7 +14,7 @@ export class SequenceDetailPage {
     }
 
     private get alignedTab() {
-        return this.page.getByRole('tab', { name: /^aligned/i }).first();
+        return this.page.getByRole('tab', { name: /^reference-aligned nucleotide/i }).first();
     }
 
     async waitForSequenceTabs(timeout = 30000) {

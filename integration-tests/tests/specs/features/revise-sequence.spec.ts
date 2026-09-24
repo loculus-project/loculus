@@ -57,7 +57,7 @@ sequenceTest(
         await reviewPage.viewSequences();
 
         const tabs = await reviewPage.getAvailableSequenceTabs();
-        expect(tabs).not.toContain('L (aligned)');
+        expect(tabs).not.toContain('L (reference-aligned)');
         expect(tabs).not.toContain('L (unaligned)');
 
         expect(tabs).toContain('S (unaligned)');
