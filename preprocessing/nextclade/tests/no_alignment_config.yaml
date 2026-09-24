@@ -19,6 +19,18 @@ processing_spec:
     function: process_options
     inputs:
       input: continent
+  hemisphere:
+    args:
+      options:
+        - Northern
+        - Southern
+      mapping:
+        Europe: Northern
+        Oceania: Southern
+    function: process_options_or_map
+    inputs:
+      input: hemisphere
+      mapFrom: processed.continent
   collection_date:
     args:
       type: date

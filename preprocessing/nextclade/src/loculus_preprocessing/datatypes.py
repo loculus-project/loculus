@@ -22,7 +22,7 @@ AminoAcidInsertion = str
 FunctionName = str  # Name of function present in processing_functions
 ArgName = str  # Name of argument present in processing_functions
 ArgValue = (
-    list[str] | str | bool | int | float | None
+    list[str] | dict[str, str] | str | bool | int | float | None
 )  # Value of an argument passed to processing_functions
 InputField = str  # Name of field in input data, either submitted metadata or NextcladeMetadata
 ProcessedMetadataValue = str | int | float | bool | None
