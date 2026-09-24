@@ -143,6 +143,7 @@ export const sequenceEntryStatus = accessionVersion.merge(
         dataUseTerms,
         groupId: z.number(),
         submitter: z.string(),
+        versionComment: z.string().nullish(),
     }),
 );
 
