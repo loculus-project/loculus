@@ -16,7 +16,7 @@ import { Spinner } from '../common/Spinner';
 
 type RevisionDiffProps = {
     current: SequenceEntryToEdit;
-    metadata: Metadata[];
+    metadataSchema: Metadata[];
     organism: string;
     clientConfig: ClientConfig;
     accessToken: string;
@@ -35,7 +35,7 @@ function compareNucleotideSequences(
 
 export function RevisionDiff({
     current,
-    metadata,
+    metadataSchema,
     organism,
     clientConfig,
     accessToken,
@@ -69,8 +69,8 @@ export function RevisionDiff({
     }
 
     const comparison = compareVersionData(
-        { tableData: getMetadataTableData(metadata, previous.data.processedData.metadata) },
-        { tableData: getMetadataTableData(metadata, current.processedData.metadata) },
+        { tableData: getMetadataTableData(metadataSchema, previous.data.processedData.metadata) },
+        { tableData: getMetadataTableData(metadataSchema, current.processedData.metadata) },
     );
     const sequenceChanges = compareNucleotideSequences(
         previous.data.processedData.unalignedNucleotideSequences,
