@@ -88,6 +88,21 @@ test_case_definitions = [
         group_id=1,
     ),
     Case(
+        name="insdc_ingest group can submit authors with non-alphabetic ASCII characters",
+        input_metadata={
+            "name_required": "name",
+            "authors": "Smith9, Anna; Müller (Jr) & Co, Anna_Maria?",
+        },
+        accession_id="22",
+        expected_metadata={
+            "name_required": "name",
+            "concatenated_string": "LOC_22.1",
+            "required_collection_date": None,
+            "authors": "Smith9, Anna; Müller (Jr) & Co, Anna_Maria?",
+        },
+        group_id=1,
+    ),
+    Case(
         name="invalid_option",
         input_metadata={
             "continent": "Afrika",
@@ -687,6 +702,22 @@ not_accepted_authors = [
     "Anna Smith, Cameron Tucker, and Jose Perez",
     "Count4th, EwanMcGregor, Count4th",
 ]
+# Only accepted for the INSDC ingest group
+accepted_authors_all_ascii = [
+    "Nebenf##hr, M.",
+    "Lee Cynthia K, [. U. S. ].'; 'Monath Thomas P, [. U. S. ].';",
+    "An?elic Dmitrovic,B.",
+    "Dall&aposAmico, L.",
+]
+not_accepted_authors_all_ascii = [
+    ";",
+    ",;",
+    " ,;",
+    ",X.;Yu,X.",
+    "Anna Maria Smith",
+    "Smith, Anna, Maria",
+    "Anna Smith, Cameron Tucker, and Jose Perez",
+]
 
 RAW_READS_FILES = {
     FileCategory.RAW_READS: [
@@ -1216,6 +1247,21 @@ def test_valid_authors() -> None:
     for author in not_accepted_authors:
         if valid_authors(author) is not False:
             msg = f"{author} should not be accepted but is."
+            raise AssertionError(msg)
+
+
+def test_valid_authors_allow_all_ascii() -> None:
+    for author in [*accepted_authors, *accepted_authors_all_ascii]:
+        if valid_authors(author, allow_all_ascii=True) is not True:
+            msg = f"{author} should be accepted with allow_all_ascii but is not."
+            raise AssertionError(msg)
+    for author in accepted_authors_all_ascii:
+        if valid_authors(author) is not False:
+            msg = f"{author} should only be accepted with allow_all_ascii but is."
+            raise AssertionError(msg)
+    for author in not_accepted_authors_all_ascii:
+        if valid_authors(author, allow_all_ascii=True) is not False:
+            msg = f"{author} should not be accepted with allow_all_ascii but is."
             raise AssertionError(msg)
 
 
