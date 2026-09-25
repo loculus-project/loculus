@@ -6,6 +6,10 @@ import org.hamcrest.Matchers.anEmptyMap
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.not
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -33,6 +37,7 @@ import org.loculus.backend.controller.groupmanagement.GroupManagementControllerC
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.service.files.dummyFileId
+import org.loculus.backend.service.submission.SequenceEntriesTable
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -90,7 +95,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     }
 
     @Test
-    fun `GIVEN a sequence entry is processed WHEN I submit edited data THEN has changed unprocessed data`() {
+    fun `GIVEN a sequence entry is processed WHEN I submit edited data THEN submitted and archived data are updated`() {
         val firstAccession = convenienceClient.prepareDataTo(Status.PROCESSED)
             .map { it.accession }
             .first()
@@ -107,6 +112,21 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         val entryAfterEdit = convenienceClient.getSubmittedMetadata()
             .find { it.accession == firstAccession && it.version == 1L }!!
         assertThat(entryAfterEdit.submittedMetadata, `is`(anEmptyMap()))
+
+        // No endpoint returns the archived data, so need to query the DB directly
+        transaction {
+            val row = SequenceEntriesTable
+                .select(SequenceEntriesTable.submittedDataColumn, SequenceEntriesTable.archiveOfSubmittedDataColumn)
+                .where {
+                    (SequenceEntriesTable.accessionColumn eq firstAccession) and
+                        (SequenceEntriesTable.versionColumn eq 1L)
+                }
+                .single()
+            assertThat(
+                row[SequenceEntriesTable.archiveOfSubmittedDataColumn],
+                `is`(row[SequenceEntriesTable.submittedDataColumn]),
+            )
+        }
     }
 
     @Test
