@@ -682,7 +682,7 @@ accepted_authors = {
     "Xi, ;Yu,X.": "Xi, ; Yu, X.",
     "Xi,;": "Xi,",
     "Xi,": "Xi,",
-    "Smith, Anna Maria; Perez, Jose X.;": "Smith, Anna Maria; Perez, Jose X.",
+    "O'Brian, Anna Maria; Perez, Jose X.;": "O'Brian, Anna Maria; Perez, Jose X.",
     "Smith,Anna Maria;Perez,Jose X;": "Smith, Anna Maria; Perez, Jose X.",
     "de souza, a.": "de souza, A.",
     "McGregor, Ewan": "McGregor, Ewan",
@@ -697,7 +697,7 @@ accepted_authors_all_ascii = [
     "Dall&aposAmico, L.",
     "Smith9, Anna;",
 ]
-not_accepted_authors_all_ascii = [
+never_accepted_authors = [
     ";",
     ",;",
     " ,;",
@@ -1238,8 +1238,8 @@ def test_preprocessing_without_consensus_sequences(config: Config) -> None:
         (accepted_authors, True, True),
         (accepted_authors_all_ascii, False, False),
         (accepted_authors_all_ascii, True, True),
-        (not_accepted_authors_all_ascii, False, False),
-        (not_accepted_authors_all_ascii, True, False),
+        (never_accepted_authors, False, False),
+        (never_accepted_authors, True, False),
     ],
 )
 def test_valid_authors(
