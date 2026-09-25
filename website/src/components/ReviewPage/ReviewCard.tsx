@@ -199,7 +199,8 @@ const ButtonBar: FC<ButtonBarProps> = ({
                             onClick={viewMetadataChanges}
                             disabled={notProcessed}
                             aria-label={`View metadata changes for ${getAccessionVersionString(sequenceEntryStatus)}`}
-                            data-tooltip-id={`metadata-diff-tooltip-${sequenceEntryStatus.accession}`}
+                           
+                           
                         >
                             <GitCompare />
                         </Button>
