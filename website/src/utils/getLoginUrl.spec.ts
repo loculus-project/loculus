@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { getLoginUrl } from './getAuthUrl.ts';
+import { getLoginUrl } from './getLoginUrl.ts';
 
 describe('getLoginUrl', () => {
     test.each([

@@ -10,7 +10,7 @@ import { getInstanceLogger } from '../logger.ts';
 import { routes } from '../routes/routes.ts';
 import { KeycloakClientManager } from '../utils/KeycloakClientManager.ts';
 import { authTransactionId, consumeAuthRequest } from '../utils/authRequestCookies.ts';
-import { getLoginUrl } from '../utils/getAuthUrl.ts';
+import { getLoginUrl } from '../utils/getLoginUrl.ts';
 import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
 export const ACCESS_TOKEN_COOKIE = 'access_token';
