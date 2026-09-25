@@ -1231,30 +1231,26 @@ def test_preprocessing_without_consensus_sequences(config: Config) -> None:
     assert processed_entry.data.aminoAcidInsertions == {}
 
 
-def test_valid_authors() -> None:
-    for author in accepted_authors:
-        if valid_authors(author) is not True:
-            msg = f"{author} should be accepted but is not."
-            raise AssertionError(msg)
-    for author in [*accepted_authors_all_ascii, *not_accepted_authors_all_ascii]:
-        if valid_authors(author) is not False:
-            msg = f"{author} should not be accepted but is."
-            raise AssertionError(msg)
-
-
-def test_valid_authors_allow_all_ascii() -> None:
-    for author in [*accepted_authors, *accepted_authors_all_ascii]:
-        if valid_authors(author, allow_all_ascii=True) is not True:
-            msg = f"{author} should be accepted with allow_all_ascii but is not."
-            raise AssertionError(msg)
-    for author in accepted_authors_all_ascii:
-        if valid_authors(author) is not False:
-            msg = f"{author} should only be accepted with allow_all_ascii but is."
-            raise AssertionError(msg)
-    for author in not_accepted_authors_all_ascii:
-        if valid_authors(author, allow_all_ascii=True) is not False:
-            msg = f"{author} should not be accepted with allow_all_ascii but is."
-            raise AssertionError(msg)
+@pytest.mark.parametrize(
+    ("authors", "allow_all_ascii", "expected"),
+    [
+        (accepted_authors, False, True),
+        (accepted_authors, True, True),
+        (accepted_authors_all_ascii, False, False),
+        (accepted_authors_all_ascii, True, True),
+        (not_accepted_authors_all_ascii, False, False),
+        (not_accepted_authors_all_ascii, True, False),
+    ],
+)
+def test_valid_authors(
+    authors: list[str],
+    allow_all_ascii: bool,
+    expected: bool,
+) -> None:
+    for author in authors:
+        assert valid_authors(author, allow_all_ascii=allow_all_ascii) is expected, (
+            f"{author!r}: expected {expected} with allow_all_ascii={allow_all_ascii}"
+        )
 
 
 def test_format_authors() -> None:
