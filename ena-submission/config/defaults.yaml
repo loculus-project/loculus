@@ -50,14 +50,61 @@ assembly_manifest_fields_mapping:
 raw_reads_manifest_fields_mapping:
   instrument_platform: # mapped to instrument and platform in the manifest
     loculus_fields: [sequencingInstrument]
+  # If the submitter did not provide the library fields, derive them from sequencingApproach
+  # and whether the organism is a DNA or RNA virus (from its molecule_type)
   library_source:
     loculus_fields: [sequencingLibrarySource]
+    derive_from: sequencingApproach
+    derived_values:
+      RNA:
+        Tiled amplicon: VIRAL RNA
+        Targeted PCR: VIRAL RNA
+        Hybrid capture: VIRAL RNA
+        Molecular inversion probe capture: VIRAL RNA
+        Shotgun metagenomic: METATRANSCRIPTOMIC
+      DNA:
+        Tiled amplicon: GENOMIC
+        Targeted PCR: GENOMIC
+        Hybrid capture: GENOMIC
+        Molecular inversion probe capture: GENOMIC
+        Shotgun metagenomic: METAGENOMIC
     default: "OTHER"
   library_selection:
     loculus_fields: [sequencingLibrarySelection]
+    derive_from: sequencingApproach
+    derived_values:
+      RNA:
+        Tiled amplicon: RT-PCR
+        Targeted PCR: RT-PCR
+        Hybrid capture: Hybrid Selection
+        Molecular inversion probe capture: padlock probes capture method
+        Shotgun metagenomic: RANDOM
+      DNA:
+        Tiled amplicon: PCR
+        Targeted PCR: PCR
+        Hybrid capture: Hybrid Selection
+        Molecular inversion probe capture: padlock probes capture method
+        Shotgun metagenomic: RANDOM
     default: "unspecified"
   library_strategy:
     loculus_fields: [sequencingAssayType]
+    derive_from: sequencingApproach
+    # sequencingAssayType is often set to WGS for amplicon or capture sequencing,
+    # so the value derived from sequencingApproach wins if there is one
+    prefer_derived: true
+    derived_values:
+      RNA:
+        Tiled amplicon: AMPLICON
+        Targeted PCR: AMPLICON
+        Hybrid capture: Targeted-Capture
+        Molecular inversion probe capture: Targeted-Capture
+        Shotgun metagenomic: RNA-Seq
+      DNA:
+        Tiled amplicon: AMPLICON
+        Targeted PCR: AMPLICON
+        Hybrid capture: Targeted-Capture
+        Molecular inversion probe capture: Targeted-Capture
+        Shotgun metagenomic: WGS
     default: "OTHER"
   insert_size:
     loculus_fields: [pairedEndInsertSize]
