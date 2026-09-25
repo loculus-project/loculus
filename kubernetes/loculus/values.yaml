@@ -61,7 +61,8 @@ dataUseTerms:
     open: https://#TODO-MVP/open
     restricted: https://#TODO-MVP/restricted
 fileSharing:
-  outputFileUrlType: backend
+  outputFileUrlType: website
+  maxFileSizeBytes: 5368709120 # 5 GiB
 s3:
   enabled: true
   gcInitialDelayMinutes: 15
@@ -1881,7 +1882,6 @@ defaultOrganisms:
               geoLocCountry: geoLocCountry
               sampleCollectionDateRangeLower: processed.sampleCollectionDateRangeLower
               specimenCollectorSampleId: specimenCollectorSampleId
-              submissionId: submissionId
             args:
               order: [geoLocCountry, IDENTIFIER, sampleCollectionDateRangeLower]
               type: [string, IDENTIFIER, string]
@@ -2856,7 +2856,7 @@ images:
     pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
-    tag: "v0.8.0@sha256:4da71d94aceb36b7ea5963aa2e7b0566567c6423fe7fdd39448e69aebda2a8bb"
+    tag: "0.8.8@sha256:6942844fddb7330ec9ce3ae14d18908f8e63e610ce287642061163d010c3d744"
     pullPolicy: Always
   website:
     repository: "ghcr.io/loculus-project/website"
@@ -2866,7 +2866,7 @@ images:
     pullPolicy: Always
   deaconIndex:
     repository: "ghcr.io/loculus-project/deacon-index"
-    tag: "latest"
+    tag: "2026-08-28-13-33@sha256:13cbc6bf729136973ed744616522598b658351a27086b0797218090cd2197637"
     pullPolicy: IfNotPresent
 silo:
   apiThreadsForHttpConnections: 16

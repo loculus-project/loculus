@@ -78,8 +78,8 @@ export const ReviewCard: FC<ReviewCardProps> = ({
 
     return (
         <div className='px-3 py-2 relative transition-all duration-500'>
-            <div className='flex'>
-                <div className='flex grow flex-wrap '>
+            <div className='flex flex-col sm:flex-row'>
+                <div className='flex grow flex-wrap'>
                     <StatusIcon
                         status={sequenceEntryStatus.status}
                         dataUseTerms={sequenceEntryStatus.dataUseTerms}
@@ -340,8 +340,11 @@ const Errors: FC<ErrorsProps> = ({ errors, accession, metadataDisplayNames }) =>
                         <div key={uniqueKey} className='flex shrink-0'>
                             <p
                                 className='text-red-600'
+                                role='alert'
+                                data-testid='processing-error'
                                 data-tooltip-id={'error-tooltip-' + accession + '-' + uniqueKey}
                             >
+                                <span className='sr-only'>Error: </span>
                                 {processedFieldName}: {error.message}
                             </p>
                             <CustomTooltip
@@ -371,7 +374,10 @@ const Warnings: FC<WarningsProps> = ({ warnings, accession }) => {
                         <p
                             key={warning.processedFields.map((field) => field.type + field.name).join('.') + accession}
                             className='text-yellow-500'
+                            role='status'
+                            data-testid='processing-warning'
                         >
+                            <span className='sr-only'>Warning: </span>
                             {processedFieldName}: {warning.message}
                         </p>
                     );

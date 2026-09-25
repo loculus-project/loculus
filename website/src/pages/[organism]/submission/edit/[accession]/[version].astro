@@ -1,6 +1,7 @@
 ---
 import { EditPage } from '../../../../../components/Edit/EditPage';
 import { cleanOrganism } from '../../../../../components/Navigation/cleanOrganism';
+import ErrorBox from '../../../../../components/common/ErrorBox.tsx';
 import { getFileSharingConfig, getGroupedInputFields, getRuntimeConfig, getSchema } from '../../../../../config';
 import BaseLayout from '../../../../../layouts/BaseLayout.astro';
 import { createBackendClient } from '../../../../../services/backendClientFactory';
@@ -27,30 +28,32 @@ const schema = getSchema(organism);
 const dataToEdit = await createBackendClient().getDataToEdit(organism, accessToken, accession, version);
 ---
 
-<BaseLayout title={`Edit ${accession}.${version}`} fullWidth>
+<BaseLayout title={`Edit ${accession}.${version}`}>
     {
         dataToEdit.match(
             (dataToEdit) => (
-                <EditPage
-                    organism={organism}
-                    accessToken={accessToken}
-                    dataToEdit={dataToEdit}
-                    clientConfig={clientConfig}
-                    groupedInputFields={groupedInputFields}
-                    submissionDataTypes={schema.submissionDataTypes}
-                    fileSharingConfig={getFileSharingConfig()}
-                    client:load
-                />
+                <div class='flex flex-col items-center'>
+                    <div class='text-left mt-3 max-w-4xl mb-3 w-full'>
+                        <EditPage
+                            organism={organism}
+                            accessToken={accessToken}
+                            dataToEdit={dataToEdit}
+                            clientConfig={clientConfig}
+                            groupedInputFields={groupedInputFields}
+                            submissionDataTypes={schema.submissionDataTypes}
+                            fileSharingConfig={getFileSharingConfig()}
+                            client:load
+                        />
+                    </div>
+                </div>
             ),
             (error) => (
-                <>
-                    <div class='flex items-center'>
-                        <h1 class='subtitle'>
-                            Error while fetching edited data for accession version: {accession}.{version}
-                        </h1>
-                    </div>
-                    <div>{JSON.stringify(error)}</div>
-                </>
+                <ErrorBox
+                    title={`Error while fetching edited data for accession version: ${accession}.${version}`}
+                    className='mb-6'
+                >
+                    {error.detail}
+                </ErrorBox>
             ),
         )
     }

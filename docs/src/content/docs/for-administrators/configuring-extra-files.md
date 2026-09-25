@@ -3,7 +3,7 @@ title: Configuring extra file submission
 ---
 
 Loculus supports the handling of arbitrary files associated with sequence entries.
-You can configure Loculus to support the submission of extra files for sequences, as well as providing extra files along with the sequence data and metadata for download. A typical usecase would be for raw reads. The files are stored in [S3](../../reference/glossary#s3-simple-storage-service).
+You can configure Loculus to support the submission of extra files for sequences, as well as providing extra files along with the sequence data and metadata for download. A typical use case would be for raw reads. The files are stored in [S3](../../reference/glossary#s3-simple-storage-service).
 
 To enable this feature you need to configure an S3 bucket for Loculus to use, and then configure the file categories per organism.
 
@@ -24,6 +24,10 @@ When configuring this feature for an organism, you can configure file categories
 
 You need admin access to an S3 bucket, and have the [credentials](../../reference/glossary#s3-credentials) at hand.
 
+The credentials consist of an `accessKey` and a `secretKey` (an Access Key ID/Secret Access Key pair) that together authenticate as a single S3 identity - much like a username and password. This identity must be able to read, write, tag, and delete objects in the bucket (see [IAM permissions](#iam-permissions) below).
+
+For AWS S3, you get such a pair by creating an [IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html) and then generating an [access key](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html) for that user.
+
 Enable S3 and configure the location of the bucket:
 
 ```yaml
@@ -34,6 +38,21 @@ s3:
     endpoint: https://my-s3.net
     bucket: loculus-data
 ```
+
+For AWS S3 specifically:
+
+```yaml
+s3:
+  enabled: true
+  bucket:
+    region: eu-central-1
+    endpoint: https://s3.eu-central-1.amazonaws.com
+    bucket: my-loculus-bucket
+```
+
+:::note
+`endpoint` must include the `https://` protocol and be the _regional_ S3 endpoint, not a bucket-specific virtual-hosted one (e.g. not `https://my-loculus-bucket.s3.eu-central-1.amazonaws.com`) - the backend addresses objects path-style (`endpoint/bucket/key`) and supplies the bucket name separately via `bucket`. `bucket` is the bare bucket name, not the ARN (`arn:aws:s3:::my-loculus-bucket`).
+:::
 
 :::note
 Have a look at the [Helm Chart S3 reference](../../reference/helm-chart-config/#s3-deployments) for more information on these configuration settings.
@@ -51,6 +70,8 @@ secrets:
       secretKey: AgAS8a/ldl....
 ```
 
+To create the `encryptedData` above, seal your `accessKey`/`secretKey` with `kubeseal` - see [Adding a sealed secret](https://github.com/loculus-project/loculus/blob/main/kubernetes/README.md#adding-a-sealed-secret).
+
 :::note
 Alternatively, you can also use the `raw` secret type. If you do, ensure the configuration file is properly access-protected, since it will contain credentials in plain text.
 
@@ -66,12 +87,38 @@ secrets:
 
 :::
 
+#### IAM permissions
+
+The `accessKey`/`secretKey` only need enough permissions for the backend to read, write, tag, and delete objects under the bucket.
+
+For AWS, attach a policy like this to the IAM user (replace `my-loculus-bucket` with your bucket name):
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:PutObjectTagging", "s3:DeleteObject", "s3:AbortMultipartUpload"],
+      "Resource": "arn:aws:s3:::my-loculus-bucket/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::my-loculus-bucket"
+    }
+  ]
+}
+```
+
 ### Configuring file submission
 
 Users can submit files along with sequence metadata and sequences (or also instead of sequences).
 For this, you need to enable the `files` submission type, and configure at least one file category that users can submit:
 
 ```yaml
+fileSharing:
+  maxFileSizeBytes: 5368709120 # 5 GiB
 my-organism:
   schema:
     submissionDataTypes:
@@ -85,6 +132,8 @@ The example above configures the `rawReads` file category.
 
 If a user submits these files, they will be passed along to the processing pipeline as well, and the pipeline can read them, pass them through as output files, or generate additional fields or process them in any other way.
 
+You can also set a maximum accepted file size for your loculus instance in `fileSharing.maxFileSizeBytes`. Files exceeding this size are rejected by the website and by the backend for multipart uploads (note for single part uploads the default maximum size limit of 5GB cannot be modified and even if a lower `maxFileSizeBytes` threshold is configured it cannot be enforced for single part uploads). If unset, the website does not enforce a limit and multi-part uploads use the configured S3 service limit.
+
 :::note
 Files are submitted by adding a `files.<category>` column to the metadata file, e.g. `files.rawReads`.
 The `files.` prefix is therefore reserved: no metadata field may have a name starting with it, as such columns are
@@ -94,11 +143,13 @@ treated as file categories during submission rather than as metadata.
 ### Configuring output files
 
 By default, files are not shown in the sequence detail view as well.
-You need to configure output files as well, and the pipeline needs to set them.
+You need to configure output files as well, and the pipeline needs to be configured to pass them through (or alternatively create and upload new files). You can additionally configure whether the backend should supply file URLs as links to the website or the backend itself using `fileSharing.outputFileUrlType`.
 
 To configure:
 
 ```yaml
+fileSharing:
+  outputFileUrlType: website
 my-organism:
   schema:
     files:
@@ -130,11 +181,16 @@ You can set a permissive CORS policy on your bucket with `s3cmd setcors cors.xml
     <AllowedMethod>HEAD</AllowedMethod>
     <AllowedMethod>POST</AllowedMethod>
     <AllowedMethod>PUT</AllowedMethod>
-    <AllowedMethod>DELETE</AllowedMethod>
     <AllowedOrigin>*</AllowedOrigin>
+    <ExposeHeader>ETag</ExposeHeader>
+    <MaxAgeSeconds>3000</MaxAgeSeconds>
   </CORSRule>
 </CORSConfiguration>
 ```
+
+:::note
+`ExposeHeader: ETag` is required for multipart uploads. `MaxAgeSeconds` is optional; it just lets the browser cache the CORS preflight response to reduce the number of preflight requests.
+:::
 
 Also consult the documentation for you S3 provider to find out about CORS policy configuration. For example: [AWS](https://docs.aws.amazon.com/AmazonS3/latest/userguide/enabling-cors-examples.html) and [Hetzner](https://docs.hetzner.com/storage/object-storage/howto-protect-objects/cors/).
 
@@ -169,3 +225,46 @@ For this to work, you need to configure a bucket policy like this:
 ```
 
 You can do this with `s3cmd`. Save the policy above in a file, `policy.json`, and then call `s3cmd setpolicy policy.json s3://<bucket-name>` (replace `<bucket-name>` with your bucket name).
+
+### Set a lifecycle policy to abort incomplete multipart uploads
+
+Files are uploaded to S3 as multipart uploads directly from the browser. If an upload is interrupted (closed tab, network drop, etc.) before it completes, the parts already uploaded are not automatically deleted and continue to incur storage costs.
+
+To avoid accumulating these orphaned parts, configure a bucket lifecycle rule with the `AbortIncompleteMultipartUpload` action, which tells S3 to abort (and delete the parts of) any multipart upload that hasn't completed within a given number of days:
+
+```json
+{
+  "Rules": [
+    {
+      "ID": "abort-incomplete-multipart-uploads",
+      "Status": "Enabled",
+      "Filter": {},
+      "AbortIncompleteMultipartUpload": {
+        "DaysAfterInitiation": 1
+      }
+    }
+  ]
+}
+```
+
+Additionally, if you choose to use a versioned s3 bucket you will need to fully remove deleted files (as the garbage collector will only add a delete marker), this can be done with an updated lifecycle policy:
+
+```json
+{
+  "Rules": [
+    {
+      "ID": "permanently-delete-after-30-days",
+      "Status": "Enabled",
+      "Filter": {
+        "Prefix": ""
+      },
+      "NoncurrentVersionExpiration": {
+        "NoncurrentDays": 30
+      },
+      "Expiration": {
+        "ExpiredObjectDeleteMarker": true
+      }
+    }
+  ]
+}
+```

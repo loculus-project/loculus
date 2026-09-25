@@ -56,7 +56,7 @@
         "noInput": {
           "groups": ["metadata"],
           "type": "boolean",
-          "description": "Whether a field with this name is expected as possible input, and so should be included in the metadata template and as a form field. (If set to true it will not be included)."
+          "description": "Whether a field with this name is expected as possible input, and so should be included in the metadata template and as a form field. (If set to true it will not be included). If set to true, the default nextclade preprocessing pipeline rejects submissions that provide a value for the field, except from the INSDC ingest group."
         },
         "notSearchable": {
           "groups": ["metadata"],
@@ -1857,6 +1857,12 @@
           "groups": ["general"],
           "default": false,
           "description": "If true, only base filename restrictions are enforced; the stricter character allowlist (alphanumerics, underscores, periods, hyphens) is not applied. Not officially supported and may result in unexpected behaviour."
+        },
+        "maxFileSizeBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "groups": ["general"],
+          "description": "The maximum allowed size, in bytes, of an individual uploaded file. Files exceeding this size are rejected by the website and by the backend for multipart uploads (note for single part uploads the default maximum size limit of 5GB cannot be modified and even if a lower `maxFileSizeBytes` threshold is configured it cannot be enforced for single part uploads). If unset, the website does not enforce a limit and multi-part uploads use the configured S3 service limit."
         }
       },
       "required": ["outputFileUrlType"],
@@ -1901,18 +1907,18 @@
             "endpoint": {
               "groups": ["s3"],
               "type": "string",
-              "default": "s3-<host value>",
-              "description": "The endpoint where S3 is running. Do not include a protocol prefix."
+              "default": "https://s3-<host value>",
+              "description": "The base URL of the S3-compatible service, including the protocol (e.g. https://). This is passed directly to the AWS SDK's endpoint override, which requires a scheme; a value without one will fail with 'The scheme of the endpoint override must not be null.' The backend addresses objects path-style (endpoint/bucket/key), so for AWS S3 use the regional endpoint rather than a bucket-specific virtual-hosted one, e.g. https://s3.eu-central-1.amazonaws.com for a bucket in eu-central-1. Ignored when runDevelopmentS3 is true: the dev S3 (MinIO) URL is generated automatically, scheme included."
             },
             "region": {
               "groups": ["s3"],
               "type": "string",
-              "description": "The region where the bucket is located."
+              "description": "The region where the bucket is located, e.g. eu-central-1 for AWS S3."
             },
             "bucket": {
               "groups": ["s3"],
               "type": "string",
-              "description": "The name of the bucket."
+              "description": "The name of the bucket, e.g. my-loculus-bucket for AWS S3. Do not include the arn:aws:s3::: prefix or any path - just the bucket name."
             }
           },
           "required": ["bucket"],

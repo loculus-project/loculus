@@ -1,4 +1,5 @@
 import { test as sequenceTest } from '../../fixtures/sequence.fixture';
+import { allowConsoleError } from '../../fixtures/console-warnings.fixture';
 import { test as groupTest } from '../../fixtures/group.fixture';
 import { expect } from '@playwright/test';
 import { SearchPage } from '../../pages/search.page';
@@ -6,6 +7,7 @@ import { ReviewPage } from '../../pages/review.page';
 import { RevisionPage } from '../../pages/revision.page';
 import { NavigationPage } from '../../pages/navigation.page';
 import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
+import { waitForUrlReportingAlerts } from '../../utils/navigation-helpers';
 import {
     CCHF_S_SEGMENT_FULL_SEQUENCE,
     createFastaContent,
@@ -55,7 +57,7 @@ sequenceTest(
         await reviewPage.viewSequences();
 
         const tabs = await reviewPage.getAvailableSequenceTabs();
-        expect(tabs).not.toContain('L (aligned)');
+        expect(tabs).not.toContain('L (reference-aligned)');
         expect(tabs).not.toContain('L (unaligned)');
 
         expect(tabs).toContain('S (unaligned)');
@@ -124,11 +126,34 @@ groupTest.describe('Bulk sequence revision', () => {
         await revisionPage.acceptTerms();
         await revisionPage.clickSubmit();
 
-        await expect(page).toHaveURL(/\/review/);
+        await waitForUrlReportingAlerts(page, '**/review', { timeout: 15_000 });
         await reviewPage.waitForZeroProcessing();
 
         const overview = await reviewPage.getReviewPageOverview();
         expect(overview.total).toBeGreaterThanOrEqual(SEQUENCES_TO_REVISE);
+
+        await groupTest.step(
+            'reject second revision before approval, error message displayed correctly',
+            async () => {
+                // This revision must fail; the browser logs the 422 itself.
+                allowConsoleError(groupTest, 'responded with a status of 422');
+
+                await revisionPage.goto(TEST_ORGANISM, groupId);
+                await revisionPage.uploadMetadataFile('revision_metadata.tsv', revisionMetadata);
+                await revisionPage.uploadSequenceFile('revised_sequences.fasta', fastaContent);
+                await revisionPage.acceptTerms();
+                await revisionPage.clickSubmit();
+
+                await expect(
+                    page.getByText(
+                        /The submitted file content was invalid: Accession versions are not in one of the states/,
+                    ),
+                ).toBeVisible();
+                await expect(
+                    page.getByText(/Received unexpected message from backend/),
+                ).toHaveCount(0);
+            },
+        );
     });
 });
 
