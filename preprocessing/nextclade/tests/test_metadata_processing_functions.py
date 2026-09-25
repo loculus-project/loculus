@@ -93,10 +93,10 @@ test_case_definitions = [
             "name_required": "name",
             "authors": "Smith9, Anna; Müller (Jr) & Co, Anna_Maria?",
         },
-        accession_id="22",
+        accession_id="23",
         expected_metadata={
             "name_required": "name",
-            "concatenated_string": "LOC_22.1",
+            "concatenated_string": "LOC_23.1",
             "required_collection_date": None,
             "authors": "Smith9, Anna; Müller (Jr) & Co, Anna_Maria?",
         },
