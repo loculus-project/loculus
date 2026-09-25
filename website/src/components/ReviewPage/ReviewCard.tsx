@@ -116,7 +116,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                     viewFiles={data && !notProcessed ? () => setFilesDialogOpen(true) : undefined}
                     filesEnabled={filesEnabled}
                     hasFiles={hasFiles}
-                    diffAccessionVersion={isRevision ? () => setDiffOpen((open) => !open) : undefined}
+                    viewMetadataChanges={isRevision ? () => setDiffOpen((open) => !open) : undefined}
                 />
             </div>
 
@@ -168,7 +168,7 @@ type ButtonBarProps = {
     viewFiles?: () => void;
     filesEnabled: boolean;
     hasFiles: boolean;
-    diffAccessionVersion?: () => void;
+    viewMetadataChanges?: () => void;
 };
 
 const ButtonBar: FC<ButtonBarProps> = ({
@@ -180,7 +180,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
     viewFiles,
     filesEnabled,
     hasFiles,
-    diffAccessionVersion,
+    viewMetadataChanges,
 }) => {
     const buttonBarClass = (disabled: boolean) =>
         `${disabled ? 'text-gray-300' : 'text-gray-500 hover:text-gray-900 hover:cursor-pointer'} inline-block text-xl`;
@@ -192,11 +192,11 @@ const ButtonBar: FC<ButtonBarProps> = ({
     return (
         <div className='flex mb-auto pt-3.5 items-center'>
             <div className='flex gap-x-4'>
-                {diffAccessionVersion && (
+                {viewMetadataChanges && (
                     <>
                         <Button
                             className={buttonBarClass(notProcessed)}
-                            onClick={diffAccessionVersion}
+                            onClick={viewMetadataChanges}
                             disabled={notProcessed}
                             aria-label={`View metadata changes for ${getAccessionVersionString(sequenceEntryStatus)}`}
                             data-tooltip-id={`metadata-diff-tooltip-${sequenceEntryStatus.accession}`}
