@@ -2,6 +2,7 @@ import logging
 import urllib.parse
 from collections import OrderedDict
 from dataclasses import dataclass
+from http import HTTPStatus
 
 import requests
 from pydantic import BaseModel, Field, ValidationError
@@ -17,6 +18,7 @@ from loculus_preprocessing.datatypes import (
     ProcessingAnnotation,
     RawProcessingResult,
     _internal_error_message,
+    processing_error,
     raw_internal_error,
 )
 
@@ -34,7 +36,7 @@ class RequestCache:
         self.cache: OrderedDict[str, requests.Response] = OrderedDict()
         self.max_size = max_size
         self.session = requests.Session()
-        retry = Retry(total=retries, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
+        retry = Retry(total=retries, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504])
         adapter = HTTPAdapter(max_retries=retry)
         self.session.mount("http://", adapter)
         self.session.mount("https://", adapter)
@@ -52,19 +54,24 @@ class RequestCache:
         if len(self.cache) > self.max_size:
             self.cache.popitem(last=False)
 
-    def get_or_fetch(self, url: str, timeout: int = 15) -> requests.Response:
+    def get_or_fetch(
+        self, url: str, timeout: int = 15, use_cache: bool = True
+    ) -> requests.Response:
         """
         Check if `url` already exists in the cache and return the cached Response if it does.
 
         If `url` is not in the cache, make the actual request (with timeout and retries).
         Add the Response to the cache (if status code in the 200s), and return the Response.
 
+        With `use_cache=False` the request is always made, and the cache is neither read nor
+        written to.
+
         The caller should wrap this in a try/except block and handle errors.
         """
-        response = self.get(url)
+        response = self.get(url) if use_cache else None
         if response is None:
             response = self.session.get(url, timeout=timeout)
-            if 200 <= response.status_code < 300:  # noqa: PLR2004
+            if use_cache and 200 <= response.status_code < 300:  # noqa: PLR2004
                 self.set(url, response)
         return response
 
@@ -203,17 +210,6 @@ class TaxonomyService:
         return RawProcessingResult(datum=common_name)
 
 
-@dataclass(frozen=True)
-class ExternalServices:
-    """External services available to processing functions.
-
-    Kept separate from `ProcessingContext` since these don't vary per accession, unlike
-    `ProcessingContext`'s fields.
-    """
-
-    taxonomy_service: TaxonomyService
-
-
 FileName = str
 
 
@@ -309,3 +305,70 @@ class FileProcessingService:
         if not internal_error:
             return ProcessingAnnotation([source], [source], message)
         return ProcessingAnnotation([source], [source], _internal_error_message(message))
+
+
+# Rarely, a bioproject XML can reach ~10 MB (e.g., PRJNA591860)
+# so keeping the cache small. Should still have high hit rate when
+# all submissions for a batch have the same project
+bioproject_cache = RequestCache(max_size=16)
+PROJECT_PREFIX = "PRJ"
+XML_PREFIXES = (
+    PROJECT_PREFIX,
+    "SAM",
+    "GCA",
+    "ERR",
+    "ERX",
+    "SRR",
+    "SRX",
+    "DRR",
+    "DRX",
+)
+
+
+class ENAVisibilityChecker:
+    """Used to check ENA visibility
+
+    Adapted from the ENAVisibilityChecker in
+    ena-submission/src/ena_deposition/check_external_visibility.py.
+    If anything changes in that class, check whether the update needs to
+    be applied here as well.
+    """
+
+    def __init__(
+        self,
+        timeout_seconds: int = 30,
+    ):
+        self.timeout_seconds = timeout_seconds
+
+    def check_visibility(self, accession: str) -> RawProcessingResult:
+        file_type = "xml" if accession.startswith(XML_PREFIXES) else "embl"
+        url = f"https://www.ebi.ac.uk/ena/browser/api/{file_type}/{accession}"
+        ena_error_message = (
+            f"unable to validate accession '{accession}': could not reach ENA, "
+            "please try resubmitting later"
+        )
+        try:
+            # Only cache bioprojects as they're what's likely to be shared across submissions
+            response = bioproject_cache.get_or_fetch(
+                url, timeout=self.timeout_seconds, use_cache=accession.startswith(PROJECT_PREFIX)
+            )
+        except requests.RequestException:
+            return processing_error(ena_error_message)
+
+        if response.status_code == HTTPStatus.OK:
+            return RawProcessingResult(datum=accession)
+        if response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
+            return processing_error(ena_error_message)
+        return processing_error(f"accession '{accession}' does not exist on ENA")
+
+
+@dataclass(frozen=True)
+class ExternalServices:
+    """External services available to processing functions.
+
+    Kept separate from `ProcessingContext` since these don't vary per accession, unlike
+    `ProcessingContext`'s fields.
+    """
+
+    taxonomy_service: TaxonomyService
+    ena_visibility_checker: ENAVisibilityChecker
