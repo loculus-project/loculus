@@ -114,7 +114,7 @@ export const FileUploadComponent = <F extends ProcessedFile>({
     }, [myFile, setMyFile]);
     return (
         <div
-            className={`flex flex-col ${small ? 'h-24' : 'h-40'} w-full rounded-lg border ${myFile ? 'border-hidden' : 'border-dashed border-gray-900/25'} ${isDragOver && !myFile ? 'bg-green-100' : ''} relative`}
+            className={`flex flex-col ${small ? 'h-24' : 'h-40'} w-full rounded-lg border ${myFile ? 'border-hidden' : 'border-dashed border-gray-900/25'} ${isDragOver ? 'bg-green-100' : ''} relative`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
