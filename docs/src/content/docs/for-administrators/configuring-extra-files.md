@@ -240,3 +240,25 @@ To avoid accumulating these orphaned parts, configure a bucket lifecycle rule wi
   ]
 }
 ```
+
+Additionally, if you choose to use a versioned s3 bucket you will need to fully remove deleted files (as the garbage collector will only add a delete marker), this can be done with an updated lifecycle policy:
+
+```json
+{
+  "Rules": [
+    {
+      "ID": "permanently-delete-after-30-days",
+      "Status": "Enabled",
+      "Filter": {
+        "Prefix": ""
+      },
+      "NoncurrentVersionExpiration": {
+        "NoncurrentDays": 30
+      },
+      "Expiration": {
+        "ExpiredObjectDeleteMarker": true
+      }
+    }
+  ]
+}
+```
