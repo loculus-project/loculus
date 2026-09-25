@@ -17,8 +17,7 @@ defaults:
     shell: micromamba-shell {0}
     working-directory: taxonomy/ncbi_tax_download
 jobs:
-  checkFormat:
-    name: Check formatting
+  taxonomydb-check-format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -30,8 +29,7 @@ jobs:
           cache-environment: true
       - name: Run ruff format check
         run: ruff check . --fix --diff
-  lint:
-    name: Lint code
+  taxonomydb-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -43,8 +41,7 @@ jobs:
           cache-environment: true
       - name: Run ruff check
         run: ruff check .
-  unitTests:
-    name: Unit Tests
+  taxonomydb-unit-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
