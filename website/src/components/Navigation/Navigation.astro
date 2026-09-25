@@ -23,7 +23,7 @@ const siteName = websiteConfig.name;
 
 const isLoggedIn = Astro.locals.session?.isLoggedIn ?? false;
 
-const loginUrl = getLoginUrl(Astro.url.toString());
+const loginUrl = getLoginUrl(Astro.url.toString(), Astro.url.origin);
 
 const topNavigationItems = navigationItems.top(isLoggedIn, loginUrl);
 const accessionPrefix = getWebsiteConfig().accessionPrefix;

@@ -314,7 +314,7 @@ const redirectToAuth = (context: APIContext) => {
     const redirectUrl = context.url.toString();
 
     logger.debug(`Redirecting to auth with redirect url: ${redirectUrl}`);
-    const authUrl = new URL(getLoginUrl(redirectUrl), context.url.origin).toString();
+    const authUrl = new URL(getLoginUrl(redirectUrl, context.url.origin), context.url.origin).toString();
 
     deleteCookie(context);
     return createRedirectWithModifiableHeaders(authUrl);

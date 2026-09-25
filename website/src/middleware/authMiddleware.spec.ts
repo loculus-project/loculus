@@ -95,9 +95,7 @@ describe('OIDC authentication middleware', () => {
         const response = (await authMiddleware(context, next)) as Response;
 
         expect(response.status).toBe(302);
-        expect(response.headers.get('location')).toBe(
-            'https://loculus.test/auth/login?returnTo=https%3A%2F%2Floculus.test%2Fuser',
-        );
+        expect(response.headers.get('location')).toBe('https://loculus.test/auth/login?returnTo=%2Fuser');
         expect(next).not.toHaveBeenCalled();
     });
 
@@ -121,7 +119,9 @@ describe('OIDC authentication middleware', () => {
             expect(response.status).toBe(302);
             expect(location.origin).toBe(requestedUrl.origin);
             expect(location.pathname).toBe('/auth/login');
-            expect(location.searchParams.get('returnTo')).toBe(requestedUrl.toString());
+            expect(new URL(location.searchParams.get('returnTo')!, requestedUrl.origin).toString()).toBe(
+                requestedUrl.toString(),
+            );
             expect(callbackParams).not.toHaveBeenCalled();
             expect(callback).not.toHaveBeenCalled();
             expect(next).not.toHaveBeenCalled();

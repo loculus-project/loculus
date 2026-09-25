@@ -17,7 +17,7 @@ const organisms = getConfiguredOrganisms();
 const websiteConfig = getWebsiteConfig();
 const databaseName = websiteConfig.name;
 const dateFieldForGroupGraph = websiteConfig.dateFieldForGroupGraph;
-const loginUrl = getLoginUrl(Astro.url.toString());
+const loginUrl = getLoginUrl(Astro.url.toString(), Astro.url.origin);
 
 const continueSubmissionOrganism = Astro.url.searchParams.get('continueSubmissionOrganism');
 
