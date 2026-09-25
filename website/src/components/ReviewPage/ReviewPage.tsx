@@ -45,8 +45,7 @@ type ReviewPageProps = {
     organism: string;
     group: Group;
     accessToken: string;
-    metadata: Metadata[];
-    metadataDisplayNames: Map<string, string>;
+    metadataSchema: Metadata[];
     outputFileCategories?: FileCategory[];
     referenceGenomesInfo: ReferenceGenomesInfo;
 };
@@ -85,8 +84,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
     organism,
     group,
     accessToken,
-    metadata,
-    metadataDisplayNames,
+    metadataSchema,
     outputFileCategories,
     referenceGenomesInfo,
 }) => {
@@ -352,8 +350,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                     <div key={sequence.accession} data-testid={`review-card-${sequence.submissionId}`}>
                         <ReviewCard
                             sequenceEntryStatus={sequence}
-                            metadata={metadata}
-                            metadataDisplayNames={metadataDisplayNames}
+                            metadataSchema={metadataSchema}
                             approveAccessionVersion={() =>
                                 displayConfirmationDialog({
                                     dialogText: `Are you sure you want to approve ${getAccessionVersionString(sequence)}?`,

@@ -1,4 +1,4 @@
-import { type FC, useState, useRef, useEffect } from 'react';
+import { type FC, useState, useRef, useEffect, useMemo } from 'react';
 
 import { FilesDialog } from './FilesDialog.tsx';
 import { RevisionDiff } from './RevisionDiff.tsx';
@@ -41,8 +41,7 @@ import TickOutline from '~icons/mdi/tick-outline';
 
 type ReviewCardProps = {
     sequenceEntryStatus: SequenceEntryStatus;
-    metadata: Metadata[];
-    metadataDisplayNames: Map<string, string>;
+    metadataSchema: Metadata[];
     deleteAccessionVersion: () => void;
     approveAccessionVersion: () => void;
     editAccessionVersion: () => void;
@@ -55,8 +54,7 @@ type ReviewCardProps = {
 
 export const ReviewCard: FC<ReviewCardProps> = ({
     sequenceEntryStatus,
-    metadata,
-    metadataDisplayNames,
+    metadataSchema,
     approveAccessionVersion,
     deleteAccessionVersion,
     editAccessionVersion,
@@ -70,6 +68,10 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     const [isFilesDialogOpen, setFilesDialogOpen] = useState(false);
     const isRevision = sequenceEntryStatus.version > 1 && !sequenceEntryStatus.isRevocation;
     const [isDiffOpen, setDiffOpen] = useState(isRevision);
+    const metadataDisplayNames = useMemo(
+        () => new Map(metadataSchema.map(({ name, displayName }) => [name, displayName ?? name])),
+        [metadataSchema],
+    );
     const { isLoading, data } = useGetMetadataAndAnnotations(organism, clientConfig, accessToken, sequenceEntryStatus);
     const filesEnabled = outputFileCategories !== undefined && outputFileCategories.length > 0;
     const hasFiles = Object.entries(data?.processedData.files ?? {}).length > 0;
@@ -131,7 +133,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
             {isDiffOpen && data !== undefined && (
                 <RevisionDiff
                     current={data}
-                    metadata={metadata}
+                    metadataSchema={metadataSchema}
                     organism={organism}
                     clientConfig={clientConfig}
                     accessToken={accessToken}

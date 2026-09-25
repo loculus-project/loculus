@@ -2,7 +2,7 @@
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import { ReviewPage } from '../../../../components/ReviewPage/ReviewPage';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import { getMetadataDisplayNames, getReferenceGenomes, getRuntimeConfig, getSchema } from '../../../../config';
+import { getReferenceGenomes, getRuntimeConfig, getSchema } from '../../../../config';
 import { type ClientConfig } from '../../../../types/runtimeConfig';
 import { getAccessToken } from '../../../../utils/getAccessToken';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
@@ -20,7 +20,6 @@ if (!cleanedOrganism) {
 const schema = getSchema(cleanedOrganism.key);
 
 const clientConfig: ClientConfig = getRuntimeConfig().public;
-const metadataDisplayNames: Map<string, string> = getMetadataDisplayNames(organism);
 const referenceGenomesInfo = getReferenceGenomes(organism);
 ---
 
@@ -33,8 +32,7 @@ const referenceGenomesInfo = getReferenceGenomes(organism);
                     organism={organism}
                     group={group}
                     accessToken={getAccessToken(Astro.locals.session)!}
-                    metadata={schema.metadata}
-                    metadataDisplayNames={metadataDisplayNames}
+                    metadataSchema={schema.metadata}
                     outputFileCategories={schema.files}
                     referenceGenomesInfo={referenceGenomesInfo}
                     client:load

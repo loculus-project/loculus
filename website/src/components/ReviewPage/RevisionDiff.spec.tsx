@@ -13,7 +13,7 @@ import {
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
 } from '../../types/referenceGenomes.spec';
 
-const metadata: Metadata[] = [
+const metadataSchema: Metadata[] = [
     { name: 'authors', type: 'authors', displayName: 'Authors', header: 'Authors' },
     { name: 'country', type: 'string', displayName: 'Country', header: 'Nucleotide mutations' },
 ];
@@ -72,8 +72,7 @@ function renderCard(status = revision, referenceGenomesInfo = SINGLE_SEG_SINGLE_
         <QueryClientProvider client={queryClient}>
             <ReviewCard
                 sequenceEntryStatus={status}
-                metadata={metadata}
-                metadataDisplayNames={new Map()}
+                metadataSchema={metadataSchema}
                 clientConfig={testConfig.public}
                 organism={testOrganism}
                 accessToken={testAccessToken}
