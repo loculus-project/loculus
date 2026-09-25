@@ -1314,6 +1314,7 @@ class SubmissionDatabaseService(
         ) {
             it[submittedDataColumn] = compressionService
                 .compressSequencesInSubmittedData(editedSequenceEntryData.data, organism)
+            it[archiveOfSubmittedDataColumn] = compressionService.compressSequencesInSubmittedData(editedSequenceEntryData.data, organism)
         }
 
         SequenceEntriesPreprocessedDataTable.deleteWhere {
