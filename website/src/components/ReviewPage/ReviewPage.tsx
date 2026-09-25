@@ -21,7 +21,7 @@ import {
     type SequenceEntryStatus,
     warningsProcessingResult,
 } from '../../types/backend.ts';
-import type { FileCategory } from '../../types/config.ts';
+import type { FileCategory, Metadata } from '../../types/config.ts';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
@@ -45,7 +45,7 @@ type ReviewPageProps = {
     organism: string;
     group: Group;
     accessToken: string;
-    metadataDisplayNames: Map<string, string>;
+    metadataSchema: Metadata[];
     outputFileCategories?: FileCategory[];
     referenceGenomesInfo: ReferenceGenomesInfo;
 };
@@ -84,7 +84,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
     organism,
     group,
     accessToken,
-    metadataDisplayNames,
+    metadataSchema,
     outputFileCategories,
     referenceGenomesInfo,
 }) => {
@@ -350,7 +350,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                     <div key={sequence.accession} data-testid={`review-card-${sequence.submissionId}`}>
                         <ReviewCard
                             sequenceEntryStatus={sequence}
-                            metadataDisplayNames={metadataDisplayNames}
+                            metadataSchema={metadataSchema}
                             approveAccessionVersion={() =>
                                 displayConfirmationDialog({
                                     dialogText: `Are you sure you want to approve ${getAccessionVersionString(sequence)}?`,
