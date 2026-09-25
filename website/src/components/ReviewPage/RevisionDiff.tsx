@@ -126,7 +126,9 @@ export function RevisionDiff({
                     />
                 </label>
             </div>
-            {metadataComparison.changedFields.length === 0 && <p className='text-gray-600 mb-2'>No metadata changes.</p>}
+            {metadataComparison.changedFields.length === 0 && (
+                <p className='text-gray-600 mb-2'>No metadata changes.</p>
+            )}
             {(comparison.changedFields.length > 0 || comparison.noisyFields.length > 0 || !hideUnchangedFields) && (
                 <DiffTable
                     comparison={comparison}
