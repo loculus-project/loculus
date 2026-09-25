@@ -5,7 +5,14 @@ import { http, HttpResponse } from 'msw';
 import { expect, test, vi } from 'vitest';
 
 import { ReviewCard } from './ReviewCard';
-import { defaultReviewData, testAccessToken, testConfig, testOrganism, testServer } from '../../../vitest.setup';
+import {
+    defaultReviewData,
+    mockRequest,
+    testAccessToken,
+    testConfig,
+    testOrganism,
+    testServer,
+} from '../../../vitest.setup';
 import { processedStatus, receivedStatus, type SequenceEntryStatus } from '../../types/backend';
 import type { Metadata } from '../../types/config';
 import {
@@ -36,6 +43,19 @@ function mockVersions(failPrevious = false) {
         sequences: { 1: { main: 'ACGT' }, 2: { main: 'ACGT' } } as Record<string, Record<string, string | null>>,
         failPrevious,
     };
+    mockRequest.lapis.details(200, {
+        info: { dataVersion: '1' },
+        data: [
+            {
+                accession: 'LOC_TEST',
+                version: 1,
+                accessionVersion: 'LOC_TEST.1',
+                versionStatus: 'LATEST_VERSION',
+                isRevocation: false,
+                submittedAtTimestamp: 0,
+            },
+        ],
+    });
     const requestedVersions = vi.fn();
     testServer.use(
         http.get(

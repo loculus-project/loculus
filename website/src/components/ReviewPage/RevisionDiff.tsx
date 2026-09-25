@@ -1,9 +1,10 @@
-import { isAxiosError } from 'axios';
 import { useState } from 'react';
 
-import { backendClientHooks } from '../../services/serviceHooks';
+import { getLapisUrl } from '../../config';
+import { backendClientHooks, useSequenceEntryHistory } from '../../services/serviceHooks';
 import type { SequenceEntryToEdit } from '../../types/backend';
 import type { Metadata } from '../../types/config';
+import { getLatestAccessionVersionForRevision } from '../../types/lapis';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
@@ -75,25 +76,26 @@ export function RevisionDiff({
     referenceGenomesInfo,
 }: RevisionDiffProps) {
     const [hideUnchangedFields, setHideUnchangedFields] = useState(true);
-    const [previousVersion, setPreviousVersion] = useState(current.version - 1);
+    const history = useSequenceEntryHistory(getLapisUrl(clientConfig, organism), current.accession);
+    const previousVersion = history.data ? getLatestAccessionVersionForRevision(history.data)?.version : undefined;
     const previous = backendClientHooks(clientConfig).useGetDataToEdit(
         {
             headers: createAuthorizationHeader(accessToken),
-            params: { organism, accession: current.accession, version: previousVersion },
+            params: { organism, accession: current.accession, version: previousVersion! },
         },
-        { retry: false },
+        { retry: false, enabled: previousVersion !== undefined },
     );
-    if (isAxiosError(previous.error) && previous.error.response?.status === 422 && previousVersion > 1) {
-        setPreviousVersion(previousVersion - 1);
-    }
 
     if (previous.data === undefined) {
         return (
             <div className='m-2 text-sm'>
-                {previous.isError && !previous.isFetching ? (
+                {history.isError || (previous.isError && !previous.isFetching) ? (
                     <p role='alert' className='text-red-600'>
                         The previous version could not be loaded. It may be revoked or unavailable.{' '}
-                        <Button className='underline' onClick={() => void previous.refetch()}>
+                        <Button
+                            className='underline'
+                            onClick={() => void (history.isError ? history.refetch() : previous.refetch())}
+                        >
                             Retry
                         </Button>
                     </p>
@@ -136,7 +138,7 @@ export function RevisionDiff({
             {(comparison.changedFields.length > 0 || comparison.noisyFields.length > 0 || !hideUnchangedFields) && (
                 <DiffTable
                     comparison={comparison}
-                    version1={previousVersion}
+                    version1={previous.data.version}
                     version2={current.version}
                     hideUnchangedFields={hideUnchangedFields}
                 />
