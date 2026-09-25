@@ -750,12 +750,16 @@ class ProcessingFunctions:
         external_services: ExternalServices,
     ) -> RawProcessingResult:
         authors = input_data["authors"]
+        allow_all_ascii = context.is_insdc_ingest_group
 
+        allowed_characters = (
+            "ASCII characters" if allow_all_ascii else "ASCII alphabetical characters A-Z"
+        )
         author_format_description = (
             "Please ensure that "
             "authors are separated by semi-colons. Each author's name should be in the format "
             "'last name, first name;'. Last name(s) is mandatory, a comma is mandatory to "
-            "separate first names/initials from last name. Only ASCII alphabetical characters A-Z "
+            f"separate first names/initials from last name. Only {allowed_characters} "
             "are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.;' "
             "or 'Xu,;' if the first name is unknown."
         )
@@ -766,7 +770,6 @@ class ProcessingFunctions:
         if errors or warnings:
             return RawProcessingResult(warnings=warnings, errors=errors)
 
-        allow_all_ascii = context.is_insdc_ingest_group
         if valid_authors(authors, allow_all_ascii):
             formatted_authors = format_authors(authors)
             if warn_potentially_invalid_authors(authors):
