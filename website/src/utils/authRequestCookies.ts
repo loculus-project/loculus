@@ -113,12 +113,11 @@ export function addAuthRequest(
 }
 
 export function consumeAuthRequest(cookies: AstroCookies, state: string | undefined): AuthRequest | undefined {
-    const store = activeTransactions(unseal(cookies.get(AUTH_TRANSACTIONS_COOKIE)?.value));
     if (state === undefined) {
-        writeStore(cookies, store);
         return undefined;
     }
 
+    const store = activeTransactions(unseal(cookies.get(AUTH_TRANSACTIONS_COOKIE)?.value));
     const transaction = store[state];
     delete store[state];
     writeStore(cookies, store);
