@@ -689,7 +689,15 @@ accepted_authors = {
     "'t Hooft, Gerard": "'t Hooft, Gerard",
     "Tandoc, A. 3rd": "Tandoc, A. 3rd",
 }
-not_accepted_authors = [
+# Only accepted for the INSDC ingest group
+accepted_authors_all_ascii = [
+    "Nebenf##hr, M.",
+    "Lee Cynthia K, [. U. S. ].'; 'Monath Thomas P, [. U. S. ].';",
+    "An?elic Dmitrovic,B.",
+    "Dall&aposAmico, L.",
+    "Smith9, Anna;",
+]
+not_accepted_authors_all_ascii = [
     ";",
     ",;",
     " ,;",
@@ -698,25 +706,9 @@ not_accepted_authors = [
     "Anna Maria Smith; Jose X. Perez",
     "Anna Maria Smith;",
     "Anna Maria Smith",
-    "Smith9, Anna;",
-    "Anna Smith, Cameron Tucker, and Jose Perez",
-    "Count4th, EwanMcGregor, Count4th",
-]
-# Only accepted for the INSDC ingest group
-accepted_authors_all_ascii = [
-    "Nebenf##hr, M.",
-    "Lee Cynthia K, [. U. S. ].'; 'Monath Thomas P, [. U. S. ].';",
-    "An?elic Dmitrovic,B.",
-    "Dall&aposAmico, L.",
-]
-not_accepted_authors_all_ascii = [
-    ";",
-    ",;",
-    " ,;",
-    ",X.;Yu,X.",
-    "Anna Maria Smith",
     "Smith, Anna, Maria",
     "Anna Smith, Cameron Tucker, and Jose Perez",
+    "Count4th, EwanMcGregor, Count4th",
 ]
 
 RAW_READS_FILES = {
@@ -1244,7 +1236,7 @@ def test_valid_authors() -> None:
         if valid_authors(author) is not True:
             msg = f"{author} should be accepted but is not."
             raise AssertionError(msg)
-    for author in not_accepted_authors:
+    for author in [*accepted_authors_all_ascii, *not_accepted_authors_all_ascii]:
         if valid_authors(author) is not False:
             msg = f"{author} should not be accepted but is."
             raise AssertionError(msg)
