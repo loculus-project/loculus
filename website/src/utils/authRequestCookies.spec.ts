@@ -129,6 +129,14 @@ describe('OIDC authentication transaction store', () => {
         expect(await consumeAuthRequest(cookies, 'state')).toBeDefined();
     });
 
+    test('rejects a genuine cookie whose authentication tag was truncated', async () => {
+        await addAuthRequest(cookies, 'state', 'nonce', 'verifier', 'https://loculus.test/state');
+        const parts = values.get(AUTH_TRANSACTIONS_COOKIE)!.split('.');
+        const truncatedTag = Buffer.from(parts[4], 'base64url').subarray(0, 8).toString('base64url');
+        values.set(AUTH_TRANSACTIONS_COOKIE, [...parts.slice(0, 4), truncatedTag].join('.'));
+        expect(await consumeAuthRequest(cookies, 'state')).toBeUndefined();
+    });
+
     test.each([
         ['garbage', () => Promise.resolve('not-a-jwe')],
         ['the pre-jose v1 format', () => Promise.resolve('v1.aaaa.bbbb.cccc')],

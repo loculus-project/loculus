@@ -49,7 +49,7 @@ async function unseal(value: string | undefined): Promise<AuthRequestStore> {
             keyManagementAlgorithms: ['dir'],
             contentEncryptionAlgorithms: ['A256GCM'],
         });
-        return payload.transactions as AuthRequestStore;
+        return (payload.transactions as AuthRequestStore | undefined) ?? {};
     } catch {
         return {};
     }
