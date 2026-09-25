@@ -85,10 +85,13 @@ function renderCard(status = revision, referenceGenomesInfo = SINGLE_SEG_SINGLE_
     );
 }
 
-test('shows the metadata diff inline by default and lets the user collapse it', async () => {
-    const { requestedVersions } = mockVersions();
+test('shows the metadata diff on request and fetches the baseline only then', async () => {
+    const { state, requestedVersions } = mockVersions();
     const user = userEvent.setup();
     const card = renderCard();
+    await card.findByText(state.authors);
+    expect(requestedVersions).not.toHaveBeenCalledWith('1', expect.anything());
+    await user.click(card.getByRole('button', diffButton));
     expect(await card.findByText('Old author')).toBeVisible();
     expect(requestedVersions).toHaveBeenCalledWith('1', `Bearer ${testAccessToken}`);
     expect(card.getByText(/Nucleotide sequence/)).toHaveTextContent('Nucleotide sequence: unchanged');
@@ -99,14 +102,13 @@ test('shows the metadata diff inline by default and lets the user collapse it', 
     expect(card.queryByRole('checkbox', { name: 'Hide shared substitutions/indels' })).not.toBeInTheDocument();
     await user.click(card.getByRole('button', diffButton));
     expect(card.queryByRole('table')).not.toBeInTheDocument();
-    await user.click(card.getByRole('button', diffButton));
-    expect(card.getByRole('table')).toBeVisible();
 });
 
 test('shows an unavailable baseline as an error and lets the user retry', async () => {
     const { state } = mockVersions(true);
     const user = userEvent.setup();
     const card = renderCard();
+    await user.click(await card.findByRole('button', diffButton));
     expect(await card.findByRole('alert')).toHaveTextContent('The previous version could not be loaded');
     expect(card.queryByRole('table')).not.toBeInTheDocument();
     state.failPrevious = false;
@@ -118,7 +120,9 @@ test('reports sequence changes per segment for multi-segmented organisms', async
     const { state } = mockVersions();
     // eslint-disable-next-line @typescript-eslint/naming-convention
     state.sequences = { 1: { S: 'AAA', L: 'CCC' }, 2: { S: 'AAA', L: null } };
+    const user = userEvent.setup();
     const card = renderCard(revision, MULTI_SEG_SINGLE_REF_REFERENCEGENOMES);
+    await user.click(await card.findByRole('button', diffButton));
     expect(await card.findByText(/Segment S/)).toHaveTextContent('Segment S: unchanged');
     expect(card.getByText(/Segment L/)).toHaveTextContent('Segment L: changed');
     expect(card.queryByText(/Nucleotide sequence/)).not.toBeInTheDocument();
@@ -127,7 +131,10 @@ test('reports sequence changes per segment for multi-segmented organisms', async
 test('shows an explicit empty state for identical metadata', async () => {
     const { state } = mockVersions();
     state.authors = 'Old author';
-    expect(await renderCard().findByText('No metadata changes.')).toBeVisible();
+    const user = userEvent.setup();
+    const card = renderCard();
+    await user.click(await card.findByRole('button', diffButton));
+    expect(await card.findByText('No metadata changes.')).toBeVisible();
 });
 
 test.each([

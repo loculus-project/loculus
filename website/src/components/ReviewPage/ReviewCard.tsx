@@ -67,7 +67,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     const [isSequencesDialogOpen, setSequencesDialogOpen] = useState(false);
     const [isFilesDialogOpen, setFilesDialogOpen] = useState(false);
     const isRevision = sequenceEntryStatus.version > 1 && !sequenceEntryStatus.isRevocation;
-    const [isDiffOpen, setDiffOpen] = useState(isRevision);
+    const [isDiffOpen, setDiffOpen] = useState(false);
     const metadataDisplayNames = useMemo(
         () => new Map(metadataSchema.map(({ name, displayName }) => [name, displayName ?? name])),
         [metadataSchema],
