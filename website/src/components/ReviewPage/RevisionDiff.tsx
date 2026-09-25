@@ -26,30 +26,8 @@ type RevisionDiffProps = {
 };
 
 const SEQUENCES_HEADER = 'Sequences';
-const MAX_LISTED_CHANGES = 20;
 
 type ProcessedData = SequenceEntryToEdit['processedData'];
-
-function describeChanges(name: string, previous: ProcessedData, current: ProcessedData) {
-    const before = previous.alignedNucleotideSequences[name];
-    const after = current.alignedNucleotideSequences[name];
-    if (typeof before !== 'string' || typeof after !== 'string' || before.length !== after.length) {
-        return 'sequence changed';
-    }
-    const changes: string[] = [];
-    for (let i = 0; i < after.length; i++) {
-        if (after[i] !== before[i]) changes.push(`${before[i]}${i + 1}${after[i]}`);
-    }
-    const parts: string[] = [];
-    if (changes.length > 0) {
-        const listed = changes.length <= MAX_LISTED_CHANGES ? `: ${changes.join(', ')}` : '';
-        parts.push(`${changes.length} position${changes.length === 1 ? '' : 's'} changed${listed}`);
-    }
-    if (String(previous.nucleotideInsertions[name] ?? []) !== String(current.nucleotideInsertions[name] ?? [])) {
-        parts.push('insertions changed');
-    }
-    return parts.length > 0 ? parts.join(', ') : 'sequence changed';
-}
 
 function compareNucleotideSequences(
     previous: ProcessedData,
@@ -79,7 +57,7 @@ function compareNucleotideSequences(
                 label,
                 header: SEQUENCES_HEADER,
                 entry1: entry(before[name]),
-                entry2: entry(after[name], hasChanged ? describeChanges(name, previous, current) : undefined),
+                entry2: entry(after[name], hasChanged ? 'sequence changed' : undefined),
                 hasChanged,
                 isNoisy: false,
             };

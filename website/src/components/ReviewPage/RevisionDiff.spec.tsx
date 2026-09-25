@@ -58,7 +58,6 @@ function mockVersions(failPrevious = false) {
                             country: 'Switzerland',
                         },
                         unalignedNucleotideSequences: state.sequences[String(params.version)],
-                        alignedNucleotideSequences: state.sequences[String(params.version)],
                     },
                 });
             },
@@ -130,7 +129,7 @@ test('reports sequence changes per segment for multi-segmented organisms', async
     expect(card.getByRole('row', { name: 'Segment S 3 nt 3 nt' })).toBeVisible();
 });
 
-test('lists the changed positions of a same-length sequence edit', async () => {
+test('flags a same-length sequence edit as changed', async () => {
     const { state } = mockVersions();
     state.authors = 'Old author';
     state.sequences[2] = { main: 'ACGA' };
@@ -138,7 +137,7 @@ test('lists the changed positions of a same-length sequence edit', async () => {
     const card = renderCard();
     await user.click(await card.findByRole('button', diffButton));
     expect(await card.findByText('No metadata changes.')).toBeVisible();
-    expect(card.getByRole('row', { name: 'Nucleotide sequence 4 nt 4 nt, 1 position changed: T4A' })).toBeVisible();
+    expect(card.getByRole('row', { name: 'Nucleotide sequence 4 nt 4 nt, sequence changed' })).toBeVisible();
 });
 
 test('shows an explicit empty state for identical metadata', async () => {
