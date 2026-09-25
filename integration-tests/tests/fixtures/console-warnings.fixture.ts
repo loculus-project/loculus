@@ -18,10 +18,16 @@ export const test = base.extend({
                     'has been externalized for browser compatibility.',
                 ];
 
+                // Keycloak's login theme CSS references a font Keycloak itself 404s on
+                const harmlessUrls = [
+                    '/resources-common/node_modules/patternfly/dist/fonts/OpenSans-Light-webfont.',
+                ];
+
                 // A test that must provoke a failed request annotates itself: the browser logs
                 // "Failed to load resource" for any non-2xx response, which no code here emits.
                 const isHarmless =
                     harmlessMessages.some((harmless) => messageText.includes(harmless)) ||
+                    harmlessUrls.some((harmless) => msg.location().url.includes(harmless)) ||
                     testInfo.annotations.some(
                         (annotation) =>
                             annotation.type === 'allow-console-error' &&
