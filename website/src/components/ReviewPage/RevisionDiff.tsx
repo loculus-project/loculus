@@ -8,8 +8,10 @@ import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { lapisNameToDisplayName } from '../../utils/sequenceTypeHelpers';
 import { getMetadataTableData } from '../SequenceDetailsPage/getMetadataTableData';
+import type { TableDataEntry } from '../SequenceDetailsPage/types';
 import { DiffTable } from '../VersionDiff/DiffTable';
 import { compareVersionData } from '../VersionDiff/compareVersions';
+import type { FieldComparison } from '../VersionDiff/types';
 import { Button } from '../common/Button';
 import { Checkbox } from '../common/Checkbox';
 import { Spinner } from '../common/Spinner';
@@ -23,14 +25,65 @@ type RevisionDiffProps = {
     referenceGenomesInfo: ReferenceGenomesInfo;
 };
 
+const SEQUENCES_HEADER = 'Sequences';
+const MAX_LISTED_CHANGES = 20;
+
+type ProcessedData = SequenceEntryToEdit['processedData'];
+
+function describeChanges(name: string, previous: ProcessedData, current: ProcessedData) {
+    const before = previous.alignedNucleotideSequences[name];
+    const after = current.alignedNucleotideSequences[name];
+    if (typeof before !== 'string' || typeof after !== 'string' || before.length !== after.length) {
+        return 'sequence changed';
+    }
+    const changes: string[] = [];
+    for (let i = 0; i < after.length; i++) {
+        if (after[i] !== before[i]) changes.push(`${before[i]}${i + 1}${after[i]}`);
+    }
+    const parts: string[] = [];
+    if (changes.length > 0) {
+        const listed = changes.length <= MAX_LISTED_CHANGES ? `: ${changes.join(', ')}` : '';
+        parts.push(`${changes.length} position${changes.length === 1 ? '' : 's'} changed${listed}`);
+    }
+    if (String(previous.nucleotideInsertions[name] ?? []) !== String(current.nucleotideInsertions[name] ?? [])) {
+        parts.push('insertions changed');
+    }
+    return parts.length > 0 ? parts.join(', ') : 'sequence changed';
+}
+
 function compareNucleotideSequences(
-    previous: Record<string, string | null>,
-    current: Record<string, string | null>,
+    previous: ProcessedData,
+    current: ProcessedData,
     displayNames: Map<string, string | undefined>,
-) {
-    return Object.keys({ ...previous, ...current })
-        .filter((name) => (previous[name] ?? current[name] ?? null) !== null)
-        .map((name) => ({ name, label: displayNames.get(name), changed: previous[name] !== current[name] }));
+): FieldComparison[] {
+    const before = previous.unalignedNucleotideSequences;
+    const after = current.unalignedNucleotideSequences;
+    return Object.keys({ ...before, ...after })
+        .filter((name) => (before[name] ?? after[name] ?? null) !== null)
+        .map((name) => {
+            const displayName = displayNames.get(name);
+            const label = displayName === undefined ? 'Nucleotide sequence' : `Segment ${displayName}`;
+            const hasChanged = before[name] !== after[name];
+            const entry = (sequence: string | null | undefined, changes?: string): TableDataEntry | null =>
+                typeof sequence === 'string'
+                    ? {
+                          name,
+                          label,
+                          header: SEQUENCES_HEADER,
+                          value: `${sequence.length} nt${changes === undefined ? '' : `, ${changes}`}`,
+                          type: { kind: 'metadata', metadataType: 'string' },
+                      }
+                    : null;
+            return {
+                name: `sequence_${name}`,
+                label,
+                header: SEQUENCES_HEADER,
+                entry1: entry(before[name]),
+                entry2: entry(after[name], hasChanged ? describeChanges(name, previous, current) : undefined),
+                hasChanged,
+                isNoisy: false,
+            };
+        });
 }
 
 export function RevisionDiff({
@@ -68,40 +121,35 @@ export function RevisionDiff({
         );
     }
 
-    const comparison = compareVersionData(
+    const metadataComparison = compareVersionData(
         { tableData: getMetadataTableData(metadataSchema, previous.data.processedData.metadata) },
         { tableData: getMetadataTableData(metadataSchema, current.processedData.metadata) },
     );
-    const sequenceChanges = compareNucleotideSequences(
-        previous.data.processedData.unalignedNucleotideSequences,
-        current.processedData.unalignedNucleotideSequences,
+    const sequenceComparison = compareNucleotideSequences(
+        previous.data.processedData,
+        current.processedData,
         lapisNameToDisplayName(referenceGenomesInfo),
     );
+    const comparison = {
+        ...metadataComparison,
+        changedFields: [...metadataComparison.changedFields, ...sequenceComparison.filter((f) => f.hasChanged)],
+        unchangedFields: [...metadataComparison.unchangedFields, ...sequenceComparison.filter((f) => !f.hasChanged)],
+    };
 
     return (
         <div className='m-2 text-sm'>
-            <div className='flex flex-wrap items-center gap-2 mb-2'>
-                <ul className='text-gray-600'>
-                    {sequenceChanges.map(({ name, label, changed }) => (
-                        <li key={name}>
-                            {label === undefined ? 'Nucleotide sequence' : `Segment ${label}`}:{' '}
-                            <span className={changed ? 'font-medium text-amber-700' : undefined}>
-                                {changed ? 'changed' : 'unchanged'}
-                            </span>
-                        </li>
-                    ))}
-                </ul>
-                <label className='ml-auto flex items-center gap-2 cursor-pointer'>
-                    <span>Hide unchanged fields ({comparison.unchangedFields.length})</span>
-                    <Checkbox
-                        size='sm'
-                        aria-label='Hide unchanged fields'
-                        checked={hideUnchangedFields}
-                        onChange={(event) => setHideUnchangedFields(event.target.checked)}
-                    />
-                </label>
-            </div>
-            {comparison.changedFields.length === 0 && <p className='text-gray-600 mb-2'>No metadata changes.</p>}
+            <label className='flex justify-end items-center gap-2 mb-2 cursor-pointer'>
+                <span>Hide unchanged fields ({comparison.unchangedFields.length})</span>
+                <Checkbox
+                    size='sm'
+                    aria-label='Hide unchanged fields'
+                    checked={hideUnchangedFields}
+                    onChange={(event) => setHideUnchangedFields(event.target.checked)}
+                />
+            </label>
+            {metadataComparison.changedFields.length === 0 && (
+                <p className='text-gray-600 mb-2'>No metadata changes.</p>
+            )}
             {(comparison.changedFields.length > 0 || comparison.noisyFields.length > 0 || !hideUnchangedFields) && (
                 <DiffTable
                     comparison={comparison}

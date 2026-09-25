@@ -58,6 +58,7 @@ function mockVersions(failPrevious = false) {
                             country: 'Switzerland',
                         },
                         unalignedNucleotideSequences: state.sequences[String(params.version)],
+                        alignedNucleotideSequences: state.sequences[String(params.version)],
                     },
                 });
             },
@@ -94,11 +95,11 @@ test('shows the metadata diff on request and fetches the baseline only then', as
     await user.click(card.getByRole('button', diffButton));
     expect(await card.findByText('Old author')).toBeVisible();
     expect(requestedVersions).toHaveBeenCalledWith('1', `Bearer ${testAccessToken}`);
-    expect(card.getByText(/Nucleotide sequence/)).toHaveTextContent('Nucleotide sequence: unchanged');
-    expect(card.queryByRole('row', { name: /Country/ })).not.toBeInTheDocument();
-    expect(card.getByText('Hide unchanged fields (1)')).toBeVisible();
+    expect(card.queryByRole('row', { name: /Country|Nucleotide sequence/ })).not.toBeInTheDocument();
+    expect(card.getByText('Hide unchanged fields (2)')).toBeVisible();
     await user.click(card.getByRole('checkbox', { name: 'Hide unchanged fields' }));
     expect(card.getByRole('row', { name: /Country Switzerland Switzerland/ })).toBeVisible();
+    expect(card.getByRole('row', { name: 'Nucleotide sequence 4 nt 4 nt' })).toBeVisible();
     expect(card.queryByRole('checkbox', { name: 'Hide shared substitutions/indels' })).not.toBeInTheDocument();
     await user.click(card.getByRole('button', diffButton));
     expect(card.queryByRole('table')).not.toBeInTheDocument();
@@ -123,9 +124,21 @@ test('reports sequence changes per segment for multi-segmented organisms', async
     const user = userEvent.setup();
     const card = renderCard(revision, MULTI_SEG_SINGLE_REF_REFERENCEGENOMES);
     await user.click(await card.findByRole('button', diffButton));
-    expect(await card.findByText(/Segment S/)).toHaveTextContent('Segment S: unchanged');
-    expect(card.getByText(/Segment L/)).toHaveTextContent('Segment L: changed');
-    expect(card.queryByText(/Nucleotide sequence/)).not.toBeInTheDocument();
+    expect(await card.findByRole('row', { name: 'Segment L 3 nt' })).toBeVisible();
+    expect(card.queryByRole('row', { name: /Segment S|Nucleotide sequence/ })).not.toBeInTheDocument();
+    await user.click(card.getByRole('checkbox', { name: 'Hide unchanged fields' }));
+    expect(card.getByRole('row', { name: 'Segment S 3 nt 3 nt' })).toBeVisible();
+});
+
+test('lists the changed positions of a same-length sequence edit', async () => {
+    const { state } = mockVersions();
+    state.authors = 'Old author';
+    state.sequences[2] = { main: 'ACGA' };
+    const user = userEvent.setup();
+    const card = renderCard();
+    await user.click(await card.findByRole('button', diffButton));
+    expect(await card.findByText('No metadata changes.')).toBeVisible();
+    expect(card.getByRole('row', { name: 'Nucleotide sequence 4 nt 4 nt, 1 position changed: T4A' })).toBeVisible();
 });
 
 test('shows an explicit empty state for identical metadata', async () => {
