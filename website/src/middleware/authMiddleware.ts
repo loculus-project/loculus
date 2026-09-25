@@ -251,6 +251,8 @@ export async function getTokenFromParams(context: APIContext, client: BaseClient
                 `hasCode=true hasState=${params.state !== undefined}`,
         );
         const callbackUrl = new URL(routes.authCallback(), context.url.origin).toString();
+        // Removes the matching transaction from the cookie store before validation,
+        // so this browser cannot retry it even if the code exchange fails.
         const authRequest = consumeAuthRequest(context.cookies, params.state);
         if (authRequest === undefined) {
             logger.info(`OIDC callback rejected: transactionId=${transactionId} reason=missing_or_expired_transaction`);
