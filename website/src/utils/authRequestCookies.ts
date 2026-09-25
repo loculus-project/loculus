@@ -1,6 +1,7 @@
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
+import { createHash } from 'node:crypto';
 
 import type { AstroCookies } from 'astro';
+import { EncryptJWT, jwtDecrypt } from 'jose';
 
 import { getRuntimeConfig } from '../config.ts';
 
@@ -28,37 +29,27 @@ function encryptionKey() {
     return createHash('sha256').update(getRuntimeConfig().oidcTransactionCookieSecret).digest();
 }
 
-function seal(store: AuthRequestStore): string {
-    const iv = randomBytes(12);
-    const cipher = createCipheriv('aes-256-gcm', encryptionKey(), iv);
-    const ciphertext = Buffer.concat([cipher.update(JSON.stringify(store), 'utf8'), cipher.final()]);
-    const authenticationTag = cipher.getAuthTag();
-    return [
-        'v1',
-        iv.toString('base64url'),
-        ciphertext.toString('base64url'),
-        authenticationTag.toString('base64url'),
-    ].join('.');
+// Transactions sit under their own claim because their keys are the caller-supplied `state`,
+// which must not collide with registered claims such as `exp`.
+async function seal(store: AuthRequestStore): Promise<string> {
+    return new EncryptJWT({ transactions: store })
+        .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
+        .setIssuedAt()
+        .setExpirationTime(`${transactionLifetimeSeconds}s`)
+        .encrypt(encryptionKey());
 }
 
-function unseal(value: string | undefined): AuthRequestStore {
+async function unseal(value: string | undefined): Promise<AuthRequestStore> {
     if (value === undefined) {
         return {};
     }
 
     try {
-        const parts = value.split('.');
-        if (parts.length !== 4 || parts[0] !== 'v1') {
-            return {};
-        }
-        const [, encodedIv, encodedCiphertext, encodedAuthenticationTag] = parts;
-        const decipher = createDecipheriv('aes-256-gcm', encryptionKey(), Buffer.from(encodedIv, 'base64url'));
-        decipher.setAuthTag(Buffer.from(encodedAuthenticationTag, 'base64url'));
-        const plaintext = Buffer.concat([
-            decipher.update(Buffer.from(encodedCiphertext, 'base64url')),
-            decipher.final(),
-        ]).toString('utf8');
-        return JSON.parse(plaintext) as AuthRequestStore;
+        const { payload } = await jwtDecrypt(value, encryptionKey(), {
+            keyManagementAlgorithms: ['dir'],
+            contentEncryptionAlgorithms: ['A256GCM'],
+        });
+        return payload.transactions as AuthRequestStore;
     } catch {
         return {};
     }
@@ -72,14 +63,14 @@ function activeTransactions(store: AuthRequestStore, now = Date.now()): AuthRequ
     );
 }
 
-function writeStore(cookies: AstroCookies, store: AuthRequestStore) {
+async function writeStore(cookies: AstroCookies, store: AuthRequestStore) {
     if (Object.keys(store).length === 0) {
         cookies.delete(AUTH_TRANSACTIONS_COOKIE, { path: '/' });
         return;
     }
 
     const runtimeConfig = getRuntimeConfig();
-    cookies.set(AUTH_TRANSACTIONS_COOKIE, seal(store), {
+    cookies.set(AUTH_TRANSACTIONS_COOKIE, await seal(store), {
         httpOnly: true,
         sameSite: 'lax',
         secure: !runtimeConfig.insecureCookies,
@@ -88,14 +79,14 @@ function writeStore(cookies: AstroCookies, store: AuthRequestStore) {
     });
 }
 
-export function addAuthRequest(
+export async function addAuthRequest(
     cookies: AstroCookies,
     state: string,
     nonce: string,
     codeVerifier: string,
     returnTo: string,
-) {
-    const existingStore = activeTransactions(unseal(cookies.get(AUTH_TRANSACTIONS_COOKIE)?.value));
+): Promise<void> {
+    const existingStore = activeTransactions(await unseal(cookies.get(AUTH_TRANSACTIONS_COOKIE)?.value));
     existingStore[state] = {
         nonce,
         codeVerifier,
@@ -109,18 +100,21 @@ export function addAuthRequest(
             .sort(([, left], [, right]) => right.expiresAt - left.expiresAt)
             .slice(0, maxConcurrentTransactions),
     );
-    writeStore(cookies, boundedStore);
+    await writeStore(cookies, boundedStore);
 }
 
-export function consumeAuthRequest(cookies: AstroCookies, state: string | undefined): AuthRequest | undefined {
+export async function consumeAuthRequest(
+    cookies: AstroCookies,
+    state: string | undefined,
+): Promise<AuthRequest | undefined> {
     if (state === undefined) {
         return undefined;
     }
 
-    const store = activeTransactions(unseal(cookies.get(AUTH_TRANSACTIONS_COOKIE)?.value));
+    const store = activeTransactions(await unseal(cookies.get(AUTH_TRANSACTIONS_COOKIE)?.value));
     const transaction = store[state];
     delete store[state];
-    writeStore(cookies, store);
+    await writeStore(cookies, store);
     if (transaction === undefined) {
         return undefined;
     }

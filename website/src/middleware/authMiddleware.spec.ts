@@ -129,7 +129,7 @@ describe('OIDC authentication middleware', () => {
     );
 
     test('uses the stored nonce and verifier with the fixed callback URI, then consumes the transaction', async () => {
-        addAuthRequest(
+        await addAuthRequest(
             cookies,
             'expected-state',
             'expected-nonce',
@@ -180,7 +180,13 @@ describe('OIDC authentication middleware', () => {
     });
 
     test('consumes the transaction and logs an error response returned by the OIDC provider', async () => {
-        addAuthRequest(cookies, 'expected-state', 'expected-nonce', 'expected-verifier', 'https://loculus.test/user');
+        await addAuthRequest(
+            cookies,
+            'expected-state',
+            'expected-nonce',
+            'expected-verifier',
+            'https://loculus.test/user',
+        );
         const context = {
             url: new URL('https://loculus.test/auth/callback?error=access_denied&state=expected-state'),
             cookies,
@@ -193,6 +199,6 @@ describe('OIDC authentication middleware', () => {
             ),
         );
         expect(callback).not.toHaveBeenCalled();
-        expect(consumeAuthRequest(cookies, 'expected-state')).toBeUndefined();
+        expect(await consumeAuthRequest(cookies, 'expected-state')).toBeUndefined();
     });
 });

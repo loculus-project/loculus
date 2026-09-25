@@ -26,7 +26,7 @@ export const GET: APIRoute = async (context) => {
     const codeVerifier = generators.codeVerifier();
     const codeChallenge = generators.codeChallenge(codeVerifier);
     const callbackUrl = new URL(routes.authCallback(), context.url.origin).toString();
-    addAuthRequest(context.cookies, state, nonce, codeVerifier, returnTo.toString());
+    await addAuthRequest(context.cookies, state, nonce, codeVerifier, returnTo.toString());
 
     /* eslint-disable @typescript-eslint/naming-convention */
     const authorizationUrl = client.authorizationUrl({

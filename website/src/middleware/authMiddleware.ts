@@ -238,7 +238,7 @@ type CallbackResult = {
 export async function getTokenFromParams(context: APIContext, client: BaseClient): Promise<CallbackResult | undefined> {
     const params = client.callbackParams(context.url.toString());
     if (params.code === undefined && params.error !== undefined) {
-        consumeAuthRequest(context.cookies, params.state);
+        await consumeAuthRequest(context.cookies, params.state);
         logger.info(
             `OIDC callback rejected: transactionId=${authTransactionId(params.state)} ` +
                 `reason=provider_error error=${params.error}`,
@@ -253,7 +253,7 @@ export async function getTokenFromParams(context: APIContext, client: BaseClient
         const callbackUrl = new URL(routes.authCallback(), context.url.origin).toString();
         // Removes the matching transaction from the cookie store before validation,
         // so this browser cannot retry it even if the code exchange fails.
-        const authRequest = consumeAuthRequest(context.cookies, params.state);
+        const authRequest = await consumeAuthRequest(context.cookies, params.state);
         if (authRequest === undefined) {
             logger.info(`OIDC callback rejected: transactionId=${transactionId} reason=missing_or_expired_transaction`);
             return undefined;
