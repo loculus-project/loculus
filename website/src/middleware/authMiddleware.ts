@@ -311,8 +311,7 @@ const createRedirectWithModifiableHeaders = (url: string) => {
 };
 
 const redirectToAuth = (context: APIContext) => {
-    const currentUrl = context.url;
-    const redirectUrl = removeTokenCodeFromSearchParams(currentUrl);
+    const redirectUrl = context.url.toString();
 
     logger.debug(`Redirecting to auth with redirect url: ${redirectUrl}`);
     const authUrl = new URL(getLoginUrl(redirectUrl), context.url.origin).toString();
@@ -320,17 +319,6 @@ const redirectToAuth = (context: APIContext) => {
     deleteCookie(context);
     return createRedirectWithModifiableHeaders(authUrl);
 };
-
-function removeTokenCodeFromSearchParams(url: URL): string {
-    const newUrl = new URL(url.toString());
-
-    newUrl.searchParams.delete('code');
-    newUrl.searchParams.delete('session_state');
-    newUrl.searchParams.delete('iss');
-    newUrl.searchParams.delete('state');
-
-    return newUrl.toString();
-}
 
 async function refreshTokenViaKeycloak(token: TokenCookie, client: BaseClient): Promise<TokenCookie | undefined> {
     const refreshedTokenSet = await client.refresh(token.refreshToken).catch(() => {
