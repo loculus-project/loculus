@@ -137,7 +137,7 @@ test('flags a same-length sequence edit as changed', async () => {
     const card = renderCard();
     await user.click(await card.findByRole('button', diffButton));
     expect(await card.findByText('No metadata changes.')).toBeVisible();
-    expect(card.getByRole('row', { name: 'Nucleotide sequence 4 nt 4 nt, sequence changed' })).toBeVisible();
+    expect(card.getByRole('row', { name: 'Nucleotide sequence 4 nt 4 nt changed' })).toBeVisible();
 });
 
 test('shows an explicit empty state for identical metadata', async () => {

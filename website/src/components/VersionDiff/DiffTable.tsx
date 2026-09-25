@@ -33,6 +33,11 @@ function FieldRow({ field, mutationsDiffOnly }: { field: FieldComparison; mutati
             </td>
             <td className='border px-4 py-2 break-words'>
                 {entry2 !== null && <DiffFieldValue entry={entry2} blankWhenEmpty={diffApplied} />}
+                {field.showChangedBadge === true && field.hasChanged && entry1 !== null && entry2 !== null && (
+                    <span className='ml-2 rounded bg-amber-200 px-1.5 py-0.5 text-xs font-medium text-amber-900'>
+                        changed
+                    </span>
+                )}
             </td>
         </tr>
     );

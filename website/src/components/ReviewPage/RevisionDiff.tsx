@@ -43,13 +43,13 @@ function compareNucleotideSequences(
             const displayName = displayNames.get(name);
             const label = displayName === undefined ? 'Nucleotide sequence' : `Segment ${displayName}`;
             const hasChanged = before[name] !== after[name];
-            const entry = (sequence: string | null | undefined, changes?: string): TableDataEntry | null =>
+            const entry = (sequence: string | null | undefined): TableDataEntry | null =>
                 typeof sequence === 'string'
                     ? {
                           name,
                           label,
                           header: SEQUENCES_HEADER,
-                          value: `${sequence.length} nt${changes === undefined ? '' : `, ${changes}`}`,
+                          value: `${sequence.length} nt`,
                           type: { kind: 'metadata', metadataType: 'string' },
                       }
                     : null;
@@ -58,9 +58,10 @@ function compareNucleotideSequences(
                 label,
                 header: SEQUENCES_HEADER,
                 entry1: entry(before[name]),
-                entry2: entry(after[name], hasChanged ? 'sequence changed' : undefined),
+                entry2: entry(after[name]),
                 hasChanged,
                 isNoisy: false,
+                showChangedBadge: true,
             };
         });
 }
