@@ -34,13 +34,11 @@ export async function uploadPart(presignedUrl: string, part: Blob): Promise<stri
         body: part,
     });
     if (!response.ok) {
-        throw new Error(
-            `Failed to upload part to ${presignedUrl}: response status ${response.status}: ${response.statusText}`,
-        );
+        throw new Error(`Failed to upload part to S3: response status ${response.status}: ${response.statusText}`);
     }
     const etag = response.headers.get('ETag');
     if (!etag) {
-        throw new Error(`Failed to upload part to ${presignedUrl}: ETag header missing from upload response`);
+        throw new Error('Failed to upload part to S3: ETag header missing from upload response');
     }
     return etag;
 }
