@@ -1,5 +1,7 @@
+import io
 import logging
 import urllib.parse
+import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from dataclasses import dataclass
 from http import HTTPStatus
@@ -347,19 +349,30 @@ class ENAVisibilityChecker:
             f"unable to validate accession '{accession}': could not reach ENA, "
             "please try resubmitting later"
         )
+        is_bioproject = accession.startswith(PROJECT_PREFIX)
         try:
             # Only cache bioprojects as they're what's likely to be shared across submissions
             response = bioproject_cache.get_or_fetch(
-                url, timeout=self.timeout_seconds, use_cache=accession.startswith(PROJECT_PREFIX)
+                url, timeout=self.timeout_seconds, use_cache=is_bioproject
             )
         except requests.RequestException:
             return processing_error(ena_error_message)
 
         if response.status_code == HTTPStatus.OK:
+            if is_bioproject and self._is_umbrella_project(response.content):
+                return processing_error(f"bioproject '{accession}' is an umbrella project")
             return RawProcessingResult(datum=accession)
         if response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
             return processing_error(ena_error_message)
         return processing_error(f"accession '{accession}' does not exist on ENA")
+
+    def _is_umbrella_project(self, xml_bytes) -> bool:
+        for _, elem in ET.iterparse(io.BytesIO(xml_bytes), events=("start",)):  # noqa: S314
+            if elem.tag == "UMBRELLA_PROJECT":
+                return True
+            if elem.tag == "SUBMISSION_PROJECT":
+                return False
+        return False
 
 
 @dataclass(frozen=True)
