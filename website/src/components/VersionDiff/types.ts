@@ -13,6 +13,9 @@ export type FieldComparison = {
     orderOnDetailsPage?: number;
     hasChanged: boolean;
     isNoisy: boolean;
+    // Mark a change explicitly when the displayed values may be identical even though the
+    // underlying data differs (e.g. a sequence shown only by its length).
+    showChangedBadge?: boolean;
 };
 
 export type ComparisonResult = {
