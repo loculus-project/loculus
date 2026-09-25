@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios';
 import { useState } from 'react';
 
 import { backendClientHooks } from '../../services/serviceHooks';
@@ -73,7 +74,7 @@ export function RevisionDiff({
     referenceGenomesInfo,
 }: RevisionDiffProps) {
     const [hideUnchangedFields, setHideUnchangedFields] = useState(true);
-    const previousVersion = current.version - 1;
+    const [previousVersion, setPreviousVersion] = useState(current.version - 1);
     const previous = backendClientHooks(clientConfig).useGetDataToEdit(
         {
             headers: createAuthorizationHeader(accessToken),
@@ -81,6 +82,9 @@ export function RevisionDiff({
         },
         { retry: false },
     );
+    if (isAxiosError(previous.error) && previous.error.response?.status === 422 && previousVersion > 1) {
+        setPreviousVersion(previousVersion - 1);
+    }
 
     if (previous.data === undefined) {
         return (
