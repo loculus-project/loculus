@@ -1307,14 +1307,17 @@ class SubmissionDatabaseService(
             )
         }
 
+        val compressedEditedSequenceEntryData = compressionService.compressSequencesInSubmittedData(
+            editedSequenceEntryData.data,
+            organism,
+        )
         SequenceEntriesTable.update(
             where = {
                 SequenceEntriesTable.accessionVersionIsIn(listOf(editedSequenceEntryData))
             },
         ) {
-            it[submittedDataColumn] = compressionService
-                .compressSequencesInSubmittedData(editedSequenceEntryData.data, organism)
-            it[archiveOfSubmittedDataColumn] = compressionService.compressSequencesInSubmittedData(editedSequenceEntryData.data, organism)
+            it[submittedDataColumn] = compressedEditedSequenceEntryData
+            it[archiveOfSubmittedDataColumn] = compressedEditedSequenceEntryData
         }
 
         SequenceEntriesPreprocessedDataTable.deleteWhere {
