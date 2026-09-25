@@ -47,19 +47,27 @@ describe('OIDC authentication middleware', () => {
             const value = values.get(name);
             return value === undefined ? undefined : { value };
         }),
+        has: vi.fn((name: string) => values.has(name)),
         set: vi.fn((name: string, value: string) => values.set(name, value)),
         delete: vi.fn((name: string) => values.delete(name)),
     } as unknown as AstroCookies;
 
     const callback = vi.fn();
+    // Like openid-client's callbackParams, a repeated parameter becomes an array.
     const callbackParams = vi.fn((url: string) => {
         const searchParams = new URL(url).searchParams;
+        const param = (name: string) => {
+            const values = searchParams.getAll(name);
+            return values.length > 1 ? values : values[0];
+        };
         return {
-            code: searchParams.get('code') ?? undefined,
-            error: searchParams.get('error') ?? undefined,
-            state: searchParams.get('state') ?? undefined,
+            code: param('code'),
+            error: param('error'),
+            state: param('state'),
         };
     });
+    const expectedState = 'expected-state-00000000000000000000000000000'.slice(0, 43);
+    const otherState = 'other-state-0000000000000000000000000000000'.slice(0, 43);
     const client = {
         callback,
         callbackParams,
@@ -131,13 +139,13 @@ describe('OIDC authentication middleware', () => {
     test('uses the stored nonce and verifier with the fixed callback URI, then consumes the transaction', async () => {
         addAuthRequest(
             cookies,
-            'expected-state',
+            expectedState,
             'expected-nonce',
             'expected-verifier',
             'https://loculus.test/ebola/submission',
         );
         const context = {
-            url: new URL('https://loculus.test/auth/callback?code=authorization-code&state=expected-state'),
+            url: new URL(`https://loculus.test/auth/callback?code=authorization-code&state=${expectedState}`),
             cookies,
         } as APIContext;
 
@@ -154,12 +162,12 @@ describe('OIDC authentication middleware', () => {
             'https://loculus.test/auth/callback',
             {
                 code: 'authorization-code',
-                state: 'expected-state',
+                state: expectedState,
             },
             {
                 code_verifier: 'expected-verifier',
                 response_type: 'code',
-                state: 'expected-state',
+                state: expectedState,
                 nonce: 'expected-nonce',
             },
         );
@@ -180,9 +188,9 @@ describe('OIDC authentication middleware', () => {
     });
 
     test('consumes the transaction and logs an error response returned by the OIDC provider', async () => {
-        addAuthRequest(cookies, 'expected-state', 'expected-nonce', 'expected-verifier', 'https://loculus.test/user');
+        addAuthRequest(cookies, expectedState, 'expected-nonce', 'expected-verifier', 'https://loculus.test/user');
         const context = {
-            url: new URL('https://loculus.test/auth/callback?error=access_denied&state=expected-state'),
+            url: new URL(`https://loculus.test/auth/callback?error=access_denied&state=${expectedState}`),
             cookies,
         } as APIContext;
 
@@ -193,6 +201,30 @@ describe('OIDC authentication middleware', () => {
             ),
         );
         expect(callback).not.toHaveBeenCalled();
-        expect(consumeAuthRequest(cookies, 'expected-state')).toBeUndefined();
+        expect(consumeAuthRequest(cookies, expectedState)).toBeUndefined();
+    });
+
+    test.each([
+        'constructor',
+        '__proto__',
+        'toString',
+        'hasOwnProperty',
+        'valueOf',
+        `${expectedState}&state=${otherState}`,
+        `${expectedState}&state=${expectedState}`,
+    ])('rejects the callback state %s without calling the provider or failing', async (state) => {
+        addAuthRequest(cookies, expectedState, 'expected-nonce', 'expected-verifier', 'https://loculus.test/user');
+        for (const query of [`code=attacker-code&state=${state}`, `error=access_denied&state=${state}`]) {
+            const context = {
+                url: new URL(`https://loculus.test/auth/callback?${query}`),
+                cookies,
+            } as APIContext;
+
+            await expect(getTokenFromParams(context, client)).resolves.toBeUndefined();
+        }
+        expect(callback).not.toHaveBeenCalled();
+        expect(mocks.loggerInfo).toHaveBeenCalledWith(
+            'OIDC callback rejected: transactionId=invalid reason=missing_or_expired_transaction',
+        );
     });
 });

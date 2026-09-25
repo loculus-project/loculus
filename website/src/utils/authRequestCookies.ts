@@ -1,37 +1,51 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 
 import type { AstroCookies } from 'astro';
+import { z } from 'zod';
 
 import { getRuntimeConfig } from '../config.ts';
+import { routes } from '../routes/routes.ts';
 
-export const AUTH_TRANSACTIONS_COOKIE = 'oidc_transactions';
-
+// Written by earlier versions of the website, which kept all pending logins in one cookie on path=/.
+export const LEGACY_AUTH_TRANSACTIONS_COOKIE = 'oidc_transactions';
+const cookiePrefix = 'oidc_tx_';
 const transactionLifetimeSeconds = 60 * 60;
-const maxConcurrentTransactions = 3;
 
-type StoredAuthRequest = {
-    nonce: string;
-    codeVerifier: string;
-    returnTo: string;
-    expiresAt: number;
-};
+// openid-client's generators.state() returns 32 random bytes as base64url.
+const statePattern = /^[A-Za-z0-9_-]{43}$/;
 
-type AuthRequestStore = Record<string, StoredAuthRequest | undefined>;
+const storedAuthRequestSchema = z.object({
+    state: z.string(),
+    nonce: z.string().min(1),
+    codeVerifier: z.string().min(1),
+    returnTo: z.string(),
+    expiresAt: z.number(),
+});
 
-export type AuthRequest = {
-    nonce: string;
-    codeVerifier: string;
-    returnTo: string;
-};
+type StoredAuthRequest = z.infer<typeof storedAuthRequestSchema>;
+
+export type AuthRequest = Omit<StoredAuthRequest, 'expiresAt'>;
+
+export function isValidState(state: unknown): state is string {
+    return typeof state === 'string' && statePattern.test(state);
+}
+
+export function authTransactionCookieName(state: string) {
+    return `${cookiePrefix}${state}`;
+}
+
+function cookiePath() {
+    return routes.authCallback();
+}
 
 function encryptionKey() {
     return createHash('sha256').update(getRuntimeConfig().oidcTransactionCookieSecret).digest();
 }
 
-function seal(store: AuthRequestStore): string {
+function seal(transaction: StoredAuthRequest): string {
     const iv = randomBytes(12);
     const cipher = createCipheriv('aes-256-gcm', encryptionKey(), iv);
-    const ciphertext = Buffer.concat([cipher.update(JSON.stringify(store), 'utf8'), cipher.final()]);
+    const ciphertext = Buffer.concat([cipher.update(JSON.stringify(transaction), 'utf8'), cipher.final()]);
     const authenticationTag = cipher.getAuthTag();
     return [
         'v1',
@@ -41,15 +55,11 @@ function seal(store: AuthRequestStore): string {
     ].join('.');
 }
 
-function unseal(value: string | undefined): AuthRequestStore {
-    if (value === undefined) {
-        return {};
-    }
-
+function unseal(value: string): unknown {
     try {
         const parts = value.split('.');
         if (parts.length !== 4 || parts[0] !== 'v1') {
-            return {};
+            return undefined;
         }
         const [, encodedIv, encodedCiphertext, encodedAuthenticationTag] = parts;
         const decipher = createDecipheriv('aes-256-gcm', encryptionKey(), Buffer.from(encodedIv, 'base64url'));
@@ -58,34 +68,10 @@ function unseal(value: string | undefined): AuthRequestStore {
             decipher.update(Buffer.from(encodedCiphertext, 'base64url')),
             decipher.final(),
         ]).toString('utf8');
-        return JSON.parse(plaintext) as AuthRequestStore;
+        return JSON.parse(plaintext);
     } catch {
-        return {};
+        return undefined;
     }
-}
-
-function activeTransactions(store: AuthRequestStore, now = Date.now()): AuthRequestStore {
-    return Object.fromEntries(
-        Object.entries(store).filter(
-            (entry): entry is [string, StoredAuthRequest] => entry[1] !== undefined && entry[1].expiresAt > now,
-        ),
-    );
-}
-
-function writeStore(cookies: AstroCookies, store: AuthRequestStore) {
-    if (Object.keys(store).length === 0) {
-        cookies.delete(AUTH_TRANSACTIONS_COOKIE, { path: '/' });
-        return;
-    }
-
-    const runtimeConfig = getRuntimeConfig();
-    cookies.set(AUTH_TRANSACTIONS_COOKIE, seal(store), {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: !runtimeConfig.insecureCookies,
-        path: '/',
-        maxAge: transactionLifetimeSeconds,
-    });
 }
 
 export function addAuthRequest(
@@ -95,42 +81,52 @@ export function addAuthRequest(
     codeVerifier: string,
     returnTo: string,
 ) {
-    const existingStore = activeTransactions(unseal(cookies.get(AUTH_TRANSACTIONS_COOKIE)?.value));
-    existingStore[state] = {
+    if (cookies.has(LEGACY_AUTH_TRANSACTIONS_COOKIE)) {
+        cookies.delete(LEGACY_AUTH_TRANSACTIONS_COOKIE, { path: '/' });
+    }
+
+    const transaction = {
+        state,
         nonce,
         codeVerifier,
         returnTo,
         expiresAt: Date.now() + transactionLifetimeSeconds * 1000,
     };
-
-    const boundedStore = Object.fromEntries(
-        Object.entries(existingStore)
-            .filter((entry): entry is [string, StoredAuthRequest] => entry[1] !== undefined)
-            .sort(([, left], [, right]) => right.expiresAt - left.expiresAt)
-            .slice(0, maxConcurrentTransactions),
-    );
-    writeStore(cookies, boundedStore);
+    cookies.set(authTransactionCookieName(state), seal(transaction), {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: !getRuntimeConfig().insecureCookies,
+        path: cookiePath(),
+        maxAge: transactionLifetimeSeconds,
+    });
 }
 
-export function consumeAuthRequest(cookies: AstroCookies, state: string | undefined): AuthRequest | undefined {
+export function consumeAuthRequest(cookies: AstroCookies, state: unknown): AuthRequest | undefined {
+    if (!isValidState(state)) {
+        return undefined;
+    }
+
+    const name = authTransactionCookieName(state);
+    const value = cookies.get(name)?.value;
+    if (value === undefined) {
+        return undefined;
+    }
+    cookies.delete(name, { path: cookiePath() });
+
+    const parsed = storedAuthRequestSchema.safeParse(unseal(value));
+    if (!parsed.success || parsed.data.state !== state || parsed.data.expiresAt <= Date.now()) {
+        return undefined;
+    }
+    const { expiresAt: _, ...authRequest } = parsed.data;
+    return authRequest;
+}
+
+export function authTransactionId(state: unknown): string {
     if (state === undefined) {
-        return undefined;
+        return 'missing';
     }
-
-    const store = activeTransactions(unseal(cookies.get(AUTH_TRANSACTIONS_COOKIE)?.value));
-    const transaction = store[state];
-    delete store[state];
-    writeStore(cookies, store);
-    if (transaction === undefined) {
-        return undefined;
+    if (!isValidState(state)) {
+        return 'invalid';
     }
-    return {
-        nonce: transaction.nonce,
-        codeVerifier: transaction.codeVerifier,
-        returnTo: transaction.returnTo,
-    };
-}
-
-export function authTransactionId(state: string | undefined): string {
-    return state === undefined ? 'missing' : createHash('sha256').update(state).digest('hex').slice(0, 12);
+    return createHash('sha256').update(state).digest('hex').slice(0, 12);
 }

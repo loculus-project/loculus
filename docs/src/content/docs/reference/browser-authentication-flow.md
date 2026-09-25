@@ -45,13 +45,13 @@ When `/auth/login` receives the requested destination as `returnTo`, it checks t
 
 These values protect different parts of the same flow: `state` checks the browser round trip, PKCE protects the authorization-code exchange, and `nonce` checks the resulting identity token.
 
-Loculus stores these values, together with `returnTo`, in an authenticated and encrypted HTTP-only cookie. The cookie:
+Loculus stores these values, together with `returnTo`, in an authenticated and encrypted HTTP-only cookie, one per login transaction, so logins started in several tabs complete independently. Each cookie:
 
+- is named after the transaction's `state`;
 - is retained for up to one hour, allowing time for multi-step authentication and registration flows;
-- is sent only over HTTPS, except in explicitly configured local development environments;
-- uses `SameSite=Lax`;
-- can hold up to three concurrent login transactions; and
-- consumes the selected transaction when its callback is received.
+- is sent only over HTTPS, except in explicitly configured local development environments, and only to `/auth/callback`;
+- uses `SameSite=Lax`; and
+- is deleted when its callback is received.
 
 The transaction cookie does not contain the user's password or access token.
 
