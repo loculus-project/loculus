@@ -145,7 +145,7 @@ describe('DownloadDialog', () => {
         expect(getDownloadHref()).toMatch(new RegExp(`^${defaultLapisUrl}`));
     });
 
-    const rawNucleotideSequencesLabel = /^Sequences$/;
+    const rawNucleotideSequencesLabel = /^Nucleotide sequences$/;
     const alignedNucleotideSequencesLabel = /Reference-aligned nucleotide sequences/;
     const alignedAminoAcidSequencesLabel = /Reference-aligned amino acid sequences/;
     const gzipCompressionLabel = /Gzip/;

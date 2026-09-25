@@ -107,7 +107,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         };
 
         const rawNucleotideSequencesOption = {
-            label: <>Sequences</>,
+            label: <>Nucleotide sequences</>,
             subOptions: (
                 <div className='px-8'>
                     {referenceGenomesInfo.isMultiSegmented ? (
