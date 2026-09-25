@@ -27,7 +27,7 @@ spec:
       {{- include "loculus.podScheduling" . | nindent 6 }}
       containers:
         - name: loculus-keycloak-database
-          image: postgres:15.12
+          image: ghcr.io/loculus-project/mirror/postgres:15.19
           resources:
             requests:
               memory: "30Mi"

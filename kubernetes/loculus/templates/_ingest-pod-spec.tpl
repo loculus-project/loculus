@@ -30,7 +30,7 @@ spec:
   restartPolicy: Never
   initContainers:
     - name: version-check
-      image: busybox
+      image: ghcr.io/loculus-project/mirror/busybox:1.38.0
       {{- include "loculus.resources" (list "ingest-init" $Values) | nindent 6 }}
       command: ['sh', '-c', '
         CONFIG_VERSION=$(grep "verify_loculus_version_is:" /package/config/config.yaml | sed "s/verify_loculus_version_is: //;");
@@ -49,7 +49,7 @@ spec:
           mountPath: /package/config/config.yaml
           subPath: config.yaml
     - name: wait-for-no-other-ingest
-      image: alpine/kubectl:1.36.0
+      image: ghcr.io/loculus-project/mirror/kubectl:1.36.0
       command:
         - sh
         - -c
