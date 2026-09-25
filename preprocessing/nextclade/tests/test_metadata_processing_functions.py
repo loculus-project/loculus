@@ -91,14 +91,14 @@ test_case_definitions = [
         name="insdc_ingest group can submit authors with non-alphabetic ASCII characters",
         input_metadata={
             "name_required": "name",
-            "authors": "Smith9, Anna; Müller (Jr) & Co, Anna_Maria?",
+            "authors": "O`Brien9, Anna; Müller (Jr) & Co, Anna_Maria?",
         },
         accession_id="23",
         expected_metadata={
             "name_required": "name",
             "concatenated_string": "LOC_23.1",
             "required_collection_date": None,
-            "authors": "Smith9, Anna; Müller (Jr) & Co, Anna_Maria?",
+            "authors": "O`Brien9, Anna; Müller (Jr) & Co, Anna_Maria?",
         },
         group_id=1,
     ),
@@ -696,6 +696,7 @@ accepted_authors_all_ascii = [
     "An?elic Dmitrovic,B.",
     "Dall&aposAmico, L.",
     "Smith9, Anna;",
+    "O`Brien, Anna;",
 ]
 never_accepted_authors = [
     ";",
