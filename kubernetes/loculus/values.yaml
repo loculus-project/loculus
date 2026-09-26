@@ -2879,6 +2879,11 @@ secrets:
     type: autogen
     data:
       backendKeycloakClientSecret: ""
+  website-oidc-cookie-secret:
+    type: autogen
+    length: 32
+    data:
+      oidcTransactionCookieSecret: ""
   database:
     type: raw
     data:
@@ -2931,7 +2936,7 @@ secrets:
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 runDevelopmentS3: true
-developmentDatabasePersistence: false
+developmentDatabasePersistence: true
 enforceHTTPS: true
 traefikVersion: 3
 registrationTermsMessage: >

@@ -79,7 +79,16 @@ export default defineConfig({
                 },
                 {
                     label: 'Reference',
-                    items: [{ autogenerate: { directory: 'reference' } }],
+                    items: [
+                        'reference/browser-authentication-flow',
+                        'reference/fasta-format',
+                        'reference/glossary',
+                        'reference/helm-chart-config',
+                        {
+                            label: 'Upgrade guides',
+                            items: [{ autogenerate: { directory: 'reference/upgrade-guides' } }],
+                        },
+                    ],
                 },
             ],
         }),

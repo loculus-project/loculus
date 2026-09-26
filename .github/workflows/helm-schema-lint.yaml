@@ -27,3 +27,6 @@ jobs:
           helm lint kubernetes/loculus -f kubernetes/loculus/values.yaml
           helm lint kubernetes/loculus -f kubernetes/loculus/values.yaml -f kubernetes/loculus/values_e2e_and_dev.yaml
           helm lint kubernetes/loculus -f kubernetes/loculus/values.yaml -f kubernetes/loculus/values_preview_server.yaml
+
+      - name: Test browser authentication config rendering
+        run: bash kubernetes/test-browser-auth-config.sh
