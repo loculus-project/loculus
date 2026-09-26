@@ -4,6 +4,7 @@ import logging
 import shutil
 import time
 
+from .auth import TokenProvider
 from .config import ImporterConfig, MetadataField
 from .constants import SPECIAL_ETAG_NONE
 from .download_manager import DownloadManager
@@ -28,7 +29,8 @@ class ImporterRunner:
         self.paths.ensure_directories()
         self._clear_download_directories()
         self.silo = SiloRunner(paths.silo_binary, paths.preprocessing_config)
-        self.download_manager = DownloadManager()
+        token_provider = TokenProvider(config.keycloak) if config.keycloak else None
+        self.download_manager = DownloadManager(token_provider=token_provider)
         self.current_etag = SPECIAL_ETAG_NONE
         self.last_hard_refresh: float = 0
         self.hierarchical_filter_values: dict[MetadataField, set[str]] = {}

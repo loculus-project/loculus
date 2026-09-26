@@ -65,3 +65,40 @@ def test_hierarchical_filters_invalid_json(monkeypatch: pytest.MonkeyPatch) -> N
 
     with pytest.raises(RuntimeError, match="HIERARCHICAL_FILTERS must be valid JSON"):
         ImporterConfig.from_env()
+
+
+def _clear_keycloak_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    for key in ("KEYCLOAK_TOKEN_URL", "KEYCLOAK_USER", "KEYCLOAK_PASSWORD", "KEYCLOAK_CLIENT_ID"):
+        monkeypatch.delenv(key, raising=False)
+
+
+def test_no_keycloak_credentials_on_a_public_instance(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("BACKEND_BASE_URL", "http://example.com")
+    _clear_keycloak_env(monkeypatch)
+
+    assert ImporterConfig.from_env().keycloak is None
+
+
+def test_keycloak_credentials_are_read_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("BACKEND_BASE_URL", "http://example.com")
+    _clear_keycloak_env(monkeypatch)
+    monkeypatch.setenv("KEYCLOAK_TOKEN_URL", "http://keycloak/token")
+    monkeypatch.setenv("KEYCLOAK_USER", "silo_import")
+    monkeypatch.setenv("KEYCLOAK_PASSWORD", "secret")
+
+    keycloak = ImporterConfig.from_env().keycloak
+
+    assert keycloak is not None
+    assert keycloak.token_url == "http://keycloak/token"
+    assert keycloak.username == "silo_import"
+    assert keycloak.password == "secret"
+    assert keycloak.client_id == "backend-client"
+
+
+def test_partial_keycloak_credentials_are_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("BACKEND_BASE_URL", "http://example.com")
+    _clear_keycloak_env(monkeypatch)
+    monkeypatch.setenv("KEYCLOAK_USER", "silo_import")
+
+    with pytest.raises(RuntimeError, match="must be set together"):
+        ImporterConfig.from_env()

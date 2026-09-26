@@ -281,6 +281,7 @@ export const websiteConfig = z.object({
     enableDataUseTerms: z.boolean(),
     fileSharing: fileSharingConfig.optional(),
     readOnlyMode: z.boolean().default(false),
+    requireLogin: z.boolean().default(false),
     dataUseTermsAgreementHTML: z.string().optional(),
     sequenceFlagging: sequenceFlaggingConfig.optional(),
     dateFieldForGroupGraph: z.string().nullable(),

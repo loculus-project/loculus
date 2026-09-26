@@ -1,5 +1,7 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
-{{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/token" }}
+{{- $testconfig := .Values.testconfig | default false }}
+{{- $keycloakHost := $testconfig | ternary (printf "http://%s:8083" $.Values.localHost) "http://loculus-keycloak-service:8083" }}
+{{- $keycloakTokenUrl := printf "%s/realms/loculus/protocol/openid-connect/token" $keycloakHost }}
 
 {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
@@ -110,6 +112,19 @@ spec:
               value: "/usr/local/bin/silo"
             - name: PREPROCESSING_CONFIG
               value: "/app/preprocessing_config.yaml"
+            {{- if $.Values.requireLogin }}
+            {{/* get-released-data is no longer public, so the importer authenticates like any
+                 other client. All three are needed together or the importer refuses to start. */}}
+            - name: KEYCLOAK_TOKEN_URL
+              value: {{ $keycloakTokenUrl | quote }}
+            - name: KEYCLOAK_USER
+              value: "silo_import"
+            - name: KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: siloImportPassword
+            {{- end }}
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/reference_genomes.json

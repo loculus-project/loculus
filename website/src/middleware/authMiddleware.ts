@@ -5,11 +5,11 @@ import JwksRsa from 'jwks-rsa';
 import { err, ok, ResultAsync } from 'neverthrow';
 import { type BaseClient, type TokenSet } from 'openid-client';
 
-import { getConfiguredOrganisms, getRuntimeConfig, getWebsiteConfig } from '../config.ts';
+import { getConfiguredOrganisms, getRuntimeConfig, getWebsiteConfig, loginIsRequired } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
 import { KeycloakClientManager } from '../utils/KeycloakClientManager.ts';
 import { getAuthUrl } from '../utils/getAuthUrl.ts';
-import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
+import { isApiRoute, shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
 export const ACCESS_TOKEN_COOKIE = 'access_token';
 export const REFRESH_TOKEN_COOKIE = 'refresh_token';
@@ -69,6 +69,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         const enforceLogin = shouldMiddlewareEnforceLogin(
             context.url.pathname,
             getConfiguredOrganisms().map((it) => it.key),
+            loginIsRequired(),
         );
         if (enforceLogin) {
             return context.redirect('/503?service=readonly');
@@ -102,9 +103,13 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     const enforceLogin = shouldMiddlewareEnforceLogin(
         context.url.pathname,
         getConfiguredOrganisms().map((it) => it.key),
+        loginIsRequired(),
     );
 
     if (enforceLogin && (userInfo === undefined || userInfo.isErr())) {
+        if (isApiRoute(context.url.pathname)) {
+            return unauthorizedResponse(context.url.pathname);
+        }
         if (client === undefined) {
             logger.error(`Keycloak client not available, cannot redirect to auth`);
             return context.redirect('/503?service=Authentication');
@@ -278,6 +283,19 @@ const createRedirectWithModifiableHeaders = (url: string) => {
     const redirect = Response.redirect(url);
     return new Response(null, { status: redirect.status, headers: redirect.headers });
 };
+
+const unauthorizedResponse = (pathname: string) =>
+    new Response(
+        JSON.stringify({
+            type: 'about:blank',
+            title: 'Unauthorized',
+            detail: 'You need to log in to access this data.',
+            status: 401,
+            instance: pathname,
+        }),
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        { status: 401, headers: { 'Content-Type': 'application/problem+json' } },
+    );
 
 const redirectToAuth = async (context: APIContext) => {
     const currentUrl = context.url;
