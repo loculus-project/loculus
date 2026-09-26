@@ -4,30 +4,40 @@ This shows some selected runtime scenarios.
 
 ## Browser Login
 
-The Loculus website initiates browser login and validates the result; the browser does not construct an authentication request or exchange an authorization code itself.
+The Loculus website's Astro server constructs the OIDC authorization request and validates the login response. The browser carries redirects between Astro and Keycloak; Astro exchanges the authorization code for tokens directly with Keycloak.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User
     participant Browser
     participant Website as Loculus website (Astro)
     participant Keycloak
 
-    User->>Browser: Open protected page
-    Browser->>Website: Request page
-    Website-->>Browser: Set protected transaction cookie and redirect
-    Browser->>Keycloak: Send state, nonce and PKCE challenge
-    User->>Keycloak: Sign in
-    Keycloak-->>Browser: Return code and state
-    Browser->>Website: Call fixed /auth/callback
-    Website->>Website: Match and consume transaction
-    Website->>Keycloak: Exchange code with PKCE verifier
-    Keycloak-->>Website: Return tokens
-    Website-->>Browser: Establish session and redirect
+    Browser->>Website: Request protected page
+    Website-->>Browser: Redirect to /auth/login with returnTo
+    Browser->>Website: GET /auth/login?returnTo=...
+    Note over Website: Validate same-origin returnTo.<br/>Generate state, nonce and PKCE values.
+    Website-->>Browser: Set encrypted HttpOnly transaction cookie<br/>and redirect to Keycloak
+    Note over Browser,Website: Cookie stores nonce, code verifier,<br/>returnTo and expiry, keyed by state.
+    Browser->>Keycloak: Follow authorization URL carrying<br/>state, nonce and PKCE code challenge
+    Note over Browser,Keycloak: User signs in at Keycloak.
+    Keycloak-->>Browser: Redirect to /auth/callback<br/>with authorization code and state
+    Browser->>Website: Request callback URL<br/>with transaction cookie
+    Note over Website: Match state and recover saved values.<br/>Remove matching transaction from cookie.<br/>Delete cookie if no transactions remain.
+    Website->>Keycloak: Exchange authorization code<br/>with saved PKCE code verifier
+    Note over Keycloak: Validate authorization code<br/>and PKCE code verifier.
+    Keycloak-->>Website: Return ID, access and refresh tokens
+    Note over Website: Validate ID token, including<br/>nonce against saved transaction.
+    Website->>Keycloak: Request user information with access token
+    Keycloak-->>Website: Return user information
+    Website-->>Browser: Set separate HttpOnly access_token<br/>and refresh_token session cookies.<br/>Redirect to saved returnTo.
 ```
 
-The transaction is bound to the initiating browser through an encrypted, HTTP-only cookie. The website validates `state`, `nonce` and PKCE, and permits only a same-origin final destination. See the [browser authentication flow](../docs/src/content/docs/reference/browser-authentication-flow.md) for the protocol details and failure modes.
+Astro matches the callback's `state` to the browser's encrypted transaction cookie and validates the ID token, including its `nonce`. Keycloak validates the PKCE code verifier against the code challenge supplied at login initiation. Astro accepts only a same-origin `returnTo` destination.
+
+The transaction cookie tracks pending login attempts; it contains no access or refresh tokens. After successful validation and retrieval of user information, Astro sets separate `access_token` and `refresh_token` cookies through `Set-Cookie` response headers. The browser stores these website session cookies and sends them with subsequent matching requests. They are distinct from Keycloak's own sign-in cookies.
+
+See the [browser authentication flow](../docs/src/content/docs/reference/browser-authentication-flow.md) for definitions, token transport and failure modes, and the [browser authentication upgrade guide](../docs/src/content/docs/reference/upgrade-guides/browser-authentication.md) for existing-deployment rollout and rollback steps.
 
 ## Sequence Entry Lifecycle
 
