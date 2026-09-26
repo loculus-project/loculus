@@ -28,17 +28,13 @@ Use the Keycloak admin password that you have configured previously
 
 The Loculus-specific users are stored in the `loculus` realm which can be selected in the selection box in the left navigation bar.
 
-## Update browser authentication settings on an existing realm
+<a id="update-browser-authentication-settings-on-an-existing-realm"></a>
 
-The Helm chart imports the `loculus` realm when Keycloak first creates it, but does not overwrite a realm that already exists in Keycloak's database. After upgrading an existing deployment to the protected browser authentication flow, update the `backend-client` in the Keycloak admin console:
+:::caution[One-time upgrade: browser authentication settings]
 
-1. Open **Clients**, then select **backend-client**.
-2. Under **Settings**, replace wildcard **Valid redirect URIs** with `https://<your-host>/auth/callback`.
-3. Under **Settings**, set **Valid post logout redirect URIs** to `https://<your-host>/logout`.
-4. Under **Advanced**, set **Proof Key for Code Exchange Code Challenge Method** to `S256`.
-5. Save the client.
+Existing deployments upgrading to the browser authentication changes in PR #6994 need a one-time Keycloak client update. Follow the [browser authentication upgrade guide](../../reference/upgrade-guides/browser-authentication/) for rollout, verification and rollback instructions.
 
-Use the corresponding `http://` URLs only for a development deployment explicitly configured to use insecure cookies. Existing deployments continue to authenticate without this update, but do not gain the narrowed redirect allowlists or server-side PKCE requirement. See the [browser authentication flow](../../reference/browser-authentication-flow/) for the application-side protections.
+:::
 
 ## How to create users
 
