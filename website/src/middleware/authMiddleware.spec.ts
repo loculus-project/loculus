@@ -179,6 +179,28 @@ describe('OIDC authentication middleware', () => {
         expect(callback).not.toHaveBeenCalled();
     });
 
+    test.each(['constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf'])(
+        'rejects an unissued prototype-chain state %s before token exchange',
+        async (state) => {
+            addAuthRequest(cookies, 'real-state', 'nonce', 'verifier', 'https://loculus.test/user');
+            const context = {
+                url: new URL(`https://loculus.test/auth/callback?code=attacker-code&state=${state}`),
+                cookies,
+            } as APIContext;
+
+            await expect(getTokenFromParams(context, client)).resolves.toBeUndefined();
+            expect(callback).not.toHaveBeenCalled();
+            expect(mocks.loggerInfo).toHaveBeenCalledWith(
+                expect.stringContaining('reason=missing_or_expired_transaction'),
+            );
+            expect(consumeAuthRequest(cookies, 'real-state')).toEqual({
+                nonce: 'nonce',
+                codeVerifier: 'verifier',
+                returnTo: 'https://loculus.test/user',
+            });
+        },
+    );
+
     test('consumes the transaction and logs an error response returned by the OIDC provider', async () => {
         addAuthRequest(cookies, 'expected-state', 'expected-nonce', 'expected-verifier', 'https://loculus.test/user');
         const context = {

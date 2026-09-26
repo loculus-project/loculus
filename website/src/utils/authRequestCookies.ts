@@ -65,9 +65,13 @@ function unseal(value: string | undefined): AuthRequestStore {
 }
 
 function activeTransactions(store: AuthRequestStore, now = Date.now()): AuthRequestStore {
-    return Object.fromEntries(
-        Object.entries(store).filter(
-            (entry): entry is [string, StoredAuthRequest] => entry[1] !== undefined && entry[1].expiresAt > now,
+    // JSON parsing restores Object.prototype; rebuild a prototype-free dictionary before keyed access.
+    return Object.assign(
+        Object.create(null) as AuthRequestStore,
+        Object.fromEntries(
+            Object.entries(store).filter(
+                (entry): entry is [string, StoredAuthRequest] => entry[1] !== undefined && entry[1].expiresAt > now,
+            ),
         ),
     );
 }
@@ -118,7 +122,9 @@ export function consumeAuthRequest(cookies: AstroCookies, state: string | undefi
     }
 
     const store = activeTransactions(unseal(cookies.get(AUTH_TRANSACTIONS_COOKIE)?.value));
-    const transaction = store[state];
+    // Only an own property can represent an issued transaction. Keep this explicit guard even
+    // with a prototype-free store so future changes cannot reintroduce inherited-key matches.
+    const transaction = Object.prototype.hasOwnProperty.call(store, state) ? store[state] : undefined;
     delete store[state];
     writeStore(cookies, store);
     if (transaction === undefined) {
