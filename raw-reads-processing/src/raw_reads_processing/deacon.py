@@ -11,7 +11,12 @@ from xopen import xopen
 
 from raw_reads_processing.config import Config
 from raw_reads_processing.datatypes import Annotation, DeaconSummary, FileName
-from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
+from raw_reads_processing.errors import (
+    DECOMPRESSION_ERRORS,
+    FALSE_POSITIVE_HINT,
+    InvalidSubmission,
+    ProcessingFailure,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -69,14 +74,46 @@ def median_read_length(
     Read length should be homogeneous within a sequencing run, so a small sample from
     the start of the file is representative and costs only a few milliseconds.
     """
-    with xopen(path, "rt", threads=0) as fh:
-        lengths = [
-            len(seq)
-            for _, seq, _ in itertools.islice(FastqGeneralIterator(fh), sample_size)
-        ]
+    try:
+        with xopen(path, "rt", threads=0) as fh:
+            lengths = [
+                len(seq)
+                for _, seq, _ in itertools.islice(FastqGeneralIterator(fh), sample_size)
+            ]
+    # A damaged file rather than a malformed record; subclasses ValueError.
+    except UnicodeDecodeError as error:
+        # The position is an offset into the decoder's chunk, not into the file.
+        message = (
+            f"File '{file_name}' contains invalid Unicode "
+            f"(byte 0x{error.object[error.start]:02x}: {error.reason}). "
+            f"{FALSE_POSITIVE_HINT}"
+        )
+        logger.error(message)
+        raise InvalidSubmission(
+            Annotation(fileNames=[file_name], message=message)
+        ) from error
+    # readtools reads only the start of the file, so a stream that ends early
+    # further in reaches us intact.
+    except tuple(DECOMPRESSION_ERRORS) as error:
+        reason = DECOMPRESSION_ERRORS.get(type(error), "could not be decompressed.")
+        message = f"File '{file_name}' {reason} {FALSE_POSITIVE_HINT}"
+        logger.error(message)
+        raise InvalidSubmission(
+            Annotation(fileNames=[file_name], message=message)
+        ) from error
+    except ValueError as error:
+        # Otherwise the submitter gets an "Internal error" that blames us for their file.
+        message = f"Failed to parse file '{file_name}': {error} {FALSE_POSITIVE_HINT}"
+        logger.error(message)
+        raise InvalidSubmission(
+            Annotation(fileNames=[file_name], message=message)
+        ) from error
     if not lengths:
-        message = f"Failed to determine median read length for file '{file_name}'. File may be empty or corrupted."
-        logging.error(message)
+        message = (
+            f"Failed to determine median read length for file '{file_name}'. "
+            f"File may be empty or corrupted. {FALSE_POSITIVE_HINT}"
+        )
+        logger.error(message)
         raise InvalidSubmission(Annotation(fileNames=[file_name], message=message))
     return statistics.median(lengths)
 
@@ -128,7 +165,8 @@ def run_deacon_filter(
             args,
             check=True,
             capture_output=True,
-            text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=config.deacon_filter_timeout_seconds,
         )
         return DeaconSummary.from_json(summary_json_path)
@@ -149,7 +187,7 @@ def run_deacon_filter(
 # TODO: Add a link to the documentation for removing host reads
 DEACON_ERROR_PROMPT = (
     "We cannot accept files with a high proportion of human reads, as they may contain "
-    "sensitive human genetic information. Please remove host reads from your data and resubmit."
+    "sensitive human genetic information. Please remove host reads from your data and resubmit. "
     "Please see our documentation for more information on how to remove host reads from your data."
 )
 

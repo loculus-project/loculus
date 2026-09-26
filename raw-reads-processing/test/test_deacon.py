@@ -6,13 +6,17 @@ import time
 from pathlib import Path
 
 import pytest
-from raw_reads_processing import deacon as deacon_module, process_files
+from conftest import missing_dependency
+
+from raw_reads_processing import deacon as deacon_module
+from raw_reads_processing import process_files
 from raw_reads_processing.config import Config
 from raw_reads_processing.datatypes import (
     FileIdAndNameAndReadUrl,
     RequestWithFiles,
 )
-from raw_reads_processing.errors import InvalidSubmission
+from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
+from raw_reads_processing.errors import FALSE_POSITIVE_HINT
 
 
 def _config() -> Config:
@@ -45,6 +49,15 @@ def _write_fastq(path: Path, records: list[tuple[str, str]]) -> None:
     path.write_text("\n".join(lines) + "\n")
 
 
+def _write_fastq_gz(
+    path: Path, records: list[tuple[str, str]], newline: str = "\n"
+) -> None:
+    lines = []
+    for i, (seq, qual) in enumerate(records):
+        lines += [f"@read{i}", seq, "+", qual]
+    path.write_bytes(gzip.compress((newline.join(lines) + newline).encode()))
+
+
 def _file(name: str, url: str) -> FileIdAndNameAndReadUrl:
     return FileIdAndNameAndReadUrl(fileId="f1", name=name, url=url)
 
@@ -66,17 +79,17 @@ def mock_downstream(monkeypatch):
 
 
 @pytest.fixture
-def deacon_server():
+def deacon_server(request):
     """Run validate_raw_reads_submission's deacon step against the real deacon
     binary and the checked-in fixture index, instead of mocking it, so these
     tests exercise the actual threshold/warning boundary logic end-to-end.
     """
     if shutil.which("deacon") is None:
-        pytest.skip("deacon binary not found on PATH")
+        missing_dependency(request, "deacon binary not found on PATH")
     proc = deacon_module.start_deacon_server()
     time.sleep(1)  # give the server a moment to start listening
     try:
-        yield
+        yield proc
     finally:
         deacon_module.stop_deacon_server(proc)
 
@@ -143,11 +156,11 @@ def test_host_reads_above_threshold_is_an_error(tmp_path):
     # deacon.idx; config's deacon_max_host_reads_proportion is 0.05, so 75% > 5%.
     host_reads = _parse_fastq_records(FIXTURES_DIR / "test_small_1.fastq")[:3]
     non_host_read = _random_read()
-    reads = tmp_path / "reads.fastq"
-    _write_fastq(reads, [*host_reads, non_host_read])
+    reads = tmp_path / "reads.fastq.gz"
+    _write_fastq_gz(reads, [*host_reads, non_host_read])
     files = RequestWithFiles(
         accessionVersion="accession.1",
-        files=[_file("reads.fastq", url=str(reads))],
+        files=[_file("reads.fastq.gz", url=str(reads))],
     )
     with pytest.raises(InvalidSubmission) as exc_info:
         process_files.validate_raw_reads_submission(_config(), files)
@@ -161,11 +174,97 @@ def test_host_reads_at_or_below_threshold_passes(tmp_path):
     # lands exactly at the threshold: not > 0.05, so no error should be raised.
     host_reads = _parse_fastq_records(FIXTURES_DIR / "test_small_1.fastq")[:1]
     non_host_reads = [_random_read() for _ in range(19)]
-    reads = tmp_path / "reads.fastq"
-    _write_fastq(reads, [*host_reads, *non_host_reads])
+    reads = tmp_path / "reads.fastq.gz"
+    _write_fastq_gz(reads, [*host_reads, *non_host_reads])
     files = RequestWithFiles(
         accessionVersion="accession.1",
-        files=[_file("reads.fastq", url=str(reads))],
+        files=[_file("reads.fastq.gz", url=str(reads))],
     )
     result = process_files.validate_raw_reads_submission(_config(), files)
     assert result is None  # no error raised
+
+
+def _write_fastq_gz_crlf(path: Path, records: list[tuple[str, str]]) -> None:
+    _write_fastq_gz(path, records, newline="\r\n")
+
+
+@pytest.mark.usefixtures("deacon_index")
+def test_crlf_fastq_is_not_counted_as_an_extra_base(tmp_path):
+    """deacon < 0.17.1 kept the `\\r` and counted it as a base, inflating bp_in by
+    one per read and making it an ambiguous base for minimizer selection.
+    """
+    reads = tmp_path / "reads.fastq.gz"
+    _write_fastq_gz_crlf(reads, [_random_read(150) for _ in range(10)])
+
+    summary = deacon_module.run_deacon_filter(
+        {"reads.fastq.gz": reads}, str(tmp_path), _config()
+    )
+
+    assert summary.bp_in == 10 * 150
+
+
+@pytest.mark.usefixtures("deacon_index")
+def test_unparsable_fastq_does_not_take_the_deacon_server_down(tmp_path, deacon_server):
+    """A malformed record makes deacon report an error for that request only.
+    In deacon 0.17.0 it exited the shared server instead, so every other
+    submission in flight failed until Kubernetes restarted the pod.
+    """
+    bad = tmp_path / "bad.fastq"
+    # A quality line one character shorter than its sequence, placed past the
+    # reads median_read_length samples so that deacon is the one to reject it.
+    good_records = "".join(
+        f"@read{i}\n{'A' * 150}\n+\n{'I' * 150}\n"
+        for i in range(deacon_module._READ_LENGTH_SAMPLE_SIZE)
+    )
+    bad.write_text(good_records + "@bad\n" + "A" * 151 + "\n+\n" + "I" * 150 + "\n")
+    with pytest.raises(ProcessingFailure):
+        deacon_module.run_deacon_filter({"bad.fastq": bad}, str(tmp_path), _config())
+    assert deacon_server.poll() is None, "deacon server exited on a malformed request"
+
+    good = tmp_path / "good.fastq.gz"
+    _write_fastq_gz(good, [_random_read(150) for _ in range(10)])
+    summary = deacon_module.run_deacon_filter(
+        {"good.fastq.gz": good}, str(tmp_path), _config()
+    )
+    assert summary.bp_in == 10 * 150
+
+
+def test_median_read_length_reports_a_malformed_record_as_a_submission_error(tmp_path):
+    reads = tmp_path / "reads.fastq"
+    reads.write_text("@read0\n" + "A" * 151 + "\n+\n" + "I" * 150 + "\n")
+
+    with pytest.raises(InvalidSubmission) as exc_info:
+        deacon_module.median_read_length(reads, "reads.fastq")
+    assert exc_info.value.error.fileNames == ["reads.fastq"]
+    assert "Failed to parse file" in exc_info.value.error.message
+    # Biopython is stricter than readtools in places, so we might be the wrong one.
+    assert FALSE_POSITIVE_HINT in exc_info.value.error.message
+
+
+def test_median_read_length_rejects_a_file_with_invalid_unicode(tmp_path):
+    reads = tmp_path / "reads.fastq"
+    reads.write_bytes(b"@read\xff0\n" + b"A" * 150 + b"\n+\n" + b"I" * 150 + b"\n")
+
+    with pytest.raises(InvalidSubmission) as exc_info:
+        deacon_module.median_read_length(reads, "reads.fastq")
+    message = exc_info.value.error.message
+    assert exc_info.value.error.fileNames == ["reads.fastq"]
+    assert "invalid Unicode" in message
+    assert "0xff" in message
+    assert FALSE_POSITIVE_HINT in message
+    assert "\xff" not in message
+
+
+def test_median_read_length_reports_a_truncated_gzip_as_a_submission_error(tmp_path):
+    reads = tmp_path / "reads.fastq.gz"
+    full = gzip.compress(
+        b"".join(
+            b"@read%d\n%s\n+\n%s\n" % (i, b"ACGT" * 40, b"I" * 160) for i in range(50)
+        )
+    )
+    reads.write_bytes(full[: len(full) // 2])
+
+    with pytest.raises(InvalidSubmission) as exc_info:
+        deacon_module.median_read_length(reads, "reads.fastq.gz")
+    assert "truncated" in exc_info.value.error.message
+    assert FALSE_POSITIVE_HINT in exc_info.value.error.message

@@ -117,12 +117,11 @@ export function addAuthRequest(
 }
 
 export function consumeAuthRequest(cookies: AstroCookies, state: string | undefined): AuthRequest | undefined {
-    const store = activeTransactions(unseal(cookies.get(AUTH_TRANSACTIONS_COOKIE)?.value));
     if (state === undefined) {
-        writeStore(cookies, store);
         return undefined;
     }
 
+    const store = activeTransactions(unseal(cookies.get(AUTH_TRANSACTIONS_COOKIE)?.value));
     // Only an own property can represent an issued transaction. Keep this explicit guard even
     // with a prototype-free store so future changes cannot reintroduce inherited-key matches.
     const transaction = Object.prototype.hasOwnProperty.call(store, state) ? store[state] : undefined;

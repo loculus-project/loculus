@@ -15,9 +15,9 @@ async function performSequenceDownload(
     await page.getByRole('button', { name: 'Download' }).click();
 
     if (selectRawNucleotide) {
-        await page.getByLabel('Raw nucleotide sequences').check();
+        await page.getByLabel('Nucleotide sequences', { exact: true }).check();
     } else {
-        await page.getByLabel('Aligned nucleotide sequences').check();
+        await page.getByLabel('Reference-aligned nucleotide sequences').check();
     }
 
     await page.getByLabel(/I agree/).check();

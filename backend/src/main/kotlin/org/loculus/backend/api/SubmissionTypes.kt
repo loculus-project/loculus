@@ -479,3 +479,17 @@ fun FileCategoryFilesMap.getDuplicateFileNames(category: FileCategory): Set<Stri
 
     return nameCounts.filterValues { it > 1 }.keys
 }
+
+/**
+ * File IDs used more than once within [category].
+ *
+ * Consumers key their local copy by file ID, so duplicate entries collapse onto one downloaded
+ * file - for paired-end reads that still passes validation and would archive one mate twice.
+ */
+fun FileCategoryFilesMap.getDuplicateFileIds(category: FileCategory): Set<FileId> {
+    val idCounts = this[category]!!
+        .groupingBy { it.fileId }
+        .eachCount()
+
+    return idCounts.filterValues { it > 1 }.keys
+}

@@ -18,14 +18,15 @@ vi.mock('../config.ts', () => ({
 describe('OIDC authentication transaction store', () => {
     const prototypeStates = ['constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf'];
     const values = new Map<string, string>();
-    const cookies = {
+    const cookieMocks = {
         get: vi.fn((name: string) => {
             const value = values.get(name);
             return value === undefined ? undefined : { value };
         }),
         set: vi.fn((name: string, value: string) => values.set(name, value)),
         delete: vi.fn((name: string) => values.delete(name)),
-    } as unknown as AstroCookies;
+    };
+    const cookies = cookieMocks as unknown as AstroCookies;
 
     beforeEach(() => {
         values.clear();
@@ -50,6 +51,24 @@ describe('OIDC authentication transaction store', () => {
             returnTo: 'https://loculus.test/two',
         });
         expect(values.has(AUTH_TRANSACTIONS_COOKIE)).toBe(false);
+    });
+
+    test('does not read or modify the transaction cookie when state is missing', () => {
+        addAuthRequest(cookies, 'pending-state', 'nonce', 'verifier', 'https://loculus.test/user');
+        const originalCookie = values.get(AUTH_TRANSACTIONS_COOKIE);
+        vi.clearAllMocks();
+
+        expect(consumeAuthRequest(cookies, undefined)).toBeUndefined();
+
+        expect(cookieMocks.get).not.toHaveBeenCalled();
+        expect(cookieMocks.set).not.toHaveBeenCalled();
+        expect(cookieMocks.delete).not.toHaveBeenCalled();
+        expect(values.get(AUTH_TRANSACTIONS_COOKIE)).toBe(originalCookie);
+        expect(consumeAuthRequest(cookies, 'pending-state')).toEqual({
+            nonce: 'nonce',
+            codeVerifier: 'verifier',
+            returnTo: 'https://loculus.test/user',
+        });
     });
 
     test('retains only the three newest transactions', () => {

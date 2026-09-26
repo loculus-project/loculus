@@ -10,7 +10,7 @@ import { getInstanceLogger } from '../logger.ts';
 import { routes } from '../routes/routes.ts';
 import { KeycloakClientManager } from '../utils/KeycloakClientManager.ts';
 import { authTransactionId, consumeAuthRequest } from '../utils/authRequestCookies.ts';
-import { getLoginUrl } from '../utils/getAuthUrl.ts';
+import { getLoginUrl } from '../utils/getLoginUrl.ts';
 import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
 export const ACCESS_TOKEN_COOKIE = 'access_token';
@@ -251,6 +251,8 @@ export async function getTokenFromParams(context: APIContext, client: BaseClient
                 `hasCode=true hasState=${params.state !== undefined}`,
         );
         const callbackUrl = new URL(routes.authCallback(), context.url.origin).toString();
+        // Removes the matching transaction from the cookie store before validation,
+        // so this browser cannot retry it even if the code exchange fails.
         const authRequest = consumeAuthRequest(context.cookies, params.state);
         if (authRequest === undefined) {
             logger.info(`OIDC callback rejected: transactionId=${transactionId} reason=missing_or_expired_transaction`);
@@ -311,26 +313,14 @@ const createRedirectWithModifiableHeaders = (url: string) => {
 };
 
 const redirectToAuth = (context: APIContext) => {
-    const currentUrl = context.url;
-    const redirectUrl = removeTokenCodeFromSearchParams(currentUrl);
+    const redirectUrl = context.url.toString();
 
     logger.debug(`Redirecting to auth with redirect url: ${redirectUrl}`);
-    const authUrl = new URL(getLoginUrl(redirectUrl), context.url.origin).toString();
+    const authUrl = new URL(getLoginUrl(redirectUrl, context.url.origin), context.url.origin).toString();
 
     deleteCookie(context);
     return createRedirectWithModifiableHeaders(authUrl);
 };
-
-function removeTokenCodeFromSearchParams(url: URL): string {
-    const newUrl = new URL(url.toString());
-
-    newUrl.searchParams.delete('code');
-    newUrl.searchParams.delete('session_state');
-    newUrl.searchParams.delete('iss');
-    newUrl.searchParams.delete('state');
-
-    return newUrl.toString();
-}
 
 async function refreshTokenViaKeycloak(token: TokenCookie, client: BaseClient): Promise<TokenCookie | undefined> {
     const refreshedTokenSet = await client.refresh(token.refreshToken).catch(() => {

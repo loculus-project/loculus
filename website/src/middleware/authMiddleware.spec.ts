@@ -95,11 +95,38 @@ describe('OIDC authentication middleware', () => {
         const response = (await authMiddleware(context, next)) as Response;
 
         expect(response.status).toBe(302);
-        expect(response.headers.get('location')).toBe(
-            'https://loculus.test/auth/login?returnTo=https%3A%2F%2Floculus.test%2Fuser',
-        );
+        expect(response.headers.get('location')).toBe('https://loculus.test/auth/login?returnTo=%2Fuser');
         expect(next).not.toHaveBeenCalled();
     });
+
+    test.each(['/user', '/ebola/user', '/ebola/my_sequences'])(
+        'preserves application query parameters when redirecting a logged-out request to %s',
+        async (path) => {
+            mocks.shouldMiddlewareEnforceLogin.mockReturnValue(true);
+            const requestedUrl = new URL(
+                `https://loculus.test${path}?state=pending&code=sample-code&iss=source&session_state=draft&filter=mine`,
+            );
+            const context = {
+                url: requestedUrl,
+                cookies,
+                locals: {},
+            } as unknown as APIContext;
+            const next = vi.fn();
+
+            const response = (await authMiddleware(context, next)) as Response;
+            const location = new URL(response.headers.get('location')!);
+
+            expect(response.status).toBe(302);
+            expect(location.origin).toBe(requestedUrl.origin);
+            expect(location.pathname).toBe('/auth/login');
+            expect(new URL(location.searchParams.get('returnTo')!, requestedUrl.origin).toString()).toBe(
+                requestedUrl.toString(),
+            );
+            expect(callbackParams).not.toHaveBeenCalled();
+            expect(callback).not.toHaveBeenCalled();
+            expect(next).not.toHaveBeenCalled();
+        },
+    );
 
     test('uses the stored nonce and verifier with the fixed callback URI, then consumes the transaction', async () => {
         addAuthRequest(
