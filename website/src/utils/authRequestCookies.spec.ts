@@ -16,6 +16,7 @@ vi.mock('../config.ts', () => ({
 }));
 
 describe('OIDC authentication transaction store', () => {
+    const prototypeStates = ['constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf'];
     const values = new Map<string, string>();
     const cookies = {
         get: vi.fn((name: string) => {
@@ -77,22 +78,34 @@ describe('OIDC authentication transaction store', () => {
         expect(consumeAuthRequest(cookies, 'other-state')).toBeUndefined();
     });
 
-    test.each(['constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf'])(
-        'rejects the prototype-chain state %s that was never issued',
+    test.each(prototypeStates)('rejects the prototype-chain state %s that was never issued', (state) => {
+        expect(consumeAuthRequest(cookies, state)).toBeUndefined();
+    });
+
+    test.each(prototypeStates)(
+        'the prototype-chain state %s does not consume or clobber a real transaction',
         (state) => {
+            addAuthRequest(cookies, 'real-state', 'nonce', 'verifier', 'https://loculus.test/real');
+
             expect(consumeAuthRequest(cookies, state)).toBeUndefined();
+            expect(consumeAuthRequest(cookies, 'real-state')).toEqual({
+                nonce: 'nonce',
+                codeVerifier: 'verifier',
+                returnTo: 'https://loculus.test/real',
+            });
         },
     );
 
-    test('a prototype-chain state does not consume or clobber a real transaction', () => {
-        addAuthRequest(cookies, 'real-state', 'nonce', 'verifier', 'https://loculus.test/real');
+    test.each(prototypeStates)('round-trips an explicitly stored %s key as an ordinary transaction', (state) => {
+        // Production states are random. These keys exercise dictionary semantics, including __proto__ assignment.
+        addAuthRequest(cookies, state, 'nonce', 'verifier', 'https://loculus.test/user');
 
-        expect(consumeAuthRequest(cookies, 'constructor')).toBeUndefined();
-        expect(consumeAuthRequest(cookies, 'real-state')).toEqual({
+        expect(consumeAuthRequest(cookies, state)).toEqual({
             nonce: 'nonce',
             codeVerifier: 'verifier',
-            returnTo: 'https://loculus.test/real',
+            returnTo: 'https://loculus.test/user',
         });
+        expect(consumeAuthRequest(cookies, state)).toBeUndefined();
     });
 
     test('produces a safe stable correlation identifier without revealing state', () => {
