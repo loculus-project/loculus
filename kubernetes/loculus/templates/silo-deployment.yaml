@@ -31,14 +31,16 @@ spec:
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       {{- include "loculus.podScheduling" $ | nindent 6 }}
+      {{- include "loculus.podSecurityContext" (list "silo" $.Values) | nindent 6 }}
       initContainers:
-        {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
+        {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy "Values" $.Values) | nindent 8 }}
       containers:
         - name: silo
           image: "{{ $.Values.images.loculusSilo.repository }}:{{ $.Values.images.loculusSilo.tag | default $dockerTag }}"
           command: ["/usr/local/bin/silo"]
           imagePullPolicy: {{ $.Values.imagePullPolicy }}
           {{- include "loculus.resources" (list "silo" $.Values $key) | nindent 10 }}
+          {{- include "loculus.containerSecurityContext" (list "silo" $.Values) | nindent 10 }}
           env:
             - name: SPDLOG_LEVEL
               value: "debug"
@@ -77,6 +79,7 @@ spec:
           image: "{{ $.Values.images.loculusSilo.repository }}:{{ $.Values.images.loculusSilo.tag | default $dockerTag }}"
           imagePullPolicy: "{{ $.Values.images.loculusSilo.pullPolicy }}"
           {{- include "loculus.resources" (list "silo-importer" $.Values) | nindent 10 }}
+          {{- include "loculus.containerSecurityContext" (list "silo-importer" $.Values) | nindent 10 }}
           env:
             - name: BACKEND_BASE_URL
               {{- if $.Values.disableBackend }}
