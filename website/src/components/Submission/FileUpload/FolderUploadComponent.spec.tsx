@@ -95,6 +95,14 @@ describe('FolderUploadComponent', () => {
         vi.mocked(multipartUpload.uploadPart).mockResolvedValue('"etag"');
     });
 
+    it('shows the file category heading by default and can hide it', () => {
+        const { rerender } = render(<FolderUploadComponentWithState {...defaultProps} />);
+        expect(screen.getByRole('heading', { name: 'Extra Files' })).toBeInTheDocument();
+
+        rerender(<FolderUploadComponentWithState {...defaultProps} showCategoryHeading={false} />);
+        expect(screen.queryByRole('heading', { name: 'Extra Files' })).not.toBeInTheDocument();
+    });
+
     describe('folder upload', () => {
         it('renders upload folder button', () => {
             render(<FolderUploadComponentWithState {...defaultProps} />);
