@@ -110,10 +110,26 @@ begin
 end;
 $$ language plpgsql;
 
+-- preprocessed data: only rows of the current pipeline version are visible in the released data (a new pipeline
+-- version being processed in the background must not mark every released accession dirty)
+create or replace function query_mark_dirty_from_preprocessed_data()
+returns trigger as $$
+begin
+    insert into query_dirty_accessions (organism, accession)
+    select distinct se.organism, se.accession
+    from (select distinct accession, version, pipeline_version from changed_rows) cr
+    join sequence_entries se on se.accession = cr.accession and se.version = cr.version
+    join current_processing_pipeline cpp on cpp.organism = se.organism and cpp.version = cr.pipeline_version
+    where se.released_at is not null
+    on conflict do nothing;
+    return null;
+end;
+$$ language plpgsql;
+
 create trigger query_dirty_trigger_ins after insert on sequence_entries_preprocessed_data
-referencing new table as changed_rows for each statement execute function query_mark_dirty_by_accession();
+referencing new table as changed_rows for each statement execute function query_mark_dirty_from_preprocessed_data();
 create trigger query_dirty_trigger_upd after update on sequence_entries_preprocessed_data
-referencing new table as changed_rows for each statement execute function query_mark_dirty_by_accession();
+referencing new table as changed_rows for each statement execute function query_mark_dirty_from_preprocessed_data();
 
 create trigger query_dirty_trigger_ins after insert on external_metadata
 referencing new table as changed_rows for each statement execute function query_mark_dirty_by_accession();

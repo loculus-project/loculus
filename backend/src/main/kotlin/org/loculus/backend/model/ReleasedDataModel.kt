@@ -20,6 +20,7 @@ import org.loculus.backend.api.FileCategoryFilesMap
 import org.loculus.backend.api.FileIdAndNameAndReadUrl
 import org.loculus.backend.api.MetadataMap
 import org.loculus.backend.api.Organism
+import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.ReleasedData
 import org.loculus.backend.api.VersionStatus
 import org.loculus.backend.config.BackendConfig
@@ -27,6 +28,7 @@ import org.loculus.backend.config.FileUrlType
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
+import org.loculus.backend.service.submission.CompressedSequence
 import org.loculus.backend.service.submission.METADATA_UPLOAD_AUX_TABLE_NAME
 import org.loculus.backend.service.submission.RawProcessedData
 import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME
@@ -90,6 +92,47 @@ open class ReleasedDataModel(
                     latestRevocationVersions,
                     finder,
                     organism,
+                )
+            }
+    }
+
+    /**
+     * The released data of [organism] exactly as [getReleasedData] computes it (same entries, same order, same
+     * metadata), but with the sequences still compressed as stored. Used by the query engine projection.
+     *
+     * Must be consumed within a transaction.
+     *
+     * @param accessions if given, only (all released versions of) these accessions are returned
+     */
+    fun streamReleasedDataWithCompressedSequences(
+        organism: Organism,
+        accessions: Collection<Accession>? = null,
+    ): Sequence<ReleasedDataWithCompressedSequences> {
+        val latestVersions = submissionDatabaseService.getLatestVersions(organism, accessions)
+        val latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism, accessions)
+
+        val earliestReleaseDateConfig = backendConfig.getInstanceConfig(organism).schema.earliestReleaseDate
+        val finder = if (earliestReleaseDateConfig.enabled) {
+            EarliestReleaseDateFinder(earliestReleaseDateConfig.externalFields)
+        } else {
+            null
+        }
+
+        return submissionDatabaseService.streamReleasedSubmissionsWithCompressedSequences(organism, accessions)
+            .map { (rawProcessedData, compressedData) ->
+                val releasedData = computeAdditionalMetadataFields(
+                    rawProcessedData,
+                    latestVersions,
+                    latestRevocationVersions,
+                    finder,
+                    organism,
+                )
+                ReleasedDataWithCompressedSequences(
+                    accession = rawProcessedData.accession,
+                    version = rawProcessedData.version,
+                    isRevocation = rawProcessedData.isRevocation,
+                    metadata = releasedData.metadata,
+                    sequences = compressedData,
                 )
             }
     }
@@ -307,3 +350,15 @@ open class ReleasedDataModel(
         return VersionStatus.REVISED
     }
 }
+
+/**
+ * A released entry as returned by get-released-data ([metadata]), with its sequences and insertions as stored
+ * (compressed, filtered to the reference genome's segments and genes).
+ */
+class ReleasedDataWithCompressedSequences(
+    val accession: Accession,
+    val version: Version,
+    val isRevocation: Boolean,
+    val metadata: MetadataMap,
+    val sequences: ProcessedData<CompressedSequence>,
+)
