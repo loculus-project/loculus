@@ -1,5 +1,6 @@
 package org.loculus.backend.api
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonValue
 import com.fasterxml.jackson.core.JsonParser
@@ -303,7 +304,26 @@ data class SequenceEntryStatus(
     val isRevocation: Boolean = false,
     val submissionId: String,
     val dataUseTerms: DataUseTerms,
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    val reviewData: SequenceReviewData? = null,
 ) : AccessionVersionInterface
+
+data class SequenceReviewData(
+    val metadata: MetadataMap,
+    val errors: List<PreprocessingAnnotation>?,
+    val warnings: List<PreprocessingAnnotation>?,
+    val files: FileCategoryFilesMap?,
+    val revision: RevisionReviewData?,
+)
+
+data class RevisionReviewData(
+    val previousVersion: Version?,
+    // Null when no processed baseline is available.
+    val previousMetadata: MetadataMap?,
+    val nucleotideChanges: Map<SegmentName, NucleotideSequenceReview>,
+)
+
+data class NucleotideSequenceReview(val changed: Boolean, val previousLength: Int?, val currentLength: Int?)
 
 data class EditedSequenceEntryData(
     @Schema(example = "LOC_000S01D") override val accession: Accession,

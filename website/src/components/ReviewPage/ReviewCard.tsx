@@ -13,7 +13,7 @@ import {
     restrictedDataUseTermsOption,
     type SequenceEntryStatus,
     type SequenceEntryStatusNames,
-    type SequenceEntryToEdit,
+    type SequenceReviewData,
     errorsProcessingResult,
     warningsProcessingResult,
 } from '../../types/backend.ts';
@@ -41,6 +41,7 @@ import TickOutline from '~icons/mdi/tick-outline';
 
 type ReviewCardProps = {
     sequenceEntryStatus: SequenceEntryStatus;
+    retryReviewData: () => void;
     metadataSchema: Metadata[];
     deleteAccessionVersion: () => void;
     approveAccessionVersion: () => void;
@@ -54,6 +55,7 @@ type ReviewCardProps = {
 
 export const ReviewCard: FC<ReviewCardProps> = ({
     sequenceEntryStatus,
+    retryReviewData,
     metadataSchema,
     approveAccessionVersion,
     deleteAccessionVersion,
@@ -72,11 +74,25 @@ export const ReviewCard: FC<ReviewCardProps> = ({
         () => new Map(metadataSchema.map(({ name, displayName }) => [name, displayName ?? name])),
         [metadataSchema],
     );
-    const { isLoading, data } = useGetMetadataAndAnnotations(organism, clientConfig, accessToken, sequenceEntryStatus);
+    const data = sequenceEntryStatus.reviewData;
+    const sequencePreview = backendClientHooks(clientConfig).useGetDataToEdit(
+        {
+            headers: createAuthorizationHeader(accessToken),
+            params: { organism, accession: sequenceEntryStatus.accession, version: sequenceEntryStatus.version },
+        },
+        {
+            enabled: isSequencesDialogOpen && data !== undefined && sequenceEntryStatus.status === processedStatus,
+            retry: false,
+        },
+    );
     const filesEnabled = outputFileCategories !== undefined && outputFileCategories.length > 0;
-    const hasFiles = Object.entries(data?.processedData.files ?? {}).length > 0;
+    const hasFiles = Object.entries(data?.files ?? {}).length > 0;
 
     const notProcessed = sequenceEntryStatus.status !== processedStatus;
+
+    useEffect(() => {
+        if (notProcessed) setSequencesDialogOpen(false);
+    }, [notProcessed]);
 
     return (
         <div className='px-3 py-2 relative transition-all duration-500'>
@@ -95,7 +111,11 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                         value={sequenceEntryStatus.submissionId}
                     />
                     {data !== undefined && (
-                        <MetadataList data={data} metadataDisplayNames={metadataDisplayNames} isLoading={isLoading} />
+                        <MetadataList
+                            data={data}
+                            accessionVersion={getAccessionVersionString(sequenceEntryStatus)}
+                            metadataDisplayNames={metadataDisplayNames}
+                        />
                     )}
                     {sequenceEntryStatus.isRevocation && (
                         <KeyValueComponent
@@ -133,10 +153,9 @@ export const ReviewCard: FC<ReviewCardProps> = ({
             {isDiffOpen && data !== undefined && (
                 <RevisionDiff
                     current={data}
+                    version={sequenceEntryStatus.version}
+                    onRetry={retryReviewData}
                     metadataSchema={metadataSchema}
-                    organism={organism}
-                    clientConfig={clientConfig}
-                    accessToken={accessToken}
                     referenceGenomesInfo={referenceGenomesInfo}
                 />
             )}
@@ -144,14 +163,18 @@ export const ReviewCard: FC<ReviewCardProps> = ({
             <SequencesDialog
                 isOpen={isSequencesDialogOpen}
                 onClose={() => setSequencesDialogOpen(false)}
-                dataToView={data}
+                dataToView={sequencePreview.data}
+                isLoading={sequencePreview.isFetching}
+                isError={sequencePreview.isError}
+                onRetry={() => void sequencePreview.refetch()}
                 referenceGenomesInfo={referenceGenomesInfo}
             />
             {filesEnabled && (
                 <FilesDialog
                     isOpen={isFilesDialogOpen}
                     onClose={() => setFilesDialogOpen(false)}
-                    dataToView={data}
+                    accessionVersion={getAccessionVersionString(sequenceEntryStatus)}
+                    files={data?.files ?? null}
                     fileCategories={outputFileCategories}
                 />
             )}
@@ -300,20 +323,19 @@ const ButtonBar: FC<ButtonBarProps> = ({
 };
 
 type MetadataListProps = {
-    data: SequenceEntryToEdit;
+    data: SequenceReviewData;
+    accessionVersion: string;
     metadataDisplayNames: Map<string, string>;
-    isLoading: boolean;
 };
 
 const isAnnotationPresent = (metadataField: string) => (item: ProcessingAnnotation) =>
     item.processedFields[0].name === metadataField;
 
-const MetadataList: FC<MetadataListProps> = ({ data, isLoading, metadataDisplayNames }) =>
-    !isLoading &&
-    Object.entries(data.processedData.metadata).map(([metadataName, value], index) =>
+const MetadataList: FC<MetadataListProps> = ({ data, accessionVersion, metadataDisplayNames }) =>
+    Object.entries(data.metadata).map(([metadataName, value], index) =>
         value === null ? null : (
             <KeyValueComponent
-                accessionVersion={getAccessionVersionString(data)}
+                accessionVersion={accessionVersion}
                 key={index}
                 keyName={metadataDisplayNames.get(metadataName) ?? metadataName}
                 value={displayMetadataField(value)}
@@ -568,22 +590,4 @@ function getTextColorAndMessages(
         primaryMessages: undefined,
         secondaryMessages: undefined,
     };
-}
-
-function useGetMetadataAndAnnotations(
-    organism: string,
-    clientConfig: ClientConfig,
-    accessToken: string,
-    sequenceEntryStatus: SequenceEntryStatus,
-) {
-    const { status, accession, version, isRevocation } = sequenceEntryStatus;
-    return backendClientHooks(clientConfig).useGetDataToEdit(
-        {
-            headers: createAuthorizationHeader(accessToken),
-            params: { organism, accession, version },
-        },
-        {
-            enabled: status !== receivedStatus && status !== inProcessingStatus && !isRevocation,
-        },
-    );
 }
