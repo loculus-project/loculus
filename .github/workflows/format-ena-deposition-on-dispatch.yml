@@ -8,7 +8,7 @@ on:
       - ".github/workflows/format-ena-deposition-on-dispatch.yml"
       - "ruff.toml"
 jobs:
-  format:
+  deposition-format:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'format_me'))
     permissions:
       contents: write

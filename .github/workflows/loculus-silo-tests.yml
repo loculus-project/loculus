@@ -9,7 +9,7 @@ defaults:
   run:
     working-directory: ./loculus-silo
 jobs:
-  tests:
+  silo-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -31,8 +31,7 @@ jobs:
       - name: Run tests
         run: |
           python -m pytest
-  typeCheck:
-    name: Type Checking
+  silo-type-check:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -47,8 +46,7 @@ jobs:
           uv pip install --system '.[test]'
       - name: Run mypy (checks type hints)
         run: mypy . --config-file .mypy.ini --non-interactive --install-types
-  lint:
-    name: Lint code
+  silo-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

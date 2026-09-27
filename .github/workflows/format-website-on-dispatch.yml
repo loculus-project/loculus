@@ -7,7 +7,7 @@ on:
       - "website/**"
       - ".github/workflows/format-website-on-dispatch.yml"
 jobs:
-  format:
+  website-format:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'format_me'))
     permissions:
       contents: write
