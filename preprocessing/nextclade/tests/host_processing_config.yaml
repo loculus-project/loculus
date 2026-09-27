@@ -1,5 +1,8 @@
 taxonomy_service_url: "http://localhost:5000"
 
+extra_input_fields:
+  - host
+
 processing_spec:
   hostNameScientific:
     function: scientific_name_from_id

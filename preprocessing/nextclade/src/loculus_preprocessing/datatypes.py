@@ -1,12 +1,16 @@
+from __future__ import annotations
+
 import logging
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import StrEnum, unique
 from typing import Any, Final
 
+from .nextclade_annotation import NextcladeAnnotation
+
 logger = logging.getLogger(__name__)
 
-AccessionVersion = str
+AccessionVersion = str  # {accession}.{version}
 GeneName = str
 SegmentName = str
 SequenceName = str
@@ -20,7 +24,7 @@ ArgName = str  # Name of argument present in processing_functions
 ArgValue = (
     list[str] | str | bool | int | float | None
 )  # Value of an argument passed to processing_functions
-InputField = str  # Name of field in input data, either inputMetadata or NextcladeMetadata
+InputField = str  # Name of field in input data, either submitted metadata or NextcladeMetadata
 ProcessedMetadataValue = str | int | float | bool | None
 ProcessedMetadata = dict[str, ProcessedMetadataValue]
 InputMetadataValue = str | None
@@ -91,21 +95,30 @@ class FileIdAndNameAndReadUrl:
     url: str | None = None
 
 
-@dataclass
-class UnprocessedData:
-    submitter: str
+@dataclass(frozen=True)
+class ProcessingContext:
+    """Runtime context that is the same for every processing function call for a given
+    accession, as opposed to `FunctionArgs` which holds the literal, per-function arguments
+    declared in the organism's YAML config.
+    """
+
+    accession_version: AccessionVersion
+    submission_id: str
     group_id: int
-    submittedAt: str  # timestamp  # noqa: N815
-    submissionId: str  # noqa: N815
-    metadata: InputMetadata
-    unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
-    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
+    insdc_ingest_group_id: int
+    submitted_at: str
+
+    @property
+    def is_insdc_ingest_group(self) -> bool:
+        return self.group_id == self.insdc_ingest_group_id
 
 
 @dataclass
 class UnprocessedEntry:
-    accessionVersion: AccessionVersion  # {accession}.{version}  # noqa: N815
-    data: UnprocessedData
+    context: ProcessingContext
+    metadata: InputMetadata
+    unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
+    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
 
 
 FunctionInputs = dict[ArgName, InputField]
@@ -114,7 +127,8 @@ FunctionArgs = dict[ArgName, ArgValue]
 
 @dataclass
 class UnprocessedAfterNextclade:
-    inputMetadata: InputMetadata  # noqa: N815
+    metadata: InputMetadata
+    context: ProcessingContext
     files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
     # Derived metadata produced by Nextclade
     nextcladeMetadata: dict[SequenceName, Any] | None  # noqa: N815
@@ -170,9 +184,8 @@ class SubmissionData:
     but the annotations need to be uploaded separately."""
 
     processed_entry: ProcessedEntry
-    submitter: str | None
-    group_id: int | None = None
-    annotations: dict[str, Any] | None = None
+    group_id: int
+    annotations: dict[SequenceName, NextcladeAnnotation | None] | None = None
 
 
 @dataclass
@@ -203,7 +216,7 @@ class RawProcessingResult:
     errors: list[str] = field(default_factory=list)
 
 
-def processing_error(message: str) -> "RawProcessingResult":
+def processing_error(message: str) -> RawProcessingResult:
     """Helper to create a RawProcessingResult with a single error and no datum."""
     return RawProcessingResult(datum=None, errors=[message])
 

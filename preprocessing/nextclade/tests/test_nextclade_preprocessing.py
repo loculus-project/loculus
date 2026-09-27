@@ -14,8 +14,10 @@ from factory_methods import (
     ProcessedEntryFactory,
     ProcessingAnnotationHelper,
     ProcessingTestCase,
+    UnprocessedEntryFactory,
     build_processing_annotations,
-    ts_from_ymd,
+    on_minus_strand,
+    single_cds_annotation,
     verify_processed_entry,
 )
 
@@ -29,15 +31,14 @@ from loculus_preprocessing.datatypes import (
     AnnotationSourceType,
     SegmentClassificationMethod,
     SubmissionData,
-    UnprocessedData,
-    UnprocessedEntry,
 )
 from loculus_preprocessing.embl import (
     create_flatfile,
     get_seq_features,
     reformat_authors_from_loculus_to_embl_style,
 )
-from loculus_preprocessing.prepro import get_nested_metadata, process_all
+from loculus_preprocessing.nextclade_annotation import NextcladeAnnotation
+from loculus_preprocessing.prepro import get_nested_metadata, process_all, unpack_annotations
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
     format_stop_codon,
@@ -1280,35 +1281,19 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
     config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
     config.max_sequences_per_entry = 1
 
-    bad_entry = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
-            files=None,
-        ),
+    bad_entry = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={},
+        accession_id="01",
+        sequences={
+            "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+            "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+        },
     )
 
-    good_entry = UnprocessedEntry(
-        accessionVersion="LOC_02.1",
-        data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-            },
-            files=None,
-        ),
+    good_entry = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={},
+        accession_id="02",
+        sequences={"ebola-sudan": sequence_with_mutation("ebola-sudan")},
     )
 
     result = process_all([bad_entry, good_entry], MULTI_EBOLA_DATASET, config)
@@ -1329,20 +1314,13 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
 
 def test_preprocessing_without_metadata() -> None:
     config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
-    sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
-            files=None,
-        ),
+    sequence_entry_data = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={},
+        accession_id="01",
+        sequences={
+            "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+            "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+        },
     )
 
     config.processing_spec = {}
@@ -1438,20 +1416,8 @@ def test_get_seq_features_translates_minus_strand_cds_correctly():
     # (Met Lys Stop), so a minus-strand CDS over this range must translate to "MK" (the
     # /translation qualifier excludes the terminal stop codon).
     sequence_str = "AAA" + "TTATTTCAT" + "CCCC"
-    annotation_object = {
-        "genes": [
-            {
-                "range": {"begin": 3, "end": 12},
-                "attributes": {},
-                "cdses": [
-                    {
-                        "segments": [{"range": {"begin": 3, "end": 12}, "strand": "-"}],
-                        "attributes": {},
-                    }
-                ],
-            }
-        ]
-    }
+    annotation_object = single_cds_annotation(3, 12, strand="-")
+
     features = get_seq_features(annotation_object, sequence_str)
     cds_features = [feature for feature in features if feature.type == "CDS"]
     assert len(cds_features) == 1
@@ -1464,20 +1430,8 @@ def test_get_seq_features_maps_phase_to_codon_start():
     # bases ("TT") are a partial codon left over from outside this feature, so the first complete
     # codon is GAA (Glu), followed by ATA (Ile) and the stop codon TAA.
     sequence_str = "TT" + "GAAATATAA"
-    annotation_object = {
-        "genes": [
-            {
-                "range": {"begin": 0, "end": 11},
-                "attributes": {},
-                "cdses": [
-                    {
-                        "segments": [{"range": {"begin": 0, "end": 11}, "strand": "+", "phase": 2}],
-                        "attributes": {},
-                    }
-                ],
-            }
-        ]
-    }
+    annotation_object = single_cds_annotation(0, 11, phase=2)
+
     features = get_seq_features(annotation_object, sequence_str)
     cds_features = [feature for feature in features if feature.type == "CDS"]
     assert len(cds_features) == 1
@@ -1487,9 +1441,11 @@ def test_get_seq_features_maps_phase_to_codon_start():
 
 def test_get_seq_features_handles_real_reverse_complemented_cchf_annotation():
     sequence_str = str(SeqIO.read(CCHF_REVERSE_COMPLEMENTED_FASTA, "fasta").seq)
-    annotation_object = json.loads(
-        Path(CCHF_REVERSE_COMPLEMENTED_ANNOTATION).read_text(encoding="utf-8")
-    )["annotation"]
+    annotation_object = NextcladeAnnotation.model_validate(
+        json.loads(Path(CCHF_REVERSE_COMPLEMENTED_ANNOTATION).read_text(encoding="utf-8"))[
+            "annotation"
+        ]
+    )
 
     features = get_seq_features(annotation_object, sequence_str)
     cds_features = [feature for feature in features if feature.type == "CDS"]
@@ -1509,20 +1465,8 @@ def test_get_seq_features_trims_trailing_partial_codon():
     # the dangling 1-2 bases can't be translated and must be dropped rather than raising or
     # producing a Biopython warning.
     sequence_str = "ATGAAATA"  # ATG AAA TA(missing base)
-    annotation_object = {
-        "genes": [
-            {
-                "range": {"begin": 0, "end": 8},
-                "attributes": {},
-                "cdses": [
-                    {
-                        "segments": [{"range": {"begin": 0, "end": 8}, "strand": "+"}],
-                        "attributes": {},
-                    }
-                ],
-            }
-        ]
-    }
+    annotation_object = single_cds_annotation(0, 8)
+
     features = get_seq_features(annotation_object, sequence_str)
     cds_features = [feature for feature in features if feature.type == "CDS"]
     assert len(cds_features) == 1
@@ -1534,20 +1478,8 @@ def test_get_seq_features_drops_raw_codon_start_not_derived_from_phase():
     # (EMBL's codon_start is 1-indexed, phase is 0-indexed), so it must be dropped and
     # codon_start recomputed as if phase were 0 (i.e. codon_start == 1).
     sequence_str = "ATGAAATAA"
-    annotation_object = {
-        "genes": [
-            {
-                "range": {"begin": 0, "end": 9},
-                "attributes": {},
-                "cdses": [
-                    {
-                        "segments": [{"range": {"begin": 0, "end": 9}, "strand": "+"}],
-                        "attributes": {"codon_start": 3},
-                    }
-                ],
-            }
-        ]
-    }
+    annotation_object = single_cds_annotation(0, 9, attributes={"codon_start": ["3"]})
+
     features = get_seq_features(annotation_object, sequence_str)
     cds_features = [feature for feature in features if feature.type == "CDS"]
     assert len(cds_features) == 1
@@ -1555,38 +1487,28 @@ def test_get_seq_features_drops_raw_codon_start_not_derived_from_phase():
 
 
 @pytest.mark.parametrize(
-    ("strand", "expected"),
-    [("+", "[<0:9](+)"), ("-", "[0:>9](-)")],
+    ("truncation", "strand", "expected"),
+    [
+        ({"fivePrime": 30}, "+", "[<0:9](+)"),
+        ({"fivePrime": 30}, "-", "[0:>9](-)"),
+        ({"threePrime": 30}, "+", "[0:>9](+)"),
+        ({"threePrime": 30}, "-", "[<0:9](-)"),
+    ],
 )
-def test_get_seq_features_marks_a_gene_partial_when_its_cds_is_truncated(strand, expected):
+def test_get_seq_features_marks_a_gene_partial_when_its_cds_is_truncated(
+    truncation, strand, expected
+):
     # INSDC marks the gene holding a truncated CDS partial as well, e.g. QB011581.1 has both
     # `gene <27762..27788` and `CDS <27762..27788`; a bare `gene` beside a `CDS <` is invalid.
     # The marker names the coordinate, not the protein end, so the same 5' truncation sits on
     # the lower coordinate on the plus strand and the upper one on the minus strand.
     sequence_str = "ATGAAATAA"
-    annotation_object = {
-        "genes": [
-            {
-                "range": {"begin": 0, "end": 9},
-                "attributes": {},
-                "cdses": [
-                    {
-                        "segments": [
-                            {
-                                "range": {"begin": 0, "end": 9},
-                                "strand": strand,
-                                "truncation": {"fivePrime": 30},
-                            }
-                        ],
-                        "attributes": {},
-                    }
-                ],
-            }
-        ]
-    }
+    annotation_object = single_cds_annotation(0, 9, strand=strand, truncation=truncation)
+
     features = get_seq_features(annotation_object, sequence_str)
     gene_feature = next(feature for feature in features if feature.type == "gene")
     cds_feature = next(feature for feature in features if feature.type == "CDS")
+
     assert str(gene_feature.location) == expected
     assert str(gene_feature.location) == str(cds_feature.location)
 
@@ -1604,6 +1526,88 @@ def test_process_labeled_mutations():
     assert process_labeled_mutations(json_string, {}).datum == "NA:H275Y"
 
 
+def test_get_seq_features_marks_the_truncated_end_by_its_coordinate_not_its_strand():
+    # INSDC marks an unknown boundary by the coordinate it lies at, not by which end of the
+    # protein it is, so the same 5' truncation takes `<` on the lower coordinate on the plus
+    # strand and `>` on the upper one on the minus strand.
+    sequence_str = "ATGGCTTAA"
+    plus = single_cds_annotation(0, 9, truncation={"fivePrime": 30})
+    minus = on_minus_strand(plus)
+
+    plus_cds = next(f for f in get_seq_features(plus, sequence_str) if f.type == "CDS")
+    minus_cds = next(f for f in get_seq_features(minus, sequence_str) if f.type == "CDS")
+
+    assert str(plus_cds.location) == "[<0:9](+)"
+    assert str(minus_cds.location) == "[0:>9](-)"
+
+
+def test_get_seq_features_gives_a_gene_the_strand_of_its_cdses():
+    # The annotation reports a strand only on a CDS's segments, so an unstranded gene would
+    # render as a plus-strand range even when its CDSes are on the minus strand.
+    sequence_str = "ATGGCTTAA"
+    annotation_object = on_minus_strand(single_cds_annotation(0, 9))
+
+    features = get_seq_features(annotation_object, sequence_str)
+    gene = next(f for f in features if f.type == "gene")
+    cds_feature = next(f for f in features if f.type == "CDS")
+
+    assert gene.location.strand == -1
+    assert gene.location.strand == cds_feature.location.strand
+
+
+def test_unpack_annotations_reports_a_bad_annotation_instead_of_raising():
+    # process_single runs inside process_all's per-entry handler, but enrich_with_nextclade
+    # does not: raising here would fail the whole batch, which the backend then re-queues.
+    # A malformed annotation must cost one entry its flatfile and nothing more.
+    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
+    config.create_embl_file = True
+    nextclade_metadata = {"main": {"annotation": {"genes": [{"range": {"begin": 5, "end": 1}}]}}}
+
+    annotations, errors = unpack_annotations(config, "LOC_01.1", nextclade_metadata)
+
+    assert annotations == {"main": None}
+    assert len(errors) == 1
+
+
+def test_unpack_annotations_returns_the_parsed_annotation():
+    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
+    config.create_embl_file = True
+    begin, end = 0, 9
+    raw = single_cds_annotation(begin, end).model_dump()
+
+    annotations, errors = unpack_annotations(config, "LOC_01.1", {"main": {"annotation": raw}})
+
+    assert errors == []
+    assert isinstance(annotations["main"], NextcladeAnnotation)
+    segment = annotations["main"].genes[0].cdses[0].segments[0]
+    assert (segment.range.begin, segment.range.end) == (begin, end)
+
+
+def test_unpack_annotations_does_nothing_when_no_flatfile_is_wanted():
+    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
+    config.create_embl_file = False
+
+    assert unpack_annotations(config, "LOC_01.1", {"main": {"annotation": {"genes": []}}}) == (
+        None,
+        [],
+    )
+
+
+@pytest.mark.parametrize("truncation", [{"both": 5}, {"both": [1, 2, 3]}, {"sideways": 1}])
+def test_unpack_annotations_contains_a_malformed_truncation_arm(truncation):
+    # pydantic turns a ValueError raised in a validator into a ValidationError but lets a
+    # TypeError through, so an arm that cannot be unpacked has to be rejected, not unpacked.
+    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
+    config.create_embl_file = True
+    raw = single_cds_annotation(0, 9).model_dump()
+    raw["genes"][0]["cdses"][0]["segments"][0]["truncation"] = truncation
+
+    annotations, errors = unpack_annotations(config, "LOC_01.1", {"main": {"annotation": raw}})
+
+    assert annotations == {"main": None}
+    assert len(errors) == 1
+
+
 def test_create_flatfile():
     config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
     embl_fields = get_config(EMBL_METADATA, ignore_args=True).processing_spec
@@ -1611,23 +1615,16 @@ def test_create_flatfile():
     # need to recompute order after updating the spec
     config.processing_order = get_processing_order(config)
     config.create_embl_file = True
-    sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            submitter="test_submitter",
-            group_id=2,
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            submissionId="test_submission_id",
-            metadata={
-                "sampleCollectionDate": "2024-01-01",
-                "geoLocCountry": "Netherlands",
-                "geoLocAdmin1": "North Holland",
-                "geoLocCity": "Amsterdam",
-                "authors": "Smith, Doe A;",
-            },
-            unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
-            files=None,
-        ),
+    sequence_entry_data = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={
+            "sampleCollectionDate": "2024-01-01",
+            "geoLocCountry": "Netherlands",
+            "geoLocAdmin1": "North Holland",
+            "geoLocCity": "Amsterdam",
+            "authors": "Smith, Doe A;",
+        },
+        accession_id="01",
+        sequences={"main": sequence_with_mutation("single")},
     )
 
     result = process_all([sequence_entry_data], EBOLA_SUDAN_DATASET, config)
