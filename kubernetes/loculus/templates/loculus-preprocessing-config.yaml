@@ -18,7 +18,12 @@ metadata:
 data:
   preprocessing-config.yaml: |
     organism: {{ $organism }}
-    {{- $processingConfig.configFile | toYaml | nindent 4 }}
+    {{- $configFile := deepCopy $processingConfig.configFile }}
+    {{- if and $.Values.requireLogin (hasKey $configFile "create_embl_file") }}
+    {{/* EMBL upload requires S3 sharing, which is unsupported in restricted mode. */}}
+    {{- $_ := set $configFile "create_embl_file" false }}
+    {{- end }}
+    {{- $configFile | toYaml | nindent 4 }}
     {{- if and $.Values.taxonomyService (not $.Values.disableTaxonomyService) }}
     taxonomy_service_url: {{ $.Values.taxonomyService.taxonomy_service_url }}
     {{- end }}
