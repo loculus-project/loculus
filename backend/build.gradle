@@ -101,11 +101,19 @@ dependencies {
     }
 }
 
-// ktlint 1.8.0 crashes on kotlin-compiler-embeddable 2.4.20 (ktlint/ktlint#3289); drop this pin once on ktlint >= 2.0
+// ktlint 1.8.0 crashes on kotlin-compiler-embeddable 2.4.20 (ktlint/ktlint#3289); drop this pin once on ktlint >= 2.0 (the ktlint tasks fail as a reminder)
 configurations.matching { it.name.startsWith("ktlint") }.configureEach {
     resolutionStrategy.eachDependency { details ->
         if (details.requested.group == "org.jetbrains.kotlin") {
             details.useVersion("2.2.21")
+        }
+    }
+}
+tasks.matching { it.name.startsWith("ktlint") || it.name.startsWith("runKtlint") }.configureEach {
+    doFirst {
+        def newKtlint = configurations.ktlint.dependencies.find { it.name == "ktlint-cli" && !it.version?.startsWith("1.") }
+        if (newKtlint) {
+            throw new GradleException("ktlint is now ${newKtlint.version}: remove the ktlint Kotlin compiler pin in build.gradle")
         }
     }
 }
