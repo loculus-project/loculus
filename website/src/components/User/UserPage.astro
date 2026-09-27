@@ -1,5 +1,6 @@
 ---
 import { ListOfGroupsOfUser } from './ListOfGroupsOfUser.tsx';
+import { loginIsRequired } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes/routes';
 import { GroupManagementClient } from '../../services/groupManagementClient';
@@ -64,7 +65,7 @@ const groupOfUsersResult = await GroupManagementClient.create().getGroupsOfUser(
         </div>
         {
             groupOfUsersResult.match(
-                (groups) => <ListOfGroupsOfUser groupsOfUser={groups} client:load />,
+                (groups) => <ListOfGroupsOfUser groupsOfUser={groups} requireLogin={loginIsRequired()} client:load />,
                 (error) => <ErrorBox title='Failed loading list of groups'>{error.detail}</ErrorBox>,
             )
         }

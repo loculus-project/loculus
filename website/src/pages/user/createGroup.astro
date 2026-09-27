@@ -1,6 +1,6 @@
 ---
 import { GroupCreationForm } from '../../components/User/GroupCreationForm.tsx';
-import { getRuntimeConfig } from '../../config';
+import { getRuntimeConfig, loginIsRequired } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getAccessToken } from '../../utils/getAccessToken';
 
@@ -11,5 +11,11 @@ const searchParams = Astro.url.searchParams.toString();
 ---
 
 <BaseLayout title='Create group' activeTopNavigationItem='account'>
-    <GroupCreationForm clientConfig={clientConfig} accessToken={accessToken} searchParams={searchParams} client:load />
+    <GroupCreationForm
+        requireLogin={loginIsRequired()}
+        clientConfig={clientConfig}
+        accessToken={accessToken}
+        searchParams={searchParams}
+        client:load
+    />
 </BaseLayout>

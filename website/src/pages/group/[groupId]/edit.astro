@@ -2,7 +2,7 @@
 import { GroupEditForm } from '../../../components/User/GroupEditForm';
 import ErrorBox from '../../../components/common/ErrorBox.tsx';
 import NeedToLogin from '../../../components/common/NeedToLogin.astro';
-import { getRuntimeConfig } from '../../../config';
+import { getRuntimeConfig, loginIsRequired } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { GroupManagementClient } from '../../../services/groupManagementClient';
 import { getAccessToken } from '../../../utils/getAccessToken';
@@ -30,6 +30,7 @@ const groupDetailsResult = await groupManagementClient.getGroupDetails(groupId, 
             groupDetailsResult.match(
                 (groupDetails) => (
                     <GroupEditForm
+                        requireLogin={loginIsRequired()}
                         prefetchedGroupDetails={groupDetails}
                         accessToken={accessToken}
                         clientConfig={clientConfig}

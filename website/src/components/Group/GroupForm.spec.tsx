@@ -1,13 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { describe, expect, test } from 'vitest';
 
 import { GroupForm } from './GroupForm';
-import { loginIsRequired } from '../../config';
 import type { GetGroupsResult } from '../../hooks/useGroupOperations';
-
-vi.mock('../../config', () => ({ loginIsRequired: vi.fn(() => false) }));
-beforeEach(() => vi.mocked(loginIsRequired).mockReturnValue(false));
 
 const MOCK_GROUP = {
     groupId: 1,
@@ -46,9 +42,9 @@ const mockGetGroupsWithGroup = async (_groupName?: string): Promise<GetGroupsRes
 
 describe('GroupForm', () => {
     test.each([false, true])('visibility copy matches restricted mode %s', (restricted) => {
-        vi.mocked(loginIsRequired).mockReturnValue(restricted);
         render(
             <GroupForm
+                requireLogin={restricted}
                 title='Create group'
                 buttonText='Submit'
                 onSubmit={noOpSubmit}
@@ -63,6 +59,7 @@ describe('GroupForm', () => {
 
         render(
             <GroupForm
+                requireLogin={false}
                 title={formTitle}
                 buttonText={buttonText}
                 onSubmit={noOpSubmit}
@@ -80,6 +77,7 @@ describe('GroupForm', () => {
     test('defaults load correctly', () => {
         render(
             <GroupForm
+                requireLogin={false}
                 title=''
                 buttonText=''
                 onSubmit={noOpSubmit}
@@ -104,6 +102,7 @@ describe('GroupForm', () => {
         const buttonText = 'Submit';
         render(
             <GroupForm
+                requireLogin={false}
                 title={formTitle}
                 buttonText={buttonText}
                 onSubmit={noOpSubmit}
