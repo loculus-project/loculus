@@ -24,21 +24,19 @@ const referenceGenomesInfo = getReferenceGenomes(organism);
 ---
 
 <SubmissionPageWrapper title='Review pending submissions' groupsResult={groupsResult}>
-    {
-        groupsResult.match(
-            ({ currentGroup: group }) => (
-                <ReviewPage
-                    clientConfig={clientConfig}
-                    organism={organism}
-                    group={group}
-                    accessToken={getAccessToken(Astro.locals.session)!}
-                    metadataSchema={schema.metadata}
-                    outputFileCategories={schema.files}
-                    referenceGenomesInfo={referenceGenomesInfo}
-                    client:load
-                />
-            ),
-            () => undefined,
-        )
-    }
+    {groupsResult.match(
+        ({ currentGroup: group }) => (
+            <ReviewPage
+                clientConfig={clientConfig}
+                organism={organism}
+                group={group}
+                accessToken={getAccessToken(Astro.locals.session)!}
+                metadataSchema={schema.metadata}
+                outputFileCategories={schema.files}
+                referenceGenomesInfo={referenceGenomesInfo}
+                client:load
+            />
+        ),
+        () => undefined,
+    )}
 </SubmissionPageWrapper>
