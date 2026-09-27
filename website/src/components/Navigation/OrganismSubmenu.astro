@@ -1,6 +1,7 @@
 ---
 import { SubmenuLink } from './SubmenuLink.tsx';
 import type { Organism } from '../../config';
+import { getWebsiteConfig } from '../../config';
 import { extraSequenceRelatedTopNavigationItems } from '../../routes/extraTopNavigationItems';
 import { getSequenceRelatedItems } from '../../routes/navigationItems';
 import FaExchangeAlt from '~icons/fa-solid/exchange-alt';
@@ -14,7 +15,10 @@ interface Props {
 const { currentOrganism, currentOrganismObject, currentPath } = Astro.props;
 
 // Get the navigation items for this organism
-const sequenceRelatedItems = getSequenceRelatedItems(currentOrganism);
+const sequenceRelatedItems = getSequenceRelatedItems(
+    currentOrganism,
+    Astro.locals.session?.access?.canContribute ?? !getWebsiteConfig().requireLogin,
+);
 const extraItems = extraSequenceRelatedTopNavigationItems(currentOrganism);
 const navigationItems = [...sequenceRelatedItems, ...extraItems];
 const selectId = currentOrganism ? `organism-navigation-${currentOrganism}` : 'organism-navigation';

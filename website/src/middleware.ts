@@ -4,10 +4,11 @@ import { safeGetWebsiteConfig } from './config.ts';
 import { authMiddleware } from './middleware/authMiddleware.ts';
 import { catchErrorMiddleware } from './middleware/catchErrorMiddleware.ts';
 import { organismValidatorMiddleware } from './middleware/organismValidatorMiddleware.ts';
+import { restrictedCacheMiddleware } from './middleware/restrictedCacheMiddleware.ts';
 import { submissionPagesDisablingMiddleware } from './middleware/submissionPagesDisablingMiddleware.ts';
 
 const websiteConfig = safeGetWebsiteConfig();
-const middlewares = [catchErrorMiddleware, organismValidatorMiddleware, authMiddleware];
+const middlewares = [restrictedCacheMiddleware, catchErrorMiddleware, organismValidatorMiddleware, authMiddleware];
 if (!(websiteConfig?.enableSubmissionPages ?? false) || (websiteConfig?.readOnlyMode ?? false)) {
     middlewares.push(submissionPagesDisablingMiddleware);
 }

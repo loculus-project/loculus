@@ -5,13 +5,14 @@ import JwksRsa from 'jwks-rsa';
 import { err, ok, ResultAsync } from 'neverthrow';
 import { type BaseClient, type TokenSet } from 'openid-client';
 
-import { getConfiguredOrganisms, getRuntimeConfig, getWebsiteConfig } from '../config.ts';
+import { getConfiguredOrganisms, getRuntimeConfig, getWebsiteConfig, loginIsRequired } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
 import { routes } from '../routes/routes.ts';
 import { KeycloakClientManager } from '../utils/KeycloakClientManager.ts';
 import { authTransactionId, consumeAuthRequest } from '../utils/authRequestCookies.ts';
 import { getLoginUrl } from '../utils/getLoginUrl.ts';
-import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
+import { getInstanceAccess, isContributionPage } from '../utils/instanceAccess.ts';
+import { isApiRoute, shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
 export const ACCESS_TOKEN_COOKIE = 'access_token';
 export const REFRESH_TOKEN_COOKIE = 'refresh_token';
@@ -106,9 +107,17 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     const enforceLogin = shouldMiddlewareEnforceLogin(
         context.url.pathname,
         getConfiguredOrganisms().map((it) => it.key),
+        loginIsRequired(),
     );
 
+    // API callers use bearer tokens directly; the proxy delegates their validation to the backend.
+    if (context.url.pathname.startsWith('/lapis/')) {
+        context.locals.session = { isLoggedIn: token !== undefined, token };
+        return next();
+    }
+
     if (enforceLogin && (userInfo === undefined || userInfo.isErr())) {
+        if (isApiRoute(context.url.pathname)) return new Response('Authentication required', { status: 401 });
         if (client === undefined) {
             logger.error(`Keycloak client not available, cannot redirect to auth`);
             return context.redirect('/503?service=Authentication');
@@ -144,6 +153,21 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         },
         token,
     };
+
+    if (loginIsRequired()) {
+        const access = await getInstanceAccess(token.accessToken);
+        if (access === undefined) return new Response('Access service unavailable', { status: 503 });
+        context.locals.session.access = access;
+        if (enforceLogin && !access.canReadReleasedData) return new Response('Access denied', { status: 403 });
+        if (isContributionPage(context.url.pathname) && !access.canContribute) {
+            return new Response('Contributor permission is required. Contact your instance administrator.', {
+                status: 403,
+            });
+        }
+        if (context.url.pathname === '/user/createGroup' && !access.canManageMembership) {
+            return new Response('Groups are created by instance administrators.', { status: 403 });
+        }
+    }
 
     return next();
 });

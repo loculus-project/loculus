@@ -9,6 +9,7 @@ import { getSchema, getRuntimeConfig, getWebsiteConfig, getReferenceGenomes, seq
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { SeqSetCitationClient } from '../../../services/seqSetCitationClient';
 import { type Group } from '../../../types/backend';
+import { createAuthorizationHeader } from '../../../utils/createAuthorizationHeader.ts';
 import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion.ts';
 import { getAccessToken } from '../../../utils/getAccessToken';
 import { getMyGroups } from '../../../utils/getMyGroups';
@@ -24,13 +25,17 @@ if (accessionVersion !== rawAccessionVersion) {
 
 const { accession } = parseAccessionVersionFromString(accessionVersion);
 
+const session = Astro.locals.session;
+const accessToken = getAccessToken(session);
+
 const sequenceCitationsPromise = seqSetsAreEnabled()
     ? SeqSetCitationClient.create().call('getSequenceCitations', {
           params: { accession }, // Display citations across all accession versions
+          headers: createAuthorizationHeader(accessToken),
       })
     : undefined;
 
-const sequenceDetailsTableData = await findOrganismAndData(accessionVersion);
+const sequenceDetailsTableData = await findOrganismAndData(accessionVersion, accessToken);
 
 if (
     sequenceDetailsTableData.isOk() &&
@@ -41,8 +46,6 @@ if (
 
 const sequenceCitations = (await sequenceCitationsPromise)?.unwrapOr(undefined);
 
-const session = Astro.locals.session;
-const accessToken = getAccessToken(session);
 const clientConfig = getRuntimeConfig().public;
 
 let myGroups: Group[] = [];
