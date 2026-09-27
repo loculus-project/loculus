@@ -77,9 +77,9 @@ const extractProcessedSequences = (
                 let label = lapisNameToDisplayNameMap.get(sequenceName);
                 if (type !== 'gene') {
                     if (label === undefined) {
-                        label = type === 'unaligned' ? 'Sequence' : 'Aligned';
+                        label = type === 'unaligned' ? 'Sequence' : 'Reference-aligned';
                     } else {
-                        label = type === 'unaligned' ? `${label} (unaligned)` : `${label} (aligned)`;
+                        label = type === 'unaligned' ? `${label} (unaligned)` : `${label} (reference-aligned)`;
                     }
                 }
                 return { label: label ?? sequenceName, sequence };
