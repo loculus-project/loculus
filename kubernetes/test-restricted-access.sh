@@ -17,6 +17,12 @@ restricted="$(helm template loculus "$chart" --set requireLogin=true --set s3.en
 [[ "$restricted" != *'name: lapis-ingress'* ]]
 [[ "$restricted" != *'name: lapis-redirect-ingress'* ]]
 [[ "$restricted" == *'name: KEYCLOAK_TOKEN_URL'* ]]
+[[ "$restricted" != *'create_embl_file: true'* ]]
+[[ "$restricted" == *'create_embl_file: false'* ]]
+[[ "$restricted" != *'"username": "testcontributor"'* ]]
+test_accounts="$(helm template loculus "$chart" --set createTestAccounts=true --show-only templates/keycloak-config-map.yaml)"
+[[ "$test_accounts" == *'"username": "testcontributor"'* ]]
+[[ "$test_accounts" == *'"realmRoles": ["user", "contributor", "offline_access"]'* ]]
 
 for setting in s3.enabled=true auth.registrationAllowed=true disableWebsite=true disableBackend=true readOnlyMode=true disableEnaSubmission=false public.lapisUrlTemplate=https://example.test; do
     if helm template loculus "$chart" --set requireLogin=true --set s3.enabled=false --set "$setting" >/dev/null 2>&1; then

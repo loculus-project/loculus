@@ -103,6 +103,18 @@ data:
             }
           },
           {
+            "username": "testcontributor",
+            "enabled": true,
+            "email": "testcontributor@void.o",
+            "emailVerified": true,
+            "firstName": "Test",
+            "lastName": "Contributor",
+            "credentials": [{"type": "password", "value": "testcontributor"}],
+            "realmRoles": ["user", "contributor", "offline_access"],
+            "attributes": {"university": "University of Test"},
+            "clientRoles": {"account": ["manage-account"]}
+          },
+          {
             "username": "superuser",
             "enabled": true,
             "email": "superuser@void.o",

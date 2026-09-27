@@ -106,6 +106,36 @@ Before production use, complete the backend endpoint suite, public/restricted br
 an existing-realm upgrade rehearsal, service pipeline checks, and large/zstd download tests.
 Do not enable S3 sharing until public object policies and release-time publication are redesigned.
 
+Restricted mode also disables `create_embl_file` in preprocessing configurations: the EMBL
+output requires an S3 upload and otherwise causes processing errors. After upgrading an affected
+preview, restart the preprocessing workers with the new configuration and explicitly reprocess
+failed records through the normal administrator workflow. Do not approve errored records to
+work around this failure.
+
+### Test accounts and automated smoke tests
+
+When `createTestAccounts` is enabled, `testcontributor` (password `testcontributor`) has the
+Contributor role without super-user privileges. `testuser` remains a viewer in restricted mode.
+These known credentials are exclusively for disposable environments with synthetic/public data.
+The realm seed does not add this account to an existing realm: an operator must provision it
+explicitly, or use a fresh disposable preview. No submitting-group membership is granted by the seed.
+
+An opt-in integration suite checks browser and API gates without creating application data:
+
+```sh
+RESTRICTED_ACCESS_TESTS=true \
+PLAYWRIGHT_TEST_BASE_URL=https://your-preview.loculus.org \
+RESTRICTED_BACKEND_URL=https://backend-your-preview.loculus.org \
+RESTRICTED_ISSUER_URL=https://authentication-your-preview.loculus.org/realms/loculus \
+BROWSER=chromium TEST_SUITE=browser \
+npx playwright test tests/restricted-access.spec.ts --reporter=list
+```
+
+Run this from `integration-tests` after provisioning the test accounts. Ordinary public-mode
+CI skips this suite. Backend endpoint tests separately exercise successful contributor submission,
+cross-group denial, viewer denial despite group membership, and operator-only membership changes.
+Successful release and non-empty downloads still require a pipeline test with disposable sequences.
+
 ## Implementation provenance
 
 Configuration, importer authentication and authenticated backend-client plumbing were adapted
