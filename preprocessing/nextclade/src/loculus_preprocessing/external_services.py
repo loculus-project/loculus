@@ -1,9 +1,11 @@
 import io
 import logging
+import re
 import urllib.parse
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from dataclasses import dataclass
+from enum import StrEnum
 from http import HTTPStatus
 
 import requests
@@ -313,18 +315,19 @@ class FileProcessingService:
 # so keeping the cache small. Should still have high hit rate when
 # all submissions for a batch have the same project
 bioproject_cache = RequestCache(max_size=16)
-PROJECT_PREFIX = "PRJ"
-XML_PREFIXES = (
-    PROJECT_PREFIX,
-    "SAM",
-    "GCA",
-    "ERR",
-    "ERX",
-    "SRR",
-    "SRX",
-    "DRR",
-    "DRX",
-)
+
+
+class EnaAccessionType(StrEnum):
+    BIOPROJECT = "bioproject"
+    BIOSAMPLE = "biosample"
+
+
+# Matched against the upper-cased accession. Rules out surrounding whitespace and
+# comma-separated lists, which the ENA browser API would otherwise resolve to multiple records.
+ACCESSION_PATTERNS: dict[EnaAccessionType, re.Pattern[str]] = {
+    EnaAccessionType.BIOPROJECT: re.compile(r"PRJ[EDN][A-Z][0-9]+"),
+    EnaAccessionType.BIOSAMPLE: re.compile(r"SAM[EDN][A-Z]?[0-9]+"),
+}
 
 
 class ENAVisibilityChecker:
@@ -342,11 +345,20 @@ class ENAVisibilityChecker:
     ):
         self.timeout_seconds = timeout_seconds
 
-    def check_visibility(self, accession: str) -> RawProcessingResult:
-        file_type = "xml" if accession.startswith(XML_PREFIXES) else "embl"
-        url = f"https://www.ebi.ac.uk/ena/browser/api/{file_type}/{accession}"
+    def check_visibility(
+        self, accession: str, accession_type: EnaAccessionType
+    ) -> RawProcessingResult:
+        # Store accessions upper-cased so they're uniform in the database and on the website
+        accession = accession.upper()
+        pattern = ACCESSION_PATTERNS[accession_type]
+        if not pattern.fullmatch(accession):
+            return processing_error(
+                f"'{accession}' is not a valid {accession_type} accession, expected a value "
+                f"matching '{pattern.pattern}'."
+            )
+        url = f"https://www.ebi.ac.uk/ena/browser/api/xml/{accession}"
         ena_error_message = f"unable to validate accession '{accession}': could not reach ENA."
-        is_bioproject = accession.startswith(PROJECT_PREFIX)
+        is_bioproject = accession_type == EnaAccessionType.BIOPROJECT
         try:
             # Only cache bioprojects as they're what's likely to be shared across submissions
             response = bioproject_cache.get_or_fetch(

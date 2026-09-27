@@ -1812,13 +1812,35 @@ def test_call_function_converts_raw_errors_to_annotations() -> None:
     )
 
 
+SUBMISSION_PROJECT_XML = b"""<PROJECT_SET>
+  <PROJECT accession="PRJEB12345">
+    <TITLE>A submission project</TITLE>
+    <SUBMISSION_PROJECT><SEQUENCING_PROJECT/></SUBMISSION_PROJECT>
+  </PROJECT>
+</PROJECT_SET>"""
+
+UMBRELLA_PROJECT_XML = b"""<PROJECT_SET>
+  <PROJECT accession="PRJEB106529">
+    <TITLE>An umbrella project</TITLE>
+    <UMBRELLA_PROJECT/>
+    <RELATED_PROJECTS>
+      <RELATED_PROJECT><PARENT_PROJECT accession="PRJEB94357"/></RELATED_PROJECT>
+    </RELATED_PROJECTS>
+  </PROJECT>
+</PROJECT_SET>"""
+
+BIOSAMPLE_XML = b"""<SAMPLE_SET><SAMPLE accession="SAMEA123456"/></SAMPLE_SET>"""
+
+
 @dataclass
 class EnaAccessionCase:
     name: str
     accession: str
+    accession_type: str = "bioproject"
     # How ENA responds: an HTTP status code, or an exception raised by the session.
     # None means ENA must not be contacted at all.
     ena_response: int | Exception | None = None
+    ena_xml: bytes = b""
     is_insdc_ingest_group: bool = False
     expected_datum: str | None = None
     expected_error: str | None = None
@@ -1830,15 +1852,61 @@ ena_accession_cases = [
         name="public_bioproject_is_accepted",
         accession="PRJEB12345",
         ena_response=200,
+        ena_xml=SUBMISSION_PROJECT_XML,
         expected_datum="PRJEB12345",
         expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB12345",
     ),
     EnaAccessionCase(
-        name="nucleotide_accession_uses_embl_endpoint",
-        accession="OZ123456",
+        name="umbrella_bioproject_is_rejected",
+        accession="PRJEB106529",
         ena_response=200,
-        expected_datum="OZ123456",
-        expected_url="https://www.ebi.ac.uk/ena/browser/api/embl/OZ123456",
+        ena_xml=UMBRELLA_PROJECT_XML,
+        expected_error="is an umbrella project",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB106529",
+    ),
+    EnaAccessionCase(
+        name="public_biosample_is_accepted",
+        accession="SAMEA123456",
+        accession_type="biosample",
+        ena_response=200,
+        ena_xml=BIOSAMPLE_XML,
+        expected_datum="SAMEA123456",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/SAMEA123456",
+    ),
+    EnaAccessionCase(
+        name="biosample_in_bioproject_field_is_rejected",
+        accession="SAMN12345678",
+        expected_error="not a valid bioproject accession",
+    ),
+    EnaAccessionCase(
+        name="bioproject_in_biosample_field_is_rejected",
+        accession="PRJEB12345",
+        accession_type="biosample",
+        expected_error="not a valid biosample accession",
+    ),
+    EnaAccessionCase(
+        name="comma_separated_bioprojects_are_rejected",
+        accession="PRJNA591860,PRJEB106529",
+        expected_error="not a valid bioproject accession",
+    ),
+    EnaAccessionCase(
+        name="lowercase_accession_is_uppercased",
+        accession="prjeb12345",
+        ena_response=200,
+        ena_xml=SUBMISSION_PROJECT_XML,
+        expected_datum="PRJEB12345",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB12345",
+    ),
+    EnaAccessionCase(
+        name="surrounding_whitespace_is_rejected",
+        accession="PRJEB12345 ",
+        expected_error="not a valid bioproject accession",
+    ),
+    EnaAccessionCase(
+        name="invalid_accession_type_is_internal_error",
+        accession="PRJEB12345",
+        accession_type="nucleotide",
+        expected_error="did not receive a valid accession_type",
     ),
     EnaAccessionCase(
         name="unknown_accession_is_rejected",
@@ -1869,7 +1937,7 @@ ena_accession_cases = [
     ),
     EnaAccessionCase(
         name="insdc_ingested_accession_is_not_checked",
-        # ingest joins multiple bioprojects with commas, which ENA cannot resolve
+        # ingest joins multiple bioprojects with commas; ingested values are passed through
         accession="PRJNA123,PRJNA456",
         is_insdc_ingest_group=True,
         expected_datum="PRJNA123,PRJNA456",
@@ -1878,24 +1946,25 @@ ena_accession_cases = [
 
 
 @pytest.mark.parametrize("case", ena_accession_cases, ids=lambda c: c.name)
-def test_check_ena_accession(case: EnaAccessionCase, config: Config) -> None:
+def test_check_ena_accession(case: EnaAccessionCase) -> None:
     external_services.bioproject_cache.clear()
     with mock.patch.object(external_services.bioproject_cache, "session") as mock_session:
         if isinstance(case.ena_response, Exception):
             mock_session.get.side_effect = case.ena_response
         else:
-            mock_session.get.return_value = mock.MagicMock(status_code=case.ena_response)
+            mock_session.get.return_value = mock.MagicMock(
+                status_code=case.ena_response, content=case.ena_xml
+            )
 
+        ingest_group_id = DEFAULT_TEST_CONTEXT.insdc_ingest_group_id
         result = ProcessingFunctions.check_ena_accession(
             input_data={"accession": case.accession},
             output_field="bioprojectAccession",
             input_fields=["bioprojectAccession"],
-            args={},
+            args={"accession_type": case.accession_type},
             context=replace(
                 DEFAULT_TEST_CONTEXT,
-                group_id=config.insdc_ingest_group_id
-                if case.is_insdc_ingest_group
-                else config.insdc_ingest_group_id + 1,
+                group_id=ingest_group_id if case.is_insdc_ingest_group else ingest_group_id + 1,
             ),
             external_services=DEFAULT_EXTERNAL_SERVICES,
         )
