@@ -88,6 +88,21 @@ test_case_definitions = [
         group_id=1,
     ),
     Case(
+        name="insdc_ingest group can submit authors with non-alphabetic ASCII characters",
+        input_metadata={
+            "name_required": "name",
+            "authors": "O`Brien9, Anna; Müller (Jr) & Co, Anna_Maria?",
+        },
+        accession_id="23",
+        expected_metadata={
+            "name_required": "name",
+            "concatenated_string": "LOC_23.1",
+            "required_collection_date": None,
+            "authors": "O`Brien9, Anna; Müller (Jr) & Co, Anna_Maria?",
+        },
+        group_id=1,
+    ),
+    Case(
         name="invalid_option",
         input_metadata={
             "continent": "Afrika",
@@ -667,14 +682,23 @@ accepted_authors = {
     "Xi, ;Yu,X.": "Xi, ; Yu, X.",
     "Xi,;": "Xi,",
     "Xi,": "Xi,",
-    "Smith, Anna Maria; Perez, Jose X.;": "Smith, Anna Maria; Perez, Jose X.",
+    "O'Brian, Anna Maria; Perez, Jose X.;": "O'Brian, Anna Maria; Perez, Jose X.",
     "Smith,Anna Maria;Perez,Jose X;": "Smith, Anna Maria; Perez, Jose X.",
     "de souza, a.": "de souza, A.",
     "McGregor, Ewan": "McGregor, Ewan",
     "'t Hooft, Gerard": "'t Hooft, Gerard",
     "Tandoc, A. 3rd": "Tandoc, A. 3rd",
 }
-not_accepted_authors = [
+# Only accepted for the INSDC ingest group
+accepted_authors_all_ascii = [
+    "Nebenf##hr, M.",
+    "Lee Cynthia K, [. U. S. ].'; 'Monath Thomas P, [. U. S. ].';",
+    "An?elic Dmitrovic,B.",
+    "Dall&aposAmico, L.",
+    "Smith9, Anna;",
+    "O`Brien, Anna;",
+]
+never_accepted_authors = [
     ";",
     ",;",
     " ,;",
@@ -683,7 +707,7 @@ not_accepted_authors = [
     "Anna Maria Smith; Jose X. Perez",
     "Anna Maria Smith;",
     "Anna Maria Smith",
-    "Smith9, Anna;",
+    "Smith, Anna, Maria",
     "Anna Smith, Cameron Tucker, and Jose Perez",
     "Count4th, EwanMcGregor, Count4th",
 ]
@@ -1208,15 +1232,26 @@ def test_preprocessing_without_consensus_sequences(config: Config) -> None:
     assert processed_entry.data.aminoAcidInsertions == {}
 
 
-def test_valid_authors() -> None:
-    for author in accepted_authors:
-        if valid_authors(author) is not True:
-            msg = f"{author} should be accepted but is not."
-            raise AssertionError(msg)
-    for author in not_accepted_authors:
-        if valid_authors(author) is not False:
-            msg = f"{author} should not be accepted but is."
-            raise AssertionError(msg)
+@pytest.mark.parametrize(
+    ("authors", "allow_all_ascii", "expected"),
+    [
+        (accepted_authors, False, True),
+        (accepted_authors, True, True),
+        (accepted_authors_all_ascii, False, False),
+        (accepted_authors_all_ascii, True, True),
+        (never_accepted_authors, False, False),
+        (never_accepted_authors, True, False),
+    ],
+)
+def test_valid_authors(
+    authors: list[str],
+    allow_all_ascii: bool,
+    expected: bool,
+) -> None:
+    for author in authors:
+        assert valid_authors(author, allow_all_ascii=allow_all_ascii) is expected, (
+            f"{author!r}: expected {expected} with allow_all_ascii={allow_all_ascii}"
+        )
 
 
 def test_format_authors() -> None:
