@@ -149,6 +149,11 @@ tasks.named('test') {
     
     // Run tests with the same object layout as production
     jvmArgs '-XX:+UseCompactObjectHeaders'
+
+    // opt-in larger heap, e.g. for the query index benchmarks (QUERY_INDEX_BENCHMARK=1)
+    if (System.getenv('TEST_MAX_HEAP')) {
+        maxHeapSize = System.getenv('TEST_MAX_HEAP')
+    }
     
     testLogging {
         events TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR
