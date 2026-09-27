@@ -10,8 +10,8 @@ createTestAccounts: true
 backendExtraArgs:
   - "--loculus.debug-mode=true"
 keycloakExtraEnv:
-  # theme caching gzips assets into kc-gzip-cache on first request, which races and 404s under parallel logins
-  - name: KC_SPI_THEME_CACHE_THEMES
+  # gzip encoder 404s concurrent first requests for a theme asset: https://github.com/keycloak/keycloak/issues/53238
+  - name: KC_SPI_RESOURCE_ENCODING_GZIP_ENABLED
     value: "false"
 disableRawReadsProcessingService: false
 disableEnaSubmission: true
