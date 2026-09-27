@@ -6,10 +6,12 @@ import org.springframework.stereotype.Component
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
 
 /**
@@ -37,7 +39,7 @@ class PostgresQueryStore(private val dataSource: DataSource, compressionDictServ
     ) {
         pipelined(
             ids,
-            METADATA_CHUNK_SIZE,
+            metadataChunkSize(organism),
             fetch = { chunk -> fetchMetadataJson(organism, chunk) },
             emit = { chunk, byId ->
                 for (id in chunk) {
@@ -56,7 +58,7 @@ class PostgresQueryStore(private val dataSource: DataSource, compressionDictServ
     ) {
         pipelined(
             ids,
-            METADATA_CHUNK_SIZE,
+            metadataChunkSize(organism),
             fetch = { chunk -> fetchMetadataFields(organism, chunk, fields) },
             emit = { chunk, byId ->
                 for (id in chunk) {
@@ -76,7 +78,7 @@ class PostgresQueryStore(private val dataSource: DataSource, compressionDictServ
     ) {
         pipelined(
             ids,
-            METADATA_CHUNK_SIZE,
+            metadataChunkSize(organism),
             prefetch = METADATA_EXPORT_PREFETCH_CHUNKS,
             fetch = { chunk ->
                 val byId = fetchMetadataFields(organism, chunk, fields)
@@ -183,8 +185,60 @@ class PostgresQueryStore(private val dataSource: DataSource, compressionDictServ
         return byId
     }
 
-    /** Postgres `->>` per field; accessionVersion is read from its own column (no jsonb detoasting) */
-    private fun fetchMetadataFields(organism: String, chunk: IntArray, fields: List<String>): Map<Int, Array<String?>> {
+    /**
+     * The texts of [fields] per id (Postgres `->>` semantics). Two strategies:
+     *  - `metadata ->> 'f'` per field: Postgres extracts, very cheap for records stored inline;
+     *  - `metadata::text` once per row, fields extracted by a streaming JSON parser in the JVM: for records that
+     *    Postgres stores compressed out of line (TOAST), because every `->>` would decompress the record again.
+     */
+    private fun fetchMetadataFields(organism: String, chunk: IntArray, fields: List<String>): Map<Int, Array<String?>> =
+        if (extractInJvm(organism, fields)) {
+            fetchMetadataFieldsFromText(organism, chunk, fields)
+        } else {
+            fetchMetadataFieldsInSql(organism, chunk, fields)
+        }
+
+    internal fun extractInJvm(organism: String, fields: List<String>): Boolean {
+        val jsonbFields = fields.count { it != ACCESSION_VERSION_FIELD }
+        return jsonbFields > FEW_FIELDS && averageStoredRecordSize(organism) > INLINE_RECORD_SIZE_LIMIT
+    }
+
+    /** ~[METADATA_CHUNK_BYTES] of stored records per chunk, so that large records still spread over workers */
+    private fun metadataChunkSize(organism: String): Int {
+        val recordSize = maxOf(1.0, averageStoredRecordSize(organism))
+        return (METADATA_CHUNK_BYTES / recordSize).toInt().coerceIn(MIN_METADATA_CHUNK_SIZE, METADATA_CHUNK_SIZE)
+    }
+
+    private class RecordSize(val bytes: Double, val measuredAtNanos: Long)
+
+    private val recordSizes = ConcurrentHashMap<String, RecordSize>()
+
+    /** average stored (possibly compressed) size of the metadata column, from a sample, cached for a while */
+    private fun averageStoredRecordSize(organism: String): Double {
+        val cached = recordSizes[organism]
+        if (cached != null && System.nanoTime() - cached.measuredAtNanos < RECORD_SIZE_TTL_NANOS) return cached.bytes
+        val bytes = withConnection { connection ->
+            connection.prepareStatement(
+                "select coalesce(avg(pg_column_size(metadata)), 0) from " +
+                    "(select metadata from query_entries where organism = ? limit $RECORD_SIZE_SAMPLE) s",
+            ).use { statement ->
+                statement.setString(1, organism)
+                statement.executeQuery().use { rs ->
+                    rs.next()
+                    rs.getDouble(1)
+                }
+            }
+        }
+        recordSizes[organism] = RecordSize(bytes, System.nanoTime())
+        return bytes
+    }
+
+    /** accessionVersion is read from its own column (no jsonb access) */
+    private fun fetchMetadataFieldsInSql(
+        organism: String,
+        chunk: IntArray,
+        fields: List<String>,
+    ): Map<Int, Array<String?>> {
         val params = mutableListOf<String>()
         val columns = fields.joinToString("") { field ->
             if (field == ACCESSION_VERSION_FIELD) {
@@ -197,6 +251,19 @@ class PostgresQueryStore(private val dataSource: DataSource, compressionDictServ
         val byId = HashMap<Int, Array<String?>>(chunk.size * 2)
         query(organism, chunk, "select id$columns from query_entries", params) { rs ->
             while (rs.next()) byId[rs.getInt(1)] = Array(fields.size) { rs.getString(it + 2) }
+        }
+        return byId
+    }
+
+    private fun fetchMetadataFieldsFromText(
+        organism: String,
+        chunk: IntArray,
+        fields: List<String>,
+    ): Map<Int, Array<String?>> {
+        val extractor = JsonFieldExtractor(fields)
+        val byId = HashMap<Int, Array<String?>>(chunk.size * 2)
+        query(organism, chunk, "select id, metadata::text from query_entries", emptyList()) { rs ->
+            while (rs.next()) byId[rs.getInt(1)] = extractor.extract(rs.getString(2))
         }
         return byId
     }
@@ -319,6 +386,8 @@ class PostgresQueryStore(private val dataSource: DataSource, compressionDictServ
 
     companion object {
         const val METADATA_CHUNK_SIZE = 5_000
+        private const val MIN_METADATA_CHUNK_SIZE = 200
+        private const val METADATA_CHUNK_BYTES = 1_000_000.0
         const val SEQUENCE_CHUNK_ROWS = 8_192
         const val FETCH_SIZE = 10_000
         const val PREFETCH_CHUNKS = 2
@@ -327,6 +396,14 @@ class PostgresQueryStore(private val dataSource: DataSource, compressionDictServ
         const val METADATA_EXPORT_PREFETCH_CHUNKS = 6
         private const val NO_DICT = Int.MIN_VALUE
         private const val ACCESSION_VERSION_FIELD = "accessionVersion"
+
+        /** up to this many jsonb fields, `->>` per field is used even for large records */
+        private const val FEW_FIELDS = 3
+
+        /** Postgres moves rows out of line / compresses them above ~2 kB (TOAST_TUPLE_THRESHOLD) */
+        private const val INLINE_RECORD_SIZE_LIMIT = 1500.0
+        private const val RECORD_SIZE_SAMPLE = 1000
+        private val RECORD_SIZE_TTL_NANOS = TimeUnit.MINUTES.toNanos(10)
 
         private val background: ExecutorService = Executors.newVirtualThreadPerTaskExecutor()
 

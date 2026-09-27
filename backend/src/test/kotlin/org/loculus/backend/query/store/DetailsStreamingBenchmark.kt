@@ -27,7 +27,7 @@ import java.io.OutputStream
  */
 @EnabledIfEnvironmentVariable(named = "QUERY_ENGINE_DETAILS_BENCHMARK_DB", matches = ".+")
 class DetailsStreamingBenchmark {
-    private val organism = "dummy-organism"
+    private val organism = System.getenv("QUERY_ENGINE_DETAILS_BENCHMARK_ORGANISM") ?: "dummy-organism"
 
     @Test
     fun benchmark() {
