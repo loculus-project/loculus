@@ -51,13 +51,11 @@ describe('authorized LAPIS query proxy', () => {
         expect(getInstanceAccess).toHaveBeenCalledWith('bad');
     });
     test('streams results without forwarding credentials and disables shared caching', async () => {
-        const fetch = vi
-            .fn()
-            .mockResolvedValue(
-                new Response('data', {
-                    headers: { 'content-type': 'text/plain', 'content-length': '999', 'set-cookie': 'bad=1' },
-                }),
-            );
+        const fetch = vi.fn().mockResolvedValue(
+            new Response('data', {
+                headers: { 'content-type': 'text/plain', 'content-length': '999', 'set-cookie': 'bad=1' },
+            }),
+        );
         vi.stubGlobal('fetch', fetch);
         const response = await ALL(context('sample/details', 'token'));
         expect(await response.text()).toBe('data');
