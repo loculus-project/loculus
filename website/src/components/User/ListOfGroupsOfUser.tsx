@@ -1,5 +1,6 @@
 import { type FC, useState } from 'react';
 
+import { loginIsRequired } from '../../config';
 import { routes } from '../../routes/routes.ts';
 import type { Group } from '../../types/backend.ts';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
@@ -30,8 +31,9 @@ const InnerListOfGroupsOfUser: FC<ListOfGroupsOfUserProps> = ({ groupsOfUser }) 
                     ))
                 ) : (
                     <p className='text-gray-600 text-sm'>
-                        You are not currently a member of a submitting group. If you intend to submit sequences, please
-                        create a group or ask an administrator of an existing group to add you to their group.
+                        {loginIsRequired()
+                            ? 'You are not currently a member of a submitting group. Contact your instance administrator to request contribution access or group membership.'
+                            : 'You are not currently a member of a submitting group. If you intend to submit sequences, please create a group or ask an administrator of an existing group to add you to their group.'}
                     </p>
                 )}
             </ul>

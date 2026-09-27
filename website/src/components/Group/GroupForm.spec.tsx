@@ -1,9 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { GroupForm } from './GroupForm';
+import { loginIsRequired } from '../../config';
 import type { GetGroupsResult } from '../../hooks/useGroupOperations';
+
+vi.mock('../../config', () => ({ loginIsRequired: vi.fn(() => false) }));
+beforeEach(() => vi.mocked(loginIsRequired).mockReturnValue(false));
 
 const MOCK_GROUP = {
     groupId: 1,
@@ -41,6 +45,18 @@ const mockGetGroupsWithGroup = async (_groupName?: string): Promise<GetGroupsRes
 };
 
 describe('GroupForm', () => {
+    test.each([false, true])('visibility copy matches restricted mode %s', (restricted) => {
+        vi.mocked(loginIsRequired).mockReturnValue(restricted);
+        render(
+            <GroupForm
+                title='Create group'
+                buttonText='Submit'
+                onSubmit={noOpSubmit}
+                getGroups={mockGetGroupsWithNoGroups}
+            />,
+        );
+        expect(screen.getByText(restricted ? /visible to signed-in users/ : /publicly available/)).toBeVisible();
+    });
     test('test empty form', () => {
         const formTitle = 'Create group';
         const buttonText = 'Submit';
