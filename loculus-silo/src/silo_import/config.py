@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
+
+from .auth import DEFAULT_CLIENT_ID, KeycloakCredentials
 
 MetadataField = str
 HierarchicalServiceUrl = str
@@ -20,6 +23,7 @@ class ImporterConfig:
     silo_binary: Path
     preprocessing_config: Path
     hierarchical_filters: dict[MetadataField, HierarchicalServiceUrl] | None = None
+    keycloak: KeycloakCredentials | None = None
 
     @classmethod
     def from_env(cls) -> ImporterConfig:
@@ -73,11 +77,37 @@ class ImporterConfig:
             silo_binary=silo_binary,
             preprocessing_config=preprocessing_config,
             hierarchical_filters=hierarchical_filters,
+            keycloak=_parse_keycloak_credentials(env),
         )
 
     @property
     def released_data_endpoint(self) -> str:
         return f"{self.backend_base_url}/get-released-data?compression=zstd"
+
+
+def _parse_keycloak_credentials(env: Mapping[str, str]) -> KeycloakCredentials | None:
+    """
+    Read the credentials the importer uses on instances that require a login.
+
+    All three are needed or none: a partially configured importer would silently fall back to
+    anonymous requests and only fail once the backend rejects them.
+    """
+    token_url = env.get("KEYCLOAK_TOKEN_URL")
+    username = env.get("KEYCLOAK_USER")
+    password = env.get("KEYCLOAK_PASSWORD")
+
+    if not any([token_url, username, password]):
+        return None
+    if not all([token_url, username, password]):
+        msg = "KEYCLOAK_TOKEN_URL, KEYCLOAK_USER and KEYCLOAK_PASSWORD must be set together"
+        raise RuntimeError(msg)
+
+    return KeycloakCredentials(
+        token_url=str(token_url),
+        username=str(username),
+        password=str(password),
+        client_id=env.get("KEYCLOAK_CLIENT_ID", DEFAULT_CLIENT_ID),
+    )
 
 
 def _parse_hierarchical_filters(

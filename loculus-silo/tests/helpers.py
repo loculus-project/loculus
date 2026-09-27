@@ -137,6 +137,7 @@ def make_mock_download_func(responses: list[MockHttpResponse]):
         output_path: Path,
         etag: str | None = None,  # ruff:ignore[unused-function-argument]
         timeout: int = 300,  # ruff:ignore[unused-function-argument]
+        extra_headers: dict[str, str] | None = None,  # ruff:ignore[unused-function-argument]
     ) -> HttpResponse:
         if not responses_copy:
             msg = "No fake HTTP responses remaining"
