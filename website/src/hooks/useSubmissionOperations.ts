@@ -49,7 +49,10 @@ export function useSubmissionOperations(
         },
         {
             onError: (error) => openErrorFeedback(getSequencesErrorMessage(error)),
-            refetchInterval: 2000,
+            refetchInterval: (data) =>
+                data?.sequenceEntries.some(({ status }) => status === receivedStatus || status === inProcessingStatus)
+                    ? 2000
+                    : 30000,
             keepPreviousData: true,
         },
     );

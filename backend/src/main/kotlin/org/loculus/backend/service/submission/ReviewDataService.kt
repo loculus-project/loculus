@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import org.jetbrains.exposed.v1.core.alias
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.core.wrapAsExpression
@@ -97,7 +98,7 @@ class ReviewDataService(
                 val available = previous != null && current != null
                 RevisionReviewData(
                     previousVersion = previousId?.version,
-                    previousMetadata = if (available) details[previousId]?.metadata else null,
+                    previousMetadata = previousId?.let { details[it]?.metadata },
                     nucleotideChanges = if (available) {
                         segmentNames.filter { previous[it] != null || current[it] != null }.associateWith { name ->
                             val before = previous[name]
@@ -120,7 +121,7 @@ class ReviewDataService(
         organism: Organism,
     ): Map<AccessionVersion, AccessionVersion> {
         if (revisions.isEmpty()) return emptyMap()
-        val table = SequenceEntriesView
+        val table = SequenceEntriesTable
         val previous = table.alias("review_baseline")
         val previousVersion = wrapAsExpression<Long>(
             previous.select(previous[table.versionColumn].max()).where {
@@ -128,7 +129,7 @@ class ReviewDataService(
                     (previous[table.versionColumn] less table.versionColumn) and
                     (previous[table.organismColumn] eq organism.name) and
                     (previous[table.isRevocationColumn] eq false) and
-                    (previous[table.statusColumn] eq Status.APPROVED_FOR_RELEASE.name)
+                    previous[table.releasedAtTimestampColumn].isNotNull()
             },
         )
         return table.select(table.accessionColumn, table.versionColumn, previousVersion).where {

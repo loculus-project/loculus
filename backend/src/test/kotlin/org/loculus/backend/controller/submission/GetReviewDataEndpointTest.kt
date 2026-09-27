@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.Status
@@ -13,6 +15,7 @@ import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.controller.generateJwtFor
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
@@ -21,6 +24,7 @@ class GetReviewDataEndpointTest(
     @Autowired private val client: SubmissionControllerClient,
     @Autowired private val convenienceClient: SubmissionConvenienceClient,
     @Autowired private val objectMapper: ObjectMapper,
+    @Autowired private val jdbcTemplate: JdbcTemplate,
 ) {
     @Test
     fun `review data is opt in and matches the editor metadata and annotations without sequences`() {
@@ -183,6 +187,53 @@ class GetReviewDataEndpointTest(
             `is`(objectMapper.valueToTree<JsonNode>(baseline.processedData.metadata)),
         )
         assertThat(revision["nucleotideChanges"][MAIN_SEGMENT]["changed"].asBoolean(), `is`(false))
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = [1, 2])
+    fun `metadata comparison does not require sequence JSON`(versionWithoutSequences: Int) {
+        val versions = convenienceClient.prepareDataTo(Status.APPROVED_FOR_RELEASE)
+        val accession = versions.first().accession
+        val baseline = convenienceClient.getSequenceEntryToEdit(accession, 1)
+        convenienceClient.reviseDefaultProcessedSequenceEntries(versions.map { it.accession })
+        convenienceClient.extractUnprocessedData()
+        convenienceClient.submitProcessedData(PreparedProcessedData.successfullyProcessed(accession, version = 2))
+        jdbcTemplate.update(
+            "UPDATE sequence_entries_preprocessed_data " +
+                "SET processed_data = processed_data - 'unalignedNucleotideSequences' " +
+                "WHERE accession = ? AND version = ?",
+            accession,
+            versionWithoutSequences,
+        )
+        val revision = getReviewPage()["sequenceEntries"].first {
+            it["accession"].asText() == accession
+        }["reviewData"]["revision"]
+        assertThat(
+            revision["previousMetadata"],
+            `is`(objectMapper.valueToTree<JsonNode>(baseline.processedData.metadata)),
+        )
+        assertThat(revision["nucleotideChanges"].isEmpty, `is`(true))
+    }
+
+    @Test
+    fun `missing processed baseline does not prevent loading current review data`() {
+        val versions = convenienceClient.prepareDataTo(Status.APPROVED_FOR_RELEASE)
+        val accession = versions.first().accession
+        convenienceClient.reviseDefaultProcessedSequenceEntries(versions.map { it.accession })
+        convenienceClient.extractUnprocessedData()
+        convenienceClient.submitProcessedData(PreparedProcessedData.successfullyProcessed(accession, version = 2))
+        val current = convenienceClient.getSequenceEntryToEdit(accession, 2)
+        jdbcTemplate.update(
+            "DELETE FROM sequence_entries_preprocessed_data WHERE accession = ? AND version = 1",
+            accession,
+        )
+        val data = getReviewPage()["sequenceEntries"].first {
+            it["accession"].asText() == accession
+        }["reviewData"]
+        assertThat(data["metadata"], `is`(objectMapper.valueToTree<JsonNode>(current.processedData.metadata)))
+        assertThat(data["revision"]["previousVersion"].asLong(), `is`(1L))
+        assertThat(data["revision"]["previousMetadata"].isNull, `is`(true))
+        assertThat(data["revision"]["nucleotideChanges"].isEmpty, `is`(true))
     }
 
     private fun getReviewPage(): JsonNode = objectMapper.readTree(

@@ -41,7 +41,6 @@ import TickOutline from '~icons/mdi/tick-outline';
 
 type ReviewCardProps = {
     sequenceEntryStatus: SequenceEntryStatus;
-    retryReviewData: () => void;
     metadataSchema: Metadata[];
     deleteAccessionVersion: () => void;
     approveAccessionVersion: () => void;
@@ -55,7 +54,6 @@ type ReviewCardProps = {
 
 export const ReviewCard: FC<ReviewCardProps> = ({
     sequenceEntryStatus,
-    retryReviewData,
     metadataSchema,
     approveAccessionVersion,
     deleteAccessionVersion,
@@ -154,7 +152,6 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                 <RevisionDiff
                     current={data}
                     version={sequenceEntryStatus.version}
-                    onRetry={retryReviewData}
                     metadataSchema={metadataSchema}
                     referenceGenomesInfo={referenceGenomesInfo}
                 />

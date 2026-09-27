@@ -336,7 +336,6 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                     <div key={getAccessionVersionString(sequence)} data-testid={`review-card-${sequence.submissionId}`}>
                         <ReviewCard
                             sequenceEntryStatus={sequence}
-                            retryReviewData={() => void hooks.getSequences.refetch()}
                             metadataSchema={metadataSchema}
                             approveAccessionVersion={() =>
                                 displayConfirmationDialog({

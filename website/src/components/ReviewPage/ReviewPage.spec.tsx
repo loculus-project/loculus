@@ -1,4 +1,4 @@
-import { render, waitFor, within } from '@testing-library/react';
+import { act, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, test, vi } from 'vitest';
@@ -167,6 +167,36 @@ describe('ReviewPage', () => {
             expect(getByText(receivedTestData.submissionId)).toBeDefined();
             expect(getByText(`${receivedTestData.accession}.${receivedTestData.version}`)).toBeDefined();
         });
+    });
+
+    test('polls processing pages quickly and slows down once processed', async () => {
+        vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+        const requests = vi.fn();
+        let entries = [receivedTestData];
+        testServer.use(
+            http.get(`${testConfig.public.backendUrl}/${testOrganism}/get-sequences`, () => {
+                requests();
+                return HttpResponse.json(generateGetSequencesResponse(entries));
+            }),
+        );
+        const page = renderReviewPage();
+        try {
+            await page.findByText(receivedTestData.submissionId);
+            expect(requests).toHaveBeenCalledTimes(1);
+            await act(() => vi.advanceTimersByTimeAsync(1999));
+            expect(requests).toHaveBeenCalledTimes(1);
+            entries = [awaitingApprovalTestData];
+            await act(() => vi.advanceTimersByTimeAsync(1));
+            await page.findByTestId(`view-sequences-${awaitingApprovalTestData.accession}`);
+            expect(requests).toHaveBeenCalledTimes(2);
+            await act(() => vi.advanceTimersByTimeAsync(29999));
+            expect(requests).toHaveBeenCalledTimes(2);
+            await act(() => vi.advanceTimersByTimeAsync(1));
+            await waitFor(() => expect(requests).toHaveBeenCalledTimes(3));
+        } finally {
+            page.unmount();
+            vi.useRealTimers();
+        }
     });
 
     test('should request data from the right group', async () => {

@@ -61,14 +61,12 @@ function trackSequenceRequests() {
 function renderCard(
     status = { ...revision, reviewData: reviewData() } as SequenceEntryStatus,
     referenceGenomesInfo = SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
-    onRetry = vi.fn(),
 ) {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
         <QueryClientProvider client={queryClient}>
             <ReviewCard
                 sequenceEntryStatus={status}
-                retryReviewData={onRetry}
                 metadataSchema={metadataSchema}
                 clientConfig={testConfig.public}
                 organism={testOrganism}
@@ -102,9 +100,8 @@ test('shows the metadata diff on request without fetching sequences', async () =
     expect(card.getByRole('table')).toBeVisible();
 });
 
-test('shows an unavailable baseline and retries the review data instead of fetching a full version', async () => {
+test('shows a neutral message when no processed baseline is available', async () => {
     const requestedVersions = trackSequenceRequests();
-    const onRetry = vi.fn();
     const data = reviewData();
     const card = renderCard(
         {
@@ -115,14 +112,24 @@ test('shows an unavailable baseline and retries the review data instead of fetch
             },
         },
         SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
-        onRetry,
     );
     await userEvent.click(card.getByRole('button', diffButton));
-    expect(await card.findByRole('alert')).toHaveTextContent('The previous version could not be loaded');
+    expect(await card.findByText('No previous version is available for comparison.')).toBeVisible();
+    expect(card.queryByRole('alert')).not.toBeInTheDocument();
     expect(card.queryByRole('table')).not.toBeInTheDocument();
-    await userEvent.click(card.getByRole('button', { name: 'Retry' }));
-    expect(onRetry).toHaveBeenCalledOnce();
+    expect(card.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
     expect(requestedVersions).not.toHaveBeenCalled();
+});
+
+test('shows metadata differences when sequence comparison data is unavailable', async () => {
+    const data = reviewData();
+    const card = renderCard({
+        ...revision,
+        reviewData: { ...data, revision: { ...data.revision, nucleotideChanges: {} } },
+    });
+    await userEvent.click(card.getByRole('button', diffButton));
+    expect(await card.findByText('Old author')).toBeVisible();
+    expect(card.queryByRole('row', { name: /Nucleotide sequence/ })).not.toBeInTheDocument();
 });
 
 test('reports sequence changes per segment for multi-segmented organisms', async () => {

@@ -9,14 +9,12 @@ import type { TableDataEntry } from '../SequenceDetailsPage/types';
 import { DiffTable } from '../VersionDiff/DiffTable';
 import { compareVersionData } from '../VersionDiff/compareVersions';
 import type { FieldComparison } from '../VersionDiff/types';
-import { Button } from '../common/Button';
 import { Checkbox } from '../common/Checkbox';
 
 type RevisionDiffProps = {
     current: SequenceReviewData;
     metadataSchema: Metadata[];
     version: number;
-    onRetry: () => void;
     referenceGenomesInfo: ReferenceGenomesInfo;
 };
 
@@ -52,20 +50,11 @@ function getSequenceComparisons(
     });
 }
 
-export function RevisionDiff({ current, version, onRetry, metadataSchema, referenceGenomesInfo }: RevisionDiffProps) {
+export function RevisionDiff({ current, version, metadataSchema, referenceGenomesInfo }: RevisionDiffProps) {
     const [hideUnchangedFields, setHideUnchangedFields] = useState(true);
     const revision = current.revision;
     if (revision?.previousMetadata == null || revision.previousVersion === null) {
-        return (
-            <div className='m-2 text-sm'>
-                <p role='alert' className='text-red-600'>
-                    The previous version could not be loaded. It may be revoked or unavailable.{' '}
-                    <Button className='underline' onClick={onRetry}>
-                        Retry
-                    </Button>
-                </p>
-            </div>
-        );
+        return <p className='m-2 text-sm text-gray-600'>No previous version is available for comparison.</p>;
     }
 
     const metadataComparison = compareVersionData(
