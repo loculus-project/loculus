@@ -98,6 +98,8 @@ class ProjectionBenchmark {
             "USA" to usa,
             "lineage#4" to lineage,
             "all" to all,
+            "all-1" to all.clone().also { it.remove(123_456) },
+            "all-1000" to all.clone().also { bm -> (0 until 1000).forEach { bm.remove(it * 911) } },
         )) {
             val n = ids.cardinality
             cases += "nuc mutations $label [$n] mp=0.05" to { index.mutations(ids, SequenceType.NUCLEOTIDE, 0.05) }

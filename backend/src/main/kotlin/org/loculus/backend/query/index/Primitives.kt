@@ -185,6 +185,30 @@ internal class LongIntMap(expected: Int = 16) {
         }
     }
 
+    /** sets the value of [key] */
+    fun put(key: Long, value: Int) {
+        if (key == -1L) {
+            if (minusOneValue < 0) size++
+            minusOneValue = value
+            return
+        }
+        val stored = key + 1
+        var slot = mix(key) and mask
+        while (true) {
+            val k = table[2 * slot]
+            if (k == stored) {
+                table[2 * slot + 1] = value.toLong()
+                return
+            }
+            if (k == 0L) break
+            slot = (slot + 1) and mask
+        }
+        table[2 * slot] = stored
+        table[2 * slot + 1] = value.toLong()
+        size++
+        if (size * 2 > mask + 1) grow()
+    }
+
     /** value for [key], inserting [newValue] if absent */
     fun getOrPut(key: Long, newValue: Int): Int {
         if (key == -1L) {

@@ -982,7 +982,18 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
 
     override fun mutations(ids: RoaringBitmap, type: SequenceType, minProportion: Double): List<MutationRow> {
         smallSetRows(ids)?.let { return SmallSetCounts.mutations(schema, it, type, minProportion) }
-        return bitmapMutations(ids, type, minProportion)
+        return bitmapMutations(ids, type, minProportion, complementRows(ids))
+    }
+
+    /** rows of alive \ ids from [rowLoader] if that complement is small (read outside the lock) */
+    private fun complementRows(ids: RoaringBitmap): List<IndexRow>? {
+        val loader = rowLoader ?: return null
+        val complement = lock.read {
+            if (alive.cardinality - RoaringBitmap.andCardinality(ids, alive) > SMALL_SET_LIMIT) return null
+            RoaringBitmap.andNot(alive, ids)
+        }
+        if (complement.isEmpty) return null
+        return loader(complement.toArray().asList())
     }
 
     /** rows of [ids] from [rowLoader] if the set is small enough to count directly (read outside the lock) */
@@ -1001,53 +1012,131 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         val n: Int,
         val cardinalities: IntArray?,
         val missing: IntArray,
+        /** present \ ids when counting as "all minus complement" (cardinalities = counts over all present) */
+        val complement: RoaringBitmap?,
+        /** counts of the complement per (position * alphabet size + symbol), from its rows */
+        val complementCounts: LongIntMap?,
     )
 
-    private fun bitmapMutations(ids: RoaringBitmap, type: SequenceType, minProportion: Double): List<MutationRow> =
-        lock.read {
-            val seqs = if (type == SequenceType.NUCLEOTIDE) schema.nucleotideSequences else schema.genes
-            fun prepare(index: Int): MutationInput? {
-                val seq = sequence(index)
-                val filtered = forIntersections(RoaringBitmap.and(ids, seq.present))
-                val n = filtered.cardinality
-                if (n == 0) return null
-                val full = n == seq.present.cardinality
-                val missing = if (full) seq.missingCountsAll() else seq.missingCountsOver(filtered)
-                return MutationInput(seq, filtered, n, if (full) seq.mutationCounts else null, missing)
+    private fun bitmapMutations(
+        ids: RoaringBitmap,
+        type: SequenceType,
+        minProportion: Double,
+        complementRows: List<IndexRow>? = null,
+    ): List<MutationRow> = lock.read {
+        val seqs = if (type == SequenceType.NUCLEOTIDE) schema.nucleotideSequences else schema.genes
+        fun prepare(index: Int): MutationInput? {
+            val seq = sequence(index)
+            val filtered = forIntersections(RoaringBitmap.and(ids, seq.present))
+            val n = filtered.cardinality
+            if (n == 0) return null
+            val complementSize = seq.present.cardinality - n
+            if (complementSize == 0) {
+                return MutationInput(seq, filtered, n, seq.mutationCounts, seq.missingCountsAll(), null, null)
             }
-            val parallel = parallelMutations
-            val inputs: List<MutationInput?> = if (parallel && seqs.size > 1) {
-                parallelPool.submit<List<MutationInput?>> {
-                    seqs.parallelStream().map { prepare(it.index) }.toList()
-                }.get()
-            } else {
-                seqs.map { prepare(it.index) }
+            if (complementRows != null) {
+                complementFromRows(seq, filtered, complementRows)?.let { (codeCounts, complementMissing) ->
+                    val all = seq.missingCountsAll()
+                    val missing = IntArray(all.size) { all[it] - complementMissing[it] }
+                    return MutationInput(seq, filtered, n, seq.mutationCounts, missing, null, codeCounts)
+                }
             }
-            // all (sequence, block) tasks of all sequences in one parallel pass, results in (sequence, block) order
-            val tasks = ArrayList<Pair<MutationInput, Int>>()
-            inputs.filterNotNull().forEach { input ->
-                for (k in 0..(input.seq.length shr SequenceIndex.BLOCK_SHIFT)) tasks.add(input to k)
+            if (complementSize <= n * COMPLEMENT_FRACTION) {
+                // almost all entries (e.g. "latest versions" with a few revisions/revocations): counts over all
+                // present entries minus the counts over the (small) complement
+                val complement = forIntersections(RoaringBitmap.andNot(seq.present, filtered))
+                val all = seq.missingCountsAll()
+                val ofComplement = seq.missingCountsOver(complement)
+                val missing = IntArray(all.size) { all[it] - ofComplement[it] }
+                return MutationInput(seq, filtered, n, seq.mutationCounts, missing, complement, null)
             }
-            val compute = { task: Pair<MutationInput, Int> ->
-                val input = task.first
-                mutationsInBlock(
-                    input.seq,
-                    task.second,
-                    input.filtered,
-                    input.n,
-                    input.cardinalities,
-                    input.missing,
-                    minProportion,
-                )
-            }
-            val allFull = inputs.all { it == null || it.cardinalities != null }
-            val perTask: List<List<MutationRow>> = if (!parallel || allFull) {
-                tasks.map(compute)
-            } else {
-                parallelPool.submit<List<List<MutationRow>>> { tasks.parallelStream().map(compute).toList() }.get()
-            }
-            perTask.flatten()
+            return MutationInput(seq, filtered, n, null, seq.missingCountsOver(filtered), null, null)
         }
+        val parallel = parallelMutations
+        val inputs: List<MutationInput?> = if (parallel && seqs.size > 1) {
+            parallelPool.submit<List<MutationInput?>> {
+                seqs.parallelStream().map { prepare(it.index) }.toList()
+            }.get()
+        } else {
+            seqs.map { prepare(it.index) }
+        }
+        // all (sequence, block) tasks of all sequences in one parallel pass, results in (sequence, block) order
+        val tasks = ArrayList<Pair<MutationInput, Int>>()
+        inputs.filterNotNull().forEach { input ->
+            for (k in 0..(input.seq.length shr SequenceIndex.BLOCK_SHIFT)) tasks.add(input to k)
+        }
+        val compute = { task: Pair<MutationInput, Int> ->
+            val input = task.first
+            mutationsInBlock(
+                input.seq,
+                task.second,
+                input.filtered,
+                input.n,
+                input.cardinalities,
+                input.complement,
+                input.complementCounts,
+                input.missing,
+                minProportion,
+            )
+        }
+        val allFull = inputs.all { it == null || (it.cardinalities != null && it.complement == null) }
+        val perTask: List<List<MutationRow>> = if (!parallel || allFull) {
+            tasks.map(compute)
+        } else {
+            parallelPool.submit<List<List<MutationRow>>> { tasks.parallelStream().map(compute).toList() }.get()
+        }
+        perTask.flatten()
+    }
+
+    /**
+     * Code counts (position * alphabet size + symbol) and per-position missing counts of the complement
+     * present \ [filtered], from the complement's projection [rows]; null if the rows do not match the index
+     * (an entry changed after the index was updated), in which case the bitmaps are used.
+     */
+    private fun complementFromRows(
+        seq: SequenceIndex,
+        filtered: RoaringBitmap,
+        rows: List<IndexRow>,
+    ): Pair<LongIntMap, IntArray>? {
+        val seqIndex = seq.schema.index
+        val size = seq.alphabet.size
+        val complementSize = seq.present.cardinality - filtered.cardinality
+        val counts = LongIntMap()
+        val diff = IntArray(seq.length + 2)
+        var matched = 0
+        for (row in rows) {
+            val rowPresent = seqIndex in row.presentSequences
+            if (rowPresent != seq.present.contains(row.id)) return null
+            if (!rowPresent || filtered.contains(row.id)) continue
+            matched++
+            val codes = row.mutations.filter { MutationCode.seqIndex(it) == seqIndex }.distinct()
+            for (code in codes) {
+                val position = MutationCode.position(code)
+                val symbol = MutationCode.symbolIndex(code)
+                if (position < 1 || position > seq.length || symbol >= size) continue
+                if (seq.mutations[position]?.get(symbol)?.contains(row.id) != true) return null
+                val key = (position * size + symbol).toLong()
+                val current = counts.getOrPut(key, 0)
+                counts.put(key, current + 1)
+            }
+            forEachRun(row.missing) { s, start, end ->
+                val from = maxOf(1, start)
+                val until = minOf(seq.length + 1, end)
+                if (s === seq && from < until) {
+                    diff[from]++
+                    diff[until]--
+                }
+            }
+        }
+        if (matched != complementSize) return null
+        val missing = IntArray(seq.length + 1)
+        var running = 0
+        for (p in 1..seq.length) {
+            running += diff[p]
+            missing[p] = running
+        }
+        return counts to missing
+    }
 
     private fun threshold(coverage: Long, minProportion: Double): Long =
         if (minProportion == 0.0) 0 else ceil(coverage.toDouble() * minProportion).toLong() - 1
@@ -1064,9 +1153,17 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         ids: RoaringBitmap,
         n: Int,
         cardinalities: IntArray?,
+        complement: RoaringBitmap?,
+        complementCounts: LongIntMap?,
         missing: IntArray,
         minProportion: Double,
     ): List<MutationRow> {
+        // count over all present entries, minus the complement's if counting "all minus complement"
+        fun countAll(index: Int, bm: RoaringBitmap): Long {
+            val all = cardinalities!![index].toLong()
+            if (complementCounts != null) return all - maxOf(0, complementCounts.get(index.toLong()))
+            return if (complement == null || all == 0L) all else all - RoaringBitmap.andCardinality(complement, bm)
+        }
         val allCounts = seq.mutationCounts
         val shift = SequenceIndex.BLOCK_SHIFT
         val first = maxOf(1, k shl shift)
@@ -1083,7 +1180,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             val refValid = validMask and (1 shl ref) != 0
             val missingAtP = missing[p].toLong()
             var pruneBelow = -1L
-            if (cardinalities == null && minProportion > 0 && refValid) {
+            if ((cardinalities == null || complement != null) && minProportion > 0 && refValid) {
                 var invalidAll = 0L
                 for (s in 0 until symbolCount) {
                     if (validMask and (1 shl s) == 0) invalidAll += allCounts[p * symbolCount + s]
@@ -1098,8 +1195,8 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
                 val bm = perSymbol[s]
                 val c = when {
                     bm == null -> 0L
-                    cardinalities != null -> cardinalities[p * symbolCount + s].toLong()
                     s != ref && minOf(n, allCounts[p * symbolCount + s]).toLong() <= pruneBelow -> 0L
+                    cardinalities != null -> countAll(p * symbolCount + s, bm)
                     else -> RoaringBitmap.andCardinality(ids, bm).toLong()
                 }
                 counts[s] = c
@@ -1117,7 +1214,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
                 if (validMask and (1 shl s) != 0) continue
                 val bm = perSymbol[s] ?: continue
                 invalid += if (cardinalities != null) {
-                    cardinalities[p * symbolCount + s].toLong()
+                    countAll(p * symbolCount + s, bm)
                 } else {
                     RoaringBitmap.andCardinality(ids, bm).toLong()
                 }
@@ -1168,12 +1265,21 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             val seq = sequence(seqSchema.index)
             val filtered = RoaringBitmap.and(ids, seq.present)
             if (filtered.isEmpty) continue
-            val full = filtered.cardinality == seq.present.cardinality
+            val complementSize = seq.present.cardinality - filtered.cardinality
+            val complement = if (complementSize in 1..(filtered.cardinality * COMPLEMENT_FRACTION).toInt()) {
+                RoaringBitmap.andNot(seq.present, filtered)
+            } else {
+                null
+            }
             for (position in seq.insertions.keys.sorted()) {
                 val bySymbols = seq.insertions.getValue(position)
                 for (symbols in bySymbols.keys.sorted()) {
                     val bm = bySymbols.getValue(symbols)
-                    val count = if (full) bm.longCardinality else RoaringBitmap.andCardinality(filtered, bm).toLong()
+                    val count = when {
+                        complementSize == 0 -> bm.longCardinality
+                        complement != null -> bm.longCardinality - RoaringBitmap.andCardinality(complement, bm)
+                        else -> RoaringBitmap.andCardinality(filtered, bm).toLong()
+                    }
                     if (count > 0) result.add(InsertionRow(seqSchema.index, position, symbols, count))
                 }
             }
@@ -1227,6 +1333,9 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
 
         /** mutations / insertions over at most this many ids are counted from their rows (see [rowLoader]) */
         const val SMALL_SET_LIMIT = 100
+
+        /** mutations / insertions over ids covering all but at most this fraction are counted as all - complement */
+        private const val COMPLEMENT_FRACTION = 0.2
         private const val BULK_POSITIONS_PER_UNIT = 4000
         private const val MAX_DENSE_RANGE = 1L shl 20
         private const val MAX_PARALLEL_DENSE_RANGE = 1 shl 16

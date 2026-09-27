@@ -124,6 +124,10 @@ class RandomizedIndexTest {
             oracle.rows.keys.filter { random.nextDouble() < 0.01 }.toSet(),
             oracle.rows.keys.filter { random.nextDouble() < 0.1 }.toSet(),
             oracle.rows.keys.take(1).toSet(),
+            // almost all: counted as all minus the complement
+            oracle.rows.keys - oracle.rows.keys.first(),
+            oracle.rows.keys - oracle.rows.keys.shuffled(random).take(7).toSet(),
+            oracle.rows.keys.filter { random.nextDouble() < 0.9 }.toSet(),
             oracle.evaluate(Maybe(randomLeaf())),
         )
         for (subset in subsets) {

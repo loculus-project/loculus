@@ -196,4 +196,62 @@ class LapisSemanticsIndexTest {
             assertThat("$ids", actual, equalTo(expected))
         }
     }
+
+    @Test
+    fun `almost all ids are counted as all minus the complement`() {
+        val all = index.evaluate(True).toArray().toList()
+        val random = kotlin.random.Random(11)
+        for (removed in listOf(
+            listOf(0),
+            listOf(5, 30000, 74260),
+            all.shuffled(random).take(500),
+            all.shuffled(random).take(9000),
+        )) {
+            val kept = all - removed.toSet()
+            val bitmap = org.roaringbitmap.RoaringBitmap.bitmapOf(*kept.toIntArray())
+            val rows = kept.map { allRows.getValue(it) }
+            for (type in SequenceType.entries) {
+                for (minProportion in listOf(0.0, 0.05, 0.5)) {
+                    assertThat(
+                        "$type $minProportion ${removed.size}",
+                        index.mutations(bitmap, type, minProportion),
+                        equalTo(SmallSetCounts.mutations(schema, rows, type, minProportion)),
+                    )
+                }
+                assertThat(index.insertions(bitmap, type), equalTo(SmallSetCounts.insertions(schema, rows, type)))
+            }
+        }
+    }
+
+    @Test
+    fun `small complements are subtracted using their rows, stale rows fall back to bitmaps`() {
+        val all = index.evaluate(True).toArray().toList()
+        try {
+            for (removed in listOf(listOf(0), listOf(5, 30000, 74260), (100 until 190).toList())) {
+                val kept = all - removed.toSet()
+                val bitmap = org.roaringbitmap.RoaringBitmap.bitmapOf(*kept.toIntArray())
+                val expected = SequenceType.entries.map { type ->
+                    SmallSetCounts.mutations(schema, kept.map { allRows.getValue(it) }, type, 0.0)
+                }
+                index.rowLoader = { requested -> requested.mapNotNull { allRows[it] } }
+                assertThat(SequenceType.entries.map { index.mutations(bitmap, it, 0.0) }, equalTo(expected))
+                // a row that disagrees with the index (e.g. changed after the last index update) is not trusted
+                index.rowLoader = { requested ->
+                    requested.mapNotNull { allRows[it] }.map { row ->
+                        IndexRow(
+                            row.id,
+                            row.values,
+                            row.presentSequences,
+                            row.mutations + (1 shl 23 or (3 shl 5) or 4),
+                            row.missing,
+                            row.insertions,
+                        )
+                    }
+                }
+                assertThat(SequenceType.entries.map { index.mutations(bitmap, it, 0.0) }, equalTo(expected))
+            }
+        } finally {
+            index.rowLoader = null
+        }
+    }
 }
