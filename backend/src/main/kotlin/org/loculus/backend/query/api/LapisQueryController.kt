@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
 import java.io.BufferedOutputStream
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
@@ -87,7 +86,7 @@ class LapisQueryController(
         @PathVariable(required = false) sequenceName: String?,
         request: HttpServletRequest,
         response: HttpServletResponse,
-    ): ResponseEntity<StreamingResponseBody> {
+    ) {
         val schema = schema(organism)
         val endpoint = endpointsByRoute[route] ?: throw notFound(request)
         if (sequenceName != null) validateSequenceRoute(schema, endpoint, sequenceName, request)
@@ -107,12 +106,15 @@ class LapisQueryController(
         } else {
             params
         }
+        val tStart = System.nanoTime()
         val parsed = parser.parse(schema, endpoint, sequenceName, withFormat, !isJson)
+        val tParsed = System.nanoTime()
 
         val dataVersion = index.dataVersion.toString()
         val requestId = requestId(response)
         val info = { LapisInfo.create(dataVersion, requestId, schema.instanceName, request.serverName) }
         val body = executor.execute(organism, index, parsed, info)
+        val tExecuted = System.nanoTime()
 
         val contentEncoding = if (parsed.compression == null && !parsed.downloadAsFile) {
             LapisParams.contentEncodingFromAcceptEncoding(request.getHeader(HttpHeaders.ACCEPT_ENCODING))
@@ -120,16 +122,32 @@ class LapisQueryController(
             null
         }
         val headers = responseHeaders(parsed, endpoint, body, dataVersion, contentEncoding)
-        val stream = StreamingResponseBody { raw ->
-            try {
-                val compressed = compress(raw, parsed.compression, contentEncoding)
-                BufferedOutputStream(compressed, OUTPUT_BUFFER_SIZE).use { out -> body.write(out) }
-            } catch (e: Exception) {
-                log.warn(e) { "Query engine: streaming ${request.requestURI} aborted: $e" }
-                throw e
-            }
+
+        // Responses are written on the servlet thread, not via StreamingResponseBody: the async dispatch raced with
+        // Spring Security's header writer (occasionally duplicated security headers) and adds latency.
+        val serverTiming = "parse;dur=${ms(tParsed - tStart)}, execute;dur=${ms(tExecuted - tParsed)}"
+        response.status = HttpStatus.OK.value()
+        headers.forEach { name, values -> values.forEach { response.addHeader(name, it) } }
+
+        if (endpoint in BOUNDED_ENDPOINTS) {
+            // bounded (counts, aggregations, mutation/insertion lists): rendered first, sent with Content-Length
+            val buffer = ByteArrayOutputStream()
+            compress(buffer, parsed.compression, contentEncoding).use { body.write(it) }
+            response.addHeader("Server-Timing", "$serverTiming, render;dur=${ms(System.nanoTime() - tExecuted)}")
+            response.setContentLength(buffer.size())
+            buffer.writeTo(response.outputStream)
+            response.outputStream.flush()
+            return
         }
-        return ResponseEntity(stream, headers, HttpStatus.OK)
+
+        response.addHeader("Server-Timing", serverTiming)
+        try {
+            val compressed = compress(response.outputStream, parsed.compression, contentEncoding)
+            BufferedOutputStream(compressed, OUTPUT_BUFFER_SIZE).use { out -> body.write(out) }
+        } catch (e: Exception) {
+            log.warn(e) { "Query engine: streaming ${request.requestURI} aborted: $e" }
+            throw e
+        }
     }
 
     @GetMapping("/{organism}/sample/info", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -223,6 +241,16 @@ class LapisQueryController(
 
     companion object {
         const val OUTPUT_BUFFER_SIZE = 64 * 1024
+
+        private fun ms(nanos: Long) = "%.3f".format(nanos / 1e6)
+
+        private val BOUNDED_ENDPOINTS = setOf(
+            Endpoint.AGGREGATED,
+            Endpoint.NUCLEOTIDE_MUTATIONS,
+            Endpoint.AMINO_ACID_MUTATIONS,
+            Endpoint.NUCLEOTIDE_INSERTIONS,
+            Endpoint.AMINO_ACID_INSERTIONS,
+        )
 
         fun isForm(contentType: String?) =
             contentType != null && contentType.lowercase().startsWith(MediaType.APPLICATION_FORM_URLENCODED_VALUE)

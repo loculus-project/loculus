@@ -91,12 +91,26 @@ class LapisQueryExecutor(private val store: QueryStore) {
         validateOrderBy(request.orderBy, fields)
         val ordered = index.select(ids, request.orderBy, request.random, request.offset, request.limit)
         val shape = TableShape(fields)
+        val types = fields.map { schema.field(it)?.type }
         return LapisBody(tableContentType(request.dataFormat), request.dataFormat.extension) { out ->
-            val writer = tableWriter(request.dataFormat, shape, out, envelope = !request.downloadAsFile, info)
-            val projector = MetadataProjector(schema, fields)
-            writer.start()
-            store.streamMetadataJson(organism, ordered) { _, json -> writer.row(projector.project(json)) }
-            writer.finish()
+            val format = tableFormat(request.dataFormat, shape, envelope = !request.downloadAsFile, info)
+            format.header(out)
+            // Postgres extracts the fields (->>), the fetch workers type and render them in parallel
+            store.streamMetadataFieldChunks(
+                organism,
+                ordered,
+                fields,
+                render = { _, values ->
+                    format.render(
+                        values.map { texts ->
+                            Array(texts.size) { i -> MetadataProjector.convertText(texts[i], types[i]) }
+                        },
+                    )
+                },
+                consumer = { chunk -> format.writeChunk(out, chunk) },
+            )
+            format.trailer(out)
+            out.flush()
         }
     }
 

@@ -83,6 +83,8 @@ class LapisExceptionHandler(private val schemas: QuerySchemaRegistry) {
         request: HttpServletRequest,
         response: HttpServletResponse,
     ): ResponseEntity<ByteArray> {
+        // after the body has started, the only way to signal the error is to abort the connection
+        if (response.isCommitted) throw e
         log.error(e) { "Query engine: unexpected error for ${request.requestURI}: $e" }
         return error(HttpStatus.INTERNAL_SERVER_ERROR, e.message, request, response)
     }

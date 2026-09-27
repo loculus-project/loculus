@@ -32,6 +32,20 @@ interface QueryStore {
     )
 
     /**
+     * Bulk variant of [streamMetadataFields] for large exports: rows are fetched in chunks, and every chunk is
+     * passed to [render] (on a background thread; chunks may be rendered concurrently, so [render] must not share
+     * mutable state) together with its ids, both in requested order (missing ids skipped). The results are
+     * passed to [consumer] in order, on the calling thread.
+     */
+    fun <T> streamMetadataFieldChunks(
+        organism: String,
+        ids: IntArray,
+        fields: List<String>,
+        render: (ids: IntArray, values: List<Array<String?>>) -> T,
+        consumer: (T) -> Unit,
+    )
+
+    /**
      * Stream decompressed sequences of [ids] (in the given order) for each of [sequenceIndices]
      * (in the given order per id): consumer(id, sequenceIndex, sequenceBytes). Entries without a
      * sequence for an index are skipped. sequenceBytes is only valid during the callback.

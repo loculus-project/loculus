@@ -23,7 +23,7 @@ class MutationTablesTest {
 
     private fun json(table: Table): String {
         val out = ByteArrayOutputStream()
-        val writer = JsonTableWriter(table.shape, out, envelope = false) { error("no info") }
+        val writer = tableWriter(DataFormat.JSON, table.shape, out, false) { error("no info") }
         writer.start()
         table.rows.forEach(writer::row)
         writer.finish()

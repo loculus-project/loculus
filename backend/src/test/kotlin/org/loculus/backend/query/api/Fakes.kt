@@ -123,6 +123,22 @@ class FakeStore(
         }
     }
 
+    /** chunks of 2 rows, rendered out of order to catch order dependencies */
+    override fun <T> streamMetadataFieldChunks(
+        organism: String,
+        ids: IntArray,
+        fields: List<String>,
+        render: (ids: IntArray, values: List<Array<String?>>) -> T,
+        consumer: (T) -> Unit,
+    ) {
+        val rows = mutableListOf<Pair<Int, Array<String?>>>()
+        streamMetadataFields(organism, ids, fields) { id, values -> rows.add(id to values) }
+        val chunks = rows.chunked(2)
+        val rendered = chunks.indices.reversed()
+            .associateWith { i -> render(chunks[i].map { it.first }.toIntArray(), chunks[i].map { it.second }) }
+        chunks.indices.forEach { consumer(rendered.getValue(it)) }
+    }
+
     override fun streamSequenceRows(
         organism: String,
         kind: SequenceKind,

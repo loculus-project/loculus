@@ -67,6 +67,32 @@ class PostgresQueryStore(private val dataSource: DataSource, compressionDictServ
         )
     }
 
+    override fun <T> streamMetadataFieldChunks(
+        organism: String,
+        ids: IntArray,
+        fields: List<String>,
+        render: (ids: IntArray, values: List<Array<String?>>) -> T,
+        consumer: (T) -> Unit,
+    ) {
+        pipelined(
+            ids,
+            METADATA_CHUNK_SIZE,
+            prefetch = METADATA_EXPORT_PREFETCH_CHUNKS,
+            fetch = { chunk ->
+                val byId = fetchMetadataFields(organism, chunk, fields)
+                val presentIds = IntArray(byId.size)
+                val values = ArrayList<Array<String?>>(byId.size)
+                for (id in chunk) {
+                    val v = byId[id] ?: continue
+                    presentIds[values.size] = id
+                    values.add(v)
+                }
+                render(if (values.size == presentIds.size) presentIds else presentIds.copyOf(values.size), values)
+            },
+            emit = { _, rendered -> consumer(rendered) },
+        )
+    }
+
     override fun streamSequences(
         organism: String,
         kind: SequenceKind,
@@ -256,7 +282,13 @@ class PostgresQueryStore(private val dataSource: DataSource, compressionDictServ
      * Splits [ids] into chunks, fetches up to [PREFETCH_CHUNKS] chunks ahead in the background and emits them in
      * order on the calling thread.
      */
-    private fun <T> pipelined(ids: IntArray, chunkSize: Int, fetch: (IntArray) -> T, emit: (IntArray, T) -> Unit) {
+    private fun <T> pipelined(
+        ids: IntArray,
+        chunkSize: Int,
+        prefetch: Int = PREFETCH_CHUNKS,
+        fetch: (IntArray) -> T,
+        emit: (IntArray, T) -> Unit,
+    ) {
         val chunks = ArrayDeque<IntArray>()
         forEachChunk(ids, chunkSize) { chunks.addLast(it) }
         if (chunks.size == 1) {
@@ -267,7 +299,7 @@ class PostgresQueryStore(private val dataSource: DataSource, compressionDictServ
         val inFlight = ArrayDeque<Pair<IntArray, Future<T>>>()
         try {
             while (chunks.isNotEmpty() || inFlight.isNotEmpty()) {
-                while (inFlight.size < PREFETCH_CHUNKS && chunks.isNotEmpty()) {
+                while (inFlight.size < prefetch && chunks.isNotEmpty()) {
                     val chunk = chunks.removeFirst()
                     inFlight.addLast(chunk to background.submit<T> { fetch(chunk) })
                 }
@@ -290,6 +322,9 @@ class PostgresQueryStore(private val dataSource: DataSource, compressionDictServ
         const val SEQUENCE_CHUNK_ROWS = 8_192
         const val FETCH_SIZE = 10_000
         const val PREFETCH_CHUNKS = 2
+
+        /** bulk metadata exports: parsing and rendering run in the fetch workers, so more of them pay off */
+        const val METADATA_EXPORT_PREFETCH_CHUNKS = 6
         private const val NO_DICT = Int.MIN_VALUE
         private const val ACCESSION_VERSION_FIELD = "accessionVersion"
 

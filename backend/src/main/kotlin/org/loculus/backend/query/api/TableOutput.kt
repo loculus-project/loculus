@@ -3,6 +3,7 @@ package org.loculus.backend.query.api
 import com.fasterxml.jackson.core.JsonEncoding
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.io.SerializedString
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVPrinter
 import org.loculus.backend.query.request.DataFormat
@@ -10,9 +11,8 @@ import org.loculus.backend.query.request.OrderByField
 import org.loculus.backend.query.request.OrderDirection
 import org.loculus.backend.query.request.QueryBadRequestException
 import org.loculus.backend.query.request.RandomOrder
-import java.io.BufferedWriter
+import java.io.ByteArrayOutputStream
 import java.io.OutputStream
-import java.io.OutputStreamWriter
 import kotlin.random.Random
 
 val lapisJsonFactory: JsonFactory = JsonFactory()
@@ -82,6 +82,38 @@ fun applyPipeline(
 
 // ---------------- writers ----------------
 
+/**
+ * A table output format, split so that rows can be rendered in chunks on several threads:
+ * [header] and [trailer] are written once, [render] turns a chunk of rows into bytes (thread-safe, no shared
+ * state), [writeChunk] appends a rendered chunk (called in order, on one thread).
+ */
+abstract class TableFormat(val shape: TableShape) {
+    open fun header(out: OutputStream) {}
+
+    abstract fun render(rows: List<Row>): ByteArray
+
+    open fun writeChunk(out: OutputStream, chunk: ByteArray) = out.write(chunk)
+
+    open fun trailer(out: OutputStream) {}
+}
+
+fun tableFormat(format: DataFormat, shape: TableShape, envelope: Boolean, info: () -> LapisInfo): TableFormat =
+    when (format) {
+        DataFormat.JSON -> JsonTableFormat(shape, envelope, info)
+
+        DataFormat.CSV -> CsvTableFormat(shape, CSV_FORMAT, withHeader = true)
+
+        DataFormat.CSV_WITHOUT_HEADERS -> CsvTableFormat(shape, CSV_FORMAT, withHeader = false)
+
+        DataFormat.TSV -> CsvTableFormat(shape, TSV_FORMAT, withHeader = true)
+
+        DataFormat.TSV_ESCAPED -> EscapedTsvTableFormat(shape)
+
+        DataFormat.FASTA, DataFormat.NDJSON -> throw QueryBadRequestException(
+            "Data format ${format.name.lowercase()} is not supported for this endpoint",
+        )
+    }
+
 interface TableWriter {
     fun start()
 
@@ -91,66 +123,85 @@ interface TableWriter {
     fun finish()
 }
 
+/** row-by-row writing on top of a [TableFormat] */
 fun tableWriter(
     format: DataFormat,
     shape: TableShape,
     out: OutputStream,
     envelope: Boolean,
     info: () -> LapisInfo,
-): TableWriter = when (format) {
-    DataFormat.JSON -> JsonTableWriter(shape, out, envelope, info)
+): TableWriter {
+    val tableFormat = tableFormat(format, shape, envelope, info)
+    return object : TableWriter {
+        private val buffer = ArrayList<Row>(ROWS_PER_CHUNK)
 
-    DataFormat.CSV -> CsvTableWriter(shape, out, CSV_FORMAT, withHeader = true)
+        override fun start() = tableFormat.header(out)
 
-    DataFormat.CSV_WITHOUT_HEADERS -> CsvTableWriter(shape, out, CSV_FORMAT, withHeader = false)
+        override fun row(values: Row) {
+            buffer.add(values)
+            if (buffer.size >= ROWS_PER_CHUNK) flush()
+        }
 
-    DataFormat.TSV -> CsvTableWriter(shape, out, TSV_FORMAT, withHeader = true)
+        private fun flush() {
+            if (buffer.isEmpty()) return
+            tableFormat.writeChunk(out, tableFormat.render(buffer))
+            buffer.clear()
+        }
 
-    DataFormat.TSV_ESCAPED -> EscapedTsvTableWriter(shape, out)
-
-    DataFormat.FASTA, DataFormat.NDJSON -> throw QueryBadRequestException(
-        "Data format ${format.name.lowercase()} is not supported for this endpoint",
-    )
+        override fun finish() {
+            flush()
+            tableFormat.trailer(out)
+            out.flush()
+        }
+    }
 }
+
+private const val ROWS_PER_CHUNK = 1024
 
 /** like LAPIS: commons-csv DEFAULT with "\n" record separator */
 val CSV_FORMAT: CSVFormat = CSVFormat.DEFAULT.builder().setRecordSeparator("\n").get()
 val TSV_FORMAT: CSVFormat = CSVFormat.DEFAULT.builder().setRecordSeparator("\n").setDelimiter('\t').get()
 
-class JsonTableWriter(
-    private val shape: TableShape,
-    out: OutputStream,
-    private val envelope: Boolean,
-    private val info: () -> LapisInfo,
-) : TableWriter {
-    private val generator: JsonGenerator = lapisJsonFactory.createGenerator(out, JsonEncoding.UTF8)
-        .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+class JsonTableFormat(shape: TableShape, private val envelope: Boolean, private val info: () -> LapisInfo) :
+    TableFormat(shape) {
+    private var wroteRows = false
 
-    override fun start() {
-        if (envelope) {
-            generator.writeStartObject()
-            generator.writeFieldName("data")
-        }
-        generator.writeStartArray()
+    override fun header(out: OutputStream) {
+        out.write((if (envelope) "{\"data\":[" else "[").toByteArray())
     }
 
-    override fun row(values: Row) {
-        generator.writeStartObject()
-        for (i in shape.columns.indices) {
-            generator.writeFieldName(shape.columns[i])
-            writeJsonValue(generator, values[i])
+    override fun render(rows: List<Row>): ByteArray {
+        val buffer = ByteArrayOutputStream(rows.size * 256)
+        lapisJsonFactory.createGenerator(buffer, JsonEncoding.UTF8).use { generator ->
+            generator.setRootValueSeparator(SerializedString(","))
+            for (row in rows) {
+                generator.writeStartObject()
+                for (i in shape.columns.indices) {
+                    generator.writeFieldName(shape.columns[i])
+                    writeJsonValue(generator, row[i])
+                }
+                generator.writeEndObject()
+            }
         }
-        generator.writeEndObject()
+        return buffer.toByteArray()
     }
 
-    override fun finish() {
-        generator.writeEndArray()
+    override fun writeChunk(out: OutputStream, chunk: ByteArray) {
+        if (chunk.isEmpty()) return
+        if (wroteRows) out.write(','.code)
+        out.write(chunk)
+        wroteRows = true
+    }
+
+    override fun trailer(out: OutputStream) {
+        out.write(']'.code)
         if (envelope) {
-            generator.writeFieldName("info")
-            info().write(generator)
-            generator.writeEndObject()
+            out.write(",\"info\":".toByteArray())
+            lapisJsonFactory.createGenerator(out, JsonEncoding.UTF8)
+                .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+                .use { info().write(it) }
+            out.write('}'.code)
         }
-        generator.flush()
     }
 }
 
@@ -175,53 +226,47 @@ fun textValue(value: Any?): String? = when (value) {
     else -> value.toString()
 }
 
-class CsvTableWriter(
-    private val shape: TableShape,
-    out: OutputStream,
-    format: CSVFormat,
-    private val withHeader: Boolean,
-) : TableWriter {
-    private val writer = BufferedWriter(OutputStreamWriter(out, Charsets.UTF_8), 64 * 1024)
-    private val printer = CSVPrinter(writer, format)
-    private val cells = arrayOfNulls<String>(shape.columns.size)
-
-    override fun start() {
-        if (withHeader) printer.printRecord(shape.csvColumnOrder.map { shape.columns[it] })
+class CsvTableFormat(shape: TableShape, private val format: CSVFormat, private val withHeader: Boolean) :
+    TableFormat(shape) {
+    override fun header(out: OutputStream) {
+        if (!withHeader) return
+        val sb = StringBuilder()
+        CSVPrinter(sb, format).printRecord(shape.csvColumnOrder.map { shape.columns[it] })
+        out.write(sb.toString().toByteArray(Charsets.UTF_8))
     }
 
-    override fun row(values: Row) {
-        for (i in cells.indices) cells[i] = textValue(values[shape.csvColumnOrder[i]])
-        printer.printRecord(*cells)
-    }
-
-    override fun finish() {
-        printer.flush()
-        writer.flush()
+    override fun render(rows: List<Row>): ByteArray {
+        val sb = StringBuilder(rows.size * 128)
+        val printer = CSVPrinter(sb, format)
+        val cells = arrayOfNulls<String>(shape.columns.size)
+        for (row in rows) {
+            for (i in cells.indices) cells[i] = textValue(row[shape.csvColumnOrder[i]])
+            printer.printRecord(*cells)
+        }
+        return sb.toString().toByteArray(Charsets.UTF_8)
     }
 }
 
 /** tsv-escaped: no quoting, newlines and tabs within values escaped as \n and \t */
-class EscapedTsvTableWriter(private val shape: TableShape, out: OutputStream) : TableWriter {
-    private val writer = BufferedWriter(OutputStreamWriter(out, Charsets.UTF_8), 64 * 1024)
-
-    override fun start() {
-        writeLine(shape.csvColumnOrder.map { shape.columns[it] })
+class EscapedTsvTableFormat(shape: TableShape) : TableFormat(shape) {
+    override fun header(out: OutputStream) {
+        val sb = StringBuilder()
+        appendLine(sb, shape.csvColumnOrder.map { shape.columns[it] })
+        out.write(sb.toString().toByteArray(Charsets.UTF_8))
     }
 
-    override fun row(values: Row) {
-        writeLine(shape.csvColumnOrder.map { textValue(values[it]) })
+    override fun render(rows: List<Row>): ByteArray {
+        val sb = StringBuilder(rows.size * 128)
+        for (row in rows) appendLine(sb, shape.csvColumnOrder.map { textValue(row[it]) })
+        return sb.toString().toByteArray(Charsets.UTF_8)
     }
 
-    private fun writeLine(cells: List<String?>) {
+    private fun appendLine(sb: StringBuilder, cells: List<String?>) {
         cells.forEachIndexed { i, cell ->
-            if (i > 0) writer.write('\t'.code)
-            if (cell != null) writer.write(escapeTsv(cell))
+            if (i > 0) sb.append('\t')
+            if (cell != null) sb.append(escapeTsv(cell))
         }
-        writer.write('\n'.code)
-    }
-
-    override fun finish() {
-        writer.flush()
+        sb.append('\n')
     }
 
     companion object {
