@@ -51,8 +51,11 @@ class LapisSemanticsIndexTest {
             if (id in 5000 until 5006) insertions["E"] = listOf("14:EPEAB")
             IndexRow.fromAlignedSequences(schema, id, mapOf("accessionVersion" to "A$id.1"), sequences, insertions)
         }
+        allRows = rows.associateBy { it.id }
         InMemoryOrganismIndex.build(schema, rows)
     }
+
+    private lateinit var allRows: Map<Int, IndexRow>
 
     private fun count(filter: Filter) = index.evaluate(filter).cardinality
 
@@ -169,5 +172,28 @@ class LapisSemanticsIndexTest {
         assertThat(count(NOf(0, false, listOf(a, b))), equalTo(index.size))
         assertThat(count(NOf(3, false, listOf(a, b))), equalTo(0))
         assertThat(count(NOf(3, true, listOf(a, b, c))), equalTo(if (count(And(listOf(a, c))) == 1) 1 else 0))
+    }
+
+    @Test
+    fun `small id sets counted from rows equal the bitmap path`() {
+        val sets = listOf(
+            (0 until 200).toList(),
+            (980 until 1010).toList(),
+            listOf(5001, 5002, 70000, 80000),
+            listOf(74260),
+        )
+        for (ids in sets) {
+            val bitmap = org.roaringbitmap.RoaringBitmap.bitmapOf(*ids.toIntArray())
+            index.rowLoader = null
+            val expected = SequenceType.entries.map {
+                index.mutations(bitmap, it, 0.0) to index.insertions(bitmap, it)
+            } + (index.mutations(bitmap, SequenceType.NUCLEOTIDE, 0.3) to emptyList())
+            index.rowLoader = { requested -> requested.mapNotNull { allRows[it] } }
+            val actual = SequenceType.entries.map {
+                index.mutations(bitmap, it, 0.0) to index.insertions(bitmap, it)
+            } + (index.mutations(bitmap, SequenceType.NUCLEOTIDE, 0.3) to emptyList())
+            index.rowLoader = null
+            assertThat("$ids", actual, equalTo(expected))
+        }
     }
 }

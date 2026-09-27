@@ -24,6 +24,25 @@ internal class ProjectionReader(private val schema: QuerySchema) {
         }
     }
 
+    /** rows with fromId <= id <= toId in id order */
+    fun streamRange(
+        connection: Connection,
+        fromId: Int,
+        toId: Int,
+        fetchSize: Int = 5000,
+        consumer: (IndexRow) -> Unit,
+    ) {
+        connection.prepareStatement(
+            "$SELECT where e.organism = ? and e.id between ? and ? order by e.id",
+        ).use { statement ->
+            statement.fetchSize = fetchSize
+            statement.setString(1, schema.organism)
+            statement.setInt(2, fromId)
+            statement.setInt(3, toId)
+            statement.executeQuery().use { rs -> while (rs.next()) consumer(readRow(rs)) }
+        }
+    }
+
     fun readIds(connection: Connection, ids: Collection<Int>): List<IndexRow> {
         if (ids.isEmpty()) return emptyList()
         val result = ArrayList<IndexRow>(ids.size)

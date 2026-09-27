@@ -74,18 +74,26 @@ class QueryIndexService(
 
         private fun fullLoad() {
             val started = System.currentTimeMillis()
-            val (startSeq, loaded) = dataSource.connection.use { connection ->
-                connection.autoCommit = false
-                try {
-                    val seq = maxChangelogSeq(connection)
-                    val newIndex = InMemoryOrganismIndex(schemaRef, initialCapacity = maxId(connection) + 1)
-                    reader.streamAll(connection) { newIndex.addForBulkLoad(it) }
-                    newIndex.finishBulkLoad(dataVersion(connection))
-                    seq to newIndex
-                } finally {
-                    connection.rollback()
-                }
+            val (startSeq, maxId, version) = dataSource.connection.use { connection ->
+                Triple(maxChangelogSeq(connection), maxId(connection), dataVersion(connection))
             }
+            val loaded = IndexLoader.load(
+                schemaRef,
+                maxId,
+                readRange = { from, to, consumer ->
+                    dataSource.connection.use { connection ->
+                        connection.autoCommit = false
+                        try {
+                            reader.streamRange(connection, from, to, consumer = consumer)
+                        } finally {
+                            connection.rollback()
+                        }
+                    }
+                },
+                dataVersion = version,
+                readers = LOAD_READERS,
+            )
+            loaded.rowLoader = { ids -> dataSource.connection.use { reader.readIds(it, ids) } }
             index = loaded
             indexes[organism] = loaded
             safeSeq = startSeq
@@ -196,5 +204,8 @@ class QueryIndexService(
         const val REBUILD_MIN_CHANGES = 50_000
         const val REBUILD_FRACTION = 0.1
         const val GAP_TIMEOUT_MS = 10_000L
+
+        /** parallel reader connections during a full load (the default Hikari pool has 10) */
+        const val LOAD_READERS = 4
     }
 }
