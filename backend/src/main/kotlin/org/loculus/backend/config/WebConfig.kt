@@ -19,7 +19,8 @@ class WebConfig(private val backendConfig: BackendConfig) : WebMvcConfigurer {
     }
 
     override fun addInterceptors(registry: InterceptorRegistry) {
-        registry.addInterceptor(ReadOnlyModeInterceptor(backendConfig))
+        // query engine (LAPIS-compatible) POSTs are reads
+        registry.addInterceptor(ReadOnlyModeInterceptor(backendConfig)).excludePathPatterns("/*/sample/**")
         registry.addInterceptor(OrganismMdcInterceptor())
     }
 
