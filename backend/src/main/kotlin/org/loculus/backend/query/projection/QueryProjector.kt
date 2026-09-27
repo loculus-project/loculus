@@ -41,8 +41,8 @@ private const val REBUILD_RETRY_BACKOFF_MILLIS = 60_000L
 private const val PARALLEL_THRESHOLD = 256
 private const val REBUILD_CHUNK_SIZE = 1000
 
-/** parallel write transactions (= database connections) during a full rebuild */
-private const val REBUILD_WRITERS = 4
+/** parallel write transactions (= database connections) during a full rebuild or while draining the dirty queue */
+private const val PARALLEL_WRITERS = 4
 
 /**
  * Maintains the query engine projection (query_entries, query_mutation_data, query_sequences) of the released data.
@@ -79,7 +79,7 @@ class QueryProjector(
     private val workerCount = maxOf(1, Runtime.getRuntime().availableProcessors() - 1)
     private val workers: ExecutorService = Executors.newFixedThreadPool(workerCount, daemonThreads("query-projector"))
     private val writerExecutor: ExecutorService =
-        Executors.newFixedThreadPool(REBUILD_WRITERS, daemonThreads("query-projector-writer"))
+        Executors.newFixedThreadPool(PARALLEL_WRITERS, daemonThreads("query-projector-writer"))
 
     private val decompressor = SequenceDecompressor { compressionDictService.getDictById(it) }
     private val entryProjectors = HashMap<String, EntryProjector>()
@@ -183,7 +183,15 @@ class QueryProjector(
         drainDirtyAccessions(schema)
     }
 
-    private fun rebuildReason(schema: QuerySchema): String? = transaction {
+    /** why a full rebuild is needed; [trustSourceHashes] if unchanged sequence data may be skipped */
+    private class RebuildReason(val description: String, val trustSourceHashes: Boolean) {
+        override fun toString() = description
+    }
+
+    /** an existing projection row: its id and source hash */
+    private class StoredEntry(val id: Int, val sourceHash: Long?)
+
+    private fun rebuildReason(schema: QuerySchema): RebuildReason? = transaction {
         val connection = jdbc()
         connection.prepareStatement(
             "insert into query_engine_state (organism, encoding_hash) values (?, '') on conflict do nothing",
@@ -201,9 +209,13 @@ class QueryProjector(
             }
         }
         when {
-            needsFullRebuild -> "full rebuild requested"
+            // the sequence encoding changed (or a rebuild was interrupted): recompute everything
+            encodingHash != schema.encodingHash() -> RebuildReason(
+                "encoding changed ('$encodingHash' -> '${schema.encodingHash()}')",
+                trustSourceHashes = false,
+            )
 
-            encodingHash != schema.encodingHash() -> "encoding changed ('$encodingHash' -> '${schema.encodingHash()}')"
+            needsFullRebuild -> RebuildReason("full rebuild requested", trustSourceHashes = true)
 
             else -> {
                 val storedFields = connection.prepareStatement(
@@ -221,7 +233,11 @@ class QueryProjector(
                     }
                 }
                 val schemaFields = schema.metadata.map { it.name }.toSet()
-                if (storedFields != null && storedFields != schemaFields) "metadata fields changed" else null
+                if (storedFields != null && storedFields != schemaFields) {
+                    RebuildReason("metadata fields changed", trustSourceHashes = true)
+                } else {
+                    null
+                }
             }
         }
     }
@@ -234,25 +250,41 @@ class QueryProjector(
     // ------------------------------------------------------------------------------------------------------------
     // incremental
 
+    /**
+     * Drains the dirty queue of [schema] with [PARALLEL_WRITERS] concurrent batch transactions (they claim disjoint
+     * accessions thanks to `skip locked`), for at most [MAX_DRAIN_MILLIS_PER_ORGANISM].
+     */
     private fun drainDirtyAccessions(schema: QuerySchema) {
         val start = System.currentTimeMillis()
-        var accessions = 0
-        var changed = 0
-        while (System.currentTimeMillis() - start < MAX_DRAIN_MILLIS_PER_ORGANISM) {
+        val accessionCount = AtomicInteger()
+        val changedCount = AtomicInteger()
+
+        /** processes one batch, returns false if the queue was empty */
+        fun batch(): Boolean {
             val result = try {
                 processDirtyBatch(schema, properties.projectorBatchSize)
             } catch (e: Exception) {
                 log.error(e) { "Query projection: batch of dirty accessions of ${schema.organism} failed: $e" }
                 processDirtyAccessionsOneByOne(schema, properties.projectorBatchSize)
             }
-            if (result.first == 0) break
-            accessions += result.first
-            changed += result.second
+            accessionCount.addAndGet(result.first)
+            changedCount.addAndGet(result.second)
+            return result.first > 0
         }
-        if (accessions > 0) {
+        // the first batch runs alone: a small queue does not need more threads
+        batch()
+        if (accessionCount.get() >= properties.projectorBatchSize) {
+            val drainer = Runnable {
+                while (System.currentTimeMillis() - start < MAX_DRAIN_MILLIS_PER_ORGANISM && batch()) {
+                    // continue
+                }
+            }
+            (1..PARALLEL_WRITERS).map { CompletableFuture.runAsync(drainer, writerExecutor) }.forEach { it.join() }
+        }
+        if (accessionCount.get() > 0) {
             log.info {
-                "Query projection: processed $accessions dirty accessions of ${schema.organism}, " +
-                    "$changed entries changed, took ${System.currentTimeMillis() - start} ms"
+                "Query projection: processed ${accessionCount.get()} dirty accessions of ${schema.organism}, " +
+                    "${changedCount.get()} entries changed, took ${System.currentTimeMillis() - start} ms"
             }
         }
     }
@@ -273,9 +305,10 @@ class QueryProjector(
     /** fallback after a failed batch: process accessions separately, dropping (and logging) the failing ones */
     private fun processDirtyAccessionsOneByOne(schema: QuerySchema, limit: Int): Pair<Int, Int> {
         val candidates = transaction {
-            jdbc().prepareStatement("select accession from query_dirty_accessions where organism = ? limit ?").use {
+            jdbc().prepareStatement(
+                "select accession from query_dirty_accessions where organism = ? limit ${limit.coerceAtLeast(1)}",
+            ).use {
                 it.setString(1, schema.organism)
-                it.setInt(2, limit)
                 it.executeQuery().use { rs ->
                     val result = ArrayList<String>()
                     while (rs.next()) result.add(rs.getString(1))
@@ -302,99 +335,116 @@ class QueryProjector(
         return processed to changed
     }
 
+    /**
+     * Deletes up to [limit] rows of the dirty queue (or only the row of [accession]) and returns their accessions.
+     * The rows stay locked until the transaction ends; rows locked by others are skipped.
+     */
     private fun claimDirtyAccessions(
         connection: Connection,
         organism: String,
         limit: Int,
         accession: String? = null,
-    ): List<String> = connection.prepareStatement(
-        // Lock exactly the claimed rows (by ctid) and keep the limit a literal: with a bind parameter, the generic
-        // plan Postgres switches to after a few executions may lock (almost) the whole queue before limiting,
-        // which took > 10 minutes for a queue of 1M accessions.
-        """
-        with claimed as (
-            select ctid from query_dirty_accessions
-            where organism = ? and (?::text is null or accession = ?::text)
-            limit ${limit.coerceAtLeast(1)}
-            for update skip locked
-        )
-        delete from query_dirty_accessions d
-        using claimed
-        where d.ctid = claimed.ctid
-        returning d.accession
-        """.trimIndent(),
-    ).use {
-        it.setString(1, organism)
-        it.setString(2, accession)
-        it.setString(3, accession)
-        it.executeQuery().use { rs ->
-            val result = ArrayList<String>()
-            while (rs.next()) result.add(rs.getString(1))
-            result
+    ): List<String> {
+        // Lock exactly the claimed rows and keep the limit a literal: with a bind parameter, the generic plan
+        // Postgres switches to after a few executions may lock (almost) the whole queue before limiting, which took
+        // > 10 minutes for a queue of 1M accessions. Delete by `ctid = any(array(...))` (always a TID scan) rather
+        // than joining with the claimed rows: a join planned with stale statistics (queue just filled) became a
+        // nested loop over the whole queue. Separate statements with and without accession, so that each has a
+        // plan that fits (no "? is null or" condition).
+        val accessionCondition = if (accession != null) "and accession = ?" else ""
+        val sql = """
+            delete from query_dirty_accessions
+            where ctid = any(array(
+                select ctid from query_dirty_accessions
+                where organism = ? $accessionCondition
+                limit ${limit.coerceAtLeast(1)}
+                for update skip locked
+            ))
+            returning accession
+        """.trimIndent()
+        return connection.prepareStatement(sql).use {
+            it.setString(1, organism)
+            if (accession != null) it.setString(2, accession)
+            it.executeQuery().use { rs ->
+                val result = ArrayList<String>()
+                while (rs.next()) result.add(rs.getString(1))
+                result
+            }
         }
     }
 
     /** recomputes all released versions of [accessions]; must run inside the transaction of [connection] */
     private fun recomputeAccessions(connection: Connection, schema: QuerySchema, accessions: List<String>): Int {
-        val entries = releasedDataModel
-            .streamReleasedDataWithCompressedSequences(Organism(schema.organism), accessions)
-            .toList()
-        val projector = entryProjector(schema)
-        val projected = if (entries.size >= PARALLEL_THRESHOLD) {
-            entries.chunked(maxOf(1, entries.size / workerCount + 1))
-                .map { chunk -> CompletableFuture.supplyAsync({ chunk.map(projector::project) }, workers) }
-                .flatMap { it.join() }
-        } else {
-            entries.map(projector::project)
-        }
-
-        val existingIds = HashMap<String, Int>()
+        val existing = HashMap<String, StoredEntry>()
         connection.prepareStatement(
-            "select accession_version, id from query_entries where organism = ? and accession = any(?)",
+            "select accession_version, id, source_hash from query_entries where organism = ? and accession = any(?)",
         ).use {
             it.setString(1, schema.organism)
             it.setArray(2, connection.createArrayOf("text", accessions.toTypedArray()))
             it.executeQuery().use { rs ->
-                while (rs.next()) existingIds[rs.getString(1)] = rs.getInt(2)
+                while (rs.next()) {
+                    existing[rs.getString(1)] = StoredEntry(rs.getInt(2), rs.getLong(3).takeIf { _ -> !rs.wasNull() })
+                }
             }
         }
 
-        val identified = assignIds(connection, schema.organism, projected, existingIds)
+        val entries = releasedDataModel
+            .streamReleasedDataWithCompressedSequences(Organism(schema.organism), accessions)
+            .toList()
+        val projector = entryProjector(schema)
+        val project = { entry: ReleasedDataWithCompressedSequences ->
+            projector.project(entry, existing["${entry.accession}.${entry.version}"]?.sourceHash)
+        }
+        val projected = if (entries.size >= PARALLEL_THRESHOLD) {
+            entries.chunked(maxOf(1, entries.size / workerCount + 1))
+                .map { chunk -> CompletableFuture.supplyAsync({ chunk.map(project) }, workers) }
+                .flatMap { it.join() }
+        } else {
+            entries.map(project)
+        }
+
+        val identified = assignIds(schema.organism, projected, existing)
         val keptIds = identified.map { it.id }.toSet()
-        val deletedIds = existingIds.values.filter { it !in keptIds }
+        val deletedIds = existing.values.map { it.id }.filter { it !in keptIds }
         return writer(schema).write(connection, identified, deletedIds)
     }
 
     private fun assignIds(
-        connection: Connection,
         organism: String,
         projected: List<ProjectedEntry>,
-        existingIds: Map<String, Int>,
+        existing: Map<String, StoredEntry>,
     ): List<IdentifiedEntry> {
-        val newCount = projected.count { it.accessionVersion !in existingIds }
-        var nextId = if (newCount > 0) allocateIds(connection, organism, newCount) else 0
+        val newCount = projected.count { it.accessionVersion !in existing }
+        var nextId = if (newCount > 0) allocateIds(organism, newCount) else 0
         return projected.map { entry ->
-            val existing = existingIds[entry.accessionVersion]
-            if (existing != null) IdentifiedEntry(existing, false, entry) else IdentifiedEntry(nextId++, true, entry)
+            val stored = existing[entry.accessionVersion]
+            if (stored != null) IdentifiedEntry(stored.id, false, entry) else IdentifiedEntry(nextId++, true, entry)
         }
     }
 
-    /** @return the first of [count] newly allocated consecutive ids */
-    private fun allocateIds(connection: Connection, organism: String, count: Int): Int = connection.prepareStatement(
-        "update query_engine_state set next_id = next_id + ? where organism = ? returning next_id",
-    ).use {
-        it.setInt(1, count)
-        it.setString(2, organism)
-        it.executeQuery().use { rs ->
-            check(rs.next()) { "No query_engine_state for $organism" }
-            rs.getInt(1) - count
+    /**
+     * @return the first of [count] newly allocated consecutive ids. Committed immediately on a separate connection,
+     *   so that concurrent batch transactions do not wait for each other's query_engine_state row lock (ids of
+     *   rolled back batches are simply lost).
+     */
+    private fun allocateIds(organism: String, count: Int): Int = dataSource.connection.use { connection ->
+        connection.autoCommit = true
+        connection.prepareStatement(
+            "update query_engine_state set next_id = next_id + ? where organism = ? returning next_id",
+        ).use {
+            it.setInt(1, count)
+            it.setString(2, organism)
+            it.executeQuery().use { rs ->
+                check(rs.next()) { "No query_engine_state for $organism" }
+                rs.getInt(1) - count
+            }
         }
     }
 
     // ------------------------------------------------------------------------------------------------------------
     // full rebuild
 
-    private fun fullRebuild(schema: QuerySchema, reason: String) {
+    private fun fullRebuild(schema: QuerySchema, reason: RebuildReason) {
         val organism = schema.organism
         val start = System.currentTimeMillis()
         log.info { "Query projection: full rebuild of $organism ($reason)" }
@@ -413,21 +463,27 @@ class QueryProjector(
                 it.setString(1, organism)
                 it.executeUpdate()
             }
-            val ids = HashMap<String, Int>()
-            connection.prepareStatement("select accession_version, id from query_entries where organism = ?").use {
+            val stored = HashMap<String, StoredEntry>()
+            connection.prepareStatement(
+                "select accession_version, id, source_hash from query_entries where organism = ?",
+            ).use {
                 it.setString(1, organism)
                 it.fetchSize = 10_000
                 it.executeQuery().use { rs ->
-                    while (rs.next()) ids[rs.getString(1)] = rs.getInt(2)
+                    while (rs.next()) {
+                        val hash = rs.getLong(3).takeIf { _ -> !rs.wasNull() && reason.trustSourceHashes }
+                        stored[rs.getString(1)] = StoredEntry(rs.getInt(2), hash)
+                    }
                 }
             }
-            ids
+            stored
         }
         // accessionVersions not (yet) seen in the stream
-        val unseen = ConcurrentHashMap(existingIds)
+        val unseen = ConcurrentHashMap<String, Int>(existingIds.size)
+        existingIds.forEach { (accessionVersion, stored) -> unseen[accessionVersion] = stored.id }
         val projector = entryProjector(schema)
         val writer = writer(schema)
-        val maxInFlight = workerCount + REBUILD_WRITERS
+        val maxInFlight = workerCount + PARALLEL_WRITERS
         val inFlight = Semaphore(maxInFlight)
         val failure = AtomicReference<Throwable?>(null)
         val written = AtomicInteger(0)
@@ -441,11 +497,13 @@ class QueryProjector(
                 inFlight.acquire()
                 read += chunk.size
                 CompletableFuture
-                    .supplyAsync({ chunk.map(projector::project) }, workers)
+                    .supplyAsync({
+                        chunk.map { projector.project(it, existingIds["${it.accession}.${it.version}"]?.sourceHash) }
+                    }, workers)
                     .thenAcceptAsync({ projected ->
                         // allocate ids in a separate short transaction so that parallel writers do not
                         // serialize on the query_engine_state row lock
-                        val identified = transaction { assignIds(jdbc(), organism, projected, existingIds) }
+                        val identified = assignIds(organism, projected, existingIds)
                         val changedInBatch = transaction { writer.write(jdbc(), identified, emptyList()) }
                         projected.forEach { unseen.remove(it.accessionVersion) }
                         changed.addAndGet(changedInBatch)

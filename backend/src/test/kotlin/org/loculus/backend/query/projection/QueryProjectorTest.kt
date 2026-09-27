@@ -10,6 +10,7 @@ import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.greaterThan
 import org.hamcrest.Matchers.hasItem
 import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.not
 import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
@@ -156,6 +157,94 @@ class QueryProjectorTest(
         assertThat(projectedIds(DEFAULT_ORGANISM), equalTo(idsAfter))
         assertThat(changelogSize(), equalTo(changelogBefore))
         assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+    }
+
+    @Test
+    fun `unchanged entries do not rewrite their sequence data and only changed sequence data is recomputed`() {
+        val groupId = groupClient.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andGetGroupId()
+        val released = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(groupId = groupId)
+        runProjector()
+        val changelogBefore = changelogSize()
+        val rowVersionsBefore = sequenceRowVersions()
+
+        // a group update that does not change the name does not mark anything dirty
+        sql { c ->
+            c.createStatement().use { it.executeUpdate("update groups_table set institution = 'other institution'") }
+        }
+        assertThat(dirtyAccessions(), empty())
+
+        // accessions marked dirty without any change: nothing is rewritten
+        sql { c ->
+            c.createStatement().use {
+                it.executeUpdate("insert into query_dirty_accessions select organism, accession from query_entries")
+            }
+        }
+        runProjector()
+        assertThat(dirtyAccessions(), empty())
+        assertThat(changelogSize(), equalTo(changelogBefore))
+        assertThat(sequenceRowVersions(), equalTo(rowVersionsBefore))
+
+        // changed insertions of one entry: only that entry is recomputed
+        val accession = released.first().accession
+        sql { c ->
+            c.prepareStatement(
+                """
+                update sequence_entries_preprocessed_data
+                set processed_data = jsonb_set(processed_data, '{nucleotideInsertions,main}', '["5:AAA"]')
+                where accession = ?
+                """.trimIndent(),
+            ).use {
+                it.setString(1, accession)
+                it.executeUpdate()
+            }
+        }
+        assertThat(dirtyAccessions(), equalTo(listOf(accession)))
+        runProjector()
+        assertThat(changelogSize(), equalTo(changelogBefore + 1))
+        assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+        val changedId = projectedIds(DEFAULT_ORGANISM).getValue("$accession.1")
+        val rowVersionsAfter = sequenceRowVersions()
+        assertThat(
+            rowVersionsAfter.filterKeys { it.first != changedId },
+            equalTo(
+                rowVersionsBefore.filterKeys {
+                    it.first !=
+                        changedId
+                },
+            ),
+        )
+        assertThat(
+            rowVersionsAfter.filterKeys { it == changedId to "mutation_data" },
+            not(equalTo(rowVersionsBefore.filterKeys { it == changedId to "mutation_data" })),
+        )
+
+        // a group rename marks the group's accessions dirty
+        groupClient.updateGroup(groupId = groupId, group = DEFAULT_GROUP_CHANGED, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+        assertThat(dirtyAccessions().size, equalTo(released.size))
+        runProjector()
+        assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+        assertThat(sequenceRowVersions(), equalTo(rowVersionsAfter))
+    }
+
+    /** (id, table/slot) -> xmin of the sequence-derived rows of dummyOrganism */
+    private fun sequenceRowVersions(): Map<Pair<Int, String>, String> = sql { c ->
+        c.createStatement().use {
+            it.executeQuery(
+                """
+                select id, 'mutation_data', xmin::text from query_mutation_data where organism = '$DEFAULT_ORGANISM'
+                union all
+                select id, kind || ':' || sequence_index, xmin::text from query_sequences
+                where organism = '$DEFAULT_ORGANISM'
+                """.trimIndent(),
+            ).use { rs ->
+                val result = mutableMapOf<Pair<Int, String>, String>()
+                while (rs.next()) result[rs.getInt(1) to rs.getString(2)] = rs.getString(3)
+                result
+            }
+        }
     }
 
     @Test

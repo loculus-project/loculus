@@ -45,7 +45,11 @@ class ProjectionWriter(private val schema: QuerySchema) {
             createStagingTables(connection)
             copyRows(connection, existingEntries, direct = false)
             changed += upsert(connection)
-            changed += deleteSequences(connection, existingEntries.map { it.id }, onlyStale = true)
+            // entries with unchanged sequence data keep their query_mutation_data / query_sequences rows untouched
+            val sequenceDataChanged = existingEntries.filter { !it.entry.sequenceDataUnchanged }.map { it.id }
+            if (sequenceDataChanged.isNotEmpty()) {
+                changed += deleteSequences(connection, sequenceDataChanged, onlyStale = true)
+            }
         }
         if (deletedIds.isNotEmpty()) {
             changed += deleteIds(connection, "query_entries", deletedIds)
@@ -61,7 +65,8 @@ class ProjectionWriter(private val schema: QuerySchema) {
             statement.execute(
                 """
                 create temp table if not exists query_stage_entries (
-                    id integer, accession text, version bigint, accession_version text, metadata jsonb
+                    id integer, accession text, version bigint, accession_version text, metadata jsonb,
+                    source_hash bigint
                 ) on commit delete rows;
                 create temp table if not exists query_stage_mutation_data (
                     id integer, present_sequences integer[], mutations integer[], missing integer[], insertions text[]
@@ -74,7 +79,10 @@ class ProjectionWriter(private val schema: QuerySchema) {
         }
     }
 
-    /** COPY [entries] into the projection tables ([direct]) or into the staging tables */
+    /**
+     * COPY [entries] into the projection tables ([direct]) or into the staging tables. Sequence-derived rows are
+     * only written for entries whose sequence data changed.
+     */
     private fun copyRows(connection: Connection, entries: List<IdentifiedEntry>, direct: Boolean) {
         val copyApi = connection.unwrap(PGConnection::class.java).copyAPI
         val prefix = if (direct) appendCsvText(StringBuilder(), organism).append(',').toString() else ""
@@ -94,8 +102,12 @@ class ProjectionWriter(private val schema: QuerySchema) {
             entriesCsv.append(prefix).append(id).append(',')
             appendCsvText(entriesCsv, e.accession).append(',').append(e.version).append(',')
             appendCsvText(entriesCsv, e.accessionVersion).append(',')
-            appendCsvText(entriesCsv, e.metadataJson).append('\n')
+            appendCsvText(entriesCsv, e.metadataJson).append(',').append(e.sourceHash).append('\n')
 
+            if (e.sequenceDataUnchanged) {
+                check(!direct) { "new entry ${e.accessionVersion} without sequence data" }
+                continue
+            }
             mutationCsv.append(prefix).append(id).append(',')
             appendIntArray(mutationCsv, e.presentSequences).append(',')
             appendIntArray(mutationCsv, e.mutations).append(',')
@@ -111,15 +123,17 @@ class ProjectionWriter(private val schema: QuerySchema) {
             }
         }
         copyApi.copyIn(
-            "copy $entriesTable (${organismColumn}id, accession, version, accession_version, metadata) " +
+            "copy $entriesTable (${organismColumn}id, accession, version, accession_version, metadata, source_hash) " +
                 "from stdin (format csv)",
             StringReader(entriesCsv.toString()),
         )
-        copyApi.copyIn(
-            "copy $mutationTable (${organismColumn}id, present_sequences, mutations, missing, insertions) " +
-                "from stdin (format csv)",
-            StringReader(mutationCsv.toString()),
-        )
+        if (mutationCsv.isNotEmpty()) {
+            copyApi.copyIn(
+                "copy $mutationTable (${organismColumn}id, present_sequences, mutations, missing, insertions) " +
+                    "from stdin (format csv)",
+                StringReader(mutationCsv.toString()),
+            )
+        }
         if (sequencesCsv.isNotEmpty()) {
             copyApi.copyIn(
                 "copy $sequencesTable (${organismColumn}kind, sequence_index, id, compression_dict_id, data) " +
@@ -134,15 +148,19 @@ class ProjectionWriter(private val schema: QuerySchema) {
         changed += queryIds(
             connection,
             """
-            insert into query_entries as t (organism, id, accession, version, accession_version, metadata)
-            select ?, id, accession, version, accession_version, metadata from query_stage_entries
+            insert into query_entries as t
+                (organism, id, accession, version, accession_version, metadata, source_hash)
+            select ?, id, accession, version, accession_version, metadata, source_hash from query_stage_entries
             on conflict (organism, id) do update set
                 accession = excluded.accession,
                 version = excluded.version,
                 accession_version = excluded.accession_version,
-                metadata = excluded.metadata
-            where (t.accession, t.version, t.accession_version, t.metadata)
-                is distinct from (excluded.accession, excluded.version, excluded.accession_version, excluded.metadata)
+                metadata = excluded.metadata,
+                source_hash = excluded.source_hash
+            where (t.accession, t.version, t.accession_version, t.metadata, t.source_hash)
+                is distinct from
+                (excluded.accession, excluded.version, excluded.accession_version, excluded.metadata,
+                    excluded.source_hash)
             returning t.id
             """.trimIndent(),
         )
@@ -198,10 +216,10 @@ class ProjectionWriter(private val schema: QuerySchema) {
 
     /**
      * Deletes query_sequences rows of [ids] (only those not in the staging table if [onlyStale]).
-     * Goes through all (kind, sequence_index) slots so that the primary key index can be used.
+     * One statement per (kind, sequence_index) slot, each an index scan on the primary key (a join with unnested
+     * arrays may be planned as a sequential scan of the whole table).
      */
     private fun deleteSequences(connection: Connection, ids: List<Int>, onlyStale: Boolean): List<Int> {
-        if (sequenceSlots.isEmpty()) return emptyList()
         val staleCondition = if (onlyStale) {
             """
             and not exists (
@@ -214,22 +232,24 @@ class ProjectionWriter(private val schema: QuerySchema) {
         }
         val sql = """
             delete from query_sequences t
-            using unnest(?::smallint[], ?::smallint[]) slot(kind, sequence_index), unnest(?::integer[]) i(id)
-            where t.organism = ? and t.kind = slot.kind and t.sequence_index = slot.sequence_index and t.id = i.id
+            where t.organism = ? and t.kind = ? and t.sequence_index = ? and t.id = any(?)
             $staleCondition
             returning t.id
         """.trimIndent()
-        return connection.prepareStatement(sql).use {
-            it.setArray(1, connection.createArrayOf("smallint", sequenceSlots.map { s -> s.first }.toTypedArray()))
-            it.setArray(2, connection.createArrayOf("smallint", sequenceSlots.map { s -> s.second }.toTypedArray()))
-            it.setArray(3, connection.createArrayOf("integer", ids.toTypedArray()))
-            it.setString(4, organism)
-            it.executeQuery().use { rs ->
-                val result = ArrayList<Int>()
-                while (rs.next()) result.add(rs.getInt(1))
-                result
+        val result = ArrayList<Int>()
+        connection.prepareStatement(sql).use {
+            val idArray = connection.createArrayOf("integer", ids.toTypedArray())
+            for ((kind, sequenceIndex) in sequenceSlots) {
+                it.setString(1, organism)
+                it.setShort(2, kind)
+                it.setShort(3, sequenceIndex)
+                it.setArray(4, idArray)
+                it.executeQuery().use { rs ->
+                    while (rs.next()) result.add(rs.getInt(1))
+                }
             }
         }
+        return result
     }
 
     private fun recordChanges(connection: Connection, changedIds: Set<Int>) {
@@ -243,7 +263,8 @@ class ProjectionWriter(private val schema: QuerySchema) {
         connection.prepareStatement(
             """
             update query_engine_state
-            set data_version = greatest(data_version, extract(epoch from now())::bigint), updated_at = now()
+            set data_version = greatest(data_version, extract(epoch from now())::bigint),
+                updated_at = timezone('UTC', now())
             where organism = ?
             """.trimIndent(),
         ).use {

@@ -108,9 +108,6 @@ open class ReleasedDataModel(
         organism: Organism,
         accessions: Collection<Accession>? = null,
     ): Sequence<ReleasedDataWithCompressedSequences> {
-        val latestVersions = submissionDatabaseService.getLatestVersions(organism, accessions)
-        val latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism, accessions)
-
         val earliestReleaseDateConfig = backendConfig.getInstanceConfig(organism).schema.earliestReleaseDate
         val finder = if (earliestReleaseDateConfig.enabled) {
             EarliestReleaseDateFinder(earliestReleaseDateConfig.externalFields)
@@ -118,23 +115,44 @@ open class ReleasedDataModel(
             null
         }
 
-        return submissionDatabaseService.streamReleasedSubmissionsWithCompressedSequences(organism, accessions)
-            .map { (rawProcessedData, compressedData) ->
-                val releasedData = computeAdditionalMetadataFields(
-                    rawProcessedData,
-                    latestVersions,
-                    latestRevocationVersions,
-                    finder,
-                    organism,
-                )
-                ReleasedDataWithCompressedSequences(
-                    accession = rawProcessedData.accession,
-                    version = rawProcessedData.version,
-                    isRevocation = rawProcessedData.isRevocation,
-                    metadata = releasedData.metadata,
-                    sequences = compressedData,
-                )
-            }
+        val rows: Sequence<Pair<RawProcessedData, ProcessedData<CompressedSequence>>>
+        val latestVersions: Map<Accession, Version>
+        val latestRevocationVersions: Map<Accession, Version>
+        if (accessions == null) {
+            latestVersions = submissionDatabaseService.getLatestVersions(organism)
+            latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism)
+            rows = submissionDatabaseService.streamReleasedSubmissionsWithCompressedSequences(organism)
+        } else {
+            // all released versions of the accessions are fetched anyway: derive the latest (revocation) versions
+            // from them instead of querying them separately (same filter as getLatestVersions and
+            // getLatestRevocationVersions)
+            val fetched = submissionDatabaseService
+                .streamReleasedSubmissionsWithCompressedSequences(organism, accessions)
+                .toList()
+            latestVersions = fetched.groupBy { it.first.accession }
+                .mapValues { (_, versions) -> versions.maxOf { it.first.version } }
+            latestRevocationVersions = fetched.filter { it.first.isRevocation }
+                .groupBy { it.first.accession }
+                .mapValues { (_, versions) -> versions.maxOf { it.first.version } }
+            rows = fetched.asSequence()
+        }
+
+        return rows.map { (rawProcessedData, compressedData) ->
+            val releasedData = computeAdditionalMetadataFields(
+                rawProcessedData,
+                latestVersions,
+                latestRevocationVersions,
+                finder,
+                organism,
+            )
+            ReleasedDataWithCompressedSequences(
+                accession = rawProcessedData.accession,
+                version = rawProcessedData.version,
+                isRevocation = rawProcessedData.isRevocation,
+                metadata = releasedData.metadata,
+                sequences = compressedData,
+            )
+        }
     }
 
     /**
