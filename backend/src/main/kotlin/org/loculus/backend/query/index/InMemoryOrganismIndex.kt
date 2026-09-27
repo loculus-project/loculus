@@ -81,6 +81,12 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     @Volatile override var dataVersion: Long = 0
         private set
 
+    /**
+     * Reads the current projection rows of a few ids (injected by [QueryIndexService]); used to answer
+     * mutations / insertions over small id sets directly instead of visiting every bitmap.
+     */
+    @Volatile var rowLoader: ((Collection<Int>) -> List<IndexRow>)? = null
+
     val size: Int get() = lock.read { alive.cardinality }
 
     // =====================================================================================================
@@ -89,13 +95,77 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
 
     /** adds rows without locking; only for building an index that is not yet visible to readers */
     fun addForBulkLoad(row: IndexRow) {
-        if (alive.contains(row.id)) removeIds(RoaringBitmap.bitmapOf(row.id), collectIntersecting(row.idSet()))
-        addRow(row)
+        if (alive.contains(row.id)) {
+            val ids = row.idSet()
+            val runs = rebuildRuns(ids, listOf(row))
+            removeIds(ids, collectIntersecting(ids))
+            installRuns(runs)
+            addRow(row, withRuns = false)
+        } else {
+            addRow(row, withRuns = true)
+        }
+    }
+
+    /**
+     * Independent parts of adding a batch of rows (ascending, unique ids beyond all ids added so far) that touch
+     * disjoint structures and can therefore run in parallel (used by [IndexLoader]); not thread-safe otherwise.
+     */
+    internal fun bulkUnits(): List<(List<IndexRow>) -> Unit> {
+        val units = ArrayList<(List<IndexRow>) -> Unit>()
+        units += { rows ->
+            rows.forEach {
+                ensureCapacity(it.id)
+                alive.add(it.id)
+            }
+        }
+        for (i in columns.indices) {
+            units += { rows ->
+                for (row in rows) {
+                    try {
+                        columns[i].set(row.id, row.values.getOrNull(i))
+                    } catch (e: RuntimeException) {
+                        columns[i].clear(row.id)
+                    }
+                }
+            }
+        }
+        for (seq in sequences.filterNotNull()) {
+            val seqIndex = seq.schema.index
+            units += { rows ->
+                for (row in rows) {
+                    if (seqIndex in row.presentSequences) seq.present.add(row.id)
+                    forEachRun(row.missing) { s, start, end -> if (s === seq) seq.addMissingRun(row.id, start, end) }
+                    for (insertion in row.insertions) {
+                        val first = insertion.indexOf(':')
+                        val second = insertion.indexOf(':', first + 1)
+                        if (first < 0 || second < 0 || insertion.substring(0, first).toIntOrNull() != seqIndex) continue
+                        val position = insertion.substring(first + 1, second).toIntOrNull() ?: continue
+                        seq.addInsertion(row.id, position, insertion.substring(second + 1))
+                    }
+                }
+            }
+            // mutations by position range (positions are independent bitmaps / counters)
+            val ranges = maxOf(1, seq.length / BULK_POSITIONS_PER_UNIT)
+            for (r in 0 until ranges) {
+                val from = 1 + r * seq.length / ranges
+                val to = (r + 1) * seq.length / ranges
+                units += { rows ->
+                    for (row in rows) {
+                        for (code in row.mutations) {
+                            if (MutationCode.seqIndex(code) != seqIndex) continue
+                            val position = MutationCode.position(code)
+                            if (position in from..to) seq.addMutation(row.id, position, MutationCode.symbolIndex(code))
+                        }
+                    }
+                }
+            }
+        }
+        return units
     }
 
     /** call after the last [addForBulkLoad] (compresses bitmaps) */
     fun finishBulkLoad(dataVersion: Long) {
-        sequences.forEach { it?.runOptimize() }
+        indexPool.submit { sequences.filterNotNull().parallelStream().forEach { it.runOptimize() } }.get()
         alive.runOptimize()
         this.dataVersion = dataVersion
     }
@@ -113,12 +183,14 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         val toRemove = RoaringBitmap.and(changed, alive)
         // read-only preparation outside the write lock (only this writer thread mutates)
         val intersecting = if (toRemove.isEmpty) emptyList() else collectIntersecting(toRemove)
+        val runs = rebuildRuns(toRemove, upserts)
         val prepared = System.nanoTime()
         val locked: Long
         lock.write {
             locked = System.nanoTime()
             if (!toRemove.isEmpty) removeIds(toRemove, intersecting)
-            upserts.forEach { addRow(it) }
+            installRuns(runs)
+            upserts.forEach { addRow(it, withRuns = false) }
             sequences.forEach { it?.invalidateCaches() }
             if (dataVersion != null) this.dataVersion = dataVersion
         }
@@ -142,6 +214,28 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
 
     private fun IndexRow.idSet() = RoaringBitmap.bitmapOf(id)
 
+    /** per sequence: rebuilt run-table chunks without [removed] ids' runs and with those of [rows] (read-only) */
+    private fun rebuildRuns(removed: RoaringBitmap, rows: List<IndexRow>): List<Map<Int, RunTable.Chunk>?> {
+        val added = Array(sequences.size) { ArrayList<Int>() }
+        for (row in rows) {
+            forEachRun(row.missing) { seq, start, end -> added[seq.schema.index].addAll(listOf(row.id, start, end)) }
+        }
+        return indexPool.submit<List<Map<Int, RunTable.Chunk>?>> {
+            sequences.indices.toList().parallelStream().map { i ->
+                val seq = sequences[i]
+                if (seq == null || (added[i].isEmpty() && !RoaringBitmap.intersects(seq.present, removed))) {
+                    null
+                } else {
+                    seq.runs.rebuild(removed, seq.clampRuns(added[i].toIntArray()))
+                }
+            }.toList()
+        }.get()
+    }
+
+    private fun installRuns(runs: List<Map<Int, RunTable.Chunk>?>) {
+        runs.forEachIndexed { i, rebuilt -> if (rebuilt != null) sequences[i]!!.runs.install(rebuilt) }
+    }
+
     private fun collectIntersecting(ids: RoaringBitmap): List<List<SequenceIndex.Removal>> = sequences.map { seq ->
         ArrayList<SequenceIndex.Removal>().also { seq?.collectIntersecting(ids, parallelPool, it) }
     }
@@ -160,7 +254,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         capacity = newCapacity
     }
 
-    private fun addRow(row: IndexRow) {
+    private fun addRow(row: IndexRow, withRuns: Boolean) {
         val id = row.id
         require(id >= 0) { "negative id $id" }
         ensureCapacity(id)
@@ -178,7 +272,9 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             val seq = sequences.getOrNull(MutationCode.seqIndex(code)) ?: continue
             seq.addMutation(id, MutationCode.position(code), MutationCode.symbolIndex(code))
         }
-        addMissing(id, row.missing)
+        forEachRun(row.missing) { seq, start, end ->
+            if (withRuns) seq.addMissingRun(id, start, end) else seq.addTransitions(id, start, end)
+        }
         for (insertion in row.insertions) {
             val first = insertion.indexOf(':')
             val second = insertion.indexOf(':', first + 1)
@@ -189,7 +285,8 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         }
     }
 
-    private fun addMissing(id: Int, missing: IntArray) {
+    /** normalised (disjoint, sorted) missing runs of a row per sequence */
+    private inline fun forEachRun(missing: IntArray, action: (SequenceIndex, Int, Int) -> Unit) {
         val triples = missing.size / 3
         if (triples == 0) return
         var sortedBySeq = true
@@ -212,7 +309,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             }
             val seq = sequences.getOrNull(seqIndex) ?: continue
             val n = SequenceIndex.normalizeRuns(runs, count)
-            for (r in 0 until n) seq.addMissingRun(id, runs[2 * r], runs[2 * r + 1])
+            for (r in 0 until n) action(seq, runs[2 * r], runs[2 * r + 1])
         }
     }
 
@@ -470,6 +567,9 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     }
 
     private fun aggregateSingleDense(ids: RoaringBitmap, source: GroupKeySource): List<AggregatedRow> {
+        if (ids.cardinality >= PARALLEL_MIN && source.denseRange <= MAX_PARALLEL_DENSE_RANGE) {
+            return aggregateSingleDenseParallel(ids, source)
+        }
         val counts = LongArray(source.denseRange)
         val order = IntArray(source.denseRange)
         var groups = 0
@@ -490,18 +590,132 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         }
     }
 
+    /** per-chunk counts and first-seen orders, merged in chunk (= id) order */
+    private fun aggregateSingleDenseParallel(ids: RoaringBitmap, source: GroupKeySource): List<AggregatedRow> {
+        val range = source.denseRange
+        val parts = mapChunks(ids) { start, end ->
+            val counts = LongArray(range)
+            val order = IntArray(range)
+            var groups = 0
+            if (source is StringColumn) {
+                forEachIdIn(ids, start, end) { id ->
+                    val k = source.code(id) + 1
+                    if (counts[k]++ == 0L) order[groups++] = k
+                }
+            } else {
+                forEachIdIn(ids, start, end) { id ->
+                    val k = source.key(id).toInt()
+                    if (counts[k]++ == 0L) order[groups++] = k
+                }
+            }
+            Triple(counts, order, groups)
+        }
+        val total = LongArray(range)
+        val order = IntArray(range)
+        var groups = 0
+        for ((counts, partOrder, partGroups) in parts) {
+            for (g in 0 until partGroups) {
+                val k = partOrder[g]
+                if (total[k] == 0L) order[groups++] = k
+                total[k] += counts[k]
+            }
+        }
+        return (0 until groups).map { g ->
+            val k = order[g]
+            AggregatedRow(listOf(source.decode(k.toLong())), total[k])
+        }
+    }
+
+    /** groups by several dense keys: per-chunk hash maps of the composite key, merged in chunk order */
+    private fun aggregateDenseParallel(
+        ids: RoaringBitmap,
+        sources: List<GroupKeySource>,
+        radix: LongArray,
+    ): List<AggregatedRow> {
+        val m = sources.size
+        val parts = mapChunks(ids) { start, end ->
+            val index = LongIntMap(4096)
+            val composites = LongArrayList()
+            var counts = LongArray(64)
+            forEachIdIn(ids, start, end) { id ->
+                var composite = 0L
+                for (f in 0 until m) composite = composite * radix[f] + sources[f].key(id)
+                val g = index.getOrPut(composite, composites.size)
+                if (g == composites.size) {
+                    composites.add(composite)
+                    if (g == counts.size) counts = counts.copyOf(g * 2)
+                }
+                counts[g]++
+            }
+            composites to counts
+        }
+        // merge in chunk (= id) order, which keeps the first-seen order
+        val index = LongIntMap(16_384)
+        val composites = LongArrayList()
+        var totals = LongArray(1024)
+        for ((partComposites, partCounts) in parts) {
+            for (g in 0 until partComposites.size) {
+                val composite = partComposites[g]
+                val global = index.getOrPut(composite, composites.size)
+                if (global == composites.size) {
+                    composites.add(composite)
+                    if (global == totals.size) totals = totals.copyOf(global * 2)
+                }
+                totals[global] += partCounts[g]
+            }
+        }
+        // decoded values per dense key, shared between groups
+        val decoded = Array(m) { f ->
+            if (sources[f].denseRange <=
+                1 shl 20
+            ) {
+                arrayOfNulls<Any?>(sources[f].denseRange)
+            } else {
+                null
+            }
+        }
+        val decodedSet = Array(m) { f -> decoded[f]?.let { BooleanArray(it.size) } }
+        return (0 until composites.size).map { g ->
+            var c = composites[g]
+            val tuple = LongArray(m)
+            for (f in m - 1 downTo 0) {
+                tuple[f] = c % radix[f]
+                c /= radix[f]
+            }
+            val values = List(m) { f ->
+                val cache = decoded[f]
+                val k = tuple[f].toInt()
+                if (cache == null) {
+                    sources[f].decode(tuple[f])
+                } else {
+                    if (!decodedSet[f]!![k]) {
+                        cache[k] = sources[f].decode(tuple[f])
+                        decodedSet[f]!![k] = true
+                    }
+                    cache[k]
+                }
+            }
+            AggregatedRow(values, totals[g])
+        }
+    }
+
     /** numeric keys (int, date, iso week) spanning a small range over [ids] become dense keys */
     private fun densified(source: GroupKeySource, ids: RoaringBitmap): GroupKeySource {
         if (source.denseRange > 0) return source
-        var min = Long.MAX_VALUE
-        var max = Long.MIN_VALUE
-        forEachId(ids) { id ->
-            val k = source.key(id)
-            if (k != Long.MIN_VALUE) {
-                if (k < min) min = k
-                if (k > max) max = k
+        val bounds = mapChunks(ids) { start, end ->
+            var lo = Long.MAX_VALUE
+            var hi = Long.MIN_VALUE
+            forEachIdIn(ids, start, end) { id ->
+                val k = source.key(id)
+                if (k != Long.MIN_VALUE) {
+                    if (k < lo) lo = k
+                    if (k > hi) hi = k
+                }
             }
+            longArrayOf(lo, hi)
         }
+        var min = bounds.minOfOrNull { it[0] } ?: Long.MAX_VALUE
+        val max = bounds.maxOfOrNull { it[1] } ?: Long.MIN_VALUE
         if (min == Long.MAX_VALUE) min = 0
         if (max != Long.MIN_VALUE && (max - min < 0 || max - min >= MAX_DENSE_RANGE)) return source
         val offset = min
@@ -523,6 +737,12 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         if (sources.size == 1 && sources[0].denseRange > 0) return aggregateSingleDense(ids, sources[0])
         val m = sources.size
         val n = ids.cardinality
+        if (n >= PARALLEL_MIN && sources.all { it.denseRange > 0 }) {
+            val denseRadix = LongArray(m) { sources[it].denseRange.toLong() }
+            var denseProduct = 1.0
+            denseRadix.forEach { denseProduct *= it.toDouble() }
+            if (denseProduct < 9.0e18) return aggregateDenseParallel(ids, sources, denseRadix)
+        }
         // per source: dense key or a per-query densification of the raw keys (first seen)
         val densifiers = Array(m) { if (sources[it].denseRange > 0) null else LongIntMap() }
         val rawKeys = Array(m) { if (densifiers[it] == null) null else LongArrayList() }
@@ -760,67 +980,118 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     // mutations / insertions
     // =====================================================================================================
 
-    override fun mutations(ids: RoaringBitmap, type: SequenceType, minProportion: Double): List<MutationRow> =
+    override fun mutations(ids: RoaringBitmap, type: SequenceType, minProportion: Double): List<MutationRow> {
+        smallSetRows(ids)?.let { return SmallSetCounts.mutations(schema, it, type, minProportion) }
+        return bitmapMutations(ids, type, minProportion)
+    }
+
+    /** rows of [ids] from [rowLoader] if the set is small enough to count directly (read outside the lock) */
+    private fun smallSetRows(ids: RoaringBitmap): List<IndexRow>? {
+        val loader = rowLoader ?: return null
+        if (ids.cardinality > SMALL_SET_LIMIT) return null
+        val live = lock.read { RoaringBitmap.and(ids, alive) }
+        if (live.isEmpty) return emptyList()
+        return loader(live.toArray().asList())
+    }
+
+    /** per-sequence inputs of the block tasks */
+    private class MutationInput(
+        val seq: SequenceIndex,
+        val filtered: RoaringBitmap,
+        val n: Int,
+        val cardinalities: IntArray?,
+        val missing: IntArray,
+    )
+
+    private fun bitmapMutations(ids: RoaringBitmap, type: SequenceType, minProportion: Double): List<MutationRow> =
         lock.read {
             val seqs = if (type == SequenceType.NUCLEOTIDE) schema.nucleotideSequences else schema.genes
-            val result = ArrayList<MutationRow>()
-            for (seqSchema in seqs) {
-                val seq = sequence(seqSchema.index)
+            fun prepare(index: Int): MutationInput? {
+                val seq = sequence(index)
                 val filtered = forIntersections(RoaringBitmap.and(ids, seq.present))
                 val n = filtered.cardinality
-                if (n == 0) continue
+                if (n == 0) return null
                 val full = n == seq.present.cardinality
-                val missingAll = seq.missingCountsAll()
-                val cardinalities = if (full) seq.mutationCounts else null
-                val blocks = (seq.length shr SequenceIndex.CHECKPOINT_SHIFT) + 1
-                val computeBlock = { k: Int ->
-                    mutationsInBlock(seq, k, filtered, n, cardinalities, missingAll, minProportion)
-                }
-                val perBlock: List<List<MutationRow>> = if (full || !parallelMutations) {
-                    (0 until blocks).map(computeBlock)
-                } else {
-                    parallelPool.submit<List<List<MutationRow>>> {
-                        (0 until blocks).toList().parallelStream().map(computeBlock).toList()
-                    }.get()
-                }
-                perBlock.forEach { result.addAll(it) }
+                val missing = if (full) seq.missingCountsAll() else seq.missingCountsOver(filtered)
+                return MutationInput(seq, filtered, n, if (full) seq.mutationCounts else null, missing)
             }
-            result
+            val parallel = parallelMutations
+            val inputs: List<MutationInput?> = if (parallel && seqs.size > 1) {
+                parallelPool.submit<List<MutationInput?>> {
+                    seqs.parallelStream().map { prepare(it.index) }.toList()
+                }.get()
+            } else {
+                seqs.map { prepare(it.index) }
+            }
+            // all (sequence, block) tasks of all sequences in one parallel pass, results in (sequence, block) order
+            val tasks = ArrayList<Pair<MutationInput, Int>>()
+            inputs.filterNotNull().forEach { input ->
+                for (k in 0..(input.seq.length shr SequenceIndex.BLOCK_SHIFT)) tasks.add(input to k)
+            }
+            val compute = { task: Pair<MutationInput, Int> ->
+                val input = task.first
+                mutationsInBlock(
+                    input.seq,
+                    task.second,
+                    input.filtered,
+                    input.n,
+                    input.cardinalities,
+                    input.missing,
+                    minProportion,
+                )
+            }
+            val allFull = inputs.all { it == null || it.cardinalities != null }
+            val perTask: List<List<MutationRow>> = if (!parallel || allFull) {
+                tasks.map(compute)
+            } else {
+                parallelPool.submit<List<List<MutationRow>>> { tasks.parallelStream().map(compute).toList() }.get()
+            }
+            perTask.flatten()
         }
 
     private fun threshold(coverage: Long, minProportion: Double): Long =
         if (minProportion == 0.0) 0 else ceil(coverage.toDouble() * minProportion).toLong() - 1
 
+    /**
+     * Mutations of the positions of block [k]. [missing]: exact missing counts per position over [ids], which
+     * give an exact lower bound of the coverage
+     * (n - missing - all ambiguous codes at p); symbols whose total count cannot exceed the threshold at that
+     * coverage are skipped without touching their bitmaps (for minProportion > 0 that is most of them).
+     */
     private fun mutationsInBlock(
         seq: SequenceIndex,
         k: Int,
         ids: RoaringBitmap,
         n: Int,
         cardinalities: IntArray?,
-        missingAll: IntArray,
+        missing: IntArray,
         minProportion: Double,
     ): List<MutationRow> {
-        val full = cardinalities != null
-        val shift = SequenceIndex.CHECKPOINT_SHIFT
+        val allCounts = seq.mutationCounts
+        val shift = SequenceIndex.BLOCK_SHIFT
         val first = maxOf(1, k shl shift)
-        val last = minOf(seq.length, (k shl shift) + SequenceIndex.CHECKPOINT_SPACING - 1)
+        val last = minOf(seq.length, (k shl shift) + SequenceIndex.BLOCK_SIZE - 1)
         if (first > last) return emptyList()
         val alphabet = seq.alphabet
         val validMask = alphabet.validMutationMask
         val symbolCount = alphabet.size
         val rows = ArrayList<MutationRow>()
-        // candidates that need the exact missing count (filtered case only)
-        var candidates: IntArray? = null
-        var candidateCounts: LongArray? = null
-        var candidateUpper: LongArray? = null
-        var nCandidates = 0
         val counts = LongArray(symbolCount)
         for (p in first..last) {
             val perSymbol = seq.mutations[p] ?: continue
-            var invalid = 0L
+            val ref = seq.reference(p)
+            val refValid = validMask and (1 shl ref) != 0
+            val missingAtP = missing[p].toLong()
+            var pruneBelow = -1L
+            if (cardinalities == null && minProportion > 0 && refValid) {
+                var invalidAll = 0L
+                for (s in 0 until symbolCount) {
+                    if (validMask and (1 shl s) == 0) invalidAll += allCounts[p * symbolCount + s]
+                }
+                pruneBelow = threshold(maxOf(n - missingAtP - minOf(n.toLong(), invalidAll), 1), minProportion)
+            }
             var validSum = 0L
             var validMax = 0L
-            val ref = seq.reference(p)
             // valid symbols first: the (many) ambiguity-code bitmaps only matter where something is reportable
             for (s in 0 until symbolCount) {
                 if (validMask and (1 shl s) == 0) continue
@@ -828,6 +1099,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
                 val c = when {
                     bm == null -> 0L
                     cardinalities != null -> cardinalities[p * symbolCount + s].toLong()
+                    s != ref && minOf(n, allCounts[p * symbolCount + s]).toLong() <= pruneBelow -> 0L
                     else -> RoaringBitmap.andCardinality(ids, bm).toLong()
                 }
                 counts[s] = c
@@ -835,60 +1107,24 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
                 if (s != ref && c > validMax) validMax = c
             }
             if (validMax == 0L) continue
-            for (s in 0 until symbolCount) {
-                if (validMask and (1 shl s) != 0) continue
-                val bm = perSymbol[s]
-                val c = when {
-                    bm == null -> 0L
-                    cardinalities != null -> cardinalities[p * symbolCount + s].toLong()
-                    else -> RoaringBitmap.andCardinality(ids, bm).toLong()
-                }
-                counts[s] = c
-                invalid += c
-            }
-            val refValid = validMask and (1 shl ref) != 0
             if (!refValid) {
                 // the (implicit) reference count is not part of the coverage
                 emitMutations(seq, p, counts, validSum, minProportion, rows)
                 continue
             }
-            val upper = n - invalid
-            if (full) {
-                emitMutations(seq, p, counts, upper - missingAll[p], minProportion, rows)
-                continue
+            var invalid = 0L
+            for (s in 0 until symbolCount) {
+                if (validMask and (1 shl s) != 0) continue
+                val bm = perSymbol[s] ?: continue
+                invalid += if (cardinalities != null) {
+                    cardinalities[p * symbolCount + s].toLong()
+                } else {
+                    RoaringBitmap.andCardinality(ids, bm).toLong()
+                }
             }
-            // missing among the filtered ids <= missing among all ids
-            val minCoverage = maxOf(upper - minOf(missingAll[p].toLong(), upper), validSum)
-            if (validMax <= threshold(minCoverage, minProportion)) continue
-            if (candidates == null) {
-                candidates = IntArray(last - first + 1)
-                candidateCounts = LongArray((last - first + 1) * symbolCount)
-                candidateUpper = LongArray(last - first + 1)
-            }
-            candidates[nCandidates] = p
-            System.arraycopy(counts, 0, candidateCounts!!, nCandidates * symbolCount, symbolCount)
-            candidateUpper!![nCandidates] = upper
-            nCandidates++
+            emitMutations(seq, p, counts, n - invalid - missingAtP, minProportion, rows)
         }
-        if (nCandidates == 0) return rows
-        // exact missing counts: start at the block's checkpoint and sweep the run transitions
-        var missing = RoaringBitmap.andCardinality(ids, seq.checkpoints[k]).toLong()
-        var q = (k shl shift) + 1
-        val merged = ArrayList<MutationRow>(rows.size + nCandidates)
-        var r = 0
-        for (c in 0 until nCandidates) {
-            val p = candidates!![c]
-            while (q <= p) {
-                seq.runStarts[q]?.let { missing += RoaringBitmap.andCardinality(ids, it) }
-                seq.runEnds[q]?.let { missing -= RoaringBitmap.andCardinality(ids, it) }
-                q++
-            }
-            while (r < rows.size && rows[r].position < p) merged.add(rows[r++])
-            System.arraycopy(candidateCounts!!, c * symbolCount, counts, 0, symbolCount)
-            emitMutations(seq, p, counts, candidateUpper!![c] - missing, minProportion, merged)
-        }
-        while (r < rows.size) merged.add(rows[r++])
-        return merged
+        return rows
     }
 
     private fun emitMutations(
@@ -920,7 +1156,12 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         }
     }
 
-    override fun insertions(ids: RoaringBitmap, type: SequenceType): List<InsertionRow> = lock.read {
+    override fun insertions(ids: RoaringBitmap, type: SequenceType): List<InsertionRow> {
+        smallSetRows(ids)?.let { return SmallSetCounts.insertions(schema, it, type) }
+        return bitmapInsertions(ids, type)
+    }
+
+    private fun bitmapInsertions(ids: RoaringBitmap, type: SequenceType): List<InsertionRow> = lock.read {
         val seqs = if (type == SequenceType.NUCLEOTIDE) schema.nucleotideSequences else schema.genes
         val result = ArrayList<InsertionRow>()
         for (seqSchema in seqs) {
@@ -944,7 +1185,10 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     // diagnostics
     // =====================================================================================================
 
-    /** per sequence: number of mutation bitmaps, their containers, and missing-run transition bitmaps */
+    /** for diagnostics and benchmarks */
+    internal fun sequenceIndex(index: Int): SequenceIndex = sequence(index)
+
+    /** per sequence: number of mutation bitmaps, their containers, and missing runs */
     fun structureStats(): Map<String, List<Long>> = lock.read {
         sequences.filterNotNull().associate { seq ->
             var bitmaps = 0L
@@ -964,8 +1208,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
                     }
                 }
             }
-            val transitions = seq.runStarts.count { it != null } + seq.runEnds.count { it != null }
-            seq.schema.name to listOf(bitmaps, containers, transitions.toLong())
+            seq.schema.name to listOf(bitmaps, containers, seq.runs.runCount)
         }
     }
 
@@ -981,9 +1224,14 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     companion object {
         /** filtered mutation counting runs position blocks in parallel (switchable for benchmarks) */
         @Volatile internal var parallelMutations = true
+
+        /** mutations / insertions over at most this many ids are counted from their rows (see [rowLoader]) */
+        const val SMALL_SET_LIMIT = 100
+        private const val BULK_POSITIONS_PER_UNIT = 4000
         private const val MAX_DENSE_RANGE = 1L shl 20
+        private const val MAX_PARALLEL_DENSE_RANGE = 1 shl 16
         private const val MAX_DIRECT_GROUP_TABLE = (1 shl 22).toDouble()
-        private val parallelPool = ForkJoinPool(Runtime.getRuntime().availableProcessors())
+        private val parallelPool: ForkJoinPool get() = indexPool
 
         /** builds an index from [rows] (any id order; ascending is fastest) */
         fun build(schema: QuerySchema, rows: Iterable<IndexRow>, dataVersion: Long = 0): InMemoryOrganismIndex {

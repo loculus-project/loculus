@@ -100,6 +100,19 @@ class RandomizedIndexTest {
     }
 
     private fun check(index: InMemoryOrganismIndex, oracle: Oracle) {
+        index.rowLoader = null
+        checkWith(index, oracle)
+        // small id sets are counted from their rows
+        index.rowLoader = { ids ->
+            ids.filter {
+                it in oracle.rows
+            }.map { IndexRow.fromAlignedSequences(schema, it, mapOf(), oracle.rows.getValue(it)) }
+        }
+        checkWith(index, oracle)
+        index.rowLoader = null
+    }
+
+    private fun checkWith(index: InMemoryOrganismIndex, oracle: Oracle) {
         repeat(300) {
             val filter = randomFilter(random.nextInt(0, 4))
             val expected = oracle.evaluate(filter)
@@ -109,6 +122,8 @@ class RandomizedIndexTest {
             oracle.rows.keys,
             oracle.rows.keys.filter { random.nextDouble() < 0.3 }.toSet(),
             oracle.rows.keys.filter { random.nextDouble() < 0.01 }.toSet(),
+            oracle.rows.keys.filter { random.nextDouble() < 0.1 }.toSet(),
+            oracle.rows.keys.take(1).toSet(),
             oracle.evaluate(Maybe(randomLeaf())),
         )
         for (subset in subsets) {
@@ -159,5 +174,22 @@ class RandomizedIndexTest {
         }
         check(index, Oracle(schema, rows))
         assertThat(index.evaluate(True).toArray().toSet(), equalTo(rows.keys))
+    }
+
+    @Test
+    fun `parallel loader builds the same index`() {
+        val rows = (0 until 1200).filter { it % 7 != 3 }.associateWith { randomRow(it) }
+        val indexRows = rows.map { (id, seqs) -> IndexRow.fromAlignedSequences(schema, id, mapOf(), seqs) }
+        val index = IndexLoader.load(
+            schema,
+            maxId = 1199,
+            readRange = { from, to, consumer -> indexRows.filter { it.id in from..to }.forEach(consumer) },
+            dataVersion = 5,
+            readers = 3,
+            chunkSize = 100,
+        )
+        assertThat(index.dataVersion, equalTo(5L))
+        assertThat(index.size, equalTo(rows.size))
+        check(index, Oracle(schema, rows))
     }
 }

@@ -162,55 +162,64 @@ internal class CodeArray(capacity: Int) {
     }
 }
 
-/** open-addressing long -> int map (no boxing); returns -1 for absent keys */
+/**
+ * Open-addressing long -> int map without boxing: keys and values interleaved in one array (one cache line per
+ * probe), key stored as key + 1 with 0 = empty slot (the key -1 is kept separately). Returns -1 for absent keys.
+ */
 internal class LongIntMap(expected: Int = 16) {
-    private var keys = LongArray(tableSize(expected))
-    private var vals = IntArray(keys.size)
-    private var used = BooleanArray(keys.size)
+    private var table = LongArray(2 * tableSize(expected))
+    private var mask = table.size / 2 - 1
     var size = 0
         private set
+    private var minusOneValue = -1
 
     fun get(key: Long): Int {
-        val mask = keys.size - 1
+        if (key == -1L) return minusOneValue
+        val stored = key + 1
         var slot = mix(key) and mask
-        while (used[slot]) {
-            if (keys[slot] == key) return vals[slot]
+        while (true) {
+            val k = table[2 * slot]
+            if (k == 0L) return -1
+            if (k == stored) return table[2 * slot + 1].toInt()
             slot = (slot + 1) and mask
         }
-        return -1
     }
 
     /** value for [key], inserting [newValue] if absent */
     fun getOrPut(key: Long, newValue: Int): Int {
-        val mask = keys.size - 1
+        if (key == -1L) {
+            if (minusOneValue < 0) {
+                minusOneValue = newValue
+                size++
+            }
+            return minusOneValue
+        }
+        val stored = key + 1
         var slot = mix(key) and mask
-        while (used[slot]) {
-            if (keys[slot] == key) return vals[slot]
+        while (true) {
+            val k = table[2 * slot]
+            if (k == stored) return table[2 * slot + 1].toInt()
+            if (k == 0L) break
             slot = (slot + 1) and mask
         }
-        used[slot] = true
-        keys[slot] = key
-        vals[slot] = newValue
+        table[2 * slot] = stored
+        table[2 * slot + 1] = newValue.toLong()
         size++
-        if (size * 2 > keys.size) grow()
+        if (size * 2 > mask + 1) grow()
         return newValue
     }
 
     private fun grow() {
-        val oldKeys = keys
-        val oldVals = vals
-        val oldUsed = used
-        keys = LongArray(oldKeys.size * 2)
-        vals = IntArray(keys.size)
-        used = BooleanArray(keys.size)
-        val mask = keys.size - 1
-        for (i in oldKeys.indices) {
-            if (!oldUsed[i]) continue
-            var slot = mix(oldKeys[i]) and mask
-            while (used[slot]) slot = (slot + 1) and mask
-            used[slot] = true
-            keys[slot] = oldKeys[i]
-            vals[slot] = oldVals[i]
+        val old = table
+        table = LongArray(old.size * 2)
+        mask = table.size / 2 - 1
+        for (i in 0 until old.size / 2) {
+            val k = old[2 * i]
+            if (k == 0L) continue
+            var slot = mix(k - 1) and mask
+            while (table[2 * slot] != 0L) slot = (slot + 1) and mask
+            table[2 * slot] = k
+            table[2 * slot + 1] = old[2 * i + 1]
         }
     }
 
@@ -222,9 +231,8 @@ internal class LongIntMap(expected: Int = 16) {
         }
 
         private fun mix(key: Long): Int {
-            var h = key * -0x61c8864680b583ebL
-            h = h xor (h ushr 29)
-            return h.toInt()
+            val h = key * -0x61c8864680b583ebL
+            return (h xor (h ushr 32)).toInt()
         }
     }
 }
@@ -245,19 +253,76 @@ internal class LongArrayList {
 
 internal const val BATCH = 256
 
-/** ids of [domain] satisfying [predicate], in id order */
-internal inline fun scan(domain: RoaringBitmap, predicate: (Int) -> Boolean): RoaringBitmap {
+/** shared pool for parallel scans, aggregations, mutation counting and update preparation */
+internal val indexPool: java.util.concurrent.ForkJoinPool =
+    java.util.concurrent.ForkJoinPool(Runtime.getRuntime().availableProcessors())
+
+/** domains at least this large are processed in parallel, one task per 65536-id chunk */
+internal const val PARALLEL_MIN = 100_000
+
+/** ids of [domain] satisfying [predicate], in id order (in parallel per 65536-id chunk for large domains) */
+internal inline fun scan(domain: RoaringBitmap, crossinline predicate: (Int) -> Boolean): RoaringBitmap {
+    if (domain.cardinality >= PARALLEL_MIN) {
+        val parts = mapChunks(domain) { start, end ->
+            val writer = RoaringBitmapWriter.writer().get()
+            forEachIdIn(domain, start, end) { if (predicate(it)) writer.add(it) }
+            writer.get()
+        }
+        return concatChunks(parts)
+    }
     val writer = RoaringBitmapWriter.writer().get()
-    val iterator = domain.batchIterator
+    forEachId(domain) { if (predicate(it)) writer.add(it) }
+    return writer.get()
+}
+
+/** [start, end) id ranges of the 65536-id chunks (roaring containers) of [ids] */
+internal fun chunkRanges(ids: RoaringBitmap): List<IntArray> {
+    val ranges = ArrayList<IntArray>()
+    val pointer = ids.containerPointer
+    while (pointer.container != null) {
+        val start = pointer.key().code shl 16
+        ranges.add(intArrayOf(start, start + 65536))
+        pointer.advance()
+    }
+    return ranges
+}
+
+/** [task] for every chunk of [ids], in parallel; results in chunk (= id) order */
+internal fun <T> mapChunks(ids: RoaringBitmap, task: (start: Int, end: Int) -> T): List<T> {
+    val ranges = chunkRanges(ids)
+    if (ranges.size <= 1) return ranges.map { task(it[0], it[1]) }
+    return indexPool.submit<List<T>> {
+        ranges.parallelStream().map { task(it[0], it[1]) }.toList()
+    }.get()
+}
+
+/** ids of [ids] in [start, end) (end may overflow to negative for the last chunk: treated as unbounded) */
+internal inline fun forEachIdIn(ids: RoaringBitmap, start: Int, end: Int, action: (Int) -> Unit) {
+    val iterator = ids.batchIterator
+    iterator.advanceIfNeeded(start)
     val buffer = IntArray(BATCH)
+    val unbounded = end < start
     while (iterator.hasNext()) {
         val n = iterator.nextBatch(buffer)
         for (i in 0 until n) {
             val id = buffer[i]
-            if (predicate(id)) writer.add(id)
+            if (!unbounded && id >= end) return
+            action(id)
         }
     }
-    return writer.get()
+}
+
+/** concatenates bitmaps whose ids lie in increasing, disjoint chunks */
+internal fun concatChunks(parts: List<RoaringBitmap>): RoaringBitmap {
+    val result = RoaringBitmap()
+    for (part in parts) {
+        val pointer = part.containerPointer
+        while (pointer.container != null) {
+            result.append(pointer.key(), pointer.container)
+            pointer.advance()
+        }
+    }
+    return result
 }
 
 internal inline fun forEachId(ids: RoaringBitmap, action: (Int) -> Unit) {

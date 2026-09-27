@@ -1,6 +1,7 @@
 package org.loculus.backend.query.index
 
 import org.loculus.backend.query.schema.SequenceSchema
+import org.roaringbitmap.FastAggregation
 import org.roaringbitmap.RoaringBitmap
 
 /**
@@ -9,13 +10,13 @@ import org.roaringbitmap.RoaringBitmap
  * - [present]: ids that have this sequence.
  * - mutation bitmaps `mutations[position][symbol]`: ids having [symbol] (neither reference nor missing) at
  *   [position].
- * - missing-symbol runs as "transition" bitmaps: `runStarts[q]` = ids with a missing run starting at q,
- *   `runEnds[q]` = ids with a run ending (exclusive) at q, plus checkpoint bitmaps
- *   `checkpoints[k]` = ids with the missing symbol at position k * [CHECKPOINT_SPACING] (exact).
- *   Runs of one entry are disjoint, so the missing set at p is
- *   `checkpoints[p / S] XOR runStarts[q] XOR runEnds[q]` for all q in (p / S * S, p], and the missing count
- *   over a set P is `|P ∩ checkpoint| + Σ (|P ∩ runStarts[q]| - |P ∩ runEnds[q]|)`.
- *   Point queries therefore touch at most 2 * S small bitmaps; per-position counts over a filter are a sweep.
+ * - missing-symbol runs, twice:
+ *   - for point queries ("which ids are missing at p"): "transition" bitmaps `runStarts[q]` / `runEnds[q]`
+ *     (ids with a run starting / ending exclusive at q) and exact checkpoints `checkpoints[k]` (ids missing at
+ *     position k * [CHECKPOINT_SPACING]). Runs of one entry are disjoint, so the missing set at p is the nearer
+ *     checkpoint XOR the transitions in between (at most S / 2 small bitmaps).
+ *   - for per-position missing counts over a filter: a [RunTable] (CSR per 65536-id chunk), which reads only
+ *     the runs of the filtered ids.
  * - insertions: position -> inserted symbols -> ids.
  */
 internal class SequenceIndex(val schema: SequenceSchema) {
@@ -24,6 +25,7 @@ internal class SequenceIndex(val schema: SequenceSchema) {
     var present = RoaringBitmap()
         private set
     val mutations: Array<Array<RoaringBitmap?>?> = arrayOfNulls(length + 1)
+    val runs = RunTable(length)
     val runStarts: Array<RoaringBitmap?> = arrayOfNulls(length + 2)
     val runEnds: Array<RoaringBitmap?> = arrayOfNulls(length + 2)
     val checkpoints: Array<RoaringBitmap> = Array((length shr CHECKPOINT_SHIFT) + 1) { RoaringBitmap() }
@@ -54,8 +56,20 @@ internal class SequenceIndex(val schema: SequenceSchema) {
         if (bm.checkedAdd(id)) mutationCounts[position * alphabet.size + symbol]++
     }
 
-    /** [start] inclusive, [end] exclusive, 1-based; runs of one entry must be disjoint (see [normalizeRuns]) */
+    /**
+     * bulk load: a missing run ([start] inclusive, [end] exclusive, 1-based) into both structures; runs of one
+     * entry must be disjoint ([normalizeRuns]) and ids ascending
+     */
     fun addMissingRun(id: Int, start: Int, end: Int) {
+        val s = maxOf(1, start)
+        val e = minOf(length + 1, end)
+        if (s >= e) return
+        addTransitions(id, s, e)
+        runs.append(id, s, e)
+    }
+
+    /** a missing run into the point-query structures only (the run table is updated via [RunTable.rebuild]) */
+    fun addTransitions(id: Int, start: Int, end: Int) {
         val s = maxOf(1, start)
         val e = minOf(length + 1, end)
         if (s >= e) return
@@ -67,6 +81,22 @@ internal class SequenceIndex(val schema: SequenceSchema) {
             if (k > 0) checkpoints[k].add(id)
             k++
         }
+    }
+
+    /** clamps flattened (id, start, end) triples to the sequence, dropping empty runs */
+    fun clampRuns(triples: IntArray): IntArray {
+        val out = IntArray(triples.size)
+        var n = 0
+        for (t in 0 until triples.size / 3) {
+            val s = maxOf(1, triples[3 * t + 1])
+            val e = minOf(length + 1, triples[3 * t + 2])
+            if (s < e) {
+                out[n++] = triples[3 * t]
+                out[n++] = s
+                out[n++] = e
+            }
+        }
+        return out.copyOf(n)
     }
 
     fun addInsertion(id: Int, position: Int, symbols: String) {
@@ -143,10 +173,13 @@ internal class SequenceIndex(val schema: SequenceSchema) {
     /** compresses all bitmaps (bulk load only: replaces bitmap objects, so the index must not be visible yet) */
     fun runOptimize() {
         present = runOptimizeFewRuns(present)
-        for (perSymbol in mutations) {
-            if (perSymbol == null) continue
-            for (s in perSymbol.indices) perSymbol[s]?.let { perSymbol[s] = runOptimizeFewRuns(it) }
+        (0..length step 1024).toList().parallelStream().forEach { from ->
+            for (p in from until minOf(length + 1, from + 1024)) {
+                val perSymbol = mutations[p] ?: continue
+                for (s in perSymbol.indices) perSymbol[s]?.let { perSymbol[s] = runOptimizeFewRuns(it) }
+            }
         }
+        runs.trim()
         for (q in runStarts.indices) runStarts[q]?.let { runStarts[q] = runOptimizeFewRuns(it) }
         for (q in runEnds.indices) runEnds[q]?.let { runEnds[q] = runOptimizeFewRuns(it) }
         for (k in checkpoints.indices) checkpoints[k] = runOptimizeFewRuns(checkpoints[k])
@@ -161,28 +194,51 @@ internal class SequenceIndex(val schema: SequenceSchema) {
             slots += perSymbol.size
             for (bm in perSymbol) if (bm != null) total += bm.getLongSizeInBytes() + 16
         }
+        total += runs.memoryBytes()
         for (bm in runStarts) if (bm != null) total += bm.getLongSizeInBytes() + 16
         for (bm in runEnds) if (bm != null) total += bm.getLongSizeInBytes() + 16
         for (bm in checkpoints) total += bm.getLongSizeInBytes() + 16
+        total += (runStarts.size + runEnds.size + startCounts.size + endCounts.size) * 4L
         insertions.values.forEach { m -> m.values.forEach { total += it.getLongSizeInBytes() + 64 } }
-        return total + slots * 4 + (mutations.size + runStarts.size + runEnds.size) * 4L +
-            (mutationCounts.size + startCounts.size + endCounts.size) * 4L
+        return total + slots * 4 + mutations.size * 4L + mutationCounts.size * 4L
     }
 
     // ---------------- reads ----------------
 
-    /** ids having the missing symbol at [position] (fresh bitmap) */
+    /**
+     * ids having the missing symbol at [position] (fresh bitmap): the nearer checkpoint XOR the run transitions
+     * between it and [position] (XOR is its own inverse, so sweeping backwards from the next checkpoint works too).
+     * The (small) transition bitmaps are combined first, then XORed once with the (large) checkpoint.
+     */
     fun missingAt(position: Int): RoaringBitmap {
         val k = position shr CHECKPOINT_SHIFT
-        val result = checkpoints[k].clone()
-        for (q in (k shl CHECKPOINT_SHIFT) + 1..position) {
-            runStarts[q]?.let { result.xor(it) }
-            runEnds[q]?.let { result.xor(it) }
+        val forward = position - (k shl CHECKPOINT_SHIFT)
+        val next = k + 1
+        val backward = if (next < checkpoints.size) (next shl CHECKPOINT_SHIFT) - position else Int.MAX_VALUE
+        val transitions = ArrayList<RoaringBitmap>()
+        val base: RoaringBitmap
+        if (forward <= backward) {
+            base = checkpoints[k]
+            for (q in (k shl CHECKPOINT_SHIFT) + 1..position) {
+                runStarts[q]?.let { transitions.add(it) }
+                runEnds[q]?.let { transitions.add(it) }
+            }
+        } else {
+            base = checkpoints[next]
+            for (q in position + 1..(next shl CHECKPOINT_SHIFT)) {
+                runStarts[q]?.let { transitions.add(it) }
+                runEnds[q]?.let { transitions.add(it) }
+            }
         }
-        return result
+        if (transitions.isEmpty()) return base.clone()
+        val combined = if (transitions.size == 1) transitions[0] else FastAggregation.xor(*transitions.toTypedArray())
+        return RoaringBitmap.xor(base, combined)
     }
 
-    /** missing counts per position (index = position) over all present ids */
+    /** missing counts per position (index = position) over [ids] */
+    fun missingCountsOver(ids: RoaringBitmap): IntArray = runs.countsOver(ids)
+
+    /** missing counts per position (index = position) over all present ids (cached until the next write) */
     fun missingCountsAll(): IntArray {
         missingCountsAll?.let { return it }
         val counts = IntArray(length + 1)
@@ -233,6 +289,9 @@ internal class SequenceIndex(val schema: SequenceSchema) {
     }
 
     companion object {
+        /** mutation counting works on blocks of 2^BLOCK_SHIFT positions (one parallel task each) */
+        const val BLOCK_SHIFT = 7
+        const val BLOCK_SIZE = 1 shl BLOCK_SHIFT
         const val CHECKPOINT_SHIFT = 7
         const val CHECKPOINT_SPACING = 1 shl CHECKPOINT_SHIFT
         private const val COLLECT_CHUNK = 1024
@@ -241,7 +300,7 @@ internal class SequenceIndex(val schema: SequenceSchema) {
 
         /**
          * sorts and merges overlapping / adjacent runs (flattened start, end pairs) so that runs are disjoint
-         * and maximal, as the transition encoding requires.
+         * and maximal.
          */
         fun normalizeRuns(runs: IntArray, count: Int): Int {
             if (count <= 1) return count

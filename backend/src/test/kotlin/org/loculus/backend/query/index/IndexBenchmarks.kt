@@ -391,7 +391,7 @@ class IndexBenchmarks {
         println("  estimated index memory ${usage.values.sum() / 1_000_000} MB")
         index.structureStats().entries.take(4).forEach { (name, stats) ->
             println(
-                "    $name: ${stats[0]} mutation bitmaps, ${stats[1]} containers, ${stats[2]} run transition bitmaps",
+                "    $name: ${stats[0]} mutation bitmaps, ${stats[1]} containers, ${stats[2]} missing runs",
             )
         }
         usage.entries.sortedByDescending {
