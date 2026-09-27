@@ -1836,7 +1836,7 @@ BIOSAMPLE_XML = b"""<SAMPLE_SET><SAMPLE accession="SAMEA123456"/></SAMPLE_SET>""
 class EnaAccessionCase:
     name: str
     accession: str
-    accession_type: str = "bioproject"
+    accession_type: str | None = "bioproject"
     # How ENA responds: an HTTP status code, or an exception raised by the session.
     # None means ENA must not be contacted at all.
     ena_response: int | Exception | None = None
@@ -1906,7 +1906,13 @@ ena_accession_cases = [
         name="invalid_accession_type_is_internal_error",
         accession="PRJEB12345",
         accession_type="nucleotide",
-        expected_error="did not receive a valid accession_type",
+        expected_error="invalid accession_type 'nucleotide'",
+    ),
+    EnaAccessionCase(
+        name="missing_accession_type_is_internal_error",
+        accession="PRJEB12345",
+        accession_type=None,
+        expected_error="requires an accession_type arg",
     ),
     EnaAccessionCase(
         name="unknown_accession_is_rejected",

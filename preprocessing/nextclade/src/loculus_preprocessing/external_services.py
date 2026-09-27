@@ -339,9 +339,14 @@ class ENAVisibilityChecker:
     ):
         self.timeout_seconds = timeout_seconds
 
-    def check_visibility(
-        self, accession: str, accession_type: EnaAccessionType
-    ) -> RawProcessingResult:
+    def check_visibility(self, accession: str, accession_type_arg: str) -> RawProcessingResult:
+        try:
+            accession_type = EnaAccessionType(accession_type_arg)
+        except ValueError:
+            return raw_internal_error(
+                f"invalid accession_type '{accession_type_arg}', expected one of "
+                f"{[t.value for t in EnaAccessionType]}."
+            )
         accession = accession.upper()
         pattern = ACCESSION_PATTERNS[accession_type]
         if not pattern.fullmatch(accession):
@@ -349,25 +354,27 @@ class ENAVisibilityChecker:
                 f"'{accession}' is not a valid {accession_type} accession, expected a value "
                 f"matching '{pattern.pattern}'."
             )
-        url = f"https://www.ebi.ac.uk/ena/browser/api/xml/{accession}"
-        ena_error_message = f"unable to validate accession '{accession}': could not reach ENA."
         try:
-            response = ena_cache.get_or_fetch(url, timeout=self.timeout_seconds)
+            response = ena_cache.get_or_fetch(
+                f"https://www.ebi.ac.uk/ena/browser/api/xml/{accession}",
+                timeout=self.timeout_seconds,
+            )
         except requests.RequestException:
-            return processing_error(ena_error_message)
-
-        if response.status_code == HTTPStatus.OK:
-            if accession_type == EnaAccessionType.BIOPROJECT and self._is_umbrella_project(
-                response.content
-            ):
-                return processing_error(
-                    f"bioproject '{accession}' is an umbrella project. "
-                    "Please provide the accession of a submission project instead."
-                )
-            return RawProcessingResult(datum=accession)
-        if response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
-            return processing_error(ena_error_message)
-        return processing_error(f"accession '{accession}' does not exist on ENA")
+            response = None
+        if response is None or response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
+            return processing_error(
+                f"unable to validate accession '{accession}': could not reach ENA."
+            )
+        if response.status_code != HTTPStatus.OK:
+            return processing_error(f"accession '{accession}' does not exist on ENA")
+        if accession_type == EnaAccessionType.BIOPROJECT and self._is_umbrella_project(
+            response.content
+        ):
+            return processing_error(
+                f"bioproject '{accession}' is an umbrella project. "
+                "Please provide the accession of a submission project instead."
+            )
+        return RawProcessingResult(datum=accession)
 
     def _is_umbrella_project(self, xml_bytes) -> bool:
         for _, elem in ET.iterparse(io.BytesIO(xml_bytes), events=("start",)):  # noqa: S314
