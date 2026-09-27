@@ -33,6 +33,7 @@ type FolderUploadComponentProps = {
     setFileUploadState: Dispatch<SetStateAction<FileUploadState | undefined>>;
     onError: (message: string) => void;
     fileSharingConfig: FileSharingConfig;
+    showCategoryHeading?: boolean;
 };
 
 const FileInput = ({
@@ -91,6 +92,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     setFileUploadState,
     onError,
     fileSharingConfig,
+    showCategoryHeading = true,
 }) => {
     const [isDragging, setIsDragging] = useState(false);
 
@@ -330,7 +332,9 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
     return (
         <div className='flex flex-col gap-2 w-full'>
-            <h3 className='text-sm font-medium'>{fileCategory.displayName ?? fileCategory.name}</h3>
+            {showCategoryHeading && (
+                <h3 className='text-sm font-medium'>{fileCategory.displayName ?? fileCategory.name}</h3>
+            )}
             {fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
                 <div
                     className={`flex flex-col items-center justify-center flex-1 py-6 px-4 border rounded-lg ${fileUploadState !== undefined ? 'border-hidden' : isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}

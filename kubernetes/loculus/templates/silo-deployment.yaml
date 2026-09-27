@@ -42,7 +42,7 @@ spec:
           env:
             - name: SPDLOG_LEVEL
               value: "debug"
-            - name: SILO_DATA_DIRECTORY
+            - name: RHYDB_DATA_DIRECTORY
               value: "/data/"
           ports:
             - containerPort: 8081
