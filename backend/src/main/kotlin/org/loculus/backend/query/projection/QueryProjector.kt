@@ -308,21 +308,25 @@ class QueryProjector(
         limit: Int,
         accession: String? = null,
     ): List<String> = connection.prepareStatement(
+        // Lock exactly the claimed rows (by ctid) and keep the limit a literal: with a bind parameter, the generic
+        // plan Postgres switches to after a few executions may lock (almost) the whole queue before limiting,
+        // which took > 10 minutes for a queue of 1M accessions.
         """
-        delete from query_dirty_accessions d
-        where d.organism = ? and d.accession in (
-            select accession from query_dirty_accessions
+        with claimed as (
+            select ctid from query_dirty_accessions
             where organism = ? and (?::text is null or accession = ?::text)
-            limit ? for update skip locked
+            limit ${limit.coerceAtLeast(1)}
+            for update skip locked
         )
+        delete from query_dirty_accessions d
+        using claimed
+        where d.ctid = claimed.ctid
         returning d.accession
         """.trimIndent(),
     ).use {
         it.setString(1, organism)
-        it.setString(2, organism)
+        it.setString(2, accession)
         it.setString(3, accession)
-        it.setString(4, accession)
-        it.setInt(5, limit)
         it.executeQuery().use { rs ->
             val result = ArrayList<String>()
             while (rs.next()) result.add(rs.getString(1))
