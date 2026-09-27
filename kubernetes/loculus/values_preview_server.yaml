@@ -1,6 +1,12 @@
 enableServiceMonitor: true
 createTestAccounts: true
 secrets:
+  # Only for prev-state-nonce-preview; do not merge this override into main.
+  website-oidc-cookie-secret:
+    type: sealedsecret
+    clusterWide: "false"
+    encryptedData:
+      oidcTransactionCookieSecret: AgAzoDD1Eb+o8Gr557MIemjIExvOa0WMqo9jszmu/jqHhzIXqZ2QFBJOheX26GMtlrIpywWRbBUXav3ji6Ns1ECOgRZGqK3tCttfgjzOgfUH6wDXQDW9l/vT28u2Sbkk0+Xj/4LO7tOeP87sYW8ZvFsA0NHzjIVoUnpZAkwtsO0eoFEw0EXqngwHIKkp5QZdu3RXxRrIeCaNLHLmCrOdWVO2Ze0m1u5BAJUhY7SU9KkZHzbv4c+/PK575bzG/p9vQcWpdrJZLzqfP5XvZOnJi7Emvg46hW+ztZBnDJ0Qpnib5AG34n9rAlR37SDGfheOPu4fiCwjb5NnQy6vRvvNt47CzsC5FZD2c/sQUlzDiwdQ9JZymS2I0S9swogcMx0+8Y1IXLJ9s05vPNkh2SqAhdlTqhzLRyux0Yd1+zm98yTkj8gpFHNhaP3Yprevm+tLI8uMg4fwauCYGUPPRYjI3lE0lEr8SfVuICf7709xjl0suKlB1fHyvGxShJCdhahISJxHqRq94c7vkHyOyNUj/+Qal2t69ldaJd4/TQFSmYrkrZplzEqEKOBRvRMM4IDCT4woaeBBfzugJHXb44sbUCzfFUsrgBeXQz1YPwg3abH4UZBqKoqEVrWzTcFzkNUbHIjm9hQpWMt61/9c6R41kgeho1/YdHAqT+vILbwBMWlNGY74t6MZFVoG8xLxeLUutjK6S5zdeF2BLOXuKyLAfLewOI2mlkb9F71yHOlTk5QWoQ==
   smtp-password:
     type: sealedsecret
     clusterWide: "true"
