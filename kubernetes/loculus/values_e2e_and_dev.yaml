@@ -9,6 +9,10 @@ secrets:
 createTestAccounts: true
 backendExtraArgs:
   - "--loculus.debug-mode=true"
+keycloakExtraEnv:
+  # theme caching gzips assets into kc-gzip-cache on first request, which races and 404s under parallel logins
+  - name: KC_SPI_THEME_CACHE_THEMES
+    value: "false"
 disableRawReadsProcessingService: false
 disableEnaSubmission: true
 auth:

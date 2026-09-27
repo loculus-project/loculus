@@ -108,6 +108,9 @@ spec:
             - name: LOCULUS_VERSION
               value: {{ $dockerTag }}
             {{- end }}
+            {{- with .Values.keycloakExtraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           args:
             - "start"
             - "--import-realm"
