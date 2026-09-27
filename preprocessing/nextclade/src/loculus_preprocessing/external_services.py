@@ -1,6 +1,7 @@
 import logging
 import urllib.parse
 from collections import OrderedDict
+from dataclasses import dataclass
 
 import requests
 from pydantic import BaseModel, Field, ValidationError
@@ -200,6 +201,17 @@ class TaxonomyService:
             return raw_internal_error(message)
 
         return RawProcessingResult(datum=common_name)
+
+
+@dataclass(frozen=True)
+class ExternalServices:
+    """External services available to processing functions.
+
+    Kept separate from `ProcessingContext` since these don't vary per accession, unlike
+    `ProcessingContext`'s fields.
+    """
+
+    taxonomy_service: TaxonomyService
 
 
 FileName = str

@@ -1,8 +1,8 @@
 # ruff: noqa: S101
 
 import gzip
-import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -121,32 +121,6 @@ IIIIIIIIII
 """
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
-
-
-def _find_jar() -> str | None:
-    """Locate the readtools jar for integration tests.
-
-    Set READTOOLS_JAR to point at a downloaded copy (see README) to run
-    these; they're skipped otherwise since the jar isn't checked in.
-    """
-    env_jar = os.environ.get("READTOOLS_JAR")
-    if env_jar and Path(env_jar).is_file():
-        return env_jar
-    repo_root = Path(__file__).parent.parent
-    for candidate in (repo_root / "readtools.jar", Path("/opt/app/lib/readtools.jar")):
-        if candidate.is_file():
-            return str(candidate)
-    return None
-
-
-@pytest.fixture
-def readtools_jar(monkeypatch):
-    jar_path = _find_jar()
-    if jar_path is None:
-        pytest.skip(
-            "readtools jar not found; set READTOOLS_JAR to its path to run this test"
-        )
-    monkeypatch.setattr(file_format_validation, "VALIDATION_JAR_PATH", jar_path)
 
 
 def _write(tmp_path: Path, name: str, content: str) -> str:
@@ -539,3 +513,37 @@ def test_too_many_bam_files_are_rejected():
             ["reads1.bam", "reads2.bam"],
         )
     assert "Too many BAM files" in exc_info.value.error.message
+
+
+@pytest.mark.usefixtures("readtools_jar")
+def test_null_byte_in_quoted_line_does_not_reach_the_error_message(tmp_path):
+    gz_path = tmp_path / "reads.fastq.gz"
+    with gzip.open(gz_path, "wb") as f:
+        f.write(b"notes\x00more\n")
+
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_with_readtools({"reads.fastq.gz": gz_path}, FileFormat.FASTQ)
+
+    error = exc_info.value.error
+    assert "\x00" not in error.message
+    assert "\\u0000" not in error.model_dump_json()
+
+
+def test_invalid_utf8_in_readtools_output_is_replaced(tmp_path, monkeypatch):
+    reads = _write(tmp_path, "reads.fastq", VALID_SINGLE_END)
+    real_run = subprocess.run
+    script = (
+        "import sys; "
+        r"sys.stdout.buffer.write(b'RESULT: INVALID\n  bad byte \xff in header\n'); "
+        "sys.exit(1)"
+    )
+
+    def fake_run(args, **kwargs):
+        return real_run([sys.executable, "-c", script], **kwargs)
+
+    monkeypatch.setattr(file_format_validation.subprocess, "run", fake_run)
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_with_readtools({"reads.fastq": Path(reads)}, FileFormat.FASTQ)
+
+    assert "bad byte \ufffd in header" in exc_info.value.error.message
+    assert "\\ud" not in exc_info.value.error.model_dump_json()
