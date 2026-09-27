@@ -1,7 +1,7 @@
 # ruff: noqa: S101
 
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from typing import Literal
 
@@ -18,23 +18,27 @@ from loculus_preprocessing.datatypes import (
     ProcessedMetadataValue,
     ProcessingAnnotation,
     ProcessingAnnotationAlignment,
+    ProcessingContext,
     SegmentName,
-    UnprocessedData,
     UnprocessedEntry,
 )
-from loculus_preprocessing.external_services import TaxonomyService
+from loculus_preprocessing.external_services import ExternalServices, TaxonomyService
 from loculus_preprocessing.nextclade_annotation import GffAttributes, NextcladeAnnotation
-from loculus_preprocessing.processing_functions import ProcessingContext
 
-# Default ProcessingContext for tests that don't care about its contents (no taxonomy
-# service, no INSDC ingest group, no submittedAt). Tests that do care about specific
-# field(s) should use `dataclasses.replace(DEFAULT_TEST_CONTEXT, ...)`.
+# Default ProcessingContext for tests that don't care about its contents (no INSDC
+# ingest group, no submittedAt). Tests that do care about specific field(s) should use
+# `dataclasses.replace(DEFAULT_TEST_CONTEXT, ...)`.
 DEFAULT_TEST_CONTEXT = ProcessingContext(
     accession_version="accession.1",
-    is_insdc_ingest_group=False,
+    group_id=2,
+    insdc_ingest_group_id=1,
     submitted_at="",
-    taxonomy_service=TaxonomyService(None),
+    submission_id="test_submission_id",
 )
+
+# Default ExternalServices for tests that don't care about its contents (no taxonomy
+# service URL configured).
+DEFAULT_EXTERNAL_SERVICES = ExternalServices(taxonomy_service=TaxonomyService(None))
 
 
 def ts_from_ymd(year: int, month: int, day: int) -> str:
@@ -88,26 +92,25 @@ class ProcessedAlignment:
 @dataclass
 class UnprocessedEntryFactory:
     @staticmethod
-    def create_unprocessed_entry(
+    def create_unprocessed_entry(  # noqa: PLR0913
         metadata_dict: dict[str, str | None],
         accession_id: str,
         sequences: dict[SegmentName, NucleotideSequence | None],
         group_id: int = 2,
+        insdc_ingest_group_id: int = DEFAULT_TEST_CONTEXT.insdc_ingest_group_id,
         files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None = None,
     ) -> UnprocessedEntry:
         return UnprocessedEntry(
-            accessionVersion=f"LOC_{accession_id}.1",
-            data=UnprocessedData(
-                submitter="test_submitter",
-                submittedAt=str(
-                    datetime.strptime("2021-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
-                ),
-                submissionId=metadata_dict.get("submissionId") or "test_submission_id",
+            context=replace(
+                DEFAULT_TEST_CONTEXT,
+                accession_version=f"LOC_{accession_id}.1",
                 group_id=group_id,
-                metadata=metadata_dict,
-                unalignedNucleotideSequences=sequences,
-                files=files,
+                insdc_ingest_group_id=insdc_ingest_group_id,
+                submitted_at=ts_from_ymd(2021, 12, 15),
             ),
+            metadata=metadata_dict,
+            unalignedNucleotideSequences=sequences,
+            files=files,
         )
 
 
@@ -205,7 +208,7 @@ class Case:
         )
         expected_output = factory_custom.create_processed_entry(
             metadata_dict=self.expected_metadata,
-            accession=unprocessed_entry.accessionVersion.split(".")[0],
+            accession=unprocessed_entry.context.accession_version.split(".")[0],
             errors=self.expected_errors or [],
             warnings=self.expected_warnings or [],
             processed_alignment=self.expected_processed_alignment,
