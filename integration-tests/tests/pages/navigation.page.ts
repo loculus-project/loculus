@@ -12,14 +12,14 @@ export class NavigationPage {
     }
 
     private organismOption(name: string) {
-        // Look for links that contain the organism name (they may have additional text/elements)
-        return this.page.locator(`a:has-text("${name}")`).first();
+        // The open menu is rendered in a portal at the end of <body>, so scope to the organism
+        // menu itself rather than matching the first link on the page with this name.
+        return this.page
+            .locator('#organism-menu-items')
+            .getByRole('menuitem', { name, exact: true });
     }
 
     async selectOrganism(name: string) {
-        // Wait a bit for the dropdown to be fully rendered
-        await this.page.waitForTimeout(500);
-
         const organismOption = this.organismOption(name);
         await organismOption.waitFor({ state: 'visible', timeout: 10000 });
         await organismOption.click();
