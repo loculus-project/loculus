@@ -2,6 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 
 const browser = process.env.BROWSER;
 const readonlySetupName = 'readonly-setup';
+// Only a browser crash earns the retry; see tests/fixtures/browser-crash.ts.
+const firefoxCrashRetries = process.env.CI ? 1 : 0;
 
 /**
  * Read environment variables from file.
@@ -57,6 +59,7 @@ const config = {
             use: {
                 ...devices['Desktop Firefox'],
             },
+            retries: firefoxCrashRetries,
             dependencies: [readonlySetupName],
             testMatch: /.*\.dependent\.spec\.ts/,
         },
@@ -70,6 +73,7 @@ const config = {
         {
             name: 'firefox-without-dep',
             use: { ...devices['Desktop Firefox'] },
+            retries: firefoxCrashRetries,
             testMatch: /^(?!.*\.dependent\.spec\.ts$).*\.spec\.ts$/,
             testIgnore: /.*\/cli\/.*\.spec\.ts$/,
         },

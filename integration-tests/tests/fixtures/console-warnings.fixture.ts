@@ -1,11 +1,20 @@
 import { test as base, ConsoleMessage, expect, type TestInfo } from '@playwright/test';
+import { assertRetryFollowsBrowserCrash, recordBrowserCrashes } from './browser-crash';
 
 /** Permits console errors containing `description` for the rest of the test. */
 export const allowConsoleError = (test: { info: () => TestInfo }, description: string) =>
     test.info().annotations.push({ type: 'allow-console-error', description });
 
-export const test = base.extend({
+export const test = base.extend<{ browserCrashRetryGuard: void }>({
+    browserCrashRetryGuard: [
+        async ({}, use, testInfo) => {
+            assertRetryFollowsBrowserCrash(testInfo);
+            await use();
+        },
+        { auto: true },
+    ],
     page: async ({ page, browserName }, use, testInfo) => {
+        const stopRecordingCrashes = recordBrowserCrashes(page, testInfo);
         const handleConsole = (msg: ConsoleMessage) => {
             if (msg.type() === 'warning' || msg.type() === 'error') {
                 const messageText = msg.text();
@@ -36,5 +45,6 @@ export const test = base.extend({
         page.on('console', handleConsole);
         await use(page);
         page.off('console', handleConsole);
+        stopRecordingCrashes();
     },
 });
