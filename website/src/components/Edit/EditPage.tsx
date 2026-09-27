@@ -92,6 +92,7 @@ const InnerEditPage: FC<EditPageProps> = ({
     );
 
     const submitEditedDataForAccessionVersion = async () => {
+        const missingSequencesError = `Submissions for organism '${organism}' must contain at least one consensus sequence.`;
         if (isCreatingRevision) {
             const fastaIds = submissionDataTypes.consensusSequences ? editableSequences.getFastaIds() : undefined;
             const metadataFile = editableMetadata.getMetadataTsv(
@@ -130,9 +131,8 @@ const InnerEditPage: FC<EditPageProps> = ({
                 });
                 return;
             }
-            const sequenceFile = editableSequences.getSequenceFasta();
-            if (!sequenceFile) {
-                toast.error('Please enter a sequence.', {
+            if (editableSequences.hasNoSequences()) {
+                toast.error(missingSequencesError, {
                     position: 'top-center',
                     autoClose: false,
                 });
@@ -140,7 +140,7 @@ const InnerEditPage: FC<EditPageProps> = ({
             }
             submitRevision({
                 metadataFile: mFile.inner(),
-                sequenceFile,
+                sequenceFile: editableSequences.getSequenceFasta(),
             });
         } else {
             let fileMappingForEdit: FilesByCategory | null = null;
@@ -160,6 +160,13 @@ const InnerEditPage: FC<EditPageProps> = ({
                         [...files.entries()].map(([path, fileId]) => ({ fileId, name: path })),
                     ]),
                 );
+            }
+            if (submissionDataTypes.consensusSequences && editableSequences.hasNoSequences()) {
+                toast.error(missingSequencesError, {
+                    position: 'top-center',
+                    autoClose: false,
+                });
+                return;
             }
             submitEdit({
                 accession: dataToEdit.accession,
