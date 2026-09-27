@@ -16,7 +16,6 @@ class Alphabet private constructor(
     val validMutationSymbols: Set<Char>,
     codesFor: Map<Char, Set<Char>>,
 ) {
-    val missingIndex: Int = indexOf(missingSymbol)
     val size: Int get() = symbols.size
 
     private val charToIndex = IntArray(128) { -1 }.also { table ->
@@ -25,6 +24,9 @@ class Alphabet private constructor(
             table[c.lowercaseChar().code] = i
         }
     }
+
+    // must be initialised after charToIndex
+    val missingIndex: Int = indexOf(missingSymbol)
 
     /** AMBIGUITY_SYMBOLS[s] = all symbols whose code set is a superset of s's code set (bitmask over indices) */
     val ambiguitySymbols: IntArray = IntArray(symbols.size) { i ->

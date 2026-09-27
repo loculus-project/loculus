@@ -58,6 +58,11 @@ data class QueryRequest(
     val limit: Int? = null,
     val offset: Int = 0,
     val dataFormat: DataFormat = DataFormat.JSON,
+    /**
+     * true if [dataFormat] was given as request parameter; otherwise it is the endpoint default and the controller
+     * may still pick a format from the Accept header (as LAPIS does)
+     */
+    val dataFormatFromParameter: Boolean = false,
     val downloadAsFile: Boolean = false,
     val downloadFileBasename: String? = null,
     /** explicit compression request property (file download); Accept-Encoding is handled separately */
@@ -72,3 +77,9 @@ data class QueryRequest(
 
 /** 400-type errors with the LAPIS error detail text */
 class QueryBadRequestException(message: String) : RuntimeException(message)
+
+/** 404-type errors, e.g. a {segment} path variable on a single-segmented organism or an unknown segment/gene */
+class QueryNotFoundException(message: String) : RuntimeException(message)
+
+/** 406-type errors: the requested dataFormat is not supported by the endpoint */
+class QueryNotAcceptableException(message: String) : RuntimeException(message)
