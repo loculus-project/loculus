@@ -1,10 +1,11 @@
-# ruff: noqa: S101
+import gzip
 from unittest.mock import Mock
 
 import pytest
+from conftest import assert_storable
 from fastapi.testclient import TestClient
 
-from raw_reads_processing import api
+from raw_reads_processing import api, process_files
 from raw_reads_processing.config import Config
 from raw_reads_processing.datatypes import Annotation
 from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
@@ -91,3 +92,58 @@ def test_health_is_unavailable_once_deacon_process_has_exited(client):
     response = client.get("/health")
 
     assert response.status_code == 503
+
+
+@pytest.mark.parametrize(
+    ("raised", "status", "expected"),
+    [
+        (
+            lambda: InvalidSubmission(
+                error=Annotation(fileNames=["reads\x00.fq.gz"], message="line \x00 1")
+            ),
+            200,
+            "reads<NUL>.fq.gz",
+        ),
+        (
+            lambda: ProcessingFailure("Could not download 'reads\x00.fq.gz'"),
+            500,
+            "reads<NUL>.fq.gz",
+        ),
+    ],
+)
+def test_null_bytes_never_reach_the_response_body(
+    client, monkeypatch, raised, status, expected
+):
+    def fail(**kwargs):
+        raise raised()
+
+    monkeypatch.setattr(api, "validate_raw_reads_submission", fail)
+
+    response = client.post("/process-files", json=VALID_PAYLOAD)
+
+    assert response.status_code == status
+    assert "\\u0000" not in response.text
+    assert expected in response.text
+
+
+@pytest.mark.usefixtures("readtools_jar")
+def test_null_byte_in_a_submitted_file_survives_the_whole_service(
+    client, monkeypatch, tmp_path
+):
+    gz_path = tmp_path / "reads.fastq.gz"
+    with gzip.open(gz_path, "wb") as f:
+        f.write(b"notes\x00more\n")
+
+    monkeypatch.setattr(
+        process_files,
+        "download_file",
+        lambda config, file, save_path: save_path.write_bytes(gz_path.read_bytes()),
+    )
+
+    response = client.post("/process-files", json=VALID_PAYLOAD)
+
+    assert response.status_code == 200
+    assert_storable(response.text)
+    message = response.json()["errors"][0]["message"]
+    assert "readtools" in message
+    assert "notes<NUL>more" in message

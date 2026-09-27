@@ -124,9 +124,34 @@ const RAW_READS_FAILURES: { id: string; files: Record<string, string | Buffer>; 
             error: /same read name appears more than once/i,
         },
         {
+            id: 'qual-length-mismatch',
+            files: { 'reads.fastq.gz': '@read1\nACGTACGTAC\n+\nIIIIIIIII\n' },
+            error: /Sequence and quality line must be the same length/i,
+        },
+        {
+            id: 'truncated-final-record',
+            files: { 'reads.fastq.gz': '@read1\n' },
+            error: /File is too short - missing Sequence Line/i,
+        },
+        {
+            id: 'empty-record',
+            files: { 'reads.fastq.gz': '@read1\n\n+\n\n' },
+            error: /File is too short - missing Quality Header/i,
+        },
+        {
             id: 'host-contaminated',
             files: { 'reads.fastq.gz': contaminatedReads() },
             error: /high proportion of human reads/i,
+        },
+        {
+            id: 'bam-renamed-as-fastq',
+            files: { 'reads.fastq.gz': readFileSync(join(__dirname, '../../test-data/valid.bam')) },
+            error: /Sequence header must start with @: BAM/i,
+        },
+        {
+            id: 'null-byte',
+            files: { 'reads.fastq.gz': gzipSync(Buffer.from('notes\x00more\n')) },
+            error: /Sequence header must start with @: notes<NUL>more/i,
         },
     ];
 

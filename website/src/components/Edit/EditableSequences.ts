@@ -144,6 +144,10 @@ export class EditableSequences {
             .join(FASTA_IDS_SEPARATOR);
     }
 
+    hasNoSequences(): boolean {
+        return this.rows.every((row) => row.value === null);
+    }
+
     getSequenceFasta(): File | undefined {
         const filledRows = this.rows.filter((row) => row.value !== null);
 
