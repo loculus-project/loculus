@@ -27,5 +27,25 @@ test.describe('Logout Flow', () => {
         const authCookies = cookies.filter((cookie) => AUTH_COOKIE_NAMES.includes(cookie.name));
 
         expect(authCookies).toHaveLength(0);
+
+        await expect(page.getByText(/Redirecting to the homepage in/)).toBeVisible();
+        await expect(page.getByRole('link', { name: 'Go to homepage' })).toHaveAttribute(
+            'href',
+            '/',
+        );
+        await expect(page).toHaveURL(new URL('/', page.url()).toString(), { timeout: 15_000 });
+        await expect(page.getByRole('link', { name: 'Login', exact: true })).toBeVisible();
+    });
+
+    test.describe('without JavaScript', () => {
+        test.use({ javaScriptEnabled: false });
+
+        test('provides a working homepage link without a countdown', async ({ page }) => {
+            await page.goto('/logout');
+            await expect(page.getByText('You have been logged out')).toBeVisible();
+            await expect(page.getByText(/Redirecting to the homepage in/)).toBeHidden();
+            await page.getByRole('link', { name: 'Go to homepage' }).click();
+            await expect(page).toHaveURL(new URL('/', page.url()).toString());
+        });
     });
 });
