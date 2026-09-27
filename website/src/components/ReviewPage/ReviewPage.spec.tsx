@@ -29,7 +29,7 @@ function renderReviewPage() {
         <ReviewPage
             group={testGroup}
             organism={testOrganism}
-            metadataDisplayNames={new Map()}
+            metadataSchema={[]}
             accessToken={testAccessToken}
             clientConfig={testConfig.public}
             referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}

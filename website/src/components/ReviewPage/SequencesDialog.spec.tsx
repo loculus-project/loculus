@@ -24,7 +24,7 @@ describe('SequencesDialog', () => {
             expect(getByText('ATTTGCC')).toBeVisible();
         });
 
-        await userEvent.click(getByRole('tab', { name: `L (aligned)` }));
+        await userEvent.click(getByRole('tab', { name: `L (reference-aligned)` }));
         await waitFor(() => {
             expect(getByText('A-T-T-T-G-C-C')).toBeVisible();
         });
@@ -55,7 +55,7 @@ describe('SequencesDialog', () => {
 
         await waitFor(() => {
             expect(getByRole('tab', { name: `Sequence` })).toBeVisible();
-            expect(getByRole('tab', { name: `Aligned` })).toBeVisible();
+            expect(getByRole('tab', { name: `Reference-aligned` })).toBeVisible();
             expect(getByRole('tab', { name: gene1 })).toBeVisible();
         });
     });
