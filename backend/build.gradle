@@ -101,6 +101,15 @@ dependencies {
     }
 }
 
+// ktlint 1.8.0 crashes on kotlin-compiler-embeddable 2.4.20 (ktlint/ktlint#3289); drop this pin once on ktlint >= 2.0
+configurations.matching { it.name.startsWith("ktlint") }.configureEach {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == "org.jetbrains.kotlin") {
+            details.useVersion("2.2.21")
+        }
+    }
+}
+
 // Check if the docker engine is running and reachable
 task checkDocker {
     doLast {
