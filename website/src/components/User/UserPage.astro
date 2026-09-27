@@ -40,16 +40,16 @@ const groupOfUsersResult = await GroupManagementClient.create().getGroupsOfUser(
             </div>
             <div>
                 <h1 class='text-gray-900 text-xl font-semibold'>{name}</h1>
-                <h2 class='text-gray-700 font-semibold'>
-                    {username}
-                </h2>
+                <h2 class='text-gray-700 font-semibold'>{username}</h2>
             </div>
         </div>
         <div class='my-2 flex gap-2'>
             <a
                 href={keycloakLogoutUrl}
-                class='bg-primary-500 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-sm text-sm'>Logout</a
+                class='bg-primary-500 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-sm text-sm'
             >
+                Logout
+            </a>
             <a
                 href={accountPageUrl}
                 target='_blank'
@@ -61,20 +61,24 @@ const groupOfUsersResult = await GroupManagementClient.create().getGroupsOfUser(
             </a>
         </div>
         <div class='font-bold mt-12 text-lg mb-2 text-primary-700'>
-            <DashiconsGroups className='w-6 h-6 inline-block mr-2' />My groups
+            <DashiconsGroups className='w-6 h-6 inline-block mr-2' />
+            My groups
         </div>
-        {
-            groupOfUsersResult.match(
-                (groups) => <ListOfGroupsOfUser groupsOfUser={groups} client:load />,
-                (error) => <ErrorBox title='Failed loading list of groups'>{error.detail}</ErrorBox>,
-            )
-        }
+        {groupOfUsersResult.match(
+            (groups) => (
+                <ListOfGroupsOfUser groupsOfUser={groups} client:load />
+            ),
+            (error) => (
+                <ErrorBox title='Failed loading list of groups'>{error.detail}</ErrorBox>
+            ),
+        )}
         <div class='mt-4'>
             <a
                 href={routes.createGroup()}
                 class='bg-primary-500 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-sm text-sm'
-                >Create a new submitting group</a
             >
+                Create a new submitting group
+            </a>
         </div>
     </div>
 </BaseLayout>
