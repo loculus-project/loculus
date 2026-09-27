@@ -91,9 +91,9 @@ def test_keycloak_credentials_are_read_from_the_environment(
     keycloak = ImporterConfig.from_env().keycloak
 
     assert keycloak is not None
-    assert keycloak.token_url == "http://keycloak/token"
+    assert keycloak.token_url == os.environ["KEYCLOAK_TOKEN_URL"]
     assert keycloak.username == "silo_import"
-    assert keycloak.password == "secret"
+    assert keycloak.password == os.environ["KEYCLOAK_PASSWORD"]
     assert keycloak.client_id == "backend-client"
 
 
