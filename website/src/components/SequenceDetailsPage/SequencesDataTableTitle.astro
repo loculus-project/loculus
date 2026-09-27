@@ -21,53 +21,46 @@ const { sequenceEntryHistory, accessionVersion, showDownload, showFastaDownloadB
     </div>
 
     <div class='pt-2'>
-        {
-            sequenceEntryHistory !== undefined && sequenceEntryHistory.length > 1 && (
-                <SequenceEntryHistoryMenu
-                    sequenceEntryHistory={sequenceEntryHistory}
-                    accessionVersion={accessionVersion}
-                />
-            )
-        }
-        {
-            showDownload && (
-                <div class='inline-block relative group'>
-                    <label
-                        tabindex='0'
-                        class='hidden sm:block py-1 text-primary-700 cursor-pointer'
-                        data-testid='metadata-download-dropdown'
-                    >
-                        Download
-                        <span class='text-primary'>
-                            {' '}
-                            <IwwaArrowDown className='inline-block -mt-1 ml-1 h-4 w-4' />
-                        </span>
-                    </label>
-                    <span tabindex='0' class='sm:hidden inline text-xl cursor-pointer'>
-                        <IcBaselineDownload />
+        {sequenceEntryHistory !== undefined && sequenceEntryHistory.length > 1 && (
+            <SequenceEntryHistoryMenu sequenceEntryHistory={sequenceEntryHistory} accessionVersion={accessionVersion} />
+        )}
+        {showDownload && (
+            <div class='inline-block relative group'>
+                <label
+                    tabindex='0'
+                    class='hidden sm:block py-1 text-primary-700 cursor-pointer'
+                    data-testid='metadata-download-dropdown'
+                >
+                    Download
+                    <span class='text-primary'>
+                        {' '}
+                        <IwwaArrowDown className='inline-block -mt-1 ml-1 h-4 w-4' />
                     </span>
-                    <ul class='invisible absolute z-20 opacity-0 transition-opacity duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 flex flex-col gap-px bg-base-100 rounded-lg shadow-sm p-1 top-full -left-44 sm:-left-24 w-52'>
-                        {showFastaDownloadButton && (
-                            <li>
-                                <a
-                                    href={routes.sequenceEntryFastaPage(accessionVersion, true)}
-                                    class='block px-4 py-2 outlineButtonDropdownItem'
-                                >
-                                    Download FASTA
-                                </a>
-                            </li>
-                        )}
+                </label>
+                <span tabindex='0' class='sm:hidden inline text-xl cursor-pointer'>
+                    <IcBaselineDownload />
+                </span>
+                <ul class='invisible absolute z-20 opacity-0 transition-opacity duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 flex flex-col gap-px bg-base-100 rounded-lg shadow-sm p-1 top-full -left-44 sm:-left-24 w-52'>
+                    {showFastaDownloadButton && (
                         <li>
                             <a
-                                href={routes.sequenceEntryTsvPage(accessionVersion, true)}
+                                href={routes.sequenceEntryFastaPage(accessionVersion, true)}
                                 class='block px-4 py-2 outlineButtonDropdownItem'
                             >
-                                Download metadata TSV
+                                Download FASTA
                             </a>
                         </li>
-                    </ul>
-                </div>
-            )
-        }
+                    )}
+                    <li>
+                        <a
+                            href={routes.sequenceEntryTsvPage(accessionVersion, true)}
+                            class='block px-4 py-2 outlineButtonDropdownItem'
+                        >
+                            Download metadata TSV
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        )}
     </div>
 </div>
