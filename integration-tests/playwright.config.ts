@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 const browser = process.env.BROWSER;
 const readonlySetupName = 'readonly-setup';
-// Only a browser crash earns the retry; see tests/fixtures/browser-crash.ts.
+// Only a browser crash earns the retry; see tests/fixtures/browser-crash.fixture.ts.
 const firefoxCrashRetries = process.env.CI ? 1 : 0;
 
 /**
