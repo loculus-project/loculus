@@ -58,24 +58,19 @@ class RequestCache:
         if len(self.cache) > self.max_size:
             self.cache.popitem(last=False)
 
-    def get_or_fetch(
-        self, url: str, timeout: int = 15, use_cache: bool = True
-    ) -> requests.Response:
+    def get_or_fetch(self, url: str, timeout: int = 15) -> requests.Response:
         """
         Check if `url` already exists in the cache and return the cached Response if it does.
 
         If `url` is not in the cache, make the actual request (with timeout and retries).
         Add the Response to the cache (if status code in the 200s), and return the Response.
 
-        With `use_cache=False` the request is always made, and the cache is neither read nor
-        written to.
-
         The caller should wrap this in a try/except block and handle errors.
         """
-        response = self.get(url) if use_cache else None
+        response = self.get(url)
         if response is None:
             response = self.session.get(url, timeout=timeout)
-            if use_cache and 200 <= response.status_code < 300:  # noqa: PLR2004
+            if 200 <= response.status_code < 300:  # noqa: PLR2004
                 self.set(url, response)
         return response
 
@@ -311,10 +306,9 @@ class FileProcessingService:
         return ProcessingAnnotation([source], [source], _internal_error_message(message))
 
 
-# Rarely, a bioproject XML can reach ~10 MB (e.g., PRJNA591860)
-# so keeping the cache small. Should still have high hit rate when
-# all submissions for a batch have the same project
-bioproject_cache = RequestCache(max_size=16)
+# Successful ENA responses are small XML documents (a few KB). Cache hits refresh an entry's
+# position; a bioproject shared across a batch stays cached while unique biosamples cycle through.
+ena_cache = RequestCache(max_size=16)
 
 
 class EnaAccessionType(StrEnum):
@@ -322,8 +316,8 @@ class EnaAccessionType(StrEnum):
     BIOSAMPLE = "biosample"
 
 
-# Matched against the upper-cased accession. Rules out surrounding whitespace and
-# comma-separated lists, which the ENA browser API would otherwise resolve to multiple records.
+# Rules out surrounding whitespace and comma-separated lists, which the ENA browser API
+# would otherwise resolve to multiple records.
 ACCESSION_PATTERNS: dict[EnaAccessionType, re.Pattern[str]] = {
     EnaAccessionType.BIOPROJECT: re.compile(r"PRJ[EDN][A-Z][0-9]+"),
     EnaAccessionType.BIOSAMPLE: re.compile(r"SAM[EDN][A-Z]?[0-9]+"),
@@ -348,7 +342,6 @@ class ENAVisibilityChecker:
     def check_visibility(
         self, accession: str, accession_type: EnaAccessionType
     ) -> RawProcessingResult:
-        # Store accessions upper-cased so they're uniform in the database and on the website
         accession = accession.upper()
         pattern = ACCESSION_PATTERNS[accession_type]
         if not pattern.fullmatch(accession):
@@ -358,17 +351,15 @@ class ENAVisibilityChecker:
             )
         url = f"https://www.ebi.ac.uk/ena/browser/api/xml/{accession}"
         ena_error_message = f"unable to validate accession '{accession}': could not reach ENA."
-        is_bioproject = accession_type == EnaAccessionType.BIOPROJECT
         try:
-            # Only cache bioprojects as they're what's likely to be shared across submissions
-            response = bioproject_cache.get_or_fetch(
-                url, timeout=self.timeout_seconds, use_cache=is_bioproject
-            )
+            response = ena_cache.get_or_fetch(url, timeout=self.timeout_seconds)
         except requests.RequestException:
             return processing_error(ena_error_message)
 
         if response.status_code == HTTPStatus.OK:
-            if is_bioproject and self._is_umbrella_project(response.content):
+            if accession_type == EnaAccessionType.BIOPROJECT and self._is_umbrella_project(
+                response.content
+            ):
                 return processing_error(
                     f"bioproject '{accession}' is an umbrella project. "
                     "Please provide the accession of a submission project instead."
