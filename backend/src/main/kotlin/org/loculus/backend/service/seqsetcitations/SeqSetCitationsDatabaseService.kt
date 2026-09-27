@@ -5,24 +5,28 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.LikePattern
-import org.jetbrains.exposed.sql.Op
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.like
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.andWhere
-import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.batchUpsert
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.max
-import org.jetbrains.exposed.sql.or
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.v1.core.LikePattern
+import org.jetbrains.exposed.v1.core.Op
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greaterEq
+import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.isNotNull
+import org.jetbrains.exposed.v1.core.like
+import org.jetbrains.exposed.v1.core.max
+import org.jetbrains.exposed.v1.core.neq
+import org.jetbrains.exposed.v1.core.or
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.andWhere
+import org.jetbrains.exposed.v1.jdbc.batchInsert
+import org.jetbrains.exposed.v1.jdbc.batchUpsert
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
 import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AddSeqSetCitationRequest
@@ -148,7 +152,6 @@ class SeqSetCitationsDatabaseService(
             .where { SeqSetsTable.seqSetId eq seqSetId and (SeqSetsTable.createdBy eq username) }
             .firstOrNull()
             ?.get(SeqSetsTable.seqSetVersion.max())
-            as Long?
 
         if (maxVersion == null) {
             throw NotFoundException("SeqSet $seqSetId does not exist")
@@ -407,6 +410,7 @@ class SeqSetCitationsDatabaseService(
                 this[SeqSetCitationSourceTable.title] = it.source.title
                 this[SeqSetCitationSourceTable.year] = it.source.year
                 this[SeqSetCitationSourceTable.contributors] = it.source.contributors
+                this[SeqSetCitationSourceTable.journal] = it.source.journal
             }
             .flatMap { result ->
                 val citationSourceId = result[SeqSetCitationSourceTable.citationSourceId]
@@ -456,6 +460,7 @@ class SeqSetCitationsDatabaseService(
                         it[SeqSetCitationSourceTable.title],
                         it[SeqSetCitationSourceTable.year],
                         it[SeqSetCitationSourceTable.contributors],
+                        it[SeqSetCitationSourceTable.journal],
                     ),
                 )
             }
@@ -494,6 +499,7 @@ class SeqSetCitationsDatabaseService(
                         title = first[SeqSetCitationSourceTable.title],
                         year = first[SeqSetCitationSourceTable.year],
                         contributors = first[SeqSetCitationSourceTable.contributors],
+                        journal = first[SeqSetCitationSourceTable.journal],
                     ),
                     seqSets = rows.map {
                         SeqSetCitingSequence(
@@ -529,6 +535,7 @@ class SeqSetCitationsDatabaseService(
                         title = first[SeqSetCitationSourceTable.title],
                         year = first[SeqSetCitationSourceTable.year],
                         contributors = first[SeqSetCitationSourceTable.contributors],
+                        journal = first[SeqSetCitationSourceTable.journal],
                     ),
                     seqSets = rows.map { it.toSeqSet() },
                     origin = first[SeqSetCitationSourceTable.origin],
@@ -584,6 +591,7 @@ class SeqSetCitationsDatabaseService(
                 this[SeqSetCitationSourceTable.title] = it.title
                 this[SeqSetCitationSourceTable.year] = it.year
                 this[SeqSetCitationSourceTable.contributors] = it.contributors
+                this[SeqSetCitationSourceTable.journal] = it.journal
             }
             .single()[SeqSetCitationSourceTable.citationSourceId]
 
@@ -691,7 +699,7 @@ class SeqSetCitationsDatabaseService(
         }
 
         if (oldSeqSet.name == newSeqSetName &&
-            oldSeqSet.description == newSeqSetDescription &&
+            oldSeqSet.description.orEmpty() == newSeqSetDescription.orEmpty() &&
             oldSubmittedSeqSetRecords == newSeqSetRecords
         ) {
             throw UnprocessableEntityException("SeqSet update must contain at least one change")

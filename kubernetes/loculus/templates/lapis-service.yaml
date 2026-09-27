@@ -5,6 +5,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ template "loculus.lapisServiceName" $key }}
+  annotations:
+    traefik.ingress.kubernetes.io/service.serverstransport: "{{ include "loculus.serversTransportRef" $ }}"
 spec:
   type: ClusterIP
   selector:

@@ -119,7 +119,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
                 />
                 <BoxWithTabsTab
                     isActive={activeTab === 'gene'}
-                    label='Aligned amino acid sequences'
+                    label='Reference-aligned amino acid sequences'
                     onClick={() => setActiveTab('gene')}
                 />
             </BoxWithTabsTabBar>
@@ -215,7 +215,7 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
                     setType(alignedSequenceSegment(onlySegment));
                     setActiveTab('aligned');
                 }}
-                label='Aligned nucleotide sequence'
+                label='Reference-aligned nucleotide sequence'
             />
         );
     }
@@ -227,7 +227,7 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
                 if (!isActive) setType(alignedSequenceSegment(getCurrentSegment(segments, sequenceType)));
                 setActiveTab('aligned');
             }}
-            label='Aligned nucleotide sequences'
+            label='Reference-aligned nucleotide sequences'
         />
     );
 };

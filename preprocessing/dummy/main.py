@@ -129,7 +129,7 @@ def parse_ndjson(ndjson_data: str) -> list[Sequence]:
 
 
 def process(unprocessed: list[Sequence]) -> list[Sequence]:
-    with open("mock-sequences.json", "r") as f:
+    with open("mock-sequences.json") as f:
         mock_sequences = json.load(f)
     possible_lineages = ["A.1", "A.1.1", "A.2"]
 
@@ -160,7 +160,7 @@ def process(unprocessed: list[Sequence]) -> list[Sequence]:
             "nucleotideInsertions": {},
             "aminoAcidInsertions": {},
         }
-        
+
         if not disableConsensusSequences:
             data = {**data, **mock_sequences}
             data["sequenceNameToFastaId"] = {"main": submissionId}

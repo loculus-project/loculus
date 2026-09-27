@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# ruff: file-ignore[hardcoded-password-string]
+
 import argparse
 import json
 import os
@@ -34,10 +36,7 @@ HELM_RELEASE_NAME = "preview"
 HELM_CHART_DIR = ROOT_DIR / "kubernetes" / "loculus"
 WEBSITE_ORGANISM_CONFIGMAP_PREFIX = "loculus-web-org-config-"
 
-# By default, uses K3s v1.31: https://hub.docker.com/r/rancher/k3s/tags?name=v1.31
-# K3s v1.31 is the latest version which installs Traefik v2 (Traefik v3 is not yet supported by Loculus)
-# Also see: https://docs.k3s.io/upgrades#version-specific-caveats
-DEFAULT_K3S_IMAGE = "rancher/k3s:v1.31.14-k3s1"
+DEFAULT_K3S_IMAGE = "rancher/k3s:v1.35.6-k3s1"
 
 WEBSITE_PORT_MAPPING = "-p 127.0.0.1:3000:30081@agent:0"
 BACKEND_PORT_MAPPING = "-p 127.0.0.1:8079:30082@agent:0"
@@ -544,21 +543,16 @@ def get_codespace_params(codespace_name):
 
 
 def install_secret_generator():
-    add_helm_repo_command = [
-        "helm",
-        "repo",
-        "add",
-        "mittwald",
-        "https://helm.mittwald.de",
-    ]
-    run_command(add_helm_repo_command)
-    print("Mittwald repository added to Helm.")
-
-    update_helm_repo_command = ["helm", "repo", "update"]
-    run_command(update_helm_repo_command)
-    print("Helm repositories updated.")
-
-    secret_generator_chart = "mittwald/kubernetes-secret-generator"  # noqa: S105
+    """
+    To refresh the mirror of the helm chart after upstream version bump:
+      VERSION=<version>
+      helm pull kubernetes-secret-generator --repo https://helm.mittwald.de --version $VERSION
+      gh auth refresh -h github.com -s write:packages
+      gh auth token | helm registry login ghcr.io -u <github-username> --password-stdin
+      helm push kubernetes-secret-generator-$VERSION.tgz oci://ghcr.io/loculus-project
+    """
+    secret_generator_chart = "oci://ghcr.io/loculus-project/kubernetes-secret-generator"
+    secret_generator_version = "3.4.1"
     print("Installing Kubernetes Secret Generator...")
     helm_install_command = [
         "helm",
@@ -566,6 +560,8 @@ def install_secret_generator():
         "--install",
         "kubernetes-secret-generator",
         secret_generator_chart,
+        "--version",
+        secret_generator_version,
         "--set",
         "secretLength=32",
         "--set",

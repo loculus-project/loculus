@@ -32,7 +32,7 @@ class ImporterConfig:
         lineage_definitions_raw = env.get("LINEAGE_DEFINITIONS")
         lineage_definitions: dict[str, dict[int, str]] | None = None
         if lineage_definitions_raw:
-            try:  # noqa: PLW0717
+            try:  # ruff:ignore[too-many-statements-in-try-clause]
                 data = json.loads(lineage_definitions_raw)
                 lineage_definitions = {}
                 for key, value in data.items():

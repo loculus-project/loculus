@@ -128,20 +128,12 @@ class SubmissionJourneyWithFilesTest(
             .headers().map()["etag"]!![0]
         filesClient.completeMultipartUploads(listOf(FileIdAndEtags(fileIdAndUrls.fileId, listOf(etag1, etag2))))
         val submissionResponse = submissionControllerClient.submit(
-            DefaultFiles.metadataFile,
+            DefaultFiles.metadataFile.withFileMapping(
+                mapOf("custom0" to mapOf("myFileCategory" to listOf(FileIdAndName(fileIdAndUrls.fileId, "foo.txt")))),
+            ),
             DefaultFiles.sequencesFile,
             organism = DEFAULT_ORGANISM,
             groupId = groupId,
-            fileMapping = mapOf(
-                "custom0" to mapOf(
-                    "myFileCategory" to listOf(
-                        FileIdAndName(
-                            fileIdAndUrls.fileId,
-                            "foo.txt",
-                        ),
-                    ),
-                ),
-            ),
         )
             .andExpect(status().isOk)
             .andReturn()

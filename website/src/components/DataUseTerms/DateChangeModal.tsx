@@ -3,6 +3,7 @@ import { DateTime } from 'luxon';
 import { useState } from 'react';
 
 import { getClientLogger } from '../../clientLogger';
+import { utcToday } from '../../utils/utcDates.ts';
 import { Button } from '../common/Button';
 
 const logger = getClientLogger('DateChangeModal');
@@ -117,7 +118,7 @@ export const DateChangeModal = ({
                         defaultValue={date}
                         showClearButton={false}
                         showTodayButton={false}
-                        minDate={new Date()}
+                        minDate={utcToday().toJSDate()}
                         maxDate={maxDate.toJSDate()}
                         theme={datePickerTheme}
                         onChange={(date: Date | null) => {

@@ -10,17 +10,14 @@ import logging
 import math
 import re
 import unicodedata
-import urllib.parse
-from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
 import dateutil.parser as dateutil
 import pytz
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+
+from loculus_preprocessing.external_services import ExternalServices
 
 from .datatypes import (
     AnnotationSourceType,
@@ -29,64 +26,16 @@ from .datatypes import (
     InputMetadata,
     ProcessedMetadataValue,
     ProcessingAnnotation,
+    ProcessingContext,
     ProcessingResult,
     RawProcessingResult,
+    _internal_error_message,
     processing_error,
+    raw_internal_error,
 )
 
 logger = logging.getLogger(__name__)
 
-
-class RequestCache:
-    """Class for caching requests to external services during preprocessing.
-
-    Keys are the fully formatted URLs that have already been used to make sucessful requests.
-    Values are requests.Response as they were returned by the service.
-    """
-
-    def __init__(self, max_size: int, retries=5) -> None:
-        self.cache: OrderedDict[str, requests.Response] = OrderedDict()
-        self.max_size = max_size
-        self.session = requests.Session()
-        retry = Retry(total=retries, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
-        adapter = HTTPAdapter(max_retries=retry)
-        self.session.mount("http://", adapter)
-        self.session.mount("https://", adapter)
-
-    def get(self, url: str) -> None | requests.Response:
-        if url in self.cache:
-            self.cache.move_to_end(url)
-            return self.cache[url]
-        return None
-
-    def set(self, url: str, response: requests.Response) -> None:
-        self.cache[url] = response
-        self.cache.move_to_end(url)
-
-        if len(self.cache) > self.max_size:
-            self.cache.popitem(last=False)
-
-    def get_or_fetch(self, url: str, timeout: int = 15) -> requests.Response:
-        """See if `url` already exists in the cache and return the cached Response
-        if it does.
-
-        If `url` is not in the cache, make the actual request (with timeout and retries).
-        Add the Response to the cache (if status code in the 200s), and return the Response.
-
-        Since request.get can error, the caller should wrap this in a try/except block and handle errors
-        """
-        response = self.get(url)
-        if response is None:
-            response = self.session.get(url, timeout=timeout)
-            if 200 <= response.status_code < 300:
-                self.set(url, response)
-        return response
-
-    def clear(self) -> None:
-        self.cache.clear()
-
-
-taxonomy_cache = RequestCache(max_size=64)
 options_cache: dict[str, dict[str, str]] = {}
 
 
@@ -103,16 +52,32 @@ def standardize_option(option):
     return " ".join(option.lower().split())
 
 
-def valid_name() -> str:
-    chars = (
-        r"\u0041-\u005A"  # A-Z
-        r"\u0061-\u007A"  # a-z
+def valid_name(allow_all_ascii: bool = False) -> str:
+    latin_letters = (
         r"\u00C0-\u00D6"  # À-Ö
         r"\u00D8-\u00F6"  # Ø-ö
         r"\u00F8-\u00FF"  # ø-ÿ
         r"\u0100-\u017F"  # Latin Extended-A
         r"\u0180-\u024F"  # Latin Extended-B
     )
+
+    if allow_all_ascii:
+        # Printable ASCII except "," (0x2C) and ";" (0x3B), which separate names and authors
+        ascii_chars = (
+            r"\u0021-\u002B"  # !"#$%&'()*+
+            r"\u002D-\u003A"  # -./0-9:
+            r"\u003C-\u007E"  # <=>?@A-Z[\]^_`a-z{|}~
+        )
+        chars = ascii_chars + latin_letters
+        first_char = rf"\s*[{chars}]"  # Last name must contain a non-whitespace character
+        name_chars = rf"[{chars}\s]*"
+        return first_char + name_chars + r"," + name_chars
+
+    ascii_letters = (
+        r"\u0041-\u005A"  # A-Z
+        r"\u0061-\u007A"  # a-z
+    )
+    chars = ascii_letters + latin_letters
 
     # Ordinal must be a separate "word":
     # - preceded only by start-of-string or whitespace
@@ -124,15 +89,15 @@ def valid_name() -> str:
     return alpha_or_ord + name_chars + r"," + name_chars
 
 
-def valid_authors(authors: str) -> bool:
-    name = valid_name()
+def valid_authors(authors: str, allow_all_ascii: bool = False) -> bool:
+    name = valid_name(allow_all_ascii)
     pattern = rf"{name}(;{name})*;?"
 
     return re.fullmatch(pattern, authors) is not None
 
 
-def get_invalid_author_names(authors: str) -> list[str]:
-    pattern = re.compile(f"^{valid_name()}$")
+def get_invalid_author_names(authors: str, allow_all_ascii: bool = False) -> list[str]:
+    pattern = re.compile(f"^{valid_name(allow_all_ascii)}$")
     invalid = []
     for author in authors.split(";"):
         if author and pattern.fullmatch(author) is None:
@@ -201,34 +166,12 @@ def format_authors(authors: str) -> str:
     return "; ".join(loculus_authors).strip()
 
 
-def _internal_error_message(message: str) -> str:
-    full = f"Internal Error. {message} Please contact the administrator."
-    logger.error(full)
-    return full
-
-
-def raw_internal_error(message: str) -> RawProcessingResult:
-    return processing_error(_internal_error_message(message))
-
-
 def regex_error(
     function_name: str, function_arg: str, input_data: InputMetadata, args: FunctionArgs
 ) -> RawProcessingResult:
     return raw_internal_error(
         f"{function_name} did not receive a valid {function_arg}, with input {input_data} and args {args}."
     )
-
-
-def missing_taxonomy_service_error() -> RawProcessingResult:
-    return raw_internal_error("taxonomy_service_url was not configured.")
-
-
-def taxonomy_network_error(
-    subject: str,
-    action: str,
-    e: Exception,
-) -> RawProcessingResult:
-    return raw_internal_error(f"Network error while {action} '{subject}': {e}.")
 
 
 @dataclass
@@ -322,13 +265,15 @@ def derive_date_range_string(lower: datetime, upper: datetime) -> str:
 
 class ProcessingFunctions:
     @classmethod
-    def call_function(
+    def call_function(  # noqa: PLR0913, PLR0917
         cls,
         function_name: str,
         args: FunctionArgs,
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
+        context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> ProcessingResult:
         if not hasattr(cls, function_name):
             msg = (
@@ -338,7 +283,14 @@ class ProcessingFunctions:
             raise ValueError(msg)
         func = getattr(cls, function_name)
         try:
-            result = func(input_data, output_field, input_fields=input_fields, args=args)
+            result = func(
+                input_data,
+                output_field,
+                input_fields=input_fields,
+                args=args,
+                context=context,
+                external_services=external_services,
+            )
         except Exception as e:
             result = raw_internal_error(
                 f"{function_name} raised an unexpected exception for output field '{output_field}': {e}. "
@@ -383,11 +335,13 @@ class ProcessingFunctions:
         return result
 
     @staticmethod
-    def check_date(
+    def check_date(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,  # args is essential - even if Pylance says it's not used
+        context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Check that date is complete YYYY-MM-DD
         If not according to format return error
@@ -411,11 +365,13 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def parse_date_into_range(  # noqa: C901, PLR0912, PLR0915
+    def parse_date_into_range(  # noqa: C901, PLR0912, PLR0913, PLR0915, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,  # args is essential - even if Pylance says it's not used
+        context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """
         Parse date string (`input.date`) with input formats:
@@ -442,10 +398,11 @@ class ProcessingFunctions:
             release_date = None
 
         try:
-            submitted_at = datetime.fromtimestamp(float(str(args["submittedAt"])), tz=pytz.utc)
+            submitted_at = datetime.fromtimestamp(float(context.submitted_at), tz=pytz.utc)
         except Exception:
             return raw_internal_error(
-                f"parse_into_ranges did not receive a valid submittedAt date, with input {input_data} and args {args}."
+                "parse_into_ranges did not receive a valid submittedAt date, with input "
+                f"{input_data} and submitted_at {context.submitted_at!r}."
             )
 
         max_upper_limit = min(submitted_at, release_date) if release_date else submitted_at
@@ -566,11 +523,13 @@ class ProcessingFunctions:
         return RawProcessingResult(datum=return_value, warnings=warnings, errors=errors)
 
     @staticmethod
-    def parse_and_assert_past_date(  # noqa: C901
+    def parse_and_assert_past_date(  # noqa: C901, PLR0913, PLR0917
         input_data: InputMetadata,
         output_field,
         input_fields: list[str],
         args: FunctionArgs,  # args is essential - even if Pylance says it's not used
+        context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Parse date string. If it's incomplete, add 01-01, if no year, return null and error
         input_data:
@@ -630,11 +589,13 @@ class ProcessingFunctions:
         return processing_error(f"Metadata field {output_field}: Date format is not recognized.")
 
     @staticmethod
-    def parse_timestamp(
+    def parse_timestamp(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,  # args is essential - even if Pylance says it's not used
+        context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
         timestamp = input_data["timestamp"]
@@ -651,11 +612,13 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def concatenate(
+    def concatenate(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
+        context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Concatenates input fields using the "/" separator in the order
         specified by the order argument. Optionally, a 'fallback_value' argument can be provided.
@@ -665,12 +628,7 @@ class ProcessingFunctions:
         warnings: list[str] = []
         errors: list[str] = []
 
-        if not isinstance(args["ACCESSION_VERSION"], str):
-            return raw_internal_error(
-                f"concatenate did not receive a valid ACCESSION_VERSION (got: {args['ACCESSION_VERSION']!r})."
-            )
-
-        accession_version: str = args["ACCESSION_VERSION"]
+        accession_version = context.accession_version
         order = args["order"]
         field_types = args["type"]
         fallback_value = (
@@ -701,7 +659,12 @@ class ProcessingFunctions:
             for i in range(len(order)):
                 if field_types[i] == "date":
                     processed = ProcessingFunctions.parse_and_assert_past_date(
-                        {"date": input_data[order[i]]}, output_field, input_fields, args
+                        {"date": input_data[order[i]]},
+                        output_field,
+                        input_fields,
+                        args,
+                        context,
+                        external_services,
                     )
                     formatted_input_data.append(
                         fallback_value
@@ -729,7 +692,12 @@ class ProcessingFunctions:
                     )
                 elif field_types[i] == "timestamp":
                     processed = ProcessingFunctions.parse_timestamp(
-                        {"timestamp": input_data[order[i]]}, output_field, input_fields, args
+                        {"timestamp": input_data[order[i]]},
+                        output_field,
+                        input_fields,
+                        args,
+                        context,
+                        external_services,
                     )
                     formatted_input_data.append(
                         fallback_value
@@ -773,19 +741,25 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def check_authors(
+    def check_authors(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
+        context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         authors = input_data["authors"]
+        allow_all_ascii = context.is_insdc_ingest_group
 
+        allowed_characters = (
+            "ASCII characters" if allow_all_ascii else "ASCII alphabetical characters A-Z"
+        )
         author_format_description = (
             "Please ensure that "
             "authors are separated by semi-colons. Each author's name should be in the format "
             "'last name, first name;'. Last name(s) is mandatory, a comma is mandatory to "
-            "separate first names/initials from last name. Only ASCII alphabetical characters A-Z "
+            f"separate first names/initials from last name. Only {allowed_characters} "
             "are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.;' "
             "or 'Xu,;' if the first name is unknown."
         )
@@ -796,7 +770,7 @@ class ProcessingFunctions:
         if errors or warnings:
             return RawProcessingResult(warnings=warnings, errors=errors)
 
-        if valid_authors(authors):
+        if valid_authors(authors, allow_all_ascii):
             formatted_authors = format_authors(authors)
             if warn_potentially_invalid_authors(authors):
                 warnings.append(
@@ -810,7 +784,7 @@ class ProcessingFunctions:
                     "`Smith, Anna; Perez, Tom J.; Xu, X.L.`."
                 )
             return RawProcessingResult(datum=formatted_authors, warnings=warnings)
-        invalid_names = get_invalid_author_names(authors)
+        invalid_names = get_invalid_author_names(authors, allow_all_ascii)
         if invalid_names:
             names_to_show = "; ".join(f"'{name}'" for name in invalid_names[:3])
             if len(invalid_names) > 3:  # noqa: PLR2004
@@ -823,11 +797,13 @@ class ProcessingFunctions:
         return RawProcessingResult(errors=[error_message], warnings=warnings)
 
     @staticmethod
-    def extract_regex(
+    def extract_regex(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
+        context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """
         Extracts a substring from the `regex_field` using the provided regex `pattern`
@@ -867,11 +843,13 @@ class ProcessingFunctions:
         return RawProcessingResult(errors=errors)
 
     @staticmethod
-    def check_regex(
+    def check_regex(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
+        context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """
         Validates that the field regex_field matches the regex expression.
@@ -893,8 +871,13 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def identity(  # noqa: C901, PLR0912
-        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
+    def identity(  # noqa: C901, PLR0912, PLR0913, PLR0917
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+        context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Identity function, takes input_data["input"] and returns it as output"""
         if "input" not in input_data:
@@ -945,8 +928,13 @@ class ProcessingFunctions:
         return RawProcessingResult(datum=output_datum, errors=errors)
 
     @staticmethod
-    def process_options(
-        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
+    def process_options(  # noqa: PLR0913, PLR0917
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+        context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Checks that option is in options"""
         if "options" not in args or not isinstance(args["options"], list):
@@ -970,15 +958,20 @@ class ProcessingFunctions:
         if standardized_input_datum in options:
             output_datum = options[standardized_input_datum]
         # Allow ingested data to include fields not in options
-        elif args["is_insdc_ingest_group"]:
+        elif context.is_insdc_ingest_group:
             return RawProcessingResult(datum=input_datum, warnings=[error_msg])
         else:
             return processing_error(error_msg)
         return RawProcessingResult(datum=output_datum)
 
     @staticmethod
-    def is_above_threshold(
-        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
+    def is_above_threshold(  # noqa: PLR0913, PLR0917
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+        context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Flag if input value is above a threshold specified in args"""
         if "threshold" not in args:
@@ -999,8 +992,13 @@ class ProcessingFunctions:
         return RawProcessingResult(datum=(input > threshold))
 
     @staticmethod
-    def is_variant(
-        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
+    def is_variant(  # noqa: PLR0913, PLR0917
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+        context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Flag if number of mutations is above mutation rate (specified in args) times length"""
         if "mu" not in args:
@@ -1021,6 +1019,8 @@ class ProcessingFunctions:
                 output_field=output_field,
                 input_fields=input_fields,
                 args={"threshold": threshold},
+                context=context,
+                external_services=external_services,
             )
         except (ValueError, TypeError):
             return processing_error(
@@ -1033,8 +1033,13 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def assign_custom_lineage(  # noqa: C901
-        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
+    def assign_custom_lineage(  # noqa: C901, PLR0913, PLR0917
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+        context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """
         Assign flu lineage based on seg4 and seg6.
@@ -1084,6 +1089,8 @@ class ProcessingFunctions:
                     {"regex_field": references.get(segment, "")},
                     "output_field",
                     ["segment_name"],
+                    context,
+                    external_services,
                 ).datum
             logger.debug(f"Extracted lineages: {extracted_lineages} from references: {references}")
             if not ha_subtype or not na_subtype:
@@ -1114,31 +1121,35 @@ class ProcessingFunctions:
         return RawProcessingResult()
 
     @staticmethod
-    def build_display_name(  # noqa: C901
+    def build_display_name(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
+        context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
-        """Builds a displayName from input_fields. The identifier field in the displayName is based on
-        specimenCollectorSampleId or - if it is not set - submissionId.
+        """Builds a displayName from input_fields. The identifier field in the displayName is based
+        on specimenCollectorSampleId or - if it is not set - submissionId (direct submissions only).
 
         This method wraps ProcessingFunctions.concatenate(). Thus, it has the same required input
         args, as well as adding some additional checks and requirements:
-            - submissionId and specimenCollectorSampleId must be in the input_data
+            - specimenCollectorSampleId must be in the input_data
             - IDENTIFIER keyword must be in args['order'] and args['type']
-            - if the IDENTIFIER is in an unrecognized format, it will be replaced with the ACCESSION_VERSION
-            - if fallback_value is not in args, { 'fallback_value': 'unknown' } is added to the args before passing
-              them on to concatenate()
-            - for sequences ingested from INSDC, we do not try to parse the IDENTIFIER field using regex. We
-              will use the Isolate Name as IDENTIFIER field if it contains no slashes or spaces (otherwise we fall back to
-              ACCESSION_VERSION)
+            - the IDENTIFIER is resolved by trying specimenCollectorSampleId first, then
+              submissionId; if neither yields a usable value it is replaced with ACCESSION_VERSION
+            - if fallback_value is not in args, { 'fallback_value': 'unknown' } is added to the args
+              before passing them on to concatenate()
+            - for sequences ingested from INSDC, we do not try to parse the IDENTIFIER field using
+              regex. We will use the Isolate Name as IDENTIFIER field if it contains no slashes or
+              spaces (otherwise we fall back to ACCESSION_VERSION)
+            - if regex_pattern is provided, human_readable_pattern must also be provided. It is a
+              submitter-friendly rendering of the pattern to show in error messages
+              (e.g. '<any>/<any>/<identifier>/<date>')
         """
         collector_id = input_data.get("specimenCollectorSampleId", None)
-        submission_id = input_data.get("submissionId", None)
+        submission_id = context.submission_id
         warnings: list[str] = []
-        if submission_id is None:
-            return raw_internal_error("'submissionId' must not be None for build_display_name().")
 
         order = args.get("order")
         field_types = args.get("type")
@@ -1153,54 +1164,55 @@ class ProcessingFunctions:
             )
 
         regex_pattern = args.get("regex_pattern")
-        if (
-            regex_pattern is not None
-            and "identifier" not in re.compile(str(regex_pattern)).groupindex
-        ):
+        regex_pattern = str(regex_pattern) if regex_pattern is not None else None
+        if regex_pattern is not None and "identifier" not in re.compile(regex_pattern).groupindex:
             return raw_internal_error(
                 "If provided, 'regex_pattern' must contain a named capture group called 'identifier'."
+            )
+
+        human_readable_pattern = args.get("human_readable_pattern")
+        human_readable_pattern = (
+            str(human_readable_pattern) if human_readable_pattern is not None else None
+        )
+        if regex_pattern is not None and human_readable_pattern is None:
+            return raw_internal_error(
+                "If 'regex_pattern' is provided, 'human_readable_pattern' must also be provided."
             )
 
         concatenate_order = order.copy()
         concatenate_field_types = field_types.copy()
 
+        insdc_ingested = context.is_insdc_ingest_group
+
+        # Try to parse the specimenCollectorSampleId first
+        identifier = parse_identifier_string(
+            collector_id, insdc_ingested, regex_pattern, context, external_services
+        )
+        if identifier is None and not insdc_ingested:
+            # For direct submissions only: try to parse the submissionId
+            # Don't do this for ingested since there the submissionId is just the
+            # (concatenation of) nuccore accession(s) of the sequence(s)
+            identifier = parse_identifier_string(
+                submission_id, insdc_ingested, regex_pattern, context, external_services
+            )
+
         def replace_identifier(values, replacement):
             return [replacement if v == "IDENTIFIER" else v for v in values]
 
-        identifier: ProcessedMetadataValue = collector_id or submission_id
-        if not isinstance(identifier, str):
-            identifier = None
-        elif args["is_insdc_ingest_group"]:
-            # For INSDC ingested sequence: use ID as is unless it contains ' ' or '/'
-            # If it does: fall back to ACCESSION_VERSION
-            if " " in identifier or "/" in identifier:
-                identifier = None
-        elif "/" in identifier:
-            # For direct submissions with "/": try to extract ID field using regex
-            if regex_pattern is None:
-                identifier = None
-            else:
-                extract_result = ProcessingFunctions.extract_regex(
-                    input_data={"regex_field": identifier},
-                    output_field="IDENTIFIER",
-                    input_fields=[],
-                    args={"pattern": regex_pattern, "capture_group": "identifier"},
+        if identifier is not None:
+            # We were able to parse an IDENTIFIER, treat it as a string
+            concatenate_field_types = replace_identifier(field_types, "string")
+            input_data["IDENTIFIER"] = identifier
+        else:
+            # Unable to parse specimenCollectorSampleId and submissionID, use ACCESSION_VERSION
+            if not insdc_ingested and regex_pattern is not None:
+                warnings.append(
+                    f"specimenCollectorSampleId and submissionId could not be parsed, using "
+                    f"ACCESSION_VERSION in displayName instead. To include your own identifier, "
+                    f"remove whitespace and '/' characters or use the format '{human_readable_pattern}' and we will parse the `identifier` from the submission."
                 )
-                if extract_result.datum is None:
-                    # regex extraction of ID field failed, fall back to ACCESSION_VERSION
-                    warnings.append(
-                        f"identifier string '{identifier}' could not be parsed, using ACCESSION_VERSION in displayName instead"
-                    )
-                identifier = extract_result.datum
-
-        if identifier is None:
-            # Use ACCESSION_VERSION instead of IDENTIFIER
             concatenate_order = replace_identifier(order, "ACCESSION_VERSION")
             concatenate_field_types = replace_identifier(field_types, "ACCESSION_VERSION")
-        else:
-            # Keep IDENTIFIER but treat it as string
-            concatenate_field_types = replace_identifier(field_types, "string")
-            input_data["IDENTIFIER"] = str(identifier)
 
         new_args = args.copy()
         new_args.update(
@@ -1208,7 +1220,6 @@ class ProcessingFunctions:
                 "order": concatenate_order,
                 "type": concatenate_field_types,
                 "fallback_value": args.get("fallback_value", "unknown"),
-                "ACCESSION_VERSION": args["ACCESSION_VERSION"],
             }
         )
 
@@ -1217,6 +1228,8 @@ class ProcessingFunctions:
             output_field,
             input_fields,
             new_args,
+            context,
+            external_services,
         )
 
         return RawProcessingResult(
@@ -1226,11 +1239,13 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def resolve_host_taxon_id(
+    def resolve_host_taxon_id(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
+        context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Validates that the host exists
         in NCBI's taxonomy. Checks either the hostTaxonId or the
@@ -1242,124 +1257,45 @@ class ProcessingFunctions:
         return the tax_id of the most generic taxon (i.e., the one that's closest to
         the root of the taxonomy)
         """
-        tax_service = args.get("taxonomy_service_url")
-        if not tax_service:
-            return missing_taxonomy_service_error()
-
         unvalidated_host = input_data.get("host")
         if not unvalidated_host:
             return RawProcessingResult()
 
-        if unvalidated_host.isdigit():
-            url = f"{tax_service}/taxa/{unvalidated_host}"
-        else:
-            query = urllib.parse.urlencode({"scientific_name": unvalidated_host})
-            url = f"{tax_service}/taxa?{query}"
-
-        try:
-            response = taxonomy_cache.get_or_fetch(url)
-            body = response.json()
-        except requests.exceptions.RequestException as e:
-            return taxonomy_network_error(unvalidated_host, "validating", e)
-
-        if response.status_code != requests.codes.ok:
-            # an invalid host organism is a warning for INSDC ingested sequences, but an error for everyone else
-            message = f"Host validation for '{unvalidated_host}' failed with code {response.status_code}: {body.get('detail', '')}"
-            return RawProcessingResult(
-                datum=None,
-                warnings=[message] if args["is_insdc_ingest_group"] else [],
-                errors=[message] if not args["is_insdc_ingest_group"] else [],
-            )
-
-        if isinstance(body, list):
-            # when querying by scientific name, multiple taxa may be returned: select the most generic one
-            taxon = min(body, key=lambda x: x.get("depth", float("inf")))
-        else:
-            taxon = body
-
-        tax_id = taxon.get("tax_id")
-        if tax_id is None:
-            return raw_internal_error(
-                f"Host validation for '{unvalidated_host}' was successful but response json 'tax_id' was missing."
-            )
-
-        return RawProcessingResult(datum=str(tax_id))
+        return external_services.taxonomy_service.get_tax_id(
+            unvalidated_host, not context.is_insdc_ingest_group
+        )
 
     @staticmethod
-    def scientific_name_from_id(
+    def scientific_name_from_id(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
+        context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
-        tax_service = args.get("taxonomy_service_url")
-        if not tax_service:
-            return missing_taxonomy_service_error()
-
         tax_id: str | None = input_data.get("hostTaxonId")
         if not tax_id:
             return RawProcessingResult()
 
-        url = f"{tax_service}/taxa/{tax_id}"
-        try:
-            response = taxonomy_cache.get_or_fetch(url)
-            body = response.json()
-        except requests.exceptions.RequestException as e:
-            return taxonomy_network_error(tax_id, "validating", e)
-
-        if response.status_code != requests.codes.ok:
-            message = f"Could not map '{tax_id}' to scientific name. Code {response.status_code}: {body.get('detail', '')}"
-            logger.warning(message)
-            return RawProcessingResult(
-                datum=None,
-                warnings=[message] if args["is_insdc_ingest_group"] else [],
-                errors=[message] if not args["is_insdc_ingest_group"] else [],
-            )
-
-        scientific_name = body.get("scientific_name")
-        if scientific_name is None:
-            return raw_internal_error(
-                f"'{tax_id}' is a valid taxon ID but response json had no 'scientific_name'."
-            )
-
-        return RawProcessingResult(datum=scientific_name)
+        return external_services.taxonomy_service.get_scientific_name(
+            tax_id, not context.is_insdc_ingest_group
+        )
 
     @staticmethod
-    def common_name_from_id(
+    def common_name_from_id(  # noqa: PLR0913, PLR0917
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
         args: FunctionArgs,
+        context: ProcessingContext,
+        external_services: ExternalServices,
     ) -> RawProcessingResult:
-        tax_service = args.get("taxonomy_service_url")
-        if not tax_service:
-            return missing_taxonomy_service_error()
-
         tax_id: str | None = input_data.get("hostTaxonId")
         if not tax_id:
             return RawProcessingResult()
 
-        url = f"{tax_service}/taxa/{tax_id}?find_common_name=true"
-        try:
-            response = taxonomy_cache.get_or_fetch(url)
-            body = response.json()
-        except requests.exceptions.RequestException as e:
-            return taxonomy_network_error(tax_id, "getting common name for", e)
-
-        if response.status_code != requests.codes.ok:
-            return RawProcessingResult(
-                warnings=[
-                    f"Could not map '{tax_id}' to common name. Code {response.status_code}: {body.get('detail', '')}"
-                ],
-            )
-
-        common_name = body.get("common_name")
-        if common_name is None:
-            return raw_internal_error(
-                f"Taxonomy service indicated common name was found for hostTaxonId '{tax_id}', but failed to return it."
-            )
-
-        return RawProcessingResult(datum=common_name)
+        return external_services.taxonomy_service.get_common_name(tax_id)
 
 
 def single_metadata_annotation(
@@ -1575,6 +1511,43 @@ def process_phenotype_values(input: str | None, args: FunctionArgs | None) -> In
             ),
         )
     return InputData(datum=None)
+
+
+def parse_identifier_string(
+    input: ProcessedMetadataValue,
+    insdc_ingested: bool,
+    regex_pattern: str | None,
+    context: ProcessingContext,
+    external_services: ExternalServices,
+) -> str | None:
+    """Return an IDENTIFIER string to use in the displayName or None if `input` cannot be used
+    as an identifier.
+    """
+    if not isinstance(input, str) or not input.strip():
+        return None
+    has_forbidden_char = any(c.isspace() for c in input) or "/" in input
+
+    if insdc_ingested:
+        # For INSDC ingested sequences: use the value as-is unless it contains whitespace or '/'
+        # Don't attempt to parse these as the format on INSDC isolate names is very inconsistent
+        return None if has_forbidden_char else input
+
+    if not has_forbidden_char:
+        # Direct submission without forbidden_char: use the value as-is, no regex parsing
+        return input
+
+    # Direct submission containing forbidden_char: attempt regex extraction of identifier field
+    if regex_pattern is None:
+        return None
+    extract_result = ProcessingFunctions.extract_regex(
+        input_data={"regex_field": input},
+        output_field="IDENTIFIER",
+        input_fields=[],
+        args={"pattern": regex_pattern, "capture_group": "identifier"},
+        context=context,
+        external_services=external_services,
+    )
+    return None if extract_result.datum is None else str(extract_result.datum)
 
 
 def trim_ns(sequence: str) -> str:

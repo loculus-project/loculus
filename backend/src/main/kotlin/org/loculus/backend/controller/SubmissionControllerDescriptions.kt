@@ -34,12 +34,6 @@ the headers of the fasta file must be added in a '$FASTA_IDS_SEPARATOR'-separate
 field in the metadata file.
 """
 
-const val FILE_MAPPING_DESCRIPTION = """
-A JSON object. `{submissionID: {<fileCategory>: [{fileId: <fileId>, name: <fileName>}]}}`.
-Files first need to be uploaded. Request pre-signed URLs to upload files using the
-'/files/request-upload' endpoint.
-"""
-
 const val GROUP_ID_DESCRIPTION = """
 The group id of the submitting group which the user is a member of.
 A submitting group is a set of users that share access to the same sequence entries.
@@ -104,11 +98,12 @@ that don't have any processing errors.
 """
 
 const val REVOKE_DESCRIPTION = """
-Revoke existing sequence entry. 
-Creates a new revocation version and stages it for confirmation. 
-If successfully, this returns the accessions, versions and status of the revocation versions.
-If any of the given sequence entries do not exist, or do not have the latest version in status 'APPROVED_FOR_RELEASE', 
-or the given user has no right to the sequence entry, this will return an error and roll back the whole transaction.
+Revoke existing sequence entry.
+Creates a new revocation version and stages it for confirmation.
+If successful, this returns the accessions, versions and status of the revocation versions.
+If any of the given sequence entries do not exist, or do not have the latest version in status 'APPROVED_FOR_RELEASE',
+or the latest version is itself a revocation, or the given user has no right to the sequence entry,
+this will return an error and roll back the whole transaction.
 """
 
 const val REVISE_RESPONSE_DESCRIPTION = """

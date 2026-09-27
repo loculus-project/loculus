@@ -1,7 +1,5 @@
 package org.loculus.backend.controller
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.headers.Header
@@ -14,7 +12,7 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
 import mu.KotlinLogging
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionsFilterWithApprovalScope
 import org.loculus.backend.api.AccessionVersionsFilterWithDeletionScope
@@ -31,7 +29,6 @@ import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.SequenceEntryVersionToEdit
 import org.loculus.backend.api.Status
-import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
@@ -42,6 +39,13 @@ import org.loculus.backend.controller.LoculusCustomHeaders.X_TOTAL_RECORDS
 import org.loculus.backend.log.ORGANISM_MDC_KEY
 import org.loculus.backend.log.REQUEST_ID_MDC_KEY
 import org.loculus.backend.log.RequestIdContext
+import org.loculus.backend.metrics.EXTRACT_UNPROCESSED_DATA_ENDPOINT
+import org.loculus.backend.metrics.GET_RELEASED_DATA_ENDPOINT
+import org.loculus.backend.metrics.GET_SUBMITTED_DATA_ENDPOINT
+import org.loculus.backend.metrics.GET_SUBMITTED_METADATA_ENDPOINT
+import org.loculus.backend.metrics.STREAM_SUBMITTED_DATA_PHASE
+import org.loculus.backend.metrics.SubmissionMetrics
+import org.loculus.backend.metrics.readPhaseForEndpoint
 import org.loculus.backend.model.ACCESSION_HEADER
 import org.loculus.backend.model.FASTA_IDS_HEADER
 import org.loculus.backend.model.FASTA_IDS_SEPARATOR
@@ -101,9 +105,9 @@ open class SubmissionController(
     private val iteratorStreamer: IteratorStreamer,
     private val requestIdContext: RequestIdContext,
     private val backendConfig: BackendConfig,
-    private val objectMapper: ObjectMapper,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
+    private val submissionMetrics: SubmissionMetrics,
 ) {
     @Operation(description = SUBMIT_DESCRIPTION)
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
@@ -125,21 +129,18 @@ open class SubmissionController(
                 " It is the date when the sequence entries will become 'OPEN'." +
                 " Format: YYYY-MM-DD",
         ) @RequestParam restrictedUntil: String?,
-        @Parameter(description = FILE_MAPPING_DESCRIPTION) @RequestPart(required = false) fileMapping: String?,
     ): List<SubmissionIdMapping> {
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
         val dataUseTerms = dataUseTermsPreconditionValidator.constructDataUseTermsAndValidate(
             dataUseTermsType,
             restrictedUntil,
         )
-        val fileMappingParsed = parseFileMapping(fileMapping, organism)
 
         val params = SubmissionParams.OriginalSubmissionParams(
             organism,
             authenticatedUser,
             metadataFile,
             sequenceFile,
-            fileMappingParsed,
             groupId,
             dataUseTerms,
         )
@@ -154,15 +155,12 @@ open class SubmissionController(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @Parameter(description = REVISED_METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
         @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile?,
-        @Parameter(description = FILE_MAPPING_DESCRIPTION) @RequestPart(required = false) fileMapping: String?,
     ): List<SubmissionIdMapping> {
-        val fileMappingParsed = parseFileMapping(fileMapping, organism)
         val params = SubmissionParams.RevisionSubmissionParams(
             organism,
             authenticatedUser,
             metadataFile,
             sequenceFile,
-            fileMappingParsed,
         )
         return submitModel.processSubmissions(UUID.randomUUID().toString(), params)
     }
@@ -201,23 +199,40 @@ open class SubmissionController(
         @RequestParam pipelineVersion: Long,
         @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
+        val requestStartNanos = System.nanoTime()
         val currentProcessingPipelineVersion = submissionDatabaseService.getCurrentProcessingPipelineVersion(organism)
         if (pipelineVersion < currentProcessingPipelineVersion) {
+            submissionMetrics.recordPollingRequest(
+                EXTRACT_UNPROCESSED_DATA_ENDPOINT,
+                organism.name,
+                HttpStatus.UNPROCESSABLE_CONTENT,
+                requestStartNanos,
+            )
             throw UnprocessableEntityException(
                 "The processing pipeline version $pipelineVersion is not accepted " +
                     "anymore. The current pipeline version is $currentProcessingPipelineVersion.",
             )
         }
 
-        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag()
+        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(organism = organism)
         if (ifNoneMatch == lastDatabaseWriteETag) {
-            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
+            submissionMetrics.recordPollingRequest(
+                EXTRACT_UNPROCESSED_DATA_ENDPOINT,
+                organism.name,
+                HttpStatus.NOT_MODIFIED,
+                requestStartNanos,
+            )
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(lastDatabaseWriteETag).build()
         }
 
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
         headers.eTag = lastDatabaseWriteETag
-        val streamBody = streamTransactioned(endpoint = "extract-unprocessed-data", organism = organism) {
+        val streamBody = streamTransactioned(
+            endpoint = EXTRACT_UNPROCESSED_DATA_ENDPOINT,
+            organism = organism,
+            requestStartNanos = requestStartNanos,
+        ) {
             submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism, pipelineVersion)
         }
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
@@ -310,16 +325,16 @@ open class SubmissionController(
             ),
             Header(
                 name = "eTag",
-                description = "Last database write Etag",
-                schema = Schema(type = "integer"),
+                description = "Last database write Etag, combined with the current date",
+                schema = Schema(type = "string"),
             ),
         ],
     )
     @ApiResponse(
         responseCode = "304",
         description =
-        "No database changes since last request " +
-            "(Etag in HttpHeaders.IF_NONE_MATCH matches lastDatabaseWriteETag)",
+        "No database changes since last request, and the date has not changed " +
+            "(Etag in HttpHeaders.IF_NONE_MATCH matches lastDatabaseWriteETagWithDate)",
     )
     @GetMapping("/get-released-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun getReleasedData(
@@ -329,16 +344,23 @@ open class SubmissionController(
             description = "(Optional) Only retrieve all released data if Etag has changed.",
         ) @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<StreamingResponseBody> {
-        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
+        val requestStartNanos = System.nanoTime()
+        val lastDatabaseWriteETagWithDate = releasedDataModel.getLastDatabaseWriteETagWithDate(
             tableNames = RELEASED_DATA_RELATED_TABLES,
             organism = organism,
         )
-        if (ifNoneMatch == lastDatabaseWriteETag) {
-            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
+        if (ifNoneMatch == lastDatabaseWriteETagWithDate) {
+            submissionMetrics.recordPollingRequest(
+                GET_RELEASED_DATA_ENDPOINT,
+                organism.name,
+                HttpStatus.NOT_MODIFIED,
+                requestStartNanos,
+            )
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(lastDatabaseWriteETagWithDate).build()
         }
 
         val headers = HttpHeaders()
-        headers.eTag = lastDatabaseWriteETag
+        headers.eTag = lastDatabaseWriteETagWithDate
         headers.contentType = MediaType.APPLICATION_NDJSON
         compression?.let { headers.add(HttpHeaders.CONTENT_ENCODING, it.compressionName) }
 
@@ -350,7 +372,12 @@ open class SubmissionController(
         // We just need to make sure the etag used is from before the count
         // Alternatively, we could read once to file while counting and then stream the file
 
-        val streamBody = streamTransactioned(compression, endpoint = "get-released-data", organism = organism) {
+        val streamBody = streamTransactioned(
+            compressionFormat = compression,
+            endpoint = GET_RELEASED_DATA_ENDPOINT,
+            organism = organism,
+            requestStartNanos = requestStartNanos,
+        ) {
             releasedDataModel.getReleasedData(organism)
         }
         return ResponseEntity.ok().headers(headers).body(streamBody)
@@ -470,7 +497,11 @@ open class SubmissionController(
         // We just need to make sure the etag used is from before the count
         // Alternatively, we could read once to file while counting and then stream the file
 
-        val streamBody = streamTransactioned(compression, endpoint = "get-submitted-metadata", organism = organism) {
+        val streamBody = streamTransactioned(
+            compressionFormat = compression,
+            endpoint = GET_SUBMITTED_METADATA_ENDPOINT,
+            organism = organism,
+        ) {
             submissionDatabaseService.streamSubmittedMetadata(
                 authenticatedUser,
                 organism,
@@ -527,6 +558,11 @@ open class SubmissionController(
         val instanceConfig = backendConfig.getInstanceConfig(organism)
         val hasConsensusSequences = instanceConfig.schema.submissionDataTypes.consensusSequences
         val isMultiSegmented = instanceConfig.referenceGenome.nucleotideSequences.size > 1
+        val fileCategories = if (instanceConfig.schema.submissionDataTypes.files.enabled) {
+            instanceConfig.schema.submissionDataTypes.files.categories
+        } else {
+            emptyList()
+        }
 
         val streamBody = StreamingResponseBody { responseBodyStream ->
             val startTime = System.currentTimeMillis()
@@ -534,55 +570,63 @@ open class SubmissionController(
             MDC.put(ORGANISM_MDC_KEY, organism.name)
 
             try {
-                java.util.zip.ZipOutputStream(responseBodyStream).use { zipOut ->
-                    transaction {
-                        val data = submissionDatabaseService.streamSubmittedDataDownload(
-                            organism,
-                            body.groupId,
-                            body.accessionsFilter,
-                        ).toList()
+                submissionMetrics.timeReadPhase(
+                    GET_SUBMITTED_DATA_ENDPOINT,
+                    organism.name,
+                    STREAM_SUBMITTED_DATA_PHASE,
+                ) {
+                    try {
+                        java.util.zip.ZipOutputStream(responseBodyStream).use { zipOut ->
+                            transaction {
+                                val data = submissionDatabaseService.streamSubmittedDataDownload(
+                                    organism,
+                                    body.groupId,
+                                    body.accessionsFilter,
+                                ).toList()
 
-                        // metadataIds: the unique metadata ids in the same order as the original submission ids.
-                        // uniqueFastaIdsByEntry: per entry (in the same order), a map from the original FASTA id to
-                        // the unique FASTA id used in the download.
-                        val metadataIds = makeUniqueIds(data.map { it.submissionId })
-                        val uniqueFastaIdsByEntry =
-                            GetSubmittedDataHelpers.uniqueFastaIdsByEntry(data, isMultiSegmented)
+                                // metadataIds: unique ids in the same order as the original submission ids.
+                                // uniqueFastaIdsByEntry: per entry, maps the original to the unique FASTA id.
+                                val metadataIds = makeUniqueIds(data.map { it.submissionId })
+                                val uniqueFastaIdsByEntry =
+                                    GetSubmittedDataHelpers.uniqueFastaIdsByEntry(data, isMultiSegmented)
 
-                        zipOut.putNextEntry(java.util.zip.ZipEntry("metadata.tsv"))
-                        GetSubmittedDataHelpers.writeMetadataTsv(
-                            data,
-                            metadataIds,
-                            uniqueFastaIdsByEntry,
-                            zipOut,
-                            isMultiSegmented,
-                        )
-                        zipOut.closeEntry()
+                                zipOut.putNextEntry(java.util.zip.ZipEntry("metadata.tsv"))
+                                GetSubmittedDataHelpers.writeMetadataTsv(
+                                    data,
+                                    metadataIds,
+                                    uniqueFastaIdsByEntry,
+                                    zipOut,
+                                    isMultiSegmented,
+                                    fileCategories,
+                                )
+                                zipOut.closeEntry()
 
-                        if (hasConsensusSequences) {
-                            zipOut.putNextEntry(java.util.zip.ZipEntry("sequences.fasta"))
-                            GetSubmittedDataHelpers.writeSequencesFasta(
-                                data,
-                                metadataIds,
-                                uniqueFastaIdsByEntry,
-                                zipOut,
-                                isMultiSegmented,
-                            )
-                            zipOut.closeEntry()
+                                if (hasConsensusSequences) {
+                                    zipOut.putNextEntry(java.util.zip.ZipEntry("sequences.fasta"))
+                                    GetSubmittedDataHelpers.writeSequencesFasta(
+                                        data,
+                                        metadataIds,
+                                        uniqueFastaIdsByEntry,
+                                        zipOut,
+                                        isMultiSegmented,
+                                    )
+                                    zipOut.closeEntry()
+                                }
+                            }
                         }
+                    } catch (e: Exception) {
+                        val duration = System.currentTimeMillis() - startTime
+                        log.error(e) { "[get-submitted-data] Error after ${duration}ms: $e" }
+                        throw e
                     }
                 }
-            } catch (e: Exception) {
+
                 val duration = System.currentTimeMillis() - startTime
-                log.error(e) { "[get-submitted-data] Error after ${duration}ms: $e" }
-                throw e
+                log.info { "[get-submitted-data] Completed in ${duration}ms" }
             } finally {
                 MDC.remove(REQUEST_ID_MDC_KEY)
                 MDC.remove(ORGANISM_MDC_KEY)
             }
-
-            val duration = System.currentTimeMillis() - startTime
-            log.info { "[get-submitted-data] Completed in ${duration}ms" }
         }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
@@ -639,51 +683,47 @@ open class SubmissionController(
         compressionFormat: CompressionFormat? = null,
         endpoint: String,
         organism: Organism,
+        requestStartNanos: Long = System.nanoTime(),
         sequenceProvider: () -> Sequence<T>,
     ) = StreamingResponseBody { responseBodyStream ->
         val startTime = System.currentTimeMillis()
         MDC.put(REQUEST_ID_MDC_KEY, requestIdContext.requestId)
         MDC.put(ORGANISM_MDC_KEY, organism.name)
 
-        val outputStream = when (compressionFormat) {
-            CompressionFormat.ZSTD -> ZstdCompressorOutputStream(responseBodyStream)
-            null -> responseBodyStream
-        }
+        try {
+            submissionMetrics.timeReadPhase(endpoint, organism.name, readPhaseForEndpoint(endpoint)) {
+                val outputStream = when (compressionFormat) {
+                    CompressionFormat.ZSTD -> ZstdCompressorOutputStream(responseBodyStream)
+                    null -> responseBodyStream
+                }
 
-        outputStream.use { stream ->
-            transaction {
-                try {
-                    iteratorStreamer.streamAsNdjson(sequenceProvider(), stream)
-                } catch (e: Exception) {
-                    val duration = System.currentTimeMillis() - startTime
-                    log.error(e) {
-                        "[$endpoint] An unexpected error occurred while streaming after ${duration}ms, aborting the stream: $e"
+                outputStream.use { stream ->
+                    transaction {
+                        try {
+                            iteratorStreamer.streamAsNdjson(sequenceProvider(), stream)
+                        } catch (e: Exception) {
+                            val duration = System.currentTimeMillis() - startTime
+                            log.error(e) {
+                                "[$endpoint] An unexpected error occurred while streaming after " +
+                                    "${duration}ms, aborting the stream: $e"
+                            }
+                            stream.write(
+                                (
+                                    "An unexpected error occurred while streaming, aborting the stream: " +
+                                        "${e.message}"
+                                    ).toByteArray(),
+                            )
+                        }
                     }
-                    stream.write(
-                        "An unexpected error occurred while streaming, aborting the stream: ${e.message}".toByteArray(),
-                    )
                 }
             }
+
+            val duration = System.currentTimeMillis() - startTime
+            log.info { "[$endpoint] Streaming response completed in ${duration}ms" }
+            submissionMetrics.recordPollingRequest(endpoint, organism.name, HttpStatus.OK, requestStartNanos)
+        } finally {
+            MDC.remove(REQUEST_ID_MDC_KEY)
+            MDC.remove(ORGANISM_MDC_KEY)
         }
-
-        val duration = System.currentTimeMillis() - startTime
-        log.info { "[$endpoint] Streaming response completed in ${duration}ms" }
-
-        MDC.remove(REQUEST_ID_MDC_KEY)
-        MDC.remove(ORGANISM_MDC_KEY)
-    }
-
-    fun parseFileMapping(fileMapping: String?, organism: Organism): SubmissionIdFilesMap? {
-        val fileMappingParsed = fileMapping?.let {
-            if (!backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files.enabled) {
-                throw BadRequestException("the ${organism.name} organism does not support file submission.")
-            }
-            try {
-                objectMapper.readValue<SubmissionIdFilesMap>(it)
-            } catch (e: Exception) {
-                throw BadRequestException("Failed to parse file mapping.", e)
-            }
-        }
-        return fileMappingParsed
     }
 }

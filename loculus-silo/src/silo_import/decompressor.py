@@ -47,7 +47,7 @@ def analyze_ndjson(
         {name: set() for name in hierarchical_filters} if hierarchical_filters else {}
     )
 
-    try:  # noqa: PLW0717
+    try:  # ruff:ignore[too-many-statements-in-try-clause]
         for record in orjsonl.stream(path):
             record_count += 1
             metadata = record.get("metadata", {})  # type: ignore

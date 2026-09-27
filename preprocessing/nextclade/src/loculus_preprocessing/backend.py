@@ -17,9 +17,11 @@ import requests
 
 from .config import Config
 from .datatypes import (
+    FileCategory,
+    FileIdAndNameAndReadUrl,
     FileUploadInfo,
     ProcessedEntry,
-    UnprocessedData,
+    ProcessingContext,
     UnprocessedEntry,
 )
 from .processing_functions import trim_ns
@@ -74,7 +76,7 @@ def get_jwt(config: Config) -> str:
         raise Exception(error_msg)
 
 
-def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
+def parse_ndjson(ndjson_data: str, config: Config) -> Sequence[UnprocessedEntry]:
     entries: list[UnprocessedEntry] = []
     if len(ndjson_data) == 0:
         return entries
@@ -93,19 +95,31 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
             key: trim_ns(value) if value else None
             for key, value in unaligned_nucleotide_sequences.items()
         }
-        unprocessed_data = UnprocessedData(
-            submitter=json_object["submitter"],
-            group_id=json_object["groupId"],
-            submittedAt=json_object["submittedAt"],
-            submissionId=json_object["submissionId"],
+        submitted_files = json_object["data"].get("files")
+        file_mapping = (
+            {
+                FileCategory(category): [
+                    FileIdAndNameAndReadUrl(fileId=f["fileId"], name=f["name"], url=f.get("url"))
+                    for f in files
+                ]
+                for category, files in submitted_files.items()
+            }
+            if submitted_files
+            else None
+        )
+        entry = UnprocessedEntry(
+            context=ProcessingContext(
+                accession_version=f"{json_object['accession']}.{json_object['version']}",
+                group_id=int(json_object["groupId"]),
+                submitted_at=str(json_object["submittedAt"]),
+                submission_id=json_object["submissionId"],
+                insdc_ingest_group_id=config.insdc_ingest_group_id,
+            ),
             metadata=json_object["data"]["metadata"],
             unalignedNucleotideSequences=trimmed_unaligned_nucleotide_sequences
             if unaligned_nucleotide_sequences
             else {},
-        )
-        entry = UnprocessedEntry(
-            accessionVersion=f"{json_object['accession']}.{json_object['version']}",
-            data=unprocessed_data,
+            files=file_mapping,
         )
         entries.append(entry)
     return entries
@@ -137,7 +151,7 @@ def fetch_unprocessed_sequences(
             return etag, None
         case HTTPStatus.OK:
             try:
-                parsed_ndjson = parse_ndjson(response.text)
+                parsed_ndjson = parse_ndjson(response.text, config)
             except ValueError as e:
                 logger.error(f"[{request_id}] {e}")
                 time.sleep(10 * 1)

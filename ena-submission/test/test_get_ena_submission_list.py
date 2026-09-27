@@ -1,7 +1,9 @@
 # ruff: noqa: S101 (allow asserts in tests))
 import json
+import tempfile
 import unittest
 from collections.abc import Iterator
+from pathlib import Path
 from typing import Any
 from unittest.mock import ANY, Mock, patch
 
@@ -58,19 +60,22 @@ class GetSubmissionListTests(unittest.TestCase):
         mock_fetch_released_entries.side_effect = fake_fetch_released_entries
         mock_fetch_suppressed_accessions.return_value = {"LOC01.1"}
 
-        get_ena_submission_list.get_ena_submission_list.callback(config_file=str(CONFIG_FILE))  # type: ignore
-        mock_upload_file_with_comment.assert_called()
-        mock_upload_file_with_comment.assert_any_call(
-            ANY,
-            "cchf_ena_submission_list.json",
-            "http://localhost:8079: cchf - ENA Submission pipeline wants to submit 1 sequences",
-        )
-        assert mock_upload_file_with_comment.call_args.args[2].startswith(
-            "http://localhost:8079: cchf - ENA Submission pipeline found 1 sequences with ena"
-        )
-        json_diff(
-            mock_upload_file_with_comment.call_args_list[0].args[1], APPROVED_RELEASED_DATA_PATH
-        )
+        with tempfile.TemporaryDirectory() as output_dir:
+            get_ena_submission_list.get_ena_submission_list.callback(  # type: ignore
+                config_file=str(CONFIG_FILE), output_dir=output_dir
+            )
+            mock_upload_file_with_comment.assert_called()
+            mock_upload_file_with_comment.assert_any_call(
+                ANY,
+                Path(output_dir) / "cchf_ena_submission_list.json",
+                "http://localhost:8079: cchf - ENA Submission pipeline wants to submit 1 sequences",
+            )
+            assert mock_upload_file_with_comment.call_args.args[2].startswith(
+                "http://localhost:8079: cchf - ENA Submission pipeline found 1 sequences with ena"
+            )
+            json_diff(
+                mock_upload_file_with_comment.call_args_list[0].args[1], APPROVED_RELEASED_DATA_PATH
+            )
 
 
 if __name__ == "__main__":

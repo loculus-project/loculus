@@ -94,7 +94,7 @@ class DataUseTermsControllerTest(
     @Test
     fun `GIVEN non-existing accessions WHEN setting new data use terms THEN return unprocessable entity`() {
         client.changeDataUseTerms(DEFAULT_DATA_USE_CHANGE_REQUEST)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail", containsString("Accessions 1, 2 do not exist")),
@@ -199,7 +199,7 @@ class DataUseTermsControllerTest(
             DataUseTermsTestCase(
                 setupDataUseTerms = DataUseTerms.Open,
                 newDataUseTerms = DataUseTerms.Open,
-                expectedStatus = status().isUnprocessableEntity,
+                expectedStatus = status().isUnprocessableContent,
                 expectedContentType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
                 expectedDetailContains = "The data use terms have already been set to 'Open'",
             ),
@@ -213,7 +213,7 @@ class DataUseTermsControllerTest(
             DataUseTermsTestCase(
                 setupDataUseTerms = DataUseTerms.Open,
                 newDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
-                expectedStatus = status().isUnprocessableEntity,
+                expectedStatus = status().isUnprocessableContent,
                 expectedContentType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
                 expectedDetailContains = "Cannot change data use terms from OPEN to RESTRICTED.",
             ),
@@ -228,7 +228,7 @@ class DataUseTermsControllerTest(
             DataUseTermsTestCase(
                 setupDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
                 newDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(7)),
-                expectedStatus = status().isUnprocessableEntity,
+                expectedStatus = status().isUnprocessableContent,
                 expectedContentType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
                 expectedDetailContains = "Cannot extend restricted data use period. " +
                     "Please choose a date before ${dateMonthsFromNow(6)}.",

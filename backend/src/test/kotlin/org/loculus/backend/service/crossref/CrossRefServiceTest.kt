@@ -101,6 +101,7 @@ class CrossRefServiceTest(
                             CitationContributor(givenName = "Jane", surname = "Doe"),
                             CitationContributor(givenName = "John", surname = "Smith"),
                         ),
+                        journal = "Journal of Citations",
                     ),
                     seqSetDOIs = setOf("10.1234/seqset-1"),
                 ),

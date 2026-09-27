@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-import subprocess  # noqa: S404
+import subprocess  # ruff:ignore[suspicious-subprocess-import]
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -14,10 +14,10 @@ class SiloRunner:
 
     def run_preprocessing(self, timeout_seconds: int) -> None:
         logger.info("Starting SILO preprocessing")
-        try:  # noqa: PLW0717
-            result = subprocess.run(  # noqa: S603
+        try:  # ruff:ignore[too-many-statements-in-try-clause]
+            result = subprocess.run(  # ruff:ignore[subprocess-without-shell-equals-true]
                 [str(self._silo_binary), "preprocessing"],
-                env={"SILO_PREPROCESSING_CONFIG": str(self._preprocessing_config)},
+                env={"RHYDB_PREPROCESSING_CONFIG": str(self._preprocessing_config)},
                 capture_output=True,
                 text=True,
                 timeout=timeout_seconds,

@@ -271,8 +271,8 @@ Once the suborganism is assigned, it runs Nextclade with the correct Nextclade d
       "matchingSuborganism-gene2": [...]
     },
     "files": {
-      "raw_reads": [],
-      "sequencing_logs": []
+      "rawReads": [],
+      "sequenceLogs": []
     }
   },
   "errors": [...],

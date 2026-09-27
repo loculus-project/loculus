@@ -1,29 +1,32 @@
 package org.loculus.backend.service.files
 
 import kotlinx.datetime.LocalDateTime
-import org.jetbrains.exposed.sql.IColumnType
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNotNull
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.kotlin.datetime.KotlinLocalDateTimeColumnType
-import org.jetbrains.exposed.sql.not
-import org.jetbrains.exposed.sql.statements.StatementType
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.v1.core.IColumnType
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.isNotNull
+import org.jetbrains.exposed.v1.core.neq
+import org.jetbrains.exposed.v1.core.not
+import org.jetbrains.exposed.v1.core.statements.StatementType
+import org.jetbrains.exposed.v1.datetime.KotlinLocalDateTimeColumnType
+import org.jetbrains.exposed.v1.jdbc.batchInsert
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.chunkedForDatabase
 import org.loculus.backend.utils.processInDatabaseSafeChunks
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.util.*
 
 @Service
 @Transactional
 class FilesDatabaseService(private val dateProvider: DateProvider) {
 
-    fun createFileEntry(fileId: UUID, uploader: String, groupId: Int, multipartUploadId: String? = null) {
+    fun createFileEntry(fileId: FileId, uploader: String, groupId: Int, multipartUploadId: String? = null) {
         val now = dateProvider.getCurrentDateTime()
         FilesTable.insert {
             it[idColumn] = fileId
@@ -34,7 +37,21 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         }
     }
 
-    fun deleteFileEntry(fileId: UUID) {
+    fun createFileEntries(fileIds: List<FileId>, uploader: String, groupId: Int) {
+        val now = dateProvider.getCurrentDateTime()
+        fileIds.processInDatabaseSafeChunks { chunk ->
+            FilesTable.batchInsert(chunk) { fileId ->
+                this[FilesTable.idColumn] = fileId
+                this[FilesTable.uploadRequestedAtColumn] = now
+                this[FilesTable.uploaderColumn] = uploader
+                this[FilesTable.groupIdColumn] = groupId
+                // Exposed does not apply DB-side defaults in batch inserts, so this has to be set explicitly.
+                this[FilesTable.multipartCompleted] = false
+            }
+        }
+    }
+
+    fun deleteFileEntry(fileId: FileId) {
         FilesTable.deleteWhere { FilesTable.idColumn eq fileId }
     }
 
@@ -77,7 +94,7 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
             -- archive_of_submitted_data and processed_data jsonb objects
             WITH referenced AS (
                 -- fetch ids for files uploaded by users and referenced in submissions
-                SELECT (fil->>'fileId')::uuid AS file_id
+                SELECT (fil->>'fileId') AS file_id
                 FROM sequence_entries se,
                     LATERAL (
                         VALUES
@@ -91,7 +108,7 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
                 UNION
                 -- also need to check processed_data since preprocessing
                 -- can create files that are never referenced in submissions
-                SELECT (fil->>'fileId')::uuid AS file_id
+                SELECT (fil->>'fileId') AS file_id
                 FROM sequence_entries_preprocessed_data sepd
                 JOIN sequence_entries se
                     ON se.accession = sepd.accession
@@ -112,7 +129,7 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
             ) { rs ->
                 buildList<DeletionCandidateFile> {
                     while (rs.next()) {
-                        val id = rs.getObject("id", UUID::class.java)
+                        val id = rs.getString("id")
                         val markedAt = rs.getTimestamp("marked_for_deletion_at")?.toLocalDateTime()?.let { ldt ->
                             LocalDateTime(
                                 ldt.year,

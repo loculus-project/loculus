@@ -4,6 +4,10 @@ import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream
+import org.loculus.backend.api.SubmissionIdFilesMap
+import org.loculus.backend.model.FILES_HEADER_PREFIX
+import org.loculus.backend.model.FILES_SEPARATOR
+import org.loculus.backend.model.FILE_NAME_ID_SEPARATOR
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.testutil.TestResource
 import org.loculus.backend.utils.Accession
@@ -151,6 +155,34 @@ object SubmitFiles {
             contentStream,
         )
     }
+}
+
+/**
+ * Returns a copy of this (uncompressed) metadata file with `files.<category>` columns stamped on,
+ * mirroring how MetadataEntry.kt's extractAndValidateFiles parses them: one column per file category,
+ * cell value is a space-separated list of `fileName:fileId` pairs. Rows for submissionIds not present
+ * in [fileMapping] get blank cells.
+ */
+fun MockMultipartFile.withFileMapping(fileMapping: SubmissionIdFilesMap): MockMultipartFile {
+    val lines = String(bytes).trim().split("\n")
+    val header = lines.first().split("\t")
+    val submissionIdIndex = header.indexOf("submissionId").let { if (it >= 0) it else header.indexOf("id") }
+    val categories = fileMapping.values.flatMap { it.keys }.toSet().sorted()
+
+    val newHeader = header + categories.map { "$FILES_HEADER_PREFIX$it" }
+    val newRows = lines.drop(1).map { line ->
+        val cells = line.split("\t")
+        val filesForRow = fileMapping[cells[submissionIdIndex]]
+        val fileCells = categories.map { category ->
+            filesForRow?.get(category)
+                ?.joinToString(FILES_SEPARATOR) { "${it.name}$FILE_NAME_ID_SEPARATOR${it.fileId}" }
+                ?: ""
+        }
+        (cells + fileCells).joinToString("\t")
+    }
+    val newContent = (listOf(newHeader.joinToString("\t")) + newRows).joinToString("\n")
+
+    return MockMultipartFile(name, originalFilename, contentType, newContent.toByteArray())
 }
 
 fun compressString(input: String, compressionAlgorithm: CompressionAlgorithm): ByteArray = try {

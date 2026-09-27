@@ -1,5 +1,5 @@
 import { isErrorFromAlias } from '@zodios/core';
-import { type FC, useState } from 'react';
+import { type FC, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { EditableSequences } from './EditableSequences.ts';
@@ -9,15 +9,31 @@ import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
-import { type FilesBySubmissionId, type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
-import { type InputField, type SubmissionDataTypes } from '../../types/config.ts';
-import { getLatestAccessionVersionForRevision, type SequenceEntryHistory } from '../../types/lapis.ts';
+import { type FilesByCategory, type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
+import { type FileSharingConfig, type InputField, type SubmissionDataTypes } from '../../types/config.ts';
+import {
+    getLatestAccessionVersionForRevision,
+    isLatestVersionRevocation,
+    type SequenceEntryHistory,
+} from '../../types/lapis.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString, parseAccessionVersionFromString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu.tsx';
 import { ExtraFilesUpload } from '../Submission/DataUploadForm.tsx';
+import {
+    applyFileMappings,
+    getSingleSubmissionFileMapping,
+    validateSubmissionFileMapping,
+} from '../Submission/FileUpload/fileMapping.ts';
+import { RawFile, type ProcessedFile } from '../Submission/FileUpload/fileProcessing.ts';
+import {
+    deriveFileMapping,
+    getPreviousFileUploadStates,
+    validateFileUploadStates,
+    type FileUploadState,
+} from '../Submission/FileUpload/fileUpload.ts';
 import { Button } from '../common/Button';
 import ErrorBox from '../common/ErrorBox';
 import { Spinner } from '../common/Spinner';
@@ -30,6 +46,7 @@ type EditPageProps = {
     accessToken: string;
     groupedInputFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
+    fileSharingConfig: FileSharingConfig;
     sequenceEntryHistory?: SequenceEntryHistory;
 };
 
@@ -55,6 +72,7 @@ const InnerEditPage: FC<EditPageProps> = ({
     accessToken,
     groupedInputFields,
     submissionDataTypes,
+    fileSharingConfig,
     sequenceEntryHistory,
 }) => {
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.fromInitialData(dataToEdit));
@@ -63,11 +81,11 @@ const InnerEditPage: FC<EditPageProps> = ({
     );
 
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
-    const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(() =>
-        extraFilesEnabled && dataToEdit.submittedData.files
-            ? { [dataToEdit.submissionId]: dataToEdit.submittedData.files }
-            : undefined,
+    const [fileUploadStates, setFileUploadStates] = useState<Map<string, FileUploadState>>(() =>
+        dataToEdit.submittedData.files ? getPreviousFileUploadStates(dataToEdit.submittedData.files) : new Map(),
     );
+
+    const fileMapping = useMemo(() => deriveFileMapping(fileUploadStates), [fileUploadStates]);
 
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
 
@@ -87,43 +105,83 @@ const InnerEditPage: FC<EditPageProps> = ({
         (message) => toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
-    const submitEditedDataForAccessionVersion = () => {
-        const fileMappingForSubmission = extraFilesEnabled ? fileMapping : undefined;
-
+    const submitEditedDataForAccessionVersion = async () => {
+        const missingSequencesError = `Submissions for organism '${organism}' must contain at least one consensus sequence.`;
         if (isCreatingRevision) {
             const fastaIds = submissionDataTypes.consensusSequences ? editableSequences.getFastaIds() : undefined;
             const metadataFile = editableMetadata.getMetadataTsv(
                 dataToEdit.submissionId,
                 dataToEdit.accession,
                 fastaIds,
+                submissionDataTypes.files?.categories,
             );
             if (metadataFile === undefined) {
                 toast.error('Please enter metadata.', { position: 'top-center', autoClose: false });
                 return;
             }
 
+            let mFile: ProcessedFile = new RawFile(metadataFile);
+
+            if (extraFilesEnabled && fileMapping !== undefined) {
+                const submissionFileMapping = getSingleSubmissionFileMapping(dataToEdit.submissionId, fileMapping);
+
+                const validation = validateSubmissionFileMapping(submissionFileMapping, fileSharingConfig);
+                if (validation.isErr()) {
+                    toast.error(validation.error.message, { position: 'top-center', autoClose: false });
+                    return;
+                }
+
+                const metadataWithFileMapping = await applyFileMappings(mFile, submissionFileMapping);
+                if (metadataWithFileMapping.isErr()) {
+                    toast.error(metadataWithFileMapping.error.message, { position: 'top-center', autoClose: false });
+                    return;
+                }
+                mFile = metadataWithFileMapping.value;
+            }
+
             if (!submissionDataTypes.consensusSequences) {
                 submitRevision({
-                    metadataFile,
-                    fileMapping: fileMappingForSubmission,
+                    metadataFile: mFile.inner(),
                 });
                 return;
             }
-            const sequenceFile = editableSequences.getSequenceFasta();
-            if (!sequenceFile) {
-                toast.error('Please enter a sequence.', {
+            if (editableSequences.hasNoSequences()) {
+                toast.error(missingSequencesError, {
                     position: 'top-center',
                     autoClose: false,
                 });
                 return;
             }
             submitRevision({
-                metadataFile,
-                sequenceFile,
-                fileMapping: fileMappingForSubmission,
+                metadataFile: mFile.inner(),
+                sequenceFile: editableSequences.getSequenceFasta(),
             });
         } else {
-            const fileMappingForEdit = fileMappingForSubmission?.[dataToEdit.submissionId] ?? null;
+            let fileMappingForEdit: FilesByCategory | null = null;
+            if (extraFilesEnabled && fileMapping !== undefined) {
+                const validation = validateSubmissionFileMapping(
+                    getSingleSubmissionFileMapping(dataToEdit.submissionId, fileMapping),
+                    fileSharingConfig,
+                );
+                if (validation.isErr()) {
+                    toast.error(validation.error.message, { position: 'top-center', autoClose: false });
+                    return;
+                }
+
+                fileMappingForEdit = Object.fromEntries(
+                    [...fileMapping].map(([category, files]) => [
+                        category,
+                        [...files.entries()].map(([path, fileId]) => ({ fileId, name: path })),
+                    ]),
+                );
+            }
+            if (submissionDataTypes.consensusSequences && editableSequences.hasNoSequences()) {
+                toast.error(missingSequencesError, {
+                    position: 'top-center',
+                    autoClose: false,
+                });
+                return;
+            }
             submitEdit({
                 accession: dataToEdit.accession,
                 version: dataToEdit.version,
@@ -134,6 +192,19 @@ const InnerEditPage: FC<EditPageProps> = ({
                 },
             });
         }
+    };
+
+    const handleSubmit = () => {
+        const fileUploadStateResult = validateFileUploadStates(fileUploadStates);
+        if (fileUploadStateResult.isErr()) {
+            toast.error(fileUploadStateResult.error.message, { position: 'top-center', autoClose: false });
+            return;
+        }
+
+        displayConfirmationDialog({
+            dialogText: 'Do you really want to submit?',
+            onConfirmation: submitEditedDataForAccessionVersion,
+        });
     };
 
     const isPending = isRevisionPending || isEditPending;
@@ -162,6 +233,11 @@ const InnerEditPage: FC<EditPageProps> = ({
                     />
                 )}
             </div>
+            {isCreatingRevision && isLatestVersionRevocation(sequenceEntryHistory) && (
+                <ErrorBox title='The latest version of this sequence is a revocation.' level='warning' className='mb-2'>
+                    <p className='mt-2'>Revising will create a new version that supersedes the revocation.</p>
+                </ErrorBox>
+            )}
             {isCreatingRevision &&
                 latestVersionForRevision !== undefined &&
                 dataToEdit.version < latestVersionForRevision && (
@@ -208,24 +284,15 @@ const InnerEditPage: FC<EditPageProps> = ({
                         inputMode='form'
                         groupId={dataToEdit.groupId}
                         fileCategories={submissionDataTypes.files?.categories ?? []}
-                        fileMapping={fileMapping}
-                        setFileMapping={setFileMapping}
-                        formSubmissionId={dataToEdit.submissionId}
+                        fileUploadStates={fileUploadStates}
+                        setFileUploadStates={setFileUploadStates}
                         onError={(msg) => toast.error(msg, { position: 'top-center', autoClose: false })}
+                        fileSharingConfig={fileSharingConfig}
                     />
                 </div>
             )}
             <div className={isCreatingRevision ? 'flex justify-end gap-x-6' : 'flex items-center gap-4 mt-4'}>
-                <Button
-                    variant='primary'
-                    onClick={() =>
-                        displayConfirmationDialog({
-                            dialogText: 'Do you really want to submit?',
-                            onConfirmation: submitEditedDataForAccessionVersion,
-                        })
-                    }
-                    disabled={isPending}
-                >
+                <Button variant='primary' onClick={handleSubmit} disabled={isPending}>
                     {isPending && <Spinner size='sm' className='mr-2' />}
                     {isCreatingRevision ? 'Upload and proceed to Approval' : 'Submit edits and proceed to Approval'}
                 </Button>

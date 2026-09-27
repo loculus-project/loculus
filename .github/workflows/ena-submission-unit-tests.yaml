@@ -30,7 +30,7 @@ jobs:
           micromamba-version: "latest"
           cache-environment: true
       - name: Run ruff format check
-        run: ruff check . --fix --diff
+        run: ruff format --diff .
   lint:
     name: Lint code
     runs-on: ubuntu-latest
@@ -65,4 +65,5 @@ jobs:
           # They require postgres to be running
             pytest \
             --ignore=./test/test_ena_submission_integration.py \
-            --ignore=./test/test_api.py
+            --ignore=./test/test_api.py \
+            --ignore=./test/test_schema_matches_models.py

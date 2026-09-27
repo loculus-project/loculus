@@ -5,6 +5,7 @@ import { RevisionForm } from '../../../../components/Submission/RevisionForm';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
 import {
     dataUseTermsAreEnabled,
+    getFileSharingConfig,
     getGroupedInputFields,
     getRuntimeConfig,
     getSchema,
@@ -23,13 +24,12 @@ const accession = Astro.url.searchParams.get('accession') || undefined;
 const version = Astro.url.searchParams.get('version') || undefined;
 
 if (!cleanedOrganism) {
-    return {
-        statusCode: 404,
-        body: 'Organism not found',
-    };
+    // undefined renders the configured Astro 404 page
+    // Note - this check is currently unused as middleware exists to check the organism, but useful for type-checking
+    return new Response(undefined, { status: 404 });
 }
 const schema = getSchema(cleanedOrganism.key);
-const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'revise', true);
+const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'revise', inputMode, true);
 
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 
@@ -50,6 +50,7 @@ const clientConfig = getRuntimeConfig().public;
                     inputMode={inputMode}
                     submissionDataTypes={schema.submissionDataTypes}
                     dataUseTermsEnabled={dataUseTermsAreEnabled()}
+                    fileSharingConfig={getFileSharingConfig()}
                     accession={accession}
                     version={version}
                     client:load

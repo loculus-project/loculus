@@ -29,10 +29,9 @@ function renderReviewPage() {
         <ReviewPage
             group={testGroup}
             organism={testOrganism}
-            metadataDisplayNames={new Map()}
+            metadataSchema={[]}
             accessToken={testAccessToken}
             clientConfig={testConfig.public}
-            filesEnabled={false}
             referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
         />,
     );

@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ToastContainer } from 'react-toastify';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import { EditPage } from './EditPage.tsx';
@@ -12,8 +13,13 @@ import {
     testAccessToken,
     testOrganism,
 } from '../../../vitest.setup.ts';
-import { type SubmittedMetadataRecord } from '../../types/backend.ts';
+import {
+    approvedForReleaseStatus,
+    type SequenceEntryToEdit,
+    type SubmittedMetadataRecord,
+} from '../../types/backend.ts';
 import type { InputField } from '../../types/config.ts';
+import type { SequenceEntryHistory, SequenceEntryHistoryEntry } from '../../types/lapis.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 const queryClient = new QueryClient();
@@ -31,10 +37,35 @@ const groupedInputFields = new Map<string, InputField[]>([
     ],
 ]);
 
+const revisionData: SequenceEntryToEdit = { ...defaultReviewData, status: approvedForReleaseStatus };
+
+const baseEntry: SequenceEntryHistoryEntry = {
+    submittedAtTimestamp: '',
+    accession: defaultReviewData.accession,
+    version: 1,
+    accessionVersion: `${defaultReviewData.accession}.1`,
+    versionStatus: 'LATEST_VERSION',
+    isRevocation: false,
+};
+
+const revisedHistory: SequenceEntryHistory = [
+    { ...baseEntry, versionStatus: 'REVISED' },
+    { ...baseEntry, accessionVersion: `${defaultReviewData.accession}.2`, version: 2 },
+];
+
+const revokedHistory: SequenceEntryHistory = [
+    { ...baseEntry, versionStatus: 'REVOKED' },
+    { ...baseEntry, accessionVersion: `${defaultReviewData.accession}.2`, version: 2, isRevocation: true },
+];
+
+const REVOKED_WARNING = 'The latest version of this sequence is a revocation.';
+const NOT_LATEST_WARNING = 'This is not the latest version of this sequence entry.';
+
 function renderEditPage({
     editedData = defaultReviewData,
     clientConfig = dummyConfig,
     allowSubmissionOfConsensusSequences = true,
+    sequenceEntryHistory = undefined as SequenceEntryHistory | undefined,
 } = {}) {
     render(
         <QueryClientProvider client={queryClient}>
@@ -48,7 +79,10 @@ function renderEditPage({
                     consensusSequences: allowSubmissionOfConsensusSequences,
                     maxSequencesPerEntry: 1,
                 }}
+                sequenceEntryHistory={sequenceEntryHistory}
+                fileSharingConfig={{ disableStrictFilenameValidation: false }}
             />
+            <ToastContainer />
         </QueryClientProvider>,
     );
 }
@@ -111,6 +145,48 @@ describe('EditPage', () => {
 
         await userEvent.click(undoButton!);
         expectTextInSequenceData.unprocessedMetadata(defaultReviewData.submittedData.metadata);
+    });
+
+    test('should refuse to submit edits when the sequence was discarded', async () => {
+        renderEditPage();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Discard file' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Submit edits and proceed to Approval' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+
+        expect(
+            await screen.findByText(
+                `Submissions for organism '${testOrganism}' must contain at least one consensus sequence.`,
+            ),
+        ).toBeVisible();
+    });
+
+    test('shows the revoked warning when revising an entry whose latest version is a revocation', () => {
+        renderEditPage({ editedData: revisionData, sequenceEntryHistory: revokedHistory });
+
+        expect(screen.getByText(REVOKED_WARNING)).toBeVisible();
+    });
+
+    test('shows no revoked warning when revising an entry whose latest version is not a revocation', () => {
+        renderEditPage({ editedData: revisionData, sequenceEntryHistory: revisedHistory });
+
+        expect(screen.queryByText(REVOKED_WARNING)).not.toBeInTheDocument();
+    });
+
+    test('shows the not latest version warning when revising from an earlier version', () => {
+        renderEditPage({ editedData: revisionData, sequenceEntryHistory: revisedHistory });
+
+        expect(screen.getByText(NOT_LATEST_WARNING)).toBeVisible();
+        expect(screen.getByRole('link', { name: 'here' })).toBeVisible();
+    });
+
+    test('shows no not latest version warning when revising from the latest version', () => {
+        renderEditPage({
+            editedData: { ...revisionData, version: 2 },
+            sequenceEntryHistory: revisedHistory,
+        });
+
+        expect(screen.queryByText(NOT_LATEST_WARNING)).not.toBeInTheDocument();
     });
 });
 

@@ -1,33 +1,44 @@
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { DateTime } from 'luxon';
-import { type FormEvent, useState, type Dispatch, type SetStateAction } from 'react';
+import type { Result } from 'neverthrow';
+import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo } from 'react';
 
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
+import { deriveFileMapping, validateFileUploadStates, type FileUploadState } from './FileUpload/fileUpload.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
+import { routes } from '../../routes/routes.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
+import { FILES_HEADER_PREFIX } from '../../settings.ts';
 import {
     type DataUseTermsOption,
     type Group,
     openDataUseTermsOption,
     restrictedDataUseTermsOption,
-    type FilesBySubmissionId,
 } from '../../types/backend.ts';
-import type { FileCategory, InputField } from '../../types/config.ts';
+import { type FileSharingConfig, type FileCategory, type InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
+import { dateTimeInMonths } from '../../utils/utcDates.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES } from '../SearchPage/DownloadDialog/DownloadSubmittedDataButton.tsx';
 import { Button } from '../common/Button';
 import { Checkbox } from '../common/Checkbox';
 import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
+import {
+    resolveFileMappings,
+    type CategoryLinkage,
+    type FileLinkage,
+    type SubmissionFileMapping,
+} from './FileUpload/fileMapping.ts';
+import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -44,6 +55,7 @@ type DataUploadFormProps = {
     onError: (message: string) => void;
     submissionDataTypes: SubmissionDataTypes;
     dataUseTermsEnabled: boolean;
+    fileSharingConfig: FileSharingConfig;
 };
 
 const logger = getClientLogger('DataUploadForm');
@@ -61,12 +73,17 @@ const InnerDataUploadForm = ({
     metadataTemplateFields,
     submissionDataTypes,
     dataUseTermsEnabled,
+    fileSharingConfig,
 }: DataUploadFormProps) => {
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
 
     const { submit, revise, isPending } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
-    const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(undefined);
+    const [fileUploadStates, setFileUploadStates] = useState<Map<string, FileUploadState>>(new Map());
+    const fileMapping = useMemo(() => deriveFileMapping(fileUploadStates), [fileUploadStates]);
+    const [submissionFileMapping, setSubmissionFileMapping] = useState<
+        Result<SubmissionFileMapping, Error> | undefined
+    >(undefined);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
@@ -74,17 +91,31 @@ const InnerDataUploadForm = ({
 
     const [confirmedNoPII, setConfirmedNoPII] = useState(false);
 
+    const fileLinkage = useMemo(
+        () =>
+            inputMode === 'bulk' && submissionFileMapping?.isOk()
+                ? resolveFileMappings(submissionFileMapping.value, fileMapping).fileLinkage
+                : undefined,
+        [inputMode, submissionFileMapping, fileMapping],
+    );
+
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
 
-        const sequenceDataResult = await fileFactory!();
-
-        if (sequenceDataResult.type === 'error') {
-            onError(sequenceDataResult.errorMessage);
+        const fileUploadStateResult = validateFileUploadStates(fileUploadStates);
+        if (fileUploadStateResult.isErr()) {
+            onError(fileUploadStateResult.error.message);
             return;
         }
 
-        const { metadataFile, sequenceFile, submissionId } = sequenceDataResult;
+        const sequenceDataResult = await fileFactory!();
+
+        if (sequenceDataResult.isErr()) {
+            onError(sequenceDataResult.error.message);
+            return;
+        }
+
+        const { metadataFile, sequenceFile, submissionId } = sequenceDataResult.value;
 
         if (submissionId === undefined && inputMode === 'form') {
             onError('No ID specified.');
@@ -103,12 +134,6 @@ const InnerDataUploadForm = ({
             return;
         }
 
-        let fileMappingWithSubmissionId = fileMapping;
-        // for single submission, use the submissionID that the user gave in the form
-        if (extraFilesEnabled && inputMode === 'form' && fileMapping !== undefined) {
-            fileMappingWithSubmissionId = { [submissionId!]: Object.values(fileMapping)[0] };
-        }
-
         const submitSequenceData = () => {
             switch (action) {
                 case 'submit': {
@@ -116,7 +141,6 @@ const InnerDataUploadForm = ({
                     submit({
                         metadataFile: metadataFile,
                         sequenceFile: sequenceFile,
-                        fileMapping: extraFilesEnabled ? fileMappingWithSubmissionId : undefined,
                         groupId,
                         dataUseTermsType,
                         restrictedUntil:
@@ -130,7 +154,6 @@ const InnerDataUploadForm = ({
                     revise({
                         metadataFile: metadataFile,
                         sequenceFile: sequenceFile,
-                        fileMapping: extraFilesEnabled ? fileMappingWithSubmissionId : undefined,
                     });
                     break;
             }
@@ -159,13 +182,24 @@ const InnerDataUploadForm = ({
                     groupId={group.groupId}
                     currentInputMode={inputMode}
                 />
+                {action === 'revise' && inputMode === 'bulk' && (
+                    <OriginalDataDownloadHint
+                        organism={organism}
+                        groupId={group.groupId}
+                        enableConsensusSequences={submissionDataTypes.consensusSequences}
+                    />
+                )}
                 <FormOrUploadWrapper
                     inputMode={inputMode}
                     setFileFactory={setFileFactory}
+                    setSubmissionFileMapping={setSubmissionFileMapping}
                     organism={organism}
                     action={action}
                     metadataTemplateFields={metadataTemplateFields}
                     submissionDataTypes={submissionDataTypes}
+                    onError={onError}
+                    fileSharingConfig={fileSharingConfig}
+                    fileMapping={fileMapping}
                 />
                 <hr />
                 {extraFilesEnabled && (
@@ -177,8 +211,10 @@ const InnerDataUploadForm = ({
                             clientConfig={clientConfig}
                             groupId={group.groupId}
                             onError={onError}
-                            fileMapping={fileMapping}
-                            setFileMapping={setFileMapping}
+                            fileUploadStates={fileUploadStates}
+                            setFileUploadStates={setFileUploadStates}
+                            fileLinkage={fileLinkage}
+                            fileSharingConfig={fileSharingConfig}
                         />
                         <hr />
                     </>
@@ -228,6 +264,32 @@ const InnerDataUploadForm = ({
 
 export const DataUploadForm = withQueryProvider(InnerDataUploadForm);
 
+/**
+ * Tells users revising sequences that they can get their originally submitted data back
+ * from the group's released sequences page, instead of having to reconstruct the files.
+ */
+const OriginalDataDownloadHint = ({
+    organism,
+    groupId,
+    enableConsensusSequences,
+}: {
+    organism: string;
+    groupId: number;
+    enableConsensusSequences: boolean;
+}) => (
+    <p className='text-gray-600 text-sm'>
+        To revise sequences you need to upload the new {enableConsensusSequences && 'sequences and '}metadata. You can
+        easily download your originally submitted data by opening your group's{' '}
+        <a href={routes.mySequencesPage(organism, groupId)} className='text-primary-600 hover:underline'>
+            released sequences
+        </a>{' '}
+        page, optionally selecting the sequences you want to revise, and using the{' '}
+        <i>Download originally submitted data</i> button, which covers up to {MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES}{' '}
+        sequences at a time. The zip file contains your original metadata (with the <i>accession</i> column already
+        filled in){enableConsensusSequences && ' and sequences'}, ready to edit and upload here.
+    </p>
+);
+
 export const InputModeTabs = ({
     action,
     organism,
@@ -273,51 +335,155 @@ export const InputModeTabs = ({
     );
 };
 
+const CategoryLinkageStatus = ({ categoryLinkage }: { categoryLinkage: CategoryLinkage | undefined }) => {
+    const statuses: {
+        key: string;
+        icon: string;
+        color: string;
+        count: number;
+        message: string;
+    }[] = useMemo(() => {
+        if (categoryLinkage === undefined) return [];
+        return [
+            {
+                key: 'linked',
+                icon: '✓',
+                color: 'text-green-500',
+                // Multiple metadata entries can reference the same file,
+                // so we want to count the number of unique files that are linked to metadata
+                count: Array.from(new Set(categoryLinkage.linked.map((file) => file.path))).length,
+                message: 'uploaded and linked to metadata!',
+            },
+            {
+                key: 'reused',
+                icon: '↺',
+                color: 'text-green-500',
+                count: categoryLinkage.reused.length,
+                message: 'reused from previous uploads.',
+            },
+            {
+                key: 'missing',
+                icon: '⚠',
+                color: 'text-yellow-600',
+                count: categoryLinkage.missing.length,
+                message: 'referenced in metadata but not uploaded.',
+            },
+            {
+                key: 'unreferenced',
+                icon: '⚠',
+                color: 'text-yellow-600',
+                count: categoryLinkage.orphaned.concat(categoryLinkage.shadowed).length,
+                message: 'uploaded but not referenced in metadata.',
+            },
+        ];
+    }, [categoryLinkage]);
+
+    return categoryLinkage ? (
+        <div className='text-xs text-gray-500 text-center space-y-1'>
+            {statuses
+                .filter((status) => status.count > 0)
+                .map((status) => (
+                    <div key={status.key}>
+                        <span className={status.color}>{status.icon}</span>{' '}
+                        {`${status.count} ${status.count === 1 ? 'file' : 'files'} ${status.message}`}
+                    </div>
+                ))}
+        </div>
+    ) : null;
+};
+
 export const ExtraFilesUpload = ({
     accessToken,
     clientConfig,
     inputMode,
     groupId,
     fileCategories,
-    fileMapping,
-    setFileMapping,
-    formSubmissionId,
+    fileUploadStates,
+    setFileUploadStates,
+    fileLinkage,
     onError,
+    fileSharingConfig,
 }: {
     accessToken: string;
     clientConfig: ClientConfig;
     inputMode: InputMode;
     groupId: number;
     fileCategories: FileCategory[];
-    fileMapping: FilesBySubmissionId | undefined;
-    setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
-    formSubmissionId?: string;
+    fileUploadStates: Map<string, FileUploadState>;
+    setFileUploadStates: Dispatch<SetStateAction<Map<string, FileUploadState>>>;
+    fileLinkage?: FileLinkage;
     onError: (message: string) => void;
+    fileSharingConfig: FileSharingConfig;
 }) => {
+    const singleFileCategory = fileCategories.length === 1 ? fileCategories[0] : undefined;
+    const singleFileCategoryDisplayName = singleFileCategory?.displayName ?? singleFileCategory?.name;
+
+    const setCategoryFileUploadState =
+        (category: string): Dispatch<SetStateAction<FileUploadState | undefined>> =>
+        (update) =>
+            setFileUploadStates((prev) => {
+                const next = typeof update === 'function' ? update(prev.get(category)) : update;
+                const map = new Map(prev);
+                if (next === undefined) map.delete(category);
+                else map.set(category, next);
+                return map;
+            });
+
     return (
         <div className='grid sm:grid-cols-3 gap-x-16 gap-y-4'>
             <div>
-                <h2 className='font-medium text-lg'>Extra files</h2>
+                <h2 className='font-medium text-lg'>
+                    {singleFileCategoryDisplayName !== undefined
+                        ? `${singleFileCategoryDisplayName} (optional)`
+                        : 'Extra files'}
+                </h2>
                 <p className='text-gray-500 text-sm'>
-                    {inputMode === 'bulk'
-                        ? 'The folder you select needs to contain one folder per sequence ID, which contains the files for that sequence entry'
-                        : 'Upload a folder of files for this sequence'}
+                    Upload a folder of files or individual files for{' '}
+                    {inputMode === 'bulk' ? 'your sequences' : 'this sequence'}
+                </p>
+                <p className='text-gray-400 text-xs mt-5'>
+                    {inputMode === 'bulk' && (
+                        <>
+                            Each file must be referenced by its name in the{' '}
+                            {singleFileCategory ? (
+                                <i>{`${FILES_HEADER_PREFIX}${singleFileCategory.name}`}</i>
+                            ) : (
+                                'corresponding file category'
+                            )}{' '}
+                            column of your metadata.{' '}
+                        </>
+                    )}
+                    For more information please refer to the{' '}
+                    <a
+                        href={extraFilesUploadDocsUrl}
+                        target='_blank'
+                        rel='noreferrer'
+                        className='text-primary-700 opacity-90'
+                    >
+                        {singleFileCategoryDisplayName?.toLowerCase() ?? 'extra files'} documentation
+                    </a>
+                    .
                 </p>
             </div>
             <div className='col-span-2 flex flex-col gap-4'>
                 {fileCategories.map((fileCategory) => (
-                    <FolderUploadComponent
-                        key={fileCategory.name}
-                        fileCategory={fileCategory}
-                        inputMode={inputMode}
-                        accessToken={accessToken}
-                        clientConfig={clientConfig}
-                        groupId={groupId}
-                        onError={onError}
-                        fileMapping={fileMapping}
-                        setFileMapping={setFileMapping}
-                        formSubmissionId={formSubmissionId}
-                    />
+                    <div className='space-y-2' key={fileCategory.name}>
+                        <FolderUploadComponent
+                            fileCategory={fileCategory}
+                            inputMode={inputMode}
+                            accessToken={accessToken}
+                            clientConfig={clientConfig}
+                            groupId={groupId}
+                            onError={onError}
+                            fileUploadState={fileUploadStates.get(fileCategory.name)}
+                            setFileUploadState={setCategoryFileUploadState(fileCategory.name)}
+                            fileSharingConfig={fileSharingConfig}
+                            showCategoryHeading={fileCategories.length > 1}
+                        />
+                        {inputMode === 'bulk' && (
+                            <CategoryLinkageStatus categoryLinkage={fileLinkage?.get(fileCategory.name)} />
+                        )}
+                    </div>
                 ))}
             </div>
         </div>
@@ -401,7 +567,7 @@ const Acknowledgement = ({
                     <p className='block text-sm'>
                         Your data will be available on {instanceName}, under the selected data use terms. Data with open
                         data use terms will additionally be made publicly available through the{' '}
-                        <a href='https://www.insdc.org/' className='text-primary-600 hover:underline'>
+                        <a href='https://www.insdc.org/' target='_blank' className='text-primary-600 hover:underline'>
                             INSDC
                         </a>{' '}
                         databases (ENA, DDBJ, NCBI).
@@ -439,6 +605,7 @@ const Acknowledgement = ({
                                     INSDC.{' '}
                                     <a
                                         href='/docs/concepts/insdc-submission'
+                                        target='_blank'
                                         className='text-primary-600 hover:underline'
                                     >
                                         Find out more.

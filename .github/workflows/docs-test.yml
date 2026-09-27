@@ -3,7 +3,8 @@ on:
   pull_request:
     paths:
       - "docs/**"
-      - .github/workflows/docs-build-check.yml
+      - "kubernetes/loculus/values.schema.json"
+      - ".github/workflows/docs-test.yml"
   push:
     branches:
       - main
@@ -19,7 +20,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v7
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: ./docs/.nvmrc
       - name: Copy Kubernetes schema to docs

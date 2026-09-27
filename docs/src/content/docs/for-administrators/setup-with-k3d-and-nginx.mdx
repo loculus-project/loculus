@@ -103,12 +103,11 @@ Re-run `./create-cluster.sh` to recreate.
 
 ## Step 2: Install secret generator
 
-The Loculus Helm chart uses the [Mittwald secrets generator](https://github.com/mittwald/kubernetes-secret-generator). You can install it with:
+The Loculus Helm chart uses the [Mittwald secrets generator](https://github.com/mittwald/kubernetes-secret-generator) to auto-generate secrets. You can install it with:
 
 ```bash
-helm repo add mittwald https://helm.mittwald.de
-helm repo update
-helm upgrade --install kubernetes-secret-generator mittwald/kubernetes-secret-generator --set secretLength=32 --set watchNamespace=""
+helm upgrade --install kubernetes-secret-generator "oci://ghcr.io/loculus-project/kubernetes-secret-generator" \
+  --version "3.4.1" --set secretLength=32 --set watchNamespace=""
 ```
 
 ## Step 3: Configure the instance

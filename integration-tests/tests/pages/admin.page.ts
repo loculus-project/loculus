@@ -40,6 +40,7 @@ export class AdminPage {
     async deleteCitation(sourceDOI: string) {
         const row = this.getCitationRow(sourceDOI);
         await row.getByTestId('delete-citation-button').click();
+        await this.page.getByRole('button', { name: 'Confirm' }).click();
         await expect(row).toBeHidden();
     }
 }

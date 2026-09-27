@@ -14,6 +14,7 @@ import org.hamcrest.Matchers.hasEntry
 import org.hamcrest.Matchers.hasProperty
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.matchesRegex
+import org.hamcrest.Matchers.not
 import org.hamcrest.Matchers.notNullValue
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.FileIdAndNameAndReadUrl
@@ -113,7 +114,33 @@ class ExtractUnprocessedDataEndpointTest(
         )
 
         responseNoNewData.andExpect(status().isNotModified)
-            .andExpect(header().doesNotExist(ETAG))
+            .andExpect(header().string(ETAG, secondEtag!!))
+    }
+
+    @Test
+    fun `GIVEN preprocessed data submitted for one organism THEN the etag for another organism is unaffected`() {
+        val defaultOrganismEntries = convenienceClient.prepareDefaultSequenceEntriesToInProcessing(
+            organism = DEFAULT_ORGANISM,
+        )
+        convenienceClient.prepareDefaultSequenceEntriesToInProcessing(organism = OTHER_ORGANISM)
+
+        val otherOrganismEtagBefore = client.extractUnprocessedData(0, organism = OTHER_ORGANISM)
+            .andReturn().response.getHeader(ETAG)
+
+        // Submitting processed data for DEFAULT_ORGANISM only must not change OTHER_ORGANISM's etag.
+        convenienceClient.submitProcessedData(
+            defaultOrganismEntries.map { PreparedProcessedData.withErrors(accession = it.accession) },
+            organism = DEFAULT_ORGANISM,
+        )
+
+        val otherOrganismEtagAfter = client.extractUnprocessedData(0, organism = OTHER_ORGANISM)
+            .andReturn().response.getHeader(ETAG)
+        assertThat(otherOrganismEtagAfter, `is`(otherOrganismEtagBefore))
+
+        // Meanwhile DEFAULT_ORGANISM's etag did change, since it received the preprocessed data write.
+        val defaultOrganismEtagAfter = client.extractUnprocessedData(0, organism = DEFAULT_ORGANISM)
+            .andReturn().response.getHeader(ETAG)
+        assertThat(defaultOrganismEtagAfter, `is`(not(otherOrganismEtagBefore)))
     }
 
     @Test

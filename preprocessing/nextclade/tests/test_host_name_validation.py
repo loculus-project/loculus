@@ -3,13 +3,11 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+from factory_methods import UnprocessedEntryFactory
 
-from loculus_preprocessing import processing_functions
-from loculus_preprocessing.config import get_config
-from loculus_preprocessing.datatypes import (
-    UnprocessedData,
-    UnprocessedEntry,
-)
+from loculus_preprocessing import external_services
+from loculus_preprocessing.config import Config, get_config
+from loculus_preprocessing.datatypes import UnprocessedEntry
 from loculus_preprocessing.prepro import process_all
 
 HOST_PROCESSING_CONFIG = "tests/host_processing_config.yaml"
@@ -17,7 +15,7 @@ HOST_PROCESSING_CONFIG = "tests/host_processing_config.yaml"
 
 @pytest.fixture(autouse=True)
 def clear_taxonomy_caches():
-    processing_functions.taxonomy_cache.clear()
+    external_services.taxonomy_cache.clear()
 
 
 def make_response(status_code, json_data):
@@ -27,17 +25,15 @@ def make_response(status_code, json_data):
     return mock
 
 
-def make_entry(metadata: dict, group_id: int) -> UnprocessedEntry:
-    return UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt="2026-01-01",
-            group_id=group_id,
-            metadata=metadata,
-            unalignedNucleotideSequences={},
-        ),
+def make_entry(metadata: dict, config: Config, *, insdc_ingest: bool) -> UnprocessedEntry:
+    """An entry with no sequences, submitted either by the INSDC ingest group or directly."""
+    insdc_ingest_group_id = config.insdc_ingest_group_id
+    return UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict=metadata,
+        accession_id="01",
+        sequences={},
+        group_id=insdc_ingest_group_id if insdc_ingest else insdc_ingest_group_id + 1,
+        insdc_ingest_group_id=insdc_ingest_group_id,
     )
 
 
@@ -55,7 +51,7 @@ def taxonomy_service_mock(url: str, **kwargs):
     return make_response(404, {"detail": "not found"})
 
 
-@patch.object(processing_functions.taxonomy_cache, "session")
+@patch.object(external_services.taxonomy_cache, "session")
 def test_host_processing_tax_id(mock_session: MagicMock) -> None:
     mock_session.get.side_effect = taxonomy_service_mock
     config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
@@ -63,7 +59,8 @@ def test_host_processing_tax_id(mock_session: MagicMock) -> None:
 
     entry = make_entry(
         metadata={"host": "7159"},
-        group_id=config.insdc_ingest_group_id + 1,
+        config=config,
+        insdc_ingest=False,
     )
 
     result = process_all([entry], "temp", config)
@@ -81,7 +78,7 @@ def test_host_processing_tax_id(mock_session: MagicMock) -> None:
     assert mock_session.get.call_count == 2
 
 
-@patch.object(processing_functions.taxonomy_cache, "session")
+@patch.object(external_services.taxonomy_cache, "session")
 def test_host_processing_sci_name(mock_session: MagicMock) -> None:
     mock_session.get.side_effect = taxonomy_service_mock
     config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
@@ -89,7 +86,8 @@ def test_host_processing_sci_name(mock_session: MagicMock) -> None:
 
     entry = make_entry(
         metadata={"host": "Aedes aegypti"},
-        group_id=config.insdc_ingest_group_id,
+        config=config,
+        insdc_ingest=True,
     )
 
     result = process_all([entry], "temp", config)
@@ -107,7 +105,7 @@ def test_host_processing_sci_name(mock_session: MagicMock) -> None:
     assert mock_session.get.call_count == 3
 
 
-@patch.object(processing_functions.taxonomy_cache, "session")
+@patch.object(external_services.taxonomy_cache, "session")
 def test_host_processing_legacy(mock_session: MagicMock) -> None:
     """Preprocessing used to use the hostTaxonId and hostNameScientific
     fields for host validation. We have since switched to using one
@@ -123,7 +121,8 @@ def test_host_processing_legacy(mock_session: MagicMock) -> None:
             "hostNameCommon": "yellow fever mosquito",
             "hostTaxonId": "7159",
         },
-        group_id=config.insdc_ingest_group_id,
+        config=config,
+        insdc_ingest=True,
     )
 
     result = process_all([entry], "temp", config)
@@ -138,7 +137,7 @@ def test_host_processing_legacy(mock_session: MagicMock) -> None:
     assert mock_session.get.call_count == 0
 
 
-@patch.object(processing_functions.taxonomy_cache, "session")
+@patch.object(external_services.taxonomy_cache, "session")
 def test_host_processing_invalid_host_insdc(mock_session: MagicMock) -> None:
     """For an INSDC-ingested sequence with an invalid host, the derived host
     fields (hostTaxonId, hostNameScientific, hostNameCommon) should all be
@@ -149,7 +148,8 @@ def test_host_processing_invalid_host_insdc(mock_session: MagicMock) -> None:
 
     entry = make_entry(
         metadata={"host": "not a real species"},
-        group_id=config.insdc_ingest_group_id,
+        config=config,
+        insdc_ingest=True,
     )
 
     result = process_all([entry], "temp", config)
@@ -165,7 +165,7 @@ def test_host_processing_invalid_host_insdc(mock_session: MagicMock) -> None:
     assert "Host validation for" in result[0].processed_entry.warnings[0].message
 
 
-@patch.object(processing_functions.taxonomy_cache, "session")
+@patch.object(external_services.taxonomy_cache, "session")
 def test_host_processing_invalid_host_direct(mock_session: MagicMock) -> None:
     """When a direct submitter provides an invalid host, the derived host
     fields (hostTaxonId, hostNameScientific, hostNameCommon) should all be
@@ -177,7 +177,8 @@ def test_host_processing_invalid_host_direct(mock_session: MagicMock) -> None:
 
     entry = make_entry(
         metadata={"host": "not a real species"},
-        group_id=config.insdc_ingest_group_id + 1,
+        config=config,
+        insdc_ingest=False,
     )
 
     result = process_all([entry], "temp", config)

@@ -5,7 +5,7 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.Matchers.containsInAnyOrder
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -128,7 +128,7 @@ class CitationEndpointsTest(
             )
 
         client.deleteSeqSet(seqSetId, seqSetVersion)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
@@ -342,7 +342,7 @@ class CitationEndpointsTest(
             sourceDOI = "10.5678/crossref-paper",
             seqSetAccessionVersions = listOf("$seqSetId.$seqSetVersion"),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
 
         // The citation must still be reported as CrossRef-origin, untouched by the rejected request.
         client.getAllSeqSetCitations()
@@ -410,7 +410,7 @@ class CitationEndpointsTest(
         seqSetCrossRefCitationsTask.task()
 
         client.deleteSeqSetCitation(sourceDOI = "10.5678/crossref-paper")
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
     }
 
     @Test

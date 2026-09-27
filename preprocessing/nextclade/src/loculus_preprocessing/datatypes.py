@@ -1,9 +1,16 @@
+from __future__ import annotations
+
+import logging
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import StrEnum, unique
 from typing import Any, Final
 
-AccessionVersion = str
+from .nextclade_annotation import NextcladeAnnotation
+
+logger = logging.getLogger(__name__)
+
+AccessionVersion = str  # {accession}.{version}
 GeneName = str
 SegmentName = str
 SequenceName = str
@@ -17,7 +24,7 @@ ArgName = str  # Name of argument present in processing_functions
 ArgValue = (
     list[str] | str | bool | int | float | None
 )  # Value of an argument passed to processing_functions
-InputField = str  # Name of field in input data, either inputMetadata or NextcladeMetadata
+InputField = str  # Name of field in input data, either submitted metadata or NextcladeMetadata
 ProcessedMetadataValue = str | int | float | bool | None
 ProcessedMetadata = dict[str, ProcessedMetadataValue]
 InputMetadataValue = str | None
@@ -28,9 +35,16 @@ ProcessingAnnotationAlignment: Final = "alignment"
 
 
 @unique
+class FileCategory(StrEnum):
+    RAW_READS = "rawReads"
+    ANNOTATIONS = "annotations"
+
+
+@unique
 class AnnotationSourceType(StrEnum):
     METADATA = "Metadata"
     NUCLEOTIDE_SEQUENCE = "NucleotideSequence"
+    FILE = "File"
 
 
 @dataclass(frozen=True)
@@ -75,19 +89,36 @@ class ProcessingAnnotation:
 
 
 @dataclass
-class UnprocessedData:
-    submitter: str
+class FileIdAndNameAndReadUrl:
+    fileId: str  # noqa: N815
+    name: str
+    url: str | None = None
+
+
+@dataclass(frozen=True)
+class ProcessingContext:
+    """Runtime context that is the same for every processing function call for a given
+    accession, as opposed to `FunctionArgs` which holds the literal, per-function arguments
+    declared in the organism's YAML config.
+    """
+
+    accession_version: AccessionVersion
+    submission_id: str
     group_id: int
-    submittedAt: str  # timestamp  # noqa: N815
-    submissionId: str  # noqa: N815
-    metadata: InputMetadata
-    unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
+    insdc_ingest_group_id: int
+    submitted_at: str
+
+    @property
+    def is_insdc_ingest_group(self) -> bool:
+        return self.group_id == self.insdc_ingest_group_id
 
 
 @dataclass
 class UnprocessedEntry:
-    accessionVersion: AccessionVersion  # {accession}.{version}  # noqa: N815
-    data: UnprocessedData
+    context: ProcessingContext
+    metadata: InputMetadata
+    unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
+    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
 
 
 FunctionInputs = dict[ArgName, InputField]
@@ -96,7 +127,9 @@ FunctionArgs = dict[ArgName, ArgValue]
 
 @dataclass
 class UnprocessedAfterNextclade:
-    inputMetadata: InputMetadata  # noqa: N815
+    metadata: InputMetadata
+    context: ProcessingContext
+    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
     # Derived metadata produced by Nextclade
     nextcladeMetadata: dict[SequenceName, Any] | None  # noqa: N815
     unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
@@ -110,21 +143,15 @@ class UnprocessedAfterNextclade:
 
 
 @dataclass
-class FileIdAndName:
-    fileId: str  # noqa: N815
-    name: str
-
-
-@dataclass
 class ProcessedData:
     metadata: ProcessedMetadata
+    files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
     unalignedNucleotideSequences: dict[SequenceName, Any]  # noqa: N815
     alignedNucleotideSequences: dict[SequenceName, Any]  # noqa: N815
     nucleotideInsertions: dict[SequenceName, Any]  # noqa: N815
     alignedAminoAcidSequences: dict[GeneName, Any]  # noqa: N815
     aminoAcidInsertions: dict[GeneName, Any]  # noqa: N815
     sequenceNameToFastaId: dict[SequenceName, FastaId]  # noqa: N815
-    files: dict[str, list[FileIdAndName]] | None = None
 
 
 @dataclass
@@ -157,9 +184,8 @@ class SubmissionData:
     but the annotations need to be uploaded separately."""
 
     processed_entry: ProcessedEntry
-    submitter: str | None
-    group_id: int | None = None
-    annotations: dict[str, Any] | None = None
+    group_id: int
+    annotations: dict[SequenceName, NextcladeAnnotation | None] | None = None
 
 
 @dataclass
@@ -190,7 +216,7 @@ class RawProcessingResult:
     errors: list[str] = field(default_factory=list)
 
 
-def processing_error(message: str) -> "RawProcessingResult":
+def processing_error(message: str) -> RawProcessingResult:
     """Helper to create a RawProcessingResult with a single error and no datum."""
     return RawProcessingResult(datum=None, errors=[message])
 
@@ -256,3 +282,13 @@ class MoleculeType(StrEnum):
 class Topology(StrEnum):
     LINEAR = "linear"
     CIRCULAR = "circular"
+
+
+def _internal_error_message(message: str) -> str:
+    full = f"Internal Error. {message} Please contact the administrator."
+    logger.error(full)
+    return full
+
+
+def raw_internal_error(message: str) -> RawProcessingResult:
+    return processing_error(_internal_error_message(message))

@@ -4,6 +4,14 @@
 {{- range $key := (keys $allOrganisms | sortAlpha) -}}
   {{- $organism := get $allOrganisms $key -}}
   {{- if ne $organism.enabled false -}}
+{{- /*
+    Organism keys are substituted verbatim into `metadata.name` of many per-organism
+    resources (ConfigMaps, Deployments, Services, CronJobs, ingress middleware), so each
+    key must be a valid RFC 1123 DNS label.
+*/ -}}
+    {{- if not (regexMatch "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$" $key) -}}
+      {{- fail (printf "Invalid organism key %q: organism keys must be a lower-case RFC 1123 DNS label (lower-case alphanumeric characters or '-', starting and ending with an alphanumeric character, e.g. 'chikungunya'). Rename this key in your organism config." $key) -}}
+    {{- end -}}
 {{- $enabledList = append $enabledList (dict "key" $key "contents" $organism) -}}
   {{- end -}}
 {{- end -}}

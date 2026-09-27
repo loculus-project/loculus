@@ -5,7 +5,7 @@ import { getLapisUrl } from '../../config.ts';
 import { routes } from '../../routes/routes.ts';
 import { backendClientHooks, useSequenceEntryHistory } from '../../services/serviceHooks.ts';
 import { type Group } from '../../types/backend.ts';
-import type { InputField, SubmissionDataTypes } from '../../types/config.ts';
+import type { FileSharingConfig, InputField, SubmissionDataTypes } from '../../types/config.ts';
 import { getLatestAccessionVersionForRevision } from '../../types/lapis.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
@@ -22,6 +22,7 @@ type IndividualRevisionFormProps = {
     group: Group;
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
+    fileSharingConfig: FileSharingConfig;
     accession?: string;
     version?: string;
 };
@@ -101,6 +102,7 @@ const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
     group,
     metadataTemplateFields,
     submissionDataTypes,
+    fileSharingConfig,
     accession,
     version,
 }) => {
@@ -229,6 +231,7 @@ const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
                             dataToEdit={data}
                             groupedInputFields={metadataTemplateFields}
                             submissionDataTypes={submissionDataTypes}
+                            fileSharingConfig={fileSharingConfig}
                             sequenceEntryHistory={sequenceEntryHistory}
                         />
                     )}

@@ -14,7 +14,7 @@ export class SequenceDetailPage {
     }
 
     private get alignedTab() {
-        return this.page.getByRole('tab', { name: /^aligned/i }).first();
+        return this.page.getByRole('tab', { name: /^reference-aligned nucleotide/i }).first();
     }
 
     async waitForSequenceTabs(timeout = 30000) {
@@ -37,8 +37,16 @@ export class SequenceDetailPage {
         await expect(this.page.getByText(/[ACGTN]{20,}/)).toBeVisible({ timeout });
     }
 
+    private get revocationBanner() {
+        return this.page.getByText('This sequence entry has been revoked!');
+    }
+
     async expectRevocationBanner() {
-        await expect(this.page.getByText('This sequence entry has been revoked!')).toBeVisible();
+        await expect(this.revocationBanner).toBeVisible();
+    }
+
+    async expectNoRevocationBanner() {
+        await expect(this.revocationBanner).not.toBeVisible();
     }
 
     private get notLatestVersionBanner() {

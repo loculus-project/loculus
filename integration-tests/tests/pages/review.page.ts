@@ -107,10 +107,10 @@ export class ReviewPage {
         await this.confirmDiscardButton().click();
     }
 
-    async waitForZeroProcessing() {
+    async waitForZeroProcessing(timeout = 90000) {
         await expect(this.page.locator('[data-testid="review-page-control-panel"]')).toContainText(
             '0 awaiting processing',
-            { timeout: 90000 },
+            { timeout: timeout },
         );
     }
 
@@ -173,6 +173,7 @@ export class ReviewPage {
                 await getFromLinkTargetAndAssertContent(
                     this.page.getByRole('link', { name: fileName }),
                     fileContent,
+                    fileName,
                 );
             }
         }
@@ -232,6 +233,21 @@ export class ReviewPage {
         }
 
         return tabNames;
+    }
+
+    async expectFileProcessingError(pattern: RegExp, submissionId: string) {
+        await expect(
+            this.page
+                .getByTestId(`review-card-${submissionId}`)
+                .getByTestId('processing-error')
+                .filter({ hasText: pattern }),
+        ).toBeVisible();
+    }
+
+    async expectNoValidSequencesToApprove() {
+        await expect(
+            this.page.getByRole('button', { name: /Approve \d+ valid sequence/ }),
+        ).toBeHidden();
     }
 
     async editFirstSequence() {

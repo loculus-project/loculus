@@ -27,7 +27,11 @@ select = [
     "LOG",
     "RUF",
 ]
-ignore = ["ISC001"]
+ignore = [
+    "ISC001",
+    "RUF105", # noqa-comments: keep `# noqa: X` instead of `# ruff: ignore[x]`
+    "RUF201", # rule-codes-in-selectors: keep rule codes in this config
+]
 preview = true
 
 # ignore-init-module-imports = trueselect = ["E", "F", "B"]

@@ -1,0 +1,19 @@
+{{- if not .Values.disableRawReadsProcessingService }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-raw-reads-processing
+spec:
+  {{- template "loculus.serviceType" . }}
+  selector:
+    app: loculus
+    component: loculus-raw-reads-processing
+  ports:
+    - port: 5000
+      targetPort: 5000
+      {{- if ne $.Values.environment "server" }}
+      nodePort: 30052
+      {{- end }}
+      protocol: TCP
+      name: http
+{{- end }}

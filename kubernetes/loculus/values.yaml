@@ -37,6 +37,7 @@ disablePreprocessing: false
 disableIngest: false
 disableEnaSubmission: true
 disableTaxonomyService: false
+disableRawReadsProcessingService: true
 readOnlyMode: false
 website:
   websiteConfig:
@@ -60,7 +61,8 @@ dataUseTerms:
     open: https://#TODO-MVP/open
     restricted: https://#TODO-MVP/restricted
 fileSharing:
-  outputFileUrlType: backend
+  outputFileUrlType: website
+  maxFileSizeBytes: 5368709120 # 5 GiB
 s3:
   enabled: true
   gcInitialDelayMinutes: 15
@@ -83,6 +85,10 @@ lineageSystemDefinitions:
     4: https://raw.githubusercontent.com/loculus-project/loculus/fe3b2974071acc9a25856d650350f8a952040a7c/preprocessing/dummy/lineage-alternative.yaml
   cchfS:
     1: https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-24--07-29-03Z/lineages.yaml
+taxonomyService:
+  dbVersion: "ncbi_taxonomy_2026-06-01"
+  taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
+  taxonomy_service_url: &taxonomy_service_url http://loculus-taxonomy-service:5000
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     submissionDataTypes: &defaultSubmissionDataTypes
@@ -1049,15 +1055,124 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Amplicon size
         header: Sequencing
         orderOnDetailsPage: 2060
+      - name: pairedEndInsertSize
+        definition: The nominal insert size for paired-end sequencing libraries.
+        guidance: Provide the nominal insert size in base pairs (as an integer).
+        example: "500"
+        displayName: Paired-end insert size
+        type: int
+        header: Sequencing
+        orderOnDetailsPage: 2065
       - name: sequencingInstrument
         ontology_id: GENEPIO:0001452
-        definition: The model of the sequencing instrument used.
+        definition: The model of the sequencing instrument used. (required when raw read files are provided)
         guidance: Select the sequencing instrument from the pick list.
-        example: Oxford Nanopore MinION [GENEPIO:0100142]
+        example: MinION
         displayName: Sequencing instrument
         header: Sequencing
         desired: true
         orderOnDetailsPage: 2080
+        autocomplete: true
+        initiallyVisible: true
+        requiredWhen:
+          - files.rawReads
+        preprocessing:
+          function: process_options
+          inputs:
+            input: sequencingInstrument
+        options:
+          # ena-webin-cli -context reads -fields
+          # ena-webin-cli=9.0.3
+          # Last checked: 04.09.2026
+          # Fields listed in INSTRUMENT (excluding `unspecified`)
+          - name: "454 GS"
+          - name: "454 GS 20"
+          - name: "454 GS FLX"
+          - name: "454 GS FLX Titanium"
+          - name: "454 GS FLX+"
+          - name: "454 GS Junior"
+          - name: "AB 310 Genetic Analyzer"
+          - name: "AB 3130 Genetic Analyzer"
+          - name: "AB 3130xL Genetic Analyzer"
+          - name: "AB 3500 Genetic Analyzer"
+          - name: "AB 3500xL Genetic Analyzer"
+          - name: "AB 3730 Genetic Analyzer"
+          - name: "AB 3730xL Genetic Analyzer"
+          - name: "AVITI 24"
+          - name: "BGISEQ-50"
+          - name: "BGISEQ-500"
+          - name: "DNBSEQ-G400"
+          - name: "DNBSEQ-G400 FAST"
+          - name: "DNBSEQ-G50"
+          - name: "DNBSEQ-T7"
+          - name: "DNBSEQ-T10x4RS"
+          - name: "Element AVITI"
+          - name: "FASTASeq 300"
+          - name: "GENIUS"
+          - name: "GS111"
+          - name: "Genapsys Sequencer"
+          - name: "GenoCare 1600"
+          - name: "GenoLab M"
+          - name: "GridION"
+          - name: "HiSeq X Five"
+          - name: "HiSeq X Ten"
+          - name: "Illumina Genome Analyzer"
+          - name: "Illumina Genome Analyzer II"
+          - name: "Illumina Genome Analyzer IIx"
+          - name: "Illumina HiScanSQ"
+          - name: "Illumina HiSeq 1000"
+          - name: "Illumina HiSeq 1500"
+          - name: "Illumina HiSeq 2000"
+          - name: "Illumina HiSeq 2500"
+          - name: "Illumina HiSeq 3000"
+          - name: "Illumina HiSeq 4000"
+          - name: "Illumina HiSeq X"
+          - name: "Illumina MiSeq"
+          - name: "Illumina MiniSeq"
+          - name: "Illumina NovaSeq 6000"
+          - name: "Illumina NovaSeq X"
+          - name: "Illumina NovaSeq X Plus"
+          - name: "Illumina iSeq 100"
+          - name: "Ion GeneStudio S5"
+          - name: "Ion GeneStudio S5 Plus"
+          - name: "Ion GeneStudio S5 Prime"
+          - name: "Ion Torrent Genexus"
+          - name: "Ion Torrent PGM"
+          - name: "Ion Torrent Proton"
+          - name: "Ion Torrent S5"
+          - name: "Ion Torrent S5 XL"
+          - name: "MGISEQ-2000RS"
+          - name: "MinION"
+          - name: "NextSeq 1000"
+          - name: "NextSeq 2000"
+          - name: "NextSeq 500"
+          - name: "NextSeq 550"
+          - name: "Onso"
+          - name: "PacBio RS"
+          - name: "PacBio RS II"
+          - name: "PromethION"
+          - name: "Revio"
+          - name: "Sentosa SQ301"
+          - name: "Sequel"
+          - name: "Sequel II"
+          - name: "Sequel IIe"
+          - name: "UG 100"
+          # Fields listed in PLATFORM
+          - name: "ILLUMINA"
+          - name: "PACBIO_SMRT"
+          - name: "OXFORD_NANOPORE"
+          - name: "BGISEQ"
+          - name: "LS454"
+          - name: "ION_TORRENT"
+          - name: "CAPILLARY"
+          - name: "DNBSEQ"
+          - name: "ELEMENT"
+          - name: "ULTIMA"
+          - name: "VELA_DIAGNOSTICS"
+          - name: "GENAPSYS"
+          - name: "GENEMIND"
+          - name: "TAPESTRI"
+          - name: "AVITI"
       - name: sequencingProtocol
         ontology_id: GENEPIO:0001454
         definition: The protocol used to generate the sequence.
@@ -1067,14 +1182,137 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sequencing
         desired: true
         orderOnDetailsPage: 2100
-      - name: sequencingAssayType
-        ontology_id: GENEPIO:0100997
-        definition: The overarching sequencing methodology that was used to determine the sequence of a biomaterial.
-        guidance: 'Example Guidance: Provide the name of the DNA or RNA sequencing technology used in your study. If unsure refer to the protocol documentation, or provide a null value.'
-        example: whole genome sequencing assay [OBI:0002117]
-        displayName: Sequencing assay type
+      - name: sequencingLibrarySelection
+        definition: The method used to select or enrich the source material.
+        guidance: 'Example Guidance: Provide the name of the DNA or RNA sequencing library selection technology used in your study. If unsure refer to the protocol documentation, or provide a null value.'
+        desired: true
+        example: PCR
+        displayName: Sequencing library selection
         header: Sequencing
         orderOnDetailsPage: 2120
+        preprocessing:
+          function: process_options
+          inputs:
+            input: sequencingLibrarySelection
+        options:
+          # ena-webin-cli -context reads -fields
+          # ena-webin-cli=9.0.3
+          # Last checked: 09.06.2026
+          # Fields listed in LIBRARY_SELECTION
+          - name: "RANDOM"
+          - name: "PCR"
+          - name: "RANDOM PCR"
+          - name: "RT-PCR"
+          - name: "HMPR"
+          - name: "MF"
+          - name: "repeat fractionation"
+          - name: "size fractionation"
+          - name: "MSLL"
+          - name: "cDNA"
+          - name: "cDNA_randomPriming"
+          - name: "cDNA_oligo_dT"
+          - name: "PolyA"
+          - name: "Oligo-dT"
+          - name: "Inverse rRNA"
+          - name: "Inverse rRNA selection"
+          - name: "ChIP"
+          - name: "ChIP-Seq"
+          - name: "MNase"
+          - name: "DNase"
+          - name: "Hybrid Selection"
+          - name: "Reduced Representation"
+          - name: "Restriction Digest"
+          - name: "5-methylcytidine antibody"
+          - name: "MBD2 protein methyl-CpG binding domain"
+          - name: "CAGE"
+          - name: "RACE"
+          - name: "MDA"
+          - name: "padlock probes capture method"
+          - name: "other"
+          - name: "unspecified"
+      - name: sequencingAssayType
+        ontology_id: GENEPIO:0100997
+        definition: The overarching sequencing technique that was used to determine the sequence of a biomaterial, also called library strategy in the INSDC. (required when raw read files are provided)
+        guidance: Select the sequencing technology from the pick list.
+        desired: true
+        example: WGS
+        displayName: Sequencing assay type
+        header: Sequencing
+        orderOnDetailsPage: 2130
+        autocomplete: true
+        initiallyVisible: true
+        preprocessing:
+          function: process_options
+          inputs:
+            input: sequencingAssayType
+        options:
+          # ena-webin-cli -context reads -fields
+          # ena-webin-cli=9.0.3
+          # Last checked: 09.06.2026
+          # Fields listed in LIBRARY_STRATEGY
+          - name: "WGS"
+          - name: "WGA"
+          - name: "WXS"
+          - name: "RNA-Seq"
+          - name: "ssRNA-seq"
+          - name: "snRNA-seq"
+          - name: "miRNA-Seq"
+          - name: "ncRNA-Seq"
+          - name: "FL-cDNA"
+          - name: "EST"
+          - name: "Hi-C"
+          - name: "ATAC-seq"
+          - name: "WCS"
+          - name: "RAD-Seq"
+          - name: "CLONE"
+          - name: "POOLCLONE"
+          - name: "AMPLICON"
+          - name: "CLONEEND"
+          - name: "FINISHING"
+          - name: "ChIP-Seq"
+          - name: "MNase-Seq"
+          - name: "DNase-Hypersensitivity"
+          - name: "Bisulfite-Seq"
+          - name: "CTS"
+          - name: "MRE-Seq"
+          - name: "MeDIP-Seq"
+          - name: "MBD-Seq"
+          - name: "Tn-Seq"
+          - name: "VALIDATION"
+          - name: "FAIRE-seq"
+          - name: "SELEX"
+          - name: "RIP-Seq"
+          - name: "ChIA-PET"
+          - name: "Synthetic-Long-Read"
+          - name: "Targeted-Capture"
+          - name: "Tethered Chromatin Conformation Capture"
+          - name: "NOMe-seq"
+          - name: "ChM-Seq"
+          - name: "GBS"
+          - name: "Ribo-seq"
+          - name: "OTHER"
+      - name: sequencingLibrarySource
+        definition: The type of biomaterial that was sequenced, also called library source in the INSDC.
+        guidance: 'Example Guidance: Provide the name of the DNA or RNA sequencing library source used in your study. If unsure refer to the protocol documentation, or provide a null value.'
+        desired: true
+        example: VIRAL RNA
+        displayName: Sequencing library source
+        header: Sequencing
+        orderOnDetailsPage: 2125
+        preprocessing:
+          function: process_options
+          inputs:
+            input: sequencingLibrarySource
+        options:
+          - name: "GENOMIC"
+          - name: "GENOMIC SINGLE CELL"
+          - name: "TRANSCRIPTOMIC"
+          - name: "TRANSCRIPTOMIC SINGLE CELL"
+          - name: "METAGENOMIC"
+          - name: "METATRANSCRIPTOMIC"
+          - name: "SYNTHETIC"
+          - name: "VIRAL RNA"
+          - name: "OTHER"
       - name: sequencedByOrganization
         ontology_id: GENEPIO:0100416
         definition: The name of the agency, organization or institution responsible for sequencing the isolate's genome.
@@ -1261,8 +1499,6 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: resolve_host_taxon_id
           inputs:
             host: host
-          args:
-            taxonomy_service_url: &taxonomy_service_url http://loculus-taxonomy-service:5000
       - name: hostNameScientific
         displayName: Host name - scientific
         definition: "The scientific name of the host from which the sample was collected."
@@ -1280,8 +1516,6 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: scientific_name_from_id
           inputs:
             hostTaxonId: processed.hostTaxonId
-          args:
-            taxonomy_service_url: *taxonomy_service_url
       - name: hostNameCommon
         displayName: Host name - common
         definition: "The common name of the host from which the sample was collected."
@@ -1299,8 +1533,6 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: common_name_from_id
           inputs:
             hostTaxonId: processed.hostTaxonId
-          args:
-            taxonomy_service_url: *taxonomy_service_url
       - name: isLabHost
         displayName: Is lab host
         definition: "If a laboratory host (e.g. cultured cell line) was used to propagate the sample."
@@ -1523,13 +1755,11 @@ defaultOrganismConfig: &defaultOrganismConfig
     extraInputFields:
       - &hostConfig
         name: host
-        type: string
+        header: "Host"
         displayName: "Host"
         definition: "NCBI taxon ID or scientific name that uniquely identifies the host from which the sample was collected."
         guidance: "You can provide either the scientific name of the organism (e.g., `Aedes aegypti`) or its NCBI taxon ID (e.g., `7159`) in this field. We will validate your input and use it to populate the `host common name` and `host scientific name` fields. When uploading data from a pooled sample, we recommend using a higher-level taxon that includes all host organisms in the sample pool. For example, you can use `Culicidae` when uploading data for a pooled mosquito sample (in addition to setting the `specimenProcessing` field to `Samples pooled`, see [OBI:0600016])."
         example: "Aedes aegypti"
-        hideInSearchResultsTable: true
-        hideOnSequenceDetailsPage: true
         desired: true
         position: last
   preprocessing:
@@ -1539,8 +1769,6 @@ defaultOrganismConfig: &defaultOrganismConfig
       args:
         - "prepro"
       replicas: 1
-      taxonomyServiceArgs: &preprocessingTaxonomyServiceArgs
-        taxonomy_service_url: *taxonomy_service_url
       configFile: &preprocessingConfigFile
         log_level: DEBUG
         batch_size: 100
@@ -1553,8 +1781,9 @@ defaultOrganismConfig: &defaultOrganismConfig
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
-    configFile:
+    configFile: &defaultIngestConfigFile
       muted_hashes_url: "https://pathoplexus.github.io/curation_data/muted_hashes/muted_hashes.tsv"
+      batch_chunk_size: 1000
 defaultOrganisms:
   ebola-sudan:
     <<: *defaultOrganismConfig
@@ -1594,6 +1823,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 3052460
     enaDeposition:
       singleReference:
@@ -1606,7 +1836,7 @@ defaultOrganisms:
         references:
           - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/reference.fasta]]"
-            insdcAccessionFull: NC_002549.1
+            insdcAccessionFull: NC_006432.1
             genes:
               - name: NP
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/NP.fasta]]"
@@ -1652,7 +1882,6 @@ defaultOrganisms:
               geoLocCountry: geoLocCountry
               sampleCollectionDateRangeLower: processed.sampleCollectionDateRangeLower
               specimenCollectorSampleId: specimenCollectorSampleId
-              submissionId: submissionId
             args:
               order: [geoLocCountry, IDENTIFIER, sampleCollectionDateRangeLower]
               type: [string, IDENTIFIER, string]
@@ -1662,6 +1891,7 @@ defaultOrganisms:
               # - Last field is a date in format YYYY, YYYY-MM, or YYYY-MM-DD
               # - Identifier is the second to last field (extracted through named capture group)
               regex_pattern: '^(?:[^/]+/)?[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$'
+              human_readable_pattern: "<any>/<any>/<identifier>/<date>"
         - <<: *hostTaxonIdConfig
           required: true
           hierarchicalFilter: *taxonomy_service_url
@@ -1740,6 +1970,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 3048448
     enaDeposition:
       singleReference:
@@ -1905,10 +2136,10 @@ defaultOrganisms:
         files:
           enabled: true
           categories:
-            - name: raw_reads
+            - name: rawReads
               displayName: Raw reads
       files:
-        - name: raw_reads
+        - name: rawReads
           displayName: Raw reads
       metadata: *dummyMetadata
       website:
@@ -2091,6 +2322,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 3052518
         grouping_override_url: "https://pathoplexus.github.io/curation_data/grouping_override/cchf/curated_group_02-03-2026.json"
         segment_identification:
@@ -2296,6 +2528,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 3052518
         segment_identification:
           method: "align"
@@ -2474,6 +2707,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 12059
         subsample_fraction: 0.2
     enaDeposition:
@@ -2622,7 +2856,7 @@ images:
     pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
-    tag: "v0.8.0@sha256:4da71d94aceb36b7ea5963aa2e7b0566567c6423fe7fdd39448e69aebda2a8bb"
+    tag: "0.8.8@sha256:6942844fddb7330ec9ce3ae14d18908f8e63e610ce287642061163d010c3d744"
     pullPolicy: Always
   website:
     repository: "ghcr.io/loculus-project/website"
@@ -2630,6 +2864,10 @@ images:
   backend:
     repository: "ghcr.io/loculus-project/backend"
     pullPolicy: Always
+  deaconIndex:
+    repository: "ghcr.io/loculus-project/deacon-index"
+    tag: "2026-08-28-13-33@sha256:13cbc6bf729136973ed744616522598b658351a27086b0797218090cd2197637"
+    pullPolicy: IfNotPresent
 silo:
   apiThreadsForHttpConnections: 16
 secrets:
@@ -2695,7 +2933,7 @@ runDevelopmentMainDatabase: true
 runDevelopmentS3: true
 developmentDatabasePersistence: false
 enforceHTTPS: true
-traefikVersion: 2
+traefikVersion: 3
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 
@@ -2705,10 +2943,13 @@ enaDeposition:
   enaUniqueSuffix: Loculus
   enaIsBroker: False
   enaSuppressedListTestUrl: "https://loculus-project.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt"
-taxonomyService:
-  dbVersion: "ncbi_taxonomy_2026-05-01"
-  taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
+  rawReadsMetadataField: rawReads
+  configFile: {}
+rawReadsProcessingService:
+  raw_reads_processing_service_url: http://loculus-raw-reads-processing:5000
 subdomainSeparator: "-"
+enableServiceMonitor: false
+
 replicas:
   website: 1
   backend: 1
@@ -2797,13 +3038,19 @@ resources:
       cpu: "10m"
     limits:
       memory: "1Gi"
+  raw-reads-processing:
+    requests:
+      memory: "8Gi"
+      cpu: "50m"
+    limits:
+      memory: "8Gi"
 defaultResources:
   requests:
     memory: "200Mi"
     cpu: "20m"
   limits:
     memory: "1Gi"
-    cpu: "20m"
+    cpu: "500m"
 ingest:
   ncbiGatewayUrl: null
   mirrorBucket: null

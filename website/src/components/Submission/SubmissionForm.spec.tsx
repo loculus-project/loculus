@@ -74,6 +74,7 @@ function renderSubmissionForm({
                 maxSequencesPerEntry: 1,
             }}
             dataUseTermsEnabled={dataUseTermsEnabled}
+            fileSharingConfig={{ disableStrictFilenameValidation: false }}
         />,
     );
 }
