@@ -68,6 +68,11 @@ class SecurityConfig {
         "/files/get/**",
     )
 
+    /** LAPIS-compatible query engine (org.loculus.backend.query.api): public reads via GET and POST */
+    private val queryEngineEndpoints = arrayOf(
+        "/*/sample/**",
+    )
+
     private val debugEndpoints = arrayOf(
         "/debug/*",
     )
@@ -93,6 +98,8 @@ class SecurityConfig {
             ).permitAll()
             auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
             auth.requestMatchers(HttpMethod.HEAD, *headEndpointsThatArePublic).permitAll()
+            auth.requestMatchers(HttpMethod.GET, *queryEngineEndpoints).permitAll()
+            auth.requestMatchers(HttpMethod.POST, *queryEngineEndpoints).permitAll()
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
             auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
             auth.requestMatchers(
@@ -102,6 +109,8 @@ class SecurityConfig {
             auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
             auth.anyRequest().authenticated()
         }
+        // query engine POSTs are anonymous reads (like LAPIS), they must not require a CSRF token
+        .csrf { csrf -> csrf.ignoringRequestMatchers(*queryEngineEndpoints) }
         .oauth2ResourceServer { oauth2 ->
             oauth2.jwt { jwt ->
                 jwt.jwtAuthenticationConverter(keycloakAuthoritiesConverter)

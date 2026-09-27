@@ -19,6 +19,19 @@ interface QueryStore {
     fun streamMetadataJson(organism: String, ids: IntArray, consumer: (id: Int, metadataJson: String) -> Unit)
 
     /**
+     * Like [streamMetadataJson], but only the given top-level [fields] of each record, as text
+     * (Postgres `->>` semantics: strings unquoted, numbers and booleans in their JSON spelling, null for
+     * missing/JSON null). values[i] belongs to fields[i]. Much cheaper than the full record when only a few
+     * values are needed (FASTA headers, primary keys).
+     */
+    fun streamMetadataFields(
+        organism: String,
+        ids: IntArray,
+        fields: List<String>,
+        consumer: (id: Int, values: Array<String?>) -> Unit,
+    )
+
+    /**
      * Stream decompressed sequences of [ids] (in the given order) for each of [sequenceIndices]
      * (in the given order per id): consumer(id, sequenceIndex, sequenceBytes). Entries without a
      * sequence for an index are skipped. sequenceBytes is only valid during the callback.
@@ -30,4 +43,27 @@ interface QueryStore {
         ids: IntArray,
         consumer: (id: Int, sequenceIndex: Int, sequence: ByteArray, length: Int) -> Unit,
     )
+
+    /**
+     * Sequences plus metadata values, for sequence endpoints that need both (FASTA headers, primary keys of JSON
+     * output). For every id in [ids] (in order) that has a metadata record: if [fields] is not empty,
+     * [SequenceRowConsumer.row] with the texts of [fields] (as in [streamMetadataFields]); then
+     * [SequenceRowConsumer.sequence] for each of its sequences (as in [streamSequences]). With empty [fields], only
+     * sequences are reported (like [streamSequences]).
+     */
+    fun streamSequenceRows(
+        organism: String,
+        kind: SequenceKind,
+        sequenceIndices: List<Int>,
+        ids: IntArray,
+        fields: List<String>,
+        consumer: SequenceRowConsumer,
+    )
+}
+
+interface SequenceRowConsumer {
+    fun row(id: Int, values: Array<String?>)
+
+    /** [sequence] is only valid during the callback */
+    fun sequence(id: Int, sequenceIndex: Int, sequence: ByteArray, length: Int)
 }
