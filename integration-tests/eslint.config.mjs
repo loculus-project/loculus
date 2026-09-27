@@ -38,4 +38,23 @@ export default tseslint.config(
             ],
         },
     },
+    {
+        files: ['tests/specs/**/*.ts', 'tests/*.setup.ts'],
+        rules: {
+            'no-restricted-imports': [
+                'error',
+                {
+                    paths: [
+                        {
+                            name: '@playwright/test',
+                            importNames: ['test'],
+                            message:
+                                "Import `test` from tests/fixtures (e.g. './fixtures/browser-crash.fixture'), " +
+                                'so the browser-crash retry guard applies.',
+                        },
+                    ],
+                },
+            ],
+        },
+    },
 );
