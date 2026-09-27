@@ -345,10 +345,7 @@ class ENAVisibilityChecker:
     def check_visibility(self, accession: str) -> RawProcessingResult:
         file_type = "xml" if accession.startswith(XML_PREFIXES) else "embl"
         url = f"https://www.ebi.ac.uk/ena/browser/api/{file_type}/{accession}"
-        ena_error_message = (
-            f"unable to validate accession '{accession}': could not reach ENA, "
-            "please try resubmitting later"
-        )
+        ena_error_message = f"unable to validate accession '{accession}': could not reach ENA."
         is_bioproject = accession.startswith(PROJECT_PREFIX)
         try:
             # Only cache bioprojects as they're what's likely to be shared across submissions
@@ -360,7 +357,10 @@ class ENAVisibilityChecker:
 
         if response.status_code == HTTPStatus.OK:
             if is_bioproject and self._is_umbrella_project(response.content):
-                return processing_error(f"bioproject '{accession}' is an umbrella project")
+                return processing_error(
+                    f"bioproject '{accession}' is an umbrella project. "
+                    "Please provide the accession of a submission project instead."
+                )
             return RawProcessingResult(datum=accession)
         if response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
             return processing_error(ena_error_message)
