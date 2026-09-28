@@ -989,7 +989,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     private fun complementRows(ids: RoaringBitmap): List<IndexRow>? {
         val loader = rowLoader ?: return null
         val complement = lock.read {
-            if (alive.cardinality - RoaringBitmap.andCardinality(ids, alive) > SMALL_SET_LIMIT) return null
+            if (alive.cardinality - RoaringBitmap.andCardinality(ids, alive) > COMPLEMENT_ROWS_LIMIT) return null
             RoaringBitmap.andNot(alive, ids)
         }
         if (complement.isEmpty) return null
@@ -1331,8 +1331,15 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         /** filtered mutation counting runs position blocks in parallel (switchable for benchmarks) */
         @Volatile internal var parallelMutations = true
 
-        /** mutations / insertions over at most this many ids are counted from their rows (see [rowLoader]) */
-        const val SMALL_SET_LIMIT = 100
+        /**
+         * mutations / insertions over at most this many ids are counted from their rows (see [rowLoader]).
+         * Loading rows costs ~0.04 ms/id on local Postgres and 0.2-0.4 ms/id on real data, the bitmap path a flat
+         * 1-3 ms (60k-1M entries), so rows only pay off for very small sets such as a single sequence's page.
+         */
+        const val SMALL_SET_LIMIT = 20
+
+        /** a complement (alive \ ids) of at most this many ids is counted from its rows (see [complementRows]) */
+        const val COMPLEMENT_ROWS_LIMIT = 100
 
         /** mutations / insertions over ids covering all but at most this fraction are counted as all - complement */
         private const val COMPLEMENT_FRACTION = 0.2
