@@ -16,13 +16,13 @@ import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.auth.User
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.service.files.FileIdAllocator
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.FilesPreconditionValidator
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
-import org.loculus.backend.utils.generateFileIds
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.ResponseEntity
@@ -50,6 +50,7 @@ class FilesController(
     private val submissionDatabaseService: SubmissionDatabaseService,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val backendConfig: BackendConfig,
+    private val fileIdAllocator: FileIdAllocator,
 ) {
 
     @Operation(
@@ -142,7 +143,7 @@ class FilesController(
         filesPreconditionValidator.validateNumberFiles(numberFiles)
         filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
 
-        val fileIds = generateFileIds(numberFiles)
+        val fileIds = fileIdAllocator.allocate(numberFiles)
         filesDatabaseService.createFileEntries(fileIds, authenticatedUser.username, groupId)
         return fileIds.map { fileId ->
             FileIdAndWriteUrl(fileId, s3Service.createUrlToUploadPrivateFile(fileId))
@@ -176,7 +177,7 @@ class FilesController(
         filesPreconditionValidator.validateNumberFiles(numberFiles)
         filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
 
-        return generateFileIds(numberFiles).map { fileId ->
+        return fileIdAllocator.allocate(numberFiles).map { fileId ->
             val multipartUploadHandler = s3Service.initiateMultipartUploadAndCreateUrlsToUpload(fileId, numberParts)
             filesDatabaseService.createFileEntry(
                 fileId,
