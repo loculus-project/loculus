@@ -76,6 +76,14 @@ class QueryProjector(
     private var leaderConnection: Connection? = null
     private var lastRestrictionCheckDate: String? = null
     private val rebuildFailedAt = HashMap<String, Long>()
+
+    /**
+     * organisms whose stored metadata field names were checked against the schema (or rewritten by a full rebuild)
+     * since this replica became the leader. Only the leader writes projections, always with the schema's fields,
+     * and the schema is fixed for the process lifetime, so the stored field names change only under another leader
+     * (e.g. during a rolling update with a changed config): the set is cleared whenever leadership is (re-)acquired.
+     */
+    private val metadataFieldsChecked = HashSet<String>()
     private val reconcileCursors = HashMap<String, String>()
     private val reconcilePassStartedAt = HashMap<String, Long>()
     private var lastReconcileAt = System.currentTimeMillis()
@@ -192,6 +200,9 @@ class QueryProjector(
         reconcilePassStartedAt.remove(organism)
     }
 
+    /** forces the stored metadata field names to be checked again in the next iteration (for tests) */
+    internal fun resetMetadataFieldsCheck() = tickLock.withLock { metadataFieldsChecked.clear() }
+
     /** forces the lapsed data use terms check to run again in the next iteration (for tests) */
     internal fun resetDataUseTermsCheck() = tickLock.withLock { lastRestrictionCheckDate = null }
 
@@ -229,6 +240,7 @@ class QueryProjector(
         }
         log.info { "This backend replica is now the query projector leader" }
         leaderConnection = connection
+        metadataFieldsChecked.clear()
         return true
     }
 
@@ -256,6 +268,8 @@ class QueryProjector(
             try {
                 fullRebuild(schema, rebuildReason)
                 rebuildFailedAt.remove(organism)
+                // the rebuild wrote every projection with the schema's metadata fields
+                metadataFieldsChecked.add(organism)
             } catch (e: Exception) {
                 rebuildFailedAt[organism] = System.currentTimeMillis()
                 log.error(e) { "Query projection: full rebuild of $organism failed, will retry: $e" }
@@ -299,6 +313,8 @@ class QueryProjector(
 
             needsFullRebuild -> RebuildReason("full rebuild requested", trustSourceHashes = true)
 
+            schema.organism in metadataFieldsChecked -> null
+
             else -> {
                 val storedFields = connection.prepareStatement(
                     "select metadata from query_entries where organism = ? limit 1",
@@ -318,6 +334,8 @@ class QueryProjector(
                 if (storedFields != null && storedFields != schemaFields) {
                     RebuildReason("metadata fields changed", trustSourceHashes = true)
                 } else {
+                    // with no stored rows yet, the first rows are written by this leader with the schema's fields
+                    metadataFieldsChecked.add(schema.organism)
                     null
                 }
             }

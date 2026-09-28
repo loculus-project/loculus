@@ -288,6 +288,29 @@ class QueryProjectorTest(
     }
 
     @Test
+    fun `stored metadata fields are checked once per leadership and a changed field list triggers a rebuild`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        runProjector()
+        // stored rows without a field of the schema, like rows written by a leader with an older config
+        sql { c ->
+            c.prepareStatement("update query_entries set metadata = metadata - 'versionStatus' where organism = ?")
+                .use {
+                    it.setString(1, DEFAULT_ORGANISM)
+                    it.executeUpdate()
+                }
+        }
+
+        // the field names were already checked in this leadership: no probe, no rebuild
+        runProjector()
+        assertThat(projectedMetadata(DEFAULT_ORGANISM).values.filter { it.has("versionStatus") }, empty())
+
+        projector.resetMetadataFieldsCheck()
+        runProjector()
+        assertThat(projectedMetadata(DEFAULT_ORGANISM).values.filter { !it.has("versionStatus") }, empty())
+        assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+    }
+
+    @Test
     fun `the reconcile pass recomputes projections that went stale without a trigger`() {
         val released = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
         runProjector()
