@@ -7,10 +7,8 @@ import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
 
@@ -22,13 +20,19 @@ import javax.sql.DataSource
  * Chunks are fetched ahead ([PREFETCH_CHUNKS]) on background (virtual) threads while the current chunk is
  * emitted, so Postgres (detoasting, jsonb output) and the JVM (decompression, formatting, writing) work in
  * parallel. Rows of a chunk are collected and then emitted in the requested order.
+ * The prefetch workers of all requests together hold at most [ExportChunkLimiter.maxPermits] pooled connections.
  * A chunk whose ids are dense (e.g. an unfiltered download in id order) is read with a range scan on the
  * primary key instead of `id = any(?)`.
  */
 @Component
 @ConditionalOnProperty(prefix = "loculus.query-engine", name = ["enabled"], havingValue = "true")
-class PostgresQueryStore(private val dataSource: DataSource, compressionDictService: CompressionDictService) :
-    QueryStore {
+class PostgresQueryStore(
+    private val dataSource: DataSource,
+    compressionDictService: CompressionDictService,
+    exportLimiter: ExportChunkLimiter,
+) : QueryStore {
+
+    private val pipeline = ChunkPipeline(exportLimiter, background)
 
     private val dictionaries = ZstdDictionaryCache { compressionDictService.getDictById(it) }
 
@@ -86,8 +90,9 @@ class PostgresQueryStore(private val dataSource: DataSource, compressionDictServ
             ids,
             metadataChunkSize(organism),
             prefetch = METADATA_EXPORT_PREFETCH_CHUNKS,
-            fetch = { chunk ->
-                val byId = fetchMetadataFields(organism, chunk, fields)
+            fetch = { chunk -> fetchMetadataFields(organism, chunk, fields) },
+            // rendering runs in the worker too, after its connection (and permit) have been returned
+            prepare = { chunk, byId ->
                 val presentIds = IntArray(byId.size)
                 val values = ArrayList<Array<String?>>(byId.size)
                 for (id in chunk) {
@@ -140,6 +145,7 @@ class PostgresQueryStore(private val dataSource: DataSource, compressionDictServ
             pipelined(
                 ids,
                 chunkSize,
+                permitsPerChunk = if (fields.isEmpty() || distinctIndices.isEmpty()) 1 else 2,
                 fetch = { chunk ->
                     // metadata values and frames of a chunk are fetched concurrently on two connections
                     val values = if (fields.isEmpty()) {
@@ -149,10 +155,15 @@ class PostgresQueryStore(private val dataSource: DataSource, compressionDictServ
                             fetchMetadataFields(organism, chunk, fields)
                         }
                     }
-                    val frames = if (distinctIndices.isEmpty()) {
-                        null
-                    } else {
-                        fetchFrames(organism, kind, distinctIndices, slotBySequenceIndex, nSlots, chunk)
+                    val frames = try {
+                        if (distinctIndices.isEmpty()) {
+                            null
+                        } else {
+                            fetchFrames(organism, kind, distinctIndices, slotBySequenceIndex, nSlots, chunk)
+                        }
+                    } catch (e: Throwable) {
+                        values?.cancel(true)
+                        throw e
                     }
                     Pair(values?.let { await(it) }, frames)
                 },
@@ -351,44 +362,23 @@ class PostgresQueryStore(private val dataSource: DataSource, compressionDictServ
 
     private inline fun <T> withConnection(block: (Connection) -> T): T = dataSource.connection.use(block)
 
-    /**
-     * Splits [ids] into chunks, fetches up to [PREFETCH_CHUNKS] chunks ahead in the background and emits them in
-     * order on the calling thread.
-     */
     private fun <T> pipelined(
         ids: IntArray,
         chunkSize: Int,
         prefetch: Int = PREFETCH_CHUNKS,
+        permitsPerChunk: Int = 1,
         fetch: (IntArray) -> T,
         emit: (IntArray, T) -> Unit,
-    ) {
-        val chunks = ArrayDeque<IntArray>()
-        forEachChunk(ids, chunkSize) { chunks.addLast(it) }
-        if (chunks.size == 1) {
-            val chunk = chunks.single()
-            emit(chunk, fetch(chunk))
-            return
-        }
-        val inFlight = ArrayDeque<Pair<IntArray, Future<T>>>()
-        try {
-            while (chunks.isNotEmpty() || inFlight.isNotEmpty()) {
-                while (inFlight.size < prefetch && chunks.isNotEmpty()) {
-                    val chunk = chunks.removeFirst()
-                    inFlight.addLast(chunk to background.submit<T> { fetch(chunk) })
-                }
-                val (chunk, future) = inFlight.removeFirst()
-                emit(chunk, await(future))
-            }
-        } finally {
-            inFlight.forEach { it.second.cancel(true) }
-        }
-    }
+    ) = pipeline.run(ids, chunkSize, prefetch, permitsPerChunk, fetch, { _, fetched -> fetched }, emit)
 
-    private fun <T> await(future: Future<T>): T = try {
-        future.get()
-    } catch (e: ExecutionException) {
-        throw e.cause ?: e
-    }
+    private fun <R, T> pipelined(
+        ids: IntArray,
+        chunkSize: Int,
+        prefetch: Int,
+        fetch: (IntArray) -> R,
+        prepare: (IntArray, R) -> T,
+        emit: (IntArray, T) -> Unit,
+    ) = pipeline.run(ids, chunkSize, prefetch, 1, fetch, prepare, emit)
 
     companion object {
         const val METADATA_CHUNK_SIZE = 5_000

@@ -34,7 +34,7 @@ class DetailsStreamingBenchmark {
     fun benchmark() {
         val url = System.getenv("QUERY_ENGINE_DETAILS_BENCHMARK_DB")
         val dataSource = HikariDataSource(HikariConfig().apply { jdbcUrl = url })
-        val store = PostgresQueryStore(dataSource, mockk())
+        val store = PostgresQueryStore(dataSource, mockk(), ExportChunkLimiter.unlimited())
         val ids = dataSource.connection.use { c ->
             c.prepareStatement("select id from query_entries where organism = ? order by id").use { st ->
                 st.setString(1, organism)
