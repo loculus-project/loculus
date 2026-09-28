@@ -23,8 +23,18 @@ import org.loculus.backend.api.toPairs
 import org.loculus.backend.service.jacksonSerializableJsonb
 
 const val SEQUENCE_ENTRIES_VIEW_NAME = "sequence_entries_view"
+const val SEQUENCE_ENTRIES_LATERAL_VIEW_NAME = "sequence_entries_lateral_view"
 
-object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
+object SequenceEntriesView : SequenceEntriesViewTable(SEQUENCE_ENTRIES_VIEW_NAME)
+
+/**
+ * Same rows as [SequenceEntriesView], but the external metadata is aggregated per row: much cheaper for queries of a
+ * few accessions (`accession in (...)`), which make [SequenceEntriesView] aggregate the whole external_metadata table.
+ * Full scans should use [SequenceEntriesView].
+ */
+object SequenceEntriesLateralView : SequenceEntriesViewTable(SEQUENCE_ENTRIES_LATERAL_VIEW_NAME)
+
+open class SequenceEntriesViewTable(name: String) : Table(name) {
     val submittedDataColumn = jacksonSerializableJsonb<SubmittedData<CompressedSequence>>(
         "submitted_data",
     ).nullable()
