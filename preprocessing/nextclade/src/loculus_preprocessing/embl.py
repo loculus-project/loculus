@@ -28,6 +28,11 @@ from .nextclade_annotation import (
 
 logger = logging.getLogger(__name__)
 
+PREMATURE_STOP_NOTE = (
+    "This CDS has been marked as pseudo because it contains a premature stop codon at position X. "
+    "It is possible that this stop codon is biological, and that the protein remains functional."
+)
+
 
 def get_country(metadata: ProcessedMetadata, config: Config) -> str:
     country: str = str(metadata.get(config.embl.country_property, "Unknown"))
@@ -279,7 +284,7 @@ def _build_cds_feature(cds: NextcladeCds, sequence_str: str) -> SeqFeature:
         # Append rather than overwrite, keeping any note carried over from the annotation.
         qualifiers["note"] = [
             *attribute_qualifiers.get("note", []),
-            "Contains premature stop codon",
+            PREMATURE_STOP_NOTE,
         ]
     else:
         qualifiers["translation"] = translation

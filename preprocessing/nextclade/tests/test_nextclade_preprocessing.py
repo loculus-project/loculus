@@ -35,6 +35,7 @@ from loculus_preprocessing.datatypes import (
     SubmissionData,
 )
 from loculus_preprocessing.embl import (
+    PREMATURE_STOP_NOTE,
     create_flatfile,
     get_seq_features,
     reformat_authors_from_loculus_to_embl_style,
@@ -1640,7 +1641,6 @@ def test_create_flatfile():
 FUNCTIONAL_SEQUENCE = "ATGAAAGGGTGA"
 # ATG AAA TAA GGG TGA -> MK*G, with a premature stop codon before the terminal one
 PREMATURE_STOP_SEQUENCE = "ATGAAATAAGGGTGA"
-PREMATURE_STOP_NOTE = "Contains premature stop codon"
 
 
 def _single_cds_feature(sequence_str: str, attributes: GffAttributes | None = None) -> SeqFeature:
@@ -1691,7 +1691,8 @@ def test_flatfile_writes_pseudo_as_a_bare_qualifier_with_both_notes():
 
     assert "/pseudo" in feature_lines
     assert '/note="existing note"' in feature_lines
-    assert f'/note="{PREMATURE_STOP_NOTE}"' in feature_lines
+    # Long qualifier values are wrapped over several FT lines at word boundaries
+    assert f'/note="{PREMATURE_STOP_NOTE}"' in " ".join(feature_lines)
     assert not any(line.startswith("/translation") for line in feature_lines)
 
 
