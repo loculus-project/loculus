@@ -134,9 +134,29 @@ class QueryProjector(
     /** marks the next [count] released accessions of [organism] after its reconcile cursor dirty */
     internal fun reconcileStep(organism: String, count: Int) {
         val cursor = reconcileCursors[organism] ?: ""
-        val last = transaction {
-            jdbc().prepareStatement(
-                """
+        val last = try {
+            reconcileMark(organism, cursor, count)
+        } catch (e: Exception) {
+            // most likely a lock timeout: retried (from the same cursor) in the next run
+            log.warn { "Query projection: reconcile step of $organism skipped: $e" }
+            return
+        }
+        if (last == null) {
+            if (cursor.isNotEmpty()) log.info { "Query projection: reconcile pass over $organism done" }
+            reconcileCursors.remove(organism)
+        } else {
+            reconcileCursors[organism] = last
+        }
+    }
+
+    /** @return the last accession marked, null if there is none after [cursor] */
+    private fun reconcileMark(organism: String, cursor: String, count: Int): String? = transaction {
+        val connection = jdbc()
+        // Inserting a key that an uncommitted submission transaction has also inserted waits for that transaction;
+        // give up quickly instead, so that this can never be the other half of a deadlock with a submission.
+        connection.createStatement().use { it.execute("set local lock_timeout = '100ms'") }
+        connection.prepareStatement(
+            """
                 with next as (
                     select distinct accession from sequence_entries
                     where organism = ? and accession > ? and released_at is not null
@@ -148,19 +168,12 @@ class QueryProjector(
                     on conflict do nothing
                 )
                 select max(accession) from next
-                """.trimIndent(),
-            ).use {
-                it.setString(1, organism)
-                it.setString(2, cursor)
-                it.setString(3, organism)
-                it.executeQuery().use { rs -> if (rs.next()) rs.getString(1) else null }
-            }
-        }
-        if (last == null) {
-            if (cursor.isNotEmpty()) log.info { "Query projection: reconcile pass over $organism done" }
-            reconcileCursors.remove(organism)
-        } else {
-            reconcileCursors[organism] = last
+            """.trimIndent(),
+        ).use {
+            it.setString(1, organism)
+            it.setString(2, cursor)
+            it.setString(3, organism)
+            it.executeQuery().use { rs -> if (rs.next()) rs.getString(1) else null }
         }
     }
 
