@@ -68,8 +68,14 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     private val lock = ReentrantReadWriteLock()
     private var capacity = maxOf(16, initialCapacity)
     private val alive = RoaringBitmap()
+    private val regexCache = RegexCache()
     private val columns: List<Column> = schema.metadata.map {
-        Column.create(it, capacity, lookupByValue = it.name == schema.primaryKey || it.name == ACCESSION_FIELD)
+        Column.create(
+            it,
+            capacity,
+            lookupByValue = it.name == schema.primaryKey || it.name == ACCESSION_FIELD,
+            regexCache = regexCache,
+        )
     }
     private val columnsByName: Map<String, Column> = columns.associateBy { it.field.name }
     private val sequences: Array<SequenceIndex?> = run {
@@ -1452,6 +1458,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         usage["alive"] = heapBytes(alive)
         columns.forEach { usage["metadata:${it.field.name}"] = it.memoryBytes() }
         sequences.filterNotNull().forEach { usage["sequence:${it.schema.name}"] = it.memoryBytes() }
+        usage["regexCache"] = regexCache.bytes
         usage
     }
 

@@ -6,7 +6,6 @@ import org.loculus.backend.query.schema.MetadataField
 import org.roaringbitmap.RoaringBitmap
 import java.time.LocalDate
 import java.time.temporal.IsoFields
-import java.util.concurrent.ConcurrentHashMap
 
 /** a source of grouping keys for /aggregated; [denseRange] > 0 means keys are 0 until denseRange */
 internal interface GroupKeySource {
@@ -51,8 +50,13 @@ internal sealed class Column(val field: MetadataField) : GroupKeySource {
 
     companion object {
         /** [lookupByValue]: keep value -> ids postings instead of per-value bitmaps (string fields only) */
-        fun create(field: MetadataField, capacity: Int, lookupByValue: Boolean = false): Column = when (field.type) {
-            FieldType.STRING -> StringColumn(field, capacity, lookupByValue)
+        fun create(
+            field: MetadataField,
+            capacity: Int,
+            lookupByValue: Boolean = false,
+            regexCache: RegexCache = RegexCache(),
+        ): Column = when (field.type) {
+            FieldType.STRING -> StringColumn(field, capacity, lookupByValue, regexCache)
             FieldType.INT -> IntColumn(field, capacity)
             FieldType.FLOAT -> FloatColumn(field, capacity)
             FieldType.DATE -> DateColumn(field, capacity)
@@ -69,7 +73,13 @@ internal sealed class Column(val field: MetadataField) : GroupKeySource {
  *   in-list filters cost O(k) at any size;
  * - neither: equality, in-list and regex filters scan the codes of the ids in their domain.
  */
-internal class StringColumn(field: MetadataField, capacity: Int, lookupByValue: Boolean = false) : Column(field) {
+internal class StringColumn(
+    field: MetadataField,
+    capacity: Int,
+    lookupByValue: Boolean = false,
+    /** regex results, shared by the string columns of one organism */
+    private val regexCache: RegexCache = RegexCache(),
+) : Column(field) {
     val dictionary = StringDictionary()
     private val codes = CodeArray(capacity)
     private val nulls = RoaringBitmap()
@@ -82,7 +92,6 @@ internal class StringColumn(field: MetadataField, capacity: Int, lookupByValue: 
     private val touchedCodes = java.util.BitSet()
 
     @Volatile private var ranks: Ranks? = null
-    private val regexCache = ConcurrentHashMap<String, RegexMatches>()
 
     val hasBitmaps: Boolean get() = bitmaps != null
 
@@ -217,15 +226,14 @@ internal class StringColumn(field: MetadataField, capacity: Int, lookupByValue: 
     fun regexFilter(pattern: String, domain: RoaringBitmap): RoaringBitmap {
         val snapshot = regexMatches(pattern)
         if (bitmaps == null) {
-            val mask = snapshot.matches
             val matchNull = snapshot.matchesNull
             return scan(domain) { id ->
                 val c = codes.get(id)
-                if (c < 0) matchNull else mask[c]
+                if (c < 0) matchNull else snapshot.matches(c)
             }
         }
         val matching = ArrayList<Int>()
-        for (c in 0 until snapshot.size) if (snapshot.matches[c]) matching.add(c)
+        for (c in 0 until snapshot.size) if (snapshot.matches(c)) matching.add(c)
         return inFilter(matching.toIntArray(), snapshot.matchesNull, domain)
     }
 
@@ -233,11 +241,7 @@ internal class StringColumn(field: MetadataField, capacity: Int, lookupByValue: 
      * Regex results per dictionary code. The dictionary is append-only, so a cached result only needs to be
      * extended to new codes.
      */
-    private fun regexMatches(pattern: String): RegexMatchesSnapshot {
-        if (regexCache.size > MAX_CACHED_REGEXES) regexCache.clear()
-        val cached = regexCache.computeIfAbsent(pattern) { RegexMatches(it) }
-        return cached.upTo(dictionary)
-    }
+    private fun regexMatches(pattern: String): RegexMatchesSnapshot = regexCache.matches(this, pattern, dictionary)
 
     fun ranks(): Ranks {
         val current = ranks
@@ -256,40 +260,99 @@ internal class StringColumn(field: MetadataField, capacity: Int, lookupByValue: 
         }
         postings?.let { total += it.memoryBytes() }
         ranks?.let { total += arrayBytes(4L * it.sorted.size) + arrayBytes(4L * it.rank.size) }
-        regexCache.values.forEach { total += it.memoryBytes() }
         return total
     }
 
     companion object {
         const val BITMAP_LIMIT = 65536
-        const val MAX_CACHED_REGEXES = 256
     }
 }
 
-internal class RegexMatchesSnapshot(val matches: BooleanArray, val size: Int, val matchesNull: Boolean)
+/**
+ * Regex results of the string columns of one organism, least recently used first out: results are dropped
+ * while they hold more than [budgetBytes] or there are more than [maxEntries] of them. A result is one bit per
+ * dictionary value (up to 2x the dictionary while it grows), so a near-unique column of 20M values costs 2.5 MB
+ * per pattern; a result larger than the whole budget is used for its query but not kept.
+ */
+internal class RegexCache(private val budgetBytes: Long = DEFAULT_BUDGET_BYTES, private val maxEntries: Int = 256) {
+    private data class Key(val column: StringColumn, val pattern: String)
+
+    /** access order: eldest = least recently used */
+    private val entries = LinkedHashMap<Key, RegexMatches>(16, 0.75f, true)
+
+    /** bytes of the kept results, as last accounted */
+    var bytes = 0L
+        @Synchronized get
+        private set
+
+    val size: Int @Synchronized get() = entries.size
+
+    fun matches(column: StringColumn, pattern: String, dictionary: StringDictionary): RegexMatchesSnapshot {
+        val key = Key(column, pattern)
+        val entry = synchronized(this) { entries.getOrPut(key) { RegexMatches(pattern) } }
+        // evaluated outside the cache lock: a new pattern scans the whole dictionary
+        val snapshot = entry.upTo(dictionary)
+        synchronized(this) {
+            if (entries[key] === entry) {
+                val now = entry.memoryBytes()
+                bytes += now - entry.accountedBytes
+                entry.accountedBytes = now
+                if (now > budgetBytes) {
+                    entries.remove(key)
+                    bytes -= now
+                }
+                val eldest = entries.values.iterator()
+                while ((bytes > budgetBytes || entries.size > maxEntries) && eldest.hasNext()) {
+                    bytes -= eldest.next().accountedBytes
+                    eldest.remove()
+                }
+            }
+        }
+        return snapshot
+    }
+
+    companion object {
+        const val DEFAULT_BUDGET_BYTES = 32L shl 20
+    }
+}
+
+internal class RegexMatchesSnapshot(private val words: LongArray, val size: Int, val matchesNull: Boolean) {
+    fun matches(code: Int): Boolean = (words[code ushr 6] ushr code) and 1L != 0L
+}
 
 internal class RegexMatches(pattern: String) {
     private val compiled = Pattern.compile(pattern)
     private val literal = LiteralPattern.parse(pattern)
     private val matchesNull = compiled.matcher("").find()
-    private var matches = BooleanArray(0)
+
+    /**
+     * bit per dictionary code. Snapshots may read it concurrently, but only the bits of codes below their size,
+     * which never change (new codes only set bits above them; a torn word write keeps those bits in both halves)
+     */
+    private var words = LongArray(0)
     private var evaluated = 0
+
+    /** [memoryBytes] as last added to the owning cache's total (guarded by the cache) */
+    var accountedBytes = 0L
 
     @Synchronized
     fun upTo(dictionary: StringDictionary): RegexMatchesSnapshot {
         val size = dictionary.size
         if (evaluated < size) {
-            if (matches.size < size) matches = matches.copyOf(maxOf(size, matches.size * 2))
+            val needed = (size + 63) ushr 6
+            if (words.size < needed) words = words.copyOf(maxOf(needed, words.size * 2))
+            val w = words
             for (c in evaluated until size) {
                 val value = dictionary.get(c)
-                matches[c] = literal?.foundIn(value) ?: compiled.matcher(value).find()
+                if (literal?.foundIn(value) ?: compiled.matcher(value).find()) w[c ushr 6] = w[c ushr 6] or (1L shl c)
             }
             evaluated = size
         }
-        return RegexMatchesSnapshot(matches, size, matchesNull)
+        return RegexMatchesSnapshot(words, size, matchesNull)
     }
 
-    fun memoryBytes(): Long = arrayBytes(matches.size.toLong())
+    @Synchronized
+    fun memoryBytes(): Long = arrayBytes(8L * words.size)
 }
 
 /**
