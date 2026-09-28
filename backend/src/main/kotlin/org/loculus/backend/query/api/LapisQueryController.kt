@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Hidden
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import mu.KotlinLogging
+import org.apache.coyote.CloseNowException
 import org.loculus.backend.query.QuerySchemaRegistry
 import org.loculus.backend.query.index.OrganismIndex
 import org.loculus.backend.query.index.OrganismIndexProvider
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RestController
 import java.io.BufferedOutputStream
 import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.io.OutputStream
 import java.net.URLEncoder
 import java.util.zip.GZIPOutputStream
@@ -143,13 +145,58 @@ class LapisQueryController(
             return
         }
 
-        startResponse(serverTiming)
+        stream(body, request, response, parsed.compression, contentEncoding) { startResponse(serverTiming) }
+    }
+
+    /**
+     * Streams [body]. Status and headers are only set when the first bytes leave the output buffer, so a failure
+     * before that is still answered with an error status (by [LapisExceptionHandler]). A failure after that aborts
+     * the connection: the chunked encoding is never terminated (and a compressed body never finished), so clients
+     * see an incomplete transfer instead of a short, well-formed 200.
+     */
+    private fun stream(
+        body: LapisBody,
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        compression: Compression?,
+        contentEncoding: String?,
+        startResponse: () -> Unit,
+    ) {
+        val client = ClientOutputStream(response.outputStream)
+        val deferred = DeferredOutputStream {
+            startResponse()
+            compress(client, compression, contentEncoding)
+        }
         try {
-            val compressed = compress(response.outputStream, parsed.compression, contentEncoding)
-            BufferedOutputStream(compressed, OUTPUT_BUFFER_SIZE).use { out -> body.write(out) }
+            val out = BufferedOutputStream(deferred, OUTPUT_BUFFER_SIZE)
+            body.write(out)
+            out.close()
         } catch (e: Exception) {
-            log.warn(e) { "Query engine: streaming ${request.requestURI} aborted: $e" }
-            throw e
+            // never close or flush the response on failure: that would finish it cleanly
+            client.detach()
+            deferred.release()
+            when {
+                client.failed -> {
+                    log.warn { "Query engine: client went away while streaming ${request.requestURI}: $e" }
+                    throw e
+                }
+
+                !deferred.started -> throw e
+
+                else -> {
+                    log.error(e) {
+                        "Query engine: ${request.method} ${request.requestURI}" +
+                            (request.queryString?.let { "?$it" } ?: "") +
+                            " (request id ${requestId(response)}) failed after the response started, " +
+                            "aborting the connection: $e"
+                    }
+                    // commit what is buffered (status line and headers at least), so that the abort is visible
+                    runCatching { response.flushBuffer() }
+                    // Tomcat closes the connection for an exception from a committed response; this one is only
+                    // logged at debug level by Tomcat (the failure has been logged above)
+                    throw CloseNowException("response aborted after a failure: $e", e)
+                }
+            }
         }
     }
 
@@ -286,5 +333,57 @@ class LapisQueryController(
         }
 
         private const val ZSTD_LEVEL = 3
+    }
+}
+
+/** the response stream; remembers whether writing to the client failed, and can be detached (writes then dropped) */
+private class ClientOutputStream(private val out: OutputStream) : OutputStream() {
+    var failed = false
+        private set
+    private var detached = false
+
+    fun detach() {
+        detached = true
+    }
+
+    private inline fun io(block: () -> Unit) {
+        if (detached) return
+        try {
+            block()
+        } catch (e: IOException) {
+            failed = true
+            throw e
+        }
+    }
+
+    override fun write(b: Int) = io { out.write(b) }
+
+    override fun write(b: ByteArray, off: Int, len: Int) = io { out.write(b, off, len) }
+
+    override fun flush() = io { out.flush() }
+
+    override fun close() = io { out.close() }
+}
+
+/** creates its target on the first byte (or on close); flushing before that does nothing */
+private class DeferredOutputStream(private val open: () -> OutputStream) : OutputStream() {
+    private var target: OutputStream? = null
+    val started get() = target != null
+
+    private fun target(): OutputStream = target ?: open().also { target = it }
+
+    override fun write(b: Int) = target().write(b)
+
+    override fun write(b: ByteArray, off: Int, len: Int) = target().write(b, off, len)
+
+    override fun flush() {
+        target?.flush()
+    }
+
+    override fun close() = target().close()
+
+    /** after a failure: frees the target (compressors hold native memory), its output must already be detached */
+    fun release() {
+        runCatching { target?.close() }
     }
 }

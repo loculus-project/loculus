@@ -158,6 +158,20 @@ class LapisHttpTest {
     }
 
     @Test
+    fun `a streamed download that fails after the first bytes aborts the connection`() {
+        store.failAfterChunks = FAIL_AFTER_CHUNKS
+        val (response, requestId) = get(STREAMED_DOWNLOAD)
+        assertThat(response.statusCode(), equalTo(200))
+        val received = java.io.ByteArrayOutputStream()
+        assertThrows<IOException> { response.body().use { it.transferTo(received) } }
+        assertThat(String(received.toByteArray()), startsWith("accessionVersion\tcountry\n"))
+
+        val errors = errorEvents()
+        assertThat(errors.map { it.formattedMessage }.toString(), errors, hasSize(1))
+        assertThat(errors.single().mdcPropertyMap["RequestId"], equalTo(requestId))
+    }
+
+    @Test
     fun `a small details response is a 500 LAPIS error when the store fails`() {
         store.failAfterChunks = 0
         val (response, _) = get(
@@ -170,6 +184,36 @@ class LapisHttpTest {
         assertThat(response.headers().firstValue("Content-Encoding").orElse(null), nullValue())
         assertThat(body, startsWith("""{"error":{"detail":"simulated store failure"""))
         assertThat(errorEvents(), hasSize(1))
+    }
+
+    @Test
+    fun `a streamed download that fails before its first byte is a 500 without download headers`() {
+        store.failAfterChunks = 0
+        val (response, _) = get(STREAMED_DOWNLOAD)
+        val body = response.body().use { it.readAllBytes() }.decodeToString()
+        assertThat(response.statusCode(), equalTo(500))
+        assertThat(response.headers().firstValue("Content-Disposition").orElse(null), nullValue())
+        assertThat(body, startsWith("""{"error":{"detail":"simulated store failure"""))
+        assertThat(errorEvents(), hasSize(1))
+    }
+
+    @Test
+    fun `a streamed JSON response that fails midway aborts the connection`() {
+        store.failAfterChunks = FAIL_AFTER_CHUNKS
+        val (response, _) = get("/test/sample/details?fields=accessionVersion,country&dataFormat=json")
+        assertThat(response.statusCode(), equalTo(200))
+        val received = java.io.ByteArrayOutputStream()
+        // before the abort, Tomcat includes Boot's /error page into the committed response (for JSON it renders)
+        assertThrows<IOException> { response.body().use { it.transferTo(received) } }
+        assertThat(String(received.toByteArray()), startsWith("""{"data":[{"accessionVersion":"A0.1","""))
+    }
+
+    @Test
+    fun `a gzip download that fails midway is not a valid gzip file`() {
+        store.failAfterChunks = FAIL_AFTER_CHUNKS
+        val (response, _) = get("$STREAMED_DOWNLOAD&compression=gzip")
+        assertThat(response.statusCode(), equalTo(200))
+        assertThrows<IOException> { response.body().use { it.readAllBytes() } }
     }
 
     @Test
