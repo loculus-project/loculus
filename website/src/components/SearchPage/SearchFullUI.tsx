@@ -264,6 +264,12 @@ const InnerSearchFullUI = ({
         }
     }, [aggregatedHook.data?.data, oldCount]);
 
+    const resultsAreLoading =
+        detailsHook.isPending ||
+        aggregatedHook.isPending ||
+        !firstClientSideLoadOfCountCompleted ||
+        !firstClientSideLoadOfDataCompleted;
+
     const showMutationSearch = schema.submissionDataTypes.consensusSequences;
 
     return (
@@ -344,17 +350,7 @@ const InnerSearchFullUI = ({
                         </ErrorBox>
                     )}
 
-                <div
-                    className={`
-                        ${
-                            !(firstClientSideLoadOfCountCompleted && firstClientSideLoadOfDataCompleted)
-                                ? 'cursor-wait pointer-events-none'
-                                : detailsHook.isPending || aggregatedHook.isPending
-                                  ? 'opacity-50 pointer-events-none'
-                                  : ''
-                        }
-                        `}
-                >
+                <div>
                     {!tableFilter.isEmpty() && (
                         <div className='pt-3 pb-2'>
                             <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
@@ -362,11 +358,10 @@ const InnerSearchFullUI = ({
                     )}
                     <div className='text-sm text-gray-800 mb-6 justify-between flex flex-wrap gap-4'>
                         <div className='mt-auto'>
-                            {buildSequenceCountText(totalSequences, oldCount, initialCount)}
-                            {detailsHook.isPending ||
-                            aggregatedHook.isPending ||
-                            !firstClientSideLoadOfCountCompleted ||
-                            !firstClientSideLoadOfDataCompleted ? (
+                            <span className={resultsAreLoading ? 'opacity-50' : ''}>
+                                {buildSequenceCountText(totalSequences, oldCount, initialCount)}
+                            </span>
+                            {resultsAreLoading ? (
                                 <span className='ml-3 appearSlowly inline-block'>
                                     <Spinner size='xs' />
                                 </span>
@@ -433,30 +428,33 @@ const InnerSearchFullUI = ({
                         </div>
                     </div>
 
-                    <Table
-                        schema={schema}
-                        data={detailsHook.data?.data ?? oldData ?? initialData}
-                        selectedSeqs={selectedSeqs}
-                        setSelectedSeqs={setSelectedSeqs}
-                        setPreviewedSeqId={(seqId: string | null) => setPreviewedSeqId(seqId)}
-                        previewedSeqId={previewedSeqId}
-                        orderBy={{
-                            field: orderByField,
-                            type: orderDirection,
-                        }}
-                        setOrderByField={setOrderByField}
-                        setOrderDirection={setOrderDirection}
-                        columnsToShow={columnsToShow}
-                    />
+                    {/* Only the rows and pagination wait for results; the toolbar above does not depend on them. */}
+                    <div className={resultsAreLoading ? 'opacity-50 pointer-events-none' : ''}>
+                        <Table
+                            schema={schema}
+                            data={detailsHook.data?.data ?? oldData ?? initialData}
+                            selectedSeqs={selectedSeqs}
+                            setSelectedSeqs={setSelectedSeqs}
+                            setPreviewedSeqId={(seqId: string | null) => setPreviewedSeqId(seqId)}
+                            previewedSeqId={previewedSeqId}
+                            orderBy={{
+                                field: orderByField,
+                                type: orderDirection,
+                            }}
+                            setOrderByField={setOrderByField}
+                            setOrderDirection={setOrderDirection}
+                            columnsToShow={columnsToShow}
+                        />
 
-                    <div className='mt-4 flex justify-center'>
-                        {totalSequences !== undefined && (
-                            <SearchPagination
-                                count={Math.ceil(totalSequences / pageSize)}
-                                page={page}
-                                setPage={setPage}
-                            />
-                        )}
+                        <div className='mt-4 flex justify-center'>
+                            {totalSequences !== undefined && (
+                                <SearchPagination
+                                    count={Math.ceil(totalSequences / pageSize)}
+                                    page={page}
+                                    setPage={setPage}
+                                />
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

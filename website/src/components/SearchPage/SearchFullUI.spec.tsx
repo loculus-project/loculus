@@ -277,6 +277,22 @@ describe('SearchFullUI', () => {
         });
     });
 
+    it('keeps the toolbar interactive and dims only the results while results are loading', () => {
+        mockUseDetails.mockReturnValue({
+            data: { data: [{ accession: 'LOC_123456', field1: '2022-01-01', field3: 'Lineage 1' }] },
+            isPending: true,
+            error: null,
+            isError: false,
+            mutate: mockDetailsMutate,
+        });
+
+        renderSearchFullUI();
+
+        expect(screen.getByRole('button', { name: 'Customize columns' }).closest('.pointer-events-none')).toBeNull();
+        expect(screen.getByRole('button', { name: /Download/ }).closest('.pointer-events-none')).toBeNull();
+        expect(screen.getByRole('table').closest('.pointer-events-none')).toHaveClass('opacity-50');
+    });
+
     it('displays sequences data correctly', async () => {
         renderSearchFullUI();
 
