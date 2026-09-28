@@ -1700,6 +1700,17 @@ def test_flatfile_writes_pseudo_as_a_bare_qualifier_with_both_notes():
     assert not any(line.startswith("/translation") for line in feature_lines)
 
 
+def test_get_seq_features_ignores_pseudo_and_translation_from_annotation():
+    functional = _single_cds_feature(
+        FUNCTIONAL_SEQUENCE, {"pseudo": ["true"], "translation": ["XXX"]}
+    )
+    assert "pseudo" not in functional.qualifiers
+    assert functional.qualifiers["translation"] == "MKG"
+
+    broken = _single_cds_feature(PREMATURE_STOP_SEQUENCE, {"translation": ["XXX"]})
+    assert "translation" not in broken.qualifiers
+
+
 multi_reference_cases = [
     Case(
         name="with only one reference uploaded",
