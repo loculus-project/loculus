@@ -83,20 +83,20 @@ fileSharing:
 website:
   lapisCache:
     enabled: true
-    memoryMB: 48
-    diskMB: 512
+    memoryMB: 150
+    diskMB: 2000
     freshSeconds: 15
   pageCache:
     enabled: true
-    memoryMB: 16
-    diskMB: 2500
+    memoryMB: 350
+    diskMB: 8000
 resources:
   website:
     requests:
-      memory: "100Mi"
+      memory: "256Mi"
       cpu: "20m"
     limits:
-      memory: "500Mi"
+      memory: "1536Mi"
   docs:
     requests:
       memory: "25Mi"
