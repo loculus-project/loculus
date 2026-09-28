@@ -146,14 +146,14 @@ EMBL_ANNOTATIONS = EmblAnnotations(
         "operon",
         "product",
         "protein_id",
-        "pseudo",
+        # "pseudo",  # nextclade marks a CDS as pseudo by omitting the translation
         "pseudogene",
         "ribosomal_slippage",
         "standard_name",
         "trans_splicing",
         "transl_except",
         # "transl_table",  # nextclade uses the standard transl_table 1
-        "translation",
+        # "translation",  # nextclade should always compute the translation
     ),
     gene_qualifiers=(
         "allele",
@@ -169,7 +169,7 @@ EMBL_ANNOTATIONS = EmblAnnotations(
         "note",
         "operon",
         "product",
-        "pseudo",
+        # "pseudo",  # nextclade marks a gene as pseudo by omitting the translation
         "pseudogene",
         "standard_name",
         "trans_splicing",
