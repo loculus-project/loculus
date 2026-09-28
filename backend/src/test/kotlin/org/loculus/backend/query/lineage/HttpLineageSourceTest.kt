@@ -3,6 +3,7 @@ package org.loculus.backend.query.lineage
 import com.sun.net.httpserver.HttpServer
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.empty
 import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.hasItem
 import org.junit.jupiter.api.AfterEach
@@ -16,14 +17,19 @@ class HttpLineageSourceTest {
     private data class Received(val method: String, val query: String?, val contentType: String?, val body: String)
 
     private val received = mutableListOf<Received>()
+    private val upgrades = mutableListOf<String>()
     private val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {
         createContext("/") { exchange ->
             val body = exchange.requestBody.readAllBytes().decodeToString()
             val query = exchange.requestURI.query
             received += Received(exchange.requestMethod, query, exchange.requestHeaders.getFirst("Content-Type"), body)
-            val (status, response) = when (exchange.requestURI.path) {
-                "/lineages.yaml" -> 200 to "A: {}\n"
-                "/silo-lineage" -> if (query == "prune=true") 200 to "'1': {}\n" else 413 to "too large"
+            upgrades += exchange.requestHeaders["Upgrade"].orEmpty()
+            val path = exchange.requestURI.path
+            // like uvicorn, which the taxonomy service runs on: HTTP/1.1 only, an h2c upgrade is a 400
+            val (status, response) = when {
+                exchange.requestHeaders.containsKey("Upgrade") -> 400 to "Unsupported upgrade request."
+                path == "/lineages.yaml" -> 200 to "A: {}\n"
+                path == "/silo-lineage" -> if (query == "prune=true") 200 to "'1': {}\n" else 413 to "too large"
                 else -> 404 to "not found"
             }
             val bytes = response.toByteArray()
@@ -59,6 +65,13 @@ class HttpLineageSourceTest {
             assertThrows<IllegalStateException> { HttpLineageSource().download("$base/missing.yaml") }.message,
             containsString("answered 404"),
         )
+    }
+
+    @Test
+    fun `requests are plain HTTP-1_1 without an h2c upgrade`() {
+        assertThat(HttpLineageSource().hierarchy(base, listOf("9606")), equalTo("'1': {}\n"))
+        assertThat(HttpLineageSource().download("$base/lineages.yaml"), equalTo("A: {}\n"))
+        assertThat(upgrades, empty())
     }
 
     /** against a running taxonomy service, e.g. `TAXONOMY_SERVICE_URL=http://localhost:5000` */

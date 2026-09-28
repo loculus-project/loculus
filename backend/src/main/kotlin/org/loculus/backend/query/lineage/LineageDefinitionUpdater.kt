@@ -34,7 +34,9 @@ interface LineageSource {
 }
 
 class HttpLineageSource(
+    // HTTP/2 would send an h2c Upgrade on http://, which uvicorn (the taxonomy service) rejects with a 400
     private val client: HttpClient = HttpClient.newBuilder()
+        .version(HttpClient.Version.HTTP_1_1)
         .connectTimeout(Duration.ofSeconds(10))
         .followRedirects(HttpClient.Redirect.NORMAL)
         .build(),
