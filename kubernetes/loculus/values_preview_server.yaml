@@ -138,10 +138,10 @@ resources:
       memory: "10Gi"
   backend:
     requests:
-      memory: "500Mi"
-      cpu: "100m"
+      memory: "8Gi"
+      cpu: "500m"
     limits:
-      memory: "3Gi"
+      memory: "8Gi"
   preprocessing:
     requests:
       memory: "200Mi"
@@ -187,3 +187,18 @@ defaultOrganisms:
   cchf: *fileSharingOrganismDefaults
   cchf-multi-ref: *fileSharingOrganismDefaults
   enteroviruses: *fileSharingOrganismDefaults
+# PR #7431 query-engine preview: the backend holds every organism's index in its heap.
+replicas:
+  backend: 1
+backendJvmExtraOpts: "-XX:MaxRAMPercentage=80 -Xlog:gc:stdout:time,uptime,level,tags"
+developmentDatabase:
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "250m"
+    limits:
+      memory: "4Gi"
+  settings:
+    - max_connections=200
+    - shared_buffers=1GB
+  shmSize: "1Gi"
