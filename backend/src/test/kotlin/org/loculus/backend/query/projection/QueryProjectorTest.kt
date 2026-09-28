@@ -360,22 +360,27 @@ class QueryProjectorTest(
                 releaseSecond.await()
             }
         }
-        assertThat(secondWrote.await(30, TimeUnit.SECONDS), equalTo(true))
-        val third = thread {
-            transaction {
-                writer.write(
-                    TransactionManager.current().connection.connection as Connection,
-                    emptyList(),
-                    listOf(ids[2]),
-                )
+        // release writer 2 on every path: a failed assertion must not leave its row lock blocking later tests
+        var third: Thread? = null
+        try {
+            assertThat(secondWrote.await(30, TimeUnit.SECONDS), equalTo(true))
+            third = thread {
+                transaction {
+                    writer.write(
+                        TransactionManager.current().connection.connection as Connection,
+                        emptyList(),
+                        listOf(ids[2]),
+                    )
+                }
             }
+            third.join(500)
+            assertThat("third writer waits for the second one", third.isAlive, equalTo(true))
+            assertThat(changelogSeqs(), equalTo(seqsBefore))
+        } finally {
+            releaseSecond.countDown()
+            second.join(30_000)
+            third?.join(30_000)
         }
-        third.join(500)
-        assertThat("third writer waits for the second one", third.isAlive, equalTo(true))
-        assertThat(changelogSeqs(), equalTo(seqsBefore))
-        releaseSecond.countDown()
-        second.join()
-        third.join()
 
         val max = seqsBefore.maxOrNull() ?: 0L
         assertThat(changelogSeqs(), equalTo(seqsBefore + listOf(max + 1, max + 2)))
