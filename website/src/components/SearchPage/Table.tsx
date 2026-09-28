@@ -121,16 +121,20 @@ const FileLink: FC<FileLinkProps> = ({ fileEntry, columnWidth }) => {
 
 const FilesCellContent: FC<CellContentProps> = ({ value, type, columnWidth, fieldName }) => {
     if (typeof value === 'string') {
-        const fileEntries = JSON.parse(value) as FileEntry[];
-        return (
-            <>
-                {fileEntries.map((fileEntry) => (
-                    <div key={fileEntry.fileId}>
-                        <FileLink fileEntry={fileEntry} columnWidth={columnWidth} />
-                    </div>
-                ))}
-            </>
-        );
+        try {
+            const fileEntries = JSON.parse(value) as FileEntry[];
+            return (
+                <>
+                    {fileEntries.map((fileEntry) => (
+                        <div key={fileEntry.fileId}>
+                            <FileLink fileEntry={fileEntry} columnWidth={columnWidth} />
+                        </div>
+                    ))}
+                </>
+            );
+        } catch {
+            // Fall back to displaying the raw value if parsing fails
+        }
     }
     return <CellContent value={value} type={type} columnWidth={columnWidth} fieldName={fieldName} />;
 };
