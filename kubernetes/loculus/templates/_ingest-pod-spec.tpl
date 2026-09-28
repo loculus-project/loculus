@@ -79,7 +79,7 @@ spec:
     - name: ingest-{{ $key }}
       image: {{ $organismContent.ingest.image }}:{{ $dockerTag }}
       imagePullPolicy: {{ $Values.imagePullPolicy }}
-      {{- include "loculus.resources" (list "ingest" $Values) | nindent 6 }}
+      {{- include "loculus.resources" (list "ingest" $Values $key) | nindent 6 }}
       env:
         - name: KEYCLOAK_INGEST_PASSWORD
           valueFrom:

@@ -91,6 +91,16 @@ website:
     memoryMB: 350
     diskMB: 8000
 resources:
+  organismSpecific:
+    sars-cov-2:
+      # hashes all 892k released-since records before subsampling; ~30 GB per FASTA copy on node disk
+      ingest:
+        requests:
+          memory: "2Gi"
+          cpu: "1"
+        limits:
+          cpu: "4"
+          memory: "16Gi"
   website:
     requests:
       memory: "256Mi"

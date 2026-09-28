@@ -42,6 +42,8 @@ defaultOrganisms:
   cchf: *fileSharingOrganismDefaults
   cchf-multi-ref: *fileSharingOrganismDefaults
   enteroviruses: *fileSharingOrganismDefaults
+  sars-cov-2:
+    enabled: false # query-engine preview only
 resources:
   raw-reads-processing:
     requests:
