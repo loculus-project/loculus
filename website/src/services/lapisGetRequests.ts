@@ -6,8 +6,10 @@
  * request is only sent as GET when its URL encoding means exactly what its JSON means to both LAPIS and the engine:
  *  - arrays become repeated keys (filter values are never comma-split, so they may contain commas);
  *  - numbers and booleans become their string form;
- *  - `orderBy` must be ascending: GET has no way to say "descending" (LAPIS' GET only knows field names);
- *  - null values, empty arrays, nested objects, descending or `random` object orders keep the request on POST.
+ *  - `orderBy` objects become field names when ascending. LAPIS' GET only knows ascending field names; the Loculus
+ *    query engine also reads `field:descending`, so with `queryEngine` set a descending order is sent that way;
+ *  - null values, empty arrays, nested objects, `random` object orders, and descending orders without `queryEngine`
+ *    keep the request on POST.
  */
 import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import axios from 'axios';
@@ -46,7 +48,14 @@ function scalarToString(value: unknown): string | undefined {
     return undefined;
 }
 
-function orderByToString(value: unknown): string | undefined {
+export type LapisGetOptions = {
+    /** Longest full URL sent as GET. */
+    maxUrlLength?: number;
+    /** The LAPIS URL is the Loculus query engine, which reads `orderBy=field:descending` in a GET. */
+    queryEngine?: boolean;
+};
+
+function orderByToString(value: unknown, queryEngine: boolean): string | undefined {
     if (typeof value === 'string') {
         return value;
     }
@@ -57,14 +66,17 @@ function orderByToString(value: unknown): string | undefined {
     if (typeof field !== 'string' || Object.keys(rest).length > 0) {
         return undefined;
     }
-    return type === undefined || type === 'ascending' ? field : undefined;
+    if (type === undefined || type === 'ascending') {
+        return field;
+    }
+    return type === 'descending' && queryEngine ? `${field}:descending` : undefined;
 }
 
 /**
  * The URL query string (without `?`) meaning the same as this JSON request body, or undefined when GET can't express
  * it. Keys keep their order; array elements keep theirs.
  */
-export function lapisRequestToQueryString(body: unknown): string | undefined {
+export function lapisRequestToQueryString(body: unknown, queryEngine = false): string | undefined {
     if (body === undefined || body === null) {
         return '';
     }
@@ -82,7 +94,7 @@ export function lapisRequestToQueryString(body: unknown): string | undefined {
         }
         const lowerKey = key.toLowerCase();
         for (const value of values) {
-            const text = lowerKey === 'orderby' ? orderByToString(value) : scalarToString(value);
+            const text = lowerKey === 'orderby' ? orderByToString(value, queryEngine) : scalarToString(value);
             if (text === undefined) {
                 return undefined;
             }
@@ -114,7 +126,7 @@ function hasParams(params: unknown): boolean {
  */
 export function toGetIfShort(
     config: InternalAxiosRequestConfig,
-    maxUrlLength: number = LAPIS_GET_MAX_URL_LENGTH,
+    { maxUrlLength = LAPIS_GET_MAX_URL_LENGTH, queryEngine = false }: LapisGetOptions = {},
 ): InternalAxiosRequestConfig {
     if ((config.method ?? 'get').toLowerCase() !== 'post' || config.responseType === 'stream') {
         return config;
@@ -122,7 +134,7 @@ export function toGetIfShort(
     if (hasParams(config.params)) {
         return config;
     }
-    const query = lapisRequestToQueryString(config.data);
+    const query = lapisRequestToQueryString(config.data, queryEngine);
     if (query === undefined) {
         return config;
     }
@@ -140,6 +152,6 @@ export function toGetIfShort(
 }
 
 /** Installs {@link toGetIfShort} on an axios instance used for LAPIS queries. */
-export function sendShortLapisRequestsAsGet(instance: AxiosInstance, maxUrlLength = LAPIS_GET_MAX_URL_LENGTH) {
-    instance.interceptors.request.use((config) => toGetIfShort(config, maxUrlLength));
+export function sendShortLapisRequestsAsGet(instance: AxiosInstance, options: LapisGetOptions = {}) {
+    instance.interceptors.request.use((config) => toGetIfShort(config, options));
 }

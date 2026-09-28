@@ -26,17 +26,19 @@ function getBrowserAdapter(): AxiosAdapter {
 /**
  * The axios instance for LAPIS calls from the browser. Responses carrying an ETag are kept in a small in-memory LRU
  * shared by all instances of this tab, and every repeat is sent with `If-None-Match`. Outside a browser (SSR render of
- * an island) this is a plain instance. Short queries are sent as GET either way (see `lapisGetRequests.ts`).
+ * an island) this is a plain instance. Short queries are sent as GET either way (see `lapisGetRequests.ts`);
+ * `lapisIsQueryEngine` lets descending orders go as GET too.
  */
-export function getLapisAxios(lapisUrl: string): AxiosInstance {
-    let instance = instances.get(lapisUrl);
+export function getLapisAxios(lapisUrl: string, lapisIsQueryEngine = false): AxiosInstance {
+    const key = `${lapisIsQueryEngine ? 'engine' : 'lapis'} ${lapisUrl}`;
+    let instance = instances.get(key);
     if (instance === undefined) {
         instance =
             typeof window === 'undefined'
                 ? axios.create({ baseURL: lapisUrl })
                 : axios.create({ baseURL: lapisUrl, adapter: getBrowserAdapter() });
-        sendShortLapisRequestsAsGet(instance);
-        instances.set(lapisUrl, instance);
+        sendShortLapisRequestsAsGet(instance, { queryEngine: lapisIsQueryEngine });
+        instances.set(key, instance);
     }
     return instance;
 }

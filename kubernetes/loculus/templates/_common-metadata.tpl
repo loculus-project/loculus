@@ -644,7 +644,9 @@ fields:
 {{- $externalLapisUrlConfig := dict "lapisUrlTemplate" $lapisUrlTemplate "config" $.Values }}
             "backendUrl": "{{ include "loculus.backendUrl" . }}",
             "lapisUrls": {{- include "loculus.generateExternalLapisUrls" $externalLapisUrlConfig | fromYaml | toJson }},
-            "keycloakUrl":  "{{ include "loculus.keycloakUrl" . }}"
+            "keycloakUrl":  "{{ include "loculus.keycloakUrl" . }}",
+            {{- /* the public LAPIS URLs are the query engine's unless lapisUrlTemplate points elsewhere */}}
+            "lapisIsQueryEngine": {{ if and $.Values.queryEngine.enabled (not $publicRuntimeConfig.lapisUrlTemplate) }}true{{ else }}false{{ end }}
 {{- end }}
 
 

@@ -118,6 +118,42 @@ describe('lapisRequestToQueryString', () => {
     });
 });
 
+describe('lapisRequestToQueryString for the query engine', () => {
+    test('sends descending orders as field:descending and ascending ones as plain names', () => {
+        expect(
+            lapisRequestToQueryString(
+                {
+                    fields: ['accessionVersion', 'clade'],
+                    orderBy: [
+                        { field: 'clade', type: 'descending' },
+                        { field: 'accessionVersion', type: 'ascending' },
+                    ],
+                    limit: 100,
+                },
+                true,
+            ),
+        ).toBe('fields=accessionVersion&fields=clade&orderBy=clade%3Adescending&orderBy=accessionVersion&limit=100');
+    });
+
+    test('keeps POST for random objects and unknown directions even for the engine', () => {
+        expect(lapisRequestToQueryString({ orderBy: [{ random: 42 }] }, true)).toBeUndefined();
+        expect(lapisRequestToQueryString({ orderBy: [{ field: 'a', type: 'down' }] }, true)).toBeUndefined();
+    });
+
+    test('without the flag a descending order stays POST', () => {
+        expect(lapisRequestToQueryString({ orderBy: [{ field: 'clade', type: 'descending' }] })).toBeUndefined();
+    });
+
+    test('toGetIfShort honours the flag', () => {
+        const descending = { orderBy: [{ field: 'date', type: 'descending' }], limit: 100 };
+        expect(toGetIfShort(config(descending)).method).toBe('post');
+        expect(toGetIfShort(config(descending), { queryEngine: true })).toMatchObject({
+            method: 'get',
+            url: '/sample/details?orderBy=date%3Adescending&limit=100',
+        });
+    });
+});
+
 describe('toGetIfShort', () => {
     test('turns a short POST into a GET without body or Content-Type', () => {
         const result = toGetIfShort(config({ accessionVersion: 'LOC_1.1', fields: ['a', 'b'] }));
@@ -254,5 +290,48 @@ describe('LapisClient (server side)', () => {
         });
         expect(seen[2].method).toBe('POST');
         expect(JSON.parse(seen[2].body)).toEqual({ accessionVersion: many, dataFormat: 'json' });
+    });
+
+    test('sends a descending search-table query as GET only when LAPIS is the query engine', async () => {
+        const seen: string[] = [];
+        testServer.use(
+            http.all('http://lapis.get/sample/details', ({ request }) => {
+                seen.push(`${request.method} ${request.url}`);
+                return HttpResponse.json({ data: [], info: { dataVersion: '1' } });
+            }),
+        );
+        const request = { orderBy: [{ field: 'accessionVersion', type: 'descending' }], limit: 100 };
+
+        (await LapisClient.create('http://lapis.get', schema).getDetails(request as never))._unsafeUnwrap();
+        (
+            await LapisClient.create('http://lapis.get', schema, undefined, { lapisIsQueryEngine: true }).getDetails(
+                request as never,
+            )
+        )._unsafeUnwrap();
+
+        expect(seen).toEqual([
+            'POST http://lapis.get/sample/details',
+            'GET http://lapis.get/sample/details?orderBy=accessionVersion%3Adescending&limit=100&dataFormat=json',
+        ]);
+    });
+});
+
+describe('getLapisAxios', () => {
+    test('keeps separate instances per flag, and only the engine one sends descending orders as GET', async () => {
+        const { getLapisAxios } = await import('./lapisCache/browserLapisAxios.ts');
+        const lapis = getLapisAxios('http://lapis.flag');
+        const engine = getLapisAxios('http://lapis.flag', true);
+        expect(engine).not.toBe(lapis);
+        expect(getLapisAxios('http://lapis.flag', true)).toBe(engine);
+
+        const methods: string[] = [];
+        for (const instance of [lapis, engine]) {
+            instance.defaults.adapter = (config) => {
+                methods.push(`${config.method} ${config.url}`);
+                return Promise.resolve({ data: '{}', status: 200, statusText: 'OK', headers: {}, config });
+            };
+            await instance.post('/sample/details', { orderBy: [{ field: 'date', type: 'descending' }] });
+        }
+        expect(methods).toEqual(['post /sample/details', 'get /sample/details?orderBy=date%3Adescending']);
     });
 });

@@ -36,10 +36,13 @@ export function backendClientHooks(clientConfig: ClientConfig) {
     return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, backendApi));
 }
 
-export function lapisClientHooks(lapisUrl: string) {
+export function lapisClientHooks(lapisUrl: string, lapisIsQueryEngine = false) {
     const zodiosHooks = new ZodiosHooks(
         'lapis',
-        new Zodios(lapisUrl, lapisApi, { transform: false, axiosInstance: getLapisAxios(lapisUrl) }),
+        new Zodios(lapisUrl, lapisApi, {
+            transform: false,
+            axiosInstance: getLapisAxios(lapisUrl, lapisIsQueryEngine),
+        }),
     );
     return {
         // All POST hooks must include retry options manually to enable retries

@@ -38,6 +38,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         api: Narrow<typeof lapisApi>,
         logger: InstanceLogger,
         private readonly schema: Schema,
+        lapisIsQueryEngine = false,
     ) {
         super(
             url,
@@ -51,15 +52,23 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         if (cacheAdapter !== undefined) {
             this.zodios.axios.defaults.adapter = cacheAdapter;
         }
-        sendShortLapisRequestsAsGet(this.zodios.axios);
+        sendShortLapisRequestsAsGet(this.zodios.axios, { queryEngine: lapisIsQueryEngine });
     }
 
     public static createForOrganism(organism: string) {
-        return this.create(getLapisUrl(getRuntimeConfig().serverSide, organism), getSchema(organism));
+        const serverSide = getRuntimeConfig().serverSide;
+        return this.create(getLapisUrl(serverSide, organism), getSchema(organism), undefined, {
+            lapisIsQueryEngine: serverSide.lapisIsQueryEngine,
+        });
     }
 
-    public static create(lapisUrl: string, schema: Schema, logger: InstanceLogger = getInstanceLogger('lapisClient')) {
-        return new LapisClient(lapisUrl, lapisApi, logger, schema);
+    public static create(
+        lapisUrl: string,
+        schema: Schema,
+        logger: InstanceLogger = getInstanceLogger('lapisClient'),
+        { lapisIsQueryEngine = false }: { lapisIsQueryEngine?: boolean } = {},
+    ) {
+        return new LapisClient(lapisUrl, lapisApi, logger, schema, lapisIsQueryEngine);
     }
 
     public getSequenceEntryVersionDetails(accessionVersion: string) {
