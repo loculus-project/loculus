@@ -1806,7 +1806,12 @@
           "type": "string",
           "description": "If set, PGDATA lives on a PersistentVolumeClaim of this size"
         },
-        "shmSize": { "type": "string", "description": "If set, size of a memory-backed /dev/shm" }
+        "shmSize": { "type": "string", "description": "If set, size of a memory-backed /dev/shm" },
+        "colocateBackend": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, the backend gets a preferred podAffinity to the dev database pod's node"
+        }
       }
     },
     "backendJvmExtraOpts": {

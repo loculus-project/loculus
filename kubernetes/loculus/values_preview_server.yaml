@@ -227,3 +227,5 @@ developmentDatabase:
   # PGDATA on a PersistentVolumeClaim (the cluster's default storage class) instead of the container layer
   storageSize: "20Gi"
   shmSize: "1Gi"
+  # exports were 1.5-2.7x slower with the backend on another node: they pull JSONB over the 1 Gbit/s node link
+  colocateBackend: true

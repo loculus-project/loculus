@@ -1,6 +1,15 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- $responseCache := .Values.queryEngine.responseCache | default dict }}
 {{- $responseCacheOnDisk := and .Values.queryEngine.enabled $responseCache.diskSize (ne (toString $responseCache.diskSize) "0") }}
+{{- $affinity := deepCopy (.Values.podScheduling.affinity | default dict) }}
+{{- if and .Values.runDevelopmentMainDatabase .Values.developmentDatabase.colocateBackend }}
+{{- /* exports read JSONB records at the link rate when the backend and the dev DB are on different nodes */}}
+{{- $podAffinity := $affinity.podAffinity | default dict }}
+{{- $preferred := $podAffinity.preferredDuringSchedulingIgnoredDuringExecution | default list }}
+{{- $term := dict "weight" 100 "podAffinityTerm" (dict "topologyKey" "kubernetes.io/hostname" "labelSelector" (dict "matchLabels" (dict "app" "loculus" "component" "database"))) }}
+{{- $_ := set $podAffinity "preferredDuringSchedulingIgnoredDuringExecution" (append $preferred $term) }}
+{{- $_ := set $affinity "podAffinity" $podAffinity }}
+{{- end }}
 {{- if not .Values.disableBackend }}
 ---
 apiVersion: apps/v1
@@ -24,7 +33,7 @@ spec:
         component: backend
     spec:
       {{- include "possiblePriorityClassName" . | nindent 6 }}
-      {{- include "loculus.podScheduling" . | nindent 6 }}
+      {{- include "loculus.podSchedulingWithAffinity" (list . $affinity) | nindent 6 }}
       initContainers:
 {{- include "loculus.configProcessor" (dict "name" "loculus-backend-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
       containers:

@@ -5347,6 +5347,7 @@ developmentDatabase:
   settings: [] # extra postgres "-c" settings, e.g. "shared_buffers=2GB"
   storageSize: "" # e.g. "100Gi": keep PGDATA on a PersistentVolumeClaim instead of the container layer
   shmSize: "" # e.g. "1Gi": /dev/shm for parallel query workers (container default is 64Mi)
+  colocateBackend: false # prefer scheduling the backend on the dev database's node
 backendJvmExtraOpts: "" # appended to the backend JVM_OPTS; later flags win, e.g. "-XX:MaxRAMPercentage=80"
 enforceHTTPS: true
 traefikVersion: 3
