@@ -265,16 +265,22 @@ def _build_cds_feature(cds: NextcladeCds, sequence_str: str) -> SeqFeature:
     # cds itself; only the first segment's phase is relevant, since EMBL's codon_start only
     # applies to the first base of a (possibly joined) feature.
     codon_start = segments[0].phase + 1
+    attribute_qualifiers = _build_qualifiers(cds.attributes, EMBL_ANNOTATIONS.cds_qualifiers)
     qualifiers: dict[str, list[str] | int | str | None] = {
-        **_build_qualifiers(cds.attributes, EMBL_ANNOTATIONS.cds_qualifiers),
+        **attribute_qualifiers,
         "codon_start": codon_start,
     }
     translation = _translate_cds(sequence_str, location, codon_start)
     # A premature stop codon makes the CDS non-functional. INSDC keeps the CDS feature key but adds
-    #  a valueless /pseudo (Biopython writes a None value as a bare qualifier) and omits 
+    #  a valueless /pseudo (Biopython writes a None value as a bare qualifier) and omits
     # /translation.
     if "*" in translation:
         qualifiers["pseudo"] = None
+        # Append rather than overwrite, keeping any note carried over from the annotation.
+        qualifiers["note"] = [
+            *attribute_qualifiers.get("note", []),
+            "Contains premature stop codon",
+        ]
     else:
         qualifiers["translation"] = translation
     return SeqFeature(
