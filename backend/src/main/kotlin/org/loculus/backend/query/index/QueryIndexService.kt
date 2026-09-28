@@ -22,7 +22,8 @@ private val log = KotlinLogging.logger {}
  * Maintains one [InMemoryOrganismIndex] per queryable organism: a full load from the projection tables
  * (in background threads after application start), then tailing `query_changelog` every
  * `loculus.query-engine.tail-interval-ms`. Large change batches (e.g. a projection rebuild) trigger a full
- * reload into a fresh index while the old one keeps serving.
+ * reload. The old index is dropped before the reload, so the heap never holds two copies of an organism's index;
+ * that organism answers 503 until the reload finishes.
  */
 @Component
 @ConditionalOnProperty(prefix = "loculus.query-engine", name = ["enabled"], havingValue = "true")
@@ -33,6 +34,7 @@ class QueryIndexService(
 ) : OrganismIndexProvider,
     DisposableBean {
     private val indexes = ConcurrentHashMap<String, InMemoryOrganismIndex>()
+    private val loadedOnce: MutableSet<String> = ConcurrentHashMap.newKeySet()
     private val executor = Executors.newScheduledThreadPool(maxOf(1, registry.schemas.size)) { runnable ->
         Thread(runnable, "query-index").apply { isDaemon = true }
     }
@@ -40,7 +42,7 @@ class QueryIndexService(
     override fun get(organism: String): OrganismIndex? = indexes[organism]
 
     /** organisms whose index has not finished its first load */
-    fun organismsNotLoaded(): List<String> = registry.schemas.keys.filter { !indexes.containsKey(it) }
+    fun organismsNotLoaded(): List<String> = registry.schemas.keys.filter { it !in loadedOnce }
 
     @EventListener(ApplicationReadyEvent::class)
     fun start() {
@@ -74,7 +76,13 @@ class QueryIndexService(
          */
         fun tick() {
             try {
-                if (index == null) fullLoad() else tail()
+                if (index == null) {
+                    fullLoad()
+                } else if (tail() == TailResult.RELOAD) {
+                    indexes.remove(organism)
+                    index = null
+                    fullLoad()
+                }
             } catch (e: OutOfMemoryError) {
                 log.error(e) { "Query index for $organism: out of memory, updates stop" }
                 throw e
@@ -107,6 +115,7 @@ class QueryIndexService(
             loaded.rowLoader = { ids -> dataSource.connection.use { reader.readIds(it, ids) } }
             index = loaded
             indexes[organism] = loaded
+            loadedOnce.add(organism)
             safeSeq = startSeq
             appliedAbove.clear()
             gapSeq = -1
@@ -116,23 +125,23 @@ class QueryIndexService(
             }
         }
 
-        private fun tail() {
-            val current = index ?: return
+        /** applies the next changelog batch, or asks for a reload (called without holding the old index) */
+        private fun tail(): TailResult {
+            val current = index ?: return TailResult.APPLIED
             dataSource.connection.use { connection ->
                 connection.autoCommit = true
                 val changes = changelogAfter(connection, safeSeq, REBUILD_MIN_CHANGES + 1)
                 val newChanges = changes.filter { it.first !in appliedAbove }
                 if (newChanges.isEmpty()) {
                     advanceSafeSeq(changes.map { it.first })
-                    return
+                    return TailResult.APPLIED
                 }
                 val ids = newChanges.map { it.second }.toSet()
                 if (changes.size > REBUILD_MIN_CHANGES) {
                     val pending = pendingIds(connection, safeSeq)
                     if (pending > current.size * REBUILD_FRACTION) {
                         log.info { "Query index for $organism: $pending changed entries, reloading" }
-                        fullLoad()
-                        return
+                        return TailResult.RELOAD
                     }
                 }
                 val rows = reader.readIds(connection, ids)
@@ -140,6 +149,7 @@ class QueryIndexService(
                 current.apply(rows, ids.filter { it !in found }, dataVersion(connection))
                 newChanges.forEach { appliedAbove.add(it.first) }
                 advanceSafeSeq(changes.map { it.first })
+                return TailResult.APPLIED
             }
         }
 
@@ -209,6 +219,8 @@ class QueryIndexService(
             statement.executeQuery().use { rs -> if (rs.next()) rs.getLong(1) else 0 }
         }
     }
+
+    private enum class TailResult { APPLIED, RELOAD }
 
     companion object {
         /** a batch larger than max(this, REBUILD_FRACTION * size) triggers a full reload */
