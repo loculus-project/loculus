@@ -5314,6 +5314,9 @@ defaultOrganisms:
                 - name: singleReference
                   nextclade_dataset_name: nextstrain/sars-cov-2/wuhan-hu-1/orfs
                   genes: ["E", "M", "N", "ORF1a", "ORF1b", "ORF3a", "ORF6", "ORF7a", "ORF7b", "ORF8", "ORF9b", "S"]
+          # an EMBL annotation file per entry is a MinIO upload each, the main preprocessing cost at this scale;
+          # entries processed before keep theirs (same pipeline version, so nothing is reprocessed)
+          create_embl_file: false
           taxon_id: 2697049
           scientific_name: "Severe acute respiratory syndrome coronavirus 2"
           molecule_type: "genomic RNA"
