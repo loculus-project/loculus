@@ -110,7 +110,7 @@ resources:
       memory: "100Mi"
       cpu: "50m"
     limits:
-      cpu: "400m"
+      cpu: "1000m"
       memory: "10Gi"
   keycloak:
     requests:
