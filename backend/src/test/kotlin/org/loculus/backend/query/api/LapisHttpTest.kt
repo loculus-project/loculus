@@ -319,7 +319,10 @@ class LapisHttpTest {
             "/test/sample/aggregated?fields=country&limit=3&dataFormat=csv" to null,
         )
 
-        /** recorded before small responses were buffered: buffering must not change a byte */
+        /**
+         * recorded before small responses were buffered: buffering must not change a byte. Compressed entries follow
+         * the compression settings (gzip level, zstd window and long-distance matching) and are re-recorded with them.
+         */
         private val GOLDEN = listOf(
             "details?fields=accessionVersion,country&limit=100&dataFormat=json [null]",
             "  200 application/json encoding=- version=1234",
@@ -332,16 +335,16 @@ class LapisHttpTest {
             "  11005 bytes, sha256 37276db22cd87551",
             "details?fields=accessionVersion,country&limit=100&dataFormat=tsv [zstd]",
             "  200 text/tab-separated-values;charset=UTF-8 encoding=zstd version=1234",
-            "  381 bytes, sha256 ce03c91712a0ee04",
+            "  442 bytes, sha256 e0a42bd03aa35bd9",
             "details?fields=accessionVersion,country&limit=1000&dataFormat=tsv-escaped [gzip]",
             "  200 text/tab-separated-values;charset=UTF-8 encoding=gzip version=1234",
-            "  5442 bytes, sha256 b30d1d84d92a0e6d",
+            "  5053 bytes, sha256 f70b5c59196dc1f5",
             "details?limit=1000&dataFormat=csv-without-headers [null]",
             "  200 text/plain encoding=- version=1234",
             "  116780 bytes, sha256 3a91352d784f8fe8",
             "details?fields=accessionVersion,country&limit=1001&dataFormat=tsv [zstd]",
             "  200 text/tab-separated-values;charset=UTF-8 encoding=zstd version=1234",
-            "  2297 bytes, sha256 10defc170e53585e",
+            "  2906 bytes, sha256 3e606459da01679c",
             "details?fields=accessionVersion,country&limit=5000&dataFormat=csv [null]",
             "  200 text/csv;charset=UTF-8 encoding=- version=1234",
             "  567805 bytes, sha256 d0977a22fb36a4da",
@@ -352,11 +355,11 @@ class LapisHttpTest {
             "details?fields=accessionVersion,country&limit=10&dataFormat=tsv&downloadAsFile=true&compression=gzip [null]",
             "  200 application/gzip encoding=- version=1234",
             "  attachment; filename=details.tsv.gz; filename*=UTF-8''details.tsv.gz",
-            "  110 bytes, sha256 d413a8d5ed72bb34",
+            "  112 bytes, sha256 adbc88cadb77626a",
             "details?fields=accessionVersion,country&dataFormat=tsv&downloadAsFile=true&compression=zstd [null]",
             "  200 application/zstd encoding=- version=1234",
             "  attachment; filename=details.tsv.zst; filename*=UTF-8''details.tsv.zst",
-            "  34186 bytes, sha256 8a83a38b3e8c6cd0",
+            "  34186 bytes, sha256 ff64d633d6d5a8f7",
             "details?fields=accessionVersion&downloadAsFile=true [zstd]",
             "  200 application/json encoding=- version=1234",
             "  attachment; filename=details.json; filename*=UTF-8''details.json",
