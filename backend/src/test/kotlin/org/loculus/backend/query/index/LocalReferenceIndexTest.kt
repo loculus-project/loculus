@@ -252,7 +252,8 @@ class LocalReferenceIndexTest {
 
     @Test
     fun `local reference answers exactly like the reference-based index, also after updates`() {
-        val rows = (0 until 1500).associateWith { randomRow() }.toMutableMap()
+        // ids spread over two 65536-id chunks
+        val rows = (0 until 1500).associate { it * 47 to randomRow() }.toMutableMap()
         val local = build(rows, localReference = true)
         val gapRunsOnly = build(rows, localReference = false, gapRuns = true)
         val plain = build(rows, localReference = false)
@@ -275,14 +276,14 @@ class LocalReferenceIndexTest {
 
         // revisions, revocations and additions after the load (batch sizes cover all removal strategies);
         // the "shifted" rows mostly carry the reference, so the implicit symbols stop being the majority
-        var nextId = 2000
+        var nextId = 100_000
         for ((changes, shift) in listOf(300 to false, 12 to true, 1 to true, 600 to true, 40 to false)) {
             val updated = rows.keys.shuffled(random).take(changes * 2 / 3).associateWith { randomRow(shift) }
             val deleted = rows.keys.shuffled(random).take(changes / 3).filter { it !in updated }
             val added = (nextId until nextId + changes / 3 + 1).associateWith { randomRow(shift) }
             nextId += changes + 1
             for (index in variants + plain) {
-                index.apply((updated + added).map { (id, seqs) -> indexRow(id, seqs) }, deleted + listOf(99_999))
+                index.apply((updated + added).map { (id, seqs) -> indexRow(id, seqs) }, deleted + listOf(999_999))
             }
             rows.putAll(updated)
             rows.putAll(added)

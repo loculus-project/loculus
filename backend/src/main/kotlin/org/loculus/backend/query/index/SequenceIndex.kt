@@ -234,49 +234,57 @@ internal class SequenceIndex(val schema: SequenceSchema) {
             if (implicitSymbol(p) == gapSymbol || count * DENSE_GAP_FRACTION > presentCount) denseGaps.set(p)
         }
         gapRuns = true
-        if (present.isEmpty) return
-        // per id: start and last position of its open run (0 = none); runs close when a position is skipped
-        val capacity = present.last() + 1
-        val runStart = IntArray(capacity)
-        val lastPosition = IntArray(capacity)
+        val sparse = (1..length).filter { !denseGaps.get(it) && mutations[it]?.get(gapSymbol) != null }
+        // one 65536-id chunk at a time, so that the per-id state is fixed-size at any number of entries; chunks
+        // come in id order, as the run table's bulk append needs
+        val runStart = IntArray(CHUNK)
+        val lastPosition = IntArray(CHUNK)
+        val perLocal = IntArray(CHUNK + 1)
         var triples = IntArray(1024)
-        var n = 0
-        fun emit(id: Int) {
-            if (n + 3 > triples.size) triples = triples.copyOf(grownArraySize(triples.size, n + 3L))
-            triples[n++] = id
-            triples[n++] = runStart[id]
-            triples[n++] = lastPosition[id] + 1
-        }
-        for (p in 1..length) {
-            if (denseGaps.get(p)) continue
-            val perSymbol = mutations[p] ?: continue
-            val bm = perSymbol[gapSymbol] ?: continue
-            forEachId(bm) { id ->
-                if (lastPosition[id] != 0 && lastPosition[id] == p - 1) {
-                    lastPosition[id] = p
-                } else {
-                    if (lastPosition[id] != 0) emit(id)
-                    runStart[id] = p
-                    lastPosition[id] = p
+        for (range in chunkRanges(present)) {
+            val base = range[0]
+            // per local id: start and last position of its open run (0 = none); a skipped position closes it
+            runStart.fill(0)
+            lastPosition.fill(0)
+            var n = 0
+            fun emit(local: Int) {
+                if (n + 3 > triples.size) triples = triples.copyOf(grownArraySize(triples.size, n + 3L))
+                triples[n++] = local
+                triples[n++] = runStart[local]
+                triples[n++] = lastPosition[local] + 1
+            }
+            for (p in sparse) {
+                forEachIdIn(mutations[p]!![gapSymbol]!!, range[0], range[1]) { id ->
+                    val local = id - base
+                    if (lastPosition[local] != 0 && lastPosition[local] == p - 1) {
+                        lastPosition[local] = p
+                    } else {
+                        if (lastPosition[local] != 0) emit(local)
+                        runStart[local] = p
+                        lastPosition[local] = p
+                    }
                 }
             }
+            for (local in 0 until CHUNK) if (lastPosition[local] != 0) emit(local)
+            // local ids ascending (stable counting sort; each id's runs were emitted in position order)
+            perLocal.fill(0)
+            for (t in 0 until n / 3) perLocal[triples[3 * t] + 1]++
+            for (i in 1..CHUNK) perLocal[i] += perLocal[i - 1]
+            val sorted = IntArray(n)
+            for (t in 0 until n / 3) {
+                val at = 3 * perLocal[triples[3 * t]]++
+                sorted[at] = triples[3 * t]
+                sorted[at + 1] = triples[3 * t + 1]
+                sorted[at + 2] = triples[3 * t + 2]
+            }
+            for (t in 0 until n / 3) gaps.add(base + sorted[3 * t], sorted[3 * t + 1], sorted[3 * t + 2])
+        }
+        for (p in sparse) {
+            val perSymbol = mutations[p]!!
             perSymbol[gapSymbol] = null
             mutationCounts[p * size + gapSymbol] = 0
             if (perSymbol.all { it == null }) mutations[p] = null
         }
-        forEachId(present) { id -> if (lastPosition[id] != 0) emit(id) }
-        // ids ascending (stable counting sort; each id's runs were emitted in position order) for the run table
-        val perId = IntArray(capacity + 1)
-        for (t in 0 until n / 3) perId[triples[3 * t] + 1]++
-        for (i in 1..capacity) perId[i] += perId[i - 1]
-        val sorted = IntArray(n)
-        for (t in 0 until n / 3) {
-            val at = 3 * perId[triples[3 * t]]++
-            sorted[at] = triples[3 * t]
-            sorted[at + 1] = triples[3 * t + 1]
-            sorted[at + 2] = triples[3 * t + 2]
-        }
-        for (t in 0 until n / 3) gaps.add(sorted[3 * t], sorted[3 * t + 1], sorted[3 * t + 2])
         invalidateCaches()
     }
 
@@ -596,6 +604,9 @@ internal class SequenceIndex(val schema: SequenceSchema) {
          * that is where an array container (2 B per id) turns into a bitmap container (8 KB)
          */
         const val DENSE_GAP_FRACTION = 16
+
+        /** ids per roaring chunk */
+        private const val CHUNK = 1 shl 16
 
         /** bitmaps swapped per write-lock hold in [compactTouched] */
         private const val COMPACT_BATCH = 4096
