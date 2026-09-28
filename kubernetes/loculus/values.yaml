@@ -113,6 +113,10 @@ queryEngine:
     # the emptyDir's limit: diskSize plus room for 2 responses being written (2 x diskSize / 8), plus margin
     diskSizeLimit: "1Gi"
 lineageSystemDefinitions:
+  sarsCoV2Pango:
+    1: https://raw.githubusercontent.com/loculus-project/loculus/959adcd0df634734f321461b1c5536c5df2ddc9d/preprocessing/lineages/sars-cov-2/pango_lineages.yaml
+  sarsCoV2NextstrainClade:
+    1: https://raw.githubusercontent.com/loculus-project/loculus/959adcd0df634734f321461b1c5536c5df2ddc9d/preprocessing/lineages/sars-cov-2/nextstrain_clades.yaml
   pangoLineage:
     1: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
     2: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
@@ -5270,6 +5274,7 @@ defaultOrganisms:
           initiallyVisible: true
           includeInDownloadsByDefault: true
           isSequenceFilter: true
+          lineageSystem: sarsCoV2Pango
           preprocessing:
             inputs: {input: nextclade.customNodeAttributes.Nextclade_pango}
         - name: nextstrainClade
@@ -5281,6 +5286,7 @@ defaultOrganisms:
           autocomplete: true
           initiallyVisible: true
           includeInDownloadsByDefault: true
+          lineageSystem: sarsCoV2NextstrainClade
           preprocessing:
             inputs: {input: nextclade.clade}
       website:
