@@ -69,13 +69,30 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     private var capacity = maxOf(16, initialCapacity)
     private val alive = RoaringBitmap()
     private val regexCache = RegexCache()
-    private val columns: List<Column> = schema.metadata.map {
-        Column.create(
-            it,
-            capacity,
-            lookupByValue = it.name == schema.primaryKey || it.name == ACCESSION_FIELD,
-            regexCache = regexCache,
-        )
+    private val columns: List<Column> = run {
+        val stored = schema.metadata.map {
+            if (AccessionVersionColumn.applies(schema, it)) {
+                null
+            } else {
+                Column.create(
+                    it,
+                    capacity,
+                    lookupByValue = it.name == schema.primaryKey || it.name == ACCESSION_FIELD,
+                    regexCache = regexCache,
+                )
+            }
+        }
+        val byName = stored.filterNotNull().associateBy { it.field.name }
+        schema.metadata.mapIndexed { i, field ->
+            stored[i] ?: AccessionVersionColumn(
+                field,
+                byName.getValue(ACCESSION_FIELD) as StringColumn,
+                byName.getValue(AccessionVersionColumn.VERSION_FIELD) as IntColumn,
+                i,
+                schema.metadata.indexOfFirst { it.name == ACCESSION_FIELD },
+                schema.metadata.indexOfFirst { it.name == AccessionVersionColumn.VERSION_FIELD },
+            )
+        }
     }
     private val columnsByName: Map<String, Column> = columns.associateBy { it.field.name }
     private val sequences: Array<SequenceIndex?> = run {
@@ -93,7 +110,8 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
      * column matches the request's first key.
      */
     private val permutationKeys: List<Pair<Column, Boolean>> = listOfNotNull(
-        schema.defaultOrderBy?.let { columnsByName[it] }?.let { it to schema.defaultOrderDescending },
+        schema.defaultOrderBy?.let { columnsByName[it] }?.takeIf { it !is AccessionVersionColumn }
+            ?.let { it to schema.defaultOrderDescending },
     )
 
     @Volatile private var permutations: List<SortPermutation> = emptyList()
@@ -149,15 +167,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             }
         }
         for (i in columns.indices) {
-            units += { rows ->
-                for (row in rows) {
-                    try {
-                        columns[i].set(row.id, row.values.getOrNull(i))
-                    } catch (e: RuntimeException) {
-                        columns[i].clear(row.id)
-                    }
-                }
-            }
+            units += { rows -> for (row in rows) setColumn(i, row.id, row.values) }
         }
         for (seq in sequences.filterNotNull()) {
             check(!seq.hasLocalReference && !seq.gapRuns) { "bulk units after the bulk load was finished" }
@@ -219,7 +229,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     /** reads columns without the lock: only for the writer thread (the only one that mutates them) */
     private fun buildPermutations(): List<SortPermutation> = permutationKeys.map { (column, descending) ->
         val direction = if (descending) OrderDirection.DESCENDING else OrderDirection.ASCENDING
-        val keys = SortKeys(listOf(column), listOf(direction))
+        val keys = SortKeys(listOf(column), listOf(direction), alive)
         SortPermutation.of(column, descending, keys.sort(alive.toArray())) { keys.key(0, it) }
     }
 
@@ -379,14 +389,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         require(id >= 0) { "negative id $id" }
         ensureCapacity(id)
         alive.add(id)
-        for (i in columns.indices) {
-            try {
-                columns[i].set(id, row.values.getOrNull(i))
-            } catch (e: RuntimeException) {
-                // a value that does not fit the column type (e.g. "abc" in an int field) is treated as null
-                columns[i].clear(id)
-            }
-        }
+        for (i in columns.indices) setColumn(i, id, row.values)
         for (seqIndex in row.presentSequences) sequences.getOrNull(seqIndex)?.addPresent(id)
         // codes of sequences with a local reference or gap runs are added per sequence (addEntryMutations)
         var entryCodes: HashMap<Int, ArrayList<Int>>? = null
@@ -427,6 +430,16 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             val seq = sequences.getOrNull(insertion.substring(0, first).toIntOrNull() ?: continue) ?: continue
             val position = insertion.substring(first + 1, second).toIntOrNull() ?: continue
             seq.addInsertion(id, position, insertion.substring(second + 1))
+        }
+    }
+
+    private fun setColumn(i: Int, id: Int, values: Array<Any?>) {
+        val column = columns[i]
+        try {
+            if (column is AccessionVersionColumn) column.setFromRow(id, values) else column.set(id, values.getOrNull(i))
+        } catch (e: RuntimeException) {
+            // a value that does not fit the column type (e.g. "abc" in an int field) is treated as null
+            column.clear(id)
         }
     }
 
@@ -492,11 +505,11 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         is NOf -> evalNOf(filter, mode, domain)
 
         is StringEquals -> {
-            val col = stringColumn(filter.field)
+            val col = stringFilters(filter.field)
             if (filter.value == null) col.isNullFilter(domain) else col.equalsFilter(filter.value, domain)
         }
 
-        is StringRegex -> stringColumn(filter.field).regexFilter(filter.pattern, domain)
+        is StringRegex -> stringFilters(filter.field).regexFilter(filter.pattern, domain)
 
         is LineageIn -> {
             val col = stringColumn(filter.field)
@@ -594,14 +607,15 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
      * value-indexed columns (a list of 200k accessions stays O(k)), one scan instead of one per value otherwise.
      */
     private fun evalOr(children: List<Filter>, mode: AmbiguityMode, domain: RoaringBitmap): RoaringBitmap {
-        val byColumn = LinkedHashMap<StringColumn, MutableList<String?>>()
+        val byColumn = LinkedHashMap<Column, MutableList<String?>>()
         val rest = ArrayList<Filter>()
         for (child in children) {
-            val col = (child as? StringEquals)?.let { stringColumnOrNull(it.field) }
+            val col = (child as? StringEquals)?.let { columnOrNull(it.field) }?.takeIf { it.stringFilters() != null }
             if (col == null) rest.add(child) else byColumn.getOrPut(col) { ArrayList() }.add(child.value)
         }
         val parts = ArrayList<RoaringBitmap>(byColumn.size + rest.size)
-        byColumn.forEach { (col, values) ->
+        byColumn.forEach { (column, values) ->
+            val col = column.stringFilters()!!
             val value = values.singleOrNull()
             parts.add(
                 when {
@@ -615,17 +629,32 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         return unionOf(parts)
     }
 
-    private fun stringColumnOrNull(name: String): StringColumn? =
-        (columnsByName[name] ?: schema.field(name)?.let { columnsByName[it.name] }) as? StringColumn
+    private fun columnOrNull(name: String): Column? =
+        columnsByName[name] ?: schema.field(name)?.let { columnsByName[it.name] }
+
+    private fun Column.stringFilters(): StringFilters? = when (this) {
+        is StringColumn -> StringColumnFilters(this)
+        is AccessionVersionColumn -> this
+        else -> null
+    }
+
+    private fun stringFilters(name: String): StringFilters = column(name).stringFilters()
+        ?: throw IllegalArgumentException("'$name' is not a string field")
 
     /** 0 = answered from bitmaps or postings, 1 = scan, 2 = composite */
     private fun cost(filter: Filter): Int = when (filter) {
         is SymbolEquals, is HasMutation, is InsertionContains, is BooleanEquals, is IsNull, True -> 0
 
         is StringEquals, is LineageIn ->
-            if ((columnsByName[filter.fieldName()] as? StringColumn)?.hasValueIndex == true) 0 else 1
+            if (filter.fieldName()?.let { columnsByName[it] }?.stringFilters()?.hasValueIndex == true) 0 else 1
 
-        is StringRegex -> if ((columnsByName[filter.fieldName()] as? StringColumn)?.hasBitmaps == true) 0 else 1
+        is StringRegex -> if (filter.fieldName()?.let { columnsByName[it] }?.stringFilters()?.hasBitmaps ==
+            true
+        ) {
+            0
+        } else {
+            1
+        }
 
         is IntEquals, is IntBetween, is FloatEquals, is FloatBetween, is DateEquals, is DateBetween -> 1
 
@@ -710,8 +739,9 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     private val positionField = Regex("^([A-Za-z0-9_-]*)\\[(\\d+)]$")
 
     private fun groupKeySource(field: String, ids: RoaringBitmap): GroupKeySource {
-        columnsByName[field]?.let { return it }
-        schema.field(field)?.let { return columnsByName.getValue(it.name) }
+        (columnsByName[field] ?: schema.field(field)?.let { columnsByName.getValue(it.name) })?.let {
+            return if (it is AccessionVersionColumn) it.groupKeySource(ids) else it
+        }
         if (field.endsWith(".isoWeek", ignoreCase = true)) {
             val base = column(field.substring(0, field.length - ".isoWeek".length))
             return (base as? DateColumn)?.isoWeekSource()
@@ -1021,7 +1051,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             for (i in 0 until count) result[i] = iterator.next()
             return@read result
         }
-        val keys = SortKeys(orderBy.map { column(it.field) }, orderBy.map { it.direction })
+        val keys = SortKeys(orderBy.map { column(it.field) }, orderBy.map { it.direction }, live)
         if (random == null && orderBy.isNotEmpty() && usePermutations && n.toLong() * 64 >= alive.cardinality) {
             val permutation = permutations.firstOrNull { it.column === keys.cols[0] }
             if (permutation != null) {
@@ -1093,15 +1123,21 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         return ordered.copyOfRange(minOf(from, ordered.size), minOf(k, ordered.size))
     }
 
-    private inner class SortKeys(val cols: List<Column>, directions: List<OrderDirection>) {
+    /** [domain]: the ids that will be sorted (derived columns rank their values per query) */
+    private inner class SortKeys(val cols: List<Column>, directions: List<OrderDirection>, domain: RoaringBitmap) {
         private val m = cols.size
         private val descending = BooleanArray(m) { directions[it] == OrderDirection.DESCENDING }
         private val ranks: Array<IntArray?> = Array(m) { (cols[it] as? StringColumn)?.ranks()?.rank }
         private val stringCols: Array<StringColumn?> = Array(m) { cols[it] as? StringColumn }
+        private val derived: Array<((Int) -> Long)?> =
+            Array(m) { (cols[it] as? AccessionVersionColumn)?.sortKeySource(domain) }
 
         fun key(f: Int, id: Int): Long {
             val r = ranks[f]
-            val raw = if (r != null) {
+            val d = derived[f]
+            val raw = if (d != null) {
+                d(id)
+            } else if (r != null) {
                 val code = stringCols[f]!!.code(id)
                 if (code < 0) Long.MIN_VALUE else r[code].toLong()
             } else {
@@ -1614,6 +1650,11 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             }
             seq.schema.name to listOf(bitmaps, containers, seq.missing.table.runCount)
         }
+    }
+
+    /** entries whose stored accessionVersion is not accession.version (expected 0; see [AccessionVersionColumn]) */
+    fun accessionVersionExceptions(): Int = lock.read {
+        columns.sumOf { (it as? AccessionVersionColumn)?.exceptionCount ?: 0 }
     }
 
     /** approximate heap usage of the index structures in bytes, per component */

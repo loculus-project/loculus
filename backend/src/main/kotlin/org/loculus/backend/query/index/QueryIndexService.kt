@@ -278,6 +278,11 @@ class QueryIndexService(
                 "Query index for $organism: loaded ${loaded.size} entries in " +
                     "${System.currentTimeMillis() - started} ms (~${loaded.memoryUsage().values.sum() / 1_000_000} MB)"
             }
+            loaded.accessionVersionExceptions().takeIf { it > 0 }?.let {
+                log.warn {
+                    "Query index for $organism: $it entries have an accessionVersion other than accession.version"
+                }
+            }
         }
 
         /** applies the next changelog batch, or asks for a reload (called without holding the old index) */
