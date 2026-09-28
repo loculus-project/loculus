@@ -124,7 +124,9 @@ enum class WireCodec {
 
         /**
          * Explicit `compression=zstd` downloads are decoded by the zstd CLI or a library, not a browser, so they may
-         * use a 128 MB window (the CLI's default decoding limit): 3.6-5x smaller than 8 MB on SARS-CoV-2 and mpox.
+         * use a 128 MB window (the CLI's default decoding limit), without long-distance matching: on 633k SARS-CoV-2
+         * sequences it made the file 15 % smaller (66 vs 77 MB) but compression 2.7x slower, and took 83 % of the
+         * request thread, capping a download at ~270 MB/s of FASTA.
          * Each such stream holds ~140 MB of native memory, so at most [MAX_LARGE_WINDOW_STREAMS] run at once; further
          * downloads get the 8 MB window instead of waiting.
          */
@@ -137,7 +139,7 @@ enum class WireCodec {
         fun zstdDownloadOutputStream(out: OutputStream): OutputStream {
             if (!largeWindowPermits.tryAcquire()) return zstdOutputStream(out)
             val zstd = try {
-                ZstdOutputStream(out, ZSTD_LEVEL).apply { setLong(ZSTD_DOWNLOAD_WINDOW_LOG) }
+                ZstdOutputStream(out, ZSTD_LEVEL).apply { setWindowLog(ZSTD_DOWNLOAD_WINDOW_LOG) }
             } catch (e: Throwable) {
                 largeWindowPermits.release()
                 throw e
