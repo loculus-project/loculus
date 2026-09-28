@@ -77,7 +77,7 @@ class ClaimUnprocessedEntriesTest(
     }
 
     @Test
-    fun `GIVEN the first entries are held by an in-flight claim THEN a concurrent claim takes the next ones`() {
+    fun `GIVEN an uncommitted claim THEN a concurrent claim takes the next entries without waiting for it`() {
         val submitted = convenienceClient.submitDefaultFiles().submissionIdMappings
             .map { AccessionVersion(it.accession, it.version) }
             .sortedWith(compareBy({ it.accession }, { it.version }))
@@ -93,9 +93,16 @@ class ClaimUnprocessedEntriesTest(
             }
         }
         firstClaimed.await(30, TimeUnit.SECONDS)
-        val second = transaction { claim(3) }
-        secondDone.countDown()
-        executor.shutdown()
+        // Fails with "canceling statement due to lock timeout" if the claim waits for the first transaction.
+        val second = try {
+            transaction {
+                exec("set local lock_timeout = '2s'")
+                claim(3)
+            }
+        } finally {
+            secondDone.countDown()
+            executor.shutdown()
+        }
 
         assertThat(first.get(30, TimeUnit.SECONDS), `is`(submitted.subList(0, 3)))
         assertThat(second, `is`(submitted.subList(3, 6)))

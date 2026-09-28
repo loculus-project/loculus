@@ -61,6 +61,17 @@ val RELEASED_DATA_RELATED_TABLES: List<String> =
         DATA_USE_TERMS_TABLE_NAME,
     )
 
+/**
+ * The tables whose writes can make entries claimable for preprocessing: new entries or versions, deleted
+ * preprocessed rows (stale claims, edits) and pipeline switches. Claims themselves do not bump the tracker (V1.41).
+ */
+val UNPROCESSED_DATA_RELATED_TABLES: List<String> =
+    listOf(
+        CURRENT_PROCESSING_PIPELINE_TABLE_NAME,
+        SEQUENCE_ENTRIES_TABLE_NAME,
+        SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME,
+    )
+
 @Service
 open class ReleasedDataModel(
     private val submissionDatabaseService: SubmissionDatabaseService,
@@ -165,9 +176,14 @@ open class ReleasedDataModel(
      * included, plus the organism- and pipeline-specific preprocessed-data rows.
      * This means preprocessing of one organism (or of a not-yet-current pipeline
      * version) no longer invalidates the ETag of other organisms.
+     * [pipelineVersion] replaces the current pipeline version.
      */
-    private fun getLastDatabaseWrite(tableNames: List<String>? = null, organism: Organism? = null): String {
-        val pipelineVersion = organism?.let {
+    private fun getLastDatabaseWrite(
+        tableNames: List<String>? = null,
+        organism: Organism? = null,
+        pipelineVersion: Long? = null,
+    ): String {
+        val scopedPipelineVersion = pipelineVersion ?: organism?.let {
             submissionDatabaseService.getCurrentProcessingPipelineVersion(it)
         }
         val query = UpdateTrackerTable.select(UpdateTrackerTable.lastTimeUpdatedDbColumn)
@@ -177,7 +193,7 @@ open class ReleasedDataModel(
                 UpdateTrackerTable.organismColumn.isNull() or (UpdateTrackerTable.organismColumn eq o.name)
             }
         }
-        pipelineVersion?.let { v ->
+        scopedPipelineVersion?.let { v ->
             query.andWhere {
                 UpdateTrackerTable.pipelineVersionColumn.isNull() or (UpdateTrackerTable.pipelineVersionColumn eq v)
             }
@@ -192,13 +208,18 @@ open class ReleasedDataModel(
         return lastUpdateTime
     }
 
-    /** ETag for the last relevant database write. */
+    /**
+     * ETag for `extract-unprocessed-data`: the last write that may have made entries of [organism] claimable for
+     * [pipelineVersion], the version the poller asks for, which can be newer than the current one.
+     */
     @Transactional(readOnly = true)
-    open fun getLastDatabaseWriteETag(tableNames: List<String>? = null, organism: Organism? = null): String =
-        "\"${getLastDatabaseWrite(tableNames, organism)}\"" // ETag must be enclosed in double quotes
+    open fun getUnprocessedDataETag(organism: Organism, pipelineVersion: Long): String =
+        // ETag must be enclosed in double quotes
+        "\"${getLastDatabaseWrite(UNPROCESSED_DATA_RELATED_TABLES, organism, pipelineVersion)}\""
 
     /**
-     * Same as [getLastDatabaseWriteETag], but also includes the current date.
+     * ETag for the last write to [tableNames] that affects [organism] at its current pipeline version, plus the current
+     * date.
      * Useful because RESTRICTED entries can lapse to OPEN with no database write, so an ETag based on write
      * timestamps alone would keep serving 304s past the `restrictedUntil` date.
      */
