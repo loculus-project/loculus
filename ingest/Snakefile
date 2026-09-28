@@ -32,7 +32,7 @@ segment_detection_method: SegmentDetectionMethod | None = (
     None  # align uses nextclade align to determine segments it is slower but more precise, minimizer uses nextclade sort and requires a minimizer index
 )
 LOG_LEVEL = config.get("log_level", "INFO")
-NCBI_API_KEY = os.getenv("NCBI_API_KEY")
+# datasets reads NCBI_API_KEY from the environment; never put it on the command line, which snakemake logs on failure
 NCBI_GATEWAY_URL = config.get("ncbi_gateway_url")
 MIRROR_BUCKET = config.get("mirror_bucket", "")
 # "tar.zst": one archive of the whole package; "zst": data_report.jsonl.zst and genomic.fna.zst, for taxa too large to unpack (SARS-CoV-2)
@@ -132,7 +132,6 @@ rule fetch_inflate_ncbi_dataset_package:
         dataset_sequences="results/ncbi_dataset/data/genomic.fna",
     params:
         taxon_id=TAXON_ID,
-        api_key=f"--api-key {NCBI_API_KEY}" if NCBI_API_KEY else "",
         gateway=f"--gateway-url {NCBI_GATEWAY_URL}" if NCBI_GATEWAY_URL else "",
         released_after=f"--released-after {RELEASED_AFTER}" if RELEASED_AFTER else "",
         use_mirror=bool(MIRROR_BUCKET),
@@ -169,7 +168,6 @@ rule fetch_inflate_ncbi_dataset_package:
             datasets download virus genome taxon {params.taxon_id} \
                 --no-progressbar \
                 --filename {params.compressed_package_zip} \
-                {params.api_key} \
                 {params.gateway} \
                 {params.released_after} \
                 && {params.unzip} \
@@ -436,7 +434,6 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
             marker="results/{source}_assembly/.fetch_inflate_complete",
         params:
             taxon_id=TAXON_ID,
-            api_key=f"--api-key {NCBI_API_KEY}" if NCBI_API_KEY else "",
             gateway=f"--gateway-url {NCBI_GATEWAY_URL}" if NCBI_GATEWAY_URL else "",
             use_mirror=bool(MIRROR_BUCKET),
             mirror_url=lambda wc: f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}-assembly-{wc.source}.tar.zst",
@@ -455,7 +452,6 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
                     --assembly-source {wildcards.source} \
                     --no-progressbar --dehydrated \
                     --filename {params.compressed_package_zip} \
-                    {params.api_key} \
                     {params.gateway} \
                     && {params.unzip} \
                         -o {params.compressed_package_zip} \
