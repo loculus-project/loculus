@@ -64,10 +64,18 @@ class QueryIndexService(
         private var gapSeq = -1L
         private var gapSince = 0L
 
+        /**
+         * Must not throw: scheduleWithFixedDelay silently cancels every later run once a task throws, which would
+         * freeze this organism's index. An OutOfMemoryError is rethrown anyway: after it the heap state is
+         * unknown, and the deployment runs with -XX:+ExitOnOutOfMemoryError so the pod restarts.
+         */
         fun tick() {
             try {
                 if (index == null) fullLoad() else tail()
-            } catch (e: Exception) {
+            } catch (e: OutOfMemoryError) {
+                log.error(e) { "Query index for $organism: out of memory, updates stop" }
+                throw e
+            } catch (e: Throwable) {
                 log.error(e) { "Query index for $organism: update failed" }
             }
         }
