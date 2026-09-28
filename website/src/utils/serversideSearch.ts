@@ -6,6 +6,7 @@ import {
     ORDER_DIRECTION_KEY,
     ORDER_KEY,
     PAGE_KEY,
+    searchRequestKey,
     type SearchResponse,
 } from './search';
 import { getSegmentAndGeneInfo } from './sequenceTypeHelpers.ts';
@@ -64,28 +65,35 @@ export const performLapisSearchQueries = async (
 
     const client = LapisClient.createForOrganism(organism);
 
+    const detailsRequest = {
+        ...lapisSearchParameters,
+        fields: [...columnsToShow, schema.primaryKey],
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
+        orderBy: [
+            {
+                field: orderByField,
+                type: orderDirection === 'ascending' ? 'ascending' : 'descending',
+            },
+        ],
+    };
+    const aggregatedRequest = {
+        ...lapisSearchParameters,
+        fields: [],
+    };
+
     const [detailsResult, aggregatedResult] = await Promise.all([
         // @ts-expect-error because OrderBy typing does not accept this for unknown reasons
-        client.call('details', {
-            ...lapisSearchParameters,
-            fields: [...columnsToShow, schema.primaryKey],
-            limit: pageSize,
-            offset: (page - 1) * pageSize,
-            orderBy: [
-                {
-                    field: orderByField,
-                    type: orderDirection === 'ascending' ? 'ascending' : 'descending',
-                },
-            ],
-        }),
-        client.call('aggregated', {
-            ...lapisSearchParameters,
-            fields: [],
-        }),
+        client.call('details', detailsRequest),
+        client.call('aggregated', aggregatedRequest),
     ]);
 
     return {
         data: detailsResult.unwrapOr({ data: [] }).data as TableSequenceData[],
         totalCount: aggregatedResult.unwrapOr({ data: [{ count: 0 }] }).data[0].count,
+        requestKey:
+            detailsResult.isOk() && aggregatedResult.isOk()
+                ? searchRequestKey(detailsRequest, aggregatedRequest)
+                : undefined,
     };
 };

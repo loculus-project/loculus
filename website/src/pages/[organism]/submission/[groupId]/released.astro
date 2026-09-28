@@ -46,14 +46,14 @@ const loadReleasedSequences = async (group: Group) => {
         [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
         [GROUP_ID_FIELD]: String(group.groupId),
     };
-    const { data, totalCount } = await performLapisSearchQueries(
+    const { data, totalCount, requestKey } = await performLapisSearchQueries(
         initialQueryDict,
         schema,
         referenceGenomesInfo,
         hiddenFieldValues,
         cleanedOrganism.key,
     );
-    return { group, hiddenFieldValues, data, totalCount };
+    return { group, hiddenFieldValues, data, totalCount, requestKey };
 };
 
 // The search is scoped to a group, so it can only run once we have one. Without a group
@@ -75,6 +75,7 @@ const searchProps = groupsResult.isOk() ? await loadReleasedSequences(groupsResu
                 hiddenFieldValues={searchProps.hiddenFieldValues}
                 initialData={searchProps.data}
                 initialCount={searchProps.totalCount}
+                initialDataRequestKey={searchProps.requestKey}
                 initialQueryDict={initialQueryDict}
                 dataUseTermsEnabled={dataUseTermsAreEnabled()}
                 sequenceFlaggingConfig={sequenceFlaggingConfig}

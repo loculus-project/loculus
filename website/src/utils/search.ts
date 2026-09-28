@@ -32,7 +32,17 @@ export const HALF_SCREEN_PARAM = 'halfScreen';
 export type SearchResponse = {
     data: TableSequenceData[];
     totalCount: number;
+    /** {@link searchRequestKey} of the requests behind `data`/`totalCount`; undefined if either failed. */
+    requestKey?: string;
 };
+
+/** Order-independent key of a search page's `details` + `aggregated` requests, to compare SSR with client. */
+export const searchRequestKey = (detailsRequest: object, aggregatedRequest: object): string =>
+    JSON.stringify({ detailsRequest, aggregatedRequest }, (_key, value: unknown) =>
+        value !== null && typeof value === 'object' && !Array.isArray(value)
+            ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
+            : value,
+    );
 
 type InitialVisibilityAccessor = (field: MetadataFilter) => boolean;
 type VisiblitySelectableAccessor = (field: MetadataFilter) => boolean;

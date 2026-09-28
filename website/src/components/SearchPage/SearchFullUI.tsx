@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button } from '../common/Button';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
@@ -33,6 +33,7 @@ import {
     getColumnVisibilitiesFromQuery,
     getFieldVisibilitiesFromQuery,
     MetadataFilterSchema,
+    searchRequestKey,
 } from '../../utils/search.ts';
 import { getSegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
@@ -51,6 +52,8 @@ export interface InnerSearchFullUIProps {
     hiddenFieldValues?: FieldValues;
     initialData: TableSequenceData[];
     initialCount: number;
+    /** Key of the server-side requests behind `initialData`/`initialCount`, undefined if they failed. */
+    initialDataRequestKey?: string;
     initialQueryDict: QueryState;
     showEditDataUseTermsControls?: boolean;
     dataUseTermsEnabled?: boolean;
@@ -82,6 +85,7 @@ const InnerSearchFullUI = ({
     hiddenFieldValues,
     initialData,
     initialCount,
+    initialDataRequestKey,
     initialQueryDict,
     showEditDataUseTermsControls = false,
     dataUseTermsEnabled = true,
@@ -191,28 +195,41 @@ const InnerSearchFullUI = ({
 
     const downloadFilter: SequenceFilter = sequencesSelected ? new SequenceEntrySelection(selectedSeqs) : tableFilter;
 
+    // Skip fetching while the query is still the one SSR answered; the first client fetch clears it.
+    const serverSideRequestKey = useRef(initialDataRequestKey);
+    const serverSideResultsAreCurrent = initialDataRequestKey !== undefined && aggregatedHook.isIdle;
+
     useEffect(() => {
-        aggregatedHook.mutate({
+        const aggregatedRequest = {
             ...lapisSearchParameters,
             fields: [],
-        });
+        };
         const OrderByList: OrderBy[] = [
             {
                 field: orderByField,
                 type: orderDirection,
             },
         ];
-        // @ts-expect-error because the hooks don't accept OrderBy
-        detailsHook.mutate({
+        const detailsRequest = {
             ...lapisSearchParameters,
             fields: [...columnsToShow, schema.primaryKey],
             limit: pageSize,
             offset: (page - 1) * pageSize,
             orderBy: OrderByList,
-        });
+        };
+        if (
+            serverSideRequestKey.current !== undefined &&
+            serverSideRequestKey.current === searchRequestKey(detailsRequest, aggregatedRequest)
+        ) {
+            return;
+        }
+        serverSideRequestKey.current = undefined;
+        aggregatedHook.mutate(aggregatedRequest);
+        // @ts-expect-error because the hooks don't accept OrderBy
+        detailsHook.mutate(detailsRequest);
     }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection]);
 
-    const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
+    const totalSequences = serverSideResultsAreCurrent ? initialCount : aggregatedHook.data?.data[0].count;
     const linkOutSequenceCount = downloadFilter.sequenceCount() ?? totalSequences;
 
     const fetchAccessions = useCallback(async (): Promise<string[]> => {
@@ -226,8 +243,12 @@ const InnerSearchFullUI = ({
 
     const [oldData, setOldData] = useState<TableSequenceData[] | null>(null);
     const [oldCount, setOldCount] = useState<number | null>(null);
-    const [firstClientSideLoadOfDataCompleted, setFirstClientSideLoadOfDataCompleted] = useState(false);
-    const [firstClientSideLoadOfCountCompleted, setFirstClientSideLoadOfCountCompleted] = useState(false);
+    const [firstClientSideLoadOfDataCompleted, setFirstClientSideLoadOfDataCompleted] = useState(
+        initialDataRequestKey !== undefined,
+    );
+    const [firstClientSideLoadOfCountCompleted, setFirstClientSideLoadOfCountCompleted] = useState(
+        initialDataRequestKey !== undefined,
+    );
 
     useEffect(() => {
         if (detailsHook.data?.data && oldData !== detailsHook.data.data) {
