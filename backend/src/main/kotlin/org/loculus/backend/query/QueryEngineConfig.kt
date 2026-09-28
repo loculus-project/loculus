@@ -60,18 +60,21 @@ class QuerySchemaRegistry(backendConfig: BackendConfig) {
             }
             return@mapNotNull null
         }
-        organism to QuerySchema.build(
-            organism,
-            instanceConfig.schema.organismName,
-            config,
-            instanceConfig.referenceGenome,
-        )
+        // a config the engine cannot serve (e.g. more sequences than MutationCode encodes) fails only its organism
+        val schema = try {
+            QuerySchema.build(organism, instanceConfig.schema.organismName, config, instanceConfig.referenceGenome)
+        } catch (e: IllegalArgumentException) {
+            log.error { "Query engine: organism $organism will not be queryable: ${e.message}" }
+            return@mapNotNull null
+        }
+        organism to schema
     }.toMap()
 
     /**
-     * organisms in the backend config without a queryEngine section. The chart gives every organism one while the
-     * engine is enabled, so this only happens when image and config disagree; readiness then fails
-     * ([org.loculus.backend.query.index.QueryIndexHealthIndicator]) instead of answering 404 for those organisms.
+     * organisms in the backend config without a queryEngine section, or whose section the engine cannot serve.
+     * The chart gives every organism one while the engine is enabled, so the former only happens when image and
+     * config disagree; readiness then fails ([org.loculus.backend.query.index.QueryIndexHealthIndicator]) instead
+     * of answering 404 for those organisms.
      */
     val notQueryable: List<String> = backendConfig.organisms.keys.filter { it !in schemas }
 

@@ -125,6 +125,24 @@ class QuerySchemaBuildTest {
     }
 
     @Test
+    fun `an organism with more sequences than mutation codes can encode fails alone`() {
+        val backendConfig = readBackendConfig(springLikeMapper(), "src/test/resources/backend_config.json")
+        val other = backendConfig.organisms.getValue("otherOrganism")
+        val genes = (0 until MutationCode.MAX_SEQUENCES).map { ReferenceSequence("gene$it", "M*") }
+        val tooMany = other.copy(referenceGenome = other.referenceGenome.copy(genes = genes))
+        val organisms = backendConfig.organisms + ("otherOrganism" to tooMany)
+        val registry = QuerySchemaRegistry(backendConfig.copy(organisms = organisms))
+        assertThat(registry.schemas.keys, equalTo(setOf("dummyOrganism")))
+        assertThat(
+            registry.notQueryable.toSet(),
+            equalTo(setOf("otherOrganism", "dummyOrganismWithoutConsensusSequences")),
+        )
+        assertThrows<IllegalArgumentException> {
+            QuerySchema.build("o", "o", tooMany.queryEngine!!, tooMany.referenceGenome)
+        }
+    }
+
+    @Test
     fun `other consumers of InstanceConfig are unaffected`() {
         val backendConfig = readBackendConfig(springLikeMapper(), "src/test/resources/backend_config.json")
         val (schema, referenceGenome) = backendConfig.organisms.getValue("dummyOrganism")
