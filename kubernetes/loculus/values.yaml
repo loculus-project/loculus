@@ -5262,6 +5262,11 @@ defaultOrganisms:
       <<: *schema
       organismName: "SARS-CoV-2"
       image: "/images/organisms/sarscov2_small.jpg"
+      linkOuts:
+        - name: "Nextclade"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/sars-cov-2/wuhan-hu-1/orfs"
+        - name: "Nextclade BA.2.86 (nightly)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/sars-cov-2/BA.2.86&input-tree=https://nextstrain.org/charon/getDataset?prefix=staging/nextclade/sars-cov-2/BA.2.86"
       metadataAdd:
         - name: pangoLineage
           displayName: Pango lineage
