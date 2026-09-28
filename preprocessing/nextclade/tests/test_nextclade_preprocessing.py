@@ -38,7 +38,7 @@ from loculus_preprocessing.embl import (
     get_seq_features,
     reformat_authors_from_loculus_to_embl_style,
 )
-from loculus_preprocessing.nextclade_annotation import NextcladeAnnotation
+from loculus_preprocessing.nextclade_annotation import GffAttributes, NextcladeAnnotation
 from loculus_preprocessing.prepro import get_nested_metadata, process_all, unpack_annotations
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
