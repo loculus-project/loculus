@@ -159,6 +159,8 @@ class QueryProjector(
 
     /** @return the last accession marked, null if there is none after [cursor] */
     private fun reconcileMark(organism: String, cursor: String, count: Int): String? = transaction {
+        // the next run retries; Exposed's own retries would only repeat the lock wait inside this run
+        maxAttempts = 1
         val connection = jdbc()
         // Inserting a key that an uncommitted submission transaction has also inserted waits for that transaction;
         // give up quickly instead, so that this can never be the other half of a deadlock with a submission.
