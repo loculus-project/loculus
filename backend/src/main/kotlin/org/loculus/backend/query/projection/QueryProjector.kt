@@ -77,6 +77,7 @@ class QueryProjector(
     private var lastRestrictionCheckDate: String? = null
     private val rebuildFailedAt = HashMap<String, Long>()
     private val reconcileCursors = HashMap<String, String>()
+    private val reconcilePassStartedAt = HashMap<String, Long>()
     private var lastReconcileAt = System.currentTimeMillis()
 
     private val workerCount = maxOf(1, Runtime.getRuntime().availableProcessors() - 1)
@@ -115,11 +116,12 @@ class QueryProjector(
     }
 
     /**
-     * Marks the next released accessions (in accession order, per organism, wrapping around) dirty, at
-     * `loculus.query-engine.reconcile-accessions-per-second`. Projections that went stale (an accession dropped after
-     * a failed projection, a missed trigger) are thereby recomputed within one pass, about
-     * (released accessions / rate) seconds. Unchanged entries cost a read and a projection but no write
-     * (change-only upserts, sequence data skipped by source_hash).
+     * Marks the next released accessions (in accession order, per organism) dirty, at
+     * `loculus.query-engine.reconcile-accessions-per-second`; a new pass over an organism starts at most every
+     * `loculus.query-engine.reconcile-pass-interval-minutes`. Projections that went stale (an accession dropped after
+     * a failed projection, a missed trigger) are thereby recomputed within max(pass interval,
+     * released accessions / rate). Unchanged entries cost a read and a projection but no write (change-only upserts,
+     * sequence data skipped by source_hash).
      */
     private fun reconcileStep() {
         val now = System.currentTimeMillis()
@@ -134,6 +136,11 @@ class QueryProjector(
     /** marks the next [count] released accessions of [organism] after its reconcile cursor dirty */
     internal fun reconcileStep(organism: String, count: Int) {
         val cursor = reconcileCursors[organism] ?: ""
+        val now = System.currentTimeMillis()
+        if (cursor.isEmpty()) {
+            val passStartedAt = reconcilePassStartedAt[organism]
+            if (passStartedAt != null && now - passStartedAt < properties.reconcilePassIntervalMinutes * 60_000) return
+        }
         val last = try {
             reconcileMark(organism, cursor, count)
         } catch (e: Exception) {
@@ -141,6 +148,7 @@ class QueryProjector(
             log.warn { "Query projection: reconcile step of $organism skipped: $e" }
             return
         }
+        if (cursor.isEmpty()) reconcilePassStartedAt[organism] = now
         if (last == null) {
             if (cursor.isNotEmpty()) log.info { "Query projection: reconcile pass over $organism done" }
             reconcileCursors.remove(organism)

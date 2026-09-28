@@ -23,6 +23,8 @@ private val log = KotlinLogging.logger {}
  * loculus.query-engine.reconcile-accessions-per-second
  *                                              rate at which the projector re-marks all released accessions dirty,
  *                                              cycling through them, to heal projections that went stale (0 = off)
+ * loculus.query-engine.reconcile-pass-interval-minutes
+ *                                              a new reconcile pass of an organism starts at most this often
  */
 @ConfigurationProperties(prefix = "loculus.query-engine")
 data class QueryEngineProperties(
@@ -32,6 +34,7 @@ data class QueryEngineProperties(
     val projectorBatchSize: Int = 2000,
     val tailIntervalMs: Long = 250,
     val reconcileAccessionsPerSecond: Double = 50.0,
+    val reconcilePassIntervalMinutes: Long = 360,
     val instanceName: String? = null,
 )
 
