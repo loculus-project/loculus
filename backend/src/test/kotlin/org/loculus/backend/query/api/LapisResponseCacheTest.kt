@@ -166,6 +166,45 @@ class LapisResponseCacheTest {
     }
 
     @Test
+    fun `a GET with orderBy field-descending equals the JSON POST in bytes and ETag`() {
+        val mockMvc = mockMvc(cache = null)
+        // the search table's shape: columns, a filter, the default descending sort, one page
+        val searchTableGet = "/test/sample/details?fields=country&fields=accessionVersion&fields=age" +
+            "&isRevocation=false&orderBy=age:descending&limit=100&offset=0"
+        for (encoding in listOf(null, "gzip")) {
+            val getResponse = mockMvc.send(
+                get(searchTableGet)
+                    .apply { if (encoding != null) header("Accept-Encoding", encoding) },
+            )
+            val postResponse = mockMvc.send(
+                post("/test/sample/details").contentType("application/json")
+                    .content(
+                        """{"fields":["country","accessionVersion","age"],"isRevocation":false,""" +
+                            """"orderBy":[{"field":"age","type":"descending"}],"limit":100,"offset":0}""",
+                    )
+                    .apply { if (encoding != null) header("Accept-Encoding", encoding) },
+            )
+            assertThat(getResponse.status, equalTo(200))
+            assertThat(getResponse.getHeader("ETag"), equalTo(postResponse.getHeader("ETag")))
+            assertThat(getResponse.contentAsByteArray.toList(), equalTo(postResponse.contentAsByteArray.toList()))
+            // FakeIndex does not sort; the parser tests show both spellings parse to the same request
+            assertThat(decode(getResponse), containsString("\"accessionVersion\""))
+
+            val revalidated = mockMvc.send(
+                get(searchTableGet)
+                    .header("If-None-Match", postResponse.getHeader("ETag")!!)
+                    .apply { if (encoding != null) header("Accept-Encoding", encoding) },
+            )
+            assertThat(revalidated.status, equalTo(304))
+        }
+        val ascending = mockMvc.send(get("/test/sample/details?fields=accessionVersion,age&orderBy=age&limit=5"))
+        val descending = mockMvc.send(
+            get("/test/sample/details?fields=accessionVersion,age&orderBy=age:descending&limit=5"),
+        )
+        assertThat(ascending.getHeader("ETag"), not(equalTo(descending.getHeader("ETag"))))
+    }
+
+    @Test
     fun `a miss, a memory hit and a disk hit send the same bytes`() {
         assertSameAcrossTiers("memory", cache(memory = 10_000_000, disk = 0))
     }
