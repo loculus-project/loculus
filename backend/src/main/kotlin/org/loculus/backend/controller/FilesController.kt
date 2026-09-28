@@ -160,6 +160,7 @@ class FilesController(
             "and the upload should then be completed using the /complete-multipart-upload endpoint. " +
             "Afterwards, the file IDs can be attached to the metadata in the `files.<fileCategory>` column.",
     )
+    @ApiResponse(responseCode = "429", description = "The instance-wide daily limit of file upload requests is reached")
     @PostMapping("/request-multipart-upload")
     fun requestMultipartUploads(
         @HiddenParam
