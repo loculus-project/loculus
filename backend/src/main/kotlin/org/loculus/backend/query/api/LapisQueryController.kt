@@ -635,6 +635,8 @@ class LapisQueryController(
 
             contentEncoding == "zstd" -> WireCodec.zstdOutputStream(out)
 
+            contentEncoding == "br" -> WireCodec.brotliOutputStream(out)
+
             else -> out
         }
     }

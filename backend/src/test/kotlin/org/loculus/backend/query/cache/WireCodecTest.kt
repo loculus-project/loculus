@@ -1,5 +1,7 @@
 package org.loculus.backend.query.cache
 
+import com.aayushatharva.brotli4j.Brotli4jLoader
+import com.aayushatharva.brotli4j.decoder.BrotliInputStream
 import com.github.luben.zstd.ZstdInputStream
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.equalTo
@@ -12,8 +14,15 @@ import kotlin.random.Random
 class WireCodecTest {
     private fun decode(codec: WireCodec, bytes: ByteArray): ByteArray = when (codec) {
         WireCodec.IDENTITY -> bytes
+
         WireCodec.GZIP -> GZIPInputStream(bytes.inputStream()).use { it.readAllBytes() }
+
         WireCodec.ZSTD -> ZstdInputStream(bytes.inputStream()).use { it.readAllBytes() }
+
+        WireCodec.BR -> {
+            Brotli4jLoader.ensureAvailability()
+            BrotliInputStream(bytes.inputStream()).use { it.readAllBytes() }
+        }
     }
 
     @Test
@@ -68,5 +77,13 @@ class WireCodecTest {
         streams.forEach { it.use { s -> s.write(plain) } }
         assertThat(WireCodec.largeWindowStreamsAvailable, equalTo(max))
         outs.forEach { assertThat(decode(WireCodec.ZSTD, it.toByteArray()).contentEquals(plain), equalTo(true)) }
+    }
+
+    @Test
+    fun `a br tail longer than one uncompressed meta-block decodes`() {
+        val prefix = Random(5).nextBytes(300_000)
+        val rest = Random(6).nextBytes(200_000)
+        val encoded = WireCodec.BR.encodePrefix(prefix, 0, prefix.size) + WireCodec.BR.tail(rest, 0, 0)
+        assertThat(decode(WireCodec.BR, encoded).contentEquals(prefix + rest), equalTo(true))
     }
 }
