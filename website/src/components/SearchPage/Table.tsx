@@ -6,7 +6,7 @@ import { Tooltip } from 'react-tooltip';
 import ScrollContainer from './ScrollContainer.jsx';
 import { routes } from '../../routes/routes.ts';
 import type { Schema } from '../../types/config.ts';
-import type { Metadatum, OrderBy, OrderDirection } from '../../types/lapis.ts';
+import type { FileEntry, Metadatum, OrderBy, OrderDirection } from '../../types/lapis.ts';
 import { deduplicateSemicolonSeparated } from '../../utils/deduplicateSemicolonSeparated';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
@@ -93,12 +93,6 @@ const CellContent: FC<CellContentProps> = ({ value, type, columnWidth, fieldName
             {formattedValue}
         </span>
     );
-};
-
-type FileEntry = {
-    fileId: string;
-    name: string;
-    url: string;
 };
 
 type FileLinkProps = {
