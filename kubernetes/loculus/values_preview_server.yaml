@@ -203,10 +203,12 @@ developmentDatabase:
   resources:
     requests:
       memory: "1Gi"
-      cpu: "250m"
+      cpu: "2000m"
     limits:
       memory: "4Gi"
   settings:
     - max_connections=200
     - shared_buffers=1GB
+  # PGDATA on a PersistentVolumeClaim (the cluster's default storage class) instead of the container layer
+  storageSize: "20Gi"
   shmSize: "1Gi"
