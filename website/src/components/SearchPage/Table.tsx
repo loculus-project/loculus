@@ -164,10 +164,17 @@ export const Table: FC<TableProps> = ({
                 type: metadata?.type ?? 'string',
                 columnWidth: metadata?.columnWidth,
                 order: metadata?.order ?? Number.MAX_SAFE_INTEGER,
-                customDisplay: metadata?.customDisplay,
+                customDisplayType: metadata?.customDisplay?.type,
             };
         })
         .sort((a, b) => a.order - b.order);
+
+    const isSortable = (column: { field: string; customDisplayType?: string }) => {
+        // File list columns return JSON but display file names,
+        // so having sorting enabled would confuse users; the sort doesn't correspond
+        // to what is displayed in the table.
+        return column.customDisplayType !== 'fileList';
+    };
 
     const handleSort = (field: string) => {
         if (orderBy.field === field) {
@@ -276,8 +283,11 @@ export const Table: FC<TableProps> = ({
                                 {columns.map((c) => (
                                     <th
                                         key={c.field}
-                                        onClick={() => handleSort(c.field)}
-                                        className='px-2 py-2 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer box-content last:pr-6 text-left'
+                                        onClick={() => isSortable(c) && handleSort(c.field)}
+                                        className={
+                                            'px-2 py-2 text-xs font-medium tracking-wider text-gray-500 uppercase box-content last:pr-6 text-left' +
+                                            (isSortable(c) ? ' cursor-pointer' : '')
+                                        }
                                         style={{
                                             minWidth: getColumnWidthStyle(c.columnWidth),
                                         }}
@@ -363,7 +373,7 @@ export const Table: FC<TableProps> = ({
                                                 minWidth: getColumnWidthStyle(c.columnWidth),
                                             }}
                                         >
-                                            {c.customDisplay?.type === 'fileList' ? (
+                                            {c.customDisplayType === 'fileList' ? (
                                                 <FilesCellContent
                                                     value={row[c.field]}
                                                     type={c.type}
