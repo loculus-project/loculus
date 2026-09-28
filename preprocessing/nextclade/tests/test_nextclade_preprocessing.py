@@ -1641,6 +1641,7 @@ def test_create_flatfile():
 FUNCTIONAL_SEQUENCE = "ATGAAAGGGTGA"
 # ATG AAA TAA GGG TGA -> MK*G, with a premature stop codon before the terminal one
 PREMATURE_STOP_SEQUENCE = "ATGAAATAAGGGTGA"
+PREMATURE_STOP_POSITION = 3
 
 
 def _single_cds_feature(sequence_str: str, attributes: GffAttributes | None = None) -> SeqFeature:
@@ -1666,7 +1667,9 @@ def test_get_seq_features_marks_a_cds_with_premature_stop_pseudo_without_transla
     assert cds_feature.type == "CDS"
     assert "pseudo" in cds_feature.qualifiers
     assert "translation" not in cds_feature.qualifiers
-    assert cds_feature.qualifiers["note"] == [PREMATURE_STOP_NOTE]
+    assert cds_feature.qualifiers["note"] == [
+        PREMATURE_STOP_NOTE.format(position=PREMATURE_STOP_POSITION)
+    ]
 
 
 def test_get_seq_features_leaves_an_existing_note_alone_without_premature_stop():
@@ -1692,7 +1695,8 @@ def test_flatfile_writes_pseudo_as_a_bare_qualifier_with_both_notes():
     assert "/pseudo" in feature_lines
     assert '/note="existing note"' in feature_lines
     # Long qualifier values are wrapped over several FT lines at word boundaries
-    assert f'/note="{PREMATURE_STOP_NOTE}"' in " ".join(feature_lines)
+    expected_note = PREMATURE_STOP_NOTE.format(position=PREMATURE_STOP_POSITION)
+    assert f'/note="{expected_note}"' in " ".join(feature_lines)
     assert not any(line.startswith("/translation") for line in feature_lines)
 
 
