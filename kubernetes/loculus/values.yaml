@@ -5258,6 +5258,7 @@ defaultOrganisms:
     schema:
       <<: *schema
       organismName: "SARS-CoV-2"
+      image: "/images/organisms/sarscov2_small.jpg"
       metadataAdd:
         - name: pangoLineage
           displayName: Pango lineage
@@ -5306,7 +5307,7 @@ defaultOrganisms:
               references:
                 - name: singleReference
                   nextclade_dataset_name: nextstrain/sars-cov-2/wuhan-hu-1/orfs
-                  genes: [E, M, N, ORF1a, ORF1b, ORF3a, ORF6, ORF7a, ORF7b, ORF8, ORF9b, S]
+                  genes: ["E", "M", "N", "ORF1a", "ORF1b", "ORF3a", "ORF6", "ORF7a", "ORF7b", "ORF8", "ORF9b", "S"]
           taxon_id: 2697049
           scientific_name: "Severe acute respiratory syndrome coronavirus 2"
           molecule_type: "genomic RNA"
