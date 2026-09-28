@@ -34,7 +34,7 @@ private val log = KotlinLogging.logger {}
 private const val ADVISORY_LOCK_KEY = 0x6c71_7072L
 
 /** encoding_hash while a full rebuild is in progress (never equals a real hash, so a crash re-triggers the rebuild) */
-private const val REBUILDING_MARKER = "rebuilding"
+internal const val REBUILDING_MARKER = "rebuilding"
 
 private const val MAX_DRAIN_MILLIS_PER_ORGANISM = 10_000L
 private const val REBUILD_RETRY_BACKOFF_MILLIS = 60_000L

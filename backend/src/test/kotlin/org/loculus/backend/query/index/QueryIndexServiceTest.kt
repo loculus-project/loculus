@@ -18,6 +18,7 @@ import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.SQLException
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import javax.sql.DataSource
 
@@ -89,6 +90,52 @@ class QueryIndexServiceTest {
     }
 
     @Test
+    fun `a projection rebuild's backlog is loaded by one reload after the rebuild`() {
+        val rebuilding = AtomicBoolean(true)
+        val loads = AtomicInteger()
+        val tails = AtomicInteger()
+        val dataSource = fakeDataSource { sql ->
+            when {
+                "coalesce(max(seq), 0) from query_changelog" in sql -> {
+                    loads.incrementAndGet()
+                    rows(0)
+                }
+
+                // the rebuild's changelog backlog, until a reload has started
+                "order by seq limit" in sql -> {
+                    tails.incrementAndGet()
+                    rows(if (loads.get() == 1) QueryIndexService.REBUILD_MIN_CHANGES + 1 else 0)
+                }
+
+                "encoding_hash" in sql -> rows(1, flag = rebuilding.get())
+
+                "count(distinct id)" in sql -> rows(1)
+
+                else -> rows(0)
+            }
+        }
+        val service = QueryIndexService(registry, dataSource, QueryEngineProperties(enabled = true, tailIntervalMs = 5))
+        fun awaitTails(n: Int) {
+            val deadline = System.currentTimeMillis() + 20_000
+            while (tails.get() < n && System.currentTimeMillis() < deadline) Thread.sleep(5)
+            assertThat(tails.get(), greaterThanOrEqualTo(n))
+        }
+        try {
+            service.start()
+            awaitTails(20)
+            assertThat("no reload while the rebuild runs", loads.get(), equalTo(1))
+            assertThat(service.get("test"), notNullValue())
+
+            rebuilding.set(false)
+            awaitTails(tails.get() + 20)
+            assertThat("one reload after the rebuild", loads.get(), equalTo(2))
+            assertThat(service.get("test"), notNullValue())
+        } finally {
+            service.destroy()
+        }
+    }
+
+    @Test
     fun `readiness is out of service until every organism's index is loaded`() {
         val service = mockk<QueryIndexService>()
         val provider = mockk<ObjectProvider<QueryIndexService>> { every { ifAvailable } returns service }
@@ -120,14 +167,15 @@ class QueryIndexServiceTest {
         return mockk { every { this@mockk.connection } returns connection }
     }
 
-    /** a result set of [n] rows in which every int/long column of row i is i */
-    private fun rows(n: Int): ResultSet {
+    /** a result set of [n] rows in which every int/long column of row i is i, and every boolean column [flag] */
+    private fun rows(n: Int, flag: Boolean = false): ResultSet {
         var row = 0
         return Proxy.newProxyInstance(javaClass.classLoader, arrayOf(ResultSet::class.java)) { _, method, _ ->
             when (method.name) {
                 "next" -> ++row <= n
                 "getLong" -> row.toLong()
                 "getInt" -> row
+                "getBoolean" -> flag
                 "wasNull" -> false
                 else -> null
             }

@@ -48,7 +48,8 @@ class QueryIndexServicePostgresTest {
             "mutations int[], missing int[], insertions text[], primary key (organism, id))",
         "create table $dbSchema.query_changelog (seq bigserial primary key, organism text, id int, " +
             "created_at timestamp default now())",
-        "create table $dbSchema.query_engine_state (organism text primary key, data_version bigint)",
+        "create table $dbSchema.query_engine_state (organism text primary key, data_version bigint, " +
+            "encoding_hash text)",
     )
 
     @Test
@@ -95,7 +96,8 @@ class QueryIndexServicePostgresTest {
                 "mutations int[], missing int[], insertions text[], primary key (organism, id))",
             "create table $dbSchema.query_changelog (seq bigserial primary key, organism text, id int, " +
                 "created_at timestamp default now())",
-            "create table $dbSchema.query_engine_state (organism text primary key, data_version bigint)",
+            "create table $dbSchema.query_engine_state (organism text primary key, data_version bigint, " +
+                "encoding_hash text)",
             "insert into $dbSchema.query_entries values ${entry(0, "CH")}, ${entry(1, "DE")}, ${entry(2, "CH")}",
             "insert into $dbSchema.query_engine_state values ('test', 100)",
             "insert into $dbSchema.query_changelog (organism, id) values ('test', 0), ('test', 1), ('test', 2)",

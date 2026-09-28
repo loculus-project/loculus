@@ -3,6 +3,7 @@ package org.loculus.backend.query.index
 import mu.KotlinLogging
 import org.loculus.backend.query.QueryEngineProperties
 import org.loculus.backend.query.QuerySchemaRegistry
+import org.loculus.backend.query.projection.REBUILDING_MARKER
 import org.loculus.backend.query.schema.QuerySchema
 import org.springframework.beans.factory.DisposableBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -24,9 +25,10 @@ private val log = KotlinLogging.logger {}
  * Maintains one [InMemoryOrganismIndex] per queryable organism: a full load from the projection tables
  * (in background threads after application start), then tailing `query_changelog` every
  * `loculus.query-engine.tail-interval-ms`. Large change batches (e.g. a projection rebuild) trigger a full
- * reload. Reloads run one organism at a time and drop the old index first, so the heap holds at most one index
- * copy being rebuilt; that organism answers 503 until its reload finishes. The first loads at startup run
- * concurrently. A failed load is retried with exponential backoff; the retry of a failed reload is a reload too.
+ * reload, once the rebuild that writes them has finished. Reloads run one organism at a time and drop the old index
+ * first, so the heap holds at most one index copy being rebuilt; that organism answers 503 until its reload finishes.
+ * The first loads at startup run concurrently. A failed load is retried with exponential backoff; the retry of a
+ * failed reload is a reload too.
  */
 @Component
 @ConditionalOnProperty(prefix = "loculus.query-engine", name = ["enabled"], havingValue = "true")
@@ -77,6 +79,9 @@ class QueryIndexService(
         private val appliedAbove = TreeSet<Long>()
         private var gapSeq = -1L
         private var gapSince = 0L
+
+        /** a large backlog is waiting for the projection rebuild that writes it to finish */
+        private var reloadDeferred = false
 
         /** consecutive failed loads, and when the next load may start */
         private var loadFailures = 0
@@ -168,6 +173,14 @@ class QueryIndexService(
                 }
                 val ids = newChanges.map { it.second }.toSet()
                 if (changes.size > REBUILD_MIN_CHANGES) {
+                    // a projection rebuild writes changelog rows throughout: serve the current index until it is
+                    // done and reload once then, instead of reloading (a 503 window) again and again during it
+                    if (rebuilding(connection)) {
+                        if (!reloadDeferred) log.info { "Query index for $organism: reload waits for the rebuild" }
+                        reloadDeferred = true
+                        return TailResult.APPLIED
+                    }
+                    reloadDeferred = false
                     val pending = pendingIds(connection, safeSeq)
                     if (pending > current.size * REBUILD_FRACTION) {
                         log.info { "Query index for $organism: $pending changed entries, reloading" }
@@ -240,6 +253,14 @@ class QueryIndexService(
         ).use { statement ->
             statement.setString(1, organism)
             statement.executeQuery().use { rs -> if (rs.next()) rs.getInt(1) else 0 }
+        }
+
+        private fun rebuilding(connection: Connection): Boolean = connection.prepareStatement(
+            "select encoding_hash = ? from query_engine_state where organism = ?",
+        ).use { statement ->
+            statement.setString(1, REBUILDING_MARKER)
+            statement.setString(2, organism)
+            statement.executeQuery().use { rs -> rs.next() && rs.getBoolean(1) }
         }
 
         private fun dataVersion(connection: Connection): Long = connection.prepareStatement(
