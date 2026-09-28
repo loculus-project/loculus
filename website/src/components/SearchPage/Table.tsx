@@ -9,7 +9,6 @@ import type { Schema } from '../../types/config.ts';
 import type { Metadatum, OrderBy, OrderDirection } from '../../types/lapis.ts';
 import { deduplicateSemicolonSeparated } from '../../utils/deduplicateSemicolonSeparated';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
-import { FileListComponent } from '../SequenceDetailsPage/DataTableEntryValue.tsx';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
@@ -61,25 +60,31 @@ type CellContentProps = {
     fieldName: string;
 };
 
-const CellContent: FC<CellContentProps> = ({ value, type, columnWidth, fieldName }) => {
-    const textRef = useRef<HTMLSpanElement>(null);
+const useTruncationTooltip = <T extends HTMLElement>(text: string) => {
+    const ref = useRef<T>(null);
     const [isTruncated, setIsTruncated] = useState(false);
 
     useEffect(() => {
-        if (textRef.current) {
-            setIsTruncated(textRef.current.scrollWidth > textRef.current.clientWidth);
+        if (ref.current) {
+            setIsTruncated(ref.current.scrollWidth > ref.current.clientWidth);
         }
-    }, [value]);
+    }, [text]);
 
-    const formattedValue = formatField(value, type, fieldName);
     const tooltipText =
-        typeof formattedValue === 'string'
-            ? formattedValue.slice(0, MAX_TOOLTIP_LENGTH) + (formattedValue.length > MAX_TOOLTIP_LENGTH ? '..' : '')
-            : formattedValue;
+        typeof text === 'string'
+            ? text.slice(0, MAX_TOOLTIP_LENGTH) + (text.length > MAX_TOOLTIP_LENGTH ? '..' : '')
+            : text;
+
+    return { ref, isTruncated, tooltipText };
+};
+
+const CellContent: FC<CellContentProps> = ({ value, type, columnWidth, fieldName }) => {
+    const formattedValue = formatField(value, type, fieldName);
+    const { ref, isTruncated, tooltipText } = useTruncationTooltip<HTMLSpanElement>(formattedValue);
 
     return (
         <span
-            ref={textRef}
+            ref={ref}
             className='truncate block'
             style={{ maxWidth: getColumnWidthStyle(columnWidth) }}
             data-tooltip-id={isTruncated ? 'table-tip' : undefined}
@@ -90,12 +95,47 @@ const CellContent: FC<CellContentProps> = ({ value, type, columnWidth, fieldName
     );
 };
 
+type FileEntry = {
+    fileId: string;
+    name: string;
+    url: string;
+};
+
+type FileLinkProps = {
+    fileEntry: FileEntry;
+    columnWidth: number | undefined;
+};
+
+const FileLink: FC<FileLinkProps> = ({ fileEntry, columnWidth }) => {
+    const { ref, isTruncated, tooltipText } = useTruncationTooltip<HTMLAnchorElement>(fileEntry.name);
+
+    return (
+        <a
+            ref={ref}
+            href={fileEntry.url}
+            className='truncate inline-block align-top hover:underline'
+            style={{ maxWidth: getColumnWidthStyle(columnWidth) }}
+            data-tooltip-id={isTruncated ? 'table-tip' : undefined}
+            data-tooltip-content={isTruncated ? tooltipText : undefined}
+            onClick={(e) => e.stopPropagation()}
+            onAuxClick={(e) => e.stopPropagation()}
+        >
+            {fileEntry.name}
+        </a>
+    );
+};
+
 const FilesCellContent: FC<CellContentProps> = ({ value, type, columnWidth, fieldName }) => {
     if (typeof value === 'string') {
+        const fileEntries = JSON.parse(value) as FileEntry[];
         return (
-            <div onClick={(e) => e.stopPropagation()} onAuxClick={(e) => e.stopPropagation()}>
-                <FileListComponent jsonString={value} hideFileSize={true} />
-            </div>
+            <>
+                {fileEntries.map((fileEntry) => (
+                    <div key={fileEntry.fileId}>
+                        <FileLink fileEntry={fileEntry} columnWidth={columnWidth} />
+                    </div>
+                ))}
+            </>
         );
     }
     return <CellContent value={value} type={type} columnWidth={columnWidth} fieldName={fieldName} />;
