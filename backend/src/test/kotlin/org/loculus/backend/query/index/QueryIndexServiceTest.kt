@@ -14,6 +14,8 @@ import org.hamcrest.Matchers.nullValue
 import org.junit.jupiter.api.Test
 import org.loculus.backend.query.QueryEngineProperties
 import org.loculus.backend.query.QuerySchemaRegistry
+import org.loculus.backend.query.index.IndexLookup.Ready
+import org.loculus.backend.query.index.IndexLookup.Unavailable
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.boot.health.contributor.Status
 import java.lang.reflect.Proxy
@@ -235,6 +237,123 @@ class QueryIndexServiceTest {
     }
 
     @Test
+    fun `a changelog that ends below the applied seq triggers one reload`() {
+        val loads = AtomicInteger()
+        val tails = AtomicInteger()
+        val truncated = AtomicBoolean(false)
+        val dataSource = fakeDataSource { sql ->
+            when {
+                // the first load sees seq 1, the reload an empty changelog
+                "coalesce(max(seq), 0) from query_changelog" in sql -> {
+                    loads.incrementAndGet()
+                    rows(if (truncated.get()) 0 else 1)
+                }
+
+                "order by seq limit" in sql -> {
+                    tails.incrementAndGet()
+                    rows(0)
+                }
+
+                // Postgres's max() over no rows is one NULL row
+                "select max(seq) from query_changelog" in sql -> rows(1, nulls = truncated.get())
+
+                else -> rows(0)
+            }
+        }
+        val service = service(dataSource)
+        try {
+            service.start()
+            awaitCount(tails, 20)
+            assertThat("no reload while the changelog ends at the applied seq", loads.get(), equalTo(1))
+
+            truncated.set(true)
+            awaitCount(tails, tails.get() + 20)
+            assertThat(loads.get(), equalTo(2))
+            assertThat(service.get("test"), notNullValue())
+        } finally {
+            service.destroy()
+        }
+    }
+
+    @Test
+    fun `an organism whose updates fail for longer than the threshold answers 503 until they work again`() {
+        val tails = AtomicInteger()
+        val failing = AtomicBoolean(false)
+        val dataSource = fakeDataSource { sql ->
+            when {
+                "order by seq limit" in sql -> {
+                    tails.incrementAndGet()
+                    if (failing.get()) throw SQLException("test")
+                    rows(0)
+                }
+
+                else -> rows(0)
+            }
+        }
+        val service = service(dataSource, staleAfterTailFailureMs = 500)
+        try {
+            service.start()
+            awaitCount(tails, 1)
+            failing.set(true)
+            val failingFrom = System.currentTimeMillis()
+            awaitCount(tails, tails.get() + 5)
+            if (System.currentTimeMillis() - failingFrom < 400) {
+                assertThat("not yet past the threshold", service.forRequest("test"), instanceOf(Ready::class.java))
+            }
+
+            val stale = awaitLookup(service, Unavailable::class.java) as Unavailable
+            assertThat(System.currentTimeMillis() - failingFrom, greaterThanOrEqualTo(500L))
+            assertThat(stale.reason, containsString("cannot be updated"))
+
+            failing.set(false)
+            awaitLookup(service, Ready::class.java)
+        } finally {
+            service.destroy()
+        }
+    }
+
+    @Test
+    fun `update failures shorter than the threshold are invisible to requests`() {
+        val tails = AtomicInteger()
+        val failing = AtomicBoolean(false)
+        val dataSource = fakeDataSource { sql ->
+            when {
+                "order by seq limit" in sql -> {
+                    tails.incrementAndGet()
+                    if (failing.get()) throw SQLException("test")
+                    rows(0)
+                }
+
+                else -> rows(0)
+            }
+        }
+        val service = service(dataSource, staleAfterTailFailureMs = 1_500)
+        fun assertServedFor(ms: Long) {
+            val until = System.currentTimeMillis() + ms
+            while (System.currentTimeMillis() < until) {
+                assertThat(service.forRequest("test"), instanceOf(Ready::class.java))
+                Thread.sleep(5)
+            }
+        }
+        try {
+            service.start()
+            awaitCount(tails, 1)
+            failing.set(true)
+            awaitCount(tails, tails.get() + 5)
+            assertServedFor(500)
+            failing.set(false)
+            awaitCount(tails, tails.get() + 5)
+            // a second blip: its clock starts afresh, so 0.5 s + 1 s of failures never add up to the 1.5 s threshold
+            failing.set(true)
+            assertServedFor(1_000)
+            failing.set(false)
+            assertServedFor(1_000)
+        } finally {
+            service.destroy()
+        }
+    }
+
+    @Test
     fun `readiness is out of service until every organism's index is loaded`() {
         val service = mockk<QueryIndexService>()
         val provider = mockk<ObjectProvider<QueryIndexService>> { every { ifAvailable } returns service }
@@ -255,11 +374,35 @@ class QueryIndexServiceTest {
         assertThat(QueryIndexHealthIndicator(provider).health().status, equalTo(Status.UP))
     }
 
-    private fun service(dataSource: DataSource, reloadWaitMs: Long = 30_000) = QueryIndexService(
-        registry,
-        dataSource,
-        QueryEngineProperties(enabled = true, tailIntervalMs = 5, reloadWaitMs = reloadWaitMs),
-    )
+    private fun service(dataSource: DataSource, reloadWaitMs: Long = 30_000, staleAfterTailFailureMs: Long = 120_000) =
+        QueryIndexService(
+            registry,
+            dataSource,
+            QueryEngineProperties(
+                enabled = true,
+                tailIntervalMs = 5,
+                reloadWaitMs = reloadWaitMs,
+                staleAfterTailFailureMs = staleAfterTailFailureMs,
+            ),
+        )
+
+    private fun awaitCount(counter: AtomicInteger, n: Int) {
+        val deadline = System.currentTimeMillis() + 20_000
+        while (counter.get() < n && System.currentTimeMillis() < deadline) Thread.sleep(5)
+        assertThat(counter.get(), greaterThanOrEqualTo(n))
+    }
+
+    private fun awaitLookup(service: QueryIndexService, type: Class<out IndexLookup>): IndexLookup {
+        val deadline = System.currentTimeMillis() + 10_000
+        while (true) {
+            val lookup = service.forRequest("test")
+            if (type.isInstance(lookup) || System.currentTimeMillis() > deadline) {
+                assertThat(lookup, instanceOf(type))
+                return lookup
+            }
+            Thread.sleep(5)
+        }
+    }
 
     /**
      * a DataSource whose first load is followed by a changelog backlog that triggers a reload; [onLoad] runs at the
@@ -301,8 +444,11 @@ class QueryIndexServiceTest {
         return mockk { every { this@mockk.connection } returns connection }
     }
 
-    /** a result set of [n] rows in which every int/long column of row i is i, and every boolean column [flag] */
-    private fun rows(n: Int, flag: Boolean = false): ResultSet {
+    /**
+     * a result set of [n] rows in which every int/long column of row i is i (SQL NULL if [nulls]), and every boolean
+     * column [flag]
+     */
+    private fun rows(n: Int, flag: Boolean = false, nulls: Boolean = false): ResultSet {
         var row = 0
         return Proxy.newProxyInstance(javaClass.classLoader, arrayOf(ResultSet::class.java)) { _, method, _ ->
             when (method.name) {
@@ -310,7 +456,7 @@ class QueryIndexServiceTest {
                 "getLong" -> row.toLong()
                 "getInt" -> row
                 "getBoolean" -> flag
-                "wasNull" -> false
+                "wasNull" -> nulls
                 else -> null
             }
         } as ResultSet

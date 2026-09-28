@@ -11,6 +11,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 import java.sql.Connection
+import java.time.Instant
 import java.util.TreeSet
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
@@ -34,6 +35,11 @@ private val log = KotlinLogging.logger {}
  *
  * While an organism's index is being (re)loaded, [forRequest] waits for it up to `loculus.query-engine.reload-wait-ms`
  * (slow answers instead of 503s), and answers 503 on timeout, or at once when the load failed.
+ *
+ * Two guards against serving a stale index: a changelog that ends below the seq already applied (it was truncated or
+ * restored) triggers a reload, and an organism whose tail has failed without a break for longer than
+ * `loculus.query-engine.stale-after-tail-failure-ms` answers 503 until the tail succeeds again (the index is kept,
+ * so recovery is immediate). Shorter failures are invisible to requests.
  */
 @Component
 @ConditionalOnProperty(prefix = "loculus.query-engine", name = ["enabled"], havingValue = "true")
@@ -67,8 +73,20 @@ class QueryIndexService(
 
     override fun get(organism: String): OrganismIndex? = indexes[organism]
 
+    /** per organism, since when its tail has failed without a break (absent while it works) */
+    private val tailFailingSince = ConcurrentHashMap<String, Long>()
+
     override fun forRequest(organism: String): IndexLookup {
-        indexes[organism]?.let { return IndexLookup.Ready(it) }
+        indexes[organism]?.let { index ->
+            val since = tailFailingSince[organism]
+            if (since != null && System.currentTimeMillis() - since > properties.staleAfterTailFailureMs) {
+                return IndexLookup.Unavailable(
+                    "The query engine for $organism is not available: its index cannot be updated from the " +
+                        "database (since ${Instant.ofEpochMilli(since)}). Please try again later.",
+                )
+            }
+            return IndexLookup.Ready(index)
+        }
         val load = loads[organism] ?: return IndexLookup.Unavailable("The query engine for $organism is not available.")
         val what = if (organism in loadedOnce) "being reloaded" else "still loading"
         val started = System.nanoTime()
@@ -119,6 +137,9 @@ class QueryIndexService(
         private var gapSeq = -1L
         private var gapSince = 0L
 
+        /** the sustained tail failure (see [tailFailingSince]) has been logged */
+        private var staleWarned = false
+
         /** a large backlog is waiting for the projection rebuild that writes it to finish */
         private var reloadDeferred = false
 
@@ -139,7 +160,7 @@ class QueryIndexService(
                     beginLoad()
                     // a load after the first one retries a failed reload: it waits its turn like any reload
                     if (organism in loadedOnce) reloadLock.withLock { load() } else load()
-                } else if (tail() == TailResult.RELOAD) {
+                } else if (tailTracked() == TailResult.RELOAD) {
                     reloadLock.withLock {
                         beginLoad()
                         indexes.remove(organism)
@@ -152,6 +173,37 @@ class QueryIndexService(
                 val retry = if (index == null) ", next load in $wait s" else ""
                 log.error(e) { "Query index for $organism: update failed$retry" }
             }
+        }
+
+        /** [tail], recording in [tailFailingSince] whether it fails */
+        private fun tailTracked(): TailResult {
+            val result = try {
+                tail()
+            } catch (e: Throwable) {
+                val now = System.currentTimeMillis()
+                val since = tailFailingSince.computeIfAbsent(organism) { now }
+                if (!staleWarned && now - since > properties.staleAfterTailFailureMs) {
+                    staleWarned = true
+                    log.warn {
+                        "Query index for $organism: updates have failed for ${(now - since) / 1000} s, " +
+                            "requests get 503 until they succeed again"
+                    }
+                }
+                throw e
+            }
+            tailRecovered()
+            return result
+        }
+
+        private fun tailRecovered() {
+            val since = tailFailingSince.remove(organism) ?: return
+            if (staleWarned) {
+                log.info {
+                    "Query index for $organism: updates work again after " +
+                        "${(System.currentTimeMillis() - since) / 1000} s, serving requests again"
+                }
+            }
+            staleWarned = false
         }
 
         /** requests that find no index from now on wait for the next load's outcome (called before the drop) */
@@ -215,6 +267,7 @@ class QueryIndexService(
             index = loaded
             indexes[organism] = loaded
             loadedOnce.add(organism)
+            tailRecovered()
             safeSeq = startSeq
             appliedAbove.clear()
             gapSeq = -1
@@ -230,6 +283,18 @@ class QueryIndexService(
             dataSource.connection.use { connection ->
                 connection.autoCommit = true
                 val changes = changelogAfter(connection, safeSeq, REBUILD_MIN_CHANGES + 1)
+                if (changes.isEmpty()) {
+                    // seqs only grow (nothing deletes an organism's newest row), so this means the changelog was
+                    // truncated or restored and later seqs may be reused: the index cannot be kept in sync
+                    val latest = latestChangelogSeq(connection)
+                    if (latest != null && latest < safeSeq) {
+                        log.warn {
+                            "Query index for $organism: query_changelog ends at seq $latest, below the $safeSeq " +
+                                "already applied; reloading"
+                        }
+                        return TailResult.RELOAD
+                    }
+                }
                 val newChanges = changes.filter { it.first !in appliedAbove }
                 if (newChanges.isEmpty()) {
                     advanceSafeSeq(changes.map { it.first })
@@ -310,6 +375,16 @@ class QueryIndexService(
         ).use { statement ->
             statement.setString(1, organism)
             statement.executeQuery().use { rs -> if (rs.next()) rs.getLong(1) else 0 }
+        }
+
+        /** null if the query returns no row (only with a fake DataSource: max() always returns one) */
+        private fun latestChangelogSeq(connection: Connection): Long? = connection.prepareStatement(
+            "select max(seq) from query_changelog where organism = ?",
+        ).use { statement ->
+            statement.setString(1, organism)
+            statement.executeQuery().use { rs ->
+                if (rs.next()) rs.getLong(1).takeUnless { rs.wasNull() } ?: 0 else null
+            }
         }
 
         private fun maxId(connection: Connection): Int = connection.prepareStatement(
