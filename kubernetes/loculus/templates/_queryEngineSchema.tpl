@@ -1,7 +1,7 @@
 {{/*
 The query engine's view of an organism, from the same values as SILO's database config (_siloDatabaseConfig.tpl):
 the same fields in the same order, but with Loculus types and with lineageSystem and hierarchicalFilter kept apart
-instead of both becoming a lineage index. Expects a dict with schema (patched), commonMetadata, referenceGenomes and
+instead of both becoming a lineage index, plus the website's default sort (the index keeps it presorted). Expects a dict with schema (patched), commonMetadata, referenceGenomes and
 lineageSystemDefinitions.
 */}}
 {{- define "loculus.queryEngineSchema" }}
@@ -34,6 +34,13 @@ metadata:
 {{- range .schema.files }}
   - name: {{ quote .name }}
     type: "string"
+{{- end }}
+{{- $website := .schema.website | default dict }}
+{{- with $website.defaultOrderBy }}
+defaultOrderBy: {{ quote . }}
+{{- end }}
+{{- with $website.defaultOrder }}
+defaultOrder: {{ quote . }}
 {{- end }}
 {{- if $lineageSystems }}
 lineageSystems:

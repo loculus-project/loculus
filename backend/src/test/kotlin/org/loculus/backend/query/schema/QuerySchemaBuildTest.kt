@@ -41,6 +41,8 @@ class QuerySchemaBuildTest {
             {"name": "outbreakLineage", "type": "string", "generateIndex": true, "lineageSystem": "mpoxOutbreakLineage"},
             {"name": "raw_reads", "type": "string"}
           ],
+          "defaultOrderBy": "sampleCollectionDate",
+          "defaultOrder": "descending",
           "lineageSystems": {"mpoxOutbreakLineage": {"27": "https://example.org/27.yaml", "28": "https://example.org/28.yaml"}}
         }
     """.trimIndent()
@@ -87,6 +89,28 @@ class QuerySchemaBuildTest {
             LineageDefinitionReader.read("""{"1": {}, "9606": {"parents": ["1"]}}"""),
         )
         assertThat(schema.lineageDefinition("hostTaxonId")!!.resolve("1", true), equalTo(setOf("1", "9606")))
+    }
+
+    @Test
+    fun `takes the default sort from the config, by canonical field name`() {
+        val schema = QuerySchema.build("mpox", "Mpox", jacksonObjectMapper().readValue(rendered), genome)
+        assertThat(schema.defaultOrderBy, equalTo("sampleCollectionDate"))
+        assertThat(schema.defaultOrderDescending, equalTo(true))
+        fun build(orderBy: String?, order: String?) = QuerySchema.build(
+            "o",
+            "o",
+            QueryEngineOrganismConfig(
+                listOf(QueryEngineMetadata("accessionVersion"), QueryEngineMetadata("date", "date")),
+                defaultOrderBy = orderBy,
+                defaultOrder = order,
+            ),
+            genome,
+        )
+        assertThat(build("DATE", "ascending").defaultOrderBy, equalTo("date"))
+        assertThat(build("DATE", "ascending").defaultOrderDescending, equalTo(false))
+        assertThat(build("unknown", "descending").defaultOrderBy, nullValue())
+        assertThat(build("", null).defaultOrderBy, nullValue())
+        assertThat(build(null, null).defaultOrderBy, nullValue())
     }
 
     @Test

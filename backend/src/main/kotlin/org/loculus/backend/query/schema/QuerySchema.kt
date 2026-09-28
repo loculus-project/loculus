@@ -74,6 +74,9 @@ data class QuerySchema(
     val genes: List<SequenceSchema>,
     val features: Set<String>,
     val lineageDefinitions: Map<String, LineageDefinition>,
+    /** canonical name of the field the search page sorts by by default (null: none); the index keeps it presorted */
+    val defaultOrderBy: String? = null,
+    val defaultOrderDescending: Boolean = false,
 ) {
     private val fieldsByLowerName = metadata.associateBy { it.name.lowercase() }
     private val nucByLowerName = nucleotideSequences.associateBy { it.name.lowercase() }
@@ -155,6 +158,10 @@ data class QuerySchema(
                 genes = genes,
                 features = setOf(GENERALIZED_ADVANCED_QUERY),
                 lineageDefinitions = systems.associateWith { lineageDefinitions[it] ?: LineageDefinition(emptyMap()) },
+                defaultOrderBy = config.defaultOrderBy?.let { name ->
+                    metadata.firstOrNull { it.name.equals(name, ignoreCase = true) }?.name
+                },
+                defaultOrderDescending = config.defaultOrder.equals("descending", ignoreCase = true),
             )
         }
     }

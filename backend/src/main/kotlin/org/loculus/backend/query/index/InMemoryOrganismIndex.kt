@@ -86,6 +86,21 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     }
     private val insertionPatterns = ConcurrentHashMap<String, Pattern>()
 
+    /**
+     * Presorted orders for [select] (see [SortPermutation]): today only the organism's default sort. Built at full
+     * load and rebuilt after [apply] once more than [permutationRebuildThreshold] entries changed. Another commonly
+     * used sort would get its own entry here (e.g. built on demand once a sort repeats); [select] picks the one whose
+     * column matches the request's first key.
+     */
+    private val permutationKeys: List<Pair<Column, Boolean>> = listOfNotNull(
+        schema.defaultOrderBy?.let { columnsByName[it] }?.let { it to schema.defaultOrderDescending },
+    )
+
+    @Volatile private var permutations: List<SortPermutation> = emptyList()
+
+    /** ids changed by [apply] since the permutations were built (not in their place there) */
+    private var permutationStale = RoaringBitmap()
+
     @Volatile override var dataVersion: Long = 0
         private set
 
@@ -195,8 +210,32 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             columns.parallelStream().forEach { it.runOptimize() }
         }.get()
         alive.runOptimize()
+        permutations = buildPermutations()
+        permutationStale = RoaringBitmap()
         this.dataVersion = dataVersion
         generation++
+    }
+
+    /** reads columns without the lock: only for the writer thread (the only one that mutates them) */
+    private fun buildPermutations(): List<SortPermutation> = permutationKeys.map { (column, descending) ->
+        val direction = if (descending) OrderDirection.DESCENDING else OrderDirection.ASCENDING
+        val keys = SortKeys(listOf(column), listOf(direction))
+        SortPermutation.of(column, descending, keys.sort(alive.toArray())) { keys.key(0, it) }
+    }
+
+    /** after [apply], on the writer thread: rebuilds the permutations off-lock once too many entries changed */
+    private fun maintainPermutations() {
+        if (permutationKeys.isEmpty()) return
+        if (permutations.isNotEmpty() &&
+            permutationStale.cardinality <= permutationRebuildThreshold(alive.cardinality)
+        ) {
+            return
+        }
+        val rebuilt = buildPermutations()
+        lock.write {
+            permutations = rebuilt
+            permutationStale = RoaringBitmap()
+        }
     }
 
     /**
@@ -220,19 +259,23 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             if (!toRemove.isEmpty) removeIds(toRemove, intersecting)
             installRuns(runs)
             upserts.forEach { addRow(it, withRuns = false) }
+            if (permutations.isNotEmpty()) permutationStale.or(changed)
             sequences.forEach { it?.invalidateCaches() }
             if (dataVersion != null) this.dataVersion = dataVersion
             generation++
         }
         val done = System.nanoTime()
         compactTouched()
+        val compacted = System.nanoTime()
+        maintainPermutations()
         return ApplyStats(
             upserts = upserts.size,
             removed = toRemove.cardinality,
             prepareMs = (prepared - started) / 1e6,
             waitForLockMs = (locked - prepared) / 1e6,
             lockedMs = (done - locked) / 1e6,
-            compactMs = (System.nanoTime() - done) / 1e6,
+            compactMs = (compacted - done) / 1e6,
+            permutationMs = (System.nanoTime() - compacted) / 1e6,
         )
     }
 
@@ -244,6 +287,8 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         val lockedMs: Double,
         /** re-compressing the changed bitmaps after the update (mostly outside the lock) */
         val compactMs: Double = 0.0,
+        /** rebuilding the sort permutations when too many entries changed (outside the lock) */
+        val permutationMs: Double = 0.0,
     )
 
     /**
@@ -977,6 +1022,12 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             return@read result
         }
         val keys = SortKeys(orderBy.map { column(it.field) }, orderBy.map { it.direction })
+        if (random == null && orderBy.isNotEmpty() && usePermutations && n.toLong() * 64 >= alive.cardinality) {
+            val permutation = permutations.firstOrNull { it.column === keys.cols[0] }
+            if (permutation != null) {
+                selectByPermutation(permutation, keys, orderBy, live, from, limit)?.let { return@read it }
+            }
+        }
         val ordered: IntArray = when {
             orderBy.isEmpty() -> live.toArray()
 
@@ -1001,6 +1052,45 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             }
         }
         ordered.copyOfRange(start, start + count)
+    }
+
+    /**
+     * [select] for a sort whose first key is [permutation]'s column: the first offset + limit ids of the walk
+     * (skipping stale ids), sorted together with the stale ones in the selection; identical to the sort because it
+     * sorts a set that contains the first offset + limit ids of the full order. Null (sort as usual) if the walk
+     * would collect too many candidates (a long run of equal first keys under a multi-key sort) or visit far more
+     * positions than a selection spread evenly over the order would need (one correlated with the key).
+     */
+    private fun selectByPermutation(
+        permutation: SortPermutation,
+        keys: SortKeys,
+        orderBy: List<OrderByField>,
+        live: RoaringBitmap,
+        from: Int,
+        limit: Int?,
+    ): IntArray? {
+        val n = live.cardinality
+        val k = if (limit == null) n else minOf(n.toLong(), from.toLong() + limit).toInt()
+        if (k <= from) return IntArray(0)
+        val stale = permutationStale.takeIf { !it.isEmpty }
+        val tail = stale?.let { RoaringBitmap.and(live, it) }?.takeIf { !it.isEmpty }
+        val forward = (orderBy[0].direction == OrderDirection.DESCENDING) == permutation.descending
+        val wholeRuns = orderBy.size > 1
+        val maxCandidates = if (limit == null) n else (4L * k + 4096).coerceAtMost(n.toLong()).toInt()
+        val maxSteps = 4L * k * alive.cardinality / n + 4096
+        val candidates =
+            permutation.candidates(live, stale, k, forward, wholeRuns, maxCandidates, maxSteps) ?: return null
+        val ordered = if (tail == null && !wholeRuns) {
+            candidates
+        } else {
+            val all = IntArray(candidates.size + (tail?.cardinality ?: 0))
+            System.arraycopy(candidates, 0, all, 0, candidates.size)
+            var i = candidates.size
+            tail?.forEach { id: Int -> all[i++] = id }
+            all.sort()
+            keys.sort(all)
+        }
+        return ordered.copyOfRange(minOf(from, ordered.size), minOf(k, ordered.size))
     }
 
     private inner class SortKeys(val cols: List<Column>, directions: List<OrderDirection>) {
@@ -1530,6 +1620,8 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     fun memoryUsage(): Map<String, Long> = lock.read {
         val usage = LinkedHashMap<String, Long>()
         usage["alive"] = heapBytes(alive)
+        permutations.forEach { usage["sortPermutation:${it.column.field.name}"] = it.memoryBytes() }
+        if (permutationKeys.isNotEmpty()) usage["sortPermutationStale"] = heapBytes(permutationStale)
         columns.forEach { usage["metadata:${it.field.name}"] = it.memoryBytes() }
         sequences.filterNotNull().forEach { usage["sequence:${it.schema.name}"] = it.memoryBytes() }
         usage["regexCache"] = regexCache.bytes
@@ -1545,6 +1637,12 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
          * tests: the fast path must be taken whenever the rows are current)
          */
         internal val complementRowFallbacks = java.util.concurrent.atomic.AtomicLong()
+
+        /** [select] walks a sort permutation where one matches (switchable for tests and benchmarks) */
+        @Volatile internal var usePermutations = true
+
+        /** stale entries past which the sort permutations are rebuilt (each select sorts the stale ones it selects) */
+        internal fun permutationRebuildThreshold(size: Int): Int = (size / 64).coerceIn(1024, 20_000)
 
         /** filtered mutation counting runs position blocks in parallel (switchable for benchmarks) */
         @Volatile internal var parallelMutations = true

@@ -68,6 +68,10 @@ data class InstanceConfig(
 data class QueryEngineOrganismConfig(
     val metadata: List<QueryEngineMetadata>,
     val lineageSystems: Map<String, Map<Int, String>> = emptyMap(),
+    /** the website's default sort of the search table (schema `defaultOrderBy`); the index keeps it presorted */
+    val defaultOrderBy: String? = null,
+    /** `ascending` or `descending` (schema `defaultOrder`) */
+    val defaultOrder: String? = null,
 )
 
 /**
