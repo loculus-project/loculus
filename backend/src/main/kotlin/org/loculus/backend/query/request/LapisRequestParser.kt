@@ -692,7 +692,15 @@ private class RequestParsing(
         return offset
     }
 
-    private fun parseMinProportion(): Double = when (val value = singleValue("minProportion")) {
+    private fun parseMinProportion(): Double {
+        val value = parseMinProportionValue()
+        if (!(value >= 0.0 && value <= 1.0)) {
+            siloError("Invalid proportion: minProportion must be in interval [0.0, 1.0]")
+        }
+        return value
+    }
+
+    private fun parseMinProportionValue(): Double = when (val value = singleValue("minProportion")) {
         null -> LapisRequestParser.DEFAULT_MIN_PROPORTION
 
         is Number -> value.toDouble()

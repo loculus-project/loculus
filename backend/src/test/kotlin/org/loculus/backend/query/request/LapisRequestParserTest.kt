@@ -558,6 +558,20 @@ class LapisRequestParserTest {
             postError(mapOf("minProportion" to listOf("x")), endpoint = Endpoint.NUCLEOTIDE_MUTATIONS),
             startsWith("minProportion must be a number"),
         )
+        assertThat(
+            post(mapOf("minProportion" to listOf(1)), endpoint = Endpoint.NUCLEOTIDE_MUTATIONS).minProportion,
+            equalTo(1.0),
+        )
+        for (outOfRange in listOf("-1", "1.5", "NaN")) {
+            assertThat(
+                getError("minProportion" to outOfRange, endpoint = Endpoint.NUCLEOTIDE_MUTATIONS),
+                equalTo("Error from SILO: Invalid proportion: minProportion must be in interval [0.0, 1.0]"),
+            )
+        }
+        assertThat(
+            postError(mapOf("minProportion" to listOf(2)), endpoint = Endpoint.AMINO_ACID_MUTATIONS),
+            equalTo("Error from SILO: Invalid proportion: minProportion must be in interval [0.0, 1.0]"),
+        )
         // not applicable to details: ignored
         assertThat(get("minProportion" to "0.5").minProportion, equalTo(0.05))
     }
