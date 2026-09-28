@@ -2938,6 +2938,13 @@ runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 runDevelopmentS3: true
 developmentDatabasePersistence: false
+# Tuning for the in-cluster development Postgres (runDevelopmentMainDatabase). Empty = previous behaviour.
+developmentDatabase:
+  resources: {}      # replaces the built-in 200Mi request / 2Gi limit when set
+  settings: []       # extra postgres "-c" settings, e.g. "shared_buffers=2GB"
+  storageSize: ""    # e.g. "100Gi": keep PGDATA on a PersistentVolumeClaim instead of the container layer
+  shmSize: ""        # e.g. "1Gi": /dev/shm for parallel query workers (container default is 64Mi)
+backendJvmExtraOpts: ""  # appended to the backend JVM_OPTS; later flags win, e.g. "-XX:MaxRAMPercentage=80"
 enforceHTTPS: true
 traefikVersion: 3
 registrationTermsMessage: >

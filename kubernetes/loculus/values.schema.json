@@ -1689,6 +1689,23 @@
       "default": true,
       "description": "If true, runs a development Keycloak database within the cluster."
     },
+    "developmentDatabase": {
+      "groups": ["db"],
+      "type": "object",
+      "description": "Tuning for the in-cluster development Postgres (runDevelopmentMainDatabase).",
+      "additionalProperties": false,
+      "properties": {
+        "resources": { "type": "object", "description": "Container resources; replaces the built-in 200Mi request / 2Gi limit when set" },
+        "settings": { "type": "array", "items": { "type": "string" }, "description": "Extra postgres -c settings, e.g. shared_buffers=2GB" },
+        "storageSize": { "type": "string", "description": "If set, PGDATA lives on a PersistentVolumeClaim of this size" },
+        "shmSize": { "type": "string", "description": "If set, size of a memory-backed /dev/shm" }
+      }
+    },
+    "backendJvmExtraOpts": {
+      "groups": ["services"],
+      "type": "string",
+      "description": "Extra JVM flags appended to the backend's JVM_OPTS; later flags win"
+    },
     "developmentDatabasePersistence": {
       "groups": ["db"],
       "type": "boolean",
