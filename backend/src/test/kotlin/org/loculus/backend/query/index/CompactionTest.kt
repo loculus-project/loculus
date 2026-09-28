@@ -43,8 +43,8 @@ class CompactionTest {
             bitmaps.add(seq.present)
             seq.mutations.forEach { it?.forEach { bm -> bm?.let(bitmaps::add) } }
             for (runs in listOf(seq.missing, seq.gaps)) {
-                runs.starts.forEach { it?.let(bitmaps::add) }
-                runs.ends.forEach { it?.let(bitmaps::add) }
+                bitmaps.addAll(runs.starts.bitmaps())
+                bitmaps.addAll(runs.ends.bitmaps())
                 bitmaps.addAll(runs.checkpoints)
             }
             for (bm in bitmaps) {

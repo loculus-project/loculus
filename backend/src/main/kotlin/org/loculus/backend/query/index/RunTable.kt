@@ -1,5 +1,6 @@
 package org.loculus.backend.query.index
 
+import org.loculus.backend.query.projection.IntList
 import org.roaringbitmap.FastAggregation
 import org.roaringbitmap.RoaringBitmap
 import org.roaringbitmap.RoaringBitmapWriter
@@ -313,27 +314,158 @@ internal class RunTable(private val length: Int) {
 }
 
 /**
+ * One id set per position (index 0 until size): a sorted IntArray (16 + 4 B per id) up to [SMALL_SET] ids, a
+ * RoaringBitmap (~110 B of objects before its first id) above. Written under the index write lock only.
+ */
+internal class IdSlots(size: Int) {
+    private val slots = arrayOfNulls<Any>(size)
+
+    /** adds [id]; false if it was there */
+    fun add(position: Int, id: Int): Boolean {
+        when (val slot = slots[position]) {
+            null -> slots[position] = intArrayOf(id)
+
+            is IntArray -> {
+                val at = java.util.Arrays.binarySearch(slot, id)
+                if (at >= 0) return false
+                val insert = -at - 1
+                if (slot.size < SMALL_SET) {
+                    val grown = IntArray(slot.size + 1)
+                    System.arraycopy(slot, 0, grown, 0, insert)
+                    grown[insert] = id
+                    System.arraycopy(slot, insert, grown, insert + 1, slot.size - insert)
+                    slots[position] = grown
+                } else {
+                    slots[position] = RoaringBitmap.bitmapOf(*slot).also { it.add(id) }
+                }
+            }
+
+            else -> return (slot as RoaringBitmap).checkedAdd(id)
+        }
+        return true
+    }
+
+    /** removes those of [ids] present; returns how many */
+    fun remove(position: Int, ids: IntArray): Int {
+        when (val slot = slots[position]) {
+            null -> return 0
+
+            is IntArray -> {
+                val kept = slot.filter { java.util.Arrays.binarySearch(ids, it) < 0 }
+                slots[position] = if (kept.isEmpty()) null else kept.toIntArray()
+                return slot.size - kept.size
+            }
+
+            else -> {
+                var n = 0
+                for (id in ids) if ((slot as RoaringBitmap).checkedRemove(id)) n++
+                return n
+            }
+        }
+    }
+
+    /** the ids of the set at [position] that are in [ids] (ascending), or null if none */
+    fun intersecting(position: Int, ids: RoaringBitmap): IntArray? {
+        val found = when (val slot = slots[position]) {
+            null -> return null
+
+            is IntArray -> slot.filter { ids.contains(it) }.toIntArray()
+
+            else -> if (RoaringBitmap.intersects(
+                    slot as RoaringBitmap,
+                    ids,
+                )
+            ) {
+                RoaringBitmap.and(slot, ids).toArray()
+            } else {
+                null
+            }
+        }
+        return found?.takeIf { it.isNotEmpty() }
+    }
+
+    /** adds the set at [position] to [bitmaps] if it is a bitmap, else its ids to [single] */
+    fun collect(position: Int, bitmaps: MutableList<RoaringBitmap>, single: IntList) {
+        when (val slot = slots[position]) {
+            null -> {}
+            is IntArray -> for (id in slot) single.add(id)
+            else -> bitmaps.add(slot as RoaringBitmap)
+        }
+    }
+
+    /** the sets stored as bitmaps (for tests) */
+    fun bitmaps(): List<RoaringBitmap> = slots.filterIsInstance<RoaringBitmap>()
+
+    fun cardinality(position: Int): Int = when (val slot = slots[position]) {
+        null -> 0
+        is IntArray -> slot.size
+        else -> (slot as RoaringBitmap).cardinality
+    }
+
+    /** the compact form of the set at [position] (array or trimmed bitmap), or null if it has no ids */
+    fun compacted(position: Int): Any? = when (val slot = slots[position]) {
+        null, is IntArray -> slot
+
+        else -> {
+            val bm = slot as RoaringBitmap
+            when {
+                bm.isEmpty -> null
+                bm.cardinality <= SMALL_SET -> bm.toArray()
+                else -> runOptimizeFewRuns(bm.clone())
+            }
+        }
+    }
+
+    /** under the write lock (swaps in a [compacted] form) */
+    fun set(position: Int, value: Any?) {
+        slots[position] = value
+    }
+
+    /** compacts every set (bulk load only, before the index is visible) */
+    fun compactAll() {
+        for (p in slots.indices) if (slots[p] is RoaringBitmap) slots[p] = compacted(p)
+    }
+
+    fun memoryBytes(): Long {
+        var total = arrayBytes(4L * slots.size)
+        for (slot in slots) {
+            total += when (slot) {
+                null -> 0L
+                is IntArray -> arrayBytes(4L * slot.size)
+                else -> heapBytes(slot as RoaringBitmap)
+            }
+        }
+        return total
+    }
+
+    companion object {
+        /** up to this many ids a sorted array is smaller than a bitmap (16 + 4k B against ~110 + 2k B) */
+        const val SMALL_SET = 32
+    }
+}
+
+/**
  * Runs of one symbol per id: the missing symbol, or gaps (`-`) where they are sparse (see
  * [SequenceIndex.storeSparseGapsAsRuns]). The runs of one id are disjoint. Stored twice:
- * - for point queries ("which ids have the symbol at p", [at]): "transition" bitmaps [starts] / [ends] (ids with
- *   a run starting / ending exclusive at q) and exact checkpoints [checkpoints] (ids covered at position
- *   k * [CHECKPOINT_SPACING]). The set at p is the nearer checkpoint XOR the transitions in between (at most
- *   [CHECKPOINT_SPACING] / 2 positions of small bitmaps).
+ * - for point queries ("which ids have the symbol at p", [at]): "transition" sets [starts] / [ends] (ids with
+ *   a run starting / ending exclusive at q; [IdSlots], mostly a few ids each) and exact checkpoints
+ *   [checkpoints] (ids covered at position k * [CHECKPOINT_SPACING]). The set at p is the nearer checkpoint XOR
+ *   the transitions in between (at most [CHECKPOINT_SPACING] / 2 positions of small sets).
  * - for per-position counts over a filter: a [RunTable] ([table]), which reads only the runs of the filtered ids.
  *
  * Written by the index writer only; [compactTouched] re-compresses what writes changed.
  */
 internal class RunIndex(private val length: Int) {
     val table = RunTable(length)
-    val starts: Array<RoaringBitmap?> = arrayOfNulls(length + 2)
-    val ends: Array<RoaringBitmap?> = arrayOfNulls(length + 2)
+    val starts = IdSlots(length + 2)
+    val ends = IdSlots(length + 2)
     val checkpoints: Array<RoaringBitmap> = Array((length shr CHECKPOINT_SHIFT) + 1) { RoaringBitmap() }
 
     /** cardinalities of [starts] / [ends], maintained on every write */
     val startCounts = IntArray(length + 2)
     val endCounts = IntArray(length + 2)
 
-    /** positions of transition bitmaps and checkpoint indexes changed since the last [compactTouched] */
+    /** positions of transition sets and checkpoint indexes changed since the last [compactTouched] */
     val touchedPositions = java.util.BitSet()
     val touchedCheckpoints = java.util.BitSet()
 
@@ -358,10 +490,10 @@ internal class RunIndex(private val length: Int) {
         val s = maxOf(1, start)
         val e = minOf(length + 1, end)
         if (s >= e) return
-        if ((starts[s] ?: RoaringBitmap().also { starts[s] = it }).checkedAdd(id)) startCounts[s]++
+        if (starts.add(s, id)) startCounts[s]++
         touchedPositions.set(s)
         // ends beyond the last position never influence a position, so they are not stored
-        if (e <= length && (ends[e] ?: RoaringBitmap().also { ends[e] = it }).checkedAdd(id)) endCounts[e]++
+        if (e <= length && ends.add(e, id)) endCounts[e]++
         touchedPositions.set(e)
         var k = (s + CHECKPOINT_SPACING - 1) shr CHECKPOINT_SHIFT
         while (k < checkpoints.size && (k shl CHECKPOINT_SHIFT) < e) {
@@ -373,10 +505,22 @@ internal class RunIndex(private val length: Int) {
         }
     }
 
+    /** removes those of [ids] (ascending) from the transition set at [position] (under the write lock) */
+    fun removeTransitions(start: Boolean, position: Int, ids: IntArray) {
+        if (start) {
+            startCounts[position] -= starts.remove(position, ids)
+        } else {
+            endCounts[position] -=
+                ends.remove(position, ids)
+        }
+        touchedPositions.set(position)
+    }
+
     /**
      * ids with a run covering [position] (fresh bitmap): the nearer checkpoint XOR the transitions between it and
-     * [position] (XOR is its own inverse, so sweeping backwards from the next checkpoint works too). The (small)
-     * transition bitmaps are combined first, then XORed once with the (large) checkpoint.
+     * [position] (XOR is its own inverse, so sweeping backwards from the next checkpoint works too). Transition
+     * bitmaps are combined first, then XORed once with the (large) checkpoint; ids of small transition sets are
+     * flipped one by one.
      */
     fun at(position: Int): RoaringBitmap {
         val k = position shr CHECKPOINT_SHIFT
@@ -384,23 +528,26 @@ internal class RunIndex(private val length: Int) {
         val next = k + 1
         val backward = if (next < checkpoints.size) (next shl CHECKPOINT_SHIFT) - position else Int.MAX_VALUE
         val transitions = ArrayList<RoaringBitmap>()
+        val single = IntList()
         val base: RoaringBitmap
-        if (forward <= backward) {
+        val range = if (forward <= backward) {
             base = checkpoints[k]
-            for (q in (k shl CHECKPOINT_SHIFT) + 1..position) {
-                starts[q]?.let { transitions.add(it) }
-                ends[q]?.let { transitions.add(it) }
-            }
+            (k shl CHECKPOINT_SHIFT) + 1..position
         } else {
             base = checkpoints[next]
-            for (q in position + 1..(next shl CHECKPOINT_SHIFT)) {
-                starts[q]?.let { transitions.add(it) }
-                ends[q]?.let { transitions.add(it) }
-            }
+            position + 1..(next shl CHECKPOINT_SHIFT)
         }
-        if (transitions.isEmpty()) return base.clone()
-        val combined = if (transitions.size == 1) transitions[0] else FastAggregation.xor(*transitions.toTypedArray())
-        return RoaringBitmap.xor(base, combined)
+        for (q in range) {
+            starts.collect(q, transitions, single)
+            ends.collect(q, transitions, single)
+        }
+        val result = when (transitions.size) {
+            0 -> base.clone()
+            1 -> RoaringBitmap.xor(base, transitions[0])
+            else -> RoaringBitmap.xor(base, FastAggregation.xor(*transitions.toTypedArray()))
+        }
+        for (i in 0 until single.size) result.flip(single[i])
+        return result
     }
 
     /** counts per position (index = position) over [ids] */
@@ -422,8 +569,8 @@ internal class RunIndex(private val length: Int) {
     /** compresses all bitmaps and completes the run table (bulk load only, before the index is visible) */
     fun runOptimize() {
         table.trim()
-        for (q in starts.indices) starts[q]?.let { starts[q] = runOptimizeFewRuns(it) }
-        for (q in ends.indices) ends[q]?.let { ends[q] = runOptimizeFewRuns(it) }
+        starts.compactAll()
+        ends.compactAll()
         for (k in checkpoints.indices) checkpoints[k] = runOptimizeFewRuns(checkpoints[k])
         clearTouched()
     }
@@ -438,13 +585,13 @@ internal class RunIndex(private val length: Int) {
         var p = touchedPositions.nextSetBit(0)
         while (p >= 0) {
             val position = p
-            starts.getOrNull(position)?.let { bm ->
-                val o = runOptimizeFewRuns(bm.clone())
-                swaps.add { starts[position] = o }
-            }
-            ends.getOrNull(position)?.let { bm ->
-                val o = runOptimizeFewRuns(bm.clone())
-                swaps.add { ends[position] = o }
+            if (position < length + 2) {
+                val s = starts.compacted(position)
+                val e = ends.compacted(position)
+                swaps.add {
+                    starts.set(position, s)
+                    ends.set(position, e)
+                }
             }
             flushIfFull()
             p = touchedPositions.nextSetBit(p + 1)
@@ -461,11 +608,9 @@ internal class RunIndex(private val length: Int) {
     }
 
     fun memoryBytes(): Long {
-        var total = table.memoryBytes()
-        for (bm in starts) if (bm != null) total += heapBytes(bm)
-        for (bm in ends) if (bm != null) total += heapBytes(bm)
+        var total = table.memoryBytes() + starts.memoryBytes() + ends.memoryBytes()
         for (bm in checkpoints) total += heapBytes(bm)
-        return total + (starts.size + ends.size + startCounts.size + endCounts.size + checkpoints.size) * 4L
+        return total + (startCounts.size + endCounts.size + checkpoints.size) * 4L
     }
 
     companion object {

@@ -339,17 +339,19 @@ internal class SequenceIndex(val schema: SequenceSchema) {
     /**
      * A bitmap to remove ids from, and the cardinality counter (counts[index]) to adjust. [ids]: exactly the ids
      * contained in the bitmap (small batches), or null to remove the whole batch with andNot. [kind], [slot] and
-     * [owner]: where the bitmap lives, for [compactTouched] ([AT_POSITION] for mutation and transition bitmaps;
-     * [owner] is the run index of transition and checkpoint bitmaps).
+     * [owner]: where the bitmap lives, for [compactTouched] ([AT_POSITION] for mutation bitmaps; [owner] is the run
+     * index of checkpoint bitmaps and of [TRANSITION] sets, whose exact [ids] are removed from its [slot]).
      */
     class Removal(
-        val bitmap: RoaringBitmap,
+        /** null for [TRANSITION] removals, which name the set by [owner], [slot] and [start] */
+        val bitmap: RoaringBitmap?,
         val counts: IntArray?,
         val index: Int,
         val ids: IntArray?,
         val kind: Int,
         val slot: Int,
         val owner: RunIndex? = null,
+        val start: Boolean = false,
     )
 
     /**
@@ -401,11 +403,11 @@ internal class SequenceIndex(val schema: SequenceSchema) {
                         }
                     }
                     for (runs in listOf(missing, gaps)) {
-                        runs.starts[p]?.let { bm ->
-                            check(bm, runs.startCounts, p, AT_POSITION, p, runs)?.let { part.add(it) }
+                        runs.starts.intersecting(p, ids)?.let {
+                            part.add(Removal(null, null, p, it, TRANSITION, p, runs, start = true))
                         }
-                        runs.ends[p]?.let { bm ->
-                            check(bm, runs.endCounts, p, AT_POSITION, p, runs)?.let { part.add(it) }
+                        runs.ends.intersecting(p, ids)?.let {
+                            part.add(Removal(null, null, p, it, TRANSITION, p, runs, start = false))
                         }
                     }
                 }
@@ -424,18 +426,23 @@ internal class SequenceIndex(val schema: SequenceSchema) {
     /** under the write lock */
     fun remove(ids: RoaringBitmap, removals: List<Removal>) {
         for (r in removals) {
+            if (r.kind == TRANSITION) {
+                r.owner!!.removeTransitions(r.start, r.slot, r.ids!!)
+                continue
+            }
+            val bitmap = r.bitmap!!
             when (r.kind) {
-                AT_POSITION -> (r.owner?.touchedPositions ?: touchedPositions).set(r.slot)
+                AT_POSITION -> touchedPositions.set(r.slot)
                 CHECKPOINT -> r.owner!!.touchedCheckpoints.set(r.slot)
                 INSERTION -> touchedInsertions.add(r.slot)
                 PRESENT -> presentTouched = true
             }
             val exact = r.ids
             if (exact != null) {
-                for (id in exact) if (r.bitmap.checkedRemove(id)) r.counts?.let { it[r.index]-- }
+                for (id in exact) if (bitmap.checkedRemove(id)) r.counts?.let { it[r.index]-- }
             } else {
-                if (r.counts != null) r.counts[r.index] -= RoaringBitmap.andCardinality(r.bitmap, ids)
-                r.bitmap.andNot(ids)
+                if (r.counts != null) r.counts[r.index] -= RoaringBitmap.andCardinality(bitmap, ids)
+                bitmap.andNot(ids)
             }
         }
     }
@@ -598,6 +605,7 @@ internal class SequenceIndex(val schema: SequenceSchema) {
         const val CHECKPOINT = 1
         const val INSERTION = 2
         const val PRESENT = 3
+        const val TRANSITION = 4
 
         /**
          * sorts and merges overlapping / adjacent runs (flattened start, end pairs) so that runs are disjoint

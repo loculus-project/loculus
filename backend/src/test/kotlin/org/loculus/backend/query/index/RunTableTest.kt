@@ -137,4 +137,37 @@ class RunTableTest {
             }
         }
     }
+
+    @Test
+    fun `id slots switch between arrays and bitmaps and stay exact`() {
+        val slots = IdSlots(8)
+        val expected = List(8) { java.util.TreeSet<Int>() }
+        repeat(20) { round ->
+            repeat(400) {
+                val p = random.nextInt(8)
+                // position 0 stays small, position 1 grows past the array limit
+                val id = if (p == 0) random.nextInt(20) else random.nextInt(200_000)
+                assertThat(slots.add(p, id), equalTo(expected[p].add(id)))
+            }
+            val removed = RoaringBitmap.bitmapOf(*(0 until 300).map { random.nextInt(200_000) }.distinct().toIntArray())
+            removed.add(3)
+            for (p in 0 until 8) {
+                val hit = slots.intersecting(p, removed)
+                val want = expected[p].filter { removed.contains(it) }
+                assertThat(hit?.toList() ?: emptyList(), equalTo(want))
+                if (hit != null) assertThat(slots.remove(p, hit), equalTo(want.size))
+                expected[p].removeAll(want.toSet())
+                if (round % 3 == 0) slots.set(p, slots.compacted(p))
+                val bitmaps = ArrayList<RoaringBitmap>()
+                val single = org.loculus.backend.query.projection.IntList()
+                slots.collect(p, bitmaps, single)
+                val ids = bitmaps.flatMap { it.toArray().toList() } + single.toIntArray().toList()
+                assertThat(ids.sorted(), equalTo(expected[p].toList()))
+                assertThat(slots.cardinality(p), equalTo(expected[p].size))
+            }
+        }
+        slots.compactAll()
+        assertThat(slots.bitmaps().all { it.cardinality > IdSlots.SMALL_SET }, equalTo(true))
+        assertThat(slots.bitmaps().isNotEmpty(), equalTo(true))
+    }
 }
