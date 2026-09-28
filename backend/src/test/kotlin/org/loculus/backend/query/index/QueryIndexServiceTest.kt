@@ -3,10 +3,13 @@ package org.loculus.backend.query.index
 import io.mockk.every
 import io.mockk.mockk
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.greaterThanOrEqualTo
 import org.junit.jupiter.api.Test
 import org.loculus.backend.query.QueryEngineProperties
 import org.loculus.backend.query.QuerySchemaRegistry
+import org.springframework.beans.factory.ObjectProvider
+import org.springframework.boot.health.contributor.Status
 import java.util.concurrent.atomic.AtomicInteger
 import javax.sql.DataSource
 
@@ -33,5 +36,26 @@ class QueryIndexServiceTest {
         } finally {
             service.destroy()
         }
+    }
+
+    @Test
+    fun `readiness is out of service until every organism's index is loaded`() {
+        val service = mockk<QueryIndexService>()
+        val provider = mockk<ObjectProvider<QueryIndexService>> { every { ifAvailable } returns service }
+        val indicator = QueryIndexHealthIndicator(provider)
+
+        every { service.organismsNotLoaded() } returns listOf("test")
+        val loading = indicator.health()
+        assertThat(loading.status, equalTo(Status.OUT_OF_SERVICE))
+        assertThat(loading.details["loading"], equalTo(listOf("test")))
+
+        every { service.organismsNotLoaded() } returns emptyList()
+        assertThat(indicator.health().status, equalTo(Status.UP))
+    }
+
+    @Test
+    fun `readiness is up when the query engine is disabled`() {
+        val provider = mockk<ObjectProvider<QueryIndexService>> { every { ifAvailable } returns null }
+        assertThat(QueryIndexHealthIndicator(provider).health().status, equalTo(Status.UP))
     }
 }

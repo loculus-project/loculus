@@ -39,6 +39,9 @@ class QueryIndexService(
 
     override fun get(organism: String): OrganismIndex? = indexes[organism]
 
+    /** organisms whose index has not finished its first load */
+    fun organismsNotLoaded(): List<String> = registry.schemas.keys.filter { !indexes.containsKey(it) }
+
     @EventListener(ApplicationReadyEvent::class)
     fun start() {
         registry.schemas.forEach { (organism, schema) ->
