@@ -1695,9 +1695,19 @@
       "description": "Tuning for the in-cluster development Postgres (runDevelopmentMainDatabase).",
       "additionalProperties": false,
       "properties": {
-        "resources": { "type": "object", "description": "Container resources; replaces the built-in 200Mi request / 2Gi limit when set" },
-        "settings": { "type": "array", "items": { "type": "string" }, "description": "Extra postgres -c settings, e.g. shared_buffers=2GB" },
-        "storageSize": { "type": "string", "description": "If set, PGDATA lives on a PersistentVolumeClaim of this size" },
+        "resources": {
+          "type": "object",
+          "description": "Container resources; replaces the built-in 200Mi request / 2Gi limit when set"
+        },
+        "settings": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Extra postgres -c settings, e.g. shared_buffers=2GB"
+        },
+        "storageSize": {
+          "type": "string",
+          "description": "If set, PGDATA lives on a PersistentVolumeClaim of this size"
+        },
         "shmSize": { "type": "string", "description": "If set, size of a memory-backed /dev/shm" }
       }
     },
@@ -1797,8 +1807,15 @@
       "description": "Experimental query engine inside the backend: a LAPIS-compatible API served from Postgres and an in-memory index. When enabled, the website uses the backend as its LAPIS.",
       "additionalProperties": false,
       "properties": {
-        "enabled": { "type": "boolean", "default": true, "description": "Enable the query engine and point the website's LAPIS URLs at the backend" },
-        "curlImage": { "type": "string", "description": "Image used by the init container that assembles the query engine configuration" }
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable the query engine and point the website's LAPIS URLs at the backend"
+        },
+        "curlImage": {
+          "type": "string",
+          "description": "Image used by the init container that assembles the query engine configuration"
+        }
       }
     },
     "lineageSystemDefinitions": {
