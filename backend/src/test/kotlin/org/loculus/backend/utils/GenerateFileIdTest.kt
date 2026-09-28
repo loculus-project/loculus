@@ -2,6 +2,7 @@ package org.loculus.backend.utils
 
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.nullValue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -52,6 +53,23 @@ class GenerateFileIdTest {
         val fileIdWithoutPrefix = generateFileId(sequenceNumber).removePrefix("FILE_")
 
         assertThat(validateFileId(fileIdWithoutPrefix), `is`(false))
+    }
+
+    @Test
+    fun `GIVEN a file id THEN it maps back to its sequence number`() {
+        listOf(1L, 31_859L, 34.0.pow(6.0).toLong() + 1).forEach {
+            assertThat(fileIdToSequenceNumber(generateFileId(it)), `is`(it))
+        }
+        assertThat(fileIdToSequenceNumber("FILE_000002Y"), `is`(nullValue()))
+    }
+
+    @Test
+    fun `GIVEN six-digit serials THEN file ids sort like their sequence numbers`() {
+        val sequenceNumbers = listOf(1L, 9L, 10L, 33L, 34L, 35L, 1_000L, 31_859L, 34.0.pow(6.0).toLong() - 1)
+
+        val fileIds = sequenceNumbers.map { generateFileId(it) }
+
+        assertThat(fileIds.sorted(), `is`(fileIds))
     }
 
     companion object {
