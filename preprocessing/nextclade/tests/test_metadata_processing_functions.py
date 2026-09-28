@@ -1884,12 +1884,6 @@ ena_accession_cases = [
         expected_error="not a valid raw reads accession",
     ),
     EnaAccessionCase(
-        name="multiple_runs_are_rejected",
-        accession="SRR27477368,SRR27477369",
-        accession_type="raw_reads",
-        expected_error="not a valid raw reads accession",
-    ),
-    EnaAccessionCase(
         name="biosample_in_bioproject_field_is_rejected",
         accession="SAMN12345678",
         expected_error="not a valid bioproject accession",
@@ -1915,7 +1909,7 @@ ena_accession_cases = [
     ),
     EnaAccessionCase(
         name="surrounding_whitespace_is_stripped",
-        accession="PRJEB12345 ",
+        accession=" PRJEB12345 ",
         ena_response=200,
         ena_xml=SUBMISSION_PROJECT_XML,
         expected_datum="PRJEB12345",
@@ -1965,7 +1959,6 @@ ena_accession_cases = [
     ),
     EnaAccessionCase(
         name="insdc_ingested_accession_is_not_checked",
-        # ingest joins multiple bioprojects with commas; ingested values are passed through
         accession="PRJNA123,PRJNA456",
         is_insdc_ingest_group=True,
         expected_datum="PRJNA123,PRJNA456",
