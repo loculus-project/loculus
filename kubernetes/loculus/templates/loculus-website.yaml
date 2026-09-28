@@ -35,15 +35,16 @@ spec:
           volumeMounts:
             - name: loculus-website-config-processed
               mountPath: /config
+          # /loculus-info renders no LAPIS queries; / sends 3 per organism on every probe
           livenessProbe:
             httpGet:
-              path: /
+              path: /loculus-info
               port: 3000
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /
+              path: /loculus-info
               port: 3000
             initialDelaySeconds: 5
             periodSeconds: 5
