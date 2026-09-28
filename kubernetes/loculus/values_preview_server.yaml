@@ -232,12 +232,13 @@ queryEngine:
 backendDatabasePoolSize: 80
 backendJvmExtraOpts: "-XX:MaxRAMPercentage=80 -Xlog:gc:stdout:time,uptime,level,tags"
 developmentDatabase:
+  # the 4Gi limit filled with page cache under SC2 ingest (4.24 GB working set; postgres RSS 0.8 GB)
   resources:
     requests:
-      memory: "1Gi"
+      memory: "4Gi"
       cpu: "2000m"
     limits:
-      memory: "4Gi"
+      memory: "12Gi"
   settings:
     - max_connections=200
     - shared_buffers=1GB
