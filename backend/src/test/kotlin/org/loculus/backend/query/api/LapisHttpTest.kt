@@ -23,6 +23,8 @@ import org.loculus.backend.query.QuerySchemaRegistry
 import org.loculus.backend.query.index.OrganismIndex
 import org.loculus.backend.query.index.OrganismIndexProvider
 import org.loculus.backend.query.store.QueryStore
+import org.loculus.backend.query.store.SequenceKind
+import org.loculus.backend.query.store.SequenceRowConsumer
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
@@ -50,7 +52,7 @@ class SimulatedStoreFailure : RuntimeException("simulated store failure: the dat
 
 /**
  * [FakeStore] that throws [SimulatedStoreFailure] after [failAfterChunks] metadata chunks (null: never); the
- * single-query read fails whenever [failAfterChunks] is set
+ * single-query read and sequences fail whenever [failAfterChunks] is set
  */
 class FailingStore(private val delegate: FakeStore) : QueryStore by delegate {
     @Volatile
@@ -59,6 +61,18 @@ class FailingStore(private val delegate: FakeStore) : QueryStore by delegate {
     override fun readMetadataFields(organism: String, ids: IntArray, fields: List<String>): List<Array<String?>> {
         if (failAfterChunks != null) throw SimulatedStoreFailure()
         return delegate.readMetadataFields(organism, ids, fields)
+    }
+
+    override fun streamSequenceRows(
+        organism: String,
+        kind: SequenceKind,
+        sequenceIndices: List<Int>,
+        ids: IntArray,
+        fields: List<String>,
+        consumer: SequenceRowConsumer,
+    ) {
+        if (failAfterChunks != null) throw SimulatedStoreFailure()
+        delegate.streamSequenceRows(organism, kind, sequenceIndices, ids, fields, consumer)
     }
 
     override fun <T> streamMetadataFieldChunks(
@@ -154,7 +168,8 @@ class LapisHttpTest {
     private fun errorEvents(): List<ILoggingEvent> {
         // the server may still be logging when the client has seen the end of the response
         Thread.sleep(300)
-        return logs.list.filter { it.level == Level.ERROR }
+        // request threads only (Tomcat's own error logging runs there too), not other contexts' background threads
+        return logs.list.filter { it.level == Level.ERROR && it.threadName.startsWith("http-nio-") }
     }
 
     @Test
@@ -206,6 +221,16 @@ class LapisHttpTest {
         // before the abort, Tomcat includes Boot's /error page into the committed response (for JSON it renders)
         assertThrows<IOException> { response.body().use { it.transferTo(received) } }
         assertThat(String(received.toByteArray()), startsWith("""{"data":[{"accessionVersion":"A0.1","""))
+    }
+
+    @Test
+    fun `a small sequence response that fails before its first bytes is a 500`() {
+        store.failAfterChunks = 0
+        val (response, _) = get("/test/sample/unalignedNucleotideSequences?limit=1")
+        val body = response.body().use { it.readAllBytes() }.decodeToString()
+        assertThat(response.statusCode(), equalTo(500))
+        assertThat(body, startsWith("""{"error":{"detail":"simulated store failure"""))
+        assertThat(errorEvents(), hasSize(1))
     }
 
     @Test
