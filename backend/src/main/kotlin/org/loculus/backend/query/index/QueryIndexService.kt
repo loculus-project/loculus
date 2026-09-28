@@ -112,6 +112,9 @@ class QueryIndexService(
     /** organisms whose index has not finished its first load */
     fun organismsNotLoaded(): List<String> = registry.schemas.keys.filter { it !in loadedOnce }
 
+    /** organisms the backend is configured for that have no schema, so no index (see [QuerySchemaRegistry.notQueryable]) */
+    fun organismsNotQueryable(): List<String> = registry.notQueryable
+
     @EventListener(ApplicationReadyEvent::class)
     fun start() {
         registry.schemas.forEach { (organism, schema) ->

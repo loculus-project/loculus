@@ -359,6 +359,7 @@ class QueryIndexServiceTest {
         val provider = mockk<ObjectProvider<QueryIndexService>> { every { ifAvailable } returns service }
         val indicator = QueryIndexHealthIndicator(provider)
 
+        every { service.organismsNotQueryable() } returns emptyList()
         every { service.organismsNotLoaded() } returns listOf("test")
         val loading = indicator.health()
         assertThat(loading.status, equalTo(Status.OUT_OF_SERVICE))
@@ -366,6 +367,18 @@ class QueryIndexServiceTest {
 
         every { service.organismsNotLoaded() } returns emptyList()
         assertThat(indicator.health().status, equalTo(Status.UP))
+    }
+
+    @Test
+    fun `readiness is out of service while a configured organism has no query schema`() {
+        val service = mockk<QueryIndexService>()
+        val provider = mockk<ObjectProvider<QueryIndexService>> { every { ifAvailable } returns service }
+        every { service.organismsNotLoaded() } returns emptyList()
+        every { service.organismsNotQueryable() } returns listOf("other")
+
+        val health = QueryIndexHealthIndicator(provider).health()
+        assertThat(health.status, equalTo(Status.OUT_OF_SERVICE))
+        assertThat(health.details["notQueryable"], equalTo(listOf("other")))
     }
 
     @Test

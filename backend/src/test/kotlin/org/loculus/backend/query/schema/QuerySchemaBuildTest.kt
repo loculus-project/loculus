@@ -117,6 +117,7 @@ class QuerySchemaBuildTest {
         val registry = QuerySchemaRegistry(backendConfig)
         assertThat(registry.schemas.keys, equalTo(setOf("dummyOrganism", "otherOrganism")))
         assertThat(backendConfig.organisms["dummyOrganismWithoutConsensusSequences"]!!.queryEngine, nullValue())
+        assertThat(registry.notQueryable, equalTo(listOf("dummyOrganismWithoutConsensusSequences")))
         val dummy = registry.get("dummyOrganism")!!
         assertThat(dummy.field("submittedAtTimestamp")!!.type, equalTo(FieldType.INT))
         assertThat(dummy.nucleotideSequences.map { it.name }, equalTo(listOf("main")))

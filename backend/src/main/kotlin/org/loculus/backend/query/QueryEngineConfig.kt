@@ -54,7 +54,10 @@ class QuerySchemaRegistry(backendConfig: BackendConfig) {
     val schemas: Map<String, QuerySchema> = backendConfig.organisms.mapNotNull { (organism, instanceConfig) ->
         val config = instanceConfig.queryEngine
         if (config == null) {
-            log.warn { "Query engine: no queryEngine config for $organism, organism will not be queryable" }
+            log.error {
+                "Query engine: no queryEngine config for $organism, organism will not be queryable and the pod " +
+                    "will not become ready"
+            }
             return@mapNotNull null
         }
         organism to QuerySchema.build(
@@ -64,6 +67,13 @@ class QuerySchemaRegistry(backendConfig: BackendConfig) {
             instanceConfig.referenceGenome,
         )
     }.toMap()
+
+    /**
+     * organisms in the backend config without a queryEngine section. The chart gives every organism one while the
+     * engine is enabled, so this only happens when image and config disagree; readiness then fails
+     * ([org.loculus.backend.query.index.QueryIndexHealthIndicator]) instead of answering 404 for those organisms.
+     */
+    val notQueryable: List<String> = backendConfig.organisms.keys.filter { it !in schemas }
 
     /** lineage-definition URLs per organism, lineage system and pipeline version */
     val lineageSystemUrls: Map<String, Map<String, Map<Int, String>>> = backendConfig.organisms

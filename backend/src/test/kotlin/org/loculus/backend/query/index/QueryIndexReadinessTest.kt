@@ -4,6 +4,7 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.equalTo
 import org.junit.jupiter.api.Test
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.health.actuate.endpoint.HealthEndpointGroups
 import org.springframework.test.web.servlet.MockMvc
@@ -29,17 +30,24 @@ class QueryIndexReadinessTest(
         assertThat(groups.get("liveness")!!.isMember("queryIndex"), equalTo(false))
     }
 
+    /**
+     * the test config's dummyOrganismWithoutConsensusSequences has no queryEngine section, so the pod must stay out of
+     * service after all indexes loaded, while liveness stays up
+     */
     @Test
-    fun `readiness becomes UP once the indexes are loaded`() {
+    fun `readiness stays out of service while a configured organism is not queryable`() {
         val deadline = System.currentTimeMillis() + 30_000
         while (service.organismsNotLoaded().isNotEmpty()) {
             check(System.currentTimeMillis() < deadline) { "indexes not loaded" }
             Thread.sleep(20)
         }
+        assertThat(service.organismsNotQueryable(), equalTo(listOf(ORGANISM_WITHOUT_CONSENSUS_SEQUENCES)))
         mockMvc.perform(get("/actuator/health/readiness"))
+            .andExpect(status().isServiceUnavailable)
+            .andExpect(jsonPath("\$.status").value("OUT_OF_SERVICE"))
+        mockMvc.perform(get("/actuator/health/liveness"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("\$.status").value("UP"))
-        mockMvc.perform(get("/actuator/health/liveness")).andExpect(status().isOk)
     }
 }
 
