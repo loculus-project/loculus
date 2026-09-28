@@ -159,12 +159,13 @@ resources:
     limits:
       memory: "10Gi"
   backend:
-    # startup loads every organism's index at once: 4.0 GB heap peak at 277k SC2 entries, growing ~8 KB per entry
+    # startup loads every organism's index at once: live heap 3.2 GB at 277k SC2 entries, 4.6 GB at ~600k (~4 KB per
+    # entry), so ~10 GB at the ~1.95M SC2 target
     requests:
       memory: "8Gi"
       cpu: "500m"
     limits:
-      memory: "16Gi"
+      memory: "24Gi"
   preprocessing:
     requests:
       memory: "200Mi"
@@ -223,7 +224,7 @@ developmentS3:
 queryEngine:
   enabled: true
   runLapisAlongside: false
-  # production-sized: the memory tier comes out of the backend heap (16Gi limit x MaxRAMPercentage=80 = 12.8 GiB)
+  # production-sized: the memory tier comes out of the backend heap (24Gi limit x MaxRAMPercentage=80 = 19.2 GiB)
   responseCache:
     memorySize: "500MB"
     diskSize: "5GB"

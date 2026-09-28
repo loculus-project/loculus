@@ -5255,7 +5255,7 @@ defaultOrganisms:
         <<: *defaultIngestConfigFile
         taxon_id: 3431483
   # Query-engine preview only: SARS-CoV-2 from the streamed NCBI mirror (mirror_format: zst), released
-  # since 2023-09-28 (892k records), all of them (set subsample_fraction to ingest a stable-hash subset).
+  # since 2023-06-19 (~1.95M records), all of them (set subsample_fraction to ingest a stable-hash subset).
   sars-cov-2:
     <<: *defaultOrganismConfig
     schema:
@@ -5330,7 +5330,7 @@ defaultOrganisms:
         <<: *defaultIngestConfigFile
         taxon_id: 2697049
         mirror_format: zst
-        released_after: "2023-09-28"
+        released_after: "2023-06-19"
     enaDeposition:
       singleReference:
         configFile:
