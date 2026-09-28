@@ -102,7 +102,7 @@ internal object FilterFactory {
     /** [lineage] null = is null */
     fun lineage(schema: QuerySchema, field: MetadataField, lineage: String?, includeSublineages: Boolean): Filter {
         if (lineage == null) return LineageIn(field.name, null)
-        val definition = field.lineageSystem?.let { schema.lineageDefinitions[it] }
+        val definition = field.lineageSystem?.let { schema.lineageDefinition(it) }
         if (definition == null || !definition.contains(lineage)) {
             siloError("The lineage '$lineage' is not a valid lineage for column '${field.name}'.")
         }

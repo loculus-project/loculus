@@ -533,6 +533,16 @@ organisms:
     referenceGenome:
       {{- $referenceGenome := include "loculus.mergeReferenceGenomes" $instance.referenceGenomes | fromYaml }}
       {{ $referenceGenome | toYaml | nindent 10 }}
+    {{- if $.Values.queryEngine.enabled }}
+    queryEngine:
+      {{- $args := dict
+        "schema" ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml)
+        "commonMetadata" (include "loculus.commonMetadata" $ | fromYaml).fields
+        "referenceGenomes" $instance.referenceGenomes
+        "lineageSystemDefinitions" $.Values.lineageSystemDefinitions
+      }}
+      {{- include "loculus.queryEngineSchema" $args | nindent 6 }}
+    {{- end }}
   {{- end }}
 {{- end }}
 

@@ -53,7 +53,34 @@ enum class FileUrlType {
     override fun toString(): String = lowerCase(name)
 }
 
-data class InstanceConfig(val schema: Schema, val referenceGenome: ReferenceGenome)
+data class InstanceConfig(
+    val schema: Schema,
+    val referenceGenome: ReferenceGenome,
+    /** only rendered when the query engine is enabled; without it the organism is not queryable */
+    val queryEngine: QueryEngineOrganismConfig? = null,
+)
+
+/**
+ * What the query engine serves for an organism, rendered from the same Helm values as SILO's database config:
+ * every LAPIS metadata field (common fields, organism metadata with per-segment fields expanded, file fields) and
+ * the lineage-definition URL per pipeline version for each lineage system those fields use.
+ */
+data class QueryEngineOrganismConfig(
+    val metadata: List<QueryEngineMetadata>,
+    val lineageSystems: Map<String, Map<Int, String>> = emptyMap(),
+)
+
+/**
+ * [type] is the Loculus metadata type (`timestamp` and `authors` included). [hierarchicalFilter] is the base URL of
+ * the service (the taxonomy service) that turns the field's observed values into a lineage definition.
+ */
+data class QueryEngineMetadata(
+    val name: String,
+    val type: String = "string",
+    val generateIndex: Boolean = false,
+    val lineageSystem: String? = null,
+    val hierarchicalFilter: String? = null,
+)
 
 data class Schema(
     val organismName: String,

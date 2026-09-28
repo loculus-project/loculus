@@ -1,8 +1,10 @@
 package org.loculus.backend.query.index
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
+import org.loculus.backend.config.QueryEngineOrganismConfig
 import org.loculus.backend.config.ReferenceGenome
 import org.loculus.backend.config.ReferenceSequence
 import org.loculus.backend.query.filter.And
@@ -14,7 +16,6 @@ import org.loculus.backend.query.filter.SymbolEquals
 import org.loculus.backend.query.filter.True
 import org.loculus.backend.query.schema.QuerySchema
 import org.loculus.backend.query.schema.SequenceType
-import org.loculus.backend.query.schema.SiloConfigReader
 import org.roaringbitmap.RoaringBitmap
 import java.io.File
 import java.sql.DriverManager
@@ -25,7 +26,7 @@ import java.time.LocalDate
  * loading path. Opt-in:
  *
  *   QUERY_INDEX_BENCHMARK=1 TEST_MAX_HEAP=16g QUERY_INDEX_PG_URL='jdbc:postgresql://localhost:5433/loculus?user=postgres&password=password' \
- *   QUERY_CONFIG_DIR=/path/to/query-config SC2_BACKEND_CONFIG=/path/to/backend_config.json \
+ *   SC2_BACKEND_CONFIG=/path/to/backend_config.json \
  *   ./gradlew test --tests '*ProjectionBenchmark*'
  */
 @EnabledIfEnvironmentVariable(named = "QUERY_INDEX_BENCHMARK", matches = "1")
@@ -42,10 +43,9 @@ class ProjectionBenchmark {
             ref["nucleotideSequences"].map { ReferenceSequence(it["name"].asText(), it["sequence"].asText()) },
             ref["genes"].map { ReferenceSequence(it["name"].asText(), it["sequence"].asText()) },
         )
-        val dbConfig = SiloConfigReader.readDatabaseConfig(
-            File(System.getenv("QUERY_CONFIG_DIR"), "$organism/database_config.yaml"),
-        )
-        return QuerySchema.build(organism, dbConfig, genome, emptyMap())
+        val queryConfig = jacksonObjectMapper()
+            .treeToValue(config["organisms"][organism]["queryEngine"], QueryEngineOrganismConfig::class.java)
+        return QuerySchema.build(organism, organism, queryConfig, genome)
     }
 
     @Test

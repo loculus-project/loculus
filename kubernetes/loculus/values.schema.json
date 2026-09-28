@@ -1811,10 +1811,6 @@
           "type": "boolean",
           "default": true,
           "description": "Enable the query engine and point the website's LAPIS URLs at the backend"
-        },
-        "curlImage": {
-          "type": "string",
-          "description": "Image used by the init container that assembles the query engine configuration"
         }
       }
     },

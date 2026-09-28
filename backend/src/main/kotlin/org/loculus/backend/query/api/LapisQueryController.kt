@@ -226,7 +226,7 @@ class LapisQueryController(
     fun lineageDefinition(@PathVariable organism: String, @PathVariable column: String): ResponseEntity<ByteArray> {
         val schema = schema(organism)
         val system = schema.metadata.firstOrNull { it.name == column }?.lineageSystem
-        val definition = system?.let { schema.lineageDefinitions[it] }
+        val definition = system?.let { schema.lineageDefinition(it) }
             ?: throw QueryBadRequestException(
                 "Error from SILO: The column $column does not have a lineageIndex defined.",
             )

@@ -100,6 +100,134 @@
                         "externalMetadataUpdater": "other_db"
                     }
                 ]
+            },
+            "queryEngine": {
+                "metadata": [
+                    {
+                        "name": "accessionVersion",
+                        "type": "string"
+                    },
+                    {
+                        "name": "accession",
+                        "type": "string"
+                    },
+                    {
+                        "name": "version",
+                        "type": "int"
+                    },
+                    {
+                        "name": "submissionId",
+                        "type": "string"
+                    },
+                    {
+                        "name": "isRevocation",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "submitter",
+                        "type": "string"
+                    },
+                    {
+                        "name": "groupName",
+                        "type": "string"
+                    },
+                    {
+                        "name": "groupId",
+                        "type": "int"
+                    },
+                    {
+                        "name": "submittedAtTimestamp",
+                        "type": "int"
+                    },
+                    {
+                        "name": "submittedDate",
+                        "type": "string"
+                    },
+                    {
+                        "name": "releasedAtTimestamp",
+                        "type": "int"
+                    },
+                    {
+                        "name": "releasedDate",
+                        "type": "string"
+                    },
+                    {
+                        "name": "dataUseTerms",
+                        "type": "string"
+                    },
+                    {
+                        "name": "dataUseTermsRestrictedUntil",
+                        "type": "date"
+                    },
+                    {
+                        "name": "dataBecameOpenAt",
+                        "type": "date"
+                    },
+                    {
+                        "name": "versionStatus",
+                        "type": "string"
+                    },
+                    {
+                        "name": "versionComment",
+                        "type": "string"
+                    },
+                    {
+                        "name": "pipelineVersion",
+                        "type": "int"
+                    },
+                    {
+                        "name": "date",
+                        "type": "date"
+                    },
+                    {
+                        "name": "dateSubmitted",
+                        "type": "date"
+                    },
+                    {
+                        "name": "region",
+                        "type": "string"
+                    },
+                    {
+                        "name": "country",
+                        "type": "string"
+                    },
+                    {
+                        "name": "division",
+                        "type": "string"
+                    },
+                    {
+                        "name": "host",
+                        "type": "string"
+                    },
+                    {
+                        "name": "age",
+                        "type": "int"
+                    },
+                    {
+                        "name": "sex",
+                        "type": "string"
+                    },
+                    {
+                        "name": "pangoLineage",
+                        "type": "string"
+                    },
+                    {
+                        "name": "qc",
+                        "type": "float"
+                    },
+                    {
+                        "name": "booleanColumn",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "insdcAccessionFull",
+                        "type": "string"
+                    },
+                    {
+                        "name": "other_db_accession",
+                        "type": "string"
+                    }
+                ]
             }
         },
         "otherOrganism": {
@@ -178,6 +306,70 @@
                         "name": "pangoLineage",
                         "type": "string",
                         "autocomplete": true
+                    },
+                    {
+                        "name": "qc",
+                        "type": "float"
+                    }
+                ]
+            },
+            "queryEngine": {
+                "metadata": [
+                    {
+                        "name": "accessionVersion",
+                        "type": "string"
+                    },
+                    {
+                        "name": "accession",
+                        "type": "string"
+                    },
+                    {
+                        "name": "version",
+                        "type": "int"
+                    },
+                    {
+                        "name": "isRevocation",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "versionStatus",
+                        "type": "string"
+                    },
+                    {
+                        "name": "groupName",
+                        "type": "string"
+                    },
+                    {
+                        "name": "releasedAtTimestamp",
+                        "type": "int"
+                    },
+                    {
+                        "name": "dataUseTerms",
+                        "type": "string"
+                    },
+                    {
+                        "name": "dataUseTermsRestrictedUntil",
+                        "type": "date"
+                    },
+                    {
+                        "name": "date",
+                        "type": "date"
+                    },
+                    {
+                        "name": "region",
+                        "type": "string"
+                    },
+                    {
+                        "name": "specialOtherField",
+                        "type": "string"
+                    },
+                    {
+                        "name": "country",
+                        "type": "string"
+                    },
+                    {
+                        "name": "age",
+                        "type": "int"
                     },
                     {
                         "name": "qc",

@@ -3,8 +3,9 @@ package org.loculus.backend.query.schema
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import org.loculus.backend.config.QueryEngineOrganismConfig
 import org.loculus.backend.config.ReferenceGenome
-import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 
 enum class FieldType {
     STRING,
@@ -15,9 +16,10 @@ enum class FieldType {
     ;
 
     companion object {
-        fun fromSilo(type: String): FieldType = when (type.lowercase()) {
-            "string" -> STRING
-            "int" -> INT
+        /** Loculus metadata type -> column type, mapped like SILO's database config template */
+        fun fromLoculus(type: String): FieldType = when (type.lowercase()) {
+            "string", "authors" -> STRING
+            "int", "timestamp" -> INT
             "float" -> FLOAT
             "date" -> DATE
             "boolean" -> BOOLEAN
@@ -30,8 +32,13 @@ data class MetadataField(
     val name: String,
     val type: FieldType,
     val generateIndex: Boolean = false,
-    /** name of the lineage system (key into [QuerySchema.lineageDefinitions]) if this is a lineage field */
+    /**
+     * name of the lineage system (key of [QuerySchema.lineageDefinition]) if this is a lineage field; a hierarchical
+     * field is a lineage field whose system is named after the field
+     */
     val lineageSystem: String? = null,
+    /** base URL of the service that builds this field's lineage definition from its observed values */
+    val hierarchicalFilter: String? = null,
 )
 
 enum class SequenceType { NUCLEOTIDE, AMINO_ACID }
@@ -54,7 +61,9 @@ data class SequenceSchema(val name: String, val type: SequenceType, val index: I
 
 /**
  * Everything the query engine needs to know about one organism: the LAPIS-visible metadata fields
- * (exactly the SILO database config), the sequences with their references, and lineage trees.
+ * (the same fields as SILO's database config), the sequences with their references, and lineage trees.
+ * [lineageDefinitions] are the definitions at construction; [updateLineageDefinition] replaces one at runtime
+ * (downloaded lineage files, hierarchies built from observed values).
  */
 data class QuerySchema(
     val organism: String,
@@ -69,6 +78,13 @@ data class QuerySchema(
     private val fieldsByLowerName = metadata.associateBy { it.name.lowercase() }
     private val nucByLowerName = nucleotideSequences.associateBy { it.name.lowercase() }
     private val genesByLowerName = genes.associateBy { it.name.lowercase() }
+    private val currentLineageDefinitions = ConcurrentHashMap(lineageDefinitions)
+
+    fun lineageDefinition(system: String): LineageDefinition? = currentLineageDefinitions[system]
+
+    fun updateLineageDefinition(system: String, definition: LineageDefinition) {
+        currentLineageDefinitions[system] = definition
+    }
 
     val isSingleSegmented: Boolean get() = nucleotideSequences.size == 1
 
@@ -90,14 +106,20 @@ data class QuerySchema(
         ).joinToString("|").hashCode().toString(16)
 
     companion object {
+        const val PRIMARY_KEY = "accessionVersion"
+        const val GENERALIZED_ADVANCED_QUERY = "generalizedAdvancedQuery"
+
         /**
          * Nucleotide sequences get indices 0..n-1, genes n..n+m-1 (both in reference genome order).
+         * Lineage systems start with an empty definition until [updateLineageDefinition] provides one, unless
+         * [lineageDefinitions] has it.
          */
         fun build(
             organism: String,
-            siloDatabaseConfig: SiloDatabaseConfig,
+            instanceName: String,
+            config: QueryEngineOrganismConfig,
             referenceGenome: ReferenceGenome,
-            lineageDefinitions: Map<String, LineageDefinition>,
+            lineageDefinitions: Map<String, LineageDefinition> = emptyMap(),
         ): QuerySchema {
             val nuc = referenceGenome.nucleotideSequences.mapIndexed { i, s ->
                 SequenceSchema(s.name, SequenceType.NUCLEOTIDE, i, s.sequence)
@@ -106,61 +128,51 @@ data class QuerySchema(
                 SequenceSchema(s.name, SequenceType.AMINO_ACID, nuc.size + i, s.sequence)
             }
             require(nuc.size + genes.size <= MutationCode.MAX_SEQUENCES) { "Too many sequences for $organism" }
-            val schema = siloDatabaseConfig.schema
+            val metadata = config.metadata.map {
+                val hierarchical = !it.hierarchicalFilter.isNullOrBlank()
+                val lineageSystem = if (hierarchical) it.name else it.lineageSystem
+                MetadataField(
+                    name = it.name,
+                    type = FieldType.fromLoculus(it.type),
+                    generateIndex = it.generateIndex || lineageSystem != null,
+                    lineageSystem = lineageSystem,
+                    hierarchicalFilter = it.hierarchicalFilter.takeIf { hierarchical },
+                )
+            }
+            require(
+                metadata.map {
+                    it.name
+                }.toSet().size == metadata.size,
+            ) { "Duplicate metadata fields for $organism" }
+            require(metadata.any { it.name == PRIMARY_KEY }) { "No $PRIMARY_KEY metadata field for $organism" }
+            val systems = metadata.mapNotNull { it.lineageSystem }.toSet()
             return QuerySchema(
                 organism = organism,
-                instanceName = schema.instanceName,
-                primaryKey = schema.primaryKey,
-                metadata = schema.metadata.map {
-                    MetadataField(
-                        name = it.name,
-                        type = FieldType.fromSilo(it.type),
-                        generateIndex = it.generateIndex ?: false,
-                        lineageSystem = it.generateLineageIndex,
-                    )
-                },
+                instanceName = instanceName,
+                primaryKey = PRIMARY_KEY,
+                metadata = metadata,
                 nucleotideSequences = nuc,
                 genes = genes,
-                features = schema.features.orEmpty().map { it.name }.toSet(),
-                lineageDefinitions = lineageDefinitions,
+                features = setOf(GENERALIZED_ADVANCED_QUERY),
+                lineageDefinitions = systems.associateWith { lineageDefinitions[it] ?: LineageDefinition(emptyMap()) },
             )
         }
     }
 }
 
-// --- SILO database_config.yaml model ---
-
-data class SiloDatabaseConfig(val schema: SiloSchema)
-
-data class SiloSchema(
-    val instanceName: String,
-    val opennessLevel: String? = null,
-    val metadata: List<SiloMetadata>,
-    val primaryKey: String,
-    val features: List<SiloFeature>? = null,
-)
-
-data class SiloMetadata(
-    val name: String,
-    val type: String,
-    val generateIndex: Boolean? = null,
-    val generateLineageIndex: String? = null,
-)
-
-data class SiloFeature(val name: String)
-
-object SiloConfigReader {
+object LineageDefinitionReader {
     private val yamlMapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
-        .configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
-    fun readDatabaseConfig(file: File): SiloDatabaseConfig = yamlMapper.readValue(file, SiloDatabaseConfig::class.java)
-
-    fun readLineageDefinition(text: String): LineageDefinition {
-        @Suppress("UNCHECKED_CAST")
-        val raw = yamlMapper.readValue(text, Map::class.java) as Map<String, Map<String, List<String>>?>
+    /** a SILO lineage definition file (YAML, or JSON as LAPIS serves it): name -> {parents, aliases} */
+    fun read(text: String): LineageDefinition {
+        val raw = yamlMapper.readValue(text, Map::class.java) ?: return LineageDefinition(emptyMap())
         return LineageDefinition(
-            raw.mapValues { (_, v) ->
-                LineageNode(parents = v?.get("parents").orEmpty(), aliases = v?.get("aliases").orEmpty())
+            raw.entries.associate { (name, value) ->
+                val node = value as? Map<*, *>
+                name.toString() to LineageNode(
+                    parents = (node?.get("parents") as? List<*>).orEmpty().map { it.toString() },
+                    aliases = (node?.get("aliases") as? List<*>).orEmpty().map { it.toString() },
+                )
             },
         )
     }

@@ -48,7 +48,6 @@ import kotlin.concurrent.thread
 @EndpointTest(
     properties = [
         "loculus.query-engine.enabled=true",
-        "loculus.query-engine.config-dir=src/test/resources/query-engine",
         "loculus.query-engine.projector-initial-delay-ms=3600000",
         "loculus.query-engine.projector-interval-ms=3600000",
         "loculus.query-engine.projector-batch-size=3",
