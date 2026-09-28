@@ -19,6 +19,7 @@ object IndexLoader {
         readers: Int = minOf(8, maxOf(1, Runtime.getRuntime().availableProcessors() / 2)),
         chunkSize: Int = 20_000,
         localReference: Boolean = true,
+        gapRuns: Boolean = true,
     ): InMemoryOrganismIndex {
         // headroom for the ids added after the load, so that the first adds do not copy every column
         val index = InMemoryOrganismIndex(schema, maxId + 1 + InMemoryOrganismIndex.capacityStep(maxId + 1))
@@ -49,7 +50,7 @@ object IndexLoader {
         } finally {
             readPool.shutdownNow()
         }
-        index.finishBulkLoad(dataVersion, localReference)
+        index.finishBulkLoad(dataVersion, localReference, gapRuns)
         return index
     }
 }

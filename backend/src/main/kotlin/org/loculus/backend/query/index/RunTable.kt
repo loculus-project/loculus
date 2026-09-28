@@ -1,5 +1,6 @@
 package org.loculus.backend.query.index
 
+import org.roaringbitmap.FastAggregation
 import org.roaringbitmap.RoaringBitmap
 import org.roaringbitmap.RoaringBitmapWriter
 
@@ -308,5 +309,167 @@ internal class RunTable(private val length: Int) {
     private fun <T> parallel(chunks: List<Int>, task: (Int) -> T): List<T> {
         if (chunks.size <= 1) return chunks.map(task)
         return indexPool.submit<List<T>> { chunks.parallelStream().map(task).toList() }.get()
+    }
+}
+
+/**
+ * Runs of one symbol per id: the missing symbol, or gaps (`-`) where they are sparse (see
+ * [SequenceIndex.storeSparseGapsAsRuns]). The runs of one id are disjoint. Stored twice:
+ * - for point queries ("which ids have the symbol at p", [at]): "transition" bitmaps [starts] / [ends] (ids with
+ *   a run starting / ending exclusive at q) and exact checkpoints [checkpoints] (ids covered at position
+ *   k * [CHECKPOINT_SPACING]). The set at p is the nearer checkpoint XOR the transitions in between (at most
+ *   [CHECKPOINT_SPACING] / 2 positions of small bitmaps).
+ * - for per-position counts over a filter: a [RunTable] ([table]), which reads only the runs of the filtered ids.
+ *
+ * Written by the index writer only; [compactTouched] re-compresses what writes changed.
+ */
+internal class RunIndex(private val length: Int) {
+    val table = RunTable(length)
+    val starts: Array<RoaringBitmap?> = arrayOfNulls(length + 2)
+    val ends: Array<RoaringBitmap?> = arrayOfNulls(length + 2)
+    val checkpoints: Array<RoaringBitmap> = Array((length shr CHECKPOINT_SHIFT) + 1) { RoaringBitmap() }
+
+    /** cardinalities of [starts] / [ends], maintained on every write */
+    val startCounts = IntArray(length + 2)
+    val endCounts = IntArray(length + 2)
+
+    /** positions of transition bitmaps and checkpoint indexes changed since the last [compactTouched] */
+    val touchedPositions = java.util.BitSet()
+    val touchedCheckpoints = java.util.BitSet()
+
+    /** counts per position over all ids (cached until the next write) */
+    @Volatile private var countsAll: IntArray? = null
+
+    fun invalidateCaches() {
+        countsAll = null
+    }
+
+    /** bulk load: a run ([start] inclusive, [end] exclusive, 1-based) into both structures, ids ascending */
+    fun add(id: Int, start: Int, end: Int) {
+        val s = maxOf(1, start)
+        val e = minOf(length + 1, end)
+        if (s >= e) return
+        addTransitions(id, s, e)
+        table.append(id, s, e)
+    }
+
+    /** a run into the point-query structures only (the run table is updated via [RunTable.rebuild]) */
+    fun addTransitions(id: Int, start: Int, end: Int) {
+        val s = maxOf(1, start)
+        val e = minOf(length + 1, end)
+        if (s >= e) return
+        if ((starts[s] ?: RoaringBitmap().also { starts[s] = it }).checkedAdd(id)) startCounts[s]++
+        touchedPositions.set(s)
+        // ends beyond the last position never influence a position, so they are not stored
+        if (e <= length && (ends[e] ?: RoaringBitmap().also { ends[e] = it }).checkedAdd(id)) endCounts[e]++
+        touchedPositions.set(e)
+        var k = (s + CHECKPOINT_SPACING - 1) shr CHECKPOINT_SHIFT
+        while (k < checkpoints.size && (k shl CHECKPOINT_SHIFT) < e) {
+            if (k > 0) {
+                checkpoints[k].add(id)
+                touchedCheckpoints.set(k)
+            }
+            k++
+        }
+    }
+
+    /**
+     * ids with a run covering [position] (fresh bitmap): the nearer checkpoint XOR the transitions between it and
+     * [position] (XOR is its own inverse, so sweeping backwards from the next checkpoint works too). The (small)
+     * transition bitmaps are combined first, then XORed once with the (large) checkpoint.
+     */
+    fun at(position: Int): RoaringBitmap {
+        val k = position shr CHECKPOINT_SHIFT
+        val forward = position - (k shl CHECKPOINT_SHIFT)
+        val next = k + 1
+        val backward = if (next < checkpoints.size) (next shl CHECKPOINT_SHIFT) - position else Int.MAX_VALUE
+        val transitions = ArrayList<RoaringBitmap>()
+        val base: RoaringBitmap
+        if (forward <= backward) {
+            base = checkpoints[k]
+            for (q in (k shl CHECKPOINT_SHIFT) + 1..position) {
+                starts[q]?.let { transitions.add(it) }
+                ends[q]?.let { transitions.add(it) }
+            }
+        } else {
+            base = checkpoints[next]
+            for (q in position + 1..(next shl CHECKPOINT_SHIFT)) {
+                starts[q]?.let { transitions.add(it) }
+                ends[q]?.let { transitions.add(it) }
+            }
+        }
+        if (transitions.isEmpty()) return base.clone()
+        val combined = if (transitions.size == 1) transitions[0] else FastAggregation.xor(*transitions.toTypedArray())
+        return RoaringBitmap.xor(base, combined)
+    }
+
+    /** counts per position (index = position) over [ids] */
+    fun countsOver(ids: RoaringBitmap): IntArray = table.countsOver(ids)
+
+    /** counts per position (index = position) over all ids (cached until the next write) */
+    fun countsAll(): IntArray {
+        countsAll?.let { return it }
+        val counts = IntArray(length + 1)
+        var running = 0
+        for (p in 1..length) {
+            running += startCounts[p] - endCounts[p]
+            counts[p] = running
+        }
+        countsAll = counts
+        return counts
+    }
+
+    /** compresses all bitmaps and completes the run table (bulk load only, before the index is visible) */
+    fun runOptimize() {
+        table.trim()
+        for (q in starts.indices) starts[q]?.let { starts[q] = runOptimizeFewRuns(it) }
+        for (q in ends.indices) ends[q]?.let { ends[q] = runOptimizeFewRuns(it) }
+        for (k in checkpoints.indices) checkpoints[k] = runOptimizeFewRuns(checkpoints[k])
+        clearTouched()
+    }
+
+    fun clearTouched() {
+        touchedPositions.clear()
+        touchedCheckpoints.clear()
+    }
+
+    /** like [SequenceIndex.compactTouched]: optimised copies of the changed bitmaps as assignments into [swaps] */
+    fun compactTouched(swaps: MutableList<() -> Unit>, flushIfFull: () -> Unit) {
+        var p = touchedPositions.nextSetBit(0)
+        while (p >= 0) {
+            val position = p
+            starts.getOrNull(position)?.let { bm ->
+                val o = runOptimizeFewRuns(bm.clone())
+                swaps.add { starts[position] = o }
+            }
+            ends.getOrNull(position)?.let { bm ->
+                val o = runOptimizeFewRuns(bm.clone())
+                swaps.add { ends[position] = o }
+            }
+            flushIfFull()
+            p = touchedPositions.nextSetBit(p + 1)
+        }
+        var k = touchedCheckpoints.nextSetBit(0)
+        while (k >= 0) {
+            val index = k
+            val o = runOptimizeFewRuns(checkpoints[index].clone())
+            swaps.add { checkpoints[index] = o }
+            flushIfFull()
+            k = touchedCheckpoints.nextSetBit(k + 1)
+        }
+        clearTouched()
+    }
+
+    fun memoryBytes(): Long {
+        var total = table.memoryBytes()
+        for (bm in starts) if (bm != null) total += heapBytes(bm)
+        for (bm in ends) if (bm != null) total += heapBytes(bm)
+        for (bm in checkpoints) total += heapBytes(bm)
+        return total + (starts.size + ends.size + startCounts.size + endCounts.size + checkpoints.size) * 4L
+    }
+
+    companion object {
+        const val CHECKPOINT_SHIFT = 7
+        const val CHECKPOINT_SPACING = 1 shl CHECKPOINT_SHIFT
     }
 }

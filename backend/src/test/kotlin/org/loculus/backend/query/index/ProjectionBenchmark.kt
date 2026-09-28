@@ -149,7 +149,7 @@ class ProjectionBenchmark {
         val main = index.sequenceIndex(0)
         val swissMain = RoaringBitmap.and(swiss, main.present)
         cases += "missing counts over Switzerland (main)" to { main.missingCountsOver(swissMain) }
-        cases += "missing counts over all (main)" to { main.runs.countsOver(null) }
+        cases += "missing counts over all (main)" to { main.missing.table.countsOver(null) }
         cases += "missingAt(15000) (main)" to { main.missingAt(15000) }
         for ((name, block) in cases) bench(name, block)
         val updateRows = reader.readIds(loaderConnection, (0 until 96).map { it * 10_007 })
@@ -195,7 +195,7 @@ class ProjectionBenchmark {
         val t1 = System.nanoTime()
         repeat(5) { seq.missingCountsOver(filter) }
         println(
-            "    missing counts over filter: ${(System.nanoTime() - t1) / 5_000_000.0} ms (${seq.runs.runCount} runs)",
+            "    missing counts over filter: ${(System.nanoTime() - t1) / 5_000_000.0} ms (${seq.missing.table.runCount} runs)",
         )
         val t2 = System.nanoTime()
         repeat(5) { seq.missingAt(15000) }

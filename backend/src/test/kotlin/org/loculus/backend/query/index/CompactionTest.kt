@@ -42,9 +42,11 @@ class CompactionTest {
             val bitmaps = ArrayList<RoaringBitmap>()
             bitmaps.add(seq.present)
             seq.mutations.forEach { it?.forEach { bm -> bm?.let(bitmaps::add) } }
-            seq.runStarts.forEach { it?.let(bitmaps::add) }
-            seq.runEnds.forEach { it?.let(bitmaps::add) }
-            bitmaps.addAll(seq.checkpoints)
+            for (runs in listOf(seq.missing, seq.gaps)) {
+                runs.starts.forEach { it?.let(bitmaps::add) }
+                runs.ends.forEach { it?.let(bitmaps::add) }
+                bitmaps.addAll(runs.checkpoints)
+            }
             for (bm in bitmaps) {
                 assertThat(heapBytes(bm), equalTo(heapBytes(runOptimizeFewRuns(bm.clone()))))
                 val p = bm.containerPointer

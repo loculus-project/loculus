@@ -131,7 +131,7 @@ class RunTableTest {
         )
         for (index in listOf(built, loaded)) {
             for (seq in schema.allSequences()) {
-                val runs = index.sequenceIndex(seq.index).runs
+                val runs = index.sequenceIndex(seq.index).missing.table
                 assertThat(runs.runCount, equalTo(300L * if (seq.name == "main") 2 else 1))
                 assertThat(runs.buildBufferBytes(), equalTo(0L))
             }
