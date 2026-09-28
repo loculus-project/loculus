@@ -1811,6 +1811,11 @@
           "type": "boolean",
           "default": true,
           "description": "Enable the query engine and point the website's LAPIS URLs at the backend"
+        },
+        "runLapisAlongside": {
+          "type": "boolean",
+          "default": true,
+          "description": "With the query engine enabled, keep LAPIS and SILO deployed alongside for comparison; false stops rendering them"
         }
       }
     },

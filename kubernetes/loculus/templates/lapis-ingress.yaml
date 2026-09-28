@@ -1,3 +1,4 @@
+{{- if include "loculus.runLapis" . }}
 {{- $lapisHost := printf "lapis%s%s" .Values.subdomainSeparator .Values.host }}
 {{- $traefikApiVersion := ternary "traefik.io/v1alpha1" "traefik.containo.us/v1alpha1" (eq (int $.Values.traefikVersion) 3) -}}
 {{- $enabledOrganismsResult := (include "loculus.enabledOrganisms" . | fromJson) }}
@@ -103,3 +104,4 @@ spec:
             port:
               number: 8080
       {{- end }}
+{{- end }}

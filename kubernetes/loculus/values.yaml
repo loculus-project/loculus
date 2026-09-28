@@ -82,6 +82,8 @@ logo:
 # When enabled, the website (and loculus-info) use the backend as LAPIS; LAPIS/SILO keep running alongside.
 queryEngine:
   enabled: true
+  # keep LAPIS/SILO running next to the engine (for comparison); false drops them
+  runLapisAlongside: true
 lineageSystemDefinitions:
   pangoLineage:
     1: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml

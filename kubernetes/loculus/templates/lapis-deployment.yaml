@@ -1,3 +1,4 @@
+{{- if include "loculus.runLapis" . }}
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 
 {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
@@ -68,4 +69,5 @@ spec:
             timeoutSeconds: 5
       volumes:
         {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 8 }}
+{{- end }}
 {{- end }}

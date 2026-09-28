@@ -77,3 +77,8 @@
 {{- define "loculus.lapisServiceName"}}
 {{- printf "loculus-lapis-service-%s" . }}
 {{- end }}
+
+{{/* LAPIS and SILO are rendered unless the query engine replaces them (queryEngine.enabled and not runLapisAlongside). */}}
+{{- define "loculus.runLapis" -}}
+{{- if or (not .Values.queryEngine.enabled) (ne .Values.queryEngine.runLapisAlongside false) }}true{{ end }}
+{{- end }}
