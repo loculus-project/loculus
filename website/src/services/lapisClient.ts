@@ -7,6 +7,7 @@ import { ZodSchema } from 'zod';
 
 import { lapisApi } from './lapisApi.ts';
 import { getServerLapisCacheAdapter } from './lapisCache/websiteCache.ts';
+import { sendShortLapisRequestsAsGet } from './lapisGetRequests.ts';
 import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
 import { getLapisUrl, getRuntimeConfig, getSchema } from '../config.ts';
 import { getInstanceLogger, type InstanceLogger } from '../logger.ts';
@@ -50,6 +51,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         if (cacheAdapter !== undefined) {
             this.zodios.axios.defaults.adapter = cacheAdapter;
         }
+        sendShortLapisRequestsAsGet(this.zodios.axios);
     }
 
     public static createForOrganism(organism: string) {
