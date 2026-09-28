@@ -9,6 +9,7 @@ import type { Schema } from '../../types/config.ts';
 import type { Metadatum, OrderBy, OrderDirection } from '../../types/lapis.ts';
 import { deduplicateSemicolonSeparated } from '../../utils/deduplicateSemicolonSeparated';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
+import { FileListComponent } from '../SequenceDetailsPage/DataTableEntryValue.tsx';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
@@ -89,6 +90,17 @@ const CellContent: FC<CellContentProps> = ({ value, type, columnWidth, fieldName
     );
 };
 
+const FilesCellContent: FC<CellContentProps> = ({ value, type, columnWidth, fieldName }) => {
+    if (typeof value === 'string') {
+        return (
+            <div onClick={(e) => e.stopPropagation()} onAuxClick={(e) => e.stopPropagation()}>
+                <FileListComponent jsonString={value} hideFileSize={true} />
+            </div>
+        );
+    }
+    return <CellContent value={value} type={type} columnWidth={columnWidth} fieldName={fieldName} />;
+};
+
 export const Table: FC<TableProps> = ({
     data,
     schema,
@@ -112,6 +124,7 @@ export const Table: FC<TableProps> = ({
                 type: metadata?.type ?? 'string',
                 columnWidth: metadata?.columnWidth,
                 order: metadata?.order ?? Number.MAX_SAFE_INTEGER,
+                customDisplay: metadata?.customDisplay,
             };
         })
         .sort((a, b) => a.order - b.order);
@@ -310,12 +323,21 @@ export const Table: FC<TableProps> = ({
                                                 minWidth: getColumnWidthStyle(c.columnWidth),
                                             }}
                                         >
-                                            <CellContent
-                                                value={row[c.field]}
-                                                type={c.type}
-                                                columnWidth={c.columnWidth}
-                                                fieldName={c.field}
-                                            />
+                                            {c.customDisplay?.type === 'fileList' ? (
+                                                <FilesCellContent
+                                                    value={row[c.field]}
+                                                    type={c.type}
+                                                    columnWidth={c.columnWidth}
+                                                    fieldName={c.field}
+                                                />
+                                            ) : (
+                                                <CellContent
+                                                    value={row[c.field]}
+                                                    type={c.type}
+                                                    columnWidth={c.columnWidth}
+                                                    fieldName={c.field}
+                                                />
+                                            )}
                                         </td>
                                     ))}
                                 </tr>

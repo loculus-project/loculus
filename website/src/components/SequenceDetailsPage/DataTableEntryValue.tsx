@@ -124,7 +124,10 @@ type FileEntry = {
     url: string;
 };
 
-export const FileListComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
+export const FileListComponent: React.FC<{ jsonString: string; hideFileSize?: boolean }> = ({
+    jsonString,
+    hideFileSize,
+}) => {
     const fileEntries = JSON.parse(jsonString) as FileEntry[];
 
     return (
@@ -134,7 +137,7 @@ export const FileListComponent: React.FC<{ jsonString: string }> = ({ jsonString
                     <a href={fileEntry.url} className='underline mr-2'>
                         {fileEntry.name}
                     </a>
-                    <FileSizeComponent url={fileEntry.url} />
+                    {!hideFileSize && <FileSizeComponent url={fileEntry.url} />}
                 </li>
             ))}
         </ul>
