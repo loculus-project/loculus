@@ -65,6 +65,50 @@ class RunTableTest {
         }
     }
 
+    private fun layouts(table: RunTable): List<Boolean> {
+        val field = RunTable::class.java.getDeclaredField("chunks").also { it.isAccessible = true }
+        return (field.get(table) as Array<*>).filterNotNull().map { (it as RunTable.Chunk).locals == null }
+    }
+
+    @Test
+    fun `rebuilds match brute force across dense and sparse layouts`() {
+        for (length in listOf(300, 70_000)) {
+            val ids = (0 until 300).toList() + (65_500 until 65_600).toList() + (131_000 until 131_072).toList()
+            val runs = randomRuns(length, ids, 0.9).toMutableMap()
+            val table = RunTable(length)
+            for (id in runs.keys.sorted()) for ((s, e) in runs.getValue(id)) table.append(id, s, e)
+            table.trim()
+            check(table, length, runs, ids)
+            val seen = HashSet<Boolean>()
+            // waves: remove most ids (dense -> sparse), add many back (sparse -> dense), replace a few, empty all
+            for ((removeShare, addShare) in listOf(0.9 to 0.0, 0.0 to 0.9, 0.05 to 0.05, 1.0 to 0.0, 0.0 to 0.02)) {
+                val removed = ids.filter { random.nextDouble() < removeShare }
+                val added = randomRuns(length, ids.filter { random.nextDouble() < addShare }, 1.0)
+                val remove = RoaringBitmap.bitmapOf(*(removed + added.keys).distinct().toIntArray())
+                val triples = added.flatMap { (id, list) -> list.flatMap { (s, e) -> listOf(id, s, e) } }
+                table.install(table.rebuild(remove, triples.toIntArray()))
+                removed.forEach { runs.remove(it) }
+                added.forEach { (id, list) -> if (list.isEmpty()) runs.remove(id) else runs[id] = list }
+                check(table, length, runs.filterValues { it.isNotEmpty() }, ids)
+                seen.addAll(layouts(table))
+            }
+            assertThat("both layouts used", seen, equalTo(setOf(true, false)))
+        }
+    }
+
+    @Test
+    fun `sparse chunks are smaller than a dense offsets array`() {
+        val table = RunTable(1000)
+        for (id in 0 until 60_000 step 100) table.append(id, 10, 20)
+        table.trim()
+        assertThat(layouts(table), equalTo(listOf(false)))
+        assertThat(table.memoryBytes() < 20_000, equalTo(true))
+        val dense = RunTable(1000)
+        for (id in 0 until 1000) dense.append(id, 10, 20)
+        dense.trim()
+        assertThat(layouts(dense), equalTo(listOf(true)))
+    }
+
     @Test
     fun `bulk-loaded indexes keep no run-table build buffers`() {
         val schema = IndexTestSupport.schema()
