@@ -138,9 +138,18 @@ class TaxonomyService:
                 "but response json 'tax_id' was missing."
             )
             return raw_internal_error(message)
-        return RawProcessingResult(
-            datum=str(tax_id),
-        )
+        warnings = []
+        scientific_name = taxon.get("scientific_name")
+        if (
+            not unvalidated_host.isdigit()
+            and unvalidated_host.casefold() != str(scientific_name).casefold()
+        ):
+            # the service matched a synonym or common name
+            warnings.append(
+                f"Host '{unvalidated_host}' was interpreted as '{scientific_name}' "
+                f"(NCBI taxon {tax_id})."
+            )
+        return RawProcessingResult(datum=str(tax_id), warnings=warnings)
 
     def get_scientific_name(self, tax_id: str, error_if_failed: bool) -> RawProcessingResult:
         if not self.taxonomy_service_url:

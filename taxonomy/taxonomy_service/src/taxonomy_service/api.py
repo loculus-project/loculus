@@ -10,6 +10,7 @@ from taxonomy_service.datatypes import SubtreeRequestBody, Taxon
 from taxonomy_service.helpers import (
     ROOT_TAX_ID,
     convert_to_lineage_dict,
+    fetch_by_alternative_name,
     fetch_by_id,
     fetch_by_sci_name,
     fetch_common_name,
@@ -51,12 +52,22 @@ def read_root() -> dict[str, str]:
 
 @app.get("/taxa")
 def query_taxa(scientific_name: str, db: DbConnection) -> list[Taxon] | None:
-    """Given a scientific name, find all taxa associated with it."""
-    taxa = fetch_by_sci_name(db, scientific_name)
+    """Given a scientific name, find all taxa associated with it. If there are none, fall back
+    to synonyms and common names, which must identify a single taxon."""
+    name = scientific_name.strip()
+    taxa = fetch_by_sci_name(db, name)
+    if taxa is not None:
+        return taxa
 
+    taxa = fetch_by_alternative_name(db, name)
     if taxa is None:
-        raise HTTPException(status_code=404, detail=f"'{scientific_name}' not found")
-
+        raise HTTPException(status_code=404, detail=f"'{name}' not found")
+    if len(taxa) > 1:
+        candidates = ", ".join(f"{t.scientific_name} (taxon {t.tax_id})" for t in taxa)
+        raise HTTPException(
+            status_code=409,
+            detail=f"'{name}' is an alternative name of several taxa: {candidates}",
+        )
     return taxa
 
 

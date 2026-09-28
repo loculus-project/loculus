@@ -59,6 +59,16 @@ mock_taxa = {
 mock_missing_taxon = 123
 mock_missing_name = "Nonsense nonsensi"
 
+# (name_txt, tax_id, name_class) rows of the `names` table
+mock_names = [
+    ("Homo sapientissimus", 9606, "synonym"),  # made up for testing purposes
+    ("Pan", 9606, "synonym"),  # made up: a scientific name must win over this
+    ("human", 9606, "genbank common name"),
+    ("human", 9606, "common name"),  # same taxon twice must not count as ambiguous
+    ("ape", 9605, "common name"),
+    ("ape", 9596, "common name"),
+]
+
 
 def get_test_db():
     conn = sqlite3.connect(":memory:")
@@ -73,6 +83,14 @@ def get_test_db():
         yield conn
     finally:
         conn.close()
+
+
+def get_test_db_with_names():
+    """A DB built after the `names` table was added; get_test_db is one built before"""
+    for conn in get_test_db():
+        conn.execute("CREATE TABLE names (name_txt TEXT, tax_id INTEGER, name_class TEXT)")
+        conn.executemany("INSERT INTO names VALUES (?, ?, ?)", mock_names)
+        yield conn
 
 
 class ApiTest(unittest.TestCase):
@@ -112,6 +130,37 @@ class ApiTest(unittest.TestCase):
     def test_query_taxon_not_found(self):
         response = client.get(f"/taxa?scientific_name={mock_missing_name}")
         assert response.status_code == codes.not_found
+
+    def test_query_taxon_strips_whitespace(self):
+        response = client.get("/taxa", params={"scientific_name": " homo sapiens "})
+        assert response.status_code == codes.ok
+        assert response.json()[0]["tax_id"] == 9606
+
+    def test_query_alternative_name_without_names_table(self):
+        response = client.get("/taxa", params={"scientific_name": "human"})
+        assert response.status_code == codes.not_found
+
+    def test_query_alternative_name(self):
+        app.dependency_overrides[get_db_connection] = get_test_db_with_names
+        for name in ["Homo sapientissimus", "Human", " human "]:
+            response = client.get("/taxa", params={"scientific_name": name})
+            assert response.status_code == codes.ok
+            assert [t["tax_id"] for t in response.json()] == [9606]
+
+        response = client.get("/taxa", params={"scientific_name": "Pan"})
+        assert response.status_code == codes.ok
+        assert [t["tax_id"] for t in response.json()] == [9596]
+
+        response = client.get("/taxa", params={"scientific_name": mock_missing_name})
+        assert response.status_code == codes.not_found
+
+    def test_query_ambiguous_alternative_name(self):
+        app.dependency_overrides[get_db_connection] = get_test_db_with_names
+        response = client.get("/taxa", params={"scientific_name": "ape"})
+        assert response.status_code == codes.conflict
+        assert response.json()["detail"] == (
+            "'ape' is an alternative name of several taxa: Pan (taxon 9596), Homo (taxon 9605)"
+        )
 
     def test_get_common_name_direct_hit(self):
         homo = mock_taxa["Homo"]
