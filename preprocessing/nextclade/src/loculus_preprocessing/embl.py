@@ -146,7 +146,7 @@ EMBL_ANNOTATIONS = EmblAnnotations(
         "operon",
         "product",
         "protein_id",
-        # "pseudo",  # nextclade marks a CDS as pseudo by omitting the translation
+        # "pseudo",  # we mark a CDS as pseudo if it contains a premature stop codon
         "pseudogene",
         "ribosomal_slippage",
         "standard_name",
