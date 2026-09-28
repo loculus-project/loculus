@@ -39,4 +39,29 @@ class PrimitivesTest {
         pointer.advance()
         assertThat(pointer.container is RunContainer, equalTo(true))
     }
+
+    @Test
+    fun `array growth doubles, stops at the largest array instead of overflowing, and fails past it`() {
+        assertThat(grownArraySize(4096, 4097), equalTo(8192))
+        assertThat(grownArraySize(4096, 10_000), equalTo(10_000))
+        // doubling 1.25 Gi overflowed Int; growing by exactly the needed size then copied the pool on every add
+        val big = 1_342_177_280
+        assertThat(grownArraySize(big, big + 10L), equalTo(MAX_ARRAY_SIZE))
+        assertThat(grownArraySize(MAX_ARRAY_SIZE - 100, MAX_ARRAY_SIZE.toLong()), equalTo(MAX_ARRAY_SIZE))
+        val error = runCatching { grownArraySize(MAX_ARRAY_SIZE, MAX_ARRAY_SIZE + 1L) }.exceptionOrNull()
+        assertThat(error is IllegalArgumentException, equalTo(true))
+    }
+
+    @Test
+    fun `StringDictionary keeps codes and values across growth`() {
+        val dictionary = StringDictionary()
+        val values = (0 until 5000).map { "value-$it-" + "x".repeat(it % 50) }
+        values.forEachIndexed { i, v -> assertThat(dictionary.getOrAdd(v), equalTo(i)) }
+        values.forEachIndexed { i, v ->
+            assertThat(dictionary.lookup(v), equalTo(i))
+            assertThat(dictionary.get(i), equalTo(v))
+        }
+        assertThat(dictionary.getOrAdd(values[1234]), equalTo(1234))
+        assertThat(dictionary.size, equalTo(5000))
+    }
 }

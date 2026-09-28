@@ -78,13 +78,13 @@ internal class StringDictionary {
 
     private fun add(bytes: ByteArray): Int {
         val code = size
-        if (poolSize + bytes.size > pool.size) {
-            pool = pool.copyOf(maxOf(pool.size * 2, poolSize + bytes.size))
+        if (poolSize.toLong() + bytes.size > pool.size) {
+            pool = pool.copyOf(grownArraySize(pool.size, poolSize.toLong() + bytes.size))
         }
         System.arraycopy(bytes, 0, pool, poolSize, bytes.size)
         poolSize += bytes.size
-        if (code + 2 > offsets.size) offsets = offsets.copyOf(offsets.size * 2)
-        if (code + 1 > hashes.size) hashes = hashes.copyOf(hashes.size * 2)
+        if (code + 2 > offsets.size) offsets = offsets.copyOf(grownArraySize(offsets.size, code + 2L))
+        if (code + 1 > hashes.size) hashes = hashes.copyOf(grownArraySize(hashes.size, code + 1L))
         offsets[code + 1] = poolSize
         hashes[code] = hash(bytes)
         size = code + 1
@@ -103,6 +103,19 @@ internal class StringDictionary {
         table = IntArray(table.size * 2)
         for (c in 0 until size) insertSlot(c)
     }
+}
+
+/** the largest array the JVM reliably allocates */
+internal const val MAX_ARRAY_SIZE = Int.MAX_VALUE - 8
+
+/**
+ * The size to grow an array of [current] elements to so that it holds [needed]: doubled, but at most
+ * [MAX_ARRAY_SIZE] (doubling past 1 Gi elements overflows Int, and growing by exactly [needed] then copies the
+ * whole array on every append).
+ */
+internal fun grownArraySize(current: Int, needed: Long): Int {
+    require(needed <= MAX_ARRAY_SIZE) { "Cannot grow an array beyond $MAX_ARRAY_SIZE elements (need $needed)" }
+    return maxOf(needed, minOf(current * 2L, MAX_ARRAY_SIZE.toLong())).toInt()
 }
 
 /**
