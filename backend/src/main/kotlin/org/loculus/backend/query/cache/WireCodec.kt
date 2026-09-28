@@ -2,7 +2,9 @@ package org.loculus.backend.query.cache
 
 import com.github.luben.zstd.ZstdOutputStream
 import java.io.ByteArrayOutputStream
+import java.io.FilterOutputStream
 import java.io.OutputStream
+import java.util.concurrent.Semaphore
 import java.util.zip.CRC32
 import java.util.zip.Deflater
 import java.util.zip.GZIPOutputStream
@@ -80,6 +82,44 @@ enum class WireCodec {
 
         fun zstdOutputStream(out: OutputStream): OutputStream =
             ZstdOutputStream(out, ZSTD_LEVEL).apply { setLong(ZSTD_WINDOW_LOG) }
+
+        /**
+         * Explicit `compression=zstd` downloads are decoded by the zstd CLI or a library, not a browser, so they may
+         * use a 128 MB window (the CLI's default decoding limit): 3.6-5x smaller than 8 MB on SARS-CoV-2 and mpox.
+         * Each such stream holds ~140 MB of native memory, so at most [MAX_LARGE_WINDOW_STREAMS] run at once; further
+         * downloads get the 8 MB window instead of waiting.
+         */
+        const val ZSTD_DOWNLOAD_WINDOW_LOG = 27
+        const val MAX_LARGE_WINDOW_STREAMS = 8
+        private val largeWindowPermits = Semaphore(MAX_LARGE_WINDOW_STREAMS)
+
+        internal val largeWindowStreamsAvailable get() = largeWindowPermits.availablePermits()
+
+        fun zstdDownloadOutputStream(out: OutputStream): OutputStream {
+            if (!largeWindowPermits.tryAcquire()) return zstdOutputStream(out)
+            val zstd = try {
+                ZstdOutputStream(out, ZSTD_LEVEL).apply { setLong(ZSTD_DOWNLOAD_WINDOW_LOG) }
+            } catch (e: Throwable) {
+                largeWindowPermits.release()
+                throw e
+            }
+            return object : FilterOutputStream(zstd) {
+                private var released = false
+
+                override fun write(b: ByteArray, off: Int, len: Int) = zstd.write(b, off, len)
+
+                override fun close() {
+                    try {
+                        zstd.close()
+                    } finally {
+                        if (!released) {
+                            released = true
+                            largeWindowPermits.release()
+                        }
+                    }
+                }
+            }
+        }
 
         fun gzipOutputStream(out: OutputStream, bufferSize: Int): OutputStream =
             object : GZIPOutputStream(out, bufferSize) {

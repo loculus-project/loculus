@@ -4,6 +4,7 @@ import com.github.luben.zstd.ZstdInputStream
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.equalTo
 import org.junit.jupiter.api.Test
+import java.io.ByteArrayOutputStream
 import java.util.zip.CRC32
 import java.util.zip.GZIPInputStream
 import kotlin.random.Random
@@ -53,5 +54,19 @@ class WireCodecTest {
                 encoded + WireCodec.GZIP.tail(tail.toByteArray(), WireCodec.crc32(prefix, 0, prefix.size), 70_000)
             assertThat(String(decode(WireCodec.GZIP, body)), equalTo("x".repeat(70_000) + tail))
         }
+    }
+
+    @Test
+    fun `download streams decode, fall back to the small window when all slots are taken, and free their slot`() {
+        val plain = Random(3).nextBytes(200_000).let { it + it }
+        val max = WireCodec.MAX_LARGE_WINDOW_STREAMS
+        assertThat(WireCodec.largeWindowStreamsAvailable, equalTo(max))
+
+        val outs = List(max + 1) { ByteArrayOutputStream() }
+        val streams = outs.map { WireCodec.zstdDownloadOutputStream(it) }
+        assertThat(WireCodec.largeWindowStreamsAvailable, equalTo(0))
+        streams.forEach { it.use { s -> s.write(plain) } }
+        assertThat(WireCodec.largeWindowStreamsAvailable, equalTo(max))
+        outs.forEach { assertThat(decode(WireCodec.ZSTD, it.toByteArray()).contentEquals(plain), equalTo(true)) }
     }
 }

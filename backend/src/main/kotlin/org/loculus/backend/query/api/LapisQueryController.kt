@@ -631,7 +631,9 @@ class LapisQueryController(
                 OUTPUT_BUFFER_SIZE,
             )
 
-            compression == Compression.ZSTD || contentEncoding == "zstd" -> WireCodec.zstdOutputStream(out)
+            compression == Compression.ZSTD -> WireCodec.zstdDownloadOutputStream(out)
+
+            contentEncoding == "zstd" -> WireCodec.zstdOutputStream(out)
 
             else -> out
         }
