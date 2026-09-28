@@ -129,6 +129,23 @@ describe('lapisRequestToQueryString', () => {
         expect(query).toBe('versionStatus=LATEST_VERSION&fields=clade&fields=accessionVersion&limit=100');
     });
 
+    test('leaves out an empty fields list, as the search page count sends it', () => {
+        const query = lapisRequestToQueryString({
+            versionStatus: 'LATEST_VERSION',
+            isRevocation: 'false',
+            nucleotideMutations: ['C3000T'],
+            aminoAcidMutations: [],
+            nucleotideInsertions: [],
+            aminoAcidInsertions: [],
+            fields: [],
+        });
+        expect(query).toBe('versionStatus=LATEST_VERSION&isRevocation=false&nucleotideMutations=C3000T');
+    });
+
+    test('leaves out an empty orderBy list', () => {
+        expect(lapisRequestToQueryString({ orderBy: [], limit: 3 })).toBe('limit=3');
+    });
+
     test('an empty list on a metadata filter still stays POST', () => {
         expect(lapisRequestToQueryString({ nucleotideMutations: [], geoLocCountry: [] })).toBeUndefined();
     });

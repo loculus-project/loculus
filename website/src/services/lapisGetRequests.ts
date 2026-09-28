@@ -8,10 +8,12 @@
  *  - numbers and booleans become their string form;
  *  - `orderBy` objects become field names when ascending. LAPIS' GET only knows ascending field names; the Loculus
  *    query engine also reads `field:descending`, so with `queryEngine` set a descending order is sent that way;
- *  - empty mutation and insertion lists are left out: both servers read them as no filter, and the search page always
- *    sends all four;
- *  - null values, other empty arrays, nested objects, `random` object orders, and descending orders without `queryEngine`
- *    keep the request on POST.
+ *  - empty `fields`, `orderBy`, mutation and insertion lists are left out: both servers read an empty list as the
+ *    parameter's default (same parsed request, same ETag). The search page sends `fields: []` for its count and all four
+ *    mutation/insertion lists on every query;
+ *  - null values (`{field: null}` filters for "blank"), empty filter arrays, nested objects, `random` object orders, and
+ *    descending orders without `queryEngine` keep the request on POST. `field.isNull=true` finds the same rows as a
+ *    null value but is a different parsed request (different ETag).
  */
 import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import axios from 'axios';
@@ -36,9 +38,14 @@ const COMMA_SPLIT_KEYS = new Set(
 
 /** List parameters where an empty list means the same as leaving the parameter out (same parsed request, same ETag). */
 const EMPTY_MEANS_ABSENT_KEYS = new Set(
-    ['nucleotideMutations', 'aminoAcidMutations', 'nucleotideInsertions', 'aminoAcidInsertions'].map((key) =>
-        key.toLowerCase(),
-    ),
+    [
+        'fields',
+        'orderBy',
+        'nucleotideMutations',
+        'aminoAcidMutations',
+        'nucleotideInsertions',
+        'aminoAcidInsertions',
+    ].map((key) => key.toLowerCase()),
 );
 
 /** Parameters parsed as integers; a fractional JSON number would be truncated by POST but rejected by GET. */
