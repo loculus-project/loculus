@@ -1,6 +1,7 @@
 package org.loculus.backend.query.api
 
 import com.fasterxml.jackson.core.JsonGenerator
+import java.time.Clock
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
@@ -27,10 +28,16 @@ data class LapisInfo(
     }
 
     companion object {
-        fun create(dataVersion: String?, requestId: String, instanceName: String, host: String) = LapisInfo(
+        fun create(
+            dataVersion: String?,
+            requestId: String,
+            instanceName: String,
+            host: String,
+            clock: Clock = Clock.systemUTC(),
+        ) = LapisInfo(
             dataVersion = dataVersion,
             requestId = requestId,
-            requestInfo = "$instanceName on $host at ${LocalDateTime.now(ZoneOffset.UTC)}",
+            requestInfo = "$instanceName on $host at ${LocalDateTime.now(clock.withZone(ZoneOffset.UTC))}",
         )
     }
 }

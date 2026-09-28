@@ -8,6 +8,12 @@ import jakarta.servlet.http.HttpServletResponse
 import mu.KotlinLogging
 import org.apache.coyote.CloseNowException
 import org.loculus.backend.query.QuerySchemaRegistry
+import org.loculus.backend.query.cache.CacheKey
+import org.loculus.backend.query.cache.CachedResponse
+import org.loculus.backend.query.cache.InfoSplice
+import org.loculus.backend.query.cache.MissCost
+import org.loculus.backend.query.cache.ResponseCache
+import org.loculus.backend.query.cache.WireCodec
 import org.loculus.backend.query.index.IndexLookup
 import org.loculus.backend.query.index.OrganismIndex
 import org.loculus.backend.query.index.OrganismIndexProvider
@@ -34,6 +40,7 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.OutputStream
 import java.net.URLEncoder
+import java.time.Clock
 import java.util.zip.GZIPOutputStream
 
 private val log = KotlinLogging.logger {}
@@ -74,9 +81,13 @@ class LapisQueryController(
     private val schemas: QuerySchemaRegistry,
     private val indexProvider: OrganismIndexProvider,
     private val parser: QueryRequestParser,
-    store: QueryStore,
+    private val store: QueryStore,
+    private val cache: ResponseCache? = null,
 ) {
     private val executor = LapisQueryExecutor(store)
+
+    /** the time in responses' requestInfo (tests fix it to compare bodies byte for byte) */
+    internal var clock: Clock = Clock.systemUTC()
     private val endpointsByRoute = Endpoint.entries.associateBy { it.routeName }
 
     @RequestMapping(
@@ -120,7 +131,8 @@ class LapisQueryController(
             null
         }
         val contentToken = index.contentToken
-        val etag = entityTag(organism, sequenceName, parsed, contentEncoding, dataVersion, contentToken)
+        val requestHash = requestHash(organism, sequenceName, parsed, contentEncoding)
+        val etag = requestHash?.let { entityTag(dataVersion, contentToken, it) }
         if (etag != null && ifNoneMatchMatches(request.getHeader(HttpHeaders.IF_NONE_MATCH), etag)) {
             // answered before the query runs; also for POST (see entityTag)
             response.status = HttpStatus.NOT_MODIFIED.value()
@@ -132,7 +144,54 @@ class LapisQueryController(
         }
 
         val requestId = requestId(response)
-        val info = { LapisInfo.create(dataVersion, requestId, schema.instanceName, request.serverName) }
+        val info = { LapisInfo.create(dataVersion, requestId, schema.instanceName, request.serverName, clock) }
+        val serverTimingParse = "parse;dur=${ms(tParsed - tStart)}"
+
+        val key = if (cache != null && cache.enabled && requestHash != null) {
+            CacheKey(organism, contentToken, requestHash)
+        } else {
+            null
+        }
+        if (cache != null && key != null) {
+            val cached = Cached(cache, key, index, parsed, endpoint, dataVersion, etag!!, contentEncoding, info)
+            cache.lookup(key)?.let { hit ->
+                serveCached(
+                    response,
+                    hit.response,
+                    hit.open(),
+                    "$serverTimingParse, cache;desc=\"${hit.tier}\"",
+                    cached,
+                )
+                return
+            }
+            when (val flight = cache.beginFlight(key)) {
+                is ResponseCache.Flight.Follower -> {
+                    val shared = cache.await(flight)
+                    if (shared != null) {
+                        val timing = "$serverTimingParse, cache;desc=\"single-flight\""
+                        serveCached(response, shared.response, shared.body.inputStream(), timing, cached)
+                        return
+                    }
+                    cache.lookup(key, sighting = false)?.let { hit ->
+                        val timing = "$serverTimingParse, cache;desc=\"${hit.tier}\""
+                        serveCached(response, hit.response, hit.open(), timing, cached)
+                        return
+                    }
+                    executeCacheable(cached, null, request, response, tParsed, serverTimingParse)
+                }
+
+                is ResponseCache.Flight.Leader -> {
+                    var shared: ResponseCache.Shared? = null
+                    try {
+                        shared = executeCacheable(cached, flight, request, response, tParsed, serverTimingParse)
+                    } finally {
+                        cache.finish(flight, shared)
+                    }
+                }
+            }
+            return
+        }
+
         val body = executor.execute(organism, index, parsed, info)
         val tExecuted = System.nanoTime()
 
@@ -144,7 +203,7 @@ class LapisQueryController(
 
         // Responses are written on the servlet thread, not via StreamingResponseBody: the async dispatch raced with
         // Spring Security's header writer (occasionally duplicated security headers) and adds latency.
-        val serverTiming = "parse;dur=${ms(tParsed - tStart)}, execute;dur=${ms(tExecuted - tParsed)}"
+        val serverTiming = "$serverTimingParse, execute;dur=${ms(tExecuted - tParsed)}"
         val startResponse = { timing: String ->
             response.status = HttpStatus.OK.value()
             headers.forEach { name, values -> values.forEach { response.addHeader(name, it) } }
@@ -162,7 +221,183 @@ class LapisQueryController(
             return
         }
 
-        stream(body, request, response, parsed.compression, contentEncoding) { startResponse(serverTiming) }
+        stream(body, request, response, parsed.compression, contentEncoding, tee = null) { startResponse(serverTiming) }
+    }
+
+    /** what serving a request through the cache needs */
+    private class Cached(
+        val cache: ResponseCache,
+        val key: CacheKey,
+        val index: OrganismIndex,
+        val parsed: QueryRequest,
+        val endpoint: Endpoint,
+        val dataVersion: String,
+        val etag: String,
+        val contentEncoding: String?,
+        val info: () -> LapisInfo,
+    ) {
+        val codec = when (parsed.compression) {
+            Compression.GZIP -> WireCodec.GZIP
+            Compression.ZSTD -> WireCodec.ZSTD
+            null -> WireCodec.of(contentEncoding)
+        }
+    }
+
+    /**
+     * A cache miss. A buffered body is rendered uncompressed first, split around its `info` object, and encoded
+     * the way a hit is served ([WireCodec.encodePrefix] + [WireCodec.tail]), so a miss and later hits send the same
+     * bytes. A streamed body is copied while it streams ([ResponseCache.Tee]) and offered only when it completed.
+     * Offered only if the index did not change while the response was computed. Returns the response for identical
+     * concurrent requests (buffered only).
+     */
+    private fun executeCacheable(
+        cached: Cached,
+        flight: ResponseCache.Flight.Leader?,
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        tParsed: Long,
+        serverTimingParse: String,
+    ): ResponseCache.Shared? {
+        val work = DbWork()
+        val countingExecutor = LapisQueryExecutor(CountingQueryStore(store, work))
+        val plain = ByteArrayOutputStream()
+        var info: LapisInfo? = null
+        var infoAt = -1
+        var tee: ResponseCache.Tee? = null
+        val body = countingExecutor.execute(cached.key.organism, cached.index, cached.parsed) {
+            cached.info().also {
+                info = it
+                infoAt = plain.size()
+                // a streamed JSON envelope (large details) is not cached: its info cannot be spliced
+                tee?.abandon()
+            }
+        }
+        val tExecuted = System.nanoTime()
+        val headers = responseHeaders(cached.parsed, cached.endpoint, body, cached.dataVersion, cached.contentEncoding)
+        headers.set(HttpHeaders.CACHE_CONTROL, CACHE_CONTROL)
+        headers.add(HttpHeaders.VARY, VARY)
+        val storedHeaders = headers.headerSet().flatMap { (name, values) -> values.map { name to it } }
+        val unchanged = { cached.index.contentToken == cached.key.contentToken }
+
+        if (!body.buffered) {
+            tee = cached.cache.tee(cached.key, cached.codec)
+            if (unchanged()) headers.set(HttpHeaders.ETAG, cached.etag)
+            val startResponse = {
+                response.status = HttpStatus.OK.value()
+                headers.forEach { name, values -> values.forEach { response.addHeader(name, it) } }
+                response.addHeader("Server-Timing", "$serverTimingParse, execute;dur=${ms(tExecuted - tParsed)}")
+            }
+            try {
+                stream(body, request, response, cached.parsed.compression, cached.contentEncoding, tee, startResponse)
+            } catch (e: Exception) {
+                tee?.abandon()
+                throw e
+            }
+            val t = tee ?: return null
+            if (!unchanged()) {
+                t.abandon()
+                return null
+            }
+            val cost = MissCost((System.nanoTime() - tParsed) / 1e6, work.rows.get(), work.bytes.get())
+            val outcome = t.complete(CachedResponse(storedHeaders, cached.codec, null, t.length), cost)
+            log.debug { "Query engine cache: ${cached.key.organism} streamed miss -> $outcome" }
+            return null
+        }
+
+        body.write(plain)
+        val bytes = plain.toByteArray()
+        val renderedInfo = info?.let(::renderInfo)
+        val splice = renderedInfo != null && infoAt >= 0 && infoAt + renderedInfo.size <= bytes.size &&
+            bytes.copyOfRange(infoAt, infoAt + renderedInfo.size).contentEquals(renderedInfo)
+        if (renderedInfo != null && !splice) {
+            // not the expected shape: send it as rendered, uncached
+            log.warn { "Query engine cache: could not locate info in a ${cached.endpoint} response, not cached" }
+            val encoded = cached.codec.encodeWhole(bytes)
+            val timing = "$serverTimingParse, execute;dur=${ms(tExecuted - tParsed)}"
+            if (unchanged()) headers.set(HttpHeaders.ETAG, cached.etag)
+            writeBuffered(response, headers, timing, encoded, null)
+            return null
+        }
+        val stored: ByteArray
+        val infoSplice: InfoSplice?
+        if (renderedInfo != null) {
+            stored = cached.codec.encodePrefix(bytes, 0, infoAt)
+            infoSplice = InfoSplice(
+                suffix = bytes.copyOfRange(infoAt + renderedInfo.size, bytes.size),
+                prefixCrc = WireCodec.crc32(bytes, 0, infoAt),
+                prefixLength = infoAt.toLong(),
+            )
+        } else {
+            stored = cached.codec.encodeWhole(bytes)
+            infoSplice = null
+        }
+        val cachedResponse = CachedResponse(storedHeaders, cached.codec, infoSplice, stored.size.toLong())
+        val tRendered = System.nanoTime()
+        val tail = infoSplice?.let { cached.codec.tail(renderedInfo!! + it.suffix, it.prefixCrc, it.prefixLength) }
+        val isUnchanged = unchanged()
+        if (isUnchanged) headers.set(HttpHeaders.ETAG, cached.etag)
+        val timing = "$serverTimingParse, execute;dur=${ms(
+            tExecuted - tParsed,
+        )}, render;dur=${ms(tRendered - tExecuted)}"
+        writeBuffered(response, headers, timing, stored, tail)
+        if (!isUnchanged) return null
+        val cost = MissCost((tRendered - tParsed) / 1e6, work.rows.get(), work.bytes.get())
+        val outcome = cached.cache.offer(cached.key, cachedResponse, stored, cost)
+        log.debug { "Query engine cache: ${cached.key.organism} ${cached.endpoint} miss -> $outcome" }
+        return if (flight != null) ResponseCache.Shared(cachedResponse, stored) else null
+    }
+
+    private fun writeBuffered(
+        response: HttpServletResponse,
+        headers: HttpHeaders,
+        serverTiming: String,
+        body: ByteArray,
+        tail: ByteArray?,
+    ) {
+        response.status = HttpStatus.OK.value()
+        headers.forEach { name, values -> values.forEach { response.addHeader(name, it) } }
+        response.addHeader("Server-Timing", serverTiming)
+        response.setContentLengthLong(body.size.toLong() + (tail?.size ?: 0))
+        response.outputStream.write(body)
+        tail?.let { response.outputStream.write(it) }
+        response.outputStream.flush()
+    }
+
+    /** a response from the cache (or from an identical concurrent request): stored body, then a fresh info */
+    private fun serveCached(
+        response: HttpServletResponse,
+        cachedResponse: CachedResponse,
+        body: java.io.InputStream,
+        serverTiming: String,
+        cached: Cached,
+    ) {
+        body.use { input ->
+            val tail = cachedResponse.splice?.let {
+                cachedResponse.codec.tail(renderInfo(cached.info()) + it.suffix, it.prefixCrc, it.prefixLength)
+            }
+            response.status = HttpStatus.OK.value()
+            cachedResponse.headers.forEach { (name, value) -> response.addHeader(name, value) }
+            response.setHeader(LAPIS_DATA_VERSION_HEADER, cached.dataVersion)
+            response.setHeader(HttpHeaders.ETAG, cached.etag)
+            response.addHeader("Server-Timing", serverTiming)
+            response.setContentLengthLong(cachedResponse.bodyLength + (tail?.size ?: 0))
+            val out = response.outputStream
+            try {
+                input.transferTo(out)
+                tail?.let { out.write(it) }
+                out.flush()
+            } catch (e: IOException) {
+                // a disk file that cannot be read to the end: never finish the response cleanly
+                if (!response.isCommitted) throw e
+                throw CloseNowException("cached response aborted: $e", e)
+            }
+        }
+    }
+
+    private fun renderInfo(info: LapisInfo): ByteArray {
+        val out = ByteArrayOutputStream(256)
+        lapisJsonFactory.createGenerator(out, JsonEncoding.UTF8).use { info.write(it) }
+        return out.toByteArray()
     }
 
     /**
@@ -177,12 +412,14 @@ class LapisQueryController(
         response: HttpServletResponse,
         compression: Compression?,
         contentEncoding: String?,
+        tee: OutputStream?,
         startResponse: () -> Unit,
     ) {
         val client = ClientOutputStream(response.outputStream)
+        val wire: OutputStream = if (tee == null) client else TeeOutputStream(client, tee)
         val deferred = DeferredOutputStream {
             startResponse()
-            compress(client, compression, contentEncoding)
+            compress(wire, compression, contentEncoding)
         }
         try {
             val out = BufferedOutputStream(deferred, OUTPUT_BUFFER_SIZE)
@@ -326,14 +563,29 @@ class LapisQueryController(
             contentEncoding: String?,
             dataVersion: String,
             contentToken: String,
+        ): String? = requestHash(organism, sequenceName, request, contentEncoding)?.let {
+            entityTag(dataVersion, contentToken, it)
+        }
+
+        fun entityTag(dataVersion: String, contentToken: String, requestHash: String) =
+            "W/\"$dataVersion-$contentToken-$requestHash\""
+
+        /**
+         * hash of everything that selects the representation (also the response cache's key); null when the
+         * response is not reproducible (unseeded random order)
+         */
+        fun requestHash(
+            organism: String,
+            sequenceName: String?,
+            request: QueryRequest,
+            contentEncoding: String?,
         ): String? {
             if (request.random != null && request.random.seed == null) return null
             // QueryRequest and its Filter tree are data classes: toString() lists every field, lineage filters
             // already expanded to their descendant sets, so a changed lineage definition changes the tag too
             val digest = java.security.MessageDigest.getInstance("SHA-256")
                 .digest("$organism\n$sequenceName\n$contentEncoding\n$request".toByteArray(Charsets.UTF_8))
-            val hash = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(digest.copyOf(16))
-            return "W/\"$dataVersion-$contentToken-$hash\""
+            return java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(digest.copyOf(16))
         }
 
         /** weak comparison (RFC 9110 §8.8.3.2) against each listed tag; `*` is not honoured (no unconditional 304s) */
@@ -417,6 +669,23 @@ private class ClientOutputStream(private val out: OutputStream) : OutputStream()
     override fun flush() = io { out.flush() }
 
     override fun close() = io { out.close() }
+}
+
+/** writes to [out] and copies to [copy] (a [ResponseCache.Tee], which never throws) */
+private class TeeOutputStream(private val out: OutputStream, private val copy: OutputStream) : OutputStream() {
+    override fun write(b: Int) {
+        out.write(b)
+        copy.write(b)
+    }
+
+    override fun write(b: ByteArray, off: Int, len: Int) {
+        out.write(b, off, len)
+        copy.write(b, off, len)
+    }
+
+    override fun flush() = out.flush()
+
+    override fun close() = out.close()
 }
 
 /** creates its target on the first byte (or on close); flushing before that does nothing */
