@@ -126,21 +126,24 @@ class LapisQueryController(
         // Responses are written on the servlet thread, not via StreamingResponseBody: the async dispatch raced with
         // Spring Security's header writer (occasionally duplicated security headers) and adds latency.
         val serverTiming = "parse;dur=${ms(tParsed - tStart)}, execute;dur=${ms(tExecuted - tParsed)}"
-        response.status = HttpStatus.OK.value()
-        headers.forEach { name, values -> values.forEach { response.addHeader(name, it) } }
+        val startResponse = { timing: String ->
+            response.status = HttpStatus.OK.value()
+            headers.forEach { name, values -> values.forEach { response.addHeader(name, it) } }
+            response.addHeader("Server-Timing", timing)
+        }
 
-        if (endpoint in BOUNDED_ENDPOINTS) {
-            // bounded (counts, aggregations, mutation/insertion lists): rendered first, sent with Content-Length
+        if (body.buffered) {
+            // rendered completely before anything is sent, so that a failure is still an error response
             val buffer = ByteArrayOutputStream()
             compress(buffer, parsed.compression, contentEncoding).use { body.write(it) }
-            response.addHeader("Server-Timing", "$serverTiming, render;dur=${ms(System.nanoTime() - tExecuted)}")
+            startResponse("$serverTiming, render;dur=${ms(System.nanoTime() - tExecuted)}")
             response.setContentLength(buffer.size())
             buffer.writeTo(response.outputStream)
             response.outputStream.flush()
             return
         }
 
-        response.addHeader("Server-Timing", serverTiming)
+        startResponse(serverTiming)
         try {
             val compressed = compress(response.outputStream, parsed.compression, contentEncoding)
             BufferedOutputStream(compressed, OUTPUT_BUFFER_SIZE).use { out -> body.write(out) }
@@ -240,14 +243,6 @@ class LapisQueryController(
         const val OUTPUT_BUFFER_SIZE = 64 * 1024
 
         private fun ms(nanos: Long) = "%.3f".format(nanos / 1e6)
-
-        private val BOUNDED_ENDPOINTS = setOf(
-            Endpoint.AGGREGATED,
-            Endpoint.NUCLEOTIDE_MUTATIONS,
-            Endpoint.AMINO_ACID_MUTATIONS,
-            Endpoint.NUCLEOTIDE_INSERTIONS,
-            Endpoint.AMINO_ACID_INSERTIONS,
-        )
 
         fun isForm(contentType: String?) =
             contentType != null && contentType.lowercase().startsWith(MediaType.APPLICATION_FORM_URLENCODED_VALUE)

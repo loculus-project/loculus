@@ -69,6 +69,12 @@ class PostgresQueryStore(private val dataSource: DataSource, compressionDictServ
         )
     }
 
+    override fun readMetadataFields(organism: String, ids: IntArray, fields: List<String>): List<Array<String?>> {
+        if (ids.isEmpty()) return emptyList()
+        val byId = fetchMetadataFields(organism, ids, fields)
+        return ids.asList().mapNotNull { byId[it] }
+    }
+
     override fun <T> streamMetadataFieldChunks(
         organism: String,
         ids: IntArray,

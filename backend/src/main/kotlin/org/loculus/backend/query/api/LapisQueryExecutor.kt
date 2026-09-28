@@ -17,8 +17,15 @@ import java.io.OutputStream
 /**
  * The body of a successful response. Everything that can fail with a client error has been evaluated when this
  * is created; [write] only streams (and must not be called more than once).
+ * A [buffered] body is known to be small: it is rendered completely before the response starts, so that a failure
+ * still gets an error status. Other bodies are streamed.
  */
-class LapisBody(val contentType: String, val fileExtension: String, val write: (OutputStream) -> Unit)
+class LapisBody(
+    val contentType: String,
+    val fileExtension: String,
+    val buffered: Boolean,
+    val write: (OutputStream) -> Unit,
+)
 
 object LapisContentTypes {
     const val JSON = "application/json"
@@ -34,7 +41,10 @@ object LapisContentTypes {
  * Executes parsed LAPIS requests against the in-memory [OrganismIndex] (which ids, aggregations, mutations) and
  * the [QueryStore] (records and sequences, streamed from Postgres).
  */
-class LapisQueryExecutor(private val store: QueryStore) {
+class LapisQueryExecutor(
+    private val store: QueryStore,
+    private val bufferedDetailsMaxRows: Int = BUFFERED_DETAILS_MAX_ROWS,
+) {
     fun execute(organism: String, index: OrganismIndex, request: QueryRequest, info: () -> LapisInfo): LapisBody {
         val schema = index.schema
         val ids = index.evaluate(request.filter)
@@ -72,7 +82,7 @@ class LapisQueryExecutor(private val store: QueryStore) {
     // ---------------- tables ----------------
 
     private fun tableBody(table: Table, request: QueryRequest, info: () -> LapisInfo) =
-        LapisBody(tableContentType(request.dataFormat), request.dataFormat.extension) { out ->
+        LapisBody(tableContentType(request.dataFormat), request.dataFormat.extension, buffered = true) { out ->
             val writer = tableWriter(request.dataFormat, table.shape, out, envelope = !request.downloadAsFile, info)
             writer.start()
             table.rows.forEach(writer::row)
@@ -92,21 +102,32 @@ class LapisQueryExecutor(private val store: QueryStore) {
         val ordered = index.select(ids, request.orderBy, request.random, request.offset, request.limit)
         val shape = TableShape(fields)
         val types = fields.map { schema.field(it)?.type }
-        return LapisBody(tableContentType(request.dataFormat), request.dataFormat.extension) { out ->
-            val format = tableFormat(request.dataFormat, shape, envelope = !request.downloadAsFile, info)
+        val contentType = tableContentType(request.dataFormat)
+        fun convert(texts: Array<String?>): Row =
+            Array(texts.size) { i -> MetadataProjector.convertText(texts[i], types[i]) }
+        val newFormat = { tableFormat(request.dataFormat, shape, envelope = !request.downloadAsFile, info) }
+        if (!request.downloadAsFile && ordered.size <= bufferedDetailsMaxRows) {
+            // small (the search table, a sequence's page): one query on the calling thread, no fetch workers
+            return LapisBody(contentType, request.dataFormat.extension, buffered = true) { out ->
+                val format = newFormat()
+                format.header(out)
+                format.writeChunk(
+                    out,
+                    format.render(store.readMetadataFields(organism, ordered, fields).map(::convert)),
+                )
+                format.trailer(out)
+                out.flush()
+            }
+        }
+        return LapisBody(contentType, request.dataFormat.extension, buffered = false) { out ->
+            val format = newFormat()
             format.header(out)
             // Postgres extracts the fields (->>), the fetch workers type and render them in parallel
             store.streamMetadataFieldChunks(
                 organism,
                 ordered,
                 fields,
-                render = { _, values ->
-                    format.render(
-                        values.map { texts ->
-                            Array(texts.size) { i -> MetadataProjector.convertText(texts[i], types[i]) }
-                        },
-                    )
-                },
+                render = { _, values -> format.render(values.map(::convert)) },
                 consumer = { chunk -> format.writeChunk(out, chunk) },
             )
             format.trailer(out)
@@ -134,7 +155,7 @@ class LapisQueryExecutor(private val store: QueryStore) {
                     schema,
                 )
                 val types = template.fields.map { schema.field(it)?.type }
-                LapisBody(LapisContentTypes.FASTA, DataFormat.FASTA.extension) { out ->
+                LapisBody(LapisContentTypes.FASTA, DataFormat.FASTA.extension, buffered = false) { out ->
                     val writer = FastaWriter(out, template, names)
                     val consumer = object : SequenceRowConsumer {
                         var headerValues: Array<String?>? = null
@@ -159,7 +180,7 @@ class LapisQueryExecutor(private val store: QueryStore) {
                 val ndjson = request.dataFormat == DataFormat.NDJSON
                 val contentType = if (ndjson) LapisContentTypes.NDJSON else LapisContentTypes.JSON_UTF8
                 val primaryKeyType = schema.field(schema.primaryKey)?.type
-                LapisBody(contentType, request.dataFormat.extension) { out ->
+                LapisBody(contentType, request.dataFormat.extension, buffered = false) { out ->
                     val writer = JsonSequenceWriter(out, schema.primaryKey, names, ndjson)
                     writer.start()
                     val consumer = object : SequenceRowConsumer {
@@ -200,6 +221,12 @@ class LapisQueryExecutor(private val store: QueryStore) {
     }
 
     companion object {
+        /**
+         * /details responses with at most this many rows (and not downloadAsFile) are buffered. The website's
+         * search table (100 rows) and sequence pages (1 row) fall under it; 1000 records are at most a few MB.
+         */
+        const val BUFFERED_DETAILS_MAX_ROWS = 1000
+
         fun tableContentType(format: DataFormat) = when (format) {
             DataFormat.JSON -> LapisContentTypes.JSON
 

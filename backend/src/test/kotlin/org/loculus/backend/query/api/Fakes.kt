@@ -123,6 +123,12 @@ class FakeStore(
         }
     }
 
+    override fun readMetadataFields(organism: String, ids: IntArray, fields: List<String>): List<Array<String?>> {
+        val rows = mutableListOf<Array<String?>>()
+        streamMetadataFields(organism, ids, fields) { _, values -> rows.add(values) }
+        return rows
+    }
+
     /** chunks of 2 rows, rendered out of order to catch order dependencies */
     override fun <T> streamMetadataFieldChunks(
         organism: String,
