@@ -1992,8 +1992,8 @@ def test_check_ena_accession(case: EnaAccessionCase) -> None:
         ingest_group_id = DEFAULT_TEST_CONTEXT.insdc_ingest_group_id
         result = ProcessingFunctions.check_ena_accession(
             input_data={"accession": case.accession},
-            output_field="bioprojectAccession",
-            input_fields=["bioprojectAccession"],
+            output_field="externalAccession",
+            input_fields=["externalAccession"],
             args={"accession_type": case.accession_type},
             context=replace(
                 DEFAULT_TEST_CONTEXT,
