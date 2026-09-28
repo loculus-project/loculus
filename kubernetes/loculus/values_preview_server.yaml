@@ -83,7 +83,7 @@ fileSharing:
 website:
   lapisCache:
     enabled: true
-    memoryMB: 300
+    memoryMB: 64
     diskMB: 3000
     freshSeconds: 15
 resources:
@@ -92,8 +92,7 @@ resources:
       memory: "100Mi"
       cpu: "20m"
     limits:
-      # 300 MB of cached LAPIS responses (Buffers, outside the 1 GB V8 heap) on top of the server itself
-      memory: "1Gi"
+      memory: "500Mi"
   docs:
     requests:
       memory: "25Mi"

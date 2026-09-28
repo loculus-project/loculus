@@ -1583,7 +1583,7 @@
               "groups": ["website"],
               "type": "integer",
               "minimum": 1,
-              "default": 100,
+              "default": 64,
               "description": "Memory budget of the cache in MiB, counted in response bytes."
             },
             "diskMB": {
