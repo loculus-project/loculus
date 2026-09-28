@@ -254,7 +254,7 @@ class LapisQueryControllerTest {
         mockMvc.perform(get("/test/sample/lineageDefinition/pangoLineage"))
             .andExpect(status().isOk)
             .andExpect(
-                content().string("""{"A":null,"A.1":{"parents":["A"]},"B":{"parents":["A"],"aliases":["A.2"]}}"""),
+                content().string("""{"A":{},"A.1":{"parents":["A"]},"B":{"parents":["A"],"aliases":["A.2"]}}"""),
             )
         mockMvc.perform(get("/test/sample/lineageDefinition/country"))
             .andExpect(status().isBadRequest)

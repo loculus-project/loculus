@@ -185,10 +185,7 @@ class LapisQueryController(
             g.writeStartObject()
             for ((name, node) in definition.nodes) {
                 g.writeFieldName(name)
-                if (node.parents.isEmpty() && node.aliases.isEmpty()) {
-                    g.writeNull()
-                    continue
-                }
+                // roots are `{}` like LAPIS (the website's schema requires an object per node)
                 g.writeStartObject()
                 if (node.parents.isNotEmpty()) {
                     g.writeArrayFieldStart("parents")
