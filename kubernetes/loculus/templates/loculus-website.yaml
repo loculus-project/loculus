@@ -32,27 +32,44 @@ spec:
           {{- include "loculus.resources" (list "website" .Values) | nindent 10 }}
           ports:
             - containerPort: 3000
-          {{- with .Values.website.lapisCache }}
-          {{- if .enabled }}
+          {{- $lapisCache := .Values.website.lapisCache }}
+          {{- $pageCache := .Values.website.pageCache }}
+          {{- $cacheDiskMB := add (ternary $lapisCache.diskMB 0 $lapisCache.enabled) (ternary $pageCache.diskMB 0 $pageCache.enabled) }}
+          {{- if or $lapisCache.enabled $pageCache.enabled }}
           env:
+            {{- if $lapisCache.enabled }}
             - name: LAPIS_CACHE_MEMORY_MB
-              value: {{ .memoryMB | quote }}
-            - name: LAPIS_CACHE_FRESH_SECONDS
-              value: {{ .freshSeconds | quote }}
-            {{- if gt (int .diskMB) 0 }}
+              value: {{ $lapisCache.memoryMB | quote }}
             - name: LAPIS_CACHE_DISK_MB
-              value: {{ .diskMB | quote }}
-            - name: LAPIS_CACHE_DIR
-              value: /cache/lapis
+              value: {{ $lapisCache.diskMB | quote }}
+            - name: LAPIS_CACHE_FRESH_SECONDS
+              value: {{ $lapisCache.freshSeconds | quote }}
             {{- end }}
-          {{- end }}
+            {{- if $pageCache.enabled }}
+            - name: PAGE_CACHE_MEMORY_MB
+              value: {{ $pageCache.memoryMB | quote }}
+            - name: PAGE_CACHE_DISK_MB
+              value: {{ $pageCache.diskMB | quote }}
+            - name: PAGE_CACHE_EDGE_HEADERS
+              value: {{ $pageCache.edgeCacheHeaders | quote }}
+            {{- end }}
+            - name: WEBSITE_CACHE_VERSION_POLL_SECONDS
+              value: {{ .Values.website.cacheMaintenance.dataVersionPollSeconds | quote }}
+            - name: WEBSITE_CACHE_OLD_VERSION_GRACE_SECONDS
+              value: {{ .Values.website.cacheMaintenance.oldVersionGraceSeconds | quote }}
+            - name: WEBSITE_CACHE_MAX_AGE_HOURS
+              value: {{ .Values.website.cacheMaintenance.maxAgeHours | quote }}
+            {{- if gt (int $cacheDiskMB) 0 }}
+            - name: WEBSITE_CACHE_DIR
+              value: /cache
+            {{- end }}
           {{- end }}
           volumeMounts:
             - name: loculus-website-config-processed
               mountPath: /config
-            {{- if and .Values.website.lapisCache.enabled (gt (int .Values.website.lapisCache.diskMB) 0) }}
-            - name: lapis-cache
-              mountPath: /cache/lapis
+            {{- if gt (int $cacheDiskMB) 0 }}
+            - name: website-cache
+              mountPath: /cache
             {{- end }}
           # /loculus-info renders no LAPIS queries; / sends 3 per organism on every probe
           livenessProbe:
@@ -84,10 +101,11 @@ spec:
               {{ end }}
         - name: loculus-website-config-processed
           emptyDir: {}
-        {{- if and .Values.website.lapisCache.enabled (gt (int .Values.website.lapisCache.diskMB) 0) }}
-        # The cache keeps its files at most diskMB; exceeding sizeLimit would evict the pod.
-        - name: lapis-cache
+        {{- $cacheDisk := add (ternary .Values.website.lapisCache.diskMB 0 .Values.website.lapisCache.enabled) (ternary .Values.website.pageCache.diskMB 0 .Values.website.pageCache.enabled) }}
+        {{- if gt (int $cacheDisk) 0 }}
+        # The caches keep their files within their diskMB budgets; exceeding sizeLimit would evict the pod.
+        - name: website-cache
           emptyDir:
-            sizeLimit: {{ div (mul (int .Values.website.lapisCache.diskMB) 6) 5 }}Mi
+            sizeLimit: {{ div (mul (int $cacheDisk) 6) 5 }}Mi
         {{- end }}
 {{- end }}

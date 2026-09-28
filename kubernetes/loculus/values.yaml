@@ -48,11 +48,24 @@ website:
   # query engine sends. Responses without an ETag (LAPIS/SILO) are never stored.
   lapisCache:
     enabled: false
-    memoryMB: 64
-    # 0: no disk tier. Otherwise an emptyDir with sizeLimit 1.2 x diskMB.
+    memoryMB: 48
+    # 0: no disk tier
     diskMB: 0
     # Serve a stored response without revalidating for this long after the backend last confirmed it.
     freshSeconds: 0
+  # Rendered HTML of anonymous sequence pages and default search views, valid while the organism's data version is
+  # unchanged. Disk tiers of both caches share one emptyDir with sizeLimit 1.2 x (lapisCache.diskMB + pageCache.diskMB).
+  pageCache:
+    enabled: false
+    memoryMB: 16
+    diskMB: 0
+    # Cache-Control: public, s-maxage=3600, stale-while-revalidate=86400 on anonymous cacheable pages (for an edge cache)
+    edgeCacheHeaders: false
+  cacheMaintenance:
+    dataVersionPollSeconds: 60
+    # Entries of an organism's previous data version are dropped this long after the change is seen.
+    oldVersionGraceSeconds: 120
+    maxAgeHours: 24
 siloImport:
   siloTimeoutSeconds: 3600
   hardRefreshIntervalSeconds: 3600

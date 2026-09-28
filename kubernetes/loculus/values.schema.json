@@ -1583,7 +1583,7 @@
               "groups": ["website"],
               "type": "integer",
               "minimum": 1,
-              "default": 64,
+              "default": 48,
               "description": "Memory budget of the cache in MiB, counted in response bytes."
             },
             "diskMB": {
@@ -1591,7 +1591,7 @@
               "type": "integer",
               "minimum": 0,
               "default": 0,
-              "description": "Disk budget in MiB for entries evicted from memory. 0 disables the disk tier; otherwise the website gets an emptyDir with a sizeLimit of 1.2 × diskMB."
+              "description": "Disk budget in MiB for entries evicted from memory. 0 disables the disk tier."
             },
             "freshSeconds": {
               "groups": ["website"],
@@ -1599,6 +1599,69 @@
               "minimum": 0,
               "default": 0,
               "description": "For this many seconds after the backend last confirmed a response, serve it without revalidating. New data can then take this long to appear in server-rendered pages."
+            }
+          }
+        },
+        "pageCache": {
+          "groups": ["website"],
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Server-side cache of the rendered HTML of anonymous sequence pages and default search views. An entry is valid while its organism's polled data version is unchanged and it is younger than `cacheMaintenance.maxAgeHours`. Requests with auth cookies or an Authorization header never use it.",
+          "properties": {
+            "enabled": {
+              "groups": ["website"],
+              "type": "boolean",
+              "default": false,
+              "description": "Whether the website caches rendered pages."
+            },
+            "memoryMB": {
+              "groups": ["website"],
+              "type": "integer",
+              "minimum": 1,
+              "default": 16,
+              "description": "Memory budget in MiB for compressed pages and the per-organism compression dictionaries."
+            },
+            "diskMB": {
+              "groups": ["website"],
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "description": "Disk budget in MiB for pages evicted from memory. The disk tiers of both caches share one emptyDir with a sizeLimit of 1.2 × their sum."
+            },
+            "edgeCacheHeaders": {
+              "groups": ["website"],
+              "type": "boolean",
+              "default": false,
+              "description": "Send `Cache-Control: public, s-maxage=3600, stale-while-revalidate=86400` and `Vary: Cookie` on anonymous cacheable pages, and `private, no-store` on the same pages for logged-in users."
+            }
+          }
+        },
+        "cacheMaintenance": {
+          "groups": ["website"],
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Data-version polling and expiry for the website's caches.",
+          "properties": {
+            "dataVersionPollSeconds": {
+              "groups": ["website"],
+              "type": "integer",
+              "minimum": 1,
+              "default": 60,
+              "description": "How often each organism's data version is read from `/sample/info`. Cached pages can be this much behind a release."
+            },
+            "oldVersionGraceSeconds": {
+              "groups": ["website"],
+              "type": "integer",
+              "minimum": 0,
+              "default": 120,
+              "description": "After an organism's data version changes, its entries of older versions are deleted this much later."
+            },
+            "maxAgeHours": {
+              "groups": ["website"],
+              "type": "integer",
+              "minimum": 1,
+              "default": 24,
+              "description": "Maximum age of any cache entry."
             }
           }
         },
