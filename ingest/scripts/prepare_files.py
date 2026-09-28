@@ -103,7 +103,8 @@ def main(
         relevant_config = {key: full_config[key] for key in Config.__annotations__}
         config = Config(**relevant_config)
 
-    to_submit = json.load(open(to_submit_path, encoding="utf-8"))
+    # a list in the file; a set here, since every metadata record is looked up in it
+    to_submit = set(json.load(open(to_submit_path, encoding="utf-8")))
     to_revise = json.load(open(to_revise_path, encoding="utf-8"))
     to_revoke = json.load(open(to_revoke_path, encoding="utf-8"))
 
