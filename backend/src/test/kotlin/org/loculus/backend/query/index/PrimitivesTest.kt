@@ -27,7 +27,7 @@ class PrimitivesTest {
     @Test
     fun `runOptimizeFewRuns re-encodes run containers that grew past the cap`() {
         val bitmap = RoaringBitmap()
-        for (run in 0 until 200) bitmap.add((run * 10).toLong(), (run * 10 + 3).toLong())
+        for (run in 0 until MAX_RUNS_PER_CONTAINER + 100) bitmap.add((run * 10).toLong(), (run * 10 + 3).toLong())
         bitmap.add(70_000L, 70_010L)
         bitmap.runOptimize()
         assertThat(bitmap.containerPointer.container is RunContainer, equalTo(true))

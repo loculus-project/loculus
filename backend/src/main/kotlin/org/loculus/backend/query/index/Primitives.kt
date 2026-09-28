@@ -366,12 +366,17 @@ internal fun unionOf(bitmaps: List<RoaringBitmap>): RoaringBitmap = when (bitmap
     else -> org.roaringbitmap.FastAggregation.or(bitmaps.iterator())
 }
 
-internal const val MAX_RUNS_PER_CONTAINER = 64
+/**
+ * Run containers with more runs are stored as array or bitmap containers. Measured on PPX data (investigation
+ * 29): caps of 64 / 256 / 1024 / unlimited give 306 / 297 / 264 / 263 MB of index for mpox, dengue, cchf and
+ * west-nile, with no measurable change in filter, mutations-endpoint or apply() latency. Roaring only keeps a run
+ * container while it is smaller than the 8 KB bitmap container (< 2048 runs), so 1024 keeps nearly all of the
+ * saving and still bounds the containers that intersections walk run by run.
+ */
+internal const val MAX_RUNS_PER_CONTAINER = 1024
 
 /**
- * [bitmap] run-optimised, but keeping run containers only where they have few runs: intersecting a run
- * container with many runs (RunContainer.andCardinality / advanceUntil) is several times slower than with an
- * array or bitmap container, and the mutation endpoints intersect hundreds of thousands of bitmaps.
+ * [bitmap] run-optimised, keeping run containers only up to [MAX_RUNS_PER_CONTAINER] runs.
  * Returns a bitmap that owns its containers (the argument must not be used afterwards).
  */
 internal fun runOptimizeFewRuns(bitmap: RoaringBitmap): RoaringBitmap {
@@ -423,7 +428,7 @@ internal fun forIntersections(bitmap: RoaringBitmap): RoaringBitmap {
     val p = bitmap.containerPointer
     while (p.container != null) {
         val c = p.container
-        val convert = (c is RunContainer && c.numberOfRuns() > MAX_RUNS_PER_CONTAINER) ||
+        val convert = (c is RunContainer && c.numberOfRuns() > INTERSECT_MAX_RUNS) ||
             (c is ArrayContainer && c.cardinality > ARRAY_TO_BITMAP)
         result.append(p.key(), if (convert) c.toBitmapContainer() else c.clone())
         p.advance()
@@ -432,6 +437,9 @@ internal fun forIntersections(bitmap: RoaringBitmap): RoaringBitmap {
 }
 
 internal const val ARRAY_TO_BITMAP = 1024
+
+/** [forIntersections] turns run containers with more runs into bitmap containers */
+internal const val INTERSECT_MAX_RUNS = 64
 
 /**
  * Approximate heap bytes of [bitmap] (compressed oops, compact object headers as in production).
