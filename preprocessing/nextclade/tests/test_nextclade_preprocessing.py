@@ -8,6 +8,7 @@ from typing import Literal
 import pytest
 from Bio import SeqIO
 from Bio.Seq import Seq
+from Bio.SeqFeature import SeqFeature
 from Bio.SeqRecord import SeqRecord
 from factory_methods import (
     Case,
@@ -38,7 +39,7 @@ from loculus_preprocessing.embl import (
     get_seq_features,
     reformat_authors_from_loculus_to_embl_style,
 )
-from loculus_preprocessing.nextclade_annotation import NextcladeAnnotation
+from loculus_preprocessing.nextclade_annotation import GffAttributes, NextcladeAnnotation
 from loculus_preprocessing.prepro import get_nested_metadata, process_all, unpack_annotations
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
@@ -1639,68 +1640,65 @@ def test_create_flatfile():
 FUNCTIONAL_SEQUENCE = "ATGAAAGGGTGA"
 # ATG AAA TAA GGG TGA -> MK*G, with a premature stop codon before the terminal one
 PREMATURE_STOP_SEQUENCE = "ATGAAATAAGGGTGA"
+PREMATURE_STOP_NOTE = "Contains premature stop codon"
 
 
-def _annotation(length: int) -> NextcladeAnnotation:
-    return NextcladeAnnotation.model_validate(
-        {
-            "genes": [
-                {
-                    "range": {"begin": 0, "end": length},
-                    "attributes": {"gene": ["L"]},
-                    "cdses": [
-                        {
-                            "attributes": {"gene": ["L"]},
-                            "segments": [
-                                {
-                                    "range": {"begin": 0, "end": length},
-                                    "strand": "+",
-                                    "phase": 0,
-                                    "truncation": "none",
-                                }
-                            ],
-                        }
-                    ],
-                }
-            ]
-        }
+def _single_cds_feature(sequence_str: str, attributes: GffAttributes | None = None) -> SeqFeature:
+    annotation_object = single_cds_annotation(0, len(sequence_str), attributes=attributes)
+    features = get_seq_features(annotation_object, sequence_str)
+    [cds_feature] = [feature for feature in features if feature.type == "CDS"]
+    return cds_feature
+
+
+def test_get_seq_features_translates_a_cds_without_premature_stop():
+    cds_feature = _single_cds_feature(FUNCTIONAL_SEQUENCE)
+
+    assert cds_feature.qualifiers["translation"] == "MKG"
+    assert "pseudo" not in cds_feature.qualifiers
+    assert "note" not in cds_feature.qualifiers
+
+
+def test_get_seq_features_marks_a_cds_with_premature_stop_pseudo_without_translation():
+    # INSDC keeps the CDS feature key for a non-functional CDS, flags it with a valueless
+    # /pseudo and forbids /translation on it.
+    cds_feature = _single_cds_feature(PREMATURE_STOP_SEQUENCE)
+
+    assert cds_feature.type == "CDS"
+    assert "pseudo" in cds_feature.qualifiers
+    assert "translation" not in cds_feature.qualifiers
+    assert cds_feature.qualifiers["note"] == [PREMATURE_STOP_NOTE]
+
+
+def test_get_seq_features_appends_premature_stop_note_to_an_existing_note():
+    # A GFF `Note` attribute becomes the EMBL /note, which must survive alongside ours.
+    cds_feature = _single_cds_feature(PREMATURE_STOP_SEQUENCE, {"Note": ["existing note"]})
+
+    assert cds_feature.qualifiers["note"] == ["existing note", PREMATURE_STOP_NOTE]
+
+
+def test_get_seq_features_leaves_an_existing_note_alone_without_premature_stop():
+    cds_feature = _single_cds_feature(FUNCTIONAL_SEQUENCE, {"Note": ["existing note"]})
+
+    assert cds_feature.qualifiers["note"] == ["existing note"]
+
+
+def test_flatfile_writes_pseudo_as_a_bare_qualifier_with_both_notes():
+    annotation_object = single_cds_annotation(
+        0, len(PREMATURE_STOP_SEQUENCE), attributes={"Note": ["existing note"]}
     )
-
-
-def _cds(sequence: str):
-    features = get_seq_features(_annotation(len(sequence)), sequence)
-    [cds] = [feature for feature in features if feature.type == "CDS"]
-    return cds
-
-
-def test_functional_cds_has_translation_and_is_not_pseudo():
-    cds = _cds(FUNCTIONAL_SEQUENCE)
-
-    assert cds.qualifiers["translation"] == "MKG"
-    assert "pseudo" not in cds.qualifiers
-
-
-def test_premature_stop_codon_marks_cds_pseudo_without_translation():
-    cds = _cds(PREMATURE_STOP_SEQUENCE)
-
-    assert cds.type == "CDS"
-    assert "pseudo" in cds.qualifiers
-    assert "translation" not in cds.qualifiers
-
-
-def test_pseudo_is_written_as_a_bare_qualifier():
-    sequence = PREMATURE_STOP_SEQUENCE
     record = SeqRecord(
-        Seq(sequence),
+        Seq(PREMATURE_STOP_SEQUENCE),
         id="test",
         annotations={"molecule_type": "RNA"},
-        features=get_seq_features(_annotation(len(sequence)), sequence),
+        features=get_seq_features(annotation_object, PREMATURE_STOP_SEQUENCE),
     )
 
-    flatfile = record.format("embl")
-    feature_lines = [line.removeprefix("FT").strip() for line in flatfile.splitlines()]
+    embl_str = record.format("embl")
+    feature_lines = [line.removeprefix("FT").strip() for line in embl_str.splitlines()]
 
     assert "/pseudo" in feature_lines
+    assert '/note="existing note"' in feature_lines
+    assert f'/note="{PREMATURE_STOP_NOTE}"' in feature_lines
     assert not any(line.startswith("/translation") for line in feature_lines)
 
 
