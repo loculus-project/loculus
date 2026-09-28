@@ -202,6 +202,10 @@ replicas:
   backend: 1
 # Keep the dev database (and Keycloak DB, MinIO) across redeploys: without this every push recreates them empty.
 developmentDatabasePersistence: true
+# MinIO must persist whenever the dev database does: a fresh DB reissues file IDs that collide with surviving objects,
+# and a fresh MinIO loses files the DB references.
+developmentS3:
+  storageSize: "20Gi"
 # The website's LAPIS is the backend's query engine; LAPIS/SILO alongside only cost resources here.
 queryEngine:
   enabled: true

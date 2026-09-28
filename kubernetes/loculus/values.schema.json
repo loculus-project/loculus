@@ -1831,6 +1831,18 @@
       "default": true,
       "description": "If true, runs a development MinIO S3 instance within the cluster."
     },
+    "developmentS3": {
+      "groups": ["db"],
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "storageSize": {
+          "type": "string",
+          "default": "",
+          "description": "If set (e.g. \"20Gi\"), the development MinIO keeps its data on a PersistentVolumeClaim of this size. Use together with a persistent development database: with only the database persistent, a MinIO restart loses files the database references."
+        }
+      }
+    },
     "disableWebsite": {
       "groups": ["services"],
       "type": "boolean",

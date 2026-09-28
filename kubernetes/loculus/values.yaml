@@ -5340,6 +5340,9 @@ secrets:
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 runDevelopmentS3: true
+# In-cluster development MinIO (runDevelopmentS3). Empty = previous behaviour.
+developmentS3:
+  storageSize: "" # e.g. "20Gi": keep MinIO data on a PersistentVolumeClaim, so it survives pod restarts with a persistent dev database
 developmentDatabasePersistence: false
 # Tuning for the in-cluster development Postgres (runDevelopmentMainDatabase). Empty = previous behaviour.
 developmentDatabase:
