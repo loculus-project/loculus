@@ -146,9 +146,12 @@ export const SingleChoiceAutoCompleteField = ({
                             <div className='px-4 py-2 text-gray-500'>No options available</div>
                         ) : (
                             <>
-                                {filteredOptions.map((option) => (
+                                {filteredOptions.map((option, index) => (
                                     <ComboboxOption
                                         key={option.option}
+                                        // Render order, so headlessui sorts registrations numerically instead of by
+                                        // DOM position (compareDocumentPosition); must match the order on screen.
+                                        order={index}
                                         className={({ focus }) =>
                                             `relative cursor-default select-none py-2 pl-10 pr-4 ${
                                                 focus ? 'bg-blue-500 text-white' : 'text-gray-900'

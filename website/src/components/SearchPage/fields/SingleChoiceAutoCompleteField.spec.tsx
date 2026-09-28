@@ -294,4 +294,47 @@ describe('SingleChoiceAutoCompleteField', () => {
         const options = await screen.findAllByRole('option');
         expect(options).toHaveLength(50);
     });
+
+    it('shows loading, not "No options", before the first load has started', async () => {
+        mockUseAggregated.mockReturnValue({ data: undefined, isPending: false, error: null, mutate: vi.fn() });
+        render(
+            <SingleChoiceAutoCompleteField
+                field={field}
+                optionsProvider={{ type: 'generic', lapisUrl, lapisSearchParameters, fieldName: field.name }}
+                setSomeFieldValues={setSomeFieldValues}
+            />,
+        );
+
+        await userEvent.click(screen.getByLabelText('Test Field'));
+
+        expect(screen.getByText('Loading...')).toBeInTheDocument();
+        expect(screen.queryByText('No options available')).not.toBeInTheDocument();
+    });
+
+    it('keeps showing options while reloading and does not refetch unchanged params on refocus', async () => {
+        const mutate = vi.fn();
+        mockUseAggregated.mockReturnValue({
+            data: { data: [{ testField: 'Option 1', count: 10 }] },
+            isPending: true,
+            error: null,
+            mutate,
+        });
+        render(
+            <SingleChoiceAutoCompleteField
+                field={field}
+                optionsProvider={{ type: 'generic', lapisUrl, lapisSearchParameters, fieldName: field.name }}
+                setSomeFieldValues={setSomeFieldValues}
+            />,
+        );
+        const input = screen.getByLabelText('Test Field');
+
+        await userEvent.click(input);
+        expect(await screen.findAllByRole('option')).toHaveLength(1);
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+
+        fireEvent.blur(input);
+        fireEvent.focus(input);
+
+        expect(mutate).toHaveBeenCalledTimes(1);
+    });
 });
