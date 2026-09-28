@@ -1,5 +1,6 @@
 package org.loculus.backend.query.index
 
+import org.loculus.backend.query.schema.MutationCode
 import org.loculus.backend.query.schema.SequenceSchema
 import org.roaringbitmap.FastAggregation
 import org.roaringbitmap.RoaringBitmap
@@ -8,8 +9,12 @@ import org.roaringbitmap.RoaringBitmap
  * Index of one aligned sequence (segment or gene).
  *
  * - [present]: ids that have this sequence.
- * - mutation bitmaps `mutations[position][symbol]`: ids having [symbol] (neither reference nor missing) at
- *   [position].
+ * - mutation bitmaps `mutations[position][symbol]`: ids having [symbol] at [position], for every symbol except
+ *   the missing symbol and the position's implicit symbol [localReference] (see [adaptLocalReference]). Ids with
+ *   the implicit symbol are those present, not missing and in none of the position's bitmaps. The implicit
+ *   symbol starts as the reference; where most entries differ from the reference it becomes their symbol, and
+ *   entries carrying the reference then get an explicit bitmap for it. Queries keep their meaning relative to
+ *   the reference ([reference]); only the storage changes.
  * - missing-symbol runs, twice:
  *   - for point queries ("which ids are missing at p"): "transition" bitmaps `runStarts[q]` / `runEnds[q]`
  *     (ids with a run starting / ending exclusive at q) and exact checkpoints `checkpoints[k]` (ids missing at
@@ -31,7 +36,14 @@ internal class SequenceIndex(val schema: SequenceSchema) {
     val checkpoints: Array<RoaringBitmap> = Array((length shr CHECKPOINT_SHIFT) + 1) { RoaringBitmap() }
     val insertions = HashMap<Int, HashMap<String, RoaringBitmap>>()
 
-    /** exact cardinalities, maintained on every write: mutations at position * alphabet.size + symbol */
+    /** implicit (unstored) symbol per position (index = position); the reference unless [adaptLocalReference] */
+    private val localReference = ByteArray(length + 1).also { for (p in 1..length) it[p] = reference(p).toByte() }
+
+    /** ascending positions whose implicit symbol is not the reference */
+    var localReferencePositions = IntArray(0)
+        private set
+
+    /** exact cardinalities of the stored bitmaps, maintained on every write: at position * alphabet.size + symbol */
     val mutationCounts = IntArray((length + 1) * alphabet.size)
     private val startCounts = IntArray(length + 2)
     private val endCounts = IntArray(length + 2)
@@ -45,6 +57,11 @@ internal class SequenceIndex(val schema: SequenceSchema) {
 
     fun reference(position: Int): Int = schema.referenceSymbolIndex(position)
 
+    /** the symbol that [position] stores implicitly (see [localReference]) */
+    fun implicitSymbol(position: Int): Int = localReference[position].toInt()
+
+    val hasLocalReference: Boolean get() = localReferencePositions.isNotEmpty()
+
     // ---------------- writes ----------------
 
     fun addMutation(id: Int, position: Int, symbol: Int) {
@@ -54,6 +71,101 @@ internal class SequenceIndex(val schema: SequenceSchema) {
         }
         val bm = perSymbol[symbol] ?: RoaringBitmap().also { perSymbol[symbol] = it }
         if (bm.checkedAdd(id)) mutationCounts[position * alphabet.size + symbol]++
+    }
+
+    /**
+     * Adds the mutation codes of one entry (codes of this sequence only; symbols relative to the reference) when
+     * some positions store another symbol than the reference implicitly: a code for the implicit symbol is not
+     * stored, and the entry is added to the reference bitmap of every such position where it has no code and is
+     * not missing. [runs]: the entry's normalised missing runs of this sequence (flattened start, end pairs).
+     */
+    fun addMutationsWithLocalReference(id: Int, codes: IntArray, runs: IntArray, runCount: Int, present: Boolean) {
+        val positions = IntArray(codes.size)
+        for ((i, code) in codes.withIndex()) {
+            val position = MutationCode.position(code)
+            positions[i] = position
+            val symbol = MutationCode.symbolIndex(code)
+            if (position in 1..length && symbol != implicitSymbol(position)) addMutation(id, position, symbol)
+        }
+        if (!present) return
+        positions.sort()
+        var run = 0
+        for (position in localReferencePositions) {
+            while (run < runCount && runs[2 * run + 1] <= position) run++
+            if (run < runCount && runs[2 * run] <= position) continue
+            if (java.util.Arrays.binarySearch(positions, position) >= 0) continue
+            addMutation(id, position, reference(position))
+        }
+    }
+
+    /**
+     * Makes each position's most common non-missing valid symbol its implicit symbol where that is not the
+     * reference (SILO's adaptLocalReference): the reference gets an explicit bitmap (present \ missing \ all
+     * stored symbols) and the new implicit symbol's bitmap is dropped. Positions whose reference is the missing
+     * symbol keep it. Bulk load only, before [runOptimize] (replaces bitmaps; the index must not be visible yet).
+     * Later writes keep the choice; correctness never depends on the implicit symbol being the majority.
+     */
+    fun adaptLocalReference() {
+        val missing = missingCountsAll()
+        val presentCount = present.cardinality
+        val size = alphabet.size
+        val valid = alphabet.validMutationMask
+        val changed = java.util.concurrent.ConcurrentLinkedQueue<Int>()
+        (0..length step COLLECT_CHUNK).toList().parallelStream().forEach { from ->
+            for (p in maxOf(1, from) until minOf(length + 1, from + COLLECT_CHUNK)) {
+                val perSymbol = mutations[p] ?: continue
+                val ref = reference(p)
+                if (ref == alphabet.missingIndex || implicitSymbol(p) != ref) continue
+                var stored = 0L
+                var best = -1
+                var bestCount = 0
+                for (s in 0 until size) {
+                    val c = mutationCounts[p * size + s]
+                    stored += c
+                    if (valid and (1 shl s) != 0 && c > bestCount) {
+                        best = s
+                        bestCount = c
+                    }
+                }
+                val implicit = presentCount - missing[p] - stored
+                if (best < 0 || bestCount <= implicit) continue
+                val refIds = present.clone()
+                refIds.andNot(missingAt(p))
+                for (bm in perSymbol) if (bm != null) refIds.andNot(bm)
+                perSymbol[best] = null
+                mutationCounts[p * size + best] = 0
+                perSymbol[ref] = if (refIds.isEmpty) null else refIds
+                mutationCounts[p * size + ref] = refIds.cardinality
+                localReference[p] = best.toByte()
+                changed.add(p)
+            }
+        }
+        localReferencePositions = changed.toIntArray().also { it.sort() }
+        invalidateCaches()
+    }
+
+    /**
+     * Entries a re-pick of the implicit symbols would stop storing: per position, how far the most common stored
+     * valid symbol exceeds the implicit one (0 right after a full load; grows as updates shift the majority).
+     */
+    fun localReferenceExcess(): Long {
+        val missing = missingCountsAll()
+        val presentCount = present.cardinality.toLong()
+        val size = alphabet.size
+        val valid = alphabet.validMutationMask
+        var excess = 0L
+        for (p in 1..length) {
+            if (mutations[p] == null || reference(p) == alphabet.missingIndex) continue
+            var stored = 0L
+            var best = 0
+            for (s in 0 until size) {
+                val c = mutationCounts[p * size + s]
+                stored += c
+                if (valid and (1 shl s) != 0 && c > best) best = c
+            }
+            excess += maxOf(0L, best - (presentCount - missing[p] - stored))
+        }
+        return excess
     }
 
     /**
@@ -199,7 +311,8 @@ internal class SequenceIndex(val schema: SequenceSchema) {
         for (bm in checkpoints) total += heapBytes(bm)
         total += (runStarts.size + runEnds.size + startCounts.size + endCounts.size) * 4L
         insertions.values.forEach { m -> m.values.forEach { total += heapBytes(it) + 64 } }
-        return total + mutations.size * 4L + mutationCounts.size * 4L
+        return total + mutations.size * 4L + mutationCounts.size * 4L + arrayBytes(localReference.size.toLong()) +
+            arrayBytes(4L * localReferencePositions.size)
     }
 
     // ---------------- reads ----------------
@@ -253,9 +366,10 @@ internal class SequenceIndex(val schema: SequenceSchema) {
     /** symbols (mask over alphabet indices) at [position] matching SILO's SymbolInSet over live ids */
     fun symbolInSet(position: Int, mask: Int): RoaringBitmap {
         if (position < 1 || position > length) return RoaringBitmap()
-        val ref = reference(position)
+        // ids with the implicit symbol = present \ missing \ all stored bitmaps of the position
+        val implicit = implicitSymbol(position)
         val missing = alphabet.missingIndex
-        val includesRef = mask and (1 shl ref) != 0
+        val includesImplicit = mask and (1 shl implicit) != 0
         val includesMissing = mask and (1 shl missing) != 0
         val perSymbol = mutations[position]
         val inSet = ArrayList<RoaringBitmap>()
@@ -263,16 +377,16 @@ internal class SequenceIndex(val schema: SequenceSchema) {
         if (perSymbol != null) {
             for (s in perSymbol.indices) {
                 val bm = perSymbol[s] ?: continue
-                if (s == ref || s == missing) continue
+                if (s == implicit || s == missing) continue
                 if (mask and (1 shl s) != 0) inSet.add(bm) else notInSet.add(bm)
             }
         }
         return when {
-            includesRef && includesMissing -> present.clone().also { r -> notInSet.forEach { r.andNot(it) } }
+            includesImplicit && includesMissing -> present.clone().also { r -> notInSet.forEach { r.andNot(it) } }
 
             includesMissing -> missingAt(position).also { r -> inSet.forEach { r.or(it) } }
 
-            includesRef -> present.clone().also { r ->
+            includesImplicit -> present.clone().also { r ->
                 r.andNot(missingAt(position))
                 notInSet.forEach { r.andNot(it) }
             }

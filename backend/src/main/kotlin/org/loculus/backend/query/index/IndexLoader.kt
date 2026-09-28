@@ -18,6 +18,7 @@ object IndexLoader {
         dataVersion: Long,
         readers: Int = minOf(8, maxOf(1, Runtime.getRuntime().availableProcessors() / 2)),
         chunkSize: Int = 20_000,
+        localReference: Boolean = true,
     ): InMemoryOrganismIndex {
         val index = InMemoryOrganismIndex(schema, maxId + 1)
         val units = index.bulkUnits()
@@ -47,7 +48,7 @@ object IndexLoader {
         } finally {
             readPool.shutdownNow()
         }
-        index.finishBulkLoad(dataVersion)
+        index.finishBulkLoad(dataVersion, localReference)
         return index
     }
 }

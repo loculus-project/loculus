@@ -132,6 +132,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             }
         }
         for (seq in sequences.filterNotNull()) {
+            check(!seq.hasLocalReference) { "bulk units after the local reference was adapted" }
             val seqIndex = seq.schema.index
             units += { rows ->
                 for (row in rows) {
@@ -165,9 +166,17 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         return units
     }
 
-    /** call after the last [addForBulkLoad] (compresses bitmaps) */
-    fun finishBulkLoad(dataVersion: Long) {
-        indexPool.submit { sequences.filterNotNull().parallelStream().forEach { it.runOptimize() } }.get()
+    /**
+     * call after the last [addForBulkLoad]: picks each position's implicit symbol ([localReference]: see
+     * [SequenceIndex.adaptLocalReference]; false keeps the reference everywhere) and compresses bitmaps
+     */
+    fun finishBulkLoad(dataVersion: Long, localReference: Boolean = true) {
+        indexPool.submit {
+            sequences.filterNotNull().parallelStream().forEach {
+                if (localReference) it.adaptLocalReference()
+                it.runOptimize()
+            }
+        }.get()
         alive.runOptimize()
         this.dataVersion = dataVersion
     }
@@ -270,12 +279,35 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             }
         }
         for (seqIndex in row.presentSequences) sequences.getOrNull(seqIndex)?.present?.add(id)
+        var localReferenceCodes: HashMap<Int, ArrayList<Int>>? = null
         for (code in row.mutations) {
             val seq = sequences.getOrNull(MutationCode.seqIndex(code)) ?: continue
-            seq.addMutation(id, MutationCode.position(code), MutationCode.symbolIndex(code))
+            if (seq.hasLocalReference) {
+                val codes = (localReferenceCodes ?: HashMap<Int, ArrayList<Int>>().also { localReferenceCodes = it })
+                codes.getOrPut(seq.schema.index) { ArrayList<Int>() }.add(code)
+            } else {
+                seq.addMutation(id, MutationCode.position(code), MutationCode.symbolIndex(code))
+            }
         }
+        val localReferenceRuns = HashMap<Int, ArrayList<Int>>()
         forEachRun(row.missing) { seq, start, end ->
             if (withRuns) seq.addMissingRun(id, start, end) else seq.addTransitions(id, start, end)
+            if (seq.hasLocalReference) {
+                localReferenceRuns.getOrPut(seq.schema.index) {
+                    ArrayList<Int>()
+                }.addAll(listOf(start, end))
+            }
+        }
+        for (seq in sequences) {
+            if (seq == null || !seq.hasLocalReference) continue
+            val runs = localReferenceRuns[seq.schema.index]
+            seq.addMutationsWithLocalReference(
+                id,
+                localReferenceCodes?.get(seq.schema.index)?.toIntArray() ?: IntArray(0),
+                runs?.toIntArray() ?: IntArray(0),
+                (runs?.size ?: 0) / 2,
+                seq.schema.index in row.presentSequences,
+            )
         }
         for (insertion in row.insertions) {
             val first = insertion.indexOf(':')
@@ -588,8 +620,8 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     private fun symbolAtPositionSource(seq: SequenceIndex, position: Int, ids: RoaringBitmap): GroupKeySource {
         require(position in 1..seq.length) { "position $position out of range for ${seq.schema.name}" }
         val symbols = ByteArray(capacity) { -1 }
-        val ref = seq.reference(position).toByte()
-        forEachId(RoaringBitmap.and(ids, seq.present)) { symbols[it] = ref }
+        val implicit = seq.implicitSymbol(position).toByte()
+        forEachId(RoaringBitmap.and(ids, seq.present)) { symbols[it] = implicit }
         seq.mutations[position]?.forEachIndexed { s, bm -> bm?.forEach { id: Int -> symbols[id] = s.toByte() } }
         seq.missingAt(position).forEach { id: Int -> symbols[id] = seq.alphabet.missingIndex.toByte() }
         val chars = seq.alphabet.symbols
@@ -1150,17 +1182,32 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
                 val position = MutationCode.position(code)
                 val symbol = MutationCode.symbolIndex(code)
                 if (position < 1 || position > seq.length || symbol >= size) continue
+                // the implicit symbol is not stored (see SequenceIndex.localReference)
+                if (symbol == seq.implicitSymbol(position)) continue
                 if (seq.mutations[position]?.get(symbol)?.contains(row.id) != true) return null
-                val key = (position * size + symbol).toLong()
-                val current = counts.getOrPut(key, 0)
-                counts.put(key, current + 1)
+                counts.increment((position * size + symbol).toLong())
             }
+            val runs = ArrayList<Int>()
             forEachRun(row.missing) { s, start, end ->
                 val from = maxOf(1, start)
                 val until = minOf(seq.length + 1, end)
                 if (s === seq && from < until) {
                     diff[from]++
                     diff[until]--
+                    runs.addAll(listOf(start, end))
+                }
+            }
+            if (seq.hasLocalReference) {
+                // the reference is stored where it is not the implicit symbol: present, not missing, no code
+                val coded = codes.map { MutationCode.position(it) }.toIntArray().also { it.sort() }
+                var run = 0
+                for (position in seq.localReferencePositions) {
+                    while (run < runs.size / 2 && runs[2 * run + 1] <= position) run++
+                    if (run < runs.size / 2 && runs[2 * run] <= position) continue
+                    if (java.util.Arrays.binarySearch(coded, position) >= 0) continue
+                    val ref = seq.reference(position)
+                    if (seq.mutations[position]?.get(ref)?.contains(row.id) != true) return null
+                    counts.increment((position * size + ref).toLong())
                 }
             }
         }
@@ -1211,6 +1258,26 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         val rows = ArrayList<MutationRow>()
         val counts = LongArray(symbolCount)
         for (p in first..last) {
+            val implicit = seq.implicitSymbol(p)
+            if (implicit != seq.reference(p)) {
+                // the reference is stored and the implicit symbol derived: count every stored symbol exactly
+                val stored = seq.mutations[p]
+                var storedSum = 0L
+                for (s in 0 until symbolCount) {
+                    val bm = stored?.get(s)
+                    counts[s] = when {
+                        bm == null -> 0L
+                        cardinalities != null -> countAll(p * symbolCount + s, bm)
+                        else -> RoaringBitmap.andCardinality(ids, bm).toLong()
+                    }
+                    storedSum += counts[s]
+                }
+                counts[implicit] = maxOf(0L, n - missing[p] - storedSum)
+                var coverage = 0L
+                for (s in 0 until symbolCount) if (validMask and (1 shl s) != 0) coverage += counts[s]
+                emitMutations(seq, p, counts, coverage, minProportion, rows)
+                continue
+            }
             val perSymbol = seq.mutations[p] ?: continue
             val ref = seq.reference(p)
             val refValid = validMask and (1 shl ref) != 0
@@ -1389,10 +1456,15 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         private val parallelPool: ForkJoinPool get() = indexPool
 
         /** builds an index from [rows] (any id order; ascending is fastest) */
-        fun build(schema: QuerySchema, rows: Iterable<IndexRow>, dataVersion: Long = 0): InMemoryOrganismIndex {
+        fun build(
+            schema: QuerySchema,
+            rows: Iterable<IndexRow>,
+            dataVersion: Long = 0,
+            localReference: Boolean = true,
+        ): InMemoryOrganismIndex {
             val index = InMemoryOrganismIndex(schema)
             rows.forEach { index.addForBulkLoad(it) }
-            index.finishBulkLoad(dataVersion)
+            index.finishBulkLoad(dataVersion, localReference)
             return index
         }
     }
@@ -1441,3 +1513,5 @@ internal inline fun mergeSort(a: IntArray, crossinline compare: (Int, Int) -> In
     }
     if (src !== a) System.arraycopy(src, 0, a, 0, n)
 }
+
+private fun LongIntMap.increment(key: Long) = put(key, getOrPut(key, 0) + 1)
