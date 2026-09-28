@@ -6,6 +6,7 @@ import { err, ok, Result } from 'neverthrow';
 import { ZodSchema } from 'zod';
 
 import { lapisApi } from './lapisApi.ts';
+import { getServerLapisCacheAdapter } from './lapisCache/serverLapisCache.ts';
 import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
 import { getLapisUrl, getRuntimeConfig, getSchema } from '../config.ts';
 import { getInstanceLogger, type InstanceLogger } from '../logger.ts';
@@ -45,6 +46,10 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
             logger,
             'LAPIS',
         );
+        const cacheAdapter = getServerLapisCacheAdapter();
+        if (cacheAdapter !== undefined) {
+            this.zodios.axios.defaults.adapter = cacheAdapter;
+        }
     }
 
     public static createForOrganism(organism: string) {
@@ -239,7 +244,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         responseSchema: ZodSchema<T>,
     ): Promise<Result<T, ProblemDetail>> {
         try {
-            const response = await axios.request({
+            const response = await this.zodios.axios.request({
                 url: `${this.url}${endpoint}`,
                 method,
                 data: request,
