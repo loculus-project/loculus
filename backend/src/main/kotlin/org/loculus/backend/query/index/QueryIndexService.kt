@@ -26,7 +26,7 @@ private val log = KotlinLogging.logger {}
  * `loculus.query-engine.tail-interval-ms`. Large change batches (e.g. a projection rebuild) trigger a full
  * reload. Reloads run one organism at a time and drop the old index first, so the heap holds at most one index
  * copy being rebuilt; that organism answers 503 until its reload finishes. The first loads at startup run
- * concurrently.
+ * concurrently. A failed load is retried with exponential backoff; the retry of a failed reload is a reload too.
  */
 @Component
 @ConditionalOnProperty(prefix = "loculus.query-engine", name = ["enabled"], havingValue = "true")
@@ -39,8 +39,11 @@ class QueryIndexService(
     private val indexes = ConcurrentHashMap<String, InMemoryOrganismIndex>()
     private val loadedOnce: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
-    /** reloads run one organism at a time; an organism waiting for its turn keeps serving its old index */
-    private val reloadLock = ReentrantLock()
+    /**
+     * reloads (and retries of failed reloads) run one organism at a time; an organism waiting for its turn keeps
+     * serving its old index
+     */
+    internal val reloadLock = ReentrantLock()
     private val executor = Executors.newScheduledThreadPool(maxOf(1, registry.schemas.size)) { runnable ->
         Thread(runnable, "query-index").apply { isDaemon = true }
     }
@@ -75,6 +78,10 @@ class QueryIndexService(
         private var gapSeq = -1L
         private var gapSince = 0L
 
+        /** consecutive failed loads, and when the next load may start */
+        private var loadFailures = 0
+        private var nextLoadAt = 0L
+
         /**
          * Must not throw: scheduleWithFixedDelay silently cancels every later run once a task throws, which would
          * freeze this organism's index. An OutOfMemoryError is rethrown anyway: after it the heap state is
@@ -83,19 +90,36 @@ class QueryIndexService(
         fun tick() {
             try {
                 if (index == null) {
-                    fullLoad()
+                    if (System.currentTimeMillis() < nextLoadAt) return
+                    // a load after the first one retries a failed reload: it waits its turn like any reload
+                    if (organism in loadedOnce) reloadLock.withLock { load() } else load()
                 } else if (tail() == TailResult.RELOAD) {
                     reloadLock.withLock {
                         indexes.remove(organism)
                         index = null
-                        fullLoad()
+                        load()
                     }
                 }
             } catch (e: OutOfMemoryError) {
                 log.error(e) { "Query index for $organism: out of memory, updates stop" }
                 throw e
             } catch (e: Throwable) {
-                log.error(e) { "Query index for $organism: update failed" }
+                val wait = (nextLoadAt - System.currentTimeMillis()) / 1000
+                val retry = if (index == null) ", next load in $wait s" else ""
+                log.error(e) { "Query index for $organism: update failed$retry" }
+            }
+        }
+
+        /** [fullLoad]; after a failure, the next load waits [MIN_LOAD_BACKOFF_MS] doubling to [MAX_LOAD_BACKOFF_MS] */
+        private fun load() {
+            try {
+                fullLoad()
+                loadFailures = 0
+            } catch (e: Throwable) {
+                nextLoadAt = System.currentTimeMillis() +
+                    minOf(MAX_LOAD_BACKOFF_MS, MIN_LOAD_BACKOFF_MS shl minOf(loadFailures, 20))
+                loadFailures++
+                throw e
             }
         }
 
@@ -235,8 +259,10 @@ class QueryIndexService(
         const val REBUILD_MIN_CHANGES = 50_000
         const val REBUILD_FRACTION = 0.1
         const val GAP_TIMEOUT_MS = 10_000L
+        const val MIN_LOAD_BACKOFF_MS = 1_000L
+        const val MAX_LOAD_BACKOFF_MS = 300_000L
 
-        /** parallel reader connections during a full load (the default Hikari pool has 10) */
+        /** parallel reader connections during a full load (the Hikari pool defaults to 30) */
         const val LOAD_READERS = 4
     }
 }
