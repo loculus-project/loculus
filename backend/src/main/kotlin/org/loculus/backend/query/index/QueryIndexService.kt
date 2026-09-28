@@ -14,7 +14,9 @@ import java.util.TreeSet
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
 import javax.sql.DataSource
+import kotlin.concurrent.withLock
 
 private val log = KotlinLogging.logger {}
 
@@ -22,8 +24,9 @@ private val log = KotlinLogging.logger {}
  * Maintains one [InMemoryOrganismIndex] per queryable organism: a full load from the projection tables
  * (in background threads after application start), then tailing `query_changelog` every
  * `loculus.query-engine.tail-interval-ms`. Large change batches (e.g. a projection rebuild) trigger a full
- * reload. The old index is dropped before the reload, so the heap never holds two copies of an organism's index;
- * that organism answers 503 until the reload finishes.
+ * reload. Reloads run one organism at a time and drop the old index first, so the heap holds at most one index
+ * copy being rebuilt; that organism answers 503 until its reload finishes. The first loads at startup run
+ * concurrently.
  */
 @Component
 @ConditionalOnProperty(prefix = "loculus.query-engine", name = ["enabled"], havingValue = "true")
@@ -35,6 +38,9 @@ class QueryIndexService(
     DisposableBean {
     private val indexes = ConcurrentHashMap<String, InMemoryOrganismIndex>()
     private val loadedOnce: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
+    /** reloads run one organism at a time; an organism waiting for its turn keeps serving its old index */
+    private val reloadLock = ReentrantLock()
     private val executor = Executors.newScheduledThreadPool(maxOf(1, registry.schemas.size)) { runnable ->
         Thread(runnable, "query-index").apply { isDaemon = true }
     }
@@ -79,9 +85,11 @@ class QueryIndexService(
                 if (index == null) {
                     fullLoad()
                 } else if (tail() == TailResult.RELOAD) {
-                    indexes.remove(organism)
-                    index = null
-                    fullLoad()
+                    reloadLock.withLock {
+                        indexes.remove(organism)
+                        index = null
+                        fullLoad()
+                    }
                 }
             } catch (e: OutOfMemoryError) {
                 log.error(e) { "Query index for $organism: out of memory, updates stop" }
