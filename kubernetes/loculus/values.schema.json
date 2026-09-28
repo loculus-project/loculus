@@ -2214,6 +2214,12 @@
     "ingest": {
       "type": "object",
       "properties": {
+        "groupId": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "default": null,
+          "description": "Actual backend group ID of automated INSDC ingestion, used by preprocessing to distinguish imported records. Null preserves per-pipeline configuration and defaults. Does not create or change group membership."
+        },
         "ncbiGatewayUrl": {
           "type": ["string", "null"]
         },

@@ -3064,5 +3064,7 @@ defaultResources:
     memory: "1Gi"
     cpu: "500m"
 ingest:
+  # Actual backend group ID used by automated INSDC ingestion. Null keeps pipeline defaults.
+  groupId: null
   ncbiGatewayUrl: null
   mirrorBucket: null

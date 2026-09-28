@@ -19,6 +19,9 @@ data:
   preprocessing-config.yaml: |
     organism: {{ $organism }}
     {{- $configFile := deepCopy $processingConfig.configFile }}
+    {{- if not (kindIs "invalid" $.Values.ingest.groupId) }}
+    {{- $_ := set $configFile "insdc_ingest_group_id" $.Values.ingest.groupId }}
+    {{- end }}
     {{- if and $.Values.requireLogin (hasKey $configFile "create_embl_file") }}
     {{/* EMBL upload requires S3 sharing, which is unsupported in restricted mode. */}}
     {{- $_ := set $configFile "create_embl_file" false }}

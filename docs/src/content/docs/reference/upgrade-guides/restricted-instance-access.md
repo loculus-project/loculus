@@ -114,6 +114,14 @@ work around this failure.
 
 ### Test accounts and automated smoke tests
 
+Before creating test groups, check the actual automated INSDC ingestion group ID. Nextclade
+preprocessing defaults to group 1; if ingestion uses another group, set `ingest.groupId` to its
+actual ID. This setting configures preprocessing, not group creation or access grants. A wrong
+ID both rejects imported metadata and gives the wrong group ingestion-specific validation
+exemptions. After changing it, wait for workers to roll out and reprocess affected records.
+The persistent branch preview currently uses group 2 for ingestion and group 1 for contributor
+testing; recheck these IDs if its database is recreated.
+
 When `createTestAccounts` is enabled, `testcontributor` (password `testcontributor`) has the
 Contributor role without super-user privileges. `testuser` remains a viewer in restricted mode.
 These known credentials are exclusively for disposable environments with synthetic/public data.
