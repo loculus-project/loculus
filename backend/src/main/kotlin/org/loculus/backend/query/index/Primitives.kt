@@ -376,7 +376,7 @@ internal const val MAX_RUNS_PER_CONTAINER = 64
  */
 internal fun runOptimizeFewRuns(bitmap: RoaringBitmap): RoaringBitmap {
     val optimized = bitmap.clone()
-    if (!optimized.runOptimize()) {
+    if (!optimized.runOptimize() && !bitmap.hasRunCompression()) {
         bitmap.trim()
         return bitmap
     }
@@ -385,13 +385,32 @@ internal fun runOptimizeFewRuns(bitmap: RoaringBitmap): RoaringBitmap {
     val candidate = optimized.containerPointer
     while (candidate.container != null) {
         val c = candidate.container
-        val useRun = c !is RunContainer || c.numberOfRuns() <= MAX_RUNS_PER_CONTAINER
-        result.append(candidate.key(), if (useRun) c else original.container)
+        val key = candidate.key()
+        result.append(
+            key,
+            when {
+                c !is RunContainer || c.numberOfRuns() <= MAX_RUNS_PER_CONTAINER -> c
+
+                // a run container that updates grew past the cap stays one through runOptimize: re-encode it
+                original.container is RunContainer -> withoutRuns(key, c)
+
+                else -> original.container
+            },
+        )
         candidate.advance()
         original.advance()
     }
     result.trim()
     return result
+}
+
+/** the values of [c] (a container of chunk [key]) as an array or bitmap container */
+private fun withoutRuns(key: Char, c: RunContainer): org.roaringbitmap.Container {
+    val writer = RoaringBitmapWriter.writer().runCompress(false).get()
+    val base = key.code shl 16
+    val iterator = c.getCharIterator()
+    while (iterator.hasNext()) writer.add(base or iterator.next().code)
+    return writer.get().containerPointer.container
 }
 
 /**

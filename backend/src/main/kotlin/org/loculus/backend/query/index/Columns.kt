@@ -43,6 +43,12 @@ internal sealed class Column(val field: MetadataField) : GroupKeySource {
 
     open fun isNullFilter(domain: RoaringBitmap): RoaringBitmap = scan(domain) { isNull(it) }
 
+    /** compresses the column's bitmaps (bulk load only, before the index is visible) */
+    open fun runOptimize() {}
+
+    /** like [SequenceIndex.compactTouched], for the bitmaps writes changed since the last call */
+    open fun compactTouched(install: (List<() -> Unit>) -> Unit) {}
+
     companion object {
         /** [lookupByValue]: keep value -> ids postings instead of per-value bitmaps (string fields only) */
         fun create(field: MetadataField, capacity: Int, lookupByValue: Boolean = false): Column = when (field.type) {
@@ -72,6 +78,9 @@ internal class StringColumn(field: MetadataField, capacity: Int, lookupByValue: 
         if (!lookupByValue && (field.generateIndex || field.lineageSystem != null)) ArrayList() else null
     private val postings: IdPostings? = if (lookupByValue) IdPostings() else null
 
+    /** codes whose value bitmap changed since [compactTouched] (writer only) */
+    private val touchedCodes = java.util.BitSet()
+
     @Volatile private var ranks: Ranks? = null
     private val regexCache = ConcurrentHashMap<String, RegexMatches>()
 
@@ -97,6 +106,36 @@ internal class StringColumn(field: MetadataField, capacity: Int, lookupByValue: 
         }
         while (bm.size <= code) bm.add(RoaringBitmap())
         bm[code].add(id)
+        touchedCodes.set(code)
+    }
+
+    override fun runOptimize() {
+        bitmaps?.let { list -> for (c in list.indices) list[c] = runOptimizeFewRuns(list[c]) }
+        nulls.runOptimize()
+        nulls.trim()
+        touchedCodes.clear()
+    }
+
+    override fun compactTouched(install: (List<() -> Unit>) -> Unit) {
+        val list = bitmaps
+        if (list != null) {
+            val swaps = ArrayList<() -> Unit>()
+            var c = touchedCodes.nextSetBit(0)
+            while (c >= 0) {
+                val code = c
+                if (code < list.size) {
+                    val o = runOptimizeFewRuns(list[code].clone())
+                    swaps.add { list[code] = o }
+                }
+                if (swaps.size >= 4096) {
+                    install(ArrayList(swaps))
+                    swaps.clear()
+                }
+                c = touchedCodes.nextSetBit(c + 1)
+            }
+            if (swaps.isNotEmpty()) install(swaps)
+        }
+        touchedCodes.clear()
     }
 
     override fun clear(id: Int) {
@@ -105,7 +144,10 @@ internal class StringColumn(field: MetadataField, capacity: Int, lookupByValue: 
             nulls.remove(id)
             return
         }
-        bitmaps?.get(code)?.remove(id)
+        bitmaps?.let {
+            it[code].remove(id)
+            touchedCodes.set(code)
+        }
         postings?.remove(code, id)
         codes.set(id, -1)
     }

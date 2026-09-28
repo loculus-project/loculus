@@ -143,7 +143,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             val seqIndex = seq.schema.index
             units += { rows ->
                 for (row in rows) {
-                    if (seqIndex in row.presentSequences) seq.present.add(row.id)
+                    if (seqIndex in row.presentSequences) seq.addPresent(row.id)
                     forEachRun(row.missing) { s, start, end -> if (s === seq) seq.addMissingRun(row.id, start, end) }
                     for (insertion in row.insertions) {
                         val first = insertion.indexOf(':')
@@ -183,6 +183,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
                 if (localReference) it.adaptLocalReference()
                 it.runOptimize()
             }
+            columns.parallelStream().forEach { it.runOptimize() }
         }.get()
         alive.runOptimize()
         this.dataVersion = dataVersion
@@ -215,12 +216,14 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             generation++
         }
         val done = System.nanoTime()
+        compactTouched()
         return ApplyStats(
             upserts = upserts.size,
             removed = toRemove.cardinality,
             prepareMs = (prepared - started) / 1e6,
             waitForLockMs = (locked - prepared) / 1e6,
             lockedMs = (done - locked) / 1e6,
+            compactMs = (System.nanoTime() - done) / 1e6,
         )
     }
 
@@ -230,7 +233,20 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         val prepareMs: Double,
         val waitForLockMs: Double,
         val lockedMs: Double,
+        /** re-compressing the changed bitmaps after the update (mostly outside the lock) */
+        val compactMs: Double = 0.0,
     )
+
+    /**
+     * Re-compresses the bitmaps the last [apply] changed, as the bulk load does for all bitmaps: copies are
+     * optimised outside the lock and swapped in under short write-lock holds.
+     */
+    private fun compactTouched() {
+        val install: (List<() -> Unit>) -> Unit = { swaps -> lock.write { swaps.forEach { it() } } }
+        sequences.forEach { it?.compactTouched(install) }
+        columns.forEach { it.compactTouched(install) }
+        lock.write { alive.runOptimize() }
+    }
 
     private fun IndexRow.idSet() = RoaringBitmap.bitmapOf(id)
 
@@ -287,7 +303,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
                 columns[i].clear(id)
             }
         }
-        for (seqIndex in row.presentSequences) sequences.getOrNull(seqIndex)?.present?.add(id)
+        for (seqIndex in row.presentSequences) sequences.getOrNull(seqIndex)?.addPresent(id)
         var localReferenceCodes: HashMap<Int, ArrayList<Int>>? = null
         for (code in row.mutations) {
             val seq = sequences.getOrNull(MutationCode.seqIndex(code)) ?: continue

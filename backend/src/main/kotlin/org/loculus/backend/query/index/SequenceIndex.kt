@@ -48,6 +48,16 @@ internal class SequenceIndex(val schema: SequenceSchema) {
     private val startCounts = IntArray(length + 2)
     private val endCounts = IntArray(length + 2)
 
+    /**
+     * What writes after the bulk load changed, so that [compactTouched] re-compresses only those bitmaps:
+     * positions of mutation and transition bitmaps, checkpoint indexes, insertion positions and [present].
+     * Written and read by the index writer only.
+     */
+    private val touchedPositions = java.util.BitSet()
+    private val touchedCheckpoints = java.util.BitSet()
+    private val touchedInsertions = HashSet<Int>()
+    private var presentTouched = false
+
     /** cached missing counts per position over all [present] ids; invalidated on every write */
     @Volatile private var missingCountsAll: IntArray? = null
 
@@ -64,6 +74,11 @@ internal class SequenceIndex(val schema: SequenceSchema) {
 
     // ---------------- writes ----------------
 
+    fun addPresent(id: Int) {
+        present.add(id)
+        presentTouched = true
+    }
+
     fun addMutation(id: Int, position: Int, symbol: Int) {
         if (position < 1 || position > length || symbol >= alphabet.size) return
         val perSymbol = mutations[position] ?: arrayOfNulls<RoaringBitmap>(alphabet.size).also {
@@ -71,6 +86,7 @@ internal class SequenceIndex(val schema: SequenceSchema) {
         }
         val bm = perSymbol[symbol] ?: RoaringBitmap().also { perSymbol[symbol] = it }
         if (bm.checkedAdd(id)) mutationCounts[position * alphabet.size + symbol]++
+        touchedPositions.set(position)
     }
 
     /**
@@ -186,11 +202,16 @@ internal class SequenceIndex(val schema: SequenceSchema) {
         val e = minOf(length + 1, end)
         if (s >= e) return
         if ((runStarts[s] ?: RoaringBitmap().also { runStarts[s] = it }).checkedAdd(id)) startCounts[s]++
+        touchedPositions.set(s)
         // ends beyond the last position never influence a position, so they are not stored
         if (e <= length && (runEnds[e] ?: RoaringBitmap().also { runEnds[e] = it }).checkedAdd(id)) endCounts[e]++
+        touchedPositions.set(e)
         var k = (s + CHECKPOINT_SPACING - 1) shr CHECKPOINT_SHIFT
         while (k < checkpoints.size && (k shl CHECKPOINT_SHIFT) < e) {
-            if (k > 0) checkpoints[k].add(id)
+            if (k > 0) {
+                checkpoints[k].add(id)
+                touchedCheckpoints.set(k)
+            }
             k++
         }
     }
@@ -213,13 +234,22 @@ internal class SequenceIndex(val schema: SequenceSchema) {
 
     fun addInsertion(id: Int, position: Int, symbols: String) {
         insertions.getOrPut(position) { HashMap() }.getOrPut(symbols) { RoaringBitmap() }.add(id)
+        touchedInsertions.add(position)
     }
 
     /**
      * A bitmap to remove ids from, and the cardinality counter (counts[index]) to adjust. [ids]: exactly the ids
-     * contained in the bitmap (small batches), or null to remove the whole batch with andNot.
+     * contained in the bitmap (small batches), or null to remove the whole batch with andNot. [kind] and [slot]:
+     * where the bitmap lives, for [compactTouched] ([AT_POSITION] for mutation and transition bitmaps).
      */
-    class Removal(val bitmap: RoaringBitmap, val counts: IntArray?, val index: Int, val ids: IntArray?)
+    class Removal(
+        val bitmap: RoaringBitmap,
+        val counts: IntArray?,
+        val index: Int,
+        val ids: IntArray?,
+        val kind: Int,
+        val slot: Int,
+    )
 
     /**
      * Every bitmap containing any of [ids] (to remove them). Read-only, so it runs outside the write lock
@@ -232,8 +262,10 @@ internal class SequenceIndex(val schema: SequenceSchema) {
         val probe = if (ids.cardinality <= PROBE_LIMIT) ids.toArray() else null
         val probeOnly = ids.cardinality <= PROBE_ONLY_LIMIT
 
-        fun check(bm: RoaringBitmap, counts: IntArray?, index: Int): Removal? {
-            if (probe == null) return if (RoaringBitmap.intersects(bm, ids)) Removal(bm, counts, index, null) else null
+        fun check(bm: RoaringBitmap, counts: IntArray?, index: Int, kind: Int, slot: Int): Removal? {
+            if (probe == null) {
+                return if (RoaringBitmap.intersects(bm, ids)) Removal(bm, counts, index, null, kind, slot) else null
+            }
             if (!probeOnly && !RoaringBitmap.intersects(bm, ids)) return null
             var matched: IntArray? = null
             var n = 0
@@ -243,10 +275,10 @@ internal class SequenceIndex(val schema: SequenceSchema) {
                     matched[n++] = id
                 }
             }
-            return matched?.let { Removal(bm, counts, index, it.copyOf(n)) }
+            return matched?.let { Removal(bm, counts, index, it.copyOf(n), kind, slot) }
         }
 
-        check(present, null, 0)?.let { out.add(it) }
+        check(present, null, 0, PRESENT, 0)?.let { out.add(it) }
         val size = alphabet.size
         val chunks = (length + 1 + COLLECT_CHUNK - 1) / COLLECT_CHUNK
         val parts = pool.submit<List<List<Removal>>> {
@@ -255,23 +287,32 @@ internal class SequenceIndex(val schema: SequenceSchema) {
                 for (p in chunk * COLLECT_CHUNK until minOf(length + 2, (chunk + 1) * COLLECT_CHUNK)) {
                     if (p <= length) {
                         mutations[p]?.forEachIndexed { sym, bm ->
-                            if (bm != null) check(bm, mutationCounts, p * size + sym)?.let { part.add(it) }
+                            val index = p * size + sym
+                            if (bm != null) check(bm, mutationCounts, index, AT_POSITION, p)?.let { part.add(it) }
                         }
                     }
-                    runStarts[p]?.let { bm -> check(bm, startCounts, p)?.let { part.add(it) } }
-                    runEnds[p]?.let { bm -> check(bm, endCounts, p)?.let { part.add(it) } }
+                    runStarts[p]?.let { bm -> check(bm, startCounts, p, AT_POSITION, p)?.let { part.add(it) } }
+                    runEnds[p]?.let { bm -> check(bm, endCounts, p, AT_POSITION, p)?.let { part.add(it) } }
                 }
                 part
             }.toList()
         }.get()
         parts.forEach { out.addAll(it) }
-        for (bm in checkpoints) check(bm, null, 0)?.let { out.add(it) }
-        for (bySymbols in insertions.values) for (bm in bySymbols.values) check(bm, null, 0)?.let { out.add(it) }
+        for ((k, bm) in checkpoints.withIndex()) check(bm, null, 0, CHECKPOINT, k)?.let { out.add(it) }
+        for ((position, bySymbols) in insertions) {
+            for (bm in bySymbols.values) check(bm, null, 0, INSERTION, position)?.let { out.add(it) }
+        }
     }
 
     /** under the write lock */
     fun remove(ids: RoaringBitmap, removals: List<Removal>) {
         for (r in removals) {
+            when (r.kind) {
+                AT_POSITION -> touchedPositions.set(r.slot)
+                CHECKPOINT -> touchedCheckpoints.set(r.slot)
+                INSERTION -> touchedInsertions.add(r.slot)
+                PRESENT -> presentTouched = true
+            }
             val exact = r.ids
             if (exact != null) {
                 for (id in exact) if (r.bitmap.checkedRemove(id)) r.counts?.let { it[r.index]-- }
@@ -296,6 +337,72 @@ internal class SequenceIndex(val schema: SequenceSchema) {
         for (q in runEnds.indices) runEnds[q]?.let { runEnds[q] = runOptimizeFewRuns(it) }
         for (k in checkpoints.indices) checkpoints[k] = runOptimizeFewRuns(checkpoints[k])
         insertions.values.forEach { m -> m.entries.forEach { it.setValue(runOptimizeFewRuns(it.value)) } }
+        clearTouched()
+    }
+
+    private fun clearTouched() {
+        touchedPositions.clear()
+        touchedCheckpoints.clear()
+        touchedInsertions.clear()
+        presentTouched = false
+    }
+
+    /**
+     * Re-compresses the bitmaps that writes changed since the bulk load or the last call (grown arrays keep up to
+     * half their capacity unused, and added ids may form runs): optimised copies are made here, outside the
+     * lock, and handed to [install] in batches of assignments that it runs under the write lock. Writer only;
+     * readers see either the old or the new bitmap, which hold the same ids.
+     */
+    fun compactTouched(install: (List<() -> Unit>) -> Unit) {
+        val swaps = ArrayList<() -> Unit>()
+        fun flush() {
+            if (swaps.isEmpty()) return
+            install(ArrayList(swaps))
+            swaps.clear()
+        }
+        fun optimized(bm: RoaringBitmap) = runOptimizeFewRuns(bm.clone())
+        if (presentTouched) {
+            val o = optimized(present)
+            swaps.add { present = o }
+        }
+        var p = touchedPositions.nextSetBit(0)
+        while (p >= 0) {
+            val position = p
+            mutations.getOrNull(position)?.let { perSymbol ->
+                for (s in perSymbol.indices) {
+                    val o = perSymbol[s]?.let { optimized(it) } ?: continue
+                    swaps.add { perSymbol[s] = o }
+                }
+            }
+            runStarts.getOrNull(position)?.let { bm ->
+                val o = optimized(bm)
+                swaps.add { runStarts[position] = o }
+            }
+            runEnds.getOrNull(position)?.let { bm ->
+                val o = optimized(bm)
+                swaps.add { runEnds[position] = o }
+            }
+            if (swaps.size >= COMPACT_BATCH) flush()
+            p = touchedPositions.nextSetBit(p + 1)
+        }
+        var k = touchedCheckpoints.nextSetBit(0)
+        while (k >= 0) {
+            val index = k
+            val o = optimized(checkpoints[index])
+            swaps.add { checkpoints[index] = o }
+            if (swaps.size >= COMPACT_BATCH) flush()
+            k = touchedCheckpoints.nextSetBit(k + 1)
+        }
+        for (position in touchedInsertions) {
+            val bySymbols = insertions[position] ?: continue
+            for (entry in bySymbols.entries) {
+                val o = optimized(entry.value)
+                swaps.add { entry.setValue(o) }
+            }
+            if (swaps.size >= COMPACT_BATCH) flush()
+        }
+        flush()
+        clearTouched()
     }
 
     fun memoryBytes(): Long {
@@ -410,6 +517,15 @@ internal class SequenceIndex(val schema: SequenceSchema) {
         private const val COLLECT_CHUNK = 1024
         private const val PROBE_LIMIT = 256
         private const val PROBE_ONLY_LIMIT = 16
+
+        /** bitmaps swapped per write-lock hold in [compactTouched] */
+        private const val COMPACT_BATCH = 4096
+
+        /** [Removal.kind] */
+        const val AT_POSITION = 0
+        const val CHECKPOINT = 1
+        const val INSERTION = 2
+        const val PRESENT = 3
 
         /**
          * sorts and merges overlapping / adjacent runs (flattened start, end pairs) so that runs are disjoint
