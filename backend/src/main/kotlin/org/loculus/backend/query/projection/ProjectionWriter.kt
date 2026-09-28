@@ -252,14 +252,13 @@ class ProjectionWriter(private val schema: QuerySchema) {
         return result
     }
 
+    /**
+     * Appends [changedIds] to query_changelog with per-organism seqs max(seq) + 1, + 2, ... The preceding update of
+     * the query_engine_state row locks it until commit, so all writers of an organism serialise here and the insert
+     * (a separate statement, hence a fresh read-committed snapshot) sees the rows of the previous writer. Seqs thus
+     * become visible in order and without holes, which the tailers in QueryIndexService rely on.
+     */
     private fun recordChanges(connection: Connection, changedIds: Set<Int>) {
-        connection.prepareStatement(
-            "insert into query_changelog (organism, id) select ?, unnest(?::integer[]) order by 2",
-        ).use {
-            it.setString(1, organism)
-            it.setArray(2, connection.createArrayOf("integer", changedIds.toTypedArray()))
-            it.executeUpdate()
-        }
         connection.prepareStatement(
             """
             update query_engine_state
@@ -269,6 +268,19 @@ class ProjectionWriter(private val schema: QuerySchema) {
             """.trimIndent(),
         ).use {
             it.setString(1, organism)
+            check(it.executeUpdate() == 1) { "No query_engine_state for $organism" }
+        }
+        connection.prepareStatement(
+            """
+            insert into query_changelog (organism, seq, id)
+            select ?, m.seq + row_number() over (order by c.id), c.id
+            from unnest(?::integer[]) as c(id),
+                (select coalesce(max(seq), 0) as seq from query_changelog where organism = ?) m
+            """.trimIndent(),
+        ).use {
+            it.setString(1, organism)
+            it.setArray(2, connection.createArrayOf("integer", changedIds.toTypedArray()))
+            it.setString(3, organism)
             it.executeUpdate()
         }
     }

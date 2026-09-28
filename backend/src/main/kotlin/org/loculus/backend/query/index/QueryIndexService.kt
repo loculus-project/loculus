@@ -162,9 +162,9 @@ class QueryIndexService(
         }
 
         /**
-         * Changelog seqs are assigned before commit, so a smaller seq can become visible after a larger one.
-         * safeSeq only advances over contiguous seqs; a gap is skipped once it persisted for [GAP_TIMEOUT_MS]
-         * (a rolled-back transaction).
+         * safeSeq only advances over contiguous seqs; a gap is skipped once it persisted for [GAP_TIMEOUT_MS].
+         * Since V1.39 the projector assigns per-organism seqs in commit order without holes, so gaps only occur in
+         * rows written before (global bigserial seqs, interleaved across organisms and assigned before commit).
          */
         private fun advanceSafeSeq(seen: List<Long>) {
             val all = TreeSet(seen)

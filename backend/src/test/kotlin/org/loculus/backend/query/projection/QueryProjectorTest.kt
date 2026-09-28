@@ -40,6 +40,9 @@ import org.loculus.backend.service.submission.CompressionDictService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.sql.Connection
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 @EndpointTest(
     properties = [
@@ -316,6 +319,69 @@ class QueryProjectorTest(
         assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
     }
 
+    @Test
+    fun `changelog seqs of an organism become visible in commit order without holes`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        runProjector()
+        val writer = ProjectionWriter(registry.get(DEFAULT_ORGANISM)!!)
+        val ids = projectedIds(DEFAULT_ORGANISM).values.sorted()
+        val seqsBefore = changelogSeqs()
+
+        // the ordering argument needs a fresh snapshot per statement
+        assertThat(
+            sql { c ->
+                c.createStatement().use { s ->
+                    s.executeQuery("show transaction_isolation").use { rs ->
+                        rs.next()
+                        rs.getString(1)
+                    }
+                }
+            },
+            equalTo("read committed"),
+        )
+
+        // a rolled-back writer must not leave a hole
+        transaction {
+            writer.write(TransactionManager.current().connection.connection as Connection, emptyList(), listOf(ids[0]))
+            rollback()
+        }
+
+        // second writer commits only after a third one has started writing
+        val secondWrote = CountDownLatch(1)
+        val releaseSecond = CountDownLatch(1)
+        val second = thread {
+            transaction {
+                writer.write(
+                    TransactionManager.current().connection.connection as Connection,
+                    emptyList(),
+                    listOf(ids[1]),
+                )
+                secondWrote.countDown()
+                releaseSecond.await()
+            }
+        }
+        assertThat(secondWrote.await(30, TimeUnit.SECONDS), equalTo(true))
+        val third = thread {
+            transaction {
+                writer.write(
+                    TransactionManager.current().connection.connection as Connection,
+                    emptyList(),
+                    listOf(ids[2]),
+                )
+            }
+        }
+        third.join(500)
+        assertThat("third writer waits for the second one", third.isAlive, equalTo(true))
+        assertThat(changelogSeqs(), equalTo(seqsBefore))
+        releaseSecond.countDown()
+        second.join()
+        third.join()
+
+        val max = seqsBefore.maxOrNull() ?: 0L
+        assertThat(changelogSeqs(), equalTo(seqsBefore + listOf(max + 1, max + 2)))
+        assertThat(changelogIdsAbove(max), equalTo(listOf(ids[1], ids[2])))
+    }
+
     // ----------------------------------------------------------------------------------------------------------
 
     private fun runProjector() {
@@ -442,6 +508,29 @@ class QueryProjectorTest(
             it.executeQuery("select accession from query_dirty_accessions").use { rs ->
                 val result = mutableListOf<String>()
                 while (rs.next()) result.add(rs.getString(1))
+                result
+            }
+        }
+    }
+
+    private fun changelogSeqs(): List<Long> = sql { c ->
+        c.prepareStatement("select seq from query_changelog where organism = ? order by seq").use {
+            it.setString(1, DEFAULT_ORGANISM)
+            it.executeQuery().use { rs ->
+                val result = mutableListOf<Long>()
+                while (rs.next()) result.add(rs.getLong(1))
+                result
+            }
+        }
+    }
+
+    private fun changelogIdsAbove(seq: Long): List<Int> = sql { c ->
+        c.prepareStatement("select id from query_changelog where organism = ? and seq > ? order by seq").use {
+            it.setString(1, DEFAULT_ORGANISM)
+            it.setLong(2, seq)
+            it.executeQuery().use { rs ->
+                val result = mutableListOf<Int>()
+                while (rs.next()) result.add(rs.getInt(1))
                 result
             }
         }
