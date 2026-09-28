@@ -8,7 +8,9 @@
  *  - numbers and booleans become their string form;
  *  - `orderBy` objects become field names when ascending. LAPIS' GET only knows ascending field names; the Loculus
  *    query engine also reads `field:descending`, so with `queryEngine` set a descending order is sent that way;
- *  - null values, empty arrays, nested objects, `random` object orders, and descending orders without `queryEngine`
+ *  - empty mutation and insertion lists are left out: both servers read them as no filter, and the search page always
+ *    sends all four;
+ *  - null values, other empty arrays, nested objects, `random` object orders, and descending orders without `queryEngine`
  *    keep the request on POST.
  */
 import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
@@ -30,6 +32,13 @@ const COMMA_SPLIT_KEYS = new Set(
         'nucleotideInsertions',
         'aminoAcidInsertions',
     ].map((key) => key.toLowerCase()),
+);
+
+/** List parameters where an empty list means the same as leaving the parameter out (same parsed request, same ETag). */
+const EMPTY_MEANS_ABSENT_KEYS = new Set(
+    ['nucleotideMutations', 'aminoAcidMutations', 'nucleotideInsertions', 'aminoAcidInsertions'].map((key) =>
+        key.toLowerCase(),
+    ),
 );
 
 /** Parameters parsed as integers; a fractional JSON number would be truncated by POST but rejected by GET. */
@@ -89,10 +98,13 @@ export function lapisRequestToQueryString(body: unknown, queryEngine = false): s
             continue; // JSON.stringify drops it too
         }
         const values = Array.isArray(rawValue) ? (rawValue as unknown[]) : [rawValue];
+        const lowerKey = key.toLowerCase();
         if (values.length === 0) {
+            if (EMPTY_MEANS_ABSENT_KEYS.has(lowerKey)) {
+                continue;
+            }
             return undefined; // POST: "must have at least one value" for filters; GET would drop the filter
         }
-        const lowerKey = key.toLowerCase();
         for (const value of values) {
             const text = lowerKey === 'orderby' ? orderByToString(value, queryEngine) : scalarToString(value);
             if (text === undefined) {

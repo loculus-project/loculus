@@ -116,6 +116,22 @@ describe('lapisRequestToQueryString', () => {
     ])('keeps POST for a body that is %s', (_, body) => {
         expect(lapisRequestToQueryString(body)).toBeUndefined();
     });
+    test('leaves out empty mutation and insertion lists, as the search page sends them', () => {
+        const query = lapisRequestToQueryString({
+            versionStatus: 'LATEST_VERSION',
+            nucleotideMutations: [],
+            aminoAcidMutations: [],
+            nucleotideInsertions: [],
+            aminoAcidInsertions: [],
+            fields: ['clade', 'accessionVersion'],
+            limit: 100,
+        });
+        expect(query).toBe('versionStatus=LATEST_VERSION&fields=clade&fields=accessionVersion&limit=100');
+    });
+
+    test('an empty list on a metadata filter still stays POST', () => {
+        expect(lapisRequestToQueryString({ nucleotideMutations: [], geoLocCountry: [] })).toBeUndefined();
+    });
 });
 
 describe('lapisRequestToQueryString for the query engine', () => {
