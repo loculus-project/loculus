@@ -33,7 +33,7 @@ PREMATURE_STOP_NOTE = (
     "This CDS has been marked as pseudo by an automated pipeline because it contains a premature "
     "stop codon at amino acid position {position}. "
     "This is not an assertion that it is a true pseudogene: "
-    "the stop codon may be a sequencing artefact, or may be genuine without abolishing protein function."
+    "the stop codon may be a sequencing artefact, or may be genuine with or without abolishing protein function."
 )
 
 
