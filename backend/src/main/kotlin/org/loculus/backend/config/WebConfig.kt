@@ -15,6 +15,8 @@ class WebConfig(private val backendConfig: BackendConfig) : WebMvcConfigurer {
             .allowedOrigins("*") // Allow requests from any origin
             .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD")
             .allowedHeaders("*")
+            // lets the website's JavaScript read the query engine's validators (for If-None-Match revalidation)
+            .exposedHeaders("ETag", "Lapis-Data-Version")
             .maxAge(3600) // Max age of pre-flight requests
     }
 

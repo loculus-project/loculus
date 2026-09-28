@@ -114,17 +114,33 @@ class LapisQueryController(
         val tParsed = System.nanoTime()
 
         val dataVersion = index.dataVersion.toString()
-        val requestId = requestId(response)
-        val info = { LapisInfo.create(dataVersion, requestId, schema.instanceName, request.serverName) }
-        val body = executor.execute(organism, index, parsed, info)
-        val tExecuted = System.nanoTime()
-
         val contentEncoding = if (parsed.compression == null && !parsed.downloadAsFile) {
             LapisParams.contentEncodingFromAcceptEncoding(request.getHeader(HttpHeaders.ACCEPT_ENCODING))
         } else {
             null
         }
+        val contentToken = index.contentToken
+        val etag = entityTag(organism, sequenceName, parsed, contentEncoding, dataVersion, contentToken)
+        if (etag != null && ifNoneMatchMatches(request.getHeader(HttpHeaders.IF_NONE_MATCH), etag)) {
+            // answered before the query runs; also for POST (see entityTag)
+            response.status = HttpStatus.NOT_MODIFIED.value()
+            response.setHeader(HttpHeaders.ETAG, etag)
+            response.setHeader(HttpHeaders.CACHE_CONTROL, CACHE_CONTROL)
+            response.setHeader(LAPIS_DATA_VERSION_HEADER, dataVersion)
+            response.addHeader(HttpHeaders.VARY, VARY)
+            return
+        }
+
+        val requestId = requestId(response)
+        val info = { LapisInfo.create(dataVersion, requestId, schema.instanceName, request.serverName) }
+        val body = executor.execute(organism, index, parsed, info)
+        val tExecuted = System.nanoTime()
+
         val headers = responseHeaders(parsed, endpoint, body, dataVersion, contentEncoding)
+        headers.set(HttpHeaders.CACHE_CONTROL, CACHE_CONTROL)
+        headers.add(HttpHeaders.VARY, VARY)
+        // an index update while the query ran may have mixed two states into the body: send no validator then
+        if (etag != null && index.contentToken == contentToken) headers.set(HttpHeaders.ETAG, etag)
 
         // Responses are written on the servlet thread, not via StreamingResponseBody: the async dispatch raced with
         // Spring Security's header writer (occasionally duplicated security headers) and adds latency.
@@ -288,6 +304,44 @@ class LapisQueryController(
 
     companion object {
         const val OUTPUT_BUFFER_SIZE = 64 * 1024
+
+        /** a client may store the response but must revalidate it (with If-None-Match) before every reuse */
+        const val CACHE_CONTROL = "no-cache"
+        const val VARY = "Accept, Accept-Encoding"
+
+        /**
+         * Weak entity tag of the response to [request]: the index state ([contentToken]) plus a hash of everything
+         * that selects the representation. Weak, because the JSON envelope's requestId/requestInfo differ between
+         * otherwise identical responses. null when the response is not reproducible (unseeded random order).
+         *
+         * A matching If-None-Match is answered with 304 for POST as well. RFC 9110 §13.1.2 asks for 412 on methods
+         * other than GET/HEAD, which presumes an unsafe method; these POSTs are safe queries, and RFC 10008's QUERY
+         * (the standard form of a safe query with a body) answers conditionals like GET. Only the website's own
+         * JavaScript sends If-None-Match on a POST; no HTTP cache stores POST responses.
+         */
+        fun entityTag(
+            organism: String,
+            sequenceName: String?,
+            request: QueryRequest,
+            contentEncoding: String?,
+            dataVersion: String,
+            contentToken: String,
+        ): String? {
+            if (request.random != null && request.random.seed == null) return null
+            // QueryRequest and its Filter tree are data classes: toString() lists every field, lineage filters
+            // already expanded to their descendant sets, so a changed lineage definition changes the tag too
+            val digest = java.security.MessageDigest.getInstance("SHA-256")
+                .digest("$organism\n$sequenceName\n$contentEncoding\n$request".toByteArray(Charsets.UTF_8))
+            val hash = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(digest.copyOf(16))
+            return "W/\"$dataVersion-$contentToken-$hash\""
+        }
+
+        /** weak comparison (RFC 9110 §8.8.3.2) against each listed tag; `*` is not honoured (no unconditional 304s) */
+        fun ifNoneMatchMatches(header: String?, etag: String): Boolean {
+            if (header.isNullOrBlank()) return false
+            val opaque = etag.removePrefix("W/")
+            return header.split(',').any { it.trim().removePrefix("W/") == opaque }
+        }
 
         private fun ms(nanos: Long) = "%.3f".format(nanos / 1e6)
 

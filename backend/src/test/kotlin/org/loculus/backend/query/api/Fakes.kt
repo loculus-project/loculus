@@ -64,8 +64,14 @@ class FakeIndex(
     var lastFilter: Filter? = null
     var lastMinProportion: Double? = null
 
+    /** content token (defaults to the dataVersion like the interface); [onEvaluate] runs inside evaluate */
+    var token: String? = null
+    var onEvaluate: (() -> Unit)? = null
+    override val contentToken: String get() = token ?: dataVersion.toString()
+
     override fun evaluate(filter: Filter): RoaringBitmap {
         lastFilter = filter
+        onEvaluate?.invoke()
         return RoaringBitmap.bitmapOf(*records.keys.sorted().toIntArray())
     }
 

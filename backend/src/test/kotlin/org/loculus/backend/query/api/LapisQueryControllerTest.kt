@@ -19,6 +19,7 @@ import org.loculus.backend.query.request.DataFormat
 import org.loculus.backend.query.request.Endpoint
 import org.loculus.backend.query.request.QueryBadRequestException
 import org.loculus.backend.query.request.QueryRequest
+import org.loculus.backend.query.request.RandomOrder
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
@@ -263,6 +264,62 @@ class LapisQueryControllerTest {
                     "\$.error.detail",
                 ).value("Error from SILO: The column country does not have a lineageIndex defined."),
             )
+    }
+
+    @Test
+    fun `responses carry a weak ETag, no-cache and Vary`() {
+        parsed = { QueryRequest(it, fields = listOf("country")) }
+        val result = perform(get("/test/sample/aggregated"))
+        assertThat(result.response.status, equalTo(200))
+        assertThat(result.response.getHeader("ETag"), startsWith("W/\"1700000000-1700000000-"))
+        assertThat(result.response.getHeader("Cache-Control"), equalTo("no-cache"))
+        assertThat(result.response.getHeaders("Vary"), contains("Accept, Accept-Encoding"))
+    }
+
+    @Test
+    fun `a matching If-None-Match is answered with 304 before the query runs, for GET and POST`() {
+        val etag = perform(get("/test/sample/details")).response.getHeader("ETag")!!
+        index.lastFilter = null
+        val notModified = perform(get("/test/sample/details").header("If-None-Match", "\"other\", $etag"))
+        assertThat(notModified.response.status, equalTo(304))
+        assertThat(notModified.response.contentAsString, equalTo(""))
+        assertThat(notModified.response.getHeader("ETag"), equalTo(etag))
+        assertThat(notModified.response.getHeader("Cache-Control"), equalTo("no-cache"))
+        assertThat(index.lastFilter, nullValue())
+
+        val post = perform(
+            post("/test/sample/details").contentType(MediaType.APPLICATION_JSON).content("{}")
+                .header("If-None-Match", etag),
+        )
+        assertThat(post.response.status, equalTo(304))
+    }
+
+    @Test
+    fun `the ETag differs by request, content encoding and index state`() {
+        fun etag(builder: RequestBuilder) = perform(builder).response.getHeader("ETag")
+        val plain = etag(get("/test/sample/details"))
+        parsed = { QueryRequest(it, limit = 10) }
+        val limited = etag(get("/test/sample/details"))
+        val gzip = etag(get("/test/sample/details").header("Accept-Encoding", "gzip"))
+        index.token = "next"
+        val updated = etag(get("/test/sample/details"))
+        assertThat(setOf(plain, limited, gzip, updated).size, equalTo(4))
+
+        val stale = perform(get("/test/sample/details").header("If-None-Match", limited!!))
+        assertThat(stale.response.status, equalTo(200))
+    }
+
+    @Test
+    fun `no ETag for an unseeded random order, nor when the index changed while the query ran`() {
+        parsed = { QueryRequest(it, random = RandomOrder(null)) }
+        assertThat(perform(get("/test/sample/details")).response.getHeader("ETag"), nullValue())
+
+        parsed = { QueryRequest(it) }
+        index.onEvaluate = { index.token = "changed-during-query" }
+        val result = perform(get("/test/sample/details"))
+        assertThat(result.response.status, equalTo(200))
+        assertThat(result.response.getHeader("ETag"), nullValue())
+        assertThat(result.response.getHeader("Cache-Control"), equalTo("no-cache"))
     }
 }
 

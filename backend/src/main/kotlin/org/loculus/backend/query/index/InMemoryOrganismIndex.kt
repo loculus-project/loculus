@@ -83,6 +83,13 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     @Volatile override var dataVersion: Long = 0
         private set
 
+    /** random per instance, so tokens of a reloaded index (or another replica) never match an older one */
+    private val instanceId = java.util.UUID.randomUUID().toString().substring(0, 8)
+
+    @Volatile private var generation: Long = 0
+
+    override val contentToken: String get() = "$instanceId.$generation"
+
     /**
      * Reads the current projection rows of a few ids (injected by [QueryIndexService]); used to answer
      * mutations / insertions over small id sets directly instead of visiting every bitmap.
@@ -179,6 +186,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         }.get()
         alive.runOptimize()
         this.dataVersion = dataVersion
+        generation++
     }
 
     /**
@@ -204,6 +212,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             upserts.forEach { addRow(it, withRuns = false) }
             sequences.forEach { it?.invalidateCaches() }
             if (dataVersion != null) this.dataVersion = dataVersion
+            generation++
         }
         val done = System.nanoTime()
         return ApplyStats(
