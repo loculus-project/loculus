@@ -17,8 +17,8 @@ enum class WireCodec {
     /** a complete stream (what the controller's own compressors produce) */
     fun encoder(out: OutputStream): OutputStream = when (this) {
         IDENTITY -> out
-        GZIP -> GZIPOutputStream(out, BUFFER_SIZE)
-        ZSTD -> ZstdOutputStream(out, ZSTD_LEVEL)
+        GZIP -> gzipOutputStream(out, BUFFER_SIZE)
+        ZSTD -> zstdOutputStream(out)
     }
 
     fun encodeWhole(plain: ByteArray, offset: Int = 0, length: Int = plain.size - offset): ByteArray {
@@ -67,6 +67,26 @@ enum class WireCodec {
 
     companion object {
         const val ZSTD_LEVEL = 3
+
+        /** level 1: ~16x faster than the default 6 on sequence data for ~14 % more bytes; gzip is CPU-bound here */
+        const val GZIP_LEVEL = Deflater.BEST_SPEED
+
+        /**
+         * Long-distance matching within an 8 MB window: sequences of one organism repeat far apart (SARS-CoV-2: ~1.6x
+         * smaller at ~800 MB/s per thread). 8 MB is the most RFC 9659 allows for `Content-Encoding: zstd`, which browsers
+         * enforce, and it bounds the native memory of each concurrent stream.
+         */
+        const val ZSTD_WINDOW_LOG = 23
+
+        fun zstdOutputStream(out: OutputStream): OutputStream =
+            ZstdOutputStream(out, ZSTD_LEVEL).apply { setLong(ZSTD_WINDOW_LOG) }
+
+        fun gzipOutputStream(out: OutputStream, bufferSize: Int): OutputStream =
+            object : GZIPOutputStream(out, bufferSize) {
+                init {
+                    def.setLevel(GZIP_LEVEL)
+                }
+            }
         private const val BUFFER_SIZE = 64 * 1024
 
         // magic, deflate, no flags, no mtime, no extra flags, OS unknown (like java.util.zip.GZIPOutputStream)
@@ -90,7 +110,7 @@ enum class WireCodec {
             flush: Int,
             finish: Boolean = false,
         ) {
-            val deflater = Deflater(Deflater.DEFAULT_COMPRESSION, true)
+            val deflater = Deflater(GZIP_LEVEL, true)
             try {
                 deflater.setInput(input, offset, length)
                 if (finish) deflater.finish()

@@ -106,7 +106,10 @@ export class PageCodec {
 
 export type PageCacheStats = {
     hits: number;
+    /** renders of opted-in pages that were not served from the cache */
     misses: number;
+    /** cacheable requests for pages that do not opt in (probes, API routes, pages without `pageCacheOrganism`) */
+    notOptedIn: number;
     /** requests with credentials, non-GET, OIDC callbacks */
     bypassed: number;
     stored: number;
@@ -123,6 +126,7 @@ export type PageCacheStats = {
 const emptyPageStats = (): PageCacheStats => ({
     hits: 0,
     misses: 0,
+    notOptedIn: 0,
     bypassed: 0,
     stored: 0,
     notAdmitted: 0,
@@ -223,10 +227,15 @@ export class PageCache {
             });
         }
 
-        this.stats.misses++;
         const versionsAtStart = this.versions.snapshot();
         const startedAt = this.now();
-        return this.admit(key, await render(), versionsAtStart.get.bind(versionsAtStart), startedAt);
+        const rendered = await render();
+        if (rendered.organism === undefined) {
+            this.stats.notOptedIn++;
+            return rendered.response;
+        }
+        this.stats.misses++;
+        return this.admit(key, rendered, versionsAtStart.get.bind(versionsAtStart), startedAt);
     }
 
     private async lookup(key: string): Promise<{ meta: BlobMeta; html: Buffer } | undefined> {

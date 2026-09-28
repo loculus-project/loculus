@@ -203,7 +203,7 @@ describe('page cache', () => {
         );
         // A Set-Cookie header on the response is refused too; happy-dom's Headers drop it, so it is not tested here.
 
-        expect(cache.stats).toMatchObject({ stored: 0, uncacheable: 3 });
+        expect(cache.stats).toMatchObject({ stored: 0, uncacheable: 3, notOptedIn: 1, misses: 3 });
     });
 
     test('entries expire after the maximum age', async () => {

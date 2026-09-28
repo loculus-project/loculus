@@ -1,7 +1,6 @@
 package org.loculus.backend.query.api
 
 import com.fasterxml.jackson.core.JsonEncoding
-import com.github.luben.zstd.ZstdOutputStream
 import io.swagger.v3.oas.annotations.Hidden
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -41,7 +40,6 @@ import java.io.IOException
 import java.io.OutputStream
 import java.net.URLEncoder
 import java.time.Clock
-import java.util.zip.GZIPOutputStream
 
 private val log = KotlinLogging.logger {}
 
@@ -628,17 +626,15 @@ class LapisQueryController(
         }
 
         fun compress(out: OutputStream, compression: Compression?, contentEncoding: String?): OutputStream = when {
-            compression == Compression.GZIP || contentEncoding == "gzip" -> GZIPOutputStream(
+            compression == Compression.GZIP || contentEncoding == "gzip" -> WireCodec.gzipOutputStream(
                 out,
                 OUTPUT_BUFFER_SIZE,
             )
 
-            compression == Compression.ZSTD || contentEncoding == "zstd" -> ZstdOutputStream(out, ZSTD_LEVEL)
+            compression == Compression.ZSTD || contentEncoding == "zstd" -> WireCodec.zstdOutputStream(out)
 
             else -> out
         }
-
-        private const val ZSTD_LEVEL = 3
     }
 }
 

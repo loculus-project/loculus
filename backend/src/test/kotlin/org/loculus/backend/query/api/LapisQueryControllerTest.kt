@@ -356,6 +356,7 @@ class LapisParamsTest {
         assertThat(LapisParams.contentEncodingFromAcceptEncoding("gzip"), equalTo("gzip"))
         assertThat(LapisParams.contentEncodingFromAcceptEncoding("zstd;q=0, gzip"), equalTo("gzip"))
         assertThat(LapisParams.contentEncodingFromAcceptEncoding("br"), nullValue())
+        assertThat(LapisParams.contentEncodingFromAcceptEncoding("gzip, deflate, br"), equalTo("gzip"))
         assertThat(LapisParams.contentEncodingFromAcceptEncoding(null), nullValue())
     }
 }

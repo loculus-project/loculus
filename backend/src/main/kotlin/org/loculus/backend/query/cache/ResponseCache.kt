@@ -1,7 +1,6 @@
 package org.loculus.backend.query.cache
 
 import com.github.luben.zstd.ZstdInputStream
-import com.github.luben.zstd.ZstdOutputStream
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
@@ -442,7 +441,7 @@ class ResponseCache(
             val f = FileOutputStream(path.toFile())
             file = f
             val buffered = BufferedOutputStream(f, 64 * 1024)
-            fileOut = if (codec == WireCodec.IDENTITY) ZstdOutputStream(buffered, WireCodec.ZSTD_LEVEL) else buffered
+            fileOut = if (codec == WireCodec.IDENTITY) WireCodec.zstdOutputStream(buffered) else buffered
             memoryBuffer.writeTo(fileOut!!)
             return Unit
         }
