@@ -5254,7 +5254,6 @@ defaultOrganisms:
       configFile:
         <<: *defaultIngestConfigFile
         taxon_id: 3431483
-        subsample_fraction: 0.2
   # Query-engine preview only: SARS-CoV-2 from the streamed NCBI mirror (mirror_format: zst), released
   # since 2023-09-28 (892k records), subsampled by stable hash; raise subsample_fraction to ramp up.
   sars-cov-2:

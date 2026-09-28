@@ -90,6 +90,8 @@ website:
     enabled: true
     memoryMB: 350
     diskMB: 8000
+# SARS-CoV-2 ingest (892k records) outlasted the 30 min default and was killed mid-submission
+ingestLimitSeconds: 10800
 resources:
   organismSpecific:
     sars-cov-2:
