@@ -8,6 +8,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from .backend import (
+    FileAlreadyExistsError,
     download_diamond_db,
     download_minimizer,
     fetch_unprocessed_sequences,
@@ -799,6 +800,29 @@ def process_all(
     return processed_results
 
 
+# A backend DB reset with the bucket kept reissues a contiguous block of already-used file IDs;
+# doubling the number of IDs requested per 412 and using the last one skips it in a few requests.
+MAX_FILE_IDS_PER_REQUEST = 1024
+MAX_UPLOAD_ATTEMPTS = 64
+
+
+def upload_embl_file_with_fresh_file_id(content: str, group_id: int, config: Config) -> str:
+    number_of_file_ids = 1
+    for _ in range(MAX_UPLOAD_ATTEMPTS):
+        upload_info = request_upload(group_id, number_of_file_ids, config)[-1]
+        try:
+            upload_embl_file_to_presigned_url(content, upload_info.url, upload_info.headers)
+        except FileAlreadyExistsError:
+            logger.warning(
+                "File ID %s already exists in S3, requesting a new file ID", upload_info.fileId
+            )
+            number_of_file_ids = min(2 * number_of_file_ids, MAX_FILE_IDS_PER_REQUEST)
+            continue
+        return upload_info.fileId
+    msg = f"All {MAX_UPLOAD_ATTEMPTS} file IDs issued by the backend already exist in S3"
+    raise RuntimeError(msg)
+
+
 def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> None:
     for submission_data in processed:
         accession = submission_data.processed_entry.accession
@@ -808,9 +832,9 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             if not file_content:
                 continue
             file_name = f"{accession}.{version}.embl"
-            upload_info = request_upload(submission_data.group_id, 1, config)[0]
-            file_id = upload_info.fileId
-            upload_embl_file_to_presigned_url(file_content, upload_info.url, upload_info.headers)
+            file_id = upload_embl_file_with_fresh_file_id(
+                file_content, submission_data.group_id, config
+            )
             processed_files = submission_data.processed_entry.data.files or {}
             processed_files.setdefault(FileCategory.ANNOTATIONS, []).append(
                 FileIdAndNameAndReadUrl(fileId=file_id, name=file_name)
