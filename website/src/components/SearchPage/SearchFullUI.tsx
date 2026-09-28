@@ -10,7 +10,6 @@ import {
 import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
 import { LinkOutMenu } from './DownloadDialog/LinkOutMenu.tsx';
 import { FieldFilterSet, SequenceEntrySelection, type SequenceFilter } from './DownloadDialog/SequenceFilters.tsx';
-import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
@@ -316,8 +315,6 @@ const InnerSearchFullUI = ({
                 className='flex-1 min-w-0'
                 style={{ paddingBottom: Boolean(previewedSeqId) && previewHalfScreen ? '50vh' : '0' }}
             >
-                <RecentSequencesBanner organism={organism} />
-
                 {(detailsHook.isError || aggregatedHook.isError) &&
                     // @ts-expect-error because response is not expected on error, but does exist
                     (aggregatedHook.error?.response?.status === 503 ? (
