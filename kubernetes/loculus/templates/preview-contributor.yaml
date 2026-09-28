@@ -1,0 +1,63 @@
+{{- if .Values.previewContributorGroup.enabled }}
+{{- if not (and .Values.createTestAccounts .Values.runDevelopmentMainDatabase .Values.runDevelopmentKeycloakDatabase (not .Values.disableIngest)) }}
+{{- fail "previewContributorGroup requires test accounts, development databases and enabled ingestion" }}
+{{- end }}
+{{- if and (not (kindIs "invalid" .Values.ingest.groupId)) (ne (int .Values.ingest.groupId) 1) }}
+{{- fail "previewContributorGroup requires ingestion group ID 1" }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-preview-contributor
+data:
+  seed.py: |
+{{ .Files.Get "files/seed-preview-contributor.py" | indent 4 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: loculus-preview-contributor
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  activeDeadlineSeconds: 1800
+  backoffLimit: 0
+  template:
+    spec:
+      {{- include "possiblePriorityClassName" . | nindent 6 }}
+      {{- include "loculus.podScheduling" . | nindent 6 }}
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      containers:
+        - name: seed
+          image: ghcr.io/loculus-project/ingest:{{ include "loculus.dockerTag" .Values }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          command: ["/opt/conda/bin/python", "/bootstrap/seed.py"]
+          env:
+            - name: GROUP_NAME
+              value: {{ .Values.previewContributorGroup.name | quote }}
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          volumeMounts:
+            - name: script
+              mountPath: /bootstrap
+              readOnly: true
+      volumes:
+        - name: script
+          configMap:
+            name: loculus-preview-contributor
+{{- end }}

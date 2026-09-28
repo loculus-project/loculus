@@ -194,6 +194,29 @@ See [kubeconfig docs](https://kubernetes.io/docs/concepts/configuration/organize
 
 ## Tips
 
+### Disposable preview contributor fixture
+
+`previewContributorGroup.enabled` enables an Argo CD PostSync job for test
+deployments only. It requires `createTestAccounts`, both development databases,
+and ingestion to be enabled. It uses the publicly known test credentials, waits
+for ingestion to create group 1, then creates group 2 with the configured
+`previewContributorGroup.name` and adds `testcontributor`. It verifies membership
+through `/user/groups`; reruns preserve existing group metadata and membership.
+
+The job fails rather than repurposing unexpected group IDs. Inspect its logs with
+`kubectl -n <preview-namespace> logs job/loculus-preview-contributor`. It times out
+after waiting 25 minutes for prerequisites; Argo retains the job until the next
+sync. Helm alone does not execute Argo hooks. Do not create groups manually while
+a fresh preview is bootstrapping. This is fixture seeding, not production user
+provisioning or email invitations.
+
+The branch preview leaves `developmentDatabasePersistence` disabled. Database
+recreation loses manual submissions and other changes; this job restores only the
+contributor fixture. Even enabling that flag does not provide PVC-backed storage.
+Use synthetic/public data only.
+
+Run fixture tests with `python3 -m unittest discover -s kubernetes -p 'test_preview_contributor.py'`.
+
 You can find frequently used `kubectl` commands in the [KUBECTL_FAQ.md](./KUBECTL_FAQ.md) file.
 
 ### Debugging failed deployments with kubectl

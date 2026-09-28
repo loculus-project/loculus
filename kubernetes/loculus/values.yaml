@@ -2944,6 +2944,9 @@ runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 runDevelopmentS3: true
 developmentDatabasePersistence: false
+previewContributorGroup:
+  enabled: false
+  name: Contributor Preview Testing
 enforceHTTPS: true
 traefikVersion: 3
 registrationTermsMessage: >

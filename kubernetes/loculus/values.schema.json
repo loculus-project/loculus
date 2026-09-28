@@ -1347,6 +1347,16 @@
       "type": "boolean",
       "description": "If true, creates the users testuser and superuser"
     },
+    "previewContributorGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "name"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "name": { "type": "string", "minLength": 1 }
+      },
+      "description": "Development-only Argo PostSync fixture: wait for ingestion group 1, then create contributor group 2 and add testcontributor. Requires test accounts and development databases."
+    },
     "robotsNoindexHeader": {
       "groups": ["general"],
       "type": ["boolean", "null"],

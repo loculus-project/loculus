@@ -1,8 +1,11 @@
 enableServiceMonitor: true
 # Branch preview only: known test accounts mean this must never contain private data.
 requireLogin: true
-# Preserve database pods across routine preview updates (not durable PVC storage).
+# Disposable preview: recreate fixture membership after database resets.
 developmentDatabasePersistence: false
+previewContributorGroup:
+  enabled: true
+  name: Contributor Preview Testing
 s3:
   enabled: false
 createTestAccounts: true
