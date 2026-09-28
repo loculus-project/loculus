@@ -1942,7 +1942,6 @@ ena_accession_cases = [
     ),
     EnaAccessionCase(
         name="server_error_is_warned_about",
-        # 501 is not in the session's status_forcelist, so it arrives as a response
         accession="PRJEB12345",
         ena_response=501,
         expected_datum="PRJEB12345",
@@ -1951,7 +1950,6 @@ ena_accession_cases = [
     ),
     EnaAccessionCase(
         name="exhausted_retries_are_warned_about",
-        # what urllib3 raises once the retries for 429/5xx in status_forcelist run out
         accession="PRJEB12345",
         ena_response=requests.exceptions.RetryError(),
         expected_datum="PRJEB12345",
