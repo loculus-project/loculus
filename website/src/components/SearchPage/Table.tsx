@@ -16,25 +16,33 @@ import MdiTriangleDown from '~icons/mdi/triangle-down';
 const MAX_TOOLTIP_LENGTH = 150;
 
 export type TableSequenceData = {
-    [key: string]: Metadatum;
+    [key: string]: Metadatum | undefined;
 };
 
-function formatField(value: unknown, type: string, fieldName?: string): string {
-    if (typeof value === 'number' && Number.isInteger(value)) {
-        if (type === 'timestamp') {
-            return new Date(value * 1000).toISOString().slice(0, 10);
-        }
-        return formatNumberWithDefaultLocale(value);
-    } else if (typeof value === 'boolean') {
-        return value ? 'True' : 'False';
-    } else {
-        const stringValue = value as string;
-        if (fieldName?.toLowerCase().includes('affiliation')) {
-            return deduplicateSemicolonSeparated(stringValue);
-        }
-        // @ts-expect-error: TODO(#3451) add proper types
-        return value;
+function formatField(value: Metadatum | undefined, type: string, fieldName?: string): string {
+    if (value === null || value === undefined) {
+        return '';
     }
+
+    if (typeof value === 'number') {
+        if (Number.isInteger(value)) {
+            if (type === 'timestamp') {
+                return new Date(value * 1000).toISOString().slice(0, 10);
+            }
+            return formatNumberWithDefaultLocale(value);
+        }
+        return value.toString();
+    }
+
+    if (typeof value === 'boolean') {
+        return value ? 'True' : 'False';
+    }
+
+    if (fieldName?.toLowerCase().includes('affiliation')) {
+        return deduplicateSemicolonSeparated(value);
+    }
+
+    return value;
 }
 
 type TableProps = {
@@ -54,13 +62,13 @@ const getColumnWidthStyle = (columnWidth: number | undefined) =>
     columnWidth !== undefined ? `${columnWidth}px` : `130px`;
 
 type CellContentProps = {
-    value: Metadatum;
+    value: Metadatum | undefined;
     type: string;
     columnWidth: number | undefined;
     fieldName: string;
 };
 
-const useTruncationTooltip = <T extends HTMLElement>(text: string) => {
+const useTruncationTooltip = <T extends HTMLElement>(value: string) => {
     const ref = useRef<T>(null);
     const [isTruncated, setIsTruncated] = useState(false);
 
@@ -68,12 +76,9 @@ const useTruncationTooltip = <T extends HTMLElement>(text: string) => {
         if (ref.current) {
             setIsTruncated(ref.current.scrollWidth > ref.current.clientWidth);
         }
-    }, [text]);
+    }, [value]);
 
-    const tooltipText =
-        typeof text === 'string'
-            ? text.slice(0, MAX_TOOLTIP_LENGTH) + (text.length > MAX_TOOLTIP_LENGTH ? '..' : '')
-            : text;
+    const tooltipText = value.slice(0, MAX_TOOLTIP_LENGTH) + (value.length > MAX_TOOLTIP_LENGTH ? '..' : '');
 
     return { ref, isTruncated, tooltipText };
 };
