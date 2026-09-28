@@ -25,6 +25,31 @@ spec:
       {{- include "loculus.podScheduling" . | nindent 6 }}
       initContainers:
 {{- include "loculus.configProcessor" (dict "name" "loculus-backend-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
+        {{- if $.Values.queryEngine.enabled }}
+        - name: query-engine-config
+          image: {{ $.Values.queryEngine.curlImage }}
+          {{- include "loculus.resources" (list "backend-query-engine-init" $.Values) | nindent 10 }}
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              cp -rL /query-engine-configmaps/. /query-engine/
+              {{- range $_, $item := (include "loculus.enabledOrganisms" $ | fromJson).organisms }}
+              {{- range $system := ($item.contents | include "loculus.lineageSystemForOrganism" | fromYamlArray) }}
+              {{- $definitions := index $.Values.lineageSystemDefinitions $system }}
+              {{- $latest := 0 }}
+              {{- range $version, $_ := $definitions }}{{- if gt (int $version) $latest }}{{- $latest = int $version }}{{- end }}{{- end }}
+              echo "Downloading lineage definitions {{ $system }} (pipeline version {{ $latest }}) for {{ $item.key }}"
+              curl -fsSL --retry 5 -o /query-engine/{{ $item.key }}/{{ $system }}.yaml {{ index $definitions (toString $latest) | quote }}
+              {{- end }}
+              {{- end }}
+          volumeMounts:
+            - name: query-engine-configmaps
+              mountPath: /query-engine-configmaps
+            - name: query-engine
+              mountPath: /query-engine
+        {{- end }}
       containers:
         - name: backend
           image: "{{ $.Values.images.backend.repository }}:{{ $.Values.images.backend.tag | default $dockerTag }}"
@@ -54,6 +79,10 @@ spec:
             {{- end }}
           args:
             - "--loculus.enable-seqsets={{ $.Values.seqSets.enabled }}"
+            {{- if $.Values.queryEngine.enabled }}
+            - "--loculus.query-engine.enabled=true"
+            - "--loculus.query-engine.config-dir=/query-engine"
+            {{- end }}
             {{- if $.Values.seqSets.crossRef }}
             - "--crossref.doi-prefix=$(CROSSREF_DOI_PREFIX)"
             - "--crossref.endpoint=$(CROSSREF_ENDPOINT)"
@@ -178,6 +207,24 @@ spec:
           volumeMounts:
             - name: loculus-backend-config-processed
               mountPath: /config
+            {{- if $.Values.queryEngine.enabled }}
+            - name: query-engine
+              mountPath: /query-engine
+            {{- end }}
       volumes:
 {{ include "loculus.configVolume" (dict "name" "loculus-backend-config") | nindent 8 }}
+        {{- if $.Values.queryEngine.enabled }}
+        - name: query-engine
+          emptyDir: {}
+        - name: query-engine-configmaps
+          projected:
+            sources:
+              {{- range $_, $item := (include "loculus.enabledOrganisms" $ | fromJson).organisms }}
+              - configMap:
+                  name: lapis-silo-database-config-{{ $item.key }}
+                  items:
+                    - key: database_config.yaml
+                      path: {{ $item.key }}/database_config.yaml
+              {{- end }}
+        {{- end }}
 {{- end }}

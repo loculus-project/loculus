@@ -623,6 +623,8 @@ fields:
 {{- $lapisUrlTemplate := "" }}
 {{- if $publicRuntimeConfig.lapisUrlTemplate }}
   {{- $lapisUrlTemplate = $publicRuntimeConfig.lapisUrlTemplate }}
+{{- else if $.Values.queryEngine.enabled }}
+  {{- $lapisUrlTemplate = printf "%s/%%organism%%" (include "loculus.backendUrl" .) }}
 {{- else if eq $.Values.environment "server" }}
   {{- $lapisUrlTemplate = printf "https://lapis%s%s/%s" $.Values.subdomainSeparator $.Values.host "%organism%" }}
 {{- else }}
