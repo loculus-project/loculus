@@ -21,6 +21,7 @@ import org.loculus.backend.service.files.FilesPreconditionValidator
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
+import org.loculus.backend.service.submission.SubmissionLimitService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.generateFileIds
 import org.springframework.http.HttpHeaders
@@ -50,6 +51,7 @@ class FilesController(
     private val submissionDatabaseService: SubmissionDatabaseService,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val backendConfig: BackendConfig,
+    private val submissionLimitService: SubmissionLimitService,
 ) {
 
     @Operation(
@@ -125,6 +127,7 @@ class FilesController(
     @ApiResponse(responseCode = "401", description = "Authentication required")
     @ApiResponse(responseCode = "403", description = "User is not a member of the specified group")
     @ApiResponse(responseCode = "404", description = "Group does not exist")
+    @ApiResponse(responseCode = "429", description = "The instance-wide daily limit of file upload requests is reached")
     @PostMapping("/request-upload")
     fun requestUploads(
         @HiddenParam
@@ -141,6 +144,7 @@ class FilesController(
     ): List<FileIdAndWriteUrl> {
         filesPreconditionValidator.validateNumberFiles(numberFiles)
         filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
+        submissionLimitService.validateFileUploadLimit(numberFiles.toLong())
 
         val fileIds = generateFileIds(numberFiles)
         filesDatabaseService.createFileEntries(fileIds, authenticatedUser.username, groupId)
@@ -175,6 +179,7 @@ class FilesController(
     ): List<FileIdAndMultipartWriteUrl> {
         filesPreconditionValidator.validateNumberFiles(numberFiles)
         filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
+        submissionLimitService.validateFileUploadLimit(numberFiles.toLong())
 
         return generateFileIds(numberFiles).map { fileId ->
             val multipartUploadHandler = s3Service.initiateMultipartUploadAndCreateUrlsToUpload(fileId, numberParts)

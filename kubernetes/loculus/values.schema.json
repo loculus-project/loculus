@@ -1741,6 +1741,32 @@
       "default": false,
       "description": "If true, disables the raw reads processing service deployment."
     },
+    "submissionLimits": {
+      "type": "object",
+      "groups": ["services"],
+      "description": "Instance-wide caps on how much can be created per rolling 24 hours, summed over all organisms and submitters. A request that would exceed a cap is rejected as a whole with 429 Too Many Requests. Unset caps are unlimited.",
+      "properties": {
+        "maxNewSequenceEntriesPerDay": {
+          "type": "integer",
+          "minimum": 0,
+          "groups": ["services"],
+          "description": "Maximum number of new sequence entries (version 1) submitted per 24 hours."
+        },
+        "maxRevisionsPerDay": {
+          "type": "integer",
+          "minimum": 0,
+          "groups": ["services"],
+          "description": "Maximum number of revisions (versions > 1, excluding revocations) submitted per 24 hours."
+        },
+        "maxFileUploadRequestsPerDay": {
+          "type": "integer",
+          "minimum": 0,
+          "groups": ["services"],
+          "description": "Maximum number of file upload URLs requested per 24 hours."
+        }
+      },
+      "additionalProperties": false
+    },
     "readOnlyMode": {
       "groups": ["services"],
       "type": "boolean",

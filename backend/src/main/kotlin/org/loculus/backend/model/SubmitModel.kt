@@ -27,6 +27,7 @@ import org.loculus.backend.metrics.VALIDATE_FILE_MAPPING_PHASE
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.service.submission.SubmissionIdFilesMappingPreconditionValidator
+import org.loculus.backend.service.submission.SubmissionLimitService
 import org.loculus.backend.service.submission.UploadDatabaseService
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.FastaReader
@@ -97,6 +98,7 @@ class SubmitModel(
     private val dateProvider: DateProvider,
     private val backendConfig: BackendConfig,
     private val submissionMetrics: SubmissionMetrics,
+    private val submissionLimitService: SubmissionLimitService,
 ) {
 
     companion object AcceptedFileTypes {
@@ -133,6 +135,12 @@ class SubmitModel(
                     batchSize,
                 )
             }
+
+            // Checked before accessions are generated, so a rejected upload does not use up accession numbers.
+            submissionLimitService.validateSequenceEntryLimit(
+                submissionParams.uploadType,
+                incoming = submissionLimitService.countEntriesInUpload(uploadId),
+            )
 
             if (backendConfig.consensusSequencesEnabled(submissionParams.organism)) {
                 submissionMetrics.timeWritePhase(endpoint, organism, VALIDATE_CONSENSUS_SEQUENCES_PHASE) {

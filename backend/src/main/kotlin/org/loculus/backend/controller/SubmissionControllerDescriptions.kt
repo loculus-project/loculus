@@ -16,6 +16,11 @@ const val SUBMIT_ERROR_RESPONSE = """
 The data use terms type have not been provided, even though they are enabled for this Loculus instance.
 """
 
+const val SUBMISSION_LIMIT_RESPONSE = """
+The instance-wide daily limit of new sequence entries or revisions is reached, or this upload would exceed it.
+The whole upload is rejected.
+"""
+
 const val METADATA_FILE_DESCRIPTION = """    
 A TSV (tab separated values) file containing the metadata of the submitted sequence entries. 
 The file may be compressed with zstd, xz, zip, gzip, lzma, bzip2 (with common extensions).
