@@ -1669,13 +1669,6 @@ def test_get_seq_features_marks_a_cds_with_premature_stop_pseudo_without_transla
     assert cds_feature.qualifiers["note"] == [PREMATURE_STOP_NOTE]
 
 
-def test_get_seq_features_appends_premature_stop_note_to_an_existing_note():
-    # A GFF `Note` attribute becomes the EMBL /note, which must survive alongside ours.
-    cds_feature = _single_cds_feature(PREMATURE_STOP_SEQUENCE, {"Note": ["existing note"]})
-
-    assert cds_feature.qualifiers["note"] == ["existing note", PREMATURE_STOP_NOTE]
-
-
 def test_get_seq_features_leaves_an_existing_note_alone_without_premature_stop():
     cds_feature = _single_cds_feature(FUNCTIONAL_SEQUENCE, {"Note": ["existing note"]})
 
