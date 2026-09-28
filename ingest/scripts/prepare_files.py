@@ -112,19 +112,18 @@ def main(
     revise_ids = set()
     submit_prior_to_revoke_ids = set()
 
+    tsv_writers: dict[str, tuple] = {}
+
     def write_to_tsv_stream(data, filename, columns_list=None):
-        # Check if the file exists
-        file_exists = os.path.exists(filename)
-
-        with open(filename, "a", newline="", encoding="utf-8") as output_file:
-            keys = columns_list or data.keys()
-            dict_writer = csv.DictWriter(output_file, keys, delimiter="\t")
-
-            # Write the header only if the file doesn't already exist
+        # one open file per output instead of reopening it for every record
+        if filename not in tsv_writers:
+            file_exists = os.path.exists(filename)
+            output_file = open(filename, "a", newline="", encoding="utf-8")
+            dict_writer = csv.DictWriter(output_file, columns_list or data.keys(), delimiter="\t")
             if not file_exists:
                 dict_writer.writeheader()
-
-            dict_writer.writerow(data)
+            tsv_writers[filename] = (output_file, dict_writer)
+        tsv_writers[filename][1].writerow(data)
 
     columns_list = None
     for field in orjsonl.stream(metadata_path):
@@ -147,6 +146,9 @@ def main(
         if fasta_id in to_revoke:
             submit_prior_to_revoke_ids.update(ids_to_add(fasta_id, config))
             write_to_tsv_stream(record, metadata_submit_prior_to_revoke_path, columns_list)
+
+    for output_file, _ in tsv_writers.values():
+        output_file.close()
 
     if to_revoke:
         revocation_notification(config, to_revoke)

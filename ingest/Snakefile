@@ -203,12 +203,10 @@ rule format_ncbi_dataset_sequences:
         ncbi_dataset_sequences="results/sequences.fasta",
     shell:
         """
+        # one pass; the stats/hash logging used three more full passes (minutes for SARS-CoV-2)
         seqkit seq -w0 -i \
             {input.dataset_sequences} \
             >{output.ncbi_dataset_sequences}
-        echo "Stats of NCBI dataset sequences: $(seqkit stats {output.ncbi_dataset_sequences})"
-        echo "seqkit hash of NCBI dataset sequences: $(seqkit sum -a -s {output.ncbi_dataset_sequences})"
-        echo "Plain hash of NCBI dataset sequences: $(md5sum {output.ncbi_dataset_sequences})"
         """
 
 
