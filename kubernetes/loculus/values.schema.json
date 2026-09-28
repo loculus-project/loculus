@@ -1816,6 +1816,28 @@
           "type": "boolean",
           "default": true,
           "description": "With the query engine enabled, keep LAPIS and SILO deployed alongside for comparison; false stops rendering them"
+        },
+        "responseCache": {
+          "type": "object",
+          "description": "Cache of rendered query-engine responses in the backend: a memory tier in the heap and a disk tier on an emptyDir. Sizes are Spring DataSize strings (e.g. 500MB, 5GB); \"0\" turns a tier off.",
+          "additionalProperties": false,
+          "properties": {
+            "memorySize": {
+              "type": "string",
+              "default": "64MB",
+              "description": "Heap budget of the memory tier; it comes out of the backend's heap (MaxRAMPercentage of its memory limit)"
+            },
+            "diskSize": {
+              "type": "string",
+              "default": "0",
+              "description": "Budget of the disk tier; \"0\" disables it and mounts no emptyDir"
+            },
+            "diskSizeLimit": {
+              "type": "string",
+              "default": "1Gi",
+              "description": "sizeLimit of the disk tier's emptyDir. Leave room above diskSize for 2 responses being written (2 x diskSize / 8): exceeding the limit evicts the pod"
+            }
+          }
         }
       }
     },

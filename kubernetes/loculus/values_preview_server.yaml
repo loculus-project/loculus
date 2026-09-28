@@ -196,6 +196,11 @@ developmentDatabasePersistence: true
 queryEngine:
   enabled: true
   runLapisAlongside: false
+  # production-sized: the memory tier comes out of the backend heap (8Gi limit x MaxRAMPercentage=80 = 6.4 GiB)
+  responseCache:
+    memorySize: "500MB"
+    diskSize: "5GB"
+    diskSizeLimit: "7Gi"
 # 8 concurrent exports saturated the default 30 (30 active + 42 pending); dev Postgres allows 200.
 backendDatabasePoolSize: 80
 backendJvmExtraOpts: "-XX:MaxRAMPercentage=80 -Xlog:gc:stdout:time,uptime,level,tags"

@@ -84,6 +84,12 @@ queryEngine:
   enabled: true
   # keep LAPIS/SILO running next to the engine (for comparison); false drops them
   runLapisAlongside: true
+  # cache of rendered query responses: a heap tier and a disk tier on an emptyDir (Spring DataSize, "0" = off)
+  responseCache:
+    memorySize: "64MB"
+    diskSize: "0"
+    # the emptyDir's limit: diskSize plus room for 2 responses being written (2 x diskSize / 8), plus margin
+    diskSizeLimit: "1Gi"
 lineageSystemDefinitions:
   pangoLineage:
     1: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml

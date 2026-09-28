@@ -1,4 +1,6 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- $responseCache := .Values.queryEngine.responseCache | default dict }}
+{{- $responseCacheOnDisk := and .Values.queryEngine.enabled $responseCache.diskSize (ne (toString $responseCache.diskSize) "0") }}
 {{- if not .Values.disableBackend }}
 ---
 apiVersion: apps/v1
@@ -56,6 +58,13 @@ spec:
             - "--loculus.enable-seqsets={{ $.Values.seqSets.enabled }}"
             {{- if $.Values.queryEngine.enabled }}
             - "--loculus.query-engine.enabled=true"
+            {{- with $.Values.queryEngine.responseCache }}
+            - "--loculus.query-engine.cache.memory-size={{ .memorySize }}"
+            {{- if $responseCacheOnDisk }}
+            - "--loculus.query-engine.cache.disk-size={{ .diskSize }}"
+            - "--loculus.query-engine.cache.disk-path=/query-response-cache"
+            {{- end }}
+            {{- end }}
             {{- end }}
             {{- if $.Values.seqSets.crossRef }}
             - "--crossref.doi-prefix=$(CROSSREF_DOI_PREFIX)"
@@ -182,6 +191,16 @@ spec:
           volumeMounts:
             - name: loculus-backend-config-processed
               mountPath: /config
+            {{- if $responseCacheOnDisk }}
+            - name: query-response-cache
+              mountPath: /query-response-cache
+            {{- end }}
       volumes:
 {{ include "loculus.configVolume" (dict "name" "loculus-backend-config") | nindent 8 }}
+        {{- if $responseCacheOnDisk }}
+        # pod-local and lost on restart, which the cache expects (it wipes the directory at startup)
+        - name: query-response-cache
+          emptyDir:
+            sizeLimit: {{ $.Values.queryEngine.responseCache.diskSizeLimit }}
+        {{- end }}
 {{- end }}
