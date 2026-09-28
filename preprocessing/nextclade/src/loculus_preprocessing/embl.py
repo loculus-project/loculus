@@ -30,11 +30,10 @@ logger = logging.getLogger(__name__)
 
 # Formatted with the 1-indexed amino acid position of the first premature stop codon in the CDS.
 PREMATURE_STOP_NOTE = (
-    "This CDS has been marked as pseudo because it contains a premature stop codon at amino acid "
-    "position {position}. "
-    "It is possible that this stop codon is biological, and that the protein remains functional,"
-    " but the pipeline has marked it as pseudo to avoid potential issues in downstream analysis "
-    "due to sequencing artefacts."
+    "This CDS has been marked as pseudo by an automated pipeline because it contains a premature "
+    "stop codon at amino acid position {position}. "
+    "This is not an assertion that it is a true pseudogene: "
+    "the stop codon may be a sequencing artefact, or may be genuine without abolishing protein function."
 )
 
 
