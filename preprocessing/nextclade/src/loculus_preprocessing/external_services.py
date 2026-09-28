@@ -365,11 +365,23 @@ class ENAVisibilityChecker:
         except requests.RequestException:
             response = None
         if response is None or response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
-            return processing_error(
-                f"unable to validate accession '{accession}': could not reach ENA."
+            return RawProcessingResult(
+                datum=accession,
+                warnings=[
+                    f"unable to check visibility of '{accession}': could not reach ENA. Please "
+                    f"verify yourself that '{accession}' is public before proceeding or we will "
+                    "not be able to propagate your submission to the INSDC."
+                ],
             )
         if response.status_code != HTTPStatus.OK:
-            return processing_error(f"accession '{accession}' does not exist on ENA")
+            return RawProcessingResult(
+                datum=accession,
+                warnings=[
+                    f"accession '{accession}' is not visible on ENA. Please make '{accession}' "
+                    "public before proceeding or we will not be able to propagate your "
+                    "submission to the INSDC."
+                ],
+            )
         if accession_type == EnaAccessionType.BIOPROJECT and self._is_umbrella_project(
             response.content
         ):

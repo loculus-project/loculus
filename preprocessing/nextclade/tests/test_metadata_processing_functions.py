@@ -1844,6 +1844,7 @@ class EnaAccessionCase:
     is_insdc_ingest_group: bool = False
     expected_datum: str | None = None
     expected_error: str | None = None
+    expected_warning: str | None = None
     expected_url: str | None = None
 
 
@@ -1885,13 +1886,13 @@ ena_accession_cases = [
         name="sra_experiment_in_raw_reads_field_is_rejected",
         accession="SRX23184375",
         accession_type="raw_reads",
-        expected_error="not a valid raw_reads accession",
+        expected_error="not a valid raw reads accession",
     ),
     EnaAccessionCase(
         name="multiple_runs_are_rejected",
         accession="SRR27477368,SRR27477369",
         accession_type="raw_reads",
-        expected_error="not a valid raw_reads accession",
+        expected_error="not a valid raw reads accession",
     ),
     EnaAccessionCase(
         name="biosample_in_bioproject_field_is_rejected",
@@ -1935,26 +1936,29 @@ ena_accession_cases = [
         expected_error="requires an accession_type arg",
     ),
     EnaAccessionCase(
-        name="unknown_accession_is_rejected",
+        name="not_visible_accession_is_warned_about",
         accession="PRJEB99999",
         ena_response=404,
-        expected_error="does not exist on ENA",
+        expected_datum="PRJEB99999",
+        expected_warning="is not visible on ENA",
         expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB99999",
     ),
     EnaAccessionCase(
-        name="server_error_asks_submitter_to_retry",
+        name="server_error_is_warned_about",
         # 501 is not in the session's status_forcelist, so it arrives as a response
         accession="PRJEB12345",
         ena_response=501,
-        expected_error="could not reach ENA",
+        expected_datum="PRJEB12345",
+        expected_warning="could not reach ENA",
         expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB12345",
     ),
     EnaAccessionCase(
-        name="exhausted_retries_ask_submitter_to_retry",
+        name="exhausted_retries_are_warned_about",
         # what urllib3 raises once the retries for 429/5xx in status_forcelist run out
         accession="PRJEB12345",
         ena_response=requests.exceptions.RetryError(),
-        expected_error="could not reach ENA",
+        expected_datum="PRJEB12345",
+        expected_warning="could not reach ENA",
         expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB12345",
     ),
     EnaAccessionCase(
@@ -2001,6 +2005,11 @@ def test_check_ena_accession(case: EnaAccessionCase) -> None:
         else:
             assert len(result.errors) == 1
             assert case.expected_error in result.errors[0]
+        if case.expected_warning is None:
+            assert result.warnings == []
+        else:
+            assert len(result.warnings) == 1
+            assert case.expected_warning in result.warnings[0]
 
         if case.expected_url is None:
             assert mock_session.get.call_count == 0
