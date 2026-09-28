@@ -187,6 +187,11 @@ class QueryProjector(
         }
     }
 
+    /** lets the next reconcile step of [organism] start a new pass without waiting for the pass interval (for tests) */
+    internal fun resetReconcilePassInterval(organism: String) = tickLock.withLock {
+        reconcilePassStartedAt.remove(organism)
+    }
+
     /** forces the lapsed data use terms check to run again in the next iteration (for tests) */
     internal fun resetDataUseTermsCheck() = tickLock.withLock { lastRestrictionCheckDate = null }
 

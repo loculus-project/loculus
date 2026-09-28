@@ -305,7 +305,7 @@ class QueryProjectorTest(
         runProjector()
         assertThat(projectedMetadata(DEFAULT_ORGANISM)["$accession.1"]!!["versionStatus"].asText(), equalTo("STALE"))
 
-        // one pass in steps of 4 accessions marks every released accession once, then starts over
+        // one pass in steps of 4 accessions marks every released accession once
         val marked = mutableListOf<String>()
         repeat((released.size + 3) / 4) {
             projector.reconcileStep(DEFAULT_ORGANISM, 4)
@@ -313,8 +313,16 @@ class QueryProjectorTest(
             runProjector()
         }
         assertThat(marked.sorted(), equalTo(released.map { it.accession }.sorted()))
+        // this step finds no accession after the cursor and ends the pass
         projector.reconcileStep(DEFAULT_ORGANISM, 4)
         assertThat(dirtyAccessions(), empty())
+        // the next one would start a new pass, but the pass interval has not passed yet
+        projector.reconcileStep(DEFAULT_ORGANISM, 4)
+        assertThat(dirtyAccessions(), empty())
+        projector.resetReconcilePassInterval(DEFAULT_ORGANISM)
+        projector.reconcileStep(DEFAULT_ORGANISM, 4)
+        assertThat(dirtyAccessions().sorted(), equalTo(released.map { it.accession }.sorted().take(4)))
+        runProjector()
 
         assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
     }
