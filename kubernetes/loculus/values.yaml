@@ -1610,6 +1610,12 @@ defaultOrganismConfig: &defaultOrganismConfig
         customDisplay:
           type: link
           url: "https://www.ncbi.nlm.nih.gov/sra/?term=__value__"
+        preprocessing:
+          function: check_ena_accession
+          inputs:
+            accession: insdcRawReadsAccession
+          args:
+            accession_type: raw_reads
         header: "INSDC"
         orderOnDetailsPage: 1120
         ingest: ncbiSraAccessions

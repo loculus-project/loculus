@@ -307,13 +307,15 @@ class FileProcessingService:
 
 
 # Successful ENA responses are small XML documents (a few KB). Cache hits refresh an entry's
-# position; a bioproject shared across a batch stays cached while unique biosamples cycle through.
+# position; a bioproject shared across a batch stays cached while unique biosamples and runs
+# cycle through.
 ena_cache = RequestCache(max_size=16)
 
 
 class EnaAccessionType(StrEnum):
     BIOPROJECT = "bioproject"
     BIOSAMPLE = "biosample"
+    RAW_READS = "raw_reads"
 
 
 # Rules out surrounding whitespace and comma-separated lists, which the ENA browser API
@@ -321,6 +323,7 @@ class EnaAccessionType(StrEnum):
 ACCESSION_PATTERNS: dict[EnaAccessionType, re.Pattern[str]] = {
     EnaAccessionType.BIOPROJECT: re.compile(r"PRJ[EDN][A-Z][0-9]+"),
     EnaAccessionType.BIOSAMPLE: re.compile(r"SAM[EDN][A-Z]?[0-9]+"),
+    EnaAccessionType.RAW_READS: re.compile(r"[EDS]RR[0-9]+"),
 }
 
 
@@ -351,8 +354,8 @@ class ENAVisibilityChecker:
         pattern = ACCESSION_PATTERNS[accession_type]
         if not pattern.fullmatch(accession):
             return processing_error(
-                f"'{accession}' is not a valid {accession_type} accession, expected a value "
-                f"matching '{pattern.pattern}'."
+                f"'{accession}' is not a valid {accession_type.replace('_', ' ')} accession, "
+                f"expected a value matching '{pattern.pattern}'."
             )
         try:
             response = ena_cache.get_or_fetch(

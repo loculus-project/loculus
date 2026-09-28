@@ -1874,6 +1874,26 @@ ena_accession_cases = [
         expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/SAMEA123456",
     ),
     EnaAccessionCase(
+        name="public_sra_run_is_accepted",
+        accession="SRR27477368",
+        accession_type="raw_reads",
+        ena_response=200,
+        expected_datum="SRR27477368",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/SRR27477368",
+    ),
+    EnaAccessionCase(
+        name="sra_experiment_in_raw_reads_field_is_rejected",
+        accession="SRX23184375",
+        accession_type="raw_reads",
+        expected_error="not a valid raw_reads accession",
+    ),
+    EnaAccessionCase(
+        name="multiple_runs_are_rejected",
+        accession="SRR27477368,SRR27477369",
+        accession_type="raw_reads",
+        expected_error="not a valid raw_reads accession",
+    ),
+    EnaAccessionCase(
         name="biosample_in_bioproject_field_is_rejected",
         accession="SAMN12345678",
         expected_error="not a valid bioproject accession",
