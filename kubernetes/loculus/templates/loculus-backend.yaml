@@ -100,6 +100,7 @@ spec:
             - "--keycloak.user=backend"
             - "--spring.datasource.password=$(DB_PASSWORD)"
             - "--spring.datasource.url=$(DB_URL)"
+            - "--spring.datasource.hikari.maximum-pool-size={{ $.Values.backendDatabasePoolSize | default 30 }}"
             - "--spring.datasource.username=$(DB_USERNAME)"
             - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
             - "--loculus.cleanup.task.reset-stale-in-processing-after-seconds={{- .Values.preprocessingTimeout | default 120 }}"

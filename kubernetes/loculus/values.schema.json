@@ -1241,6 +1241,14 @@
       "maximum": 22,
       "description": "Zstandard compression level for sequence data. Higher means better compression ratio but higher CPU/memory usage."
     },
+    "backendDatabasePoolSize": {
+      "groups": ["general"],
+      "group": "general",
+      "type": "integer",
+      "default": 30,
+      "minimum": 1,
+      "description": "Maximum number of Postgres connections per backend replica (Hikari pool size). Bulk downloads from the query engine take several connections each. Keep replicas times this value, plus other database clients, below the database's max_connections."
+    },
     "pipelineVersionUpgradeCheckIntervalSeconds": {
       "groups": ["general"],
       "group": "general",

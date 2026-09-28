@@ -55,6 +55,7 @@ accessionPrefix: "LOC_"
 dateFieldForGroupGraph: null
 zstdCompressionLevel: 10
 pipelineVersionUpgradeCheckIntervalSeconds: 10
+backendDatabasePoolSize: 30
 dataUseTerms:
   enabled: true
   urls:
