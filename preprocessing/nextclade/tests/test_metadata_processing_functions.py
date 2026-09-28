@@ -1919,9 +1919,12 @@ ena_accession_cases = [
         expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB12345",
     ),
     EnaAccessionCase(
-        name="surrounding_whitespace_is_rejected",
+        name="surrounding_whitespace_is_stripped",
         accession="PRJEB12345 ",
-        expected_error="not a valid bioproject accession",
+        ena_response=200,
+        ena_xml=SUBMISSION_PROJECT_XML,
+        expected_datum="PRJEB12345",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB12345",
     ),
     EnaAccessionCase(
         name="invalid_accession_type_is_internal_error",

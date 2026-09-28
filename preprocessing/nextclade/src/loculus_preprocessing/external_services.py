@@ -309,7 +309,7 @@ class FileProcessingService:
 # Successful ENA responses are small XML documents (a few KB). Cache hits refresh an entry's
 # position; a bioproject shared across a batch stays cached while unique biosamples and runs
 # cycle through.
-ena_cache = RequestCache(max_size=16)
+ena_cache = RequestCache(max_size=16, retries=1)
 
 
 class EnaAccessionType(StrEnum):
@@ -318,7 +318,7 @@ class EnaAccessionType(StrEnum):
     RAW_READS = "raw_reads"
 
 
-# Rules out surrounding whitespace and comma-separated lists, which the ENA browser API
+# Also guards against comma-separated lists, which the ENA browser API
 # would otherwise resolve to multiple records.
 ACCESSION_PATTERNS: dict[EnaAccessionType, re.Pattern[str]] = {
     EnaAccessionType.BIOPROJECT: re.compile(r"PRJ[EDN][A-Z][0-9]+"),
@@ -338,7 +338,7 @@ class ENAVisibilityChecker:
 
     def __init__(
         self,
-        timeout_seconds: int = 30,
+        timeout_seconds: int = 10,
     ):
         self.timeout_seconds = timeout_seconds
 
@@ -350,7 +350,7 @@ class ENAVisibilityChecker:
                 f"invalid accession_type '{accession_type_arg}', expected one of "
                 f"{[t.value for t in EnaAccessionType]}."
             )
-        accession = accession.upper()
+        accession = accession.strip().upper()
         pattern = ACCESSION_PATTERNS[accession_type]
         if not pattern.fullmatch(accession):
             return processing_error(
@@ -362,7 +362,8 @@ class ENAVisibilityChecker:
                 f"https://www.ebi.ac.uk/ena/browser/api/xml/{accession}",
                 timeout=self.timeout_seconds,
             )
-        except requests.RequestException:
+        except requests.RequestException as e:
+            logger.warning(f"Failed to check ENA visibility of '{accession}': {e}")
             response = None
         if response is None or response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
             return RawProcessingResult(
