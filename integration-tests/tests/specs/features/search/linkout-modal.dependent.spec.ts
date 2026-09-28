@@ -19,18 +19,28 @@ async function getOpenedUrls(page: import('@playwright/test').Page) {
     );
 }
 
+// The ebola-sudan Nextclade link-out has a low maxNumberOfRecommendedEntries in some deployments,
+// so its launch dialog may start with the too-many-sequences warning.
+async function continuePastSequenceCountWarning(page: import('@playwright/test').Page) {
+    const continueButton = page.getByRole('button', { name: 'Continue', exact: true });
+    await expect(
+        continueButton.or(page.getByRole('heading', { name: 'Data use terms' })),
+    ).toBeVisible();
+    if (await continueButton.isVisible()) {
+        await expect(page.getByText('This tool is recommended for at most')).toBeVisible();
+        await continueButton.click();
+    }
+}
+
 test.describe('Search linkout data use terms modal', () => {
     test('can be opened, closed, and launched with both data-use options', async ({ page }) => {
         const searchPage = new SearchPage(page);
         await searchPage.ebolaSudan();
         await mockWindowOpen(page);
-        page.on('dialog', async (dialog) => {
-            expect(dialog.message()).toContain('This tool is recommended for at most');
-            await dialog.accept();
-        });
 
         await page.getByRole('button', { name: 'Tools' }).click();
         await page.getByRole('menuitem', { name: 'Nextclade' }).click();
+        await continuePastSequenceCountWarning(page);
 
         await expect(page.getByRole('heading', { name: 'Options for launching' })).toBeVisible();
 
@@ -40,6 +50,7 @@ test.describe('Search linkout data use terms modal', () => {
 
         await page.getByRole('button', { name: 'Tools' }).click();
         await page.getByRole('menuitem', { name: 'Nextclade' }).click();
+        await continuePastSequenceCountWarning(page);
         await page.getByRole('button', { name: 'Open sequences only' }).click();
 
         let openedUrls = await getOpenedUrls(page);
@@ -48,6 +59,7 @@ test.describe('Search linkout data use terms modal', () => {
 
         await page.getByRole('button', { name: 'Tools' }).click();
         await page.getByRole('menuitem', { name: 'Nextclade' }).click();
+        await continuePastSequenceCountWarning(page);
         await page.getByRole('button', { name: 'Include Restricted-Use' }).click();
 
         openedUrls = await getOpenedUrls(page);
