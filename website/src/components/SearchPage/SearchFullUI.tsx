@@ -463,7 +463,7 @@ const InnerSearchFullUI = ({
 };
 
 export const SearchFullUI = (props: InnerSearchFullUIProps) => {
-    const queryClient = new QueryClient();
+    const [queryClient] = useState(() => new QueryClient());
 
     return (
         <QueryClientProvider client={queryClient}>
