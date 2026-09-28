@@ -291,7 +291,7 @@ export const utf16StringCodec: BodyCodec<string> = {
 
 /** A byte-budgeted LRU. `onEvict` runs for entries pushed out by the budget, not for explicit deletes or replacements. */
 export class ByteLru<V> {
-    private readonly entries = new Map<string, { value: V; bytes: number }>();
+    private readonly map = new Map<string, { value: V; bytes: number }>();
     private usedBytes = 0;
 
     constructor(
@@ -304,16 +304,16 @@ export class ByteLru<V> {
     }
 
     public get size() {
-        return this.entries.size;
+        return this.map.size;
     }
 
     public get(key: string): V | undefined {
-        const entry = this.entries.get(key);
+        const entry = this.map.get(key);
         if (entry === undefined) {
             return undefined;
         }
-        this.entries.delete(key);
-        this.entries.set(key, entry);
+        this.map.delete(key);
+        this.map.set(key, entry);
         return entry.value;
     }
 
@@ -322,24 +322,36 @@ export class ByteLru<V> {
         if (bytes > this.maxBytes) {
             return false;
         }
-        this.entries.set(key, { value, bytes });
+        this.map.set(key, { value, bytes });
         this.usedBytes += bytes;
         while (this.usedBytes > this.maxBytes) {
-            const oldestKey = this.entries.keys().next().value!;
-            const oldest = this.entries.get(oldestKey)!;
-            this.entries.delete(oldestKey);
+            const oldestKey = this.map.keys().next().value!;
+            const oldest = this.map.get(oldestKey)!;
+            this.map.delete(oldestKey);
             this.usedBytes -= oldest.bytes;
             this.onEvict?.(oldestKey, oldest.value);
         }
         return true;
     }
 
+    /** Like get, without touching recency. */
+    public peek(key: string): V | undefined {
+        return this.map.get(key)?.value;
+    }
+
+    /** Least recently used first. */
+    public *entries(): IterableIterator<[string, V]> {
+        for (const [key, entry] of this.map) {
+            yield [key, entry.value];
+        }
+    }
+
     public delete(key: string): V | undefined {
-        const entry = this.entries.get(key);
+        const entry = this.map.get(key);
         if (entry === undefined) {
             return undefined;
         }
-        this.entries.delete(key);
+        this.map.delete(key);
         this.usedBytes -= entry.bytes;
         return entry.value;
     }

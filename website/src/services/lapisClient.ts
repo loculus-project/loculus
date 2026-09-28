@@ -6,7 +6,7 @@ import { err, ok, Result } from 'neverthrow';
 import { ZodSchema } from 'zod';
 
 import { lapisApi } from './lapisApi.ts';
-import { getServerLapisCacheAdapter } from './lapisCache/serverLapisCache.ts';
+import { getServerLapisCacheAdapter } from './lapisCache/websiteCache.ts';
 import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
 import { getLapisUrl, getRuntimeConfig, getSchema } from '../config.ts';
 import { getInstanceLogger, type InstanceLogger } from '../logger.ts';

@@ -50,6 +50,11 @@ const { data, totalCount, requestKey } = await performLapisSearchQueries(
     cleanedOrganism.key,
 );
 
+// The default view (no query parameters) may be kept in the page cache, if the server-side queries succeeded
+if (Astro.url.search === '' && requestKey !== undefined) {
+    Astro.locals.pageCacheOrganism = cleanedOrganism.key;
+}
+
 const websiteConfig = getWebsiteConfig();
 const sequenceFlaggingConfig = websiteConfig.sequenceFlagging;
 const contactConfig = getContactConfig(websiteConfig);
