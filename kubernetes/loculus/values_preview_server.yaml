@@ -2,7 +2,7 @@ enableServiceMonitor: true
 # Branch preview only: known test accounts mean this must never contain private data.
 requireLogin: true
 # Preserve database pods across routine preview updates (not durable PVC storage).
-developmentDatabasePersistence: true
+developmentDatabasePersistence: false
 s3:
   enabled: false
 createTestAccounts: true
@@ -53,8 +53,6 @@ disableEnaSubmission: true
 disableRawReadsProcessingService: true
 additionalHeadHTML: '<script defer data-domain="loculus.org" src="https://plausible.io/js/script.js"></script>'
 ingest:
-  # This persistent preview created its contributor test group first (ID 1).
-  groupId: 2
   ncbiGatewayUrl: "https://ncbi-temp-proxy.api.taxonium.org/datasets/v2"
   mirrorBucket: "https://hel1.your-objectstorage.com/loculus-public/mirror/"
 sequenceFlagging:
