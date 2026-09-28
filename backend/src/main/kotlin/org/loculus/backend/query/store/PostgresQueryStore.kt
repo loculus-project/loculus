@@ -155,17 +155,18 @@ class PostgresQueryStore(
                             fetchMetadataFields(organism, chunk, fields)
                         }
                     }
-                    val frames = try {
-                        if (distinctIndices.isEmpty()) {
+                    try {
+                        val frames = if (distinctIndices.isEmpty()) {
                             null
                         } else {
                             fetchFrames(organism, kind, distinctIndices, slotBySequenceIndex, nSlots, chunk)
                         }
+                        Pair(values?.let { await(it) }, frames)
                     } catch (e: Throwable) {
+                        // failed or cancelled: the values task must not outlive this chunk's permits
                         values?.cancel(true)
                         throw e
                     }
-                    Pair(values?.let { await(it) }, frames)
                 },
                 emit = { chunk, (valuesById, frames) ->
                     for (position in chunk.indices) {
