@@ -48,6 +48,7 @@ import java.sql.Connection
         "loculus.query-engine.projector-initial-delay-ms=3600000",
         "loculus.query-engine.projector-interval-ms=3600000",
         "loculus.query-engine.projector-batch-size=3",
+        "loculus.query-engine.reconcile-accessions-per-second=0",
     ],
 )
 class QueryProjectorTest(
@@ -280,6 +281,38 @@ class QueryProjectorTest(
         projector.resetDataUseTermsCheck()
         runProjector()
         assertThat(projectedMetadata(DEFAULT_ORGANISM)["$accession.1"]!!["dataUseTerms"].asText(), equalTo("OPEN"))
+        assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+    }
+
+    @Test
+    fun `the reconcile pass recomputes projections that went stale without a trigger`() {
+        val released = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        runProjector()
+        val accession = released.first().accession
+        // a projection that is wrong and not in the dirty queue (like an accession dropped after a failed batch)
+        sql { c ->
+            c.prepareStatement(
+                "update query_entries set metadata = jsonb_set(metadata, '{versionStatus}', '\"STALE\"') " +
+                    "where accession = ?",
+            ).use {
+                it.setString(1, accession)
+                it.executeUpdate()
+            }
+        }
+        runProjector()
+        assertThat(projectedMetadata(DEFAULT_ORGANISM)["$accession.1"]!!["versionStatus"].asText(), equalTo("STALE"))
+
+        // one pass in steps of 4 accessions marks every released accession once, then starts over
+        val marked = mutableListOf<String>()
+        repeat((released.size + 3) / 4) {
+            projector.reconcileStep(DEFAULT_ORGANISM, 4)
+            marked += dirtyAccessions()
+            runProjector()
+        }
+        assertThat(marked.sorted(), equalTo(released.map { it.accession }.sorted()))
+        projector.reconcileStep(DEFAULT_ORGANISM, 4)
+        assertThat(dirtyAccessions(), empty())
+
         assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
     }
 

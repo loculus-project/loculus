@@ -20,6 +20,9 @@ private val log = KotlinLogging.logger {}
  *                                              config) and <organism>/<lineageSystem>.yaml lineage files
  * loculus.query-engine.projector-interval-ms   how often the projector drains the dirty queue
  * loculus.query-engine.tail-interval-ms        how often in-memory indexes poll the changelog
+ * loculus.query-engine.reconcile-accessions-per-second
+ *                                              rate at which the projector re-marks all released accessions dirty,
+ *                                              cycling through them, to heal projections that went stale (0 = off)
  */
 @ConfigurationProperties(prefix = "loculus.query-engine")
 data class QueryEngineProperties(
@@ -28,6 +31,7 @@ data class QueryEngineProperties(
     val projectorIntervalMs: Long = 500,
     val projectorBatchSize: Int = 2000,
     val tailIntervalMs: Long = 250,
+    val reconcileAccessionsPerSecond: Double = 50.0,
     val instanceName: String? = null,
 )
 

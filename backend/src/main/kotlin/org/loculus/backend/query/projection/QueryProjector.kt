@@ -51,6 +51,7 @@ private const val PARALLEL_WRITERS = 4
  * set query_engine_state.needs_full_rebuild on a pipeline version change). Every
  * `loculus.query-engine.projector-interval-ms` the projector
  * - checks once per (UTC) day whether RESTRICTED data use terms have lapsed and marks those accessions dirty,
+ * - marks the next few released accessions of each organism dirty (see [reconcileStep]),
  * - per organism: runs a full rebuild if needed (new organism, changed sequence encoding, changed metadata field
  *   list, pipeline version change), then drains the dirty queue in batches: all released versions of each claimed
  *   accession are recomputed with the same code as get-released-data and written; the claimed queue rows are
@@ -75,6 +76,8 @@ class QueryProjector(
     private var leaderConnection: Connection? = null
     private var lastRestrictionCheckDate: String? = null
     private val rebuildFailedAt = HashMap<String, Long>()
+    private val reconcileCursors = HashMap<String, String>()
+    private var lastReconcileAt = System.currentTimeMillis()
 
     private val workerCount = maxOf(1, Runtime.getRuntime().availableProcessors() - 1)
     private val workers: ExecutorService = Executors.newFixedThreadPool(workerCount, daemonThreads("query-projector"))
@@ -104,10 +107,61 @@ class QueryProjector(
     fun runOnce(): Boolean = tickLock.withLock {
         if (!ensureLeadership()) return false
         checkLapsedDataUseTerms()
+        reconcileStep()
         for (schema in registry.schemas.values) {
             processOrganism(schema)
         }
         true
+    }
+
+    /**
+     * Marks the next released accessions (in accession order, per organism, wrapping around) dirty, at
+     * `loculus.query-engine.reconcile-accessions-per-second`. Projections that went stale (an accession dropped after
+     * a failed projection, a missed trigger) are thereby recomputed within one pass, about
+     * (released accessions / rate) seconds. Unchanged entries cost a read and a projection but no write
+     * (change-only upserts, sequence data skipped by source_hash).
+     */
+    private fun reconcileStep() {
+        val now = System.currentTimeMillis()
+        val count = (properties.reconcileAccessionsPerSecond * (now - lastReconcileAt) / 1000).toInt()
+        if (count < 1) return
+        lastReconcileAt = now
+        for (schema in registry.schemas.values) {
+            reconcileStep(schema.organism, minOf(count, properties.projectorBatchSize))
+        }
+    }
+
+    /** marks the next [count] released accessions of [organism] after its reconcile cursor dirty */
+    internal fun reconcileStep(organism: String, count: Int) {
+        val cursor = reconcileCursors[organism] ?: ""
+        val last = transaction {
+            jdbc().prepareStatement(
+                """
+                with next as (
+                    select distinct accession from sequence_entries
+                    where organism = ? and accession > ? and released_at is not null
+                    order by accession
+                    limit $count
+                ), marked as (
+                    insert into query_dirty_accessions (organism, accession)
+                    select ?, accession from next
+                    on conflict do nothing
+                )
+                select max(accession) from next
+                """.trimIndent(),
+            ).use {
+                it.setString(1, organism)
+                it.setString(2, cursor)
+                it.setString(3, organism)
+                it.executeQuery().use { rs -> if (rs.next()) rs.getString(1) else null }
+            }
+        }
+        if (last == null) {
+            if (cursor.isNotEmpty()) log.info { "Query projection: reconcile pass over $organism done" }
+            reconcileCursors.remove(organism)
+        } else {
+            reconcileCursors[organism] = last
+        }
     }
 
     /** forces the lapsed data use terms check to run again in the next iteration (for tests) */
@@ -281,7 +335,8 @@ class QueryProjector(
             }
             (1..PARALLEL_WRITERS).map { CompletableFuture.runAsync(drainer, writerExecutor) }.forEach { it.join() }
         }
-        if (accessionCount.get() > 0) {
+        // the reconcile marks a few accessions every run: log only runs that changed something
+        if (changedCount.get() > 0) {
             log.info {
                 "Query projection: processed ${accessionCount.get()} dirty accessions of ${schema.organism}, " +
                     "${changedCount.get()} entries changed, took ${System.currentTimeMillis() - start} ms"
