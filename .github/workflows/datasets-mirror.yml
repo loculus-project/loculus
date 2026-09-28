@@ -2,6 +2,8 @@ name: Mirror NCBI Datasets to Object Storage
 # This reusable workflow contains the shared logic for mirroring NCBI datasets.
 # It is called by datasets-mirror-priority-1.yml and datasets-mirror-priority-2.yml with different schedules.
 # It can also be manually triggered to mirror a single taxon ID.
+# `streamed: true` is for taxa too large to unzip on a runner (SARS-CoV-2: ~280 GB of FASTA): the NCBI zip is
+# streamed into <taxon>.genomic.fna.zst and <taxon>.data_report.jsonl.zst, which ingest reads with `mirror_format: zst`.
 on:
   workflow_call:
     inputs:
@@ -9,12 +11,22 @@ on:
         description: 'Single taxon ID to process'
         required: true
         type: number
+      streamed:
+        description: 'Stream into per-file .zst instead of .zip + .tar.zst'
+        required: false
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
       taxon_id:
         description: 'Taxon ID to mirror'
         required: true
         type: number
+      streamed:
+        description: 'Stream into per-file .zst instead of .zip + .tar.zst'
+        required: false
+        type: boolean
+        default: false
 jobs:
   download-and-upload:
     runs-on: ubuntu-latest
@@ -22,10 +34,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
       - uses: mamba-org/setup-micromamba@v3
+        if: ${{ !inputs.streamed }}
         with:
           environment-name: datasets
           create-args: -c conda-forge -c bioconda ncbi-datasets-cli s3cmd seqkit
       - name: Download NCBI Dataset and create tzst archive
+        if: ${{ !inputs.streamed }}
         shell: bash -l {0}
         run: |
           datasets download virus genome taxon ${{ inputs.taxon_id }} --no-progressbar --filename ${{ inputs.taxon_id }}.zip
@@ -34,6 +48,21 @@ jobs:
           cat md5sum.txt
           ls -lh ${{ inputs.taxon_id }}.* ncbi_dataset/data/*
           seqkit stats ncbi_dataset/data/genomic.fna
+      - uses: astral-sh/setup-uv@v7
+        if: ${{ inputs.streamed }}
+      - name: Stream NCBI Dataset into per-file zst
+        if: ${{ inputs.streamed }}
+        env:
+          NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
+        run: |
+          set -o pipefail
+          curl -sS --fail --retry 3 ${NCBI_API_KEY:+-H "api-key: $NCBI_API_KEY"} \
+            "https://api.ncbi.nlm.nih.gov/datasets/v2/virus/taxon/${{ inputs.taxon_id }}/genome/download?include_sequence=GENOME" \
+            | uv run --with stream-unzip --with zstandard python .github/scripts/ncbi_zip_to_zst.py out
+          test -s out/genomic.fna.zst && test -s out/data_report.jsonl.zst
+          mv out/genomic.fna.zst ${{ inputs.taxon_id }}.genomic.fna.zst
+          mv out/data_report.jsonl.zst ${{ inputs.taxon_id }}.data_report.jsonl.zst
+          ls -lh ${{ inputs.taxon_id }}.*.zst
       - name: Create S3cmd config
         run: |
           cat <<EOF > ~/.s3cfg
@@ -47,7 +76,13 @@ jobs:
       - name: Upload to Object Storage
         shell: bash -l {0}
         run: |
-          for file in ${{ inputs.taxon_id }}.zip ${{ inputs.taxon_id }}.tar.zst ; do
+          if [[ "${{ inputs.streamed }}" == "true" ]]; then
+            files="${{ inputs.taxon_id }}.genomic.fna.zst ${{ inputs.taxon_id }}.data_report.jsonl.zst"
+            s3cmd() { uvx s3cmd "$@"; }
+          else
+            files="${{ inputs.taxon_id }}.zip ${{ inputs.taxon_id }}.tar.zst"
+          fi
+          for file in $files; do
             s3cmd put "${file}" s3://loculus-public/mirror/"${file}"
           done
   notify_on_failure:

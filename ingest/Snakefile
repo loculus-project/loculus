@@ -35,6 +35,13 @@ LOG_LEVEL = config.get("log_level", "INFO")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY")
 NCBI_GATEWAY_URL = config.get("ncbi_gateway_url")
 MIRROR_BUCKET = config.get("mirror_bucket", "")
+# "tar.zst": one archive of the whole package; "zst": data_report.jsonl.zst and genomic.fna.zst, for taxa too large to unpack (SARS-CoV-2)
+MIRROR_FORMAT = config.get("mirror_format", "tar.zst")
+RELEASED_AFTER = config.get(
+    "released_after", ""
+)  # YYYY-MM-DD: only ingest records released on or after this date
+if RELEASED_AFTER and MIRROR_BUCKET and MIRROR_FORMAT != "zst":
+    raise ValueError("released_after needs mirror_format: zst or no mirror_bucket")
 CHECK_ENA_DEPOSITION = config.get("check_ena_deposition", False)
 FILTER = config.get("metadata_filter", None)
 CALCULATE_GROUPS_OVERRIDE_JSON = config.get(
@@ -127,15 +134,35 @@ rule fetch_inflate_ncbi_dataset_package:
         taxon_id=TAXON_ID,
         api_key=f"--api-key {NCBI_API_KEY}" if NCBI_API_KEY else "",
         gateway=f"--gateway-url {NCBI_GATEWAY_URL}" if NCBI_GATEWAY_URL else "",
+        released_after=f"--released-after {RELEASED_AFTER}" if RELEASED_AFTER else "",
         use_mirror=bool(MIRROR_BUCKET),
+        mirror_format=MIRROR_FORMAT,
         mirror_url=f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}.tar.zst",
+        mirror_prefix=f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}",
+        filter_script="scripts/filter_by_release_date.py",
+        released_after_date=RELEASED_AFTER,
         unzip=unzip,
         dataset_package=directory("results/ncbi_dataset"),
         compressed_package_tzst="results/dataset.tar.zst",
         compressed_package_zip="results/dataset.zip",
     shell:
         """
-        if [[ "{params.use_mirror}" == "True" ]]; then
+        if [[ "{params.use_mirror}" == "True" && "{params.mirror_format}" == "zst" ]]; then
+            # Streamed so the unfiltered package never lands on disk
+            mkdir -p results/ncbi_dataset/data
+            if [[ -n "{params.released_after_date}" ]]; then
+                curl -fsS {params.mirror_prefix}.data_report.jsonl.zst | zstd -dc \
+                    | python {params.filter_script} \
+                        --released-after {params.released_after_date} \
+                        --output-accessions results/released_accessions.txt \
+                        >{output.dataset_report}
+                curl -fsS {params.mirror_prefix}.genomic.fna.zst | zstd -dc \
+                    | seqkit grep -f results/released_accessions.txt >{output.dataset_sequences}
+            else
+                curl -fsS {params.mirror_prefix}.data_report.jsonl.zst | zstd -dc >{output.dataset_report}
+                curl -fsS {params.mirror_prefix}.genomic.fna.zst | zstd -dc >{output.dataset_sequences}
+            fi
+        elif [[ "{params.use_mirror}" == "True" ]]; then
             curl {params.mirror_url} -o {params.compressed_package_tzst}
             tar xvf {params.compressed_package_tzst} -C results
         else
@@ -144,6 +171,7 @@ rule fetch_inflate_ncbi_dataset_package:
                 --filename {params.compressed_package_zip} \
                 {params.api_key} \
                 {params.gateway} \
+                {params.released_after} \
                 && {params.unzip} \
                     -o {params.compressed_package_zip} \
                     -d results

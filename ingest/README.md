@@ -172,6 +172,8 @@ backend_url: http://backend-main.loculus.org/
 mirror_bucket: "https://hel1.your-objectstorage.com/loculus-public/mirror/"
 ```
 
+For taxa too large to unpack whole (SARS-CoV-2 is ~280 GB of FASTA), `.github/workflows/datasets-mirror.yml` with `streamed: true` mirrors the package as `<taxon>.data_report.jsonl.zst` and `<taxon>.genomic.fna.zst`. Setting `mirror_format: zst` makes ingest stream those files. With `released_after: "YYYY-MM-DD"` it keeps only records released on or after that date, filtering while decompressing so the full package never lands on disk. Without a mirror, `released_after` is passed to `datasets download` as `--released-after`.
+
 The password might be different, you can get it through:
 
 ```bash
