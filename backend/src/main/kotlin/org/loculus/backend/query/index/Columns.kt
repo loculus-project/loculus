@@ -44,8 +44,9 @@ internal sealed class Column(val field: MetadataField) : GroupKeySource {
     open fun isNullFilter(domain: RoaringBitmap): RoaringBitmap = scan(domain) { isNull(it) }
 
     companion object {
-        fun create(field: MetadataField, capacity: Int): Column = when (field.type) {
-            FieldType.STRING -> StringColumn(field, capacity)
+        /** [lookupByValue]: keep value -> ids postings instead of per-value bitmaps (string fields only) */
+        fun create(field: MetadataField, capacity: Int, lookupByValue: Boolean = false): Column = when (field.type) {
+            FieldType.STRING -> StringColumn(field, capacity, lookupByValue)
             FieldType.INT -> IntColumn(field, capacity)
             FieldType.FLOAT -> FloatColumn(field, capacity)
             FieldType.DATE -> DateColumn(field, capacity)
@@ -54,18 +55,30 @@ internal sealed class Column(val field: MetadataField) : GroupKeySource {
     }
 }
 
-internal class StringColumn(field: MetadataField, capacity: Int) : Column(field) {
+/**
+ * Dictionary codes per id plus one of three ways to find the ids of a value:
+ * - per-value bitmaps, for fields with `generateIndex` or a lineage system (like SILO's indexed dictionary
+ *   columns); dropped for good once the dictionary exceeds [BITMAP_LIMIT] values;
+ * - [IdPostings] (value -> ids, ~4 B per value), for the accession columns ([lookupByValue]), so point and
+ *   in-list filters cost O(k) at any size;
+ * - neither: equality, in-list and regex filters scan the codes of the ids in their domain.
+ */
+internal class StringColumn(field: MetadataField, capacity: Int, lookupByValue: Boolean = false) : Column(field) {
     val dictionary = StringDictionary()
     private val codes = CodeArray(capacity)
     private val nulls = RoaringBitmap()
 
-    /** per-code bitmaps; dropped (null) once the dictionary exceeds [BITMAP_LIMIT] values */
-    private var bitmaps: ArrayList<RoaringBitmap>? = ArrayList()
+    private var bitmaps: ArrayList<RoaringBitmap>? =
+        if (!lookupByValue && (field.generateIndex || field.lineageSystem != null)) ArrayList() else null
+    private val postings: IdPostings? = if (lookupByValue) IdPostings() else null
 
     @Volatile private var ranks: Ranks? = null
     private val regexCache = ConcurrentHashMap<String, RegexMatches>()
 
     val hasBitmaps: Boolean get() = bitmaps != null
+
+    /** equality and in-list filters are answered without scanning */
+    val hasValueIndex: Boolean get() = bitmaps != null || postings != null
 
     override fun grow(capacity: Int) = codes.grow(capacity)
 
@@ -76,6 +89,7 @@ internal class StringColumn(field: MetadataField, capacity: Int) : Column(field)
         }
         val code = dictionary.getOrAdd(value.toString())
         codes.set(id, code)
+        postings?.add(code, id)
         val bm = bitmaps ?: return
         if (dictionary.size > BITMAP_LIMIT) {
             bitmaps = null
@@ -92,6 +106,7 @@ internal class StringColumn(field: MetadataField, capacity: Int) : Column(field)
             return
         }
         bitmaps?.get(code)?.remove(id)
+        postings?.remove(code, id)
         codes.set(id, -1)
     }
 
@@ -122,10 +137,11 @@ internal class StringColumn(field: MetadataField, capacity: Int) : Column(field)
         if (code < 0) return RoaringBitmap()
         val bm = bitmaps
         if (bm != null) return if (code < bm.size) bm[code].clone() else RoaringBitmap()
+        postings?.let { return it.ids(intArrayOf(code)) }
         return scan(domain) { codes.get(it) == code }
     }
 
-    /** ids whose code is in [codeSet] (plus nulls if [matchNull]) */
+    /** ids whose code is in [codeSet] (plus nulls if [matchNull]); codes < 0 (unknown values) are ignored */
     fun inFilter(codeSet: IntArray, matchNull: Boolean, domain: RoaringBitmap): RoaringBitmap {
         val bm = bitmaps
         if (bm != null) {
@@ -134,10 +150,26 @@ internal class StringColumn(field: MetadataField, capacity: Int) : Column(field)
             if (matchNull) parts.add(nulls)
             return unionOf(parts)
         }
+        postings?.let { p ->
+            val ids = p.ids(codeSet)
+            if (matchNull) ids.or(nulls)
+            return ids
+        }
         val lookup = BooleanArray(dictionary.size + 1)
         for (c in codeSet) if (c >= 0) lookup[c + 1] = true
         lookup[0] = matchNull
         return scan(domain) { lookup[codes.get(it) + 1] }
+    }
+
+    /** ids equal to one of [values] (null = is null) */
+    fun inFilter(values: Collection<String?>, domain: RoaringBitmap): RoaringBitmap {
+        var matchNull = false
+        val codeSet = IntArray(values.size)
+        var n = 0
+        for (v in values) {
+            if (v == null) matchNull = true else codeSet[n++] = dictionary.lookup(v)
+        }
+        return inFilter(codeSet.copyOf(n), matchNull, domain)
     }
 
     fun regexFilter(pattern: String, domain: RoaringBitmap): RoaringBitmap {
@@ -175,9 +207,14 @@ internal class StringColumn(field: MetadataField, capacity: Int) : Column(field)
     }
 
     override fun memoryBytes(): Long {
-        var total = codes.memoryBytes() + dictionary.memoryBytes() + nulls.getLongSizeInBytes()
-        bitmaps?.forEach { total += it.getLongSizeInBytes() + 16 }
-        ranks?.let { total += it.sorted.size * 8L }
+        var total = codes.memoryBytes() + dictionary.memoryBytes() + heapBytes(nulls)
+        bitmaps?.let { list ->
+            total += arrayBytes(4L * list.size)
+            list.forEach { total += heapBytes(it) }
+        }
+        postings?.let { total += it.memoryBytes() }
+        ranks?.let { total += arrayBytes(4L * it.sorted.size) + arrayBytes(4L * it.rank.size) }
+        regexCache.values.forEach { total += it.memoryBytes() }
         return total
     }
 
@@ -209,6 +246,8 @@ internal class RegexMatches(pattern: String) {
         }
         return RegexMatchesSnapshot(matches, size, matchesNull)
     }
+
+    fun memoryBytes(): Long = arrayBytes(matches.size.toLong())
 }
 
 /**
@@ -534,5 +573,5 @@ internal class BooleanColumn(field: MetadataField, capacity: Int) : Column(field
 
     fun filter(value: Boolean): RoaringBitmap = (if (value) trues else falses).clone()
 
-    override fun memoryBytes(): Long = values.size + trues.getLongSizeInBytes() + falses.getLongSizeInBytes()
+    override fun memoryBytes(): Long = values.size + heapBytes(trues) + heapBytes(falses)
 }

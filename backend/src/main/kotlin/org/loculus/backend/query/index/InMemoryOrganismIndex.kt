@@ -68,7 +68,9 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     private val lock = ReentrantReadWriteLock()
     private var capacity = maxOf(16, initialCapacity)
     private val alive = RoaringBitmap()
-    private val columns: List<Column> = schema.metadata.map { Column.create(it, capacity) }
+    private val columns: List<Column> = schema.metadata.map {
+        Column.create(it, capacity, lookupByValue = it.name == schema.primaryKey || it.name == ACCESSION_FIELD)
+    }
     private val columnsByName: Map<String, Column> = columns.associateBy { it.field.name }
     private val sequences: Array<SequenceIndex?> = run {
         val all = schema.allSequences()
@@ -338,7 +340,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
 
         is And -> evalAnd(filter.children, mode, domain)
 
-        is Or -> unionOf(filter.children.map { eval(it, mode, domain) })
+        is Or -> evalOr(filter.children, mode, domain)
 
         is Not -> domain.clone().also { it.andNot(eval(filter.child, mode.inverted(), domain)) }
 
@@ -444,14 +446,48 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         return result
     }
 
-    /** 0 = answered from bitmaps, 1 = scan, 2 = composite */
+    /**
+     * Equality children on the same string field become one in-list filter: one lookup per value for
+     * value-indexed columns (a list of 200k accessions stays O(k)), one scan instead of one per value otherwise.
+     */
+    private fun evalOr(children: List<Filter>, mode: AmbiguityMode, domain: RoaringBitmap): RoaringBitmap {
+        val byColumn = LinkedHashMap<StringColumn, MutableList<String?>>()
+        val rest = ArrayList<Filter>()
+        for (child in children) {
+            val col = (child as? StringEquals)?.let { stringColumnOrNull(it.field) }
+            if (col == null) rest.add(child) else byColumn.getOrPut(col) { ArrayList() }.add(child.value)
+        }
+        val parts = ArrayList<RoaringBitmap>(byColumn.size + rest.size)
+        byColumn.forEach { (col, values) ->
+            val value = values.singleOrNull()
+            parts.add(
+                when {
+                    values.size > 1 -> col.inFilter(values, domain)
+                    value == null -> col.isNullFilter(domain)
+                    else -> col.equalsFilter(value, domain)
+                },
+            )
+        }
+        rest.forEach { parts.add(eval(it, mode, domain)) }
+        return unionOf(parts)
+    }
+
+    private fun stringColumnOrNull(name: String): StringColumn? =
+        (columnsByName[name] ?: schema.field(name)?.let { columnsByName[it.name] }) as? StringColumn
+
+    /** 0 = answered from bitmaps or postings, 1 = scan, 2 = composite */
     private fun cost(filter: Filter): Int = when (filter) {
         is SymbolEquals, is HasMutation, is InsertionContains, is BooleanEquals, is IsNull, True -> 0
 
-        is StringEquals, is LineageIn, is StringRegex ->
-            if ((columnsByName[filter.fieldName()] as? StringColumn)?.hasBitmaps == true) 0 else 1
+        is StringEquals, is LineageIn ->
+            if ((columnsByName[filter.fieldName()] as? StringColumn)?.hasValueIndex == true) 0 else 1
+
+        is StringRegex -> if ((columnsByName[filter.fieldName()] as? StringColumn)?.hasBitmaps == true) 0 else 1
 
         is IntEquals, is IntBetween, is FloatEquals, is FloatBetween, is DateEquals, is DateBetween -> 1
+
+        // an accession list must run before the scans an And also holds (versionStatus), so these only visit k ids
+        is Or -> filter.children.maxOfOrNull { cost(it) } ?: 0
 
         else -> 2
     }
@@ -1321,13 +1357,16 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     /** approximate heap usage of the index structures in bytes, per component */
     fun memoryUsage(): Map<String, Long> = lock.read {
         val usage = LinkedHashMap<String, Long>()
-        usage["alive"] = alive.getLongSizeInBytes()
+        usage["alive"] = heapBytes(alive)
         columns.forEach { usage["metadata:${it.field.name}"] = it.memoryBytes() }
         sequences.filterNotNull().forEach { usage["sequence:${it.schema.name}"] = it.memoryBytes() }
         usage
     }
 
     companion object {
+        /** Loculus's accession field; with the primary key (accessionVersion) it is looked up by value */
+        const val ACCESSION_FIELD = "accession"
+
         /** filtered mutation counting runs position blocks in parallel (switchable for benchmarks) */
         @Volatile internal var parallelMutations = true
 

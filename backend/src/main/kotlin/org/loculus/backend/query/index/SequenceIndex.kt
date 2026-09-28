@@ -187,20 +187,19 @@ internal class SequenceIndex(val schema: SequenceSchema) {
     }
 
     fun memoryBytes(): Long {
-        var total = present.getLongSizeInBytes()
-        var slots = 0L
+        var total = heapBytes(present)
         for (perSymbol in mutations) {
             if (perSymbol == null) continue
-            slots += perSymbol.size
-            for (bm in perSymbol) if (bm != null) total += bm.getLongSizeInBytes() + 16
+            total += arrayBytes(4L * perSymbol.size)
+            for (bm in perSymbol) if (bm != null) total += heapBytes(bm)
         }
         total += runs.memoryBytes()
-        for (bm in runStarts) if (bm != null) total += bm.getLongSizeInBytes() + 16
-        for (bm in runEnds) if (bm != null) total += bm.getLongSizeInBytes() + 16
-        for (bm in checkpoints) total += bm.getLongSizeInBytes() + 16
+        for (bm in runStarts) if (bm != null) total += heapBytes(bm)
+        for (bm in runEnds) if (bm != null) total += heapBytes(bm)
+        for (bm in checkpoints) total += heapBytes(bm)
         total += (runStarts.size + runEnds.size + startCounts.size + endCounts.size) * 4L
-        insertions.values.forEach { m -> m.values.forEach { total += it.getLongSizeInBytes() + 64 } }
-        return total + slots * 4 + mutations.size * 4L + mutationCounts.size * 4L
+        insertions.values.forEach { m -> m.values.forEach { total += heapBytes(it) + 64 } }
+        return total + mutations.size * 4L + mutationCounts.size * 4L
     }
 
     // ---------------- reads ----------------
