@@ -8,6 +8,7 @@ from typing import Literal
 import pytest
 from Bio import SeqIO
 from Bio.Seq import Seq
+from Bio.SeqFeature import BeforePosition, ExactPosition, SeqFeature
 from factory_methods import (
     Case,
     ProcessedAlignment,
@@ -1632,6 +1633,70 @@ def test_create_flatfile():
     embl_str = create_flatfile(config, result[0])
     expected_embl = Path(SINGLE_SEGMENT_EMBL).read_text(encoding="utf-8")
     assert embl_str == expected_embl
+
+
+# ATG AAA GGG TGA -> MKG, ending in a terminal stop codon
+FUNCTIONAL_SEQUENCE = "ATGAAAGGGTGA"
+# ATG AAA TAA GGG TGA -> MK*G, with a premature stop codon before the terminal one
+PREMATURE_STOP_SEQUENCE = "ATGAAATAAGGGTGA"
+
+
+def _single_cds_feature(
+    sequence_str: str,
+    attributes: GffAttributes | None = None,
+    annotation_object: NextcladeAnnotation | None = None,
+) -> SeqFeature:
+    annotation_object = annotation_object or single_cds_annotation(
+        0, len(sequence_str), attributes=attributes
+    )
+    features = get_seq_features(annotation_object, sequence_str)
+    [cds_feature] = [feature for feature in features if feature.type == "CDS"]
+    return cds_feature
+
+
+def test_get_seq_features_translates_a_cds_without_premature_stop():
+    cds_feature = _single_cds_feature(FUNCTIONAL_SEQUENCE)
+
+    assert cds_feature.qualifiers["translation"] == "MKG"
+    assert "pseudo" not in cds_feature.qualifiers
+    assert "note" not in cds_feature.qualifiers
+
+
+def test_get_seq_features_ends_a_cds_at_its_premature_stop():
+    cds_feature = _single_cds_feature(PREMATURE_STOP_SEQUENCE)
+
+    assert cds_feature.qualifiers["translation"] == "MK"
+    assert "pseudo" not in cds_feature.qualifiers
+    # ATG AAA TAA: the CDS now ends on the premature stop codon's last base.
+    assert (cds_feature.location.start, cds_feature.location.end) == (0, 9)
+
+
+def test_get_seq_features_drops_the_3_prime_truncation_at_a_premature_stop():
+    # <1..>15 becomes <1..9: the 5' end is still unknown, but the stop codon is a known 3' end.
+    annotation_object = single_cds_annotation(
+        0, len(PREMATURE_STOP_SEQUENCE), truncation={"both": [1, 1]}
+    )
+    cds_feature = _single_cds_feature(PREMATURE_STOP_SEQUENCE, annotation_object=annotation_object)
+
+    assert isinstance(cds_feature.location.start, BeforePosition)
+    assert type(cds_feature.location.end) is ExactPosition
+    assert cds_feature.location.end == 9  # noqa: PLR2004
+
+
+def test_get_seq_features_ends_a_minus_strand_cds_at_its_premature_stop():
+    sequence = str(Seq(PREMATURE_STOP_SEQUENCE).reverse_complement())
+    annotation_object = on_minus_strand(single_cds_annotation(0, len(sequence)))
+    cds_feature = _single_cds_feature(sequence, annotation_object=annotation_object)
+
+    assert cds_feature.qualifiers["translation"] == "MK"
+    assert (cds_feature.location.start, cds_feature.location.end) == (6, 15)
+    assert cds_feature.location.strand == -1
+
+
+def test_get_seq_features_leaves_an_existing_note_alone_without_premature_stop():
+    cds_feature = _single_cds_feature(FUNCTIONAL_SEQUENCE, {"Note": ["existing note"]})
+
+    assert cds_feature.qualifiers["note"] == ["existing note"]
 
 
 multi_reference_cases = [

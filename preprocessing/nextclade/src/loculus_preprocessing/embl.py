@@ -256,6 +256,29 @@ def _translate_cds(
     return translation.removesuffix("*")
 
 
+def _trim_location(
+    location: FeatureLocation | CompoundLocation, length: int
+) -> FeatureLocation | CompoundLocation:
+    """Keep the first `length` bases of `location`, counted 5'->3' along the feature.
+
+    The kept 5' end keeps any fuzzy position; a new 3' end is exact.
+    """
+    parts: list[FeatureLocation] = []
+    for part in location.parts:
+        if length <= 0:
+            break
+        kept = part
+        if len(part) > length:
+            # On the minus strand the feature's 5' end is the part's upper coordinate.
+            if part.strand == -1:
+                kept = FeatureLocation(int(part.end) - length, part.end, strand=-1)
+            else:
+                kept = FeatureLocation(part.start, int(part.start) + length, strand=part.strand)
+        parts.append(kept)
+        length -= len(kept)
+    return parts[0] if len(parts) == 1 else CompoundLocation(parts)
+
+
 def _build_cds_feature(cds: NextcladeCds, sequence_str: str) -> SeqFeature:
     segments = cds.segments
     location = _cds_location(segments)
@@ -265,12 +288,18 @@ def _build_cds_feature(cds: NextcladeCds, sequence_str: str) -> SeqFeature:
     # cds itself; only the first segment's phase is relevant, since EMBL's codon_start only
     # applies to the first base of a (possibly joined) feature.
     codon_start = segments[0].phase + 1
-    # Copied GFF attributes are lists, codon_start is a count, translation is one string.
+    attribute_qualifiers = _build_qualifiers(cds.attributes, EMBL_ANNOTATIONS.cds_qualifiers)
     qualifiers: dict[str, list[str] | int | str] = {
-        **_build_qualifiers(cds.attributes, EMBL_ANNOTATIONS.cds_qualifiers),
+        **attribute_qualifiers,
         "codon_start": codon_start,
-        "translation": _translate_cds(sequence_str, location, codon_start),
     }
+    translation = _translate_cds(sequence_str, location, codon_start)
+    # A premature stop codon ends the protein there: translate only up to it and end the CDS on
+    # the stop codon's last base. That end is known, so the CDS is no longer 3' partial.
+    if (stop_index := translation.find("*")) != -1:
+        translation = translation[:stop_index]
+        location = _trim_location(location, codon_start - 1 + 3 * (stop_index + 1))
+    qualifiers["translation"] = translation
     return SeqFeature(
         location=location,
         type="CDS",
