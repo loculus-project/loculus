@@ -42,6 +42,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.sql.Connection
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 
 @EndpointTest(
@@ -372,16 +373,15 @@ class QueryProjectorTest(
         var third: Thread? = null
         try {
             assertThat(secondWrote.await(30, TimeUnit.SECONDS), equalTo(true))
+            val thirdPid = AtomicInteger()
             third = thread {
                 transaction {
-                    writer.write(
-                        TransactionManager.current().connection.connection as Connection,
-                        emptyList(),
-                        listOf(ids[2]),
-                    )
+                    val connection = TransactionManager.current().connection.connection as Connection
+                    thirdPid.set(backendPid(connection))
+                    writer.write(connection, emptyList(), listOf(ids[2]))
                 }
             }
-            third.join(500)
+            assertThat("third writer waits on a lock", awaitLockWait(thirdPid), equalTo(true))
             assertThat("third writer waits for the second one", third.isAlive, equalTo(true))
             assertThat(changelogSeqs(), equalTo(seqsBefore))
         } finally {
@@ -556,6 +556,29 @@ class QueryProjectorTest(
                 rs.getInt(1)
             }
         }
+    }
+
+    private fun backendPid(connection: Connection): Int = connection.createStatement().use { s ->
+        s.executeQuery("select pg_backend_pid()").use { rs ->
+            rs.next()
+            rs.getInt(1)
+        }
+    }
+
+    /** waits (up to 10 s) until the backend whose pid [pid] will hold is waiting for a lock */
+    private fun awaitLockWait(pid: AtomicInteger): Boolean {
+        val deadline = System.currentTimeMillis() + 10_000
+        while (System.currentTimeMillis() < deadline) {
+            val waiting = pid.get() != 0 && sql { c ->
+                c.prepareStatement("select exists (select from pg_locks where pid = ? and not granted)").use {
+                    it.setInt(1, pid.get())
+                    it.executeQuery().use { rs -> rs.next() && rs.getBoolean(1) }
+                }
+            }
+            if (waiting) return true
+            Thread.sleep(10)
+        }
+        return false
     }
 
     private fun <T> sql(block: (Connection) -> T): T = transaction {
