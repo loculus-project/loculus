@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse
 import mu.KotlinLogging
 import org.apache.coyote.CloseNowException
 import org.loculus.backend.query.QuerySchemaRegistry
+import org.loculus.backend.query.index.IndexLookup
 import org.loculus.backend.query.index.OrganismIndex
 import org.loculus.backend.query.index.OrganismIndexProvider
 import org.loculus.backend.query.request.Compression
@@ -257,11 +258,10 @@ class LapisQueryController(
     private fun schema(organism: String): QuerySchema =
         schemas.get(organism) ?: throw LapisNotFoundException("Unknown organism: $organism")
 
-    private fun index(organism: String): OrganismIndex = indexProvider.get(organism)
-        ?: throw LapisUnavailableException(
-            "The query engine for $organism is not available yet: the database is initializing. " +
-                "Please try again later.",
-        )
+    private fun index(organism: String): OrganismIndex = when (val lookup = indexProvider.forRequest(organism)) {
+        is IndexLookup.Ready -> lookup.index
+        is IndexLookup.Unavailable -> throw LapisUnavailableException(lookup.reason)
+    }
 
     private fun notFound(request: HttpServletRequest): LapisNotFoundException {
         val path = request.requestURI.substringAfter('/').substringAfter('/')

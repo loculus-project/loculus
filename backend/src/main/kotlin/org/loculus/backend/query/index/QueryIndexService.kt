@@ -12,9 +12,12 @@ import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 import java.sql.Connection
 import java.util.TreeSet
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.locks.ReentrantLock
 import javax.sql.DataSource
 import kotlin.concurrent.withLock
@@ -26,9 +29,11 @@ private val log = KotlinLogging.logger {}
  * (in background threads after application start), then tailing `query_changelog` every
  * `loculus.query-engine.tail-interval-ms`. Large change batches (e.g. a projection rebuild) trigger a full
  * reload, once the rebuild that writes them has finished. Reloads run one organism at a time and drop the old index
- * first, so the heap holds at most one index copy being rebuilt; that organism answers 503 until its reload finishes.
- * The first loads at startup run concurrently. A failed load is retried with exponential backoff; the retry of a
- * failed reload is a reload too.
+ * first, so the heap holds at most one index copy being rebuilt. The first loads at startup run concurrently. A failed
+ * load is retried with exponential backoff; the retry of a failed reload is a reload too.
+ *
+ * While an organism's index is being (re)loaded, [forRequest] waits for it up to `loculus.query-engine.reload-wait-ms`
+ * (slow answers instead of 503s), and answers 503 on timeout, or at once when the load failed.
  */
 @Component
 @ConditionalOnProperty(prefix = "loculus.query-engine", name = ["enabled"], havingValue = "true")
@@ -42,6 +47,16 @@ class QueryIndexService(
     private val loadedOnce: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
     /**
+     * per organism, the outcome of its current or last load: pending while it runs (or waits for [reloadLock]),
+     * completed with the index it loaded, or exceptionally with a [LoadFailed] until the next attempt starts. A new
+     * pending future is installed before the organism's index is dropped, so a request that finds no index finds
+     * the future of the load that will replace it.
+     */
+    private val loads = ConcurrentHashMap<String, CompletableFuture<OrganismIndex>>().apply {
+        registry.schemas.keys.forEach { put(it, CompletableFuture()) }
+    }
+
+    /**
      * reloads (and retries of failed reloads) run one organism at a time; an organism waiting for its turn keeps
      * serving its old index
      */
@@ -51,6 +66,30 @@ class QueryIndexService(
     }
 
     override fun get(organism: String): OrganismIndex? = indexes[organism]
+
+    override fun forRequest(organism: String): IndexLookup {
+        indexes[organism]?.let { return IndexLookup.Ready(it) }
+        val load = loads[organism] ?: return IndexLookup.Unavailable("The query engine for $organism is not available.")
+        val what = if (organism in loadedOnce) "being reloaded" else "still loading"
+        val started = System.nanoTime()
+        fun waitedMs() = (System.nanoTime() - started) / 1_000_000
+        return try {
+            val index = load.get(properties.reloadWaitMs, TimeUnit.MILLISECONDS)
+            val waited = waitedMs()
+            if (waited > SLOW_WAIT_LOG_MS) log.info { "Query index for $organism: a request waited $waited ms for it" }
+            IndexLookup.Ready(index)
+        } catch (_: TimeoutException) {
+            log.warn { "Query index for $organism: a request gave up after ${waitedMs()} ms waiting for it (503)" }
+            IndexLookup.Unavailable(
+                "The query engine for $organism is not available: its index is $what. Please try again later.",
+            )
+        } catch (e: ExecutionException) {
+            IndexLookup.Unavailable(e.cause?.message ?: "The query engine for $organism is not available.")
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+            IndexLookup.Unavailable("The query engine for $organism is not available: the request was interrupted.")
+        }
+    }
 
     /** organisms whose index has not finished its first load */
     fun organismsNotLoaded(): List<String> = registry.schemas.keys.filter { it !in loadedOnce }
@@ -97,10 +136,12 @@ class QueryIndexService(
             try {
                 if (index == null) {
                     if (System.currentTimeMillis() < nextLoadAt) return
+                    beginLoad()
                     // a load after the first one retries a failed reload: it waits its turn like any reload
                     if (organism in loadedOnce) reloadLock.withLock { load() } else load()
                 } else if (tail() == TailResult.RELOAD) {
                     reloadLock.withLock {
+                        beginLoad()
                         indexes.remove(organism)
                         index = null
                         load()
@@ -113,15 +154,38 @@ class QueryIndexService(
             }
         }
 
-        /** [fullLoad]; after a failure, the next load waits [MIN_LOAD_BACKOFF_MS] doubling to [MAX_LOAD_BACKOFF_MS] */
+        /** requests that find no index from now on wait for the next load's outcome (called before the drop) */
+        private fun beginLoad() {
+            loads.compute(organism) { _, current ->
+                if (current == null ||
+                    current.isDone
+                ) {
+                    CompletableFuture()
+                } else {
+                    current
+                }
+            }
+        }
+
+        /**
+         * [fullLoad]; after a failure, the next load waits [MIN_LOAD_BACKOFF_MS] doubling to [MAX_LOAD_BACKOFF_MS].
+         * Either way, requests waiting for the load are released.
+         */
         private fun load() {
             try {
                 fullLoad()
                 loadFailures = 0
+                loads[organism]!!.complete(index!!)
             } catch (e: Throwable) {
                 nextLoadAt = System.currentTimeMillis() +
                     minOf(MAX_LOAD_BACKOFF_MS, MIN_LOAD_BACKOFF_MS shl minOf(loadFailures, 20))
                 loadFailures++
+                loads[organism]!!.completeExceptionally(
+                    LoadFailed(
+                        "The query engine for $organism is not available: loading its index failed and is retried " +
+                            "in the background. Please try again later.",
+                    ),
+                )
                 throw e
             }
         }
@@ -273,6 +337,9 @@ class QueryIndexService(
 
     private enum class TailResult { APPLIED, RELOAD }
 
+    /** the outcome of a failed load that waiting requests see; its message is the 503's */
+    private class LoadFailed(message: String) : Exception(message)
+
     companion object {
         /** a batch larger than max(this, REBUILD_FRACTION * size) triggers a full reload */
         const val REBUILD_MIN_CHANGES = 50_000
@@ -280,6 +347,9 @@ class QueryIndexService(
         const val GAP_TIMEOUT_MS = 10_000L
         const val MIN_LOAD_BACKOFF_MS = 1_000L
         const val MAX_LOAD_BACKOFF_MS = 300_000L
+
+        /** requests that waited longer than this for a (re)load are logged */
+        const val SLOW_WAIT_LOG_MS = 1_000L
 
         /** parallel reader connections during a full load (the Hikari pool defaults to 30) */
         const val LOAD_READERS = 4

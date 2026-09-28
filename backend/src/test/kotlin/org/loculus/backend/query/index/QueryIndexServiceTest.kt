@@ -3,10 +3,14 @@ package org.loculus.backend.query.index
 import io.mockk.every
 import io.mockk.mockk
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.everyItem
 import org.hamcrest.Matchers.greaterThanOrEqualTo
+import org.hamcrest.Matchers.instanceOf
+import org.hamcrest.Matchers.lessThan
 import org.hamcrest.Matchers.notNullValue
+import org.hamcrest.Matchers.nullValue
 import org.junit.jupiter.api.Test
 import org.loculus.backend.query.QueryEngineProperties
 import org.loculus.backend.query.QuerySchemaRegistry
@@ -17,7 +21,10 @@ import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.SQLException
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import javax.sql.DataSource
@@ -136,6 +143,98 @@ class QueryIndexServiceTest {
     }
 
     @Test
+    fun `a request during a reload waits for it and is then served`() {
+        val release = CountDownLatch(1)
+        val loads = AtomicInteger()
+        val service = service(reloadingDataSource(loads) { if (it == 2) release.await() })
+        try {
+            service.start()
+            awaitReloadStarted(service, loads)
+            val request = CompletableFuture.supplyAsync { service.forRequest("test") }
+            Thread.sleep(300)
+            assertThat("the request waits for the reload", request.isDone, equalTo(false))
+            release.countDown()
+            assertThat(request.get(10, TimeUnit.SECONDS), instanceOf(IndexLookup.Ready::class.java))
+            assertThat(loads.get(), equalTo(2))
+        } finally {
+            release.countDown()
+            service.destroy()
+        }
+    }
+
+    @Test
+    fun `a request that waits longer than reload-wait-ms for a reload gets a 503`() {
+        val release = CountDownLatch(1)
+        val loads = AtomicInteger()
+        val service = service(reloadingDataSource(loads) { if (it == 2) release.await() }, reloadWaitMs = 300)
+        try {
+            service.start()
+            awaitReloadStarted(service, loads)
+            val started = System.currentTimeMillis()
+            val lookup = service.forRequest("test")
+            assertThat(System.currentTimeMillis() - started, greaterThanOrEqualTo(300L))
+            assertThat((lookup as IndexLookup.Unavailable).reason, containsString("being reloaded"))
+        } finally {
+            release.countDown()
+            service.destroy()
+        }
+    }
+
+    @Test
+    fun `a failed reload releases waiting requests at once with a 503`() {
+        val release = CountDownLatch(1)
+        val loads = AtomicInteger()
+        val dataSource = reloadingDataSource(loads) {
+            if (it == 2) {
+                release.await()
+                throw SQLException("test")
+            }
+        }
+        val service = service(dataSource)
+        try {
+            service.start()
+            awaitReloadStarted(service, loads)
+            val request = CompletableFuture.supplyAsync { service.forRequest("test") }
+            Thread.sleep(300)
+            assertThat(request.isDone, equalTo(false))
+            release.countDown()
+            val lookup = request.get(5, TimeUnit.SECONDS)
+            assertThat((lookup as IndexLookup.Unavailable).reason, containsString("failed"))
+
+            // until the retry (after a 1 s backoff) starts, requests get the 503 without waiting
+            val started = System.currentTimeMillis()
+            assertThat(service.forRequest("test"), instanceOf(IndexLookup.Unavailable::class.java))
+            assertThat(System.currentTimeMillis() - started, lessThan(500L))
+
+            // the retry succeeds, and requests are served again
+            val deadline = System.currentTimeMillis() + 20_000
+            while (service.get("test") == null && System.currentTimeMillis() < deadline) Thread.sleep(5)
+            assertThat(service.forRequest("test"), instanceOf(IndexLookup.Ready::class.java))
+        } finally {
+            release.countDown()
+            service.destroy()
+        }
+    }
+
+    @Test
+    fun `a request during the first load waits for it`() {
+        val release = CountDownLatch(1)
+        val loads = AtomicInteger()
+        val service = service(reloadingDataSource(loads) { if (it == 1) release.await() })
+        try {
+            service.start()
+            val request = CompletableFuture.supplyAsync { service.forRequest("test") }
+            Thread.sleep(300)
+            assertThat(request.isDone, equalTo(false))
+            release.countDown()
+            assertThat(request.get(10, TimeUnit.SECONDS), instanceOf(IndexLookup.Ready::class.java))
+        } finally {
+            release.countDown()
+            service.destroy()
+        }
+    }
+
+    @Test
     fun `readiness is out of service until every organism's index is loaded`() {
         val service = mockk<QueryIndexService>()
         val provider = mockk<ObjectProvider<QueryIndexService>> { every { ifAvailable } returns service }
@@ -154,6 +253,41 @@ class QueryIndexServiceTest {
     fun `readiness is up when the query engine is disabled`() {
         val provider = mockk<ObjectProvider<QueryIndexService>> { every { ifAvailable } returns null }
         assertThat(QueryIndexHealthIndicator(provider).health().status, equalTo(Status.UP))
+    }
+
+    private fun service(dataSource: DataSource, reloadWaitMs: Long = 30_000) = QueryIndexService(
+        registry,
+        dataSource,
+        QueryEngineProperties(enabled = true, tailIntervalMs = 5, reloadWaitMs = reloadWaitMs),
+    )
+
+    /**
+     * a DataSource whose first load is followed by a changelog backlog that triggers a reload; [onLoad] runs at the
+     * start of every full load with its number (1 = the first load), after [loads] was incremented
+     */
+    private fun reloadingDataSource(loads: AtomicInteger, onLoad: (Int) -> Unit) = fakeDataSource { sql ->
+        when {
+            "coalesce(max(seq), 0) from query_changelog" in sql -> {
+                onLoad(loads.incrementAndGet())
+                rows(0)
+            }
+
+            "order by seq limit" in sql && loads.get() == 1 -> rows(QueryIndexService.REBUILD_MIN_CHANGES + 1)
+
+            "count(distinct id)" in sql -> rows(1)
+
+            else -> rows(0)
+        }
+    }
+
+    /** waits until the reload (load 2) has dropped the index and started */
+    private fun awaitReloadStarted(service: QueryIndexService, loads: AtomicInteger) {
+        val deadline = System.currentTimeMillis() + 20_000
+        while ((loads.get() < 2 || service.get("test") != null) && System.currentTimeMillis() < deadline) {
+            Thread.sleep(5)
+        }
+        assertThat(loads.get(), equalTo(2))
+        assertThat(service.get("test"), nullValue())
     }
 
     /** a DataSource whose statements return [result] of their SQL (throwing there fails the statement) */

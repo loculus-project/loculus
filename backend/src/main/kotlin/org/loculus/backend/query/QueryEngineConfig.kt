@@ -16,6 +16,8 @@ private val log = KotlinLogging.logger {}
  *                                              organisms whose backend config has a `queryEngine` section
  * loculus.query-engine.projector-interval-ms   how often the projector drains the dirty queue
  * loculus.query-engine.tail-interval-ms        how often in-memory indexes poll the changelog
+ * loculus.query-engine.reload-wait-ms          how long a request waits for its organism's index while it is being
+ *                                              (re)loaded before answering 503
  * loculus.query-engine.reconcile-accessions-per-second
  *                                              rate at which the projector re-marks all released accessions dirty,
  *                                              cycling through them, to heal projections that went stale (0 = off)
@@ -31,6 +33,7 @@ data class QueryEngineProperties(
     val projectorIntervalMs: Long = 500,
     val projectorBatchSize: Int = 2000,
     val tailIntervalMs: Long = 250,
+    val reloadWaitMs: Long = 30_000,
     val reconcileAccessionsPerSecond: Double = 50.0,
     val reconcilePassIntervalMinutes: Long = 360,
     val lineageRefreshIntervalMs: Long = 5_000,
