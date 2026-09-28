@@ -8,6 +8,7 @@ from typing import Literal
 import pytest
 from Bio import SeqIO
 from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 from factory_methods import (
     Case,
     ProcessedAlignment,
@@ -1632,6 +1633,75 @@ def test_create_flatfile():
     embl_str = create_flatfile(config, result[0])
     expected_embl = Path(SINGLE_SEGMENT_EMBL).read_text(encoding="utf-8")
     assert embl_str == expected_embl
+
+
+# ATG AAA GGG TGA -> MKG, ending in a terminal stop codon
+FUNCTIONAL_SEQUENCE = "ATGAAAGGGTGA"
+# ATG AAA TAA GGG TGA -> MK*G, with a premature stop codon before the terminal one
+PREMATURE_STOP_SEQUENCE = "ATGAAATAAGGGTGA"
+
+
+def _annotation(length: int) -> NextcladeAnnotation:
+    return NextcladeAnnotation.model_validate(
+        {
+            "genes": [
+                {
+                    "range": {"begin": 0, "end": length},
+                    "attributes": {"gene": ["L"]},
+                    "cdses": [
+                        {
+                            "attributes": {"gene": ["L"]},
+                            "segments": [
+                                {
+                                    "range": {"begin": 0, "end": length},
+                                    "strand": "+",
+                                    "phase": 0,
+                                    "truncation": "none",
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ]
+        }
+    )
+
+
+def _cds(sequence: str):
+    features = get_seq_features(_annotation(len(sequence)), sequence)
+    [cds] = [feature for feature in features if feature.type == "CDS"]
+    return cds
+
+
+def test_functional_cds_has_translation_and_is_not_pseudo():
+    cds = _cds(FUNCTIONAL_SEQUENCE)
+
+    assert cds.qualifiers["translation"] == "MKG"
+    assert "pseudo" not in cds.qualifiers
+
+
+def test_premature_stop_codon_marks_cds_pseudo_without_translation():
+    cds = _cds(PREMATURE_STOP_SEQUENCE)
+
+    assert cds.type == "CDS"
+    assert "pseudo" in cds.qualifiers
+    assert "translation" not in cds.qualifiers
+
+
+def test_pseudo_is_written_as_a_bare_qualifier():
+    sequence = PREMATURE_STOP_SEQUENCE
+    record = SeqRecord(
+        Seq(sequence),
+        id="test",
+        annotations={"molecule_type": "RNA"},
+        features=get_seq_features(_annotation(len(sequence)), sequence),
+    )
+
+    flatfile = record.format("embl")
+    feature_lines = [line.removeprefix("FT").strip() for line in flatfile.splitlines()]
+
+    assert "/pseudo" in feature_lines
+    assert not any(line.startswith("/translation") for line in feature_lines)
 
 
 multi_reference_cases = [
