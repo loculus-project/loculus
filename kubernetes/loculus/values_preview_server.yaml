@@ -80,13 +80,20 @@ auth:
 fileSharing:
   outputFileUrlType: website
   maxFileSizeBytes: 2147483648 # 2 GiB
+website:
+  lapisCache:
+    enabled: true
+    memoryMB: 300
+    diskMB: 3000
+    freshSeconds: 15
 resources:
   website:
     requests:
       memory: "100Mi"
       cpu: "20m"
     limits:
-      memory: "500Mi"
+      # 300 MB of cached LAPIS responses (Buffers, outside the 1 GB V8 heap) on top of the server itself
+      memory: "1Gi"
   docs:
     requests:
       memory: "25Mi"

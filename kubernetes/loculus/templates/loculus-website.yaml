@@ -32,9 +32,28 @@ spec:
           {{- include "loculus.resources" (list "website" .Values) | nindent 10 }}
           ports:
             - containerPort: 3000
+          {{- with .Values.website.lapisCache }}
+          {{- if .enabled }}
+          env:
+            - name: LAPIS_CACHE_MEMORY_MB
+              value: {{ .memoryMB | quote }}
+            - name: LAPIS_CACHE_FRESH_SECONDS
+              value: {{ .freshSeconds | quote }}
+            {{- if gt (int .diskMB) 0 }}
+            - name: LAPIS_CACHE_DISK_MB
+              value: {{ .diskMB | quote }}
+            - name: LAPIS_CACHE_DIR
+              value: /cache/lapis
+            {{- end }}
+          {{- end }}
+          {{- end }}
           volumeMounts:
             - name: loculus-website-config-processed
               mountPath: /config
+            {{- if and .Values.website.lapisCache.enabled (gt (int .Values.website.lapisCache.diskMB) 0) }}
+            - name: lapis-cache
+              mountPath: /cache/lapis
+            {{- end }}
           # /loculus-info renders no LAPIS queries; / sends 3 per organism on every probe
           livenessProbe:
             httpGet:
@@ -65,4 +84,10 @@ spec:
               {{ end }}
         - name: loculus-website-config-processed
           emptyDir: {}
+        {{- if and .Values.website.lapisCache.enabled (gt (int .Values.website.lapisCache.diskMB) 0) }}
+        # The cache keeps its files at most diskMB; exceeding sizeLimit would evict the pod.
+        - name: lapis-cache
+          emptyDir:
+            sizeLimit: {{ div (mul (int .Values.website.lapisCache.diskMB) 6) 5 }}Mi
+        {{- end }}
 {{- end }}

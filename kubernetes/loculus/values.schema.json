@@ -1567,6 +1567,41 @@
             }
           }
         },
+        "lapisCache": {
+          "groups": ["website"],
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Server-side cache of the website's LAPIS responses: a memory LRU spilling to disk, revalidated with If-None-Match on every use (except within `freshSeconds`). Only responses with an ETag are stored, i.e. those of the query engine.",
+          "properties": {
+            "enabled": {
+              "groups": ["website"],
+              "type": "boolean",
+              "default": false,
+              "description": "Whether the website caches LAPIS responses during server-side rendering."
+            },
+            "memoryMB": {
+              "groups": ["website"],
+              "type": "integer",
+              "minimum": 1,
+              "default": 100,
+              "description": "Memory budget of the cache in MiB, counted in response bytes."
+            },
+            "diskMB": {
+              "groups": ["website"],
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "description": "Disk budget in MiB for entries evicted from memory. 0 disables the disk tier; otherwise the website gets an emptyDir with a sizeLimit of 1.2 × diskMB."
+            },
+            "freshSeconds": {
+              "groups": ["website"],
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "description": "For this many seconds after the backend last confirmed a response, serve it without revalidating. New data can then take this long to appear in server-rendered pages."
+            }
+          }
+        },
         "runtimeConfig": {
           "type": "object",
           "additionalProperties": false,

@@ -44,6 +44,15 @@ website:
     enableLoginNavigationItem: true
     enableSubmissionNavigationItem: true
     enableSubmissionPages: true
+  # Server-side (SSR) cache of the website's LAPIS responses, revalidated with If-None-Match against the ETags the
+  # query engine sends. Responses without an ETag (LAPIS/SILO) are never stored.
+  lapisCache:
+    enabled: false
+    memoryMB: 100
+    # 0: no disk tier. Otherwise an emptyDir with sizeLimit 1.2 x diskMB.
+    diskMB: 0
+    # Serve a stored response without revalidating for this long after the backend last confirmed it.
+    freshSeconds: 0
 siloImport:
   siloTimeoutSeconds: 3600
   hardRefreshIntervalSeconds: 3600
