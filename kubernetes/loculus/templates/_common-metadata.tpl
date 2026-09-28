@@ -147,6 +147,7 @@ fields:
     displayName: Version status
     type: string
     autocomplete: true
+    generateIndex: true
     hideOnSequenceDetailsPage: true
     definition: "Indicates whether this is the latest version of the sequence record (`LATEST_VERSION`), an earlier version (`REVISED`), or has been revoked (`REVOKED`)."
   - name: versionComment
