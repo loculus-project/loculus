@@ -84,8 +84,9 @@ class QueryIndexService(
 
         /**
          * Must not throw: scheduleWithFixedDelay silently cancels every later run once a task throws, which would
-         * freeze this organism's index. An OutOfMemoryError is rethrown anyway: after it the heap state is
-         * unknown, and the deployment runs with -XX:+ExitOnOutOfMemoryError so the pod restarts.
+         * freeze this organism's index. That includes OutOfMemoryError: a heap OOM never gets here (the deployment
+         * runs with -XX:+ExitOnOutOfMemoryError, which exits at the failed allocation), and one thrown by library
+         * code (e.g. an array above the VM's size limit) allocated nothing, so it is retried like any other error.
          */
         fun tick() {
             try {
@@ -100,9 +101,6 @@ class QueryIndexService(
                         load()
                     }
                 }
-            } catch (e: OutOfMemoryError) {
-                log.error(e) { "Query index for $organism: out of memory, updates stop" }
-                throw e
             } catch (e: Throwable) {
                 val wait = (nextLoadAt - System.currentTimeMillis()) / 1000
                 val retry = if (index == null) ", next load in $wait s" else ""
