@@ -29,9 +29,13 @@ internal class RunTable(private val length: Int) {
     private var buildSize = 0
     private var buildLastLocal = -1
 
-    val runCount: Long get() = chunks.sumOf { (it?.offsets?.get(65536) ?: 0).toLong() }
+    val runCount: Long get() = chunks.sumOf { (it?.offsets?.get(65536) ?: 0).toLong() } / width
 
-    fun memoryBytes(): Long = chunks.sumOf { c -> if (c == null) 0L else c.offsets.size * 4L + c.data.size * 4L }
+    fun memoryBytes(): Long =
+        chunks.sumOf { c -> if (c == null) 0L else c.offsets.size * 4L + c.data.size * 4L } + buildBufferBytes()
+
+    /** bulk-load buffers still held (0 once the load is complete) */
+    internal fun buildBufferBytes(): Long = buildOffsets.size * 4L + buildData.size * 4L
 
     private fun ensureChunk(chunk: Int) {
         if (chunk >= chunks.size) chunks = chunks.copyOf(maxOf(chunk + 1, chunks.size * 2))
@@ -72,6 +76,9 @@ internal class RunTable(private val length: Int) {
         ensureChunk(buildChunk)
         chunks[buildChunk] = Chunk(buildOffsets, buildData.copyOf(buildSize))
         buildChunk = -1
+        // the chunk owns the offsets now; the data buffer (up to twice the chunk's data) is garbage
+        buildOffsets = IntArray(0)
+        buildData = IntArray(0)
     }
 
     private fun write(data: IntArray, at: Int, start: Int, end: Int) {
