@@ -288,12 +288,14 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         alive.andNot(ids)
     }
 
+    /** grows the id-indexed arrays in steps of [capacityStep], so that growth copies less under the write lock */
     private fun ensureCapacity(id: Int) {
         if (id < capacity) return
-        var newCapacity = capacity
-        while (newCapacity <= id) newCapacity = maxOf(newCapacity * 3 / 2, newCapacity + 1024)
-        columns.forEach { it.grow(newCapacity) }
-        capacity = newCapacity
+        var newCapacity = capacity.toLong()
+        while (newCapacity <= id) newCapacity += capacityStep(newCapacity.toInt())
+        val grown = minOf(newCapacity, MAX_ARRAY_SIZE.toLong()).toInt()
+        columns.forEach { it.grow(grown) }
+        capacity = grown
     }
 
     private fun addRow(row: IndexRow, withRuns: Boolean) {
@@ -1486,6 +1488,12 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         private const val MAX_PARALLEL_DENSE_RANGE = 1 shl 16
         private const val MAX_DIRECT_GROUP_TABLE = (1 shl 22).toDouble()
         private val parallelPool: ForkJoinPool get() = indexPool
+
+        /**
+         * headroom above [capacity] ids: 1/16 of it, at least 4096 and at most 1M ids (the id-indexed arrays cost
+         * ~10-150 B per id, so 1M ids is ~0.15 GB, where growing by half at 20M entries held 10M ids)
+         */
+        internal fun capacityStep(capacity: Int): Int = (capacity / 16).coerceIn(4096, 1 shl 20)
 
         /** builds an index from [rows] (any id order; ascending is fastest) */
         fun build(

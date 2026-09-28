@@ -20,7 +20,8 @@ object IndexLoader {
         chunkSize: Int = 20_000,
         localReference: Boolean = true,
     ): InMemoryOrganismIndex {
-        val index = InMemoryOrganismIndex(schema, maxId + 1)
+        // headroom for the ids added after the load, so that the first adds do not copy every column
+        val index = InMemoryOrganismIndex(schema, maxId + 1 + InMemoryOrganismIndex.capacityStep(maxId + 1))
         val units = index.bulkUnits()
         val ranges = (0..maxOf(0, maxId) step chunkSize).map { it to minOf(maxId, it + chunkSize - 1) }
         val readPool = Executors.newFixedThreadPool(readers, ::loaderThread)
