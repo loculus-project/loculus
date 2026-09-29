@@ -4241,7 +4241,7 @@ organisms:
       extraInputFields: *id031
       metadataTemplate: *id032
       organismName: Ebola Bundibugyo
-      image: /images/organisms/ebola_misc_small.jpg
+      image: https://pathoplexus.org/images/organisms/ebola_misc_small.jpg
       linkOuts:
       - name: Nextclade
         maxNumberOfRecommendedEntries: 3000
@@ -4388,7 +4388,7 @@ organisms:
         required: true
       metadataTemplate: *id032
       organismName: Dengue Virus
-      image: /images/organisms/dengue_small.jpg
+      image: https://pathoplexus.org/images/organisms/dengue_small.jpg
       linkOuts:
       - name: Nextclade (DENV-1)
         category: Nextclade
@@ -4947,7 +4947,7 @@ organisms:
       - L
       - M
       - S
-      image: /images/organisms/andv.jpg
+      image: https://pathoplexus.org/images/organisms/andv.jpg
       linkOuts:
       - name: Nextclade (L)
         category: Nextclade
@@ -5920,7 +5920,7 @@ organisms:
       extraInputFields: *id031
       metadataTemplate: *id032
       organismName: RSV-A
-      image: /images/organisms/rsv-adjusted.jpg
+      image: https://pathoplexus.org/images/organisms/rsv-adjusted.jpg
       linkOuts:
       - name: Nextclade
         maxNumberOfRecommendedEntries: 1300
@@ -6340,7 +6340,7 @@ organisms:
       - *id038
       metadataTemplate: *id032
       organismName: Measles Virus
-      image: /images/organisms/measles_small.jpg
+      image: https://pathoplexus.org/images/organisms/measles_small.jpg
       linkOuts:
       - name: Nextclade
         maxNumberOfRecommendedEntries: 1000
@@ -6484,7 +6484,7 @@ organisms:
       extraInputFields: *id031
       metadataTemplate: *id032
       organismName: Marburg Virus
-      image: /images/organisms/marburg.jpg
+      image: https://pathoplexus.org/images/organisms/marburg.jpg
       linkOuts:
       - name: Nextclade
         maxNumberOfRecommendedEntries: 3000
@@ -6607,7 +6607,7 @@ organisms:
       extraInputFields: *id047
       metadataTemplate: *id032
       organismName: Yellow Fever Virus
-      image: /images/organisms/yellow_fever.jpg
+      image: https://pathoplexus.org/images/organisms/yellow_fever.jpg
       linkOuts:
       - name: Nextclade
         maxNumberOfRecommendedEntries: 2500
@@ -6770,7 +6770,7 @@ organisms:
       extraInputFields: *id047
       metadataTemplate: *id032
       organismName: Zika Virus
-      image: /images/organisms/zika_virus.jpg
+      image: https://pathoplexus.org/images/organisms/zika_virus.jpg
       linkOuts:
       - name: Nextclade
         maxNumberOfRecommendedEntries: 3000
@@ -6902,7 +6902,7 @@ organisms:
       extraInputFields: *id047
       metadataTemplate: *id032
       organismName: Chikungunya Virus
-      image: /images/organisms/chikungunya_virus.jpg
+      image: https://raw.githubusercontent.com/pathoplexus/pathoplexus/583c437546e4ef1a1094a24f88deb3bae19034cc/monorepo/website/public/images/organisms/chikungunya_virus.jpg
       linkOuts:
       - name: Nextclade
         maxNumberOfRecommendedEntries: 3000
