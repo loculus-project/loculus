@@ -1887,6 +1887,16 @@ private fun JdbcTransaction.findNewPreprocessingPipelineVersion(organism: String
     // If any accession.version either was processed unsuccessfully with the new version, or just wasn't
     // processed yet -> we _don't_ return the new version yet.
 
+    // The current version is inlined as a literal: with a subquery (or a generic plan for a parameter) the planner
+    // cannot see that only a few rows have a newer version, and hash-joins a sequential scan of all of the
+    // organism's sequence entries (~1 s for 2M SARS-CoV-2 entries, every 10 s); with the literal it probes the
+    // pipeline_version index and the sequence_entries primary key (~70 ms).
+    val currentVersion = exec(
+        "select version from current_processing_pipeline where organism = ?",
+        listOf(Pair(VarCharColumnType(), organism)),
+        explicitStatementType = StatementType.SELECT,
+    ) { resultSet -> if (resultSet.next()) resultSet.getLong("version") else null } ?: return null
+
     val sql = """
         select
             newest.version as version
@@ -1902,8 +1912,7 @@ private fun JdbcTransaction.findNewPreprocessingPipelineVersion(organism: String
                             and se.version = sep.version
                         where 
                             se.organism = ?
-                            and sep.pipeline_version > (select version from current_processing_pipeline
-                                                        where organism = ?)
+                            and sep.pipeline_version > $currentVersion
                     ) as newer
                 where
                     not exists( -- ...for which no sequence exists...
@@ -1917,8 +1926,7 @@ private fun JdbcTransaction.findNewPreprocessingPipelineVersion(organism: String
                                     and se.version = sep.version
                                 where
                                     se.organism = ?
-                                    and sep.pipeline_version = (select version from current_processing_pipeline
-                                                                where organism = ?)
+                                    and sep.pipeline_version = $currentVersion
                                     and sep.processing_status = 'PROCESSED'
                                     and (sep.errors is null or jsonb_array_length(sep.errors) = 0)
                             ) as successful
@@ -1941,8 +1949,6 @@ private fun JdbcTransaction.findNewPreprocessingPipelineVersion(organism: String
     return exec(
         sql,
         listOf(
-            Pair(VarCharColumnType(), organism),
-            Pair(VarCharColumnType(), organism),
             Pair(VarCharColumnType(), organism),
             Pair(VarCharColumnType(), organism),
         ),
