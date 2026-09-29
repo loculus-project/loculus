@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from collections import defaultdict
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from http import HTTPMethod, HTTPStatus
 from io import BytesIO
@@ -10,7 +11,7 @@ from time import sleep
 from typing import Any, Literal
 
 import jsonlines
-import orjsonl
+import orjson
 import requests
 
 logger = logging.getLogger(__name__)
@@ -112,16 +113,20 @@ def make_request(  # noqa: PLR0913, PLR0917
     params: dict[str, Any] | None = None,
     files: dict[str, Any] | None = None,
     json_body: dict[str, Any] | None = None,
+    stream: bool = False,
 ) -> requests.Response:
     """
     Generic request function to handle repetitive tasks like fetching JWT and setting headers.
+    With stream, a GET's body is read as it is consumed instead of into memory first.
     """
     jwt = get_jwt(config)
     headers = {"Authorization": f"Bearer {jwt}", "Content-Type": "application/json"}
     timeout = config.backend_request_timeout_seconds
     match method:
         case HTTPMethod.GET:
-            response = requests.get(url, headers=headers, params=params, timeout=timeout)
+            response = requests.get(
+                url, headers=headers, params=params, timeout=timeout, stream=stream
+            )
         case HTTPMethod.POST:
             if files:
                 headers.pop("Content-Type")  # Remove content-type for multipart/form-data
@@ -139,7 +144,7 @@ def make_request(  # noqa: PLR0913, PLR0917
     if response.status_code == 423:
         logger.warning(f"Got 423 from {url}. Retrying after 30 seconds.")
         sleep(30)
-        return make_request(method, url, config, params, files, json_body)
+        return make_request(method, url, config, params, files, json_body, stream)
 
     if not response.ok:
         error_message = (
@@ -477,17 +482,14 @@ def get_sequence_status(config: Config):
     return result
 
 
-def get_submitted(
+def get_submitted_metadata(
     config: Config,
-    output: str | None,
+    handle_entries: Callable[[Iterator[dict[str, Any]]], int],
     fields: list[str] | None = None,
     accessionVersionsFilter: list[str] | None = None,  # noqa: N803
-):
-    """Get previously submitted sequences as ndjson
-    This way we can avoid submitting the same sequences again
-    Adds status to the output (as this is not returned by get-submitted-metadata)
-    """
-
+) -> None:
+    """Stream /get-submitted-metadata through handle_entries, which returns how many entries it
+    took; retried until that is the number of records the backend announced"""
     url = f"{organism_url(config)}/get-submitted-metadata"
 
     params = {
@@ -502,42 +504,73 @@ def get_submitted(
     while True:
         logger.info("Getting previously submitted sequences")
 
-        response = make_request(HTTPMethod.GET, url, config, params=params)
-        expected_record_count = int(response.headers["x-total-records"])
+        with make_request(HTTPMethod.GET, url, config, params=params, stream=True) as response:
+            expected_record_count = int(response.headers["x-total-records"])
+            lines = response.iter_lines(chunk_size=1 << 20)
+            try:
+                record_count = handle_entries(jsonlines.Reader(lines).iter())
+            except jsonlines.Error as err:
+                line = str(getattr(err, "line", ""))
+                max_error_length = 100
+                if len(line) > max_error_length:
+                    line = line[:50] + "\n[..]\n" + line[-50:]
+                logger.error(f"Error decoding JSON from /get-submitted-metadata: {line}")
+                raise ValueError from err
 
-        entries: list[dict[str, Any]] = []
-        try:
-            entries = list(jsonlines.Reader(response.iter_lines()).iter())
-        except jsonlines.Error as err:
-            response_summary = response.text
-            max_error_length = 100
-            if len(response_summary) > max_error_length:
-                response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
-            logger.error(f"Error decoding JSON from /get-submitted-metadata: {response_summary}")
-            raise ValueError from err
-
-        if len(entries) == expected_record_count:
-            logger.info(f"Got {len(entries)} records as expected")
-            break
+        if record_count == expected_record_count:
+            logger.info(f"Got {record_count} records as expected")
+            return
         logger.error(
-            f"Got incomplete unprocessed metadata stream: expected {len(entries)}"
-            f"records but got {expected_record_count}. Retrying after 60 seconds."
+            f"Got incomplete unprocessed metadata stream: got {record_count} records but expected "
+            f"{expected_record_count}. Retrying after 60 seconds."
         )
         sleep(60)
 
+
+def get_submitted(
+    config: Config,
+    output: str | None,
+    fields: list[str] | None = None,
+    accessionVersionsFilter: list[str] | None = None,  # noqa: N803
+):
+    """Get previously submitted sequences as ndjson
+    This way we can avoid submitting the same sequences again
+    Adds status to the output (as this is not returned by get-submitted-metadata)
+
+    Without output, returns the entries (without status). With output, the entries are streamed to
+    disk (for SARS-CoV-2, millions of entries that took ~2 kB of memory each as dicts), then
+    rewritten with their status: the statuses are fetched after the entries, as before, so that a
+    version submitted in between has its status.
+    """
     if not output:
+        entries: list[dict[str, Any]] = []
+
+        def collect(new_entries: Iterator[dict[str, Any]]) -> int:
+            entries[:] = new_entries
+            return len(entries)
+
+        get_submitted_metadata(config, collect, fields, accessionVersionsFilter)
         return entries
+
+    without_status = f"{output}.without_status"
+
+    def write(new_entries: Iterator[dict[str, Any]]) -> int:
+        count = 0
+        with open(without_status, "wb") as f:
+            for entry in new_entries:
+                f.write(orjson.dumps(entry) + b"\n")
+                count += 1
+        return count
+
+    get_submitted_metadata(config, write, fields, accessionVersionsFilter)
 
     statuses: dict[str, dict[int, str]] = get_sequence_status(config)
     logger.info(f"Got info on {len(statuses.keys())} previously submitted sequences/accessions")
 
-    for entry in entries:
-        status = statuses.get(entry["accession"], {}).get(entry["version"], "UNKNOWN")
-        entry_with_status = entry.copy()
-        entry_with_status["status"] = status
-        orjsonl.append(output, entry_with_status)
-
-    if len(entries) == 0:
-        with open(output, "w", encoding="utf-8"):
-            pass
+    with open(without_status, "rb") as f, open(output, "wb") as out:
+        for line in f:
+            entry = orjson.loads(line)
+            entry["status"] = statuses.get(entry["accession"], {}).get(entry["version"], "UNKNOWN")
+            out.write(orjson.dumps(entry) + b"\n")
+    os.remove(without_status)
     return None
