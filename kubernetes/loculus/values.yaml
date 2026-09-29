@@ -77,6 +77,11 @@ logo:
   url: "/favicon.svg"
   width: 100
   height: 100
+# Query engine built into the backend (LAPIS-compatible API served from Postgres + an in-memory index).
+# When enabled, the website (and loculus-info) use the backend as LAPIS; LAPIS/SILO keep running alongside.
+queryEngine:
+  enabled: true
+  curlImage: "curlimages/curl:8.11.1"
 lineageSystemDefinitions:
   pangoLineage:
     1: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml

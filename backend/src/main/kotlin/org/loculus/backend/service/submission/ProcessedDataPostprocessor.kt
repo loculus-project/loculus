@@ -19,4 +19,12 @@ class ProcessedDataPostprocessor(
         .let { processedMetadataPostprocessor.filterOutExtraFieldsAndAddNulls(it, organism) }
         .let { compressionService.decompressSequencesInProcessedData(it) }
         .let { processedSequencesPostprocessor.filterOutExtraSequencesAndAddNulls(it, organism) }
+
+    /** Same as [retrieveFromStoredValue], but keeps the sequences compressed. */
+    fun retrieveFromStoredValueWithoutDecompressing(
+        storedValue: ProcessedData<CompressedSequence>,
+        organism: Organism,
+    ) = storedValue
+        .let { processedMetadataPostprocessor.filterOutExtraFieldsAndAddNulls(it, organism) }
+        .let { processedSequencesPostprocessor.filterOutExtraSequencesAndAddNulls(it, organism) }
 }

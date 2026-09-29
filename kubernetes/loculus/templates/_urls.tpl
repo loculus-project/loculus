@@ -55,7 +55,11 @@
 {{ define "loculus.generateInternalLapisUrls" }}
   {{ range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
+    {{- if $.Values.queryEngine.enabled }}
+    "{{ $key }}": "{{ if not $.Values.disableWebsite }}http://loculus-backend-service:8079/{{ $key }}{{ else -}}http://{{ $.Values.localHost }}:8079/{{ $key }}{{ end }}"
+    {{- else }}
     "{{ $key }}": "{{ if not $.Values.disableWebsite }}http://{{ template "loculus.lapisServiceName" $key }}:8080{{ else -}}http://{{ $.Values.localHost }}:8080/{{ $key }}{{ end }}"
+    {{- end }}
   {{ end }}
 {{ end }}
 

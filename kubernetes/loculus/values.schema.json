@@ -1766,6 +1766,16 @@
         "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$": { "$ref": "#/definitions/organism" }
       }
     },
+    "queryEngine": {
+      "groups": ["services"],
+      "type": "object",
+      "description": "Experimental query engine inside the backend: a LAPIS-compatible API served from Postgres and an in-memory index. When enabled, the website uses the backend as its LAPIS.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean", "default": true, "description": "Enable the query engine and point the website's LAPIS URLs at the backend" },
+        "curlImage": { "type": "string", "description": "Image used by the init container that assembles the query engine configuration" }
+      }
+    },
     "lineageSystemDefinitions": {
       "groups": ["organism-conf"],
       "type": "object",
