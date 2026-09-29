@@ -4,6 +4,7 @@ import mu.KotlinLogging
 import org.loculus.backend.query.QueryEngineProperties
 import org.loculus.backend.query.QuerySchemaRegistry
 import org.loculus.backend.query.projection.REBUILDING_MARKER
+import org.loculus.backend.query.projection.TRUSTED_REBUILDING_SUFFIX
 import org.loculus.backend.query.schema.QuerySchema
 import org.loculus.backend.query.store.ZstdDictionaryCache
 import org.loculus.backend.service.submission.CompressionDictService
@@ -411,10 +412,11 @@ class QueryIndexService(
         }
 
         private fun rebuilding(connection: Connection): Boolean = connection.prepareStatement(
-            "select encoding_hash = ? from query_engine_state where organism = ?",
+            "select encoding_hash = ? or encoding_hash like ? from query_engine_state where organism = ?",
         ).use { statement ->
             statement.setString(1, REBUILDING_MARKER)
-            statement.setString(2, organism)
+            statement.setString(2, "%$TRUSTED_REBUILDING_SUFFIX")
+            statement.setString(3, organism)
             statement.executeQuery().use { rs -> rs.next() && rs.getBoolean(1) }
         }
 

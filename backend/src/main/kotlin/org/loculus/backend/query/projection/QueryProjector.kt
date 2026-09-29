@@ -37,7 +37,10 @@ private val log = KotlinLogging.logger {}
 /** pg advisory lock key held by the (single) projector leader: "loculus-query-projector".hashCode() */
 private const val ADVISORY_LOCK_KEY = 0x6c71_7072L
 
-/** encoding_hash while a full rebuild is in progress (never equals a real hash, so a crash re-triggers the rebuild) */
+/**
+ * encoding_hash while a full rebuild is in progress (never equals a real hash, so a crash re-triggers the rebuild);
+ * rebuilds that trust the stored source hashes use [rebuildingEncoding]
+ */
 internal const val REBUILDING_MARKER = "rebuilding"
 
 private const val MAX_DRAIN_MILLIS_PER_ORGANISM = 10_000L
@@ -691,7 +694,7 @@ class QueryProjector(
             connection.prepareStatement(
                 "update query_engine_state set encoding_hash = ?, needs_full_rebuild = false where organism = ?",
             ).use {
-                it.setString(1, REBUILDING_MARKER)
+                it.setString(1, rebuildingEncoding(schema, reason.trustSourceHashes))
                 it.setString(2, organism)
                 it.executeUpdate()
             }

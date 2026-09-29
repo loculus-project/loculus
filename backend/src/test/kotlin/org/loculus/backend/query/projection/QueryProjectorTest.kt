@@ -390,6 +390,34 @@ class QueryProjectorTest(
     }
 
     @Test
+    fun `an interrupted rebuild that trusted the source hashes resumes trusting them, others recompute everything`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        runProjector()
+        val schema = registry.get(DEFAULT_ORGANISM)!!
+        // sequence-derived rows that only a rebuild without trusted source hashes recomputes
+        val tampered = "select count(*) from query_mutation_data where missing = '{-1}'"
+        sql { c -> c.createStatement().use { it.executeUpdate("update query_mutation_data set missing = '{-1}'") } }
+        val rows = count(tampered)
+        assertThat(rows, greaterThan(0L))
+        fun interruptedRebuild(trustSourceHashes: Boolean) = sql { c ->
+            c.prepareStatement("update query_engine_state set encoding_hash = ? where organism = ?").use {
+                it.setString(1, rebuildingEncoding(schema, trustSourceHashes))
+                it.setString(2, DEFAULT_ORGANISM)
+                it.executeUpdate()
+            }
+        }
+
+        interruptedRebuild(trustSourceHashes = true)
+        runProjector()
+        assertThat(count(tampered), equalTo(rows))
+
+        interruptedRebuild(trustSourceHashes = false)
+        runProjector()
+        assertThat(count(tampered), equalTo(0L))
+        assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+    }
+
+    @Test
     fun `stored metadata has no null values`() {
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
         runProjector()

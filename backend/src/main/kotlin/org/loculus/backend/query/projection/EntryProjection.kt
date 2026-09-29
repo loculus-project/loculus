@@ -65,6 +65,17 @@ fun sequenceEncoding(projectionEncoding: String): String =
 
 private const val METADATA_ENCODING_SEPARATOR = "/m"
 
+/** ends the encoding_hash of a full rebuild in progress that trusts the stored source hashes */
+internal const val TRUSTED_REBUILDING_SUFFIX = METADATA_ENCODING_SEPARATOR + REBUILDING_MARKER
+
+/**
+ * encoding_hash while a full rebuild of [schema]'s organism runs. A rebuild that trusts the stored source hashes keeps
+ * the sequence part, so that a rebuild interrupted by a restart resumes as a metadata-only one instead of recomputing
+ * every sequence.
+ */
+fun rebuildingEncoding(schema: QuerySchema, trustSourceHashes: Boolean): String =
+    if (trustSourceHashes) "${schema.encodingHash()}$TRUSTED_REBUILDING_SUFFIX" else REBUILDING_MARKER
+
 /**
  * Computes the projection rows of released entries of one organism. Thread-safe (can be used from parallel workers).
  */
