@@ -656,11 +656,12 @@ rule get_previous_submissions:
         ...
     """
     input:
-        # Reduce likelihood of race condition of multi-submission
-        # By delaying the start of the script
         script="scripts/call_loculus.py",
-        prepped_metadata=prepped_metadata(),
         config="results/config.yaml",
+        # Segmented: reduce likelihood of race condition of multi-submission by delaying the start of
+        # the script. Non-segmented: select_changed_records needs it first, so fetch it alongside the
+        # NCBI download; the ingest lock init container keeps runs for an organism from overlapping.
+        prepped_metadata=prepped_metadata() if SEGMENTED else [],
     output:
         hashes="results/previous_submissions.ndjson",
     params:
@@ -677,64 +678,126 @@ rule get_previous_submissions:
         """
 
 
-compare_hashes_input = {
-    "script": "scripts/compare_hashes.py",
-    "config": "results/config.yaml",
-    "old_hashes": "results/previous_submissions.ndjson",
-    "metadata": prepped_metadata(),
-}
+if SEGMENTED:
+    compare_hashes_input = {
+        "script": "scripts/compare_hashes.py",
+        "config": "results/config.yaml",
+        "old_hashes": "results/previous_submissions.ndjson",
+        "metadata": prepped_metadata(),
+    }
 
-if MUTED_HASHES_URL:
-    compare_hashes_input["muted_hashes"] = "results/muted_hashes.tsv"
+    if MUTED_HASHES_URL:
+        compare_hashes_input["muted_hashes"] = "results/muted_hashes.tsv"
 
+    rule compare_hashes:
+        input:
+            **compare_hashes_input,
+        output:
+            to_submit="results/to_submit.json",
+            to_revise="results/to_revise.json",
+            to_revoke="results/to_revoke.json",
+            unchanged="results/unchanged.json",
+            blocked="results/blocked.json",
+            sampled_out="results/sampled_out.json",
+        params:
+            log_level=LOG_LEVEL,
+            subsample_fraction=config.get("subsample_fraction", 1.0),
+            muted_hashes=(
+                "--muted-hashes results/muted_hashes.tsv" if MUTED_HASHES_URL else ""
+            ),
+        shell:
+            """
+            python {input.script} \
+                --config-file {input.config} \
+                --old-hashes {input.old_hashes} \
+                {params.muted_hashes} \
+                --metadata {input.metadata} \
+                --to-submit {output.to_submit} \
+                --to-revise {output.to_revise} \
+                --to-revoke {output.to_revoke} \
+                --unchanged {output.unchanged} \
+                --output-blocked {output.blocked} \
+                --sampled-out-file {output.sampled_out} \
+                --log-level {params.log_level} \
+                --subsample-fraction {params.subsample_fraction}
+            """
 
-rule compare_hashes:
-    input:
-        **compare_hashes_input,
-    output:
-        to_submit="results/to_submit.json",
-        to_revise="results/to_revise.json",
-        to_revoke="results/to_revoke.json",
-        unchanged="results/unchanged.json",
-        blocked="results/blocked.json",
-        sampled_out="results/sampled_out.json",
-    params:
-        log_level=LOG_LEVEL,
-        subsample_fraction=config.get("subsample_fraction", 1.0),
-        muted_hashes=(
-            "--muted-hashes results/muted_hashes.tsv" if MUTED_HASHES_URL else ""
-        ),
-    shell:
+else:
+    select_changed_records_input = {
+        "script": "scripts/select_changed_records.py",
+        "config": "results/config.yaml",
+        "dataset_report": "results/ncbi_dataset/data/data_report.jsonl",
+        "dataset_sequences": "results/ncbi_dataset/data/genomic.fna",
+        "old_hashes": "results/previous_submissions.ndjson",
+    }
+    if CHECK_ENA_DEPOSITION:
+        select_changed_records_input["exclude_insdc_accessions"] = (
+            "results/accessions_to_exclude.json"
+        )
+    if MUTED_HASHES_URL:
+        select_changed_records_input["muted_hashes"] = "results/muted_hashes.tsv"
+    if APPLY_MINIMIZER:
+        select_changed_records_input["segments"] = "results/nextclade_merged.tsv"
+
+    rule select_changed_records:
+        """Non-segmented organisms: format, filter, prepare, hash and compare the NCBI records in one
+        pass, and write only the records to submit or revise (see the script's docstring)
         """
-        python {input.script} \
-            --config-file {input.config} \
-            --old-hashes {input.old_hashes} \
-            {params.muted_hashes} \
-            --metadata {input.metadata} \
-            --to-submit {output.to_submit} \
-            --to-revise {output.to_revise} \
-            --to-revoke {output.to_revoke} \
-            --unchanged {output.unchanged} \
-            --output-blocked {output.blocked} \
-            --sampled-out-file {output.sampled_out} \
-            --log-level {params.log_level} \
-            --subsample-fraction {params.subsample_fraction}
-        """
+        input:
+            **select_changed_records_input,
+        output:
+            to_submit="results/to_submit.json",
+            to_revise="results/to_revise.json",
+            to_revoke="results/to_revoke.json",
+            unchanged="results/unchanged.json",
+            blocked="results/blocked.json",
+            sampled_out="results/sampled_out.json",
+            metadata="results/changed_metadata.ndjson",
+            sequences="results/changed_sequences.ndjson",
+        params:
+            log_level=LOG_LEVEL,
+            subsample_fraction=config.get("subsample_fraction", 1.0),
+            optional_inputs=lambda wildcards, input: " ".join(
+                f"--{name.replace('_', '-')} {input[name]}"
+                for name in ["exclude_insdc_accessions", "muted_hashes", "segments"]
+                if name in input.keys()
+            ),
+        shell:
+            """
+            python {input.script} \
+                --config-file {input.config} \
+                --dataset-report {input.dataset_report} \
+                --sequences {input.dataset_sequences} \
+                --old-hashes {input.old_hashes} \
+                {params.optional_inputs} \
+                --subsample-fraction {params.subsample_fraction} \
+                --to-submit {output.to_submit} \
+                --to-revise {output.to_revise} \
+                --to-revoke {output.to_revoke} \
+                --unchanged {output.unchanged} \
+                --output-blocked {output.blocked} \
+                --sampled-out-file {output.sampled_out} \
+                --output-metadata {output.metadata} \
+                --output-sequences {output.sequences} \
+                --log-level {params.log_level}
+            """
 
 
 rule prepare_files:
     input:
         script="scripts/prepare_files.py",
         config="results/config.yaml",
-        metadata=prepped_metadata(),
+        metadata=(
+            prepped_metadata() if SEGMENTED else "results/changed_metadata.ndjson"
+        ),
         sequences=(
-            "results/sequences_filtered.ndjson"
-            if FILTER
-            else (
-                "results/sequences_post_group.ndjson"
-                if SEGMENTED
-                else "results/sequences.ndjson"
+            (
+                "results/sequences_filtered.ndjson"
+                if FILTER
+                else "results/sequences_post_group.ndjson"
             )
+            if SEGMENTED
+            else "results/changed_sequences.ndjson"
         ),
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",

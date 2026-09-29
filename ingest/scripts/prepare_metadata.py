@@ -56,6 +56,31 @@ def resolve_host_information(record: dict[str, str]) -> dict[str, str]:
     return record
 
 
+def load_config(full_config: dict) -> Config:
+    return Config(**{key: full_config[key] for key in Config.__annotations__})
+
+
+def load_segments(
+    segments: str | None,
+) -> tuple[dict[FastaIdField, dict[str, str]], list[str]]:
+    """Segment assignments (nextclade_merged.tsv) by sequence name, and their columns"""
+    segments_dict: dict[FastaIdField, dict[str, str]] = {}
+    segmented_fields: list[str] = []
+    if segments:
+        segment_df = pd.read_csv(segments, sep="\t")
+        segmented_fields = list(segment_df.columns)
+        for row in segment_df.to_dict(orient="records"):
+            segments_dict[row["seqName"]] = row
+    return segments_dict, segmented_fields
+
+
+def get_keys_to_keep(config: Config) -> set[str]:
+    keys_to_keep = set(config.rename.values()) | set(config.keep)
+    if config.segmented:
+        keys_to_keep.add("segment")
+    return keys_to_keep
+
+
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--input", required=True, type=click.Path(exists=True))
@@ -78,26 +103,15 @@ def main(
     logger.setLevel(log_level)
 
     with open(config_file, encoding="utf-8") as file:
-        full_config = yaml.safe_load(file)
-        relevant_config = {key: full_config[key] for key in Config.__annotations__}
-        config = Config(**relevant_config)
+        config = load_config(yaml.safe_load(file))
     logger.debug(config)
 
     sequence_hashes: dict[FastaIdField, str] = {
         record["id"]: record["hash"] for record in orjsonl.load(sequence_hashes_file)
     }
 
-    segments_dict: dict[FastaIdField, dict[str, str]] = {}
-    segmented_fields: list[str] = []
-    if segments:
-        segment_df = pd.read_csv(segments, sep="\t")
-        segmented_fields = list(segment_df.columns)
-        for row in segment_df.to_dict(orient="records"):
-            segments_dict[row["seqName"]] = row
-
-    keys_to_keep = set(config.rename.values()) | set(config.keep)
-    if config.segmented:
-        keys_to_keep.add("segment")
+    segments_dict, segmented_fields = load_segments(segments)
+    keys_to_keep = get_keys_to_keep(config)
     fasta_id_field = config.rename.get(config.fasta_id_field, config.fasta_id_field)
 
     # One record at a time: holding every row (as a DataFrame, then as dicts) took ~4.8 GB for ~3M
@@ -167,6 +181,19 @@ def rename_and_filter(record: dict[str, str], config: Config, keys_to_keep: set[
             record.pop(key)
 
 
+def metadata_hash_prefix(record: dict[str, str]) -> str:
+    """The metadata part of the record hash, which metadata_hash appends the sequence hash to"""
+    # Hash of all metadata fields should be the same if
+    # 1. field is not in keys_to_keep and
+    # 2. field is in keys_to_keep but is "" or None
+    filtered_record = {k: str(v) for k, v in record.items() if v is not None and str(v)}
+
+    # rename "id" to "submissionId" for back-compatibility with old hashes
+    filtered_record["submissionId"] = filtered_record.pop("id")
+
+    return json.dumps(filtered_record, sort_keys=True)
+
+
 def metadata_hash(
     record: dict[str, str],
     config: Config,
@@ -179,16 +206,7 @@ def metadata_hash(
         msg = f"No hash found for {record[config.fasta_id_field]}"
         raise ValueError(msg)
 
-    # Hash of all metadata fields should be the same if
-    # 1. field is not in keys_to_keep and
-    # 2. field is in keys_to_keep but is "" or None
-    filtered_record = {k: str(v) for k, v in record.items() if v is not None and str(v)}
-
-    # rename "id" to "submissionId" for back-compatibility with old hashes
-    filtered_record["submissionId"] = filtered_record.pop("id")
-
-    metadata_dump = json.dumps(filtered_record, sort_keys=True)
-    prehash = metadata_dump + sequence_hash
+    prehash = metadata_hash_prefix(record) + sequence_hash
     return hashlib.md5(prehash.encode(), usedforsecurity=False).hexdigest()
 
 

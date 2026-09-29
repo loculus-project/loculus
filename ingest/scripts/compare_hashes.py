@@ -1,6 +1,7 @@
 import dataclasses
 import json
 import logging
+import sys
 from collections import defaultdict
 from dataclasses import dataclass
 from hashlib import md5
@@ -49,7 +50,7 @@ class SequenceUpdateManager:
     muted_hashes: dict[LoculusAccession, set[str]]
 
 
-@dataclass
+@dataclass(slots=True)
 class LatestLoculusVersion:
     loculus_accession: LoculusAccession
     latest_version: int
@@ -111,6 +112,36 @@ def calculate_metadata_diff(
     }
 
 
+# How a record compares to what was submitted before (see classify_hash)
+SUBMIT = "submit"
+NOOP = "noop"
+MUTED = "muted"
+BLOCKED = "blocked"
+CURATED = "curated"
+REVISE = "revise"
+
+
+def classify_hash(
+    ingested_insdc_accession: InsdcAccession,
+    newly_ingested_hash: str | None,
+    submitted: dict[InsdcAccession, LatestLoculusVersion],
+    muted_hashes: dict[LoculusAccession, set[str]],
+) -> str:
+    """Decide if a record should be submitted, revised, or left alone, without side effects"""
+    if ingested_insdc_accession not in submitted:
+        return SUBMIT
+    previously_submitted_entry = submitted[ingested_insdc_accession]
+    if previously_submitted_entry.hash == newly_ingested_hash:
+        return NOOP
+    if newly_ingested_hash in muted_hashes.get(previously_submitted_entry.loculus_accession, set()):
+        return MUTED
+    if previously_submitted_entry.status != "APPROVED_FOR_RELEASE":
+        return BLOCKED
+    if previously_submitted_entry.curated:
+        return CURATED
+    return REVISE
+
+
 def process_hashes(
     ingested_insdc_accession: InsdcAccession,
     metadata_id: SubmissionId,
@@ -122,8 +153,11 @@ def process_hashes(
     Decide if metadata_id should be submitted, revised, or noop
     """
     newly_ingested_hash: str | None = new_metadata.get("hash")
+    decision = classify_hash(
+        ingested_insdc_accession, newly_ingested_hash, submitted, update_manager.muted_hashes
+    )
 
-    if ingested_insdc_accession not in submitted:
+    if decision == SUBMIT:
         update_manager.submit.append(metadata_id)
         return update_manager
 
@@ -131,24 +165,22 @@ def process_hashes(
     corresponding_loculus_accession = previously_submitted_entry.loculus_accession
     status = previously_submitted_entry.status
 
-    if previously_submitted_entry.hash == newly_ingested_hash:
+    if decision == NOOP:
         update_manager.noop[metadata_id] = corresponding_loculus_accession
         return update_manager
 
-    if newly_ingested_hash in update_manager.muted_hashes.get(
-        corresponding_loculus_accession, set()
-    ):
+    if decision == MUTED:
         logger.info(
             f"Skipping muted hash {newly_ingested_hash} for accession {corresponding_loculus_accession}"
         )
         update_manager.noop[metadata_id] = corresponding_loculus_accession
         return update_manager
 
-    if status != "APPROVED_FOR_RELEASE":
+    if decision == BLOCKED:
         update_manager.blocked[status][metadata_id] = corresponding_loculus_accession
         return update_manager
 
-    if previously_submitted_entry.curated:
+    if decision == CURATED:
         metadata_diff = calculate_metadata_diff(
             update_manager.config, new_metadata, previously_submitted_entry
         )
@@ -180,12 +212,30 @@ def get_joint_insdc_accession(record, insdc_keys, config, take_subset=False, sub
     return "/".join(f"{record[key]}.{segment}" for key, segment in pairs if record.get(key))
 
 
-def get_loculus_accession_to_latest_version_map(
-    old_hashes: str,
-) -> dict[LoculusAccession, dict[str, Any]]:
-    """
-    Maps each LoculusAccession to the entry of the latest version,
-    additionally adding a bool field curated.
+_MISSING = object()
+
+
+@dataclass(slots=True)
+class _VersionsSeen:
+    """What construct_submitted_dict keeps of the versions of one Loculus accession: the latest
+    version, and the latest non-revocation (revocations have no INSDC accessions)"""
+
+    latest_version: Any
+    latest_version_number: int
+    latest_is_revocation: bool
+    non_revocation_version_number: int = -1
+    non_revocation_status: Status = ""
+    non_revocation_hash: str | None = None
+    non_revocation_insdc_values: tuple = ()
+    latest_by_curator: bool = False
+    non_revocation_by_curator: bool = False
+    versions_by_curator: int = 0
+
+
+def construct_submitted_dict(  # noqa: C901, PLR0912, PLR0915
+    old_hashes: str, insdc_keys: list[str], config: Config
+) -> dict[InsdcAccession, LatestLoculusVersion]:
+    """Map each INSDC accession to the latest version of the Loculus accession that has it
 
     old_hashes is an ndjson file where each entry has the following fields:
     ```
@@ -201,73 +251,81 @@ def get_loculus_accession_to_latest_version_map(
     "status":"RECEIVED"}
     ```
     (a single segmented example will only have one insdcAccessionBase field)
+
+    The latest version of a revoked accession takes its INSDC accessions and hash from the latest
+    non-revocation, and an accession counts as curated if any version was submitted by someone else
+    than the ingest user. Of versions with the same number, the first in the file counts.
+
+    Streamed, keeping two versions per Loculus accession: holding every entry took ~1 kB per
+    previous submission, which is GBs for SARS-CoV-2.
     """
-    loculus_accession_to_version_map: dict[LoculusAccession, list[dict[str, Any]]] = {}
-
-    for field in orjsonl.stream(old_hashes):
-        accession: LoculusAccession = field["accession"]
-        if accession not in loculus_accession_to_version_map:
-            loculus_accession_to_version_map[accession] = []
-        loculus_accession_to_version_map[accession].append(field)
-
-    loculus_accession_to_latest_version_map: dict[LoculusAccession, dict[str, Any]] = {}
-    for accession, versions in loculus_accession_to_version_map.items():
-        sorted_versions = sorted(versions, key=lambda x: int(x["version"]), reverse=True)
-        # Revocations do not have INSDC accessions, get these from the last non-revocation
-        if sorted_versions[0]["isRevocation"]:
-            non_revoked_versions = sorted(
-                [v for v in versions if not v.get("isRevocation", False)],
-                key=lambda x: int(x["version"]),
-                reverse=True,
+    value_keys = insdc_keys if config.segmented else ["insdcAccessionBase"]
+    seen: dict[LoculusAccession, _VersionsSeen] = {}
+    for entry in orjsonl.stream(old_hashes):
+        accession: LoculusAccession = entry["accession"]
+        version_number = int(entry["version"])
+        is_revocation = entry.get("isRevocation", False)
+        versions = seen.get(accession)
+        by_curator = entry["submitter"] != "insdc_ingest_user"
+        if versions is None:
+            versions = seen[accession] = _VersionsSeen(
+                entry["version"], version_number, is_revocation, latest_by_curator=by_curator
             )
-            latest = non_revoked_versions[0]
-            latest["isRevocation"] = True
-            latest["version"] = sorted_versions[0]["version"]
-            latest["submitter"] = sorted_versions[0]["submitter"]
-        else:
-            latest = sorted_versions[0]
-
-        # Check if any version of sequence has been curated
-        latest["curated"] = {v["submitter"] for v in sorted_versions} != {"insdc_ingest_user"}
-
-        loculus_accession_to_latest_version_map[accession] = latest
-    return loculus_accession_to_latest_version_map
-
-
-def construct_submitted_dict(
-    old_hashes: str, insdc_keys: list[str], config: Config
-) -> dict[InsdcAccession, LatestLoculusVersion]:
-    # Get the latest version for each loculus accession
-    loculus_accession_to_latest_version_map: dict[LoculusAccession, dict[str, Any]] = (
-        get_loculus_accession_to_latest_version_map(old_hashes)
-    )
+        elif version_number > versions.latest_version_number:
+            versions.latest_version = entry["version"]
+            versions.latest_version_number = version_number
+            versions.latest_is_revocation = is_revocation
+            versions.latest_by_curator = by_curator
+        versions.versions_by_curator += by_curator
+        if not is_revocation and version_number > versions.non_revocation_version_number:
+            submitted_metadata = entry["submittedMetadata"]
+            versions.non_revocation_version_number = version_number
+            versions.non_revocation_status = sys.intern(entry["status"])
+            versions.non_revocation_hash = submitted_metadata.get("hash")
+            versions.non_revocation_insdc_values = tuple(
+                submitted_metadata.get(key, _MISSING) for key in value_keys
+            )
+            versions.non_revocation_by_curator = by_curator
 
     # Create a map from INSDC accession to latest loculus accession
     insdc_to_loculus_accession_map: dict[InsdcAccession, LatestLoculusVersion] = {}
-    for loculus_accession, entry in loculus_accession_to_latest_version_map.items():
-        submitted_metadata: dict[str, Any] = entry["submittedMetadata"]
-        hash_value = submitted_metadata.get("hash")
-
+    for loculus_accession, versions in seen.items():
+        if versions.non_revocation_version_number < 0:
+            msg = f"{loculus_accession} has no version that is not a revocation"
+            raise ValueError(msg)
         if config.segmented:
+            for key, value in zip(value_keys, versions.non_revocation_insdc_values, strict=True):
+                if value is _MISSING:
+                    raise KeyError(key)
+            submitted_metadata = dict(
+                zip(value_keys, versions.non_revocation_insdc_values, strict=True)
+            )
             insdc_accessions = [
                 submitted_metadata[key] for key in insdc_keys if submitted_metadata[key]
             ]
             joint_accession = get_joint_insdc_accession(submitted_metadata, insdc_keys, config)
         else:
-            insdc_accessions = [submitted_metadata.get("insdcAccessionBase", "")]
-            joint_accession = submitted_metadata.get("insdcAccessionBase", "")
+            value = versions.non_revocation_insdc_values[0]
+            joint_accession = "" if value is _MISSING else value
+            insdc_accessions = [joint_accession]
 
-        status = "REVOKED" if entry["isRevocation"] else entry["status"]
+        status = "REVOKED" if versions.latest_is_revocation else versions.non_revocation_status
+        # Check if any version of sequence has been curated. For a revoked accession, the latest
+        # non-revocation counts with the submitter of the revocation, as it always has (only
+        # reachable in the metadata diff of a curated sequence, which REVOKED never gets to).
+        by_curator = versions.versions_by_curator
+        if versions.latest_is_revocation:
+            by_curator += versions.latest_by_curator - versions.non_revocation_by_curator
+        latest = LatestLoculusVersion(
+            loculus_accession=loculus_accession,
+            latest_version=versions.latest_version,
+            hash=versions.non_revocation_hash,
+            status=status,
+            curated=by_curator > 0,
+            jointAccession=joint_accession,
+        )
 
         for insdc_accession in insdc_accessions:
-            latest = LatestLoculusVersion(
-                loculus_accession=loculus_accession,
-                latest_version=entry["version"],
-                hash=hash_value,
-                status=status,
-                curated=entry["curated"],
-                jointAccession=joint_accession,
-            )
             if insdc_accession not in insdc_to_loculus_accession_map:
                 insdc_to_loculus_accession_map[insdc_accession] = latest
                 continue
@@ -314,6 +372,13 @@ def load_muted_hashes_dict(muted_hashes_path: str) -> dict[LoculusAccession, set
     return df.groupby("accession")["hash_digest"].agg(set).to_dict()
 
 
+def load_config(config_file: str) -> Config:
+    with open(config_file, encoding="utf-8") as file:
+        full_config = yaml.safe_load(file)
+    relevant_config = {f.name: full_config.get(f.name, []) for f in dataclasses.fields(Config)}
+    return Config(**relevant_config)
+
+
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--old-hashes", required=True, type=click.Path(exists=True))
@@ -348,10 +413,7 @@ def main(
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
-    with open(config_file, encoding="utf-8") as file:
-        full_config = yaml.safe_load(file)
-        relevant_config = {f.name: full_config.get(f.name, []) for f in dataclasses.fields(Config)}
-        config = Config(**relevant_config)
+    config = load_config(config_file)
 
     insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
 
@@ -449,6 +511,28 @@ def main(
         )
         update_manager.revoke[metadata_id] = old_accessions
 
+    write_outputs(
+        update_manager,
+        to_submit=to_submit,
+        to_revise=to_revise,
+        unchanged=unchanged,
+        output_blocked=output_blocked,
+        to_revoke=to_revoke,
+        sampled_out_file=sampled_out_file,
+    )
+    warn_potentially_suppressed(config, already_ingested_accessions, current_ingested_accessions)
+
+
+def write_outputs(  # noqa: PLR0913
+    update_manager: SequenceUpdateManager,
+    *,
+    to_submit: str,
+    to_revise: str,
+    unchanged: str,
+    output_blocked: str,
+    to_revoke: str,
+    sampled_out_file: str,
+) -> None:
     outputs = [
         (update_manager.submit, to_submit, "Sequences to submit"),
         (update_manager.revise, to_revise, "Sequences to revise"),
@@ -467,6 +551,12 @@ def main(
         else:
             logger.info(f"{text}: {len(value)}")
 
+
+def warn_potentially_suppressed(
+    config: Config,
+    already_ingested_accessions: set[InsdcAccession],
+    current_ingested_accessions: set[InsdcAccession],
+) -> None:
     potentially_suppressed = already_ingested_accessions - current_ingested_accessions
     if len(potentially_suppressed) > 0:
         warning = (

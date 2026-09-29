@@ -133,13 +133,42 @@ def extract_fields(row, ncbi_mappings: NCBIMappings) -> dict:
     return extracted
 
 
-def jsonl_to_tsv(jsonl_file: str, tsv_file: str, ncbi_mappings: NCBIMappings) -> None:
-    headers = (
+def tsv_headers(ncbi_mappings: NCBIMappings) -> list[str]:
+    return (
         list(ncbi_mappings.string_to_string_mappings.keys())
         + list(ncbi_mappings.string_to_list_mappings.keys())
         + [key for val in ncbi_mappings.string_to_dict_mappings.values() for key in val]
         + list(ncbi_mappings.unknown_mappings)
     )
+
+
+def format_row(row: dict, ncbi_mappings: NCBIMappings) -> dict:
+    """One data_report.jsonl record as the dict written as a row of the metadata TSV"""
+    extracted = extract_fields(row, ncbi_mappings)
+    extracted["ncbiSubmitterNames"] = reformat_authors_from_genbank_to_loculus(
+        extracted["ncbiSubmitterNames"], extracted["genbankAccession"]
+    )
+
+    # Ensure float formatting matches "%.0f"
+    return {
+        key: f"{value:.0f}" if isinstance(value, float) else value
+        for key, value in extracted.items()
+    }
+
+
+def as_tsv_record(formatted_row: dict, headers: list[str]) -> dict[str, str]:
+    """The record that csv.DictReader returns for formatted_row after the TSV round trip
+    (csv.DictWriter writes None as "" and anything else as str(value); the backslash
+    escaping reads back unchanged), so that the TSV can be skipped"""
+    record = {}
+    for header in headers:
+        value = formatted_row.get(header)
+        record[header] = "" if value is None else str(value)
+    return record
+
+
+def jsonl_to_tsv(jsonl_file: str, tsv_file: str, ncbi_mappings: NCBIMappings) -> None:
+    headers = tsv_headers(ncbi_mappings)
     with (
         open(jsonl_file, encoding="utf-8") as infile,
         open(tsv_file, "w", newline="", encoding="utf-8") as file,
@@ -154,17 +183,13 @@ def jsonl_to_tsv(jsonl_file: str, tsv_file: str, ncbi_mappings: NCBIMappings) ->
         writer.writeheader()
         for line in infile:
             row = json.loads(line.strip())
-            extracted = extract_fields(row, ncbi_mappings)
-            extracted["ncbiSubmitterNames"] = reformat_authors_from_genbank_to_loculus(
-                extracted["ncbiSubmitterNames"], extracted["genbankAccession"]
-            )
+            writer.writerow(format_row(row, ncbi_mappings))
 
-            # Ensure float formatting matches "%.0f"
-            formatted_row = {
-                key: f"{value:.0f}" if isinstance(value, float) else value
-                for key, value in extracted.items()
-            }
-            writer.writerow(formatted_row)
+
+def load_ncbi_mappings(full_config: dict) -> NCBIMappings:
+    ncbi_mappings_data = full_config["ncbi_mappings"]
+    relevant_config = {key: ncbi_mappings_data[key] for key in NCBIMappings.__annotations__}
+    return NCBIMappings(**relevant_config)
 
 
 @click.command()
@@ -180,10 +205,7 @@ def main(config_file: str, input: str, output: str, log_level: str) -> None:
     logger.setLevel(log_level)
 
     with open(config_file, encoding="utf-8") as file:
-        full_config = yaml.safe_load(file)
-        ncbi_mappings_data = full_config["ncbi_mappings"]
-        relevant_config = {key: ncbi_mappings_data[key] for key in NCBIMappings.__annotations__}
-        ncbi_mappings = NCBIMappings(**relevant_config)
+        ncbi_mappings = load_ncbi_mappings(yaml.safe_load(file))
 
     jsonl_to_tsv(input, output, ncbi_mappings=ncbi_mappings)
 

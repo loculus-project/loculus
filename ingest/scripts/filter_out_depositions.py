@@ -23,6 +23,27 @@ class Config:
     db_host: str
 
 
+def load_exclusions(exclude_insdc_accessions: str) -> tuple[set[str], set[str]]:
+    """INSDC accessions (without version) and BioSample accessions of Loculus depositions"""
+    with open(exclude_insdc_accessions, encoding="utf-8") as file:
+        data = json.load(file)
+    insdc_accessions = {line.strip().split(".")[0] for line in data["insdcAccessions"]}
+    return insdc_accessions, set(data["biosampleAccessions"])
+
+
+def is_loculus_deposition(
+    genbank_accession: str,
+    biosample_accession: str,
+    loculus_insdc_accessions: set[str],
+    loculus_biosample_accessions: set[str],
+) -> bool:
+    # Filter out all versions of an accession
+    return (
+        genbank_accession.split(".", 1)[0] in loculus_insdc_accessions
+        or biosample_accession in loculus_biosample_accessions
+    )
+
+
 @click.command()
 @click.option(
     "--log-level",
@@ -64,12 +85,9 @@ def filter_out_depositions(
         relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
         config = Config(**relevant_config)
     logger.info(f"Config: {config}")
-    with open(exclude_insdc_accessions, encoding="utf-8") as file:
-        data = json.load(file)
-        loculus_insdc_accessions: set = {
-            line.strip().split(".")[0] for line in data["insdcAccessions"]
-        }  # Remove version
-        loculus_biosample_accessions = set(data["biosampleAccessions"])
+    loculus_insdc_accessions, loculus_biosample_accessions = load_exclusions(
+        exclude_insdc_accessions
+    )
 
     # Row by row: reading the whole TSV into a DataFrame took ~3.3 GB for ~3M SARS-CoV-2 records.
     # Same bytes as the pandas read/write it replaces: no quoting, backslash escapes, and quotes left as they are
@@ -88,10 +106,12 @@ def filter_out_depositions(
         biosample_column = header.index("biosampleAccession")
         for row in reader:
             original_count += 1
-            # Filter out all versions of an accession
-            if row[accession_column].split(".")[0] in loculus_insdc_accessions:
-                continue
-            if row[biosample_column] in loculus_biosample_accessions:
+            if is_loculus_deposition(
+                row[accession_column],
+                row[biosample_column],
+                loculus_insdc_accessions,
+                loculus_biosample_accessions,
+            ):
                 continue
             writer.writerow(row)
             kept_count += 1
