@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from unittest import mock
 
+import pytest
 import requests
 
 SCRIPT_PATH = Path(__file__).parents[1] / "scripts" / "loculus_client.py"
@@ -25,14 +26,16 @@ CONFIG = loculus_client.Config(
     batch_chunk_size=1,
 )
 
+# as the backend sends them: status is not the last key
 ENTRIES = [
-    {"accession": "LOC_1", "version": 1, "submittedMetadata": {"hash": "a"}},
-    {"accession": "LOC_1", "version": 2, "submittedMetadata": {"hash": "b"}},
-    {"accession": "LOC_2", "version": 1, "submittedMetadata": {"hash": "é"}},
-]
-STATUSES = [
-    {"accession": "LOC_1", "version": 1, "status": "APPROVED_FOR_RELEASE"},
-    {"accession": "LOC_1", "version": 2, "status": "HAS_ERRORS"},
+    {
+        "accession": "LOC_1",
+        "version": 1,
+        "status": "APPROVED_FOR_RELEASE",
+        "submittedMetadata": {"hash": "a"},
+    },
+    {"accession": "LOC_1", "version": 2, "status": "PROCESSED", "submittedMetadata": {"hash": "b"}},
+    {"accession": "LOC_2", "version": 1, "status": "RECEIVED", "submittedMetadata": {"hash": "é"}},
 ]
 
 
@@ -49,12 +52,11 @@ def response(body: bytes, total_records: int | None = None) -> requests.Response
 
 def backend(metadata_responses: list[list[dict]]):
     """make_request for get-submitted-metadata (one response per call, announcing len(ENTRIES)
-    records) and get-sequences"""
+    records)"""
     responses = iter(metadata_responses)
 
     def make_request(method, url, config, params=None, stream=False, **kwargs):
-        if url.endswith("/get-sequences"):
-            return response(json.dumps({"sequenceEntries": STATUSES}).encode())
+        assert url.endswith("/get-submitted-metadata")
         assert stream
         lines = b"".join(json.dumps(e).encode() + b"\n" for e in next(responses))
         return response(lines, total_records=len(ENTRIES))
@@ -70,10 +72,25 @@ def test_get_submitted_writes_entries_with_status(tmp_path):
     ):
         loculus_client.get_submitted(CONFIG, str(output), ["hash"])
     sleep.assert_called_once()  # the incomplete first stream is retried
-    statuses = ["APPROVED_FOR_RELEASE", "HAS_ERRORS", "UNKNOWN"]
-    expected = [{**e, "status": s} for e, s in zip(ENTRIES, statuses, strict=True)]
-    assert [json.loads(line) for line in output.read_text().splitlines()] == expected
+    # status moves to the end of each entry, where the files always had it
+    expected = [
+        {k: v for k, v in e.items() if k != "status"} | {"status": e["status"]} for e in ENTRIES
+    ]
+    lines = output.read_text().splitlines()
+    assert [list(json.loads(line)) for line in lines] == [list(e) for e in expected]
+    assert [json.loads(line) for line in lines] == expected
     assert list(tmp_path.iterdir()) == [output]
+
+
+def test_get_submitted_rejects_entries_without_status(tmp_path):
+    output = tmp_path / "previous_submissions.ndjson"
+    without_status = [{k: v for k, v in e.items() if k != "status"} for e in ENTRIES]
+    with (
+        mock.patch.object(loculus_client, "make_request", backend([without_status])),
+        pytest.raises(ValueError, match="without status"),
+    ):
+        loculus_client.get_submitted(CONFIG, str(output), ["hash"])
+    assert not output.exists()
 
 
 def test_get_submitted_without_output_returns_the_entries():

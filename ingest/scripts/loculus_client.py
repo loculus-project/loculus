@@ -2,7 +2,6 @@ import dataclasses
 import json
 import logging
 import os
-import sys
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from http import HTTPMethod, HTTPStatus
@@ -457,36 +456,6 @@ def approve(config: ApproveConfig):
     return response.json()
 
 
-def get_sequence_status(config: Config) -> dict[str, str]:
-    """Status of each sequence entry, keyed by "accession.version"
-
-    The entries are taken from the parser as it builds them (object_hook) rather than from the
-    parsed list, which for SARS-CoV-2's millions of entries held ~1 kB per entry at once.
-    """
-    url = f"{organism_url(config)}/get-sequences"
-
-    params = {
-        "organism": config.organism,
-    }
-
-    response = make_request(HTTPMethod.GET, url, config, params=params)
-
-    result: dict[str, str] = {}
-
-    def take_entry(obj: dict[str, Any]) -> dict[str, Any] | None:
-        if "accession" in obj and "status" in obj:
-            result[f"{obj['accession']}.{obj['version']}"] = sys.intern(obj["status"])
-            return None
-        return obj
-
-    try:
-        response.json(object_hook=take_entry)
-    except requests.JSONDecodeError:
-        logger.warning(f"Error decoding JSON of /get-sequences: {response.text}")
-        result.clear()
-    return result
-
-
 def get_submitted_metadata(
     config: Config,
     handle_entries: Callable[[Iterator[dict[str, Any]]], int],
@@ -538,14 +507,12 @@ def get_submitted(
     fields: list[str] | None = None,
     accessionVersionsFilter: list[str] | None = None,  # noqa: N803
 ):
-    """Get previously submitted sequences as ndjson
+    """Get previously submitted sequences, each with its status, as ndjson
     This way we can avoid submitting the same sequences again
-    Adds status to the output (as this is not returned by get-submitted-metadata)
 
-    Without output, returns the entries (without status). With output, the entries are streamed to
-    disk (for SARS-CoV-2, millions of entries that took ~2 kB of memory each as dicts), then
-    rewritten with their status: the statuses are fetched after the entries, as before, so that a
-    version submitted in between has its status.
+    Without output, returns the entries. With output, the entries are streamed to disk (for
+    SARS-CoV-2, millions of entries that took ~2 kB of memory each as dicts), then moved into place.
+    The status comes with each entry, from the same snapshot as its metadata.
     """
     if not output:
         entries: list[dict[str, Any]] = []
@@ -557,25 +524,23 @@ def get_submitted(
         get_submitted_metadata(config, collect, fields, accessionVersionsFilter)
         return entries
 
-    without_status = f"{output}.without_status"
+    partial = f"{output}.partial"
 
     def write(new_entries: Iterator[dict[str, Any]]) -> int:
         count = 0
-        with open(without_status, "wb") as f:
+        with open(partial, "wb") as f:
             for entry in new_entries:
+                if "status" not in entry:
+                    msg = (
+                        "/get-submitted-metadata returned an entry without status: the backend is "
+                        "older than this ingest"
+                    )
+                    raise ValueError(msg)
+                entry["status"] = entry.pop("status")  # last, as downstream files always had it
                 f.write(orjson.dumps(entry) + b"\n")
                 count += 1
         return count
 
     get_submitted_metadata(config, write, fields, accessionVersionsFilter)
-
-    statuses = get_sequence_status(config)
-    logger.info(f"Got the status of {len(statuses)} previously submitted sequence entries")
-
-    with open(without_status, "rb") as f, open(output, "wb") as out:
-        for line in f:
-            entry = orjson.loads(line)
-            entry["status"] = statuses.get(f"{entry['accession']}.{entry['version']}", "UNKNOWN")
-            out.write(orjson.dumps(entry) + b"\n")
-    os.remove(without_status)
+    os.replace(partial, output)
     return None
