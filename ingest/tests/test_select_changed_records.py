@@ -94,6 +94,12 @@ def test_invalid_utf8_fails_only_in_a_kept_record(dropped):
         list(select_changed_records.split_fasta_records(io.BytesIO(data)))
 
 
+@pytest.mark.parametrize("data", [*FASTA_CASES.values(), b">", b"\n>", b">>\n>\n\n>>"])
+def test_find_record_start_is_find(data):
+    for start in range(len(data) + 1):
+        assert select_changed_records._find_record_start(data, start) == data.find(b"\n>", start)
+
+
 # --- the TSV round trip ----------------------------------------------------------------------
 
 TSV_VALUES = [
