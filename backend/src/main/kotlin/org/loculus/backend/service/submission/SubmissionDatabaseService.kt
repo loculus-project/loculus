@@ -13,6 +13,7 @@ import org.jetbrains.exposed.v1.core.Count
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.LongColumnType
 import org.jetbrains.exposed.v1.core.Op
+import org.jetbrains.exposed.v1.core.QueryBuilder
 import org.jetbrains.exposed.v1.core.QueryParameter
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -20,6 +21,7 @@ import org.jetbrains.exposed.v1.core.TextColumnType
 import org.jetbrains.exposed.v1.core.VarCharColumnType
 import org.jetbrains.exposed.v1.core.alias
 import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.append
 import org.jetbrains.exposed.v1.core.booleanParam
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greaterEq
@@ -890,17 +892,35 @@ class SubmissionDatabaseService(
             }
         }
 
-        // every PROCESSED entry is unreleased: the released_at predicate lets sequence_entries_unreleased_idx drive
-        // the plan, so the cost follows the unreleased backlog instead of the organism's whole table
-        val statusCondition = SequenceEntriesView.statusIs(Status.PROCESSED) and
-            SequenceEntriesView.releasedAtTimestampColumn.isNull()
+        val statusCondition = SequenceEntriesView.statusIs(Status.PROCESSED)
+
+        // Every PROCESSED entry is unreleased. Without an accession filter, first read the organism's unreleased
+        // entries (sequence_entries_unreleased_idx) and look only those up in the view: filtering the view by status
+        // directly joins the organism's whole table with sequence_entries_preprocessed_data, and a released_at
+        // predicate alone is planned from statistics that are stale after every large ingest.
+        val unreleased = if (accessionVersionsFilter === null) {
+            SequenceEntriesTable
+                .select(SequenceEntriesTable.accessionColumn, SequenceEntriesTable.versionColumn)
+                .where {
+                    (SequenceEntriesTable.organismColumn eq organism.name) and
+                        SequenceEntriesTable.releasedAtTimestampColumn.isNull()
+                }
+                .map {
+                    AccessionVersion(it[SequenceEntriesTable.accessionColumn], it[SequenceEntriesTable.versionColumn])
+                }
+                .ifEmpty { return emptyList() }
+        } else {
+            null
+        }
 
         val accessionCondition = if (accessionVersionsFilter !== null) {
             SequenceEntriesView.accessionVersionIsIn(accessionVersionsFilter)
-        } else if (authenticatedUser.isSuperUser) {
-            Op.TRUE
         } else {
-            SequenceEntriesView.groupIsOneOf(groupManagementDatabaseService.getGroupIdsOfUser(authenticatedUser))
+            AccessionVersionInArrays(checkNotNull(unreleased)) and if (authenticatedUser.isSuperUser) {
+                Op.TRUE
+            } else {
+                SequenceEntriesView.groupIsOneOf(groupManagementDatabaseService.getGroupIdsOfUser(authenticatedUser))
+            }
         }
 
         val includedProcessingResults = mutableListOf(NO_ISSUES)
@@ -1988,3 +2008,24 @@ data class RawProcessedData(
     val dataUseTerms: DataUseTerms,
     val dataUseTermsChangeDate: LocalDateTime?,
 ) : AccessionVersionInterface
+
+/**
+ * `(accession, version) IN (SELECT * FROM unnest(?, ?))` on [SequenceEntriesView], with the pairs bound as two arrays:
+ * planned as a nested loop of primary-key lookups whatever the table statistics say, and cheap to plan for thousands
+ * of pairs (an IN list of row literals took 0.4 s to plan for 1,200 pairs).
+ */
+private class AccessionVersionInArrays(private val accessionVersions: List<AccessionVersion>) : Op<Boolean>() {
+    override fun toQueryBuilder(queryBuilder: QueryBuilder) = queryBuilder {
+        append("(", SequenceEntriesView.accessionColumn, ", ", SequenceEntriesView.versionColumn, ")")
+        append(" IN (SELECT * FROM unnest(")
+        registerArgument(
+            ArrayColumnType<String, List<String>>(TextColumnType()),
+            accessionVersions.map {
+                it.accession
+            },
+        )
+        append("::text[], ")
+        registerArgument(ArrayColumnType<Long, List<Long>>(LongColumnType()), accessionVersions.map { it.version })
+        append("::bigint[]))")
+    }
+}
