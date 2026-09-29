@@ -19,6 +19,12 @@ KEYCLOAK_RETRY_INITIAL_DELAY_SECONDS = 5.0
 KEYCLOAK_RETRY_MAX_DELAY_SECONDS = 30.0
 KEYCLOAK_RETRY_MAX_WAIT_SECONDS = 300.0
 
+# A backend rollout breaks streams to the pod that shuts down (502s, cut connections) for ~30 s, and
+# a failed fetch fails the whole ingest run: 8 attempts over ~8.5 min ride that out.
+SUBMITTED_RETRY_INITIAL_DELAY_SECONDS = 10.0
+SUBMITTED_RETRY_MAX_DELAY_SECONDS = 120.0
+SUBMITTED_RETRY_MAX_ATTEMPTS = 8
+
 
 @dataclass(kw_only=True)
 class ApproveConfig:
@@ -456,6 +462,10 @@ def approve(config: ApproveConfig):
     return response.json()
 
 
+class MissingStatusError(ValueError):
+    """A /get-submitted-metadata entry without status: the backend pod is older than this ingest"""
+
+
 def get_submitted_metadata(
     config: Config,
     handle_entries: Callable[[Iterator[dict[str, Any]]], int],
@@ -463,7 +473,9 @@ def get_submitted_metadata(
     accessionVersionsFilter: list[str] | None = None,  # noqa: N803
 ) -> None:
     """Stream /get-submitted-metadata through handle_entries, which returns how many entries it
-    took; retried until that is the number of records the backend announced"""
+    took; the whole stream is fetched again, with backoff, until that is the number of records the
+    backend announced. A connection error, a 5xx, or a stream that is cut (mid-line, or short) is
+    retried; handle_entries must start over each time it is called."""
     url = f"{organism_url(config)}/get-submitted-metadata"
 
     params = {
@@ -475,30 +487,60 @@ def get_submitted_metadata(
     if accessionVersionsFilter:
         params["accessionVersionsFilter"] = accessionVersionsFilter
 
-    while True:
+    delay = SUBMITTED_RETRY_INITIAL_DELAY_SECONDS
+    for attempt in range(1, SUBMITTED_RETRY_MAX_ATTEMPTS + 1):
         logger.info("Getting previously submitted sequences")
+        problem = fetch_submitted_metadata_once(config, url, params, handle_entries)
+        if problem is None:
+            return
+        if attempt == SUBMITTED_RETRY_MAX_ATTEMPTS:
+            msg = f"/get-submitted-metadata failed {attempt} times, last: {problem}"
+            logger.error(msg)
+            raise requests.ConnectionError(msg)
+        logger.warning(
+            f"/get-submitted-metadata failed ({problem}); retrying in {delay:.0f} s "
+            f"(attempt {attempt} of {SUBMITTED_RETRY_MAX_ATTEMPTS})"
+        )
+        sleep(delay)
+        delay = min(delay * 2, SUBMITTED_RETRY_MAX_DELAY_SECONDS)
 
+
+def fetch_submitted_metadata_once(
+    config: Config,
+    url: str,
+    params: dict[str, Any],
+    handle_entries: Callable[[Iterator[dict[str, Any]]], int],
+) -> str | None:
+    """One fetch for get_submitted_metadata: None if complete, else what went wrong if it is worth
+    retrying. Other errors (e.g. a 4xx) are raised."""
+    try:
         with make_request(HTTPMethod.GET, url, config, params=params, stream=True) as response:
             expected_record_count = int(response.headers["x-total-records"])
             lines = response.iter_lines(chunk_size=1 << 20)
-            try:
-                record_count = handle_entries(jsonlines.Reader(lines).iter())
-            except jsonlines.Error as err:
-                line = str(getattr(err, "line", ""))
-                max_error_length = 100
-                if len(line) > max_error_length:
-                    line = line[:50] + "\n[..]\n" + line[-50:]
-                logger.error(f"Error decoding JSON from /get-submitted-metadata: {line}")
-                raise ValueError from err
-
-        if record_count == expected_record_count:
-            logger.info(f"Got {record_count} records as expected")
-            return
-        logger.error(
-            f"Got incomplete unprocessed metadata stream: got {record_count} records but expected "
-            f"{expected_record_count}. Retrying after 60 seconds."
-        )
-        sleep(60)
+            record_count = handle_entries(jsonlines.Reader(lines).iter())
+    except requests.HTTPError as err:
+        if err.response is None or err.response.status_code < HTTPStatus.INTERNAL_SERVER_ERROR:
+            raise
+        return f"status {err.response.status_code}"
+    except (
+        requests.ConnectionError,
+        requests.Timeout,
+        requests.exceptions.ChunkedEncodingError,
+        requests.exceptions.ContentDecodingError,
+    ) as err:
+        return f"{type(err).__name__}: {err}"
+    except jsonlines.Error as err:
+        line = str(getattr(err, "line", ""))
+        max_error_length = 100
+        if len(line) > max_error_length:
+            line = line[:50] + "\n[..]\n" + line[-50:]
+        return f"invalid JSON line (a cut stream?): {line}"
+    except MissingStatusError as err:
+        return str(err)  # an old pod still serving during a rollout
+    if record_count != expected_record_count:
+        return f"got {record_count} records but expected {expected_record_count}"
+    logger.info(f"Got {record_count} records as expected")
+    return None
 
 
 def get_submitted(
@@ -531,16 +573,17 @@ def get_submitted(
         with open(partial, "wb") as f:
             for entry in new_entries:
                 if "status" not in entry:
-                    msg = (
-                        "/get-submitted-metadata returned an entry without status: the backend is "
-                        "older than this ingest"
-                    )
-                    raise ValueError(msg)
+                    msg = "an entry without status: the backend is older than this ingest"
+                    raise MissingStatusError(msg)
                 entry["status"] = entry.pop("status")  # last, as downstream files always had it
                 f.write(orjson.dumps(entry) + b"\n")
                 count += 1
         return count
 
-    get_submitted_metadata(config, write, fields, accessionVersionsFilter)
-    os.replace(partial, output)
+    try:
+        get_submitted_metadata(config, write, fields, accessionVersionsFilter)
+        os.replace(partial, output)
+    finally:
+        if os.path.exists(partial):
+            os.remove(partial)
     return None
