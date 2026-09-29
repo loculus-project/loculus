@@ -111,12 +111,15 @@ import org.loculus.backend.utils.toTimestamp
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.sql.ResultSet
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.LinkedBlockingQueue
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -131,6 +134,9 @@ private const val MAX_EXTRA_CLAIM_CANDIDATES = 10_000
 private const val MAX_CLAIM_ROUNDS = 5
 
 private data class ClaimCursor(val after: AccessionVersion?, val lastFullScan: Instant)
+
+/** revised entries remembered per organism for the next claim; beyond this, the full scan finds them */
+private const val MAX_REVISED_AWAITING_CLAIM = 1_000_000
 
 private val accessionVersionOrder = compareBy<AccessionVersion>({ it.accession }, { it.version })
 
@@ -162,6 +168,44 @@ class SubmissionDatabaseService(
 ) {
     private val claimFullScanInterval = claimFullScanIntervalSeconds.seconds
     private val claimCursors = ConcurrentHashMap<Pair<String, Long>, ClaimCursor>()
+    private val revisedAwaitingClaim = ConcurrentHashMap<String, LinkedBlockingQueue<AccessionVersion>>()
+
+    /**
+     * Revisions add new versions of existing accessions, which sort before the claim cursor, so only the next full
+     * scan would find them. Remembers them (once the revising transaction has committed) for the next claim of the
+     * organism. Held per backend replica: a revision submitted to another replica waits for the full scan.
+     */
+    fun rememberRevisedEntries(organism: Organism, entries: List<AccessionVersionInterface>) {
+        if (entries.isEmpty()) {
+            return
+        }
+        val remember = {
+            val queue = revisedAwaitingClaim.computeIfAbsent(organism.name) {
+                LinkedBlockingQueue(MAX_REVISED_AWAITING_CLAIM)
+            }
+            entries.forEach { queue.offer(AccessionVersion(it.accession, it.version)) }
+        }
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                object : TransactionSynchronization {
+                    override fun afterCommit() = remember()
+                },
+            )
+        } else {
+            remember()
+        }
+    }
+
+    /** claims up to [limit] of the organism's remembered revisions; the rest were claimed or processed already */
+    private fun claimRevisedEntries(organism: Organism, limit: Int, pipelineVersion: Long): List<AccessionVersion> {
+        val queue = revisedAwaitingClaim[organism.name] ?: return emptyList()
+        val revised = mutableListOf<AccessionVersion>()
+        queue.drainTo(revised, limit)
+        if (revised.isEmpty()) {
+            return emptyList()
+        }
+        return lockAndInsertClaims(revised.sortedWith(accessionVersionOrder), limit, pipelineVersion)
+    }
 
     private var lastPreprocessedDataUpdate: String? = null
 
@@ -270,6 +314,8 @@ class SubmissionDatabaseService(
      * once per [claimFullScanInterval] per organism and pipeline version, for entries that appear before the cursor:
      * revisions, claims reset as stale and claims that rolled back. Until a claim sets the cursor, claims between
      * full scans return nothing, so an organism with nothing to process costs one full scan per interval.
+     * Revisions submitted to this replica are claimed first, without waiting for a full scan
+     * ([rememberRevisedEntries]).
      */
     private fun claimUnprocessedEntries(
         organism: Organism,
@@ -287,11 +333,11 @@ class SubmissionDatabaseService(
                 current
             }
         }!!
+        val claimed = claimRevisedEntries(organism, limit, pipelineVersion).toMutableList()
         if (!fullScan && cursor.after == null) {
             // Nothing claimed since the last full scan found nothing: wait for the next one instead of repeating it.
-            return emptyList()
+            return claimed.sortedWith(accessionVersionOrder)
         }
-        val claimed = mutableListOf<AccessionVersion>()
         var after: AccessionVersion? = if (fullScan) null else cursor.after
         var round = 0
         while (claimed.size < limit && round < MAX_CLAIM_ROUNDS) {

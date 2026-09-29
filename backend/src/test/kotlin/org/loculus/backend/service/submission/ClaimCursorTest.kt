@@ -61,4 +61,25 @@ class ClaimCursorTest(
         Thread.sleep(FULL_SCAN_INTERVAL_SECONDS * 1000 + 100)
         assertThat(claim(100), `is`(listOf(submitted[0])))
     }
+
+    @Test
+    fun `entries remembered as revised are claimed before the next full scan`() {
+        val submitted = convenienceClient.submitDefaultFiles().submissionIdMappings
+            .map { AccessionVersion(it.accession, it.version) }
+            .sortedWith(compareBy({ it.accession }, { it.version }))
+        Thread.sleep(FULL_SCAN_INTERVAL_SECONDS * 1000 + 100)
+
+        assertThat(claim(100), `is`(submitted))
+        // unprocessed again and before the cursor, like the new version a revision adds
+        transaction {
+            exec(
+                "delete from sequence_entries_preprocessed_data where accession = '${submitted[0].accession}'",
+            )
+        }
+        assertThat(claim(100), `is`(emptyList()))
+
+        submissionDatabaseService.rememberRevisedEntries(organism, listOf(submitted[0]))
+        assertThat(claim(100), `is`(listOf(submitted[0])))
+        assertThat(claim(100), `is`(emptyList()))
+    }
 }

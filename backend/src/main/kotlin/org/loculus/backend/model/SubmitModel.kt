@@ -26,6 +26,7 @@ import org.loculus.backend.metrics.VALIDATE_CONSENSUS_SEQUENCES_PHASE
 import org.loculus.backend.metrics.VALIDATE_FILE_MAPPING_PHASE
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.submission.CompressionAlgorithm
+import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.service.submission.SubmissionIdFilesMappingPreconditionValidator
 import org.loculus.backend.service.submission.UploadDatabaseService
 import org.loculus.backend.utils.DateProvider
@@ -97,6 +98,7 @@ class SubmitModel(
     private val dateProvider: DateProvider,
     private val backendConfig: BackendConfig,
     private val submissionMetrics: SubmissionMetrics,
+    private val submissionDatabaseService: SubmissionDatabaseService,
 ) {
 
     companion object AcceptedFileTypes {
@@ -192,6 +194,9 @@ class SubmitModel(
                 submissionMetrics.timeWritePhase(endpoint, organism, INSERT_SEQUENCE_ENTRIES_PHASE) {
                     uploadDatabaseService.mapAndCopy(uploadId, submissionParams)
                 }
+            if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
+                submissionDatabaseService.rememberRevisedEntries(submissionParams.organism, submissionIdMappings)
+            }
             submissionMetrics.recordUploadedSequences(
                 organism = organism,
                 count = submissionIdMappings.size,
