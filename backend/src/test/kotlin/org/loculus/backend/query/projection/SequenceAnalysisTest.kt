@@ -150,7 +150,8 @@ class SequenceAnalysisTest {
         )
         assertThat(
             result.fieldNames().asSequence().toList(),
-            equalTo(listOf("s", "sNum", "i", "iText", "f", "d", "dInvalid", "dPartial", "b", "missing")),
+            // values that are missing, null or not coercible are omitted
+            equalTo(listOf("s", "sNum", "i", "iText", "f", "d", "b")),
         )
         assertThat(result["s"], equalTo(TextNode("text")))
         assertThat(result["sNum"], equalTo(TextNode("5")))
@@ -158,10 +159,7 @@ class SequenceAnalysisTest {
         assertThat(result["iText"], equalTo(LongNode(12)))
         assertThat(result["f"], equalTo(DoubleNode(3.0)))
         assertThat(result["d"], equalTo(TextNode("2024-02-29")))
-        assertThat(result["dInvalid"].isNull, equalTo(true))
-        assertThat(result["dPartial"].isNull, equalTo(true))
         assertThat(result["b"], equalTo(BooleanNode.TRUE))
-        assertThat(result["missing"].isNull, equalTo(true))
     }
 
     @Test

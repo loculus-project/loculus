@@ -288,26 +288,52 @@ class QueryProjectorTest(
     }
 
     @Test
-    fun `stored metadata fields are checked once per leadership and a changed field list triggers a rebuild`() {
+    fun `a changed metadata encoding rewrites the metadata and keeps the sequence-derived rows`() {
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
         runProjector()
-        // stored rows without a field of the schema, like rows written by a leader with an older config
-        sql { c ->
-            c.prepareStatement("update query_entries set metadata = metadata - 'versionStatus' where organism = ?")
-                .use {
-                    it.setString(1, DEFAULT_ORGANISM)
-                    it.executeUpdate()
-                }
+        val encoding = sql { c ->
+            c.createStatement().use { st ->
+                st.executeQuery("select encoding_hash from query_engine_state where organism = '$DEFAULT_ORGANISM'")
+                    .use { rs ->
+                        rs.next()
+                        rs.getString(1)
+                    }
+            }
         }
+        assertThat(encoding, equalTo(projectionEncoding(registry.get(DEFAULT_ORGANISM)!!)))
+        // rows and encoding as an older version wrote them: another field list, sequence encoding only
+        sql { c ->
+            c.createStatement().use {
+                it.executeUpdate(
+                    "update query_entries set metadata = metadata - 'versionStatus' where organism = '$DEFAULT_ORGANISM'",
+                )
+                it.executeUpdate(
+                    "update query_engine_state set encoding_hash = split_part(encoding_hash, '/m', 1) " +
+                        "where organism = '$DEFAULT_ORGANISM'",
+                )
+            }
+        }
+        val rowVersions = sequenceRowVersions()
 
-        // the field names were already checked in this leadership: no probe, no rebuild
-        runProjector()
-        assertThat(projectedMetadata(DEFAULT_ORGANISM).values.filter { it.has("versionStatus") }, empty())
-
-        projector.resetMetadataFieldsCheck()
         runProjector()
         assertThat(projectedMetadata(DEFAULT_ORGANISM).values.filter { !it.has("versionStatus") }, empty())
         assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+        // the rebuild trusted the source hashes: no sequence-derived row was rewritten
+        assertThat(sequenceRowVersions(), equalTo(rowVersions))
+
+        // the encoding is stored: no further rebuild
+        val changelog = changelogSize()
+        runProjector()
+        assertThat(changelogSize(), equalTo(changelog))
+    }
+
+    @Test
+    fun `stored metadata has no null values`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        runProjector()
+        val metadata = projectedMetadata(DEFAULT_ORGANISM).values
+        assertThat(metadata.size, greaterThan(0))
+        assertThat(metadata.flatMap { it.properties() }.filter { it.value.isNull }, empty())
     }
 
     @Test

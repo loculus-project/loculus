@@ -40,6 +40,24 @@ class ProjectedEntry(
 )
 
 /**
+ * The projection encoding of [schema], stored as query_engine_state.encoding_hash:
+ * `<sequence encoding>/m<metadata encoding>`. The sequence part covers what the sequence-derived rows depend on
+ * ([QuerySchema.encodingHash]); the metadata part covers the metadata fields, their types and
+ * [EntryProjector.METADATA_FORMAT_VERSION]. A change of the metadata part alone rewrites only the metadata.
+ */
+fun projectionEncoding(schema: QuerySchema): String {
+    val metadata = (schema.metadata.map { "${it.name}:${it.type}" } + "v${EntryProjector.METADATA_FORMAT_VERSION}")
+        .joinToString("|").hashCode().toString(16)
+    return "${schema.encodingHash()}$METADATA_ENCODING_SEPARATOR$metadata"
+}
+
+/** the sequence part of a stored projection encoding (encodings written before the metadata part are all sequence) */
+fun sequenceEncoding(projectionEncoding: String): String =
+    projectionEncoding.substringBefore(METADATA_ENCODING_SEPARATOR)
+
+private const val METADATA_ENCODING_SEPARATOR = "/m"
+
+/**
  * Computes the projection rows of released entries of one organism. Thread-safe (can be used from parallel workers).
  */
 class EntryProjector(
@@ -149,6 +167,12 @@ class EntryProjector(
     companion object {
         /** bump when the computation of the sequence-derived data changes (invalidates all source hashes) */
         const val PROJECTION_VERSION = 1
+
+        /**
+         * bump when the stored form of query_entries.metadata changes: the projection encoding changes, and the
+         * projector rewrites every entry's metadata (see [projectionEncoding])
+         */
+        const val METADATA_FORMAT_VERSION = 2
     }
 
     private fun stored(kind: SequenceKind, schema: SequenceSchema, compressed: CompressedSequence) = ProjectedSequence(
