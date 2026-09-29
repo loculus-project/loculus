@@ -436,26 +436,9 @@ class QueryProjectorTest(
         assertThat(count("select count(*) from query_entries where metadata_zstd is null"), equalTo(0L))
         assertThat(count("select count(*) from query_entries"), greaterThanOrEqualTo(DICTIONARY_MIN_ENTRIES.toLong()))
 
-        // enough entries now: a full rebuild trains a dictionary and rewrites every record with it
-        runProjector()
-        val dictId = count("select metadata_dict_id from query_engine_state where organism = '$DEFAULT_ORGANISM'")
-        assertThat(
-            count(
-                "select count(*) from query_entries where organism = '$DEFAULT_ORGANISM' and metadata_dict_id = $dictId",
-            ),
-            equalTo(count("select count(*) from query_entries where organism = '$DEFAULT_ORGANISM'")),
-        )
+        // enough entries now: a dictionary is trained and every record recompressed with it
+        val dictId = assertRecompressedWithNewDictionary(previousDictId = null)
         assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
-
-        // compression is deterministic: an unchanged projection is not rewritten
-        val changelog = changelogSize()
-        sql { c ->
-            c.createStatement().use {
-                it.executeUpdate("insert into query_dirty_accessions select organism, accession from query_entries")
-            }
-        }
-        runProjector()
-        assertThat(changelogSize(), equalTo(changelog))
 
         // a new leader loads the dictionary from query_engine_state and compresses new entries with it
         projector.resetMetadataDictionaries()
@@ -466,6 +449,71 @@ class QueryProjectorTest(
             equalTo(0L),
         )
         assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+    }
+
+    @Test
+    fun `an organism that has grown since its dictionary was trained recompresses its records with a new one`() {
+        repeat(3) { convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease() }
+        projector.metadataDictionaryMinEntries = DICTIONARY_MIN_ENTRIES
+        runProjector()
+        runProjector()
+        val firstDictId = count(
+            "select metadata_dict_id from query_engine_state where organism = '$DEFAULT_ORGANISM'",
+        ).toInt()
+        assertThat(firstDictId, greaterThan(0))
+
+        repeat(2) { convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease() }
+        // the new entries are drained, compressed with the first dictionary; the organism has now grown 1.5x
+        runProjector()
+        assertThat(
+            count("select count(*) from query_entries where metadata_dict_id is distinct from $firstDictId"),
+            equalTo(0L),
+        )
+        assertRecompressedWithNewDictionary(previousDictId = firstDictId)
+        assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+    }
+
+    /**
+     * Runs the projector once, expecting it to train a new dictionary and recompress every record with it without
+     * changing any record, sequence-derived row, changelog or data_version. Returns the new dictionary id.
+     */
+    private fun assertRecompressedWithNewDictionary(previousDictId: Int?): Int {
+        val metadata = projectedMetadata(DEFAULT_ORGANISM)
+        val rowVersions = sequenceRowVersions()
+        val changelog = changelogSize()
+        val dataVersion = count("select data_version from query_engine_state where organism = '$DEFAULT_ORGANISM'")
+
+        runProjector()
+        val dictId = count(
+            "select metadata_dict_id from query_engine_state where organism = '$DEFAULT_ORGANISM'",
+        ).toInt()
+        assertThat(dictId, greaterThan(0))
+        assertThat(dictId, not(equalTo(previousDictId)))
+        assertThat(
+            count("select metadata_dict_entries from query_engine_state where organism = '$DEFAULT_ORGANISM'"),
+            equalTo(count("select next_id from query_engine_state where organism = '$DEFAULT_ORGANISM'")),
+        )
+        assertThat(
+            count("select count(*) from query_entries where metadata_dict_id is distinct from $dictId"),
+            equalTo(0L),
+        )
+        assertThat(projectedMetadata(DEFAULT_ORGANISM), equalTo(metadata))
+        assertThat(sequenceRowVersions(), equalTo(rowVersions))
+        assertThat(changelogSize(), equalTo(changelog))
+        assertThat(
+            count("select data_version from query_engine_state where organism = '$DEFAULT_ORGANISM'"),
+            equalTo(dataVersion),
+        )
+
+        // the frames equal what the projector writes for the same records: recomputing them changes nothing
+        sql { c ->
+            c.createStatement().use {
+                it.executeUpdate("insert into query_dirty_accessions select organism, accession from query_entries")
+            }
+        }
+        runProjector()
+        assertThat(changelogSize(), equalTo(changelog))
+        return dictId
     }
 
     @Test

@@ -58,6 +58,26 @@ class ProjectionWriter(private val schema: QuerySchema) {
         return changed.size
     }
 
+    /**
+     * Replaces the metadata frames of [ids] with [frames] (the same records, compressed with dictionary [dictId]).
+     * Content does not change: no query_changelog rows, data_version stays.
+     */
+    fun rewriteMetadataFrames(connection: Connection, ids: IntArray, frames: List<ByteArray>, dictId: Int) {
+        connection.prepareStatement(
+            """
+            update query_entries t set metadata_zstd = v.frame, metadata_dict_id = ?
+            from unnest(?::integer[], ?::bytea[]) as v(id, frame)
+            where t.organism = ? and t.id = v.id
+            """.trimIndent(),
+        ).use {
+            it.setInt(1, dictId)
+            it.setArray(2, connection.createArrayOf("integer", ids.toTypedArray()))
+            it.setArray(3, connection.createArrayOf("bytea", frames.toTypedArray()))
+            it.setString(4, organism)
+            it.executeUpdate()
+        }
+    }
+
     private fun createStagingTables(connection: Connection) {
         connection.createStatement().use { statement ->
             statement.execute(
