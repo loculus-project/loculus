@@ -166,6 +166,30 @@ describe('conditional LAPIS cache (browser)', () => {
         expect(stats).toMatchObject({ bypassed: 2, stored: 0 });
     });
 
+    test('methods outside `methods` pass through without If-None-Match and are not stored', async () => {
+        const server = etagServer({ version: 1 });
+        const stats = emptyStats();
+        const store = new MemoryCacheStore(1024 * 1024, utf16StringCodec);
+        const client = axios.create({
+            baseURL: lapisUrl,
+            adapter: createConditionalCacheAdapter({ store, stats, baseAdapter: server.adapter, methods: ['post'] }),
+        });
+
+        await client.get('/sample/details?limit=1');
+        const second = await client.get('/sample/details?limit=1');
+        await client.post('/sample/details', {});
+        await client.post('/sample/details', {});
+
+        expect(second.headers[CACHE_STATUS_HEADER]).toBeUndefined();
+        expect(server.requests.map((r) => [r.method, r.ifNoneMatch !== undefined])).toEqual([
+            ['get', false],
+            ['get', false],
+            ['post', false],
+            ['post', true],
+        ]);
+        expect(stats).toMatchObject({ bypassed: 2, stored: 1, notModified: 1 });
+    });
+
     test('keys by method, URL, normalised body and Accept', () => {
         const key = (config: object) =>
             requestCacheKey({ baseURL: lapisUrl, headers: new AxiosHeaders(), ...config } as never);

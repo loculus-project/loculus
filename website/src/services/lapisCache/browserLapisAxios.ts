@@ -4,8 +4,8 @@ import { createConditionalCacheAdapter, emptyStats, MemoryCacheStore, utf16Strin
 import { sendShortLapisRequestsAsGet } from '../lapisGetRequests.ts';
 
 /**
- * Per-tab budget. A search table is 41–82 KB of JSON (≈2× that as UTF-16), so this holds dozens of queries: enough for
- * paging and filter changes back and forth within one page. Every use revalidates with the server.
+ * Per-tab budget for POST responses. A search table is 41–82 KB of JSON (≈2× that as UTF-16), so this holds dozens of
+ * queries: enough for paging and filter changes back and forth within one page. Every use revalidates with the server.
  */
 const BROWSER_CACHE_BYTES = 4 * 1024 * 1024;
 const BROWSER_CACHE_MAX_ENTRY_BYTES = 1024 * 1024;
@@ -19,15 +19,18 @@ function getBrowserAdapter(): AxiosAdapter {
     browserAdapter ??= createConditionalCacheAdapter({
         store: new MemoryCacheStore(BROWSER_CACHE_BYTES, utf16StringCodec, BROWSER_CACHE_MAX_ENTRY_BYTES),
         stats: browserLapisCacheStats,
+        // GETs are left to the browser's HTTP cache: an If-None-Match set from JS would make them need a preflight
+        methods: ['post'],
     });
     return browserAdapter;
 }
 
 /**
- * The axios instance for LAPIS calls from the browser. Responses carrying an ETag are kept in a small in-memory LRU
- * shared by all instances of this tab, and every repeat is sent with `If-None-Match`. Outside a browser (SSR render of
- * an island) this is a plain instance. Short queries are sent as GET either way (see `lapisGetRequests.ts`);
- * `lapisIsQueryEngine` lets descending orders go as GET too.
+ * The axios instance for LAPIS calls from the browser. Short queries are sent as GET (see `lapisGetRequests.ts`;
+ * `lapisIsQueryEngine` lets descending orders go as GET too), and the browser's HTTP cache stores and revalidates
+ * their responses: axios' XHR uses it, and a 304 from its revalidation reaches axios as a 200 with the stored body.
+ * POST responses carrying an ETag are kept in a small in-memory LRU shared by all instances of this tab, and every
+ * repeat is sent with `If-None-Match`. Outside a browser (SSR render of an island) this is a plain instance.
  */
 export function getLapisAxios(lapisUrl: string, lapisIsQueryEngine = false): AxiosInstance {
     const key = `${lapisIsQueryEngine ? 'engine' : 'lapis'} ${lapisUrl}`;

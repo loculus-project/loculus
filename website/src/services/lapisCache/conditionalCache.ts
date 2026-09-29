@@ -6,6 +6,9 @@
  * (ETag, raw body) per request and sends `If-None-Match` on every repeat, so a repeat costs a round trip but no
  * query work and no body transfer. A stored body is only returned after the server confirmed its ETag, except within
  * an optional freshness window (server side only). Responses without an ETag (e.g. LAPIS/SILO, errors) pass through.
+ *
+ * In the browser it handles POST only: GET responses (`Cache-Control: no-cache` plus ETag) are kept and revalidated by
+ * the browser's HTTP cache, whose conditional headers need no CORS preflight, while an `If-None-Match` set here would.
  */
 import axios, {
     AxiosError,
@@ -48,7 +51,7 @@ export type ConditionalCacheStats = {
     stored: number;
     /** 2xx not stored: no ETag, `no-store`, `Vary: *`, non-text body */
     uncacheable: number;
-    /** requests not eligible at all: Authorization, streams, non-GET/POST, caller-set conditional headers */
+    /** requests not eligible at all: Authorization, streams, other methods, caller-set conditional headers */
     bypassed: number;
 };
 
@@ -188,6 +191,8 @@ export type ConditionalCacheOptions = {
     now?: () => number;
     /** The adapter that actually sends requests; defaults to axios' own. */
     baseAdapter?: AxiosAdapter;
+    /** Methods this adapter caches; others are passed through (counted as bypassed). Default: GET and POST. */
+    methods?: readonly ('get' | 'post')[];
 };
 
 export function createConditionalCacheAdapter(options: ConditionalCacheOptions): AxiosAdapter {
@@ -196,6 +201,7 @@ export function createConditionalCacheAdapter(options: ConditionalCacheOptions):
     const freshMs = options.freshMs ?? 0;
     const now = options.now ?? Date.now;
     const baseAdapter = options.baseAdapter ?? axios.getAdapter(axios.defaults.adapter);
+    const methods: readonly string[] = options.methods ?? ['get', 'post'];
 
     const sendConditional = (config: InternalAxiosRequestConfig, etag: string) => {
         const headers = AxiosHeaders.concat(config.headers);
@@ -233,7 +239,7 @@ export function createConditionalCacheAdapter(options: ConditionalCacheOptions):
     };
 
     return async (config) => {
-        const key = requestCacheKey(config);
+        const key = methods.includes((config.method ?? 'get').toLowerCase()) ? requestCacheKey(config) : undefined;
         if (key === undefined) {
             stats.bypassed++;
             return baseAdapter(config);

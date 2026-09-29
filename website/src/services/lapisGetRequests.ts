@@ -1,9 +1,11 @@
 /**
  * Sends short LAPIS queries as GET with the query in the URL, and keeps POST with a JSON body for the rest.
  *
- * A GET is cacheable by the browser and needs no CORS preflight (unless it carries `If-None-Match`); the query engine
- * gives GET and POST the same body and the same ETag for the same parsed request. GET parameters are all strings, so a
- * request is only sent as GET when its URL encoding means exactly what its JSON means to both LAPIS and the engine:
+ * A GET needs no CORS preflight, and the browser's HTTP cache stores its response and revalidates it with the ETag
+ * (the query engine sends `Cache-Control: no-cache`), so a repeat costs one round trip and no body. JavaScript must not
+ * set `If-None-Match` on it: that header would make the GET need a preflight. The query engine gives GET and POST the
+ * same body and the same ETag for the same parsed request. GET parameters are all strings, so a request is only sent
+ * as GET when its URL encoding means exactly what its JSON means to both LAPIS and the engine:
  *  - arrays become repeated keys (filter values are never comma-split, so they may contain commas);
  *  - numbers and booleans become their string form;
  *  - `orderBy` objects become field names when ascending. LAPIS' GET only knows ascending field names; the Loculus

@@ -232,7 +232,7 @@ describe('toGetIfShort', () => {
 });
 
 describe('sendShortLapisRequestsAsGet with the conditional cache', () => {
-    function setup() {
+    function setup(methods?: readonly ('get' | 'post')[]) {
         const lapis = fakeLapis((request) => {
             const tag = `W/"1-${request.url}-${typeof request.data === 'string' ? request.data : ''}"`;
             return request.ifNoneMatch === tag
@@ -242,6 +242,7 @@ describe('sendShortLapisRequestsAsGet with the conditional cache', () => {
         const adapter = createConditionalCacheAdapter({
             store: new MemoryCacheStore(1024 * 1024, utf16StringCodec),
             baseAdapter: lapis.adapter,
+            methods,
         });
         const instance = axios.create({ baseURL: 'http://lapis.dummy/mpox', adapter });
         sendShortLapisRequestsAsGet(instance);
@@ -264,6 +265,24 @@ describe('sendShortLapisRequestsAsGet with the conditional cache', () => {
                 undefined,
                 'W/"1-http://lapis.dummy/mpox/sample/details?accessionVersion=LOC_1.1-"',
             ],
+        ]);
+    });
+
+    test('configured like the browser, a repeat GET carries no If-None-Match (no preflight), a POST still does', async () => {
+        const { instance, requests } = setup(['post']);
+        const short = { accessionVersion: 'LOC_1.1' };
+        const long = { orderBy: [{ field: 'date', type: 'descending' }], limit: 100 };
+        await instance.post('/sample/details', short);
+        await instance.post('/sample/details', short);
+        await instance.post('/sample/details', long);
+        const second = await instance.post('/sample/details', long);
+
+        expect(second.headers['x-loculus-lapis-cache']).toBe('revalidated');
+        expect(requests.map((r) => [r.method, r.ifNoneMatch !== undefined])).toEqual([
+            ['get', false],
+            ['get', false],
+            ['post', false],
+            ['post', true],
         ]);
     });
 
