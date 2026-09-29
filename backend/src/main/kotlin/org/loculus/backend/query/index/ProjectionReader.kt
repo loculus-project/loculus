@@ -67,6 +67,7 @@ internal class ProjectionReader(private val schema: QuerySchema) {
         )
     }
 
+    /** a missing key and a JSON null both leave the value null (records are read without their null-valued keys) */
     fun parseMetadata(json: String?): Array<Any?> {
         val values = arrayOfNulls<Any?>(schema.metadata.size)
         if (json == null) return values
@@ -104,8 +105,8 @@ internal class ProjectionReader(private val schema: QuerySchema) {
 
     companion object {
         private const val SELECT = """
-            select e.id, e.metadata::text, array_send(m.present_sequences), array_send(m.mutations),
-                   array_send(m.missing), array_send(m.insertions)
+            select e.id, jsonb_strip_nulls(e.metadata)::text, array_send(m.present_sequences),
+                   array_send(m.mutations), array_send(m.missing), array_send(m.insertions)
             from query_entries e
             left join query_mutation_data m on m.organism = e.organism and m.id = e.id
         """

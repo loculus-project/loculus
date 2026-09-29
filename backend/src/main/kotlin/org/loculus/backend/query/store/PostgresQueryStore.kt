@@ -197,7 +197,7 @@ class PostgresQueryStore(
 
     private fun fetchMetadataJson(organism: String, chunk: IntArray): Map<Int, String> {
         val byId = HashMap<Int, String>(chunk.size * 2)
-        query(organism, chunk, "select id, metadata::text from query_entries", emptyList()) { rs ->
+        query(organism, chunk, "select id, $METADATA_TEXT from query_entries", emptyList()) { rs ->
             while (rs.next()) byId[rs.getInt(1)] = rs.getString(2)
         }
         return byId
@@ -206,7 +206,7 @@ class PostgresQueryStore(
     /**
      * The texts of [fields] per id (Postgres `->>` semantics). Two strategies:
      *  - `metadata ->> 'f'` per field: Postgres extracts, very cheap for records stored inline;
-     *  - `metadata::text` once per row, fields extracted by a streaming JSON parser in the JVM: for records that
+     *  - [METADATA_TEXT] once per row, fields extracted by a streaming JSON parser in the JVM: for records that
      *    Postgres stores compressed out of line (TOAST), because every `->>` would decompress the record again.
      */
     private fun fetchMetadataFields(organism: String, chunk: IntArray, fields: List<String>): Map<Int, Array<String?>> =
@@ -280,7 +280,7 @@ class PostgresQueryStore(
     ): Map<Int, Array<String?>> {
         val extractor = JsonFieldExtractor(fields)
         val byId = HashMap<Int, Array<String?>>(chunk.size * 2)
-        query(organism, chunk, "select id, metadata::text from query_entries", emptyList()) { rs ->
+        query(organism, chunk, "select id, $METADATA_TEXT from query_entries", emptyList()) { rs ->
             while (rs.next()) byId[rs.getInt(1)] = extractor.extract(rs.getString(2))
         }
         return byId
@@ -382,6 +382,12 @@ class PostgresQueryStore(
     ) = pipeline.run(ids, chunkSize, prefetch, 1, fetch, prepare, emit)
 
     companion object {
+        /**
+         * The stored record as JSON text without its null-valued keys: less than half the bytes of `metadata::text`
+         * (most of the ~130 fields of a record are null), and every reader treats a missing key like JSON null.
+         */
+        const val METADATA_TEXT = "jsonb_strip_nulls(metadata)::text"
+
         const val METADATA_CHUNK_SIZE = 5_000
         private const val MIN_METADATA_CHUNK_SIZE = 200
         private const val METADATA_CHUNK_BYTES = 1_000_000.0
