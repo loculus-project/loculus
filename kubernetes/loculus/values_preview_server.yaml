@@ -108,7 +108,6 @@ resources:
           cpu: "50m"
         limits:
           memory: "512Mi"
-          cpu: "1000m"
     ebola-sudan:
       preprocessing:
         requests:
@@ -122,7 +121,6 @@ resources:
           cpu: "50m"
         limits:
           memory: "512Mi"
-          cpu: "1000m"
     ebola-bdbv:
       preprocessing:
         requests:
@@ -136,7 +134,6 @@ resources:
           cpu: "50m"
         limits:
           memory: "512Mi"
-          cpu: "1000m"
     dengue:
       preprocessing:
         requests:
@@ -150,7 +147,6 @@ resources:
           cpu: "50m"
         limits:
           memory: "704Mi"
-          cpu: "1000m"
     west-nile:
       preprocessing:
         requests:
@@ -164,7 +160,6 @@ resources:
           cpu: "50m"
         limits:
           memory: "512Mi"
-          cpu: "1000m"
     andv:
       preprocessing:
         requests:
@@ -178,7 +173,6 @@ resources:
           cpu: "50m"
         limits:
           memory: "512Mi"
-          cpu: "1000m"
     cchf:
       preprocessing:
         requests:
@@ -192,7 +186,6 @@ resources:
           cpu: "50m"
         limits:
           memory: "512Mi"
-          cpu: "1000m"
     mpox:
       preprocessing:
         requests:
@@ -206,7 +199,6 @@ resources:
           cpu: "50m"
         limits:
           memory: "4224Mi"
-          cpu: "1000m"
     rsv-a:
       preprocessing:
         requests:
@@ -220,7 +212,6 @@ resources:
           cpu: "50m"
         limits:
           memory: "1024Mi"
-          cpu: "1000m"
     rsv-b:
       preprocessing:
         requests:
@@ -234,7 +225,6 @@ resources:
           cpu: "50m"
         limits:
           memory: "960Mi"
-          cpu: "1000m"
     hmpv:
       preprocessing:
         requests:
@@ -248,7 +238,6 @@ resources:
           cpu: "50m"
         limits:
           memory: "512Mi"
-          cpu: "1000m"
     measles:
       preprocessing:
         requests:
@@ -262,7 +251,6 @@ resources:
           cpu: "50m"
         limits:
           memory: "512Mi"
-          cpu: "1000m"
     marburg:
       preprocessing:
         requests:
@@ -276,7 +264,6 @@ resources:
           cpu: "50m"
         limits:
           memory: "512Mi"
-          cpu: "1000m"
     yellow-fever:
       preprocessing:
         requests:
@@ -290,7 +277,6 @@ resources:
           cpu: "50m"
         limits:
           memory: "512Mi"
-          cpu: "1000m"
     zika:
       preprocessing:
         requests:
@@ -304,7 +290,6 @@ resources:
           cpu: "50m"
         limits:
           memory: "512Mi"
-          cpu: "1000m"
     chikungunya:
       preprocessing:
         requests:
@@ -318,7 +303,6 @@ resources:
           cpu: "50m"
         limits:
           memory: "512Mi"
-          cpu: "1000m"
     sars-cov-2:
       # hashes all 892k released-since records before subsampling; ~30 GB per FASTA copy on node disk
       ingest:
@@ -326,7 +310,6 @@ resources:
           memory: "2Gi"
           cpu: "1"
         limits:
-          cpu: "4"
           memory: "16Gi"
   website:
     requests:
@@ -357,7 +340,6 @@ resources:
       memory: "100Mi"
       cpu: "50m"
     limits:
-      cpu: "1000m"
       memory: "10Gi"
   keycloak:
     requests:
@@ -417,7 +399,6 @@ defaultResources:
     cpu: "20m"
   limits:
     memory: "1Gi"
-    cpu: "500m"
 # PR #7431 query-engine preview: the backend holds every organism's index in its heap.
 replicas:
   backend: 1

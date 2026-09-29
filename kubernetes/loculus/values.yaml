@@ -5531,7 +5531,6 @@ resources:
       memory: "200Mi"
       cpu: "200m"
     limits:
-      cpu: "1"
       memory: "10Gi"
   keycloak:
     requests:
@@ -5587,7 +5586,6 @@ defaultResources:
     cpu: "20m"
   limits:
     memory: "1Gi"
-    cpu: "500m"
 ingest:
   ncbiGatewayUrl: null
   mirrorBucket: null

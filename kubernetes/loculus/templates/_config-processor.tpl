@@ -14,7 +14,6 @@
       cpu: 50m
       memory: 64Mi
     limits:
-      cpu: 500m
       memory: 256Mi
   env:
     - name: LOCULUSSUB_smtpPassword
