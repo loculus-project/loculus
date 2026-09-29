@@ -24,6 +24,7 @@ import org.jetbrains.exposed.v1.core.booleanParam
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.core.not
@@ -889,7 +890,10 @@ class SubmissionDatabaseService(
             }
         }
 
-        val statusCondition = SequenceEntriesView.statusIs(Status.PROCESSED)
+        // every PROCESSED entry is unreleased: the released_at predicate lets sequence_entries_unreleased_idx drive
+        // the plan, so the cost follows the unreleased backlog instead of the organism's whole table
+        val statusCondition = SequenceEntriesView.statusIs(Status.PROCESSED) and
+            SequenceEntriesView.releasedAtTimestampColumn.isNull()
 
         val accessionCondition = if (accessionVersionsFilter !== null) {
             SequenceEntriesView.accessionVersionIsIn(accessionVersionsFilter)
