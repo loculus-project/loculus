@@ -113,6 +113,8 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.sql.ResultSet
 import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 private val log = KotlinLogging.logger { }
@@ -124,6 +126,10 @@ private const val CLAIM_CANDIDATE_FACTOR = 10
 private const val MAX_EXTRA_CLAIM_CANDIDATES = 10_000
 
 private const val MAX_CLAIM_ROUNDS = 5
+
+private data class ClaimCursor(val after: AccessionVersion?, val lastFullScan: Instant)
+
+private val accessionVersionOrder = compareBy<AccessionVersion>({ it.accession }, { it.version })
 
 internal fun claimCandidateLimit(remaining: Int) =
     minOf(remaining.toLong() * CLAIM_CANDIDATE_FACTOR, remaining.toLong() + MAX_EXTRA_CLAIM_CANDIDATES).toInt()
@@ -149,7 +155,11 @@ class SubmissionDatabaseService(
     private val submissionMetrics: SubmissionMetrics,
     // A whole batch is serialized in memory before it is stored, so raising this multiplies peak heap.
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
+    @Value("\${${BackendSpringProperty.CLAIM_FULL_SCAN_INTERVAL_SECONDS}:10}") claimFullScanIntervalSeconds: Long,
 ) {
+    private val claimFullScanInterval = claimFullScanIntervalSeconds.seconds
+    private val claimCursors = ConcurrentHashMap<Pair<String, Long>, ClaimCursor>()
+
     private var lastPreprocessedDataUpdate: String? = null
 
     fun streamUnprocessedSubmissions(
@@ -250,14 +260,31 @@ class SubmissionDatabaseService(
      * The primary key of the preprocessed data table guarantees that no entry is handed out twice; the row lock only
      * keeps concurrent pollers apart without waiting. Later rounds continue after the last candidate of the previous
      * round: candidates that were skipped are held by in-flight claims.
+     *
+     * A scan from the start walks every processed entry before the first unprocessed one, and new entries sort last
+     * (SARS-CoV-2 at 1.9M entries: 3.3 s per claim, 83 % of the database's time). So a claim starts after the last
+     * entry claimed so far (the cursor), which finds the new entries in milliseconds, and scans from the start at most
+     * once per [claimFullScanInterval] per organism and pipeline version, for entries that appear before the cursor:
+     * revisions, claims reset as stale and claims that rolled back.
      */
     private fun claimUnprocessedEntries(
         organism: Organism,
         limit: Int,
         pipelineVersion: Long,
     ): List<AccessionVersion> {
+        val key = organism.name to pipelineVersion
+        val now = dateProvider.getCurrentInstant()
+        var fullScan = false
+        val cursor = claimCursors.compute(key) { _, current ->
+            if (current == null || now - current.lastFullScan >= claimFullScanInterval) {
+                fullScan = true
+                ClaimCursor(current?.after, now)
+            } else {
+                current
+            }
+        }!!
         val claimed = mutableListOf<AccessionVersion>()
-        var after: AccessionVersion? = null
+        var after: AccessionVersion? = if (fullScan) null else cursor.after
         var round = 0
         while (claimed.size < limit && round < MAX_CLAIM_ROUNDS) {
             round++
@@ -273,8 +300,19 @@ class SubmissionDatabaseService(
             }
             after = candidates.last()
         }
-        log.info { "Claimed ${claimed.size} of up to $limit entries for processing in $round round(s)" }
-        return claimed.sortedWith(compareBy({ it.accession }, { it.version }))
+        val sorted = claimed.sortedWith(accessionVersionOrder)
+        sorted.lastOrNull()?.let { last ->
+            claimCursors.computeIfPresent(key) { _, current ->
+                // Concurrent claims finish out of order; only a full scan moves the cursor back.
+                val after = if (fullScan) last else maxOf(current.after ?: last, last, accessionVersionOrder)
+                current.copy(after = after)
+            }
+        }
+        log.info {
+            "Claimed ${claimed.size} of up to $limit entries for processing in $round round(s)" +
+                if (fullScan) " from the start" else " after ${cursor.after}"
+        }
+        return sorted
     }
 
     private fun findClaimCandidates(
@@ -293,6 +331,8 @@ class SubmissionDatabaseService(
               AND NOT EXISTS (
                   SELECT FROM $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME p
                   WHERE p.accession = se.accession AND p.version = se.version AND p.pipeline_version = ?
+                  -- implied by the join, but lets a merge anti join start both sides at the cursor
+                  ${if (after != null) "AND (p.accession, p.version) > (?, ?)" else ""}
               )
             ORDER BY se.accession, se.version
             LIMIT $candidateLimit
@@ -304,6 +344,10 @@ class SubmissionDatabaseService(
                 add(LongColumnType() to after.version)
             }
             add(LongColumnType() to pipelineVersion)
+            if (after != null) {
+                add(TextColumnType() to after.accession)
+                add(LongColumnType() to after.version)
+            }
         }
         return TransactionManager.current().exec(sql, args, explicitStatementType = StatementType.SELECT) {
             readAccessionVersions(it)
