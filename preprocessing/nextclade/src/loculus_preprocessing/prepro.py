@@ -416,6 +416,11 @@ def get_output_metadata(  # noqa: C901
 
     if not context.is_insdc_ingest_group:
         warnings.extend(_check_submitted_metadata(unprocessed.metadata, config))
+        unprocessed.metadata = {
+            field: value
+            for field, value in unprocessed.metadata.items()
+            if not config.is_existing_field(field) or config.is_user_input(field)
+        }
 
     for output_field in config.processing_order:
         spec = config.processing_spec[output_field]
