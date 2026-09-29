@@ -1,10 +1,12 @@
 package org.loculus.backend.query.projection
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.loculus.backend.model.ReleasedDataWithCompressedSequences
 import org.loculus.backend.query.schema.QuerySchema
 import org.loculus.backend.query.schema.SequenceSchema
 import org.loculus.backend.query.store.SequenceKind
+import org.loculus.backend.query.store.StoredMetadataCompressor
 import org.loculus.backend.service.submission.CompressedSequence
 import java.nio.ByteBuffer
 import java.security.MessageDigest
@@ -29,7 +31,13 @@ class ProjectedEntry(
     val accession: String,
     val version: Long,
     val accessionVersion: String,
-    val metadataJson: String,
+    /** the LAPIS record as JSON text (UTF-8) */
+    val metadataJson: ByteArray,
+    /** [metadataJson] compressed with the dictionary [metadataDictionaryId] (see StoredMetadata) */
+    val metadataZstd: ByteArray,
+    val metadataDictionaryId: Int?,
+    /** dataUseTerms is RESTRICTED: the projection goes stale when the restriction ends */
+    val dataUseTermsRestricted: Boolean,
     val sourceHash: Long,
     val sequenceDataUnchanged: Boolean,
     val presentSequences: IntArray,
@@ -64,15 +72,23 @@ class EntryProjector(
     private val schema: QuerySchema,
     private val decompressor: SequenceDecompressor,
     private val objectMapper: ObjectMapper,
+    private val metadataCompressor: StoredMetadataCompressor,
 ) {
     private val normalizer = LapisMetadataNormalizer(schema.metadata)
+
+    /** the stored JSON text of a get-released-data metadata record */
+    fun metadataJson(metadata: Map<String, JsonNode>): ByteArray =
+        objectMapper.writeValueAsBytes(normalizer.normalize(metadata))
 
     /**
      * @param storedSourceHash the source hash currently stored for this accessionVersion (null if none or not to be
      *   trusted): if it equals the hash of [entry]'s sequence data, the sequence-derived data is not recomputed.
      */
     fun project(entry: ReleasedDataWithCompressedSequences, storedSourceHash: Long? = null): ProjectedEntry {
-        val metadataJson = objectMapper.writeValueAsString(normalizer.normalize(entry.metadata))
+        val metadata = normalizer.normalize(entry.metadata)
+        val metadataJson = objectMapper.writeValueAsBytes(metadata)
+        val metadataZstd = metadataCompressor.compress(metadataJson)
+        val restricted = metadata[DATA_USE_TERMS]?.asText() == RESTRICTED
         val accessionVersion = "${entry.accession}.${entry.version}"
         val sourceHash = sourceHash(entry)
         if (storedSourceHash == sourceHash) {
@@ -81,6 +97,9 @@ class EntryProjector(
                 version = entry.version,
                 accessionVersion = accessionVersion,
                 metadataJson = metadataJson,
+                metadataZstd = metadataZstd,
+                metadataDictionaryId = metadataCompressor.dictionaryId,
+                dataUseTermsRestricted = restricted,
                 sourceHash = sourceHash,
                 sequenceDataUnchanged = true,
                 presentSequences = IntArray(0),
@@ -124,6 +143,9 @@ class EntryProjector(
             version = entry.version,
             accessionVersion = accessionVersion,
             metadataJson = metadataJson,
+            metadataZstd = metadataZstd,
+            metadataDictionaryId = metadataCompressor.dictionaryId,
+            dataUseTermsRestricted = restricted,
             sourceHash = sourceHash,
             sequenceDataUnchanged = false,
             presentSequences = present.toIntArray(),
@@ -172,7 +194,10 @@ class EntryProjector(
          * bump when the stored form of query_entries.metadata changes: the projection encoding changes, and the
          * projector rewrites every entry's metadata (see [projectionEncoding])
          */
-        const val METADATA_FORMAT_VERSION = 2
+        const val METADATA_FORMAT_VERSION = 3
+
+        private const val DATA_USE_TERMS = "dataUseTerms"
+        private const val RESTRICTED = "RESTRICTED"
     }
 
     private fun stored(kind: SequenceKind, schema: SequenceSchema, compressed: CompressedSequence) = ProjectedSequence(

@@ -16,6 +16,7 @@ import org.loculus.backend.query.filter.SymbolEquals
 import org.loculus.backend.query.filter.True
 import org.loculus.backend.query.schema.QuerySchema
 import org.loculus.backend.query.schema.SequenceType
+import org.loculus.backend.query.store.ZstdDictionaryCache
 import org.roaringbitmap.RoaringBitmap
 import java.io.File
 import java.sql.DriverManager
@@ -51,7 +52,7 @@ class ProjectionBenchmark {
     @Test
     fun projection() {
         val schema = schema()
-        val reader = ProjectionReader(schema)
+        val reader = ProjectionReader(schema, ZstdDictionaryCache { error("no dictionaries") })
         val started = System.nanoTime()
         val maxId = DriverManager.getConnection(url).use { c ->
             c.createStatement().use { st ->

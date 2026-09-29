@@ -29,6 +29,9 @@ private val log = KotlinLogging.logger {}
  * loculus.query-engine.lineage-refresh-interval-ms
  *                                              how often lineage definitions are checked: downloads not yet done are
  *                                              retried, and hierarchies are rebuilt when the observed values changed
+ * loculus.query-engine.metadata-dictionary-min-entries
+ *                                              an organism gets a trained metadata compression dictionary once it has
+ *                                              this many entries (smaller ones store dictionary-less zstd frames)
  */
 @ConfigurationProperties(prefix = "loculus.query-engine")
 data class QueryEngineProperties(
@@ -42,6 +45,7 @@ data class QueryEngineProperties(
     val reconcilePassIntervalMinutes: Long = 360,
     val lineageRefreshIntervalMs: Long = 5_000,
     val instanceName: String? = null,
+    val metadataDictionaryMinEntries: Int = 5_000,
 )
 
 @Configuration

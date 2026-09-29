@@ -2,12 +2,14 @@ package org.loculus.backend.query.projection
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.empty
 import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.greaterThan
+import org.hamcrest.Matchers.greaterThanOrEqualTo
 import org.hamcrest.Matchers.hasItem
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.not
@@ -35,6 +37,10 @@ import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.loculus.backend.query.QuerySchemaRegistry
 import org.loculus.backend.query.schema.QuerySchema
 import org.loculus.backend.query.store.SequenceKind
+import org.loculus.backend.query.store.StoredMetadata
+import org.loculus.backend.query.store.StoredMetadataCompressor
+import org.loculus.backend.query.store.StoredMetadataReader
+import org.loculus.backend.query.store.ZstdDictionaryCache
 import org.loculus.backend.service.KeycloakAdapter
 import org.loculus.backend.service.submission.CompressionDictService
 import org.springframework.beans.factory.annotation.Autowired
@@ -68,6 +74,7 @@ class QueryProjectorTest(
     lateinit var keycloakAdapter: KeycloakAdapter
 
     private val decompressor by lazy { SequenceDecompressor { compressionDictService.getDictById(it) } }
+    private val metadataDictionaries by lazy { ZstdDictionaryCache { compressionDictService.getDictById(it) } }
 
     @BeforeEach
     fun setup() {
@@ -80,6 +87,7 @@ class QueryProjectorTest(
                 )
             }
         }
+        projector.resetMetadataDictionaries()
     }
 
     @Test
@@ -301,12 +309,17 @@ class QueryProjectorTest(
             }
         }
         assertThat(encoding, equalTo(projectionEncoding(registry.get(DEFAULT_ORGANISM)!!)))
-        // rows and encoding as an older version wrote them: another field list, sequence encoding only
+        // rows and encoding as an older version wrote them: jsonb with all fields (nulls included) but versionStatus,
+        // sequence encoding only
+        val fields = registry.get(DEFAULT_ORGANISM)!!.metadata.map { it.name }
+        val legacy = projectedMetadata(DEFAULT_ORGANISM).mapValues { (_, record) ->
+            objectMapper.createObjectNode().also { node ->
+                fields.filter { it != "versionStatus" }.forEach { node.set<JsonNode>(it, record[it]) }
+            }
+        }
+        writeStoredMetadata(legacy) { json -> Triple(null, null, json) }
         sql { c ->
             c.createStatement().use {
-                it.executeUpdate(
-                    "update query_entries set metadata = metadata - 'versionStatus' where organism = '$DEFAULT_ORGANISM'",
-                )
                 it.executeUpdate(
                     "update query_engine_state set encoding_hash = split_part(encoding_hash, '/m', 1) " +
                         "where organism = '$DEFAULT_ORGANISM'",
@@ -317,6 +330,10 @@ class QueryProjectorTest(
 
         runProjector()
         assertThat(projectedMetadata(DEFAULT_ORGANISM).values.filter { !it.has("versionStatus") }, empty())
+        assertThat(
+            count("select count(*) from query_entries where metadata is not null or metadata_zstd is null"),
+            equalTo(0L),
+        )
         assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
         // the rebuild trusted the source hashes: no sequence-derived row was rewritten
         assertThat(sequenceRowVersions(), equalTo(rowVersions))
@@ -337,18 +354,59 @@ class QueryProjectorTest(
     }
 
     @Test
+    fun `a metadata dictionary is trained once an organism has enough entries and compresses every record`() {
+        repeat(4) { convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease() }
+        projector.metadataDictionaryMinEntries = DICTIONARY_MIN_ENTRIES
+        // the initial rebuild sees no entries yet: records are compressed without a dictionary
+        runProjector()
+        assertThat(count("select count(*) from query_entries where metadata_dict_id is not null"), equalTo(0L))
+        assertThat(count("select count(*) from query_entries where metadata_zstd is null"), equalTo(0L))
+        assertThat(count("select count(*) from query_entries"), greaterThanOrEqualTo(DICTIONARY_MIN_ENTRIES.toLong()))
+
+        // enough entries now: a full rebuild trains a dictionary and rewrites every record with it
+        runProjector()
+        val dictId = count("select metadata_dict_id from query_engine_state where organism = '$DEFAULT_ORGANISM'")
+        assertThat(
+            count(
+                "select count(*) from query_entries where organism = '$DEFAULT_ORGANISM' and metadata_dict_id = $dictId",
+            ),
+            equalTo(count("select count(*) from query_entries where organism = '$DEFAULT_ORGANISM'")),
+        )
+        assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+
+        // compression is deterministic: an unchanged projection is not rewritten
+        val changelog = changelogSize()
+        sql { c ->
+            c.createStatement().use {
+                it.executeUpdate("insert into query_dirty_accessions select organism, accession from query_entries")
+            }
+        }
+        runProjector()
+        assertThat(changelogSize(), equalTo(changelog))
+
+        // a new leader loads the dictionary from query_engine_state and compresses new entries with it
+        projector.resetMetadataDictionaries()
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        runProjector()
+        assertThat(
+            count("select count(*) from query_entries where metadata_dict_id is distinct from $dictId"),
+            equalTo(0L),
+        )
+        assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+    }
+
+    @Test
     fun `the reconcile pass recomputes projections that went stale without a trigger`() {
         val released = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
         runProjector()
         val accession = released.first().accession
-        // a projection that is wrong and not in the dirty queue (like an accession dropped after a failed batch)
-        sql { c ->
-            c.prepareStatement(
-                "update query_entries set metadata = jsonb_set(metadata, '{versionStatus}', '\"STALE\"') " +
-                    "where accession = ?",
-            ).use {
-                it.setString(1, accession)
-                it.executeUpdate()
+        // a projection that is wrong and not in the dirty queue (like an accession dropped after a failed batch),
+        // stored as a frame without dictionary
+        val stale = projectedMetadata(DEFAULT_ORGANISM).getValue("$accession.1").deepCopy<ObjectNode>()
+        stale.put("versionStatus", "STALE")
+        StoredMetadataCompressor(null, null).use { compressor ->
+            writeStoredMetadata(mapOf("$accession.1" to stale)) { json ->
+                Triple(compressor.compress(json), null, null)
             }
         }
         runProjector()
@@ -543,14 +601,46 @@ class QueryProjectorTest(
     }
 
     private fun projectedMetadata(organism: String): Map<String, JsonNode> = sql { c ->
-        c.prepareStatement("select accession_version, metadata from query_entries where organism = ?").use {
+        c.prepareStatement(
+            "select accession_version, ${StoredMetadata.SELECT} from query_entries where organism = ?",
+        ).use {
             it.setString(1, organism)
-            it.executeQuery().use { rs ->
-                val result = mutableMapOf<String, JsonNode>()
-                while (rs.next()) result[rs.getString(1)] = objectMapper.readTree(rs.getString(2))
-                result
+            StoredMetadataReader(metadataDictionaries).use { reader ->
+                it.executeQuery().use { rs ->
+                    val result = mutableMapOf<String, JsonNode>()
+                    while (rs.next()) {
+                        check(reader.read(rs, 2))
+                        result[rs.getString(1)] = objectMapper.readTree(reader.bytes, 0, reader.length)
+                    }
+                    result
+                }
             }
         }
+    }
+
+    /** overwrites stored records: encode returns (frame, dictionary id, jsonb text) for a record's JSON text */
+    private fun writeStoredMetadata(
+        records: Map<String, JsonNode>,
+        encode: (ByteArray) -> Triple<ByteArray?, Int?, ByteArray?>,
+    ) = sql { c ->
+        c.prepareStatement(
+            "update query_entries set metadata_zstd = ?, metadata_dict_id = ?, metadata = ?::jsonb " +
+                "where accession_version = ?",
+        ).use { ps ->
+            for ((accessionVersion, record) in records) {
+                val (frame, dictId, json) = encode(objectMapper.writeValueAsBytes(record))
+                ps.setBytes(1, frame)
+                if (dictId == null) ps.setNull(2, java.sql.Types.INTEGER) else ps.setInt(2, dictId)
+                ps.setString(3, json?.let { String(it) })
+                ps.setString(4, accessionVersion)
+                ps.addBatch()
+            }
+            ps.executeBatch()
+        }
+    }
+
+    private fun count(query: String): Long = sql { c ->
+        c.createStatement().use { st -> st.executeQuery(query).use { rs -> if (rs.next()) rs.getLong(1) else 0 } }
     }
 
     private fun projectedIds(organism: String): Map<String, Int> = sql { c ->
@@ -631,5 +721,9 @@ class QueryProjectorTest(
 
     private fun <T> sql(block: (Connection) -> T): T = transaction {
         block(TransactionManager.current().connection.connection as Connection)
+    }
+
+    private companion object {
+        const val DICTIONARY_MIN_ENTRIES = 30
     }
 }

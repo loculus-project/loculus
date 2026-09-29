@@ -10,6 +10,10 @@ import org.loculus.backend.model.ReleasedDataWithCompressedSequences
 import org.loculus.backend.query.QueryEngineProperties
 import org.loculus.backend.query.QuerySchemaRegistry
 import org.loculus.backend.query.schema.QuerySchema
+import org.loculus.backend.query.store.StoredMetadata
+import org.loculus.backend.query.store.StoredMetadataCompressor
+import org.loculus.backend.query.store.StoredMetadataReader
+import org.loculus.backend.query.store.ZstdDictionaryCache
 import org.loculus.backend.service.submission.CompressionDictService
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.DisposableBean
@@ -41,6 +45,12 @@ private const val REBUILD_RETRY_BACKOFF_MILLIS = 60_000L
 private const val PARALLEL_THRESHOLD = 256
 private const val REBUILD_CHUNK_SIZE = 1000
 
+/** records a metadata dictionary is trained on */
+private const val DICTIONARY_SAMPLE_ENTRIES = 20_000
+
+/** a metadata dictionary is retrained when the organism has this many times the entries it was trained at */
+private const val RETRAIN_GROWTH_FACTOR = 1.5
+
 /** parallel write transactions (= database connections) during a full rebuild or while draining the dirty queue */
 private const val PARALLEL_WRITERS = 4
 
@@ -67,7 +77,7 @@ class QueryProjector(
     private val registry: QuerySchemaRegistry,
     private val properties: QueryEngineProperties,
     private val releasedDataModel: ReleasedDataModel,
-    compressionDictService: CompressionDictService,
+    private val compressionDictService: CompressionDictService,
     private val dateProvider: DateProvider,
     private val objectMapper: ObjectMapper,
     private val dataSource: DataSource,
@@ -87,8 +97,26 @@ class QueryProjector(
         Executors.newFixedThreadPool(PARALLEL_WRITERS, daemonThreads("query-projector-writer"))
 
     private val decompressor = SequenceDecompressor { compressionDictService.getDictById(it) }
+    private val metadataDictionaries = ZstdDictionaryCache { compressionDictService.getDictById(it) }
     private val entryProjectors = HashMap<String, EntryProjector>()
     private val writers = HashMap<String, ProjectionWriter>()
+
+    /**
+     * per organism, the compressor of new metadata records: the dictionary in query_engine_state.metadata_dict_id. Only
+     * the leader trains dictionaries; cleared whenever leadership is (re-)acquired, since another leader may have
+     * trained one meanwhile.
+     */
+    private val metadataCompressors = HashMap<String, StoredMetadataCompressor>()
+
+    /**
+     * organisms for which no dictionary could be trained in this leadership (too few entries or zstd failed): not
+     * retried by the dictionary triggers of [rebuildReason] until leadership is (re-)acquired
+     */
+    private val dictionaryTrainingFailed = HashSet<String>()
+
+    /** `metadata-dictionary-min-entries` (changed by tests) */
+    @Volatile
+    internal var metadataDictionaryMinEntries = properties.metadataDictionaryMinEntries
 
     @Scheduled(
         fixedDelayString = "\${loculus.query-engine.projector-interval-ms:500}",
@@ -193,6 +221,15 @@ class QueryProjector(
         reconcilePassStartedAt.remove(organism)
     }
 
+    /** forgets the metadata compressors and failed dictionary trainings, as a new leader would (for tests) */
+    internal fun resetMetadataDictionaries() = tickLock.withLock {
+        metadataCompressors.values.forEach { it.close() }
+        metadataCompressors.clear()
+        entryProjectors.clear()
+        dictionaryTrainingFailed.clear()
+        metadataDictionaryMinEntries = properties.metadataDictionaryMinEntries
+    }
+
     /** forces the lapsed data use terms check to run again in the next iteration (for tests) */
     internal fun resetDataUseTermsCheck() = tickLock.withLock { lastRestrictionCheckDate = null }
 
@@ -230,6 +267,10 @@ class QueryProjector(
         }
         log.info { "This backend replica is now the query projector leader" }
         leaderConnection = connection
+        metadataCompressors.values.forEach { it.close() }
+        metadataCompressors.clear()
+        entryProjectors.clear()
+        dictionaryTrainingFailed.clear()
         return true
     }
 
@@ -266,8 +307,15 @@ class QueryProjector(
         drainDirtyAccessions(schema)
     }
 
-    /** why a full rebuild is needed; [trustSourceHashes] if unchanged sequence data may be skipped */
-    private class RebuildReason(val description: String, val trustSourceHashes: Boolean) {
+    /**
+     * why a full rebuild is needed; [trustSourceHashes] if unchanged sequence data may be skipped; [forDictionary] if
+     * it is needed only to train a new metadata dictionary
+     */
+    private class RebuildReason(
+        val description: String,
+        val trustSourceHashes: Boolean,
+        val forDictionary: Boolean = false,
+    ) {
         override fun toString() = description
     }
 
@@ -282,39 +330,156 @@ class QueryProjector(
             it.setString(1, schema.organism)
             it.executeUpdate()
         }
-        val (encodingHash, needsFullRebuild) = connection.prepareStatement(
-            "select encoding_hash, needs_full_rebuild from query_engine_state where organism = ?",
+        val state = connection.prepareStatement(
+            "select encoding_hash, needs_full_rebuild, next_id, metadata_dict_id, metadata_dict_entries " +
+                "from query_engine_state where organism = ?",
         ).use {
             it.setString(1, schema.organism)
             it.executeQuery().use { rs ->
                 rs.next()
-                rs.getString(1) to rs.getBoolean(2)
+                StoredState(
+                    encodingHash = rs.getString(1),
+                    needsFullRebuild = rs.getBoolean(2),
+                    nextId = rs.getInt(3),
+                    metadataDictId = rs.getInt(4).takeIf { _ -> !rs.wasNull() },
+                    metadataDictEntries = rs.getInt(5).takeIf { _ -> !rs.wasNull() },
+                )
             }
         }
+        val encodingHash = state.encodingHash
         val expected = projectionEncoding(schema)
         when {
-            encodingHash == expected -> if (needsFullRebuild) {
-                RebuildReason("full rebuild requested", trustSourceHashes = true)
-            } else {
-                null
-            }
-
             // the sequence encoding changed (or a rebuild was interrupted): recompute everything
-            sequenceEncoding(encodingHash) != schema.encodingHash() -> RebuildReason(
+            encodingHash != expected && sequenceEncoding(encodingHash) != schema.encodingHash() -> RebuildReason(
                 "encoding changed ('$encodingHash' -> '$expected')",
                 trustSourceHashes = false,
             )
 
             // metadata fields, their types or the metadata storage format changed: sequence-derived rows stay valid
-            else -> RebuildReason(
+            encodingHash != expected -> RebuildReason(
                 "metadata encoding changed ('$encodingHash' -> '$expected')",
                 trustSourceHashes = true,
             )
+
+            state.needsFullRebuild -> RebuildReason("full rebuild requested", trustSourceHashes = true)
+
+            // (ids are allocated consecutively: next_id is the number of entries ever projected)
+            state.metadataDictId == null &&
+                state.nextId >= metadataDictionaryMinEntries &&
+                schema.organism !in dictionaryTrainingFailed -> RebuildReason(
+                "no metadata dictionary yet (${state.nextId} entries)",
+                trustSourceHashes = true,
+                forDictionary = true,
+            )
+
+            // records drift (new lineages, dates, fields): retrain once the organism has grown by half
+            state.metadataDictEntries != null &&
+                state.nextId >= state.metadataDictEntries * RETRAIN_GROWTH_FACTOR &&
+                schema.organism !in dictionaryTrainingFailed -> RebuildReason(
+                "metadata dictionary trained at ${state.metadataDictEntries} entries, now ${state.nextId}",
+                trustSourceHashes = true,
+                forDictionary = true,
+            )
+
+            else -> null
         }
     }
 
-    private fun entryProjector(schema: QuerySchema) =
-        entryProjectors.getOrPut(schema.organism) { EntryProjector(schema, decompressor, objectMapper) }
+    private class StoredState(
+        val encodingHash: String,
+        val needsFullRebuild: Boolean,
+        val nextId: Int,
+        val metadataDictId: Int?,
+        val metadataDictEntries: Int?,
+    )
+
+    /** the compressor of new metadata records of [organism] (see [metadataCompressors]) */
+    private fun metadataCompressor(organism: String): StoredMetadataCompressor =
+        metadataCompressors.getOrPut(organism) {
+            val dictId = transaction {
+                jdbc().prepareStatement("select metadata_dict_id from query_engine_state where organism = ?").use {
+                    it.setString(1, organism)
+                    it.executeQuery().use { rs -> if (rs.next()) rs.getInt(1).takeIf { _ -> !rs.wasNull() } else null }
+                }
+            }
+            StoredMetadataCompressor(dictId, dictId?.let { compressionDictService.getDictById(it) })
+        }
+
+    /**
+     * Trains a metadata dictionary for [schema]'s organism on a random sample of its stored records (any stored form,
+     * normalised like new records) and makes it the dictionary of new records. Organisms with fewer than
+     * `metadata-dictionary-min-entries` entries keep their current dictionary (or none).
+     */
+    private fun trainMetadataDictionary(schema: QuerySchema, ids: List<Int>, reason: RebuildReason) {
+        val organism = schema.organism
+        if (ids.size < metadataDictionaryMinEntries) {
+            // next_id, which the dictionary triggers look at, also counts deleted entries
+            if (reason.forDictionary) dictionaryTrainingFailed.add(organism)
+            return
+        }
+        val start = System.currentTimeMillis()
+        val sampleIds = ids.shuffled().take(DICTIONARY_SAMPLE_ENTRIES)
+        val projector = entryProjector(schema)
+        val samples = ArrayList<ByteArray>(sampleIds.size)
+        transaction {
+            val connection = jdbc()
+            connection.prepareStatement(
+                "select ${StoredMetadata.SELECT} from query_entries where organism = ? and id = any(?)",
+            ).use { statement ->
+                statement.setString(1, organism)
+                statement.setArray(2, connection.createArrayOf("int4", sampleIds.toTypedArray()))
+                statement.fetchSize = 5000
+                StoredMetadataReader(metadataDictionaries).use { reader ->
+                    statement.executeQuery().use { rs ->
+                        while (rs.next()) {
+                            if (!reader.read(rs, 1)) continue
+                            val record = objectMapper.readTree(reader.bytes, 0, reader.length)
+                            samples.add(projector.metadataJson(record.properties().associate { it.key to it.value }))
+                        }
+                    }
+                }
+            }
+        }
+        val dictionary = StoredMetadata.trainDictionary(samples)
+        if (dictionary == null) {
+            dictionaryTrainingFailed.add(organism)
+            log.warn {
+                "Query projection: could not train a metadata dictionary for $organism on ${samples.size} records"
+            }
+            return
+        }
+        val dictId = transaction {
+            compressionDictService.getDictIdOrInsert(
+                dictionary,
+                "$organism - query engine metadata, trained on ${samples.size} records",
+            )
+        }
+        val compressor = StoredMetadataCompressor(dictId, dictionary)
+        val sampleBytes = samples.sumOf { compressor.compress(it).size.toLong() }.toDouble() / samples.size
+        transaction {
+            jdbc().prepareStatement(
+                "update query_engine_state set metadata_dict_id = ?, metadata_dict_entries = next_id where organism = ?",
+            ).use {
+                it.setInt(1, dictId)
+                it.setString(2, organism)
+                it.executeUpdate()
+            }
+        }
+        metadataCompressors.put(organism, compressor)?.close()
+        entryProjectors.remove(organism)
+        log.info {
+            "Query projection: trained metadata dictionary $dictId (${dictionary.size} bytes) for $organism on " +
+                "${samples.size} records in ${System.currentTimeMillis() - start} ms: " +
+                "%.0f bytes per record on the sample (JSON %.0f)".format(
+                    sampleBytes,
+                    samples.sumOf { it.size }.toDouble() / samples.size,
+                )
+        }
+    }
+
+    private fun entryProjector(schema: QuerySchema) = entryProjectors.getOrPut(schema.organism) {
+        EntryProjector(schema, decompressor, objectMapper, metadataCompressor(schema.organism))
+    }
 
     private fun writer(schema: QuerySchema) = writers.getOrPut(schema.organism) { ProjectionWriter(schema) }
 
@@ -550,6 +715,9 @@ class QueryProjector(
             }
             stored
         }
+        // every row is rewritten: compress them with a dictionary trained on the current records
+        trainMetadataDictionary(schema, existingIds.values.map { it.id }, reason)
+
         // accessionVersions not (yet) seen in the stream
         val unseen = ConcurrentHashMap<String, Int>(existingIds.size)
         existingIds.forEach { (accessionVersion, stored) -> unseen[accessionVersion] = stored.id }
@@ -647,7 +815,7 @@ class QueryProjector(
                     select distinct q.organism, q.accession
                     from query_entries q
                     where q.organism = ?
-                        and q.metadata ->> 'dataUseTerms' = 'RESTRICTED'
+                        and q.data_use_terms_restricted
                         and not exists (
                             select 1 from data_use_terms_table d
                             where d.accession = q.accession

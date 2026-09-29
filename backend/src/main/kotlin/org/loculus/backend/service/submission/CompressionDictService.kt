@@ -125,6 +125,26 @@ class CompressionDictService(private val backendConfig: BackendConfig, private v
         }
     }
 
+    /**
+     * The id of the dictionary [dict] (content-addressed: the same bytes always get the same id), inserted if new.
+     * Must run inside a transaction.
+     */
+    fun getDictIdOrInsert(dict: ByteArray, description: String): Int {
+        val hash = computeHash(dict)
+        val id = CompressionDictionaryEntity.find { CompressionDictionariesTable.hashColumn eq hash }
+            .firstOrNull()
+            ?.id
+            ?.value
+            ?: CompressionDictionaryEntity.new {
+                this.hash = hash
+                this.dictContents = dict
+                this.description = description
+                this.createdAt = dateProvider.getCurrentDateTime()
+            }.id.value
+        caches.dictsById.putIfAbsent(id, dict)
+        return id
+    }
+
     private fun getDictIdOrInsertNewEntry(dict: String, description: String): Int {
         val hash = computeHash(dict)
 
@@ -153,9 +173,11 @@ class CompressionDictService(private val backendConfig: BackendConfig, private v
             .value
     }
 
-    private fun computeHash(input: String): String {
+    private fun computeHash(input: String): String = computeHash(input.toByteArray())
+
+    private fun computeHash(input: ByteArray): String {
         val hashFunction = MessageDigest.getInstance("SHA-256")
-        val digest = hashFunction.digest(input.toByteArray())
+        val digest = hashFunction.digest(input)
         return digest.joinToString("") { "%02x".format(it) }
     }
 }

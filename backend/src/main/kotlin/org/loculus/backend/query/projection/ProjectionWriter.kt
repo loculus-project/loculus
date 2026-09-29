@@ -65,8 +65,8 @@ class ProjectionWriter(private val schema: QuerySchema) {
             statement.execute(
                 """
                 create temp table if not exists query_stage_entries (
-                    id integer, accession text, version bigint, accession_version text, metadata jsonb,
-                    source_hash bigint
+                    id integer, accession text, version bigint, accession_version text, metadata_zstd bytea,
+                    metadata_dict_id integer, data_use_terms_restricted boolean, source_hash bigint
                 ) on commit delete rows;
                 create temp table if not exists query_stage_mutation_data (
                     id integer, present_sequences integer[], mutations integer[], missing integer[], insertions text[]
@@ -93,7 +93,7 @@ class ProjectionWriter(private val schema: QuerySchema) {
         }
         val organismColumn = if (direct) "organism, " else ""
 
-        val entriesCsv = StringBuilder(entries.size * 1024)
+        val entriesCsv = StringBuilder(entries.size * 512)
         val mutationCsv = StringBuilder(entries.size * 2048)
         val sequencesCsv = StringBuilder(entries.size * 2048)
         for (identified in entries) {
@@ -102,7 +102,9 @@ class ProjectionWriter(private val schema: QuerySchema) {
             entriesCsv.append(prefix).append(id).append(',')
             appendCsvText(entriesCsv, e.accession).append(',').append(e.version).append(',')
             appendCsvText(entriesCsv, e.accessionVersion).append(',')
-            appendCsvText(entriesCsv, e.metadataJson).append(',').append(e.sourceHash).append('\n')
+            appendHex(entriesCsv, e.metadataZstd).append(',')
+            e.metadataDictionaryId?.let { entriesCsv.append(it) }
+            entriesCsv.append(',').append(e.dataUseTermsRestricted).append(',').append(e.sourceHash).append('\n')
 
             if (e.sequenceDataUnchanged) {
                 check(!direct) { "new entry ${e.accessionVersion} without sequence data" }
@@ -123,8 +125,8 @@ class ProjectionWriter(private val schema: QuerySchema) {
             }
         }
         copyApi.copyIn(
-            "copy $entriesTable (${organismColumn}id, accession, version, accession_version, metadata, source_hash) " +
-                "from stdin (format csv)",
+            "copy $entriesTable (${organismColumn}id, accession, version, accession_version, metadata_zstd, " +
+                "metadata_dict_id, data_use_terms_restricted, source_hash) from stdin (format csv)",
             StringReader(entriesCsv.toString()),
         )
         if (mutationCsv.isNotEmpty()) {
@@ -149,17 +151,25 @@ class ProjectionWriter(private val schema: QuerySchema) {
             connection,
             """
             insert into query_entries as t
-                (organism, id, accession, version, accession_version, metadata, source_hash)
-            select ?, id, accession, version, accession_version, metadata, source_hash from query_stage_entries
+                (organism, id, accession, version, accession_version, metadata_zstd, metadata_dict_id,
+                    data_use_terms_restricted, source_hash)
+            select ?, id, accession, version, accession_version, metadata_zstd, metadata_dict_id,
+                data_use_terms_restricted, source_hash
+            from query_stage_entries
             on conflict (organism, id) do update set
                 accession = excluded.accession,
                 version = excluded.version,
                 accession_version = excluded.accession_version,
-                metadata = excluded.metadata,
+                metadata = null,
+                metadata_zstd = excluded.metadata_zstd,
+                metadata_dict_id = excluded.metadata_dict_id,
+                data_use_terms_restricted = excluded.data_use_terms_restricted,
                 source_hash = excluded.source_hash
-            where (t.accession, t.version, t.accession_version, t.metadata, t.source_hash)
+            where (t.accession, t.version, t.accession_version, t.metadata, t.metadata_zstd, t.metadata_dict_id,
+                    t.data_use_terms_restricted, t.source_hash)
                 is distinct from
-                (excluded.accession, excluded.version, excluded.accession_version, excluded.metadata,
+                (excluded.accession, excluded.version, excluded.accession_version, null::jsonb,
+                    excluded.metadata_zstd, excluded.metadata_dict_id, excluded.data_use_terms_restricted,
                     excluded.source_hash)
             returning t.id
             """.trimIndent(),

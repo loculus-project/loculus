@@ -5,6 +5,8 @@ import org.loculus.backend.query.QueryEngineProperties
 import org.loculus.backend.query.QuerySchemaRegistry
 import org.loculus.backend.query.projection.REBUILDING_MARKER
 import org.loculus.backend.query.schema.QuerySchema
+import org.loculus.backend.query.store.ZstdDictionaryCache
+import org.loculus.backend.service.submission.CompressionDictService
 import org.springframework.beans.factory.DisposableBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.event.ApplicationReadyEvent
@@ -47,6 +49,7 @@ class QueryIndexService(
     private val registry: QuerySchemaRegistry,
     private val dataSource: DataSource,
     private val properties: QueryEngineProperties,
+    compressionDictService: CompressionDictService? = null,
 ) : OrganismIndexProvider,
     DisposableBean {
     private val indexes = ConcurrentHashMap<String, InMemoryOrganismIndex>()
@@ -69,6 +72,11 @@ class QueryIndexService(
     internal val reloadLock = ReentrantLock()
     private val executor = Executors.newScheduledThreadPool(maxOf(1, registry.schemas.size)) { runnable ->
         Thread(runnable, "query-index").apply { isDaemon = true }
+    }
+
+    /** metadata dictionaries (without a dictionary service, e.g. in tests, only records without one can be read) */
+    private val dictionaries = ZstdDictionaryCache { id ->
+        compressionDictService?.getDictById(id) ?: error("no dictionary service to read metadata dictionary $id")
     }
 
     override fun get(organism: String): OrganismIndex? = indexes[organism]
@@ -128,7 +136,7 @@ class QueryIndexService(
     }
 
     private inner class OrganismTracker(private val organism: String, schema: QuerySchema) {
-        private val reader = ProjectionReader(schema)
+        private val reader = ProjectionReader(schema, dictionaries)
         private val schemaRef = schema
         private var index: InMemoryOrganismIndex? = null
 

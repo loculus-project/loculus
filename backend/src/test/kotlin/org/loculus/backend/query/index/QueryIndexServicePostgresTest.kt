@@ -43,7 +43,7 @@ class QueryIndexServicePostgresTest {
         "create schema $dbSchema",
         "set search_path to $dbSchema",
         "create table $dbSchema.query_entries (organism text, id int, accession text, version bigint, " +
-            "accession_version text, metadata jsonb, primary key (organism, id))",
+            "accession_version text, metadata jsonb, metadata_zstd bytea, metadata_dict_id int, primary key (organism, id))",
         "create table $dbSchema.query_mutation_data (organism text, id int, present_sequences int[], " +
             "mutations int[], missing int[], insertions text[], primary key (organism, id))",
         "create table $dbSchema.query_changelog (seq bigserial primary key, organism text, id int, " +
@@ -91,7 +91,7 @@ class QueryIndexServicePostgresTest {
             "create schema $dbSchema",
             "set search_path to $dbSchema",
             "create table $dbSchema.query_entries (organism text, id int, accession text, version bigint, " +
-                "accession_version text, metadata jsonb, primary key (organism, id))",
+                "accession_version text, metadata jsonb, metadata_zstd bytea, metadata_dict_id int, primary key (organism, id))",
             "create table $dbSchema.query_mutation_data (organism text, id int, present_sequences int[], " +
                 "mutations int[], missing int[], insertions text[], primary key (organism, id))",
             "create table $dbSchema.query_changelog (seq bigserial primary key, organism text, id int, " +
