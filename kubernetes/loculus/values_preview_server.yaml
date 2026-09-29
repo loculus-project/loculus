@@ -438,6 +438,9 @@ queryEngine:
     diskSizeLimit: "7Gi"
 # 8 concurrent exports saturated the default 30 (30 active + 42 pending); dev Postgres allows 200.
 backendDatabasePoolSize: 80
+# The claim cursor claims new entries and remembered revisions at once; the full scan (3.6-3.9 s at 3.8M SC2)
+# only catches entries reset as stale, rolled-back claims and revisions submitted to another replica.
+claimFullScanIntervalSeconds: 60
 backendJvmExtraOpts: "-XX:MaxRAMPercentage=80 -Xlog:gc:stdout:time,uptime,level,tags"
 developmentDatabase:
   # the 4Gi limit filled with page cache under SC2 ingest (4.24 GB working set; postgres RSS 0.8 GB). The request
