@@ -353,6 +353,8 @@ data class AccessionVersionSubmittedMetadata(
     val submitter: String,
     val isRevocation: Boolean,
     val submittedMetadata: Map<String, String?>?,
+    @Schema(description = "The status of the sequence entry, as returned by get-sequences")
+    val status: Status,
 ) : AccessionVersionInterface
 
 data class GetSubmittedDataRequest(

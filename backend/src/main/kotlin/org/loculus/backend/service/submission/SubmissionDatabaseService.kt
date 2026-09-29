@@ -1626,6 +1626,7 @@ class SubmissionDatabaseService(
             // It's actually <Map<String, String>?> but exposed does not support nullable types here
             .extract<Map<String, String>>("metadata")
             .alias("submitted_metadata")
+        val status = SequenceEntriesView.statusWithoutJoin.alias("status")
 
         return SequenceEntriesView
             .select(
@@ -1634,6 +1635,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.submitterColumn,
                 SequenceEntriesView.isRevocationColumn,
+                status,
             )
             .where(
                 submittedMetadataFilter(
@@ -1658,6 +1660,7 @@ class SubmissionDatabaseService(
                     it[SequenceEntriesView.submitterColumn],
                     it[SequenceEntriesView.isRevocationColumn],
                     selectedMetadata,
+                    Status.fromString(it[status]),
                 )
             }
     }

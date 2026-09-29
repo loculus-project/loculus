@@ -1,10 +1,14 @@
 package org.loculus.backend.service.submission
 
 import org.jetbrains.exposed.v1.core.Expression
+import org.jetbrains.exposed.v1.core.ExpressionWithColumnType
 import org.jetbrains.exposed.v1.core.Op
+import org.jetbrains.exposed.v1.core.QueryBuilder
 import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.core.VarCharColumnType
 import org.jetbrains.exposed.v1.core.alias
 import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.append
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.max
@@ -21,6 +25,7 @@ import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.api.toPairs
 import org.loculus.backend.service.jacksonSerializableJsonb
+import org.loculus.backend.service.submission.dbtables.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
 
 const val SEQUENCE_ENTRIES_VIEW_NAME = "sequence_entries_view"
 const val SEQUENCE_ENTRIES_LATERAL_VIEW_NAME = "sequence_entries_lateral_view"
@@ -61,6 +66,30 @@ open class SequenceEntriesViewTable(name: String) : Table(name) {
     val pipelineVersionColumn = long("pipeline_version").nullable()
 
     override val primaryKey = PrimaryKey(accessionColumn, versionColumn)
+
+    /**
+     * The value of [statusColumn], computed so that sequence_entries_preprocessed_data is read only for entries that are
+     * neither released nor revocations. Selecting [statusColumn] in a full scan makes Postgres hash-join all of
+     * sequence_entries_preprocessed_data (+1.2 s and ~150 MB of temp files per million entries).
+     * Keep in sync with the status CASE of sequence_entries_view (GetSubmittedMetadataEndpointTest compares them).
+     */
+    val statusWithoutJoin: ExpressionWithColumnType<String> = object : ExpressionWithColumnType<String>() {
+        override val columnType = VarCharColumnType(255)
+
+        override fun toQueryBuilder(queryBuilder: QueryBuilder) = queryBuilder {
+            append("CASE WHEN ", releasedAtTimestampColumn, " IS NOT NULL THEN 'APPROVED_FOR_RELEASE'")
+            append(" WHEN ", isRevocationColumn, " THEN 'PROCESSED'")
+            append(
+                " ELSE COALESCE((SELECT CASE sepd.processing_status",
+                " WHEN 'IN_PROCESSING' THEN 'IN_PROCESSING' WHEN 'PROCESSED' THEN 'PROCESSED' END",
+                " FROM $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME sepd",
+                " JOIN $CURRENT_PROCESSING_PIPELINE_TABLE_NAME cpp ON cpp.version = sepd.pipeline_version",
+                " WHERE sepd.accession = ",
+            )
+            append(accessionColumn, " AND sepd.version = ", versionColumn, " AND cpp.organism = ", organismColumn)
+            append("), 'RECEIVED') END")
+        }
+    }
 
     val isMaxVersion = versionColumn eq maxVersionQuery()
 
