@@ -68,7 +68,7 @@ type CellContentProps = {
     fieldName: string;
 };
 
-const useTruncationTooltip = <T extends HTMLElement>(value: string) => {
+const useTruncationTooltip = <T extends HTMLElement>(text: string) => {
     const ref = useRef<T>(null);
     const [isTruncated, setIsTruncated] = useState(false);
 
@@ -76,9 +76,9 @@ const useTruncationTooltip = <T extends HTMLElement>(value: string) => {
         if (ref.current) {
             setIsTruncated(ref.current.scrollWidth > ref.current.clientWidth);
         }
-    }, [value]);
+    }, [text]);
 
-    const tooltipText = value.slice(0, MAX_TOOLTIP_LENGTH) + (value.length > MAX_TOOLTIP_LENGTH ? '..' : '');
+    const tooltipText = text.slice(0, MAX_TOOLTIP_LENGTH) + (text.length > MAX_TOOLTIP_LENGTH ? '..' : '');
 
     return { ref, isTruncated, tooltipText };
 };
