@@ -265,7 +265,8 @@ class SubmissionDatabaseService(
      * (SARS-CoV-2 at 1.9M entries: 3.3 s per claim, 83 % of the database's time). So a claim starts after the last
      * entry claimed so far (the cursor), which finds the new entries in milliseconds, and scans from the start at most
      * once per [claimFullScanInterval] per organism and pipeline version, for entries that appear before the cursor:
-     * revisions, claims reset as stale and claims that rolled back.
+     * revisions, claims reset as stale and claims that rolled back. Until a claim sets the cursor, claims between
+     * full scans return nothing, so an organism with nothing to process costs one full scan per interval.
      */
     private fun claimUnprocessedEntries(
         organism: Organism,
@@ -283,6 +284,10 @@ class SubmissionDatabaseService(
                 current
             }
         }!!
+        if (!fullScan && cursor.after == null) {
+            // Nothing claimed since the last full scan found nothing: wait for the next one instead of repeating it.
+            return emptyList()
+        }
         val claimed = mutableListOf<AccessionVersion>()
         var after: AccessionVersion? = if (fullScan) null else cursor.after
         var round = 0

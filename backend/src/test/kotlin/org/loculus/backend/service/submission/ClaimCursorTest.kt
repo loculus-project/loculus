@@ -28,6 +28,19 @@ class ClaimCursorTest(
     }
 
     @Test
+    fun `GIVEN a full scan found nothing THEN entries submitted afterwards are claimed by the next full scan`() {
+        Thread.sleep(FULL_SCAN_INTERVAL_SECONDS * 1000 + 100)
+        assertThat(claim(100), `is`(emptyList()))
+        val submitted = convenienceClient.submitDefaultFiles().submissionIdMappings
+            .map { AccessionVersion(it.accession, it.version) }
+            .sortedWith(compareBy({ it.accession }, { it.version }))
+
+        assertThat(claim(100), `is`(emptyList()))
+        Thread.sleep(FULL_SCAN_INTERVAL_SECONDS * 1000 + 100)
+        assertThat(claim(100), `is`(submitted))
+    }
+
+    @Test
     fun `claims continue after the cursor, and entries before it are claimed by the next full scan`() {
         val submitted = convenienceClient.submitDefaultFiles().submissionIdMappings
             .map { AccessionVersion(it.accession, it.version) }
