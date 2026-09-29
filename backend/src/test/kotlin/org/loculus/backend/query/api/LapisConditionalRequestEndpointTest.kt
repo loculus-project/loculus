@@ -70,6 +70,46 @@ class LapisConditionalRequestEndpointTest(
     }
 
     @Test
+    fun `GET responses may be stored by the browser and revalidated, file downloads may not`() {
+        awaitIndex()
+        fun browserGet(path: String) =
+            get(path).header("Origin", "https://example.org").header("Accept-Encoding", "gzip")
+        // buffered, and streamed (sequences are never buffered)
+        for (path in listOf("aggregated", "unalignedNucleotideSequences")) {
+            val first = mockMvc.perform(browserGet("/$DEFAULT_ORGANISM/sample/$path")).andReturn().response
+            assertThat(path, first.status, equalTo(200))
+            assertThat(path, first.getHeaders("Cache-Control"), equalTo(listOf("no-cache")))
+            assertThat(path, first.getHeader("Pragma"), nullValue())
+            val vary = first.getHeaders("Vary").joinToString(", ")
+            // content negotiation and CORS (the Access-Control-Allow-Origin a cached response carries)
+            assertThat(path, vary, containsString("Accept, Accept-Encoding"))
+            assertThat(path, vary, containsString("Origin"))
+            val etag = first.getHeader("ETag")
+            assertThat(path, etag, notNullValue())
+
+            val revalidated = mockMvc.perform(
+                browserGet("/$DEFAULT_ORGANISM/sample/$path").header("If-None-Match", etag!!),
+            ).andReturn().response
+            assertThat(path, revalidated.status, equalTo(304))
+            assertThat(path, revalidated.getHeader("ETag"), equalTo(etag))
+            assertThat(path, revalidated.getHeaders("Cache-Control"), equalTo(listOf("no-cache")))
+            assertThat(path, revalidated.getHeaders("Vary").joinToString(", "), equalTo(vary))
+        }
+
+        val download = mockMvc.perform(
+            get("/$DEFAULT_ORGANISM/sample/details?dataFormat=tsv&downloadAsFile=true"),
+        ).andReturn().response
+        assertThat(download.status, equalTo(200))
+        assertThat(download.getHeader("Content-Disposition"), containsString("attachment"))
+        assertThat(download.getHeaders("Cache-Control"), equalTo(listOf("no-store")))
+
+        // the website's POST cache stores what it may revalidate: no-store would switch it off (no HTTP cache
+        // stores POST responses anyway)
+        val post = mockMvc.perform(aggregated()).andReturn().response
+        assertThat(post.getHeaders("Cache-Control"), equalTo(listOf("no-cache")))
+    }
+
+    @Test
     fun `errors carry no validator and stay no-store`() {
         awaitIndex()
         val response = mockMvc.perform(

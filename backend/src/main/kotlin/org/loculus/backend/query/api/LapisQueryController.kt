@@ -135,7 +135,7 @@ class LapisQueryController(
             // answered before the query runs; also for POST (see entityTag)
             response.status = HttpStatus.NOT_MODIFIED.value()
             response.setHeader(HttpHeaders.ETAG, etag)
-            response.setHeader(HttpHeaders.CACHE_CONTROL, CACHE_CONTROL)
+            response.setHeader(HttpHeaders.CACHE_CONTROL, cacheControl(parsed))
             response.setHeader(LAPIS_DATA_VERSION_HEADER, dataVersion)
             response.addHeader(HttpHeaders.VARY, VARY)
             return
@@ -194,7 +194,7 @@ class LapisQueryController(
         val tExecuted = System.nanoTime()
 
         val headers = responseHeaders(parsed, endpoint, body, dataVersion, contentEncoding)
-        headers.set(HttpHeaders.CACHE_CONTROL, CACHE_CONTROL)
+        headers.set(HttpHeaders.CACHE_CONTROL, cacheControl(parsed))
         headers.add(HttpHeaders.VARY, VARY)
         // an index update while the query ran may have mixed two states into the body: send no validator then
         if (etag != null && index.contentToken == contentToken) headers.set(HttpHeaders.ETAG, etag)
@@ -272,7 +272,7 @@ class LapisQueryController(
         }
         val tExecuted = System.nanoTime()
         val headers = responseHeaders(cached.parsed, cached.endpoint, body, cached.dataVersion, cached.contentEncoding)
-        headers.set(HttpHeaders.CACHE_CONTROL, CACHE_CONTROL)
+        headers.set(HttpHeaders.CACHE_CONTROL, cacheControl(cached.parsed))
         headers.add(HttpHeaders.VARY, VARY)
         val storedHeaders = headers.headerSet().flatMap { (name, values) -> values.map { name to it } }
         val unchanged = { cached.index.contentToken == cached.key.contentToken }
@@ -540,8 +540,20 @@ class LapisQueryController(
     companion object {
         const val OUTPUT_BUFFER_SIZE = 64 * 1024
 
-        /** a client may store the response but must revalidate it (with If-None-Match) before every reuse */
+        /**
+         * Query responses may be stored but must be revalidated (with If-None-Match) before every reuse, so the
+         * browser's HTTP cache revalidates repeat GETs itself: a conditional header added by the browser, unlike one
+         * set from JavaScript, does not make a cross-origin GET need a CORS preflight. Not `private`: the data is
+         * public and the response depends only on the URL and the headers in [VARY], and the website's own caches
+         * (browser POST cache, server-side render cache) do not store `private` or `no-store` responses.
+         * POST responses keep `no-cache` for those caches; no HTTP cache stores POST responses.
+         */
         const val CACHE_CONTROL = "no-cache"
+
+        /** file downloads (`downloadAsFile`) are not kept in the browser's cache */
+        const val CACHE_CONTROL_DOWNLOAD = "no-store"
+
+        fun cacheControl(request: QueryRequest) = if (request.downloadAsFile) CACHE_CONTROL_DOWNLOAD else CACHE_CONTROL
         const val VARY = "Accept, Accept-Encoding"
 
         /**

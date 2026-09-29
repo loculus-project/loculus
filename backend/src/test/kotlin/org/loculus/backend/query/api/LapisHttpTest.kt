@@ -174,17 +174,22 @@ class LapisHttpTest {
 
     @Test
     fun `a revalidation with the ETag gets an empty 304 through Tomcat, for streamed and buffered responses`() {
-        for (path in listOf(STREAMED_DOWNLOAD, "/test/sample/details?fields=accessionVersion,country&limit=100")) {
+        val paths = mapOf(
+            STREAMED_DOWNLOAD to "no-store",
+            "/test/sample/details?fields=accessionVersion,country&limit=100" to "no-cache",
+        )
+        for ((path, cacheControl) in paths) {
             val (first, _) = get(path, "Accept-Encoding", "gzip")
             first.body().use { it.readAllBytes() }
             assertThat(first.statusCode(), equalTo(200))
             val etag = first.headers().firstValue("ETag").orElseThrow()
-            assertThat(first.headers().firstValue("Cache-Control").orElse(null), equalTo("no-cache"))
+            assertThat(first.headers().firstValue("Cache-Control").orElse(null), equalTo(cacheControl))
 
             val (second, _) = get(path, "Accept-Encoding", "gzip", "If-None-Match", etag)
             assertThat(second.statusCode(), equalTo(304))
             assertThat(second.body().use { it.readAllBytes() }.size, equalTo(0))
             assertThat(second.headers().firstValue("ETag").orElse(null), equalTo(etag))
+            assertThat(second.headers().firstValue("Cache-Control").orElse(null), equalTo(cacheControl))
         }
     }
 
