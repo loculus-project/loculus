@@ -2186,6 +2186,7 @@ organisms:
       configFile:
         log_level: DEBUG
         batch_size: 100
+        nextclade_jobs: 4
         create_embl_file: false
         segments:
         - name: main
@@ -4512,6 +4513,7 @@ organisms:
       configFile:
         log_level: DEBUG
         batch_size: 100
+        nextclade_jobs: 4
         create_embl_file: false
         backend_request_timeout_seconds: 600
         segment_classification_method: minimizer
@@ -5327,6 +5329,7 @@ organisms:
         molecule_type: genomic DNA
         log_level: DEBUG
         batch_size: 5
+        nextclade_jobs: 4
         create_embl_file: false
         backend_request_timeout_seconds: 600
         segments:
