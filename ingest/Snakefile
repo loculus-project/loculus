@@ -94,6 +94,26 @@ APPLY_MINIMIZER = (
     SEGMENTED and segment_detection_method == SegmentDetectionMethod.MINIMIZER
 ) or (config.get("minimizer_url") and config.get("minimizer_parser"))
 
+# Non-segmented organisms without a minimizer read the mirror's compressed FASTA directly
+# (select_changed_records), so the decompressed genomic.fna (~270 GB for SARS-CoV-2) is never written
+STREAM_MIRROR_SEQUENCES = (
+    bool(MIRROR_BUCKET)
+    and MIRROR_FORMAT == "zst"
+    and not SEGMENTED
+    and not APPLY_MINIMIZER
+)
+DATASET_SEQUENCES = (
+    "results/ncbi_dataset/data/genomic.fna.zst"
+    if STREAM_MIRROR_SEQUENCES
+    else "results/ncbi_dataset/data/genomic.fna"
+)
+# The records released after RELEASED_AFTER, written while filtering the mirror's data report
+RELEASED_ACCESSIONS = (
+    "results/released_accessions.txt"
+    if MIRROR_BUCKET and MIRROR_FORMAT == "zst" and RELEASED_AFTER
+    else None
+)
+
 print(segment_detection_method)
 
 if os.uname().sysname == "Darwin":
@@ -128,14 +148,16 @@ rule clean:
 
 rule fetch_inflate_ncbi_dataset_package:
     output:
+        **({"released_accessions": RELEASED_ACCESSIONS} if RELEASED_ACCESSIONS else {}),
         dataset_report="results/ncbi_dataset/data/data_report.jsonl",
-        dataset_sequences="results/ncbi_dataset/data/genomic.fna",
+        dataset_sequences=DATASET_SEQUENCES,
     params:
         taxon_id=TAXON_ID,
         gateway=f"--gateway-url {NCBI_GATEWAY_URL}" if NCBI_GATEWAY_URL else "",
         released_after=f"--released-after {RELEASED_AFTER}" if RELEASED_AFTER else "",
         use_mirror=bool(MIRROR_BUCKET),
         mirror_format=MIRROR_FORMAT,
+        stream_sequences=STREAM_MIRROR_SEQUENCES,
         mirror_url=f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}.tar.zst",
         mirror_prefix=f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}",
         filter_script="scripts/filter_by_release_date.py",
@@ -155,10 +177,16 @@ rule fetch_inflate_ncbi_dataset_package:
                         --released-after {params.released_after_date} \
                         --output-accessions results/released_accessions.txt \
                         >{output.dataset_report}
+            else
+                curl -fsS {params.mirror_prefix}.data_report.jsonl.zst | zstd -dc >{output.dataset_report}
+            fi
+            if [[ "{params.stream_sequences}" == "True" ]]; then
+                # kept compressed; select_changed_records applies the release filter
+                curl -fsS {params.mirror_prefix}.genomic.fna.zst -o {output.dataset_sequences}
+            elif [[ -n "{params.released_after_date}" ]]; then
                 curl -fsS {params.mirror_prefix}.genomic.fna.zst | zstd -dc \
                     | seqkit grep -f results/released_accessions.txt >{output.dataset_sequences}
             else
-                curl -fsS {params.mirror_prefix}.data_report.jsonl.zst | zstd -dc >{output.dataset_report}
                 curl -fsS {params.mirror_prefix}.genomic.fna.zst | zstd -dc >{output.dataset_sequences}
             fi
         elif [[ "{params.use_mirror}" == "True" ]]; then
@@ -727,9 +755,11 @@ else:
         "script": "scripts/select_changed_records.py",
         "config": "results/config.yaml",
         "dataset_report": "results/ncbi_dataset/data/data_report.jsonl",
-        "dataset_sequences": "results/ncbi_dataset/data/genomic.fna",
+        "dataset_sequences": DATASET_SEQUENCES,
         "old_hashes": "results/previous_submissions.ndjson",
     }
+    if STREAM_MIRROR_SEQUENCES and RELEASED_ACCESSIONS:
+        select_changed_records_input["fasta_ids"] = RELEASED_ACCESSIONS
     if CHECK_ENA_DEPOSITION:
         select_changed_records_input["exclude_insdc_accessions"] = (
             "results/accessions_to_exclude.json"
@@ -759,7 +789,12 @@ else:
             subsample_fraction=config.get("subsample_fraction", 1.0),
             optional_inputs=lambda wildcards, input: " ".join(
                 f"--{name.replace('_', '-')} {input[name]}"
-                for name in ["exclude_insdc_accessions", "muted_hashes", "segments"]
+                for name in [
+                    "exclude_insdc_accessions",
+                    "muted_hashes",
+                    "segments",
+                    "fasta_ids",
+                ]
                 if name in input.keys()
             ),
         shell:

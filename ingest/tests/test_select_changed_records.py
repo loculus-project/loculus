@@ -14,6 +14,7 @@ import orjson
 import pytest
 import yaml
 from click.testing import CliRunner
+from compression import zstd
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
 
@@ -68,6 +69,29 @@ def test_split_fasta_records_matches_text_mode_parser(monkeypatch, name, block_s
         # the byte range holds the record, so it can be read back on its own
         again = list(select_changed_records.split_fasta_records(io.BytesIO(data[start:end])))
         assert record_id in {n for n, _, _, _ in again}
+
+
+@pytest.mark.parametrize("block_size", [1, 3, 1 << 24])
+@pytest.mark.parametrize("name", FASTA_CASES)
+def test_split_fasta_records_keeps_only_the_given_ids(monkeypatch, name, block_size):
+    """what seqkit grep -f keeps, then the text-mode parser"""
+    data = FASTA_CASES[name]
+    monkeypatch.setattr(select_changed_records, "READ_BLOCK_SIZE", block_size)
+    keep = {"B.1", ""}
+    split = list(select_changed_records.split_fasta_records(io.BytesIO(data), keep))
+    expected = [(n, s) for n, s in text_mode_records(data) if n in keep]
+    assert [(n, s.decode()) for n, s, _, _ in split] == expected
+
+
+@pytest.mark.parametrize("dropped", [b">X.1 \xff\nAC\n", b">X.1\nA\xffC\rG\n", b">X.1 \xff\rAC\n"])
+def test_invalid_utf8_fails_only_in_a_kept_record(dropped):
+    data = b">A.1\nAC\n" + dropped + b">B.1\nGG\n"
+    split = select_changed_records.split_fasta_records(io.BytesIO(data), {"A.1", "B.1"})
+    assert [n for n, _, _, _ in split] == ["A.1", "B.1"]
+    with pytest.raises(UnicodeError):
+        list(select_changed_records.split_fasta_records(io.BytesIO(data), {"X.1", "B.1"}))
+    with pytest.raises(UnicodeError):
+        list(select_changed_records.split_fasta_records(io.BytesIO(data)))
 
 
 # --- the TSV round trip ----------------------------------------------------------------------
@@ -347,7 +371,9 @@ def old_chain(tmp_path, config, report, fasta, previous, exclusions, muted, subs
     return d
 
 
-def new_chain(tmp_path, config, report, fasta, previous, exclusions, muted, subsample):
+def new_chain(
+    tmp_path, config, report, fasta, previous, exclusions, muted, subsample, fasta_ids=None
+):
     d = tmp_path / "new"
     d.mkdir()
     run(
@@ -364,6 +390,7 @@ def new_chain(tmp_path, config, report, fasta, previous, exclusions, muted, subs
             d / "changed_metadata.ndjson",
             "--output-sequences",
             d / "changed_sequences.ndjson",
+            *(["--fasta-ids", fasta_ids] if fasta_ids else []),
         ],
     )
     run(
@@ -432,8 +459,25 @@ def write_inputs(tmp_path, report_lines):
     return report, fasta
 
 
-@pytest.mark.parametrize("subsample", ["1.0", "0.5"])
-def test_same_outputs_as_the_chain_it_replaces(tmp_path, subsample):
+def as_mirror(tmp_path, fasta):
+    """The mirror's genomic.fna.zst, with records the release filter drops between the records of
+    fasta, and the --fasta-ids file of the filter"""
+    records = [b">" + r.lstrip(b">") for r in fasta.read_bytes().rstrip(b"\n").split(b"\n>")]
+    ids = [r[1:].split(None, 1)[0] for r in records]
+    unreleased = [b">OLD%d.1 not released\nACGT\nAC" % n for n in range(len(records))]
+    unreleased[1] = b">OLD1.1 \xff invalid UTF-8\nAC\rGT"
+    interleaved = [r for pair in zip(unreleased, records, strict=True) for r in pair]
+    mirror = tmp_path / "genomic.fna.zst"
+    mirror.write_bytes(zstd.compress(b"\n".join(interleaved) + b"\n"))
+    fasta_ids = tmp_path / "released_accessions.txt"
+    fasta_ids.write_bytes(b"".join(i + b"\n" for i in ids))
+    return mirror, fasta_ids
+
+
+@pytest.mark.parametrize(
+    ("subsample", "from_mirror"), [("1.0", False), ("0.5", False), ("1.0", True)]
+)
+def test_same_outputs_as_the_chain_it_replaces(tmp_path, subsample, from_mirror):
     lines = DATA_REPORT.read_bytes().splitlines(keepends=True)
     # a repeated accession whose second record differs: prepare_files writes both
     repeated = orjson.loads(lines[4])
@@ -500,7 +544,12 @@ def test_same_outputs_as_the_chain_it_replaces(tmp_path, subsample):
     )
 
     args = (config, report, fasta, previous_path, exclusions, muted, subsample)
-    old, new = old_chain(tmp_path, *args), new_chain(tmp_path, *args)
+    old = old_chain(tmp_path, *args)
+    if from_mirror:
+        mirror, fasta_ids = as_mirror(tmp_path, fasta)
+        new = new_chain(tmp_path, *args[:2], mirror, *args[3:], fasta_ids=fasta_ids)
+    else:
+        new = new_chain(tmp_path, *args)
 
     for name in ["to-submit", "to-revise", "to-revoke", "unchanged", "blocked", "sampled_out"]:
         assert (new / f"{name}.json").read_bytes() == (old / f"{name}.json").read_bytes(), name

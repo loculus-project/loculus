@@ -9,10 +9,15 @@ outputs are the same files compare_hashes writes, plus the metadata and sequence
 prepare_files needs: the ndjson records of the submissions and revisions, in the order the old
 metadata_post_prepare.ndjson and sequences.ndjson had them.
 
-1. Read the sequences (genomic.fna) once: the hash of each sequence and where its record is.
+1. Read the sequences once: the hash of each sequence and where its record is.
 2. Stream the data report in order: format, drop Loculus depositions, prepare, hash, filter, sample
    and compare each record, and write the metadata of the records to submit or revise.
-3. Read just the records to submit or revise back from genomic.fna.
+3. Read just the records to submit or revise back from the sequences.
+
+The sequences are genomic.fna, or the zstd-compressed FASTA of the NCBI mirror as downloaded
+(genomic.fna.zst), so that the decompressed file (~270 GB for SARS-CoV-2) is never written: it is
+decompressed twice instead, at several GB/s. --fasta-ids restricts it to the records that
+`seqkit grep -f` would have kept.
 """
 
 import hashlib
@@ -20,7 +25,7 @@ import io
 import logging
 import struct
 from collections import defaultdict
-from collections.abc import Iterator
+from collections.abc import Container, Iterator
 from dataclasses import dataclass
 from typing import Any, BinaryIO
 
@@ -42,6 +47,7 @@ from compare_hashes import (
     write_outputs,
 )
 from compare_hashes import load_config as load_compare_config
+from compression import zstd
 from filter_out_depositions import is_loculus_deposition, load_exclusions
 from format_ncbi_metadata import as_tsv_record, format_row, load_ncbi_mappings, tsv_headers
 from metadata_filter import passes_metadata_filter
@@ -71,7 +77,8 @@ SEQUENCE_ENTRY = struct.Struct("<16sQQ")
 
 @dataclass
 class SequenceIndex:
-    entries: dict[str, bytes]  # FASTA id -> SEQUENCE_ENTRY
+    # FASTA id -> SEQUENCE_ENTRY; None for a --fasta-ids id not (yet) seen in the FASTA
+    entries: dict[str, bytes | None]
     earlier_copies: dict[str, list[tuple[int, int]]]  # byte ranges of repeated FASTA ids
 
     def hash(self, fasta_id: str) -> str | None:
@@ -91,9 +98,11 @@ class SequenceIndex:
         return False
 
 
-def split_fasta_records(f: BinaryIO) -> Iterator[tuple[str, bytes, int, int]]:  # noqa: C901, PLR0912
+def split_fasta_records(  # noqa: C901, PLR0912
+    f: BinaryIO, keep: Container[str] | None = None
+) -> Iterator[tuple[str, bytes, int, int]]:
     """(id, sequence, start, end) for each record of a FASTA file opened in binary mode, with the
-    byte range [start, end) of the record
+    byte range [start, end) of the record; only the records with an id in keep, if given
 
     Ids and sequences are those of calculate_sequence_hashes.fasta_records on the file opened as
     text, which is what the hashes submitted before were computed from. Records are cut at "\\n>"
@@ -118,7 +127,7 @@ def split_fasta_records(f: BinaryIO) -> Iterator[tuple[str, bytes, int, int]]:  
                 continue
             first = len(buffer) if first < 0 else first + (buffer[first] != ord(">"))
             if b"\r" in buffer[:first]:
-                yield from _parse_as_text(buffer[:first], buffer_start, buffer_start + first)
+                yield from _parse_as_text(buffer[:first], buffer_start, buffer_start + first, keep)
             position = first
             in_record = True
         while position < len(buffer):
@@ -131,15 +140,17 @@ def split_fasta_records(f: BinaryIO) -> Iterator[tuple[str, bytes, int, int]]:  
                 end = next_record + 1
             start_offset, end_offset = buffer_start + position, buffer_start + end
             if buffer.find(b"\r", position, end) >= 0:
-                yield from _parse_as_text(buffer[position:end], start_offset, end_offset)
+                yield from _parse_as_text(buffer[position:end], start_offset, end_offset, keep)
             else:
                 header_end = buffer.find(b"\n", position, end)
                 if header_end < 0:
                     header_end = end
-                title = buffer[position + 1 : header_end].decode("utf-8")
-                name = title.split(None, 1)[0] if title.strip() else ""
-                sequence = buffer[header_end + 1 : end].replace(b"\n", b"").replace(b" ", b"")
-                yield name, sequence, start_offset, end_offset
+                title_bytes = buffer[position + 1 : header_end]
+                # a record that is not kept must not fail on invalid UTF-8, as seqkit grep drops it
+                if keep is None or _name(title_bytes.decode("utf-8", "replace")) in keep:
+                    name = _name(title_bytes.decode("utf-8"))
+                    sequence = buffer[header_end + 1 : end].replace(b"\n", b"").replace(b" ", b"")
+                    yield name, sequence, start_offset, end_offset
             position = end
         buffer_start += position
         buffer = buffer[position:]
@@ -147,16 +158,39 @@ def split_fasta_records(f: BinaryIO) -> Iterator[tuple[str, bytes, int, int]]:  
             return
 
 
-def _parse_as_text(chunk: bytes, start: int, end: int) -> Iterator[tuple[str, bytes, int, int]]:
-    text = io.StringIO(chunk.decode("utf-8"), newline=None)  # universal newlines, as open() does
-    for name, sequence in fasta_records(text):
+def _name(title: str) -> str:
+    return title.split(None, 1)[0] if title.strip() else ""
+
+
+def _parse_as_text(
+    chunk: bytes, start: int, end: int, keep: Container[str] | None
+) -> Iterator[tuple[str, bytes, int, int]]:
+    text = chunk.decode("utf-8", "surrogateescape")
+    records = fasta_records(io.StringIO(text, newline=None))  # universal newlines, as open()
+    kept = [(name, sequence) for name, sequence in records if keep is None or name in keep]
+    if kept:
+        chunk.decode("utf-8")  # invalid UTF-8 fails as in the text-mode read, if a record is kept
+    for name, sequence in kept:
         yield name, sequence.encode(), start, end
 
 
-def index_sequences(sequences_path: str) -> SequenceIndex:
-    index = SequenceIndex(entries={}, earlier_copies={})
-    with open(sequences_path, "rb") as f:
-        for name, sequence, start, end in split_fasta_records(f):
+def open_sequences(path: str) -> BinaryIO:
+    """genomic.fna, or the mirror's genomic.fna.zst: decompressed on the fly, and seeking forward
+    decompresses up to the offset"""
+    return zstd.open(path, "rb") if path.endswith(".zst") else open(path, "rb")
+
+
+def index_sequences(sequences_path: str, fasta_ids_path: str | None) -> SequenceIndex:
+    keep = None
+    entries: dict[str, bytes | None] = {}
+    if fasta_ids_path:
+        with open(fasta_ids_path, encoding="utf-8") as f:
+            # the ids to keep are the index's keys, so they cost no extra memory
+            entries = dict.fromkeys(line.rstrip("\n") for line in f)
+        keep = entries.keys()
+    index = SequenceIndex(entries=entries, earlier_copies={})
+    with open_sequences(sequences_path) as f:
+        for name, sequence, start, end in split_fasta_records(f, keep):
             digest = hashlib.md5(sequence, usedforsecurity=False).digest()
             previous = index.entries.get(name)
             if previous is not None:
@@ -165,7 +199,8 @@ def index_sequences(sequences_path: str) -> SequenceIndex:
                 _, previous_start, previous_end = SEQUENCE_ENTRY.unpack(previous)
                 index.earlier_copies.setdefault(name, []).append((previous_start, previous_end))
             index.entries[name] = SEQUENCE_ENTRY.pack(digest, start, end)
-    logger.info(f"Hashed {len(index.entries)} sequences")
+    count = sum(entry is not None for entry in index.entries.values())
+    logger.info(f"Hashed {count} sequences")
     return index
 
 
@@ -175,7 +210,7 @@ def write_sequences(
     """Sequences of fasta_ids as sequences.ndjson records, in the order of the FASTA file"""
     byte_ranges = sorted({r for fasta_id in fasta_ids for r in index.byte_ranges(fasta_id)})
     count = 0
-    with open(sequences_path, "rb") as f, open(output, "wb") as out:
+    with open_sequences(sequences_path) as f, open(output, "wb") as out:
         for start, end in byte_ranges:
             f.seek(start)
             chunk = io.BytesIO(f.read(end - start))
@@ -256,7 +291,15 @@ def write_metadata(out, metadata_id: str, record: dict[str, str]) -> None:
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--dataset-report", required=True, type=click.Path(exists=True))
-@click.option("--sequences", required=True, type=click.Path(exists=True))
+@click.option(
+    "--sequences", required=True, type=click.Path(exists=True), help="FASTA, or FASTA.zst"
+)
+@click.option(
+    "--fasta-ids",
+    required=False,
+    type=click.Path(exists=True),
+    help="Only read the FASTA records with these ids (one per line)",
+)
 @click.option("--old-hashes", required=True, type=click.Path(exists=True))
 @click.option("--exclude-insdc-accessions", required=False, type=click.Path(exists=True))
 @click.option("--muted-hashes", required=False, type=click.Path(exists=True))
@@ -279,6 +322,7 @@ def main(  # noqa: PLR0913, PLR0917
     config_file: str,
     dataset_report: str,
     sequences: str,
+    fasta_ids: str | None,
     old_hashes: str,
     exclude_insdc_accessions: str | None,
     muted_hashes: str | None,
@@ -318,7 +362,7 @@ def main(  # noqa: PLR0913, PLR0917
     )
     logger.info(f"Previously submitted INSDC accessions: {len(submitted)}")
 
-    index = index_sequences(sequences)
+    index = index_sequences(sequences, fasta_ids)
 
     repeated_ids = False
     count = 0
