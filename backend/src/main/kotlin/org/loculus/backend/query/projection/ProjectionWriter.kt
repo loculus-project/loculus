@@ -46,15 +46,13 @@ class ProjectionWriter(private val schema: QuerySchema) {
             copyRows(connection, existingEntries, direct = false)
             changed += upsert(connection)
             // entries with unchanged sequence data keep their query_mutation_data / query_sequences rows untouched
-            val sequenceDataChanged = existingEntries.filter { !it.entry.sequenceDataUnchanged }.map { it.id }
-            if (sequenceDataChanged.isNotEmpty()) {
-                changed += deleteSequences(connection, sequenceDataChanged, onlyStale = true)
-            }
+            changed += deleteStaleSequences(connection, existingEntries.filter { !it.entry.sequenceDataUnchanged })
         }
         if (deletedIds.isNotEmpty()) {
             changed += deleteIds(connection, "query_entries", deletedIds)
             changed += deleteIds(connection, "query_mutation_data", deletedIds)
-            changed += deleteSequences(connection, deletedIds.toList(), onlyStale = false)
+            val ids = deletedIds.toList()
+            changed += sequenceSlots.flatMap { slot -> deleteSequences(connection, slot, ids) }
         }
         if (changed.isNotEmpty()) recordChanges(connection, changed)
         return changed.size
@@ -225,42 +223,43 @@ class ProjectionWriter(private val schema: QuerySchema) {
         }
 
     /**
-     * Deletes query_sequences rows of [ids] (only those not in the staging table if [onlyStale]).
-     * One statement per (kind, sequence_index) slot, each an index scan on the primary key (a join with unnested
-     * arrays may be planned as a sequential scan of the whole table).
+     * Deletes the query_sequences rows that [entries] (just upserted) no longer have: per slot, the rows of entries
+     * without a sequence in that slot. Computed here rather than with an anti-join against the staging table: that
+     * table is temporary, so it never gets statistics, and the planner chose a nested loop over all staged rows for
+     * each id (0.4 s per slot and batch of 1000 SC2 entries on the preview).
      */
-    private fun deleteSequences(connection: Connection, ids: List<Int>, onlyStale: Boolean): List<Int> {
-        val staleCondition = if (onlyStale) {
-            """
-            and not exists (
-                select 1 from query_stage_sequences s
-                where s.id = t.id and s.kind = t.kind and s.sequence_index = t.sequence_index
-            )
-            """.trimIndent()
-        } else {
-            ""
+    private fun deleteStaleSequences(connection: Connection, entries: List<IdentifiedEntry>): List<Int> {
+        if (entries.isEmpty()) return emptyList()
+        return sequenceSlots.flatMap { (kind, sequenceIndex) ->
+            val stale = entries.filter { identified ->
+                identified.entry.sequences.none { it.kind.code == kind && it.sequenceIndex.toShort() == sequenceIndex }
+            }.map { it.id }
+            if (stale.isEmpty()) emptyList() else deleteSequences(connection, kind to sequenceIndex, stale)
         }
-        val sql = """
-            delete from query_sequences t
-            where t.organism = ? and t.kind = ? and t.sequence_index = ? and t.id = any(?)
-            $staleCondition
-            returning t.id
-        """.trimIndent()
-        val result = ArrayList<Int>()
-        connection.prepareStatement(sql).use {
-            val idArray = connection.createArrayOf("integer", ids.toTypedArray())
-            for ((kind, sequenceIndex) in sequenceSlots) {
-                it.setString(1, organism)
-                it.setShort(2, kind)
-                it.setShort(3, sequenceIndex)
-                it.setArray(4, idArray)
-                it.executeQuery().use { rs ->
-                    while (rs.next()) result.add(rs.getInt(1))
-                }
+    }
+
+    /**
+     * Deletes the query_sequences rows of [ids] in one (kind, sequence_index) slot: an index scan on the primary key
+     * (a join with unnested arrays over all slots may be planned as a sequential scan of the whole table).
+     */
+    private fun deleteSequences(connection: Connection, slot: Pair<Short, Short>, ids: List<Int>): List<Int> =
+        connection.prepareStatement(
+            """
+            delete from query_sequences
+            where organism = ? and kind = ? and sequence_index = ? and id = any(?)
+            returning id
+            """.trimIndent(),
+        ).use {
+            it.setString(1, organism)
+            it.setShort(2, slot.first)
+            it.setShort(3, slot.second)
+            it.setArray(4, connection.createArrayOf("integer", ids.toTypedArray()))
+            it.executeQuery().use { rs ->
+                val result = ArrayList<Int>()
+                while (rs.next()) result.add(rs.getInt(1))
+                result
             }
         }
-        return result
-    }
 
     /**
      * Appends [changedIds] to query_changelog with per-organism seqs max(seq) + 1, + 2, ... The preceding update of

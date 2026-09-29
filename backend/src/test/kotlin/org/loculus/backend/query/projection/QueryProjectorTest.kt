@@ -241,6 +241,51 @@ class QueryProjectorTest(
         assertThat(sequenceRowVersions(), equalTo(rowVersionsAfter))
     }
 
+    @Test
+    fun `a sequence that an entry no longer has is deleted, in the incremental path and in a full rebuild`() {
+        val released = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        runProjector()
+        val sequenceRows = "select count(*) from query_sequences where organism = '$DEFAULT_ORGANISM'"
+        val before = count(sequenceRows)
+
+        // remove one gene of the first entry: the entry is recomputed through the staging tables
+        val (first, second) = released.take(2).map { it.accession }
+        removeFirstGene(first)
+        runProjector()
+        assertThat(count(sequenceRows), equalTo(before - 1))
+        assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+
+        // the same in an untrusted full rebuild over the existing rows
+        removeFirstGene(second)
+        sql { c ->
+            c.createStatement().use {
+                it.executeUpdate("delete from query_dirty_accessions")
+                it.executeUpdate("update query_engine_state set encoding_hash = 'x'")
+            }
+        }
+        runProjector()
+        assertThat(count(sequenceRows), equalTo(before - 2))
+        assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+    }
+
+    private fun removeFirstGene(accession: String) = sql { c ->
+        c.prepareStatement(
+            """
+            update sequence_entries_preprocessed_data
+            set processed_data = jsonb_set(
+                processed_data,
+                array['alignedAminoAcidSequences',
+                    (select min(k) from jsonb_object_keys(processed_data -> 'alignedAminoAcidSequences') k)],
+                'null'
+            )
+            where accession = ?
+            """.trimIndent(),
+        ).use {
+            it.setString(1, accession)
+            assertThat(it.executeUpdate(), greaterThan(0))
+        }
+    }
+
     /** (id, table/slot) -> xmin of the sequence-derived rows of dummyOrganism */
     private fun sequenceRowVersions(): Map<Pair<Int, String>, String> = sql { c ->
         c.createStatement().use {
