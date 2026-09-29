@@ -250,6 +250,8 @@ developmentDatabase:
     - max_wal_size=4GB
     # above the SC2 claim query (~1 s at 500k entries, known and in pg_stat_statements) so outliers stand out
     - log_min_duration_statement=2s
+    # the default cost limit (200) held autovacuum to 15-34 MB/s on NVMe: one TOAST vacuum took 352 s (report 58)
+    - autovacuum_vacuum_cost_limit=2000
     - log_lock_waits=on
     - log_autovacuum_min_duration=1s
   # PGDATA on a PersistentVolumeClaim (the cluster's default storage class) instead of the container layer
