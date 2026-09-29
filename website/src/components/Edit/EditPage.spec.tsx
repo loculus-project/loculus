@@ -160,7 +160,7 @@ describe('EditPage', () => {
             },
         });
 
-        expect(screen.getByText('Fields that are not accepted as input')).toBeInTheDocument();
+        expect(screen.getByText('Unrecognized input fields')).toBeInTheDocument();
         expect(document.querySelector(`label[for="${noInputKey}"]`)).toBeTruthy();
 
         await userEvent.clear(screen.getByDisplayValue(noInputValue));
