@@ -143,7 +143,7 @@ resources:
           memory: "128Mi"
           cpu: "10m"
         limits:
-          memory: "768Mi"
+          memory: "1536Mi"  # PPX main peak 1,118 MiB (7 d)
       ingest:
         requests:
           memory: "128Mi"
@@ -199,7 +199,7 @@ resources:
           memory: "256Mi"
           cpu: "10m"
         limits:
-          memory: "3200Mi"
+          memory: "3712Mi"  # PPX main peak 2,834 MiB (7 d)
       ingest:
         requests:
           memory: "1024Mi"
