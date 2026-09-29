@@ -209,7 +209,7 @@ const UnknownFieldsSection: FC<Omit<MetadataFormProps, 'isSubmitForm'>> = ({
             <Subtitle title='Unrecognized input fields' small />
             <tr>
                 <td colSpan={3} className='text-sm text-gray-600'>
-                    These fields were submitted but are not valid input fields. Clear their values to remove them.
+                    These fields were submitted but are not recognized input fields. Clear their values to remove them.
                 </td>
             </tr>
             {unknownRows.map((row) => (
