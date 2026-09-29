@@ -160,10 +160,11 @@ resources:
       memory: "10Gi"
   backend:
     # startup loads every organism's index at once: live heap 3.2 GB at 277k SC2 entries, 4.6 GB at ~600k (~4 KB per
-    # entry), so ~10 GB at the ~1.95M SC2 target. The request stays low enough to fit next to the database
-    # (colocateBackend is only a preference): on another node exports are capped by the 1 Gbit/s link.
+    # entry), so ~10 GB at the ~1.95M SC2 target. The request is kept small so that the old and the new pod of a
+    # rolling update both fit next to the database (colocateBackend is only a preference, and the database's node
+    # has ~3.5 GiB of requests free): on another node exports are capped by the 1 Gbit/s link.
     requests:
-      memory: "6Gi"
+      memory: "3Gi"
       cpu: "500m"
     limits:
       memory: "24Gi"
