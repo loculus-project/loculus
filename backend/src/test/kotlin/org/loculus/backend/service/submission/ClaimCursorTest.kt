@@ -82,4 +82,19 @@ class ClaimCursorTest(
         assertThat(claim(100), `is`(listOf(submitted[0])))
         assertThat(claim(100), `is`(emptyList()))
     }
+
+    @Test
+    fun `entries reset by the stale-claim clean-up are claimed by the next claim, before the next full scan`() {
+        val submitted = convenienceClient.submitDefaultFiles().submissionIdMappings
+            .map { AccessionVersion(it.accession, it.version) }
+            .sortedWith(compareBy({ it.accession }, { it.version }))
+        Thread.sleep(FULL_SCAN_INTERVAL_SECONDS * 1000 + 100)
+
+        assertThat(claim(100), `is`(submitted))
+        assertThat(claim(100), `is`(emptyList()))
+        Thread.sleep(100)
+
+        submissionDatabaseService.cleanUpStaleSequencesInProcessing(timeToStaleInSeconds = 0)
+        assertThat(claim(100), `is`(submitted))
+    }
 }

@@ -196,6 +196,27 @@ class SubmissionDatabaseService(
         }
     }
 
+    /**
+     * Deleting preprocessed rows makes their entries claimable again, but they sort before the claim cursor. The
+     * delete bumps the update tracker, so each poller gets one full response for it and then 304s until the next
+     * write; that one claim must scan from the start or the entries wait for an unrelated write. Forgets the
+     * organism's cursors before and after the deleting transaction commits: a claim running in between cannot see
+     * the deleted rows yet.
+     */
+    private fun forgetClaimCursorsAroundCommit(organism: String?) {
+        val forget: () -> Unit = {
+            if (organism == null) claimCursors.clear() else claimCursors.keys.removeIf { it.first == organism }
+        }
+        forget()
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                object : TransactionSynchronization {
+                    override fun afterCommit() = forget()
+                },
+            )
+        }
+    }
+
     /** claims up to [limit] of the organism's remembered revisions; the rest were claimed or processed already */
     private fun claimRevisedEntries(organism: Organism, limit: Int, pipelineVersion: Long): List<AccessionVersion> {
         val queue = revisedAwaitingClaim[organism.name] ?: return emptyList()
@@ -1578,6 +1599,7 @@ class SubmissionDatabaseService(
         SequenceEntriesPreprocessedDataTable.deleteWhere {
             accessionVersionEquals(editedSequenceEntryData)
         }
+        forgetClaimCursorsAroundCommit(organism.name)
 
         auditLogger.log(
             authenticatedUser.username,
@@ -1817,6 +1839,9 @@ class SubmissionDatabaseService(
         if (staleSequencesExist) {
             val numberDeleted = SequenceEntriesPreprocessedDataTable.deleteWhere {
                 statusIs(IN_PROCESSING) and startedProcessingAtColumn.less(staleDateTime)
+            }
+            if (numberDeleted > 0) {
+                forgetClaimCursorsAroundCommit(organism = null)
             }
             log.info { "Cleaned up $numberDeleted stale sequences in processing" }
         } else {
