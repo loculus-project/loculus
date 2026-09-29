@@ -2,7 +2,7 @@ import dataclasses
 import json
 import logging
 import os
-from collections import defaultdict
+import sys
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from http import HTTPMethod, HTTPStatus
@@ -143,6 +143,7 @@ def make_request(  # noqa: PLR0913, PLR0917
 
     if response.status_code == 423:
         logger.warning(f"Got 423 from {url}. Retrying after 30 seconds.")
+        response.close()
         sleep(30)
         return make_request(method, url, config, params, files, json_body, stream)
 
@@ -456,8 +457,12 @@ def approve(config: ApproveConfig):
     return response.json()
 
 
-def get_sequence_status(config: Config):
-    """Get status of each sequence"""
+def get_sequence_status(config: Config) -> dict[str, str]:
+    """Status of each sequence entry, keyed by "accession.version"
+
+    The entries are taken from the parser as it builds them (object_hook) rather than from the
+    parsed list, which for SARS-CoV-2's millions of entries held ~1 kB per entry at once.
+    """
     url = f"{organism_url(config)}/get-sequences"
 
     params = {
@@ -466,19 +471,19 @@ def get_sequence_status(config: Config):
 
     response = make_request(HTTPMethod.GET, url, config, params=params)
 
-    # Turn into dict with {accession: {version: status}}
-    result = defaultdict(dict)
-    entries = []
+    result: dict[str, str] = {}
+
+    def take_entry(obj: dict[str, Any]) -> dict[str, Any] | None:
+        if "accession" in obj and "status" in obj:
+            result[f"{obj['accession']}.{obj['version']}"] = sys.intern(obj["status"])
+            return None
+        return obj
+
     try:
-        entries = response.json()["sequenceEntries"]
+        response.json(object_hook=take_entry)
     except requests.JSONDecodeError:
         logger.warning(f"Error decoding JSON of /get-sequences: {response.text}")
-    for entry in entries:
-        accession = entry["accession"]
-        version = entry["version"]
-        status = entry["status"]
-        result[accession][version] = status
-
+        result.clear()
     return result
 
 
@@ -564,13 +569,13 @@ def get_submitted(
 
     get_submitted_metadata(config, write, fields, accessionVersionsFilter)
 
-    statuses: dict[str, dict[int, str]] = get_sequence_status(config)
-    logger.info(f"Got info on {len(statuses.keys())} previously submitted sequences/accessions")
+    statuses = get_sequence_status(config)
+    logger.info(f"Got the status of {len(statuses)} previously submitted sequence entries")
 
     with open(without_status, "rb") as f, open(output, "wb") as out:
         for line in f:
             entry = orjson.loads(line)
-            entry["status"] = statuses.get(entry["accession"], {}).get(entry["version"], "UNKNOWN")
+            entry["status"] = statuses.get(f"{entry['accession']}.{entry['version']}", "UNKNOWN")
             out.write(orjson.dumps(entry) + b"\n")
     os.remove(without_status)
     return None
