@@ -4,7 +4,7 @@ import logging
 import os
 from collections import defaultdict
 from dataclasses import dataclass
-from http import HTTPMethod
+from http import HTTPMethod, HTTPStatus
 from io import BytesIO
 from time import sleep
 from typing import Any, Literal
@@ -14,6 +14,10 @@ import orjsonl
 import requests
 
 logger = logging.getLogger(__name__)
+
+KEYCLOAK_RETRY_INITIAL_DELAY_SECONDS = 5.0
+KEYCLOAK_RETRY_MAX_DELAY_SECONDS = 30.0
+KEYCLOAK_RETRY_MAX_WAIT_SECONDS = 300.0
 
 
 @dataclass(kw_only=True)
@@ -67,12 +71,34 @@ def get_jwt(config: ApproveConfig) -> str:
 
     keycloak_token_url = config.keycloak_token_url
 
-    response = requests.post(
-        keycloak_token_url,
-        data=data,
-        headers=headers,
-        timeout=config.backend_request_timeout_seconds,
-    )
+    # Keycloak restarts with deployments (~1-2 min unreachable). A failed token request fails the
+    # whole ingest run, and its job retries then stop at the version check, so ride out a restart
+    # instead. Client errors (e.g. wrong credentials) still fail at once.
+    waited = 0.0
+    delay = KEYCLOAK_RETRY_INITIAL_DELAY_SECONDS
+    while True:
+        try:
+            response = requests.post(
+                keycloak_token_url,
+                data=data,
+                headers=headers,
+                timeout=config.backend_request_timeout_seconds,
+            )
+            if response.status_code < HTTPStatus.INTERNAL_SERVER_ERROR:
+                break
+            problem = f"status {response.status_code}"
+        except (requests.ConnectionError, requests.Timeout) as e:
+            problem = type(e).__name__
+        if waited >= KEYCLOAK_RETRY_MAX_WAIT_SECONDS:
+            logger.error(f"Keycloak token request still failing ({problem}) after {waited:.0f} s")
+            if problem.startswith("status"):
+                break
+            msg = f"Keycloak unreachable at {keycloak_token_url} ({problem})"
+            raise requests.ConnectionError(msg)
+        logger.warning(f"Keycloak token request failed ({problem}); retrying in {delay:.0f} s")
+        sleep(delay)
+        waited += delay
+        delay = min(delay * 2, KEYCLOAK_RETRY_MAX_DELAY_SECONDS)
     response.raise_for_status()
 
     jwt_keycloak = response.json()
