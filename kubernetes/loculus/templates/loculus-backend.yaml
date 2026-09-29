@@ -20,6 +20,12 @@ metadata:
     argocd.argoproj.io/sync-options: Replace=true
 spec:
   replicas: {{$.Values.replicas.backend}}
+  {{- if and .Values.runDevelopmentMainDatabase .Values.developmentDatabase.colocateBackend }}
+  # Colocation is only a preferred affinity. A rolling update starts the new pod while the old one still holds its
+  # memory request on the database's node, so the new pod lands elsewhere; stop the old one first.
+  strategy:
+    type: Recreate
+  {{- end }}
   selector:
     matchLabels:
       app: loculus

@@ -6,6 +6,15 @@
 {{- $testconfig := .Values.testconfig | default false }}
 {{- $keycloakHost := $testconfig | ternary (printf "http://%s:8083" $.Values.localHost) "http://loculus-keycloak-service:8083" }}
 {{- if not .Values.disablePreprocessing }}
+{{- $affinity := deepCopy (.Values.podScheduling.affinity | default dict) }}
+{{- if and .Values.runDevelopmentMainDatabase .Values.developmentDatabase.colocateBackend }}
+{{- /* keep CPU-heavy preprocessing off the node the dev database and the backend share */}}
+{{- $podAntiAffinity := $affinity.podAntiAffinity | default dict }}
+{{- $preferred := $podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution | default list }}
+{{- $term := dict "weight" 50 "podAffinityTerm" (dict "topologyKey" "kubernetes.io/hostname" "labelSelector" (dict "matchLabels" (dict "app" "loculus" "component" "database"))) }}
+{{- $_ := set $podAntiAffinity "preferredDuringSchedulingIgnoredDuringExecution" (append $preferred $term) }}
+{{- $_ := set $affinity "podAntiAffinity" $podAntiAffinity }}
+{{- end }}
 {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $organism := $item.key }}
 {{- $flattened := include "loculus.flattenPreprocessingVersions" $item.contents.preprocessing | fromJson }}
@@ -34,7 +43,7 @@ spec:
         component: loculus-preprocessing-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
-      {{- include "loculus.podScheduling" $ | nindent 6 }}
+      {{- include "loculus.podSchedulingWithAffinity" (list $ $affinity) | nindent 6 }}
       containers:
         - name: preprocessing-{{ $organism }}
           image: {{ $processingConfig.image}}:{{ $thisDockerTag }}
