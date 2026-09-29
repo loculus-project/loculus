@@ -372,15 +372,14 @@ def _try_compute_length_field(
 def _check_submitted_metadata(
     submitted_metadata: InputMetadata,
     config: Config,
-) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
+) -> list[ProcessingAnnotation]:
     """Validates that metadata submitted by the user matches the config:
     - adds a warning if a user-provided field is not recognized (it will be ignored)
-    - adds an error if a user provided a value for a field marked `noInput`
+    - adds a warning if a user provided a value for a field marked `noInput`
 
     For fields without a value, validation is skipped (e.g. an empty
     column in a submitted metadata file).
     """
-    errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
     for field_name, value in submitted_metadata.items():
         if null_per_backend(value):
@@ -394,15 +393,14 @@ def _check_submitted_metadata(
             )
         elif not config.is_user_input(field_name):
             message = (
-                f"Metadata field `{field_name}` may not be provided as input. "
-                "Please remove it from your metadata."
+                f"Metadata field `{field_name}` may not be provided as input and will be ignored."
             )
-            errors.append(
+            warnings.append(
                 ProcessingAnnotation.from_single(
                     field_name, AnnotationSourceType.METADATA, message
                 ),
             )
-    return errors, warnings
+    return warnings
 
 
 def get_output_metadata(  # noqa: C901
@@ -417,9 +415,7 @@ def get_output_metadata(  # noqa: C901
     context = unprocessed.context
 
     if not context.is_insdc_ingest_group:
-        new_errors, new_warnings = _check_submitted_metadata(unprocessed.metadata, config)
-        errors.extend(new_errors)
-        warnings.extend(new_warnings)
+        warnings.extend(_check_submitted_metadata(unprocessed.metadata, config))
 
     for output_field in config.processing_order:
         spec = config.processing_spec[output_field]

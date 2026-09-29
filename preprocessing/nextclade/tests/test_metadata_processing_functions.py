@@ -1148,13 +1148,8 @@ def test_required_field_message_lists_only_user_input_fields() -> None:
             "non_user_input",
             "illegal_user_input",
             False,
-            [
-                (
-                    "Metadata field `non_user_input` may not be provided as input. "
-                    "Please remove it from your metadata."
-                )
-            ],
             [],
+            ["Metadata field `non_user_input` may not be provided as input and will be ignored."],
         ),
         # A field without a processing spec and not declared as an extraInputField
         (
