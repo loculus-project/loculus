@@ -171,7 +171,7 @@ describe('EditPage', () => {
     test('should not show the unknown fields section when all fields are input fields', () => {
         renderEditPage();
 
-        expect(screen.queryByText('Fields that are not accepted as input')).not.toBeInTheDocument();
+        expect(screen.queryByText('Unrecognized input fields')).not.toBeInTheDocument();
     });
 
     test('should refuse to submit edits when the sequence was discarded', async () => {
