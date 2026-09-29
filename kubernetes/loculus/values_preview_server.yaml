@@ -93,150 +93,232 @@ website:
 # SARS-CoV-2 ingest (892k records) outlasted the 30 min default and was killed mid-submission
 ingestLimitSeconds: 10800
 resources:
-  # PPX organisms: requests at ~1.1-1.3x their peak working set on PPX staging during the 2026-09-28 reprocess
-  # (grafana.pathoplexus.org, max_over_time 3d; report 59), so the scheduler counts the bootstrap's real footprint
-  # instead of 200Mi/100Mi per pod. Preprocessing already prefers nodes other than the database's.
   organismSpecific:
-    mpox:
-      preprocessing:
-        requests:
-          memory: "2560Mi"
-          cpu: "10m"
-        limits:
-          memory: "3Gi"
-      ingest:
-        requests:
-          memory: "3584Mi"
-          cpu: "50m"
-        limits:
-          cpu: "1000m"
-          memory: "10Gi"
-    hmpv:
-      preprocessing:
-        requests:
-          memory: "768Mi"
-          cpu: "10m"
-        limits:
-          memory: "3Gi"
-    dengue:
-      preprocessing:
-        requests:
-          memory: "768Mi"
-          cpu: "10m"
-        limits:
-          memory: "3Gi"
-      ingest:
-        requests:
-          memory: "768Mi"
-          cpu: "50m"
-        limits:
-          cpu: "1000m"
-          memory: "10Gi"
-    cchf:
-      preprocessing:
-        requests:
-          memory: "768Mi"
-          cpu: "10m"
-        limits:
-          memory: "3Gi"
-    measles:
-      preprocessing:
-        requests:
-          memory: "768Mi"
-          cpu: "10m"
-        limits:
-          memory: "3Gi"
-    rsv-a:
-      preprocessing:
-        requests:
-          memory: "512Mi"
-          cpu: "10m"
-        limits:
-          memory: "3Gi"
-      ingest:
-        requests:
-          memory: "1Gi"
-          cpu: "50m"
-        limits:
-          cpu: "1000m"
-          memory: "10Gi"
-    rsv-b:
-      preprocessing:
-        requests:
-          memory: "512Mi"
-          cpu: "10m"
-        limits:
-          memory: "3Gi"
-      ingest:
-        requests:
-          memory: "1Gi"
-          cpu: "50m"
-        limits:
-          cpu: "1000m"
-          memory: "10Gi"
-    andv:
-      preprocessing:
-        requests:
-          memory: "512Mi"
-          cpu: "10m"
-        limits:
-          memory: "3Gi"
-    chikungunya:
-      preprocessing:
-        requests:
-          memory: "512Mi"
-          cpu: "10m"
-        limits:
-          memory: "3Gi"
-    ebola-bdbv:
-      preprocessing:
-        requests:
-          memory: "512Mi"
-          cpu: "10m"
-        limits:
-          memory: "3Gi"
-    ebola-sudan:
-      preprocessing:
-        requests:
-          memory: "512Mi"
-          cpu: "10m"
-        limits:
-          memory: "3Gi"
+  # PPX organisms (generated, port_ppx_organisms.py): requests = typical use, limits = measured peak x 1.3, at least 512Mi
     ebola-zaire:
       preprocessing:
         requests:
-          memory: "512Mi"
+          memory: "128Mi"
           cpu: "10m"
         limits:
-          memory: "3Gi"
-    marburg:
+          memory: "640Mi"
+      ingest:
+        requests:
+          memory: "128Mi"
+          cpu: "50m"
+        limits:
+          memory: "512Mi"
+          cpu: "1000m"
+    ebola-sudan:
       preprocessing:
         requests:
-          memory: "512Mi"
+          memory: "128Mi"
           cpu: "10m"
         limits:
-          memory: "3Gi"
+          memory: "512Mi"
+      ingest:
+        requests:
+          memory: "128Mi"
+          cpu: "50m"
+        limits:
+          memory: "512Mi"
+          cpu: "1000m"
+    ebola-bdbv:
+      preprocessing:
+        requests:
+          memory: "128Mi"
+          cpu: "10m"
+        limits:
+          memory: "512Mi"
+      ingest:
+        requests:
+          memory: "128Mi"
+          cpu: "50m"
+        limits:
+          memory: "512Mi"
+          cpu: "1000m"
+    dengue:
+      preprocessing:
+        requests:
+          memory: "128Mi"
+          cpu: "10m"
+        limits:
+          memory: "768Mi"
+      ingest:
+        requests:
+          memory: "128Mi"
+          cpu: "50m"
+        limits:
+          memory: "704Mi"
+          cpu: "1000m"
     west-nile:
       preprocessing:
         requests:
-          memory: "512Mi"
+          memory: "128Mi"
           cpu: "10m"
         limits:
-          memory: "3Gi"
+          memory: "704Mi"
+      ingest:
+        requests:
+          memory: "128Mi"
+          cpu: "50m"
+        limits:
+          memory: "512Mi"
+          cpu: "1000m"
+    andv:
+      preprocessing:
+        requests:
+          memory: "128Mi"
+          cpu: "10m"
+        limits:
+          memory: "512Mi"
+      ingest:
+        requests:
+          memory: "128Mi"
+          cpu: "50m"
+        limits:
+          memory: "512Mi"
+          cpu: "1000m"
+    cchf:
+      preprocessing:
+        requests:
+          memory: "128Mi"
+          cpu: "10m"
+        limits:
+          memory: "768Mi"
+      ingest:
+        requests:
+          memory: "128Mi"
+          cpu: "50m"
+        limits:
+          memory: "512Mi"
+          cpu: "1000m"
+    mpox:
+      preprocessing:
+        requests:
+          memory: "256Mi"
+          cpu: "10m"
+        limits:
+          memory: "3200Mi"
+      ingest:
+        requests:
+          memory: "1024Mi"
+          cpu: "50m"
+        limits:
+          memory: "4224Mi"
+          cpu: "1000m"
+    rsv-a:
+      preprocessing:
+        requests:
+          memory: "128Mi"
+          cpu: "10m"
+        limits:
+          memory: "512Mi"
+      ingest:
+        requests:
+          memory: "512Mi"
+          cpu: "50m"
+        limits:
+          memory: "1024Mi"
+          cpu: "1000m"
+    rsv-b:
+      preprocessing:
+        requests:
+          memory: "128Mi"
+          cpu: "10m"
+        limits:
+          memory: "512Mi"
+      ingest:
+        requests:
+          memory: "512Mi"
+          cpu: "50m"
+        limits:
+          memory: "960Mi"
+          cpu: "1000m"
+    hmpv:
+      preprocessing:
+        requests:
+          memory: "128Mi"
+          cpu: "10m"
+        limits:
+          memory: "960Mi"
+      ingest:
+        requests:
+          memory: "128Mi"
+          cpu: "50m"
+        limits:
+          memory: "512Mi"
+          cpu: "1000m"
+    measles:
+      preprocessing:
+        requests:
+          memory: "128Mi"
+          cpu: "10m"
+        limits:
+          memory: "768Mi"
+      ingest:
+        requests:
+          memory: "128Mi"
+          cpu: "50m"
+        limits:
+          memory: "512Mi"
+          cpu: "1000m"
+    marburg:
+      preprocessing:
+        requests:
+          memory: "128Mi"
+          cpu: "10m"
+        limits:
+          memory: "512Mi"
+      ingest:
+        requests:
+          memory: "128Mi"
+          cpu: "50m"
+        limits:
+          memory: "512Mi"
+          cpu: "1000m"
     yellow-fever:
       preprocessing:
         requests:
-          memory: "512Mi"
+          memory: "128Mi"
           cpu: "10m"
         limits:
-          memory: "3Gi"
+          memory: "576Mi"
+      ingest:
+        requests:
+          memory: "128Mi"
+          cpu: "50m"
+        limits:
+          memory: "512Mi"
+          cpu: "1000m"
     zika:
       preprocessing:
         requests:
-          memory: "512Mi"
+          memory: "128Mi"
           cpu: "10m"
         limits:
-          memory: "3Gi"
+          memory: "512Mi"
+      ingest:
+        requests:
+          memory: "128Mi"
+          cpu: "50m"
+        limits:
+          memory: "512Mi"
+          cpu: "1000m"
+    chikungunya:
+      preprocessing:
+        requests:
+          memory: "128Mi"
+          cpu: "10m"
+        limits:
+          memory: "512Mi"
+      ingest:
+        requests:
+          memory: "128Mi"
+          cpu: "50m"
+        limits:
+          memory: "512Mi"
+          cpu: "1000m"
     sars-cov-2:
       # hashes all 892k released-since records before subsampling; ~30 GB per FASTA copy on node disk
       ingest:
@@ -2109,7 +2191,7 @@ organisms:
       image: ghcr.io/loculus-project/preprocessing-nextclade
       args:
       - prepro
-      replicas: 20
+      replicas: 2  # was 20 for the 3.8M bootstrap; raise again before submitting many SC2 sequences
       configFile:
         log_level: DEBUG
         batch_size: 100
@@ -2350,7 +2432,7 @@ organisms:
       configFile:
         log_level: DEBUG
         batch_size: 100
-        create_embl_file: true
+        create_embl_file: false
         segments:
         - name: L
           references:
@@ -2800,8 +2882,6 @@ organisms:
       files:
       - name: rawReads
         displayName: Raw reads
-      - name: annotations
-        displayName: Annotations
       loadSequencesAutomatically: true
       richFastaHeaderFields:
       - displayName
@@ -3963,7 +4043,7 @@ organisms:
         molecule_type: genomic RNA
         log_level: DEBUG
         batch_size: 100
-        create_embl_file: true
+        create_embl_file: false
         backend_request_timeout_seconds: 600
         segments:
         - name: main
@@ -4074,7 +4154,7 @@ organisms:
         molecule_type: genomic RNA
         log_level: DEBUG
         batch_size: 100
-        create_embl_file: true
+        create_embl_file: false
         backend_request_timeout_seconds: 600
         segments:
         - name: main
@@ -4093,7 +4173,8 @@ organisms:
             - VP24
             - L
       version:
-      - 29
+      - 1
+      - 2
     ingest:
       image: ghcr.io/loculus-project/ingest
       configFile:
@@ -4138,8 +4219,6 @@ organisms:
       files:
       - name: rawReads
         displayName: Raw reads
-      - name: annotations
-        displayName: Annotations
       loadSequencesAutomatically: true
       richFastaHeaderFields:
       - displayName
@@ -4201,7 +4280,7 @@ organisms:
         molecule_type: genomic RNA
         log_level: DEBUG
         batch_size: 100
-        create_embl_file: true
+        create_embl_file: false
         backend_request_timeout_seconds: 600
         segments:
         - name: main
@@ -4262,8 +4341,6 @@ organisms:
       files:
       - name: rawReads
         displayName: Raw reads
-      - name: annotations
-        displayName: Annotations
       loadSequencesAutomatically: true
       richFastaHeaderFields:
       - displayName
@@ -4437,14 +4514,14 @@ organisms:
           args:
             pattern: ^EPI_ISL_[0-9]+$
     preprocessing:
-    - replicas: 3
+    - replicas: 1
       image: ghcr.io/loculus-project/preprocessing-nextclade
       args:
       - prepro
       configFile:
         log_level: DEBUG
         batch_size: 100
-        create_embl_file: true
+        create_embl_file: false
         backend_request_timeout_seconds: 600
         segment_classification_method: minimizer
         minimizer_url: https://loculus-project.github.io/nextclade-sort-minimizers/data/dengue/minimizer.json
@@ -4751,7 +4828,7 @@ organisms:
         molecule_type: genomic RNA
         log_level: DEBUG
         batch_size: 100
-        create_embl_file: true
+        create_embl_file: false
         backend_request_timeout_seconds: 600
         segments:
         - name: main
@@ -4771,8 +4848,7 @@ organisms:
             - 2K
             - NS4B
             - NS5
-      version:
-      - 30
+      version: 1
     ingest:
       image: ghcr.io/loculus-project/ingest
       configFile:
@@ -4822,8 +4898,6 @@ organisms:
       files:
       - name: rawReads
         displayName: Raw reads
-      - name: annotations
-        displayName: Annotations
       loadSequencesAutomatically: true
       richFastaHeaderFields:
       - displayName
@@ -4889,7 +4963,7 @@ organisms:
         molecule_type: genomic RNA
         log_level: DEBUG
         batch_size: 100
-        create_embl_file: true
+        create_embl_file: false
         backend_request_timeout_seconds: 600
         alignment_requirement: ANY
         segment_classification_method: minimizer
@@ -5069,7 +5143,7 @@ organisms:
         molecule_type: genomic RNA
         log_level: DEBUG
         batch_size: 100
-        create_embl_file: true
+        create_embl_file: false
         backend_request_timeout_seconds: 600
         segments:
         - name: L
@@ -5094,8 +5168,7 @@ organisms:
             genes:
             - NP
         segment_classification_method: align
-      version:
-      - 26
+      version: 1
     ingest:
       image: ghcr.io/loculus-project/ingest
       configFile:
@@ -5139,8 +5212,6 @@ organisms:
       files:
       - name: rawReads
         displayName: Raw reads
-      - name: annotations
-        displayName: Annotations
       loadSequencesAutomatically: true
       richFastaHeaderFields:
       - displayName
@@ -5255,7 +5326,7 @@ organisms:
         lineageSystem: mpoxOutbreakLineage
       - *id042
     preprocessing:
-    - replicas: 3
+    - replicas: 1
       image: ghcr.io/loculus-project/preprocessing-nextclade
       args:
       - prepro
@@ -5265,7 +5336,7 @@ organisms:
         molecule_type: genomic DNA
         log_level: DEBUG
         batch_size: 5
-        create_embl_file: true
+        create_embl_file: false
         backend_request_timeout_seconds: 600
         segments:
         - name: main
@@ -5450,7 +5521,7 @@ organisms:
             - OPG209
             - OPG210
       version:
-      - 29
+      - 28
     ingest:
       image: ghcr.io/loculus-project/ingest
       configFile:
@@ -5827,8 +5898,6 @@ organisms:
       files:
       - name: rawReads
         displayName: Raw reads
-      - name: annotations
-        displayName: Annotations
       loadSequencesAutomatically: true
       richFastaHeaderFields:
       - displayName
@@ -5887,7 +5956,7 @@ organisms:
         notSearchable: true
       - *id042
     preprocessing:
-    - replicas: 3
+    - replicas: 1
       image: ghcr.io/loculus-project/preprocessing-nextclade
       args:
       - prepro
@@ -5897,7 +5966,7 @@ organisms:
         molecule_type: genomic RNA
         log_level: DEBUG
         batch_size: 100
-        create_embl_file: true
+        create_embl_file: false
         backend_request_timeout_seconds: 600
         segments:
         - name: main
@@ -5976,8 +6045,6 @@ organisms:
       files:
       - name: rawReads
         displayName: Raw reads
-      - name: annotations
-        displayName: Annotations
       loadSequencesAutomatically: true
       richFastaHeaderFields:
       - displayName
@@ -6023,7 +6090,7 @@ organisms:
       - *id045
       - *id042
     preprocessing:
-    - replicas: 3
+    - replicas: 1
       image: ghcr.io/loculus-project/preprocessing-nextclade
       args:
       - prepro
@@ -6033,7 +6100,7 @@ organisms:
         molecule_type: genomic RNA
         log_level: DEBUG
         batch_size: 100
-        create_embl_file: true
+        create_embl_file: false
         backend_request_timeout_seconds: 600
         segments:
         - name: main
@@ -6112,8 +6179,6 @@ organisms:
       files:
       - name: rawReads
         displayName: Raw reads
-      - name: annotations
-        displayName: Annotations
       loadSequencesAutomatically: true
       richFastaHeaderFields:
       - displayName
@@ -6159,7 +6224,7 @@ organisms:
         orderOnDetailsPage: 740
         lineageSystem: hmpv
     preprocessing:
-    - replicas: 2
+    - replicas: 1
       image: ghcr.io/loculus-project/preprocessing-nextclade
       args:
       - prepro
@@ -6169,7 +6234,7 @@ organisms:
         molecule_type: genomic RNA
         log_level: DEBUG
         batch_size: 100
-        create_embl_file: true
+        create_embl_file: false
         backend_request_timeout_seconds: 600
         segments:
         - name: main
@@ -6233,8 +6298,6 @@ organisms:
       files:
       - name: rawReads
         displayName: Raw reads
-      - name: annotations
-        displayName: Annotations
       loadSequencesAutomatically: true
       richFastaHeaderFields:
       - displayName
@@ -6316,7 +6379,7 @@ organisms:
         example: Isolate 1
         desired: true
     preprocessing:
-    - replicas: 3
+    - replicas: 1
       image: ghcr.io/loculus-project/preprocessing-nextclade
       args:
       - prepro
@@ -6326,7 +6389,7 @@ organisms:
         molecule_type: genomic RNA
         log_level: DEBUG
         batch_size: 100
-        create_embl_file: true
+        create_embl_file: false
         backend_request_timeout_seconds: 600
         segments:
         - name: main
@@ -6387,8 +6450,6 @@ organisms:
       files:
       - name: rawReads
         displayName: Raw reads
-      - name: annotations
-        displayName: Annotations
       loadSequencesAutomatically: true
       richFastaHeaderFields:
       - displayName
@@ -6453,7 +6514,7 @@ organisms:
         molecule_type: viral cRNA
         log_level: DEBUG
         batch_size: 100
-        create_embl_file: true
+        create_embl_file: false
         backend_request_timeout_seconds: 600
         segments:
         - name: main
@@ -6511,8 +6572,6 @@ organisms:
       files:
       - name: rawReads
         displayName: Raw reads
-      - name: annotations
-        displayName: Annotations
       loadSequencesAutomatically: true
       richFastaHeaderFields:
       - displayName
@@ -6602,7 +6661,7 @@ organisms:
         molecule_type: genomic RNA
         log_level: DEBUG
         batch_size: 100
-        create_embl_file: true
+        create_embl_file: false
         backend_request_timeout_seconds: 600
         segments:
         - name: main
@@ -6676,8 +6735,6 @@ organisms:
       files:
       - name: rawReads
         displayName: Raw reads
-      - name: annotations
-        displayName: Annotations
       loadSequencesAutomatically: true
       richFastaHeaderFields:
       - displayName
@@ -6744,7 +6801,7 @@ organisms:
         molecule_type: genomic RNA
         log_level: DEBUG
         batch_size: 100
-        create_embl_file: true
+        create_embl_file: false
         backend_request_timeout_seconds: 600
         segments:
         - name: main
@@ -6823,8 +6880,6 @@ organisms:
       files:
       - name: rawReads
         displayName: Raw reads
-      - name: annotations
-        displayName: Annotations
       loadSequencesAutomatically: true
       richFastaHeaderFields:
       - displayName
@@ -6879,7 +6934,7 @@ organisms:
         molecule_type: genomic RNA
         log_level: DEBUG
         batch_size: 100
-        create_embl_file: true
+        create_embl_file: false
         backend_request_timeout_seconds: 600
         segments:
         - name: main
