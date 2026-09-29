@@ -457,6 +457,13 @@ developmentDatabase:
     - log_min_duration_statement=2s
     # the default cost limit (200) held autovacuum to 15-34 MB/s on NVMe: one TOAST vacuum took 352 s (report 58)
     - autovacuum_vacuum_cost_limit=2000
+    # the defaults (vacuum 20 %, analyze 10 % of a table) left sequence_entries unanalyzed for 12 h after a 1M ingest,
+    # and the stale statistics picked a 2.4 s plan over a 30 ms one for the approve query
+    - autovacuum_vacuum_scale_factor=0.02
+    - autovacuum_vacuum_insert_scale_factor=0.02
+    - autovacuum_analyze_scale_factor=0.01
+    - autovacuum_naptime=15s
+    - maintenance_work_mem=1GB
     - log_lock_waits=on
     - log_autovacuum_min_duration=1s
   # PGDATA on a PersistentVolumeClaim (the cluster's default storage class) instead of the container layer
