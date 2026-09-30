@@ -144,7 +144,7 @@ class FilesController(
     ): List<FileIdAndWriteUrl> {
         filesPreconditionValidator.validateNumberFiles(numberFiles)
         filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
-        submissionLimitService.validateFileUploadLimit(numberFiles.toLong())
+        submissionLimitService.validateFileUploadLimit(groupId, numberFiles.toLong())
 
         val fileIds = generateFileIds(numberFiles)
         filesDatabaseService.createFileEntries(fileIds, authenticatedUser.username, groupId)
@@ -180,7 +180,7 @@ class FilesController(
     ): List<FileIdAndMultipartWriteUrl> {
         filesPreconditionValidator.validateNumberFiles(numberFiles)
         filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
-        submissionLimitService.validateFileUploadLimit(numberFiles.toLong())
+        submissionLimitService.validateFileUploadLimit(groupId, numberFiles.toLong())
 
         return generateFileIds(numberFiles).map { fileId ->
             val multipartUploadHandler = s3Service.initiateMultipartUploadAndCreateUrlsToUpload(fileId, numberParts)

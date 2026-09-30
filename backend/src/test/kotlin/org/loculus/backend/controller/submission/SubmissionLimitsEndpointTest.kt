@@ -3,6 +3,7 @@ package org.loculus.backend.controller.submission
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.hasSize
 import org.junit.jupiter.api.Test
 import org.loculus.backend.config.BackendConfig
@@ -32,6 +33,10 @@ private const val MAX_NEW_SEQUENCE_ENTRIES = 15L
 private const val MAX_REVISIONS = 5L
 private const val MAX_FILE_UPLOAD_REQUESTS = 3L
 
+// Group IDs restart at 1 for every test, so the third and fourth group created in a test get these IDs.
+private const val EXEMPT_GROUP_ID = 3
+private const val TRUSTED_GROUP_ID = 4
+
 @EndpointTest(
     properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
 )
@@ -51,7 +56,9 @@ class SubmissionLimitsEndpointTest(
 
         submissionControllerClient.submit(DefaultFiles.metadataFile, DefaultFiles.sequencesFile, groupId = groupId)
             .andExpect(status().isTooManyRequests)
-            .andExpect(content().string(containsString("at most $MAX_NEW_SEQUENCE_ENTRIES new sequence entries")))
+            .andExpect(
+                content().string(containsString("quota of $MAX_NEW_SEQUENCE_ENTRIES new sequence entries shared")),
+            )
             .andExpect(content().string(containsString("10 have been created")))
 
         assertThat(convenienceClient.getSequenceEntries().sequenceEntries, hasSize(10))
@@ -66,7 +73,7 @@ class SubmissionLimitsEndpointTest(
             DefaultFiles.sequencesFile,
         )
             .andExpect(status().isTooManyRequests)
-            .andExpect(content().string(containsString("at most $MAX_REVISIONS revisions")))
+            .andExpect(content().string(containsString("quota of $MAX_REVISIONS revisions")))
     }
 
     @Test
@@ -82,6 +89,33 @@ class SubmissionLimitsEndpointTest(
         filesClient.requestUploads(groupId, numberFiles = 1, jwt = jwtForDefaultUser)
             .andExpect(status().isOk)
     }
+
+    @Test
+    fun `GIVEN many untrusted groups THEN they share one quota`() {
+        val firstGroup = groupManagementClient.createNewGroup(group = DEFAULT_GROUP).andGetGroupId()
+        val secondGroup = groupManagementClient.createNewGroup(group = DEFAULT_GROUP).andGetGroupId()
+        convenienceClient.submitDefaultFiles(groupId = firstGroup)
+
+        submissionControllerClient.submit(DefaultFiles.metadataFile, DefaultFiles.sequencesFile, groupId = secondGroup)
+            .andExpect(status().isTooManyRequests)
+    }
+
+    @Test
+    fun `GIVEN a trusted group THEN it has its own quota, and exempt groups are not limited`() {
+        val sharedGroup = groupManagementClient.createNewGroup(group = DEFAULT_GROUP).andGetGroupId()
+        groupManagementClient.createNewGroup(group = DEFAULT_GROUP)
+        val exemptGroup = groupManagementClient.createNewGroup(group = DEFAULT_GROUP).andGetGroupId()
+        val trustedGroup = groupManagementClient.createNewGroup(group = DEFAULT_GROUP).andGetGroupId()
+        assertThat(listOf(exemptGroup, trustedGroup), equalTo(listOf(EXEMPT_GROUP_ID, TRUSTED_GROUP_ID)))
+
+        convenienceClient.submitDefaultFiles(groupId = sharedGroup)
+        repeat(3) { convenienceClient.submitDefaultFiles(groupId = exemptGroup) }
+        convenienceClient.submitDefaultFiles(groupId = trustedGroup)
+
+        submissionControllerClient.submit(DefaultFiles.metadataFile, DefaultFiles.sequencesFile, groupId = trustedGroup)
+            .andExpect(status().isTooManyRequests)
+            .andExpect(content().string(containsString("for group $TRUSTED_GROUP_ID")))
+    }
 }
 
 @TestConfiguration
@@ -96,6 +130,8 @@ class BackendConfigWithSubmissionLimitsTestConfig {
             maxNewSequenceEntriesPerDay = MAX_NEW_SEQUENCE_ENTRIES,
             maxRevisionsPerDay = MAX_REVISIONS,
             maxFileUploadRequestsPerDay = MAX_FILE_UPLOAD_REQUESTS,
+            exemptGroupIds = setOf(EXEMPT_GROUP_ID),
+            trustedGroupIds = setOf(TRUSTED_GROUP_ID),
         ),
     )
 }

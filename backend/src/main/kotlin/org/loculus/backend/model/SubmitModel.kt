@@ -136,12 +136,6 @@ class SubmitModel(
                 )
             }
 
-            // Checked before accessions are generated, so a rejected upload does not use up accession numbers.
-            submissionLimitService.validateSequenceEntryLimit(
-                submissionParams.uploadType,
-                incoming = submissionLimitService.countEntriesInUpload(uploadId),
-            )
-
             if (backendConfig.consensusSequencesEnabled(submissionParams.organism)) {
                 submissionMetrics.timeWritePhase(endpoint, organism, VALIDATE_CONSENSUS_SEQUENCES_PHASE) {
                     log.debug { "Validating submission with uploadId $uploadId" }
@@ -167,6 +161,13 @@ class SubmitModel(
                     )
                 }
             }
+
+            // Needs the group of each entry, which revisions only have once associated. Checked before accessions
+            // are generated, so a rejected upload does not use up accession numbers.
+            submissionLimitService.validateSequenceEntryLimit(
+                submissionParams.uploadType,
+                incomingByGroup = submissionLimitService.countEntriesInUploadByGroup(uploadId),
+            )
 
             submissionMetrics.timeWritePhase(endpoint, organism, VALIDATE_FILE_MAPPING_PHASE) {
                 val files = uploadDatabaseService.getFilesForUpload(uploadId)

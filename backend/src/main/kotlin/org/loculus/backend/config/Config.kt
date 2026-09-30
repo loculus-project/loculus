@@ -35,13 +35,16 @@ data class FileSharing(
 )
 
 /**
- * Instance-wide caps on how much can be created within a rolling 24h window, across all organisms and submitters.
- * Null means unlimited.
+ * Caps on how much can be created within a rolling 24h window, across all organisms. Null means unlimited.
+ * Groups in [exemptGroupIds] are not limited (e.g. ingest), each group in [trustedGroupIds] gets the full quota for
+ * itself, and all other groups share one quota. A group listed in both is exempt.
  */
 data class SubmissionLimits(
     val maxNewSequenceEntriesPerDay: Long? = null,
     val maxRevisionsPerDay: Long? = null,
     val maxFileUploadRequestsPerDay: Long? = null,
+    val exemptGroupIds: Set<Int> = emptySet(),
+    val trustedGroupIds: Set<Int> = emptySet(),
 )
 
 /**

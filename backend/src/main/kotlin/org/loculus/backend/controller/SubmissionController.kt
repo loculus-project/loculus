@@ -136,7 +136,7 @@ open class SubmissionController(
     ): List<SubmissionIdMapping> {
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
         // Fails fast when the limit is already reached, before the upload is parsed.
-        submissionLimitService.validateSequenceEntryLimit(UploadType.ORIGINAL, incoming = 1)
+        submissionLimitService.validateSequenceEntryLimit(UploadType.ORIGINAL, incomingByGroup = mapOf(groupId to 1))
         val dataUseTerms = dataUseTermsPreconditionValidator.constructDataUseTermsAndValidate(
             dataUseTermsType,
             restrictedUntil,
@@ -163,7 +163,6 @@ open class SubmissionController(
         @Parameter(description = REVISED_METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
         @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile?,
     ): List<SubmissionIdMapping> {
-        submissionLimitService.validateSequenceEntryLimit(UploadType.REVISION, incoming = 1)
         val params = SubmissionParams.RevisionSubmissionParams(
             organism,
             authenticatedUser,
