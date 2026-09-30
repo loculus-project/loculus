@@ -10,8 +10,12 @@ Astro.cookies.delete(REFRESH_TOKEN_COOKIE, { path: '/' });
 <BaseLayout title='Logout' activeTopNavigationItem='account'>
     <div class='bc'>
         <h1 class='title'>You have been logged out</h1>
-        <p id='logout-countdown' hidden>Redirecting to the homepage in 5 seconds…</p>
-        <a href='/' class={buttonClasses({ variant: 'primary', className: 'mt-4' })}>Go to homepage</a>
+        <p id='logout-countdown' hidden>
+            Redirecting to the homepage in 5 seconds…
+        </p>
+        <a href='/' class={buttonClasses({ variant: 'primary', className: 'mt-4' })}>
+            Go to homepage
+        </a>
     </div>
 </BaseLayout>
 
