@@ -24,9 +24,13 @@ from .datatypes import (
     ProcessingContext,
     UnprocessedEntry,
 )
+from .external_services import create_retrying_session
 from .processing_functions import trim_ns
 
 logger = logging.getLogger(__name__)
+
+# Presigned URLs can be reused until they expire, so transient S3 errors can be retried
+upload_session = create_retrying_session(retries=3)
 
 
 class JwtCache:
@@ -242,7 +246,11 @@ def upload_embl_file_to_presigned_url(
     headers = {"Content-Type": "chemical/x-embl-dl-nucleotide"}
     if extra_headers:
         headers.update(extra_headers)
-    r = requests.put(url, data=content.encode("utf-8"), headers=headers, timeout=60)
+    try:
+        r = upload_session.put(url, data=content.encode("utf-8"), headers=headers, timeout=60)
+    except requests.exceptions.RequestException as e:
+        msg = f"Upload failed: {e}"
+        raise RuntimeError(msg) from e
     if not r.ok:
         msg = f"Upload failed: {r.status_code}, {r.text}"
         raise RuntimeError(msg)
