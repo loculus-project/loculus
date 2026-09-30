@@ -101,11 +101,11 @@ class SubmissionLimitsEndpointTest(
     fun `GIVEN usage passes 80 percent and then the quota THEN alerts are sent`() {
         val groupId = newGroup()
         filesClient.requestUploads(groupId, numberFiles = 12, jwt = jwtForDefaultUser).andExpect(status().isOk)
-        verify { alertNotifier.notify(any(), 80, 12, MAX_OPERATIONS) }
+        verify { alertNotifier.notify("shared", any(), 80, 12, MAX_OPERATIONS) }
 
         filesClient.requestUploads(groupId, numberFiles = 5, jwt = jwtForDefaultUser)
             .andExpect(status().isTooManyRequests)
-        verify { alertNotifier.notify(any(), 100, 12, MAX_OPERATIONS) }
+        verify { alertNotifier.notify("shared", any(), 100, 12, MAX_OPERATIONS) }
     }
 
     @Test

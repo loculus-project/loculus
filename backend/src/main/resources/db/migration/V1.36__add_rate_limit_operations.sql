@@ -9,3 +9,11 @@ CREATE TABLE rate_limit_operations (
 );
 
 CREATE INDEX rate_limit_operations_created_at_idx ON rate_limit_operations (created_at);
+
+-- When each quota last alerted per threshold, shared by all backend instances and surviving restarts.
+CREATE TABLE rate_limit_alerts (
+    quota text NOT NULL,
+    threshold_percent integer NOT NULL,
+    sent_at timestamp NOT NULL,
+    PRIMARY KEY (quota, threshold_percent)
+);

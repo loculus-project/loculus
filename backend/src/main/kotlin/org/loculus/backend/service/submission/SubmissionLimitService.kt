@@ -50,8 +50,15 @@ class SubmissionLimitService(
 ) {
 
     private sealed interface Quota {
-        data class OwnGroup(val groupId: Int) : Quota
-        data object Shared : Quota
+        val key: String
+
+        data class OwnGroup(val groupId: Int) : Quota {
+            override val key get() = "group:$groupId"
+        }
+
+        data object Shared : Quota {
+            override val key = "shared"
+        }
     }
 
     /**
@@ -187,16 +194,16 @@ class SubmissionLimitService(
             if (alert) {
                 val usedAfter = used + incoming
                 when {
-                    usedAfter >= limit -> alertNotifier.notify(scope, 100, usedAfter, limit)
+                    usedAfter >= limit -> alertNotifier.notify(quota.key, scope, 100, usedAfter, limit)
 
                     usedAfter * 100 >= limit * ALERT_THRESHOLD_PERCENT ->
-                        alertNotifier.notify(scope, ALERT_THRESHOLD_PERCENT, usedAfter, limit)
+                        alertNotifier.notify(quota.key, scope, ALERT_THRESHOLD_PERCENT, usedAfter, limit)
                 }
             }
             return
         }
         if (alert) {
-            alertNotifier.notify(scope, 100, used, limit)
+            alertNotifier.notify(quota.key, scope, 100, used, limit)
         }
 
         val retryAt = earliestRetry(quota, limit, used, incoming)
