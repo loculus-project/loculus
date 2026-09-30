@@ -1116,7 +1116,7 @@ class SubmissionDatabaseService(
         }
         submissionLimitService.checkAndRecord(
             RateLimitedOperation.REVOKE,
-            authenticatedUser.username,
+            authenticatedUser,
             submissionLimitService.countAccessionsByGroup(accessions),
         )
 
@@ -1282,7 +1282,7 @@ class SubmissionDatabaseService(
         }
         submissionLimitService.checkAndRecord(
             RateLimitedOperation.EDIT,
-            authenticatedUser.username,
+            authenticatedUser,
             submissionLimitService.countAccessionsByGroup(listOf(editedSequenceEntryData.accession)),
         )
 

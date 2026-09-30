@@ -135,7 +135,7 @@ open class SubmissionController(
     ): List<SubmissionIdMapping> {
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
         // Fails fast when the limit is already reached, before the upload is parsed.
-        submissionLimitService.checkQuotaNotUsedUp(groupId)
+        submissionLimitService.checkQuotaNotUsedUp(groupId, authenticatedUser)
         val dataUseTerms = dataUseTermsPreconditionValidator.constructDataUseTermsAndValidate(
             dataUseTermsType,
             restrictedUntil,

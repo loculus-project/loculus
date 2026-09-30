@@ -147,7 +147,7 @@ class FilesController(
         filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
         submissionLimitService.checkAndRecord(
             RateLimitedOperation.REQUEST_FILE_UPLOAD,
-            authenticatedUser.username,
+            authenticatedUser,
             mapOf(groupId to numberFiles.toLong()),
         )
 
@@ -187,7 +187,7 @@ class FilesController(
         filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
         submissionLimitService.checkAndRecord(
             RateLimitedOperation.REQUEST_FILE_UPLOAD,
-            authenticatedUser.username,
+            authenticatedUser,
             mapOf(groupId to numberFiles.toLong()),
         )
 

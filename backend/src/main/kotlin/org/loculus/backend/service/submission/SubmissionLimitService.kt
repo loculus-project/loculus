@@ -14,6 +14,7 @@ import org.jetbrains.exposed.v1.core.sum
 import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
+import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.TooManyRequestsException
 import org.loculus.backend.utils.Accession
@@ -38,7 +39,7 @@ private fun ceilDiv(a: Long, b: Long) = -Math.floorDiv(-a, b)
 /**
  * Enforces [org.loculus.backend.config.SubmissionLimits]: the number of sequence entries and files affected by write
  * operations in a rolling 24h window, summed over all operations and organisms, taken from [RateLimitOperationsTable].
- * Exempt groups are not limited, groups in `groupQuotas` each have their own quota, and all other groups share one
+ * Superusers and exempt groups are not limited, groups in `groupQuotas` each have their own quota, and all other groups share one
  * quota, so creating many groups does not raise the amount a submitter can write.
  */
 @Service
@@ -62,16 +63,24 @@ class SubmissionLimitService(
     }
 
     /**
-     * Rejects the operation if it would exceed a quota, otherwise records it.
+     * Rejects the operation if it would exceed a quota, otherwise records it. Superusers are never rejected.
      * Runs in the caller's transaction if there is one, so a failing write does not use up quota.
      */
-    fun checkAndRecord(operation: RateLimitedOperation, username: String, countByGroup: Map<Int, Long>) {
+    fun checkAndRecord(
+        operation: RateLimitedOperation,
+        authenticatedUser: AuthenticatedUser,
+        countByGroup: Map<Int, Long>,
+    ) {
         val nonEmpty = countByGroup.filterValues { it > 0 }
         if (nonEmpty.isEmpty()) {
             return
         }
-        val limitedQuotas = incomingByQuota(nonEmpty).mapNotNull { (quota, incoming) ->
-            limitOf(quota)?.let { Triple(quota, it, incoming) }
+        val limitedQuotas = if (authenticatedUser.isSuperUser) {
+            emptyList()
+        } else {
+            incomingByQuota(nonEmpty).mapNotNull { (quota, incoming) ->
+                limitOf(quota)?.let { Triple(quota, it, incoming) }
+            }
         }
         if (limitedQuotas.isNotEmpty()) {
             TransactionManager.current().exec("SELECT pg_advisory_xact_lock($RATE_LIMIT_ADVISORY_LOCK_KEY)")
@@ -82,14 +91,17 @@ class SubmissionLimitService(
             this[RateLimitOperationsTable.createdAtColumn] = now
             this[RateLimitOperationsTable.operationColumn] = operation
             this[RateLimitOperationsTable.groupIdColumn] = groupId
-            this[RateLimitOperationsTable.usernameColumn] = username
+            this[RateLimitOperationsTable.usernameColumn] = authenticatedUser.username
             this[RateLimitOperationsTable.countColumn] = count
         }
     }
 
     /** Fails fast when the quota is already used up, without recording anything. */
     @Transactional(readOnly = true)
-    fun checkQuotaNotUsedUp(groupId: Int) {
+    fun checkQuotaNotUsedUp(groupId: Int, authenticatedUser: AuthenticatedUser) {
+        if (authenticatedUser.isSuperUser) {
+            return
+        }
         incomingByQuota(mapOf(groupId to 1)).forEach { (quota, incoming) ->
             limitOf(quota)?.let { checkQuota(quota, it, incoming, alert = false) }
         }

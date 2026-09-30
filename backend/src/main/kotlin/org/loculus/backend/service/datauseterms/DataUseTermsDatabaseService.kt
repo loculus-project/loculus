@@ -106,7 +106,7 @@ class DataUseTermsDatabaseService(
         // a rejection rolls the inserts back.
         submissionLimitService.checkAndRecord(
             RateLimitedOperation.CHANGE_DATA_USE_TERMS,
-            authenticatedUser.username,
+            authenticatedUser,
             submissionLimitService.countAccessionsByGroup(accessions),
         )
 

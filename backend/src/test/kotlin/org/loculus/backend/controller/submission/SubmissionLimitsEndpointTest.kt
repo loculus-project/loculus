@@ -29,6 +29,7 @@ import org.loculus.backend.controller.files.FilesClient
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
+import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.service.submission.RateLimitAlertNotifier
 import org.loculus.backend.utils.DateProvider
@@ -168,6 +169,22 @@ class SubmissionLimitsEndpointTest(
             .andExpect(status().isTooManyRequests)
         filesClient.requestMultipartUploads(groupId, numberFiles = 10).andExpect(status().isTooManyRequests)
         filesClient.requestUploads(groupId, numberFiles = 5, jwt = jwtForDefaultUser).andExpect(status().isOk)
+    }
+
+    @Test
+    fun `GIVEN a superuser THEN no quota applies, but the writes still count for others`() {
+        val groupId = newGroup()
+        repeat(2) {
+            submissionControllerClient.submit(
+                DefaultFiles.metadataFile,
+                DefaultFiles.sequencesFile,
+                groupId = groupId,
+                jwt = jwtForSuperUser,
+            ).andExpect(status().isOk)
+        }
+
+        submitDefaultFilesExpectingTooManyRequests(groupId)
+            .andExpect(content().string(containsString("20 of $MAX_OPERATIONS")))
     }
 
     @Test

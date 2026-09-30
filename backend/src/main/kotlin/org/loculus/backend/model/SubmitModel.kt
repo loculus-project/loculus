@@ -191,7 +191,7 @@ class SubmitModel(
                     UploadType.ORIGINAL -> RateLimitedOperation.SUBMIT
                     UploadType.REVISION -> RateLimitedOperation.REVISE
                 },
-                username = submissionParams.authenticatedUser.username,
+                authenticatedUser = submissionParams.authenticatedUser,
                 countByGroup = submissionLimitService.countEntriesInUploadByGroup(uploadId),
             )
 
