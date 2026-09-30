@@ -7048,9 +7048,3 @@ siloImport:
   # a hard refresh re-downloads all ~4M SC2 entries from the backend under test; ETag changes still import at once
   hardRefreshIntervalSeconds: 86400
   pollIntervalSeconds: 30
-images:
-  loculusSilo:
-    # main's loculus-silo (SILO 0.14.3) as of 2026-09-30; this branch doesn't change loculus-silo/
-    repository: "ghcr.io/loculus-project/loculus-silo"
-    tag: "latest@sha256:06a35ce8f344424097782e58c3d87ef6b422a993b005b93c620527558cce0866"
-    pullPolicy: IfNotPresent
