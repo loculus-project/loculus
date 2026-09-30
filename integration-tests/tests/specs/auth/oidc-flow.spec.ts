@@ -125,6 +125,34 @@ test.describe('OIDC browser login', () => {
         }
     });
 
+    for (const entryPoint of ['navigation', 'protected page']) {
+        test(`Back after login from ${entryPoint} does not show a failure to an authenticated user`, async ({
+            page,
+            testAccount,
+        }) => {
+            const websiteOrigin = new URL(page.url()).origin;
+            const destination = new URL(
+                entryPoint === 'navigation' ? '/api-documentation?source=back-test' : '/user',
+                websiteOrigin,
+            ).toString();
+            await page.goto(destination);
+            if (entryPoint === 'navigation') {
+                await page.getByRole('link', { name: 'Login', exact: true }).click();
+            }
+            await submitCredentials(page, testAccount);
+            await expect(page).toHaveURL(destination);
+
+            await page.goBack();
+            await expect(page.getByRole('link', { name: 'My account', exact: true })).toBeVisible();
+            await expect(page).not.toHaveURL(
+                new URL('/auth/login-failed', websiteOrigin).toString(),
+            );
+            await expect(
+                page.getByRole('heading', { name: 'Login could not be completed' }),
+            ).toHaveCount(0);
+        });
+    }
+
     test('abandoned long-URL logins do not prevent a subsequent login', async ({
         page,
         testAccount,

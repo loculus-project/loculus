@@ -115,7 +115,7 @@ The one-hour limit applies to the Loculus transaction. Keycloak or another authe
 
 ## Callback validation failures
 
-When the middleware cannot complete the transaction, `/auth/callback` redirects to a login-failure page without creating a session. Removing the callback parameters from the visible URL also prevents an invalid authorization code and `state` from remaining in the address bar. Common causes include:
+When the middleware cannot complete the transaction and there is no independently validated website session, `/auth/callback` redirects to a login-failure page without creating a session. If the user already has a valid website session, it redirects to `/user` instead; this avoids a misleading failure page when Back revisits a completed login. The rejected callback does not establish a new session. Removing the callback parameters from the visible URL also prevents an invalid authorization code and `state` from remaining in the address bar. Common causes include:
 
 - the login was started more than one hour earlier;
 - the callback was refreshed or reused after its transaction had already been consumed;
