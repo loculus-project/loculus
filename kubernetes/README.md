@@ -26,6 +26,26 @@ Install the Helm chart:
 helm install loculus kubernetes/loculus -f my-values.yaml
 ```
 
+## Mirrored container images
+
+External Helm images and selected CI images use `ghcr.io/loculus-project/mirror`.
+Dockerfile base images, k3s and tooling images such as yamlfmt are outside this mirror.
+
+To update an image:
+
+1. Add its upstream tag to [mirror-images.txt](../.github/mirror-images.txt).
+2. Merge the list change and wait for `mirror-images`, or have a maintainer run that
+   workflow manually on the branch. Existing tags are never overwritten.
+3. For a new package, an organization admin must make it public in GHCR package
+   settings. CI and deployments pull without credentials.
+4. Update consumers in a subsequent commit or PR. PR checks require every referenced
+   mirror tag to be listed and publicly available, without publishing anything.
+
+Tags are updated manually. Keep the PostgreSQL server version in Helm, tests and
+the backend and ENA submission READMEs in sync. The schema-dump PostgreSQL client
+has its own version. Its Flyway CLI pin is also separate from backend `flyway-core`
+and should be updated with migration compatibility checks.
+
 ## Local development/testing with k3d
 
 ### Prerequisites

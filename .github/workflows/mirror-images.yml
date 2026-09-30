@@ -2,19 +2,30 @@ name: mirror-images
 on:
   workflow_dispatch:
   pull_request:
-    paths:
-      - .github/mirror-images.txt
-      - .github/workflows/mirror-images.yml
   push:
     branches:
       - main
     paths:
       - .github/mirror-images.txt
+      - .github/scripts/mirror-images.py
       - .github/workflows/mirror-images.yml
 permissions:
-  packages: write
+  contents: read
 jobs:
+  check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: python3 .github/scripts/mirror-images.py
   mirror:
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      packages: write
+    concurrency:
+      group: mirror-images
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -27,10 +38,4 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - run: |
-          while read -r src
-          do
-            dst="ghcr.io/loculus-project/mirror/${src##*/}"
-            skopeo inspect --raw "docker://$dst" > /dev/null 2>&1 && continue
-            skopeo copy --all --preserve-digests "docker://$src" "docker://$dst"
-          done < .github/mirror-images.txt
+      - run: python3 .github/scripts/mirror-images.py --publish
