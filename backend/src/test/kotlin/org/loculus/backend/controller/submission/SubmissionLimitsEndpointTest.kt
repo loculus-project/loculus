@@ -2,6 +2,8 @@ package org.loculus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean
+import com.ninjasquad.springmockk.MockkSpyBean
+import io.mockk.every
 import io.mockk.verify
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.MatcherAssert.assertThat
@@ -29,6 +31,7 @@ import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.service.submission.RateLimitAlertNotifier
+import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.TestConfiguration
@@ -38,6 +41,8 @@ import org.springframework.context.annotation.Primary
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.hours
 
 // The default submission contains 10 sequence entries.
 private const val MAX_OPERATIONS = 15L
@@ -64,6 +69,9 @@ class SubmissionLimitsEndpointTest(
     @MockkBean(relaxed = true)
     lateinit var alertNotifier: RateLimitAlertNotifier
 
+    @MockkSpyBean
+    lateinit var dateProvider: DateProvider
+
     private fun newGroup() = groupManagementClient.createNewGroup(group = DEFAULT_GROUP).andGetGroupId()
 
     private fun submitDefaultFilesExpectingTooManyRequests(groupId: Int) =
@@ -78,7 +86,7 @@ class SubmissionLimitsEndpointTest(
         val response = submitDefaultFilesExpectingTooManyRequests(groupId)
             .andExpect(content().string(containsString("quota shared by all groups without their own quota")))
             .andExpect(content().string(containsString("10 of $MAX_OPERATIONS")))
-            .andExpect(content().string(containsString("can be retried after")))
+            .andExpect(content().string(containsString("at least 20% of the quota is free")))
             .andExpect(content().string(containsString("contact the instance administrators")))
             .andReturn().response
 
@@ -98,6 +106,24 @@ class SubmissionLimitsEndpointTest(
         filesClient.requestUploads(groupId, numberFiles = 5, jwt = jwtForDefaultUser)
             .andExpect(status().isTooManyRequests)
         verify { alertNotifier.notify(any(), 100, 12, MAX_OPERATIONS) }
+    }
+
+    @Test
+    fun `GIVEN a rejected request THEN the retry time leaves at least 20 percent of the quota free`() {
+        val groupId = newGroup()
+        val start = Clock.System.now()
+        every { dateProvider.getCurrentInstant() } returns start
+        filesClient.requestUploads(groupId, numberFiles = 2, jwt = jwtForDefaultUser).andExpect(status().isOk)
+        every { dateProvider.getCurrentInstant() } returns start + 1.hours
+        filesClient.requestUploads(groupId, numberFiles = 13, jwt = jwtForDefaultUser).andExpect(status().isOk)
+        every { dateProvider.getCurrentInstant() } returns start + 2.hours
+
+        // The 2 files from the start leaving the window would make room for 1 file, but 20% of 15 is 3,
+        // so the retry time is when the 13 files from start + 1h leave it: 23h from now.
+        val retryAfter = filesClient.requestUploads(groupId, numberFiles = 1, jwt = jwtForDefaultUser)
+            .andExpect(status().isTooManyRequests)
+            .andReturn().response.getHeader("Retry-After")!!.toLong()
+        assertThat(retryAfter, allOf(greaterThan(23 * 3600L - 5), lessThanOrEqualTo(23 * 3600L + 1)))
     }
 
     @Test

@@ -31,6 +31,10 @@ private const val RATE_LIMIT_ADVISORY_LOCK_KEY = 7434L
 
 private const val ALERT_THRESHOLD_PERCENT = 80
 
+private const val RETRY_FREE_PERCENT = 20L
+
+private fun ceilDiv(a: Long, b: Long) = -Math.floorDiv(-a, b)
+
 /**
  * Enforces [org.loculus.backend.config.SubmissionLimits]: the number of sequence entries and files affected by write
  * operations in a rolling 24h window, summed over all operations and organisms, taken from [RateLimitOperationsTable].
@@ -150,14 +154,15 @@ class SubmissionLimitService(
     }
 
     /**
-     * The earliest time at which enough of the current usage has left the rolling window for [incoming] to fit,
-     * or null if [incoming] alone exceeds the limit.
+     * The earliest time at which enough of the current usage has left the rolling window for [incoming] to fit and at
+     * least [RETRY_FREE_PERCENT] of the quota to be free, so a retry does not find room for only a handful of entries.
+     * Null if [incoming] alone exceeds the limit.
      */
     private fun earliestRetry(quota: Quota, limit: Long, used: Long, incoming: Long): Instant? {
         if (incoming > limit) {
             return null
         }
-        val toFree = used + incoming - limit
+        val toFree = used + maxOf(incoming, ceilDiv(limit * RETRY_FREE_PERCENT, 100)) - limit
         var freed = 0L
         RateLimitOperationsTable
             .select(RateLimitOperationsTable.createdAtColumn, RateLimitOperationsTable.countColumn)
@@ -198,8 +203,12 @@ class SubmissionLimitService(
             ?.let { Instant.fromEpochSeconds(it.epochSeconds + 1) }
         val whenToRetry = when {
             limit == 0L -> "Writes are currently paused for these groups."
+
             retryAt == null -> "This request alone is larger than the whole quota, so please split it up."
-            else -> "A request of this size can be retried after $retryAt."
+
+            else ->
+                "Please try again after $retryAt, when there is room for this request and at least " +
+                    "$RETRY_FREE_PERCENT% of the quota is free."
         }
         throw TooManyRequestsException(
             "To protect this instance against abuse, the amount of data that can be submitted, revised, revoked, " +
