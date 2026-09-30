@@ -125,6 +125,14 @@ spec:
             - name: CROSSREF_WRITE_ENABLED
               value: {{$.Values.seqSets.crossRef.writeEnabled | quote }}
            {{- end }}
+          {{- if $.Values.submissionLimits }}
+            - name: SLACK_HOOK
+              valueFrom:
+                secretKeyRef:
+                  name: slack-notifications
+                  key: slack-hook
+                  optional: true
+          {{- end }}
             - name: BACKEND_KEYCLOAK_PASSWORD
               valueFrom:
                 secretKeyRef:

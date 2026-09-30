@@ -54,7 +54,6 @@ import org.loculus.backend.model.RELEASED_DATA_RELATED_TABLES
 import org.loculus.backend.model.ReleasedDataModel
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.SubmitModel
-import org.loculus.backend.model.UploadType
 import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
@@ -136,7 +135,7 @@ open class SubmissionController(
     ): List<SubmissionIdMapping> {
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
         // Fails fast when the limit is already reached, before the upload is parsed.
-        submissionLimitService.validateSequenceEntryLimit(UploadType.ORIGINAL, incomingByGroup = mapOf(groupId to 1))
+        submissionLimitService.checkQuotaNotUsedUp(groupId)
         val dataUseTerms = dataUseTermsPreconditionValidator.constructDataUseTermsAndValidate(
             dataUseTermsType,
             restrictedUntil,

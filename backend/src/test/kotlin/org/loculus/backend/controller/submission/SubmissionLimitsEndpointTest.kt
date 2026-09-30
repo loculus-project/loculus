@@ -1,11 +1,19 @@
 package org.loculus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.verify
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.equalTo
+import org.hamcrest.Matchers.greaterThan
 import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.lessThanOrEqualTo
 import org.junit.jupiter.api.Test
+import org.loculus.backend.api.DataUseTerms
+import org.loculus.backend.api.DataUseTermsChangeRequest
+import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.config.SubmissionLimits
@@ -13,11 +21,14 @@ import org.loculus.backend.config.readBackendConfig
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.S3_CONFIG
+import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
+import org.loculus.backend.controller.dateMonthsFromNow
 import org.loculus.backend.controller.files.FilesClient
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
+import org.loculus.backend.service.submission.RateLimitAlertNotifier
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.TestConfiguration
@@ -29,13 +40,14 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 // The default submission contains 10 sequence entries.
-private const val MAX_NEW_SEQUENCE_ENTRIES = 15L
-private const val MAX_REVISIONS = 5L
-private const val MAX_FILE_UPLOAD_REQUESTS = 3L
+private const val MAX_OPERATIONS = 15L
 
-// Group IDs restart at 1 for every test, so the third and fourth group created in a test get these IDs.
+// Group IDs restart at 1 for every test, so the third, fourth and fifth group created in a test get these IDs.
 private const val EXEMPT_GROUP_ID = 3
 private const val TRUSTED_GROUP_ID = 4
+private const val PAUSED_GROUP_ID = 5
+
+private const val SECONDS_PER_DAY = 24 * 60 * 60
 
 @EndpointTest(
     properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
@@ -47,74 +59,146 @@ class SubmissionLimitsEndpointTest(
     @Autowired private val convenienceClient: SubmissionConvenienceClient,
     @Autowired private val groupManagementClient: GroupManagementControllerClient,
     @Autowired private val filesClient: FilesClient,
+    @Autowired private val dataUseTermsClient: DataUseTermsControllerClient,
 ) {
+    @MockkBean(relaxed = true)
+    lateinit var alertNotifier: RateLimitAlertNotifier
 
-    @Test
-    fun `GIVEN an upload that would exceed the daily limit of new entries THEN the whole upload is rejected`() {
-        val groupId = groupManagementClient.createNewGroup(group = DEFAULT_GROUP).andGetGroupId()
-        convenienceClient.submitDefaultFiles(groupId = groupId)
+    private fun newGroup() = groupManagementClient.createNewGroup(group = DEFAULT_GROUP).andGetGroupId()
 
+    private fun submitDefaultFilesExpectingTooManyRequests(groupId: Int) =
         submissionControllerClient.submit(DefaultFiles.metadataFile, DefaultFiles.sequencesFile, groupId = groupId)
             .andExpect(status().isTooManyRequests)
-            .andExpect(
-                content().string(containsString("quota of $MAX_NEW_SEQUENCE_ENTRIES new sequence entries shared")),
-            )
-            .andExpect(content().string(containsString("10 have been created")))
 
+    @Test
+    fun `GIVEN an upload that would exceed the quota THEN it is rejected as a whole with a retry time`() {
+        val groupId = newGroup()
+        convenienceClient.submitDefaultFiles(groupId = groupId)
+
+        val response = submitDefaultFilesExpectingTooManyRequests(groupId)
+            .andExpect(content().string(containsString("quota shared by all groups without their own quota")))
+            .andExpect(content().string(containsString("10 of $MAX_OPERATIONS")))
+            .andExpect(content().string(containsString("can be retried after")))
+            .andExpect(content().string(containsString("contact the instance administrators")))
+            .andReturn().response
+
+        assertThat(
+            response.getHeader("Retry-After")!!.toInt(),
+            allOf(greaterThan(SECONDS_PER_DAY - 600), lessThanOrEqualTo(SECONDS_PER_DAY + 1)),
+        )
         assertThat(convenienceClient.getSequenceEntries().sequenceEntries, hasSize(10))
     }
 
     @Test
-    fun `GIVEN a revision exceeding the daily limit of revisions THEN it is rejected`() {
+    fun `GIVEN usage passes 80 percent and then the quota THEN alerts are sent`() {
+        val groupId = newGroup()
+        filesClient.requestUploads(groupId, numberFiles = 12, jwt = jwtForDefaultUser).andExpect(status().isOk)
+        verify { alertNotifier.notify(any(), 80, 12, MAX_OPERATIONS) }
+
+        filesClient.requestUploads(groupId, numberFiles = 5, jwt = jwtForDefaultUser)
+            .andExpect(status().isTooManyRequests)
+        verify { alertNotifier.notify(any(), 100, 12, MAX_OPERATIONS) }
+    }
+
+    @Test
+    fun `GIVEN deleted entries THEN they still count against the quota`() {
+        val groupId = newGroup()
+        convenienceClient.submitDefaultFiles(groupId = groupId)
+        submissionControllerClient.deleteSequenceEntries(DeleteSequenceScope.ALL).andExpect(status().isOk)
+        assertThat(convenienceClient.getSequenceEntries().sequenceEntries, hasSize(0))
+
+        submitDefaultFilesExpectingTooManyRequests(groupId)
+    }
+
+    @Test
+    fun `GIVEN revisions and revocations THEN they count against the quota`() {
         val accessions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease().map { it.accession }
 
         submissionControllerClient.reviseSequenceEntries(
             DefaultFiles.getRevisedMetadataFile(accessions),
             DefaultFiles.sequencesFile,
-        )
-            .andExpect(status().isTooManyRequests)
-            .andExpect(content().string(containsString("quota of $MAX_REVISIONS revisions")))
+        ).andExpect(status().isTooManyRequests)
+        submissionControllerClient.revokeSequenceEntries(accessions).andExpect(status().isTooManyRequests)
     }
 
     @Test
-    fun `GIVEN file upload requests exceeding the daily limit THEN they are rejected`() {
-        val groupId = groupManagementClient.createNewGroup(group = DEFAULT_GROUP).andGetGroupId()
+    fun `GIVEN a data use terms change exceeding the quota THEN it is rejected and not applied`() {
+        val accessions = convenienceClient
+            .submitDefaultFiles(dataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)))
+            .submissionIdMappings.map { it.accession }
 
-        filesClient.requestUploads(groupId, numberFiles = 2, jwt = jwtForDefaultUser)
-            .andExpect(status().isOk)
-        filesClient.requestUploads(groupId, numberFiles = 2, jwt = jwtForDefaultUser)
+        dataUseTermsClient.changeDataUseTerms(DataUseTermsChangeRequest(accessions, DataUseTerms.Open))
             .andExpect(status().isTooManyRequests)
-        filesClient.requestMultipartUploads(groupId, numberFiles = 2)
+        dataUseTermsClient.changeDataUseTerms(DataUseTermsChangeRequest(accessions.take(5), DataUseTerms.Open))
+            .andExpect(status().isNoContent)
+    }
+
+    @Test
+    fun `GIVEN file upload requests exceeding the quota THEN they are rejected`() {
+        val groupId = newGroup()
+
+        filesClient.requestUploads(groupId, numberFiles = 10, jwt = jwtForDefaultUser).andExpect(status().isOk)
+        filesClient.requestUploads(groupId, numberFiles = 10, jwt = jwtForDefaultUser)
             .andExpect(status().isTooManyRequests)
-        filesClient.requestUploads(groupId, numberFiles = 1, jwt = jwtForDefaultUser)
-            .andExpect(status().isOk)
+        filesClient.requestMultipartUploads(groupId, numberFiles = 10).andExpect(status().isTooManyRequests)
+        filesClient.requestUploads(groupId, numberFiles = 5, jwt = jwtForDefaultUser).andExpect(status().isOk)
     }
 
     @Test
     fun `GIVEN many untrusted groups THEN they share one quota`() {
-        val firstGroup = groupManagementClient.createNewGroup(group = DEFAULT_GROUP).andGetGroupId()
-        val secondGroup = groupManagementClient.createNewGroup(group = DEFAULT_GROUP).andGetGroupId()
-        convenienceClient.submitDefaultFiles(groupId = firstGroup)
+        convenienceClient.submitDefaultFiles(groupId = newGroup())
 
-        submissionControllerClient.submit(DefaultFiles.metadataFile, DefaultFiles.sequencesFile, groupId = secondGroup)
-            .andExpect(status().isTooManyRequests)
+        submitDefaultFilesExpectingTooManyRequests(newGroup())
     }
 
     @Test
     fun `GIVEN a trusted group THEN it has its own quota, and exempt groups are not limited`() {
-        val sharedGroup = groupManagementClient.createNewGroup(group = DEFAULT_GROUP).andGetGroupId()
-        groupManagementClient.createNewGroup(group = DEFAULT_GROUP)
-        val exemptGroup = groupManagementClient.createNewGroup(group = DEFAULT_GROUP).andGetGroupId()
-        val trustedGroup = groupManagementClient.createNewGroup(group = DEFAULT_GROUP).andGetGroupId()
+        val sharedGroup = newGroup()
+        newGroup()
+        val exemptGroup = newGroup()
+        val trustedGroup = newGroup()
         assertThat(listOf(exemptGroup, trustedGroup), equalTo(listOf(EXEMPT_GROUP_ID, TRUSTED_GROUP_ID)))
 
         convenienceClient.submitDefaultFiles(groupId = sharedGroup)
         repeat(3) { convenienceClient.submitDefaultFiles(groupId = exemptGroup) }
         convenienceClient.submitDefaultFiles(groupId = trustedGroup)
 
-        submissionControllerClient.submit(DefaultFiles.metadataFile, DefaultFiles.sequencesFile, groupId = trustedGroup)
+        submitDefaultFilesExpectingTooManyRequests(trustedGroup)
+            .andExpect(content().string(containsString("quota of group $TRUSTED_GROUP_ID")))
+    }
+
+    @Test
+    fun `GIVEN one revision spanning several groups THEN each group's quota is charged for its own entries`() {
+        val sharedGroup = newGroup()
+        newGroup()
+        val exemptGroup = newGroup()
+        val trustedGroup = newGroup()
+        val exemptAccessions = convenienceClient
+            .prepareDefaultSequenceEntriesToApprovedForRelease(groupId = exemptGroup).map { it.accession }
+        val trustedAccessions = convenienceClient
+            .prepareDefaultSequenceEntriesToApprovedForRelease(groupId = trustedGroup).map { it.accession }
+
+        submissionControllerClient.reviseSequenceEntries(
+            DefaultFiles.getRevisedMetadataFile(exemptAccessions.take(5) + trustedAccessions.take(5)),
+            DefaultFiles.sequencesFile,
+        ).andExpect(status().isOk)
+
+        // The trusted group has used 10 submissions + 5 revisions = its whole quota; the shared quota is untouched.
+        filesClient.requestUploads(trustedGroup, numberFiles = 1, jwt = jwtForDefaultUser)
             .andExpect(status().isTooManyRequests)
-            .andExpect(content().string(containsString("for group $TRUSTED_GROUP_ID")))
+        filesClient.requestUploads(sharedGroup, numberFiles = 15, jwt = jwtForDefaultUser).andExpect(status().isOk)
+    }
+
+    @Test
+    fun `GIVEN a quota of 0 THEN writes are paused without a retry time`() {
+        repeat(4) { newGroup() }
+        val pausedGroup = newGroup()
+        assertThat(pausedGroup, equalTo(PAUSED_GROUP_ID))
+
+        val response = submitDefaultFilesExpectingTooManyRequests(pausedGroup)
+            .andExpect(content().string(containsString("Writes are currently paused")))
+            .andReturn().response
+        assertThat(response.getHeader("Retry-After"), equalTo(null))
     }
 }
 
@@ -127,11 +211,9 @@ class BackendConfigWithSubmissionLimitsTestConfig {
         @Value("\${${BackendSpringProperty.BACKEND_CONFIG_PATH}}") configPath: String,
     ): BackendConfig = readBackendConfig(objectMapper = objectMapper, configPath = configPath).copy(
         submissionLimits = SubmissionLimits(
-            maxNewSequenceEntriesPerDay = MAX_NEW_SEQUENCE_ENTRIES,
-            maxRevisionsPerDay = MAX_REVISIONS,
-            maxFileUploadRequestsPerDay = MAX_FILE_UPLOAD_REQUESTS,
+            maxOperationsPerDay = MAX_OPERATIONS,
             exemptGroupIds = setOf(EXEMPT_GROUP_ID),
-            trustedGroupIds = setOf(TRUSTED_GROUP_ID),
+            groupQuotas = mapOf(TRUSTED_GROUP_ID to MAX_OPERATIONS, PAUSED_GROUP_ID to 0),
         ),
     )
 }

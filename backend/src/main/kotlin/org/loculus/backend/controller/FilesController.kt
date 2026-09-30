@@ -20,6 +20,7 @@ import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.FilesPreconditionValidator
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
+import org.loculus.backend.service.submission.RateLimitedOperation
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.service.submission.SubmissionLimitService
 import org.loculus.backend.utils.Accession
@@ -127,7 +128,7 @@ class FilesController(
     @ApiResponse(responseCode = "401", description = "Authentication required")
     @ApiResponse(responseCode = "403", description = "User is not a member of the specified group")
     @ApiResponse(responseCode = "404", description = "Group does not exist")
-    @ApiResponse(responseCode = "429", description = "The instance-wide daily limit of file upload requests is reached")
+    @ApiResponse(responseCode = "429", description = "The daily operations quota is used up")
     @PostMapping("/request-upload")
     fun requestUploads(
         @HiddenParam
@@ -144,7 +145,11 @@ class FilesController(
     ): List<FileIdAndWriteUrl> {
         filesPreconditionValidator.validateNumberFiles(numberFiles)
         filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
-        submissionLimitService.validateFileUploadLimit(groupId, numberFiles.toLong())
+        submissionLimitService.checkAndRecord(
+            RateLimitedOperation.REQUEST_FILE_UPLOAD,
+            authenticatedUser.username,
+            mapOf(groupId to numberFiles.toLong()),
+        )
 
         val fileIds = generateFileIds(numberFiles)
         filesDatabaseService.createFileEntries(fileIds, authenticatedUser.username, groupId)
@@ -160,7 +165,7 @@ class FilesController(
             "and the upload should then be completed using the /complete-multipart-upload endpoint. " +
             "Afterwards, the file IDs can be attached to the metadata in the `files.<fileCategory>` column.",
     )
-    @ApiResponse(responseCode = "429", description = "The instance-wide daily limit of file upload requests is reached")
+    @ApiResponse(responseCode = "429", description = "The daily operations quota is used up")
     @PostMapping("/request-multipart-upload")
     fun requestMultipartUploads(
         @HiddenParam
@@ -180,7 +185,11 @@ class FilesController(
     ): List<FileIdAndMultipartWriteUrl> {
         filesPreconditionValidator.validateNumberFiles(numberFiles)
         filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
-        submissionLimitService.validateFileUploadLimit(groupId, numberFiles.toLong())
+        submissionLimitService.checkAndRecord(
+            RateLimitedOperation.REQUEST_FILE_UPLOAD,
+            authenticatedUser.username,
+            mapOf(groupId to numberFiles.toLong()),
+        )
 
         return generateFileIds(numberFiles).map { fileId ->
             val multipartUploadHandler = s3Service.initiateMultipartUploadAndCreateUrlsToUpload(fileId, numberParts)

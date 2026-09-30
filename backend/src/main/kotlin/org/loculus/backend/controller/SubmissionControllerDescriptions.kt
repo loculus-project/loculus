@@ -17,8 +17,7 @@ The data use terms type have not been provided, even though they are enabled for
 """
 
 const val SUBMISSION_LIMIT_RESPONSE = """
-The instance-wide daily limit of new sequence entries or revisions is reached, or this upload would exceed it.
-The whole upload is rejected.
+The daily operations quota is used up, or this upload would exceed it. The whole upload is rejected.
 """
 
 const val METADATA_FILE_DESCRIPTION = """    

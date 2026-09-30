@@ -127,10 +127,12 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
     fun handleTooManyRequestsException(e: TooManyRequestsException): ResponseEntity<ProblemDetail> {
         log.warn { "Caught too many requests exception: ${e.message}" }
 
-        return responseEntity(
-            HttpStatus.TOO_MANY_REQUESTS,
-            e.message,
-        )
+        val response = responseEntity(HttpStatus.TOO_MANY_REQUESTS, e.message)
+        val retryAfterSeconds = e.retryAfterSeconds ?: return response
+        return ResponseEntity.status(response.statusCode)
+            .headers(response.headers)
+            .header(HttpHeaders.RETRY_AFTER, retryAfterSeconds.toString())
+            .body(response.body)
     }
 
     private fun responseEntity(httpStatus: HttpStatus, detail: String?): ResponseEntity<ProblemDetail> =
@@ -183,4 +185,4 @@ class ProcessingValidationException(message: String) : RuntimeException(message)
 class DuplicateKeyException(message: String) : RuntimeException(message)
 class ConflictException(message: String) : RuntimeException(message)
 class ServiceUnavailableException(message: String) : RuntimeException(message)
-class TooManyRequestsException(message: String) : RuntimeException(message)
+class TooManyRequestsException(message: String, val retryAfterSeconds: Long? = null) : RuntimeException(message)

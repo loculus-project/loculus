@@ -26,6 +26,7 @@ import org.loculus.backend.metrics.VALIDATE_CONSENSUS_SEQUENCES_PHASE
 import org.loculus.backend.metrics.VALIDATE_FILE_MAPPING_PHASE
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.submission.CompressionAlgorithm
+import org.loculus.backend.service.submission.RateLimitedOperation
 import org.loculus.backend.service.submission.SubmissionIdFilesMappingPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionLimitService
 import org.loculus.backend.service.submission.UploadDatabaseService
@@ -162,13 +163,6 @@ class SubmitModel(
                 }
             }
 
-            // Needs the group of each entry, which revisions only have once associated. Checked before accessions
-            // are generated, so a rejected upload does not use up accession numbers.
-            submissionLimitService.validateSequenceEntryLimit(
-                submissionParams.uploadType,
-                incomingByGroup = submissionLimitService.countEntriesInUploadByGroup(uploadId),
-            )
-
             submissionMetrics.timeWritePhase(endpoint, organism, VALIDATE_FILE_MAPPING_PHASE) {
                 val files = uploadDatabaseService.getFilesForUpload(uploadId)
                 if (files.isNotEmpty()) {
@@ -188,6 +182,18 @@ class SubmitModel(
                     validateFileGroupOwnership(files, submissionParams, uploadId)
                 }
             }
+
+            // After all validation, so only uploads that will be written count, and before accessions are generated,
+            // so a rejected upload does not use up accession numbers. Needs the group of each entry, which revisions
+            // only have once associated.
+            submissionLimitService.checkAndRecord(
+                operation = when (submissionParams.uploadType) {
+                    UploadType.ORIGINAL -> RateLimitedOperation.SUBMIT
+                    UploadType.REVISION -> RateLimitedOperation.REVISE
+                },
+                username = submissionParams.authenticatedUser.username,
+                countByGroup = submissionLimitService.countEntriesInUploadByGroup(uploadId),
+            )
 
             if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
                 submissionMetrics.timeWritePhase(endpoint, organism, GENERATE_ACCESSIONS_PHASE) {
