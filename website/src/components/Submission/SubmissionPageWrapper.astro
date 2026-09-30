@@ -23,42 +23,40 @@ const lastTimeSubmissionBannerWasClosed = Astro.cookies.get('lastTimeSubmissionB
 ---
 
 <BaseLayout title={title} fullWidth>
-    {
-        groupsResult.match(
-            ({ currentGroup: group, groupsOfUser }) => (
-                <>
-                    <Banner
-                        message={submissionBannerMessage}
-                        lastTimeBannerWasClosed={
-                            lastTimeSubmissionBannerWasClosed !== undefined
-                                ? parseInt(lastTimeSubmissionBannerWasClosed, 10)
-                                : undefined
-                        }
-                        serverTime={Date.now()}
-                        cookieName='lastTimeSubmissionBannerWasClosed'
-                        client:load
-                    />
-                    <SubmissionGroupSelector
-                        groups={groupsOfUser}
-                        selectedGroupId={group.groupId}
-                        pathname={pathname}
-                        search={search}
-                        client:load
-                    />
-                    {!disablePageTitle && <h1 class='title'>{title}</h1>}
-                    <slot />
-                </>
-            ),
-            ({ type }) => {
-                switch (type) {
-                    case 'not_logged_in':
-                        return <NeedToLogin message='You need to be logged in to submit sequences.' />;
-                    case 'group_not_found':
-                        return <p class='text-red-500'>Group not found</p>;
-                    default:
-                        return <p class='text-red-500'>Unexpected error: Failed to load groups</p>;
-                }
-            },
-        )
-    }
+    {groupsResult.match(
+        ({ currentGroup: group, groupsOfUser }) => (
+            <>
+                <Banner
+                    message={submissionBannerMessage}
+                    lastTimeBannerWasClosed={
+                        lastTimeSubmissionBannerWasClosed !== undefined
+                            ? parseInt(lastTimeSubmissionBannerWasClosed, 10)
+                            : undefined
+                    }
+                    serverTime={Date.now()}
+                    cookieName='lastTimeSubmissionBannerWasClosed'
+                    client:load
+                />
+                <SubmissionGroupSelector
+                    groups={groupsOfUser}
+                    selectedGroupId={group.groupId}
+                    pathname={pathname}
+                    search={search}
+                    client:load
+                />
+                {!disablePageTitle && <h1 class='title'>{title}</h1>}
+                <slot />
+            </>
+        ),
+        ({ type }) => {
+            switch (type) {
+                case 'not_logged_in':
+                    return <NeedToLogin message='You need to be logged in to submit sequences.' />;
+                case 'group_not_found':
+                    return <p class='text-red-500'>Group not found</p>;
+                default:
+                    return <p class='text-red-500'>Unexpected error: Failed to load groups</p>;
+            }
+        },
+    )}
 </BaseLayout>
