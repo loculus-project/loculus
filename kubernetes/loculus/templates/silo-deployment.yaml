@@ -154,9 +154,9 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
+  # Same sync wave as the Deployment: local-path binds a claim only once a pod uses it, and ArgoCD holds later waves
+  # until the claim is healthy.
   name: loculus-silo-data-{{ $key }}
-  annotations:
-    argocd.argoproj.io/sync-wave: "-5"
 spec:
   accessModes: ["ReadWriteOnce"]
   resources:
