@@ -106,6 +106,8 @@ queryEngine:
   enabled: true
   # keep LAPIS/SILO running next to the engine (for comparison); false drops them
   runLapisAlongside: true
+  # organism keys that get LAPIS/SILO alongside the engine; empty: every enabled organism
+  lapisAlongsideOrganisms: []
   # cache of rendered query responses: a heap tier and a disk tier on an emptyDir (Spring DataSize, "0" = off)
   responseCache:
     memorySize: "64MB"

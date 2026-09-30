@@ -1,7 +1,7 @@
 {{- if include "loculus.runLapis" . }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 
-{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- range $_, $item := (include "loculus.lapisOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
 {{- $organismContent := $item.contents }}
 

@@ -1939,6 +1939,12 @@
           "default": true,
           "description": "With the query engine enabled, keep LAPIS and SILO deployed alongside for comparison; false stops rendering them"
         },
+        "lapisAlongsideOrganisms": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "With the query engine enabled, the organism keys that get LAPIS and SILO alongside; empty means every enabled organism"
+        },
         "responseCache": {
           "type": "object",
           "description": "Cache of rendered query-engine responses in the backend: a memory tier in the heap and a disk tier on an emptyDir. Sizes are Spring DataSize strings (e.g. 500MB, 5GB); \"0\" turns a tier off.",

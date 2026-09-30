@@ -1,5 +1,5 @@
 {{- if include "loculus.runLapis" . }}
-{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- range $_, $item := (include "loculus.lapisOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
 ---
 apiVersion: v1

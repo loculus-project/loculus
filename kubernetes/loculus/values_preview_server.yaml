@@ -311,6 +311,28 @@ resources:
           cpu: "1"
         limits:
           memory: "16Gi"
+      # LAPIS/SILO alongside the engine (queryEngine.lapisAlongsideOrganisms), sized for ~4M entries: SC2 has never
+      # run on SILO here, so requests are an estimate of steady use (on loculus-agent-1 via silo.nodeSelector) and
+      # limits leave room for the import peak (SILO holds old and new database while it swaps, the importer runs SILO
+      # preprocessing in its own container). The limits sum to 94Gi, under the ~110 GB the node has available.
+      silo:
+        requests:
+          memory: "20Gi"
+          cpu: "500m"
+        limits:
+          memory: "56Gi"
+      silo-importer:
+        requests:
+          memory: "6Gi"
+          cpu: "500m"
+        limits:
+          memory: "32Gi"
+      lapis:
+        requests:
+          memory: "1Gi"
+          cpu: "100m"
+        limits:
+          memory: "6Gi"
   website:
     requests:
       memory: "256Mi"
@@ -408,10 +430,12 @@ developmentDatabasePersistence: true
 # and a fresh MinIO loses files the DB references.
 developmentS3:
   storageSize: "20Gi"
-# The website's LAPIS is the backend's query engine; LAPIS/SILO alongside only cost resources here.
+# The website's LAPIS is the backend's query engine; LAPIS/SILO run alongside for SC2 only, as a baseline.
 queryEngine:
   enabled: true
-  runLapisAlongside: false
+  runLapisAlongside: true
+  # SC2 only, for a same-data LAPIS/SILO baseline at scale (lapis-qe-fixes-preview.loculus.org/sars-cov-2/)
+  lapisAlongsideOrganisms: ["sars-cov-2"]
   # production-sized: the memory tier comes out of the backend heap (24Gi limit x MaxRAMPercentage=80 = 19.2 GiB)
   responseCache:
     memorySize: "500MB"
@@ -7008,3 +7032,25 @@ lineageSystemDefinitions:
   dengue:
     33: https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/dengue/all/2025-09-09--12-13-13Z/lineages.yaml
     34: https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/dengue/all/2025-09-09--12-13-13Z/lineages.yaml
+# SC2's SILO keeps its database across restarts and runs on the node with the most free memory; main's image.
+silo:
+  apiThreadsForHttpConnections: 16
+  persistence:
+    enabled: true
+    storageSize: "100Gi"
+  # the download, its transformed copy and SILO's input copy, all zstd; a cap evicts only this pod, not the node
+  inputSizeLimit: "150Gi"
+  nodeSelector:
+    kubernetes.io/hostname: loculus-agent-1
+siloImport:
+  # a full SC2 preprocessing run may outlast the 1 h default
+  siloTimeoutSeconds: 14400
+  # a hard refresh re-downloads all ~4M SC2 entries from the backend under test; ETag changes still import at once
+  hardRefreshIntervalSeconds: 86400
+  pollIntervalSeconds: 30
+images:
+  loculusSilo:
+    # main's loculus-silo (SILO 0.14.3) as of 2026-09-30; this branch doesn't change loculus-silo/
+    repository: "ghcr.io/loculus-project/loculus-silo"
+    tag: "latest@sha256:06a35ce8f344424097782e58c3d87ef6b422a993b005b93c620527558cce0866"
+    pullPolicy: IfNotPresent

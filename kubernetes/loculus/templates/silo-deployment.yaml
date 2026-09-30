@@ -5,7 +5,7 @@
 {{- $siloScheduling := deepCopy $.Values.podScheduling }}
 {{- with ($.Values.silo).nodeSelector }}{{- $_ := set $siloScheduling "nodeSelector" . }}{{- end }}
 
-{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- range $_, $item := (include "loculus.lapisOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
 {{- $organismContent := $item.contents }}
 {{- $lineageSystem := $organismContent | include "loculus.lineageSystemForOrganism" | fromYamlArray }}
