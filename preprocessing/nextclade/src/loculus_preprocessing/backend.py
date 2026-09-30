@@ -243,7 +243,7 @@ def request_upload(group_id: int, number_of_files: int, config: Config) -> Seque
 def upload_embl_file_to_presigned_url(
     content: str, url: str, extra_headers: dict | None = None
 ) -> None:
-    headers = {"Content-Type": "chemical/x-embl-dl-nucleotide"}
+    headers = {"Content-Type": "text/plain; charset=utf-8"}
     if extra_headers:
         headers.update(extra_headers)
     try:
