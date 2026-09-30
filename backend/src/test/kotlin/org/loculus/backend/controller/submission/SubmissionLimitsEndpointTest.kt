@@ -44,7 +44,7 @@ private const val MAX_OPERATIONS = 15L
 
 // Group IDs restart at 1 for every test, so the third, fourth and fifth group created in a test get these IDs.
 private const val EXEMPT_GROUP_ID = 3
-private const val TRUSTED_GROUP_ID = 4
+private const val OWN_QUOTA_GROUP_ID = 4
 private const val PAUSED_GROUP_ID = 5
 
 private const val SECONDS_PER_DAY = 24 * 60 * 60
@@ -145,26 +145,26 @@ class SubmissionLimitsEndpointTest(
     }
 
     @Test
-    fun `GIVEN many untrusted groups THEN they share one quota`() {
+    fun `GIVEN many groups without their own quota THEN they share one quota`() {
         convenienceClient.submitDefaultFiles(groupId = newGroup())
 
         submitDefaultFilesExpectingTooManyRequests(newGroup())
     }
 
     @Test
-    fun `GIVEN a trusted group THEN it has its own quota, and exempt groups are not limited`() {
+    fun `GIVEN a group with its own quota THEN it is limited separately, and exempt groups are not limited`() {
         val sharedGroup = newGroup()
         newGroup()
         val exemptGroup = newGroup()
-        val trustedGroup = newGroup()
-        assertThat(listOf(exemptGroup, trustedGroup), equalTo(listOf(EXEMPT_GROUP_ID, TRUSTED_GROUP_ID)))
+        val ownQuotaGroup = newGroup()
+        assertThat(listOf(exemptGroup, ownQuotaGroup), equalTo(listOf(EXEMPT_GROUP_ID, OWN_QUOTA_GROUP_ID)))
 
         convenienceClient.submitDefaultFiles(groupId = sharedGroup)
         repeat(3) { convenienceClient.submitDefaultFiles(groupId = exemptGroup) }
-        convenienceClient.submitDefaultFiles(groupId = trustedGroup)
+        convenienceClient.submitDefaultFiles(groupId = ownQuotaGroup)
 
-        submitDefaultFilesExpectingTooManyRequests(trustedGroup)
-            .andExpect(content().string(containsString("quota of group $TRUSTED_GROUP_ID")))
+        submitDefaultFilesExpectingTooManyRequests(ownQuotaGroup)
+            .andExpect(content().string(containsString("quota of group $OWN_QUOTA_GROUP_ID")))
     }
 
     @Test
@@ -172,19 +172,19 @@ class SubmissionLimitsEndpointTest(
         val sharedGroup = newGroup()
         newGroup()
         val exemptGroup = newGroup()
-        val trustedGroup = newGroup()
+        val ownQuotaGroup = newGroup()
         val exemptAccessions = convenienceClient
             .prepareDefaultSequenceEntriesToApprovedForRelease(groupId = exemptGroup).map { it.accession }
-        val trustedAccessions = convenienceClient
-            .prepareDefaultSequenceEntriesToApprovedForRelease(groupId = trustedGroup).map { it.accession }
+        val ownQuotaAccessions = convenienceClient
+            .prepareDefaultSequenceEntriesToApprovedForRelease(groupId = ownQuotaGroup).map { it.accession }
 
         submissionControllerClient.reviseSequenceEntries(
-            DefaultFiles.getRevisedMetadataFile(exemptAccessions.take(5) + trustedAccessions.take(5)),
+            DefaultFiles.getRevisedMetadataFile(exemptAccessions.take(5) + ownQuotaAccessions.take(5)),
             DefaultFiles.sequencesFile,
         ).andExpect(status().isOk)
 
-        // The trusted group has used 10 submissions + 5 revisions = its whole quota; the shared quota is untouched.
-        filesClient.requestUploads(trustedGroup, numberFiles = 1, jwt = jwtForDefaultUser)
+        // The own-quota group has used 10 submissions + 5 revisions = its whole quota; the shared quota is untouched.
+        filesClient.requestUploads(ownQuotaGroup, numberFiles = 1, jwt = jwtForDefaultUser)
             .andExpect(status().isTooManyRequests)
         filesClient.requestUploads(sharedGroup, numberFiles = 15, jwt = jwtForDefaultUser).andExpect(status().isOk)
     }
@@ -213,7 +213,7 @@ class BackendConfigWithSubmissionLimitsTestConfig {
         submissionLimits = SubmissionLimits(
             maxOperationsPerDay = MAX_OPERATIONS,
             exemptGroupIds = setOf(EXEMPT_GROUP_ID),
-            groupQuotas = mapOf(TRUSTED_GROUP_ID to MAX_OPERATIONS, PAUSED_GROUP_ID to 0),
+            groupQuotas = mapOf(OWN_QUOTA_GROUP_ID to MAX_OPERATIONS, PAUSED_GROUP_ID to 0),
         ),
     )
 }

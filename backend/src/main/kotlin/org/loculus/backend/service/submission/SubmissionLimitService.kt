@@ -35,7 +35,7 @@ private const val ALERT_THRESHOLD_PERCENT = 80
  * Enforces [org.loculus.backend.config.SubmissionLimits]: the number of sequence entries and files affected by write
  * operations in a rolling 24h window, summed over all operations and organisms, taken from [RateLimitOperationsTable].
  * Exempt groups are not limited, groups in `groupQuotas` each have their own quota, and all other groups share one
- * quota, so creating many groups does not raise the amount an untrusted submitter can write.
+ * quota, so creating many groups does not raise the amount a submitter can write.
  */
 @Service
 @Transactional
