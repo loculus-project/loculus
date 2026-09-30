@@ -51,6 +51,8 @@ import java.nio.charset.StandardCharsets
 
 private val log = KotlinLogging.logger { }
 
+private const val STREAMING_PROGRESS_LOG_INTERVAL = 100_000L
+
 val RELEASED_DATA_RELATED_TABLES: List<String> =
     listOf(
         CURRENT_PROCESSING_PIPELINE_TABLE_NAME,
@@ -95,7 +97,7 @@ open class ReleasedDataModel(
         }
 
         log.info { "Starting to stream released submissions for organism $organism" }
-        return submissionDatabaseService.streamReleasedSubmissions(organism)
+        val released = submissionDatabaseService.streamReleasedSubmissions(organism)
             .map {
                 computeAdditionalMetadataFields(
                     it,
@@ -105,6 +107,21 @@ open class ReleasedDataModel(
                     organism,
                 )
             }
+        return withStreamingProgressLog(released, organism)
+    }
+
+    private fun <T> withStreamingProgressLog(entries: Sequence<T>, organism: Organism): Sequence<T> = sequence {
+        val start = System.nanoTime()
+        var streamed = 0L
+        fun rate() = streamed / ((System.nanoTime() - start) / 1e9).coerceAtLeast(1e-3)
+        for (entry in entries) {
+            yield(entry)
+            streamed++
+            if (streamed % STREAMING_PROGRESS_LOG_INTERVAL == 0L) {
+                log.info { "Streamed $streamed released entries of $organism (${rate().toLong()}/s)" }
+            }
+        }
+        log.info { "Finished streaming $streamed released entries of $organism (${rate().toLong()}/s)" }
     }
 
     /**
