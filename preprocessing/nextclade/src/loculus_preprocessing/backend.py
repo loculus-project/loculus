@@ -247,7 +247,12 @@ def upload_embl_file_to_presigned_url(
     if extra_headers:
         headers.update(extra_headers)
     try:
-        r = upload_session.put(url, data=content.encode("utf-8"), headers=headers, timeout=config.backend_request_timeout_seconds)
+        r = upload_session.put(
+            url,
+            data=content.encode("utf-8"),
+            headers=headers,
+            timeout=config.backend_request_timeout_seconds,
+        )
     except requests.exceptions.RequestException as e:
         msg = f"Upload failed: {e}"
         raise RuntimeError(msg) from e
