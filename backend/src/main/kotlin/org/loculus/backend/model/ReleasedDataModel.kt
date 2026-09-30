@@ -104,10 +104,18 @@ open class ReleasedDataModel(
      * included, plus the organism- and pipeline-specific preprocessed-data rows.
      * This means preprocessing of one organism (or of a not-yet-current pipeline
      * version) no longer invalidates the ETag of other organisms.
+     *
+     * [pipelineVersion] overrides the current pipeline version, for callers that serve
+     * a specific (possibly newer) pipeline version, e.g. the preprocessing pipeline polling
+     * for unprocessed data.
      */
-    private fun getLastDatabaseWrite(tableNames: List<String>? = null, organism: Organism? = null): String {
-        val pipelineVersion = organism?.let {
-            submissionDatabaseService.getCurrentProcessingPipelineVersion(it)
+    private fun getLastDatabaseWrite(
+        tableNames: List<String>? = null,
+        organism: Organism? = null,
+        pipelineVersion: Long? = null,
+    ): String {
+        val scopedPipelineVersion = organism?.let {
+            pipelineVersion ?: submissionDatabaseService.getCurrentProcessingPipelineVersion(it)
         }
         val query = UpdateTrackerTable.select(UpdateTrackerTable.lastTimeUpdatedDbColumn)
         tableNames?.let { query.andWhere { UpdateTrackerTable.tableNameColumn inList it } }
@@ -116,7 +124,7 @@ open class ReleasedDataModel(
                 UpdateTrackerTable.organismColumn.isNull() or (UpdateTrackerTable.organismColumn eq o.name)
             }
         }
-        pipelineVersion?.let { v ->
+        scopedPipelineVersion?.let { v ->
             query.andWhere {
                 UpdateTrackerTable.pipelineVersionColumn.isNull() or (UpdateTrackerTable.pipelineVersionColumn eq v)
             }
@@ -133,8 +141,12 @@ open class ReleasedDataModel(
 
     /** ETag for the last relevant database write. */
     @Transactional(readOnly = true)
-    open fun getLastDatabaseWriteETag(tableNames: List<String>? = null, organism: Organism? = null): String =
-        "\"${getLastDatabaseWrite(tableNames, organism)}\"" // ETag must be enclosed in double quotes
+    open fun getLastDatabaseWriteETag(
+        tableNames: List<String>? = null,
+        organism: Organism? = null,
+        pipelineVersion: Long? = null,
+    ): String = // ETag must be enclosed in double quotes
+        "\"${getLastDatabaseWrite(tableNames, organism, pipelineVersion)}\""
 
     /**
      * Same as [getLastDatabaseWriteETag], but also includes the current date.

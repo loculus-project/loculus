@@ -26,6 +26,7 @@ import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
 import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -115,6 +116,38 @@ class ExtractUnprocessedDataEndpointTest(
 
         responseNoNewData.andExpect(status().isNotModified)
             .andExpect(header().string(ETAG, secondEtag!!))
+    }
+
+    @Test
+    fun `GIVEN newer than current pipeline version WHEN its preprocessed data changes THEN its etag changes`() {
+        val newerPipelineVersion = DEFAULT_PIPELINE_VERSION + 1
+        convenienceClient.submitDefaultFiles()
+
+        // Claiming entries for the newer pipeline only writes preprocessed-data rows for that version,
+        // which must invalidate the etag the newer pipeline polls with (not only the current version's).
+        val response = client.extractUnprocessedData(
+            DefaultFiles.NUMBER_OF_SEQUENCES,
+            pipelineVersion = newerPipelineVersion,
+        )
+        val initialEtag = response.andReturn().response.getHeader(ETAG)
+        assertThat(
+            response.expectNdjsonAndGetContent<UnprocessedData>().size,
+            `is`(DefaultFiles.NUMBER_OF_SEQUENCES),
+        )
+
+        val responseAfterUpdatingTable = client.extractUnprocessedData(
+            DefaultFiles.NUMBER_OF_SEQUENCES,
+            pipelineVersion = newerPipelineVersion,
+            ifNoneMatch = initialEtag,
+        ).andExpect(status().isOk)
+        assertThat(responseAfterUpdatingTable.expectNdjsonAndGetContent<UnprocessedData>().size, `is`(0))
+
+        val secondEtag = responseAfterUpdatingTable.andReturn().response.getHeader(ETAG)
+        client.extractUnprocessedData(
+            DefaultFiles.NUMBER_OF_SEQUENCES,
+            pipelineVersion = newerPipelineVersion,
+            ifNoneMatch = secondEtag,
+        ).andExpect(status().isNotModified)
     }
 
     @Test

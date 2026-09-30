@@ -214,7 +214,12 @@ open class SubmissionController(
             )
         }
 
-        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(organism = organism)
+        // Scope the ETag to the requested pipeline version: writes by a newer, not yet current pipeline
+        // (e.g. deleting its failed rows so they get reprocessed) must invalidate that pipeline's ETag.
+        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
+            organism = organism,
+            pipelineVersion = pipelineVersion,
+        )
         if (ifNoneMatch == lastDatabaseWriteETag) {
             submissionMetrics.recordPollingRequest(
                 EXTRACT_UNPROCESSED_DATA_ENDPOINT,
