@@ -95,19 +95,17 @@ open class ReleasedDataModel(
     }
 
     /**
-     * Returns the timestamp of the last relevant database write, for use in ETags, taken from the
-     * most recent `last_time_updated` in the update tracker.
+     * Returns the latest tracked database-write timestamp matching the filters,
+     * or an empty string if none exists, for use in ETags.
      *
-     * When [organism] is given, the lookup is scoped to the rows that affect that organism's
-     * released data at its current pipeline version:
-     * table-wide writes (tagged with NULL organism / pipeline_version) are always
-     * included, plus the organism- and pipeline-specific preprocessed-data rows.
-     * This means preprocessing of one organism (or of a not-yet-current pipeline
-     * version) no longer invalidates the ETag of other organisms.
+     * By default, includes all tables, all organisms and all pipeline versions.
+     * [tableNames] restricts the lookup to the specified tables.
+     * [organism] restricts it to that organism and rows with no organism scope.
+     * When [organism] is supplied, uses its current pipeline version unless
+     * [pipelineVersion] overrides it, also including rows with no pipeline scope.
      *
-     * [pipelineVersion] overrides the current pipeline version, for callers that serve
-     * a specific (possibly newer) pipeline version, e.g. the preprocessing pipeline polling
-     * for unprocessed data. It is only valid together with [organism].
+     * All filters apply together: unscoped rows are included only from matching tables.
+     * [pipelineVersion] requires [organism].
      */
     private fun getLastDatabaseWrite(
         tableNames: List<String>? = null,
@@ -117,7 +115,8 @@ open class ReleasedDataModel(
         require(pipelineVersion == null || organism != null) {
             "pipelineVersion can only be specified together with organism"
         }
-        val scopedPipelineVersion = organism?.let {
+        // For an organism, use the requested pipeline version or default to its current version.
+        val effectivePipelineVersion = organism?.let {
             pipelineVersion ?: submissionDatabaseService.getCurrentProcessingPipelineVersion(it)
         }
         val query = UpdateTrackerTable.select(UpdateTrackerTable.lastTimeUpdatedDbColumn)
@@ -127,7 +126,7 @@ open class ReleasedDataModel(
                 UpdateTrackerTable.organismColumn.isNull() or (UpdateTrackerTable.organismColumn eq o.name)
             }
         }
-        scopedPipelineVersion?.let { v ->
+        effectivePipelineVersion?.let { v ->
             query.andWhere {
                 UpdateTrackerTable.pipelineVersionColumn.isNull() or (UpdateTrackerTable.pipelineVersionColumn eq v)
             }
