@@ -107,13 +107,16 @@ open class ReleasedDataModel(
      *
      * [pipelineVersion] overrides the current pipeline version, for callers that serve
      * a specific (possibly newer) pipeline version, e.g. the preprocessing pipeline polling
-     * for unprocessed data.
+     * for unprocessed data. It is only valid together with [organism].
      */
     private fun getLastDatabaseWrite(
         tableNames: List<String>? = null,
         organism: Organism? = null,
         pipelineVersion: Long? = null,
     ): String {
+        require(pipelineVersion == null || organism != null) {
+            "pipelineVersion can only be specified together with organism"
+        }
         val scopedPipelineVersion = organism?.let {
             pipelineVersion ?: submissionDatabaseService.getCurrentProcessingPipelineVersion(it)
         }
