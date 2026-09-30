@@ -8,7 +8,8 @@ podScheduling:
   affinity: {}
 
 localHost: localhost
-robotsNoindexHeader: false
+# Unset so that it follows requireLogin; set explicitly to override.
+robotsNoindexHeader: null
 seqSets:
   enabled: true
   fieldsToDisplay:
@@ -39,6 +40,10 @@ disableEnaSubmission: true
 disableTaxonomyService: false
 disableRawReadsProcessingService: true
 readOnlyMode: false
+# Require operator-created accounts for released-data reads. Human contributions additionally
+# require the contributor realm role (super_user remains compatible) and existing group access.
+# See docs/src/content/docs/reference/upgrade-guides/restricted-instance-access.md.
+requireLogin: false
 website:
   websiteConfig:
     enableLoginNavigationItem: true
@@ -2845,7 +2850,8 @@ defaultOrganisms:
 auth:
   verifyEmail: false
   resetPasswordAllowed: true
-  registrationAllowed: true
+  # Unset so that it follows requireLogin; set explicitly to override.
+  registrationAllowed: null
 insecureCookies: false
 bannerMessage: "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly."
 welcomeMessageHTML: null
@@ -2903,6 +2909,7 @@ secrets:
     data:
       insdcIngestUserPassword: ""
       preprocessingPipelinePassword: ""
+      siloImportPassword: ""
       externalMetadataUpdaterPassword: ""
       backendUserPassword: ""
   keycloak-admin:
@@ -2937,6 +2944,9 @@ runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 runDevelopmentS3: true
 developmentDatabasePersistence: false
+previewContributorGroup:
+  enabled: false
+  name: Contributor Preview Testing
 enforceHTTPS: true
 traefikVersion: 3
 registrationTermsMessage: >
@@ -3057,5 +3067,7 @@ defaultResources:
     memory: "1Gi"
     cpu: "500m"
 ingest:
+  # Actual backend group ID used by automated INSDC ingestion. Null keeps pipeline defaults.
+  groupId: null
   ncbiGatewayUrl: null
   mirrorBucket: null

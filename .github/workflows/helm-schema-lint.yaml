@@ -30,3 +30,6 @@ jobs:
 
       - name: Test browser authentication config rendering
         run: bash kubernetes/test-browser-auth-config.sh
+
+      - name: Test restricted access config rendering
+        run: bash kubernetes/test-restricted-access.sh

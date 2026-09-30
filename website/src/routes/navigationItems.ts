@@ -23,7 +23,7 @@ export type TopNavigationItem = {
 
 export type TopNavigationItems = TopNavigationItem[];
 
-export function getSequenceRelatedItems(organism: string | undefined) {
+export function getSequenceRelatedItems(organism: string | undefined, canContribute = true) {
     if (organism === undefined) {
         return [];
     }
@@ -34,7 +34,7 @@ export function getSequenceRelatedItems(organism: string | undefined) {
         icon: SearchIcon,
     };
 
-    if (!getWebsiteConfig().enableSubmissionNavigationItem || getWebsiteConfig().readOnlyMode) {
+    if (!canContribute || !getWebsiteConfig().enableSubmissionNavigationItem || getWebsiteConfig().readOnlyMode) {
         return [browseItem];
     }
 

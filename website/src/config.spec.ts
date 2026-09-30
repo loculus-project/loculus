@@ -9,6 +9,7 @@ import type { InstanceConfig, WebsiteConfig } from './types/config.ts';
 import { SINGLE_SEG_MULTI_REF_REFERENCEGENOMES_SCHEMA } from './types/referenceGenomes.spec.ts';
 
 const defaultConfig: WebsiteConfig = {
+    requireLogin: false,
     accessionPrefix: '',
     enableDataUseTerms: false,
     enableLoginNavigationItem: false,

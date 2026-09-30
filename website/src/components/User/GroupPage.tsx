@@ -25,6 +25,8 @@ import IwwaArrowDown from '~icons/iwwa/arrow-down';
 const logger = getClientLogger('GroupPage');
 
 type GroupPageProps = {
+    canContribute?: boolean;
+    canManageMembership?: boolean;
     prefetchedGroupDetails: GroupDetails;
     clientConfig: ClientConfig;
     accessToken: string | undefined;
@@ -38,6 +40,8 @@ type GroupPageProps = {
 };
 
 const InnerGroupPage: FC<GroupPageProps> = ({
+    canContribute = true,
+    canManageMembership = true,
     prefetchedGroupDetails,
     clientConfig,
     accessToken,
@@ -68,8 +72,10 @@ const InnerGroupPage: FC<GroupPageProps> = ({
         setNewUserName('');
     };
 
-    const userIsGroupMember = groupDetails.data?.users?.some((user) => user.name === username) ?? false;
-    const userHasEditPrivileges = userGroups.some((group) => group.groupId === prefetchedGroupDetails.group.groupId);
+    const userIsGroupMember =
+        canManageMembership && (groupDetails.data?.users?.some((user) => user.name === username) ?? false);
+    const userHasEditPrivileges =
+        canContribute && userGroups.some((group) => group.groupId === prefetchedGroupDetails.group.groupId);
 
     const { data: sequenceCounts, isLoading: sequenceCountsLoading } = useQuery({
         queryKey: ['group-sequence-counts', groupId, clientConfig, organisms],
@@ -109,7 +115,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                 <ErrorFeedback message={errorMessage} onClose={() => setErrorMessage(undefined)} />
             )}
 
-            {continueSubmissionCta !== undefined && (
+            {canContribute && continueSubmissionCta !== undefined && (
                 <div className='bg-blue-50 border border-blue-200 rounded-md p-4 mb-4 text-blue-900'>
                     <h2 className='font-semibold text-blue-900 text-lg'>Continue your submission</h2>
                     <p className='mt-2 text-sm'>
@@ -155,10 +161,12 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                         </DropdownMenuItem>
                                     ),
                             )}
-                            <DropdownMenuItem href={routes.createGroup()}>
-                                <DashiconsPlus className='w-6 h-6 inline-block' />
-                                Create a new group...
-                            </DropdownMenuItem>
+                            {canManageMembership && (
+                                <DropdownMenuItem href={routes.createGroup()}>
+                                    <DashiconsPlus className='w-6 h-6 inline-block' />
+                                    Create a new group...
+                                </DropdownMenuItem>
+                            )}
                         </DropdownMenu>
                     </h1>
                     {userIsGroupMember && (
@@ -261,7 +269,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                 </div>
             )}
 
-            {userHasEditPrivileges && (
+            {userHasEditPrivileges && canManageMembership && (
                 <>
                     <h2 className='text-lg font-bold py-4'> Users </h2>
                     <form onSubmit={(event) => void handleAddUser(event)}>

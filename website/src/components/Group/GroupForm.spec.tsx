@@ -41,12 +41,25 @@ const mockGetGroupsWithGroup = async (_groupName?: string): Promise<GetGroupsRes
 };
 
 describe('GroupForm', () => {
+    test.each([false, true])('visibility copy matches restricted mode %s', (restricted) => {
+        render(
+            <GroupForm
+                requireLogin={restricted}
+                title='Create group'
+                buttonText='Submit'
+                onSubmit={noOpSubmit}
+                getGroups={mockGetGroupsWithNoGroups}
+            />,
+        );
+        expect(screen.getByText(restricted ? /visible to signed-in users/ : /publicly available/)).toBeVisible();
+    });
     test('test empty form', () => {
         const formTitle = 'Create group';
         const buttonText = 'Submit';
 
         render(
             <GroupForm
+                requireLogin={false}
                 title={formTitle}
                 buttonText={buttonText}
                 onSubmit={noOpSubmit}
@@ -64,6 +77,7 @@ describe('GroupForm', () => {
     test('defaults load correctly', () => {
         render(
             <GroupForm
+                requireLogin={false}
                 title=''
                 buttonText=''
                 onSubmit={noOpSubmit}
@@ -88,6 +102,7 @@ describe('GroupForm', () => {
         const buttonText = 'Submit';
         render(
             <GroupForm
+                requireLogin={false}
                 title={formTitle}
                 buttonText={buttonText}
                 onSubmit={noOpSubmit}

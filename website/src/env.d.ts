@@ -8,6 +8,7 @@ type TokenCookie = {
 
 type Session = {
     isLoggedIn: boolean;
+    access?: import('./utils/instanceAccess').InstanceAccess;
     user?: {
         name?: string;
         username?: string;

@@ -1,0 +1,2 @@
+{{/* Renders nothing; exists so that the access policy checks run on every helm template/install. */}}
+{{- include "loculus.validateAccessPolicy" . -}}

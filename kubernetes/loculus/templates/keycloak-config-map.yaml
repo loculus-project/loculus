@@ -39,8 +39,8 @@ data:
         "password": "[[smtpPassword]]"
       },
       {{- end }}
-      "registrationAllowed": {{ $.Values.auth.registrationAllowed }},
-      "accessTokenLifespan": 36000,
+      "registrationAllowed": {{ include "loculus.registrationAllowed" $ }},
+      "accessTokenLifespan": {{ ternary 300 36000 $.Values.requireLogin }},
       "ssoSessionIdleTimeout": 36000,
       "actionTokenGeneratedByUserLifespan": 1800,
       "users": [
@@ -103,6 +103,18 @@ data:
             }
           },
           {
+            "username": "testcontributor",
+            "enabled": true,
+            "email": "testcontributor@void.o",
+            "emailVerified": true,
+            "firstName": "Test",
+            "lastName": "Contributor",
+            "credentials": [{"type": "password", "value": "testcontributor"}],
+            "realmRoles": ["user", "contributor", "offline_access"],
+            "attributes": {"university": "University of Test"},
+            "clientRoles": {"account": ["manage-account"]}
+          },
+          {
             "username": "superuser",
             "enabled": true,
             "email": "superuser@void.o",
@@ -143,6 +155,7 @@ data:
               }
             ],
             "realmRoles": [
+              "ingestion_pipeline",
               "user",
               "offline_access"
             ],
@@ -181,6 +194,34 @@ data:
               ]
             }
           },
+          {{- if .Values.requireLogin }}
+          {
+            "username": "silo_import",
+            "enabled": true,
+            "email": "silo_import@void.o",
+            "emailVerified" : true,
+            "firstName": "Dummy",
+            "lastName": "Silo Import",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "[[siloImportPassword]]"
+              }
+            ],
+            "realmRoles": [
+              "get_released_data",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {{- end }}
           {
             "username": "external_metadata_updater",
             "enabled": true,
@@ -259,6 +300,14 @@ data:
           {
             "name": "super_user",
             "description": "Privileges for curators to modify sequence entries of any user"
+          },
+          {
+            "name": "contributor",
+            "description": "May contribute on restricted instances, subject to existing group permissions"
+          },
+          {
+            "name": "ingestion_pipeline",
+            "description": "Machine ingestion operations, subject to existing group permissions"
           }
         ]
       },

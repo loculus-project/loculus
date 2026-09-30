@@ -1,5 +1,6 @@
 ---
 import { ListOfGroupsOfUser } from './ListOfGroupsOfUser.tsx';
+import { loginIsRequired } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes/routes';
 import { GroupManagementClient } from '../../services/groupManagementClient';
@@ -64,16 +65,21 @@ const groupOfUsersResult = await GroupManagementClient.create().getGroupsOfUser(
         </div>
         {
             groupOfUsersResult.match(
-                (groups) => <ListOfGroupsOfUser groupsOfUser={groups} client:load />,
+                (groups) => <ListOfGroupsOfUser groupsOfUser={groups} requireLogin={loginIsRequired()} client:load />,
                 (error) => <ErrorBox title='Failed loading list of groups'>{error.detail}</ErrorBox>,
             )
         }
-        <div class='mt-4'>
-            <a
-                href={routes.createGroup()}
-                class='bg-primary-500 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-sm text-sm'
-                >Create a new submitting group</a
-            >
-        </div>
+        {
+            session.access?.canManageMembership !== false && (
+                <div class='mt-4'>
+                    <a
+                        href={routes.createGroup()}
+                        class='bg-primary-500 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-sm text-sm'
+                    >
+                        Create a new submitting group
+                    </a>
+                </div>
+            )
+        }
     </div>
 </BaseLayout>

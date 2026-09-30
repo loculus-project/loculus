@@ -367,6 +367,15 @@ export function dataUseTermsAreEnabled() {
     return getWebsiteConfig().enableDataUseTerms;
 }
 
+/**
+ * Whether this instance keeps sequence data behind the authentication layer.
+ * When enabled, LAPIS is not reachable from the browser directly; queries go through
+ * the /lapis/<organism>/... proxy route, which requires a logged in session.
+ */
+export function loginIsRequired() {
+    return getWebsiteConfig().requireLogin;
+}
+
 export function getFileSharingConfig(): FileSharingConfig {
     return getWebsiteConfig().fileSharing ?? fileSharingConfig.parse({});
 }

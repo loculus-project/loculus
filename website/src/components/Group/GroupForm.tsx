@@ -32,6 +32,7 @@ const PLACEHOLDER_NEWGROUP: NewGroup = {
 };
 
 interface GroupFormProps {
+    requireLogin: boolean;
     /**
      * The title above the form fields.
      */
@@ -76,6 +77,7 @@ export type GroupSubmitError = {
 export type GroupSubmitResult = GroupSubmitSuccess | GroupSubmitError;
 
 export const GroupForm: FC<GroupFormProps> = ({
+    requireLogin,
     title,
     buttonText,
     defaultGroupData,
@@ -147,7 +149,9 @@ export const GroupForm: FC<GroupFormProps> = ({
             <form onSubmit={(event) => void submitFromForm(event)}>
                 <div className='border-b border-gray-900/10 pb-12 '>
                     <p className='mt-1 text-sm leading-6 text-gray-600'>
-                        The information you enter on this form will be publicly available on your group page.
+                        {requireLogin
+                            ? 'The information you enter on this form will be visible to signed-in users on your group page.'
+                            : 'The information you enter on this form will be publicly available on your group page.'}
                     </p>
 
                     <div className='mt-5 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6'>

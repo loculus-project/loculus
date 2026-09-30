@@ -1,4 +1,13 @@
 enableServiceMonitor: true
+# Branch preview only: known test accounts mean this must never contain private data.
+requireLogin: true
+# Disposable preview: recreate fixture membership after database resets.
+developmentDatabasePersistence: false
+previewContributorGroup:
+  enabled: true
+  name: Contributor Preview Testing
+s3:
+  enabled: false
 createTestAccounts: true
 secrets:
   smtp-password:
@@ -43,8 +52,8 @@ secrets:
       username: AgCDpVIUKgJyAe44Yo/SczCphLNOuQdQs6csipAt7LNigQqs9Pd35Ba4j82ZPevV9ueacG1+O0IHf4n/tTyX7/lPdeLD2W/GmJlZaI3pzbTNwFbYVwk4kO2JKvLOYqoyKvuOzf1hZ6vKOGfiuw2EHsWuAVRToEScI533Md40bu5mqLxbraDUueHnRC42oLte76ecvSdypr/ixgP6xm6yiZSgd232lm5xpAuSBAfl6GSjMP/EgLv5GT0LcGmkPaFZFKiwia7Oj7Gh9xhlbOilj86fjAIIMOfL79bVdBwKtJnt6v9ahsLe5MIOgHpyWxb069TS1eduJVRrWIPQjNrUdNQQxr32NwXQFXeB3PABmiS6mM1W89zVG+qnUsWPjKMUUU5p8h2+0w01+qKjEUVRXXaII6ZJrko/cENxhQTHhUVYQGCtnzAr2wz5KJAfwhioztO9N/zTcOfQXtIoGCTCQqpwXrKBEHaD5QDjFbeZDYjiv5DfwQ1xJt6gHEgSAl3fWqjjyOyNk4ogtNSmTrCF6miTrzOFlWckSelLZsoRJ/PWPA0KfymFjwSaeQd1D6472Rm0juJgBPfPye2+ddIzN1eVsaivDRZ5HYwjTcLZ7PaFW5f1E4Z9QnV5HltkLXYINCcnj+qy5145PrGHyGad9JqpVFF7V9MRGfPZ5ako7U7nDkQiS6Ad64feAhEl5fdJ7R30IGVb2TMgwoQtPCdeAwbk6mFhob0gc6zS
 previewDocs: true
 robotsNoindexHeader: true
-disableEnaSubmission: false
-disableRawReadsProcessingService: false
+disableEnaSubmission: true
+disableRawReadsProcessingService: true
 additionalHeadHTML: '<script defer data-domain="loculus.org" src="https://plausible.io/js/script.js"></script>'
 ingest:
   ncbiGatewayUrl: "https://ncbi-temp-proxy.api.taxonium.org/datasets/v2"
@@ -73,10 +82,9 @@ auth:
     envelopeFrom: "noreply@loculus.org"
   verifyEmail: false
   resetPasswordAllowed: true
-  registrationAllowed: true
-  identityProviders:
-    orcid:
-      clientId: "APP-P1P7N7T9YVBHQ4EH"
+  registrationAllowed: false
+  # Do not allow upstream sign-in to provision unapproved preview accounts.
+  identityProviders: {}
 fileSharing:
   outputFileUrlType: website
   maxFileSizeBytes: 2147483648 # 2 GiB
@@ -167,23 +175,3 @@ defaultResources:
   limits:
     memory: "1Gi"
     cpu: "500m"
-defaultOrganisms:
-  ebola-sudan: &fileSharingOrganismDefaults
-    schema:
-      submissionDataTypes:
-        files:
-          enabled: true
-          categories:
-            - name: rawReads
-              displayName: Raw reads
-      files:
-        - name: annotations
-          displayName: Annotations
-        - name: rawReads
-          displayName: Raw reads
-  west-nile: *fileSharingOrganismDefaults
-  dummy-organism: *fileSharingOrganismDefaults
-  not-aligned-organism: *fileSharingOrganismDefaults
-  cchf: *fileSharingOrganismDefaults
-  cchf-multi-ref: *fileSharingOrganismDefaults
-  enteroviruses: *fileSharingOrganismDefaults

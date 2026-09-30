@@ -15,6 +15,7 @@ vi.mock('../config.ts', () => ({
         oidcTransactionCookieSecret: 'test-oidc-transaction-cookie-secret',
     }),
     getWebsiteConfig: () => ({ readOnlyMode: false }),
+    loginIsRequired: () => false,
 }));
 
 vi.mock('../logger.ts', () => ({
@@ -34,6 +35,7 @@ vi.mock('../utils/KeycloakClientManager.ts', () => ({
 }));
 
 vi.mock('../utils/shouldMiddlewareEnforceLogin.ts', () => ({
+    isApiRoute: () => false,
     shouldMiddlewareEnforceLogin: mocks.shouldMiddlewareEnforceLogin,
 }));
 

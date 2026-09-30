@@ -8,12 +8,18 @@ import { GroupForm, type GroupSubmitError, type GroupSubmitSuccess } from '../Gr
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 interface GroupEditFormProps {
+    requireLogin: boolean;
     prefetchedGroupDetails: GroupDetails;
     clientConfig: ClientConfig;
     accessToken: string;
 }
 
-const InnerGroupEditForm: FC<GroupEditFormProps> = ({ prefetchedGroupDetails, clientConfig, accessToken }) => {
+const InnerGroupEditForm: FC<GroupEditFormProps> = ({
+    prefetchedGroupDetails,
+    clientConfig,
+    accessToken,
+    requireLogin,
+}) => {
     const { groupId, ...groupInfo } = prefetchedGroupDetails.group;
 
     const { getGroups } = useGetGroups({
@@ -43,6 +49,7 @@ const InnerGroupEditForm: FC<GroupEditFormProps> = ({ prefetchedGroupDetails, cl
 
     return (
         <GroupForm
+            requireLogin={requireLogin}
             title='Edit group'
             buttonText='Update group'
             onSubmit={handleEditGroup}

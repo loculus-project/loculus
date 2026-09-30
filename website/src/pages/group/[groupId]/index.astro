@@ -50,6 +50,8 @@ const userGroups = userGroupsResponse.match(
         groupDetailsResult.match(
             (groupDetails) => (
                 <GroupPage
+                    canContribute={session?.access?.canContribute}
+                    canManageMembership={session?.access?.canManageMembership}
                     prefetchedGroupDetails={groupDetails}
                     accessToken={accessToken}
                     clientConfig={clientConfig}

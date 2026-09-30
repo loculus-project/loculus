@@ -9,6 +9,7 @@ import { GroupForm, type GroupSubmitError, type GroupSubmitSuccess } from '../Gr
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 interface GroupManagerProps {
+    requireLogin: boolean;
     clientConfig: ClientConfig;
     accessToken: string;
     searchParams: string;
@@ -24,7 +25,7 @@ const getContinueSubmissionFromSearchParams = (searchParamsString: string): Cont
     return { organism };
 };
 
-const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessToken, searchParams }) => {
+const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessToken, searchParams, requireLogin }) => {
     const { getGroups } = useGetGroups({
         clientConfig,
         accessToken,
@@ -54,6 +55,7 @@ const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessTok
 
     return (
         <GroupForm
+            requireLogin={requireLogin}
             title='Create a new submitting group'
             buttonText='Create group'
             onSubmit={handleCreateGroup}

@@ -3,6 +3,8 @@ package org.loculus.backend.config
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import mu.KotlinLogging
+import org.loculus.backend.auth.InstanceAccessPolicy
+import org.loculus.backend.auth.InstanceActorAdapter
 import org.loculus.backend.auth.Roles.EXTERNAL_METADATA_UPDATER
 import org.loculus.backend.auth.Roles.PREPROCESSING_PIPELINE
 import org.loculus.backend.auth.Roles.SUPER_USER
@@ -13,6 +15,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.convert.converter.Converter
 import org.springframework.http.HttpMethod
 import org.springframework.security.access.AccessDeniedException
+import org.springframework.security.authorization.AuthorizationDecision
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.core.AuthenticationException
@@ -80,6 +83,8 @@ class SecurityConfig {
     fun securityFilterChain(
         httpSecurity: HttpSecurity,
         keycloakAuthoritiesConverter: KeycloakAuthenticationConverter,
+        instanceAccessPolicy: InstanceAccessPolicy,
+        instanceActorAdapter: InstanceActorAdapter,
     ): SecurityFilterChain = httpSecurity
         .authorizeHttpRequests { auth ->
             auth.requestMatchers(
@@ -91,8 +96,17 @@ class SecurityConfig {
                 "/api-docs/**",
                 "/swagger-ui/**",
             ).permitAll()
-            auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
-            auth.requestMatchers(HttpMethod.HEAD, *headEndpointsThatArePublic).permitAll()
+            auth.requestMatchers(HttpMethod.GET, "/access/capabilities").permitAll()
+            auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).access { authentication, _ ->
+                AuthorizationDecision(
+                    instanceAccessPolicy.canReadReleasedData(instanceActorAdapter.resolve(authentication.get())),
+                )
+            }
+            auth.requestMatchers(HttpMethod.HEAD, *headEndpointsThatArePublic).access { authentication, _ ->
+                AuthorizationDecision(
+                    instanceAccessPolicy.canReadReleasedData(instanceActorAdapter.resolve(authentication.get())),
+                )
+            }
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
             auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
             auth.requestMatchers(
@@ -100,7 +114,37 @@ class SecurityConfig {
             ).hasAuthority(EXTERNAL_METADATA_UPDATER)
             auth.requestMatchers(*adminEndpoints).hasAuthority(SUPER_USER)
             auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
-            auth.anyRequest().authenticated()
+            if (instanceAccessPolicy.restricted) {
+                // Machine ingestion retains its existing group checks without a human Contributor role.
+                auth.requestMatchers(HttpMethod.POST, "/groups").hasAnyAuthority(SUPER_USER, "ingestion_pipeline")
+                auth.requestMatchers(
+                    "/*/submit",
+                    "/*/revise",
+                    "/*/approve-processed-data",
+                    "/*/revoke",
+                    "/*/get-submitted-data",
+                    "/*/get-submitted-metadata",
+                    "/*/get-sequences",
+                ).access { authentication, _ ->
+                    val actor = authentication.get()
+                    AuthorizationDecision(
+                        instanceAccessPolicy.canContribute(instanceActorAdapter.resolve(actor)) ||
+                            actor.authorities.any { it.authority == "ingestion_pipeline" },
+                    )
+                }
+                // Operators provision groups/membership in the first restricted-mode implementation.
+                auth.requestMatchers(HttpMethod.PUT, "/groups/*/users/*").hasAuthority(SUPER_USER)
+                auth.requestMatchers(HttpMethod.DELETE, "/groups/*/users/*").hasAuthority(SUPER_USER)
+                auth.requestMatchers(HttpMethod.GET, "/groups", "/user/groups", "/get-seqsets-of-user").authenticated()
+                // Fail closed for new endpoints: viewers only get the explicitly listed released reads.
+                auth.anyRequest().access { authentication, _ ->
+                    AuthorizationDecision(
+                        instanceAccessPolicy.canContribute(instanceActorAdapter.resolve(authentication.get())),
+                    )
+                }
+            } else {
+                auth.anyRequest().authenticated()
+            }
         }
         .oauth2ResourceServer { oauth2 ->
             oauth2.jwt { jwt ->
