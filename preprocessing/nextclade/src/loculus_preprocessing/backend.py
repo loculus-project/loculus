@@ -241,7 +241,7 @@ def request_upload(group_id: int, number_of_files: int, config: Config) -> Seque
 
 
 def upload_embl_file_to_presigned_url(
-    content: str, url: str, config: Config, extra_headers: dict | None = None
+    content: str, url: str, extra_headers: dict | None = None
 ) -> None:
     headers = {"Content-Type": "chemical/x-embl-dl-nucleotide"}
     if extra_headers:
@@ -251,7 +251,7 @@ def upload_embl_file_to_presigned_url(
             url,
             data=content.encode("utf-8"),
             headers=headers,
-            timeout=config.backend_request_timeout_seconds,
+            timeout=60,
         )
     except requests.exceptions.RequestException as e:
         msg = f"Upload failed: {e}"

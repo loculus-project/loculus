@@ -810,9 +810,7 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
             file_name = f"{accession}.{version}.embl"
             upload_info = request_upload(submission_data.group_id, 1, config)[0]
             file_id = upload_info.fileId
-            upload_embl_file_to_presigned_url(
-                file_content, upload_info.url, config, upload_info.headers
-            )
+            upload_embl_file_to_presigned_url(file_content, upload_info.url, upload_info.headers)
             processed_files = submission_data.processed_entry.data.files or {}
             processed_files.setdefault(FileCategory.ANNOTATIONS, []).append(
                 FileIdAndNameAndReadUrl(fileId=file_id, name=file_name)

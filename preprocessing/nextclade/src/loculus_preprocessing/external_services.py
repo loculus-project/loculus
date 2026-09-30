@@ -24,10 +24,10 @@ logger = logging.getLogger(__name__)
 
 
 def create_retrying_session(retries: int = 5) -> requests.Session:
-    """Session that retries connection errors, read timeouts and 5xx responses
+    """Session that retries connection errors, read timeouts, 429 and selected 5xx responses
     with exponential backoff. Only idempotent methods (e.g. GET, PUT) are retried."""
     session = requests.Session()
-    retry = Retry(total=retries, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
+    retry = Retry(total=retries, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504])
     adapter = HTTPAdapter(max_retries=retry)
     session.mount("http://", adapter)
     session.mount("https://", adapter)
