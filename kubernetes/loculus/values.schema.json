@@ -2279,6 +2279,29 @@
           "description": "Number of threads for HTTP connections in SILO API",
           "default": 16,
           "minimum": 1
+        },
+        "persistence": {
+          "groups": ["silo"],
+          "type": "object",
+          "description": "Keep SILO's imported database on a PersistentVolumeClaim per organism, so a restarted pod serves the last import at once. Switches the SILO Deployment to the Recreate strategy.",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean", "default": false, "description": "Use a PVC instead of an emptyDir for SILO's data directory" },
+            "storageSize": { "type": "string", "default": "10Gi", "description": "Requested size of each organism's PVC" }
+          }
+        },
+        "inputSizeLimit": {
+          "groups": ["silo"],
+          "type": "string",
+          "default": "",
+          "description": "sizeLimit of the importer's download emptyDir (e.g. 150Gi); empty means no limit"
+        },
+        "nodeSelector": {
+          "groups": ["silo"],
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "default": {},
+          "description": "Node selector for the SILO and LAPIS pods; overrides podScheduling.nodeSelector"
         }
       },
       "additionalProperties": false

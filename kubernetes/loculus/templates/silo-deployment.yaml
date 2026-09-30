@@ -1,6 +1,9 @@
 {{- if include "loculus.runLapis" . }}
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/token" }}
+{{- $siloPersistence := (($.Values.silo).persistence).enabled }}
+{{- $siloScheduling := deepCopy $.Values.podScheduling }}
+{{- with ($.Values.silo).nodeSelector }}{{- $_ := set $siloScheduling "nodeSelector" . }}{{- end }}
 
 {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
@@ -18,6 +21,11 @@ metadata:
 spec:
   progressDeadlineSeconds: 1200  # 20 minute timeout to allow for long silo imports e.g. mpox
   replicas: 1
+  {{- if $siloPersistence }}
+  # the importer of the old and the new pod must not write the same data directory
+  strategy:
+    type: Recreate
+  {{- end }}
   selector:
     matchLabels:
       app: loculus
@@ -31,7 +39,7 @@ spec:
         component: silo-{{ $key }}
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
-      {{- include "loculus.podScheduling" $ | nindent 6 }}
+      {{- include "loculus.podSchedulingWithAffinity" (list (dict "Values" (dict "podScheduling" $siloScheduling)) $siloScheduling.affinity) | nindent 6 }}
       initContainers:
         {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
       containers:
@@ -77,7 +85,7 @@ spec:
         - name: silo-importer
           image: "{{ $.Values.images.loculusSilo.repository }}:{{ $.Values.images.loculusSilo.tag | default $dockerTag }}"
           imagePullPolicy: "{{ $.Values.images.loculusSilo.pullPolicy }}"
-          {{- include "loculus.resources" (list "silo-importer" $.Values) | nindent 10 }}
+          {{- include "loculus.resources" (list "silo-importer" $.Values $key) | nindent 10 }}
           env:
             - name: BACKEND_BASE_URL
               {{- if $.Values.disableBackend }}
@@ -128,8 +136,32 @@ spec:
       volumes:
         {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 8 }}
         - name: lapis-silo-shared-data
+          {{- if $siloPersistence }}
+          # SILO serves the last import from here after a restart instead of waiting for a new one
+          persistentVolumeClaim:
+            claimName: loculus-silo-data-{{ $key }}
+          {{- else }}
           emptyDir: {}
+          {{- end }}
         - name: lapis-silo-input-data-cache
-          emptyDir: {}
+          emptyDir:
+            {{- with ($.Values.silo).inputSizeLimit }}
+            sizeLimit: {{ . }}
+            {{- else }} {}
+            {{- end }}
+{{- if $siloPersistence }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: loculus-silo-data-{{ $key }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: {{ $.Values.silo.persistence.storageSize }}
+{{- end }}
 {{- end }}
 {{- end }}

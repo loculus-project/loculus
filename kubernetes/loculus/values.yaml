@@ -5396,6 +5396,14 @@ images:
     pullPolicy: IfNotPresent
 silo:
   apiThreadsForHttpConnections: 16
+  # keep SILO's imported database on a PVC, so a restarted pod serves the last import at once
+  persistence:
+    enabled: false
+    storageSize: "10Gi"
+  # cap of the importer's download directory (emptyDir sizeLimit); unset: no cap
+  inputSizeLimit: ""
+  # overrides podScheduling.nodeSelector for SILO and LAPIS pods
+  nodeSelector: {}
 secrets:
   smtp-password:
     type: raw

@@ -1,5 +1,7 @@
 {{- if include "loculus.runLapis" . }}
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- $lapisScheduling := deepCopy $.Values.podScheduling }}
+{{- with ($.Values.silo).nodeSelector }}{{- $_ := set $lapisScheduling "nodeSelector" . }}{{- end }}
 
 {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
@@ -25,7 +27,7 @@ spec:
         component: lapis-{{ $key }}
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
-      {{- include "loculus.podScheduling" $ | nindent 6 }}
+      {{- include "loculus.podSchedulingWithAffinity" (list (dict "Values" (dict "podScheduling" $lapisScheduling)) $lapisScheduling.affinity) | nindent 6 }}
       initContainers:
         {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
       containers:
