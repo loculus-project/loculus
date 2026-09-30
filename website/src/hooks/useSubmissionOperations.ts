@@ -50,7 +50,9 @@ export function useSubmissionOperations(
         {
             onError: (error) => openErrorFeedback(getSequencesErrorMessage(error)),
             refetchInterval: (data) =>
-                data?.sequenceEntries.some(({ status }) => status === receivedStatus || status === inProcessingStatus)
+                data === undefined ||
+                data.statusCounts[receivedStatus] > 0 ||
+                data.statusCounts[inProcessingStatus] > 0
                     ? 2000
                     : 30000,
             keepPreviousData: true,
