@@ -214,8 +214,7 @@ open class SubmissionController(
             )
         }
 
-        // Scope the ETag to the requested pipeline version: writes by a newer, not yet current pipeline
-        // (e.g. deleting its failed rows so they get reprocessed) must invalidate that pipeline's ETag.
+        // Scope ETag to requested pipeline version and organism
         val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
             organism = organism,
             pipelineVersion = pipelineVersion,
