@@ -147,7 +147,7 @@ spec:
       serviceAccountName: loculus-ingest-trigger
       containers:
         - name: trigger
-          image: ghcr.io/loculus-project/mirror/kubectl:1.36.0
+          image: {{ $.Values.mirrorRegistry }}/kubectl:1.36.0
           command:
             - sh
             - -c

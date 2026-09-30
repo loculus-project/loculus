@@ -1,5 +1,6 @@
 environment: server
 imagePullPolicy: Always
+mirrorRegistry: ghcr.io/loculus-project/mirror
 
 # Pod scheduling: nodeSelector, tolerations, affinity, and priority class for pod placement
 podScheduling:

@@ -29,6 +29,7 @@ helm install loculus kubernetes/loculus -f my-values.yaml
 ## Mirrored container images
 
 External Helm images and selected CI images use `ghcr.io/loculus-project/mirror`.
+Set `mirrorRegistry` to use another registry containing the same names and tags.
 Dockerfile base images, k3s and tooling images such as yamlfmt are outside this mirror.
 
 To update an image:
