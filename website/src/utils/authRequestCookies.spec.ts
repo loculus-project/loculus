@@ -170,6 +170,57 @@ describe('OIDC authentication transaction store', () => {
         expectCookieWithinBudget();
     });
 
+    test.each([4, 8, 12, 13, 14, 15])(
+        'rejects a cookie whose authentication tag is truncated to %s bytes',
+        (length) => {
+            addAuthRequest(cookies, 'state', nonce, verifier, 'https://loculus.test/user');
+            const parts = values.get(AUTH_TRANSACTIONS_COOKIE)!.split('.');
+            parts[3] = Buffer.from(parts[3], 'base64url').subarray(0, length).toString('base64url');
+            values.set(AUTH_TRANSACTIONS_COOKIE, parts.join('.'));
+
+            expect(consumeAuthRequest(cookies, 'state')).toBeUndefined();
+        },
+    );
+
+    test('rejects modified ciphertext even when the authentication tag has the correct length', () => {
+        addAuthRequest(cookies, 'state', nonce, verifier, 'https://loculus.test/user');
+        const parts = values.get(AUTH_TRANSACTIONS_COOKIE)!.split('.');
+        const ciphertext = Buffer.from(parts[2], 'base64url');
+        ciphertext[0] ^= 1;
+        parts[2] = ciphertext.toString('base64url');
+        values.set(AUTH_TRANSACTIONS_COOKIE, parts.join('.'));
+
+        expect(consumeAuthRequest(cookies, 'state')).toBeUndefined();
+    });
+
+    test('rejects an unexpected IV length', () => {
+        // GCM supports other IV lengths, but the v1 cookie format uses exactly 12 bytes.
+        // A valid tag with a different IV length must not bypass that format restriction.
+        const iv = randomBytes(16);
+        const key = createHash('sha256').update('test-oidc-transaction-cookie-secret').digest();
+        const cipher = createCipheriv('aes-256-gcm', key, iv);
+        const store = {
+            state: {
+                nonce,
+                codeVerifier: verifier,
+                returnTo: 'https://loculus.test/user',
+                expiresAt: Date.now() + 60000,
+            },
+        };
+        const ciphertext = Buffer.concat([cipher.update(JSON.stringify(store)), cipher.final()]);
+        values.set(
+            AUTH_TRANSACTIONS_COOKIE,
+            [
+                'v1',
+                iv.toString('base64url'),
+                ciphertext.toString('base64url'),
+                cipher.getAuthTag().toString('base64url'),
+            ].join('.'),
+        );
+
+        expect(consumeAuthRequest(cookies, 'state')).toBeUndefined();
+    });
+
     test('rejects expired and modified stores', () => {
         vi.useFakeTimers();
         vi.setSystemTime('2026-07-24T00:00:00Z');

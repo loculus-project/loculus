@@ -11,6 +11,8 @@ const transactionLifetimeSeconds = 60 * 60;
 const maxConcurrentTransactions = 3;
 // Leave room for cookie attributes and browser differences below the 4 KiB limit.
 const maxCookieBytes = 3800;
+const ivLength = 12;
+const authenticationTagLength = 16;
 
 type StoredAuthRequest = {
     nonce: string;
@@ -32,8 +34,8 @@ function encryptionKey() {
 }
 
 function seal(store: AuthRequestStore): string {
-    const iv = randomBytes(12);
-    const cipher = createCipheriv('aes-256-gcm', encryptionKey(), iv);
+    const iv = randomBytes(ivLength);
+    const cipher = createCipheriv('aes-256-gcm', encryptionKey(), iv, { authTagLength: authenticationTagLength });
     const ciphertext = Buffer.concat([cipher.update(JSON.stringify(store), 'utf8'), cipher.final()]);
     const authenticationTag = cipher.getAuthTag();
     return [
@@ -55,8 +57,15 @@ function unseal(value: string | undefined): AuthRequestStore {
             return {};
         }
         const [, encodedIv, encodedCiphertext, encodedAuthenticationTag] = parts;
-        const decipher = createDecipheriv('aes-256-gcm', encryptionKey(), Buffer.from(encodedIv, 'base64url'));
-        decipher.setAuthTag(Buffer.from(encodedAuthenticationTag, 'base64url'));
+        const iv = Buffer.from(encodedIv, 'base64url');
+        const authenticationTag = Buffer.from(encodedAuthenticationTag, 'base64url');
+        if (iv.length !== ivLength || authenticationTag.length !== authenticationTagLength) {
+            return {};
+        }
+        const decipher = createDecipheriv('aes-256-gcm', encryptionKey(), iv, {
+            authTagLength: authenticationTagLength,
+        });
+        decipher.setAuthTag(authenticationTag);
         const plaintext = Buffer.concat([
             decipher.update(Buffer.from(encodedCiphertext, 'base64url')),
             decipher.final(),
