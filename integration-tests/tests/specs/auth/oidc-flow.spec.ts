@@ -125,6 +125,47 @@ test.describe('OIDC browser login', () => {
         }
     });
 
+    test('abandoned long-URL logins do not prevent a subsequent login', async ({
+        page,
+        testAccount,
+    }) => {
+        const websiteOrigin = new URL(page.url()).origin;
+        for (let attempt = 0; attempt < 3; attempt++) {
+            const destination = new URL(`/user?attempt=${attempt}&query=`, websiteOrigin)
+                .toString()
+                .padEnd(2000, 'x');
+            await page.goto(`/auth/login?returnTo=${encodeURIComponent(destination)}`);
+            await expect(page.getByLabel('Username')).toBeVisible();
+            const pending = (await page.context().cookies(websiteOrigin)).find(
+                (cookie) => cookie.name === transactionCookie,
+            );
+            expect(pending).toBeDefined();
+            expect(Buffer.byteLength(`${pending.name}=${pending.value}`)).toBeLessThanOrEqual(3800);
+        }
+
+        const destination = new URL(
+            '/user?source=after-abandoned-logins',
+            websiteOrigin,
+        ).toString();
+        await page.goto(`/auth/login?returnTo=${encodeURIComponent(destination)}`);
+        await submitCredentials(page, testAccount);
+        await expect(page).toHaveURL(destination);
+        await expectAccount(page, testAccount);
+    });
+
+    test('an oversized return URL falls back to the account page without breaking login', async ({
+        page,
+        testAccount,
+    }) => {
+        const websiteOrigin = new URL(page.url()).origin;
+        const destination = new URL('/user?query=', websiteOrigin).toString().padEnd(2900, 'x');
+        await page.goto(`/auth/login?returnTo=${encodeURIComponent(destination)}`);
+        await submitCredentials(page, testAccount);
+
+        await expect(page).toHaveURL(new URL('/user', websiteOrigin).toString());
+        await expectAccount(page, testAccount);
+    });
+
     test('offers a working retry when the browser has lost its login transaction', async ({
         page,
         testAccount,

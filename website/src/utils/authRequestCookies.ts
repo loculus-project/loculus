@@ -3,11 +3,14 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:
 import type { AstroCookies } from 'astro';
 
 import { getRuntimeConfig } from '../config.ts';
+import { routes } from '../routes/routes.ts';
 
 export const AUTH_TRANSACTIONS_COOKIE = 'oidc_transactions';
 
 const transactionLifetimeSeconds = 60 * 60;
 const maxConcurrentTransactions = 3;
+// Leave room for cookie attributes and browser differences below the 4 KiB limit.
+const maxCookieBytes = 3800;
 
 type StoredAuthRequest = {
     nonce: string;
@@ -76,14 +79,18 @@ function activeTransactions(store: AuthRequestStore, now = Date.now()): AuthRequ
     );
 }
 
-function writeStore(cookies: AstroCookies, store: AuthRequestStore) {
+function fitsCookieBudget(sealedStore: string): boolean {
+    return Buffer.byteLength(`${AUTH_TRANSACTIONS_COOKIE}=${sealedStore}`, 'utf8') <= maxCookieBytes;
+}
+
+function writeStore(cookies: AstroCookies, store: AuthRequestStore, sealedStore?: string) {
     if (Object.keys(store).length === 0) {
         cookies.delete(AUTH_TRANSACTIONS_COOKIE, { path: '/' });
         return;
     }
 
     const runtimeConfig = getRuntimeConfig();
-    cookies.set(AUTH_TRANSACTIONS_COOKIE, seal(store), {
+    cookies.set(AUTH_TRANSACTIONS_COOKIE, sealedStore ?? seal(store), {
         httpOnly: true,
         sameSite: 'lax',
         secure: !runtimeConfig.insecureCookies,
@@ -100,20 +107,40 @@ export function addAuthRequest(
     returnTo: string,
 ) {
     const existingStore = activeTransactions(unseal(cookies.get(AUTH_TRANSACTIONS_COOKIE)?.value));
-    existingStore[state] = {
+    const transaction: StoredAuthRequest = {
         nonce,
         codeVerifier,
         returnTo,
         expiresAt: Date.now() + transactionLifetimeSeconds * 1000,
     };
 
-    const boundedStore = Object.fromEntries(
-        Object.entries(existingStore)
-            .filter((entry): entry is [string, StoredAuthRequest] => entry[1] !== undefined)
-            .sort(([, left], [, right]) => right.expiresAt - left.expiresAt)
-            .slice(0, maxConcurrentTransactions),
-    );
-    writeStore(cookies, boundedStore);
+    // Reserve space for this attempt first, including when replica clocks differ.
+    const boundedStore: AuthRequestStore = Object.assign(Object.create(null), { [state]: transaction });
+    let sealedStore = seal(boundedStore);
+    if (!fitsCookieBudget(sealedStore)) {
+        // The caller supplies an absolute, same-origin URL. Preserve it unless it cannot
+        // fit even on its own; never redirect to Keycloak with an unstorable transaction.
+        transaction.returnTo = new URL(routes.userOverviewPage(), returnTo).toString();
+        sealedStore = seal(boundedStore);
+        if (!fitsCookieBudget(sealedStore)) {
+            throw new Error('OIDC login transaction exceeds the cookie size limit');
+        }
+    }
+
+    const previousTransactions = Object.entries(existingStore)
+        .filter((entry): entry is [string, StoredAuthRequest] => entry[0] !== state && entry[1] !== undefined)
+        .sort(([, left], [, right]) => right.expiresAt - left.expiresAt)
+        .slice(0, maxConcurrentTransactions - 1);
+    for (const [previousState, previousTransaction] of previousTransactions) {
+        boundedStore[previousState] = previousTransaction;
+        const candidate = seal(boundedStore);
+        if (!fitsCookieBudget(candidate)) {
+            delete boundedStore[previousState];
+            break; // This and any older entries are evicted to keep the new attempt usable.
+        }
+        sealedStore = candidate;
+    }
+    writeStore(cookies, boundedStore, sealedStore);
 }
 
 export function consumeAuthRequest(cookies: AstroCookies, state: string | undefined): AuthRequest | undefined {

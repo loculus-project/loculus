@@ -9,7 +9,7 @@ This page describes browser login. [Authentication via the API](../../for-users/
 
 The flow uses the standard [OIDC authorization-code flow](https://openid.net/specs/openid-connect-core-1_0.html#CodeFlowAuth) and established protections described in the [OAuth 2.0 Security Best Current Practice](https://www.rfc-editor.org/rfc/rfc9700.html#section-2.1). State, nonce and PKCE bind different parts of the same login attempt.
 
-Loculus stores pending login transactions in an encrypted cookie so Astro replicas can validate callbacks without a shared transaction database. The one-hour lifetime and three-transaction limit balance login usability with bounded storage. These are implementation choices; OIDC does not prescribe the storage mechanism or these limits.
+Loculus stores pending login transactions in an encrypted cookie so Astro replicas can validate callbacks without a shared transaction database. Each transaction is valid for one hour; the cookie holds at most three transactions within a byte-size budget. These are implementation choices; OIDC does not prescribe the storage mechanism or these limits.
 
 ## Components and responsibilities
 
@@ -22,7 +22,7 @@ Loculus stores pending login transactions in an encrypted cookie so Astro replic
 
 ### Login initiation
 
-- **Login transaction:** one pending login attempt that Astro creates at `/auth/login`. Astro saves its state, nonce, PKCE code verifier, return destination and expiry in an encrypted, `HttpOnly` transaction cookie, then retrieves and removes the matching transaction when processing the callback. The cookie holds up to three pending login transactions, each valid for 60 minutes. Starting a fourth discards the oldest.
+- **Login transaction:** one pending login attempt that Astro creates at `/auth/login`. Astro saves its state, nonce, PKCE code verifier, return destination and expiry in an encrypted, `HttpOnly` transaction cookie, then retrieves and removes the matching transaction when processing the callback. The cookie holds up to three pending login transactions, each valid for 60 minutes. Starting another login discards older transactions if necessary to stay within the count or byte-size limit.
 - **Return destination (`returnTo`):** the website URL the browser supplies to `/auth/login` for use after successful login. Astro checks that it has the same origin as the website, saves it in the transaction cookie and later redirects the browser there. It is not the callback URL sent to Keycloak.
 - **State:** a random value Astro generates for each login attempt and stores as the transaction's key in the cookie. Astro includes it in the authorization URL that the browser follows to Keycloak. Keycloak returns it in the callback URL; Astro uses it to find the matching transaction in the browser's cookie, binding the callback to that browser's login attempt and protecting against login CSRF.
 - **Nonce:** a random value Astro generates and saves in the transaction cookie. Astro also includes it in the authorization URL delivered to Keycloak by the browser. Keycloak places that nonce in the signed ID token returned directly to Astro during the token exchange. Astro compares it with the saved nonce to check that the ID token belongs to this login attempt.
@@ -103,7 +103,9 @@ Astro stores the nonce, PKCE code verifier, `returnTo` and expiry, keyed by `sta
 - is retained for up to one hour, allowing time for multi-step authentication and registration flows;
 - is sent only over HTTPS, except in explicitly configured local development environments;
 - uses `SameSite=Lax`;
-- can hold up to three concurrent login transactions.
+- can hold up to three concurrent login transactions, subject to a 3,800-byte budget for the cookie name and encrypted value, leaving room for attributes below browser cookie-size limits.
+
+New login attempts take priority over older pending transactions. Long return URLs may mean fewer than three transactions fit. If the newest transaction's return URL cannot fit even on its own, Astro stores the same-origin `/user` destination instead. Login still completes, but the original search URL is not restored. This prevents abandoned long-URL attempts from blocking subsequent logins.
 
 Astro removes the matching transaction from the cookie when processing its callback, leaving any other pending transactions in place.
 
@@ -117,6 +119,7 @@ When the middleware cannot complete the transaction, `/auth/callback` redirects 
 
 - the login was started more than one hour earlier;
 - the callback was refreshed or reused after its transaction had already been consumed;
+- a newer login attempt evicted this transaction to keep the cookie within its count or byte-size limit;
 - the transaction cookie is missing or cannot be decrypted; or
 - OIDC validation or retrieval of the user's information failed.
 
