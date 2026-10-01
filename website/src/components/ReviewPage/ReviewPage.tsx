@@ -26,7 +26,6 @@ import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
-import { getLastApprovalTimeKey } from '../SearchPage/RecentSequencesBanner.tsx';
 import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
@@ -329,8 +328,6 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                                     groupIdsFilter: [group.groupId],
                                     scope: approveAllDataScope.value,
                                 });
-
-                                storeLastApprovalTime(organism);
                             },
                         })
                     }
@@ -361,7 +358,6 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                                             groupIdsFilter: [group.groupId],
                                             scope: approveAllDataScope.value,
                                         });
-                                        storeLastApprovalTime(organism);
                                     },
                                 })
                             }
@@ -411,11 +407,6 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
             {pagination}
         </div>
     );
-};
-
-const storeLastApprovalTime = (organism: string) => {
-    const lastApprovalTime = Math.floor(Date.now() / 1000);
-    localStorage.setItem(getLastApprovalTimeKey(organism), lastApprovalTime.toString());
 };
 
 export const ReviewPage = withQueryProvider(InnerReviewPage);

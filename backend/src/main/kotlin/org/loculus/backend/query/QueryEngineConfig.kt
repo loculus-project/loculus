@@ -2,33 +2,50 @@ package org.loculus.backend.query
 
 import mu.KotlinLogging
 import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.query.schema.LineageDefinition
 import org.loculus.backend.query.schema.QuerySchema
-import org.loculus.backend.query.schema.SiloConfigReader
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration
 import org.springframework.stereotype.Component
-import java.io.File
 
 private val log = KotlinLogging.logger {}
 
 /**
- * loculus.query-engine.enabled=true            turn the engine on (projection, index, /sample endpoints)
- * loculus.query-engine.config-dir=/path        contains <organism>/database_config.yaml (the SILO database
- *                                              config) and <organism>/<lineageSystem>.yaml lineage files
+ * loculus.query-engine.enabled=true            turn the engine on (projection, index, /sample endpoints) for the
+ *                                              organisms whose backend config has a `queryEngine` section
  * loculus.query-engine.projector-interval-ms   how often the projector drains the dirty queue
  * loculus.query-engine.tail-interval-ms        how often in-memory indexes poll the changelog
+ * loculus.query-engine.reload-wait-ms          how long a request waits for its organism's index while it is being
+ *                                              (re)loaded before answering 503
+ * loculus.query-engine.stale-after-tail-failure-ms
+ *                                              an organism whose index updates have failed without a break for this
+ *                                              long answers 503 until they succeed again
+ * loculus.query-engine.reconcile-accessions-per-second
+ *                                              rate at which the projector re-marks all released accessions dirty,
+ *                                              cycling through them, to heal projections that went stale (0 = off)
+ * loculus.query-engine.reconcile-pass-interval-minutes
+ *                                              a new reconcile pass of an organism starts at most this often
+ * loculus.query-engine.lineage-refresh-interval-ms
+ *                                              how often lineage definitions are checked: downloads not yet done are
+ *                                              retried, and hierarchies are rebuilt when the observed values changed
+ * loculus.query-engine.metadata-dictionary-min-entries
+ *                                              an organism gets a trained metadata compression dictionary once it has
+ *                                              this many entries (smaller ones store dictionary-less zstd frames)
  */
 @ConfigurationProperties(prefix = "loculus.query-engine")
 data class QueryEngineProperties(
     val enabled: Boolean = false,
-    val configDir: String = "/config/query-engine",
     val projectorIntervalMs: Long = 500,
     val projectorBatchSize: Int = 2000,
     val tailIntervalMs: Long = 250,
+    val reloadWaitMs: Long = 30_000,
+    val staleAfterTailFailureMs: Long = 120_000,
+    val reconcileAccessionsPerSecond: Double = 50.0,
+    val reconcilePassIntervalMinutes: Long = 360,
+    val lineageRefreshIntervalMs: Long = 5_000,
     val instanceName: String? = null,
+    val metadataDictionaryMinEntries: Int = 5_000,
 )
 
 @Configuration
@@ -37,27 +54,38 @@ class QueryEngineConfiguration
 
 @Component
 @ConditionalOnProperty(prefix = "loculus.query-engine", name = ["enabled"], havingValue = "true")
-class QuerySchemaRegistry(backendConfig: BackendConfig, properties: QueryEngineProperties) {
+class QuerySchemaRegistry(backendConfig: BackendConfig) {
     val schemas: Map<String, QuerySchema> = backendConfig.organisms.mapNotNull { (organism, instanceConfig) ->
-        val dir = File(properties.configDir, organism)
-        val dbConfigFile = File(dir, "database_config.yaml")
-        if (!dbConfigFile.exists()) {
-            log.warn { "Query engine: no $dbConfigFile, organism $organism will not be queryable" }
+        val config = instanceConfig.queryEngine
+        if (config == null) {
+            log.error {
+                "Query engine: no queryEngine config for $organism, organism will not be queryable and the pod " +
+                    "will not become ready"
+            }
             return@mapNotNull null
         }
-        val dbConfig = SiloConfigReader.readDatabaseConfig(dbConfigFile)
-        val lineageSystems = dbConfig.schema.metadata.mapNotNull { it.generateLineageIndex }.toSet()
-        val lineages: Map<String, LineageDefinition> = lineageSystems.associateWith { system ->
-            val file = File(dir, "$system.yaml")
-            if (file.exists()) {
-                SiloConfigReader.readLineageDefinition(file.readText())
-            } else {
-                log.warn { "Query engine: lineage definition $file missing for $organism" }
-                LineageDefinition(emptyMap())
-            }
+        // a config the engine cannot serve (e.g. more sequences than MutationCode encodes) fails only its organism
+        val schema = try {
+            QuerySchema.build(organism, instanceConfig.schema.organismName, config, instanceConfig.referenceGenome)
+        } catch (e: IllegalArgumentException) {
+            log.error { "Query engine: organism $organism will not be queryable: ${e.message}" }
+            return@mapNotNull null
         }
-        organism to QuerySchema.build(organism, dbConfig, instanceConfig.referenceGenome, lineages)
+        organism to schema
     }.toMap()
+
+    /**
+     * organisms in the backend config without a queryEngine section, or whose section the engine cannot serve.
+     * The chart gives every organism one while the engine is enabled, so the former only happens when image and
+     * config disagree; readiness then fails ([org.loculus.backend.query.index.QueryIndexHealthIndicator]) instead
+     * of answering 404 for those organisms.
+     */
+    val notQueryable: List<String> = backendConfig.organisms.keys.filter { it !in schemas }
+
+    /** lineage-definition URLs per organism, lineage system and pipeline version */
+    val lineageSystemUrls: Map<String, Map<String, Map<Int, String>>> = backendConfig.organisms
+        .filterKeys { it in schemas }
+        .mapValues { (_, instanceConfig) -> instanceConfig.queryEngine!!.lineageSystems }
 
     fun get(organism: String): QuerySchema? = schemas[organism]
 }

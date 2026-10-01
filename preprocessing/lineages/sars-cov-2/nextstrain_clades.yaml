@@ -1,0 +1,242 @@
+19A:
+  aliases: []
+  parents: []
+19B:
+  aliases: []
+  parents:
+  - 19A
+20A:
+  aliases: []
+  parents:
+  - 19A
+20B:
+  aliases: []
+  parents:
+  - 20A
+20C:
+  aliases: []
+  parents:
+  - 20A
+20D:
+  aliases: []
+  parents:
+  - 20B
+20E:
+  aliases: []
+  parents:
+  - 20A
+20F:
+  aliases: []
+  parents:
+  - 20B
+20G:
+  aliases: []
+  parents:
+  - 20C
+20H:
+  aliases: []
+  parents:
+  - 20C
+20I:
+  aliases: []
+  parents:
+  - 20B
+20J:
+  aliases: []
+  parents:
+  - 20B
+21A:
+  aliases: []
+  parents:
+  - 20A
+21B:
+  aliases: []
+  parents:
+  - 20A
+21C:
+  aliases: []
+  parents:
+  - 20C
+21D:
+  aliases: []
+  parents:
+  - 20A
+21E:
+  aliases: []
+  parents:
+  - 20B
+21F:
+  aliases: []
+  parents:
+  - 20C
+21G:
+  aliases: []
+  parents:
+  - 20D
+21H:
+  aliases: []
+  parents:
+  - 20A
+21I:
+  aliases: []
+  parents:
+  - 21A
+21J:
+  aliases: []
+  parents:
+  - 21A
+21K:
+  aliases: []
+  parents:
+  - 21M
+21L:
+  aliases: []
+  parents:
+  - 21M
+21M:
+  aliases: []
+  parents:
+  - 20B
+22A:
+  aliases: []
+  parents:
+  - 21L
+22B:
+  aliases: []
+  parents:
+  - 21L
+22C:
+  aliases: []
+  parents:
+  - 21L
+22D:
+  aliases: []
+  parents:
+  - 21L
+22E:
+  aliases: []
+  parents:
+  - 22B
+22F:
+  aliases: []
+  parents:
+  - 21L
+23A:
+  aliases: []
+  parents:
+  - 22F
+23B:
+  aliases: []
+  parents:
+  - 22F
+23C:
+  aliases: []
+  parents:
+  - 22D
+23D:
+  aliases: []
+  parents:
+  - 22F
+23E:
+  aliases: []
+  parents:
+  - 22F
+23F:
+  aliases: []
+  parents:
+  - 23D
+23G:
+  aliases: []
+  parents:
+  - 23A
+23H:
+  aliases: []
+  parents:
+  - 23F
+23I:
+  aliases: []
+  parents:
+  - 21L
+24A:
+  aliases: []
+  parents:
+  - 23I
+24B:
+  aliases: []
+  parents:
+  - 24A
+24C:
+  aliases: []
+  parents:
+  - 24B
+24D:
+  aliases: []
+  parents:
+  - recombinant
+24E:
+  aliases: []
+  parents:
+  - 24C
+24F:
+  aliases: []
+  parents:
+  - 24A
+24G:
+  aliases: []
+  parents:
+  - 24B
+24H:
+  aliases: []
+  parents:
+  - 24A
+24I:
+  aliases: []
+  parents:
+  - 24A
+25A:
+  aliases: []
+  parents:
+  - 24B
+25B:
+  aliases: []
+  parents:
+  - 24D
+25C:
+  aliases: []
+  parents:
+  - 24A
+25D:
+  aliases: []
+  parents:
+  - 24E
+25E:
+  aliases: []
+  parents:
+  - 24H
+25F:
+  aliases: []
+  parents:
+  - 25A
+25G:
+  aliases: []
+  parents:
+  - 24A
+25H:
+  aliases: []
+  parents:
+  - 24A
+25I:
+  aliases: []
+  parents:
+  - 21M
+26A:
+  aliases: []
+  parents:
+  - 25C
+26B:
+  aliases: []
+  parents:
+  - 25C
+recombinant:
+  aliases: []
+  parents: []

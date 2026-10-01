@@ -68,7 +68,32 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     private val lock = ReentrantReadWriteLock()
     private var capacity = maxOf(16, initialCapacity)
     private val alive = RoaringBitmap()
-    private val columns: List<Column> = schema.metadata.map { Column.create(it, capacity) }
+    private val regexCache = RegexCache()
+    private val columns: List<Column> = run {
+        val stored = schema.metadata.map {
+            if (AccessionVersionColumn.applies(schema, it)) {
+                null
+            } else {
+                Column.create(
+                    it,
+                    capacity,
+                    lookupByValue = it.name == schema.primaryKey || it.name == ACCESSION_FIELD,
+                    regexCache = regexCache,
+                )
+            }
+        }
+        val byName = stored.filterNotNull().associateBy { it.field.name }
+        schema.metadata.mapIndexed { i, field ->
+            stored[i] ?: AccessionVersionColumn(
+                field,
+                byName.getValue(ACCESSION_FIELD) as StringColumn,
+                byName.getValue(AccessionVersionColumn.VERSION_FIELD) as IntColumn,
+                i,
+                schema.metadata.indexOfFirst { it.name == ACCESSION_FIELD },
+                schema.metadata.indexOfFirst { it.name == AccessionVersionColumn.VERSION_FIELD },
+            )
+        }
+    }
     private val columnsByName: Map<String, Column> = columns.associateBy { it.field.name }
     private val sequences: Array<SequenceIndex?> = run {
         val all = schema.allSequences()
@@ -78,8 +103,31 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     }
     private val insertionPatterns = ConcurrentHashMap<String, Pattern>()
 
+    /**
+     * Presorted orders for [select] (see [SortPermutation]): today only the organism's default sort. Built at full
+     * load and rebuilt after [apply] once more than [permutationRebuildThreshold] entries changed. Another commonly
+     * used sort would get its own entry here (e.g. built on demand once a sort repeats); [select] picks the one whose
+     * column matches the request's first key.
+     */
+    private val permutationKeys: List<Pair<Column, Boolean>> = listOfNotNull(
+        schema.defaultOrderBy?.let { columnsByName[it] }?.takeIf { it !is AccessionVersionColumn }
+            ?.let { it to schema.defaultOrderDescending },
+    )
+
+    @Volatile private var permutations: List<SortPermutation> = emptyList()
+
+    /** ids changed by [apply] since the permutations were built (not in their place there) */
+    private var permutationStale = RoaringBitmap()
+
     @Volatile override var dataVersion: Long = 0
         private set
+
+    /** random per instance, so tokens of a reloaded index (or another replica) never match an older one */
+    private val instanceId = java.util.UUID.randomUUID().toString().substring(0, 8)
+
+    @Volatile private var generation: Long = 0
+
+    override val contentToken: String get() = "$instanceId.$generation"
 
     /**
      * Reads the current projection rows of a few ids (injected by [QueryIndexService]); used to answer
@@ -119,21 +167,14 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             }
         }
         for (i in columns.indices) {
-            units += { rows ->
-                for (row in rows) {
-                    try {
-                        columns[i].set(row.id, row.values.getOrNull(i))
-                    } catch (e: RuntimeException) {
-                        columns[i].clear(row.id)
-                    }
-                }
-            }
+            units += { rows -> for (row in rows) setColumn(i, row.id, row.values) }
         }
         for (seq in sequences.filterNotNull()) {
+            check(!seq.hasLocalReference && !seq.gapRuns) { "bulk units after the bulk load was finished" }
             val seqIndex = seq.schema.index
             units += { rows ->
                 for (row in rows) {
-                    if (seqIndex in row.presentSequences) seq.present.add(row.id)
+                    if (seqIndex in row.presentSequences) seq.addPresent(row.id)
                     forEachRun(row.missing) { s, start, end -> if (s === seq) seq.addMissingRun(row.id, start, end) }
                     for (insertion in row.insertions) {
                         val first = insertion.indexOf(':')
@@ -163,11 +204,48 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         return units
     }
 
-    /** call after the last [addForBulkLoad] (compresses bitmaps) */
-    fun finishBulkLoad(dataVersion: Long) {
-        indexPool.submit { sequences.filterNotNull().parallelStream().forEach { it.runOptimize() } }.get()
+    /**
+     * call after the last [addForBulkLoad]: picks each position's implicit symbol ([localReference]: see
+     * [SequenceIndex.adaptLocalReference]; false keeps the reference everywhere), moves sparse gaps into runs
+     * ([gapRuns]: see [SequenceIndex.storeSparseGapsAsRuns]; false keeps every gap a bitmap) and compresses
+     * bitmaps
+     */
+    fun finishBulkLoad(dataVersion: Long, localReference: Boolean = true, gapRuns: Boolean = true) {
+        indexPool.submit {
+            sequences.filterNotNull().parallelStream().forEach {
+                if (localReference) it.adaptLocalReference()
+                if (gapRuns) it.storeSparseGapsAsRuns()
+                it.runOptimize()
+            }
+            columns.parallelStream().forEach { it.runOptimize() }
+        }.get()
         alive.runOptimize()
+        permutations = buildPermutations()
+        permutationStale = RoaringBitmap()
         this.dataVersion = dataVersion
+        generation++
+    }
+
+    /** reads columns without the lock: only for the writer thread (the only one that mutates them) */
+    private fun buildPermutations(): List<SortPermutation> = permutationKeys.map { (column, descending) ->
+        val direction = if (descending) OrderDirection.DESCENDING else OrderDirection.ASCENDING
+        val keys = SortKeys(listOf(column), listOf(direction), alive)
+        SortPermutation.of(column, descending, keys.sort(alive.toArray())) { keys.key(0, it) }
+    }
+
+    /** after [apply], on the writer thread: rebuilds the permutations off-lock once too many entries changed */
+    private fun maintainPermutations() {
+        if (permutationKeys.isEmpty()) return
+        if (permutations.isNotEmpty() &&
+            permutationStale.cardinality <= permutationRebuildThreshold(alive.cardinality)
+        ) {
+            return
+        }
+        val rebuilt = buildPermutations()
+        lock.write {
+            permutations = rebuilt
+            permutationStale = RoaringBitmap()
+        }
     }
 
     /**
@@ -191,16 +269,23 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             if (!toRemove.isEmpty) removeIds(toRemove, intersecting)
             installRuns(runs)
             upserts.forEach { addRow(it, withRuns = false) }
+            if (permutations.isNotEmpty()) permutationStale.or(changed)
             sequences.forEach { it?.invalidateCaches() }
             if (dataVersion != null) this.dataVersion = dataVersion
+            generation++
         }
         val done = System.nanoTime()
+        compactTouched()
+        val compacted = System.nanoTime()
+        maintainPermutations()
         return ApplyStats(
             upserts = upserts.size,
             removed = toRemove.cardinality,
             prepareMs = (prepared - started) / 1e6,
             waitForLockMs = (locked - prepared) / 1e6,
             lockedMs = (done - locked) / 1e6,
+            compactMs = (compacted - done) / 1e6,
+            permutationMs = (System.nanoTime() - compacted) / 1e6,
         )
     }
 
@@ -210,30 +295,73 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         val prepareMs: Double,
         val waitForLockMs: Double,
         val lockedMs: Double,
+        /** re-compressing the changed bitmaps after the update (mostly outside the lock) */
+        val compactMs: Double = 0.0,
+        /** rebuilding the sort permutations when too many entries changed (outside the lock) */
+        val permutationMs: Double = 0.0,
     )
+
+    /**
+     * Re-compresses the bitmaps the last [apply] changed, as the bulk load does for all bitmaps: copies are
+     * optimised outside the lock and swapped in under short write-lock holds.
+     */
+    private fun compactTouched() {
+        val install: (List<() -> Unit>) -> Unit = { swaps -> lock.write { swaps.forEach { it() } } }
+        sequences.forEach { it?.compactTouched(install) }
+        columns.forEach { it.compactTouched(install) }
+        lock.write { alive.runOptimize() }
+    }
 
     private fun IndexRow.idSet() = RoaringBitmap.bitmapOf(id)
 
-    /** per sequence: rebuilt run-table chunks without [removed] ids' runs and with those of [rows] (read-only) */
-    private fun rebuildRuns(removed: RoaringBitmap, rows: List<IndexRow>): List<Map<Int, RunTable.Chunk>?> {
+    /** rebuilt run-table chunks of one sequence's missing and gap runs (null: unchanged) */
+    private class RebuiltRuns(val missing: Map<Int, RunTable.Chunk>?, val gaps: Map<Int, RunTable.Chunk>?)
+
+    /**
+     * per sequence: rebuilt run-table chunks without [removed] ids' runs and with those of [rows], for missing
+     * and gap runs (read-only)
+     */
+    private fun rebuildRuns(removed: RoaringBitmap, rows: List<IndexRow>): List<RebuiltRuns?> {
         val added = Array(sequences.size) { ArrayList<Int>() }
+        val addedGaps = Array(sequences.size) { ArrayList<Int>() }
         for (row in rows) {
             forEachRun(row.missing) { seq, start, end -> added[seq.schema.index].addAll(listOf(row.id, start, end)) }
+            if (sequences.none { it?.gapRuns == true }) continue
+            for ((seqIndex, codes) in row.mutations.groupBy { MutationCode.seqIndex(it) }) {
+                val seq = sequences.getOrNull(seqIndex) ?: continue
+                val runs = seq.gapRunsOf(codes.toIntArray())
+                for (r in 0 until runs.size / 2) {
+                    addedGaps[seqIndex].addAll(
+                        listOf(row.id, runs[2 * r], runs[2 * r + 1]),
+                    )
+                }
+            }
         }
-        return indexPool.submit<List<Map<Int, RunTable.Chunk>?>> {
+        return indexPool.submit<List<RebuiltRuns?>> {
             sequences.indices.toList().parallelStream().map { i ->
-                val seq = sequences[i]
-                if (seq == null || (added[i].isEmpty() && !RoaringBitmap.intersects(seq.present, removed))) {
+                val seq = sequences[i] ?: return@map null
+                val touched = RoaringBitmap.intersects(seq.present, removed)
+                val missing = if (added[i].isEmpty() && !touched) {
                     null
                 } else {
-                    seq.runs.rebuild(removed, seq.clampRuns(added[i].toIntArray()))
+                    seq.missing.table.rebuild(removed, seq.clampRuns(added[i].toIntArray()))
                 }
+                val gaps = if (addedGaps[i].isEmpty() && (!touched || seq.gaps.table.runCount == 0L)) {
+                    null
+                } else {
+                    seq.gaps.table.rebuild(removed, addedGaps[i].toIntArray())
+                }
+                if (missing == null && gaps == null) null else RebuiltRuns(missing, gaps)
             }.toList()
         }.get()
     }
 
-    private fun installRuns(runs: List<Map<Int, RunTable.Chunk>?>) {
-        runs.forEachIndexed { i, rebuilt -> if (rebuilt != null) sequences[i]!!.runs.install(rebuilt) }
+    private fun installRuns(runs: List<RebuiltRuns?>) {
+        runs.forEachIndexed { i, rebuilt ->
+            if (rebuilt == null) return@forEachIndexed
+            rebuilt.missing?.let { sequences[i]!!.missing.table.install(it) }
+            rebuilt.gaps?.let { sequences[i]!!.gaps.table.install(it) }
+        }
     }
 
     private fun collectIntersecting(ids: RoaringBitmap): List<List<SequenceIndex.Removal>> = sequences.map { seq ->
@@ -246,12 +374,14 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         alive.andNot(ids)
     }
 
+    /** grows the id-indexed arrays in steps of [capacityStep], so that growth copies less under the write lock */
     private fun ensureCapacity(id: Int) {
         if (id < capacity) return
-        var newCapacity = capacity
-        while (newCapacity <= id) newCapacity = maxOf(newCapacity * 3 / 2, newCapacity + 1024)
-        columns.forEach { it.grow(newCapacity) }
-        capacity = newCapacity
+        var newCapacity = capacity.toLong()
+        while (newCapacity <= id) newCapacity += capacityStep(newCapacity.toInt())
+        val grown = minOf(newCapacity, MAX_ARRAY_SIZE.toLong()).toInt()
+        columns.forEach { it.grow(grown) }
+        capacity = grown
     }
 
     private fun addRow(row: IndexRow, withRuns: Boolean) {
@@ -259,21 +389,39 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         require(id >= 0) { "negative id $id" }
         ensureCapacity(id)
         alive.add(id)
-        for (i in columns.indices) {
-            try {
-                columns[i].set(id, row.values.getOrNull(i))
-            } catch (e: RuntimeException) {
-                // a value that does not fit the column type (e.g. "abc" in an int field) is treated as null
-                columns[i].clear(id)
-            }
-        }
-        for (seqIndex in row.presentSequences) sequences.getOrNull(seqIndex)?.present?.add(id)
+        for (i in columns.indices) setColumn(i, id, row.values)
+        for (seqIndex in row.presentSequences) sequences.getOrNull(seqIndex)?.addPresent(id)
+        // codes of sequences with a local reference or gap runs are added per sequence (addEntryMutations)
+        var entryCodes: HashMap<Int, ArrayList<Int>>? = null
         for (code in row.mutations) {
             val seq = sequences.getOrNull(MutationCode.seqIndex(code)) ?: continue
-            seq.addMutation(id, MutationCode.position(code), MutationCode.symbolIndex(code))
+            if (seq.hasLocalReference || seq.gapRuns) {
+                val codes = (entryCodes ?: HashMap<Int, ArrayList<Int>>().also { entryCodes = it })
+                codes.getOrPut(seq.schema.index) { ArrayList<Int>() }.add(code)
+            } else {
+                seq.addMutation(id, MutationCode.position(code), MutationCode.symbolIndex(code))
+            }
         }
+        val localReferenceRuns = HashMap<Int, ArrayList<Int>>()
         forEachRun(row.missing) { seq, start, end ->
             if (withRuns) seq.addMissingRun(id, start, end) else seq.addTransitions(id, start, end)
+            if (seq.hasLocalReference) {
+                localReferenceRuns.getOrPut(seq.schema.index) {
+                    ArrayList<Int>()
+                }.addAll(listOf(start, end))
+            }
+        }
+        for (seq in sequences) {
+            if (seq == null || !(seq.hasLocalReference || seq.gapRuns)) continue
+            val runs = localReferenceRuns[seq.schema.index]
+            seq.addEntryMutations(
+                id,
+                entryCodes?.get(seq.schema.index)?.toIntArray() ?: IntArray(0),
+                runs?.toIntArray() ?: IntArray(0),
+                (runs?.size ?: 0) / 2,
+                seq.schema.index in row.presentSequences,
+                withRuns,
+            )
         }
         for (insertion in row.insertions) {
             val first = insertion.indexOf(':')
@@ -282,6 +430,16 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             val seq = sequences.getOrNull(insertion.substring(0, first).toIntOrNull() ?: continue) ?: continue
             val position = insertion.substring(first + 1, second).toIntOrNull() ?: continue
             seq.addInsertion(id, position, insertion.substring(second + 1))
+        }
+    }
+
+    private fun setColumn(i: Int, id: Int, values: Array<Any?>) {
+        val column = columns[i]
+        try {
+            if (column is AccessionVersionColumn) column.setFromRow(id, values) else column.set(id, values.getOrNull(i))
+        } catch (e: RuntimeException) {
+            // a value that does not fit the column type (e.g. "abc" in an int field) is treated as null
+            column.clear(id)
         }
     }
 
@@ -338,7 +496,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
 
         is And -> evalAnd(filter.children, mode, domain)
 
-        is Or -> unionOf(filter.children.map { eval(it, mode, domain) })
+        is Or -> evalOr(filter.children, mode, domain)
 
         is Not -> domain.clone().also { it.andNot(eval(filter.child, mode.inverted(), domain)) }
 
@@ -347,11 +505,11 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         is NOf -> evalNOf(filter, mode, domain)
 
         is StringEquals -> {
-            val col = stringColumn(filter.field)
+            val col = stringFilters(filter.field)
             if (filter.value == null) col.isNullFilter(domain) else col.equalsFilter(filter.value, domain)
         }
 
-        is StringRegex -> stringColumn(filter.field).regexFilter(filter.pattern, domain)
+        is StringRegex -> stringFilters(filter.field).regexFilter(filter.pattern, domain)
 
         is LineageIn -> {
             val col = stringColumn(filter.field)
@@ -444,14 +602,64 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         return result
     }
 
-    /** 0 = answered from bitmaps, 1 = scan, 2 = composite */
+    /**
+     * Equality children on the same string field become one in-list filter: one lookup per value for
+     * value-indexed columns (a list of 200k accessions stays O(k)), one scan instead of one per value otherwise.
+     */
+    private fun evalOr(children: List<Filter>, mode: AmbiguityMode, domain: RoaringBitmap): RoaringBitmap {
+        val byColumn = LinkedHashMap<Column, MutableList<String?>>()
+        val rest = ArrayList<Filter>()
+        for (child in children) {
+            val col = (child as? StringEquals)?.let { columnOrNull(it.field) }?.takeIf { it.stringFilters() != null }
+            if (col == null) rest.add(child) else byColumn.getOrPut(col) { ArrayList() }.add(child.value)
+        }
+        val parts = ArrayList<RoaringBitmap>(byColumn.size + rest.size)
+        byColumn.forEach { (column, values) ->
+            val col = column.stringFilters()!!
+            val value = values.singleOrNull()
+            parts.add(
+                when {
+                    values.size > 1 -> col.inFilter(values, domain)
+                    value == null -> col.isNullFilter(domain)
+                    else -> col.equalsFilter(value, domain)
+                },
+            )
+        }
+        rest.forEach { parts.add(eval(it, mode, domain)) }
+        return unionOf(parts)
+    }
+
+    private fun columnOrNull(name: String): Column? =
+        columnsByName[name] ?: schema.field(name)?.let { columnsByName[it.name] }
+
+    private fun Column.stringFilters(): StringFilters? = when (this) {
+        is StringColumn -> StringColumnFilters(this)
+        is AccessionVersionColumn -> this
+        else -> null
+    }
+
+    private fun stringFilters(name: String): StringFilters = column(name).stringFilters()
+        ?: throw IllegalArgumentException("'$name' is not a string field")
+
+    /** 0 = answered from bitmaps or postings, 1 = scan, 2 = composite */
     private fun cost(filter: Filter): Int = when (filter) {
         is SymbolEquals, is HasMutation, is InsertionContains, is BooleanEquals, is IsNull, True -> 0
 
-        is StringEquals, is LineageIn, is StringRegex ->
-            if ((columnsByName[filter.fieldName()] as? StringColumn)?.hasBitmaps == true) 0 else 1
+        is StringEquals, is LineageIn ->
+            if (filter.fieldName()?.let { columnsByName[it] }?.stringFilters()?.hasValueIndex == true) 0 else 1
+
+        is StringRegex -> if (filter.fieldName()?.let { columnsByName[it] }?.stringFilters()?.hasBitmaps ==
+            true
+        ) {
+            0
+        } else {
+            1
+        }
 
         is IntEquals, is IntBetween, is FloatEquals, is FloatBetween, is DateEquals, is DateBetween -> 1
+
+        // an accession list must run before the scans an And also holds (versionStatus), so these only visit k ids
+        is Or -> filter.children.maxOfOrNull { cost(it) } ?: 0
 
         else -> 2
     }
@@ -531,8 +739,9 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     private val positionField = Regex("^([A-Za-z0-9_-]*)\\[(\\d+)]$")
 
     private fun groupKeySource(field: String, ids: RoaringBitmap): GroupKeySource {
-        columnsByName[field]?.let { return it }
-        schema.field(field)?.let { return columnsByName.getValue(it.name) }
+        (columnsByName[field] ?: schema.field(field)?.let { columnsByName.getValue(it.name) })?.let {
+            return if (it is AccessionVersionColumn) it.groupKeySource(ids) else it
+        }
         if (field.endsWith(".isoWeek", ignoreCase = true)) {
             val base = column(field.substring(0, field.length - ".isoWeek".length))
             return (base as? DateColumn)?.isoWeekSource()
@@ -552,9 +761,10 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     private fun symbolAtPositionSource(seq: SequenceIndex, position: Int, ids: RoaringBitmap): GroupKeySource {
         require(position in 1..seq.length) { "position $position out of range for ${seq.schema.name}" }
         val symbols = ByteArray(capacity) { -1 }
-        val ref = seq.reference(position).toByte()
-        forEachId(RoaringBitmap.and(ids, seq.present)) { symbols[it] = ref }
+        val implicit = seq.implicitSymbol(position).toByte()
+        forEachId(RoaringBitmap.and(ids, seq.present)) { symbols[it] = implicit }
         seq.mutations[position]?.forEachIndexed { s, bm -> bm?.forEach { id: Int -> symbols[id] = s.toByte() } }
+        seq.gapRunsAt(position)?.forEach { id: Int -> symbols[id] = seq.gapSymbol.toByte() }
         seq.missingAt(position).forEach { id: Int -> symbols[id] = seq.alphabet.missingIndex.toByte() }
         val chars = seq.alphabet.symbols
         return object : GroupKeySource {
@@ -841,7 +1051,13 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             for (i in 0 until count) result[i] = iterator.next()
             return@read result
         }
-        val keys = SortKeys(orderBy.map { column(it.field) }, orderBy.map { it.direction })
+        val keys = SortKeys(orderBy.map { column(it.field) }, orderBy.map { it.direction }, live)
+        if (random == null && orderBy.isNotEmpty() && usePermutations && n.toLong() * 64 >= alive.cardinality) {
+            val permutation = permutations.firstOrNull { it.column === keys.cols[0] }
+            if (permutation != null) {
+                selectByPermutation(permutation, keys, orderBy, live, from, limit)?.let { return@read it }
+            }
+        }
         val ordered: IntArray = when {
             orderBy.isEmpty() -> live.toArray()
 
@@ -868,15 +1084,60 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         ordered.copyOfRange(start, start + count)
     }
 
-    private inner class SortKeys(val cols: List<Column>, directions: List<OrderDirection>) {
+    /**
+     * [select] for a sort whose first key is [permutation]'s column: the first offset + limit ids of the walk
+     * (skipping stale ids), sorted together with the stale ones in the selection; identical to the sort because it
+     * sorts a set that contains the first offset + limit ids of the full order. Null (sort as usual) if the walk
+     * would collect too many candidates (a long run of equal first keys under a multi-key sort) or visit far more
+     * positions than a selection spread evenly over the order would need (one correlated with the key).
+     */
+    private fun selectByPermutation(
+        permutation: SortPermutation,
+        keys: SortKeys,
+        orderBy: List<OrderByField>,
+        live: RoaringBitmap,
+        from: Int,
+        limit: Int?,
+    ): IntArray? {
+        val n = live.cardinality
+        val k = if (limit == null) n else minOf(n.toLong(), from.toLong() + limit).toInt()
+        if (k <= from) return IntArray(0)
+        val stale = permutationStale.takeIf { !it.isEmpty }
+        val tail = stale?.let { RoaringBitmap.and(live, it) }?.takeIf { !it.isEmpty }
+        val forward = (orderBy[0].direction == OrderDirection.DESCENDING) == permutation.descending
+        val wholeRuns = orderBy.size > 1
+        val maxCandidates = if (limit == null) n else (4L * k + 4096).coerceAtMost(n.toLong()).toInt()
+        val maxSteps = 4L * k * alive.cardinality / n + 4096
+        val candidates =
+            permutation.candidates(live, stale, k, forward, wholeRuns, maxCandidates, maxSteps) ?: return null
+        val ordered = if (tail == null && !wholeRuns) {
+            candidates
+        } else {
+            val all = IntArray(candidates.size + (tail?.cardinality ?: 0))
+            System.arraycopy(candidates, 0, all, 0, candidates.size)
+            var i = candidates.size
+            tail?.forEach { id: Int -> all[i++] = id }
+            all.sort()
+            keys.sort(all)
+        }
+        return ordered.copyOfRange(minOf(from, ordered.size), minOf(k, ordered.size))
+    }
+
+    /** [domain]: the ids that will be sorted (derived columns rank their values per query) */
+    private inner class SortKeys(val cols: List<Column>, directions: List<OrderDirection>, domain: RoaringBitmap) {
         private val m = cols.size
         private val descending = BooleanArray(m) { directions[it] == OrderDirection.DESCENDING }
         private val ranks: Array<IntArray?> = Array(m) { (cols[it] as? StringColumn)?.ranks()?.rank }
         private val stringCols: Array<StringColumn?> = Array(m) { cols[it] as? StringColumn }
+        private val derived: Array<((Int) -> Long)?> =
+            Array(m) { (cols[it] as? AccessionVersionColumn)?.sortKeySource(domain) }
 
         fun key(f: Int, id: Int): Long {
             val r = ranks[f]
-            val raw = if (r != null) {
+            val d = derived[f]
+            val raw = if (d != null) {
+                d(id)
+            } else if (r != null) {
                 val code = stringCols[f]!!.code(id)
                 if (code < 0) Long.MIN_VALUE else r[code].toLong()
             } else {
@@ -989,7 +1250,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     private fun complementRows(ids: RoaringBitmap): List<IndexRow>? {
         val loader = rowLoader ?: return null
         val complement = lock.read {
-            if (alive.cardinality - RoaringBitmap.andCardinality(ids, alive) > SMALL_SET_LIMIT) return null
+            if (alive.cardinality - RoaringBitmap.andCardinality(ids, alive) > COMPLEMENT_ROWS_LIMIT) return null
             RoaringBitmap.andNot(alive, ids)
         }
         if (complement.isEmpty) return null
@@ -1012,6 +1273,8 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         val n: Int,
         val cardinalities: IntArray?,
         val missing: IntArray,
+        /** counts over ids per position of the gaps stored as runs; null if the sequence stores none */
+        val gaps: IntArray?,
         /** present \ ids when counting as "all minus complement" (cardinalities = counts over all present) */
         val complement: RoaringBitmap?,
         /** counts of the complement per (position * alphabet size + symbol), from its rows */
@@ -1031,26 +1294,41 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             val n = filtered.cardinality
             if (n == 0) return null
             val complementSize = seq.present.cardinality - n
+            val gapRuns = seq.gapRuns
             if (complementSize == 0) {
-                return MutationInput(seq, filtered, n, seq.mutationCounts, seq.missingCountsAll(), null, null)
+                val gaps = if (gapRuns) seq.gaps.countsAll() else null
+                return MutationInput(seq, filtered, n, seq.mutationCounts, seq.missingCountsAll(), gaps, null, null)
             }
             if (complementRows != null) {
-                complementFromRows(seq, filtered, complementRows)?.let { (codeCounts, complementMissing) ->
+                val fromRows = complementFromRows(seq, filtered, complementRows)
+                if (fromRows == null) complementRowFallbacks.incrementAndGet()
+                fromRows?.let { (codeCounts, complementMissing, complementGaps) ->
                     val all = seq.missingCountsAll()
                     val missing = IntArray(all.size) { all[it] - complementMissing[it] }
-                    return MutationInput(seq, filtered, n, seq.mutationCounts, missing, null, codeCounts)
+                    val gaps = if (gapRuns) {
+                        val allGaps = seq.gaps.countsAll()
+                        IntArray(allGaps.size) { allGaps[it] - complementGaps[it] }
+                    } else {
+                        null
+                    }
+                    return MutationInput(seq, filtered, n, seq.mutationCounts, missing, gaps, null, codeCounts)
                 }
             }
             if (complementSize <= n * COMPLEMENT_FRACTION) {
                 // almost all entries (e.g. "latest versions" with a few revisions/revocations): counts over all
                 // present entries minus the counts over the (small) complement
                 val complement = forIntersections(RoaringBitmap.andNot(seq.present, filtered))
-                val all = seq.missingCountsAll()
-                val ofComplement = seq.missingCountsOver(complement)
-                val missing = IntArray(all.size) { all[it] - ofComplement[it] }
-                return MutationInput(seq, filtered, n, seq.mutationCounts, missing, complement, null)
+                fun allMinusComplement(runs: RunIndex): IntArray {
+                    val all = runs.countsAll()
+                    val ofComplement = runs.countsOver(complement)
+                    return IntArray(all.size) { all[it] - ofComplement[it] }
+                }
+                val missing = allMinusComplement(seq.missing)
+                val gaps = if (gapRuns) allMinusComplement(seq.gaps) else null
+                return MutationInput(seq, filtered, n, seq.mutationCounts, missing, gaps, complement, null)
             }
-            return MutationInput(seq, filtered, n, null, seq.missingCountsOver(filtered), null, null)
+            val gaps = if (gapRuns) seq.gaps.countsOver(filtered) else null
+            return MutationInput(seq, filtered, n, null, seq.missingCountsOver(filtered), gaps, null, null)
         }
         val parallel = parallelMutations
         val inputs: List<MutationInput?> = if (parallel && seqs.size > 1) {
@@ -1076,6 +1354,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
                 input.complement,
                 input.complementCounts,
                 input.missing,
+                input.gaps,
                 minProportion,
             )
         }
@@ -1089,20 +1368,22 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
     }
 
     /**
-     * Code counts (position * alphabet size + symbol) and per-position missing counts of the complement
-     * present \ [filtered], from the complement's projection [rows]; null if the rows do not match the index
-     * (an entry changed after the index was updated), in which case the bitmaps are used.
+     * Code counts (position * alphabet size + symbol), per-position missing counts and per-position counts of
+     * gaps stored as runs of the complement present \ [filtered], from the complement's projection [rows]; null
+     * if the rows do not match the index (an entry changed after the index was updated), in which case the
+     * bitmaps are used ([complementRowFallbacks]).
      */
     private fun complementFromRows(
         seq: SequenceIndex,
         filtered: RoaringBitmap,
         rows: List<IndexRow>,
-    ): Pair<LongIntMap, IntArray>? {
+    ): Triple<LongIntMap, IntArray, IntArray>? {
         val seqIndex = seq.schema.index
         val size = seq.alphabet.size
         val complementSize = seq.present.cardinality - filtered.cardinality
         val counts = LongIntMap()
         val diff = IntArray(seq.length + 2)
+        val gapDiff = IntArray(seq.length + 2)
         var matched = 0
         for (row in rows) {
             val rowPresent = seqIndex in row.presentSequences
@@ -1114,28 +1395,52 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
                 val position = MutationCode.position(code)
                 val symbol = MutationCode.symbolIndex(code)
                 if (position < 1 || position > seq.length || symbol >= size) continue
+                // the implicit symbol is not stored (see SequenceIndex.localReference)
+                if (symbol == seq.implicitSymbol(position)) continue
+                if (symbol == seq.gapSymbol && seq.gapAsRun(position)) continue
                 if (seq.mutations[position]?.get(symbol)?.contains(row.id) != true) return null
-                val key = (position * size + symbol).toLong()
-                val current = counts.getOrPut(key, 0)
-                counts.put(key, current + 1)
+                counts.increment((position * size + symbol).toLong())
             }
+            val gapRuns = seq.gapRunsOf(codes.toIntArray())
+            for (r in 0 until gapRuns.size / 2) {
+                gapDiff[gapRuns[2 * r]]++
+                gapDiff[gapRuns[2 * r + 1]]--
+            }
+            val runs = ArrayList<Int>()
             forEachRun(row.missing) { s, start, end ->
                 val from = maxOf(1, start)
                 val until = minOf(seq.length + 1, end)
                 if (s === seq && from < until) {
                     diff[from]++
                     diff[until]--
+                    runs.addAll(listOf(start, end))
+                }
+            }
+            if (seq.hasLocalReference) {
+                // the reference is stored where it is not the implicit symbol: present, not missing, no code
+                val coded = codes.map { MutationCode.position(it) }.toIntArray().also { it.sort() }
+                var run = 0
+                for (position in seq.localReferencePositions) {
+                    while (run < runs.size / 2 && runs[2 * run + 1] <= position) run++
+                    if (run < runs.size / 2 && runs[2 * run] <= position) continue
+                    if (java.util.Arrays.binarySearch(coded, position) >= 0) continue
+                    val ref = seq.reference(position)
+                    if (seq.mutations[position]?.get(ref)?.contains(row.id) != true) return null
+                    counts.increment((position * size + ref).toLong())
                 }
             }
         }
         if (matched != complementSize) return null
-        val missing = IntArray(seq.length + 1)
-        var running = 0
-        for (p in 1..seq.length) {
-            running += diff[p]
-            missing[p] = running
+        fun cumulative(d: IntArray): IntArray {
+            val out = IntArray(seq.length + 1)
+            var running = 0
+            for (p in 1..seq.length) {
+                running += d[p]
+                out[p] = running
+            }
+            return out
         }
-        return counts to missing
+        return Triple(counts, cumulative(diff), cumulative(gapDiff))
     }
 
     private fun threshold(coverage: Long, minProportion: Double): Long =
@@ -1146,6 +1451,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
      * give an exact lower bound of the coverage
      * (n - missing - all ambiguous codes at p); symbols whose total count cannot exceed the threshold at that
      * coverage are skipped without touching their bitmaps (for minProportion > 0 that is most of them).
+     * [gaps]: exact counts over [ids] of the gaps stored as runs (0 where gaps are bitmaps).
      */
     private fun mutationsInBlock(
         seq: SequenceIndex,
@@ -1156,6 +1462,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         complement: RoaringBitmap?,
         complementCounts: LongIntMap?,
         missing: IntArray,
+        gaps: IntArray?,
         minProportion: Double,
     ): List<MutationRow> {
         // count over all present entries, minus the complement's if counting "all minus complement"
@@ -1174,8 +1481,34 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         val symbolCount = alphabet.size
         val rows = ArrayList<MutationRow>()
         val counts = LongArray(symbolCount)
+        val gapSymbol = seq.gapSymbol
         for (p in first..last) {
-            val perSymbol = seq.mutations[p] ?: continue
+            val gapRuns = gaps?.get(p)?.toLong() ?: 0L
+            val implicit = seq.implicitSymbol(p)
+            if (implicit != seq.reference(p)) {
+                // the reference is stored and the implicit symbol derived: count every stored symbol exactly
+                val stored = seq.mutations[p]
+                var storedSum = 0L
+                for (s in 0 until symbolCount) {
+                    val bm = stored?.get(s)
+                    counts[s] = when {
+                        bm == null -> 0L
+                        cardinalities != null -> countAll(p * symbolCount + s, bm)
+                        else -> RoaringBitmap.andCardinality(ids, bm).toLong()
+                    }
+                    storedSum += counts[s]
+                }
+                // gaps stored as runs have no bitmap here, and are never the implicit symbol
+                counts[gapSymbol] += gapRuns
+                storedSum += gapRuns
+                counts[implicit] = maxOf(0L, n - missing[p] - storedSum)
+                var coverage = 0L
+                for (s in 0 until symbolCount) if (validMask and (1 shl s) != 0) coverage += counts[s]
+                emitMutations(seq, p, counts, coverage, minProportion, rows)
+                continue
+            }
+            val perSymbol = seq.mutations[p]
+            if (perSymbol == null && gapRuns == 0L) continue
             val ref = seq.reference(p)
             val refValid = validMask and (1 shl ref) != 0
             val missingAtP = missing[p].toLong()
@@ -1192,8 +1525,9 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             // valid symbols first: the (many) ambiguity-code bitmaps only matter where something is reportable
             for (s in 0 until symbolCount) {
                 if (validMask and (1 shl s) == 0) continue
-                val bm = perSymbol[s]
+                val bm = perSymbol?.get(s)
                 val c = when {
+                    s == gapSymbol && gapRuns > 0 -> gapRuns
                     bm == null -> 0L
                     s != ref && minOf(n, allCounts[p * symbolCount + s]).toLong() <= pruneBelow -> 0L
                     cardinalities != null -> countAll(p * symbolCount + s, bm)
@@ -1212,7 +1546,7 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
             var invalid = 0L
             for (s in 0 until symbolCount) {
                 if (validMask and (1 shl s) != 0) continue
-                val bm = perSymbol[s] ?: continue
+                val bm = perSymbol?.get(s) ?: continue
                 invalid += if (cardinalities != null) {
                     countAll(p * symbolCount + s, bm)
                 } else {
@@ -1314,25 +1648,55 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
                     }
                 }
             }
-            seq.schema.name to listOf(bitmaps, containers, seq.runs.runCount)
+            seq.schema.name to listOf(bitmaps, containers, seq.missing.table.runCount)
         }
+    }
+
+    /** entries whose stored accessionVersion is not accession.version (expected 0; see [AccessionVersionColumn]) */
+    fun accessionVersionExceptions(): Int = lock.read {
+        columns.sumOf { (it as? AccessionVersionColumn)?.exceptionCount ?: 0 }
     }
 
     /** approximate heap usage of the index structures in bytes, per component */
     fun memoryUsage(): Map<String, Long> = lock.read {
         val usage = LinkedHashMap<String, Long>()
-        usage["alive"] = alive.getLongSizeInBytes()
+        usage["alive"] = heapBytes(alive)
+        permutations.forEach { usage["sortPermutation:${it.column.field.name}"] = it.memoryBytes() }
+        if (permutationKeys.isNotEmpty()) usage["sortPermutationStale"] = heapBytes(permutationStale)
         columns.forEach { usage["metadata:${it.field.name}"] = it.memoryBytes() }
         sequences.filterNotNull().forEach { usage["sequence:${it.schema.name}"] = it.memoryBytes() }
+        usage["regexCache"] = regexCache.bytes
         usage
     }
 
     companion object {
+        /** Loculus's accession field; with the primary key (accessionVersion) it is looked up by value */
+        const val ACCESSION_FIELD = "accession"
+
+        /**
+         * complements whose rows did not match the index, so that their counts came from bitmaps instead (for
+         * tests: the fast path must be taken whenever the rows are current)
+         */
+        internal val complementRowFallbacks = java.util.concurrent.atomic.AtomicLong()
+
+        /** [select] walks a sort permutation where one matches (switchable for tests and benchmarks) */
+        @Volatile internal var usePermutations = true
+
+        /** stale entries past which the sort permutations are rebuilt (each select sorts the stale ones it selects) */
+        internal fun permutationRebuildThreshold(size: Int): Int = (size / 64).coerceIn(1024, 20_000)
+
         /** filtered mutation counting runs position blocks in parallel (switchable for benchmarks) */
         @Volatile internal var parallelMutations = true
 
-        /** mutations / insertions over at most this many ids are counted from their rows (see [rowLoader]) */
-        const val SMALL_SET_LIMIT = 100
+        /**
+         * mutations / insertions over at most this many ids are counted from their rows (see [rowLoader]).
+         * Loading rows costs ~0.04 ms/id on local Postgres and 0.2-0.4 ms/id on real data, the bitmap path a flat
+         * 1-3 ms (60k-1M entries), so rows only pay off for very small sets such as a single sequence's page.
+         */
+        const val SMALL_SET_LIMIT = 20
+
+        /** a complement (alive \ ids) of at most this many ids is counted from its rows (see [complementRows]) */
+        const val COMPLEMENT_ROWS_LIMIT = 100
 
         /** mutations / insertions over ids covering all but at most this fraction are counted as all - complement */
         private const val COMPLEMENT_FRACTION = 0.2
@@ -1342,11 +1706,23 @@ class InMemoryOrganismIndex(override val schema: QuerySchema, initialCapacity: I
         private const val MAX_DIRECT_GROUP_TABLE = (1 shl 22).toDouble()
         private val parallelPool: ForkJoinPool get() = indexPool
 
+        /**
+         * headroom above [capacity] ids: 1/16 of it, at least 4096 and at most 1M ids (the id-indexed arrays cost
+         * ~10-150 B per id, so 1M ids is ~0.15 GB, where growing by half at 20M entries held 10M ids)
+         */
+        internal fun capacityStep(capacity: Int): Int = (capacity / 16).coerceIn(4096, 1 shl 20)
+
         /** builds an index from [rows] (any id order; ascending is fastest) */
-        fun build(schema: QuerySchema, rows: Iterable<IndexRow>, dataVersion: Long = 0): InMemoryOrganismIndex {
+        fun build(
+            schema: QuerySchema,
+            rows: Iterable<IndexRow>,
+            dataVersion: Long = 0,
+            localReference: Boolean = true,
+            gapRuns: Boolean = true,
+        ): InMemoryOrganismIndex {
             val index = InMemoryOrganismIndex(schema)
             rows.forEach { index.addForBulkLoad(it) }
-            index.finishBulkLoad(dataVersion)
+            index.finishBulkLoad(dataVersion, localReference, gapRuns)
             return index
         }
     }
@@ -1395,3 +1771,5 @@ internal inline fun mergeSort(a: IntArray, crossinline compare: (Int, Int) -> In
     }
     if (src !== a) System.arraycopy(src, 0, a, 0, n)
 }
+
+private fun LongIntMap.increment(key: Long) = put(key, getOrPut(key, 0) + 1)

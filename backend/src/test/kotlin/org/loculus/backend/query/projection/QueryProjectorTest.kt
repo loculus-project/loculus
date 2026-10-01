@@ -2,12 +2,14 @@ package org.loculus.backend.query.projection
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.empty
 import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.greaterThan
+import org.hamcrest.Matchers.greaterThanOrEqualTo
 import org.hamcrest.Matchers.hasItem
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.not
@@ -35,19 +37,27 @@ import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.loculus.backend.query.QuerySchemaRegistry
 import org.loculus.backend.query.schema.QuerySchema
 import org.loculus.backend.query.store.SequenceKind
+import org.loculus.backend.query.store.StoredMetadata
+import org.loculus.backend.query.store.StoredMetadataCompressor
+import org.loculus.backend.query.store.StoredMetadataReader
+import org.loculus.backend.query.store.ZstdDictionaryCache
 import org.loculus.backend.service.KeycloakAdapter
 import org.loculus.backend.service.submission.CompressionDictService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.sql.Connection
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.thread
 
 @EndpointTest(
     properties = [
         "loculus.query-engine.enabled=true",
-        "loculus.query-engine.config-dir=src/test/resources/query-engine",
         "loculus.query-engine.projector-initial-delay-ms=3600000",
         "loculus.query-engine.projector-interval-ms=3600000",
         "loculus.query-engine.projector-batch-size=3",
+        "loculus.query-engine.reconcile-accessions-per-second=0",
     ],
 )
 class QueryProjectorTest(
@@ -64,6 +74,7 @@ class QueryProjectorTest(
     lateinit var keycloakAdapter: KeycloakAdapter
 
     private val decompressor by lazy { SequenceDecompressor { compressionDictService.getDictById(it) } }
+    private val metadataDictionaries by lazy { ZstdDictionaryCache { compressionDictService.getDictById(it) } }
 
     @BeforeEach
     fun setup() {
@@ -76,6 +87,7 @@ class QueryProjectorTest(
                 )
             }
         }
+        projector.resetMetadataDictionaries()
     }
 
     @Test
@@ -229,6 +241,51 @@ class QueryProjectorTest(
         assertThat(sequenceRowVersions(), equalTo(rowVersionsAfter))
     }
 
+    @Test
+    fun `a sequence that an entry no longer has is deleted, in the incremental path and in a full rebuild`() {
+        val released = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        runProjector()
+        val sequenceRows = "select count(*) from query_sequences where organism = '$DEFAULT_ORGANISM'"
+        val before = count(sequenceRows)
+
+        // remove one gene of the first entry: the entry is recomputed through the staging tables
+        val (first, second) = released.take(2).map { it.accession }
+        removeFirstGene(first)
+        runProjector()
+        assertThat(count(sequenceRows), equalTo(before - 1))
+        assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+
+        // the same in an untrusted full rebuild over the existing rows
+        removeFirstGene(second)
+        sql { c ->
+            c.createStatement().use {
+                it.executeUpdate("delete from query_dirty_accessions")
+                it.executeUpdate("update query_engine_state set encoding_hash = 'x'")
+            }
+        }
+        runProjector()
+        assertThat(count(sequenceRows), equalTo(before - 2))
+        assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+    }
+
+    private fun removeFirstGene(accession: String) = sql { c ->
+        c.prepareStatement(
+            """
+            update sequence_entries_preprocessed_data
+            set processed_data = jsonb_set(
+                processed_data,
+                array['alignedAminoAcidSequences',
+                    (select min(k) from jsonb_object_keys(processed_data -> 'alignedAminoAcidSequences') k)],
+                'null'
+            )
+            where accession = ?
+            """.trimIndent(),
+        ).use {
+            it.setString(1, accession)
+            assertThat(it.executeUpdate(), greaterThan(0))
+        }
+    }
+
     /** (id, table/slot) -> xmin of the sequence-derived rows of dummyOrganism */
     private fun sequenceRowVersions(): Map<Pair<Int, String>, String> = sql { c ->
         c.createStatement().use {
@@ -281,6 +338,288 @@ class QueryProjectorTest(
         runProjector()
         assertThat(projectedMetadata(DEFAULT_ORGANISM)["$accession.1"]!!["dataUseTerms"].asText(), equalTo("OPEN"))
         assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+    }
+
+    @Test
+    fun `a changed metadata encoding rewrites the metadata and keeps the sequence-derived rows`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        runProjector()
+        val encoding = sql { c ->
+            c.createStatement().use { st ->
+                st.executeQuery("select encoding_hash from query_engine_state where organism = '$DEFAULT_ORGANISM'")
+                    .use { rs ->
+                        rs.next()
+                        rs.getString(1)
+                    }
+            }
+        }
+        assertThat(encoding, equalTo(projectionEncoding(registry.get(DEFAULT_ORGANISM)!!)))
+        // rows and encoding as an older version wrote them: jsonb with all fields (nulls included) but versionStatus,
+        // sequence encoding only
+        val fields = registry.get(DEFAULT_ORGANISM)!!.metadata.map { it.name }
+        val legacy = projectedMetadata(DEFAULT_ORGANISM).mapValues { (_, record) ->
+            objectMapper.createObjectNode().also { node ->
+                fields.filter { it != "versionStatus" }.forEach { node.set<JsonNode>(it, record[it]) }
+            }
+        }
+        writeStoredMetadata(legacy) { json -> Triple(null, null, json) }
+        sql { c ->
+            c.createStatement().use {
+                it.executeUpdate(
+                    "update query_engine_state set encoding_hash = split_part(encoding_hash, '/m', 1) " +
+                        "where organism = '$DEFAULT_ORGANISM'",
+                )
+            }
+        }
+        val rowVersions = sequenceRowVersions()
+
+        runProjector()
+        assertThat(projectedMetadata(DEFAULT_ORGANISM).values.filter { !it.has("versionStatus") }, empty())
+        assertThat(
+            count("select count(*) from query_entries where metadata is not null or metadata_zstd is null"),
+            equalTo(0L),
+        )
+        assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+        // the rebuild trusted the source hashes: no sequence-derived row was rewritten
+        assertThat(sequenceRowVersions(), equalTo(rowVersions))
+
+        // the encoding is stored: no further rebuild
+        val changelog = changelogSize()
+        runProjector()
+        assertThat(changelogSize(), equalTo(changelog))
+    }
+
+    @Test
+    fun `an interrupted rebuild that trusted the source hashes resumes trusting them, others recompute everything`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        runProjector()
+        val schema = registry.get(DEFAULT_ORGANISM)!!
+        // sequence-derived rows that only a rebuild without trusted source hashes recomputes
+        val tampered = "select count(*) from query_mutation_data where missing = '{-1}'"
+        sql { c -> c.createStatement().use { it.executeUpdate("update query_mutation_data set missing = '{-1}'") } }
+        val rows = count(tampered)
+        assertThat(rows, greaterThan(0L))
+        fun interruptedRebuild(trustSourceHashes: Boolean) = sql { c ->
+            c.prepareStatement("update query_engine_state set encoding_hash = ? where organism = ?").use {
+                it.setString(1, rebuildingEncoding(schema, trustSourceHashes))
+                it.setString(2, DEFAULT_ORGANISM)
+                it.executeUpdate()
+            }
+        }
+
+        interruptedRebuild(trustSourceHashes = true)
+        runProjector()
+        assertThat(count(tampered), equalTo(rows))
+
+        interruptedRebuild(trustSourceHashes = false)
+        runProjector()
+        assertThat(count(tampered), equalTo(0L))
+        assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+    }
+
+    @Test
+    fun `stored metadata has no null values`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        runProjector()
+        val metadata = projectedMetadata(DEFAULT_ORGANISM).values
+        assertThat(metadata.size, greaterThan(0))
+        assertThat(metadata.flatMap { it.properties() }.filter { it.value.isNull }, empty())
+    }
+
+    @Test
+    fun `a metadata dictionary is trained once an organism has enough entries and compresses every record`() {
+        repeat(4) { convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease() }
+        projector.metadataDictionaryMinEntries = DICTIONARY_MIN_ENTRIES
+        // the initial rebuild sees no entries yet: records are compressed without a dictionary
+        runProjector()
+        assertThat(count("select count(*) from query_entries where metadata_dict_id is not null"), equalTo(0L))
+        assertThat(count("select count(*) from query_entries where metadata_zstd is null"), equalTo(0L))
+        assertThat(count("select count(*) from query_entries"), greaterThanOrEqualTo(DICTIONARY_MIN_ENTRIES.toLong()))
+
+        // enough entries now: a dictionary is trained and every record recompressed with it
+        val dictId = assertRecompressedWithNewDictionary(previousDictId = null)
+        assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+
+        // a new leader loads the dictionary from query_engine_state and compresses new entries with it
+        projector.resetMetadataDictionaries()
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        runProjector()
+        assertThat(
+            count("select count(*) from query_entries where metadata_dict_id is distinct from $dictId"),
+            equalTo(0L),
+        )
+        assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+    }
+
+    @Test
+    fun `an organism that has grown since its dictionary was trained recompresses its records with a new one`() {
+        repeat(3) { convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease() }
+        projector.metadataDictionaryMinEntries = DICTIONARY_MIN_ENTRIES
+        runProjector()
+        runProjector()
+        val firstDictId = count(
+            "select metadata_dict_id from query_engine_state where organism = '$DEFAULT_ORGANISM'",
+        ).toInt()
+        assertThat(firstDictId, greaterThan(0))
+
+        repeat(2) { convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease() }
+        // the new entries are drained, compressed with the first dictionary; the organism has now grown 1.5x
+        runProjector()
+        assertThat(
+            count("select count(*) from query_entries where metadata_dict_id is distinct from $firstDictId"),
+            equalTo(0L),
+        )
+        assertRecompressedWithNewDictionary(previousDictId = firstDictId)
+        assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+    }
+
+    /**
+     * Runs the projector once, expecting it to train a new dictionary and recompress every record with it without
+     * changing any record, sequence-derived row, changelog or data_version. Returns the new dictionary id.
+     */
+    private fun assertRecompressedWithNewDictionary(previousDictId: Int?): Int {
+        val metadata = projectedMetadata(DEFAULT_ORGANISM)
+        val rowVersions = sequenceRowVersions()
+        val changelog = changelogSize()
+        val dataVersion = count("select data_version from query_engine_state where organism = '$DEFAULT_ORGANISM'")
+
+        runProjector()
+        val dictId = count(
+            "select metadata_dict_id from query_engine_state where organism = '$DEFAULT_ORGANISM'",
+        ).toInt()
+        assertThat(dictId, greaterThan(0))
+        assertThat(dictId, not(equalTo(previousDictId)))
+        assertThat(
+            count("select metadata_dict_entries from query_engine_state where organism = '$DEFAULT_ORGANISM'"),
+            equalTo(count("select next_id from query_engine_state where organism = '$DEFAULT_ORGANISM'")),
+        )
+        assertThat(
+            count("select count(*) from query_entries where metadata_dict_id is distinct from $dictId"),
+            equalTo(0L),
+        )
+        assertThat(projectedMetadata(DEFAULT_ORGANISM), equalTo(metadata))
+        assertThat(sequenceRowVersions(), equalTo(rowVersions))
+        assertThat(changelogSize(), equalTo(changelog))
+        assertThat(
+            count("select data_version from query_engine_state where organism = '$DEFAULT_ORGANISM'"),
+            equalTo(dataVersion),
+        )
+
+        // the frames equal what the projector writes for the same records: recomputing them changes nothing
+        sql { c ->
+            c.createStatement().use {
+                it.executeUpdate("insert into query_dirty_accessions select organism, accession from query_entries")
+            }
+        }
+        runProjector()
+        assertThat(changelogSize(), equalTo(changelog))
+        return dictId
+    }
+
+    @Test
+    fun `the reconcile pass recomputes projections that went stale without a trigger`() {
+        val released = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        runProjector()
+        val accession = released.first().accession
+        // a projection that is wrong and not in the dirty queue (like an accession dropped after a failed batch),
+        // stored as a frame without dictionary
+        val stale = projectedMetadata(DEFAULT_ORGANISM).getValue("$accession.1").deepCopy<ObjectNode>()
+        stale.put("versionStatus", "STALE")
+        StoredMetadataCompressor(null, null).use { compressor ->
+            writeStoredMetadata(mapOf("$accession.1" to stale)) { json ->
+                Triple(compressor.compress(json), null, null)
+            }
+        }
+        runProjector()
+        assertThat(projectedMetadata(DEFAULT_ORGANISM)["$accession.1"]!!["versionStatus"].asText(), equalTo("STALE"))
+
+        // one pass in steps of 4 accessions marks every released accession once
+        val marked = mutableListOf<String>()
+        repeat((released.size + 3) / 4) {
+            projector.reconcileStep(DEFAULT_ORGANISM, 4)
+            marked += dirtyAccessions()
+            runProjector()
+        }
+        assertThat(marked.sorted(), equalTo(released.map { it.accession }.sorted()))
+        // this step finds no accession after the cursor and ends the pass
+        projector.reconcileStep(DEFAULT_ORGANISM, 4)
+        assertThat(dirtyAccessions(), empty())
+        // the next one would start a new pass, but the pass interval has not passed yet
+        projector.reconcileStep(DEFAULT_ORGANISM, 4)
+        assertThat(dirtyAccessions(), empty())
+        projector.resetReconcilePassInterval(DEFAULT_ORGANISM)
+        projector.reconcileStep(DEFAULT_ORGANISM, 4)
+        assertThat(dirtyAccessions().sorted(), equalTo(released.map { it.accession }.sorted().take(4)))
+        runProjector()
+
+        assertProjectionMatchesReleasedData(DEFAULT_ORGANISM)
+    }
+
+    @Test
+    fun `changelog seqs of an organism become visible in commit order without holes`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        runProjector()
+        val writer = ProjectionWriter(registry.get(DEFAULT_ORGANISM)!!)
+        val ids = projectedIds(DEFAULT_ORGANISM).values.sorted()
+        val seqsBefore = changelogSeqs()
+
+        // the ordering argument needs a fresh snapshot per statement
+        assertThat(
+            sql { c ->
+                c.createStatement().use { s ->
+                    s.executeQuery("show transaction_isolation").use { rs ->
+                        rs.next()
+                        rs.getString(1)
+                    }
+                }
+            },
+            equalTo("read committed"),
+        )
+
+        // a rolled-back writer must not leave a hole
+        transaction {
+            writer.write(TransactionManager.current().connection.connection as Connection, emptyList(), listOf(ids[0]))
+            rollback()
+        }
+
+        // second writer commits only after a third one has started writing
+        val secondWrote = CountDownLatch(1)
+        val releaseSecond = CountDownLatch(1)
+        val second = thread {
+            transaction {
+                writer.write(
+                    TransactionManager.current().connection.connection as Connection,
+                    emptyList(),
+                    listOf(ids[1]),
+                )
+                secondWrote.countDown()
+                releaseSecond.await()
+            }
+        }
+        // release writer 2 on every path: a failed assertion must not leave its row lock blocking later tests
+        var third: Thread? = null
+        try {
+            assertThat(secondWrote.await(30, TimeUnit.SECONDS), equalTo(true))
+            val thirdPid = AtomicInteger()
+            third = thread {
+                transaction {
+                    val connection = TransactionManager.current().connection.connection as Connection
+                    thirdPid.set(backendPid(connection))
+                    writer.write(connection, emptyList(), listOf(ids[2]))
+                }
+            }
+            assertThat("third writer waits on a lock", awaitLockWait(thirdPid), equalTo(true))
+            assertThat("third writer waits for the second one", third.isAlive, equalTo(true))
+            assertThat(changelogSeqs(), equalTo(seqsBefore))
+        } finally {
+            releaseSecond.countDown()
+            second.join(30_000)
+            third?.join(30_000)
+        }
+
+        val max = seqsBefore.maxOrNull() ?: 0L
+        assertThat(changelogSeqs(), equalTo(seqsBefore + listOf(max + 1, max + 2)))
+        assertThat(changelogIdsAbove(max), equalTo(listOf(ids[1], ids[2])))
     }
 
     // ----------------------------------------------------------------------------------------------------------
@@ -383,14 +722,46 @@ class QueryProjectorTest(
     }
 
     private fun projectedMetadata(organism: String): Map<String, JsonNode> = sql { c ->
-        c.prepareStatement("select accession_version, metadata from query_entries where organism = ?").use {
+        c.prepareStatement(
+            "select accession_version, ${StoredMetadata.SELECT} from query_entries where organism = ?",
+        ).use {
             it.setString(1, organism)
-            it.executeQuery().use { rs ->
-                val result = mutableMapOf<String, JsonNode>()
-                while (rs.next()) result[rs.getString(1)] = objectMapper.readTree(rs.getString(2))
-                result
+            StoredMetadataReader(metadataDictionaries).use { reader ->
+                it.executeQuery().use { rs ->
+                    val result = mutableMapOf<String, JsonNode>()
+                    while (rs.next()) {
+                        check(reader.read(rs, 2))
+                        result[rs.getString(1)] = objectMapper.readTree(reader.bytes, 0, reader.length)
+                    }
+                    result
+                }
             }
         }
+    }
+
+    /** overwrites stored records: encode returns (frame, dictionary id, jsonb text) for a record's JSON text */
+    private fun writeStoredMetadata(
+        records: Map<String, JsonNode>,
+        encode: (ByteArray) -> Triple<ByteArray?, Int?, ByteArray?>,
+    ) = sql { c ->
+        c.prepareStatement(
+            "update query_entries set metadata_zstd = ?, metadata_dict_id = ?, metadata = ?::jsonb " +
+                "where accession_version = ?",
+        ).use { ps ->
+            for ((accessionVersion, record) in records) {
+                val (frame, dictId, json) = encode(objectMapper.writeValueAsBytes(record))
+                ps.setBytes(1, frame)
+                if (dictId == null) ps.setNull(2, java.sql.Types.INTEGER) else ps.setInt(2, dictId)
+                ps.setString(3, json?.let { String(it) })
+                ps.setString(4, accessionVersion)
+                ps.addBatch()
+            }
+            ps.executeBatch()
+        }
+    }
+
+    private fun count(query: String): Long = sql { c ->
+        c.createStatement().use { st -> st.executeQuery(query).use { rs -> if (rs.next()) rs.getLong(1) else 0 } }
     }
 
     private fun projectedIds(organism: String): Map<String, Int> = sql { c ->
@@ -414,6 +785,29 @@ class QueryProjectorTest(
         }
     }
 
+    private fun changelogSeqs(): List<Long> = sql { c ->
+        c.prepareStatement("select seq from query_changelog where organism = ? order by seq").use {
+            it.setString(1, DEFAULT_ORGANISM)
+            it.executeQuery().use { rs ->
+                val result = mutableListOf<Long>()
+                while (rs.next()) result.add(rs.getLong(1))
+                result
+            }
+        }
+    }
+
+    private fun changelogIdsAbove(seq: Long): List<Int> = sql { c ->
+        c.prepareStatement("select id from query_changelog where organism = ? and seq > ? order by seq").use {
+            it.setString(1, DEFAULT_ORGANISM)
+            it.setLong(2, seq)
+            it.executeQuery().use { rs ->
+                val result = mutableListOf<Int>()
+                while (rs.next()) result.add(rs.getInt(1))
+                result
+            }
+        }
+    }
+
     private fun changelogSize(): Int = sql { c ->
         c.createStatement().use {
             it.executeQuery("select count(*) from query_changelog").use { rs ->
@@ -423,7 +817,34 @@ class QueryProjectorTest(
         }
     }
 
+    private fun backendPid(connection: Connection): Int = connection.createStatement().use { s ->
+        s.executeQuery("select pg_backend_pid()").use { rs ->
+            rs.next()
+            rs.getInt(1)
+        }
+    }
+
+    /** waits (up to 10 s) until the backend whose pid [pid] will hold is waiting for a lock */
+    private fun awaitLockWait(pid: AtomicInteger): Boolean {
+        val deadline = System.currentTimeMillis() + 10_000
+        while (System.currentTimeMillis() < deadline) {
+            val waiting = pid.get() != 0 && sql { c ->
+                c.prepareStatement("select exists (select from pg_locks where pid = ? and not granted)").use {
+                    it.setInt(1, pid.get())
+                    it.executeQuery().use { rs -> rs.next() && rs.getBoolean(1) }
+                }
+            }
+            if (waiting) return true
+            Thread.sleep(10)
+        }
+        return false
+    }
+
     private fun <T> sql(block: (Connection) -> T): T = transaction {
         block(TransactionManager.current().connection.connection as Connection)
+    }
+
+    private companion object {
+        const val DICTIONARY_MIN_ENTRIES = 30
     }
 }

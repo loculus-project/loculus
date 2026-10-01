@@ -205,7 +205,7 @@ const backendRequestMocks = {
 const lapisRequestMocks = {
     details: (statusCode: number = 200, response: DetailsResponse | LapisError) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/details`, () => {
+            http.all(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/details`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -214,7 +214,7 @@ const lapisRequestMocks = {
     },
     alignedNucleotideSequences: (statusCode: number = 200, response: string | LapisError) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/alignedNucleotideSequences`, () => {
+            http.all(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/alignedNucleotideSequences`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -227,7 +227,7 @@ const lapisRequestMocks = {
         segmentName: string,
     ) => {
         testServer.use(
-            http.post(
+            http.all(
                 `${testConfig.serverSide.lapisUrls[testOrganism]}/sample/alignedNucleotideSequences/${segmentName}`,
                 () => {
                     return new Response(JSON.stringify(response), {
@@ -239,7 +239,7 @@ const lapisRequestMocks = {
     },
     unalignedNucleotideSequences: (statusCode: number = 200, response: string | LapisError, dataVersion?: string) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/unalignedNucleotideSequences`, () => {
+            http.all(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/unalignedNucleotideSequences`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                     headers:
@@ -260,7 +260,7 @@ const lapisRequestMocks = {
         dataVersion?: string,
     ) => {
         testServer.use(
-            http.post(
+            http.all(
                 `${testConfig.serverSide.lapisUrls[testOrganism]}/sample/unalignedNucleotideSequences/${segmentName}`,
                 () => {
                     return new Response(JSON.stringify(response), {
@@ -279,7 +279,7 @@ const lapisRequestMocks = {
     },
     nucleotideMutations: (statusCode: number = 200, response: MutationsResponse | LapisError) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/nucleotideMutations`, () => {
+            http.all(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/nucleotideMutations`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -288,7 +288,7 @@ const lapisRequestMocks = {
     },
     aminoAcidMutations: (statusCode: number = 200, response: MutationsResponse | LapisError) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/aminoAcidMutations`, () => {
+            http.all(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/aminoAcidMutations`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -297,7 +297,7 @@ const lapisRequestMocks = {
     },
     nucleotideInsertions: (statusCode: number = 200, response: InsertionsResponse | LapisError) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/nucleotideInsertions`, () => {
+            http.all(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/nucleotideInsertions`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -306,7 +306,7 @@ const lapisRequestMocks = {
     },
     aminoAcidInsertions: (statusCode: number = 200, response: InsertionsResponse | LapisError) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/aminoAcidInsertions`, () => {
+            http.all(`${testConfig.serverSide.lapisUrls[testOrganism]}/sample/aminoAcidInsertions`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });

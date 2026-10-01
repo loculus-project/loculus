@@ -77,3 +77,19 @@
 {{- define "loculus.lapisServiceName"}}
 {{- printf "loculus-lapis-service-%s" . }}
 {{- end }}
+
+{{/* LAPIS and SILO are rendered unless the query engine replaces them (queryEngine.enabled and not runLapisAlongside). */}}
+{{- define "loculus.runLapis" -}}
+{{- if or (not .Values.queryEngine.enabled) (ne .Values.queryEngine.runLapisAlongside false) }}true{{ end }}
+{{- end }}
+
+{{/* Enabled organisms that get LAPIS/SILO: all of them, or queryEngine.lapisAlongsideOrganisms when the engine is on and that list is set. Same {"organisms": [...]} shape as loculus.enabledOrganisms. */}}
+{{- define "loculus.lapisOrganisms" -}}
+{{- $only := list -}}
+{{- if .Values.queryEngine.enabled -}}{{- $only = .Values.queryEngine.lapisAlongsideOrganisms | default list -}}{{- end -}}
+{{- $selected := list -}}
+{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms -}}
+  {{- if or (not $only) (has $item.key $only) -}}{{- $selected = append $selected $item -}}{{- end -}}
+{{- end -}}
+{{- dict "organisms" $selected | toJson -}}
+{{- end -}}

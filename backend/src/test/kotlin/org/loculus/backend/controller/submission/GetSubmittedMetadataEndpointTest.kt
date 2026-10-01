@@ -212,6 +212,25 @@ class GetSubmittedMetadataEndpointTest(
         ).andExpect(status().isUnprocessableContent)
     }
 
+    @Test
+    fun `GIVEN entries in every status THEN returns the same status as get-sequences`() {
+        convenienceClient.prepareRevokedSequenceEntries()
+        convenienceClient.prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation()
+        convenienceClient.prepareDataTo(Status.APPROVED_FOR_RELEASE)
+        convenienceClient.prepareDataTo(Status.PROCESSED, errors = true)
+        convenienceClient.prepareDataTo(Status.PROCESSED)
+        convenienceClient.prepareDataTo(Status.IN_PROCESSING)
+        convenienceClient.prepareDataTo(Status.RECEIVED)
+
+        val expected = convenienceClient.getSequenceEntries().sequenceEntries
+            .associate { it.displayAccessionVersion() to it.status }
+        val actual = convenienceClient.getSubmittedMetadata()
+            .associate { it.displayAccessionVersion() to it.status }
+
+        assertThat(actual, `is`(expected))
+        assertThat(actual.values.toSet(), `is`(Status.entries.toSet()))
+    }
+
     // Regression test for https://github.com/loculus-project/loculus/issues/4036
     @Test
     fun `GIVEN revoked sequences exist THEN endpoint does not throw exception`() {

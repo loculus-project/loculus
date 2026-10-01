@@ -1,13 +1,11 @@
 package org.loculus.backend.query.request
 
+import org.loculus.backend.config.QueryEngineMetadata
+import org.loculus.backend.config.QueryEngineOrganismConfig
 import org.loculus.backend.config.ReferenceGenome
 import org.loculus.backend.config.ReferenceSequence
+import org.loculus.backend.query.schema.LineageDefinitionReader
 import org.loculus.backend.query.schema.QuerySchema
-import org.loculus.backend.query.schema.SiloConfigReader
-import org.loculus.backend.query.schema.SiloDatabaseConfig
-import org.loculus.backend.query.schema.SiloFeature
-import org.loculus.backend.query.schema.SiloMetadata
-import org.loculus.backend.query.schema.SiloSchema
 import java.time.LocalDate
 
 object TestSchemas {
@@ -16,25 +14,20 @@ object TestSchemas {
     const val GENE_S = "MFVFLVLLPL"
     const val GENE_E = "MYSFVTEETG"
 
-    private val databaseConfig = SiloDatabaseConfig(
-        SiloSchema(
-            instanceName = "test",
-            primaryKey = "accessionVersion",
-            metadata = listOf(
-                SiloMetadata("accessionVersion", "string", generateIndex = false),
-                SiloMetadata("country", "string", generateIndex = true),
-                SiloMetadata("date", "date"),
-                SiloMetadata("age", "int"),
-                SiloMetadata("qc", "float"),
-                SiloMetadata("isRevocation", "boolean"),
-                SiloMetadata("pangoLineage", "string", generateIndex = true, generateLineageIndex = "pango"),
-                SiloMetadata("versionStatus", "string"),
-            ),
-            features = listOf(SiloFeature("generalizedAdvancedQuery")),
+    private val queryEngineConfig = QueryEngineOrganismConfig(
+        metadata = listOf(
+            QueryEngineMetadata("accessionVersion", "string"),
+            QueryEngineMetadata("country", "string", generateIndex = true),
+            QueryEngineMetadata("date", "date"),
+            QueryEngineMetadata("age", "int"),
+            QueryEngineMetadata("qc", "float"),
+            QueryEngineMetadata("isRevocation", "boolean"),
+            QueryEngineMetadata("pangoLineage", "string", generateIndex = true, lineageSystem = "pango"),
+            QueryEngineMetadata("versionStatus", "string"),
         ),
     )
 
-    val lineages = SiloConfigReader.readLineageDefinition(
+    val lineages = LineageDefinitionReader.read(
         """
         A: {}
         B:
@@ -61,7 +54,8 @@ object TestSchemas {
 
     val single: QuerySchema = QuerySchema.build(
         "single",
-        databaseConfig,
+        "test",
+        queryEngineConfig,
         ReferenceGenome(
             nucleotideSequences = listOf(ReferenceSequence("main", MAIN_REFERENCE)),
             genes = listOf(ReferenceSequence("S", GENE_S), ReferenceSequence("E", GENE_E)),
@@ -71,7 +65,8 @@ object TestSchemas {
 
     val multi: QuerySchema = QuerySchema.build(
         "multi",
-        databaseConfig,
+        "test",
+        queryEngineConfig,
         ReferenceGenome(
             nucleotideSequences = listOf(ReferenceSequence("L", "ACGTACGTAC"), ReferenceSequence("M", "GGGGCCCC")),
             genes = listOf(ReferenceSequence("GP", "MKV"), ReferenceSequence("NP", "MSTL")),

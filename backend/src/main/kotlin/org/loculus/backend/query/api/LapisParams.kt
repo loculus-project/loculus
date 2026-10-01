@@ -2,6 +2,7 @@ package org.loculus.backend.query.api
 
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.loculus.backend.query.cache.WireCodec
 import org.loculus.backend.query.request.Endpoint
 import org.loculus.backend.query.request.QueryBadRequestException
 import java.io.InputStream
@@ -86,7 +87,7 @@ object LapisParams {
         throw LapisNotAcceptableException("Acceptable representations: [$acceptable].")
     }
 
-    /** the response Content-Encoding chosen from Accept-Encoding (zstd preferred over gzip) */
+    /** the response Content-Encoding chosen from Accept-Encoding: zstd, else br, else gzip */
     fun contentEncodingFromAcceptEncoding(acceptEncoding: String?): String? {
         if (acceptEncoding.isNullOrBlank()) return null
         val accepted = acceptEncoding.split(',').mapNotNull { part ->
@@ -96,6 +97,7 @@ object LapisParams {
         }.toSet()
         return when {
             "zstd" in accepted -> "zstd"
+            "br" in accepted && WireCodec.brotliAvailable -> "br"
             "gzip" in accepted -> "gzip"
             else -> null
         }

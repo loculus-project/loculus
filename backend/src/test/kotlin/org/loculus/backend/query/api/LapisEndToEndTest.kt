@@ -79,6 +79,14 @@ class LapisEndToEndTest {
             ),
             equalTo("country\tcount\nDE\t5\nCH\t3\n"),
         )
+        assertThat(
+            body(get("/test/sample/aggregated?fields=country&orderBy=count:descending&dataFormat=tsv")),
+            equalTo("country\tcount\nDE\t5\nCH\t3\n"),
+        )
+        assertThat(
+            body(get("/test/sample/aggregated?fields=country&orderBy=count:ascending&dataFormat=tsv")),
+            equalTo("country\tcount\nCH\t3\nDE\t5\n"),
+        )
     }
 
     @Test

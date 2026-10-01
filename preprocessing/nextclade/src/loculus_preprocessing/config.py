@@ -107,6 +107,8 @@ class Config(BaseModel):
     log_level: str = "DEBUG"
     keep_tmp_dir: bool = False
     batch_size: int = 5
+    # Threads per nextclade call; nextclade parallelises over the sequences of a batch
+    nextclade_jobs: int = 1
     pipeline_version: int = 1
     backend_request_timeout_seconds: int = 30
 

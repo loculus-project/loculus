@@ -33,12 +33,20 @@ spec:
           - "shared_preload_libraries=pg_stat_statements"
           - "-c"
           - "pg_stat_statements.track=all"
+          {{- range .Values.developmentDatabase.settings }}
+          - "-c"
+          - {{ . | quote }}
+          {{- end }}
         resources:
+          {{- if .Values.developmentDatabase.resources }}
+          {{- toYaml .Values.developmentDatabase.resources | nindent 10 }}
+          {{- else }}
           requests:
             memory: "200Mi"
             cpu: "250m"
           limits:
             memory: "2Gi"
+          {{- end }}
         ports:
         - containerPort: 5432
         env:
@@ -50,13 +58,50 @@ spec:
           value: "loculus"
         - name: POSTGRES_HOST_AUTH_METHOD
           value: "trust"
+        {{- if .Values.developmentDatabase.storageSize }}
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        {{- end }}
         volumeMounts:
         - name: init-scripts
           mountPath: /docker-entrypoint-initdb.d
+        {{- if .Values.developmentDatabase.storageSize }}
+        - name: data
+          mountPath: /var/lib/postgresql/data
+        {{- end }}
+        {{- if .Values.developmentDatabase.shmSize }}
+        - name: dshm
+          mountPath: /dev/shm
+        {{- end }}
       volumes:
       - name: init-scripts
         configMap:
           name: loculus-database-init
+      {{- if .Values.developmentDatabase.storageSize }}
+      - name: data
+        persistentVolumeClaim:
+          claimName: loculus-database-data
+      {{- end }}
+      {{- if .Values.developmentDatabase.shmSize }}
+      - name: dshm
+        emptyDir:
+          medium: Memory
+          sizeLimit: {{ .Values.developmentDatabase.shmSize }}
+      {{- end }}
+{{- if .Values.developmentDatabase.storageSize }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: loculus-database-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: {{ .Values.developmentDatabase.storageSize }}
+{{- end }}
 ---
 apiVersion: v1
 kind: ConfigMap

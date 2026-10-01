@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import { type FC, type FormEvent, useMemo, useState, type ReactNode } from 'react';
 
 import { CumulativeSubmissionsChart, type TimeSeriesData } from './CumulativeSubmissionsChart.tsx';
@@ -8,6 +7,7 @@ import type { Organism } from '../../config.ts';
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
 import type { ContinueSubmissionIntent } from '../../routes/routes.ts';
+import { getLapisAxios } from '../../services/lapisCache/browserLapisAxios.ts';
 import { GROUP_ID_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { Address, Group, GroupDetails } from '../../types/backend.ts';
 import { versionStatuses } from '../../types/lapis.ts';
@@ -321,12 +321,15 @@ async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, 
                 return;
             }
             try {
-                const response = await axios.post(`${url}/sample/aggregated`, {
-                    [GROUP_ID_FIELD]: groupId,
-                    [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
-                    [IS_REVOCATION_FIELD]: 'false',
-                    fields: [],
-                });
+                const response = await getLapisAxios(url, clientConfig.lapisIsQueryEngine).post(
+                    `${url}/sample/aggregated`,
+                    {
+                        [GROUP_ID_FIELD]: groupId,
+                        [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
+                        [IS_REVOCATION_FIELD]: 'false',
+                        fields: [],
+                    },
+                );
                 const count = (response.data as { data?: { count?: number }[] }).data?.[0]?.count ?? 0;
                 counts[key] = count;
             } catch (error) {
@@ -353,12 +356,15 @@ async function fetchTimeSeriesData(
                 return;
             }
             try {
-                const response = await axios.post(`${url}/sample/aggregated`, {
-                    [GROUP_ID_FIELD]: groupId,
-                    [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
-                    [IS_REVOCATION_FIELD]: 'false',
-                    fields: [metadataField],
-                });
+                const response = await getLapisAxios(url, clientConfig.lapisIsQueryEngine).post(
+                    `${url}/sample/aggregated`,
+                    {
+                        [GROUP_ID_FIELD]: groupId,
+                        [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
+                        [IS_REVOCATION_FIELD]: 'false',
+                        fields: [metadataField],
+                    },
+                );
                 const rawData = (response.data as { data?: Record<string, unknown>[] }).data ?? [];
                 data[key] = rawData
                     .filter((d) => d[metadataField])

@@ -13,6 +13,7 @@ import org.jetbrains.exposed.v1.core.Count
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.LongColumnType
 import org.jetbrains.exposed.v1.core.Op
+import org.jetbrains.exposed.v1.core.QueryBuilder
 import org.jetbrains.exposed.v1.core.QueryParameter
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -20,21 +21,20 @@ import org.jetbrains.exposed.v1.core.TextColumnType
 import org.jetbrains.exposed.v1.core.VarCharColumnType
 import org.jetbrains.exposed.v1.core.alias
 import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.append
 import org.jetbrains.exposed.v1.core.booleanParam
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.core.not
-import org.jetbrains.exposed.v1.core.notExists
 import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.core.plus
 import org.jetbrains.exposed.v1.core.statements.StatementType
 import org.jetbrains.exposed.v1.core.stringLiteral
 import org.jetbrains.exposed.v1.core.stringParam
-import org.jetbrains.exposed.v1.core.vendors.ForUpdateOption.PostgreSQL.ForUpdate
-import org.jetbrains.exposed.v1.core.vendors.ForUpdateOption.PostgreSQL.MODE
 import org.jetbrains.exposed.v1.datetime.KotlinLocalDateTimeColumnType
 import org.jetbrains.exposed.v1.datetime.dateTimeParam
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
@@ -111,13 +111,37 @@ import org.loculus.backend.utils.toTimestamp
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
+import java.sql.ResultSet
 import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.LinkedBlockingQueue
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 private val log = KotlinLogging.logger { }
+
+/** candidates fetched per entry still to claim: concurrent pollers skip the candidates that others hold */
+private const val CLAIM_CANDIDATE_FACTOR = 10
+
+/** caps the over-fetch of large (manual) claims */
+private const val MAX_EXTRA_CLAIM_CANDIDATES = 10_000
+
+private const val MAX_CLAIM_ROUNDS = 5
+
+private data class ClaimCursor(val after: AccessionVersion?, val lastFullScan: Instant)
+
+/** revised entries remembered per organism for the next claim; beyond this, the full scan finds them */
+private const val MAX_REVISED_AWAITING_CLAIM = 1_000_000
+
+private val accessionVersionOrder = compareBy<AccessionVersion>({ it.accession }, { it.version })
+
+internal fun claimCandidateLimit(remaining: Int) =
+    minOf(remaining.toLong() * CLAIM_CANDIDATE_FACTOR, remaining.toLong() + MAX_EXTRA_CLAIM_CANDIDATES).toInt()
 
 @Service
 @Transactional
@@ -140,7 +164,70 @@ class SubmissionDatabaseService(
     private val submissionMetrics: SubmissionMetrics,
     // A whole batch is serialized in memory before it is stored, so raising this multiplies peak heap.
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
+    @Value("\${${BackendSpringProperty.CLAIM_FULL_SCAN_INTERVAL_SECONDS}:10}") claimFullScanIntervalSeconds: Long,
 ) {
+    private val claimFullScanInterval = claimFullScanIntervalSeconds.seconds
+    private val claimCursors = ConcurrentHashMap<Pair<String, Long>, ClaimCursor>()
+    private val revisedAwaitingClaim = ConcurrentHashMap<String, LinkedBlockingQueue<AccessionVersion>>()
+
+    /**
+     * Revisions add new versions of existing accessions, which sort before the claim cursor, so only the next full
+     * scan would find them. Remembers them (once the revising transaction has committed) for the next claim of the
+     * organism. Held per backend replica: a revision submitted to another replica waits for the full scan.
+     */
+    fun rememberRevisedEntries(organism: Organism, entries: List<AccessionVersionInterface>) {
+        if (entries.isEmpty()) {
+            return
+        }
+        val remember = {
+            val queue = revisedAwaitingClaim.computeIfAbsent(organism.name) {
+                LinkedBlockingQueue(MAX_REVISED_AWAITING_CLAIM)
+            }
+            entries.forEach { queue.offer(AccessionVersion(it.accession, it.version)) }
+        }
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                object : TransactionSynchronization {
+                    override fun afterCommit() = remember()
+                },
+            )
+        } else {
+            remember()
+        }
+    }
+
+    /**
+     * Deleting preprocessed rows makes their entries claimable again, but they sort before the claim cursor. The
+     * delete bumps the update tracker, so each poller gets one full response for it and then 304s until the next
+     * write; that one claim must scan from the start or the entries wait for an unrelated write. Forgets the
+     * organism's cursors before and after the deleting transaction commits: a claim running in between cannot see
+     * the deleted rows yet.
+     */
+    private fun forgetClaimCursorsAroundCommit(organism: String?) {
+        val forget: () -> Unit = {
+            if (organism == null) claimCursors.clear() else claimCursors.keys.removeIf { it.first == organism }
+        }
+        forget()
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                object : TransactionSynchronization {
+                    override fun afterCommit() = forget()
+                },
+            )
+        }
+    }
+
+    /** claims up to [limit] of the organism's remembered revisions; the rest were claimed or processed already */
+    private fun claimRevisedEntries(organism: Organism, limit: Int, pipelineVersion: Long): List<AccessionVersion> {
+        val queue = revisedAwaitingClaim[organism.name] ?: return emptyList()
+        val revised = mutableListOf<AccessionVersion>()
+        queue.drainTo(revised, limit)
+        if (revised.isEmpty()) {
+            return emptyList()
+        }
+        return lockAndInsertClaims(revised.sortedWith(accessionVersionOrder), limit, pipelineVersion)
+    }
+
     private var lastPreprocessedDataUpdate: String? = null
 
     fun streamUnprocessedSubmissions(
@@ -180,82 +267,189 @@ class SubmissionDatabaseService(
         numberOfSequenceEntries: Int,
         pipelineVersion: Long,
     ): Sequence<UnprocessedData> {
+        val claimedKeys = claimUnprocessedEntries(organism, numberOfSequenceEntries, pipelineVersion)
         val table = SequenceEntriesTable
-        val preprocessing = SequenceEntriesPreprocessedDataTable
 
-        return table
-            .select(
-                table.accessionColumn,
-                table.versionColumn,
-                table.submittedDataColumn,
-                table.submissionIdColumn,
-                table.submitterColumn,
-                table.groupIdColumn,
-                table.submittedAtTimestampColumn,
-            )
-            .where {
-                table.organismIs(organism) and
-                    not(table.isRevocationColumn) and
-                    notExists(
-                        preprocessing.selectAll().where {
-                            (table.accessionColumn eq preprocessing.accessionColumn) and
-                                (table.versionColumn eq preprocessing.versionColumn) and
-                                (preprocessing.pipelineVersionColumn eq pipelineVersion)
-                        },
-                    )
-            }
-            .orderBy(table.accessionColumn)
-            .limit(numberOfSequenceEntries)
-            .forUpdate(ForUpdate(mode = MODE.SKIP_LOCKED))
-            .fetchSize(streamBatchSize)
+        return claimedKeys
             .asSequence()
             .chunked(streamBatchSize)
-            .map { chunk ->
-                val chunkOfUnprocessedData = chunk.map {
-                    val submittedData = compressionService.decompressSequencesInSubmittedData(
-                        it[table.submittedDataColumn]!!,
+            .flatMap { chunk ->
+                table
+                    .select(
+                        table.accessionColumn,
+                        table.versionColumn,
+                        table.submittedDataColumn,
+                        table.submissionIdColumn,
+                        table.submitterColumn,
+                        table.groupIdColumn,
+                        table.submittedAtTimestampColumn,
                     )
-                    val submittedDataWithFileUrls = SubmittedContentWithFileUrls(
-                        submittedData.metadata,
-                        submittedData.unalignedNucleotideSequences,
-                        submittedData.files?.let {
-                            it.mapValues {
-                                it.value.map { f ->
-                                    val presignedUrl = s3Service.createUrlToReadPrivateFile(f.fileId)
-                                    FileIdAndNameAndReadUrl(f.fileId, f.name, presignedUrl)
+                    .where { table.accessionVersionIsIn(chunk) }
+                    .orderBy(table.accessionColumn to SortOrder.ASC, table.versionColumn to SortOrder.ASC)
+                    .map {
+                        val submittedData = compressionService.decompressSequencesInSubmittedData(
+                            it[table.submittedDataColumn]!!,
+                        )
+                        val submittedDataWithFileUrls = SubmittedContentWithFileUrls(
+                            submittedData.metadata,
+                            submittedData.unalignedNucleotideSequences,
+                            submittedData.files?.let {
+                                it.mapValues {
+                                    it.value.map { f ->
+                                        val presignedUrl = s3Service.createUrlToReadPrivateFile(f.fileId)
+                                        FileIdAndNameAndReadUrl(f.fileId, f.name, presignedUrl)
+                                    }
                                 }
-                            }
-                        },
-                    )
-                    UnprocessedData(
-                        accession = it[table.accessionColumn],
-                        version = it[table.versionColumn],
-                        data = submittedDataWithFileUrls,
-                        submissionId = it[table.submissionIdColumn],
-                        submitter = it[table.submitterColumn],
-                        groupId = it[table.groupIdColumn],
-                        submittedAt = it[table.submittedAtTimestampColumn].toTimestamp(),
-                    )
-                }
-                updateStatusToProcessing(chunkOfUnprocessedData, pipelineVersion)
+                            },
+                        )
+                        UnprocessedData(
+                            accession = it[table.accessionColumn],
+                            version = it[table.versionColumn],
+                            data = submittedDataWithFileUrls,
+                            submissionId = it[table.submissionIdColumn],
+                            submitter = it[table.submitterColumn],
+                            groupId = it[table.groupIdColumn],
+                            submittedAt = it[table.submittedAtTimestampColumn].toTimestamp(),
+                        )
+                    }
             }
-            .flatten()
     }
 
-    private fun updateStatusToProcessing(
-        sequenceEntries: List<UnprocessedData>,
+    /**
+     * Claims up to [limit] unprocessed, non-revocation entries of [organism] for [pipelineVersion] by inserting their
+     * IN_PROCESSING rows, and returns the claimed keys in (accession, version) order.
+     *
+     * Each round runs two statements, each with its own READ COMMITTED snapshot:
+     * 1. [findClaimCandidates]: the first [claimCandidateLimit] unprocessed keys, an index only scan without locks.
+     *    It over-fetches, because concurrent pollers compute nearly the same candidates.
+     * 2. [lockAndInsertClaims]: locks up to the remaining number of candidates with SKIP LOCKED, re-checks that they
+     *    are still unprocessed (claims committed while step 1 ran are visible to this new snapshot) and inserts
+     *    their rows; only the keys the INSERT returns are claimed.
+     * The primary key of the preprocessed data table guarantees that no entry is handed out twice; the row lock only
+     * keeps concurrent pollers apart without waiting. Later rounds continue after the last candidate of the previous
+     * round: candidates that were skipped are held by in-flight claims.
+     *
+     * A scan from the start walks every processed entry before the first unprocessed one, and new entries sort last
+     * (SARS-CoV-2 at 1.9M entries: 3.3 s per claim, 83 % of the database's time). So a claim starts after the last
+     * entry claimed so far (the cursor), which finds the new entries in milliseconds, and scans from the start at most
+     * once per [claimFullScanInterval] per organism and pipeline version, for entries that appear before the cursor:
+     * revisions, claims reset as stale and claims that rolled back. Until a claim sets the cursor, claims between
+     * full scans return nothing, so an organism with nothing to process costs one full scan per interval.
+     * Revisions submitted to this replica are claimed first, without waiting for a full scan
+     * ([rememberRevisedEntries]).
+     */
+    private fun claimUnprocessedEntries(
+        organism: Organism,
+        limit: Int,
         pipelineVersion: Long,
-    ): List<UnprocessedData> {
-        log.info { "updating status to processing. Number of sequence entries: ${sequenceEntries.size}" }
-
-        if (sequenceEntries.isEmpty()) {
-            return emptyList()
+    ): List<AccessionVersion> {
+        val key = organism.name to pipelineVersion
+        val now = dateProvider.getCurrentInstant()
+        var fullScan = false
+        val cursor = claimCursors.compute(key) { _, current ->
+            if (current == null || now - current.lastFullScan >= claimFullScanInterval) {
+                fullScan = true
+                ClaimCursor(current?.after, now)
+            } else {
+                current
+            }
+        }!!
+        val claimed = claimRevisedEntries(organism, limit, pipelineVersion).toMutableList()
+        if (!fullScan && cursor.after == null) {
+            // Nothing claimed since the last full scan found nothing: wait for the next one instead of repeating it.
+            return claimed.sortedWith(accessionVersionOrder)
         }
+        var after: AccessionVersion? = if (fullScan) null else cursor.after
+        var round = 0
+        while (claimed.size < limit && round < MAX_CLAIM_ROUNDS) {
+            round++
+            val remaining = limit - claimed.size
+            val candidateLimit = claimCandidateLimit(remaining)
+            val candidates = findClaimCandidates(organism, pipelineVersion, candidateLimit, after)
+            if (candidates.isEmpty()) {
+                break
+            }
+            claimed += lockAndInsertClaims(candidates, remaining, pipelineVersion)
+            if (candidates.size < candidateLimit) {
+                break
+            }
+            after = candidates.last()
+        }
+        val sorted = claimed.sortedWith(accessionVersionOrder)
+        sorted.lastOrNull()?.let { last ->
+            claimCursors.computeIfPresent(key) { _, current ->
+                // Concurrent claims finish out of order; only a full scan moves the cursor back.
+                val after = if (fullScan) last else maxOf(current.after ?: last, last, accessionVersionOrder)
+                current.copy(after = after)
+            }
+        }
+        log.info {
+            "Claimed ${claimed.size} of up to $limit entries for processing in $round round(s)" +
+                if (fullScan) " from the start" else " after ${cursor.after}"
+        }
+        return sorted
+    }
 
-        // One statement per batch, so the per statement tracker trigger fires once per batch
-        // rather than once per claimed entry. RETURNING reports exactly the rows this claim
-        // inserted, so entries another pipeline already holds are simply absent.
+    private fun findClaimCandidates(
+        organism: Organism,
+        pipelineVersion: Long,
+        candidateLimit: Int,
+        after: AccessionVersion?,
+    ): List<AccessionVersion> {
+        // The limit is inlined so that a generic plan of the prepared statement still sees it.
         val sql = """
+            SELECT se.accession, se.version
+            FROM $SEQUENCE_ENTRIES_TABLE_NAME se
+            WHERE se.organism = ?
+              AND NOT se.is_revocation
+              ${if (after != null) "AND (se.accession, se.version) > (?, ?)" else ""}
+              AND NOT EXISTS (
+                  SELECT FROM $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME p
+                  WHERE p.accession = se.accession AND p.version = se.version AND p.pipeline_version = ?
+                  -- implied by the join, but lets a merge anti join start both sides at the cursor
+                  ${if (after != null) "AND (p.accession, p.version) > (?, ?)" else ""}
+              )
+            ORDER BY se.accession, se.version
+            LIMIT $candidateLimit
+        """.trimIndent()
+        val args = buildList {
+            add(TextColumnType() to organism.name)
+            if (after != null) {
+                add(TextColumnType() to after.accession)
+                add(LongColumnType() to after.version)
+            }
+            add(LongColumnType() to pipelineVersion)
+            if (after != null) {
+                add(TextColumnType() to after.accession)
+                add(LongColumnType() to after.version)
+            }
+        }
+        return TransactionManager.current().exec(sql, args, explicitStatementType = StatementType.SELECT) {
+            readAccessionVersions(it)
+        }.orEmpty()
+    }
+
+    private fun lockAndInsertClaims(
+        candidates: List<AccessionVersion>,
+        limit: Int,
+        pipelineVersion: Long,
+    ): List<AccessionVersion> {
+        // One statement per round, so the per statement tracker trigger fires once per round rather than once per
+        // claimed entry.
+        val sql = """
+            WITH locked AS (
+                SELECT se.accession, se.version
+                FROM $SEQUENCE_ENTRIES_TABLE_NAME se
+                JOIN unnest(?::text[], ?::bigint[]) AS candidate(accession, version)
+                  ON se.accession = candidate.accession AND se.version = candidate.version
+                WHERE NOT EXISTS (
+                    SELECT FROM $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME p
+                    WHERE p.accession = se.accession AND p.version = se.version AND p.pipeline_version = ?
+                )
+                ORDER BY se.accession, se.version
+                LIMIT $limit
+                FOR UPDATE OF se SKIP LOCKED
+            )
             INSERT INTO $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME (
                 accession,
                 version,
@@ -263,38 +457,30 @@ class SubmissionDatabaseService(
                 processing_status,
                 started_processing_at
             )
-            SELECT claimed.accession, claimed.version, ?::bigint, '${IN_PROCESSING.name}', ?::timestamp
-            FROM unnest(?::text[], ?::bigint[]) AS claimed(accession, version)
+            SELECT accession, version, ?::bigint, '${IN_PROCESSING.name}', ?::timestamp
+            FROM locked
             ON CONFLICT (accession, version, pipeline_version) DO NOTHING
             RETURNING accession, version
         """.trimIndent()
 
-        val claimedKeys = TransactionManager.current().exec(
+        return TransactionManager.current().exec(
             sql,
             args = listOf(
+                ArrayColumnType<String, List<String>>(TextColumnType()) to candidates.map { it.accession },
+                ArrayColumnType<Long, List<Long>>(LongColumnType()) to candidates.map { it.version },
+                LongColumnType() to pipelineVersion,
                 LongColumnType() to pipelineVersion,
                 KotlinLocalDateTimeColumnType() to dateProvider.getCurrentDateTime(),
-                ArrayColumnType<String, List<String>>(TextColumnType()) to sequenceEntries.map { it.accession },
-                ArrayColumnType<Long, List<Long>>(LongColumnType()) to sequenceEntries.map { it.version },
             ),
             // SELECT so that Exposed runs executeQuery and the RETURNING rows can be read.
             explicitStatementType = StatementType.SELECT,
-        ) { resultSet ->
-            buildSet {
-                while (resultSet.next()) {
-                    add(AccessionVersion(resultSet.getString("accession"), resultSet.getLong("version")))
-                }
-            }
-        }.orEmpty()
+        ) { readAccessionVersions(it) }.orEmpty()
+    }
 
-        if (claimedKeys.size < sequenceEntries.size) {
-            val skippedCount = sequenceEntries.size - claimedKeys.size
-            log.warn {
-                "$skippedCount entries were already claimed by another pipeline and will be skipped."
-            }
+    private fun readAccessionVersions(resultSet: ResultSet): List<AccessionVersion> = buildList {
+        while (resultSet.next()) {
+            add(AccessionVersion(resultSet.getString("accession"), resultSet.getLong("version")))
         }
-
-        return sequenceEntries.filter { AccessionVersion(it.accession, it.version) in claimedKeys }
     }
 
     fun updateProcessedData(inputStream: InputStream, organism: Organism, pipelineVersion: Long) {
@@ -775,12 +961,33 @@ class SubmissionDatabaseService(
 
         val statusCondition = SequenceEntriesView.statusIs(Status.PROCESSED)
 
+        // Every PROCESSED entry is unreleased. Without an accession filter, first read the organism's unreleased
+        // entries (sequence_entries_unreleased_idx) and look only those up in the view: filtering the view by status
+        // directly joins the organism's whole table with sequence_entries_preprocessed_data, and a released_at
+        // predicate alone is planned from statistics that are stale after every large ingest.
+        val unreleased = if (accessionVersionsFilter === null) {
+            SequenceEntriesTable
+                .select(SequenceEntriesTable.accessionColumn, SequenceEntriesTable.versionColumn)
+                .where {
+                    (SequenceEntriesTable.organismColumn eq organism.name) and
+                        SequenceEntriesTable.releasedAtTimestampColumn.isNull()
+                }
+                .map {
+                    AccessionVersion(it[SequenceEntriesTable.accessionColumn], it[SequenceEntriesTable.versionColumn])
+                }
+                .ifEmpty { return emptyList() }
+        } else {
+            null
+        }
+
         val accessionCondition = if (accessionVersionsFilter !== null) {
             SequenceEntriesView.accessionVersionIsIn(accessionVersionsFilter)
-        } else if (authenticatedUser.isSuperUser) {
-            Op.TRUE
         } else {
-            SequenceEntriesView.groupIsOneOf(groupManagementDatabaseService.getGroupIdsOfUser(authenticatedUser))
+            AccessionVersionInArrays(checkNotNull(unreleased)) and if (authenticatedUser.isSuperUser) {
+                Op.TRUE
+            } else {
+                SequenceEntriesView.groupIsOneOf(groupManagementDatabaseService.getGroupIdsOfUser(authenticatedUser))
+            }
         }
 
         val includedProcessingResults = mutableListOf(NO_ISSUES)
@@ -894,9 +1101,10 @@ class SubmissionDatabaseService(
 
     // Make sure to keep in sync with countReleasedSubmissions query
     fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> =
-        releasedSubmissionsQuery(organism, accessions = null)
+        releasedSubmissionsQuery(SequenceEntriesView, organism, accessions = null)
             .map { row ->
                 toRawProcessedData(
+                    SequenceEntriesView,
                     row,
                     when (val processedData = row[SequenceEntriesView.jointDataColumn]) {
                         null -> emptyProcessedDataProvider.provide(organism)
@@ -915,10 +1123,12 @@ class SubmissionDatabaseService(
     fun streamReleasedSubmissionsWithCompressedSequences(
         organism: Organism,
         accessions: Collection<Accession>? = null,
-    ): Sequence<Pair<RawProcessedData, ProcessedData<CompressedSequence>>> =
-        releasedSubmissionsQuery(organism, accessions)
+    ): Sequence<Pair<RawProcessedData, ProcessedData<CompressedSequence>>> {
+        // same rows; the lateral view does not aggregate all of external_metadata for an accession filter
+        val view = if (accessions == null) SequenceEntriesView else SequenceEntriesLateralView
+        return releasedSubmissionsQuery(view, organism, accessions)
             .map { row ->
-                val compressed = when (val processedData = row[SequenceEntriesView.jointDataColumn]) {
+                val compressed = when (val processedData = row[view.jointDataColumn]) {
                     null -> emptyProcessedDataProvider.provideCompressed(organism)
 
                     else -> processedDataPostprocessor.retrieveFromStoredValueWithoutDecompressing(
@@ -936,62 +1146,73 @@ class SubmissionDatabaseService(
                     sequenceNameToFastaId = compressed.sequenceNameToFastaId,
                     files = compressed.files,
                 )
-                toRawProcessedData(row, withoutSequences) to compressed
+                toRawProcessedData(view, row, withoutSequences) to compressed
             }
-
-    private fun accessionFilter(accessions: Collection<Accession>?): Op<Boolean> = when (accessions) {
-        null -> Op.TRUE
-        else -> SequenceEntriesView.accessionColumn inList accessions
     }
 
-    private fun releasedSubmissionsQuery(organism: Organism, accessions: Collection<Accession>?) =
-        SequenceEntriesView.join(
-            DataUseTermsTable,
-            JoinType.LEFT,
-            additionalConstraint = {
-                (SequenceEntriesView.accessionColumn eq DataUseTermsTable.accessionColumn) and
-                    (DataUseTermsTable.isNewestDataUseTerms)
-            },
-        )
-            .select(
-                SequenceEntriesView.accessionColumn,
-                SequenceEntriesView.versionColumn,
-                SequenceEntriesView.isRevocationColumn,
-                SequenceEntriesView.jointDataColumn,
-                SequenceEntriesView.submitterColumn,
-                SequenceEntriesView.groupIdColumn,
-                SequenceEntriesView.submittedAtTimestampColumn,
-                SequenceEntriesView.releasedAtTimestampColumn,
-                SequenceEntriesView.submissionIdColumn,
-                SequenceEntriesView.pipelineVersionColumn,
-                DataUseTermsTable.dataUseTermsTypeColumn,
-                DataUseTermsTable.restrictedUntilColumn,
-                DataUseTermsTable.changeDateColumn,
-            )
-            .where {
-                SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
-                    organism,
-                ) and accessionFilter(accessions)
-            }
-            .orderBy(
-                SequenceEntriesView.accessionColumn to SortOrder.ASC,
-                SequenceEntriesView.versionColumn to SortOrder.ASC,
-            )
-            .fetchSize(streamBatchSize)
-            .asSequence()
+    private fun accessionFilter(
+        accessions: Collection<Accession>?,
+        view: SequenceEntriesViewTable = SequenceEntriesView,
+    ): Op<Boolean> = when (accessions) {
+        null -> Op.TRUE
+        else -> view.accessionColumn inList accessions
+    }
 
-    private fun toRawProcessedData(row: ResultRow, processedData: ProcessedData<GeneticSequence>) = RawProcessedData(
-        accession = row[SequenceEntriesView.accessionColumn],
-        version = row[SequenceEntriesView.versionColumn],
-        isRevocation = row[SequenceEntriesView.isRevocationColumn],
-        submitter = row[SequenceEntriesView.submitterColumn],
-        groupId = row[SequenceEntriesView.groupIdColumn],
-        groupName = GroupEntity[row[SequenceEntriesView.groupIdColumn]].groupName,
-        submissionId = row[SequenceEntriesView.submissionIdColumn],
+    private fun releasedSubmissionsQuery(
+        view: SequenceEntriesViewTable,
+        organism: Organism,
+        accessions: Collection<Accession>?,
+    ) = view.join(
+        DataUseTermsTable,
+        JoinType.LEFT,
+        additionalConstraint = {
+            (view.accessionColumn eq DataUseTermsTable.accessionColumn) and
+                (DataUseTermsTable.isNewestDataUseTerms)
+        },
+    )
+        .select(
+            view.accessionColumn,
+            view.versionColumn,
+            view.isRevocationColumn,
+            view.jointDataColumn,
+            view.submitterColumn,
+            view.groupIdColumn,
+            view.submittedAtTimestampColumn,
+            view.releasedAtTimestampColumn,
+            view.submissionIdColumn,
+            view.pipelineVersionColumn,
+            DataUseTermsTable.dataUseTermsTypeColumn,
+            DataUseTermsTable.restrictedUntilColumn,
+            DataUseTermsTable.changeDateColumn,
+        )
+        .where {
+            view.statusIs(Status.APPROVED_FOR_RELEASE) and view.organismIs(
+                organism,
+            ) and accessionFilter(accessions, view)
+        }
+        .orderBy(
+            view.accessionColumn to SortOrder.ASC,
+            view.versionColumn to SortOrder.ASC,
+        )
+        .fetchSize(streamBatchSize)
+        .asSequence()
+
+    private fun toRawProcessedData(
+        view: SequenceEntriesViewTable,
+        row: ResultRow,
+        processedData: ProcessedData<GeneticSequence>,
+    ) = RawProcessedData(
+        accession = row[view.accessionColumn],
+        version = row[view.versionColumn],
+        isRevocation = row[view.isRevocationColumn],
+        submitter = row[view.submitterColumn],
+        groupId = row[view.groupIdColumn],
+        groupName = GroupEntity[row[view.groupIdColumn]].groupName,
+        submissionId = row[view.submissionIdColumn],
         processedData = processedData,
-        pipelineVersion = row[SequenceEntriesView.pipelineVersionColumn]!!,
-        submittedAtTimestamp = row[SequenceEntriesView.submittedAtTimestampColumn],
-        releasedAtTimestamp = row[SequenceEntriesView.releasedAtTimestampColumn]!!,
+        pipelineVersion = row[view.pipelineVersionColumn]!!,
+        submittedAtTimestamp = row[view.submittedAtTimestampColumn],
+        releasedAtTimestamp = row[view.releasedAtTimestampColumn]!!,
         dataUseTerms = DataUseTerms.fromParameters(
             DataUseTermsType.fromString(row[DataUseTermsTable.dataUseTermsTypeColumn]),
             row[DataUseTermsTable.restrictedUntilColumn],
@@ -1378,6 +1599,7 @@ class SubmissionDatabaseService(
         SequenceEntriesPreprocessedDataTable.deleteWhere {
             accessionVersionEquals(editedSequenceEntryData)
         }
+        forgetClaimCursorsAroundCommit(organism.name)
 
         auditLogger.log(
             authenticatedUser.username,
@@ -1496,6 +1718,7 @@ class SubmissionDatabaseService(
             // It's actually <Map<String, String>?> but exposed does not support nullable types here
             .extract<Map<String, String>>("metadata")
             .alias("submitted_metadata")
+        val status = SequenceEntriesView.statusWithoutJoin.alias("status")
 
         return SequenceEntriesView
             .select(
@@ -1504,6 +1727,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.submitterColumn,
                 SequenceEntriesView.isRevocationColumn,
+                status,
             )
             .where(
                 submittedMetadataFilter(
@@ -1528,6 +1752,7 @@ class SubmissionDatabaseService(
                     it[SequenceEntriesView.submitterColumn],
                     it[SequenceEntriesView.isRevocationColumn],
                     selectedMetadata,
+                    Status.fromString(it[status]),
                 )
             }
     }
@@ -1614,6 +1839,9 @@ class SubmissionDatabaseService(
         if (staleSequencesExist) {
             val numberDeleted = SequenceEntriesPreprocessedDataTable.deleteWhere {
                 statusIs(IN_PROCESSING) and startedProcessingAtColumn.less(staleDateTime)
+            }
+            if (numberDeleted > 0) {
+                forgetClaimCursorsAroundCommit(organism = null)
             }
             log.info { "Cleaned up $numberDeleted stale sequences in processing" }
         } else {
@@ -1757,6 +1985,16 @@ private fun JdbcTransaction.findNewPreprocessingPipelineVersion(organism: String
     // If any accession.version either was processed unsuccessfully with the new version, or just wasn't
     // processed yet -> we _don't_ return the new version yet.
 
+    // The current version is inlined as a literal: with a subquery (or a generic plan for a parameter) the planner
+    // cannot see that only a few rows have a newer version, and hash-joins a sequential scan of all of the
+    // organism's sequence entries (~1 s for 2M SARS-CoV-2 entries, every 10 s); with the literal it probes the
+    // pipeline_version index and the sequence_entries primary key (~70 ms).
+    val currentVersion = exec(
+        "select version from current_processing_pipeline where organism = ?",
+        listOf(Pair(VarCharColumnType(), organism)),
+        explicitStatementType = StatementType.SELECT,
+    ) { resultSet -> if (resultSet.next()) resultSet.getLong("version") else null } ?: return null
+
     val sql = """
         select
             newest.version as version
@@ -1772,8 +2010,7 @@ private fun JdbcTransaction.findNewPreprocessingPipelineVersion(organism: String
                             and se.version = sep.version
                         where 
                             se.organism = ?
-                            and sep.pipeline_version > (select version from current_processing_pipeline
-                                                        where organism = ?)
+                            and sep.pipeline_version > $currentVersion
                     ) as newer
                 where
                     not exists( -- ...for which no sequence exists...
@@ -1787,8 +2024,7 @@ private fun JdbcTransaction.findNewPreprocessingPipelineVersion(organism: String
                                     and se.version = sep.version
                                 where
                                     se.organism = ?
-                                    and sep.pipeline_version = (select version from current_processing_pipeline
-                                                                where organism = ?)
+                                    and sep.pipeline_version = $currentVersion
                                     and sep.processing_status = 'PROCESSED'
                                     and (sep.errors is null or jsonb_array_length(sep.errors) = 0)
                             ) as successful
@@ -1811,8 +2047,6 @@ private fun JdbcTransaction.findNewPreprocessingPipelineVersion(organism: String
     return exec(
         sql,
         listOf(
-            Pair(VarCharColumnType(), organism),
-            Pair(VarCharColumnType(), organism),
             Pair(VarCharColumnType(), organism),
             Pair(VarCharColumnType(), organism),
         ),
@@ -1845,3 +2079,24 @@ data class RawProcessedData(
     val dataUseTerms: DataUseTerms,
     val dataUseTermsChangeDate: LocalDateTime?,
 ) : AccessionVersionInterface
+
+/**
+ * `(accession, version) IN (SELECT * FROM unnest(?, ?))` on [SequenceEntriesView], with the pairs bound as two arrays:
+ * planned as a nested loop of primary-key lookups whatever the table statistics say, and cheap to plan for thousands
+ * of pairs (an IN list of row literals took 0.4 s to plan for 1,200 pairs).
+ */
+private class AccessionVersionInArrays(private val accessionVersions: List<AccessionVersion>) : Op<Boolean>() {
+    override fun toQueryBuilder(queryBuilder: QueryBuilder) = queryBuilder {
+        append("(", SequenceEntriesView.accessionColumn, ", ", SequenceEntriesView.versionColumn, ")")
+        append(" IN (SELECT * FROM unnest(")
+        registerArgument(
+            ArrayColumnType<String, List<String>>(TextColumnType()),
+            accessionVersions.map {
+                it.accession
+            },
+        )
+        append("::text[], ")
+        registerArgument(ArrayColumnType<Long, List<Long>>(LongColumnType()), accessionVersions.map { it.version })
+        append("::bigint[]))")
+    }
+}

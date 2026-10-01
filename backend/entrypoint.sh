@@ -3,12 +3,14 @@ JVM_OPTS=${JVM_OPTS:-}
 # Take script arguments
 ARGS="${*}"
 
-NATIVE_ACCESS_FLAG="--enable-native-access=ALL-UNNAMED"
+# EnableDynamicAgentLoading: async-profiler attaches to the running JVM; JEP 451 will otherwise disallow that by default
+DEFAULT_JVM_FLAGS="--enable-native-access=ALL-UNNAMED -XX:+EnableDynamicAgentLoading"
 if [ -n "$JVM_OPTS" ]; then
-    CMD="java $NATIVE_ACCESS_FLAG $JVM_OPTS -jar app.jar --spring.profiles.active=docker $ARGS"
+    CMD="java $DEFAULT_JVM_FLAGS $JVM_OPTS -jar app.jar --spring.profiles.active=docker $ARGS"
 else
-    CMD="java $NATIVE_ACCESS_FLAG -jar app.jar --spring.profiles.active=docker $ARGS"
+    CMD="java $DEFAULT_JVM_FLAGS -jar app.jar --spring.profiles.active=docker $ARGS"
 fi
 echo Running:
 echo "$CMD"
-$CMD
+# exec: java runs as PID 1, receives SIGTERM directly and is what `asprof ... 1` targets
+exec $CMD

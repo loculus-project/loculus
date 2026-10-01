@@ -7,6 +7,7 @@ import logging
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
+from http import HTTPStatus
 from http.client import BAD_REQUEST
 from pathlib import Path
 
@@ -29,6 +30,8 @@ from .paths import ImporterPaths
 from .transformer import TransformationError, transform_data_format
 
 logger = logging.getLogger(__name__)
+
+DOWNLOAD_PROGRESS_LOG_INTERVAL_SECONDS = 30
 
 
 class RecordCountValidationError(Exception):
@@ -112,10 +115,19 @@ def _download_file(
         response = session.get(url, timeout=timeout, stream=True)
 
         # Write response body to file (raw, no automatic decompression)
+        start = last_log = time.monotonic()
+        received = 0
         with output_path.open("wb") as f:
             for chunk in response.raw.stream(8192, decode_content=False):
                 if chunk:
                     f.write(chunk)
+                    received += len(chunk)
+                    now = time.monotonic()
+                    if now - last_log >= DOWNLOAD_PROGRESS_LOG_INTERVAL_SECONDS:
+                        last_log = now
+                        _log_download_progress("Downloading", received, now - start)
+        if response.status_code == HTTPStatus.OK:
+            _log_download_progress("Downloaded", received, time.monotonic() - start)
 
         # Normalize headers to lowercase keys
         normalized_headers = {k.lower(): v for k, v in response.headers.items()}
@@ -125,6 +137,13 @@ def _download_file(
     except requests.RequestException as exc:
         msg = f"Failed to download from {url}: {exc}"
         raise RuntimeError(msg) from exc
+
+
+def _log_download_progress(prefix: str, received: int, elapsed: float) -> None:
+    rate = received / max(elapsed, 1e-3) / 1e6
+    logger.info(
+        "%s: %.1f MB compressed in %.0f s (%.2f MB/s)", prefix, received / 1e6, elapsed, rate
+    )
 
 
 # Type for download function (allows test mocking)

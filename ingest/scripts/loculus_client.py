@@ -2,18 +2,28 @@ import dataclasses
 import json
 import logging
 import os
-from collections import defaultdict
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
-from http import HTTPMethod
+from http import HTTPMethod, HTTPStatus
 from io import BytesIO
 from time import sleep
 from typing import Any, Literal
 
 import jsonlines
-import orjsonl
+import orjson
 import requests
 
 logger = logging.getLogger(__name__)
+
+KEYCLOAK_RETRY_INITIAL_DELAY_SECONDS = 5.0
+KEYCLOAK_RETRY_MAX_DELAY_SECONDS = 30.0
+KEYCLOAK_RETRY_MAX_WAIT_SECONDS = 300.0
+
+# A backend rollout breaks streams to the pod that shuts down (502s, cut connections) for ~30 s, and
+# a failed fetch fails the whole ingest run: 8 attempts over ~8.5 min ride that out.
+SUBMITTED_RETRY_INITIAL_DELAY_SECONDS = 10.0
+SUBMITTED_RETRY_MAX_DELAY_SECONDS = 120.0
+SUBMITTED_RETRY_MAX_ATTEMPTS = 8
 
 
 @dataclass(kw_only=True)
@@ -67,12 +77,34 @@ def get_jwt(config: ApproveConfig) -> str:
 
     keycloak_token_url = config.keycloak_token_url
 
-    response = requests.post(
-        keycloak_token_url,
-        data=data,
-        headers=headers,
-        timeout=config.backend_request_timeout_seconds,
-    )
+    # Keycloak restarts with deployments (~1-2 min unreachable). A failed token request fails the
+    # whole ingest run, and its job retries then stop at the version check, so ride out a restart
+    # instead. Client errors (e.g. wrong credentials) still fail at once.
+    waited = 0.0
+    delay = KEYCLOAK_RETRY_INITIAL_DELAY_SECONDS
+    while True:
+        try:
+            response = requests.post(
+                keycloak_token_url,
+                data=data,
+                headers=headers,
+                timeout=config.backend_request_timeout_seconds,
+            )
+            if response.status_code < HTTPStatus.INTERNAL_SERVER_ERROR:
+                break
+            problem = f"status {response.status_code}"
+        except (requests.ConnectionError, requests.Timeout) as e:
+            problem = type(e).__name__
+        if waited >= KEYCLOAK_RETRY_MAX_WAIT_SECONDS:
+            logger.error(f"Keycloak token request still failing ({problem}) after {waited:.0f} s")
+            if problem.startswith("status"):
+                break
+            msg = f"Keycloak unreachable at {keycloak_token_url} ({problem})"
+            raise requests.ConnectionError(msg)
+        logger.warning(f"Keycloak token request failed ({problem}); retrying in {delay:.0f} s")
+        sleep(delay)
+        waited += delay
+        delay = min(delay * 2, KEYCLOAK_RETRY_MAX_DELAY_SECONDS)
     response.raise_for_status()
 
     jwt_keycloak = response.json()
@@ -86,16 +118,20 @@ def make_request(  # noqa: PLR0913, PLR0917
     params: dict[str, Any] | None = None,
     files: dict[str, Any] | None = None,
     json_body: dict[str, Any] | None = None,
+    stream: bool = False,
 ) -> requests.Response:
     """
     Generic request function to handle repetitive tasks like fetching JWT and setting headers.
+    With stream, a GET's body is read as it is consumed instead of into memory first.
     """
     jwt = get_jwt(config)
     headers = {"Authorization": f"Bearer {jwt}", "Content-Type": "application/json"}
     timeout = config.backend_request_timeout_seconds
     match method:
         case HTTPMethod.GET:
-            response = requests.get(url, headers=headers, params=params, timeout=timeout)
+            response = requests.get(
+                url, headers=headers, params=params, timeout=timeout, stream=stream
+            )
         case HTTPMethod.POST:
             if files:
                 headers.pop("Content-Type")  # Remove content-type for multipart/form-data
@@ -112,8 +148,9 @@ def make_request(  # noqa: PLR0913, PLR0917
 
     if response.status_code == 423:
         logger.warning(f"Got 423 from {url}. Retrying after 30 seconds.")
+        response.close()
         sleep(30)
-        return make_request(method, url, config, params, files, json_body)
+        return make_request(method, url, config, params, files, json_body, stream)
 
     if not response.ok:
         error_message = (
@@ -425,43 +462,20 @@ def approve(config: ApproveConfig):
     return response.json()
 
 
-def get_sequence_status(config: Config):
-    """Get status of each sequence"""
-    url = f"{organism_url(config)}/get-sequences"
-
-    params = {
-        "organism": config.organism,
-    }
-
-    response = make_request(HTTPMethod.GET, url, config, params=params)
-
-    # Turn into dict with {accession: {version: status}}
-    result = defaultdict(dict)
-    entries = []
-    try:
-        entries = response.json()["sequenceEntries"]
-    except requests.JSONDecodeError:
-        logger.warning(f"Error decoding JSON of /get-sequences: {response.text}")
-    for entry in entries:
-        accession = entry["accession"]
-        version = entry["version"]
-        status = entry["status"]
-        result[accession][version] = status
-
-    return result
+class MissingStatusError(ValueError):
+    """A /get-submitted-metadata entry without status: the backend pod is older than this ingest"""
 
 
-def get_submitted(
+def get_submitted_metadata(
     config: Config,
-    output: str | None,
+    handle_entries: Callable[[Iterator[dict[str, Any]]], int],
     fields: list[str] | None = None,
     accessionVersionsFilter: list[str] | None = None,  # noqa: N803
-):
-    """Get previously submitted sequences as ndjson
-    This way we can avoid submitting the same sequences again
-    Adds status to the output (as this is not returned by get-submitted-metadata)
-    """
-
+) -> None:
+    """Stream /get-submitted-metadata through handle_entries, which returns how many entries it
+    took; the whole stream is fetched again, with backoff, until that is the number of records the
+    backend announced. A connection error, a 5xx, or a stream that is cut (mid-line, or short) is
+    retried; handle_entries must start over each time it is called."""
     url = f"{organism_url(config)}/get-submitted-metadata"
 
     params = {
@@ -473,45 +487,103 @@ def get_submitted(
     if accessionVersionsFilter:
         params["accessionVersionsFilter"] = accessionVersionsFilter
 
-    while True:
+    delay = SUBMITTED_RETRY_INITIAL_DELAY_SECONDS
+    for attempt in range(1, SUBMITTED_RETRY_MAX_ATTEMPTS + 1):
         logger.info("Getting previously submitted sequences")
-
-        response = make_request(HTTPMethod.GET, url, config, params=params)
-        expected_record_count = int(response.headers["x-total-records"])
-
-        entries: list[dict[str, Any]] = []
-        try:
-            entries = list(jsonlines.Reader(response.iter_lines()).iter())
-        except jsonlines.Error as err:
-            response_summary = response.text
-            max_error_length = 100
-            if len(response_summary) > max_error_length:
-                response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
-            logger.error(f"Error decoding JSON from /get-submitted-metadata: {response_summary}")
-            raise ValueError from err
-
-        if len(entries) == expected_record_count:
-            logger.info(f"Got {len(entries)} records as expected")
-            break
-        logger.error(
-            f"Got incomplete unprocessed metadata stream: expected {len(entries)}"
-            f"records but got {expected_record_count}. Retrying after 60 seconds."
+        problem = fetch_submitted_metadata_once(config, url, params, handle_entries)
+        if problem is None:
+            return
+        if attempt == SUBMITTED_RETRY_MAX_ATTEMPTS:
+            msg = f"/get-submitted-metadata failed {attempt} times, last: {problem}"
+            logger.error(msg)
+            raise requests.ConnectionError(msg)
+        logger.warning(
+            f"/get-submitted-metadata failed ({problem}); retrying in {delay:.0f} s "
+            f"(attempt {attempt} of {SUBMITTED_RETRY_MAX_ATTEMPTS})"
         )
-        sleep(60)
+        sleep(delay)
+        delay = min(delay * 2, SUBMITTED_RETRY_MAX_DELAY_SECONDS)
 
+
+def fetch_submitted_metadata_once(
+    config: Config,
+    url: str,
+    params: dict[str, Any],
+    handle_entries: Callable[[Iterator[dict[str, Any]]], int],
+) -> str | None:
+    """One fetch for get_submitted_metadata: None if complete, else what went wrong if it is worth
+    retrying. Other errors (e.g. a 4xx) are raised."""
+    try:
+        with make_request(HTTPMethod.GET, url, config, params=params, stream=True) as response:
+            expected_record_count = int(response.headers["x-total-records"])
+            lines = response.iter_lines(chunk_size=1 << 20)
+            record_count = handle_entries(jsonlines.Reader(lines).iter())
+    except requests.HTTPError as err:
+        if err.response is None or err.response.status_code < HTTPStatus.INTERNAL_SERVER_ERROR:
+            raise
+        return f"status {err.response.status_code}"
+    except (
+        requests.ConnectionError,
+        requests.Timeout,
+        requests.exceptions.ChunkedEncodingError,
+        requests.exceptions.ContentDecodingError,
+    ) as err:
+        return f"{type(err).__name__}: {err}"
+    except jsonlines.Error as err:
+        line = str(getattr(err, "line", ""))
+        max_error_length = 100
+        if len(line) > max_error_length:
+            line = line[:50] + "\n[..]\n" + line[-50:]
+        return f"invalid JSON line (a cut stream?): {line}"
+    except MissingStatusError as err:
+        return str(err)  # an old pod still serving during a rollout
+    if record_count != expected_record_count:
+        return f"got {record_count} records but expected {expected_record_count}"
+    logger.info(f"Got {record_count} records as expected")
+    return None
+
+
+def get_submitted(
+    config: Config,
+    output: str | None,
+    fields: list[str] | None = None,
+    accessionVersionsFilter: list[str] | None = None,  # noqa: N803
+):
+    """Get previously submitted sequences, each with its status, as ndjson
+    This way we can avoid submitting the same sequences again
+
+    Without output, returns the entries. With output, the entries are streamed to disk (for
+    SARS-CoV-2, millions of entries that took ~2 kB of memory each as dicts), then moved into place.
+    The status comes with each entry, from the same snapshot as its metadata.
+    """
     if not output:
+        entries: list[dict[str, Any]] = []
+
+        def collect(new_entries: Iterator[dict[str, Any]]) -> int:
+            entries[:] = new_entries
+            return len(entries)
+
+        get_submitted_metadata(config, collect, fields, accessionVersionsFilter)
         return entries
 
-    statuses: dict[str, dict[int, str]] = get_sequence_status(config)
-    logger.info(f"Got info on {len(statuses.keys())} previously submitted sequences/accessions")
+    partial = f"{output}.partial"
 
-    for entry in entries:
-        status = statuses.get(entry["accession"], {}).get(entry["version"], "UNKNOWN")
-        entry_with_status = entry.copy()
-        entry_with_status["status"] = status
-        orjsonl.append(output, entry_with_status)
+    def write(new_entries: Iterator[dict[str, Any]]) -> int:
+        count = 0
+        with open(partial, "wb") as f:
+            for entry in new_entries:
+                if "status" not in entry:
+                    msg = "an entry without status: the backend is older than this ingest"
+                    raise MissingStatusError(msg)
+                entry["status"] = entry.pop("status")  # last, as downstream files always had it
+                f.write(orjson.dumps(entry) + b"\n")
+                count += 1
+        return count
 
-    if len(entries) == 0:
-        with open(output, "w", encoding="utf-8"):
-            pass
+    try:
+        get_submitted_metadata(config, write, fields, accessionVersionsFilter)
+        os.replace(partial, output)
+    finally:
+        if os.path.exists(partial):
+            os.remove(partial)
     return None

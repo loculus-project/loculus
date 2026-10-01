@@ -395,3 +395,82 @@ describe('LinkOutMenu grouping with category field', () => {
         expect(screen.getByText('S')).toBeInTheDocument();
     });
 });
+
+describe('LinkOutMenu warning about too many sequences', () => {
+    const limitedLinkOut: LinkOut = {
+        name: 'Limited',
+        url: 'http://example.com/tool?data=[unalignedNucleotideSequences]',
+        maxNumberOfRecommendedEntries: 5,
+    };
+    const warning =
+        'Warning: This tool is recommended for at most 5 sequences. You are attempting to use 10. Continue?';
+
+    const renderMenu = (dataUseTermsEnabled: boolean, sequenceCount: number) =>
+        render(
+            <LinkOutMenu
+                downloadUrlGenerator={realDownloadUrlGenerator}
+                sequenceFilter={mockSequenceFilter}
+                sequenceCount={sequenceCount}
+                linkOuts={[limitedLinkOut]}
+                dataUseTermsEnabled={dataUseTermsEnabled}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
+            />,
+        );
+
+    const clickTool = () => {
+        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
+        fireEvent.click(screen.getByText('Limited'));
+    };
+
+    test('shows the warning in the dialog, then the data use terms choice', () => {
+        const confirmSpy = vi.fn();
+        vi.stubGlobal('confirm', confirmSpy);
+        renderMenu(true, 10);
+
+        clickTool();
+        expect(screen.getByText('Options for launching Limited')).toBeInTheDocument();
+        expect(screen.getByText(warning)).toBeInTheDocument();
+        expect(screen.queryByText('Data use terms')).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+        expect(screen.queryByText(warning)).not.toBeInTheDocument();
+        expect(screen.getByText('Data use terms')).toBeInTheDocument();
+        expect(windowOpenMock).not.toHaveBeenCalled();
+
+        fireEvent.click(screen.getByText('Include Restricted-Use'));
+        expect(windowOpenMock).toHaveBeenCalledTimes(1);
+        expect(screen.queryByText('Options for launching Limited')).not.toBeInTheDocument();
+        expect(confirmSpy).not.toHaveBeenCalled();
+        vi.unstubAllGlobals();
+    });
+
+    test('does not open the tool when the warning is cancelled', () => {
+        renderMenu(true, 10);
+
+        clickTool();
+        fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+        expect(screen.queryByText('Options for launching Limited')).not.toBeInTheDocument();
+        expect(windowOpenMock).not.toHaveBeenCalled();
+    });
+
+    test('opens the tool directly after the warning when data use terms are disabled', () => {
+        renderMenu(false, 10);
+
+        clickTool();
+        expect(screen.getByText(warning)).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+        expect(windowOpenMock).toHaveBeenCalledTimes(1);
+        expect(screen.queryByText('Options for launching Limited')).not.toBeInTheDocument();
+    });
+
+    test('skips the warning when the count is within the recommended maximum', () => {
+        renderMenu(true, 5);
+
+        clickTool();
+
+        expect(screen.queryByText(/This tool is recommended for at most/)).not.toBeInTheDocument();
+        expect(screen.getByText('Data use terms')).toBeInTheDocument();
+    });
+});

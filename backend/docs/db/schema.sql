@@ -51,6 +51,107 @@ CREATE FUNCTION public.jsonb_concat(a jsonb, b jsonb) RETURNS jsonb
 ALTER FUNCTION public.jsonb_concat(a jsonb, b jsonb) OWNER TO postgres;
 
 --
+-- Name: query_mark_dirty_by_accession(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.query_mark_dirty_by_accession() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+begin
+    insert into query_dirty_accessions (organism, accession)
+    select distinct se.organism, se.accession
+    from (select distinct accession from changed_rows) cr
+    join sequence_entries se on se.accession = cr.accession
+    where se.released_at is not null
+    on conflict do nothing;
+    return null;
+end;
+$$;
+
+
+ALTER FUNCTION public.query_mark_dirty_by_accession() OWNER TO postgres;
+
+--
+-- Name: query_mark_dirty_from_group_rename(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.query_mark_dirty_from_group_rename() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+begin
+    insert into query_dirty_accessions (organism, accession)
+    select distinct se.organism, se.accession
+    from sequence_entries se
+    where se.group_id = new.group_id and se.released_at is not null
+    on conflict do nothing;
+    return null;
+end;
+$$;
+
+
+ALTER FUNCTION public.query_mark_dirty_from_group_rename() OWNER TO postgres;
+
+--
+-- Name: query_mark_dirty_from_preprocessed_data(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.query_mark_dirty_from_preprocessed_data() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+begin
+    insert into query_dirty_accessions (organism, accession)
+    select distinct se.organism, se.accession
+    from (select distinct accession, version, pipeline_version from changed_rows) cr
+    join sequence_entries se on se.accession = cr.accession and se.version = cr.version
+    join current_processing_pipeline cpp on cpp.organism = se.organism and cpp.version = cr.pipeline_version
+    where se.released_at is not null
+    on conflict do nothing;
+    return null;
+end;
+$$;
+
+
+ALTER FUNCTION public.query_mark_dirty_from_preprocessed_data() OWNER TO postgres;
+
+--
+-- Name: query_mark_dirty_from_sequence_entries(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.query_mark_dirty_from_sequence_entries() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+begin
+    insert into query_dirty_accessions (organism, accession)
+    select distinct cr.organism, cr.accession
+    from changed_rows cr
+    where cr.released_at is not null
+    on conflict do nothing;
+    return null;
+end;
+$$;
+
+
+ALTER FUNCTION public.query_mark_dirty_from_sequence_entries() OWNER TO postgres;
+
+--
+-- Name: query_mark_rebuild_from_pipeline(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.query_mark_rebuild_from_pipeline() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+begin
+    update query_engine_state s set needs_full_rebuild = true
+    from changed_rows cr
+    where s.organism = cr.organism;
+    return null;
+end;
+$$;
+
+
+ALTER FUNCTION public.query_mark_rebuild_from_pipeline() OWNER TO postgres;
+
+--
 -- Name: update_current_processing_pipeline_tracker(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -438,6 +539,119 @@ CREATE TABLE public.metadata_upload_aux_table (
 ALTER TABLE public.metadata_upload_aux_table OWNER TO postgres;
 
 --
+-- Name: query_changelog; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.query_changelog (
+    seq bigint NOT NULL,
+    organism text NOT NULL,
+    id integer NOT NULL,
+    created_at timestamp without time zone DEFAULT timezone('UTC'::text, now()) NOT NULL
+);
+
+
+ALTER TABLE public.query_changelog OWNER TO postgres;
+
+--
+-- Name: query_changelog_seq_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.query_changelog_seq_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.query_changelog_seq_seq OWNER TO postgres;
+
+--
+-- Name: query_changelog_seq_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.query_changelog_seq_seq OWNED BY public.query_changelog.seq;
+
+
+--
+-- Name: query_dirty_accessions; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.query_dirty_accessions (
+    organism text NOT NULL,
+    accession text NOT NULL
+);
+
+
+ALTER TABLE public.query_dirty_accessions OWNER TO postgres;
+
+--
+-- Name: query_engine_state; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.query_engine_state (
+    organism text NOT NULL,
+    encoding_hash text NOT NULL,
+    data_version bigint DEFAULT 0 NOT NULL,
+    next_id integer DEFAULT 0 NOT NULL,
+    needs_full_rebuild boolean DEFAULT true NOT NULL,
+    updated_at timestamp without time zone DEFAULT timezone('UTC'::text, now()) NOT NULL
+);
+
+
+ALTER TABLE public.query_engine_state OWNER TO postgres;
+
+--
+-- Name: query_entries; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.query_entries (
+    organism text NOT NULL,
+    id integer NOT NULL,
+    accession text NOT NULL,
+    version bigint NOT NULL,
+    accession_version text NOT NULL,
+    metadata jsonb NOT NULL,
+    source_hash bigint
+);
+
+
+ALTER TABLE public.query_entries OWNER TO postgres;
+
+--
+-- Name: query_mutation_data; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.query_mutation_data (
+    organism text NOT NULL,
+    id integer NOT NULL,
+    present_sequences integer[] NOT NULL,
+    mutations integer[] NOT NULL,
+    missing integer[] NOT NULL,
+    insertions text[] NOT NULL
+);
+
+
+ALTER TABLE public.query_mutation_data OWNER TO postgres;
+
+--
+-- Name: query_sequences; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.query_sequences (
+    organism text NOT NULL,
+    kind smallint NOT NULL,
+    sequence_index smallint NOT NULL,
+    id integer NOT NULL,
+    compression_dict_id integer,
+    data bytea NOT NULL
+);
+ALTER TABLE ONLY public.query_sequences ALTER COLUMN data SET STORAGE EXTERNAL;
+
+
+ALTER TABLE public.query_sequences OWNER TO postgres;
+
+--
 -- Name: seqset_citation_source; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -631,6 +845,60 @@ CREATE TABLE public.sequence_entries_preprocessed_data (
 ALTER TABLE public.sequence_entries_preprocessed_data OWNER TO postgres;
 
 --
+-- Name: sequence_entries_lateral_view; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.sequence_entries_lateral_view AS
+ SELECT se.accession,
+    se.version,
+    se.organism,
+    se.submission_id,
+    se.submitter,
+    se.approver,
+    se.group_id,
+    se.submitted_at,
+    se.released_at,
+    se.is_revocation,
+    se.submitted_data,
+    sepd.started_processing_at,
+    sepd.finished_processing_at,
+    sepd.processed_data,
+        CASE
+            WHEN se.is_revocation THEN jsonb_build_object('metadata', COALESCE((se.submitted_data -> 'metadata'::text), '{}'::jsonb), 'unalignedNucleotideSequences', '{}'::jsonb, 'alignedNucleotideSequences', '{}'::jsonb, 'nucleotideInsertions', '{}'::jsonb, 'alignedAminoAcidSequences', '{}'::jsonb, 'aminoAcidInsertions', '{}'::jsonb, 'files', 'null'::jsonb)
+            WHEN (aem.external_metadata IS NULL) THEN sepd.processed_data
+            ELSE (sepd.processed_data || jsonb_build_object('metadata', ((sepd.processed_data -> 'metadata'::text) || aem.external_metadata)))
+        END AS joint_metadata,
+        CASE
+            WHEN se.is_revocation THEN cpp.version
+            ELSE sepd.pipeline_version
+        END AS pipeline_version,
+    sepd.errors,
+    sepd.warnings,
+        CASE
+            WHEN (se.released_at IS NOT NULL) THEN 'APPROVED_FOR_RELEASE'::text
+            WHEN se.is_revocation THEN 'PROCESSED'::text
+            WHEN (sepd.processing_status = 'IN_PROCESSING'::text) THEN 'IN_PROCESSING'::text
+            WHEN (sepd.processing_status = 'PROCESSED'::text) THEN 'PROCESSED'::text
+            ELSE 'RECEIVED'::text
+        END AS status,
+        CASE
+            WHEN (sepd.processing_status = 'IN_PROCESSING'::text) THEN NULL::text
+            WHEN ((sepd.errors IS NOT NULL) AND (jsonb_array_length(sepd.errors) > 0)) THEN 'HAS_ERRORS'::text
+            WHEN ((sepd.warnings IS NOT NULL) AND (jsonb_array_length(sepd.warnings) > 0)) THEN 'HAS_WARNINGS'::text
+            ELSE 'NO_ISSUES'::text
+        END AS processing_result
+   FROM (((public.sequence_entries se
+     LEFT JOIN public.current_processing_pipeline cpp ON ((se.organism = cpp.organism)))
+     LEFT JOIN public.sequence_entries_preprocessed_data sepd ON (((se.accession = sepd.accession) AND (se.version = sepd.version) AND (sepd.pipeline_version = cpp.version))))
+     LEFT JOIN LATERAL ( SELECT public.jsonb_merge_agg(em.external_metadata) AS external_metadata
+           FROM public.external_metadata em
+          WHERE ((em.accession = se.accession) AND (em.version = se.version))
+          GROUP BY em.accession, em.version) aem ON (true));
+
+
+ALTER VIEW public.sequence_entries_lateral_view OWNER TO postgres;
+
+--
 -- Name: sequence_entries_view; Type: VIEW; Schema: public; Owner: postgres
 --
 
@@ -775,6 +1043,13 @@ ALTER TABLE ONLY public.groups_table ALTER COLUMN group_id SET DEFAULT nextval('
 
 
 --
+-- Name: query_changelog seq; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.query_changelog ALTER COLUMN seq SET DEFAULT nextval('public.query_changelog_seq_seq'::regclass);
+
+
+--
 -- Name: seqset_citation_source citation_source_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -880,6 +1155,54 @@ ALTER TABLE ONLY public.metadata_upload_aux_table
 
 ALTER TABLE ONLY public.metadata_upload_aux_table
     ADD CONSTRAINT metadata_upload_aux_table_upload_id_accession_key UNIQUE (upload_id, accession);
+
+
+--
+-- Name: query_changelog query_changelog_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.query_changelog
+    ADD CONSTRAINT query_changelog_pkey PRIMARY KEY (organism, seq);
+
+
+--
+-- Name: query_dirty_accessions query_dirty_accessions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.query_dirty_accessions
+    ADD CONSTRAINT query_dirty_accessions_pkey PRIMARY KEY (organism, accession);
+
+
+--
+-- Name: query_engine_state query_engine_state_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.query_engine_state
+    ADD CONSTRAINT query_engine_state_pkey PRIMARY KEY (organism);
+
+
+--
+-- Name: query_entries query_entries_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.query_entries
+    ADD CONSTRAINT query_entries_pkey PRIMARY KEY (organism, id);
+
+
+--
+-- Name: query_mutation_data query_mutation_data_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.query_mutation_data
+    ADD CONSTRAINT query_mutation_data_pkey PRIMARY KEY (organism, id);
+
+
+--
+-- Name: query_sequences query_sequences_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.query_sequences
+    ADD CONSTRAINT query_sequences_pkey PRIMARY KEY (organism, kind, sequence_index, id);
 
 
 --
@@ -1008,6 +1331,20 @@ CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING b
 
 
 --
+-- Name: query_entries_accession_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX query_entries_accession_idx ON public.query_entries USING btree (organism, accession);
+
+
+--
+-- Name: query_entries_accession_version_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX query_entries_accession_version_idx ON public.query_entries USING btree (organism, accession_version);
+
+
+--
 -- Name: sequence_entries_organism_covering_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1047,6 +1384,97 @@ CREATE INDEX sequence_entries_submitter_idx ON public.sequence_entries USING btr
 --
 
 CREATE INDEX user_groups_table_user_name_idx ON public.user_groups_table USING btree (user_name);
+
+
+--
+-- Name: external_metadata query_dirty_trigger_del; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER query_dirty_trigger_del AFTER DELETE ON public.external_metadata REFERENCING OLD TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.query_mark_dirty_by_accession();
+
+
+--
+-- Name: sequence_entries query_dirty_trigger_del; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER query_dirty_trigger_del AFTER DELETE ON public.sequence_entries REFERENCING OLD TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.query_mark_dirty_from_sequence_entries();
+
+
+--
+-- Name: data_use_terms_table query_dirty_trigger_ins; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER query_dirty_trigger_ins AFTER INSERT ON public.data_use_terms_table REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.query_mark_dirty_by_accession();
+
+
+--
+-- Name: external_metadata query_dirty_trigger_ins; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER query_dirty_trigger_ins AFTER INSERT ON public.external_metadata REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.query_mark_dirty_by_accession();
+
+
+--
+-- Name: sequence_entries query_dirty_trigger_ins; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER query_dirty_trigger_ins AFTER INSERT ON public.sequence_entries REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.query_mark_dirty_from_sequence_entries();
+
+
+--
+-- Name: sequence_entries_preprocessed_data query_dirty_trigger_ins; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER query_dirty_trigger_ins AFTER INSERT ON public.sequence_entries_preprocessed_data REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.query_mark_dirty_from_preprocessed_data();
+
+
+--
+-- Name: data_use_terms_table query_dirty_trigger_upd; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER query_dirty_trigger_upd AFTER UPDATE ON public.data_use_terms_table REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.query_mark_dirty_by_accession();
+
+
+--
+-- Name: external_metadata query_dirty_trigger_upd; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER query_dirty_trigger_upd AFTER UPDATE ON public.external_metadata REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.query_mark_dirty_by_accession();
+
+
+--
+-- Name: groups_table query_dirty_trigger_upd; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER query_dirty_trigger_upd AFTER UPDATE ON public.groups_table FOR EACH ROW WHEN (((old.group_name)::text IS DISTINCT FROM (new.group_name)::text)) EXECUTE FUNCTION public.query_mark_dirty_from_group_rename();
+
+
+--
+-- Name: sequence_entries query_dirty_trigger_upd; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER query_dirty_trigger_upd AFTER UPDATE ON public.sequence_entries REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.query_mark_dirty_from_sequence_entries();
+
+
+--
+-- Name: sequence_entries_preprocessed_data query_dirty_trigger_upd; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER query_dirty_trigger_upd AFTER UPDATE ON public.sequence_entries_preprocessed_data REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.query_mark_dirty_from_preprocessed_data();
+
+
+--
+-- Name: current_processing_pipeline query_rebuild_trigger_ins; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER query_rebuild_trigger_ins AFTER INSERT ON public.current_processing_pipeline REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.query_mark_rebuild_from_pipeline();
+
+
+--
+-- Name: current_processing_pipeline query_rebuild_trigger_upd; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER query_rebuild_trigger_upd AFTER UPDATE ON public.current_processing_pipeline REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.query_mark_rebuild_from_pipeline();
 
 
 --

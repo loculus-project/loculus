@@ -46,18 +46,36 @@ class ProjectionWriter(private val schema: QuerySchema) {
             copyRows(connection, existingEntries, direct = false)
             changed += upsert(connection)
             // entries with unchanged sequence data keep their query_mutation_data / query_sequences rows untouched
-            val sequenceDataChanged = existingEntries.filter { !it.entry.sequenceDataUnchanged }.map { it.id }
-            if (sequenceDataChanged.isNotEmpty()) {
-                changed += deleteSequences(connection, sequenceDataChanged, onlyStale = true)
-            }
+            changed += deleteStaleSequences(connection, existingEntries.filter { !it.entry.sequenceDataUnchanged })
         }
         if (deletedIds.isNotEmpty()) {
             changed += deleteIds(connection, "query_entries", deletedIds)
             changed += deleteIds(connection, "query_mutation_data", deletedIds)
-            changed += deleteSequences(connection, deletedIds.toList(), onlyStale = false)
+            val ids = deletedIds.toList()
+            changed += sequenceSlots.flatMap { slot -> deleteSequences(connection, slot, ids) }
         }
         if (changed.isNotEmpty()) recordChanges(connection, changed)
         return changed.size
+    }
+
+    /**
+     * Replaces the metadata frames of [ids] with [frames] (the same records, compressed with dictionary [dictId]).
+     * Content does not change: no query_changelog rows, data_version stays.
+     */
+    fun rewriteMetadataFrames(connection: Connection, ids: IntArray, frames: List<ByteArray>, dictId: Int) {
+        connection.prepareStatement(
+            """
+            update query_entries t set metadata_zstd = v.frame, metadata_dict_id = ?
+            from unnest(?::integer[], ?::bytea[]) as v(id, frame)
+            where t.organism = ? and t.id = v.id
+            """.trimIndent(),
+        ).use {
+            it.setInt(1, dictId)
+            it.setArray(2, connection.createArrayOf("integer", ids.toTypedArray()))
+            it.setArray(3, connection.createArrayOf("bytea", frames.toTypedArray()))
+            it.setString(4, organism)
+            it.executeUpdate()
+        }
     }
 
     private fun createStagingTables(connection: Connection) {
@@ -65,8 +83,8 @@ class ProjectionWriter(private val schema: QuerySchema) {
             statement.execute(
                 """
                 create temp table if not exists query_stage_entries (
-                    id integer, accession text, version bigint, accession_version text, metadata jsonb,
-                    source_hash bigint
+                    id integer, accession text, version bigint, accession_version text, metadata_zstd bytea,
+                    metadata_dict_id integer, data_use_terms_restricted boolean, source_hash bigint
                 ) on commit delete rows;
                 create temp table if not exists query_stage_mutation_data (
                     id integer, present_sequences integer[], mutations integer[], missing integer[], insertions text[]
@@ -93,7 +111,7 @@ class ProjectionWriter(private val schema: QuerySchema) {
         }
         val organismColumn = if (direct) "organism, " else ""
 
-        val entriesCsv = StringBuilder(entries.size * 1024)
+        val entriesCsv = StringBuilder(entries.size * 512)
         val mutationCsv = StringBuilder(entries.size * 2048)
         val sequencesCsv = StringBuilder(entries.size * 2048)
         for (identified in entries) {
@@ -102,7 +120,9 @@ class ProjectionWriter(private val schema: QuerySchema) {
             entriesCsv.append(prefix).append(id).append(',')
             appendCsvText(entriesCsv, e.accession).append(',').append(e.version).append(',')
             appendCsvText(entriesCsv, e.accessionVersion).append(',')
-            appendCsvText(entriesCsv, e.metadataJson).append(',').append(e.sourceHash).append('\n')
+            appendHex(entriesCsv, e.metadataZstd).append(',')
+            e.metadataDictionaryId?.let { entriesCsv.append(it) }
+            entriesCsv.append(',').append(e.dataUseTermsRestricted).append(',').append(e.sourceHash).append('\n')
 
             if (e.sequenceDataUnchanged) {
                 check(!direct) { "new entry ${e.accessionVersion} without sequence data" }
@@ -123,8 +143,8 @@ class ProjectionWriter(private val schema: QuerySchema) {
             }
         }
         copyApi.copyIn(
-            "copy $entriesTable (${organismColumn}id, accession, version, accession_version, metadata, source_hash) " +
-                "from stdin (format csv)",
+            "copy $entriesTable (${organismColumn}id, accession, version, accession_version, metadata_zstd, " +
+                "metadata_dict_id, data_use_terms_restricted, source_hash) from stdin (format csv)",
             StringReader(entriesCsv.toString()),
         )
         if (mutationCsv.isNotEmpty()) {
@@ -149,17 +169,25 @@ class ProjectionWriter(private val schema: QuerySchema) {
             connection,
             """
             insert into query_entries as t
-                (organism, id, accession, version, accession_version, metadata, source_hash)
-            select ?, id, accession, version, accession_version, metadata, source_hash from query_stage_entries
+                (organism, id, accession, version, accession_version, metadata_zstd, metadata_dict_id,
+                    data_use_terms_restricted, source_hash)
+            select ?, id, accession, version, accession_version, metadata_zstd, metadata_dict_id,
+                data_use_terms_restricted, source_hash
+            from query_stage_entries
             on conflict (organism, id) do update set
                 accession = excluded.accession,
                 version = excluded.version,
                 accession_version = excluded.accession_version,
-                metadata = excluded.metadata,
+                metadata = null,
+                metadata_zstd = excluded.metadata_zstd,
+                metadata_dict_id = excluded.metadata_dict_id,
+                data_use_terms_restricted = excluded.data_use_terms_restricted,
                 source_hash = excluded.source_hash
-            where (t.accession, t.version, t.accession_version, t.metadata, t.source_hash)
+            where (t.accession, t.version, t.accession_version, t.metadata, t.metadata_zstd, t.metadata_dict_id,
+                    t.data_use_terms_restricted, t.source_hash)
                 is distinct from
-                (excluded.accession, excluded.version, excluded.accession_version, excluded.metadata,
+                (excluded.accession, excluded.version, excluded.accession_version, null::jsonb,
+                    excluded.metadata_zstd, excluded.metadata_dict_id, excluded.data_use_terms_restricted,
                     excluded.source_hash)
             returning t.id
             """.trimIndent(),
@@ -215,51 +243,51 @@ class ProjectionWriter(private val schema: QuerySchema) {
         }
 
     /**
-     * Deletes query_sequences rows of [ids] (only those not in the staging table if [onlyStale]).
-     * One statement per (kind, sequence_index) slot, each an index scan on the primary key (a join with unnested
-     * arrays may be planned as a sequential scan of the whole table).
+     * Deletes the query_sequences rows that [entries] (just upserted) no longer have: per slot, the rows of entries
+     * without a sequence in that slot. Computed here rather than with an anti-join against the staging table: that
+     * table is temporary, so it never gets statistics, and the planner chose a nested loop over all staged rows for
+     * each id (0.4 s per slot and batch of 1000 SC2 entries on the preview).
      */
-    private fun deleteSequences(connection: Connection, ids: List<Int>, onlyStale: Boolean): List<Int> {
-        val staleCondition = if (onlyStale) {
-            """
-            and not exists (
-                select 1 from query_stage_sequences s
-                where s.id = t.id and s.kind = t.kind and s.sequence_index = t.sequence_index
-            )
-            """.trimIndent()
-        } else {
-            ""
+    private fun deleteStaleSequences(connection: Connection, entries: List<IdentifiedEntry>): List<Int> {
+        if (entries.isEmpty()) return emptyList()
+        return sequenceSlots.flatMap { (kind, sequenceIndex) ->
+            val stale = entries.filter { identified ->
+                identified.entry.sequences.none { it.kind.code == kind && it.sequenceIndex.toShort() == sequenceIndex }
+            }.map { it.id }
+            if (stale.isEmpty()) emptyList() else deleteSequences(connection, kind to sequenceIndex, stale)
         }
-        val sql = """
-            delete from query_sequences t
-            where t.organism = ? and t.kind = ? and t.sequence_index = ? and t.id = any(?)
-            $staleCondition
-            returning t.id
-        """.trimIndent()
-        val result = ArrayList<Int>()
-        connection.prepareStatement(sql).use {
-            val idArray = connection.createArrayOf("integer", ids.toTypedArray())
-            for ((kind, sequenceIndex) in sequenceSlots) {
-                it.setString(1, organism)
-                it.setShort(2, kind)
-                it.setShort(3, sequenceIndex)
-                it.setArray(4, idArray)
-                it.executeQuery().use { rs ->
-                    while (rs.next()) result.add(rs.getInt(1))
-                }
-            }
-        }
-        return result
     }
 
-    private fun recordChanges(connection: Connection, changedIds: Set<Int>) {
+    /**
+     * Deletes the query_sequences rows of [ids] in one (kind, sequence_index) slot: an index scan on the primary key
+     * (a join with unnested arrays over all slots may be planned as a sequential scan of the whole table).
+     */
+    private fun deleteSequences(connection: Connection, slot: Pair<Short, Short>, ids: List<Int>): List<Int> =
         connection.prepareStatement(
-            "insert into query_changelog (organism, id) select ?, unnest(?::integer[]) order by 2",
+            """
+            delete from query_sequences
+            where organism = ? and kind = ? and sequence_index = ? and id = any(?)
+            returning id
+            """.trimIndent(),
         ).use {
             it.setString(1, organism)
-            it.setArray(2, connection.createArrayOf("integer", changedIds.toTypedArray()))
-            it.executeUpdate()
+            it.setShort(2, slot.first)
+            it.setShort(3, slot.second)
+            it.setArray(4, connection.createArrayOf("integer", ids.toTypedArray()))
+            it.executeQuery().use { rs ->
+                val result = ArrayList<Int>()
+                while (rs.next()) result.add(rs.getInt(1))
+                result
+            }
         }
+
+    /**
+     * Appends [changedIds] to query_changelog with per-organism seqs max(seq) + 1, + 2, ... The preceding update of
+     * the query_engine_state row locks it until commit, so all writers of an organism serialise here and the insert
+     * (a separate statement, hence a fresh read-committed snapshot) sees the rows of the previous writer. Seqs thus
+     * become visible in order and without holes, which the tailers in QueryIndexService rely on.
+     */
+    private fun recordChanges(connection: Connection, changedIds: Set<Int>) {
         connection.prepareStatement(
             """
             update query_engine_state
@@ -269,6 +297,19 @@ class ProjectionWriter(private val schema: QuerySchema) {
             """.trimIndent(),
         ).use {
             it.setString(1, organism)
+            check(it.executeUpdate() == 1) { "No query_engine_state for $organism" }
+        }
+        connection.prepareStatement(
+            """
+            insert into query_changelog (organism, seq, id)
+            select ?, m.seq + row_number() over (order by c.id), c.id
+            from unnest(?::integer[]) as c(id),
+                (select coalesce(max(seq), 0) as seq from query_changelog where organism = ?) m
+            """.trimIndent(),
+        ).use {
+            it.setString(1, organism)
+            it.setArray(2, connection.createArrayOf("integer", changedIds.toTypedArray()))
+            it.setString(3, organism)
             it.executeUpdate()
         }
     }

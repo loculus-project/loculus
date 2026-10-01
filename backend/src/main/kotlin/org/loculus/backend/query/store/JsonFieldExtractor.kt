@@ -1,5 +1,6 @@
 package org.loculus.backend.query.store
 
+import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -12,9 +13,15 @@ import com.fasterxml.jackson.databind.ObjectMapper
 class JsonFieldExtractor(private val fields: List<String>) {
     private val positionByName: Map<String, Int> = fields.withIndex().associate { it.value to it.index }
 
-    fun extract(json: String): Array<String?> {
+    fun extract(json: String): Array<String?> = extract(mapper.createParser(json))
+
+    /** from UTF-8 JSON text in `json[offset until offset + length]` */
+    fun extract(json: ByteArray, offset: Int, length: Int): Array<String?> =
+        extract(mapper.createParser(json, offset, length))
+
+    private fun extract(jsonParser: JsonParser): Array<String?> {
         val values = arrayOfNulls<String>(fields.size)
-        mapper.createParser(json).use { parser ->
+        jsonParser.use { parser ->
             if (parser.nextToken() != JsonToken.START_OBJECT) return values
             while (parser.nextToken() == JsonToken.FIELD_NAME) {
                 val position = positionByName[parser.currentName()]

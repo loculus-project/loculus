@@ -32,7 +32,6 @@ spec:
               cpu: 100m
               memory: 128Mi
             limits:
-              cpu: 500m
               memory: 256Mi
           image: "ghcr.io/loculus-project/keycloakify:{{ $dockerTag }}"
           volumeMounts:

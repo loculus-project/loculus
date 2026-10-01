@@ -1,0 +1,253 @@
+{
+  "1": {
+    "aliases": ["root [Taxon 1]"]
+  },
+  "131567": {
+    "parents": ["1"],
+    "aliases": ["cellular organisms [Taxon 131567]"]
+  },
+  "2759": {
+    "parents": ["131567"],
+    "aliases": ["Eukaryota; eukaryotes [Taxon 2759]"]
+  },
+  "33154": {
+    "parents": ["2759"],
+    "aliases": ["Opisthokonta [Taxon 33154]"]
+  },
+  "33208": {
+    "parents": ["33154"],
+    "aliases": [
+      "Metazoa; animals; metazoans; multicellular animals [Taxon 33208]"
+    ]
+  },
+  "6072": {
+    "parents": ["33208"],
+    "aliases": ["Eumetazoa [Taxon 6072]"]
+  },
+  "33213": {
+    "parents": ["6072"],
+    "aliases": ["Bilateria [Taxon 33213]"]
+  },
+  "33511": {
+    "parents": ["33213"],
+    "aliases": ["Deuterostomia; deuterostomes [Taxon 33511]"]
+  },
+  "7711": {
+    "parents": ["33511"],
+    "aliases": ["Chordata; chordates [Taxon 7711]"]
+  },
+  "89593": {
+    "parents": ["7711"],
+    "aliases": ["Craniata [Taxon 89593]"]
+  },
+  "7742": {
+    "parents": ["89593"],
+    "aliases": ["Vertebrata; vertebrates [Taxon 7742]"]
+  },
+  "7776": {
+    "parents": ["7742"],
+    "aliases": ["Gnathostomata; jawed vertebrates [Taxon 7776]"]
+  },
+  "117570": {
+    "parents": ["7776"],
+    "aliases": ["Teleostomi [Taxon 117570]"]
+  },
+  "117571": {
+    "parents": ["117570"],
+    "aliases": ["Euteleostomi; bony vertebrates [Taxon 117571]"]
+  },
+  "8287": {
+    "parents": ["117571"],
+    "aliases": ["Sarcopterygii [Taxon 8287]"]
+  },
+  "1338369": {
+    "parents": ["8287"],
+    "aliases": ["Dipnotetrapodomorpha [Taxon 1338369]"]
+  },
+  "32523": {
+    "parents": ["1338369"],
+    "aliases": ["Tetrapoda; tetrapods [Taxon 32523]"]
+  },
+  "32524": {
+    "parents": ["32523"],
+    "aliases": ["Amniota; amniotes [Taxon 32524]"]
+  },
+  "40674": {
+    "parents": ["32524"],
+    "aliases": ["Mammalia; mammals [Taxon 40674]"]
+  },
+  "32525": {
+    "parents": ["40674"],
+    "aliases": ["Theria [Taxon 32525]"]
+  },
+  "9347": {
+    "parents": ["32525"],
+    "aliases": [
+      "Eutheria; eutherian mammals; placental mammals; placentals [Taxon 9347]"
+    ]
+  },
+  "1437010": {
+    "parents": ["9347"],
+    "aliases": ["Boreoeutheria [Taxon 1437010]"]
+  },
+  "314145": {
+    "parents": ["1437010"],
+    "aliases": ["Laurasiatheria [Taxon 314145]"]
+  },
+  "314146": {
+    "parents": ["1437010"],
+    "aliases": ["Euarchontoglires [Taxon 314146]"]
+  },
+  "9397": {
+    "parents": ["314145"],
+    "aliases": ["Chiroptera; bats [Taxon 9397]"]
+  },
+  "9443": {
+    "parents": ["314146"],
+    "aliases": ["Primates; primates [Taxon 9443]"]
+  },
+  "314147": {
+    "parents": ["314146"],
+    "aliases": ["Glires; Rodents and rabbits [Taxon 314147]"]
+  },
+  "9989": {
+    "parents": ["314147"],
+    "aliases": ["Rodentia; rodent; rodents [Taxon 9989]"]
+  },
+  "30559": {
+    "parents": ["9397"],
+    "aliases": ["Yinpterochiroptera [Taxon 30559]"]
+  },
+  "376913": {
+    "parents": ["9443"],
+    "aliases": ["Haplorrhini [Taxon 376913]"]
+  },
+  "33550": {
+    "parents": ["9989"],
+    "aliases": ["Hystricomorpha; guinea pigs and others [Taxon 33550]"]
+  },
+  "314293": {
+    "parents": ["376913"],
+    "aliases": ["Simiiformes [Taxon 314293]"]
+  },
+  "1963758": {
+    "parents": ["9989"],
+    "aliases": ["Myomorpha; mice and others [Taxon 1963758]"]
+  },
+  "3136022": {
+    "parents": ["30559"],
+    "aliases": ["Rhinolophoidea [Taxon 3136022]"]
+  },
+  "3136023": {
+    "parents": ["30559"],
+    "aliases": ["Pteropodoidea; megabats [Taxon 3136023]"]
+  },
+  "9398": {
+    "parents": ["3136023"],
+    "aliases": ["Pteropodidae; Old World fruit bats; flying foxes [Taxon 9398]"]
+  },
+  "9526": {
+    "parents": ["314293"],
+    "aliases": ["Catarrhini [Taxon 9526]"]
+  },
+  "10139": {
+    "parents": ["33550"],
+    "aliases": ["Caviidae; cavies [Taxon 10139]"]
+  },
+  "186994": {
+    "parents": ["3136022"],
+    "aliases": ["Hipposideridae; Old World leaf-nosed bats [Taxon 186994]"]
+  },
+  "337687": {
+    "parents": ["1963758"],
+    "aliases": ["Muroidea [Taxon 337687]"]
+  },
+  "10066": {
+    "parents": ["337687"],
+    "aliases": ["Muridae [Taxon 10066]"]
+  },
+  "10140": {
+    "parents": ["10139"],
+    "aliases": ["Cavia; guinea pigs; guinea-pigs [Taxon 10140]"]
+  },
+  "58068": {
+    "parents": ["186994"],
+    "aliases": ["Hipposideros [Taxon 58068]"]
+  },
+  "314295": {
+    "parents": ["9526"],
+    "aliases": ["Hominoidea; ape; apes [Taxon 314295]"]
+  },
+  "337677": {
+    "parents": ["337687"],
+    "aliases": ["Cricetidae [Taxon 337677]"]
+  },
+  "3136029": {
+    "parents": ["9398"],
+    "aliases": ["Rousettinae [Taxon 3136029]"]
+  },
+  "9406": {
+    "parents": ["3136029"],
+    "aliases": ["Rousettus [Taxon 9406]"]
+  },
+  "9604": {
+    "parents": ["314295"],
+    "aliases": ["Hominidae; great apes [Taxon 9604]"]
+  },
+  "10026": {
+    "parents": ["337677"],
+    "aliases": ["Cricetinae; hamsters [Taxon 10026]"]
+  },
+  "10141": {
+    "parents": ["10140"],
+    "aliases": [
+      "Cavia porcellus; domestic guinea pig; guinea pig [Taxon 10141]"
+    ]
+  },
+  "39107": {
+    "parents": ["10066"],
+    "aliases": ["Murinae [Taxon 39107]"]
+  },
+  "302402": {
+    "parents": ["58068"],
+    "aliases": ["Hipposideros caffer; Sundevall's roundleaf bat [Taxon 302402]"]
+  },
+  "9407": {
+    "parents": ["9406"],
+    "aliases": ["Rousettus aegyptiacus; Egyptian rousette [Taxon 9407]"]
+  },
+  "10035": {
+    "parents": ["10026"],
+    "aliases": ["Mesocricetus [Taxon 10035]"]
+  },
+  "10088": {
+    "parents": ["39107"],
+    "aliases": ["Mus; mice; mouse [Taxon 10088]"]
+  },
+  "207598": {
+    "parents": ["9604"],
+    "aliases": ["Homininae [Taxon 207598]"]
+  },
+  "9605": {
+    "parents": ["207598"],
+    "aliases": ["Homo; humans [Taxon 9605]"]
+  },
+  "10036": {
+    "parents": ["10035"],
+    "aliases": [
+      "Mesocricetus auratus; Syrian golden hamster; Syrian golden hamsters; Syrian hamster; golden hamster [Taxon 10036]"
+    ]
+  },
+  "862507": {
+    "parents": ["10088"],
+    "aliases": ["Mus [Taxon 862507]"]
+  },
+  "9606": {
+    "parents": ["9605"],
+    "aliases": ["Homo sapiens; human [Taxon 9606]"]
+  },
+  "10090": {
+    "parents": ["862507"],
+    "aliases": ["Mus musculus; house mouse; mouse [Taxon 10090]"]
+  }
+}

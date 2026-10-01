@@ -1,9 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ok } from 'neverthrow';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type InnerSearchFullUIProps, SearchFullUI } from './SearchFullUI';
+import type { TableSequenceData } from './Table.tsx';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { FieldValues, MetadataFilter, Schema } from '../../types/config.ts';
@@ -13,6 +15,7 @@ import {
 } from '../../types/referenceGenomes.spec.ts';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import { performLapisSearchQueries } from '../../utils/serversideSearch.ts';
 import { ACTIVE_FILTER_BADGE_TEST_ID } from '../common/ActiveFilters.tsx';
 
 global.ResizeObserver = class FakeResizeObserver {
@@ -28,6 +31,21 @@ vi.mock('../../config', () => ({
 
 vi.mock('../../services/serviceHooks.ts', () => ({
     lapisClientHooks: vi.fn(),
+}));
+
+const serverSideRows = [{ accession: 'LOC_SSR_1', field1: '2021-05-05', field3: 'SSR lineage' }];
+const serverSideCount = 7;
+
+vi.mock('../../services/lapisClient', () => ({
+    // eslint-disable-next-line @typescript-eslint/naming-convention -- mocks the class of that name
+    LapisClient: {
+        createForOrganism: () => ({
+            call: (method: string) =>
+                Promise.resolve(
+                    ok(method === 'details' ? { data: serverSideRows } : { data: [{ count: serverSideCount }] }),
+                ),
+        }),
+    },
 }));
 
 vi.mock('../../clientLogger.ts', () => ({
@@ -67,41 +85,53 @@ const defaultSearchFormFilters: MetadataFilter[] = [
     },
 ];
 
+function buildSchema(searchFormFilters: MetadataFilter[], referenceIdentifierField?: string): Schema {
+    const metadataSchema: MetadataFilter[] = searchFormFilters.map((filter) => ({
+        ...filter,
+        grouped: false,
+    }));
+    return {
+        metadata: metadataSchema,
+        tableColumns: ['field1', 'field3'],
+        primaryKey: 'accession',
+        defaultOrderBy: 'field1',
+        defaultOrder: 'ascending',
+        submissionDataTypes: {
+            consensusSequences: true,
+        },
+        referenceIdentifierField,
+    } as Schema;
+}
+
 function renderSearchFullUI({
     searchFormFilters = [...defaultSearchFormFilters],
     clientConfig = testConfig.public,
     referenceGenomesInfo = SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
     hiddenFieldValues = {},
     referenceIdentifierField,
+    initialData = [],
+    initialCount = 0,
+    initialDataRequestKey,
 }: {
     searchFormFilters?: MetadataFilter[];
     clientConfig?: ClientConfig;
     referenceGenomesInfo?: ReferenceGenomesInfo;
     hiddenFieldValues?: FieldValues;
     referenceIdentifierField?: string | undefined;
+    initialData?: TableSequenceData[];
+    initialCount?: number;
+    initialDataRequestKey?: string;
 } = {}) {
-    const metadataSchema: MetadataFilter[] = searchFormFilters.map((filter) => ({
-        ...filter,
-        grouped: false,
-    }));
-
     const props = {
         accessToken: 'dummyAccessToken',
         referenceGenomesInfo,
         myGroups: [],
         organism: testOrganism,
         clientConfig,
-        schema: {
-            metadata: metadataSchema,
-            tableColumns: ['field1', 'field3'],
-            primaryKey: 'accession',
-            submissionDataTypes: {
-                consensusSequences: true,
-            },
-            referenceIdentifierField,
-        } as Schema,
-        initialData: [],
-        initialCount: 0,
+        schema: buildSchema(searchFormFilters, referenceIdentifierField),
+        initialData,
+        initialCount,
+        initialDataRequestKey,
         initialQueryDict: {},
         hiddenFieldValues,
         isReleasedPage: true,
@@ -114,8 +144,13 @@ function renderSearchFullUI({
     );
 }
 
+const mockAggregatedMutate = vi.fn();
+const mockDetailsMutate = vi.fn();
+
 describe('SearchFullUI', () => {
     beforeEach(() => {
+        mockAggregatedMutate.mockReset();
+        mockDetailsMutate.mockReset();
         Object.defineProperty(window, 'location', {
             value: {
                 href: '',
@@ -130,7 +165,7 @@ describe('SearchFullUI', () => {
             isPending: false,
             error: null,
             isError: false,
-            mutate: vi.fn(),
+            mutate: mockAggregatedMutate,
         });
 
         mockUseDetails.mockReturnValue({
@@ -143,13 +178,119 @@ describe('SearchFullUI', () => {
             isPending: false,
             error: null,
             isError: false,
-            mutate: vi.fn(),
+            mutate: mockDetailsMutate,
         });
     });
 
     it('renders without crashing', () => {
         renderSearchFullUI();
         expect(screen.getByText(/Search returned 2 sequences/i)).toBeInTheDocument();
+    });
+
+    describe('with server-side rendered results', () => {
+        const idleHook = (mutate: typeof mockAggregatedMutate) => ({
+            data: undefined,
+            isIdle: true,
+            isPending: false,
+            error: null,
+            isError: false,
+            mutate,
+        });
+
+        const serverSideRequestKey = async () => {
+            const { requestKey } = await performLapisSearchQueries(
+                {},
+                buildSchema(defaultSearchFormFilters),
+                SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+                {},
+                testOrganism,
+            );
+            expect(requestKey).toBeDefined();
+            return requestKey;
+        };
+
+        beforeEach(() => {
+            mockUseAggregated.mockReturnValue(idleHook(mockAggregatedMutate));
+            mockUseDetails.mockReturnValue(idleHook(mockDetailsMutate));
+        });
+
+        it('does not fetch again on mount when the query matches the server-side one', async () => {
+            renderSearchFullUI({
+                initialData: serverSideRows,
+                initialCount: serverSideCount,
+                initialDataRequestKey: await serverSideRequestKey(),
+            });
+
+            expect(screen.getByText('Search returned 7 sequences')).toBeInTheDocument();
+            expect(screen.getByText('LOC_SSR_1')).toBeInTheDocument();
+            expect(mockAggregatedMutate).not.toHaveBeenCalled();
+            expect(mockDetailsMutate).not.toHaveBeenCalled();
+        });
+
+        it('fetches once the filters change', async () => {
+            renderSearchFullUI({
+                initialData: serverSideRows,
+                initialCount: serverSideCount,
+                initialDataRequestKey: await serverSideRequestKey(),
+            });
+
+            await userEvent.type(await screen.findByLabelText('Field 1'), 'abc');
+
+            await waitFor(() => {
+                expect(mockAggregatedMutate).toHaveBeenLastCalledWith(expect.objectContaining({ field1: 'abc' }));
+                expect(mockDetailsMutate).toHaveBeenLastCalledWith(expect.objectContaining({ field1: 'abc' }));
+            });
+        });
+
+        it('fetches on mount when the URL holds a different query than the server-side one', async () => {
+            const requestKey = await serverSideRequestKey();
+            Object.defineProperty(window, 'location', { value: { href: '', search: '?field1=abc' } });
+
+            renderSearchFullUI({
+                initialData: serverSideRows,
+                initialCount: serverSideCount,
+                initialDataRequestKey: requestKey,
+            });
+
+            await waitFor(() => {
+                expect(mockAggregatedMutate).toHaveBeenCalledWith(expect.objectContaining({ field1: 'abc' }));
+                expect(mockDetailsMutate).toHaveBeenCalledWith(expect.objectContaining({ field1: 'abc' }));
+            });
+        });
+
+        it('fetches on mount when the server-side query differs', () => {
+            renderSearchFullUI({
+                initialData: serverSideRows,
+                initialCount: serverSideCount,
+                initialDataRequestKey: 'a different query',
+            });
+
+            expect(mockAggregatedMutate).toHaveBeenCalledTimes(1);
+            expect(mockDetailsMutate).toHaveBeenCalledTimes(1);
+        });
+
+        it('fetches on mount when the server-side queries failed', () => {
+            renderSearchFullUI({ initialDataRequestKey: undefined });
+
+            expect(mockAggregatedMutate).toHaveBeenCalledTimes(1);
+            expect(mockDetailsMutate).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    it('keeps the toolbar interactive and dims only the results while results are loading', () => {
+        mockUseDetails.mockReturnValue({
+            data: { data: [{ accession: 'LOC_123456', field1: '2022-01-01', field3: 'Lineage 1' }] },
+            isPending: true,
+            error: null,
+            isError: false,
+            mutate: mockDetailsMutate,
+        });
+
+        renderSearchFullUI();
+
+        expect(screen.getByRole('button', { name: 'Customize columns' }).closest('.pointer-events-none')).toBeNull();
+        expect(screen.getByRole('button', { name: /Download/ }).closest('.pointer-events-none')).toBeNull();
+        expect(screen.getByRole('table').closest('.pointer-events-none')).toHaveClass('opacity-50');
     });
 
     it('displays sequences data correctly', async () => {

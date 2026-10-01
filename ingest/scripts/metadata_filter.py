@@ -24,6 +24,10 @@ logging.basicConfig(
 )
 
 
+def passes_metadata_filter(record: dict, metadata_filter: dict[str, str]) -> bool:
+    return all(record[key] == value for key, value in metadata_filter.items())
+
+
 def stream_filter_to_fasta(input, output, keep, config: Config):
     for record in orjsonl.stream(input):
         if (not config.segmented and record["id"] in keep) or (
@@ -64,7 +68,7 @@ def main(
         row = record["metadata"]
         accession = record["id"]
         count += 1
-        if all(row[key] == value for key, value in config.metadata_filter.items()):
+        if passes_metadata_filter(row, config.metadata_filter):
             orjsonl.append(output_metadata, record)
             submission_ids.add(accession)
 

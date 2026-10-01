@@ -1,5 +1,5 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { type MutableRefObject, type FC, useState, useRef, useMemo } from 'react';
+import { type FC, useState, useMemo } from 'react';
 
 import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator';
 import { type SequenceFilter } from './SequenceFilters';
@@ -18,6 +18,9 @@ import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
 const DATA_TYPES = ['unalignedNucleotideSequences', 'metadata', 'alignedNucleotideSequences'] as const;
 type DataType = (typeof DATA_TYPES)[number];
+
+/** The steps of launching a tool: a warning if there are too many sequences, then the data-use terms choice. */
+type LaunchStep = 'tooManySequences' | 'dataUseTerms';
 
 type LinkOutMenuProps = {
     downloadUrlGenerator: DownloadUrlGenerator;
@@ -39,8 +42,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
     referenceSelection,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [isDataUseTermsModalVisible, setDataUseTermsModalVisible] = useState(false);
-    const currentLinkOut = useRef<LinkOut | null>(null);
+    const [launch, setLaunch] = useState<{ linkOut: LinkOut; step: LaunchStep } | null>(null);
 
     const selectedReferences = referenceSelection?.selectedReferences;
     const segmentLapisNames = useMemo(
@@ -62,24 +64,24 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
     );
 
     const handleLinkClick = (linkOut: LinkOut) => {
-        currentLinkOut.current = linkOut;
         if (
             linkOut.maxNumberOfRecommendedEntries !== undefined &&
             sequenceCount !== undefined &&
             sequenceCount > linkOut.maxNumberOfRecommendedEntries
         ) {
-            const proceed = confirm(
-                `Warning: This tool is recommended for at most ${linkOut.maxNumberOfRecommendedEntries} sequences. You are attempting to use ${sequenceCount}. Continue?`,
-            );
-            if (!proceed) {
-                return;
-            }
+            setLaunch({ linkOut, step: 'tooManySequences' });
+            return;
         }
+        continueAfterSequenceCountCheck(linkOut);
+    };
+
+    // Called from a click handler, so that `window.open` counts as user-initiated.
+    const continueAfterSequenceCountCheck = (linkOut: LinkOut) => {
         if (dataUseTermsEnabled) {
-            setDataUseTermsModalVisible(true);
+            setLaunch({ linkOut, step: 'dataUseTerms' });
         } else {
-            const url = generateLinkOutUrl(currentLinkOut.current);
-            openUrl(url);
+            setLaunch(null);
+            openUrl(generateLinkOutUrl(linkOut));
         }
     };
 
@@ -147,20 +149,11 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
         window.open(url, '_blank', 'noopener,noreferrer');
     };
 
-    const handleIncludeRestricted = () => {
-        if (currentLinkOut.current) {
-            const url = generateLinkOutUrl(currentLinkOut.current, true);
-            openUrl(url);
+    const launchWithDataUseTerms = (includeRestricted: boolean) => {
+        if (launch !== null) {
+            openUrl(generateLinkOutUrl(launch.linkOut, includeRestricted));
         }
-        setDataUseTermsModalVisible(false);
-    };
-
-    const handleOpenLinkWithOpenOnly = () => {
-        if (currentLinkOut.current) {
-            const url = generateLinkOutUrl(currentLinkOut.current, false);
-            openUrl(url);
-        }
-        setDataUseTermsModalVisible(false);
+        setLaunch(null);
     };
 
     // Group filtered linkOuts by their optional `category` field.
@@ -248,54 +241,74 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                     </div>
                 </MenuItems>
             </Menu>
-            {dataUseTermsEnabled && (
-                <LinkOutMenuDataUseTermModal
-                    modalVisible={isDataUseTermsModalVisible}
-                    setModalVisible={setDataUseTermsModalVisible}
-                    currentLinkOut={currentLinkOut}
-                    onClick={handleOpenLinkWithOpenOnly}
-                    onClick1={handleIncludeRestricted}
-                />
-            )}
+            <LinkOutLaunchDialog
+                launch={launch}
+                sequenceCount={sequenceCount}
+                onClose={() => setLaunch(null)}
+                onContinue={continueAfterSequenceCountCheck}
+                onLaunchWithDataUseTerms={launchWithDataUseTerms}
+            />
         </>
     );
 };
 
-function LinkOutMenuDataUseTermModal(props: {
-    modalVisible: boolean;
-    setModalVisible: (value: ((prevState: boolean) => boolean) | boolean) => void;
-    currentLinkOut: MutableRefObject<LinkOut | null>;
-    onClick: () => void;
-    onClick1: () => void;
+function LinkOutLaunchDialog({
+    launch,
+    sequenceCount,
+    onClose,
+    onContinue,
+    onLaunchWithDataUseTerms,
+}: {
+    launch: { linkOut: LinkOut; step: LaunchStep } | null;
+    sequenceCount?: number;
+    onClose: () => void;
+    onContinue: (linkOut: LinkOut) => void;
+    onLaunchWithDataUseTerms: (includeRestricted: boolean) => void;
 }) {
+    const secondaryButtonClasses =
+        'px-4 py-2 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 transition-colors';
+    const primaryButtonClasses =
+        'px-4 py-2 bg-primary-600 text-white rounded-md font-medium hover:bg-primary-700 transition-colors';
+
     return (
         <BaseDialog
-            title={`Options for launching ${props.currentLinkOut.current?.name ?? 'Tool'}`}
-            isOpen={props.modalVisible}
-            onClose={() => props.setModalVisible(false)}
+            title={`Options for launching ${launch?.linkOut.name ?? 'Tool'}`}
+            isOpen={launch !== null}
+            onClose={onClose}
             fullWidth={false}
         >
-            <div className='max-w-lg'>
-                <h3 className='text-lg font-medium text-gray-700 mb-3'>Data use terms</h3>
-                <p className='mb-6 text-gray-600 leading-relaxed'>
-                    Would you like to include Restricted-Use sequences in this analysis? (If you do, you must comply
-                    with the Restricted-Use terms.)
-                </p>
-                <div className='flex flex-col-reverse sm:flex-row sm:justify-end gap-3'>
-                    <Button
-                        className='px-4 py-2 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 transition-colors'
-                        onClick={props.onClick}
-                    >
-                        Open sequences only
-                    </Button>
-                    <Button
-                        className='px-4 py-2 bg-primary-600 text-white rounded-md font-medium hover:bg-primary-700 transition-colors'
-                        onClick={props.onClick1}
-                    >
-                        Include Restricted-Use
-                    </Button>
+            {launch?.step === 'tooManySequences' && (
+                <div className='max-w-lg'>
+                    <p className='mb-6 text-gray-600 leading-relaxed'>
+                        {`Warning: This tool is recommended for at most ${launch.linkOut.maxNumberOfRecommendedEntries} sequences. You are attempting to use ${sequenceCount}. Continue?`}
+                    </p>
+                    <div className='flex flex-col-reverse sm:flex-row sm:justify-end gap-3'>
+                        <Button className={secondaryButtonClasses} onClick={onClose}>
+                            Cancel
+                        </Button>
+                        <Button className={primaryButtonClasses} onClick={() => onContinue(launch.linkOut)}>
+                            Continue
+                        </Button>
+                    </div>
                 </div>
-            </div>
+            )}
+            {launch?.step === 'dataUseTerms' && (
+                <div className='max-w-lg'>
+                    <h3 className='text-lg font-medium text-gray-700 mb-3'>Data use terms</h3>
+                    <p className='mb-6 text-gray-600 leading-relaxed'>
+                        Would you like to include Restricted-Use sequences in this analysis? (If you do, you must comply
+                        with the Restricted-Use terms.)
+                    </p>
+                    <div className='flex flex-col-reverse sm:flex-row sm:justify-end gap-3'>
+                        <Button className={secondaryButtonClasses} onClick={() => onLaunchWithDataUseTerms(false)}>
+                            Open sequences only
+                        </Button>
+                        <Button className={primaryButtonClasses} onClick={() => onLaunchWithDataUseTerms(true)}>
+                            Include Restricted-Use
+                        </Button>
+                    </div>
+                </div>
+            )}
         </BaseDialog>
     );
 }

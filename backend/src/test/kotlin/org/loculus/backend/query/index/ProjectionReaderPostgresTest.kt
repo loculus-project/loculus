@@ -7,6 +7,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
 import org.loculus.backend.query.filter.SymbolEquals
 import org.loculus.backend.query.schema.MutationCode
+import org.loculus.backend.query.store.StoredMetadata
+import org.loculus.backend.query.store.StoredMetadataCompressor
+import org.loculus.backend.query.store.ZstdDictionaryCache
 import java.sql.DriverManager
 
 /**
@@ -24,7 +27,7 @@ class ProjectionReaderPostgresTest {
             c.createStatement().use { st ->
                 st.execute(
                     "create temp table query_entries (organism text, id int, accession text, version bigint, " +
-                        "accession_version text, metadata jsonb, primary key (organism, id))",
+                        "accession_version text, metadata jsonb, metadata_zstd bytea, metadata_dict_id int, primary key (organism, id))",
                 )
                 st.execute(
                     "create temp table query_mutation_data (organism text, id int, present_sequences int[], " +
@@ -43,10 +46,33 @@ class ProjectionReaderPostgresTest {
                     """.trimIndent(),
                 )
             }
-            val reader = ProjectionReader(schema)
+            // records as the projector writes them since V1.42: zstd frames, with and without a dictionary
+            val samples = (0 until 50).map {
+                """{"accessionVersion":"S$it.1","country":"Country $it","age":$it}""".toByteArray()
+            }
+            val dictionary = StoredMetadata.trainDictionary(samples)!!
+            val json = """{"accessionVersion":"D.1","country":"Ä","age":8}""".toByteArray()
+            c.prepareStatement("insert into query_entries values ('test', ?, 'D', 1, 'D.1', null, ?, ?)").use { ps ->
+                StoredMetadataCompressor(7, dictionary).use { compressor ->
+                    ps.setInt(1, 3)
+                    ps.setBytes(2, compressor.compress(json))
+                    ps.setInt(3, 7)
+                    ps.executeUpdate()
+                }
+                StoredMetadataCompressor(null, null).use { compressor ->
+                    ps.setInt(1, 4)
+                    ps.setBytes(2, compressor.compress(json))
+                    ps.setNull(3, java.sql.Types.INTEGER)
+                    ps.executeUpdate()
+                }
+            }
+            val reader = ProjectionReader(schema, ZstdDictionaryCache { id -> dictionary.also { check(id == 7) } })
             val rows = mutableListOf<IndexRow>()
             reader.streamAll(c) { rows.add(it) }
-            assertThat(rows.map { it.id }, contains(1, 2))
+            assertThat(rows.map { it.id }, contains(1, 2, 3, 4))
+            for (row in rows.subList(2, 4)) {
+                assertThat(row.values.toList(), contains<Any?>("D.1", "Ä", null, 8L, null, null, null))
+            }
             val first = rows[0]
             assertThat(
                 first.values.toList(),
@@ -59,7 +85,7 @@ class ProjectionReaderPostgresTest {
             assertThat(rows[1].presentSequences.size, equalTo(0))
             assertThat(rows[1].values[1], equalTo(null))
 
-            assertThat(reader.readIds(c, listOf(2, 3)).map { it.id }, contains(2))
+            assertThat(reader.readIds(c, listOf(2, 5)).map { it.id }, contains(2))
 
             val index = InMemoryOrganismIndex.build(schema, rows)
             assertThat(index.evaluate(SymbolEquals(0, 21, 4)).toArray().toList(), contains(1))

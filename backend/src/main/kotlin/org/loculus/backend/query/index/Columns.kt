@@ -6,7 +6,6 @@ import org.loculus.backend.query.schema.MetadataField
 import org.roaringbitmap.RoaringBitmap
 import java.time.LocalDate
 import java.time.temporal.IsoFields
-import java.util.concurrent.ConcurrentHashMap
 
 /** a source of grouping keys for /aggregated; [denseRange] > 0 means keys are 0 until denseRange */
 internal interface GroupKeySource {
@@ -43,9 +42,21 @@ internal sealed class Column(val field: MetadataField) : GroupKeySource {
 
     open fun isNullFilter(domain: RoaringBitmap): RoaringBitmap = scan(domain) { isNull(it) }
 
+    /** compresses the column's bitmaps (bulk load only, before the index is visible) */
+    open fun runOptimize() {}
+
+    /** like [SequenceIndex.compactTouched], for the bitmaps writes changed since the last call */
+    open fun compactTouched(install: (List<() -> Unit>) -> Unit) {}
+
     companion object {
-        fun create(field: MetadataField, capacity: Int): Column = when (field.type) {
-            FieldType.STRING -> StringColumn(field, capacity)
+        /** [lookupByValue]: keep value -> ids postings instead of per-value bitmaps (string fields only) */
+        fun create(
+            field: MetadataField,
+            capacity: Int,
+            lookupByValue: Boolean = false,
+            regexCache: RegexCache = RegexCache(),
+        ): Column = when (field.type) {
+            FieldType.STRING -> StringColumn(field, capacity, lookupByValue, regexCache)
             FieldType.INT -> IntColumn(field, capacity)
             FieldType.FLOAT -> FloatColumn(field, capacity)
             FieldType.DATE -> DateColumn(field, capacity)
@@ -54,18 +65,38 @@ internal sealed class Column(val field: MetadataField) : GroupKeySource {
     }
 }
 
-internal class StringColumn(field: MetadataField, capacity: Int) : Column(field) {
+/**
+ * Dictionary codes per id plus one of three ways to find the ids of a value:
+ * - per-value bitmaps, for fields with `generateIndex` or a lineage system (like SILO's indexed dictionary
+ *   columns); dropped for good once the dictionary exceeds [BITMAP_LIMIT] values;
+ * - [IdPostings] (value -> ids, ~4 B per value), for the accession columns ([lookupByValue]), so point and
+ *   in-list filters cost O(k) at any size;
+ * - neither: equality, in-list and regex filters scan the codes of the ids in their domain.
+ */
+internal class StringColumn(
+    field: MetadataField,
+    capacity: Int,
+    lookupByValue: Boolean = false,
+    /** regex results, shared by the string columns of one organism */
+    private val regexCache: RegexCache = RegexCache(),
+) : Column(field) {
     val dictionary = StringDictionary()
     private val codes = CodeArray(capacity)
     private val nulls = RoaringBitmap()
 
-    /** per-code bitmaps; dropped (null) once the dictionary exceeds [BITMAP_LIMIT] values */
-    private var bitmaps: ArrayList<RoaringBitmap>? = ArrayList()
+    private var bitmaps: ArrayList<RoaringBitmap>? =
+        if (!lookupByValue && (field.generateIndex || field.lineageSystem != null)) ArrayList() else null
+    private val postings: IdPostings? = if (lookupByValue) IdPostings() else null
+
+    /** codes whose value bitmap changed since [compactTouched] (writer only) */
+    private val touchedCodes = java.util.BitSet()
 
     @Volatile private var ranks: Ranks? = null
-    private val regexCache = ConcurrentHashMap<String, RegexMatches>()
 
     val hasBitmaps: Boolean get() = bitmaps != null
+
+    /** equality and in-list filters are answered without scanning */
+    val hasValueIndex: Boolean get() = bitmaps != null || postings != null
 
     override fun grow(capacity: Int) = codes.grow(capacity)
 
@@ -76,6 +107,7 @@ internal class StringColumn(field: MetadataField, capacity: Int) : Column(field)
         }
         val code = dictionary.getOrAdd(value.toString())
         codes.set(id, code)
+        postings?.add(code, id)
         val bm = bitmaps ?: return
         if (dictionary.size > BITMAP_LIMIT) {
             bitmaps = null
@@ -83,6 +115,36 @@ internal class StringColumn(field: MetadataField, capacity: Int) : Column(field)
         }
         while (bm.size <= code) bm.add(RoaringBitmap())
         bm[code].add(id)
+        touchedCodes.set(code)
+    }
+
+    override fun runOptimize() {
+        bitmaps?.let { list -> for (c in list.indices) list[c] = runOptimizeFewRuns(list[c]) }
+        nulls.runOptimize()
+        nulls.trim()
+        touchedCodes.clear()
+    }
+
+    override fun compactTouched(install: (List<() -> Unit>) -> Unit) {
+        val list = bitmaps
+        if (list != null) {
+            val swaps = ArrayList<() -> Unit>()
+            var c = touchedCodes.nextSetBit(0)
+            while (c >= 0) {
+                val code = c
+                if (code < list.size) {
+                    val o = runOptimizeFewRuns(list[code].clone())
+                    swaps.add { list[code] = o }
+                }
+                if (swaps.size >= 4096) {
+                    install(ArrayList(swaps))
+                    swaps.clear()
+                }
+                c = touchedCodes.nextSetBit(c + 1)
+            }
+            if (swaps.isNotEmpty()) install(swaps)
+        }
+        touchedCodes.clear()
     }
 
     override fun clear(id: Int) {
@@ -91,7 +153,11 @@ internal class StringColumn(field: MetadataField, capacity: Int) : Column(field)
             nulls.remove(id)
             return
         }
-        bitmaps?.get(code)?.remove(id)
+        bitmaps?.let {
+            it[code].remove(id)
+            touchedCodes.set(code)
+        }
+        postings?.remove(code, id)
         codes.set(id, -1)
     }
 
@@ -122,10 +188,11 @@ internal class StringColumn(field: MetadataField, capacity: Int) : Column(field)
         if (code < 0) return RoaringBitmap()
         val bm = bitmaps
         if (bm != null) return if (code < bm.size) bm[code].clone() else RoaringBitmap()
+        postings?.let { return it.ids(intArrayOf(code)) }
         return scan(domain) { codes.get(it) == code }
     }
 
-    /** ids whose code is in [codeSet] (plus nulls if [matchNull]) */
+    /** ids whose code is in [codeSet] (plus nulls if [matchNull]); codes < 0 (unknown values) are ignored */
     fun inFilter(codeSet: IntArray, matchNull: Boolean, domain: RoaringBitmap): RoaringBitmap {
         val bm = bitmaps
         if (bm != null) {
@@ -134,24 +201,39 @@ internal class StringColumn(field: MetadataField, capacity: Int) : Column(field)
             if (matchNull) parts.add(nulls)
             return unionOf(parts)
         }
+        postings?.let { p ->
+            val ids = p.ids(codeSet)
+            if (matchNull) ids.or(nulls)
+            return ids
+        }
         val lookup = BooleanArray(dictionary.size + 1)
         for (c in codeSet) if (c >= 0) lookup[c + 1] = true
         lookup[0] = matchNull
         return scan(domain) { lookup[codes.get(it) + 1] }
     }
 
+    /** ids equal to one of [values] (null = is null) */
+    fun inFilter(values: Collection<String?>, domain: RoaringBitmap): RoaringBitmap {
+        var matchNull = false
+        val codeSet = IntArray(values.size)
+        var n = 0
+        for (v in values) {
+            if (v == null) matchNull = true else codeSet[n++] = dictionary.lookup(v)
+        }
+        return inFilter(codeSet.copyOf(n), matchNull, domain)
+    }
+
     fun regexFilter(pattern: String, domain: RoaringBitmap): RoaringBitmap {
         val snapshot = regexMatches(pattern)
         if (bitmaps == null) {
-            val mask = snapshot.matches
             val matchNull = snapshot.matchesNull
             return scan(domain) { id ->
                 val c = codes.get(id)
-                if (c < 0) matchNull else mask[c]
+                if (c < 0) matchNull else snapshot.matches(c)
             }
         }
         val matching = ArrayList<Int>()
-        for (c in 0 until snapshot.size) if (snapshot.matches[c]) matching.add(c)
+        for (c in 0 until snapshot.size) if (snapshot.matches(c)) matching.add(c)
         return inFilter(matching.toIntArray(), snapshot.matchesNull, domain)
     }
 
@@ -159,11 +241,7 @@ internal class StringColumn(field: MetadataField, capacity: Int) : Column(field)
      * Regex results per dictionary code. The dictionary is append-only, so a cached result only needs to be
      * extended to new codes.
      */
-    private fun regexMatches(pattern: String): RegexMatchesSnapshot {
-        if (regexCache.size > MAX_CACHED_REGEXES) regexCache.clear()
-        val cached = regexCache.computeIfAbsent(pattern) { RegexMatches(Pattern.compile(it)) }
-        return cached.upTo(dictionary)
-    }
+    private fun regexMatches(pattern: String): RegexMatchesSnapshot = regexCache.matches(this, pattern, dictionary)
 
     fun ranks(): Ranks {
         val current = ranks
@@ -175,34 +253,156 @@ internal class StringColumn(field: MetadataField, capacity: Int) : Column(field)
     }
 
     override fun memoryBytes(): Long {
-        var total = codes.memoryBytes() + dictionary.memoryBytes() + nulls.getLongSizeInBytes()
-        bitmaps?.forEach { total += it.getLongSizeInBytes() + 16 }
-        ranks?.let { total += it.sorted.size * 8L }
+        var total = codes.memoryBytes() + dictionary.memoryBytes() + heapBytes(nulls)
+        bitmaps?.let { list ->
+            total += arrayBytes(4L * list.size)
+            list.forEach { total += heapBytes(it) }
+        }
+        postings?.let { total += it.memoryBytes() }
+        ranks?.let { total += arrayBytes(4L * it.sorted.size) + arrayBytes(4L * it.rank.size) }
         return total
     }
 
     companion object {
         const val BITMAP_LIMIT = 65536
-        const val MAX_CACHED_REGEXES = 256
     }
 }
 
-internal class RegexMatchesSnapshot(val matches: BooleanArray, val size: Int, val matchesNull: Boolean)
+/**
+ * Regex results of the string columns of one organism, least recently used first out: results are dropped
+ * while they hold more than [budgetBytes] or there are more than [maxEntries] of them. A result is one bit per
+ * dictionary value (up to 2x the dictionary while it grows), so a near-unique column of 20M values costs 2.5 MB
+ * per pattern; a result larger than the whole budget is used for its query but not kept.
+ */
+internal class RegexCache(private val budgetBytes: Long = DEFAULT_BUDGET_BYTES, private val maxEntries: Int = 256) {
+    private data class Key(val column: StringColumn, val pattern: String)
 
-internal class RegexMatches(private val pattern: Pattern) {
-    private val matchesNull = pattern.matcher("").find()
-    private var matches = BooleanArray(0)
+    /** access order: eldest = least recently used */
+    private val entries = LinkedHashMap<Key, RegexMatches>(16, 0.75f, true)
+
+    /** bytes of the kept results, as last accounted */
+    var bytes = 0L
+        @Synchronized get
+        private set
+
+    val size: Int @Synchronized get() = entries.size
+
+    fun matches(column: StringColumn, pattern: String, dictionary: StringDictionary): RegexMatchesSnapshot {
+        val key = Key(column, pattern)
+        val entry = synchronized(this) { entries.getOrPut(key) { RegexMatches(pattern) } }
+        // evaluated outside the cache lock: a new pattern scans the whole dictionary
+        val snapshot = entry.upTo(dictionary)
+        synchronized(this) {
+            if (entries[key] === entry) {
+                val now = entry.memoryBytes()
+                bytes += now - entry.accountedBytes
+                entry.accountedBytes = now
+                if (now > budgetBytes) {
+                    entries.remove(key)
+                    bytes -= now
+                }
+                val eldest = entries.values.iterator()
+                while ((bytes > budgetBytes || entries.size > maxEntries) && eldest.hasNext()) {
+                    bytes -= eldest.next().accountedBytes
+                    eldest.remove()
+                }
+            }
+        }
+        return snapshot
+    }
+
+    companion object {
+        const val DEFAULT_BUDGET_BYTES = 32L shl 20
+    }
+}
+
+internal class RegexMatchesSnapshot(private val words: LongArray, val size: Int, val matchesNull: Boolean) {
+    fun matches(code: Int): Boolean = (words[code ushr 6] ushr code) and 1L != 0L
+}
+
+internal class RegexMatches(pattern: String) {
+    private val compiled = Pattern.compile(pattern)
+    private val literal = LiteralPattern.parse(pattern)
+    private val matchesNull = compiled.matcher("").find()
+
+    /**
+     * bit per dictionary code. Snapshots may read it concurrently, but only the bits of codes below their size,
+     * which never change (new codes only set bits above them; a torn word write keeps those bits in both halves)
+     */
+    private var words = LongArray(0)
     private var evaluated = 0
+
+    /** [memoryBytes] as last added to the owning cache's total (guarded by the cache) */
+    var accountedBytes = 0L
 
     @Synchronized
     fun upTo(dictionary: StringDictionary): RegexMatchesSnapshot {
         val size = dictionary.size
         if (evaluated < size) {
-            if (matches.size < size) matches = matches.copyOf(maxOf(size, matches.size * 2))
-            for (c in evaluated until size) matches[c] = pattern.matcher(dictionary.get(c)).find()
+            val needed = (size + 63) ushr 6
+            if (words.size < needed) words = words.copyOf(maxOf(needed, words.size * 2))
+            val w = words
+            for (c in evaluated until size) {
+                val value = dictionary.get(c)
+                if (literal?.foundIn(value) ?: compiled.matcher(value).find()) w[c ushr 6] = w[c ushr 6] or (1L shl c)
+            }
             evaluated = size
         }
-        return RegexMatchesSnapshot(matches, size, matchesNull)
+        return RegexMatchesSnapshot(words, size, matchesNull)
+    }
+
+    @Synchronized
+    fun memoryBytes(): Long = arrayBytes(8L * words.size)
+}
+
+/**
+ * A regex that is an ASCII literal, optionally prefixed by `(?i)`, with metacharacters backslash-escaped: what the
+ * website's free-text and substring search sends. Evaluated as a substring search instead of RE2J, which is
+ * ~8x faster per dictionary value, with RE2's case folding for ASCII (k also matches U+212A KELVIN SIGN, s also
+ * matches U+017F LATIN SMALL LETTER LONG S).
+ */
+internal class LiteralPattern private constructor(private val literal: String, private val ignoreCase: Boolean) {
+    fun foundIn(value: String): Boolean {
+        if (!ignoreCase) return value.contains(literal)
+        val last = value.length - literal.length
+        for (start in 0..last) {
+            var k = 0
+            while (k < literal.length && foldEquals(literal[k], value[start + k])) k++
+            if (k == literal.length) return true
+        }
+        return false
+    }
+
+    private fun foldEquals(literalChar: Char, c: Char): Boolean = when {
+        c == literalChar -> true
+        c.code < 128 -> literalChar.isLetter() && c.lowercaseChar() == literalChar.lowercaseChar()
+        c == '\u212A' -> literalChar == 'k' || literalChar == 'K'
+        c == '\u017F' -> literalChar == 's' || literalChar == 'S'
+        else -> false
+    }
+
+    companion object {
+        private const val META = "\\.+*?()|[]{}^$"
+
+        fun parse(pattern: String): LiteralPattern? {
+            val ignoreCase = pattern.startsWith("(?i)")
+            val body = if (ignoreCase) pattern.substring(4) else pattern
+            val literal = StringBuilder(body.length)
+            var i = 0
+            while (i < body.length) {
+                var c = body[i]
+                if (c == '\\') {
+                    if (i + 1 >= body.length || body[i + 1] !in META) return null
+                    c = body[++i]
+                } else if (c in META) {
+                    return null
+                }
+                if (c.code >= 128 || c.code < 32) return null
+                literal.append(c)
+                i++
+            }
+            return LiteralPattern(literal.toString(), ignoreCase)
+        }
     }
 }
 
@@ -478,5 +678,5 @@ internal class BooleanColumn(field: MetadataField, capacity: Int) : Column(field
 
     fun filter(value: Boolean): RoaringBitmap = (if (value) trues else falses).clone()
 
-    override fun memoryBytes(): Long = values.size + trues.getLongSizeInBytes() + falses.getLongSizeInBytes()
+    override fun memoryBytes(): Long = values.size + heapBytes(trues) + heapBytes(falses)
 }

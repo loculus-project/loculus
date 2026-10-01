@@ -32,6 +32,12 @@ interface QueryStore {
     )
 
     /**
+     * [streamMetadataFields] for a few ids, read at once: one query on one connection, on the calling thread (no
+     * fetch workers). The values of the ids that exist, in the given order.
+     */
+    fun readMetadataFields(organism: String, ids: IntArray, fields: List<String>): List<Array<String?>>
+
+    /**
      * Bulk variant of [streamMetadataFields] for large exports: rows are fetched in chunks, and every chunk is
      * passed to [render] (on a background thread; chunks may be rendered concurrently, so [render] must not share
      * mutable state) together with its ids, both in requested order (missing ids skipped). The results are

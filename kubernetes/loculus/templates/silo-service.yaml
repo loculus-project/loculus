@@ -1,4 +1,5 @@
-{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- if include "loculus.runLapis" . }}
+{{- range $_, $item := (include "loculus.lapisOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
 ---
 apiVersion: v1
@@ -15,4 +16,5 @@ spec:
       targetPort: 8081
       protocol: TCP
       name: http
+{{- end }}
 {{- end }}

@@ -147,6 +147,7 @@ fields:
     displayName: Version status
     type: string
     autocomplete: true
+    generateIndex: true
     hideOnSequenceDetailsPage: true
     definition: "Indicates whether this is the latest version of the sequence record (`LATEST_VERSION`), an earlier version (`REVISED`), or has been revoked (`REVOKED`)."
   - name: versionComment
@@ -533,6 +534,16 @@ organisms:
     referenceGenome:
       {{- $referenceGenome := include "loculus.mergeReferenceGenomes" $instance.referenceGenomes | fromYaml }}
       {{ $referenceGenome | toYaml | nindent 10 }}
+    {{- if $.Values.queryEngine.enabled }}
+    queryEngine:
+      {{- $args := dict
+        "schema" ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml)
+        "commonMetadata" (include "loculus.commonMetadata" $ | fromYaml).fields
+        "referenceGenomes" $instance.referenceGenomes
+        "lineageSystemDefinitions" $.Values.lineageSystemDefinitions
+      }}
+      {{- include "loculus.queryEngineSchema" $args | nindent 6 }}
+    {{- end }}
   {{- end }}
 {{- end }}
 
@@ -633,7 +644,9 @@ fields:
 {{- $externalLapisUrlConfig := dict "lapisUrlTemplate" $lapisUrlTemplate "config" $.Values }}
             "backendUrl": "{{ include "loculus.backendUrl" . }}",
             "lapisUrls": {{- include "loculus.generateExternalLapisUrls" $externalLapisUrlConfig | fromYaml | toJson }},
-            "keycloakUrl":  "{{ include "loculus.keycloakUrl" . }}"
+            "keycloakUrl":  "{{ include "loculus.keycloakUrl" . }}",
+            {{- /* the public LAPIS URLs are the query engine's unless lapisUrlTemplate points elsewhere */}}
+            "lapisIsQueryEngine": {{ if and $.Values.queryEngine.enabled (not $publicRuntimeConfig.lapisUrlTemplate) }}true{{ else }}false{{ end }}
 {{- end }}
 
 

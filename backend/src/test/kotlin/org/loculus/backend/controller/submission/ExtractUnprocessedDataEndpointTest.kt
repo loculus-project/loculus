@@ -26,6 +26,7 @@ import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
 import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -39,6 +40,7 @@ import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.getAccessionVersions
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
+import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders.ETAG
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
@@ -58,6 +60,7 @@ import java.net.http.HttpResponse
 class ExtractUnprocessedDataEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val client: SubmissionControllerClient,
+    @Autowired val submissionDatabaseService: SubmissionDatabaseService,
 ) {
 
     @Test
@@ -98,24 +101,70 @@ class ExtractUnprocessedDataEndpointTest(
         val responseBody = response.expectNdjsonAndGetContent<UnprocessedData>()
         assertThat(responseBody.size, `is`(DefaultFiles.NUMBER_OF_SEQUENCES))
 
-        val responseAfterUpdatingTable = client.extractUnprocessedData(
+        // A claim only removes claimable entries, so it leaves the etag unchanged.
+        client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES, ifNoneMatch = initialEtag)
+            .andExpect(status().isNotModified)
+            .andExpect(header().string(ETAG, initialEtag!!))
+
+        convenienceClient.submitDefaultFiles(groupId = submissionResult.groupId)
+
+        val responseAfterNewSubmission = client.extractUnprocessedData(
             DefaultFiles.NUMBER_OF_SEQUENCES,
             ifNoneMatch = initialEtag,
         ).andExpect(status().isOk)
-
-        val emptyResponseBody = responseAfterUpdatingTable.expectNdjsonAndGetContent<UnprocessedData>()
-        assertThat(emptyResponseBody.size, `is`(0))
-
-        val secondEtag = responseAfterUpdatingTable.andReturn().response.getHeader(ETAG)
-
-        val responseNoNewData = client.extractUnprocessedData(
-            DefaultFiles.NUMBER_OF_SEQUENCES,
-            ifNoneMatch = secondEtag,
+        assertThat(
+            responseAfterNewSubmission.expectNdjsonAndGetContent<UnprocessedData>().size,
+            `is`(DefaultFiles.NUMBER_OF_SEQUENCES),
         )
+        val secondEtag = responseAfterNewSubmission.andReturn().response.getHeader(ETAG)
+        assertThat(secondEtag, `is`(not(initialEtag)))
 
-        responseNoNewData.andExpect(status().isNotModified)
+        client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES, ifNoneMatch = secondEtag)
+            .andExpect(status().isNotModified)
             .andExpect(header().string(ETAG, secondEtag!!))
     }
+
+    @Test
+    fun `GIVEN a submission for one organism THEN the etag for another organism is unaffected`() {
+        val groupId = convenienceClient.submitDefaultFiles(organism = DEFAULT_ORGANISM).groupId
+        val otherOrganismEtagBefore = extractEtag(OTHER_ORGANISM)
+        val defaultOrganismEtagBefore = extractEtag(DEFAULT_ORGANISM)
+
+        // The submission writes the organism-independent upload aux tables as well as sequence_entries.
+        convenienceClient.submitDefaultFiles(organism = DEFAULT_ORGANISM, groupId = groupId)
+
+        assertThat(extractEtag(OTHER_ORGANISM), `is`(otherOrganismEtagBefore))
+        assertThat(extractEtag(DEFAULT_ORGANISM), `is`(not(defaultOrganismEtagBefore)))
+    }
+
+    @Test
+    fun `GIVEN stale claims are cleaned up THEN the etag changes, also for a newer pipeline version`() {
+        convenienceClient.submitDefaultFiles()
+        // The newer version goes first, so that its clean-up deletes only its own claims.
+        for (pipelineVersion in listOf(DEFAULT_PIPELINE_VERSION + 1, DEFAULT_PIPELINE_VERSION)) {
+            assertThat(
+                convenienceClient.extractUnprocessedData(pipelineVersion = pipelineVersion),
+                hasSize(DefaultFiles.NUMBER_OF_SEQUENCES),
+            )
+            val etagWithEverythingClaimed = extractEtag(DEFAULT_ORGANISM, pipelineVersion)
+
+            submissionDatabaseService.cleanUpStaleSequencesInProcessing(timeToStaleInSeconds = 0)
+
+            val response = client.extractUnprocessedData(
+                DefaultFiles.NUMBER_OF_SEQUENCES,
+                pipelineVersion = pipelineVersion,
+                ifNoneMatch = etagWithEverythingClaimed,
+            ).andExpect(status().isOk)
+            assertThat(
+                response.expectNdjsonAndGetContent<UnprocessedData>(),
+                hasSize(DefaultFiles.NUMBER_OF_SEQUENCES),
+            )
+        }
+    }
+
+    private fun extractEtag(organism: String, pipelineVersion: Long = DEFAULT_PIPELINE_VERSION): String? =
+        client.extractUnprocessedData(0, organism = organism, pipelineVersion = pipelineVersion)
+            .andReturn().response.getHeader(ETAG)
 
     @Test
     fun `GIVEN preprocessed data submitted for one organism THEN the etag for another organism is unaffected`() {

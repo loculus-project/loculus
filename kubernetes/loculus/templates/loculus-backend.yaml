@@ -1,4 +1,15 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- $responseCache := .Values.queryEngine.responseCache | default dict }}
+{{- $responseCacheOnDisk := and .Values.queryEngine.enabled $responseCache.diskSize (ne (toString $responseCache.diskSize) "0") }}
+{{- $affinity := deepCopy (.Values.podScheduling.affinity | default dict) }}
+{{- if and .Values.runDevelopmentMainDatabase .Values.developmentDatabase.colocateBackend }}
+{{- /* exports read JSONB records at the link rate when the backend and the dev DB are on different nodes */}}
+{{- $podAffinity := $affinity.podAffinity | default dict }}
+{{- $preferred := $podAffinity.preferredDuringSchedulingIgnoredDuringExecution | default list }}
+{{- $term := dict "weight" 100 "podAffinityTerm" (dict "topologyKey" "kubernetes.io/hostname" "labelSelector" (dict "matchLabels" (dict "app" "loculus" "component" "database"))) }}
+{{- $_ := set $podAffinity "preferredDuringSchedulingIgnoredDuringExecution" (append $preferred $term) }}
+{{- $_ := set $affinity "podAffinity" $podAffinity }}
+{{- end }}
 {{- if not .Values.disableBackend }}
 ---
 apiVersion: apps/v1
@@ -22,34 +33,9 @@ spec:
         component: backend
     spec:
       {{- include "possiblePriorityClassName" . | nindent 6 }}
-      {{- include "loculus.podScheduling" . | nindent 6 }}
+      {{- include "loculus.podSchedulingWithAffinity" (list . $affinity) | nindent 6 }}
       initContainers:
 {{- include "loculus.configProcessor" (dict "name" "loculus-backend-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
-        {{- if $.Values.queryEngine.enabled }}
-        - name: query-engine-config
-          image: {{ $.Values.queryEngine.curlImage }}
-          {{- include "loculus.resources" (list "backend-query-engine-init" $.Values) | nindent 10 }}
-          command:
-            - sh
-            - -c
-            - |
-              set -e
-              cp -rL /query-engine-configmaps/. /query-engine/
-              {{- range $_, $item := (include "loculus.enabledOrganisms" $ | fromJson).organisms }}
-              {{- range $system := ($item.contents | include "loculus.lineageSystemForOrganism" | fromYamlArray) }}
-              {{- $definitions := index $.Values.lineageSystemDefinitions $system }}
-              {{- $latest := 0 }}
-              {{- range $version, $_ := $definitions }}{{- if gt (int $version) $latest }}{{- $latest = int $version }}{{- end }}{{- end }}
-              echo "Downloading lineage definitions {{ $system }} (pipeline version {{ $latest }}) for {{ $item.key }}"
-              curl -fsSL --retry 5 -o /query-engine/{{ $item.key }}/{{ $system }}.yaml {{ index $definitions (toString $latest) | quote }}
-              {{- end }}
-              {{- end }}
-          volumeMounts:
-            - name: query-engine-configmaps
-              mountPath: /query-engine-configmaps
-            - name: query-engine
-              mountPath: /query-engine
-        {{- end }}
       containers:
         - name: backend
           image: "{{ $.Values.images.backend.repository }}:{{ $.Values.images.backend.tag | default $dockerTag }}"
@@ -81,7 +67,13 @@ spec:
             - "--loculus.enable-seqsets={{ $.Values.seqSets.enabled }}"
             {{- if $.Values.queryEngine.enabled }}
             - "--loculus.query-engine.enabled=true"
-            - "--loculus.query-engine.config-dir=/query-engine"
+            {{- with $.Values.queryEngine.responseCache }}
+            - "--loculus.query-engine.cache.memory-size={{ .memorySize }}"
+            {{- if $responseCacheOnDisk }}
+            - "--loculus.query-engine.cache.disk-size={{ .diskSize }}"
+            - "--loculus.query-engine.cache.disk-path=/query-response-cache"
+            {{- end }}
+            {{- end }}
             {{- end }}
             {{- if $.Values.seqSets.crossRef }}
             - "--crossref.doi-prefix=$(CROSSREF_DOI_PREFIX)"
@@ -100,10 +92,14 @@ spec:
             - "--keycloak.user=backend"
             - "--spring.datasource.password=$(DB_PASSWORD)"
             - "--spring.datasource.url=$(DB_URL)"
+            - "--spring.datasource.hikari.maximum-pool-size={{ $.Values.backendDatabasePoolSize | default 30 }}"
             - "--spring.datasource.username=$(DB_USERNAME)"
             - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
             - "--loculus.cleanup.task.reset-stale-in-processing-after-seconds={{- .Values.preprocessingTimeout | default 120 }}"
             - "--loculus.pipeline-version-upgrade-check.interval-seconds={{- .Values.pipelineVersionUpgradeCheckIntervalSeconds | default 10 }}"
+            {{- with .Values.claimFullScanIntervalSeconds }}
+            - "--loculus.claim.full-scan-interval-seconds={{ . }}"
+            {{- end }}
             - "--loculus.s3.enabled=$(S3_ENABLED)"
             {{- if $.Values.s3.enabled }}
             - "--loculus.s3.gc-enabled=$(S3_GC_ENABLED)"
@@ -129,7 +125,7 @@ spec:
             # If a flag in JVM_OPTS below changes object layout or other observable JVM
             # semantics, mirror it in the test task in backend/build.gradle
             - name: JVM_OPTS
-              value: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseCompactObjectHeaders -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2
+              value: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseCompactObjectHeaders -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2 -XX:+ExitOnOutOfMemoryError{{ with .Values.backendJvmExtraOpts }} {{ . }}{{ end }}
           {{- if $.Values.seqSets.crossRef }}
             - name: CROSSREF_USERNAME
               valueFrom:
@@ -207,24 +203,16 @@ spec:
           volumeMounts:
             - name: loculus-backend-config-processed
               mountPath: /config
-            {{- if $.Values.queryEngine.enabled }}
-            - name: query-engine
-              mountPath: /query-engine
+            {{- if $responseCacheOnDisk }}
+            - name: query-response-cache
+              mountPath: /query-response-cache
             {{- end }}
       volumes:
 {{ include "loculus.configVolume" (dict "name" "loculus-backend-config") | nindent 8 }}
-        {{- if $.Values.queryEngine.enabled }}
-        - name: query-engine
-          emptyDir: {}
-        - name: query-engine-configmaps
-          projected:
-            sources:
-              {{- range $_, $item := (include "loculus.enabledOrganisms" $ | fromJson).organisms }}
-              - configMap:
-                  name: lapis-silo-database-config-{{ $item.key }}
-                  items:
-                    - key: database_config.yaml
-                      path: {{ $item.key }}/database_config.yaml
-              {{- end }}
+        {{- if $responseCacheOnDisk }}
+        # pod-local and lost on restart, which the cache expects (it wipes the directory at startup)
+        - name: query-response-cache
+          emptyDir:
+            sizeLimit: {{ $.Values.queryEngine.responseCache.diskSizeLimit }}
         {{- end }}
 {{- end }}

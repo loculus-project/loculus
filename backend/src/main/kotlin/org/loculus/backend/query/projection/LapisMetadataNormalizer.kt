@@ -12,16 +12,18 @@ private val nodes = JsonNodeFactory.instance
 private val DATE_PATTERN = Regex("""\d{4}-\d{2}-\d{2}""")
 
 /**
- * Turns a get-released-data metadata record into the LAPIS record of the query engine: exactly the fields of the
- * SILO database config, in schema order, missing fields as null, values coerced to the field type
+ * Turns a get-released-data metadata record into the LAPIS record of the query engine: the fields of the SILO
+ * database config that have a value, in schema order, values coerced to the field type
  * (STRING -> text, INT -> long, FLOAT -> double, DATE -> 'YYYY-MM-DD' text, BOOLEAN -> boolean).
- * Values that cannot be coerced become null.
+ * Fields without a value (missing, null, or not coercible) are omitted: readers treat a missing key as null, and most
+ * fields of a record are null.
  */
 class LapisMetadataNormalizer(private val fields: List<MetadataField>) {
     fun normalize(metadata: Map<String, JsonNode>): ObjectNode {
         val result = ObjectNode(nodes, LinkedHashMap(fields.size * 2))
         for (field in fields) {
-            result.set<JsonNode>(field.name, coerce(field.type, metadata[field.name]))
+            val value = coerce(field.type, metadata[field.name])
+            if (!value.isNull) result.set<JsonNode>(field.name, value)
         }
         return result
     }

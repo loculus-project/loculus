@@ -5,6 +5,11 @@
 biz.aQute.bnd:biz.aQute.bnd.annotation:7.1.0=compileClasspath,testCompileClasspath
 ch.qos.logback:logback-classic:1.5.38=compileClasspath,ktlint,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 ch.qos.logback:logback-core:1.5.38=compileClasspath,ktlint,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.aayushatharva.brotli4j:brotli4j:1.18.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.aayushatharva.brotli4j:native-linux-aarch64:1.18.0=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
+com.aayushatharva.brotli4j:native-linux-x86_64:1.18.0=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
+com.aayushatharva.brotli4j:native-osx-aarch64:1.18.0=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
+com.aayushatharva.brotli4j:service:1.18.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.carrotsearch.thirdparty:simple-xml-safe:2.7.1=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.fasterxml.jackson.core:jackson-annotations:2.21=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.fasterxml.jackson.core:jackson-core:2.21.5=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath

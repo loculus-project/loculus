@@ -3,6 +3,7 @@ package org.loculus.backend.query.index
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.contains
 import org.hamcrest.Matchers.equalTo
+import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
 import org.loculus.backend.query.filter.And
 import org.loculus.backend.query.filter.BooleanEquals
@@ -217,6 +218,20 @@ class MetadataIndexTest {
                 if (keys[i] == keys[i - 1] && orderBy.size == 1) assertThat(full[i] > full[i - 1], equalTo(true))
             }
         }
+    }
+
+    @Test
+    fun `the content token changes with every applied batch, even within one dataVersion, and per instance`() {
+        val schema = IndexTestSupport.schema()
+        val rows = (0 until 3).map { IndexRow.of(schema, it, mapOf("country" to "C$it")) }
+        val idx = InMemoryOrganismIndex.build(schema, rows, dataVersion = 7)
+        val loaded = idx.contentToken
+        idx.apply(listOf(IndexRow.of(schema, 1, mapOf("country" to "X"))), emptyList(), dataVersion = 7)
+        val updated = idx.contentToken
+        idx.apply(emptyList(), listOf(2))
+        assertThat(setOf(loaded, updated, idx.contentToken).size, equalTo(3))
+        assertThat(idx.dataVersion, equalTo(7L))
+        assertThat(InMemoryOrganismIndex.build(schema, rows, dataVersion = 7).contentToken, not(equalTo(loaded)))
     }
 
     @Test

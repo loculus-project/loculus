@@ -54,7 +54,7 @@ class PostgresQueryStoreBenchmark {
                 }
             }
         }
-        val store = PostgresQueryStore(dataSource, dictService)
+        val store = PostgresQueryStore(dataSource, dictService, ExportChunkLimiter.unlimited())
         val ids = connection.createStatement().use { st ->
             st.executeQuery("select id from qe_bench.query_sequences where kind = 1 order by id").use { rs ->
                 buildList { while (rs.next()) add(rs.getInt(1)) }.toIntArray()

@@ -64,8 +64,14 @@ class FakeIndex(
     var lastFilter: Filter? = null
     var lastMinProportion: Double? = null
 
+    /** content token (defaults to the dataVersion like the interface); [onEvaluate] runs inside evaluate */
+    var token: String? = null
+    var onEvaluate: (() -> Unit)? = null
+    override val contentToken: String get() = token ?: dataVersion.toString()
+
     override fun evaluate(filter: Filter): RoaringBitmap {
         lastFilter = filter
+        onEvaluate?.invoke()
         return RoaringBitmap.bitmapOf(*records.keys.sorted().toIntArray())
     }
 
@@ -121,6 +127,12 @@ class FakeStore(
             val tree = mapper.readTree(json)
             consumer(id, Array(fields.size) { i -> tree.get(fields[i])?.takeUnless { it.isNull }?.asText() })
         }
+    }
+
+    override fun readMetadataFields(organism: String, ids: IntArray, fields: List<String>): List<Array<String?>> {
+        val rows = mutableListOf<Array<String?>>()
+        streamMetadataFields(organism, ids, fields) { _, values -> rows.add(values) }
+        return rows
     }
 
     /** chunks of 2 rows, rendered out of order to catch order dependencies */

@@ -46,6 +46,29 @@ class LapisQueryExecutorTest {
     }
 
     @Test
+    fun `small details are buffered and read at once, with the same bytes as the streamed path`() {
+        // 4 has no record (deleted meanwhile): skipped by both paths
+        index.selectResult = intArrayOf(3, 4, 1, 2)
+        val streaming = LapisQueryExecutor(store, bufferedDetailsMaxRows = 0)
+        for (format in listOf(
+            DataFormat.JSON,
+            DataFormat.CSV,
+            DataFormat.CSV_WITHOUT_HEADERS,
+            DataFormat.TSV,
+            DataFormat.TSV_ESCAPED,
+        )) {
+            val request = QueryRequest(Endpoint.DETAILS, dataFormat = format)
+            val (buffered, bufferedOutput) = run(request)
+            val streamed = streaming.execute("test", index, request) { info }
+            val streamedOutput = ByteArrayOutputStream().also { streamed.write(it) }.toString(Charsets.UTF_8)
+            assertThat(buffered.buffered, equalTo(true))
+            assertThat(streamed.buffered, equalTo(false))
+            assertThat(format.name, bufferedOutput, equalTo(streamedOutput))
+        }
+        assertThat(run(QueryRequest(Endpoint.DETAILS, downloadAsFile = true)).first.buffered, equalTo(false))
+    }
+
+    @Test
     fun `details projects fields in request order and normalises types`() {
         val (body, output) = run(
             QueryRequest(

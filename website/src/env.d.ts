@@ -20,5 +20,7 @@ type Session = {
 declare namespace App {
     interface Locals {
         session?: Session;
+        /** Set by a page whose anonymous render may be kept in the page cache: the organism whose data it shows. */
+        pageCacheOrganism?: string;
     }
 }

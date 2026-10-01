@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { LineageDefinition } from '../../../types/lapis.ts';
@@ -41,6 +41,29 @@ type LineageOptionsProvider = {
 /* Defines where how the options in the dropdown of the AutocompleteField are fetched. */
 export type OptionsProvider = GenericOptionsProvider | LineageOptionsProvider;
 
+/**
+ * headlessui's Combobox re-runs every mounted option's selector on each option registration (O(n²) on open and
+ * on every keystroke): 1000 options cost ~3 s of main thread, 100 cost ~30 ms. Users narrow the list by typing.
+ */
+export const DEFAULT_MAX_DISPLAYED_OPTIONS = 100;
+
+/** One shared collator: `localeCompare` with options builds a new one per comparison (~20x slower). */
+export const optionCollator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
+
+/**
+ * Calls `mutate` only when the params differ from the last successful load, so re-focusing a field does not
+ * refetch (and flash "Loading...") for identical params.
+ */
+function useDedupedLoad(lapisParams: object, mutate: (params: never) => void, hasError: boolean) {
+    const lastLoadedKey = useRef<string | null>(null);
+    return () => {
+        const key = JSON.stringify(lapisParams);
+        if (key === lastLoadedKey.current && !hasError) return;
+        lastLoadedKey.current = key;
+        mutate(lapisParams as never);
+    };
+}
+
 export type AutocompleteOptionsHook = () => {
     options: Option[];
     isPending: boolean;
@@ -66,34 +89,36 @@ const createGenericOptionsHook = (
 
     return function hook() {
         const { data, isPending, error, mutate } = lapisClientHooks(lapisUrl).useAggregated();
+        const load = useDedupedLoad(lapisParams, mutate, Boolean(error));
 
-        const options: Option[] = (data?.data ?? [])
-            .filter(
-                (it) =>
-                    it[fieldName] === null ||
-                    typeof it[fieldName] === 'string' ||
-                    typeof it[fieldName] === 'boolean' ||
-                    typeof it[fieldName] === 'number',
-            )
-            .map((it) => ({
-                option: it[fieldName] === null ? '(blank)' : it[fieldName].toString(),
-                value: it[fieldName] === null ? NULL_QUERY_VALUE : it[fieldName].toString(),
-                count: it.count,
-            }))
-            .sort((a, b) =>
-                a.option.localeCompare(b.option, 'en', {
-                    numeric: true,
-                    sensitivity: 'base',
-                }),
-            );
+        const options: Option[] = useMemo(
+            () =>
+                (data?.data ?? [])
+                    .filter(
+                        (it) =>
+                            it[fieldName] === null ||
+                            typeof it[fieldName] === 'string' ||
+                            typeof it[fieldName] === 'boolean' ||
+                            typeof it[fieldName] === 'number',
+                    )
+                    .map((it) => ({
+                        option: it[fieldName] === null ? '(blank)' : it[fieldName].toString(),
+                        value: it[fieldName] === null ? NULL_QUERY_VALUE : it[fieldName].toString(),
+                        count: it.count,
+                    }))
+                    .sort((a, b) => optionCollator.compare(a.option, b.option)),
+            [data],
+        );
 
         return {
             options,
-            isPending,
+            // Before the first load the mutation is idle; treat that as loading rather than "No options". Once data
+            // exists, keep showing it during a reload instead of swapping in "Loading...".
+            isPending: data ? false : isPending || !error,
             error: error
                 ? `Error while loading options for field "${fieldName}": ${stringifyMaybeAxiosError(error)}`
                 : null,
-            load: () => mutate(lapisParams),
+            load,
         };
     };
 };
@@ -135,24 +160,26 @@ function aggregateCounts(
             let parents = lineageDefinition[lineage].parents ?? [];
             parents = parents.map((p) => canonicalNames.get(p)!);
             parents.forEach((parent) => {
-                const existingChildren = children.get(parent) ?? [];
-                children.set(parent, [lineage, ...existingChildren]);
+                const existingChildren = children.get(parent);
+                if (existingChildren) existingChildren.push(lineage);
+                else children.set(parent, [lineage]);
             });
         }
 
         // traverse tree and collect counts
         for (const lineage of Object.keys(lineageDefinition)) {
             const descendants = new Set<string>();
-            let toVisit: string[] = [lineage];
-            while (toVisit.length > 0) {
-                const currentElement = toVisit[0];
-                toVisit = toVisit.slice(1);
+            // Distinct descendants (not a bottom-up sum): the definition is a DAG, so a recombinant reachable via
+            // two parents must be counted once. Appending to one queue keeps this O(subtree size).
+            const toVisit: string[] = [lineage];
+            // Array iteration also visits elements pushed during the loop.
+            for (const currentElement of toVisit) {
+                if (descendants.has(currentElement)) continue;
                 descendants.add(currentElement);
-                (children.get(currentElement) ?? []).forEach((child) => toVisit.push(child));
+                for (const child of children.get(currentElement) ?? []) toVisit.push(child);
             }
-            const count = Array.from(descendants)
-                .map((descendant) => canonicalCounts.get(descendant) ?? 0)
-                .reduce((acc, num) => acc + num, 0);
+            let count = 0;
+            for (const descendant of descendants) count += canonicalCounts.get(descendant) ?? 0;
             resolvedCounts.set(lineage, count);
         }
     } else {
@@ -202,39 +229,44 @@ const createLineageOptionsHook = (
             {},
         );
 
-        const unaggregatedCounts = new Map<string, number>();
+        const load = useDedupedLoad(lapisParams, mutate, Boolean(aggregatedEndpointError));
 
-        // set initial counts
-        if (data?.data) {
-            data.data
-                .filter(
-                    (it) =>
-                        typeof it[fieldName] === 'string' ||
-                        typeof it[fieldName] === 'boolean' ||
-                        typeof it[fieldName] === 'number',
-                )
-                .forEach((it) => unaggregatedCounts.set(it[fieldName]!.toString(), it.count));
-        }
+        const options = useMemo(() => {
+            const unaggregatedCounts = new Map<string, number>();
 
-        const options: Option[] = [];
+            // set initial counts
+            if (data?.data) {
+                data.data
+                    .filter(
+                        (it) =>
+                            typeof it[fieldName] === 'string' ||
+                            typeof it[fieldName] === 'boolean' ||
+                            typeof it[fieldName] === 'number',
+                    )
+                    .forEach((it) => unaggregatedCounts.set(it[fieldName]!.toString(), it.count));
+            }
 
-        if (lineageDefinition) {
-            const aggregatedCounts = aggregateCounts(lineageDefinition, unaggregatedCounts, includeSublineages);
+            const options: Option[] = [];
 
-            // generate options
-            Object.keys(lineageDefinition).forEach((lineageName) => {
-                const count: number = aggregatedCounts.get(lineageName) ?? 0;
-                if (count === 0) {
-                    if (!includeZeroCounts) return;
-                }
+            if (lineageDefinition) {
+                const aggregatedCounts = aggregateCounts(lineageDefinition, unaggregatedCounts, includeSublineages);
 
-                const aliases = lineageDefinition[lineageName].aliases ?? [];
-                const label = showAlias && aliases.length > 0 ? aliases[0] : lineageName;
-                options.push({ option: label, value: lineageName, count });
-            });
-        }
+                // generate options
+                Object.keys(lineageDefinition).forEach((lineageName) => {
+                    const count: number = aggregatedCounts.get(lineageName) ?? 0;
+                    if (count === 0) {
+                        if (!includeZeroCounts) return;
+                    }
 
-        options.sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1));
+                    const aliases = lineageDefinition[lineageName].aliases ?? [];
+                    const label = showAlias && aliases.length > 0 ? aliases[0] : lineageName;
+                    options.push({ option: label, value: lineageName, count });
+                });
+            }
+
+            options.sort((a, b) => optionCollator.compare(a.option, b.option));
+            return options;
+        }, [data, lineageDefinition, includeSublineages, showAlias, includeZeroCounts]);
 
         const errors = [
             aggregatedEndpointError && `aggregated endpoint: ${stringifyMaybeAxiosError(aggregatedEndpointError)}`,
@@ -244,12 +276,13 @@ const createLineageOptionsHook = (
 
         return {
             options,
-            isPending: aggregatedEndpointIsPending || definitionIsLoading,
+            // See the generic hook: idle-before-first-load counts as loading; a reload keeps the current options.
+            isPending: definitionIsLoading || (data ? false : aggregatedEndpointIsPending || !aggregatedEndpointError),
             error:
                 errors.length > 0
                     ? `Error while loading lineage autocomplete options for field "${fieldName}" from ${lapisUrl}: ${errors.join('; ')}`
                     : null,
-            load: () => mutate(lapisParams),
+            load,
         };
     };
 };

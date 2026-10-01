@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import { type FC, useMemo } from 'react';
 
+import { getLapisAxios } from '../../services/lapisCache/browserLapisAxios.ts';
 import { versionStatuses } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSetRecord, SeqSetRecordType } from '../../types/seqSetCitation';
@@ -32,7 +32,7 @@ async function queryLapisDetails(
     fields: string[],
 ): Promise<Record<string, unknown>[]> {
     try {
-        const response = await axios.post(`${lapisUrl}/sample/details`, {
+        const response = await getLapisAxios(lapisUrl).post(`${lapisUrl}/sample/details`, {
             ...filter,
             fields,
             dataFormat: 'json',

@@ -52,6 +52,13 @@ if (accessToken !== undefined) {
 }
 
 const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
+
+if (
+    sequenceDetailsTableData.isOk() &&
+    sequenceDetailsTableData.value.result.type === SequenceDetailsTableResultType.TABLE_DATA
+) {
+    Astro.locals.pageCacheOrganism = sequenceDetailsTableData.value.organism;
+}
 ---
 
 <BaseLayout

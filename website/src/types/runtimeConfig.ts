@@ -5,6 +5,8 @@ export const name = z.string().min(1);
 export const serviceUrls = z.object({
     backendUrl: z.string(),
     lapisUrls: z.record(z.string(), z.string()),
+    /** The LAPIS URLs point at the Loculus query engine, which also reads `orderBy=field:descending` in a GET. */
+    lapisIsQueryEngine: z.boolean().optional(),
 });
 export type ServiceUrls = z.infer<typeof serviceUrls>;
 

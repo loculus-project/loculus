@@ -444,6 +444,58 @@ class LapisRequestParserTest {
     }
 
     @Test
+    fun `orderBy GET with a direction suffix parses like the POST object`() {
+        val fields = "fields" to "country,date"
+        val suffixed = get("orderBy" to "Date:descending,country:ascending", fields)
+        val repeated = get("orderBy" to "date:descending", "orderBy" to "country", fields)
+        val json = post(
+            mapOf(
+                "orderBy" to listOf(
+                    mapOf("field" to "date", "type" to "descending"),
+                    mapOf("field" to "country", "type" to "ascending"),
+                ),
+                "fields" to listOf("country", "date"),
+            ),
+        )
+        val expected = listOf(
+            OrderByField("date", OrderDirection.DESCENDING),
+            OrderByField("country", OrderDirection.ASCENDING),
+        )
+        assertThat(suffixed.orderBy, equalTo(expected))
+        assertThat(repeated.orderBy, equalTo(expected))
+        assertThat(suffixed, equalTo(json))
+        // the same spelling is accepted as a JSON string entry
+        assertThat(post(mapOf("orderBy" to listOf("date:descending"))).orderBy, equalTo(expected.take(1)))
+    }
+
+    @Test
+    fun `orderBy direction suffix errors`() {
+        assertThat(
+            getError("orderBy" to "date:desc"),
+            equalTo("Invalid orderBy 'date:desc': use 'field', 'field:ascending' or 'field:descending'"),
+        )
+        assertThat(
+            getError("orderBy" to ":descending"),
+            equalTo("Invalid orderBy ':descending': the field name is missing"),
+        )
+        assertThat(
+            getError("orderBy" to "random:descending"),
+            equalTo("Invalid orderBy 'random:descending': random ordering takes no direction"),
+        )
+        assertThat(
+            getError("orderBy" to "random(3):ascending"),
+            equalTo("Invalid orderBy 'random(3):ascending': random ordering takes no direction"),
+        )
+        assertThat(
+            getError("fields" to "country", "orderBy" to "date:descending"),
+            equalTo(
+                "Error from SILO: OrderByField date is not contained in the result of this operation. " +
+                    "Allowed values are country.",
+            ),
+        )
+    }
+
+    @Test
     fun `orderBy POST`() {
         val request = post(
             mapOf(
@@ -557,6 +609,20 @@ class LapisRequestParserTest {
         assertThat(
             postError(mapOf("minProportion" to listOf("x")), endpoint = Endpoint.NUCLEOTIDE_MUTATIONS),
             startsWith("minProportion must be a number"),
+        )
+        assertThat(
+            post(mapOf("minProportion" to listOf(1)), endpoint = Endpoint.NUCLEOTIDE_MUTATIONS).minProportion,
+            equalTo(1.0),
+        )
+        for (outOfRange in listOf("-1", "1.5", "NaN")) {
+            assertThat(
+                getError("minProportion" to outOfRange, endpoint = Endpoint.NUCLEOTIDE_MUTATIONS),
+                equalTo("Error from SILO: Invalid proportion: minProportion must be in interval [0.0, 1.0]"),
+            )
+        }
+        assertThat(
+            postError(mapOf("minProportion" to listOf(2)), endpoint = Endpoint.AMINO_ACID_MUTATIONS),
+            equalTo("Error from SILO: Invalid proportion: minProportion must be in interval [0.0, 1.0]"),
         )
         // not applicable to details: ignored
         assertThat(get("minProportion" to "0.5").minProportion, equalTo(0.05))

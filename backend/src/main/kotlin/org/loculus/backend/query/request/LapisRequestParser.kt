@@ -608,7 +608,7 @@ private class RequestParsing(
                     } else {
                         listOf(value)
                     }
-                    parts.forEach { fields.add(OrderByField(cleanOrderByField(it), OrderDirection.ASCENDING)) }
+                    parts.forEach { fields.add(orderByFromString(it)) }
                 }
 
                 is Map<*, *> -> {
@@ -637,6 +637,31 @@ private class RequestParsing(
                     "Use 'random' or 'random(<seed>)' where seed is a positive integer.",
             )
         return emptyList<OrderByField>() to RandomOrder(seed.toLong())
+    }
+
+    /**
+     * A string orderBy entry: `field` (ascending, as in LAPIS), or `field:ascending` / `field:descending`, the GET
+     * spelling of `{"field": …, "type": …}`. `random` / `random(<seed>)` take no direction.
+     */
+    private fun orderByFromString(value: String): OrderByField {
+        val colon = value.lastIndexOf(':')
+        val direction = when (if (colon < 0) null else value.substring(colon + 1)) {
+            null -> return OrderByField(cleanOrderByField(value), OrderDirection.ASCENDING)
+
+            "ascending" -> OrderDirection.ASCENDING
+
+            "descending" -> OrderDirection.DESCENDING
+
+            else -> badRequest(
+                "Invalid orderBy '$value': use 'field', 'field:ascending' or 'field:descending'",
+            )
+        }
+        val field = value.substring(0, colon).trim()
+        if (field.isEmpty()) badRequest("Invalid orderBy '$value': the field name is missing")
+        if (field.startsWith("random")) {
+            badRequest("Invalid orderBy '$value': random ordering takes no direction")
+        }
+        return OrderByField(cleanOrderByField(field), direction)
     }
 
     private fun parseRandomObject(value: Any?): RandomOrder = when {
@@ -692,7 +717,15 @@ private class RequestParsing(
         return offset
     }
 
-    private fun parseMinProportion(): Double = when (val value = singleValue("minProportion")) {
+    private fun parseMinProportion(): Double {
+        val value = parseMinProportionValue()
+        if (!(value >= 0.0 && value <= 1.0)) {
+            siloError("Invalid proportion: minProportion must be in interval [0.0, 1.0]")
+        }
+        return value
+    }
+
+    private fun parseMinProportionValue(): Double = when (val value = singleValue("minProportion")) {
         null -> LapisRequestParser.DEFAULT_MIN_PROPORTION
 
         is Number -> value.toDouble()

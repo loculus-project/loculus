@@ -32,9 +32,16 @@ segment_detection_method: SegmentDetectionMethod | None = (
     None  # align uses nextclade align to determine segments it is slower but more precise, minimizer uses nextclade sort and requires a minimizer index
 )
 LOG_LEVEL = config.get("log_level", "INFO")
-NCBI_API_KEY = os.getenv("NCBI_API_KEY")
+# datasets reads NCBI_API_KEY from the environment; never put it on the command line, which snakemake logs on failure
 NCBI_GATEWAY_URL = config.get("ncbi_gateway_url")
 MIRROR_BUCKET = config.get("mirror_bucket", "")
+# "tar.zst": one archive of the whole package; "zst": data_report.jsonl.zst and genomic.fna.zst, for taxa too large to unpack (SARS-CoV-2)
+MIRROR_FORMAT = config.get("mirror_format", "tar.zst")
+RELEASED_AFTER = config.get(
+    "released_after", ""
+)  # YYYY-MM-DD: only ingest records released on or after this date
+if RELEASED_AFTER and MIRROR_BUCKET and MIRROR_FORMAT != "zst":
+    raise ValueError("released_after needs mirror_format: zst or no mirror_bucket")
 CHECK_ENA_DEPOSITION = config.get("check_ena_deposition", False)
 FILTER = config.get("metadata_filter", None)
 CALCULATE_GROUPS_OVERRIDE_JSON = config.get(
@@ -87,6 +94,26 @@ APPLY_MINIMIZER = (
     SEGMENTED and segment_detection_method == SegmentDetectionMethod.MINIMIZER
 ) or (config.get("minimizer_url") and config.get("minimizer_parser"))
 
+# Non-segmented organisms without a minimizer read the mirror's compressed FASTA directly
+# (select_changed_records), so the decompressed genomic.fna (~270 GB for SARS-CoV-2) is never written
+STREAM_MIRROR_SEQUENCES = (
+    bool(MIRROR_BUCKET)
+    and MIRROR_FORMAT == "zst"
+    and not SEGMENTED
+    and not APPLY_MINIMIZER
+)
+DATASET_SEQUENCES = (
+    "results/ncbi_dataset/data/genomic.fna.zst"
+    if STREAM_MIRROR_SEQUENCES
+    else "results/ncbi_dataset/data/genomic.fna"
+)
+# The records released after RELEASED_AFTER, written while filtering the mirror's data report
+RELEASED_ACCESSIONS = (
+    "results/released_accessions.txt"
+    if MIRROR_BUCKET and MIRROR_FORMAT == "zst" and RELEASED_AFTER
+    else None
+)
+
 print(segment_detection_method)
 
 if os.uname().sysname == "Darwin":
@@ -121,29 +148,56 @@ rule clean:
 
 rule fetch_inflate_ncbi_dataset_package:
     output:
+        **({"released_accessions": RELEASED_ACCESSIONS} if RELEASED_ACCESSIONS else {}),
         dataset_report="results/ncbi_dataset/data/data_report.jsonl",
-        dataset_sequences="results/ncbi_dataset/data/genomic.fna",
+        dataset_sequences=DATASET_SEQUENCES,
     params:
         taxon_id=TAXON_ID,
-        api_key=f"--api-key {NCBI_API_KEY}" if NCBI_API_KEY else "",
         gateway=f"--gateway-url {NCBI_GATEWAY_URL}" if NCBI_GATEWAY_URL else "",
+        released_after=f"--released-after {RELEASED_AFTER}" if RELEASED_AFTER else "",
         use_mirror=bool(MIRROR_BUCKET),
+        mirror_format=MIRROR_FORMAT,
+        stream_sequences=STREAM_MIRROR_SEQUENCES,
         mirror_url=f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}.tar.zst",
+        mirror_prefix=f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}",
+        filter_script="scripts/filter_by_release_date.py",
+        released_after_date=RELEASED_AFTER,
         unzip=unzip,
         dataset_package=directory("results/ncbi_dataset"),
         compressed_package_tzst="results/dataset.tar.zst",
         compressed_package_zip="results/dataset.zip",
     shell:
         """
-        if [[ "{params.use_mirror}" == "True" ]]; then
+        if [[ "{params.use_mirror}" == "True" && "{params.mirror_format}" == "zst" ]]; then
+            # Streamed so the unfiltered package never lands on disk
+            mkdir -p results/ncbi_dataset/data
+            if [[ -n "{params.released_after_date}" ]]; then
+                curl -fsS {params.mirror_prefix}.data_report.jsonl.zst | zstd -dc \
+                    | python {params.filter_script} \
+                        --released-after {params.released_after_date} \
+                        --output-accessions results/released_accessions.txt \
+                        >{output.dataset_report}
+            else
+                curl -fsS {params.mirror_prefix}.data_report.jsonl.zst | zstd -dc >{output.dataset_report}
+            fi
+            if [[ "{params.stream_sequences}" == "True" ]]; then
+                # kept compressed; select_changed_records applies the release filter
+                curl -fsS {params.mirror_prefix}.genomic.fna.zst -o {output.dataset_sequences}
+            elif [[ -n "{params.released_after_date}" ]]; then
+                curl -fsS {params.mirror_prefix}.genomic.fna.zst | zstd -dc \
+                    | seqkit grep -f results/released_accessions.txt >{output.dataset_sequences}
+            else
+                curl -fsS {params.mirror_prefix}.genomic.fna.zst | zstd -dc >{output.dataset_sequences}
+            fi
+        elif [[ "{params.use_mirror}" == "True" ]]; then
             curl {params.mirror_url} -o {params.compressed_package_tzst}
             tar xvf {params.compressed_package_tzst} -C results
         else
             datasets download virus genome taxon {params.taxon_id} \
                 --no-progressbar \
                 --filename {params.compressed_package_zip} \
-                {params.api_key} \
                 {params.gateway} \
+                {params.released_after} \
                 && {params.unzip} \
                     -o {params.compressed_package_zip} \
                     -d results
@@ -177,12 +231,10 @@ rule format_ncbi_dataset_sequences:
         ncbi_dataset_sequences="results/sequences.fasta",
     shell:
         """
+        # one pass; the stats/hash logging used three more full passes (minutes for SARS-CoV-2)
         seqkit seq -w0 -i \
             {input.dataset_sequences} \
             >{output.ncbi_dataset_sequences}
-        echo "Stats of NCBI dataset sequences: $(seqkit stats {output.ncbi_dataset_sequences})"
-        echo "seqkit hash of NCBI dataset sequences: $(seqkit sum -a -s {output.ncbi_dataset_sequences})"
-        echo "Plain hash of NCBI dataset sequences: $(md5sum {output.ncbi_dataset_sequences})"
         """
 
 
@@ -408,7 +460,6 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
             marker="results/{source}_assembly/.fetch_inflate_complete",
         params:
             taxon_id=TAXON_ID,
-            api_key=f"--api-key {NCBI_API_KEY}" if NCBI_API_KEY else "",
             gateway=f"--gateway-url {NCBI_GATEWAY_URL}" if NCBI_GATEWAY_URL else "",
             use_mirror=bool(MIRROR_BUCKET),
             mirror_url=lambda wc: f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}-assembly-{wc.source}.tar.zst",
@@ -427,7 +478,6 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
                     --assembly-source {wildcards.source} \
                     --no-progressbar --dehydrated \
                     --filename {params.compressed_package_zip} \
-                    {params.api_key} \
                     {params.gateway} \
                     && {params.unzip} \
                         -o {params.compressed_package_zip} \
@@ -634,11 +684,12 @@ rule get_previous_submissions:
         ...
     """
     input:
-        # Reduce likelihood of race condition of multi-submission
-        # By delaying the start of the script
         script="scripts/call_loculus.py",
-        prepped_metadata=prepped_metadata(),
         config="results/config.yaml",
+        # Segmented: reduce likelihood of race condition of multi-submission by delaying the start of
+        # the script. Non-segmented: select_changed_records needs it first, so fetch it alongside the
+        # NCBI download; the ingest lock init container keeps runs for an organism from overlapping.
+        prepped_metadata=prepped_metadata() if SEGMENTED else [],
     output:
         hashes="results/previous_submissions.ndjson",
     params:
@@ -655,64 +706,133 @@ rule get_previous_submissions:
         """
 
 
-compare_hashes_input = {
-    "script": "scripts/compare_hashes.py",
-    "config": "results/config.yaml",
-    "old_hashes": "results/previous_submissions.ndjson",
-    "metadata": prepped_metadata(),
-}
+if SEGMENTED:
+    compare_hashes_input = {
+        "script": "scripts/compare_hashes.py",
+        "config": "results/config.yaml",
+        "old_hashes": "results/previous_submissions.ndjson",
+        "metadata": prepped_metadata(),
+    }
 
-if MUTED_HASHES_URL:
-    compare_hashes_input["muted_hashes"] = "results/muted_hashes.tsv"
+    if MUTED_HASHES_URL:
+        compare_hashes_input["muted_hashes"] = "results/muted_hashes.tsv"
 
+    rule compare_hashes:
+        input:
+            **compare_hashes_input,
+        output:
+            to_submit="results/to_submit.json",
+            to_revise="results/to_revise.json",
+            to_revoke="results/to_revoke.json",
+            unchanged="results/unchanged.json",
+            blocked="results/blocked.json",
+            sampled_out="results/sampled_out.json",
+        params:
+            log_level=LOG_LEVEL,
+            subsample_fraction=config.get("subsample_fraction", 1.0),
+            muted_hashes=(
+                "--muted-hashes results/muted_hashes.tsv" if MUTED_HASHES_URL else ""
+            ),
+        shell:
+            """
+            python {input.script} \
+                --config-file {input.config} \
+                --old-hashes {input.old_hashes} \
+                {params.muted_hashes} \
+                --metadata {input.metadata} \
+                --to-submit {output.to_submit} \
+                --to-revise {output.to_revise} \
+                --to-revoke {output.to_revoke} \
+                --unchanged {output.unchanged} \
+                --output-blocked {output.blocked} \
+                --sampled-out-file {output.sampled_out} \
+                --log-level {params.log_level} \
+                --subsample-fraction {params.subsample_fraction}
+            """
 
-rule compare_hashes:
-    input:
-        **compare_hashes_input,
-    output:
-        to_submit="results/to_submit.json",
-        to_revise="results/to_revise.json",
-        to_revoke="results/to_revoke.json",
-        unchanged="results/unchanged.json",
-        blocked="results/blocked.json",
-        sampled_out="results/sampled_out.json",
-    params:
-        log_level=LOG_LEVEL,
-        subsample_fraction=config.get("subsample_fraction", 1.0),
-        muted_hashes=(
-            "--muted-hashes results/muted_hashes.tsv" if MUTED_HASHES_URL else ""
-        ),
-    shell:
+else:
+    select_changed_records_input = {
+        "script": "scripts/select_changed_records.py",
+        "config": "results/config.yaml",
+        "dataset_report": "results/ncbi_dataset/data/data_report.jsonl",
+        "dataset_sequences": DATASET_SEQUENCES,
+        "old_hashes": "results/previous_submissions.ndjson",
+    }
+    if STREAM_MIRROR_SEQUENCES and RELEASED_ACCESSIONS:
+        select_changed_records_input["fasta_ids"] = RELEASED_ACCESSIONS
+    if CHECK_ENA_DEPOSITION:
+        select_changed_records_input["exclude_insdc_accessions"] = (
+            "results/accessions_to_exclude.json"
+        )
+    if MUTED_HASHES_URL:
+        select_changed_records_input["muted_hashes"] = "results/muted_hashes.tsv"
+    if APPLY_MINIMIZER:
+        select_changed_records_input["segments"] = "results/nextclade_merged.tsv"
+
+    rule select_changed_records:
+        """Non-segmented organisms: format, filter, prepare, hash and compare the NCBI records in one
+        pass, and write only the records to submit or revise (see the script's docstring)
         """
-        python {input.script} \
-            --config-file {input.config} \
-            --old-hashes {input.old_hashes} \
-            {params.muted_hashes} \
-            --metadata {input.metadata} \
-            --to-submit {output.to_submit} \
-            --to-revise {output.to_revise} \
-            --to-revoke {output.to_revoke} \
-            --unchanged {output.unchanged} \
-            --output-blocked {output.blocked} \
-            --sampled-out-file {output.sampled_out} \
-            --log-level {params.log_level} \
-            --subsample-fraction {params.subsample_fraction}
-        """
+        input:
+            **select_changed_records_input,
+        output:
+            to_submit="results/to_submit.json",
+            to_revise="results/to_revise.json",
+            to_revoke="results/to_revoke.json",
+            unchanged="results/unchanged.json",
+            blocked="results/blocked.json",
+            sampled_out="results/sampled_out.json",
+            metadata="results/changed_metadata.ndjson",
+            sequences="results/changed_sequences.ndjson",
+        params:
+            log_level=LOG_LEVEL,
+            subsample_fraction=config.get("subsample_fraction", 1.0),
+            optional_inputs=lambda wildcards, input: " ".join(
+                f"--{name.replace('_', '-')} {input[name]}"
+                for name in [
+                    "exclude_insdc_accessions",
+                    "muted_hashes",
+                    "segments",
+                    "fasta_ids",
+                ]
+                if name in input.keys()
+            ),
+        shell:
+            """
+            python {input.script} \
+                --config-file {input.config} \
+                --dataset-report {input.dataset_report} \
+                --sequences {input.dataset_sequences} \
+                --old-hashes {input.old_hashes} \
+                {params.optional_inputs} \
+                --subsample-fraction {params.subsample_fraction} \
+                --to-submit {output.to_submit} \
+                --to-revise {output.to_revise} \
+                --to-revoke {output.to_revoke} \
+                --unchanged {output.unchanged} \
+                --output-blocked {output.blocked} \
+                --sampled-out-file {output.sampled_out} \
+                --output-metadata {output.metadata} \
+                --output-sequences {output.sequences} \
+                --log-level {params.log_level}
+            """
 
 
 rule prepare_files:
     input:
         script="scripts/prepare_files.py",
         config="results/config.yaml",
-        metadata=prepped_metadata(),
+        metadata=(
+            prepped_metadata() if SEGMENTED else "results/changed_metadata.ndjson"
+        ),
         sequences=(
-            "results/sequences_filtered.ndjson"
-            if FILTER
-            else (
-                "results/sequences_post_group.ndjson"
-                if SEGMENTED
-                else "results/sequences.ndjson"
+            (
+                "results/sequences_filtered.ndjson"
+                if FILTER
+                else "results/sequences_post_group.ndjson"
             )
+            if SEGMENTED
+            else "results/changed_sequences.ndjson"
         ),
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",

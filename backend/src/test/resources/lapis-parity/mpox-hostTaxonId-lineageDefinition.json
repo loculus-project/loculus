@@ -1,0 +1,335 @@
+{
+  "1": {
+    "aliases": ["root [Taxon 1]"]
+  },
+  "131567": {
+    "parents": ["1"],
+    "aliases": ["cellular organisms [Taxon 131567]"]
+  },
+  "2759": {
+    "parents": ["131567"],
+    "aliases": ["Eukaryota; eukaryotes [Taxon 2759]"]
+  },
+  "33154": {
+    "parents": ["2759"],
+    "aliases": ["Opisthokonta [Taxon 33154]"]
+  },
+  "33208": {
+    "parents": ["33154"],
+    "aliases": [
+      "Metazoa; animals; metazoans; multicellular animals [Taxon 33208]"
+    ]
+  },
+  "6072": {
+    "parents": ["33208"],
+    "aliases": ["Eumetazoa [Taxon 6072]"]
+  },
+  "33213": {
+    "parents": ["6072"],
+    "aliases": ["Bilateria [Taxon 33213]"]
+  },
+  "33511": {
+    "parents": ["33213"],
+    "aliases": ["Deuterostomia; deuterostomes [Taxon 33511]"]
+  },
+  "7711": {
+    "parents": ["33511"],
+    "aliases": ["Chordata; chordates [Taxon 7711]"]
+  },
+  "89593": {
+    "parents": ["7711"],
+    "aliases": ["Craniata [Taxon 89593]"]
+  },
+  "7742": {
+    "parents": ["89593"],
+    "aliases": ["Vertebrata; vertebrates [Taxon 7742]"]
+  },
+  "7776": {
+    "parents": ["7742"],
+    "aliases": ["Gnathostomata; jawed vertebrates [Taxon 7776]"]
+  },
+  "117570": {
+    "parents": ["7776"],
+    "aliases": ["Teleostomi [Taxon 117570]"]
+  },
+  "117571": {
+    "parents": ["117570"],
+    "aliases": ["Euteleostomi; bony vertebrates [Taxon 117571]"]
+  },
+  "8287": {
+    "parents": ["117571"],
+    "aliases": ["Sarcopterygii [Taxon 8287]"]
+  },
+  "1338369": {
+    "parents": ["8287"],
+    "aliases": ["Dipnotetrapodomorpha [Taxon 1338369]"]
+  },
+  "32523": {
+    "parents": ["1338369"],
+    "aliases": ["Tetrapoda; tetrapods [Taxon 32523]"]
+  },
+  "32524": {
+    "parents": ["32523"],
+    "aliases": ["Amniota; amniotes [Taxon 32524]"]
+  },
+  "40674": {
+    "parents": ["32524"],
+    "aliases": ["Mammalia; mammals [Taxon 40674]"]
+  },
+  "32525": {
+    "parents": ["40674"],
+    "aliases": ["Theria [Taxon 32525]"]
+  },
+  "9347": {
+    "parents": ["32525"],
+    "aliases": [
+      "Eutheria; eutherian mammals; placental mammals; placentals [Taxon 9347]"
+    ]
+  },
+  "9348": {
+    "parents": ["9347"],
+    "aliases": ["Xenarthra; armadillos and others [Taxon 9348]"]
+  },
+  "1437010": {
+    "parents": ["9347"],
+    "aliases": ["Boreoeutheria [Taxon 1437010]"]
+  },
+  "314146": {
+    "parents": ["1437010"],
+    "aliases": ["Euarchontoglires [Taxon 314146]"]
+  },
+  "948950": {
+    "parents": ["9348"],
+    "aliases": ["Pilosa [Taxon 948950]"]
+  },
+  "9443": {
+    "parents": ["314146"],
+    "aliases": ["Primates; primates [Taxon 9443]"]
+  },
+  "314147": {
+    "parents": ["314146"],
+    "aliases": ["Glires; Rodents and rabbits [Taxon 314147]"]
+  },
+  "948952": {
+    "parents": ["948950"],
+    "aliases": ["Vermilingua [Taxon 948952]"]
+  },
+  "9349": {
+    "parents": ["948952"],
+    "aliases": ["Myrmecophagidae; anteaters [Taxon 9349]"]
+  },
+  "9989": {
+    "parents": ["314147"],
+    "aliases": ["Rodentia; rodent; rodents [Taxon 9989]"]
+  },
+  "376913": {
+    "parents": ["9443"],
+    "aliases": ["Haplorrhini [Taxon 376913]"]
+  },
+  "33553": {
+    "parents": ["9989"],
+    "aliases": ["Sciuromorpha; squirrels [Taxon 33553]"]
+  },
+  "71005": {
+    "parents": ["9349"],
+    "aliases": ["Myrmecophaga [Taxon 71005]"]
+  },
+  "314293": {
+    "parents": ["376913"],
+    "aliases": ["Simiiformes [Taxon 314293]"]
+  },
+  "1963758": {
+    "parents": ["9989"],
+    "aliases": ["Myomorpha; mice and others [Taxon 1963758]"]
+  },
+  "9479": {
+    "parents": ["314293"],
+    "aliases": ["Platyrrhini; New World monkeys; monkey; monkeys [Taxon 9479]"]
+  },
+  "9526": {
+    "parents": ["314293"],
+    "aliases": ["Catarrhini [Taxon 9526]"]
+  },
+  "30650": {
+    "parents": ["33553"],
+    "aliases": ["Gliridae; dormice [Taxon 30650]"]
+  },
+  "55153": {
+    "parents": ["33553"],
+    "aliases": ["Sciuridae [Taxon 55153]"]
+  },
+  "71006": {
+    "parents": ["71005"],
+    "aliases": ["Myrmecophaga tridactyla; giant anteater [Taxon 71006]"]
+  },
+  "337687": {
+    "parents": ["1963758"],
+    "aliases": ["Muroidea [Taxon 337687]"]
+  },
+  "9498": {
+    "parents": ["9479"],
+    "aliases": ["Cebidae [Taxon 9498]"]
+  },
+  "10066": {
+    "parents": ["337687"],
+    "aliases": ["Muridae [Taxon 10066]"]
+  },
+  "314294": {
+    "parents": ["9526"],
+    "aliases": ["Cercopithecoidea [Taxon 314294]"]
+  },
+  "314295": {
+    "parents": ["9526"],
+    "aliases": ["Hominoidea; ape; apes [Taxon 314295]"]
+  },
+  "337673": {
+    "parents": ["337687"],
+    "aliases": ["Nesomyidae [Taxon 337673]"]
+  },
+  "337724": {
+    "parents": ["55153"],
+    "aliases": ["Callosciurinae [Taxon 337724]"]
+  },
+  "337726": {
+    "parents": ["55153"],
+    "aliases": ["Xerinae [Taxon 337726]"]
+  },
+  "9480": {
+    "parents": ["9498"],
+    "aliases": ["Callitrichinae; marmosets and tamarins [Taxon 9480]"]
+  },
+  "9527": {
+    "parents": ["314294"],
+    "aliases": [
+      "Cercopithecidae; Old World monkeys; monkey; monkeys [Taxon 9527]"
+    ]
+  },
+  "9604": {
+    "parents": ["314295"],
+    "aliases": ["Hominidae; great apes [Taxon 9604]"]
+  },
+  "39107": {
+    "parents": ["10066"],
+    "aliases": ["Murinae [Taxon 39107]"]
+  },
+  "40142": {
+    "parents": ["337673"],
+    "aliases": ["Cricetomyinae [Taxon 40142]"]
+  },
+  "337730": {
+    "parents": ["337726"],
+    "aliases": ["Marmotini [Taxon 337730]"]
+  },
+  "337737": {
+    "parents": ["337724"],
+    "aliases": ["Funambulini [Taxon 337737]"]
+  },
+  "9481": {
+    "parents": ["9480"],
+    "aliases": ["Callithrix [Taxon 9481]"]
+  },
+  "9528": {
+    "parents": ["9527"],
+    "aliases": ["Cercopithecinae [Taxon 9528]"]
+  },
+  "10084": {
+    "parents": ["40142"],
+    "aliases": ["Cricetomys [Taxon 10084]"]
+  },
+  "10111": {
+    "parents": ["39107"],
+    "aliases": ["Praomys; African soft-furred rats [Taxon 10111]"]
+  },
+  "45478": {
+    "parents": ["337730"],
+    "aliases": ["Cynomys [Taxon 45478]"]
+  },
+  "47972": {
+    "parents": ["337737"],
+    "aliases": ["Paraxerus; African bush squirrels [Taxon 47972]"]
+  },
+  "207598": {
+    "parents": ["9604"],
+    "aliases": ["Homininae [Taxon 207598]"]
+  },
+  "226679": {
+    "parents": ["337737"],
+    "aliases": ["Funisciurus; rope squirrels [Taxon 226679]"]
+  },
+  "9529": {
+    "parents": ["9528"],
+    "aliases": ["Cercocebus [Taxon 9529]"]
+  },
+  "9539": {
+    "parents": ["9528"],
+    "aliases": ["Macaca; macaque; macaques [Taxon 9539]"]
+  },
+  "9596": {
+    "parents": ["207598"],
+    "aliases": ["Pan; chimpanzees [Taxon 9596]"]
+  },
+  "9605": {
+    "parents": ["207598"],
+    "aliases": ["Homo; humans [Taxon 9605]"]
+  },
+  "10085": {
+    "parents": ["10084"],
+    "aliases": [
+      "Cricetomys gambianus; Gambia rat; Gambian giant pouched rat; Gambian rat [Taxon 10085]"
+    ]
+  },
+  "209866": {
+    "parents": ["10111"],
+    "aliases": ["Praomys jacksoni [Taxon 209866]"]
+  },
+  "226680": {
+    "parents": ["226679"],
+    "aliases": [
+      "Funisciurus pyrropus; fire-footed rope squirrel [Taxon 226680]"
+    ]
+  },
+  "1235483": {
+    "parents": ["226679"],
+    "aliases": ["Funisciurus anerythrus; Thomas' rope squirrel [Taxon 1235483]"]
+  },
+  "1965096": {
+    "parents": ["9481"],
+    "aliases": ["Callithrix [Taxon 1965096]"]
+  },
+  "2819860": {
+    "parents": ["226679"],
+    "aliases": ["Funisciurus bayonii [Taxon 2819860]"]
+  },
+  "9483": {
+    "parents": ["1965096"],
+    "aliases": [
+      "Callithrix jacchus; common marmoset; white ear-tufted marmoset; white-tufted-ear marmoset [Taxon 9483]"
+    ]
+  },
+  "9531": {
+    "parents": ["9529"],
+    "aliases": ["Cercocebus atys; sooty mangabey [Taxon 9531]"]
+  },
+  "9541": {
+    "parents": ["9539"],
+    "aliases": [
+      "Macaca fascicularis; crab eating macaque; crab-eating macaque; cynomolgus macaque; cynomolgus monkey; cynomolgus monkeys; long-tailed macaque [Taxon 9541]"
+    ]
+  },
+  "9598": {
+    "parents": ["9596"],
+    "aliases": ["Pan troglodytes; chimpanzee [Taxon 9598]"]
+  },
+  "9606": {
+    "parents": ["9605"],
+    "aliases": ["Homo sapiens; human [Taxon 9606]"]
+  },
+  "255237": {
+    "parents": ["9529"],
+    "aliases": ["Cercocebus agilis; agile mangabey [Taxon 255237]"]
+  },
+  "37012": {
+    "parents": ["9598"],
+    "aliases": ["Pan troglodytes verus; West African chimpanzee [Taxon 37012]"]
+  }
+}

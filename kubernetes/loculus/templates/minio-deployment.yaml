@@ -35,6 +35,10 @@ spec:
     matchLabels:
       app: loculus
       component: minio
+  {{- if .Values.developmentS3.storageSize }}
+  strategy:
+    type: Recreate
+  {{- end }}
   template:
     metadata:
       labels:
@@ -46,6 +50,11 @@ spec:
         - name: policy-volume
           configMap:
             name: minio-policies
+        {{- if .Values.developmentS3.storageSize }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: minio-data
+        {{- end }}
       containers:
         - name: minio
           image: ghcr.io/loculus-project/mirror/minio:RELEASE.2025-09-07T16-13-09Z
@@ -98,5 +107,21 @@ spec:
           volumeMounts:
             - name: policy-volume
               mountPath: /policy
+            {{- if .Values.developmentS3.storageSize }}
+            - name: data
+              mountPath: /data
+            {{- end }}
       restartPolicy: Always
+{{- if .Values.developmentS3.storageSize }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-data
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: {{ .Values.developmentS3.storageSize }}
+{{- end }}
 {{- end }}

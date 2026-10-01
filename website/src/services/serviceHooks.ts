@@ -5,6 +5,7 @@ import { isAxiosError } from 'axios';
 
 import { backendApi } from './backendApi.ts';
 import { lapisApi } from './lapisApi.ts';
+import { getLapisAxios } from './lapisCache/browserLapisAxios.ts';
 import { seqSetCitationApi } from './seqSetCitationApi.ts';
 import {
     ACCESSION_FIELD,
@@ -35,8 +36,14 @@ export function backendClientHooks(clientConfig: ClientConfig) {
     return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, backendApi));
 }
 
-export function lapisClientHooks(lapisUrl: string) {
-    const zodiosHooks = new ZodiosHooks('lapis', new Zodios(lapisUrl, lapisApi, { transform: false }));
+export function lapisClientHooks(lapisUrl: string, lapisIsQueryEngine = false) {
+    const zodiosHooks = new ZodiosHooks(
+        'lapis',
+        new Zodios(lapisUrl, lapisApi, {
+            transform: false,
+            axiosInstance: getLapisAxios(lapisUrl, lapisIsQueryEngine),
+        }),
+    );
     return {
         // All POST hooks must include retry options manually to enable retries
         useAggregated: () => zodiosHooks.useAggregated({}, { ...LAPIS_RETRY_OPTIONS }),
@@ -136,7 +143,7 @@ export function useSequenceEntryHistory(
     return useQuery({
         queryKey: ['sequence-entry-history', lapisUrl, accession],
         queryFn: async (): Promise<SequenceEntryHistory> => {
-            const client = new Zodios(lapisUrl, lapisApi, { transform: false });
+            const client = new Zodios(lapisUrl, lapisApi, { transform: false, axiosInstance: getLapisAxios(lapisUrl) });
 
             // @ts-expect-error Zod issue: https://github.com/colinhacks/zod/issues/3136
             const response = await client.details({

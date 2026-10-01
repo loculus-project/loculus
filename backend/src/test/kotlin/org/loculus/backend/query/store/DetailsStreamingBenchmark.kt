@@ -1,10 +1,12 @@
 package org.loculus.backend.query.store
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.mockk.mockk
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
+import org.loculus.backend.config.QueryEngineOrganismConfig
 import org.loculus.backend.query.api.FakeIndex
 import org.loculus.backend.query.api.LapisInfo
 import org.loculus.backend.query.api.LapisQueryExecutor
@@ -14,7 +16,6 @@ import org.loculus.backend.query.request.QueryRequest
 import org.loculus.backend.query.schema.FieldType
 import org.loculus.backend.query.schema.MetadataField
 import org.loculus.backend.query.schema.QuerySchema
-import org.loculus.backend.query.schema.SiloConfigReader
 import java.io.File
 import java.io.OutputStream
 
@@ -22,7 +23,7 @@ import java.io.OutputStream
  * Manual benchmark of the /details streaming path against a database with a filled (real) query_entries table
  * (read only). Run with e.g.
  *   QUERY_ENGINE_DETAILS_BENCHMARK_DB='jdbc:postgresql://localhost:5433/loculus?user=postgres&password=password' \
- *   QUERY_ENGINE_DETAILS_BENCHMARK_CONFIG=/path/to/query-config/dummy-organism/database_config.yaml \
+ *   QUERY_ENGINE_DETAILS_BENCHMARK_CONFIG=/path/to/backend_config.json \
  *   ./gradlew test --tests 'org.loculus.backend.query.store.DetailsStreamingBenchmark'
  */
 @EnabledIfEnvironmentVariable(named = "QUERY_ENGINE_DETAILS_BENCHMARK_DB", matches = ".+")
@@ -33,19 +34,23 @@ class DetailsStreamingBenchmark {
     fun benchmark() {
         val url = System.getenv("QUERY_ENGINE_DETAILS_BENCHMARK_DB")
         val dataSource = HikariDataSource(HikariConfig().apply { jdbcUrl = url })
-        val store = PostgresQueryStore(dataSource, mockk())
+        val store = PostgresQueryStore(dataSource, mockk(), ExportChunkLimiter.unlimited())
         val ids = dataSource.connection.use { c ->
             c.prepareStatement("select id from query_entries where organism = ? order by id").use { st ->
                 st.setString(1, organism)
                 st.executeQuery().use { rs -> buildList { while (rs.next()) add(rs.getInt(1)) }.toIntArray() }
             }
         }
-        val config = SiloConfigReader.readDatabaseConfig(File(System.getenv("QUERY_ENGINE_DETAILS_BENCHMARK_CONFIG")))
+        val backendConfig = jacksonObjectMapper().readTree(File(System.getenv("QUERY_ENGINE_DETAILS_BENCHMARK_CONFIG")))
+        val config = jacksonObjectMapper().treeToValue(
+            backendConfig["organisms"][organism]["queryEngine"],
+            QueryEngineOrganismConfig::class.java,
+        )
         val schema = QuerySchema(
             organism = organism,
             instanceName = "bench",
-            primaryKey = config.schema.primaryKey,
-            metadata = config.schema.metadata.map { MetadataField(it.name, FieldType.fromSilo(it.type)) },
+            primaryKey = QuerySchema.PRIMARY_KEY,
+            metadata = config.metadata.map { MetadataField(it.name, FieldType.fromLoculus(it.type)) },
             nucleotideSequences = emptyList(),
             genes = emptyList(),
             features = emptySet(),

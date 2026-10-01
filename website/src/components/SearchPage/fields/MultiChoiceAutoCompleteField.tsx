@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { createOptionsProviderHook, type OptionsProvider } from './AutoCompleteOptions.ts';
+import {
+    createOptionsProviderHook,
+    DEFAULT_MAX_DISPLAYED_OPTIONS,
+    type OptionsProvider,
+} from './AutoCompleteOptions.ts';
 import { FloatingLabelContainer } from './FloatingLabelContainer.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
@@ -33,7 +37,7 @@ export const MultiChoiceAutoCompleteField = ({
     optionsProvider,
     setSomeFieldValues,
     fieldValues,
-    maxDisplayedOptions = 1000,
+    maxDisplayedOptions = DEFAULT_MAX_DISPLAYED_OPTIONS,
 }: MultiChoiceAutoCompleteFieldProps) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const [query, setQuery] = useState('');
@@ -54,13 +58,15 @@ export const MultiChoiceAutoCompleteField = ({
         }
     }, [error]);
 
-    const filteredOptions = useMemo(() => {
-        const allMatchedOptions =
-            query === ''
-                ? options
-                : options.filter((option) => option.option.toLowerCase().includes(query.toLowerCase()));
-        return allMatchedOptions.slice(0, maxDisplayedOptions);
-    }, [options, query, maxDisplayedOptions]);
+    const allMatchedOptions = useMemo(() => {
+        const lowerQuery = query.toLowerCase();
+        return query === '' ? options : options.filter((o) => o.option.toLowerCase().includes(lowerQuery));
+    }, [options, query]);
+    const filteredOptions = useMemo(
+        () => allMatchedOptions.slice(0, maxDisplayedOptions),
+        [allMatchedOptions, maxDisplayedOptions],
+    );
+    const hiddenOptionCount = allMatchedOptions.length - filteredOptions.length;
 
     const handleChange = (value: string[] | null) => {
         if (!value || value.length === 0) {
@@ -188,7 +194,7 @@ export const MultiChoiceAutoCompleteField = ({
                                         onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
-                                            const allValues = filteredOptions.map((opt) => opt.value);
+                                            const allValues = allMatchedOptions.map((opt) => opt.value);
                                             handleChange(allValues);
                                         }}
                                     >
@@ -206,9 +212,12 @@ export const MultiChoiceAutoCompleteField = ({
                                         Select none
                                     </Button>
                                 </div>
-                                {filteredOptions.map((option) => (
+                                {filteredOptions.map((option, index) => (
                                     <ComboboxOption
                                         key={option.option}
+                                        // Render order, so headlessui sorts registrations numerically instead of by
+                                        // DOM position (compareDocumentPosition); must match the order on screen.
+                                        order={index}
                                         className={({ focus }) =>
                                             `relative cursor-default select-none py-2 pl-10 pr-4 ${
                                                 focus ? 'bg-blue-500 text-white' : 'text-gray-900'
@@ -243,6 +252,12 @@ export const MultiChoiceAutoCompleteField = ({
                                         }}
                                     </ComboboxOption>
                                 ))}
+                                {hiddenOptionCount > 0 && (
+                                    <div className='px-4 py-2 text-sm italic text-gray-500'>
+                                        …and {formatNumberWithDefaultLocale(hiddenOptionCount)} more, type to narrow
+                                        down
+                                    </div>
+                                )}
                             </>
                         )}
                     </ComboboxOptions>

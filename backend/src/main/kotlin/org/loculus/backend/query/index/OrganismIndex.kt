@@ -36,6 +36,13 @@ interface OrganismIndex {
     /** epoch seconds of the last change applied (LAPIS dataVersion) */
     val dataVersion: Long
 
+    /**
+     * Opaque token that changes whenever the index's content changes, and is never shared by two index instances.
+     * Unlike [dataVersion] it is updated inside the write that changes the content, so a request that reads it
+     * before and after executing and sees the same value was answered from that one state (response ETags).
+     */
+    val contentToken: String get() = dataVersion.toString()
+
     /** ids of all live entries matching [filter] */
     fun evaluate(filter: Filter): RoaringBitmap
 

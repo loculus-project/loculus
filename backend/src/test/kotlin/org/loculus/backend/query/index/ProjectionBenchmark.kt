@@ -1,8 +1,10 @@
 package org.loculus.backend.query.index
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
+import org.loculus.backend.config.QueryEngineOrganismConfig
 import org.loculus.backend.config.ReferenceGenome
 import org.loculus.backend.config.ReferenceSequence
 import org.loculus.backend.query.filter.And
@@ -14,7 +16,7 @@ import org.loculus.backend.query.filter.SymbolEquals
 import org.loculus.backend.query.filter.True
 import org.loculus.backend.query.schema.QuerySchema
 import org.loculus.backend.query.schema.SequenceType
-import org.loculus.backend.query.schema.SiloConfigReader
+import org.loculus.backend.query.store.ZstdDictionaryCache
 import org.roaringbitmap.RoaringBitmap
 import java.io.File
 import java.sql.DriverManager
@@ -25,7 +27,7 @@ import java.time.LocalDate
  * loading path. Opt-in:
  *
  *   QUERY_INDEX_BENCHMARK=1 TEST_MAX_HEAP=16g QUERY_INDEX_PG_URL='jdbc:postgresql://localhost:5433/loculus?user=postgres&password=password' \
- *   QUERY_CONFIG_DIR=/path/to/query-config SC2_BACKEND_CONFIG=/path/to/backend_config.json \
+ *   SC2_BACKEND_CONFIG=/path/to/backend_config.json \
  *   ./gradlew test --tests '*ProjectionBenchmark*'
  */
 @EnabledIfEnvironmentVariable(named = "QUERY_INDEX_BENCHMARK", matches = "1")
@@ -42,16 +44,15 @@ class ProjectionBenchmark {
             ref["nucleotideSequences"].map { ReferenceSequence(it["name"].asText(), it["sequence"].asText()) },
             ref["genes"].map { ReferenceSequence(it["name"].asText(), it["sequence"].asText()) },
         )
-        val dbConfig = SiloConfigReader.readDatabaseConfig(
-            File(System.getenv("QUERY_CONFIG_DIR"), "$organism/database_config.yaml"),
-        )
-        return QuerySchema.build(organism, dbConfig, genome, emptyMap())
+        val queryConfig = jacksonObjectMapper()
+            .treeToValue(config["organisms"][organism]["queryEngine"], QueryEngineOrganismConfig::class.java)
+        return QuerySchema.build(organism, organism, queryConfig, genome)
     }
 
     @Test
     fun projection() {
         val schema = schema()
-        val reader = ProjectionReader(schema)
+        val reader = ProjectionReader(schema, ZstdDictionaryCache { error("no dictionaries") })
         val started = System.nanoTime()
         val maxId = DriverManager.getConnection(url).use { c ->
             c.createStatement().use { st ->
@@ -149,7 +150,7 @@ class ProjectionBenchmark {
         val main = index.sequenceIndex(0)
         val swissMain = RoaringBitmap.and(swiss, main.present)
         cases += "missing counts over Switzerland (main)" to { main.missingCountsOver(swissMain) }
-        cases += "missing counts over all (main)" to { main.runs.countsOver(null) }
+        cases += "missing counts over all (main)" to { main.missing.table.countsOver(null) }
         cases += "missingAt(15000) (main)" to { main.missingAt(15000) }
         for ((name, block) in cases) bench(name, block)
         val updateRows = reader.readIds(loaderConnection, (0 until 96).map { it * 10_007 })
@@ -195,7 +196,7 @@ class ProjectionBenchmark {
         val t1 = System.nanoTime()
         repeat(5) { seq.missingCountsOver(filter) }
         println(
-            "    missing counts over filter: ${(System.nanoTime() - t1) / 5_000_000.0} ms (${seq.runs.runCount} runs)",
+            "    missing counts over filter: ${(System.nanoTime() - t1) / 5_000_000.0} ms (${seq.missing.table.runCount} runs)",
         )
         val t2 = System.nanoTime()
         repeat(5) { seq.missingAt(15000) }

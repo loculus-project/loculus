@@ -1,6 +1,11 @@
 import { type InputHTMLAttributes, useEffect, useMemo, useState, forwardRef } from 'react';
 
-import { createOptionsProviderHook, type OptionsProvider } from './AutoCompleteOptions.ts';
+import {
+    createOptionsProviderHook,
+    DEFAULT_MAX_DISPLAYED_OPTIONS,
+    optionCollator,
+    type OptionsProvider,
+} from './AutoCompleteOptions.ts';
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
@@ -49,7 +54,7 @@ export const SingleChoiceAutoCompleteField = ({
     setSomeFieldValues,
     fieldValue,
     fieldDisplayNameMap,
-    maxDisplayedOptions = 1000,
+    maxDisplayedOptions = DEFAULT_MAX_DISPLAYED_OPTIONS,
 }: SingleChoiceAutoCompleteFieldProps) => {
     const [query, setQuery] = useState('');
 
@@ -64,24 +69,29 @@ export const SingleChoiceAutoCompleteField = ({
 
     const valueToLabel = useMemo(() => new Map(options.map((o) => [o.value, o.option])), [options]);
 
-    const filteredOptions = useMemo(() => {
-        const allMatchedOptions =
-            query === ''
+    // Options arrive sorted by option; only a display-name map can change the order.
+    const sortedOptions = useMemo(
+        () =>
+            fieldDisplayNameMap === undefined
                 ? options
-                : options.filter((option) => option.option.toLowerCase().includes(query.toLowerCase()));
-        // Sort options by display name if displayNameMap is provided, otherwise by option value
-        const displayedOptions = allMatchedOptions.sort((a, b) =>
-            (fieldDisplayNameMap?.get(a.option) ?? a.option).localeCompare(
-                fieldDisplayNameMap?.get(b.option) ?? b.option,
-                'en',
-                {
-                    numeric: true,
-                    sensitivity: 'base',
-                },
-            ),
-        );
-        return displayedOptions.slice(0, maxDisplayedOptions);
-    }, [options, query, maxDisplayedOptions, fieldDisplayNameMap]);
+                : [...options].sort((a, b) =>
+                      optionCollator.compare(
+                          fieldDisplayNameMap.get(a.option) ?? a.option,
+                          fieldDisplayNameMap.get(b.option) ?? b.option,
+                      ),
+                  ),
+        [options, fieldDisplayNameMap],
+    );
+
+    const { filteredOptions, hiddenOptionCount } = useMemo(() => {
+        const lowerQuery = query.toLowerCase();
+        const allMatchedOptions =
+            query === '' ? sortedOptions : sortedOptions.filter((o) => o.option.toLowerCase().includes(lowerQuery));
+        return {
+            filteredOptions: allMatchedOptions.slice(0, maxDisplayedOptions),
+            hiddenOptionCount: Math.max(0, allMatchedOptions.length - maxDisplayedOptions),
+        };
+    }, [sortedOptions, query, maxDisplayedOptions]);
 
     const handleChange = (value: string | number | null) => {
         const finalValue = value === NULL_QUERY_VALUE ? null : (value?.toString() ?? '');
@@ -136,9 +146,12 @@ export const SingleChoiceAutoCompleteField = ({
                             <div className='px-4 py-2 text-gray-500'>No options available</div>
                         ) : (
                             <>
-                                {filteredOptions.map((option) => (
+                                {filteredOptions.map((option, index) => (
                                     <ComboboxOption
                                         key={option.option}
+                                        // Render order, so headlessui sorts registrations numerically instead of by
+                                        // DOM position (compareDocumentPosition); must match the order on screen.
+                                        order={index}
                                         className={({ focus }) =>
                                             `relative cursor-default select-none py-2 pl-10 pr-4 ${
                                                 focus ? 'bg-blue-500 text-white' : 'text-gray-900'
@@ -173,6 +186,12 @@ export const SingleChoiceAutoCompleteField = ({
                                         }}
                                     </ComboboxOption>
                                 ))}
+                                {hiddenOptionCount > 0 && (
+                                    <div className='px-4 py-2 text-sm italic text-gray-500'>
+                                        …and {formatNumberWithDefaultLocale(hiddenOptionCount)} more, type to narrow
+                                        down
+                                    </div>
+                                )}
                             </>
                         )}
                     </ComboboxOptions>

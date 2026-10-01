@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button } from '../common/Button';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
@@ -10,7 +10,6 @@ import {
 import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
 import { LinkOutMenu } from './DownloadDialog/LinkOutMenu.tsx';
 import { FieldFilterSet, SequenceEntrySelection, type SequenceFilter } from './DownloadDialog/SequenceFilters.tsx';
-import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
@@ -33,6 +32,7 @@ import {
     getColumnVisibilitiesFromQuery,
     getFieldVisibilitiesFromQuery,
     MetadataFilterSchema,
+    searchRequestKey,
 } from '../../utils/search.ts';
 import { getSegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
@@ -51,6 +51,8 @@ export interface InnerSearchFullUIProps {
     hiddenFieldValues?: FieldValues;
     initialData: TableSequenceData[];
     initialCount: number;
+    /** Key of the server-side requests behind `initialData`/`initialCount`, undefined if they failed. */
+    initialDataRequestKey?: string;
     initialQueryDict: QueryState;
     showEditDataUseTermsControls?: boolean;
     dataUseTermsEnabled?: boolean;
@@ -82,6 +84,7 @@ const InnerSearchFullUI = ({
     hiddenFieldValues,
     initialData,
     initialCount,
+    initialDataRequestKey,
     initialQueryDict,
     showEditDataUseTermsControls = false,
     dataUseTermsEnabled = true,
@@ -164,7 +167,7 @@ const InnerSearchFullUI = ({
         schema.richFastaHeaderFields,
     );
 
-    const hooks = lapisClientHooks(lapisUrl);
+    const hooks = lapisClientHooks(lapisUrl, clientConfig.lapisIsQueryEngine);
     const aggregatedHook = hooks.useAggregated();
     const detailsHook = hooks.useDetails();
 
@@ -191,28 +194,41 @@ const InnerSearchFullUI = ({
 
     const downloadFilter: SequenceFilter = sequencesSelected ? new SequenceEntrySelection(selectedSeqs) : tableFilter;
 
+    // Skip fetching while the query is still the one SSR answered; the first client fetch clears it.
+    const serverSideRequestKey = useRef(initialDataRequestKey);
+    const serverSideResultsAreCurrent = initialDataRequestKey !== undefined && aggregatedHook.isIdle;
+
     useEffect(() => {
-        aggregatedHook.mutate({
+        const aggregatedRequest = {
             ...lapisSearchParameters,
             fields: [],
-        });
+        };
         const OrderByList: OrderBy[] = [
             {
                 field: orderByField,
                 type: orderDirection,
             },
         ];
-        // @ts-expect-error because the hooks don't accept OrderBy
-        detailsHook.mutate({
+        const detailsRequest = {
             ...lapisSearchParameters,
             fields: [...columnsToShow, schema.primaryKey],
             limit: pageSize,
             offset: (page - 1) * pageSize,
             orderBy: OrderByList,
-        });
+        };
+        if (
+            serverSideRequestKey.current !== undefined &&
+            serverSideRequestKey.current === searchRequestKey(detailsRequest, aggregatedRequest)
+        ) {
+            return;
+        }
+        serverSideRequestKey.current = undefined;
+        aggregatedHook.mutate(aggregatedRequest);
+        // @ts-expect-error because the hooks don't accept OrderBy
+        detailsHook.mutate(detailsRequest);
     }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection]);
 
-    const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
+    const totalSequences = serverSideResultsAreCurrent ? initialCount : aggregatedHook.data?.data[0].count;
     const linkOutSequenceCount = downloadFilter.sequenceCount() ?? totalSequences;
 
     const fetchAccessions = useCallback(async (): Promise<string[]> => {
@@ -226,8 +242,12 @@ const InnerSearchFullUI = ({
 
     const [oldData, setOldData] = useState<TableSequenceData[] | null>(null);
     const [oldCount, setOldCount] = useState<number | null>(null);
-    const [firstClientSideLoadOfDataCompleted, setFirstClientSideLoadOfDataCompleted] = useState(false);
-    const [firstClientSideLoadOfCountCompleted, setFirstClientSideLoadOfCountCompleted] = useState(false);
+    const [firstClientSideLoadOfDataCompleted, setFirstClientSideLoadOfDataCompleted] = useState(
+        initialDataRequestKey !== undefined,
+    );
+    const [firstClientSideLoadOfCountCompleted, setFirstClientSideLoadOfCountCompleted] = useState(
+        initialDataRequestKey !== undefined,
+    );
 
     useEffect(() => {
         if (detailsHook.data?.data && oldData !== detailsHook.data.data) {
@@ -242,6 +262,12 @@ const InnerSearchFullUI = ({
             setFirstClientSideLoadOfCountCompleted(true);
         }
     }, [aggregatedHook.data?.data, oldCount]);
+
+    const resultsAreLoading =
+        detailsHook.isPending ||
+        aggregatedHook.isPending ||
+        !firstClientSideLoadOfCountCompleted ||
+        !firstClientSideLoadOfDataCompleted;
 
     const showMutationSearch = schema.submissionDataTypes.consensusSequences;
 
@@ -289,8 +315,6 @@ const InnerSearchFullUI = ({
                 className='flex-1 min-w-0'
                 style={{ paddingBottom: Boolean(previewedSeqId) && previewHalfScreen ? '50vh' : '0' }}
             >
-                <RecentSequencesBanner organism={organism} />
-
                 {(detailsHook.isError || aggregatedHook.isError) &&
                     // @ts-expect-error because response is not expected on error, but does exist
                     (aggregatedHook.error?.response?.status === 503 ? (
@@ -323,17 +347,7 @@ const InnerSearchFullUI = ({
                         </ErrorBox>
                     )}
 
-                <div
-                    className={`
-                        ${
-                            !(firstClientSideLoadOfCountCompleted && firstClientSideLoadOfDataCompleted)
-                                ? 'cursor-wait pointer-events-none'
-                                : detailsHook.isPending || aggregatedHook.isPending
-                                  ? 'opacity-50 pointer-events-none'
-                                  : ''
-                        }
-                        `}
-                >
+                <div>
                     {!tableFilter.isEmpty() && (
                         <div className='pt-3 pb-2'>
                             <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
@@ -341,11 +355,10 @@ const InnerSearchFullUI = ({
                     )}
                     <div className='text-sm text-gray-800 mb-6 justify-between flex flex-wrap gap-4'>
                         <div className='mt-auto'>
-                            {buildSequenceCountText(totalSequences, oldCount, initialCount)}
-                            {detailsHook.isPending ||
-                            aggregatedHook.isPending ||
-                            !firstClientSideLoadOfCountCompleted ||
-                            !firstClientSideLoadOfDataCompleted ? (
+                            <span className={resultsAreLoading ? 'opacity-50' : ''}>
+                                {buildSequenceCountText(totalSequences, oldCount, initialCount)}
+                            </span>
+                            {resultsAreLoading ? (
                                 <span className='ml-3 appearSlowly inline-block'>
                                     <Spinner size='xs' />
                                 </span>
@@ -412,30 +425,33 @@ const InnerSearchFullUI = ({
                         </div>
                     </div>
 
-                    <Table
-                        schema={schema}
-                        data={detailsHook.data?.data ?? oldData ?? initialData}
-                        selectedSeqs={selectedSeqs}
-                        setSelectedSeqs={setSelectedSeqs}
-                        setPreviewedSeqId={(seqId: string | null) => setPreviewedSeqId(seqId)}
-                        previewedSeqId={previewedSeqId}
-                        orderBy={{
-                            field: orderByField,
-                            type: orderDirection,
-                        }}
-                        setOrderByField={setOrderByField}
-                        setOrderDirection={setOrderDirection}
-                        columnsToShow={columnsToShow}
-                    />
+                    {/* Only the rows and pagination wait for results; the toolbar above does not depend on them. */}
+                    <div className={resultsAreLoading ? 'opacity-50 pointer-events-none' : ''}>
+                        <Table
+                            schema={schema}
+                            data={detailsHook.data?.data ?? oldData ?? initialData}
+                            selectedSeqs={selectedSeqs}
+                            setSelectedSeqs={setSelectedSeqs}
+                            setPreviewedSeqId={(seqId: string | null) => setPreviewedSeqId(seqId)}
+                            previewedSeqId={previewedSeqId}
+                            orderBy={{
+                                field: orderByField,
+                                type: orderDirection,
+                            }}
+                            setOrderByField={setOrderByField}
+                            setOrderDirection={setOrderDirection}
+                            columnsToShow={columnsToShow}
+                        />
 
-                    <div className='mt-4 flex justify-center'>
-                        {totalSequences !== undefined && (
-                            <SearchPagination
-                                count={Math.ceil(totalSequences / pageSize)}
-                                page={page}
-                                setPage={setPage}
-                            />
-                        )}
+                        <div className='mt-4 flex justify-center'>
+                            {totalSequences !== undefined && (
+                                <SearchPagination
+                                    count={Math.ceil(totalSequences / pageSize)}
+                                    page={page}
+                                    setPage={setPage}
+                                />
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -444,7 +460,7 @@ const InnerSearchFullUI = ({
 };
 
 export const SearchFullUI = (props: InnerSearchFullUIProps) => {
-    const queryClient = new QueryClient();
+    const [queryClient] = useState(() => new QueryClient());
 
     return (
         <QueryClientProvider client={queryClient}>

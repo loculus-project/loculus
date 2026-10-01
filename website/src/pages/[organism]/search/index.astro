@@ -42,13 +42,18 @@ const referenceGenomesInfo = getReferenceGenomes(cleanedOrganism.key);
 
 // Build initialQueryDict with support for multi-value parameters
 const initialQueryDict = parseUrlSearchParams(Astro.url.searchParams);
-const { data, totalCount } = await performLapisSearchQueries(
+const { data, totalCount, requestKey } = await performLapisSearchQueries(
     initialQueryDict,
     schema,
     referenceGenomesInfo,
     hiddenFieldValues,
     cleanedOrganism.key,
 );
+
+// The default view (no query parameters) may be kept in the page cache, if the server-side queries succeeded
+if (Astro.url.search === '' && requestKey !== undefined) {
+    Astro.locals.pageCacheOrganism = cleanedOrganism.key;
+}
 
 const websiteConfig = getWebsiteConfig();
 const sequenceFlaggingConfig = websiteConfig.sequenceFlagging;
@@ -67,6 +72,7 @@ const contactConfig = getContactConfig(websiteConfig);
         hiddenFieldValues={hiddenFieldValues}
         initialData={data}
         initialCount={totalCount}
+        initialDataRequestKey={requestKey}
         initialQueryDict={initialQueryDict}
         dataUseTermsEnabled={dataUseTermsAreEnabled()}
         dataUseTermsAgreementHTML={getDataUseTermsAgreementHTML()}

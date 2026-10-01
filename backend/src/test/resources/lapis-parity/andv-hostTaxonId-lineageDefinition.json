@@ -1,0 +1,339 @@
+{
+  "1": {
+    "aliases": ["root [Taxon 1]"]
+  },
+  "131567": {
+    "parents": ["1"],
+    "aliases": ["cellular organisms [Taxon 131567]"]
+  },
+  "2759": {
+    "parents": ["131567"],
+    "aliases": ["Eukaryota; eukaryotes [Taxon 2759]"]
+  },
+  "33154": {
+    "parents": ["2759"],
+    "aliases": ["Opisthokonta [Taxon 33154]"]
+  },
+  "33208": {
+    "parents": ["33154"],
+    "aliases": [
+      "Metazoa; animals; metazoans; multicellular animals [Taxon 33208]"
+    ]
+  },
+  "6072": {
+    "parents": ["33208"],
+    "aliases": ["Eumetazoa [Taxon 6072]"]
+  },
+  "33213": {
+    "parents": ["6072"],
+    "aliases": ["Bilateria [Taxon 33213]"]
+  },
+  "33511": {
+    "parents": ["33213"],
+    "aliases": ["Deuterostomia; deuterostomes [Taxon 33511]"]
+  },
+  "7711": {
+    "parents": ["33511"],
+    "aliases": ["Chordata; chordates [Taxon 7711]"]
+  },
+  "89593": {
+    "parents": ["7711"],
+    "aliases": ["Craniata [Taxon 89593]"]
+  },
+  "7742": {
+    "parents": ["89593"],
+    "aliases": ["Vertebrata; vertebrates [Taxon 7742]"]
+  },
+  "7776": {
+    "parents": ["7742"],
+    "aliases": ["Gnathostomata; jawed vertebrates [Taxon 7776]"]
+  },
+  "117570": {
+    "parents": ["7776"],
+    "aliases": ["Teleostomi [Taxon 117570]"]
+  },
+  "117571": {
+    "parents": ["117570"],
+    "aliases": ["Euteleostomi; bony vertebrates [Taxon 117571]"]
+  },
+  "8287": {
+    "parents": ["117571"],
+    "aliases": ["Sarcopterygii [Taxon 8287]"]
+  },
+  "1338369": {
+    "parents": ["8287"],
+    "aliases": ["Dipnotetrapodomorpha [Taxon 1338369]"]
+  },
+  "32523": {
+    "parents": ["1338369"],
+    "aliases": ["Tetrapoda; tetrapods [Taxon 32523]"]
+  },
+  "32524": {
+    "parents": ["32523"],
+    "aliases": ["Amniota; amniotes [Taxon 32524]"]
+  },
+  "40674": {
+    "parents": ["32524"],
+    "aliases": ["Mammalia; mammals [Taxon 40674]"]
+  },
+  "32525": {
+    "parents": ["40674"],
+    "aliases": ["Theria [Taxon 32525]"]
+  },
+  "9347": {
+    "parents": ["32525"],
+    "aliases": [
+      "Eutheria; eutherian mammals; placental mammals; placentals [Taxon 9347]"
+    ]
+  },
+  "1437010": {
+    "parents": ["9347"],
+    "aliases": ["Boreoeutheria [Taxon 1437010]"]
+  },
+  "314145": {
+    "parents": ["1437010"],
+    "aliases": ["Laurasiatheria [Taxon 314145]"]
+  },
+  "314146": {
+    "parents": ["1437010"],
+    "aliases": ["Euarchontoglires [Taxon 314146]"]
+  },
+  "9397": {
+    "parents": ["314145"],
+    "aliases": ["Chiroptera; bats [Taxon 9397]"]
+  },
+  "9443": {
+    "parents": ["314146"],
+    "aliases": ["Primates; primates [Taxon 9443]"]
+  },
+  "314147": {
+    "parents": ["314146"],
+    "aliases": ["Glires; Rodents and rabbits [Taxon 314147]"]
+  },
+  "9989": {
+    "parents": ["314147"],
+    "aliases": ["Rodentia; rodent; rodents [Taxon 9989]"]
+  },
+  "30560": {
+    "parents": ["9397"],
+    "aliases": ["Yangochiroptera [Taxon 30560]"]
+  },
+  "376913": {
+    "parents": ["9443"],
+    "aliases": ["Haplorrhini [Taxon 376913]"]
+  },
+  "9415": {
+    "parents": ["30560"],
+    "aliases": [
+      "Phyllostomidae; American leaf-nosed and vampire bats; leaf-nosed bats [Taxon 9415]"
+    ]
+  },
+  "314293": {
+    "parents": ["376913"],
+    "aliases": ["Simiiformes [Taxon 314293]"]
+  },
+  "1963758": {
+    "parents": ["9989"],
+    "aliases": ["Myomorpha; mice and others [Taxon 1963758]"]
+  },
+  "9526": {
+    "parents": ["314293"],
+    "aliases": ["Catarrhini [Taxon 9526]"]
+  },
+  "40231": {
+    "parents": ["9415"],
+    "aliases": ["Carolliinae [Taxon 40231]"]
+  },
+  "40237": {
+    "parents": ["9415"],
+    "aliases": ["Desmodontinae [Taxon 40237]"]
+  },
+  "337687": {
+    "parents": ["1963758"],
+    "aliases": ["Muroidea [Taxon 337687]"]
+  },
+  "9429": {
+    "parents": ["40237"],
+    "aliases": ["Desmodus [Taxon 9429]"]
+  },
+  "10066": {
+    "parents": ["337687"],
+    "aliases": ["Muridae [Taxon 10066]"]
+  },
+  "40232": {
+    "parents": ["40231"],
+    "aliases": ["Carollia [Taxon 40232]"]
+  },
+  "314295": {
+    "parents": ["9526"],
+    "aliases": ["Hominoidea; ape; apes [Taxon 314295]"]
+  },
+  "337677": {
+    "parents": ["337687"],
+    "aliases": ["Cricetidae [Taxon 337677]"]
+  },
+  "9430": {
+    "parents": ["9429"],
+    "aliases": [
+      "Desmodus rotundus; common vampire bat; vampire bat [Taxon 9430]"
+    ]
+  },
+  "9604": {
+    "parents": ["314295"],
+    "aliases": ["Hominidae; great apes [Taxon 9604]"]
+  },
+  "10026": {
+    "parents": ["337677"],
+    "aliases": ["Cricetinae; hamsters [Taxon 10026]"]
+  },
+  "39107": {
+    "parents": ["10066"],
+    "aliases": ["Murinae [Taxon 39107]"]
+  },
+  "40141": {
+    "parents": ["337677"],
+    "aliases": ["Sigmodontinae [Taxon 40141]"]
+  },
+  "40233": {
+    "parents": ["40232"],
+    "aliases": ["Carollia perspicillata; Seba's short-tailed bat [Taxon 40233]"]
+  },
+  "10035": {
+    "parents": ["10026"],
+    "aliases": ["Mesocricetus [Taxon 10035]"]
+  },
+  "10069": {
+    "parents": ["40141"],
+    "aliases": ["Akodon [Taxon 10069]"]
+  },
+  "10114": {
+    "parents": ["39107"],
+    "aliases": ["Rattus; rat; rats [Taxon 10114]"]
+  },
+  "29105": {
+    "parents": ["40141"],
+    "aliases": ["Calomys [Taxon 29105]"]
+  },
+  "29120": {
+    "parents": ["40141"],
+    "aliases": ["Oligoryzomys [Taxon 29120]"]
+  },
+  "29124": {
+    "parents": ["40141"],
+    "aliases": ["Oxymycterus [Taxon 29124]"]
+  },
+  "37026": {
+    "parents": ["40141"],
+    "aliases": ["Neacomys [Taxon 37026]"]
+  },
+  "156196": {
+    "parents": ["40141"],
+    "aliases": ["Abrothrix [Taxon 156196]"]
+  },
+  "207598": {
+    "parents": ["9604"],
+    "aliases": ["Homininae [Taxon 207598]"]
+  },
+  "399316": {
+    "parents": ["40141"],
+    "aliases": ["Necromys [Taxon 399316]"]
+  },
+  "2819045": {
+    "parents": ["40141"],
+    "aliases": ["Loxodontomys [Taxon 2819045]"]
+  },
+  "9605": {
+    "parents": ["207598"],
+    "aliases": ["Homo; humans [Taxon 9605]"]
+  },
+  "10036": {
+    "parents": ["10035"],
+    "aliases": [
+      "Mesocricetus auratus; Syrian golden hamster; Syrian golden hamsters; Syrian hamster; golden hamster [Taxon 10036]"
+    ]
+  },
+  "10116": {
+    "parents": ["10114"],
+    "aliases": [
+      "Rattus norvegicus; Norway rat; brown rat; rat; rats [Taxon 10116]"
+    ]
+  },
+  "10117": {
+    "parents": ["10114"],
+    "aliases": ["Rattus rattus; black rat; house rat; roof rat [Taxon 10117]"]
+  },
+  "29094": {
+    "parents": ["156196"],
+    "aliases": ["Abrothrix longipilis; long-haired grass mouse [Taxon 29094]"]
+  },
+  "29095": {
+    "parents": ["10069"],
+    "aliases": ["Akodon azarae; Azara's grass mouse [Taxon 29095]"]
+  },
+  "30635": {
+    "parents": ["399316"],
+    "aliases": ["Necromys lasiurus; hairy-tailed bolo mouse [Taxon 30635]"]
+  },
+  "37015": {
+    "parents": ["29120"],
+    "aliases": ["Oligoryzomys chacoensis; Chacoan pygmy rice rat [Taxon 37015]"]
+  },
+  "37017": {
+    "parents": ["29120"],
+    "aliases": [
+      "Oligoryzomys nigripes; Black-footed pygmy rice rat; Brazilian colilargo; Large colilargo [Taxon 37017]"
+    ]
+  },
+  "48005": {
+    "parents": ["37026"],
+    "aliases": ["Neacomys spinosus; bristly mouse [Taxon 48005]"]
+  },
+  "56211": {
+    "parents": ["29105"],
+    "aliases": ["Calomys laucha; small vesper mouse [Taxon 56211]"]
+  },
+  "56230": {
+    "parents": ["29124"],
+    "aliases": ["Oxymycterus rufus; red hocicudo [Taxon 56230]"]
+  },
+  "89122": {
+    "parents": ["2819045"],
+    "aliases": ["Loxodontomys micropus; southern big-eared mouse [Taxon 89122]"]
+  },
+  "106112": {
+    "parents": ["10069"],
+    "aliases": ["Akodon montensis [Taxon 106112]"]
+  },
+  "134911": {
+    "parents": ["29124"],
+    "aliases": ["Oxymycterus nasutus [Taxon 134911]"]
+  },
+  "137207": {
+    "parents": ["29120"],
+    "aliases": ["Oligoryzomys longicaudatus [Taxon 137207]"]
+  },
+  "218824": {
+    "parents": ["29120"],
+    "aliases": ["Oligoryzomys flavescens; yellow pygmy rice rat [Taxon 218824]"]
+  },
+  "399317": {
+    "parents": ["399316"],
+    "aliases": ["Necromys obscurus; Dark-furred akodont [Taxon 399317]"]
+  },
+  "2059112": {
+    "parents": ["399316"],
+    "aliases": ["Necromys benefactus; Argentine bolo mouse [Taxon 2059112]"]
+  },
+  "2618621": {
+    "parents": ["399316"],
+    "aliases": ["unclassified Necromys [Taxon 2618621]"]
+  },
+  "9606": {
+    "parents": ["9605"],
+    "aliases": ["Homo sapiens; human [Taxon 9606]"]
+  },
+  "2116606": {
+    "parents": ["2618621"],
+    "aliases": ["Necromys sp. [Taxon 2116606]"]
+  }
+}
