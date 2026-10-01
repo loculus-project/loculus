@@ -45,6 +45,8 @@ Loculus stores pending login transactions in an encrypted cookie so Astro replic
 
 ## Login flow
 
+Keycloak allows only registered callback destinations. Production deployments use the deployed website's callback; previews and local development can also allow `http://localhost:3000/auth/callback` through the opt-in `allowLocalhostAuthRedirects` chart setting. See the [upgrade guide's local development settings](../upgrade-guides/browser-authentication/#local-website-development), including the manual steps for existing realms.
+
 <!-- Editable diagram source and regeneration command: docs/public/images/browser-authentication-flow.mmd -->
 
 ![Numbered login sequence between the browser, Astro server and Keycloak, from /auth/login through callback validation to session creation.](/images/browser-authentication-flow.svg)

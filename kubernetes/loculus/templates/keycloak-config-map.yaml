@@ -9,8 +9,10 @@
 {{- $postLogoutRedirectUris = append $postLogoutRedirectUris (printf "http://%s/logout" $.Values.host) }}
 {{- end }}
 {{- end }}
+{{- if $.Values.allowLocalhostAuthRedirects }}
 {{- $browserRedirectUris = append $browserRedirectUris "http://localhost:3000/auth/callback" | uniq }}
 {{- $postLogoutRedirectUris = append $postLogoutRedirectUris "http://localhost:3000/logout" | uniq }}
+{{- end }}
 ---
 apiVersion: v1
 kind: ConfigMap

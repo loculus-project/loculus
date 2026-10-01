@@ -26,24 +26,29 @@ Open the [Keycloak admin console](../../../for-administrators/user-administratio
 4. Under **Advanced**, set **Proof Key for Code Exchange Code Challenge Method** to `S256`.
 5. Save the client.
 
-For the deployed host, add corresponding `http://` URLs only for a development deployment explicitly configured with `insecureCookies=true`. If the instance supports local website development, also retain or add the exact localhost destinations below.
+For the deployed host, add corresponding `http://` URLs only for a development deployment explicitly configured with `insecureCookies=true`. In production, remove any localhost redirect and post-logout entries left over from an earlier configuration. For previews or local development, retain or add the exact localhost destinations below when local website development is enabled.
 
 Until these settings are updated, an existing realm does not gain the narrowed redirect allowlists or Keycloak's requirement to use PKCE. The application-side protections are described in the [browser authentication flow](../../browser-authentication-flow/).
 
 ## Local website development
 
-The chart includes these exact destinations regardless of `insecureCookies`:
+The chart setting `allowLocalhostAuthRedirects` defaults to `false`. The preview values (`values_preview_server.yaml`) and local development/integration-test values (`values_e2e_and_dev.yaml`) set it to `true`, adding these exact destinations:
 
 - **Valid redirect URIs:** `http://localhost:3000/auth/callback`
 - **Valid post logout redirect URIs:** `http://localhost:3000/logout`
 
-This supports both a fully local installation and a local Astro website using a remote instance through `generate_local_test_config.sh --from-live`. In the latter case, Keycloak returns the browser to the local Astro server, so the remote realm must allow those localhost destinations. Retain or add these entries when that development workflow is supported; there is no need to enable insecure cookies on the remote deployment. These are exact destinations, not a `http://localhost:3000/*` wildcard.
+For a fully local installation, use the local development values or explicitly set `allowLocalhostAuthRedirects=true` in your Helm values. For a local Astro website using a preview through `generate_local_test_config.sh --from-live`, the **preview's Keycloak realm** must allow these destinations: Keycloak returns the browser to the local Astro server, which validates the callback and exchanges the authorization code. Generating local configuration does not change the remote realm's allowlist. Use a preview rather than production for this workflow.
+
+This setting is independent of `insecureCookies`; an HTTPS preview can support localhost callbacks without enabling insecure cookies on the preview. These are exact destinations, not a `http://localhost:3000/*` wildcard.
+
+The chart applies the setting only when creating a realm. For an existing preview realm, manually add these entries to `backend-client` when enabling local development, or remove them when disabling it. Setting `allowLocalhostAuthRedirects=false` does not remove entries already stored in Keycloak's database.
 
 ## Verify the upgrade
 
 - Sign in from a protected page and confirm that login returns to that page.
 - Sign out and confirm that the browser returns to the website's `/logout` page.
 - Check that the saved client settings contain the exact redirect destinations and require `S256`.
+- In production, confirm that neither redirect allowlist contains localhost destinations.
 - If local website development is supported, test localhost login and logout against the updated realm.
 
 For failed callbacks, consult [callback validation failures](../../browser-authentication-flow/#callback-validation-failures).

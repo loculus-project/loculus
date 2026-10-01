@@ -15,6 +15,7 @@ auth:
   verifyEmail: false
 host: localhost:3000
 insecureCookies: true
+allowLocalhostAuthRedirects: true
 siloImport:
   pollIntervalSeconds: 5
 images:
