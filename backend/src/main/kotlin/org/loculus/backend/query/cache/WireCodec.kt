@@ -109,8 +109,13 @@ enum class WireCodec {
     companion object {
         const val ZSTD_LEVEL = 3
 
-        /** level 1: ~16x faster than the default 6 on sequence data for ~14 % more bytes; gzip is CPU-bound here */
-        const val GZIP_LEVEL = Deflater.BEST_SPEED
+        /**
+         * Level 6 (zlib's default, as LAPIS uses). Against level 1 on SARS-CoV-2 (per thread): FASTA 59 % smaller
+         * (each ~30 kb sequence fits the 32 kb window, and only level 6's longer match search finds the previous one)
+         * at 20 vs 163 MB/s; details TSV 28 % smaller at 181 vs 529 MB/s; aggregated JSON 26 % smaller at 338 vs
+         * 796 MB/s. Bulk downloads should use zstd, which is smaller and faster than either.
+         */
+        const val GZIP_LEVEL = Deflater.DEFAULT_COMPRESSION
 
         /**
          * Long-distance matching within an 8 MB window: sequences of one organism repeat far apart (SARS-CoV-2: ~1.6x
