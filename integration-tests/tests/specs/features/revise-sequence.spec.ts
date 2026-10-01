@@ -54,10 +54,12 @@ sequenceTest(
 
         const reviewPage = new ReviewPage(page);
         await reviewPage.waitForZeroProcessing();
+        await page.getByTestId(/^view-metadata-changes-/).click();
+        await expect(page.getByRole('row', { name: /Segment L/ })).toBeVisible();
         await reviewPage.viewSequences();
 
         const tabs = await reviewPage.getAvailableSequenceTabs();
-        expect(tabs).not.toContain('L (aligned)');
+        expect(tabs).not.toContain('L (reference-aligned)');
         expect(tabs).not.toContain('L (unaligned)');
 
         expect(tabs).toContain('S (unaligned)');

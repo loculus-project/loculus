@@ -86,7 +86,7 @@ lineageSystemDefinitions:
   cchfS:
     1: https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-24--07-29-03Z/lineages.yaml
 taxonomyService:
-  dbVersion: "ncbi_taxonomy_2026-06-01"
+  dbVersion: "ncbi_taxonomy_2026-09-01"
   taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
   taxonomy_service_url: &taxonomy_service_url http://loculus-taxonomy-service:5000
 defaultOrganismConfig: &defaultOrganismConfig
@@ -1804,7 +1804,7 @@ defaultOrganisms:
       linkOuts:
         - name: "Nextclade"
           maxNumberOfRecommendedEntries: 5
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/ebola/sudan&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/orthoebolavirus/sudv"
     preprocessing:
       - <<: *preprocessing
         version: [1, 2]
@@ -1814,9 +1814,9 @@ defaultOrganisms:
             - name: main
               references:
                 - name: singleReference
-                  nextclade_dataset_name: nextstrain/ebola/sudan
+                  nextclade_dataset_name: nextstrain/orthoebolavirus/sudv
+                  nextclade_dataset_tag: "2025-09-24--07-29-03Z"
                   genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
           taxon_id: 186540
           scientific_name: "Sudan ebolavirus"
           molecule_type: "genomic RNA"
@@ -1882,7 +1882,6 @@ defaultOrganisms:
               geoLocCountry: geoLocCountry
               sampleCollectionDateRangeLower: processed.sampleCollectionDateRangeLower
               specimenCollectorSampleId: specimenCollectorSampleId
-              submissionId: submissionId
             args:
               order: [geoLocCountry, IDENTIFIER, sampleCollectionDateRangeLower]
               type: [string, IDENTIFIER, string]

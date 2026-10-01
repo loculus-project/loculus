@@ -8,16 +8,18 @@ from typing import Literal
 import pytest
 from Bio import SeqIO
 from Bio.Seq import Seq
+from Bio.SeqFeature import SeqFeature
+from Bio.SeqRecord import SeqRecord
 from factory_methods import (
     Case,
     ProcessedAlignment,
     ProcessedEntryFactory,
     ProcessingAnnotationHelper,
     ProcessingTestCase,
+    UnprocessedEntryFactory,
     build_processing_annotations,
     on_minus_strand,
     single_cds_annotation,
-    ts_from_ymd,
     verify_processed_entry,
 )
 
@@ -31,15 +33,14 @@ from loculus_preprocessing.datatypes import (
     AnnotationSourceType,
     SegmentClassificationMethod,
     SubmissionData,
-    UnprocessedData,
-    UnprocessedEntry,
 )
 from loculus_preprocessing.embl import (
+    PREMATURE_STOP_NOTE,
     create_flatfile,
     get_seq_features,
     reformat_authors_from_loculus_to_embl_style,
 )
-from loculus_preprocessing.nextclade_annotation import NextcladeAnnotation
+from loculus_preprocessing.nextclade_annotation import GffAttributes, NextcladeAnnotation
 from loculus_preprocessing.prepro import get_nested_metadata, process_all, unpack_annotations
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
@@ -1283,35 +1284,19 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
     config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
     config.max_sequences_per_entry = 1
 
-    bad_entry = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
-            files=None,
-        ),
+    bad_entry = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={},
+        accession_id="01",
+        sequences={
+            "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+            "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+        },
     )
 
-    good_entry = UnprocessedEntry(
-        accessionVersion="LOC_02.1",
-        data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-            },
-            files=None,
-        ),
+    good_entry = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={},
+        accession_id="02",
+        sequences={"ebola-sudan": sequence_with_mutation("ebola-sudan")},
     )
 
     result = process_all([bad_entry, good_entry], MULTI_EBOLA_DATASET, config)
@@ -1332,20 +1317,13 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
 
 def test_preprocessing_without_metadata() -> None:
     config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
-    sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
-            files=None,
-        ),
+    sequence_entry_data = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={},
+        accession_id="01",
+        sequences={
+            "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+            "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+        },
     )
 
     config.processing_spec = {}
@@ -1640,23 +1618,16 @@ def test_create_flatfile():
     # need to recompute order after updating the spec
     config.processing_order = get_processing_order(config)
     config.create_embl_file = True
-    sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            submitter="test_submitter",
-            group_id=2,
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            submissionId="test_submission_id",
-            metadata={
-                "sampleCollectionDate": "2024-01-01",
-                "geoLocCountry": "Netherlands",
-                "geoLocAdmin1": "North Holland",
-                "geoLocCity": "Amsterdam",
-                "authors": "Smith, Doe A;",
-            },
-            unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
-            files=None,
-        ),
+    sequence_entry_data = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={
+            "sampleCollectionDate": "2024-01-01",
+            "geoLocCountry": "Netherlands",
+            "geoLocAdmin1": "North Holland",
+            "geoLocCity": "Amsterdam",
+            "authors": "Smith, Doe A;",
+        },
+        accession_id="01",
+        sequences={"main": sequence_with_mutation("single")},
     )
 
     result = process_all([sequence_entry_data], EBOLA_SUDAN_DATASET, config)
@@ -1664,6 +1635,80 @@ def test_create_flatfile():
     embl_str = create_flatfile(config, result[0])
     expected_embl = Path(SINGLE_SEGMENT_EMBL).read_text(encoding="utf-8")
     assert embl_str == expected_embl
+
+
+# ATG AAA GGG TGA -> MKG, ending in a terminal stop codon
+FUNCTIONAL_SEQUENCE = "ATGAAAGGGTGA"
+# ATG AAA TAA GGG TGA -> MK*G, with a premature stop codon before the terminal one
+PREMATURE_STOP_SEQUENCE = "ATGAAATAAGGGTGA"
+PREMATURE_STOP_POSITION = 3
+
+
+def _single_cds_feature(sequence_str: str, attributes: GffAttributes | None = None) -> SeqFeature:
+    annotation_object = single_cds_annotation(0, len(sequence_str), attributes=attributes)
+    features = get_seq_features(annotation_object, sequence_str)
+    [cds_feature] = [feature for feature in features if feature.type == "CDS"]
+    return cds_feature
+
+
+def test_get_seq_features_translates_a_cds_without_premature_stop():
+    cds_feature = _single_cds_feature(FUNCTIONAL_SEQUENCE)
+
+    assert cds_feature.qualifiers["translation"] == "MKG"
+    assert "pseudo" not in cds_feature.qualifiers
+    assert "note" not in cds_feature.qualifiers
+
+
+def test_get_seq_features_marks_a_cds_with_premature_stop_pseudo_without_translation():
+    # INSDC keeps the CDS feature key for a non-functional CDS, flags it with a valueless
+    # /pseudo and forbids /translation on it.
+    cds_feature = _single_cds_feature(PREMATURE_STOP_SEQUENCE)
+
+    assert cds_feature.type == "CDS"
+    assert "pseudo" in cds_feature.qualifiers
+    assert "translation" not in cds_feature.qualifiers
+    assert cds_feature.qualifiers["note"] == [
+        PREMATURE_STOP_NOTE.format(position=PREMATURE_STOP_POSITION)
+    ]
+
+
+def test_get_seq_features_leaves_an_existing_note_alone_without_premature_stop():
+    cds_feature = _single_cds_feature(FUNCTIONAL_SEQUENCE, {"Note": ["existing note"]})
+
+    assert cds_feature.qualifiers["note"] == ["existing note"]
+
+
+def test_flatfile_writes_pseudo_as_a_bare_qualifier_with_both_notes():
+    annotation_object = single_cds_annotation(
+        0, len(PREMATURE_STOP_SEQUENCE), attributes={"Note": ["existing note"]}
+    )
+    record = SeqRecord(
+        Seq(PREMATURE_STOP_SEQUENCE),
+        id="test",
+        annotations={"molecule_type": "RNA"},
+        features=get_seq_features(annotation_object, PREMATURE_STOP_SEQUENCE),
+    )
+
+    embl_str = record.format("embl")
+    feature_lines = [line.removeprefix("FT").strip() for line in embl_str.splitlines()]
+
+    assert "/pseudo" in feature_lines
+    assert '/note="existing note"' in feature_lines
+    # Long qualifier values are wrapped over several FT lines at word boundaries
+    expected_note = PREMATURE_STOP_NOTE.format(position=PREMATURE_STOP_POSITION)
+    assert f'/note="{expected_note}"' in " ".join(feature_lines)
+    assert not any(line.startswith("/translation") for line in feature_lines)
+
+
+def test_get_seq_features_ignores_pseudo_and_translation_from_annotation():
+    functional = _single_cds_feature(
+        FUNCTIONAL_SEQUENCE, {"pseudo": ["true"], "translation": ["XXX"]}
+    )
+    assert "pseudo" not in functional.qualifiers
+    assert functional.qualifiers["translation"] == "MKG"
+
+    broken = _single_cds_feature(PREMATURE_STOP_SEQUENCE, {"translation": ["XXX"]})
+    assert "translation" not in broken.qualifiers
 
 
 multi_reference_cases = [

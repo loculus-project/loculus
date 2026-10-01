@@ -17,6 +17,19 @@ curl -L -o readtools.jar \
   https://github.com/loculus-project/readtools/releases/download/v1.0.0/readtools-2.15.1-all.jar
 ```
 
+## Testing
+
+```sh
+pytest
+```
+
+You can skip tests requiring `readtools` and `deacon` with:
+
+```sh
+pytest --skip-missing-deps
+```
+
+
 ## How to configure the service
 
 Preprocessing is currently configured to send raw read files to the `rawReadsProcessingService` and requires the `values.yaml` to contain:

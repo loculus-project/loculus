@@ -20,61 +20,59 @@ const navigationItems = [...sequenceRelatedItems, ...extraItems];
 const selectId = currentOrganism ? `organism-navigation-${currentOrganism}` : 'organism-navigation';
 ---
 
-{
-    currentOrganism && (
-        <nav class='bg-gray-50 border-gray-200 border-b-[1.5px]' aria-label='Organism navigation'>
-            <div class='flex flex-col sm:flex-row sm:items-center gap-2 px-4 py-2 mx-4'>
-                <div class='flex items-center gap-2 w-full sm:flex-1 flex-wrap sm:flex-nowrap'>
-                    <span class='text-gray-700 font-medium'>
-                        {currentOrganismObject?.displayName || currentOrganism}
-                        {/* eslint-disable-next-line no-restricted-syntax -- Server-rendered Astro component, wired via vanilla script, no React hydration needed */}
-                        <button
-                            type='button'
-                            class='inline-flex items-center justify-center w-5 h-5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-sm transition-colors self-end mb-px mr-2 ml-2'
-                            title='Switch organism'
-                            aria-label='Switch organism'
-                            data-organism-switch-button
-                        >
-                            <FaExchangeAlt className='w-2.5 h-2.5 ' />
-                        </button>
-                    </span>
-                    <span class='hidden sm:inline text-gray-300 mr-2'>|</span>
-                    <div class='hidden sm:flex items-center gap-2 flex-wrap'>
-                        {navigationItems.map(({ text, path, icon }) => {
-                            const Icon = icon;
-                            const isActive = currentPath.startsWith(path);
-                            return (
-                                <SubmenuLink href={path} isActive={isActive}>
-                                    {Icon && <Icon className='w-4 h-4' />}
-                                    {text}
-                                </SubmenuLink>
-                            );
-                        })}
-                    </div>
-                </div>
-                <div class='w-full sm:hidden'>
-                    <label class='sr-only' for={selectId}>
-                        Select organism section
-                    </label>
-                    <select
-                        id={selectId}
-                        class='w-full rounded-sm border border-gray-300 bg-white py-1.5 pl-3 pr-8 text-sm text-gray-800 shadow-xs focus:border-primary-400 focus:outline-hidden focus:ring-2 focus:ring-primary-200'
-                        onchange='if (this.value) window.location.href = this.value;'
+{currentOrganism && (
+    <nav class='bg-gray-50 border-gray-200 border-b-[1.5px]' aria-label='Organism navigation'>
+        <div class='flex flex-col sm:flex-row sm:items-center gap-2 px-4 py-2 mx-4'>
+            <div class='flex items-center gap-2 w-full sm:flex-1 flex-wrap sm:flex-nowrap'>
+                <span class='text-gray-700 font-medium'>
+                    {currentOrganismObject?.displayName || currentOrganism}
+                    {/* eslint-disable-next-line no-restricted-syntax -- Server-rendered Astro component, wired via vanilla script, no React hydration needed */}
+                    <button
+                        type='button'
+                        class='inline-flex items-center justify-center w-5 h-5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-sm transition-colors self-end mb-px mr-2 ml-2'
+                        title='Switch organism'
+                        aria-label='Switch organism'
+                        data-organism-switch-button
                     >
-                        {navigationItems.map(({ text, path }) => {
-                            const isActive = currentPath.startsWith(path);
-                            return (
-                                <option value={path} selected={isActive}>
-                                    {text}
-                                </option>
-                            );
-                        })}
-                    </select>
+                        <FaExchangeAlt className='w-2.5 h-2.5 ' />
+                    </button>
+                </span>
+                <span class='hidden sm:inline text-gray-300 mr-2'>|</span>
+                <div class='hidden sm:flex items-center gap-2 flex-wrap'>
+                    {navigationItems.map(({ text, path, icon }) => {
+                        const Icon = icon;
+                        const isActive = currentPath.startsWith(path);
+                        return (
+                            <SubmenuLink href={path} isActive={isActive}>
+                                {Icon && <Icon className='w-4 h-4' />}
+                                {text}
+                            </SubmenuLink>
+                        );
+                    })}
                 </div>
             </div>
-        </nav>
-    )
-}
+            <div class='w-full sm:hidden'>
+                <label class='sr-only' for={selectId}>
+                    Select organism section
+                </label>
+                <select
+                    id={selectId}
+                    class='w-full rounded-sm border border-gray-300 bg-white py-1.5 pl-3 pr-8 text-sm text-gray-800 shadow-xs focus:border-primary-400 focus:outline-hidden focus:ring-2 focus:ring-primary-200'
+                    onchange='if (this.value) window.location.href = this.value;'
+                >
+                    {navigationItems.map(({ text, path }) => {
+                        const isActive = currentPath.startsWith(path);
+                        return (
+                            <option value={path} selected={isActive}>
+                                {text}
+                            </option>
+                        );
+                    })}
+                </select>
+            </div>
+        </div>
+    </nav>
+)}
 
 <script>
     let isAnimating = false;
