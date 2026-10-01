@@ -211,7 +211,7 @@ class LapisQueryController(
         if (body.buffered) {
             // rendered completely before anything is sent, so that a failure is still an error response
             val buffer = ByteArrayOutputStream()
-            compress(buffer, parsed.compression, contentEncoding).use { body.write(it) }
+            compress(buffer, parsed.compression, contentEncoding, endpoint.isSequenceEndpoint).use { body.write(it) }
             startResponse("$serverTiming, render;dur=${ms(System.nanoTime() - tExecuted)}")
             response.setContentLength(buffer.size())
             buffer.writeTo(response.outputStream)
@@ -219,7 +219,9 @@ class LapisQueryController(
             return
         }
 
-        stream(body, request, response, parsed.compression, contentEncoding, tee = null) { startResponse(serverTiming) }
+        stream(body, request, response, parsed.compression, contentEncoding, endpoint.isSequenceEndpoint, tee = null) {
+            startResponse(serverTiming)
+        }
     }
 
     /** what serving a request through the cache needs */
@@ -286,7 +288,16 @@ class LapisQueryController(
                 response.addHeader("Server-Timing", "$serverTimingParse, execute;dur=${ms(tExecuted - tParsed)}")
             }
             try {
-                stream(body, request, response, cached.parsed.compression, cached.contentEncoding, tee, startResponse)
+                stream(
+                    body,
+                    request,
+                    response,
+                    cached.parsed.compression,
+                    cached.contentEncoding,
+                    cached.endpoint.isSequenceEndpoint,
+                    tee,
+                    startResponse,
+                )
             } catch (e: Exception) {
                 tee?.abandon()
                 throw e
@@ -410,6 +421,7 @@ class LapisQueryController(
         response: HttpServletResponse,
         compression: Compression?,
         contentEncoding: String?,
+        sequences: Boolean,
         tee: OutputStream?,
         startResponse: () -> Unit,
     ) {
@@ -417,7 +429,7 @@ class LapisQueryController(
         val wire: OutputStream = if (tee == null) client else TeeOutputStream(client, tee)
         val deferred = DeferredOutputStream {
             startResponse()
-            compress(wire, compression, contentEncoding)
+            compress(wire, compression, contentEncoding, sequences)
         }
         try {
             val out = BufferedOutputStream(deferred, OUTPUT_BUFFER_SIZE)
@@ -637,10 +649,17 @@ class LapisQueryController(
             return "attachment; filename=$ascii; filename*=UTF-8''$encoded"
         }
 
-        fun compress(out: OutputStream, compression: Compression?, contentEncoding: String?): OutputStream = when {
+        /** [sequences]: the body holds sequences, which gzip at [WireCodec.GZIP_SEQUENCE_LEVEL] */
+        fun compress(
+            out: OutputStream,
+            compression: Compression?,
+            contentEncoding: String?,
+            sequences: Boolean = false,
+        ): OutputStream = when {
             compression == Compression.GZIP || contentEncoding == "gzip" -> WireCodec.gzipOutputStream(
                 out,
                 OUTPUT_BUFFER_SIZE,
+                if (sequences) WireCodec.GZIP_SEQUENCE_LEVEL else WireCodec.GZIP_LEVEL,
             )
 
             compression == Compression.ZSTD -> WireCodec.zstdDownloadOutputStream(out)

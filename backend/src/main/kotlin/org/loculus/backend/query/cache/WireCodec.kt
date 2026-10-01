@@ -110,12 +110,19 @@ enum class WireCodec {
         const val ZSTD_LEVEL = 3
 
         /**
-         * Level 6 (zlib's default, as LAPIS uses). Against level 1 on SARS-CoV-2 (per thread): FASTA 59 % smaller
-         * (each ~30 kb sequence fits the 32 kb window, and only level 6's longer match search finds the previous one)
-         * at 20 vs 163 MB/s; details TSV 28 % smaller at 181 vs 529 MB/s; aggregated JSON 26 % smaller at 338 vs
-         * 796 MB/s. Bulk downloads should use zstd, which is smaller and faster than either.
+         * Level 6 (zlib's default, as LAPIS uses) for tables. On SARS-CoV-2 details TSV, per thread: 6.81 MB at
+         * 166 MB/s (level 1: 9.45 MB at 529 MB/s; level 8: 6.57 MB at 75 MB/s); aggregated JSON 1.25 MB at 323 MB/s
+         * (level 1: 1.67 MB; level 8: 1.14 MB at 202 MB/s).
          */
         const val GZIP_LEVEL = Deflater.DEFAULT_COMPRESSION
+
+        /**
+         * Level 8 for sequences: its 258-byte "nice" match length and 1024-entry chain find the previous sequence
+         * within deflate's 32 kb window. On 3,000 SARS-CoV-2 sequences (84 MB of FASTA), per thread: 1.40 MB at
+         * 51 MB/s, against 11.15 MB at 20 MB/s at level 6 and 27.2 MB at 163 MB/s at level 1; level 9 gains <1 %.
+         * Genomes longer than the window (mpox) cannot match the previous sequence at any level.
+         */
+        const val GZIP_SEQUENCE_LEVEL = 8
 
         /**
          * Long-distance matching within an 8 MB window: sequences of one organism repeat far apart (SARS-CoV-2: ~1.6x
@@ -186,10 +193,10 @@ enum class WireCodec {
 
         fun brotliOutputStream(out: OutputStream): OutputStream = BrotliOutputStream(out, brotliParameters, BUFFER_SIZE)
 
-        fun gzipOutputStream(out: OutputStream, bufferSize: Int): OutputStream =
+        fun gzipOutputStream(out: OutputStream, bufferSize: Int, level: Int = GZIP_LEVEL): OutputStream =
             object : GZIPOutputStream(out, bufferSize) {
                 init {
-                    def.setLevel(GZIP_LEVEL)
+                    def.setLevel(level)
                 }
             }
         private const val BUFFER_SIZE = 64 * 1024
