@@ -30,7 +30,7 @@ test.describe('Sequence Preview URL Parameters', () => {
         expect(urlParams.has('selectedSeq')).toBe(false);
 
         const currentUrl = new URL(page.url());
-        currentUrl.searchParams.set('selectedSeq', selectedSeqId);
+        currentUrl.searchParams.set('selectedSeq', selectedSeqId || '');
         await page.goto(currentUrl.toString());
 
         await expect(searchPage.getSequencePreviewModal()).toBeVisible();
@@ -73,7 +73,7 @@ test.describe('Sequence Preview URL Parameters', () => {
         await searchPage.closePreviewButton().click();
 
         const currentUrl = new URL(page.url());
-        currentUrl.searchParams.set('selectedSeq', selectedSeqId);
+        currentUrl.searchParams.set('selectedSeq', selectedSeqId || '');
         currentUrl.searchParams.set('halfScreen', 'true');
         await page.goto(currentUrl.toString());
 

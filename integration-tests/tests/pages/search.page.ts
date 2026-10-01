@@ -204,7 +204,7 @@ export class SearchPage {
         return new EditPage(this.page);
     }
 
-    async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string> {
+    async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string | null> {
         const rows = this.getSequenceRows();
         const row = rows.nth(rowIndex);
         const rowText = await row.innerText();
