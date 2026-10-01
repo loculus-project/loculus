@@ -1297,6 +1297,27 @@ class ProcessingFunctions:
 
         return external_services.taxonomy_service.get_common_name(tax_id)
 
+    @staticmethod
+    def check_ena_accession(  # noqa: PLR0913, PLR0917
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+        context: ProcessingContext,
+        external_services: ExternalServices,
+    ) -> RawProcessingResult:
+        accession_type = args.get("accession_type")
+        if not isinstance(accession_type, str):
+            return raw_internal_error(
+                f"check_ena_accession requires an accession_type arg, got args {args}."
+            )
+        accession: str | None = input_data.get("accession")
+        if not accession:
+            return RawProcessingResult()
+        if context.is_insdc_ingest_group:
+            return RawProcessingResult(datum=accession)
+        return external_services.ena_visibility_checker.check_visibility(accession, accession_type)
+
 
 def single_metadata_annotation(
     source_name: str,

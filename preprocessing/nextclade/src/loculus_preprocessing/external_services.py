@@ -1,7 +1,12 @@
+import io
 import logging
+import re
 import urllib.parse
+import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from dataclasses import dataclass
+from enum import StrEnum
+from http import HTTPStatus
 
 import requests
 from pydantic import BaseModel, Field, ValidationError
@@ -17,6 +22,7 @@ from loculus_preprocessing.datatypes import (
     ProcessingAnnotation,
     RawProcessingResult,
     _internal_error_message,
+    processing_error,
     raw_internal_error,
 )
 
@@ -34,7 +40,7 @@ class RequestCache:
         self.cache: OrderedDict[str, requests.Response] = OrderedDict()
         self.max_size = max_size
         self.session = requests.Session()
-        retry = Retry(total=retries, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
+        retry = Retry(total=retries, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504])
         adapter = HTTPAdapter(max_retries=retry)
         self.session.mount("http://", adapter)
         self.session.mount("https://", adapter)
@@ -203,17 +209,6 @@ class TaxonomyService:
         return RawProcessingResult(datum=common_name)
 
 
-@dataclass(frozen=True)
-class ExternalServices:
-    """External services available to processing functions.
-
-    Kept separate from `ProcessingContext` since these don't vary per accession, unlike
-    `ProcessingContext`'s fields.
-    """
-
-    taxonomy_service: TaxonomyService
-
-
 FileName = str
 
 
@@ -309,3 +304,110 @@ class FileProcessingService:
         if not internal_error:
             return ProcessingAnnotation([source], [source], message)
         return ProcessingAnnotation([source], [source], _internal_error_message(message))
+
+
+# Successful ENA responses are small XML documents (a few KB). Cache hits refresh an entry's
+# position; a bioproject shared across a batch stays cached while unique biosamples and runs
+# cycle through.
+ena_cache = RequestCache(max_size=16, retries=1)
+
+
+class EnaAccessionType(StrEnum):
+    BIOPROJECT = "bioproject"
+    BIOSAMPLE = "biosample"
+    RAW_READS = "raw_reads"
+
+
+# Also guards against comma-separated lists, which the ENA browser API
+# would otherwise resolve to multiple records.
+ACCESSION_PATTERNS: dict[EnaAccessionType, re.Pattern[str]] = {
+    EnaAccessionType.BIOPROJECT: re.compile(r"PRJ[EDN][A-Z][0-9]+"),
+    EnaAccessionType.BIOSAMPLE: re.compile(r"SAM[EDN][A-Z]?[0-9]+"),
+    EnaAccessionType.RAW_READS: re.compile(r"[EDS]RR[0-9]+"),
+}
+
+
+class ENAVisibilityChecker:
+    """Used to check ENA visibility
+
+    Adapted from the ENAVisibilityChecker in
+    ena-submission/src/ena_deposition/check_external_visibility.py.
+    If anything changes in that class, check whether the update needs to
+    be applied here as well.
+    """
+
+    def __init__(
+        self,
+        timeout_seconds: int = 10,
+    ):
+        self.timeout_seconds = timeout_seconds
+
+    def check_visibility(self, accession: str, accession_type_arg: str) -> RawProcessingResult:
+        try:
+            accession_type = EnaAccessionType(accession_type_arg)
+        except ValueError:
+            return raw_internal_error(
+                f"invalid accession_type '{accession_type_arg}', expected one of "
+                f"{[t.value for t in EnaAccessionType]}."
+            )
+        accession = accession.strip().upper()
+        pattern = ACCESSION_PATTERNS[accession_type]
+        if not pattern.fullmatch(accession):
+            return processing_error(
+                f"'{accession}' is not a valid {accession_type.replace('_', ' ')} accession, "
+                f"expected a value matching '{pattern.pattern}'."
+            )
+        try:
+            response = ena_cache.get_or_fetch(
+                f"https://www.ebi.ac.uk/ena/browser/api/xml/{accession}",
+                timeout=self.timeout_seconds,
+            )
+        except requests.RequestException as e:
+            logger.warning(f"Failed to check ENA visibility of '{accession}': {e}")
+            response = None
+        if response is None or response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
+            return RawProcessingResult(
+                datum=accession,
+                warnings=[
+                    f"unable to check visibility of '{accession}': could not reach ENA. Please "
+                    f"verify yourself that '{accession}' is public before proceeding or we will "
+                    "not be able to propagate your submission to the INSDC."
+                ],
+            )
+        if response.status_code != HTTPStatus.OK:
+            return RawProcessingResult(
+                datum=accession,
+                warnings=[
+                    f"accession '{accession}' is not visible on ENA. Please make '{accession}' "
+                    "public before proceeding or we will not be able to propagate your "
+                    "submission to the INSDC."
+                ],
+            )
+        if accession_type == EnaAccessionType.BIOPROJECT and self._is_umbrella_project(
+            response.content
+        ):
+            return processing_error(
+                f"bioproject '{accession}' is an umbrella project. "
+                "Please provide the accession of a submission project instead."
+            )
+        return RawProcessingResult(datum=accession)
+
+    def _is_umbrella_project(self, xml_bytes) -> bool:
+        for _, elem in ET.iterparse(io.BytesIO(xml_bytes), events=("start",)):  # noqa: S314
+            if elem.tag == "UMBRELLA_PROJECT":
+                return True
+            if elem.tag == "SUBMISSION_PROJECT":
+                return False
+        return False
+
+
+@dataclass(frozen=True)
+class ExternalServices:
+    """External services available to processing functions.
+
+    Kept separate from `ProcessingContext` since these don't vary per accession, unlike
+    `ProcessingContext`'s fields.
+    """
+
+    taxonomy_service: TaxonomyService
+    ena_visibility_checker: ENAVisibilityChecker

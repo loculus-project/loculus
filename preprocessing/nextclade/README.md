@@ -139,6 +139,7 @@ taxonomyService:
 9. `resolve_host_taxon_id`: Validates that a host taxon ID or scientific name exists in the NCBI taxonomy, returning the taxon ID if validation is successful. Requires an input field called `host` (entries ingested from the INSDC do not error).
 10. `scientific_name_from_id`: Returns a scientific name for a taxon given a taxon ID `hostTaxonId` as input (entries ingested from the INSDC do not error).
 11. `common_name_from_id`: Returns a common name for a taxon given a taxon ID `hostTaxonId` as input (entries ingested from the INSDC do not error).
+12. `check_ena_accession`: checks whether a submitter-provided `biosampleAccession`, `bioprojectAccession`, or `insdcRawReadsAccession` is publicly visible on ENA.
 
 Using these functions in your `values.yaml` will look like:
 

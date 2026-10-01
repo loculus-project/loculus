@@ -720,6 +720,12 @@ defaultOrganismConfig: &defaultOrganismConfig
               url: "https://www.ebi.ac.uk/ena/browser/view/__value__"
             - name: View in DDBJ
               url: "https://ddbj.nig.ac.jp/search/entry/bioproject/__value__"
+        preprocessing:
+          function: check_ena_accession
+          inputs:
+            accession: bioprojectAccession
+          args:
+            accession_type: bioproject
         header: "INSDC"
         orderOnDetailsPage: 1060
         ingest: bioprojects
@@ -747,6 +753,12 @@ defaultOrganismConfig: &defaultOrganismConfig
               url: "https://www.ebi.ac.uk/ena/browser/view/__value__"
             - name: View in DDBJ
               url: "https://ddbj.nig.ac.jp/search/entry/biosample/__value__"
+        preprocessing:
+          function: check_ena_accession
+          inputs:
+            accession: biosampleAccession
+          args:
+            accession_type: biosample
         header: "INSDC"
         orderOnDetailsPage: 1080
         guidance: "Only add this field if you have already submitted the raw reads to the INSDC, read more at https://pathoplexus.org/docs/how-to/upload-sequences. If you add this field we will not create a new biosample for you and assume you have submitted all required metadata in the linked biosample."
@@ -1598,6 +1610,12 @@ defaultOrganismConfig: &defaultOrganismConfig
         customDisplay:
           type: link
           url: "https://www.ncbi.nlm.nih.gov/sra/?term=__value__"
+        preprocessing:
+          function: check_ena_accession
+          inputs:
+            accession: insdcRawReadsAccession
+          args:
+            accession_type: raw_reads
         header: "INSDC"
         orderOnDetailsPage: 1120
         ingest: ncbiSraAccessions
