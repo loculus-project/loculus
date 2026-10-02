@@ -12,6 +12,7 @@ import { GROUP_ID_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../..
 import type { Address, Group, GroupDetails } from '../../types/backend.ts';
 import { versionStatuses } from '../../types/lapis.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
+import { formatErrorMessage } from '../../utils/formatErrorMessage.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.js';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { Button } from '../common/Button';
@@ -330,7 +331,7 @@ async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, 
                 const count = (response.data as { data?: { count?: number }[] }).data?.[0]?.count ?? 0;
                 counts[key] = count;
             } catch (error) {
-                void logger.error(`Failed to fetch sequence count for ${key}: ${JSON.stringify(error)}`);
+                void logger.error(`Failed to fetch sequence count for ${key}: ${formatErrorMessage(error)}`);
                 counts[key] = 0;
             }
         }),
@@ -368,7 +369,7 @@ async function fetchTimeSeriesData(
                     }))
                     .sort((a, b) => a.date.localeCompare(b.date));
             } catch (error) {
-                void logger.error(`Failed to fetch time series data for ${key}: ${JSON.stringify(error)}`);
+                void logger.error(`Failed to fetch time series data for ${key}: ${formatErrorMessage(error)}`);
                 data[key] = [];
             }
         }),
