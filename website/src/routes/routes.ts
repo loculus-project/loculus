@@ -29,6 +29,8 @@ export const routes = {
         }),
     sequenceEntryDetailsPage: (accessionVersion: AccessionVersion | string) =>
         `/seq/${getAccessionVersionString(accessionVersion)}`,
+    sequenceEntryReferenceComparisonPage: (accessionVersion: string, segment: string) =>
+        `/seq/${encodeURIComponent(accessionVersion)}/reference-comparison?${new URLSearchParams({ segment }).toString()}`,
     sequenceEntryVersionsPage: (accessionVersion: AccessionVersion | string) =>
         `/seq/${getAccessionVersionString(accessionVersion)}/versions`,
     sequenceEntryFastaPage: (accessionVersion: AccessionVersion | string, download = false) =>
