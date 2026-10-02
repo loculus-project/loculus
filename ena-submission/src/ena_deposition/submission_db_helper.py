@@ -10,6 +10,7 @@ from typing import Any, Final, cast
 
 import pytz
 from sqlalchemy import (
+    CursorResult,
     DateTime,
     Engine,
     Enum,
@@ -147,7 +148,9 @@ class SubmissionTableEntry(Base):
     """Maps to submission_table. Primary key: (accession, version)."""
 
     __tablename__ = "submission_table"
-    __table_args__: typing.ClassVar[dict[str, Any]] = {"schema": "ena_deposition_schema"}
+    __table_args__: typing.ClassVar[dict[str, Any]] = {  # type: ignore[misc]
+        "schema": "ena_deposition_schema"
+    }
 
     # Required fields (no defaults) must come first for dataclass ordering.
     accession: Mapped[str] = mapped_column(primary_key=True)
@@ -187,7 +190,7 @@ class ProjectTableEntry(Base):
     """Maps to project_table. Primary key: project_id (BIGSERIAL)."""
 
     __tablename__ = "project_table"
-    __table_args__: typing.ClassVar[tuple[Any, ...]] = (
+    __table_args__: typing.ClassVar[tuple[Any, ...]] = (  # type: ignore[misc]
         Index("idx_project_table_group_id", "group_id"),
         Index("idx_project_table_organism", "organism"),
         {"schema": "ena_deposition_schema"},
@@ -225,7 +228,9 @@ class SampleTableEntry(Base):
     """Maps to sample_table. Primary key: (accession, version)."""
 
     __tablename__ = "sample_table"
-    __table_args__: typing.ClassVar[dict[str, Any]] = {"schema": "ena_deposition_schema"}
+    __table_args__: typing.ClassVar[dict[str, Any]] = {  # type: ignore[misc]
+        "schema": "ena_deposition_schema"
+    }
 
     accession: Mapped[str] = mapped_column(primary_key=True)
     version: Mapped[int] = mapped_column(primary_key=True)
@@ -289,7 +294,9 @@ class AssemblyTableEntry(Base):
     """Maps to assembly_table. Primary key: (accession, version)."""
 
     __tablename__ = "assembly_table"
-    __table_args__: typing.ClassVar[dict[str, Any]] = {"schema": "ena_deposition_schema"}
+    __table_args__: typing.ClassVar[dict[str, Any]] = {  # type: ignore[misc]
+        "schema": "ena_deposition_schema"
+    }
 
     accession: Mapped[str] = mapped_column(primary_key=True)
     version: Mapped[int] = mapped_column(primary_key=True)
@@ -383,7 +390,7 @@ def delete_records_in_db[T: TableEntry](
             stmt = stmt.where(col.is_(None)) if value is None else stmt.where(col == value)
         result = session.execute(stmt)
         session.commit()
-        deleted_rows = result.rowcount
+        deleted_rows = cast("CursorResult[Any]", result).rowcount
     logger.debug(f"Deleted {deleted_rows} rows from '{model_class.__name__}' where {conditions}")
     return deleted_rows
 
@@ -476,7 +483,7 @@ def update_db_where_conditions[T: TableEntry](
             stmt = stmt.values(**update_values)
             result = session.execute(stmt)
             session.commit()
-            updated_row_count = result.rowcount
+            updated_row_count = cast("CursorResult[Any]", result).rowcount
     except Exception as e:
         logger.warning(f"update_db_where_conditions errored with: {e}")
     logger.debug(
