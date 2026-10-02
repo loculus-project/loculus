@@ -1,5 +1,5 @@
 // Extend Jest "expect" functionality with Testing Library assertions.
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 
 import { HttpStatusCode } from 'axios';
 import { mockAnimationsApi } from 'jsdom-testing-mocks';
