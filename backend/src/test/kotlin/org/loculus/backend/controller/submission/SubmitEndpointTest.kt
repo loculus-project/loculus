@@ -8,6 +8,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasEntry
+import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -211,6 +212,47 @@ class SubmitEndpointTest(
             .andExpect(expectedStatus)
             .andExpect(jsonPath("\$.title").value(expectedTitle))
             .andExpect(jsonPath("\$.detail", containsString(expectedMessage)))
+    }
+
+    @Test
+    fun `GIVEN duplicate submissionId in metadata THEN error detail contains no database internals`() {
+        submissionControllerClient.submit(
+            metadataFile = SubmitFiles.metadataFileWith(
+                content = """
+                    id	firstColumn
+                    sameHeader	someValue
+                    sameHeader	someValue2
+                """.trimIndent(),
+            ),
+            sequencesFile = DefaultFiles.sequencesFile,
+            groupId = groupId,
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("\$.detail").value("Metadata file contains at least one duplicate submissionId"))
+            .andExpect(jsonPath("\$.detail", not(containsString("PSQLException"))))
+            .andExpect(jsonPath("\$.detail", not(containsString("constraint"))))
+            .andExpect(jsonPath("\$.detail", not(containsString("metadata_upload_aux_table"))))
+    }
+
+    @Test
+    fun `GIVEN duplicate submissionId in sequences THEN error detail contains no database internals`() {
+        submissionControllerClient.submit(
+            metadataFile = DefaultFiles.metadataFile,
+            sequencesFile = SubmitFiles.sequenceFileWith(
+                content = """
+                    >sameHeader_main
+                    AC
+                    >sameHeader_main
+                    AC
+                """.trimIndent(),
+            ),
+            groupId = groupId,
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("\$.detail").value("Sequence file contains at least one duplicate submissionId"))
+            .andExpect(jsonPath("\$.detail", not(containsString("PSQLException"))))
+            .andExpect(jsonPath("\$.detail", not(containsString("constraint"))))
+            .andExpect(jsonPath("\$.detail", not(containsString("sequence_upload_aux_table"))))
     }
 
     @Test
