@@ -134,6 +134,37 @@ export const dataUseTermsHistoryEntry = z.object({
 
 export type DataUseTermsHistoryEntry = z.infer<typeof dataUseTermsHistoryEntry>;
 
+const filesByCategory = z.record(
+    z.array(
+        z.object({
+            fileId: z.string(),
+            name: z.string(),
+        }),
+    ),
+);
+export type FilesByCategory = z.infer<typeof filesByCategory>;
+
+export const sequenceReviewData = z.object({
+    metadata: metadataRecord,
+    errors: z.array(processingAnnotation).nullable(),
+    warnings: z.array(processingAnnotation).nullable(),
+    files: filesByCategory.nullable(),
+    revision: z
+        .object({
+            previousVersion: z.number().nullable(),
+            previousMetadata: metadataRecord.nullable(),
+            nucleotideChanges: z.record(
+                z.object({
+                    changed: z.boolean(),
+                    previousLength: z.number().nullable(),
+                    currentLength: z.number().nullable(),
+                }),
+            ),
+        })
+        .nullable(),
+});
+export type SequenceReviewData = z.infer<typeof sequenceReviewData>;
+
 export const sequenceEntryStatus = accessionVersion.merge(
     z.object({
         status: sequenceEntryStatusNames,
@@ -143,6 +174,7 @@ export const sequenceEntryStatus = accessionVersion.merge(
         dataUseTerms,
         groupId: z.number(),
         submitter: z.string(),
+        reviewData: sequenceReviewData.optional(),
     }),
 );
 
@@ -175,16 +207,6 @@ export const submissionIdMapping = accessionVersion.merge(
     }),
 );
 export type SubmissionIdMapping = z.infer<typeof submissionIdMapping>;
-
-const filesByCategory = z.record(
-    z.array(
-        z.object({
-            fileId: z.string(),
-            name: z.string(),
-        }),
-    ),
-);
-export type FilesByCategory = z.infer<typeof filesByCategory>;
 
 export const editedSequenceEntryData = accessionVersion.merge(
     z.object({

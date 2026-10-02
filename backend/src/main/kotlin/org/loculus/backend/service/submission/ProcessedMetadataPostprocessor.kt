@@ -1,6 +1,7 @@
 package org.loculus.backend.service.submission
 
 import com.fasterxml.jackson.databind.node.NullNode
+import org.loculus.backend.api.MetadataMap
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.config.BackendConfig
@@ -14,13 +15,15 @@ class ProcessedMetadataPostprocessor(private val backendConfig: BackendConfig) {
     /** Filter out any extra fields that are not in the current schema and add nulls for any missing fields. */
     fun <SequenceType> filterOutExtraFieldsAndAddNulls(processedData: ProcessedData<SequenceType>, organism: Organism) =
         processedData.copy(
-            metadata = backendConfig
-                .getInstanceConfig(organism)
-                .schema
-                .metadata
-                .map { it.name }
-                .associateWith { fieldName ->
-                    processedData.metadata[fieldName] ?: NullNode.instance
-                },
+            metadata = filterOutExtraFieldsAndAddNulls(processedData.metadata, organism),
         )
+
+    fun filterOutExtraFieldsAndAddNulls(metadata: MetadataMap, organism: Organism): MetadataMap = backendConfig
+        .getInstanceConfig(organism)
+        .schema
+        .metadata
+        .map { it.name }
+        .associateWith { fieldName ->
+            metadata[fieldName] ?: NullNode.instance
+        }
 }
