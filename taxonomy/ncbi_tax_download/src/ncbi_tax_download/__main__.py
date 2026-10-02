@@ -6,6 +6,7 @@ from pathlib import Path
 from .ncbi import (
     create_taxonomy_df,
     download_ncbi_archive,
+    extract_alternative_names_df,
     write_to_sqlite,
 )
 
@@ -31,7 +32,8 @@ def run() -> None:
     try:
         archive = download_ncbi_archive()
         df_taxonomy = create_taxonomy_df(archive)
-        write_to_sqlite(df_taxonomy, args.output_db)
+        df_names = extract_alternative_names_df(archive)
+        write_to_sqlite(df_taxonomy, df_names, args.output_db)
     except Exception:
         logger.exception("NCBI taxonomy download pipeline failed")
         sys.exit(1)
