@@ -1,4 +1,5 @@
-import { test as base, ConsoleMessage, expect, type TestInfo } from '@playwright/test';
+import { ConsoleMessage, expect, type TestInfo } from '@playwright/test';
+import { test as base } from './browser-crash.fixture';
 
 /** Permits console errors containing `description` for the rest of the test. */
 export const allowConsoleError = (test: { info: () => TestInfo }, description: string) =>

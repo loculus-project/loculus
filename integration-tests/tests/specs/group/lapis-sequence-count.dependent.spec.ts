@@ -1,4 +1,5 @@
-import { expect, test, type Locator } from '@playwright/test';
+import { expect, type Locator } from '@playwright/test';
+import { test } from '../../fixtures/browser-crash.fixture';
 import { readonlyUser } from '../../fixtures/user.fixture';
 import { AuthPage } from '../../pages/auth.page';
 import { GroupPage } from '../../pages/group.page';
