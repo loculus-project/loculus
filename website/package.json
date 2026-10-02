@@ -18,7 +18,7 @@
         "test-fast": "vitest --bail=1"
     },
     "dependencies": {
-        "@astrojs/mdx": "^7.0.8",
+        "@astrojs/mdx": "^8.0.2",
         "@astrojs/node": "^11.1.6",
         "@emotion/react": "^11.14.0",
         "@headlessui/react": "^2.2.10",
