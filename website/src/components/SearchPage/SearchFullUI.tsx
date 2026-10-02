@@ -3,13 +3,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Button } from '../common/Button';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
-import {
-    DownloadSubmittedDataButton,
-    MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES,
-} from './DownloadDialog/DownloadSubmittedDataButton.tsx';
 import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
 import { LinkOutMenu } from './DownloadDialog/LinkOutMenu.tsx';
 import { FieldFilterSet, SequenceEntrySelection, type SequenceFilter } from './DownloadDialog/SequenceFilters.tsx';
+import { MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES } from './DownloadDialog/useSubmittedDataDownload.ts';
+import { ModifyEntriesMenu } from './ModifyEntriesMenu.tsx';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
@@ -35,7 +33,6 @@ import {
     MetadataFilterSchema,
 } from '../../utils/search.ts';
 import { getSegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers.ts';
-import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
 import ErrorContactMessage from '../common/ErrorContactMessage.tsx';
@@ -224,6 +221,18 @@ const InnerSearchFullUI = ({
         return response.data.map((item) => String(item[schema.primaryKey]));
     }, [lapisUrl, lapisSearchParameters, schema.primaryKey]);
 
+    const showModifyEntriesMenu = showEditDataUseTermsControls && dataUseTermsEnabled;
+    const submittedDataDownload =
+        isReleasedPage && accessToken !== undefined && groupId !== undefined
+            ? {
+                  backendUrl: clientConfig.backendUrl,
+                  organism,
+                  groupId,
+                  totalSequences,
+                  fetchAccessions,
+              }
+            : undefined;
+
     const [oldData, setOldData] = useState<TableSequenceData[] | null>(null);
     const [oldCount, setOldCount] = useState<number | null>(null);
     const [firstClientSideLoadOfDataCompleted, setFirstClientSideLoadOfDataCompleted] = useState(false);
@@ -339,8 +348,22 @@ const InnerSearchFullUI = ({
                             <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
                         </div>
                     )}
-                    <div className='text-sm text-gray-800 mb-6 justify-between flex flex-wrap gap-4'>
-                        <div className='mt-auto'>
+                    {/*
+                     * The sequence count sits beside the buttons and takes its own line once they
+                     * no longer fit next to it. `flex-wrap` decides that from the content rather
+                     * than a breakpoint, because viewport width is a poor guide to the width this
+                     * row actually has -- the search form sits alongside this column from `md` up,
+                     * so there is less room here at a 768px viewport than at a 640px one -- and
+                     * because the buttons on offer, and the counts in their labels, vary by page.
+                     *
+                     * The count keeps its place well into narrow widths: `basis-0` means the row
+                     * breaks on how little space the count will accept rather than how much its
+                     * text would like, so it narrows and wraps beside the buttons first and only
+                     * takes its own line once even 160px is not there. `grow` gives it the space
+                     * going spare, so at ordinary widths it still reads as one line on the left.
+                     */}
+                    <div className='text-sm text-gray-800 mb-6 justify-between flex flex-wrap items-baseline gap-x-4 gap-y-2'>
+                        <div className='mt-auto basis-0 grow min-w-40'>
                             {buildSequenceCountText(totalSequences, oldCount, initialCount)}
                             {detailsHook.isPending ||
                             aggregatedHook.isPending ||
@@ -351,24 +374,34 @@ const InnerSearchFullUI = ({
                                 </span>
                             ) : null}
                         </div>
-                        <div className='flex flex-wrap justify-start gap-2'>
-                            {showEditDataUseTermsControls && dataUseTermsEnabled && (
-                                <EditDataUseTermsModal
-                                    lapisUrl={lapisUrl}
-                                    clientConfig={clientConfig}
-                                    accessToken={accessToken}
-                                    sequenceFilter={downloadFilter}
-                                />
-                            )}
+                        {/*
+                         * `ml-auto` keeps the buttons against the right edge once the count has
+                         * taken its own line and they are alone on theirs. Above that width the
+                         * count has already grown into the space between, so there is none left
+                         * for the margin to take and it changes nothing.
+                         *
+                         * The buttons are squeezed rather than wrapped as the row narrows, but
+                         * `*:break-normal` stops that going too far. `base.css` sets
+                         * `word-break: break-word` on everything, and that legacy value lets a line
+                         * break between any two characters *for intrinsic sizing too*, so a flex
+                         * item's automatic minimum size collapses to one character: "Customize
+                         * columns" came out 13px wide and 260px tall. Breaking at word boundaries
+                         * instead floors each button at its longest word.
+                         *
+                         * It has to be `!important` to get there: that rule in `base.css` sits
+                         * outside any cascade layer, and unlayered declarations beat layered ones
+                         * whatever their specificity, so a plain utility loses to it.
+                         */}
+                        <div className='flex items-center gap-2 ml-auto *:break-normal!'>
                             <Button
-                                className='mr-2 underline text-primary-700 hover:text-primary-500'
+                                className='underline text-primary-700 hover:text-primary-500'
                                 onClick={() => setIsColumnModalOpen(true)}
                             >
                                 Customize columns
                             </Button>
                             {sequencesSelected ? (
                                 <Button
-                                    className='mr-2 underline text-primary-700 hover:text-primary-500'
+                                    className='underline text-primary-700 hover:text-primary-500'
                                     onClick={clearSelectedSeqs}
                                 >
                                     Clear selection
@@ -387,15 +420,14 @@ const InnerSearchFullUI = ({
                                 selectedReferenceNames={referenceSelection?.selectedReferences}
                                 referenceIdentifierField={schema.referenceIdentifierField}
                             />
-                            {isReleasedPage && accessToken !== undefined && groupId !== undefined && (
-                                <DownloadSubmittedDataButton
+                            {(showModifyEntriesMenu || submittedDataDownload !== undefined) && (
+                                <ModifyEntriesMenu
                                     sequenceFilter={downloadFilter}
-                                    backendUrl={clientConfig.backendUrl}
+                                    clientConfig={clientConfig}
+                                    lapisUrl={lapisUrl}
                                     accessToken={accessToken}
-                                    organism={organism}
-                                    groupId={groupId}
-                                    totalSequences={totalSequences}
-                                    fetchAccessions={fetchAccessions}
+                                    showEditDataUseTerms={showModifyEntriesMenu}
+                                    submittedDataDownload={submittedDataDownload}
                                 />
                             )}
                             {linkOuts !== undefined && linkOuts.length > 0 && (
