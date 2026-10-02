@@ -128,6 +128,7 @@ def create_manifest_object(
     ).name
     metadata = submission_row.seq_metadata
     raw_reads_manifest_fields_mapping = config.raw_reads_manifest_fields_mapping
+    molecule_type = config.enaOrganisms[submission_row.organism].molecule_type
 
     sequencing_instrument = resolve_required_manifest_field(
         raw_reads_manifest_fields_mapping["instrument_platform"], metadata
@@ -141,15 +142,21 @@ def create_manifest_object(
     )
     insert_size = int(insert_size_) if len(fastq_files) > 1 and insert_size_ else None
     library_source = LibrarySource.from_value(
-        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_source"], metadata),
+        resolve_manifest_field(
+            raw_reads_manifest_fields_mapping["library_source"], metadata, molecule_type
+        ),
         required=True,
     )
     library_selection = LibrarySelection.from_value(
-        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_selection"], metadata),
+        resolve_manifest_field(
+            raw_reads_manifest_fields_mapping["library_selection"], metadata, molecule_type
+        ),
         required=True,
     )
     library_strategy = LibraryStrategy.from_value(
-        resolve_manifest_field(raw_reads_manifest_fields_mapping["library_strategy"], metadata),
+        resolve_manifest_field(
+            raw_reads_manifest_fields_mapping["library_strategy"], metadata, molecule_type
+        ),
         required=True,
     )
 
@@ -277,7 +284,10 @@ def can_revise_raw_reads(
     #     return True
 
     differing_fields = manifest_fields_diff(
-        config.raw_reads_manifest_fields_mapping, submission_row, last_entry
+        config.raw_reads_manifest_fields_mapping,
+        submission_row,
+        last_entry,
+        molecule_type=config.enaOrganisms[submission_row.organism].molecule_type,
     )
     if differing_fields and not has_raw_reads_changed(config, db_engine, submission_row):
         error = (

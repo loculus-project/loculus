@@ -46,6 +46,12 @@ class MetadataMapping(BaseModel):
 class ManifestFieldDetails(BaseModel):
     loculus_fields: list[str] = field(default_factory=list)
     function: str | None = None
+    # If loculus_fields are empty, look up the value of the loculus field `derive_from` in
+    # derived_values[nucleic acid of the organism ("DNA" or "RNA")] before using the default
+    derive_from: str | None = None
+    derived_values: dict[str, dict[str, str]] = field(default_factory=dict)
+    # If true, a derived value takes precedence over the value of loculus_fields
+    prefer_derived: bool = False
     default: str | None = None
 
 
