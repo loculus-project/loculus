@@ -1,3 +1,5 @@
+import { expect } from '@playwright/test';
+
 import { test } from '../../fixtures/auth.fixture';
 import { AuthPage } from '../../pages/auth.page';
 
@@ -11,6 +13,6 @@ test.describe('Login Flow', () => {
     test('should login with valid credentials', async ({ testAccount }) => {
         await authPage.createAccount(testAccount);
         await authPage.logout();
-        await authPage.login(testAccount.username, testAccount.password);
+        expect(await authPage.login(testAccount.username, testAccount.password)).toBe(true);
     });
 });
