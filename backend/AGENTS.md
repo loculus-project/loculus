@@ -1,10 +1,10 @@
 Kotlin dependent packages have already been installed for you.
 
-Run tests like this (if you have Docker set up properly):
+First check whether Docker is present (e.g. `docker info`). If it is, prefer running tests through Docker:
 
 ./gradlew test --console=plain
 
-If that doesn't work due to Docker issues because you're running inside a cloud environment, try this:
+Only fall back to the non-Docker route if Docker is not present or the Docker-based run fails (e.g. when running inside a cloud environment):
 
 USE_NONDOCKER_INFRA=true ./gradlew test --console=plain
 
