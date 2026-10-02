@@ -2931,7 +2931,7 @@ secrets:
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 runDevelopmentS3: true
-developmentDatabasePersistence: false
+developmentDatabasePersistence: true
 enforceHTTPS: true
 traefikVersion: 3
 registrationTermsMessage: >
