@@ -9,6 +9,10 @@ secrets:
 createTestAccounts: true
 backendExtraArgs:
   - "--loculus.debug-mode=true"
+keycloakExtraEnv:
+  # gzip encoder 404s concurrent first requests for a theme asset: https://github.com/keycloak/keycloak/issues/53238
+  - name: KC_SPI_RESOURCE_ENCODING_GZIP_ENABLED
+    value: "false"
 disableRawReadsProcessingService: false
 disableEnaSubmission: true
 auth:

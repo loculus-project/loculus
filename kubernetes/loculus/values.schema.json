@@ -2203,6 +2203,22 @@
         "type": "string"
       }
     },
+    "keycloakExtraEnv": {
+      "groups": ["auth"],
+      "type": "array",
+      "default": [],
+      "description": "Extra environment variables for the Keycloak container, as a list of Kubernetes `EnvVar` objects (`name` plus `value` or `valueFrom`). Appended after the chart's own entries.",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "value": { "type": "string" },
+          "valueFrom": { "type": "object" }
+        },
+        "additionalProperties": false
+      }
+    },
     "previewDocs": {
       "description": "TODO"
     },
