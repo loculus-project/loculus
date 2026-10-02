@@ -11,6 +11,7 @@ import { routes } from '../../routes/routes';
 import { SeqSetCitationClient } from '../../services/seqSetCitationClient.ts';
 import type { ProblemDetail } from '../../types/backend';
 import type { SeqSet } from '../../types/seqSetCitation';
+import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessToken } from '../../utils/getAccessToken';
 
 const clientConfig = getRuntimeConfig().public;
@@ -32,9 +33,18 @@ if (!seqSetsAreEnabled()) {
 }
 
 const seqSetClient = SeqSetCitationClient.create();
-const seqSetVersionsResponse = await seqSetClient.call('getSeqSetVersions', { params: { seqSetId } });
-const seqSetRecordsResponse = await seqSetClient.call('getSeqSetRecords', { params: { seqSetId, version } });
-const seqSetCitationsResponse = await seqSetClient.call('getSeqSetCitations', { params: { seqSetId, version } });
+const seqSetVersionsResponse = await seqSetClient.call('getSeqSetVersions', {
+    params: { seqSetId },
+    headers: createAuthorizationHeader(accessToken),
+});
+const seqSetRecordsResponse = await seqSetClient.call('getSeqSetRecords', {
+    params: { seqSetId, version },
+    headers: createAuthorizationHeader(accessToken),
+});
+const seqSetCitationsResponse = await seqSetClient.call('getSeqSetCitations', {
+    params: { seqSetId, version },
+    headers: createAuthorizationHeader(accessToken),
+});
 
 const getSeqSetByVersion = (seqSetVersions: SeqSet[], version: string) => {
     const matchedVersion = seqSetVersions.find((obj) => {
@@ -51,7 +61,7 @@ const latestSeqSetVersion = seqSetVersionsResponse.isOk()
     ? Math.max(...seqSetVersionsResponse.value.map((s) => s.seqSetVersion))
     : undefined;
 const seqSetAuthorResponse = seqSetResponse.isOk()
-    ? await seqSetClient.getAuthor(seqSetResponse.value.createdBy)
+    ? await seqSetClient.getAuthor(seqSetResponse.value.createdBy, accessToken)
     : err();
 
 const accessions = seqSetRecordsResponse.unwrapOr([]).map((record) => record.accession);

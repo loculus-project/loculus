@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { err, ok, type Result } from 'neverthrow';
 
 import { parseAccessionVersionFromString } from './extractAccessionVersion';
-import { getConfiguredOrganisms } from '../config';
+import { getConfiguredOrganisms, loginIsRequired } from '../config';
 import { LapisClient } from '../services/lapisClient';
 import { type ProblemDetail } from '../types/backend';
 
@@ -56,8 +56,11 @@ export function createDownloadAPIRoute(
 
         const headers: Record<string, string> = {
             'Content-Type': contentType, // eslint-disable-line @typescript-eslint/naming-convention
-            'Access-Control-Allow-Origin': '*', // eslint-disable-line @typescript-eslint/naming-convention
         };
+        if (!loginIsRequired()) {
+            // Only instances whose data is public share it with other origins.
+            headers['Access-Control-Allow-Origin'] = '*';
+        }
         if (isDownload) {
             const filename = `${accessionVersion}.${fileSuffix}`;
             headers['Content-Disposition'] = `attachment; filename="${filename}"`;
