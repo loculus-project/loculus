@@ -1,4 +1,3 @@
-{{- $keycloakHost := (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -256,11 +255,14 @@ data:
           "enabled": true,
           "publicClient": true,
           "directAccessGrantsEnabled": true,
-          "redirectUris": [
-            "https://{{$.Values.host}}/*",
-            "http://{{$.Values.host}}/*",
-            "http://localhost:3000/*"
-          ]
+          {{- $websiteUrl := include "loculus.websiteUrl" . }}
+          {{- $redirectUris := list (printf "%s/*" $websiteUrl) }}
+          {{- /* only accept a plaintext redirect where the deployment actually serves plain HTTP:
+                 with HTTPS enforced, an http:// redirect URI is a machine-in-the-middle handle on the auth code */}}
+          {{- if not $.Values.networking.enforceHTTPS }}
+            {{- $redirectUris = append $redirectUris (printf "http://%s/*" ($websiteUrl | trimPrefix "https://" | trimPrefix "http://")) }}
+          {{- end }}
+          "redirectUris": {{ append $redirectUris "http://localhost:3000/*" | uniq | toJson }}
         },
         {
           "clientId" : "account-console2",
