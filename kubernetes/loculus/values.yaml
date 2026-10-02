@@ -86,7 +86,7 @@ lineageSystemDefinitions:
   cchfS:
     1: https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-24--07-29-03Z/lineages.yaml
 taxonomyService:
-  dbVersion: "ncbi_taxonomy_2026-06-01"
+  dbVersion: "ncbi_taxonomy_2026-09-01"
   taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
   taxonomy_service_url: &taxonomy_service_url http://loculus-taxonomy-service:5000
 defaultOrganismConfig: &defaultOrganismConfig
@@ -1804,7 +1804,7 @@ defaultOrganisms:
       linkOuts:
         - name: "Nextclade"
           maxNumberOfRecommendedEntries: 5
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/ebola/sudan&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/orthoebolavirus/sudv"
     preprocessing:
       - <<: *preprocessing
         version: [1, 2]
@@ -1814,9 +1814,9 @@ defaultOrganisms:
             - name: main
               references:
                 - name: singleReference
-                  nextclade_dataset_name: nextstrain/ebola/sudan
+                  nextclade_dataset_name: nextstrain/orthoebolavirus/sudv
+                  nextclade_dataset_tag: "2025-09-24--07-29-03Z"
                   genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
           taxon_id: 186540
           scientific_name: "Sudan ebolavirus"
           molecule_type: "genomic RNA"
@@ -1864,7 +1864,7 @@ defaultOrganisms:
       image: "/images/organisms/wnv_small.jpg"
       linkOuts:
         - name: "Nextclade"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/wnv/all-lineages&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/wnv/all-lineages"
         - name: "Country map"
           url: "https://mapoplexus.genomium.org/?url={{[metadata+accessionVersion,accession,version,geoLocAdmin1,geoLocAdmin2,geoLocCity,geoLocCountry,geoLocSite,hostNameCommon,hostNameScientific,authors,sampleCollectionDate]}}"
       extraInputFields:
@@ -1961,10 +1961,9 @@ defaultOrganisms:
               references:
                 - name: singleReference
                   nextclade_dataset_name: nextstrain/wnv/all-lineages
+                  nextclade_dataset_tag: "2026-03-04--12-40-26Z"
                   genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
                   nextclade_additional_args: ["--allowed-mismatches", "8", "--min-seed-cover", "0.01"]
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
-          taxon_id: 11082
           scientific_name: "West Nile virus"
           molecule_type: "genomic RNA"
     ingest:
@@ -2299,7 +2298,6 @@ defaultOrganisms:
       - <<: *preprocessing
         configFile:
           <<: *preprocessingConfigFile
-          taxon_id: 3052518
           scientific_name: "Orthonairovirus haemorrhagiae"
           molecule_type: "genomic RNA"
           log_level: DEBUG
@@ -2307,16 +2305,19 @@ defaultOrganisms:
             - name: L
               references:
                 - nextclade_dataset_name: community/pathoplexus/cchfv/L
+                  nextclade_dataset_tag: "2025-09-24--07-29-03Z"
                   name: singleReference
                   genes: [RdRp]
             - name: M
               references:
                 - nextclade_dataset_name: community/pathoplexus/cchfv/M
+                  nextclade_dataset_tag: "2025-09-24--07-29-03Z"
                   name: singleReference
                   genes: [GPC]
             - name: S
               references:
                 - nextclade_dataset_name: community/pathoplexus/cchfv/S
+                  nextclade_dataset_tag: "2025-09-24--07-29-03Z"
                   name: singleReference
                   genes: [NP]
     ingest:
@@ -2497,7 +2498,6 @@ defaultOrganisms:
       - <<: *preprocessing
         configFile:
           <<: *preprocessingConfigFile
-          taxon_id: 3052518
           scientific_name: "Orthonairovirus haemorrhagiae"
           molecule_type: "genomic RNA"
           alignment_requirement: ANY
@@ -2859,7 +2859,7 @@ images:
     pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
-    tag: "0.8.8@sha256:6942844fddb7330ec9ce3ae14d18908f8e63e610ce287642061163d010c3d744"
+    tag: "v0.8.0@sha256:4da71d94aceb36b7ea5963aa2e7b0566567c6423fe7fdd39448e69aebda2a8bb"
     pullPolicy: Always
   website:
     repository: "ghcr.io/loculus-project/website"

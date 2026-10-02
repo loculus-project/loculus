@@ -16,6 +16,10 @@ import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.matchesRegex
 import org.hamcrest.Matchers.not
 import org.hamcrest.Matchers.notNullValue
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.FileIdAndNameAndReadUrl
 import org.loculus.backend.api.GeneticSequence
@@ -26,6 +30,7 @@ import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
 import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -39,6 +44,7 @@ import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.getAccessionVersions
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
+import org.loculus.backend.service.submission.SequenceEntriesPreprocessedDataTable
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders.ETAG
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
@@ -115,6 +121,86 @@ class ExtractUnprocessedDataEndpointTest(
 
         responseNoNewData.andExpect(status().isNotModified)
             .andExpect(header().string(ETAG, secondEtag!!))
+    }
+
+    @Test
+    fun `GIVEN newer than current pipeline version WHEN its preprocessed data changes THEN its etag changes`() {
+        val newerPipelineVersion = DEFAULT_PIPELINE_VERSION + 1
+        convenienceClient.submitDefaultFiles()
+
+        // Claiming entries for the newer pipeline only writes preprocessed-data rows for that version,
+        // which must invalidate the etag the newer pipeline polls with (not only the current version's).
+        val response = client.extractUnprocessedData(
+            DefaultFiles.NUMBER_OF_SEQUENCES,
+            pipelineVersion = newerPipelineVersion,
+        )
+        val initialEtag = response.andReturn().response.getHeader(ETAG)
+        assertThat(
+            response.expectNdjsonAndGetContent<UnprocessedData>().size,
+            `is`(DefaultFiles.NUMBER_OF_SEQUENCES),
+        )
+
+        val responseAfterUpdatingTable = client.extractUnprocessedData(
+            DefaultFiles.NUMBER_OF_SEQUENCES,
+            pipelineVersion = newerPipelineVersion,
+            ifNoneMatch = initialEtag,
+        ).andExpect(status().isOk)
+        assertThat(responseAfterUpdatingTable.expectNdjsonAndGetContent<UnprocessedData>().size, `is`(0))
+
+        val secondEtag = responseAfterUpdatingTable.andReturn().response.getHeader(ETAG)
+        client.extractUnprocessedData(
+            DefaultFiles.NUMBER_OF_SEQUENCES,
+            pipelineVersion = newerPipelineVersion,
+            ifNoneMatch = secondEtag,
+        ).andExpect(status().isNotModified)
+    }
+
+    @Test
+    fun `GIVEN newer pipeline version WHEN its processed entry is deleted from db THEN it is returned again`() {
+        val newerPipelineVersion = DEFAULT_PIPELINE_VERSION + 1
+        val accessions = convenienceClient.submitDefaultFiles().submissionIdMappings.map { it.accession }
+
+        client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES, pipelineVersion = newerPipelineVersion)
+            .expectNdjsonAndGetContent<UnprocessedData>()
+        convenienceClient.submitProcessedData(
+            accessions.map { PreparedProcessedData.withErrors(accession = it) },
+            pipelineVersion = newerPipelineVersion,
+        )
+
+        val newerEtagBeforeDelete = client.extractUnprocessedData(0, pipelineVersion = newerPipelineVersion)
+            .andReturn().response.getHeader(ETAG)
+        client.extractUnprocessedData(
+            DefaultFiles.NUMBER_OF_SEQUENCES,
+            pipelineVersion = newerPipelineVersion,
+            ifNoneMatch = newerEtagBeforeDelete,
+        ).andExpect(status().isNotModified)
+
+        val currentEtagBeforeDelete = client.extractUnprocessedData(0).andReturn().response.getHeader(ETAG)
+
+        // Simulates manually deleting a failed row so that the newer pipeline reprocesses it
+        val deletedAccession = accessions.first()
+        transaction {
+            SequenceEntriesPreprocessedDataTable.deleteWhere {
+                (SequenceEntriesPreprocessedDataTable.accessionColumn eq deletedAccession) and
+                    (SequenceEntriesPreprocessedDataTable.pipelineVersionColumn eq newerPipelineVersion)
+            }
+        }
+
+        val responseAfterDelete = client.extractUnprocessedData(
+            DefaultFiles.NUMBER_OF_SEQUENCES,
+            pipelineVersion = newerPipelineVersion,
+            ifNoneMatch = newerEtagBeforeDelete,
+        ).andExpect(status().isOk)
+        assertThat(
+            responseAfterDelete.andReturn().response.getHeader(ETAG),
+            `is`(not(newerEtagBeforeDelete)),
+        )
+        val reextracted = responseAfterDelete.expectNdjsonAndGetContent<UnprocessedData>()
+        assertThat(reextracted.map { it.accession }, `is`(listOf(deletedAccession)))
+
+        // Deleting a newer pipeline's row must not invalidate the current pipeline's etag
+        client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES, ifNoneMatch = currentEtagBeforeDelete)
+            .andExpect(status().isNotModified)
     }
 
     @Test
