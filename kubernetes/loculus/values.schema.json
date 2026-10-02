@@ -1256,6 +1256,13 @@
       "default": "server",
       "description": "Deployment environment. local for development, server for production"
     },
+    "mirrorRegistry": {
+      "groups": ["general"],
+      "type": "string",
+      "pattern": "^[^\\s/]+(?:/[^\\s/]+)*$",
+      "default": "ghcr.io/loculus-project/mirror",
+      "description": "Registry prefix for mirrored external images, without a trailing slash. Override with a registry containing the same image names and tags."
+    },
     "imagePullPolicy": {
       "groups": ["general"],
       "type": "string",
