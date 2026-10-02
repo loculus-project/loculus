@@ -56,8 +56,8 @@ spec:
             httpGet:
               path: /sample/info
               port: 8080
-            periodSeconds: 10
-            failureThreshold: 3
+            periodSeconds: 5
+            failureThreshold: 12
             timeoutSeconds: 5
           livenessProbe:
             httpGet:
