@@ -21,8 +21,8 @@ test.describe('Sequence Preview URL Parameters', () => {
 
         urlParams = searchPage.getUrlParams();
         expect(urlParams.has('selectedSeq')).toBe(true);
-        expect(urlParams.get('selectedSeq')).not.toBeNull();
         const selectedSeqId = urlParams.get('selectedSeq');
+        if (!selectedSeqId) throw new Error('selectedSeq missing from URL');
 
         await searchPage.closePreviewButton().click();
 
@@ -30,7 +30,7 @@ test.describe('Sequence Preview URL Parameters', () => {
         expect(urlParams.has('selectedSeq')).toBe(false);
 
         const currentUrl = new URL(page.url());
-        currentUrl.searchParams.set('selectedSeq', selectedSeqId || '');
+        currentUrl.searchParams.set('selectedSeq', selectedSeqId);
         await page.goto(currentUrl.toString());
 
         await expect(searchPage.getSequencePreviewModal()).toBeVisible();
@@ -67,13 +67,14 @@ test.describe('Sequence Preview URL Parameters', () => {
 
         const urlParams = searchPage.getUrlParams();
         const selectedSeqId = urlParams.get('selectedSeq');
+        if (!selectedSeqId) throw new Error('selectedSeq missing from URL');
 
         await searchPage.toggleHalfScreenButton().click();
 
         await searchPage.closePreviewButton().click();
 
         const currentUrl = new URL(page.url());
-        currentUrl.searchParams.set('selectedSeq', selectedSeqId || '');
+        currentUrl.searchParams.set('selectedSeq', selectedSeqId);
         currentUrl.searchParams.set('halfScreen', 'true');
         await page.goto(currentUrl.toString());
 

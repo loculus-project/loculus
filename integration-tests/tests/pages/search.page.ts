@@ -204,16 +204,6 @@ export class SearchPage {
         return new EditPage(this.page);
     }
 
-    async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string | null> {
-        const rows = this.getSequenceRows();
-        const row = rows.nth(rowIndex);
-        const rowText = await row.innerText();
-        const accessionVersionMatch = rowText.match(accessionVersionRegex);
-        const accessionVersion = accessionVersionMatch ? accessionVersionMatch[0] : null;
-        await row.click();
-        return accessionVersion;
-    }
-
     getSequencePreviewModal() {
         return this.page.locator('[data-testid="sequence-preview-modal"]');
     }
