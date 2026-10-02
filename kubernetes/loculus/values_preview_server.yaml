@@ -1,5 +1,7 @@
 enableServiceMonitor: true
 createTestAccounts: true
+# Support local Astro development against preview Keycloak.
+allowLocalhostAuthRedirects: true
 secrets:
   smtp-password:
     type: sealedsecret

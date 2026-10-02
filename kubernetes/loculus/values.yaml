@@ -2847,6 +2847,9 @@ auth:
   resetPasswordAllowed: true
   registrationAllowed: true
 insecureCookies: false
+# Allow local Astro development against this realm. Keep disabled in production.
+# Existing Keycloak realms require manual redirect-allowlist updates.
+allowLocalhostAuthRedirects: false
 bannerMessage: "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly."
 welcomeMessageHTML: null
 additionalHeadHTML: ""
@@ -2879,6 +2882,11 @@ secrets:
     type: autogen
     data:
       backendKeycloakClientSecret: ""
+  website-oidc-cookie-secret:
+    type: autogen
+    length: 32
+    data:
+      oidcTransactionCookieSecret: ""
   database:
     type: raw
     data:

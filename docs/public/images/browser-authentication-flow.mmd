@@ -1,0 +1,38 @@
+---
+config:
+  theme: neutral
+  fontFamily: Arial, sans-serif
+  sequence:
+    mirrorActors: false
+    actorMargin: 70
+    messageMargin: 32
+    noteMargin: 16
+    width: 160
+---
+%% Regenerate from the repository root:
+%% npm exec --yes --package=@mermaid-js/mermaid-cli@11.12.0 -- mmdc -i docs/public/images/browser-authentication-flow.mmd -o docs/public/images/browser-authentication-flow.svg -b white
+sequenceDiagram
+    autonumber
+    participant B as Browser
+    participant W as Website<br/>(Astro server)
+    participant K as Keycloak
+
+    B->>W: Request protected page
+    W-->>B: Redirect to /auth/login<br/>with returnTo
+    B->>W: GET /auth/login?returnTo=...
+    Note over W: Check same-origin returnTo.<br/>Create state, nonce and<br/>PKCE verifier + challenge.
+    W-->>B: Set encrypted HttpOnly<br/>transaction cookie<br/>and redirect to Keycloak
+    Note over B,W: Before login: oidc_transactions<br/>stores returnTo, nonce, code verifier<br/>and expiry, keyed by state.<br/>No access or refresh tokens.<br/>The browser stores this cookie.
+    B->>K: Follow Astro's redirect to Keycloak:<br/>URL carries state, nonce<br/>and PKCE challenge
+    Note over B,K: User signs in at Keycloak.
+    K-->>B: Redirect to /auth/callback<br/>with authorization code and state
+    B->>W: GET /auth/callback<br/>with transaction cookie
+    Note over W: Decrypt transaction cookie.<br/>Match state and read saved values.<br/>Remove matching transaction.<br/>Delete cookie if none remain.
+    W->>K: Exchange authorization code<br/>with PKCE code verifier
+    Note over K: Validate authorization code<br/>and PKCE code verifier.
+    K-->>W: Return ID token, access token<br/>and refresh token directly to Astro
+    Note over W: Validate ID token, including<br/>matching its nonce<br/>to the saved nonce.
+    W->>K: Request user information<br/>with access token
+    K-->>W: Return user information
+    W-->>B: Set separate HttpOnly session cookies:<br/>access_token and refresh_token<br/>Redirect to saved returnTo
+    Note over B,W: After login: the browser stores<br/>the access and refresh tokens<br/>in the website session cookies.<br/>These are not the transaction cookie.
