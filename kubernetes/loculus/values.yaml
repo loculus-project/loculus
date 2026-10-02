@@ -39,6 +39,7 @@ disableEnaSubmission: true
 disableTaxonomyService: false
 disableRawReadsProcessingService: true
 readOnlyMode: false
+backendExtraJvmOpts: ""
 website:
   websiteConfig:
     enableLoginNavigationItem: true
