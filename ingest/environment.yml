@@ -15,13 +15,13 @@ dependencies:
   - ncbi-datasets-cli=18.38.0
   - nextclade=3.23.0
   - orjsonl=1.0.0
-  - pandas=2.3.3
+  - pandas=3.0.5
   - psycopg2=2.9.13
   - pytz=2026.4
   - pyyaml=6.0.3
   - requests=2.34.2
   - seqkit=2.14.0
   - snakefmt=2.0.3
-  - snakemake=9.27.0
+  - snakemake-minimal=9.27.0
   - unzip=6.0
   - pytest=9.1.1
