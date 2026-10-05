@@ -6,7 +6,7 @@ import { Tooltip } from 'react-tooltip';
 import ScrollContainer from './ScrollContainer.jsx';
 import { routes } from '../../routes/routes.ts';
 import type { Schema } from '../../types/config.ts';
-import type { Metadatum, OrderBy, OrderDirection } from '../../types/lapis.ts';
+import type { FileEntry, Metadatum, OrderBy, OrderDirection } from '../../types/lapis.ts';
 import { deduplicateSemicolonSeparated } from '../../utils/deduplicateSemicolonSeparated';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
@@ -60,25 +60,31 @@ type CellContentProps = {
     fieldName: string;
 };
 
-const CellContent: FC<CellContentProps> = ({ value, type, columnWidth, fieldName }) => {
-    const textRef = useRef<HTMLSpanElement>(null);
+const useTruncationTooltip = <T extends HTMLElement>(text: string) => {
+    const ref = useRef<T>(null);
     const [isTruncated, setIsTruncated] = useState(false);
 
     useEffect(() => {
-        if (textRef.current) {
-            setIsTruncated(textRef.current.scrollWidth > textRef.current.clientWidth);
+        if (ref.current) {
+            setIsTruncated(ref.current.scrollWidth > ref.current.clientWidth);
         }
-    }, [value]);
+    }, [text]);
 
-    const formattedValue = formatField(value, type, fieldName);
     const tooltipText =
-        typeof formattedValue === 'string'
-            ? formattedValue.slice(0, MAX_TOOLTIP_LENGTH) + (formattedValue.length > MAX_TOOLTIP_LENGTH ? '..' : '')
-            : formattedValue;
+        typeof text === 'string'
+            ? text.slice(0, MAX_TOOLTIP_LENGTH) + (text.length > MAX_TOOLTIP_LENGTH ? '..' : '')
+            : text;
+
+    return { ref, isTruncated, tooltipText };
+};
+
+const CellContent: FC<CellContentProps> = ({ value, type, columnWidth, fieldName }) => {
+    const formattedValue = formatField(value, type, fieldName);
+    const { ref, isTruncated, tooltipText } = useTruncationTooltip<HTMLSpanElement>(formattedValue);
 
     return (
         <span
-            ref={textRef}
+            ref={ref}
             className='truncate block'
             style={{ maxWidth: getColumnWidthStyle(columnWidth) }}
             data-tooltip-id={isTruncated ? 'table-tip' : undefined}
@@ -87,6 +93,50 @@ const CellContent: FC<CellContentProps> = ({ value, type, columnWidth, fieldName
             {formattedValue}
         </span>
     );
+};
+
+type FileLinkProps = {
+    fileEntry: FileEntry;
+    columnWidth: number | undefined;
+};
+
+const FileLink: FC<FileLinkProps> = ({ fileEntry, columnWidth }) => {
+    const { ref, isTruncated, tooltipText } = useTruncationTooltip<HTMLAnchorElement>(fileEntry.name);
+
+    return (
+        <a
+            ref={ref}
+            href={fileEntry.url}
+            className='truncate inline-block align-top hover:underline'
+            style={{ maxWidth: getColumnWidthStyle(columnWidth) }}
+            data-tooltip-id={isTruncated ? 'table-tip' : undefined}
+            data-tooltip-content={isTruncated ? tooltipText : undefined}
+            onClick={(e) => e.stopPropagation()}
+            onAuxClick={(e) => e.stopPropagation()}
+        >
+            {fileEntry.name}
+        </a>
+    );
+};
+
+const FilesCellContent: FC<CellContentProps> = ({ value, type, columnWidth, fieldName }) => {
+    if (typeof value === 'string') {
+        try {
+            const fileEntries = JSON.parse(value) as FileEntry[];
+            return (
+                <>
+                    {fileEntries.map((fileEntry) => (
+                        <div key={fileEntry.fileId}>
+                            <FileLink fileEntry={fileEntry} columnWidth={columnWidth} />
+                        </div>
+                    ))}
+                </>
+            );
+        } catch {
+            // Fall back to displaying the raw value if parsing fails
+        }
+    }
+    return <CellContent value={value} type={type} columnWidth={columnWidth} fieldName={fieldName} />;
 };
 
 export const Table: FC<TableProps> = ({
@@ -112,9 +162,17 @@ export const Table: FC<TableProps> = ({
                 type: metadata?.type ?? 'string',
                 columnWidth: metadata?.columnWidth,
                 order: metadata?.order ?? Number.MAX_SAFE_INTEGER,
+                customDisplayType: metadata?.customDisplay?.type,
             };
         })
         .sort((a, b) => a.order - b.order);
+
+    const isSortable = (column: { field: string; customDisplayType?: string }) => {
+        // File list columns return JSON but display file names,
+        // so having sorting enabled would confuse users; the sort doesn't correspond
+        // to what is displayed in the table.
+        return column.customDisplayType !== 'fileList';
+    };
 
     const handleSort = (field: string) => {
         if (orderBy.field === field) {
@@ -223,8 +281,11 @@ export const Table: FC<TableProps> = ({
                                 {columns.map((c) => (
                                     <th
                                         key={c.field}
-                                        onClick={() => handleSort(c.field)}
-                                        className='px-2 py-2 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer box-content last:pr-6 text-left'
+                                        onClick={() => isSortable(c) && handleSort(c.field)}
+                                        className={
+                                            'px-2 py-2 text-xs font-medium tracking-wider text-gray-500 uppercase box-content last:pr-6 text-left' +
+                                            (isSortable(c) ? ' cursor-pointer' : '')
+                                        }
                                         style={{
                                             minWidth: getColumnWidthStyle(c.columnWidth),
                                         }}
@@ -310,12 +371,21 @@ export const Table: FC<TableProps> = ({
                                                 minWidth: getColumnWidthStyle(c.columnWidth),
                                             }}
                                         >
-                                            <CellContent
-                                                value={row[c.field]}
-                                                type={c.type}
-                                                columnWidth={c.columnWidth}
-                                                fieldName={c.field}
-                                            />
+                                            {c.customDisplayType === 'fileList' ? (
+                                                <FilesCellContent
+                                                    value={row[c.field]}
+                                                    type={c.type}
+                                                    columnWidth={c.columnWidth}
+                                                    fieldName={c.field}
+                                                />
+                                            ) : (
+                                                <CellContent
+                                                    value={row[c.field]}
+                                                    type={c.type}
+                                                    columnWidth={c.columnWidth}
+                                                    fieldName={c.field}
+                                                />
+                                            )}
                                         </td>
                                     ))}
                                 </tr>
