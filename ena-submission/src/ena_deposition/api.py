@@ -9,7 +9,13 @@ from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session
 
 from .config import Config, EnaResultField
-from .submission_db_helper import AssemblyTableEntry, SampleTableEntry, Status, db_init
+from .submission_db_helper import (
+    AssemblyTableEntry,
+    RawReadsTableEntry,
+    SampleTableEntry,
+    Status,
+    db_init,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +26,7 @@ class SubmittedAccessionsResponse(BaseModel):
     status: str
     insdcAccessions: list[str]  # noqa: N815
     biosampleAccessions: list[str]  # noqa: N815
+    runAccessions: list[str]  # noqa: N815
 
 
 def get_bio_sample_accessions(engine: Engine) -> dict[str, str]:
@@ -50,6 +57,17 @@ def get_insdc_accessions(engine: Engine) -> dict[str, list[str]]:
     }
 
 
+def get_run_accessions(engine: Engine) -> dict[str, str]:
+    with Session(engine) as session:
+        stmt = select(RawReadsTableEntry).where(RawReadsTableEntry.status == Status.SUBMITTED)
+        results = list(session.scalars(stmt).all())
+    return {
+        row.accession: cast(str, row.result[EnaResultField.RUN])
+        for row in results
+        if row.result and row.result.get(EnaResultField.RUN)
+    }
+
+
 def init_app(config: Config):
     app.state.config = config
     app.state.engine = db_init(config.db_password, config.db_username, config.db_url)
@@ -72,10 +90,12 @@ def submitted_insdc_accessions():
         insdc_accessions = get_insdc_accessions(engine)
         all_insdc_accessions = [item for sublist in insdc_accessions.values() for item in sublist]
         bio_samples = list(get_bio_sample_accessions(engine).values())
+        run_accessions = list(get_run_accessions(engine).values())
         return {
             "status": "ok",
             "insdcAccessions": all_insdc_accessions,
             "biosampleAccessions": bio_samples,
+            "runAccessions": run_accessions,
         }
     except Exception as e:
         logger.error(f"Failed to fetch submitted accessions: {e}")

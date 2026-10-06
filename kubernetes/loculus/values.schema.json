@@ -1863,6 +1863,16 @@
           "minimum": 1,
           "groups": ["general"],
           "description": "The maximum allowed size, in bytes, of an individual uploaded file. Files exceeding this size are rejected by the website and by the backend for multipart uploads (note for single part uploads the default maximum size limit of 5GB cannot be modified and even if a lower `maxFileSizeBytes` threshold is configured it cannot be enforced for single part uploads). If unset, the website does not enforce a limit and multi-part uploads use the configured S3 service limit."
+        },
+        "externalFileUrlPrefixes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^https?://[^/]+/"
+          },
+          "groups": ["general"],
+          "default": [],
+          "description": "URL prefixes of trusted archives from which files can be linked instead of uploaded, e.g. `https://ftp.sra.ebi.ac.uk/vol1/fastq/` for FASTQ files hosted at ENA (used by the INSDC ingest to attach raw reads). Linked files are not stored in S3: downloads redirect to the external URL, and the raw reads processing service does not validate them. Each prefix must include at least the host and a trailing slash. If empty, linking files is disabled."
         }
       },
       "required": ["outputFileUrlType"],

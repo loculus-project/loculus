@@ -1,3 +1,4 @@
+import csv
 import dataclasses
 import json
 import logging
@@ -14,6 +15,9 @@ import orjsonl
 import requests
 
 logger = logging.getLogger(__name__)
+
+FILES_COLUMN_PREFIX = "files."
+EXTERNAL_FILES_BATCH_SIZE = 1000
 
 
 @dataclass(kw_only=True)
@@ -85,7 +89,7 @@ def make_request(  # noqa: PLR0913, PLR0917
     config: ApproveConfig,
     params: dict[str, Any] | None = None,
     files: dict[str, Any] | None = None,
-    json_body: dict[str, Any] | None = None,
+    json_body: dict[str, Any] | list[Any] | None = None,
 ) -> requests.Response:
     """
     Generic request function to handle repetitive tasks like fetching JWT and setting headers.
@@ -324,6 +328,65 @@ def count_lines(path, chunk_size=1024 * 1024):
     return count
 
 
+def register_external_files(
+    config: Config, group_id: str, external_files: list[dict[str, Any]]
+) -> dict[str, str]:
+    """Register files hosted externally (e.g. at ENA) with the backend, return file IDs by URL.
+
+    Registration is idempotent, so URLs registered in previous runs keep their file IDs.
+    """
+    url = f"{backend_url(config)}/files/register-external"
+    file_ids: dict[str, str] = {}
+    for start in range(0, len(external_files), EXTERNAL_FILES_BATCH_SIZE):
+        batch = external_files[start : start + EXTERNAL_FILES_BATCH_SIZE]
+        response = make_request(
+            HTTPMethod.POST, url, config, params={"groupId": group_id}, json_body=batch
+        )
+        file_ids.update({item["url"]: item["fileId"] for item in response.json()})
+    logger.info(f"Registered {len(file_ids)} external files")
+    return file_ids
+
+
+def resolve_external_files(metadata: str, config: Config, group_id: str) -> str:
+    """Replace the external files in `files.<category>` columns by backend file IDs.
+
+    Until submission, file columns hold JSON lists of external files (`{name, url, size}`, see
+    attach_raw_reads.py). The backend expects space-separated `<name>:<fileId>` pairs instead.
+    Returns the path of the metadata file to submit.
+    """
+    with open(metadata, encoding="utf-8", newline="") as file:
+        reader = csv.DictReader(file, delimiter="\t")
+        fieldnames = list(reader.fieldnames or [])
+        file_columns = [name for name in fieldnames if name.startswith(FILES_COLUMN_PREFIX)]
+        if not file_columns:
+            return metadata
+        rows = list(reader)
+
+    external_files = {
+        external_file["url"]: {"url": external_file["url"], "size": external_file.get("size")}
+        for row in rows
+        for column in file_columns
+        if row[column]
+        for external_file in json.loads(row[column])
+    }
+    file_ids = register_external_files(config, group_id, list(external_files.values()))
+
+    for row in rows:
+        for column in file_columns:
+            if row[column]:
+                row[column] = " ".join(
+                    f"{external_file['name']}:{file_ids[external_file['url']]}"
+                    for external_file in json.loads(row[column])
+                )
+
+    output = metadata.removesuffix(".tsv") + "_with_file_ids.tsv"
+    with open(output, "w", encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames, delimiter="\t")
+        writer.writeheader()
+        writer.writerows(rows)
+    return output
+
+
 def submit_or_revise(
     metadata, sequences, config: Config, group_id, mode=Literal["submit", "revise"]
 ) -> list[dict[str, Any]]:
@@ -364,6 +427,7 @@ def submit_or_revise(
     if mode == "submit":
         params["dataUseTermsType"] = "OPEN"
 
+    metadata = resolve_external_files(metadata, config, group_id)
     response = post_fasta_batches(url, sequences, metadata, config, params=params)
 
     return response.json()

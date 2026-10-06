@@ -28,6 +28,9 @@ data:
     raw_reads_processing_service_timeout_seconds: {{ $.Values.rawReadsProcessingService.raw_reads_processing_service_timeout_seconds }}
     {{- end }}
     {{- end }}
+    {{- if and $.Values.fileSharing $.Values.fileSharing.externalFileUrlPrefixes }}
+    trusted_external_file_url_prefixes: {{ toJson $.Values.fileSharing.externalFileUrlPrefixes }}
+    {{- end }}
     {{- if and (hasKey $organismConfig.schema "submissionDataTypes") (hasKey $organismConfig.schema.submissionDataTypes "maxSequencesPerEntry") }}
     max_sequences_per_entry: {{ $organismConfig.schema.submissionDataTypes.maxSequencesPerEntry }}
     {{- end }}

@@ -74,3 +74,12 @@ batch_chunk_size: 1000 # Batch size for submitting sequences to Loculus backend
 nextclade_dataset_server: https://data.clades.nextstrain.org/v3
 backend_request_timeout_seconds: 600
 match_previous_accession_versions: false
+# Raw reads: attach links to FASTQ files hosted at ENA to ingested entries, see scripts/attach_raw_reads.py.
+# The files are not downloaded. Requires the organism to accept files in `raw_reads_file_category` and the
+# backend's `fileSharing.externalFileUrlPrefixes` to allow https://ftp.sra.ebi.ac.uk/vol1/fastq/
+ingest_raw_reads: false
+ena_portal_api_url: https://www.ebi.ac.uk/ena/portal/api
+raw_reads_file_category: rawReads
+raw_reads_accession_field: insdcRawReadsAccession
+biosample_field: biosampleAccession
+sequencing_instrument_field: sequencingInstrument

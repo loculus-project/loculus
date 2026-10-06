@@ -160,6 +160,30 @@ my-organism:
 The name (`rawReads` in the example above) must not be a name that is also used by a metadata field!
 :::
 
+### Linking files from external archives
+
+Files that are already hosted in a trusted public archive can be linked instead of uploaded.
+For example, the [INSDC ingest pipeline](https://github.com/loculus-project/loculus/tree/main/ingest) can attach raw reads hosted at ENA to ingested sequence entries without copying them to S3.
+To allow this, configure the URL prefixes that may be linked:
+
+```yaml
+fileSharing:
+  externalFileUrlPrefixes:
+    - https://ftp.sra.ebi.ac.uk/vol1/fastq/
+```
+
+Files are linked with the backend's `/files/register-external` endpoint, which returns a file ID for each URL (registering the same URL twice for a group returns the same file ID).
+These file IDs are attached to sequence entries like the IDs of uploaded files.
+Linked files are not stored in S3: downloads redirect to the external URL, and they are never deleted by the garbage collection.
+The preprocessing pipeline does not send linked files to the raw reads processing service for validation, as they were already validated by the archive and can be very large.
+
+:::caution
+Only add prefixes of archives you trust: users of the instance can link any file starting with one of these prefixes.
+Each prefix should include the host and end with a `/`.
+:::
+
+To have the INSDC ingest attach raw reads from ENA for an organism, set `ingest_raw_reads: true` in its ingest config, see the [ingest README](https://github.com/loculus-project/loculus/tree/main/ingest#raw-reads-from-ena).
+
 ## S3 Configuration
 
 To ensure Loculus can access the bucket and allow reading files directly from S3, certain configuration settings are required. The default settings may depend on your S3 provider, meaning that some steps may be unnecessary or different.

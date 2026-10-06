@@ -51,6 +51,7 @@ CALCULATED_GROUPS_JSON = (
     "results/calculated_groups.json" if GROUPING_OVERRIDE_URL else "results/groups.json"
 )
 MUTED_HASHES_URL = config.get("muted_hashes_url", False)
+INGEST_RAW_READS = config.get("ingest_raw_reads", False)
 
 
 if SEGMENTED:
@@ -97,12 +98,18 @@ else:
     unzip = "unzip"
 
 
-def prepped_metadata():
+def prepped_metadata_without_raw_reads():
     if FILTER:
         return "results/metadata_filtered.ndjson"
     if SEGMENTED:
         return "results/metadata_post_group.ndjson"
     return "results/metadata_post_prepare.ndjson"
+
+
+def prepped_metadata():
+    if INGEST_RAW_READS:
+        return "results/metadata_with_raw_reads.ndjson"
+    return prepped_metadata_without_raw_reads()
 
 
 rule all:
@@ -615,6 +622,60 @@ if FILTER:
                 --output-metadata {output.metadata} \
                 --log-level {params.log_level} \
                 --config-file {input.config}
+            """
+
+
+if INGEST_RAW_READS:
+
+    rule fetch_ena_read_runs:
+        """Fetch all ENA read runs of the taxon, including links to their FASTQ files"""
+        output:
+            runs="results/ena_read_runs.tsv",
+        params:
+            url=config["ena_portal_api_url"].rstrip("/") + "/search",
+            taxon_id=TAXON_ID,
+            fields="run_accession,sample_accession,instrument_model,base_count,fastq_ftp,fastq_bytes,fastq_md5",
+        shell:
+            """
+            curl --fail --silent --show-error --retry 3 -G "{params.url}" \
+                --data-urlencode "result=read_run" \
+                --data-urlencode "query=tax_tree({params.taxon_id})" \
+                --data-urlencode "fields={params.fields}" \
+                --data-urlencode "limit=0" \
+                --data-urlencode "format=tsv" \
+                -o {output.runs}
+            """
+
+    rule attach_raw_reads:
+        """Attach links to the raw reads of each entry (matched by run accession or BioSample)"""
+        input:
+            script="scripts/attach_raw_reads.py",
+            config="results/config.yaml",
+            metadata=prepped_metadata_without_raw_reads(),
+            runs="results/ena_read_runs.tsv",
+            depositions=(
+                "results/accessions_to_exclude.json"
+                if CHECK_ENA_DEPOSITION
+                else "results/config.yaml"
+            ),
+        output:
+            metadata="results/metadata_with_raw_reads.ndjson",
+        params:
+            log_level=LOG_LEVEL,
+            depositions=(
+                "--loculus-depositions results/accessions_to_exclude.json"
+                if CHECK_ENA_DEPOSITION
+                else ""
+            ),
+        shell:
+            """
+            python {input.script} \
+                --config-file {input.config} \
+                --input-metadata {input.metadata} \
+                --ena-read-runs {input.runs} \
+                {params.depositions} \
+                --output-metadata {output.metadata} \
+                --log-level {params.log_level}
             """
 
 
