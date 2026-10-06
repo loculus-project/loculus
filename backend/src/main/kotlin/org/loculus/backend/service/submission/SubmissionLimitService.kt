@@ -53,7 +53,7 @@ class SubmissionLimitService(
     private sealed interface Quota {
         val key: String
 
-        data class OwnGroup(val groupId: Int) : Quota {
+        data class OwnQuotaGroup(val groupId: Int) : Quota {
             override val key get() = "group:$groupId"
         }
 
@@ -138,21 +138,21 @@ class SubmissionLimitService(
             .filterKeys { it !in limits.exemptGroupIds }
             .entries
             .groupBy(
-                { (groupId, _) -> if (groupId in limits.groupQuotas) Quota.OwnGroup(groupId) else Quota.Shared },
+                { (groupId, _) -> if (groupId in limits.groupQuotas) Quota.OwnQuotaGroup(groupId) else Quota.Shared },
                 { (_, incoming) -> incoming },
             )
             .mapValues { (_, incoming) -> incoming.sum() }
     }
 
     private fun limitOf(quota: Quota): Long? = when (quota) {
-        is Quota.OwnGroup -> backendConfig.submissionLimits.groupQuotas.getValue(quota.groupId)
+        is Quota.OwnQuotaGroup -> backendConfig.submissionLimits.groupQuotas.getValue(quota.groupId)
         Quota.Shared -> backendConfig.submissionLimits.maxOperationsPerDay
     }
 
     private fun windowStart() = (dateProvider.getCurrentInstant() - LIMIT_WINDOW).toLocalDateTime(DateProvider.timeZone)
 
     private fun quotaCondition(quota: Quota): Op<Boolean> = when (quota) {
-        is Quota.OwnGroup -> RateLimitOperationsTable.groupIdColumn eq quota.groupId
+        is Quota.OwnQuotaGroup -> RateLimitOperationsTable.groupIdColumn eq quota.groupId
 
         Quota.Shared -> {
             val groupsWithOwnQuota = backendConfig.submissionLimits.let { it.exemptGroupIds + it.groupQuotas.keys }
@@ -199,7 +199,7 @@ class SubmissionLimitService(
     private fun checkQuota(quota: Quota, limit: Long, incoming: Long, alert: Boolean) {
         val used = usedInWindow(quota)
         val scope = when (quota) {
-            is Quota.OwnGroup -> "of group ${quota.groupId}"
+            is Quota.OwnQuotaGroup -> "of group ${quota.groupId}"
             Quota.Shared -> "shared by all groups without their own quota"
         }
         if (used + incoming <= limit) {
