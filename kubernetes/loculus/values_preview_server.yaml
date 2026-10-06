@@ -80,6 +80,8 @@ auth:
 fileSharing:
   outputFileUrlType: website
   maxFileSizeBytes: 2147483648 # 2 GiB
+  externalFileUrlPrefixes:
+    - https://ftp.sra.ebi.ac.uk/vol1/fastq/
 resources:
   website:
     requests:
