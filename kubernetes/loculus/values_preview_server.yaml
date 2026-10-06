@@ -170,8 +170,8 @@ defaultResources:
     memory: "1Gi"
     cpu: "500m"
 defaultOrganisms:
-  ebola-sudan: &fileSharingOrganismDefaults
-    schema:
+  ebola-sudan:
+    schema: &fileSharingSchema
       submissionDataTypes:
         files:
           enabled: true
@@ -183,7 +183,12 @@ defaultOrganisms:
           displayName: Annotations
         - name: rawReads
           displayName: Raw reads
-  west-nile: *fileSharingOrganismDefaults
+    ingest:
+      configFile:
+        # Attach links to raw reads hosted at ENA (allowed by fileSharing.externalFileUrlPrefixes)
+        ingest_raw_reads: true
+  west-nile: &fileSharingOrganismDefaults
+    schema: *fileSharingSchema
   dummy-organism: *fileSharingOrganismDefaults
   not-aligned-organism: *fileSharingOrganismDefaults
   cchf: *fileSharingOrganismDefaults
