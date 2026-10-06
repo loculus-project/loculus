@@ -150,3 +150,46 @@ def test_process_files_network_error_returns_internal_error(mock_post: MagicMock
     assert errors[0].unprocessedFields == (
         AnnotationSource("reads.fastq", AnnotationSourceType.FILE),
     )
+
+
+ENA_PREFIX = "https://ftp.sra.ebi.ac.uk/vol1/fastq/"
+
+
+def make_ena_files() -> dict[FileCategory, list[FileIdAndNameAndReadUrl]]:
+    return {
+        FileCategory.RAW_READS: [
+            FileIdAndNameAndReadUrl(
+                fileId=f"id-{i}", name=f"ERR1_{i}.fastq.gz", url=f"{ENA_PREFIX}ERR1_{i}.fastq.gz"
+            )
+            for i in (1, 2)
+        ],
+    }
+
+
+@patch("loculus_preprocessing.external_services.requests.post")
+def test_process_files_skips_files_linked_from_trusted_archive(mock_post: MagicMock) -> None:
+    service = FileProcessingService(
+        raw_reads_processing_service_url=None, trusted_external_file_url_prefixes=[ENA_PREFIX]
+    )
+
+    errors = service.process_files(make_ena_files(), "accession.1")
+
+    mock_post.assert_not_called()
+    assert errors == []
+
+
+@patch("loculus_preprocessing.external_services.requests.post")
+def test_process_files_validates_when_not_all_files_are_trusted(mock_post: MagicMock) -> None:
+    mock_post.return_value = make_response(200, {"errors": []})
+    service = FileProcessingService(
+        raw_reads_processing_service_url=SERVICE_URL,
+        trusted_external_file_url_prefixes=[ENA_PREFIX],
+    )
+    files = make_ena_files()
+    files[FileCategory.RAW_READS][1] = FileIdAndNameAndReadUrl(
+        fileId="id-2", name="ERR1_2.fastq.gz", url="http://s3.example/id-2"
+    )
+
+    service.process_files(files, "accession.1")
+
+    mock_post.assert_called_once()
