@@ -67,6 +67,9 @@ export async function reloadUntil<T>(
         },
         options,
     ).toBe(true);
+    if (lastRead === undefined) {
+        throw new Error('reloadUntil finished without reading a value');
+    }
     return lastRead;
 }
 
