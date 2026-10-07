@@ -85,7 +85,7 @@ export class GroupPage {
     - Requires that the user is logged in
     - Returns null if the user is not a member of the group
     - Throws an error if the user is a member of multiple groups with the same name */
-    async getGroupId(groupName: string): Promise<number> {
+    async getGroupId(groupName: string): Promise<number | null> {
         await this.page.goto('/user');
 
         const signInPage = this.page.getByText('Sign in to your account');
@@ -119,7 +119,12 @@ export class GroupPage {
         }
 
         const href = await groupLinkLocators.first().getAttribute('href');
-        const groupIdStr = href.split('/').pop();
+        const groupIdStr = href?.split('/').pop();
+
+        if (!groupIdStr) {
+            throw new Error(`Could not determine group ID for group: ${groupName}`);
+        }
+
         return parseInt(groupIdStr);
     }
 
