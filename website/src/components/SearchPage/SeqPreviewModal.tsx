@@ -11,8 +11,10 @@ import { getSegmentNames } from '../../utils/sequenceTypeHelpers.ts';
 import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu';
 import SequencesBanner from '../SequenceDetailsPage/SequencesBanner.tsx';
+import { isRestrictedUse } from '../SequenceDetailsPage/isRestrictedUse';
 import { Button } from '../common/Button';
 import { DropdownMenu, DropdownMenuItem } from '../common/DropdownMenu';
+import { useRestrictedUseDownloadConfirmation } from '../common/RestrictedUseDownloadDialog';
 import CharmMenuKebab from '~icons/charm/menu-kebab';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
@@ -133,7 +135,11 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                         <MdiDockBottom className='w-6 h-6' />
                     )}
                 </Button>
-                <DownloadButton seqId={seqId} allowFastaDownload={getSegmentNames(referenceGenomesInfo).length > 0} />
+                <DownloadButton
+                    seqId={seqId}
+                    allowFastaDownload={getSegmentNames(referenceGenomesInfo).length > 0}
+                    isRestricted={data !== null && isRestrictedUse(data.tableData)}
+                />
                 <a href={routes.sequenceEntryDetailsPage(seqId)} title='Open in full window' className={BUTTONCLASS}>
                     <OouiNewWindowLtr className='w-6 h-6' />
                 </a>
@@ -183,25 +189,34 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
 interface DownloadButtonProps {
     seqId: string;
     allowFastaDownload?: boolean;
+    isRestricted: boolean;
 }
 
-const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId, allowFastaDownload = true }) => {
+const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId, allowFastaDownload = true, isRestricted }) => {
+    const { onDownloadLinkClick, confirmationDialog } = useRestrictedUseDownloadConfirmation(isRestricted);
     return (
-        <DropdownMenu
-            className='inline-block'
-            panelClassName='top-full w-52 -left-32'
-            trigger={
-                <Button className={BUTTONCLASS}>
-                    <IcBaselineDownload className='w-6 h-6' />
+        <>
+            <DropdownMenu
+                className='inline-block'
+                panelClassName='top-full w-52 -left-32'
+                trigger={
+                    <Button className={BUTTONCLASS}>
+                        <IcBaselineDownload className='w-6 h-6' />
 
-                    <CharmMenuKebab className=' w-4 h-6 -ml-1.5 pb-1 pt-1.5' />
-                </Button>
-            }
-        >
-            {allowFastaDownload && (
-                <DropdownMenuItem href={routes.sequenceEntryFastaPage(seqId, true)}>Download FASTA</DropdownMenuItem>
-            )}
-            <DropdownMenuItem href={routes.sequenceEntryTsvPage(seqId, true)}>Download metadata TSV</DropdownMenuItem>
-        </DropdownMenu>
+                        <CharmMenuKebab className=' w-4 h-6 -ml-1.5 pb-1 pt-1.5' />
+                    </Button>
+                }
+            >
+                {allowFastaDownload && (
+                    <DropdownMenuItem href={routes.sequenceEntryFastaPage(seqId, true)} onClick={onDownloadLinkClick}>
+                        Download FASTA
+                    </DropdownMenuItem>
+                )}
+                <DropdownMenuItem href={routes.sequenceEntryTsvPage(seqId, true)} onClick={onDownloadLinkClick}>
+                    Download metadata TSV
+                </DropdownMenuItem>
+            </DropdownMenu>
+            {confirmationDialog}
+        </>
     );
 };
