@@ -2,7 +2,7 @@ import { type FC, type MouseEvent, useState } from 'react';
 
 import { BaseDialog } from './BaseDialog';
 import { Button } from './Button';
-import { routes } from '../../routes/routes';
+import RestrictedUseDownloadTerms from './RestrictedUseDownloadTerms';
 
 type RestrictedUseDownloadDialogProps = {
     isOpen: boolean;
@@ -19,11 +19,7 @@ export const RestrictedUseDownloadDialog: FC<RestrictedUseDownloadDialogProps> =
         className='max-w-lg'
     >
         <p className='text-gray-700 pr-6'>
-            This sequence is only available under the Restricted Use Terms. By downloading it, you agree to follow the{' '}
-            <a href={routes.datauseTermsPage()} target='_blank' className='underline'>
-                Restricted Use Terms
-            </a>
-            .
+            <RestrictedUseDownloadTerms />
         </p>
         <div className='flex justify-end gap-4 mt-6'>
             <Button variant='outline' onClick={onClose}>
