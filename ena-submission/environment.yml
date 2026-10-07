@@ -32,7 +32,7 @@ dependencies:
   - types-pyyaml=6.0.12.20260906
   - types-xmltodict=1.0.1.20250920
   - python-dotenv=1.2.3
-  - pytest=8.4.2
+  - pytest=9.1.1
   - unidecode=1.4.0
   - orjson
   - orjsonl

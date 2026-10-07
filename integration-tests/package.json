@@ -12,16 +12,16 @@
         "@eslint/js": "^9.39.2",
         "@lokalise/xlsx": "^0.20.3",
         "@playwright/test": "^1.63.0",
-        "@types/node": "^26.6.2",
+        "@types/node": "^26.6.3",
         "@types/papaparse": "^5.5.2",
-        "@typescript-eslint/eslint-plugin": "^8.70.0",
-        "@typescript-eslint/parser": "^8.70.0",
+        "@typescript-eslint/eslint-plugin": "^8.70.1",
+        "@typescript-eslint/parser": "^8.70.1",
         "eslint": "^10.11.0",
         "eslint-plugin-unicorn": "^76.0.0",
         "papaparse": "^5.7.0",
-        "prettier": "^3.9.8",
-        "typescript": "^5.9.3",
-        "typescript-eslint": "^8.70.0",
+        "prettier": "^3.9.9",
+        "typescript": "~6.0.3",
+        "typescript-eslint": "^8.70.1",
         "uuid": "^14.0.2"
     }
 }
