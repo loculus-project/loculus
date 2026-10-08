@@ -136,7 +136,6 @@ export const defaultReviewData: SequenceEntryToEdit = {
 export const testSiteName = 'Loculus';
 export const testAccessToken = 'someTestToken';
 
-// happy-dom sends a CORS preflight before cross-origin requests, which msw 3 intercepts
 export const testServer = setupServer(
     http.options(
         '*',
@@ -144,9 +143,8 @@ export const testServer = setupServer(
             new Response(null, {
                 status: 204,
                 headers: {
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
                     'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': '*',
-                    'Access-Control-Allow-Headers': '*',
                 },
             }),
     ),
