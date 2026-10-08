@@ -136,7 +136,21 @@ export const defaultReviewData: SequenceEntryToEdit = {
 export const testSiteName = 'Loculus';
 export const testAccessToken = 'someTestToken';
 
-export const testServer = setupServer();
+// happy-dom sends a CORS preflight before cross-origin requests, which msw 3 intercepts
+export const testServer = setupServer(
+    http.options(
+        '*',
+        () =>
+            new Response(null, {
+                status: 204,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': '*',
+                    'Access-Control-Allow-Headers': '*',
+                },
+            }),
+    ),
+);
 
 const backendRequestMocks = {
     submit: (statusCode: number = 200, response: SubmissionIdMapping[] | unknown = []) => {
@@ -349,7 +363,7 @@ export const mockRequest = {
     lapis: lapisRequestMocks,
 };
 
-beforeAll(() => testServer.listen({ onUnhandledRequest: 'error' }));
+beforeAll(() => testServer.listen({ onUnhandledFrame: 'error' }));
 
 beforeEach(() => {
     testServer.use(
