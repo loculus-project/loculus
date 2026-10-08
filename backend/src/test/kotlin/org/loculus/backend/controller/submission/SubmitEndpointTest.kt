@@ -22,7 +22,6 @@ import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
-import org.loculus.backend.controller.containsNoDatabaseInternals
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
@@ -212,8 +211,7 @@ class SubmitEndpointTest(
         )
             .andExpect(expectedStatus)
             .andExpect(jsonPath("\$.title").value(expectedTitle))
-            .andExpect(jsonPath("\$.detail", containsString(expectedMessage)))
-            .andExpect(containsNoDatabaseInternals())
+            .andExpect(jsonPath("\$.detail").value(expectedMessage))
     }
 
     @ParameterizedTest
@@ -397,7 +395,7 @@ class SubmitEndpointTest(
                     DefaultFiles.sequencesFile,
                     status().isUnprocessableContent,
                     "Unprocessable Content",
-                    "contains no value for 'id'",
+                    "Record #1 in the metadata file contains no value for 'id'. Row: ['', 'someValueButNoHeader']",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -455,7 +453,7 @@ class SubmitEndpointTest(
                     ),
                     status().isUnprocessableContent,
                     "Unprocessable Content",
-                    "Metadata file contains 1 FASTA ids that are not present in the sequence file: 'notInSequences'",
+                    "Metadata file contains 1 FASTA ids that are not present in the sequence file: 'notInSequences'. ",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),

@@ -28,7 +28,6 @@ import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.controller.SUPER_USER_NAME
 import org.loculus.backend.controller.assertStatusIs
-import org.loculus.backend.controller.containsNoDatabaseInternals
 import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.files.FilesClient
@@ -41,7 +40,11 @@ import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
+import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.metadataFileTypes
+import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.sequenceFileTypes
+import org.loculus.backend.model.SubmitModel.ValidExtension
 import org.loculus.backend.service.files.dummyFileId
+import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
@@ -484,8 +487,7 @@ class ReviseEndpointTest(
         client.reviseSequenceEntries(metadataFile, sequencesFile)
             .andExpect(expectedStatus)
             .andExpect(jsonPath("\$.title").value(expectedTitle))
-            .andExpect(jsonPath("\$.detail", containsString(expectedMessage)))
-            .andExpect(containsNoDatabaseInternals())
+            .andExpect(jsonPath("\$.detail").value(expectedMessage))
     }
 
     @Test
@@ -549,7 +551,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isBadRequest,
                 "Bad Request",
-                "Metadata file has wrong extension.",
+                wrongExtensionMessage(metadataFileTypes),
             ),
             Arguments.of(
                 "wrong extension for sequences file",
@@ -557,7 +559,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(originalFilename = "sequences.wrongExtension"),
                 status().isBadRequest,
                 "Bad Request",
-                "Sequence file has wrong extension.",
+                wrongExtensionMessage(sequenceFileTypes),
             ),
             Arguments.of(
                 "metadata file where one row has a blank header",
@@ -571,7 +573,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableContent,
                 "Unprocessable Content",
-                "contains no value for 'id'",
+                "Record #1 in the metadata file contains no value for 'id'. Row: ['1', '', 'someValueButNoHeader']",
             ),
             Arguments.of(
                 "metadata file with no header",
@@ -654,7 +656,7 @@ class ReviseEndpointTest(
                 ),
                 status().isUnprocessableContent,
                 "Unprocessable Content",
-                "Metadata file contains 1 FASTA ids that are not present in the sequence file: 'notInSequences'",
+                "Metadata file contains 1 FASTA ids that are not present in the sequence file: 'notInSequences'. ",
             ),
             Arguments.of(
                 "metadata file misses accession header",
@@ -682,8 +684,18 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableContent,
                 "Unprocessable Content",
-                "contains no value for 'accession'",
+                "Record #1 in the metadata file contains no value for 'accession'. Row: ['', 'someHeader', 'someValue']",
             ),
         )
     }
+}
+
+private fun wrongExtensionMessage(fileType: ValidExtension): String {
+    val compressedExtensions = fileType.getCompressedExtensions()
+        .filterKeys { it != CompressionAlgorithm.NONE }
+        .flatMap { it.value }
+        .joinToString(", .")
+    return "${fileType.displayName} has wrong extension. Must be " +
+        ".${fileType.validExtensions.joinToString(", .")} for uncompressed submissions or " +
+        ".$compressedExtensions for compressed submissions"
 }
