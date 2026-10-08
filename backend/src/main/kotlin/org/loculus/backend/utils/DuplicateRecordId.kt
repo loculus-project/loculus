@@ -8,7 +8,7 @@ data class DuplicateRecordId(val field: String, val value: String)
 
 // Record IDs can contain commas and parentheses.
 private val duplicateRecordKey = Regex(
-    """Key \(upload_id, (\w+)\)=\(([^,]+), (.+)\) already exists\.""",
+    """Key \(upload_id, (?<column>\w+)\)=\((?<uploadId>[^,]+), (?<id>.+)\) already exists\.""",
 )
 
 /** Returns null if the duplicate ID cannot be read from the error. */
