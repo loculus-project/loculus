@@ -2,7 +2,7 @@ target-version = "py312"
 line-length = 100
 
 [lint]
-extend-select = [
+select = [
     "ARG",
     "B",
     "C4",
@@ -32,6 +32,7 @@ extend-select = [
 ignore = [
     "C901", # function is too complex
     "ISC001",
+    "RUF105", # noqa-comments: keep `# noqa: X` instead of `# ruff: ignore[x]`
     "PLR0913", # Too many arguments
     "PLR0914", # Too many local variables
     "PLR0917", # Too many positional arguments
