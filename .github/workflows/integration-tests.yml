@@ -128,9 +128,11 @@ jobs:
         env:
           BROWSER: ${{ matrix.browser == 'cli' && 'chromium' || matrix.browser }}
           TEST_SUITE: ${{ matrix.browser == 'cli' && 'cli' || 'browser' }}
+          # Puts each test's browser output, incl. the exit signal if Firefox dies, in the HTML report only
+          DEBUG: ${{ matrix.browser == 'firefox' && 'pw:browser' || '' }}
         run: |
           set -o pipefail
-          cd integration-tests && npx playwright test --workers=2 --reporter=list,html 2>&1 | tee output.txt
+          cd integration-tests && npx playwright test --workers=2 --reporter=list,html ${{ matrix.browser == 'firefox' && '--quiet' || '' }} 2>&1 | tee output.txt
           EXIT_CODE=$?
           echo '```' >> $GITHUB_STEP_SUMMARY
           sed -n '/Running [0-9]\+ tests/,$p' output.txt >> $GITHUB_STEP_SUMMARY
@@ -142,6 +144,9 @@ jobs:
           name: playwright-report-${{ matrix.browser }}
           path: integration-tests/playwright-report/
           retention-days: 30
+      - name: Show kernel OOM kills and fatal signals
+        if: failure()
+        run: sudo dmesg -T | grep -iE 'out of memory|oom-kill|killed process|segfault|fatal signal|traps:' | tail -50 || true
       - name: List running pods
         if: ${{ !cancelled() }}
         run: kubectl get pods --all-namespaces
