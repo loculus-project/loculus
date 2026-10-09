@@ -247,7 +247,7 @@ class FileProcessingService:
         self.raw_reads_processing_service_url = raw_reads_processing_service_url
         self.timeout_seconds = timeout_seconds
 
-    def process_files(  # noqa: PLR0911
+    def process_files(  # noqa: C901, PLR0911
         self,
         files: dict[FileCategory, list[FileIdAndNameAndReadUrl]],
         accession_version: AccessionVersion,
@@ -303,6 +303,11 @@ class FileProcessingService:
                 )
             ]
 
+        for error in result.errors:
+            logger.warning(
+                f"Raw reads processing rejected {accession_version} "
+                f"(files: {', '.join(error.fileNames)}): {error.message}"
+            )
         return [
             self._annotation(error.fileNames, error.message, internal_error=False)
             for error in result.errors
