@@ -52,16 +52,32 @@ def standardize_option(option):
     return " ".join(option.lower().split())
 
 
-def valid_name() -> str:
-    chars = (
-        r"\u0041-\u005A"  # A-Z
-        r"\u0061-\u007A"  # a-z
+def valid_name(allow_all_ascii: bool = False) -> str:
+    latin_letters = (
         r"\u00C0-\u00D6"  # À-Ö
         r"\u00D8-\u00F6"  # Ø-ö
         r"\u00F8-\u00FF"  # ø-ÿ
         r"\u0100-\u017F"  # Latin Extended-A
         r"\u0180-\u024F"  # Latin Extended-B
     )
+
+    if allow_all_ascii:
+        # Printable ASCII except "," (0x2C) and ";" (0x3B), which separate names and authors
+        ascii_chars = (
+            r"\u0021-\u002B"  # !"#$%&'()*+
+            r"\u002D-\u003A"  # -./0-9:
+            r"\u003C-\u007E"  # <=>?@A-Z[\]^_`a-z{|}~
+        )
+        chars = ascii_chars + latin_letters
+        first_char = rf"\s*[{chars}]"  # Last name must contain a non-whitespace character
+        name_chars = rf"[{chars}\s]*"
+        return first_char + name_chars + r"," + name_chars
+
+    ascii_letters = (
+        r"\u0041-\u005A"  # A-Z
+        r"\u0061-\u007A"  # a-z
+    )
+    chars = ascii_letters + latin_letters
 
     # Ordinal must be a separate "word":
     # - preceded only by start-of-string or whitespace
@@ -73,15 +89,15 @@ def valid_name() -> str:
     return alpha_or_ord + name_chars + r"," + name_chars
 
 
-def valid_authors(authors: str) -> bool:
-    name = valid_name()
+def valid_authors(authors: str, allow_all_ascii: bool = False) -> bool:
+    name = valid_name(allow_all_ascii)
     pattern = rf"{name}(;{name})*;?"
 
     return re.fullmatch(pattern, authors) is not None
 
 
-def get_invalid_author_names(authors: str) -> list[str]:
-    pattern = re.compile(f"^{valid_name()}$")
+def get_invalid_author_names(authors: str, allow_all_ascii: bool = False) -> list[str]:
+    pattern = re.compile(f"^{valid_name(allow_all_ascii)}$")
     invalid = []
     for author in authors.split(";"):
         if author and pattern.fullmatch(author) is None:
@@ -734,12 +750,16 @@ class ProcessingFunctions:
         external_services: ExternalServices,
     ) -> RawProcessingResult:
         authors = input_data["authors"]
+        allow_all_ascii = context.is_insdc_ingest_group
 
+        allowed_characters = (
+            "ASCII characters" if allow_all_ascii else "ASCII alphabetical characters A-Z"
+        )
         author_format_description = (
             "Please ensure that "
             "authors are separated by semi-colons. Each author's name should be in the format "
             "'last name, first name;'. Last name(s) is mandatory, a comma is mandatory to "
-            "separate first names/initials from last name. Only ASCII alphabetical characters A-Z "
+            f"separate first names/initials from last name. Only {allowed_characters} "
             "are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.;' "
             "or 'Xu,;' if the first name is unknown."
         )
@@ -750,7 +770,7 @@ class ProcessingFunctions:
         if errors or warnings:
             return RawProcessingResult(warnings=warnings, errors=errors)
 
-        if valid_authors(authors):
+        if valid_authors(authors, allow_all_ascii):
             formatted_authors = format_authors(authors)
             if warn_potentially_invalid_authors(authors):
                 warnings.append(
@@ -764,7 +784,7 @@ class ProcessingFunctions:
                     "`Smith, Anna; Perez, Tom J.; Xu, X.L.`."
                 )
             return RawProcessingResult(datum=formatted_authors, warnings=warnings)
-        invalid_names = get_invalid_author_names(authors)
+        invalid_names = get_invalid_author_names(authors, allow_all_ascii)
         if invalid_names:
             names_to_show = "; ".join(f"'{name}'" for name in invalid_names[:3])
             if len(invalid_names) > 3:  # noqa: PLR2004
