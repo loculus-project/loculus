@@ -1747,6 +1747,12 @@
       "default": false,
       "description": "If true, the instance runs in read-only mode: the backend rejects write requests (POST/PUT/DELETE/PATCH) with 503 Service Unavailable, and the website hides login/submission entry points and shows a read-only banner."
     },
+    "backendExtraJvmOpts": {
+      "groups": ["services"],
+      "type": "string",
+      "default": "",
+      "description": "Extra JVM options for the backend, appended after the built-in JVM_OPTS so they override them, e.g. `-XX:MaxRAMPercentage=25`."
+    },
     "organisms": {
       "groups": ["organism-conf"],
       "type": "object",
