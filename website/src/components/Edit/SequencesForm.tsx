@@ -20,7 +20,7 @@ function generateAndDownloadFastaFile(fastaHeader: string, sequenceData: string)
     URL.revokeObjectURL(url);
 }
 
-const removeExtension = (filename: string | undefined) => filename?.replace(/\.[^/.]+$/, '') ?? null;
+const removeExtension = (filename: string) => filename.replace(/\.[^/.]+$/, '');
 
 type SequenceFormProps = {
     editableSequences: EditableSequences;
@@ -46,11 +46,14 @@ export const SequencesForm: FC<SequenceFormProps> = ({
                         )}
                         <FileUploadComponent
                             setFile={async (file) => {
-                                const text = file ? await file.text() : null;
-                                const fastaHeader = file?.fastaHeader() ?? removeExtension(file?.handle().name) ?? null;
-                                setEditableSequences((editableSequences) =>
-                                    editableSequences.update(field.key, text, fastaHeader, fastaHeader),
-                                );
+                                if (file !== undefined) {
+                                    const value = await file.text();
+                                    const fastaHeader = file.fastaHeader() ?? removeExtension(file.handle().name);
+                                    const updatedSequences = editableSequences.update(field.key, value, fastaHeader);
+                                    setEditableSequences(updatedSequences);
+                                } else {
+                                    setEditableSequences((editableSequences) => editableSequences.remove(field.key));
+                                }
                             }}
                             name={`${field.label}_segment_file`}
                             ariaLabel={`${field.label} Segment File`}
@@ -58,16 +61,17 @@ export const SequencesForm: FC<SequenceFormProps> = ({
                             small={true}
                             initialValue={
                                 field.initialValue !== null
-                                    ? new VirtualPlainSegmentFile(field.initialValue, 'Existing data')
+                                    ? new VirtualPlainSegmentFile(
+                                          field.initialValue,
+                                          'Existing data',
+                                          field.initialFastaHeader,
+                                      )
                                     : undefined
                             }
                             showUndo={field.initialValue !== null}
                             onDownload={
-                                field.initialValue !== null && field.value !== null && dataToEdit
-                                    ? () => {
-                                          if (field.value === null) return;
-                                          generateAndDownloadFastaFile(field.fastaHeader ?? 'sequence', field.value);
-                                      }
+                                dataToEdit && field.value !== null
+                                    ? () => generateAndDownloadFastaFile(field.fastaHeader, field.value)
                                     : undefined
                             }
                             downloadDisabled={isLoading}

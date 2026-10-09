@@ -1,5 +1,3 @@
-import { toast } from 'react-toastify';
-
 import type { SequenceEntryToEdit } from '../../types/backend.ts';
 import { FASTA_IDS_SEPARATOR } from '../../types/config.ts';
 
@@ -12,37 +10,50 @@ function getFastaId(fastaHeader: string | null): string | null {
 
 type EditableSequenceFile = {
     key: string;
-    label: string | null;
-    fastaHeader: string | null;
-    value: string | null;
+    label: string;
+    fastaHeader: string;
+    value: string;
+    initialLabel: string | null;
+    initialFastaHeader: string | null;
     initialValue: string | null;
 };
 
-export class EditableSequences {
-    private static nextKey = 0;
+type PlaceholderSequenceFile = {
+    key: string;
+    label: string;
+    fastaHeader: null;
+    value: null;
+    initialLabel: null;
+    initialFastaHeader: null;
+    initialValue: null;
+};
 
+export class EditableSequences {
     private readonly editableSequenceFiles: EditableSequenceFile[];
+    private readonly placeholderFile: PlaceholderSequenceFile;
     private readonly maxNumberOfRows: number;
 
-    public get rows(): Required<EditableSequenceFile>[] {
-        const rows = this.editableSequenceFiles.map((row, i) => ({
-            ...row,
-            label: row.label ?? `Segment ${i + 1}`,
-        }));
-        if (rows.length < this.maxNumberOfRows) {
-            rows.push({
-                label: `Add a segment`,
-                fastaHeader: null,
-                value: null,
-                initialValue: null,
-                key: EditableSequences.getNextKey(),
-            });
+    public get rows(): Required<EditableSequenceFile | PlaceholderSequenceFile>[] {
+        const sequenceFiles: (EditableSequenceFile | PlaceholderSequenceFile)[] = [...this.editableSequenceFiles];
+
+        if (this.editableSequenceFiles.length < this.maxNumberOfRows) {
+            sequenceFiles.push(this.placeholderFile);
         }
-        return rows;
+
+        return sequenceFiles;
     }
 
     private constructor(rows: EditableSequenceFile[], maxNumberOfRows: number) {
         this.editableSequenceFiles = rows;
+        this.placeholderFile = {
+            key: crypto.randomUUID(),
+            label: `Add a segment`,
+            fastaHeader: null,
+            value: null,
+            initialLabel: null,
+            initialFastaHeader: null,
+            initialValue: null,
+        };
         this.maxNumberOfRows = maxNumberOfRows;
     }
 
@@ -70,19 +81,21 @@ export class EditableSequences {
         const maxNumberRows = maxSequencesPerEntry ?? Infinity;
         const fastaHeaderMap = EditableSequences.invertRecordMulti(initialData.processedData.sequenceNameToFastaId);
         const existingDataRows = Object.entries(initialData.submittedData.unalignedNucleotideSequences).map(
-            ([key, value]) => {
-                const mapped = (fastaHeaderMap[key] ?? []).join(', ') || '';
+            ([header, value]) => {
+                const mapped = (fastaHeaderMap[header] ?? []).join(', ') || '';
                 const label = !mapped
-                    ? `${key} (could not be classified)`
-                    : mapped === key
-                      ? key
-                      : `${key} (mapped to ${mapped})`;
+                    ? `${header} (could not be classified)`
+                    : mapped === header
+                      ? header
+                      : `${header} (mapped to ${mapped})`;
                 return {
+                    key: crypto.randomUUID(),
                     label,
-                    fastaHeader: maxNumberRows > 1 ? key : initialData.submissionId,
-                    value: value,
+                    fastaHeader: maxNumberRows > 1 ? header : initialData.submissionId,
+                    value,
+                    initialLabel: label,
+                    initialFastaHeader: maxNumberRows > 1 ? header : initialData.submissionId,
                     initialValue: value,
-                    key: EditableSequences.getNextKey(),
                 };
             },
         );
@@ -97,47 +110,63 @@ export class EditableSequences {
         return new EditableSequences([], maxSequencesPerEntry ?? Infinity);
     }
 
-    private static getNextKey(): string {
-        return (EditableSequences.nextKey++).toString();
-    }
-
     /**
      * Create a new {@link EditableSequences} object with the given row value updated.
      */
-    update(key: string, value: string | null, label: string | null, fastaHeader: string | null): EditableSequences {
+    update(key: string, value: string, fastaHeader: string): EditableSequences {
         const existingFileIndex = this.editableSequenceFiles.findIndex((file) => file.key === key);
 
         if (existingFileIndex === -1 && this.editableSequenceFiles.length === this.maxNumberOfRows) {
             throw new Error(`Maximum limit reached — you can add up to ${this.maxNumberOfRows} sequence file(s) only.`);
         }
 
-        fastaHeader ??= value == null ? null : key; // Ensure fastaHeader is never null if a sequence exists
-        if (this.editableSequenceFiles.some((seq) => getFastaId(seq.fastaHeader) === getFastaId(fastaHeader))) {
-            toast.error(`A sequence with the fastaID ${getFastaId(fastaHeader)} already exists.`);
-            return new EditableSequences(
-                this.editableSequenceFiles.filter((file) => file.value !== null),
-                this.maxNumberOfRows,
-            );
+        if (
+            this.editableSequenceFiles
+                .filter((seq) => seq.key !== key)
+                .some((seq) => getFastaId(seq.fastaHeader) === getFastaId(fastaHeader))
+        ) {
+            throw new Error(`A sequence with the fastaID ${getFastaId(fastaHeader)} already exists.`);
         }
 
         const newSequenceFiles = [...this.editableSequenceFiles];
-        newSequenceFiles[existingFileIndex > -1 ? existingFileIndex : this.editableSequenceFiles.length] = {
-            ...(existingFileIndex > -1 ? newSequenceFiles[existingFileIndex] : { key, initialValue: null }),
-            value: value,
-            label: label,
-            fastaHeader: fastaHeader,
-        };
+        if (existingFileIndex === -1) {
+            if (key !== this.placeholderFile.key) {
+                throw new Error('Invalid key — cannot update sequence file.');
+            }
+            newSequenceFiles.push({
+                key,
+                label: fastaHeader,
+                fastaHeader,
+                value,
+                initialLabel: null,
+                initialFastaHeader: null,
+                initialValue: null,
+            });
+        } else {
+            const row = newSequenceFiles[existingFileIndex];
+            const isInitialData = value === row.initialValue && fastaHeader === row.initialFastaHeader;
+            newSequenceFiles[existingFileIndex] = {
+                ...row,
+                value,
+                label: isInitialData && row.initialLabel !== null ? row.initialLabel : fastaHeader,
+                fastaHeader,
+            };
+        }
 
-        return new EditableSequences(
-            newSequenceFiles.filter((file) => file.value !== null),
-            this.maxNumberOfRows,
-        );
+        return new EditableSequences(newSequenceFiles, this.maxNumberOfRows);
+    }
+
+    /**
+     * Create a new {@link EditableSequences} object with the given row removed.
+     */
+    remove(key: string): EditableSequences {
+        const newSequenceFiles = this.editableSequenceFiles.filter((file) => file.key !== key);
+        return new EditableSequences(newSequenceFiles, this.maxNumberOfRows);
     }
 
     getFastaIds(): string {
         return this.rows
             .flatMap((row) => {
-                if (row.value === null) return [];
                 const id = getFastaId(row.fastaHeader);
                 return id === null || id === '' ? [] : [id];
             })
@@ -145,33 +174,21 @@ export class EditableSequences {
     }
 
     hasNoSequences(): boolean {
-        return this.rows.every((row) => row.value === null);
+        return this.editableSequenceFiles.length === 0;
     }
 
     getSequenceFasta(): File | undefined {
-        const filledRows = this.rows.filter((row) => row.value !== null);
+        if (this.hasNoSequences()) return undefined;
 
-        if (filledRows.length === 0) {
-            return undefined;
-        }
-
-        const fastaContent = filledRows.map((sequence) => `>${sequence.fastaHeader}\n${sequence.value}`).join('\n');
+        const fastaContent = this.editableSequenceFiles
+            .map((sequence) => `>${sequence.fastaHeader}\n${sequence.value}`)
+            .join('\n');
 
         return new File([fastaContent], 'sequences.fasta', { type: 'text/plain' });
     }
 
     getSequenceRecord(): Record<string, string> {
-        const filledRows = this.rows.filter(
-            (
-                row,
-            ): row is Omit<EditableSequenceFile, 'fastaHeader' | 'value' | 'label'> & {
-                fastaHeader: string;
-                value: string;
-                label: string;
-            } => row.value !== null && row.fastaHeader !== null && row.label !== null,
-        );
-
-        return filledRows.reduce<Record<string, string>>((prev, row) => {
+        return this.editableSequenceFiles.reduce<Record<string, string>>((prev, row) => {
             prev[row.fastaHeader] = row.value;
             return prev;
         }, {});
