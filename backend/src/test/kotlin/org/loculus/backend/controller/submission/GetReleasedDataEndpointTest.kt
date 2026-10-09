@@ -55,6 +55,7 @@ import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.awaitedResponse
 import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
 import org.loculus.backend.controller.dateMonthsFromNow
 import org.loculus.backend.controller.expectNdjsonAndGetContent
@@ -246,9 +247,9 @@ class GetReleasedDataEndpointTest(
         convenienceClient.approveProcessedSequenceEntries(accessionVersions)
 
         val initialEtagOtherOrganism = submissionControllerClient.getReleasedData(organism = OTHER_ORGANISM)
-            .andReturn().response.getHeader(ETAG)
+            .awaitedResponse().getHeader(ETAG)
         val initialEtagDefaultOrganism = submissionControllerClient.getReleasedData(organism = DEFAULT_ORGANISM)
-            .andReturn().response.getHeader(ETAG)
+            .awaitedResponse().getHeader(ETAG)
 
         // Reuse the existing group — submitDefaultFiles would otherwise create a new group and
         // write to the groups table (NULL-organism tracker), which would invalidate OTHER_ORGANISM's etag.
@@ -275,7 +276,7 @@ class GetReleasedDataEndpointTest(
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 1)
         convenienceClient.approveProcessedSequenceEntries(accessionVersions)
 
-        val initialEtag = submissionControllerClient.getReleasedData().andReturn().response.getHeader(ETAG)
+        val initialEtag = submissionControllerClient.getReleasedData().awaitedResponse().getHeader(ETAG)
 
         // A newer pipeline version processes the same entries in the background. Released data is
         // still served from version 1, so this must not invalidate the etag.
@@ -300,7 +301,7 @@ class GetReleasedDataEndpointTest(
             convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(organism = OTHER_ORGANISM)
 
         val initialEtag = submissionControllerClient.getReleasedData(organism = DEFAULT_ORGANISM)
-            .andReturn().response.getHeader(ETAG)
+            .awaitedResponse().getHeader(ETAG)
 
         // A newer pipeline version reprocesses the OTHER organism. This only writes preprocessed data
         // tagged with the other organism, so it must not invalidate the default organism's etag.
@@ -330,8 +331,7 @@ class GetReleasedDataEndpointTest(
             convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(organism = OTHER_ORGANISM)
 
         val initialEtag = submissionControllerClient.getReleasedData(organism = DEFAULT_ORGANISM)
-            .andReturn()
-            .response
+            .awaitedResponse()
             .getHeader(ETAG)
 
         convenienceClient.extractUnprocessedData(organism = OTHER_ORGANISM, pipelineVersion = 2)
@@ -607,6 +607,12 @@ fun expectIsTimestampWithCurrentYear(value: JsonNode) {
 private const val OPEN_DATA_USE_TERMS_URL = "openUrl"
 private const val RESTRICTED_DATA_USE_TERMS_URL = "restrictedUrl"
 
+// Tests move time by writing here: re-stubbing with `every` briefly installs an answerless stub.
+class FakeCurrentInstant {
+    @Volatile
+    var value: Instant? = null
+}
+
 @EndpointTest
 @Import(GetReleasedDataEndpointWithDataUseTermsUrlTestConfig::class)
 @TestPropertySource(properties = ["spring.main.allow-bean-definition-overriding=true"])
@@ -614,12 +620,16 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val dataUseTermsClient: DataUseTermsControllerClient,
     @Autowired val submissionControllerClient: SubmissionControllerClient,
-    @Autowired var dateProvider: DateProvider,
+    @Autowired val dateProvider: DateProvider,
+    @Autowired val fakeCurrentInstant: FakeCurrentInstant,
 ) {
+    @BeforeEach
+    fun useRealTime() {
+        fakeCurrentInstant.value = null
+    }
+
     @Test
     fun `GIVEN sequence entry WHEN I change data use terms THEN returns updated data use terms`() {
-        every { dateProvider.getCurrentInstant() } answers { callOriginal() }
-
         val threeMonthsFromNow = dateMonthsFromNow(3)
 
         var accessionVersion = convenienceClient.prepareDataTo(
@@ -653,8 +663,6 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
 
     @Test
     fun `GIVEN sequence entry with expired restricted data use terms THEN returns open terms and new etag`() {
-        every { dateProvider.getCurrentInstant() } answers { callOriginal() }
-
         val threeMonthsFromNow = dateMonthsFromNow(3)
 
         var accessionVersion = convenienceClient.prepareDataTo(
@@ -665,7 +673,7 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
         assertAccessionVersionIsRestrictedUntil(accessionVersion, threeMonthsFromNow)
 
         val etagWhileRestricted = submissionControllerClient.getReleasedData()
-            .andReturn().response.getHeader(ETAG)!!
+            .awaitedResponse().getHeader(ETAG)!!
         submissionControllerClient.getReleasedData(ifNoneMatch = etagWhileRestricted)
             .andExpect(status().isNotModified)
 
@@ -673,20 +681,19 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
             date = dateMonthsFromNow(3).plus(1, DateTimeUnit.DAY),
             time = LocalTime.fromSecondOfDay(0),
         ).toInstant(DateProvider.timeZone)
-        every { dateProvider.getCurrentInstant() } answers { threeMonthsAndADayFromNow }
+        fakeCurrentInstant.value = threeMonthsAndADayFromNow
 
         // The restriction lapsing is not a database write, so the etag has to change on the date alone.
         submissionControllerClient.getReleasedData(ifNoneMatch = etagWhileRestricted)
             .andExpect(status().isOk)
             .andExpect(header().string(ETAG, greaterThan(etagWhileRestricted)))
+            .awaitedResponse()
 
         assertAccessionVersionIsOpen(accessionVersion)
     }
 
     @Test
     fun `GIVEN different data use terms scenarios THEN dataBecameOpenAt is computed correctly`() {
-        every { dateProvider.getCurrentInstant() } answers { callOriginal() }
-
         val threeMonthsFromNow = dateMonthsFromNow(3)
         val currentDate = dateProvider.getCurrentDate()
 
@@ -723,7 +730,7 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
             date = oneMonthFromNow,
             time = LocalTime.fromSecondOfDay(0),
         ).toInstant(DateProvider.timeZone)
-        every { dateProvider.getCurrentInstant() } answers { oneMonthFromNowInstant }
+        fakeCurrentInstant.value = oneMonthFromNowInstant
 
         dataUseTermsClient.changeDataUseTerms(
             newDataUseTerms = DataUseTermsChangeRequest(
@@ -741,7 +748,7 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
         )
 
         // Reset time for next scenario
-        every { dateProvider.getCurrentInstant() } answers { callOriginal() }
+        fakeCurrentInstant.value = null
 
         // Scenario 4: Expired RESTRICTED data - dataBecameOpenAt should be the restrictedUntil date
         val anotherRestrictedAccessionVersion = convenienceClient.prepareDataTo(
@@ -754,7 +761,7 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
             date = threeMonthsFromNow.plus(1, DateTimeUnit.DAY),
             time = LocalTime.fromSecondOfDay(0),
         ).toInstant(DateProvider.timeZone)
-        every { dateProvider.getCurrentInstant() } answers { threeMonthsAndADayFromNow }
+        fakeCurrentInstant.value = threeMonthsAndADayFromNow
 
         releasedData = getReleasedDataForAccessionVersion(anotherRestrictedAccessionVersion)
         assertThat(
@@ -832,9 +839,13 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
         }
 
         @Bean
+        fun fakeCurrentInstant() = FakeCurrentInstant()
+
+        @Bean
         @Primary
-        fun mockedDateProvider(): DateProvider {
-            val mock = mockk<DateProvider>(relaxed = true)
+        fun mockedDateProvider(fakeCurrentInstant: FakeCurrentInstant): DateProvider {
+            val mock = mockk<DateProvider>()
+            every { mock.getCurrentInstant() } answers { fakeCurrentInstant.value ?: callOriginal() }
             every { mock.getCurrentDateTime() } answers { callOriginal() }
             every { mock.getCurrentDate() } answers { callOriginal() }
             return mock
