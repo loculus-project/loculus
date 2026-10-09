@@ -83,7 +83,7 @@
         "@types/react-dom": "^18.3.1",
         "@typescript-eslint/parser": "^8.71.0",
         "@vitejs/plugin-react": "^6.1.2",
-        "astro-eslint-parser": "^1.4.0",
+        "astro-eslint-parser": "^3.2.0",
         "eslint": "^9.34.0",
         "eslint-plugin-astro": "^1.7.0",
         "eslint-plugin-import": "^2.32.0",
