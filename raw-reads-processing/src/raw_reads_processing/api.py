@@ -9,7 +9,7 @@ from raw_reads_processing.process_files import validate_raw_reads_submission
 
 from .config import Config
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Raw Reads Processing Service", description="Loculus raw reads processing API"
@@ -38,8 +38,13 @@ def process_files(
             request_with_files=payload,
         )
     except InvalidSubmission as e:
+        logger.warning(
+            f"Rejected submission {payload.accessionVersion} "
+            f"(files: {', '.join(e.error.fileNames)}): {e.error.message}"
+        )
         return ValidationResult(errors=[e.error])
     except ProcessingFailure as e:
+        logger.error(f"Processing failed for {payload.accessionVersion}: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
     except Exception as e:
         # A bug on our side: report it as internal rather than blaming the submission.

@@ -289,14 +289,12 @@ def validate_with_readtools(
             f"Validation of files '{','.join(file_names)}' "
             f"timed out after {timeout_seconds} seconds."
         )
-        logger.error(message)
         raise ProcessingFailure(message) from None
     except subprocess.CalledProcessError as error:
         validation_error = _parse_validation_error(
             stdout=error.stdout,
             stderr=error.stderr,
         )
-        logger.error(validation_error)
         raise InvalidSubmission(
             error=Annotation(
                 fileNames=file_names,

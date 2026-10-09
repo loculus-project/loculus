@@ -35,7 +35,6 @@ def download_file(
                 f.writelines(response.iter_content(chunk_size=1024 * 1024))
     except requests.RequestException as e:
         message = f"Error downloading file '{file.name}' from S3: {e}"
-        logger.error(message)
         raise ProcessingFailure(message) from e
     logger.debug(f"Successfully downloaded file '{file.name}' to '{save_path}'")
 
