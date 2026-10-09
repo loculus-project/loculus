@@ -22,19 +22,17 @@ const organismStatisticsMap = await getOrganismStatisticsMap(
 
         <div class='flex justify-center'>
             <div
-                class=`flex flex-wrap justify-center gap-x-5  gap-y-4 ${getConfiguredOrganisms().length ===5 ? "max-w-4xl" : ""}`
+                class=`flex flex-wrap justify-center gap-x-5  gap-y-4 ${getConfiguredOrganisms().length === 5 ? 'max-w-4xl' : ''}`
             >
-                {
-                    getConfiguredOrganisms().map(({ key, displayName, image }) => (
-                        <OrganismCard
-                            key={key}
-                            image={image}
-                            displayName={displayName}
-                            organismStatistics={organismStatisticsMap.get(key)!}
-                            numberDaysAgoStatistics={numberDaysAgoStatistics}
-                        />
-                    ))
-                }
+                {getConfiguredOrganisms().map(({ key, displayName, image }) => (
+                    <OrganismCard
+                        key={key}
+                        image={image}
+                        displayName={displayName}
+                        organismStatistics={organismStatisticsMap.get(key)!}
+                        numberDaysAgoStatistics={numberDaysAgoStatistics}
+                    />
+                ))}
             </div>
         </div>
         <div class='mdContainer'>

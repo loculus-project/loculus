@@ -66,7 +66,10 @@ function comparisonKey(entry: TableDataEntry): string {
     return String(entry.value);
 }
 
-export function compareVersionData(v1: DetailsJson, v2: DetailsJson): ComparisonResult {
+export function compareVersionData(
+    v1: Pick<DetailsJson, 'tableData'>,
+    v2: Pick<DetailsJson, 'tableData'>,
+): ComparisonResult {
     const changedFields: FieldComparison[] = [];
     const unchangedFields: FieldComparison[] = [];
     const noisyFields: FieldComparison[] = [];

@@ -1,0 +1,175 @@
+{
+  "annotation": {
+    "genes": [
+      {
+        "index": 1,
+        "id": "gene-CCFHVsSgp1",
+        "name": "CCFHVsSgp1",
+        "range": {
+          "begin": 0,
+          "end": 466
+        },
+        "cdses": [
+          {
+            "id": "cds-NP_950237.1",
+            "name": "NP",
+            "product": "nucleoprotein",
+            "segments": [
+              {
+                "index": 2,
+                "id": "cds-NP_950237.1",
+                "name": "NP",
+                "range": {
+                  "begin": 0,
+                  "end": 466
+                },
+                "rangeLocal": {
+                  "begin": 0,
+                  "end": 1449
+                },
+                "landmark": {
+                  "index": 0,
+                  "id": "NC_005302.1:1..1672",
+                  "name": "S",
+                  "range": {
+                    "begin": 0,
+                    "end": 1672
+                  },
+                  "strand": "+",
+                  "isCircular": false
+                },
+                "wrappingPart": "non-wrapping",
+                "strand": "-",
+                "frame": 1,
+                "phase": 2,
+                "truncation": {
+                  "both": [
+                    769,
+                    214
+                  ]
+                },
+                "exceptions": [],
+                "attributes": {
+                  "protein_id": [
+                    "NP_950237.1"
+                  ],
+                  "Dbxref": [
+                    "GenBank:NP_950237.1",
+                    "GeneID:2943076"
+                  ],
+                  "gbkey": [
+                    "CDS"
+                  ],
+                  "ID": [
+                    "CDS-0-cds-NP_950237.1"
+                  ],
+                  "Parent": [
+                    "Gene-0-gene-CCFHVsSgp1"
+                  ],
+                  "locus_tag": [
+                    "CCFHVsSgp1"
+                  ],
+                  "Name": [
+                    "NP"
+                  ],
+                  "product": [
+                    "nucleoprotein"
+                  ],
+                  "seq_index": [
+                    "0"
+                  ],
+                  "is_reverse_complement": [
+                    "true"
+                  ],
+                  "truncated-left": [
+                    "769"
+                  ],
+                  "truncated-right": [
+                    "214"
+                  ]
+                },
+                "compatIsGene": false,
+                "color": null,
+                "gffSeqid": "AY049081.1",
+                "gffSource": "RefSeq",
+                "gffFeatureType": "CDS"
+              }
+            ],
+            "proteins": [],
+            "exceptions": [],
+            "attributes": {
+              "protein_id": [
+                "NP_950237.1"
+              ],
+              "Dbxref": [
+                "GenBank:NP_950237.1",
+                "GeneID:2943076"
+              ],
+              "gbkey": [
+                "CDS"
+              ],
+              "ID": [
+                "cds-NP_950237.1"
+              ],
+              "Parent": [
+                "gene-CCFHVsSgp1"
+              ],
+              "locus_tag": [
+                "CCFHVsSgp1"
+              ],
+              "Name": [
+                "NP"
+              ],
+              "product": [
+                "nucleoprotein"
+              ],
+              "seq_index": [
+                "0"
+              ],
+              "is_reverse_complement": [
+                "true"
+              ]
+            },
+            "compatIsGene": false,
+            "color": null
+          }
+        ],
+        "exceptions": [],
+        "attributes": {
+          "Name": [
+            "CCFHVsSgp1"
+          ],
+          "gbkey": [
+            "Gene"
+          ],
+          "ID": [
+            "Gene-0-gene-CCFHVsSgp1"
+          ],
+          "gene_biotype": [
+            "protein_coding"
+          ],
+          "Dbxref": [
+            "GeneID:2943076"
+          ],
+          "locus_tag": [
+            "CCFHVsSgp1"
+          ],
+          "seq_index": [
+            "0"
+          ],
+          "is_reverse_complement": [
+            "true"
+          ],
+          "product": [
+            "CCFHVsSgp1"
+          ]
+        },
+        "compatIsCds": false,
+        "color": null,
+        "gffSeqid": "AY049081.1",
+        "gffSource": "RefSeq",
+        "gffFeatureType": "gene"
+      }
+    ]
+  }
+}

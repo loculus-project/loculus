@@ -2,6 +2,7 @@ import { type Result, ok, err } from 'neverthrow';
 import Papa from 'papaparse';
 
 import { getFileNameErrorMessage, validateFileNames } from './fileNameValidation';
+import { VirtualFile, type ProcessedFile } from './fileProcessing';
 import { FILES_HEADER_PREFIX, SUBMISSION_ID_INPUT_FIELD } from '../../../settings';
 import type { FileSharingConfig } from '../../../types/config';
 
@@ -357,31 +358,38 @@ const getIdColumn = (columns: MetadataColumn[]): Result<MetadataColumn, Error> =
 };
 
 /**
- * Parses the TSV text of a metadata file into its columns and rows.
- * @param text The text of the metadata file.
+ * Parses the metadata file into its columns and rows.
+ * @param metadataFile The uploaded metadata file.
  * @returns The columns and the rows, or an error if the file is empty.
  */
-const parseMetadataText = (text: string): Result<ParsedMetadata, Error> => {
-    const parsed = Papa.parse<string[]>(text, { delimiter: '\t', skipEmptyLines: true });
-    if (parsed.data.length === 0) return err(new Error('Please provide a non-empty metadata file.'));
+const parseMetadataFile = async (metadataFile: ProcessedFile): Promise<Result<ParsedMetadata, Error>> => {
+    try {
+        const text = await metadataFile.text();
+        const parsed = Papa.parse<string[]>(text, { delimiter: '\t', skipEmptyLines: true });
+        if (parsed.data.length === 0) return err(new Error('Please provide a non-empty metadata file.'));
 
-    const columns = parsed.data[0].map((column, index) => ({ name: column, index }));
-    const rows = parsed.data.slice(1);
+        const columns = parsed.data[0].map((column, index) => ({ name: column, index }));
+        const rows = parsed.data.slice(1);
 
-    return ok({ columns, rows });
+        return ok({ columns, rows });
+    } catch (error) {
+        return err(
+            new Error(`Could not read the metadata file: ${error instanceof Error ? error.message : String(error)}`),
+        );
+    }
 };
 
 /**
  * Reads the file entries declared in the file columns of a metadata file, validating that submission IDs are
  * unique and that each submission declares unique file names per category.
- * @param text The contents of the uploaded metadata file.
+ * @param metadataFile The uploaded metadata file.
  * @returns A mapping of submission IDs to file categories and names, or the first validation error encountered.
  */
-export function parseSubmissionFileMapping(
-    text: string,
+export async function parseSubmissionFileMapping(
+    metadataFile: ProcessedFile,
     categories: FileCategory[],
-): Result<SubmissionFileMapping, Error> {
-    const parsedMetadataResult = parseMetadataText(text);
+): Promise<Result<SubmissionFileMapping, Error>> {
+    const parsedMetadataResult = await parseMetadataFile(metadataFile);
     if (parsedMetadataResult.isErr()) return err(parsedMetadataResult.error);
     const { columns, rows } = parsedMetadataResult.value;
 
@@ -464,20 +472,18 @@ export function parseSubmissionFileMapping(
 /**
  * Rewrites the file columns of a metadata file so that every entry references its resolved file ID, adding a
  * column for any category which the metadata file does not already declare.
- * @param metadataFile The metadata file uploaded by the user.
+ * @param metadataFile The uploaded metadata file.
  * @param resolvedSubmissionFileMapping The resolved submission file mapping to write into the file columns.
  * @returns A new metadata file with the resolved file entries, or the first validation error encountered.
  */
 export async function applyFileMappings(
-    metadataFile: File,
+    metadataFile: ProcessedFile,
     resolvedSubmissionFileMapping: SubmissionFileMapping<ResolvedFile>,
-): Promise<Result<File, Error>> {
+): Promise<Result<ProcessedFile, Error>> {
     // If there are no resolved file entries, return the original file
     if (resolvedSubmissionFileMapping.size === 0) return ok(metadataFile);
 
-    const text = await metadataFile.text();
-
-    const parsedMetadataResult = parseMetadataText(text);
+    const parsedMetadataResult = await parseMetadataFile(metadataFile);
     if (parsedMetadataResult.isErr()) return err(parsedMetadataResult.error);
     const { columns, rows } = parsedMetadataResult.value;
 
@@ -517,7 +523,7 @@ export async function applyFileMappings(
 
     const header = columns.map(({ name }) => name);
     const content = Papa.unparse([header, ...updatedRows], { delimiter: '\t', newline: '\n' });
-    return ok(new File([content], 'metadata.tsv', { type: 'text/tab-separated-values' }));
+    return ok(new VirtualFile(content, 'metadata.tsv'));
 }
 
 export function validateSubmissionFileMapping<T>(

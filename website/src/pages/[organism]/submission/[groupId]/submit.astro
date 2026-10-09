@@ -40,24 +40,22 @@ Astro.response.headers.append('Expires', '0');
 ---
 
 <SubmissionPageWrapper title='Submit sequences' disablePageTitle={true} groupsResult={groupsResult}>
-    {
-        groupsResult.match(
-            ({ currentGroup: group }) => (
-                <SubmissionForm
-                    accessToken={getAccessToken(Astro.locals.session)!}
-                    instanceName={instanceName}
-                    metadataTemplateFields={groupedInputFields}
-                    organism={organism}
-                    clientConfig={clientConfig}
-                    group={group}
-                    inputMode={inputMode}
-                    submissionDataTypes={schema.submissionDataTypes}
-                    dataUseTermsEnabled={dataUseTermsAreEnabled()}
-                    fileSharingConfig={getFileSharingConfig()}
-                    client:load
-                />
-            ),
-            () => undefined,
-        )
-    }
+    {groupsResult.match(
+        ({ currentGroup: group }) => (
+            <SubmissionForm
+                accessToken={getAccessToken(Astro.locals.session)!}
+                instanceName={instanceName}
+                metadataTemplateFields={groupedInputFields}
+                organism={organism}
+                clientConfig={clientConfig}
+                group={group}
+                inputMode={inputMode}
+                submissionDataTypes={schema.submissionDataTypes}
+                dataUseTermsEnabled={dataUseTermsAreEnabled()}
+                fileSharingConfig={getFileSharingConfig()}
+                client:load
+            />
+        ),
+        () => undefined,
+    )}
 </SubmissionPageWrapper>

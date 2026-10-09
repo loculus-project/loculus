@@ -1,15 +1,24 @@
-import type { Result } from 'neverthrow';
+import { err, ok, type Result } from 'neverthrow';
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 
 import type { UploadAction } from './DataUploadForm';
 import type { ColumnMapping } from './FileUpload/ColumnMapping';
 import { SequenceEntryUpload } from './FileUpload/SequenceEntryUploadComponent';
-import type { ProcessedFile } from './FileUpload/fileProcessing';
-import type { InputField, SubmissionDataTypes } from '../../types/config';
+import { RawFile, type ProcessedFile } from './FileUpload/fileProcessing';
+import type { FileSharingConfig, InputField, SubmissionDataTypes } from '../../types/config';
 import { EditableSequences } from '../Edit/EditableSequences';
 import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
 import { SequencesForm } from '../Edit/SequencesForm';
-import { parseSubmissionFileMapping, type SubmissionFileMapping } from './FileUpload/fileMapping';
+import {
+    applyFileMappings,
+    getLinkageErrors,
+    getSingleSubmissionFileMapping,
+    parseSubmissionFileMapping,
+    resolveFileMappings,
+    validateSubmissionFileMapping,
+    type FileMapping,
+    type SubmissionFileMapping,
+} from './FileUpload/fileMapping';
 
 export type InputMode = 'form' | 'bulk';
 
@@ -21,22 +30,16 @@ export type InputMode = 'form' | 'bulk';
  * there.
  */
 export type SequenceData = {
-    type: 'ok';
     metadataFile: File;
     sequenceFile?: File;
     submissionId?: string;
 };
 
-export type InputError = {
-    type: 'error';
-    errorMessage: string;
-};
-
 /**
- * A function that generates a {@link SequenceData} or {@link InputError} if the user has made a mistake
+ * A function that generates a result containing {@link SequenceData}, or a {@link Error} if the user has made a mistake
  * when entering the data (such as, no Submission ID given, or no metadata given).
  */
-export type FileFactory = () => Promise<SequenceData | InputError>;
+export type FileFactory = () => Promise<Result<SequenceData, Error>>;
 
 type FormOrUploadWrapperProps = {
     inputMode: InputMode;
@@ -47,6 +50,8 @@ type FormOrUploadWrapperProps = {
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
     onError: (message: string) => void;
+    fileSharingConfig: FileSharingConfig;
+    fileMapping: FileMapping | undefined;
 };
 
 /**
@@ -65,6 +70,8 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     metadataTemplateFields,
     submissionDataTypes,
     onError,
+    fileSharingConfig,
+    fileMapping,
 }) => {
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
     const enableConsensusSequences = submissionDataTypes.consensusSequences;
@@ -87,16 +94,24 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 setSubmissionFileMapping(undefined);
                 return;
             }
-            const text = columnMapping
-                ? await (await columnMapping.applyTo(metadataFile)).text()
-                : await metadataFile.text();
 
-            if (state.cancelled) return;
+            let mFile = metadataFile;
+            if (columnMapping !== null) {
+                const metadataWithColumnMapping = await columnMapping.applyTo(metadataFile);
+                if (state.cancelled) return;
+                if (metadataWithColumnMapping.isErr()) {
+                    setSubmissionFileMapping(undefined);
+                    onError(metadataWithColumnMapping.error.message);
+                    return;
+                }
+                mFile = metadataWithColumnMapping.value;
+            }
 
-            const submissionFileMapping = parseSubmissionFileMapping(
-                text,
+            const submissionFileMapping = await parseSubmissionFileMapping(
+                mFile,
                 submissionDataTypes.files?.categories?.map((category) => category.name) ?? [],
             );
+            if (state.cancelled) return;
             setSubmissionFileMapping(submissionFileMapping);
             if (submissionFileMapping.isErr()) onError(submissionFileMapping.error.message);
         })();
@@ -108,12 +123,12 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     useEffect(() => {
         setFileFactory(() => {
             // Returns a function that the parent component can call to get the files needed for submission
-            return async (): Promise<SequenceData | InputError> => {
+            return async (): Promise<Result<SequenceData, Error>> => {
                 switch (inputMode) {
                     case 'form': {
                         const submissionId = editableMetadata.getSubmissionId();
                         if (!submissionId) {
-                            return { type: 'error', errorMessage: 'Please specify an ID.' };
+                            return err(new Error('Please specify an ID.'));
                         }
                         const fastaIds = enableConsensusSequences ? editableSequences.getFastaIds() : undefined;
                         const metadataFile = editableMetadata.getMetadataTsv(
@@ -123,44 +138,112 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                             submissionDataTypes.files?.categories,
                         );
                         if (!metadataFile) {
-                            return { type: 'error', errorMessage: 'Please specify metadata.' };
+                            return err(new Error('Please specify metadata.'));
                         }
                         const sequenceFile = editableSequences.getSequenceFasta();
                         if (!sequenceFile && enableConsensusSequences) {
-                            return { type: 'error', errorMessage: 'Please enter sequence data.' };
+                            return err(new Error('Please enter sequence data.'));
                         }
 
-                        return {
-                            type: 'ok',
-                            metadataFile,
+                        let mFile: ProcessedFile = new RawFile(metadataFile);
+
+                        if (extraFilesEnabled && fileMapping !== undefined) {
+                            const submissionFileMapping = getSingleSubmissionFileMapping(submissionId, fileMapping);
+
+                            const validation = validateSubmissionFileMapping(submissionFileMapping, fileSharingConfig);
+                            if (validation.isErr()) {
+                                return err(validation.error);
+                            }
+
+                            const metadataWithFileMapping = await applyFileMappings(mFile, submissionFileMapping);
+                            if (metadataWithFileMapping.isErr()) {
+                                return err(metadataWithFileMapping.error);
+                            }
+
+                            mFile = metadataWithFileMapping.value;
+                        }
+
+                        return ok({
+                            metadataFile: mFile.inner(),
                             sequenceFile,
                             submissionId,
-                        };
+                        });
                     }
                     case 'bulk': {
-                        let mFile = metadataFile?.inner();
-                        if (metadataFile !== undefined && columnMapping !== null) {
-                            mFile = await columnMapping.applyTo(metadataFile);
-                        }
-                        if (mFile === undefined) {
-                            return { type: 'error', errorMessage: 'Please specify a metadata file.' };
+                        if (!metadataFile) {
+                            return err(new Error('Please specify a metadata file.'));
                         }
 
-                        const sFile = sequenceFile?.inner();
-                        if (enableConsensusSequences && sFile === undefined) {
-                            return { type: 'error', errorMessage: 'Please specify a sequences file.' };
+                        if (enableConsensusSequences && !sequenceFile) {
+                            return err(new Error('Please specify a sequences file.'));
                         }
 
-                        return {
-                            type: 'ok',
-                            metadataFile: mFile,
-                            sequenceFile: sFile,
-                        };
+                        let mFile = metadataFile;
+
+                        if (columnMapping !== null) {
+                            const metadataWithColumnMapping = await columnMapping.applyTo(metadataFile);
+                            if (metadataWithColumnMapping.isErr()) {
+                                return err(metadataWithColumnMapping.error);
+                            }
+                            mFile = metadataWithColumnMapping.value;
+                        }
+
+                        if (extraFilesEnabled) {
+                            // Parse submission file mapping from the metadata
+                            // Re-deriving the file mapping at submit prevents race conditions in CI
+                            // See #7270 PR description
+                            const submissionFileMapping = await parseSubmissionFileMapping(
+                                mFile,
+                                submissionDataTypes.files?.categories?.map((category) => category.name) ?? [],
+                            );
+                            if (submissionFileMapping.isErr()) {
+                                return err(submissionFileMapping.error);
+                            }
+
+                            // Validate the submission file mapping
+                            const validation = validateSubmissionFileMapping(
+                                submissionFileMapping.value,
+                                fileSharingConfig,
+                            );
+                            if (validation.isErr()) {
+                                return err(validation.error);
+                            }
+
+                            // Resolve the submission file mapping against file mapping of uploads
+                            const { submissionFileMapping: resolvedFileMapping, fileLinkage } = resolveFileMappings(
+                                submissionFileMapping.value,
+                                fileMapping,
+                            );
+                            const linkageErrorMessage = getLinkageErrors(fileLinkage);
+                            if (linkageErrorMessage !== undefined) {
+                                return err(new Error(linkageErrorMessage));
+                            }
+
+                            // Apply resolved mapping to metadata file
+                            const metadataWithFileMapping = await applyFileMappings(mFile, resolvedFileMapping);
+                            if (metadataWithFileMapping.isErr()) {
+                                return err(metadataWithFileMapping.error);
+                            }
+                            mFile = metadataWithFileMapping.value;
+                        }
+
+                        return ok({
+                            metadataFile: mFile.inner(),
+                            sequenceFile: sequenceFile?.inner(),
+                        });
                     }
                 }
             };
         });
-    }, [editableMetadata, editableSequences, metadataFile, sequenceFile, enableConsensusSequences, columnMapping]);
+    }, [
+        editableMetadata,
+        editableSequences,
+        metadataFile,
+        sequenceFile,
+        enableConsensusSequences,
+        columnMapping,
+        fileMapping,
+    ]);
 
     if (inputMode === 'bulk') {
         return (

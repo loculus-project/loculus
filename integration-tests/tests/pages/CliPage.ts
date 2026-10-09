@@ -625,8 +625,8 @@ export class CliPage {
             // Create metadata
             const metadata =
                 withErrors && i === numSequences
-                    ? `id\tsampleCollectionDate\tgeoLocCountry\thostNameScientific\tauthors\tinvalid_field\n${submissionId}\t2024-01-${String(i).padStart(2, '0')}\tUSA\tHomo sapiens\tSmith, John\tinvalid_value`
-                    : `id\tsampleCollectionDate\tgeoLocCountry\thostNameScientific\tauthors\n${submissionId}\t2024-01-${String(i).padStart(2, '0')}\tUSA\tHomo sapiens\tSmith, John`;
+                    ? `id\tsampleCollectionDate\tgeoLocCountry\thost\tauthors\tinvalid_field\n${submissionId}\t2024-01-${String(i).padStart(2, '0')}\tUSA\tHomo sapiens\tSmith, John\tinvalid_value`
+                    : `id\tsampleCollectionDate\tgeoLocCountry\thost\tauthors\n${submissionId}\t2024-01-${String(i).padStart(2, '0')}\tUSA\tHomo sapiens\tSmith, John`;
 
             // Create sequence
             const sequences = `>${submissionId}\nATCGATCGATCGATCGATCGATCG`;
