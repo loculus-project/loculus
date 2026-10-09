@@ -159,6 +159,10 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .paramIfPresent("size", size?.toString()),
     )
 
+    fun getReviewCounts(jwt: String? = jwtForDefaultUser): ResultActions = mockMvc.perform(
+        get("/my/review-counts").withAuth(jwt),
+    )
+
     fun getSequenceEntryToEdit(
         accession: Accession,
         version: Long,
