@@ -10,6 +10,7 @@ import type { ClientConfig } from '../../types/runtimeConfig';
 import type { AuthorProfile, SeqSetRecord, SeqSet } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
+import { formatErrorMessage } from '../../utils/formatErrorMessage.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { Button } from '../common/Button';
@@ -188,7 +189,7 @@ function useDeleteSeqSetAction(
                 window.location.href = '/seqsets';
             },
             onError: async (error) => {
-                const message = `Failed to delete seqSet with error: '${JSON.stringify(error)})}'`;
+                const message = `Failed to delete seqSet with error: '${formatErrorMessage(error)})}'`;
                 await logger.info(message);
                 onError(message);
             },

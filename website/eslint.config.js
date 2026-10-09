@@ -63,6 +63,14 @@ const enableFromEslint = {
                 'The wrapped Button component automatically disables until hydration completes, ' +
                 'preventing race conditions in Playwright tests.',
         },
+        {
+            selector:
+                'CallExpression[callee.object.name="JSON"][callee.property.name="stringify"] > Identifier[name=/^(error|err|e)$/]',
+            message:
+                'Use formatErrorMessage from "src/utils/formatErrorMessage" instead of JSON.stringify on an error. ' +
+                "Axios's toJSON() serialises the request config, so the dump leaks the Authorization header " +
+                'while omitting the backend message.',
+        },
     ],
 };
 

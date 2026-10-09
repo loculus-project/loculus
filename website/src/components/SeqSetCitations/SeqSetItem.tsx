@@ -14,6 +14,7 @@ import type { SeqSetGraph } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetCitation, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
+import { formatErrorMessage } from '../../utils/formatErrorMessage.ts';
 import { getThemeColor } from '../../utils/getThemeColor';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button.tsx';
@@ -248,7 +249,7 @@ function useCreateSeqSetDOIAction(
                 location.reload();
             },
             onError: async (error) => {
-                await logger.info(`Failed to create seqSet DOI with error: '${JSON.stringify(error)})}'`);
+                await logger.info(`Failed to create seqSet DOI with error: '${formatErrorMessage(error)})}'`);
                 if (error instanceof AxiosError) {
                     const responseData = error.response?.data as ProblemDetail | undefined;
                     if (error.response?.data !== undefined) {

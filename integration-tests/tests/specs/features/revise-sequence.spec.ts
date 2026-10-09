@@ -134,6 +134,8 @@ groupTest.describe('Bulk sequence revision', () => {
         const overview = await reviewPage.getReviewPageOverview();
         expect(overview.total).toBeGreaterThanOrEqual(SEQUENCES_TO_REVISE);
 
+        // Keeps the problem-detail contract under test: if the shape the backend sends drifts, the
+        // website falls back to a generic wrapper and this fails.
         await groupTest.step(
             'reject second revision before approval, error message displayed correctly',
             async () => {
