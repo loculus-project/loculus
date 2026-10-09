@@ -743,14 +743,18 @@ rule prepare_files:
 
 
 rule sort_fasta:
-    """Sort FASTA sequences by id using two-pass to avoid memory issues"""
+    """Sort FASTA sequences by id using two-pass to avoid memory issues. Skip if file is empty."""
     input:
         sequences="results/{basename}.fasta",
     output:
         sorted="results/{basename}_sorted.fasta",
     shell:
         """
-        seqkit sort -N --two-pass {input.sequences} | seqkit seq -w 0 >{output.sorted}
+        if [ -s {input.sequences} ]; then
+            seqkit sort -N --two-pass {input.sequences} | seqkit seq -w 0 >{output.sorted}
+        else
+            touch {output.sorted}
+        fi
         """
 
 
