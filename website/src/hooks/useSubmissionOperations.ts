@@ -40,7 +40,7 @@ export function useSubmissionOperations(
             },
             queries: {
                 groupIdsFilter: group.groupId.toString(),
-                initialStatusesFilter: allRelevantStatuses.join(','),
+                includeReviewData: true,
                 statusesFilter: includedStatuses.join(','),
                 processingResultFilter: includedProcessingResults.join(','),
                 page: pageQuery.pageOneIndexed - 1,
@@ -49,7 +49,11 @@ export function useSubmissionOperations(
         },
         {
             onError: (error) => openErrorFeedback(getSequencesErrorMessage(error)),
-            refetchInterval: 2000,
+            refetchInterval: (data) =>
+                data === undefined || data.statusCounts[receivedStatus] > 0 || data.statusCounts[inProcessingStatus] > 0
+                    ? 2000
+                    : 30000,
+            keepPreviousData: true,
         },
     );
 
