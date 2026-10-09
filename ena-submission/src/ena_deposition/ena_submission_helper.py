@@ -731,11 +731,7 @@ _BINARY_SNIFF_BYTES: Final = 8192
 def _log_webin_cli_output_files(output_dir: str) -> None:
     """
     Log the contents of the files webin-cli wrote to its output directory.
-
-    These reports often hold the only per-sequence validation detail, so everything
-    readable as text is logged in full. Directories and the binary state files webin-cli
-    writes alongside its reports are skipped: they contain no diagnostics, and trying to
-    read them as UTF-8 buries the actual error under a warning per entry.
+    Only text files are logged, binary files are skipped.
     """
     for file_path in glob.glob(f"{output_dir}/**", recursive=True, include_hidden=True):
         path = Path(file_path)
