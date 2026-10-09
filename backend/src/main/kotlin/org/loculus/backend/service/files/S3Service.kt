@@ -1,12 +1,15 @@
 package org.loculus.backend.service.files
 
+import mu.KotlinLogging
 import org.loculus.backend.config.S3BucketConfig
 import org.loculus.backend.config.S3Config
 import org.loculus.backend.controller.BadRequestException
+import org.loculus.backend.controller.ServiceUnavailableException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.springframework.stereotype.Service
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.core.exception.SdkClientException
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.S3Configuration
@@ -18,6 +21,7 @@ import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request
 import software.amazon.awssdk.services.s3.model.ListPartsRequest
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.PutObjectTaggingRequest
@@ -33,7 +37,10 @@ import software.amazon.awssdk.services.s3.presigner.model.UploadPartPresignReque
 import java.net.URI
 import java.time.Duration
 
+private val log = KotlinLogging.logger {}
+
 private const val PRESIGNED_URL_EXPIRY_SECONDS = 60 * 30
+private const val FILES_KEY_PREFIX = "files/"
 
 data class MultipartUploadHandler(val uploadId: String, val presignedUrls: List<String>)
 
@@ -264,7 +271,36 @@ class S3Service(private val s3Config: S3Config) {
         .pathStyleAccessEnabled(true)
         .build()
 
-    private fun getFileIdPath(fileId: FileId): String = "files/$fileId"
+    private fun getFileIdPath(fileId: FileId): String = "$FILES_KEY_PREFIX$fileId"
+
+    /**
+     * Lazily lists the file IDs of the stored objects whose key sorts after `files/<startAfter>`, in key order.
+     * Only keys starting with `files/<prefix>` are listed. Pages are fetched as the sequence is consumed.
+     */
+    fun listStoredFileIds(prefix: String, startAfter: String): Sequence<String> = sequence {
+        val config = getS3BucketConfig()
+        var continuationToken: String? = null
+        do {
+            val request = ListObjectsV2Request.builder()
+                .bucket(config.bucket)
+                .prefix(FILES_KEY_PREFIX + prefix)
+                .startAfter(FILES_KEY_PREFIX + startAfter)
+                .continuationToken(continuationToken)
+                .build()
+            val response = s3ErrorMapping {
+                try {
+                    s3Client.listObjectsV2(request)
+                } catch (e: SdkClientException) {
+                    log.error(e) { "Could not list objects in S3 bucket ${config.bucket}" }
+                    throw ServiceUnavailableException(
+                        "Could not reach the file storage to check which file IDs are already in use.",
+                    )
+                }
+            }
+            response.contents().forEach { yield(it.key().removePrefix(FILES_KEY_PREFIX)) }
+            continuationToken = if (response.isTruncated) response.nextContinuationToken() else null
+        } while (continuationToken != null)
+    }
 
     /**
      * Returns the file size in bytes, or `null` if the file doesn't exist.
