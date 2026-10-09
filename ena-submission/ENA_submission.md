@@ -470,9 +470,11 @@ ena-webin-cli -context reads -fields
 - INSTRUMENT: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-instrument) e.g. Illumina Genome Analyzer - can be set to `unspecified`
 - INSERT_SIZE: Insert size for paired reads
 - LIBRARY_NAME: Library name (optional)
-- LIBRARY_SOURCE: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source) -> should always be `VIRAL RNA` for us
+- LIBRARY_SOURCE: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source) e.g. `VIRAL RNA` for RNA viruses, `GENOMIC` for DNA viruses
 - LIBRARY_SELECTION: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-selection) e.g. PCR - can be set to `unspecified`
 - LIBRARY_STRATEGY: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-strategy) e.g. WGS or WGA - can be set to `OTHER`
+
+We take LIBRARY_SOURCE, LIBRARY_SELECTION and LIBRARY_STRATEGY from the `sequencingLibrarySource`, `sequencingLibrarySelection` and `sequencingAssayType` metadata fields. If the submitter left them empty, they are derived from `sequencingApproach` (e.g. `Tiled amplicon`) and whether the organism's `molecule_type` is DNA or RNA, using `derive_from`/`derived_values` in `raw_reads_manifest_fields_mapping` (`config/defaults.yaml`). If that doesn't give a value either, the configured `default` is used. For LIBRARY_STRATEGY, `prefer_derived: true` means the value derived from `sequencingApproach` wins over `sequencingAssayType`, because submitters often use `WGS` for amplicon or capture sequencing.
 - DESCRIPTION: free text library description (optional)
 
 and then link (local location of raw reads file):
