@@ -8,13 +8,12 @@ import click
 from rich.console import Console
 from rich.live import Live
 
+from ..api.backend import BackendClient
+from ..api.models import ProcessingResult, SequenceStatus
 from ..auth.client import AuthClient
 from ..config import get_instance_config
 from ..utils.guards import require_instance, require_organism
 from ..utils.review_utils import (
-    ProcessingResult,
-    ReviewApiClient,
-    SequenceStatus,
     filter_sequences,
     format_sequence_summary,
     format_sequence_table,
@@ -84,12 +83,23 @@ def status(
     auth_client = AuthClient(config)
     console = Console()
 
+    current_user = auth_client.get_current_user()
+    if not current_user:
+        console.print(
+            "[red]Not authenticated. Please run 'loculus auth login' first.[/red]"
+        )
+        raise click.Abort()
+
+    api_client = BackendClient(config, auth_client)
+
     # Get organism with default (required for status)
     organism = require_organism(instance, ctx.obj.get("organism"))
 
     # Get group with default (optional)
-    # Group is optional for status command - use if provided via top-level param
-    group = ctx.obj.get("group")
+    # Prefer explicit command option over top-level default when provided.
+    context_group = ctx.obj.get("group")
+    if group is None:
+        group = context_group
 
     # Validate options
     if accession and not version:
@@ -103,8 +113,6 @@ def status(
     status_filter = SequenceStatus(status) if status else None
     result_filter = ProcessingResult(result) if result else None
 
-    api_client = ReviewApiClient(config, auth_client)
-
     def fetch_and_display() -> bool:
         """Fetch and display sequence data."""
         try:
@@ -112,13 +120,19 @@ def status(
                 # Show detailed info for specific sequence
                 seq_version = version if version is not None else 1
                 show_sequence_details(
-                    api_client, organism, accession, seq_version, console
+                    api_client,
+                    current_user,
+                    organism,
+                    accession,
+                    seq_version,
+                    console,
                 )
                 return True
             else:
                 # Show list of sequences
                 show_sequences_list(
                     api_client=api_client,
+                    username=current_user,
                     organism=organism,
                     status_filter=status_filter,
                     result_filter=result_filter,
@@ -150,6 +164,7 @@ def status(
                 try:
                     content = get_display_content(
                         api_client=api_client,
+                        username=current_user,
                         organism=organism,
                         status_filter=status_filter,
                         result_filter=result_filter,
@@ -179,7 +194,8 @@ def status(
 
 
 def show_sequence_details(
-    api_client: ReviewApiClient,
+    api_client: BackendClient,
+    username: str,
     organism: str,
     accession: str,
     version: int,
@@ -187,7 +203,9 @@ def show_sequence_details(
 ) -> bool:
     """Show detailed information for a specific sequence."""
     try:
-        details = api_client.get_sequence_details(organism, accession, version)
+        details = api_client.get_review_sequence_details(
+            username, organism, accession, version
+        )
 
         console.print(f"[bold]Sequence: {accession}.{version}[/bold]")
         console.print(f"Status: {details['status']}")
@@ -231,7 +249,8 @@ def show_sequence_details(
 
 
 def show_sequences_list(
-    api_client: ReviewApiClient,
+    api_client: BackendClient,
+    username: str,
     organism: str,
     status_filter: SequenceStatus | None,
     result_filter: ProcessingResult | None,
@@ -255,7 +274,8 @@ def show_sequences_list(
         group_ids = [group] if group else None
 
         # Fetch sequences
-        response = api_client.get_sequences(
+        response = api_client.get_review_sequences(
+            username=username,
             organism=organism,
             group_ids=group_ids,
             statuses=statuses,
@@ -335,7 +355,8 @@ def show_sequences_list(
 
 
 def get_display_content(
-    api_client: ReviewApiClient,
+    api_client: BackendClient,
+    username: str,
     organism: str,
     status_filter: SequenceStatus | None,
     result_filter: ProcessingResult | None,
@@ -357,7 +378,8 @@ def get_display_content(
         group_ids = [group] if group else None
 
         # Fetch sequences
-        response = api_client.get_sequences(
+        response = api_client.get_review_sequences(
+            username=username,
             organism=organism,
             group_ids=group_ids,
             statuses=statuses,
