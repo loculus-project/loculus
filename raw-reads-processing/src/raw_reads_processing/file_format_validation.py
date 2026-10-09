@@ -239,7 +239,6 @@ def validate_compression(
         # Only these three mean the submitter's file is bad; anything else (a missing
         # temp file, a disk error) is ours and must not be blamed on them.
         except (gzip.BadGzipFile, EOFError, zlib.error) as error:
-            logger.exception("Could not decompress '%s'", file_name)
             reason = DECOMPRESSION_ERRORS.get(type(error), "could not be decompressed.")
             raise InvalidSubmission(
                 error=Annotation(
