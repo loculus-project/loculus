@@ -23,11 +23,13 @@ spec:
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       {{- include "loculus.podScheduling" $ | nindent 6 }}
+      {{- include "loculus.podSecurityContext" (list "raw-reads-processing" $.Values) | nindent 6 }}
       containers:
         - name: raw-reads-processing
           image: "ghcr.io/loculus-project/raw-reads-processing-service:{{ $dockerTag }}"
           imagePullPolicy: {{ $.Values.imagePullPolicy }}
           {{- include "loculus.resources" (list "raw-reads-processing" $.Values) | nindent 10 }}
+          {{- include "loculus.containerSecurityContext" (list "raw-reads-processing" $.Values) | nindent 10 }}
           args:
             - raw_reads_processing
             - "--config-file=/config/config.yaml"
