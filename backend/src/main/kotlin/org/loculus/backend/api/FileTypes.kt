@@ -54,3 +54,20 @@ fun FileIdAndNameAndReadUrl.toFileIdAndName(): FileIdAndName = FileIdAndName(fil
 data class FileIdAndEtags(val fileId: FileId, val etags: List<String>)
 
 data class FileIdAndMaybeReleasedAt(val fileId: FileId, val releasedAt: LocalDateTime?)
+
+data class ExternalFile(
+    @Schema(
+        description = "The URL at which the file is hosted. Must start with one of the configured " +
+            "`fileSharing.externalFileUrlPrefixes`.",
+        example = "https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR100/093/ERR10093693/ERR10093693_1.fastq.gz",
+    )
+    val url: String,
+    @Schema(description = "The size of the file in bytes, if known.", example = "2819215")
+    val size: Long? = null,
+)
+
+data class FileIdAndExternalUrl(
+    @Schema(example = "FILE_000001Y") val fileId: FileId,
+    @Schema(example = "https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR100/093/ERR10093693/ERR10093693_1.fastq.gz")
+    val url: String,
+)

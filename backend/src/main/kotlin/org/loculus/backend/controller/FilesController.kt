@@ -9,7 +9,9 @@ import jakarta.servlet.http.HttpServletRequest
 import mu.KotlinLogging
 import org.apache.http.HttpStatus
 import org.loculus.backend.api.AccessionVersion
+import org.loculus.backend.api.ExternalFile
 import org.loculus.backend.api.FileIdAndEtags
+import org.loculus.backend.api.FileIdAndExternalUrl
 import org.loculus.backend.api.FileIdAndMultipartWriteUrl
 import org.loculus.backend.api.FileIdAndWriteUrl
 import org.loculus.backend.auth.AuthenticatedUser
@@ -54,7 +56,8 @@ class FilesController(
 
     @Operation(
         summary = "Download file via redirect to S3 pre-signed URL",
-        description = "Returns a 307 redirect to a pre-signed S3 download URL",
+        description = "Returns a 307 redirect to a pre-signed S3 download URL, " +
+            "or to the external URL for files registered via /files/register-external",
     )
     @ApiResponse(
         responseCode = "307",
@@ -98,13 +101,15 @@ class FilesController(
             }
         }
         val method = HttpMethod.valueOf(request.method)
-        val presignedUrl = when (method) {
-            HttpMethod.HEAD -> s3Service.createUrlToHeadPrivateFile(fileId)
-            HttpMethod.GET -> s3Service.createUrlToReadPrivateFile(fileId, fileName)
+        val externalUrl = filesDatabaseService.getExternalUrls(setOf(fileId))[fileId]
+        val redirectUrl = when {
+            externalUrl != null -> externalUrl
+            method == HttpMethod.HEAD -> s3Service.createUrlToHeadPrivateFile(fileId)
+            method == HttpMethod.GET -> s3Service.createUrlToReadPrivateFile(fileId, fileName)
             else -> throw RuntimeException("Unexpected error: /files/get was called with HTTP method $method")
         }
         return ResponseEntity.status(HttpStatus.SC_TEMPORARY_REDIRECT)
-            .location(URI.create(presignedUrl))
+            .location(URI.create(redirectUrl))
             .build()
     }
 
@@ -147,6 +152,43 @@ class FilesController(
         return fileIds.map { fileId ->
             FileIdAndWriteUrl(fileId, s3Service.createUrlToUploadPrivateFile(fileId))
         }
+    }
+
+    @Operation(
+        summary = "Register files hosted at external URLs",
+        description =
+        "Registers files hosted in a trusted external archive (e.g. FASTQ files in ENA) so that they can be " +
+            "attached to submissions without being uploaded. Only URLs starting with one of the configured " +
+            "`fileSharing.externalFileUrlPrefixes` are accepted. Registering a URL that is already registered " +
+            "for the group returns the existing file ID. Afterwards, the file IDs can be attached to the metadata " +
+            "in the `files.<fileCategory>` column like uploaded files. Downloads redirect to the external URL.",
+    )
+    @ApiResponse(responseCode = "200", description = "The file ID for each registered URL")
+    @ApiResponse(responseCode = "400", description = "Linking is disabled or a URL is not allowed")
+    @ApiResponse(responseCode = "403", description = "User is not a member of the specified group")
+    @ApiResponse(responseCode = "404", description = "Group does not exist")
+    @PostMapping("/register-external")
+    fun registerExternalFiles(
+        @HiddenParam
+        authenticatedUser: AuthenticatedUser,
+        @Parameter(
+            description = "The Group ID of the group which will own the files. " +
+                "The requesting user must be a member of the group.",
+        )
+        @RequestParam
+        groupId: Int,
+        @RequestBody
+        externalFiles: List<ExternalFile>,
+    ): List<FileIdAndExternalUrl> {
+        filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
+        filesPreconditionValidator.validateExternalFiles(externalFiles)
+
+        val urlsToFileIds = filesDatabaseService.registerExternalFiles(
+            externalFiles,
+            authenticatedUser.username,
+            groupId,
+        )
+        return externalFiles.map { FileIdAndExternalUrl(urlsToFileIds.getValue(it.url), it.url) }
     }
 
     @Operation(
