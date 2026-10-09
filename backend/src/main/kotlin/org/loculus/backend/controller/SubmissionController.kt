@@ -57,6 +57,7 @@ import org.loculus.backend.model.SubmitModel
 import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
+import org.loculus.backend.service.submission.SubmissionLimitService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.FastaEntry
 import org.loculus.backend.utils.FastaWriter
@@ -108,10 +109,12 @@ open class SubmissionController(
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
     private val submissionMetrics: SubmissionMetrics,
+    private val submissionLimitService: SubmissionLimitService,
 ) {
     @Operation(description = SUBMIT_DESCRIPTION)
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
     @ApiResponse(responseCode = "400", description = SUBMIT_ERROR_RESPONSE)
+    @ApiResponse(responseCode = "429", description = SUBMISSION_LIMIT_RESPONSE)
     @PostMapping("/submit", consumes = ["multipart/form-data"])
     fun submit(
         @PathVariable @Valid organism: Organism,
@@ -131,6 +134,8 @@ open class SubmissionController(
         ) @RequestParam restrictedUntil: String?,
     ): List<SubmissionIdMapping> {
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
+        // Fails fast when the limit is already reached, before the upload is parsed.
+        submissionLimitService.checkQuotaNotUsedUp(groupId, authenticatedUser)
         val dataUseTerms = dataUseTermsPreconditionValidator.constructDataUseTermsAndValidate(
             dataUseTermsType,
             restrictedUntil,
@@ -149,6 +154,7 @@ open class SubmissionController(
 
     @Operation(description = REVISE_DESCRIPTION)
     @ApiResponse(responseCode = "200", description = REVISE_RESPONSE_DESCRIPTION)
+    @ApiResponse(responseCode = "429", description = SUBMISSION_LIMIT_RESPONSE)
     @PostMapping("/revise", consumes = ["multipart/form-data"])
     fun revise(
         @PathVariable @Valid organism: Organism,

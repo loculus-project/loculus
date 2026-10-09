@@ -26,7 +26,9 @@ import org.loculus.backend.metrics.VALIDATE_CONSENSUS_SEQUENCES_PHASE
 import org.loculus.backend.metrics.VALIDATE_FILE_MAPPING_PHASE
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.submission.CompressionAlgorithm
+import org.loculus.backend.service.submission.RateLimitedOperation
 import org.loculus.backend.service.submission.SubmissionIdFilesMappingPreconditionValidator
+import org.loculus.backend.service.submission.SubmissionLimitService
 import org.loculus.backend.service.submission.UploadDatabaseService
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.FastaReader
@@ -98,6 +100,7 @@ class SubmitModel(
     private val dateProvider: DateProvider,
     private val backendConfig: BackendConfig,
     private val submissionMetrics: SubmissionMetrics,
+    private val submissionLimitService: SubmissionLimitService,
 ) {
 
     companion object AcceptedFileTypes {
@@ -180,6 +183,18 @@ class SubmitModel(
                     validateFileGroupOwnership(files, submissionParams, uploadId)
                 }
             }
+
+            // After all validation, so only uploads that will be written count, and before accessions are generated,
+            // so a rejected upload does not use up accession numbers. Needs the group of each entry, which revisions
+            // only have once associated.
+            submissionLimitService.checkAndRecord(
+                operation = when (submissionParams.uploadType) {
+                    UploadType.ORIGINAL -> RateLimitedOperation.SUBMIT
+                    UploadType.REVISION -> RateLimitedOperation.REVISE
+                },
+                authenticatedUser = submissionParams.authenticatedUser,
+                countByGroup = submissionLimitService.countEntriesInUploadByGroup(uploadId),
+            )
 
             if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
                 submissionMetrics.timeWritePhase(endpoint, organism, GENERATE_ACCESSIONS_PHASE) {

@@ -75,6 +75,11 @@ class DataUseTermsPreconditionValidator(private val dateProvider: DateProvider, 
                         ?: throw RuntimeException(
                             "Data use terms are RESTRICTED but restrictedUntil is null. Aborting.",
                         )
+                    if (oldRestrictedUntilDate == newDataUseTerms.restrictedUntil) {
+                        throw UnprocessableEntityException(
+                            "The data use terms are already restricted until $oldRestrictedUntilDate.",
+                        )
+                    }
                     if (oldRestrictedUntilDate < newDataUseTerms.restrictedUntil) {
                         throw UnprocessableEntityException(
                             "Cannot extend restricted data use period. Please choose a date before " +

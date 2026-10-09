@@ -14,6 +14,7 @@ data class BackendConfig(
     val zstdCompressionLevel: Int = 10,
     val pipelineVersionUpgradeCheckIntervalSeconds: Long = 10,
     val readOnlyMode: Boolean = false,
+    val submissionLimits: SubmissionLimits = SubmissionLimits(),
 ) {
     fun getInstanceConfig(organism: Organism) = organisms[organism.name] ?: throw IllegalArgumentException(
         "Organism: ${organism.name} not found in backend config. Available organisms: ${organisms.keys}",
@@ -31,6 +32,19 @@ data class FileSharing(
     val outputFileUrlType: FileUrlType = FileUrlType.WEBSITE,
     val disableStrictFilenameValidation: Boolean = false,
     val maxFileSizeBytes: Long? = null,
+)
+
+/**
+ * Daily quotas on the number of sequence entries and files affected by write operations (submit, revise, revoke, edit,
+ * data use terms change, file upload request) within a rolling 24h window, across all organisms.
+ * - Groups in [exemptGroupIds] are not limited (e.g. ingest). A group listed there and in [groupQuotas] is exempt.
+ * - Groups in [groupQuotas] each have their own quota of the given size.
+ * - All other groups share one quota of [maxOperationsPerDay]; null means unlimited, 0 blocks them entirely.
+ */
+data class SubmissionLimits(
+    val maxOperationsPerDay: Long? = null,
+    val exemptGroupIds: Set<Int> = emptySet(),
+    val groupQuotas: Map<Int, Long> = emptyMap(),
 )
 
 /**

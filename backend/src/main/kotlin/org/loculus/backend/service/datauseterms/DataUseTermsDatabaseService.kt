@@ -16,6 +16,8 @@ import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.service.submission.MetadataUploadAuxTable
+import org.loculus.backend.service.submission.RateLimitedOperation
+import org.loculus.backend.service.submission.SubmissionLimitService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.processInDatabaseSafeChunks
@@ -29,6 +31,7 @@ class DataUseTermsDatabaseService(
     private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
     private val auditLogger: AuditLogger,
     private val dateProvider: DateProvider,
+    private val submissionLimitService: SubmissionLimitService,
 ) {
 
     fun setInitialDataUseTerms(
@@ -98,6 +101,14 @@ class DataUseTermsDatabaseService(
                 this[DataUseTermsTable.userNameColumn] = authenticatedUser.username
             }
         }
+
+        // After the inserts so that unauthorized or invalid requests fail with their own error first;
+        // a rejection rolls the inserts back.
+        submissionLimitService.checkAndRecord(
+            RateLimitedOperation.CHANGE_DATA_USE_TERMS,
+            authenticatedUser,
+            submissionLimitService.countAccessionsByGroup(accessions),
+        )
 
         auditLogger.log(
             username = authenticatedUser.username,
