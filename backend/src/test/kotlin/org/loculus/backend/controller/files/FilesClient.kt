@@ -1,6 +1,7 @@
 package org.loculus.backend.controller.files
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import org.loculus.backend.api.ExternalFile
 import org.loculus.backend.api.FileCategory
 import org.loculus.backend.api.FileIdAndEtags
 import org.loculus.backend.api.FileIdAndMultipartWriteUrl
@@ -41,6 +42,18 @@ class FilesClient(private val mockMvc: MockMvc) {
         numberParts?.let { request.param("numberParts", it.toString()) }
         return mockMvc.perform(request)
     }
+
+    fun registerExternalFiles(
+        groupId: Int,
+        externalFiles: List<ExternalFile>,
+        jwt: String = jwtForDefaultUser,
+    ): ResultActions = mockMvc.perform(
+        post("/files/register-external")
+            .withAuth(jwt)
+            .param("groupId", groupId.toString())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(jacksonObjectMapper().writeValueAsString(externalFiles)),
+    )
 
     fun completeMultipartUploads(
         fileIdAndEtags: List<FileIdAndEtags>? = null,

@@ -257,7 +257,8 @@
         "enabled": true
     },
     "fileSharing": {
-        "outputFileUrlType": "s3"
+        "outputFileUrlType": "s3",
+        "externalFileUrlPrefixes": ["https://ftp.sra.ebi.ac.uk/vol1/fastq/"]
     },
     "s3": {
         "enabled": true,
