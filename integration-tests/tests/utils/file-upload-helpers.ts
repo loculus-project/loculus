@@ -36,9 +36,9 @@ export async function prepareTmpDirForBulkUpload(
 
     // Create subfolders if required
     await Promise.all(
-        Object.entries(fileContents).flatMap(([p, f]) => {
-            if (!isSingleFile(f)) return fs.promises.mkdir(path.join(tmpDir, p));
-        }),
+        Object.entries(fileContents).flatMap(([p, f]) =>
+            !isSingleFile(f) ? fs.promises.mkdir(path.join(tmpDir, p)) : Promise.resolve(),
+        ),
     );
     // Populate files, in subfolders if required
     await Promise.all(

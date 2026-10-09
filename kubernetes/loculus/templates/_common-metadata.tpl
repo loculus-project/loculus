@@ -305,6 +305,7 @@ organisms:
           type: string
           header: "Files"
           noInput: true
+          substringSearch: true
           customDisplay:
             type: fileList
         {{- end }}

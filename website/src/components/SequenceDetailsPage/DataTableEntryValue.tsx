@@ -8,6 +8,7 @@ import { PlainValueDisplay } from './PlainValueDisplay.tsx';
 import { type TableDataEntry } from './types.ts';
 import { type DataUseTermsHistoryEntry } from '../../types/backend.ts';
 import type { MutationBadgeData } from '../../types/config.ts';
+import type { FileEntry } from '../../types/lapis.ts';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { getReferenceDisplayNameMap } from '../../utils/sequenceTypeHelpers.ts';
 
@@ -116,12 +117,6 @@ const VariantReferenceComponent: React.FC<{ jsonString: string; referenceGenomes
         return <>{referenceDisplayName ?? reference ?? 'N/A'} (variant)</>;
     }
     return <>{referenceDisplayName ?? reference ?? 'N/A'}</>;
-};
-
-type FileEntry = {
-    fileId: string;
-    name: string;
-    url: string;
 };
 
 export const FileListComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
