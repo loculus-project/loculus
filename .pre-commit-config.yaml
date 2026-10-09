@@ -21,6 +21,12 @@ repos:
         entry: npx prettier@3.6.2 --write
         language: system
         files: ^kubernetes/loculus/values\.schema\.json$
+      - id: check-schema-annotations
+        name: check values.schema.json annotations
+        entry: python3 kubernetes/utils/check_schema_annotations.py
+        language: system
+        pass_filenames: false
+        files: ^(kubernetes/loculus/values.schema.json|docs/src/content/docs/reference/helm-chart-config.mdx)$
       - id: helm-lint
         name: helm lint
         entry: bash
