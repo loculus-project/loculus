@@ -23,15 +23,13 @@ const layout = layoutByCount[organisms.length] ?? 'grid-cols-2 sm:grid-cols-3 lg
 ---
 
 <div class={`mx-auto grid gap-4 sm:gap-5 ${layout}`}>
-    {
-        organisms.map(({ key, displayName, image }) => (
-            <OrganismCard
-                organismKey={key}
-                image={image}
-                displayName={displayName}
-                organismStatistics={organismStatisticsMap.get(key)}
-                numberDaysAgoStatistics={numberDaysAgoStatistics}
-            />
-        ))
-    }
+    {organisms.map(({ key, displayName, image }) => (
+        <OrganismCard
+            organismKey={key}
+            image={image}
+            displayName={displayName}
+            organismStatistics={organismStatisticsMap.get(key)}
+            numberDaysAgoStatistics={numberDaysAgoStatistics}
+        />
+    ))}
 </div>
