@@ -1,4 +1,5 @@
-{{- $traefikApiVersion := ternary "traefik.io/v1alpha1" "traefik.containo.us/v1alpha1" (eq (int $.Values.traefikVersion) 3) -}}
+{{- include "loculus.assertPublicHostsRoutable" . -}}
+{{- $traefikApiVersion := ternary "traefik.io/v1alpha1" "traefik.containo.us/v1alpha1" (eq (int $.Values.networking.traefikVersion) 3) -}}
 apiVersion: {{ $traefikApiVersion }}
 kind: Middleware
 metadata:
@@ -47,11 +48,15 @@ spec:
     permanent: true
 ---
 {{- if eq $.Values.environment "server" }}
-{{- $backendHost := printf "backend%s%s" .Values.subdomainSeparator .Values.host }}
-{{- $keycloakHost := (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
-{{- $minioHost := (printf "s3%s%s" $.Values.subdomainSeparator $.Values.host) }}
+{{- $ingressHosts := $.Values.networking.ingressHosts | default dict }}
+{{- $websiteHost := $ingressHosts.website | default (include "loculus.ingressHost" (include "loculus.websiteUrl" .)) }}
+{{- /* only serve the www. alias for the plain default host: a cert for www.<override> would likely have no DNS */}}
+{{- $wwwHost := ternary (printf "www.%s" $websiteHost) "" (and (eq $websiteHost $.Values.networking.host) (not (hasPrefix "www." $websiteHost))) }}
+{{- $backendHost := $ingressHosts.backend | default (include "loculus.ingressHost" (include "loculus.backendUrl" .)) }}
+{{- $keycloakHost := $ingressHosts.keycloak | default (include "loculus.ingressHost" (include "loculus.keycloakUrl" .)) }}
+{{- $minioHost := include "loculus.ingressHost" (include "loculus.s3Url" .) }}
 {{- $middlewareList := list (printf "%s-compression-middleware@kubernetescrd" $.Release.Namespace) }}
-{{- if $.Values.enforceHTTPS }}
+{{- if $.Values.networking.enforceHTTPS }}
 {{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- end }}
 {{ if $.Values.robotsNoindexHeader }}
@@ -66,7 +71,9 @@ spec:
 {{ $middlewareListForKeycloak = append $middlewareListForKeycloak (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
 {{ end }}
 
+{{ if $wwwHost }}
 {{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-redirect-www-middleware@kubernetescrd" $.Release.Namespace) }}
+{{ end }}
 
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -76,7 +83,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareListForWebsite }}"
 spec:
   rules:
-    - host: "{{ .Values.host }}"
+    - host: "{{ $websiteHost }}"
       http:
         paths:
           - path: /
@@ -86,7 +93,8 @@ spec:
                 name: loculus-website-service
                 port:
                   number: 3000
-    - host: "www.{{ .Values.host }}"
+    {{- if $wwwHost }}
+    - host: "{{ $wwwHost }}"
       http:
         paths:
           - path: /
@@ -96,10 +104,13 @@ spec:
                 name: loculus-website-service
                 port:
                   number: 3000
+    {{- end }}
   tls:
   - hosts:
-    - "{{ .Values.host }}"
-    - "www.{{ .Values.host }}"
+    - "{{ $websiteHost }}"
+    {{- if $wwwHost }}
+    - "{{ $wwwHost }}"
+    {{- end }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
