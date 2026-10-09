@@ -15,6 +15,7 @@ jobs:
           - 3048448  # Orthoflavivirus nilense (West nile virus)
           - 3048459  # Orthoflavivirus zikaense
           - 3052345  # Morbillivirus hominis (Measles)
+          - 3052429  # Orthobunyavirus oropoucheense
           - 3052458  # Orthoebolavirus bundibugyoense
           - 3052460  # Orthoebolavirus sudanense
           - 3052462  # Orthoebolavirus zairense
