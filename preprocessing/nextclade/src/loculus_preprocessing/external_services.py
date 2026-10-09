@@ -303,10 +303,10 @@ class FileProcessingService:
                 )
             ]
 
-        for error in result.errors:
+        for e in result.errors:
             logger.warning(
                 f"Raw reads processing rejected {accession_version} "
-                f"(files: {', '.join(error.fileNames)}): {error.message}"
+                f"(files: {', '.join(e.fileNames)}): {e.message}"
             )
         return [
             self._annotation(error.fileNames, error.message, internal_error=False)
