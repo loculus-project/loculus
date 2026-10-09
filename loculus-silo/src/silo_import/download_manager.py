@@ -12,6 +12,7 @@ from pathlib import Path
 
 import requests
 
+from .auth import TokenProvider, authorization_header
 from .config import ImporterConfig
 from .constants import (
     DATA_FILENAME,
@@ -86,6 +87,7 @@ def _download_file(
     output_path: Path,
     etag: str | None = None,
     timeout: int = 300,
+    extra_headers: dict[str, str] | None = None,
 ) -> HttpResponse:
     """
     Download a file using requests.
@@ -95,6 +97,7 @@ def _download_file(
         output_path: Where to save the response body
         etag: Optional ETag for conditional request
         timeout: Request timeout in seconds
+        extra_headers: Additional headers, the Authorization header on instances that require one
 
     Returns:
         HttpResponse with status code and headers
@@ -102,7 +105,7 @@ def _download_file(
     Raises:
         RuntimeError: If the download fails
     """
-    headers = {}
+    headers = dict(extra_headers or {})
     if etag and etag != "0":
         headers["If-None-Match"] = etag
 
@@ -128,14 +131,19 @@ def _download_file(
 
 
 # Type for download function (allows test mocking)
-DownloadFunc = Callable[[str, Path, str | None, int], HttpResponse]
+DownloadFunc = Callable[[str, Path, str | None, int, dict[str, str] | None], HttpResponse]
 
 
 class DownloadManager:
     """Manages downloading and validating data releases."""
 
-    def __init__(self, download_func: DownloadFunc | None = None) -> None:
+    def __init__(
+        self,
+        download_func: DownloadFunc | None = None,
+        token_provider: TokenProvider | None = None,
+    ) -> None:
         self.download_func = download_func or _download_file
+        self.token_provider = token_provider
 
     def download_release(
         self,
@@ -175,6 +183,7 @@ class DownloadManager:
                 data_path,
                 last_etag,
                 300,
+                authorization_header(self.token_provider),
             )
 
             if response.status_code >= BAD_REQUEST:

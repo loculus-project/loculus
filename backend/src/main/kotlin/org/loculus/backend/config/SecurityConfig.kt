@@ -35,7 +35,21 @@ private val log = KotlinLogging.logger { }
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfig {
+class SecurityConfig(
+    /**
+     * When set, no sequence data is readable without a token: the endpoints listed in
+     * [getEndpointsThatArePublic] stop being public and fall through to `anyRequest().authenticated()`.
+     * Instances that leave this off behave exactly as before.
+     */
+    @Value("\${${BackendSpringProperty.REQUIRE_AUTHENTICATION}:false}")
+    private val requireAuthentication: Boolean,
+) {
+
+    init {
+        if (requireAuthentication) {
+            log.info { "Authentication is required: no data endpoint is public" }
+        }
+    }
 
     // This is the preconfigured default that we want to wrap in a logger
     private val defaultAccessDeniedHandler = DelegatingAccessDeniedHandler(
@@ -91,8 +105,10 @@ class SecurityConfig {
                 "/api-docs/**",
                 "/swagger-ui/**",
             ).permitAll()
-            auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
-            auth.requestMatchers(HttpMethod.HEAD, *headEndpointsThatArePublic).permitAll()
+            if (!requireAuthentication) {
+                auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
+                auth.requestMatchers(HttpMethod.HEAD, *headEndpointsThatArePublic).permitAll()
+            }
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
             auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
             auth.requestMatchers(
