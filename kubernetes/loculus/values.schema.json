@@ -1749,8 +1749,9 @@
     },
     "backendExtraJvmOpts": {
       "groups": ["services"],
-      "type": "string",
-      "default": "",
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
       "description": "Extra JVM options for the backend, appended after the built-in JVM_OPTS so they override them, e.g. `-XX:MaxRAMPercentage=25`."
     },
     "organisms": {
