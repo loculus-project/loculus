@@ -1256,13 +1256,6 @@
       "default": "server",
       "description": "Deployment environment. local for development, server for production"
     },
-    "mirrorRegistry": {
-      "groups": ["general"],
-      "type": "string",
-      "pattern": "^[^\\s/]+(?:/[^\\s/]+)*$",
-      "default": "ghcr.io/loculus-project/mirror",
-      "description": "Registry prefix for mirrored external images, without a trailing slash. Override with a registry containing the same image names and tags."
-    },
     "imagePullPolicy": {
       "groups": ["general"],
       "type": "string",
@@ -2067,14 +2060,20 @@
     "images": {
       "groups": ["general"],
       "type": "object",
-      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website`, `backend` and `deaconIndex.`",
+      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website`, `backend`, `deaconIndex`, `postgres`, `keycloak`, `minio`, `busybox`, `kubectl` and `alpine`.",
       "properties": {
         "lapis": { "$ref": "#/definitions/imageSpec" },
         "lapisSilo": { "$ref": "#/definitions/imageSpec" },
         "loculusSilo": { "$ref": "#/definitions/imageSpec" },
         "website": { "$ref": "#/definitions/imageSpec" },
         "backend": { "$ref": "#/definitions/imageSpec" },
-        "deaconIndex": { "$ref": "#/definitions/imageSpec" }
+        "deaconIndex": { "$ref": "#/definitions/imageSpec" },
+        "postgres": { "$ref": "#/definitions/imageSpec" },
+        "keycloak": { "$ref": "#/definitions/imageSpec" },
+        "minio": { "$ref": "#/definitions/imageSpec" },
+        "busybox": { "$ref": "#/definitions/imageSpec" },
+        "kubectl": { "$ref": "#/definitions/imageSpec" },
+        "alpine": { "$ref": "#/definitions/imageSpec" }
       },
       "additionalProperties": false
     },

@@ -5,6 +5,8 @@ import re
 import subprocess
 from pathlib import Path
 
+import yaml
+
 REGISTRY = "ghcr.io/loculus-project/mirror"
 
 parser = argparse.ArgumentParser(description=__doc__)
@@ -28,12 +30,15 @@ for line in Path(".github/mirror-images.txt").read_text().splitlines():
         raise SystemExit(f"Duplicate destination {name}: {images[name]}, {source}")
     images[name] = source
 
-lines = subprocess.check_output(
-    ["git", "grep", "-Ih", "-e", REGISTRY, "-e", "mirrorRegistry"], text=True
+lines = subprocess.check_output(["git", "grep", "-Ih", REGISTRY], text=True)
+values = yaml.safe_load(Path("kubernetes/loculus/values.yaml").read_text())
+lines += "".join(
+    f"{image['repository']}:{image['tag']}\n"
+    for image in values["images"].values()
+    if image["repository"].startswith(f"{REGISTRY}/")
 )
-prefix = re.escape(REGISTRY) + r"|\{\{[^}\n]*\bmirrorRegistry\b[^}\n]*\}\}"
 # Only explicit tags are supported, not digest or untagged references.
-references = set(re.findall(rf"(?:{prefix})/([\w.-]+:[\w.-]+)", lines))
+references = set(re.findall(rf"{re.escape(REGISTRY)}/([\w.-]+:[\w.-]+)", lines))
 if missing := references - images.keys():
     raise SystemExit(f"Missing from .github/mirror-images.txt: {', '.join(sorted(missing))}")
 

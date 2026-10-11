@@ -1,6 +1,5 @@
 environment: server
 imagePullPolicy: Always
-mirrorRegistry: ghcr.io/loculus-project/mirror
 
 # Pod scheduling: nodeSelector, tolerations, affinity, and priority class for pod placement
 podScheduling:
@@ -2868,6 +2867,30 @@ images:
   deaconIndex:
     repository: "ghcr.io/loculus-project/deacon-index"
     tag: "2026-08-28-13-33@sha256:13cbc6bf729136973ed744616522598b658351a27086b0797218090cd2197637"
+    pullPolicy: IfNotPresent
+  postgres:
+    repository: "ghcr.io/loculus-project/mirror/postgres"
+    tag: "15.19"
+    pullPolicy: IfNotPresent
+  keycloak:
+    repository: "ghcr.io/loculus-project/mirror/keycloak"
+    tag: "23.0"
+    pullPolicy: IfNotPresent
+  minio:
+    repository: "ghcr.io/loculus-project/mirror/minio"
+    tag: "RELEASE.2025-09-07T16-13-09Z"
+    pullPolicy: IfNotPresent
+  busybox:
+    repository: "ghcr.io/loculus-project/mirror/busybox"
+    tag: "1.38.0"
+    pullPolicy: IfNotPresent
+  kubectl:
+    repository: "ghcr.io/loculus-project/mirror/kubectl"
+    tag: "1.36.0"
+    pullPolicy: IfNotPresent
+  alpine:
+    repository: "ghcr.io/loculus-project/mirror/alpine"
+    tag: "3.24"
     pullPolicy: IfNotPresent
 silo:
   apiThreadsForHttpConnections: 16
