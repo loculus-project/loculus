@@ -21,12 +21,16 @@ from .datatypes import (
     FileIdAndNameAndReadUrl,
     FileUploadInfo,
     ProcessedEntry,
-    UnprocessedData,
+    ProcessingContext,
     UnprocessedEntry,
 )
+from .external_services import create_retrying_session
 from .processing_functions import trim_ns
 
 logger = logging.getLogger(__name__)
+
+# Presigned URLs can be reused until they expire, so transient S3 errors can be retried
+upload_session = create_retrying_session(retries=3)
 
 
 class JwtCache:
@@ -76,7 +80,7 @@ def get_jwt(config: Config) -> str:
         raise Exception(error_msg)
 
 
-def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
+def parse_ndjson(ndjson_data: str, config: Config) -> Sequence[UnprocessedEntry]:
     entries: list[UnprocessedEntry] = []
     if len(ndjson_data) == 0:
         return entries
@@ -107,20 +111,19 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
             if submitted_files
             else None
         )
-        unprocessed_data = UnprocessedData(
-            submitter=json_object["submitter"],
-            group_id=json_object["groupId"],
-            submittedAt=json_object["submittedAt"],
-            submissionId=json_object["submissionId"],
+        entry = UnprocessedEntry(
+            context=ProcessingContext(
+                accession_version=f"{json_object['accession']}.{json_object['version']}",
+                group_id=int(json_object["groupId"]),
+                submitted_at=str(json_object["submittedAt"]),
+                submission_id=json_object["submissionId"],
+                insdc_ingest_group_id=config.insdc_ingest_group_id,
+            ),
             metadata=json_object["data"]["metadata"],
             unalignedNucleotideSequences=trimmed_unaligned_nucleotide_sequences
             if unaligned_nucleotide_sequences
             else {},
             files=file_mapping,
-        )
-        entry = UnprocessedEntry(
-            accessionVersion=f"{json_object['accession']}.{json_object['version']}",
-            data=unprocessed_data,
         )
         entries.append(entry)
     return entries
@@ -152,7 +155,7 @@ def fetch_unprocessed_sequences(
             return etag, None
         case HTTPStatus.OK:
             try:
-                parsed_ndjson = parse_ndjson(response.text)
+                parsed_ndjson = parse_ndjson(response.text, config)
             except ValueError as e:
                 logger.error(f"[{request_id}] {e}")
                 time.sleep(10 * 1)
@@ -240,10 +243,19 @@ def request_upload(group_id: int, number_of_files: int, config: Config) -> Seque
 def upload_embl_file_to_presigned_url(
     content: str, url: str, extra_headers: dict | None = None
 ) -> None:
-    headers = {"Content-Type": "chemical/x-embl-dl-nucleotide"}
+    headers = {"Content-Type": "text/plain; charset=utf-8"}
     if extra_headers:
         headers.update(extra_headers)
-    r = requests.put(url, data=content.encode("utf-8"), headers=headers, timeout=60)
+    try:
+        r = upload_session.put(
+            url,
+            data=content.encode("utf-8"),
+            headers=headers,
+            timeout=60,
+        )
+    except requests.exceptions.RequestException as e:
+        msg = f"Upload failed: {e}"
+        raise RuntimeError(msg) from e
     if not r.ok:
         msg = f"Upload failed: {r.status_code}, {r.text}"
         raise RuntimeError(msg)

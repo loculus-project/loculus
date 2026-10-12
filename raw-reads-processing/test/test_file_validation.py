@@ -1,8 +1,8 @@
 # ruff: noqa: S101
 
 import gzip
-import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -10,8 +10,10 @@ import pytest
 from raw_reads_processing import file_format_validation
 from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
 from raw_reads_processing.file_format_validation import (
+    GZIP_MAGIC,
     FileFormat,
     _parse_validation_error,
+    validate_compression,
     validate_file_extensions,
     validate_file_numbers,
     validate_with_readtools,
@@ -121,32 +123,6 @@ IIIIIIIIII
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
-def _find_jar() -> str | None:
-    """Locate the readtools jar for integration tests.
-
-    Set READTOOLS_JAR to point at a downloaded copy (see README) to run
-    these; they're skipped otherwise since the jar isn't checked in.
-    """
-    env_jar = os.environ.get("READTOOLS_JAR")
-    if env_jar and Path(env_jar).is_file():
-        return env_jar
-    repo_root = Path(__file__).parent.parent
-    for candidate in (repo_root / "readtools.jar", Path("/opt/app/lib/readtools.jar")):
-        if candidate.is_file():
-            return str(candidate)
-    return None
-
-
-@pytest.fixture
-def readtools_jar(monkeypatch):
-    jar_path = _find_jar()
-    if jar_path is None:
-        pytest.skip(
-            "readtools jar not found; set READTOOLS_JAR to its path to run this test"
-        )
-    monkeypatch.setattr(file_format_validation, "VALIDATION_JAR_PATH", jar_path)
-
-
 def _write(tmp_path: Path, name: str, content: str) -> str:
     file_path = tmp_path / name
     file_path.write_text(content)
@@ -206,8 +182,13 @@ def test_interleaved_fastq_in_single_file_is_rejected(tmp_path):
     reads = _write(tmp_path, "interleaved.fastq", INTERLEAVED_SAME_NAME)
     with pytest.raises(InvalidSubmission) as exc_info:
         validate_with_readtools({"interleaved.fastq": Path(reads)}, FileFormat.FASTQ)
-    assert "Multiple" in exc_info.value.error.message
-    assert "occurrences of read name" in exc_info.value.error.message
+    message = exc_info.value.error.message
+    assert "The same read name appears more than once in this file" in message
+    # readtools reports its duplicate read names in an unspecified order
+    assert 'for example "read1"' in message or 'for example "read2"' in message
+    assert "de-interleaved files" in message
+    # The verbose per-read readtools lines are collapsed into the single hint.
+    assert "occurrences of read name" not in message
 
 
 @pytest.mark.usefixtures("readtools_jar")
@@ -259,6 +240,82 @@ def test_gzipped_fastq_is_recognized_and_passes(tmp_path):
     )
 
 
+def _gz(tmp_path: Path, name: str, payload: bytes) -> Path:
+    path = tmp_path / name
+    with gzip.open(path, "wb") as f:
+        f.write(payload)
+    return path
+
+
+def test_gzipped_files_pass(tmp_path):
+    first = _gz(tmp_path, "reads.fastq.gz", VALID_SINGLE_END.encode())
+    second = _gz(tmp_path, "reads2.fastq.gz", VALID_SINGLE_END.encode())
+    assert (
+        validate_compression(
+            {"reads.fastq.gz": first, "reads2.fastq.gz": second}, FileFormat.FASTQ
+        )
+        is None
+    )
+
+
+def test_plain_file_named_gz_is_rejected(tmp_path):
+    path = tmp_path / "stored"
+    path.write_text(VALID_SINGLE_END)
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_compression({"reads.fastq.gz": path}, FileFormat.FASTQ)
+    assert "named as gzip-compressed" in exc_info.value.error.message
+
+
+def test_double_gzipped_file_is_rejected(tmp_path):
+    inner = gzip.compress(VALID_SINGLE_END.encode())
+    path = _gz(tmp_path, "stored", inner)
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_compression({"reads.fastq.gz": path}, FileFormat.FASTQ)
+    assert "more than once" in exc_info.value.error.message
+
+
+def test_truncated_gzip_is_reported_as_invalid_submission(tmp_path):
+    """gzip raises EOFError here, not OSError - it must still become an annotation."""
+    path = tmp_path / "stored"
+    path.write_bytes(GZIP_MAGIC)
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_compression({"reads.fastq.gz": path}, FileFormat.FASTQ)
+    assert "appears to be truncated" in exc_info.value.error.message
+
+
+def test_corrupt_gzip_is_reported_as_invalid_submission(tmp_path):
+    path = tmp_path / "stored"
+    # Create a gzip-looking file with a corrupt payload.
+    path.write_bytes(GZIP_MAGIC + b"\x08\x00\x00\x00\x00\x00\x00\x03" + b"\xff" * 20)
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_compression({"reads.fastq.gz": path}, FileFormat.FASTQ)
+    assert "appears to be corrupt" in exc_info.value.error.message
+
+
+def test_empty_file_named_gz_is_rejected(tmp_path):
+    path = tmp_path / "stored"
+    path.write_bytes(b"")
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_compression({"reads.fastq.gz": path}, FileFormat.FASTQ)
+    assert "named as gzip-compressed" in exc_info.value.error.message
+
+
+def test_compression_check_skipped_for_non_fastq(tmp_path):
+    """BAM is BGZF, so a .bam would otherwise trip the 'gzipped but not named .gz' branch."""
+    path = tmp_path / "stored"
+    with gzip.open(path, "wb") as f:
+        f.write(b"anything")
+    assert validate_compression({"reads.bam": path}, FileFormat.BAM) is None
+
+
+def test_invalid_gzip_body_is_reported_as_invalid_submission(tmp_path):
+    path = tmp_path / "stored"
+    path.write_bytes(GZIP_MAGIC + b"not really a gzip member")
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_compression({"reads.fastq.gz": path}, FileFormat.FASTQ)
+    assert "contact the administrators" in exc_info.value.error.message
+
+
 def _write_bytes(tmp_path: Path, name: str, data: bytes) -> str:
     file_path = tmp_path / name
     file_path.write_bytes(data)
@@ -307,6 +364,57 @@ def test_parse_validation_error_handles_qualified_result_line():
     )
 
 
+@pytest.mark.parametrize(
+    "separator",
+    [
+        "",
+        "\n  ",
+    ],
+)
+def test_parse_validation_error_condenses_duplicate_read_name_spam(separator):
+    """An interleaved FASTQ trips readtools' duplicate-read-name check once per
+    shared pair. Test we collapse them into one hint with the first offending
+    read name, and that it works for different separators.
+    """
+    read_names = [
+        "ERR17356121.13 VH00852:178:AAJ7F5MM5:1:1101:5734:28792 length=121",
+        "ERR17356121.17 VH00852:178:AAJ7F5MM5:1:1101:5866:23661 length=49",
+        "ERR17356121.20 VH00852:178:AAJ7F5MM5:1:1101:5885:25952 length=120",
+    ]
+    raw = separator.join(
+        f'Multiple (2) occurrences of read name "{name}"' for name in read_names
+    )
+    message = _parse_validation_error(f"RESULT: INVALID\n  {raw}\n", "")
+    assert (
+        f'more than once in this file (for example "{read_names[0]}"). This usually '
+        in message
+    )
+    assert "occurrences of read name" not in message
+
+
+def test_parse_validation_error_condenses_duplicates_among_other_errors():
+    message = _parse_validation_error(
+        "RESULT: INVALID\n"
+        "  Sequence and quality strings must be the same length\n"
+        '  Multiple (2) occurrences of read name "read1"\n'
+        '  Multiple (2) occurrences of read name "read2"\n',
+        "",
+    )
+    assert "The same read name appears more than once" in message
+    assert "Sequence and quality strings must be the same length" in message
+    assert "occurrences of read name" not in message
+
+
+def test_parse_validation_error_leaves_unrelated_errors_untouched():
+    message = _parse_validation_error(
+        "RESULT: INVALID\n  Sequence and quality strings must be the same length\n", ""
+    )
+    assert message == (
+        "File validation failed while running ENA readtools. "
+        "Sequence and quality strings must be the same length"
+    )
+
+
 def test_parse_validation_error_falls_back_to_stderr():
     message = _parse_validation_error(
         "some unrelated crash output\n", "Exception in thread main: OutOfMemoryError\n"
@@ -337,16 +445,53 @@ def test_validation_timeout_is_reported_as_error(tmp_path, monkeypatch):
     assert "1 second" in str(exc_info.value)
 
 
+@pytest.mark.parametrize("file_name", ["reads.fastq.gz", "reads.fq.gz"])
+def test_accepted_fastq_extensions(file_name):
+    assert validate_file_extensions([file_name]) == FileFormat.FASTQ
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    ["READS.FASTQ.GZ", "reads.Fq.Gz", "Reads.FastQ.gz"],
+)
+def test_fastq_extension_matching_is_case_insensitive(file_name):
+    assert validate_file_extensions([file_name]) == FileFormat.FASTQ
+
+
+@pytest.mark.parametrize("file_name", ["reads.fastq", "reads.fq", "READS.FASTQ"])
+def test_uncompressed_fastq_is_rejected(file_name):
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_file_extensions([file_name])
+    assert "must be gzip-compressed" in exc_info.value.error.message
+    assert ".fastq.gz, .fq.gz" in exc_info.value.error.message
+    assert exc_info.value.error.fileNames == [file_name]
+
+
+def test_uncompressed_fastq_is_reported_even_when_mixed_with_a_valid_file():
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_file_extensions(["reads_1.fastq.gz", "reads_2.fastq"])
+    assert "must be gzip-compressed" in exc_info.value.error.message
+    assert exc_info.value.error.fileNames == ["reads_2.fastq"]
+
+
+@pytest.mark.parametrize("file_name", ["reads.fastq.zst", "reads.fastq.bz2"])
+def test_other_compression_formats_are_rejected(file_name):
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_file_extensions([file_name])
+    assert "File is not in accepted format" in exc_info.value.error.message
+
+
 def test_unsupported_extension_is_rejected():
     with pytest.raises(InvalidSubmission) as exc_info:
         validate_file_extensions(["file.txt"])
     assert "File is not in accepted format" in exc_info.value.error.message
+    assert "Accepted file extensions: .fastq.gz, .fq.gz" in exc_info.value.error.message
 
 
 def test_mixed_formats_are_rejected_():
     with pytest.raises(InvalidSubmission) as exc_info:
         validate_file_extensions(
-            ["reads.fastq", "reads.bam"],
+            ["reads.fastq.gz", "reads.bam"],
             accepted_formats=[FileFormat.FASTQ, FileFormat.BAM],
         )
     assert "mixed formats" in exc_info.value.error.message
@@ -356,7 +501,7 @@ def test_too_many_fastq_files_are_rejected():
     with pytest.raises(InvalidSubmission) as exc_info:
         validate_file_numbers(
             FileFormat.FASTQ,
-            ["reads1.fastq", "reads2.fastq", "reads3.fastq"],
+            ["reads1.fastq.gz", "reads2.fastq.gz", "reads3.fastq.gz"],
         )
     assert "Too many FASTQ files" in exc_info.value.error.message
 
@@ -368,3 +513,37 @@ def test_too_many_bam_files_are_rejected():
             ["reads1.bam", "reads2.bam"],
         )
     assert "Too many BAM files" in exc_info.value.error.message
+
+
+@pytest.mark.usefixtures("readtools_jar")
+def test_null_byte_in_quoted_line_does_not_reach_the_error_message(tmp_path):
+    gz_path = tmp_path / "reads.fastq.gz"
+    with gzip.open(gz_path, "wb") as f:
+        f.write(b"notes\x00more\n")
+
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_with_readtools({"reads.fastq.gz": gz_path}, FileFormat.FASTQ)
+
+    error = exc_info.value.error
+    assert "\x00" not in error.message
+    assert "\\u0000" not in error.model_dump_json()
+
+
+def test_invalid_utf8_in_readtools_output_is_replaced(tmp_path, monkeypatch):
+    reads = _write(tmp_path, "reads.fastq", VALID_SINGLE_END)
+    real_run = subprocess.run
+    script = (
+        "import sys; "
+        r"sys.stdout.buffer.write(b'RESULT: INVALID\n  bad byte \xff in header\n'); "
+        "sys.exit(1)"
+    )
+
+    def fake_run(args, **kwargs):
+        return real_run([sys.executable, "-c", script], **kwargs)
+
+    monkeypatch.setattr(file_format_validation.subprocess, "run", fake_run)
+    with pytest.raises(InvalidSubmission) as exc_info:
+        validate_with_readtools({"reads.fastq": Path(reads)}, FileFormat.FASTQ)
+
+    assert "bad byte \ufffd in header" in exc_info.value.error.message
+    assert "\\ud" not in exc_info.value.error.model_dump_json()

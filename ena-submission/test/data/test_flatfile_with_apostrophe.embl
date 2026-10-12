@@ -14,9 +14,9 @@ XX
 FH   Key             Location/Qualifiers
 FH
 FT   source          1..12
-FT                   /molecule_type="genomic RNA"
+FT                   /mol_type="genomic RNA"
 FT                   /organism="Test scientific name"
-FT                   /country="Italy"
+FT                   /geo_loc_name="Italy"
 FT                   /collection_date="2024-01-01"
 XX
 SQ   

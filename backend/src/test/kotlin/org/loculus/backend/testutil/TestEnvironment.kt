@@ -19,8 +19,13 @@ class TestEnvironment {
     }
 
     fun stop() {
-        postgres.stop()
-        minio.stop()
+        val postgresFailure = runCatching { postgres.stop() }.exceptionOrNull()
+        val minioFailure = runCatching { minio.stop() }.exceptionOrNull()
+        postgresFailure?.let { failure ->
+            minioFailure?.let(failure::addSuppressed)
+            throw failure
+        }
+        minioFailure?.let { throw it }
     }
 }
 

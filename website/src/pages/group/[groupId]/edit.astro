@@ -23,21 +23,19 @@ const groupDetailsResult = await groupManagementClient.getGroupDetails(groupId, 
 ---
 
 <BaseLayout title='Edit group' activeTopNavigationItem='account'>
-    {
-        !accessToken ? (
-            <NeedToLogin message='You need to be logged in to edit this group.' />
-        ) : (
-            groupDetailsResult.match(
-                (groupDetails) => (
-                    <GroupEditForm
-                        prefetchedGroupDetails={groupDetails}
-                        accessToken={accessToken}
-                        clientConfig={clientConfig}
-                        client:load
-                    />
-                ),
-                () => <ErrorBox>Failed to fetch group details, sorry for the inconvenience!</ErrorBox>,
-            )
+    {!accessToken ? (
+        <NeedToLogin message='You need to be logged in to edit this group.' />
+    ) : (
+        groupDetailsResult.match(
+            (groupDetails) => (
+                <GroupEditForm
+                    prefetchedGroupDetails={groupDetails}
+                    accessToken={accessToken}
+                    clientConfig={clientConfig}
+                    client:load
+                />
+            ),
+            () => <ErrorBox>Failed to fetch group details, sorry for the inconvenience!</ErrorBox>,
         )
-    }
+    )}
 </BaseLayout>

@@ -28,66 +28,64 @@ const editAccountUrl = (await getUrlForKeycloakAccountPage()) + '/#/personal-inf
 
 <BaseLayout title='SeqSets' data-testid='seqSets-list-container' activeTopNavigationItem='seqsets'>
     <div class='flex flex-col items-center'>
-        {
-            !accessToken ? (
-                <NeedToLogin message='You need to be logged in to create new SeqSets.' />
-            ) : (
-                <div class='flex flex-wrap w-full'>
+        {!accessToken ? (
+            <NeedToLogin message='You need to be logged in to create new SeqSets.' />
+        ) : (
+            <div class='flex flex-wrap w-full'>
+                <div class='flex flex-col'>
+                    {authorResponse.match(
+                        (authorProfile) => (
+                            <AuthorDetails
+                                displayFullDetails
+                                firstName={authorProfile.firstName}
+                                lastName={authorProfile.lastName}
+                                emailDomain={authorProfile.emailDomain}
+                                university={authorProfile.university}
+                                editAccountUrl={editAccountUrl}
+                            />
+                        ),
+                        (error) => (
+                            <ErrorFeedback
+                                message={'Error while fetching author profile: ' + JSON.stringify(error)}
+                                client:load
+                            />
+                        ),
+                    )}
+                    <hr />
                     <div class='flex flex-col'>
-                        {authorResponse.match(
-                            (authorProfile) => (
-                                <AuthorDetails
-                                    displayFullDetails
-                                    firstName={authorProfile.firstName}
-                                    lastName={authorProfile.lastName}
-                                    emailDomain={authorProfile.emailDomain}
-                                    university={authorProfile.university}
-                                    editAccountUrl={editAccountUrl}
-                                />
-                            ),
-                            (error) => (
-                                <ErrorFeedback
-                                    message={'Error while fetching author profile: ' + JSON.stringify(error)}
-                                    client:load
-                                />
-                            ),
-                        )}
-                        <hr />
-                        <div class='flex flex-col'>
-                            <div class='flex justify-between items-center py-8'>
-                                <h1 class='text-2xl font-semibold'>SeqSets</h1>
-                                <SeqSetListActions clientConfig={clientConfig} accessToken={accessToken} client:load />
-                            </div>
-                            <div>
-                                <p>
-                                    SeqSets are collections of sequences with a unique identifier that can be used to
-                                    reference that set of sequences. SeqSets can also be used to generate DOIs, which
-                                    can in turn be used in publications, public communications etc.
-                                </p>
-                                <p class='py-4'>
-                                    You can learn how to generate SeqSets{' '}
-                                    <a href='/docs/how-to/generate-seqset' class='text-primary-700 opacity-90'>
-                                        here.
-                                    </a>
-                                </p>
-                            </div>
-                            <div>
-                                {seqSetsResponse.match(
-                                    (seqSets) => (
-                                        <SeqSetList seqSets={seqSets} client:load />
-                                    ),
-                                    (error) => (
-                                        <ErrorFeedback
-                                            message={'Error while fetching seqSets: ' + JSON.stringify(error)}
-                                            client:load
-                                        />
-                                    ),
-                                )}
-                            </div>
+                        <div class='flex justify-between items-center py-8'>
+                            <h1 class='text-2xl font-semibold'>SeqSets</h1>
+                            <SeqSetListActions clientConfig={clientConfig} accessToken={accessToken} client:load />
+                        </div>
+                        <div>
+                            <p>
+                                SeqSets are collections of sequences with a unique identifier that can be used to
+                                reference that set of sequences. SeqSets can also be used to generate DOIs, which can in
+                                turn be used in publications, public communications etc.
+                            </p>
+                            <p class='py-4'>
+                                You can learn how to generate SeqSets{' '}
+                                <a href='/docs/how-to/generate-seqset' class='text-primary-700 opacity-90'>
+                                    here.
+                                </a>
+                            </p>
+                        </div>
+                        <div>
+                            {seqSetsResponse.match(
+                                (seqSets) => (
+                                    <SeqSetList seqSets={seqSets} client:load />
+                                ),
+                                (error) => (
+                                    <ErrorFeedback
+                                        message={'Error while fetching seqSets: ' + JSON.stringify(error)}
+                                        client:load
+                                    />
+                                ),
+                            )}
                         </div>
                     </div>
                 </div>
-            )
-        }
+            </div>
+        )}
     </div>
 </BaseLayout>

@@ -10,6 +10,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.S3Configuration
+import software.amazon.awssdk.services.s3.model.AbortMultipartUploadRequest
 import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadRequest
 import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload
 import software.amazon.awssdk.services.s3.model.CompletedPart
@@ -17,6 +18,7 @@ import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest
+import software.amazon.awssdk.services.s3.model.ListPartsRequest
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.PutObjectTaggingRequest
 import software.amazon.awssdk.services.s3.model.S3Exception
@@ -109,6 +111,42 @@ class S3Service(private val s3Config: S3Config) {
                         .parts(completedParts)
                         .build(),
                 )
+                .build(),
+        )
+        Unit
+    }
+
+    /**
+     * Returns the total size in bytes of the parts already uploaded for an in-progress (not yet completed)
+     * multipart upload. Unlike [getFileSize], this does not require the upload to be completed first, since
+     * it reads the parts directly rather than the (not yet existing) assembled object.
+     */
+    fun getMultipartUploadSize(fileId: FileId, uploadId: String): Long = s3ErrorMapping {
+        val config = getS3BucketConfig()
+        var partNumberMarker: Int? = null
+        var totalSize = 0L
+        do {
+            val response = s3Client.listParts(
+                ListPartsRequest.builder()
+                    .bucket(config.bucket)
+                    .key(getFileIdPath(fileId))
+                    .uploadId(uploadId)
+                    .partNumberMarker(partNumberMarker)
+                    .build(),
+            )
+            totalSize += response.parts().sumOf { it.size() }
+            partNumberMarker = if (response.isTruncated) response.nextPartNumberMarker() else null
+        } while (partNumberMarker != null)
+        totalSize
+    }
+
+    fun abortMultipartUpload(fileId: FileId, uploadId: String) = s3ErrorMapping {
+        val config = getS3BucketConfig()
+        s3Client.abortMultipartUpload(
+            AbortMultipartUploadRequest.builder()
+                .bucket(config.bucket)
+                .key(getFileIdPath(fileId))
+                .uploadId(uploadId)
                 .build(),
         )
         Unit

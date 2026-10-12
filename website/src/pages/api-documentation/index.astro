@@ -35,8 +35,8 @@ const BUTTON_CLASS =
                 >
                     Swagger UI
                 </a>{' '}
-                for documentation and direct interaction with the APIs. For more tips on how to use the API, it is recommended
-                to start with the{' '}
+                for documentation and direct interaction with the APIs. For more tips on how to use the API, it is
+                recommended to start with the{' '}
                 <a
                     href={authenticationApiDocsUrl}
                     class='underline text-primary-900 hover:text-primary-800 hover:no-underline'
@@ -48,20 +48,18 @@ const BUTTON_CLASS =
                 WARNING: Swagger incorrectly displays NDJSON examples in JSON format. For endpoints that require NDJSON
                 as input you must convert the JSON examples to NDJSON (e.g. by removing new lines) prior to testing.
             </p>
-            {
-                dataUseTermsAreEnabled() && (
-                    <p class='mt-4 mb-4'>
-                        By using our API you agree to our{' '}
-                        <a
-                            href={routes.datauseTermsPage()}
-                            class='underline text-primary-900 hover:text-primary-800 hover:no-underline'
-                        >
-                            Data use terms
-                        </a>
-                        .
-                    </p>
-                )
-            }
+            {dataUseTermsAreEnabled() && (
+                <p class='mt-4 mb-4'>
+                    By using our API you agree to our{' '}
+                    <a
+                        href={routes.datauseTermsPage()}
+                        class='underline text-primary-900 hover:text-primary-800 hover:no-underline'
+                    >
+                        Data use terms
+                    </a>
+                    .
+                </p>
+            )}
         </div>
 
         <div class='mb-10'>
@@ -81,24 +79,20 @@ const BUTTON_CLASS =
         <div class='mb-10'>
             <h2 class='text-xl font-semibold text-primary-400 mb-4'>LAPIS query engines</h2>
             <div class='flex flex-wrap gap-x-2 gap-y-4'>
-                {
-                    Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
-                        <a class={BUTTON_CLASS} href={url + '/swagger-ui/index.html'}>
-                            {organismToDisplayName[organism]} LAPIS API documentation
-                        </a>
-                    ))
-                }
+                {Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
+                    <a class={BUTTON_CLASS} href={url + '/swagger-ui/index.html'}>
+                        {organismToDisplayName[organism]} LAPIS API documentation
+                    </a>
+                ))}
             </div>
             <div class='mt-8'>
                 <span class='font-medium'>URLs of LAPIS query engines:</span>
                 <ul class='list-disc ml-6'>
-                    {
-                        Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
-                            <li>
-                                {organismToDisplayName[organism]}: <code>{url}</code>
-                            </li>
-                        ))
-                    }
+                    {Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
+                        <li>
+                            {organismToDisplayName[organism]}: <code>{url}</code>
+                        </li>
+                    ))}
                 </ul>
             </div>
         </div>

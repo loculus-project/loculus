@@ -8,8 +8,8 @@ plugins {
     // Check here: https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin
     // To bump gradle version run: `./gradlew wrapper --gradle-version=VERSION && ./gradlew wrapper`
     // Then commit the changes
-    id 'org.jetbrains.kotlin.jvm' version '2.4.10'
-    id 'org.jetbrains.kotlin.plugin.spring' version '2.4.10'
+    id 'org.jetbrains.kotlin.jvm' version '2.4.20'
+    id 'org.jetbrains.kotlin.plugin.spring' version '2.4.20'
     id 'org.jlleitschuh.gradle.ktlint' version '14.2.0'
     id 'org.springdoc.openapi-gradle-plugin' version '1.9.0'
 }
@@ -71,13 +71,13 @@ dependencies {
     implementation "org.hibernate.validator:hibernate-validator"
     implementation "org.keycloak:keycloak-admin-client:26.0.12"
     implementation("io.minio:minio:9.0.3")
-    implementation("software.amazon.awssdk:s3:2.54.13")
+    implementation("software.amazon.awssdk:s3:2.55.11")
 
     implementation "org.springframework.boot:spring-boot-starter-security-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
 
     implementation 'org.apache.commons:commons-compress'
-    implementation 'com.github.luben:zstd-jni:1.5.7-16'
+    implementation 'com.github.luben:zstd-jni:1.5.7-21'
     implementation 'org.tukaani:xz:1.12'
 
     implementation("org.redundent:kotlin-xml-builder:1.9.3")
@@ -97,6 +97,23 @@ dependencies {
     ktlint("com.pinterest.ktlint:ktlint-cli:1.8.0") {
         attributes {
             attribute(Bundling.BUNDLING_ATTRIBUTE, getObjects().named(Bundling, Bundling.EXTERNAL))
+        }
+    }
+}
+
+// ktlint 1.8.0 crashes on kotlin-compiler-embeddable 2.4.20 (ktlint/ktlint#3289); drop this pin once on ktlint >= 2.0 (the ktlint tasks fail as a reminder)
+configurations.matching { it.name.startsWith("ktlint") }.configureEach {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == "org.jetbrains.kotlin") {
+            details.useVersion("2.2.21")
+        }
+    }
+}
+tasks.matching { it.name.startsWith("ktlint") || it.name.startsWith("runKtlint") }.configureEach {
+    doFirst {
+        def newKtlint = configurations.ktlint.dependencies.find { it.name == "ktlint-cli" && !it.version?.startsWith("1.") }
+        if (newKtlint) {
+            throw new GradleException("ktlint is now ${newKtlint.version}: remove the ktlint Kotlin compiler pin in build.gradle")
         }
     }
 }

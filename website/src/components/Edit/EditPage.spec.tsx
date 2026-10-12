@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ToastContainer } from 'react-toastify';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import { EditPage } from './EditPage.tsx';
@@ -81,6 +82,7 @@ function renderEditPage({
                 sequenceEntryHistory={sequenceEntryHistory}
                 fileSharingConfig={{ disableStrictFilenameValidation: false }}
             />
+            <ToastContainer />
         </QueryClientProvider>,
     );
 }
@@ -143,6 +145,47 @@ describe('EditPage', () => {
 
         await userEvent.click(undoButton!);
         expectTextInSequenceData.unprocessedMetadata(defaultReviewData.submittedData.metadata);
+    });
+
+    test('should show submitted fields that are not input fields so they can be cleared', async () => {
+        const noInputKey = 'noInputField';
+        const noInputValue = 'shouldNotBeHere';
+        renderEditPage({
+            editedData: {
+                ...defaultReviewData,
+                submittedData: {
+                    ...defaultReviewData.submittedData,
+                    metadata: { ...defaultReviewData.submittedData.metadata, [noInputKey]: noInputValue },
+                },
+            },
+        });
+
+        expect(screen.getByText('Unrecognized input fields')).toBeInTheDocument();
+        expect(document.querySelector(`label[for="${noInputKey}"]`)).toBeTruthy();
+
+        await userEvent.clear(screen.getByDisplayValue(noInputValue));
+        expect(screen.queryByDisplayValue(noInputValue)).not.toBeInTheDocument();
+        expect(document.querySelector(`label[for="${noInputKey}"]`)).toBeTruthy();
+    });
+
+    test('should not show the unknown fields section when all fields are input fields', () => {
+        renderEditPage();
+
+        expect(screen.queryByText('Unrecognized input fields')).not.toBeInTheDocument();
+    });
+
+    test('should refuse to submit edits when the sequence was discarded', async () => {
+        renderEditPage();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Discard file' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Submit edits and proceed to Approval' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+
+        expect(
+            await screen.findByText(
+                `Submissions for organism '${testOrganism}' must contain at least one consensus sequence.`,
+            ),
+        ).toBeVisible();
     });
 
     test('shows the revoked warning when revising an entry whose latest version is a revocation', () => {

@@ -1,6 +1,7 @@
 import logging
 import urllib.parse
 from collections import OrderedDict
+from dataclasses import dataclass
 
 import requests
 from pydantic import BaseModel, Field, ValidationError
@@ -22,6 +23,17 @@ from loculus_preprocessing.datatypes import (
 logger = logging.getLogger(__name__)
 
 
+def create_retrying_session(retries: int = 5) -> requests.Session:
+    """Session that retries connection errors, read timeouts, 429 and selected 5xx responses
+    with exponential backoff. Only idempotent methods (e.g. GET, PUT) are retried."""
+    session = requests.Session()
+    retry = Retry(total=retries, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504])
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    return session
+
+
 class RequestCache:
     """Class for caching requests to external services during preprocessing.
 
@@ -32,11 +44,7 @@ class RequestCache:
     def __init__(self, max_size: int, retries=5) -> None:
         self.cache: OrderedDict[str, requests.Response] = OrderedDict()
         self.max_size = max_size
-        self.session = requests.Session()
-        retry = Retry(total=retries, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
-        adapter = HTTPAdapter(max_retries=retry)
-        self.session.mount("http://", adapter)
-        self.session.mount("https://", adapter)
+        self.session = create_retrying_session(retries)
 
     def get(self, url: str) -> requests.Response | None:
         if url in self.cache:
@@ -200,6 +208,17 @@ class TaxonomyService:
             return raw_internal_error(message)
 
         return RawProcessingResult(datum=common_name)
+
+
+@dataclass(frozen=True)
+class ExternalServices:
+    """External services available to processing functions.
+
+    Kept separate from `ProcessingContext` since these don't vary per accession, unlike
+    `ProcessingContext`'s fields.
+    """
+
+    taxonomy_service: TaxonomyService
 
 
 FileName = str

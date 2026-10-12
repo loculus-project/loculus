@@ -1,7 +1,7 @@
 # ruff: noqa: S101
 """Tests for ProcessingFunctions.assign_custom_lineage and is_variant."""
 
-from factory_methods import DEFAULT_TEST_CONTEXT
+from factory_methods import DEFAULT_EXTERNAL_SERVICES, DEFAULT_TEST_CONTEXT
 
 from loculus_preprocessing.processing_functions import ProcessingFunctions
 
@@ -40,6 +40,7 @@ def assign_custom_lineage(input_data: dict) -> str | int | float | bool | None:
         input_fields=list(input_data.keys()),
         args=ARGS,
         context=DEFAULT_TEST_CONTEXT,
+        external_services=DEFAULT_EXTERNAL_SERVICES,
     ).datum
 
 
@@ -192,6 +193,7 @@ def assign_custom_lineage_is_variant(length, num_mutations, mu="0.01"):
         input_fields=["length", "numMutations"],
         args={"mu": mu},
         context=DEFAULT_TEST_CONTEXT,
+        external_services=DEFAULT_EXTERNAL_SERVICES,
     )
 
 
@@ -236,6 +238,7 @@ class TestIsVariant:
             input_fields=["length", "numMutations"],
             args={},
             context=DEFAULT_TEST_CONTEXT,
+            external_services=DEFAULT_EXTERNAL_SERVICES,
         )
         assert result.datum is None
         assert len(result.errors) == 1

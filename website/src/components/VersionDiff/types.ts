@@ -13,6 +13,7 @@ export type FieldComparison = {
     orderOnDetailsPage?: number;
     hasChanged: boolean;
     isNoisy: boolean;
+    showChangedBadge?: boolean;
 };
 
 export type ComparisonResult = {

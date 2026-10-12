@@ -67,9 +67,9 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
         {backendIsInDebugMode && <div class='bg-red-500 text-white text-center p-2'>Backend is in debug mode</div>}
         <Banner
             message={bannerMessage}
-            lastTimeBannerWasClosed={lastTimeBannerWasClosed !== undefined
-                ? parseInt(lastTimeBannerWasClosed, 10)
-                : undefined}
+            lastTimeBannerWasClosed={
+                lastTimeBannerWasClosed !== undefined ? parseInt(lastTimeBannerWasClosed, 10) : undefined
+            }
             serverTime={Date.now()}
             client:load
         />
@@ -88,7 +88,9 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                                 }}
                             />
                         </a>
-                        <a href='/' class='fancytitle leading-tight tracking-tight pb-2'>{websiteName}</a>
+                        <a href='/' class='fancytitle leading-tight tracking-tight pb-2'>
+                            {websiteName}
+                        </a>
                     </div>
                     <Navigation
                         implicitOrganism={implicitOrganism}
@@ -120,13 +122,11 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
             <footer class='hidden sm:flex sm:z-6 justify-between items-center h-20 px-8'>
                 <div class:list={['w-full flex justify-between items-center mx-auto']}>
                     <div class='flex gap-5'>
-                        {
-                            navigationItems.bottom.map(({ text, path }) => (
-                                <a href={path} class='text-gray-600'>
-                                    {text}
-                                </a>
-                            ))
-                        }
+                        {navigationItems.bottom.map(({ text, path }) => (
+                            <a href={path} class='text-gray-600'>
+                                {text}
+                            </a>
+                        ))}
                     </div>
 
                     <a

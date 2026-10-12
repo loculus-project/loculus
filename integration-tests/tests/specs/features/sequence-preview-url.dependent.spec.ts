@@ -21,8 +21,8 @@ test.describe('Sequence Preview URL Parameters', () => {
 
         urlParams = searchPage.getUrlParams();
         expect(urlParams.has('selectedSeq')).toBe(true);
-        expect(urlParams.get('selectedSeq')).not.toBeNull();
         const selectedSeqId = urlParams.get('selectedSeq');
+        if (!selectedSeqId) throw new Error('selectedSeq missing from URL');
 
         await searchPage.closePreviewButton().click();
 
@@ -67,6 +67,7 @@ test.describe('Sequence Preview URL Parameters', () => {
 
         const urlParams = searchPage.getUrlParams();
         const selectedSeqId = urlParams.get('selectedSeq');
+        if (!selectedSeqId) throw new Error('selectedSeq missing from URL');
 
         await searchPage.toggleHalfScreenButton().click();
 

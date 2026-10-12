@@ -2,6 +2,10 @@
 {{- $organism := $item.key }}
 {{- $organismConfig := $item.contents }}
 {{- $metadata := ($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).metadata }}
+{{- $extraInputFieldNames := list }}
+{{- range $organismConfig.schema.extraInputFields | default (list) }}
+{{- $extraInputFieldNames = append $extraInputFieldNames .name }}
+{{- end }}
 {{- $referenceGenomes:= include "loculus.mergeReferenceGenomes" $organismConfig.referenceGenomes | fromYaml }}
 {{- $flattened := include "loculus.flattenPreprocessingVersions" $organismConfig.preprocessing | fromJson }}
 {{- range $processingIndex, $processingConfig := $flattened.items }}
@@ -27,6 +31,7 @@ data:
     {{- if and (hasKey $organismConfig.schema "submissionDataTypes") (hasKey $organismConfig.schema.submissionDataTypes "maxSequencesPerEntry") }}
     max_sequences_per_entry: {{ $organismConfig.schema.submissionDataTypes.maxSequencesPerEntry }}
     {{- end }}
+    extra_input_fields: {{ toJson $extraInputFieldNames }}
     processing_spec:
       {{- $args := dict "metadata" $metadata "referenceGenomes" $organismConfig.referenceGenomes }}
       {{- include "loculus.preprocessingSpecs" $args | nindent 6 }}

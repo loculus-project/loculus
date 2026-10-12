@@ -26,7 +26,7 @@ const TAB_ACTIVE_CLASS = 'font-semibold';
 
 // Button Labels
 const LOAD_SEQUENCES_BUTTON = 'Load sequences';
-const ALIGNED_NUCLEOTIDE_SEQUENCE_TAB = 'Aligned nucleotide sequence';
+const ALIGNED_NUCLEOTIDE_SEQUENCE_TAB = 'Reference-aligned nucleotide sequence';
 const NUCLEOTIDE_SEQUENCE_TAB = 'Nucleotide sequence';
 
 // Test Selectors
@@ -106,8 +106,8 @@ describe('SequencesContainer', () => {
             await waitFor(() => {
                 expect(screen.getByRole(TAB_ROLE, { name: 'Nucleotide sequences' })).toBeVisible();
             });
-            expect(screen.getByRole(TAB_ROLE, { name: 'Aligned nucleotide sequences' })).toBeVisible();
-            expect(screen.getByRole(TAB_ROLE, { name: 'Aligned amino acid sequences' })).toBeVisible();
+            expect(screen.getByRole(TAB_ROLE, { name: 'Reference-aligned nucleotide sequences' })).toBeVisible();
+            expect(screen.getByRole(TAB_ROLE, { name: 'Reference-aligned amino acid sequences' })).toBeVisible();
 
             click('Nucleotide sequences');
 
@@ -116,7 +116,7 @@ describe('SequencesContainer', () => {
                 const optionLabels = options.map((o) => o.textContent);
                 expect(optionLabels).toContain('L');
                 expect(optionLabels).toContain('S');
-                expectTabNotActive('Aligned nucleotide sequences');
+                expectTabNotActive('Reference-aligned nucleotide sequences');
             });
         });
     });
@@ -168,10 +168,10 @@ describe('SequencesContainer', () => {
             await waitFor(() => {
                 expect(screen.getByRole(TAB_ROLE, { name: 'Nucleotide sequences' })).toBeVisible();
             });
-            expect(screen.getByRole(TAB_ROLE, { name: 'Aligned nucleotide sequences' })).toBeVisible();
-            expect(screen.getByRole(TAB_ROLE, { name: 'Aligned amino acid sequences' })).toBeVisible();
+            expect(screen.getByRole(TAB_ROLE, { name: 'Reference-aligned nucleotide sequences' })).toBeVisible();
+            expect(screen.getByRole(TAB_ROLE, { name: 'Reference-aligned amino acid sequences' })).toBeVisible();
 
-            click('Aligned nucleotide sequences');
+            click('Reference-aligned nucleotide sequences');
 
             await waitFor(() => {
                 const options = screen.getAllByRole('option');

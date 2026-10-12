@@ -17,6 +17,19 @@ curl -L -o readtools.jar \
   https://github.com/loculus-project/readtools/releases/download/v1.0.0/readtools-2.15.1-all.jar
 ```
 
+## Testing
+
+```sh
+pytest
+```
+
+You can skip tests requiring `readtools` and `deacon` with:
+
+```sh
+pytest --skip-missing-deps
+```
+
+
 ## How to configure the service
 
 Preprocessing is currently configured to send raw read files to the `rawReadsProcessingService` and requires the `values.yaml` to contain:
@@ -53,20 +66,25 @@ The service downloads the files and validates their structure. The service respo
 
 Raw reads submissions go through `validate_raw_reads_submission`, which checks:
 
-1. **Format validation** (`raw_reads_processing.file_format_validation`) — is the submission well-formed FASTQ?
+1. **Format validation** (`raw_reads_processing.file_format_validation`) — is the submission well-formed, gzip-compressed FASTQ?
 2. **Human Host Contamination** (`raw_reads_processing.deacon`) - run deacon to confirm that the submission does not contain human reads (thresholds and parameters used by deacon are defined below).
 
 ## Raw reads format validation
 
-Only FASTQ is currently accepted (`ACCEPTED_FORMATS`). If the file extension is not supported the function errors early.
+Only gzip-compressed FASTQ is accepted (`ACCEPTED_FASTQ_EXTENSIONS`: `.fastq.gz` and
+`.fq.gz`, matched case-insensitively). If the file extension is not supported the function
+errors early.
 
-Once files are downloaded, they are validated using ENA's own validator,
+Once files are downloaded, `validate_compression` checks that the contents really are gzip,
+compressed exactly once.
+
+They are then validated using ENA's own validator,
 [readtools](https://github.com/loculus-project/readtools), which checks structural/content
 correctness (valid headers, IUPAC bases, matching sequence/quality lengths, etc.) and rejects
 truly duplicate read names within a single file:
 
 ```sh
-READTOOLS_JAR=readtools.jar java -jar readtools.jar read1.fastq [read2.fastq] --format FASTQ
+READTOOLS_JAR=readtools.jar java -jar readtools.jar read1.fastq.gz [read2.fastq.gz] --format FASTQ
 ```
 ## Validate sequences have been dehosted (deacon)
 

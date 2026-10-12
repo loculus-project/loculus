@@ -495,6 +495,8 @@ def create_flatfile(
             seq=Seq(sequence_str),
             id=f"{accession}_{seq_name}" if multi_segment else accession,
             annotations={
+                # Biopython's EMBL writer reads this specific key to fill in the ID line's
+                # molecule-type token - it is not an INSDC qualifier (that's "mol_type" below).
                 "molecule_type": seq_io_moleculetype[organism_metadata.molecule_type],
                 "organism": organism,
                 "topology": organism_metadata.topology,
@@ -507,9 +509,9 @@ def create_flatfile(
             FeatureLocation(start=0, end=len(sequence_str)),
             type="source",
             qualifiers={
-                "molecule_type": str(organism_metadata.molecule_type),
+                "mol_type": str(organism_metadata.molecule_type),
                 "organism": organism,
-                "country": country,
+                "geo_loc_name": country,
                 "collection_date": collection_date,
             },
         )
@@ -886,7 +888,7 @@ def get_ena_analysis_process(
         # f"{config.ena_reports_service_url}/analysis-files/{erz_accession}?format=json"
         # should still succeed
         return CreationResult(errors=errors, warnings=warnings)
-    try:
+    try:  # noqa: PLW0717
         parsed_response = json.loads(response.text)
         entry = parsed_response[0]["report"]
         if entry["processingError"]:
@@ -936,7 +938,7 @@ def get_chromsome_accessions(
         "insdc_accession_full_segment2": "OZ189936.1",
     }
     """
-    try:
+    try:  # noqa: PLW0717
         start, end = insdc_accession_range.split("-")
         start_letters = start[:2]
         end_letters = end[:2]

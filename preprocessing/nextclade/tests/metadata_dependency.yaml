@@ -1,3 +1,6 @@
+extra_input_fields:
+  - continent
+  - ncbi_required_collection_date
 processing_spec:
   depends_on_A:
     function: concatenate
