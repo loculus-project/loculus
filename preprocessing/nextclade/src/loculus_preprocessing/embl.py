@@ -28,6 +28,14 @@ from .nextclade_annotation import (
 
 logger = logging.getLogger(__name__)
 
+# Formatted with the 1-indexed amino acid position of the first premature stop codon in the CDS.
+PREMATURE_STOP_NOTE = (
+    "This CDS has been marked as pseudo by an automated pipeline because it contains a premature "
+    "stop codon at amino acid position {position}. "
+    "This is not an assertion that it is a true pseudogene: "
+    "the stop codon may be a sequencing artefact, or may be genuine with or without abolishing protein function."
+)
+
 
 def get_country(metadata: ProcessedMetadata, config: Config) -> str:
     country: str = str(metadata.get(config.embl.country_property, "Unknown"))
@@ -138,14 +146,14 @@ EMBL_ANNOTATIONS = EmblAnnotations(
         "operon",
         "product",
         "protein_id",
-        "pseudo",
+        # "pseudo",  # we mark a CDS as pseudo if it contains a premature stop codon
         "pseudogene",
         "ribosomal_slippage",
         "standard_name",
         "trans_splicing",
         "transl_except",
         # "transl_table",  # nextclade uses the standard transl_table 1
-        "translation",
+        # "translation",  # nextclade should always compute the translation
     ),
     gene_qualifiers=(
         "allele",
@@ -161,7 +169,7 @@ EMBL_ANNOTATIONS = EmblAnnotations(
         "note",
         "operon",
         "product",
-        "pseudo",
+        # "pseudo",  # we mark a CDS as pseudo if it contains a premature stop codon
         "pseudogene",
         "standard_name",
         "trans_splicing",
@@ -265,12 +273,24 @@ def _build_cds_feature(cds: NextcladeCds, sequence_str: str) -> SeqFeature:
     # cds itself; only the first segment's phase is relevant, since EMBL's codon_start only
     # applies to the first base of a (possibly joined) feature.
     codon_start = segments[0].phase + 1
-    # Copied GFF attributes are lists, codon_start is a count, translation is one string.
-    qualifiers: dict[str, list[str] | int | str] = {
-        **_build_qualifiers(cds.attributes, EMBL_ANNOTATIONS.cds_qualifiers),
+    attribute_qualifiers = _build_qualifiers(cds.attributes, EMBL_ANNOTATIONS.cds_qualifiers)
+    qualifiers: dict[str, list[str] | int | str | None] = {
+        **attribute_qualifiers,
         "codon_start": codon_start,
-        "translation": _translate_cds(sequence_str, location, codon_start),
     }
+    translation = _translate_cds(sequence_str, location, codon_start)
+    # A premature stop codon makes the CDS non-functional. INSDC keeps the CDS feature key but adds
+    #  a valueless /pseudo (Biopython writes a None value as a bare qualifier) and omits
+    # /translation.
+    if "*" in translation:
+        qualifiers["pseudo"] = None
+        # Append rather than overwrite, keeping any note carried over from the annotation.
+        qualifiers["note"] = [
+            *attribute_qualifiers.get("note", []),
+            PREMATURE_STOP_NOTE.format(position=translation.index("*") + 1),
+        ]
+    else:
+        qualifiers["translation"] = translation
     return SeqFeature(
         location=location,
         type="CDS",

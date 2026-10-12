@@ -40,7 +40,11 @@ import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
+import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.metadataFileTypes
+import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.sequenceFileTypes
+import org.loculus.backend.model.SubmitModel.ValidExtension
 import org.loculus.backend.service.files.dummyFileId
+import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
@@ -210,7 +214,7 @@ class ReviseEndpointTest(
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Duplicate accession found in metadata file: ${accessions.first()}",
+                    "Metadata file contains at least one duplicate accession: ${accessions.first()}",
                 ),
             )
     }
@@ -483,7 +487,7 @@ class ReviseEndpointTest(
         client.reviseSequenceEntries(metadataFile, sequencesFile)
             .andExpect(expectedStatus)
             .andExpect(jsonPath("\$.title").value(expectedTitle))
-            .andExpect(jsonPath("\$.detail", containsString(expectedMessage)))
+            .andExpect(jsonPath("\$.detail").value(expectedMessage))
     }
 
     @Test
@@ -547,7 +551,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isBadRequest,
                 "Bad Request",
-                "Metadata file has wrong extension.",
+                wrongExtensionMessage(metadataFileTypes),
             ),
             Arguments.of(
                 "wrong extension for sequences file",
@@ -555,7 +559,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(originalFilename = "sequences.wrongExtension"),
                 status().isBadRequest,
                 "Bad Request",
-                "Sequence file has wrong extension.",
+                wrongExtensionMessage(sequenceFileTypes),
             ),
             Arguments.of(
                 "metadata file where one row has a blank header",
@@ -569,7 +573,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableContent,
                 "Unprocessable Content",
-                "contains no value for 'id'",
+                "Record #1 in the metadata file contains no value for 'id'. Row: ['1', '', 'someValueButNoHeader']",
             ),
             Arguments.of(
                 "metadata file with no header",
@@ -589,14 +593,14 @@ class ReviseEndpointTest(
                 SubmitFiles.revisedMetadataFileWith(
                     content = """
                             accession	submissionId	firstColumn
-                            1	sameHeader	someValue
-                            2	sameHeader	someValue2
+                            1	same,Header(1)	someValue
+                            2	same,Header(1)	someValue2
                     """.trimIndent(),
                 ),
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableContent,
                 "Unprocessable Content",
-                "Duplicate submission_id found in metadata file: sameHeader",
+                "Metadata file contains at least one duplicate submissionId: same,Header(1)",
             ),
             Arguments.of(
                 "duplicate headers in sequence file",
@@ -611,7 +615,7 @@ class ReviseEndpointTest(
                 ),
                 status().isUnprocessableContent,
                 "Unprocessable Content",
-                "Sequence file contains at least one duplicate submissionId",
+                "Sequence file contains at least one duplicate FASTA ID: sameHeader_main",
             ),
             Arguments.of(
                 "metadata file misses headers",
@@ -652,7 +656,7 @@ class ReviseEndpointTest(
                 ),
                 status().isUnprocessableContent,
                 "Unprocessable Content",
-                "Metadata file contains 1 FASTA ids that are not present in the sequence file: 'notInSequences'",
+                "Metadata file contains 1 FASTA ids that are not present in the sequence file: 'notInSequences'. ",
             ),
             Arguments.of(
                 "metadata file misses accession header",
@@ -680,8 +684,18 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableContent,
                 "Unprocessable Content",
-                "contains no value for 'accession'",
+                "Record #1 in the metadata file contains no value for 'accession'. Row: ['', 'someHeader', 'someValue']",
             ),
         )
     }
+}
+
+private fun wrongExtensionMessage(fileType: ValidExtension): String {
+    val compressedExtensions = fileType.getCompressedExtensions()
+        .filterKeys { it != CompressionAlgorithm.NONE }
+        .flatMap { it.value }
+        .joinToString(", .")
+    return "${fileType.displayName} has wrong extension. Must be " +
+        ".${fileType.validExtensions.joinToString(", .")} for uncompressed submissions or " +
+        ".$compressedExtensions for compressed submissions"
 }

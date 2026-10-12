@@ -109,6 +109,14 @@ jobs:
         run: cd cli && uv sync && uv build && uv pip install --system dist/*.whl
       - name: Install keyring backend for CLI
         run: uv pip install --system keyrings.alt
+      - name: Resolve Playwright version
+        id: playwright-version
+        run: cd integration-tests && echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ matrix.browser }}-${{ steps.playwright-version.outputs.version }}
       # Firefox's readonly-setup is also done with Chromium
       - name: Install Playwright Browsers and System Dependencies
         run: cd integration-tests && npx playwright install --with-deps --only-shell chromium ${{ matrix.browser == 'firefox' && 'firefox' || '' }}

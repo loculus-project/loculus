@@ -214,7 +214,11 @@ open class SubmissionController(
             )
         }
 
-        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(organism = organism)
+        // Scope ETag to requested pipeline version and organism
+        val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
+            organism = organism,
+            pipelineVersion = pipelineVersion,
+        )
         if (ifNoneMatch == lastDatabaseWriteETag) {
             submissionMetrics.recordPollingRequest(
                 EXTRACT_UNPROCESSED_DATA_ENDPOINT,

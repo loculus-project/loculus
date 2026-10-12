@@ -56,6 +56,12 @@ export type InsertionsResponse = z.infer<typeof insertionsResponse>;
 const metadatum = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 export type Metadatum = z.infer<typeof metadatum>;
 
+export type FileEntry = {
+    fileId: string;
+    name: string;
+    url: string;
+};
+
 const details = z.record(metadatum);
 export type Details = z.infer<typeof details>;
 
