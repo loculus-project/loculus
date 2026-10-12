@@ -289,8 +289,8 @@ export const Table: FC<TableProps> = ({
                                         key={c.field}
                                         onClick={() => isSortable(c) && handleSort(c.field)}
                                         className={
-                                            'px-2 py-2 text-xs font-medium tracking-wider text-gray-500 uppercase box-content last:pr-6 text-left hover:text-gray-800' +
-                                            (isSortable(c) ? ' cursor-pointer' : '')
+                                            'px-2 py-2 text-xs font-medium tracking-wider text-gray-500 uppercase box-content last:pr-6 text-left' +
+                                            (isSortable(c) ? ' cursor-pointer hover:text-gray-800' : '')
                                         }
                                         style={{
                                             minWidth: getColumnWidthStyle(c.columnWidth),
