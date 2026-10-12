@@ -41,7 +41,8 @@ spec:
       containers:
         - name: keycloak
           # TODO #1221
-          image: quay.io/keycloak/keycloak:23.0
+          image: "{{ $.Values.images.keycloak.repository }}:{{ $.Values.images.keycloak.tag }}"
+          imagePullPolicy: "{{ $.Values.images.keycloak.pullPolicy }}"
           {{- include "loculus.resources" (list "keycloak" $.Values) | nindent 10 }}
           env:
             - name: REGISTRATION_TERMS_MESSAGE
