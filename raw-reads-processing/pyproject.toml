@@ -24,3 +24,8 @@ log_cli = true
 log_cli_level = "INFO"  # Show INFO logs during execution
 log_cli_format = "%(asctime)s [%(levelname)8s] %(name)s: %(message)s (%(filename)s:%(lineno)d)"
 log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+# Upstream deprecation warnings from starlette's TestClient (not our code)
+filterwarnings = [
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+    "ignore:The anyio.abc.BlockingPortal alias is deprecated:DeprecationWarning",
+]
