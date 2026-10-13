@@ -7,12 +7,14 @@ import { getConfiguredOrganisms, getWebsiteConfig } from '../config';
 import BaseLayout from '../layouts/BaseLayout.astro';
 const websiteConfig = getWebsiteConfig();
 const { name: websiteName, welcomeMessageHTML } = websiteConfig;
+import { getAccessToken } from '../utils/getAccessToken';
 import '../styles/mdcontainer.css';
 
 const numberDaysAgoStatistics = 30;
 const organismStatisticsMap = await getOrganismStatisticsMap(
     getConfiguredOrganisms().map((organism) => organism.key),
     numberDaysAgoStatistics,
+    getAccessToken(Astro.locals.session),
 );
 ---
 

@@ -11,7 +11,7 @@ import { routes } from '../routes/routes.ts';
 import { KeycloakClientManager } from '../utils/KeycloakClientManager.ts';
 import { authTransactionId, consumeAuthRequest } from '../utils/authRequestCookies.ts';
 import { getLoginUrl } from '../utils/getLoginUrl.ts';
-import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
+import { isLapisDataRoute, shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
 export const ACCESS_TOKEN_COOKIE = 'access_token';
 export const REFRESH_TOKEN_COOKIE = 'refresh_token';
@@ -20,6 +20,24 @@ enum TokenVerificationError {
     EXPIRED,
     REQUEST_ERROR,
     INVALID_TOKEN,
+}
+
+/**
+ * JWKS clients keyed by their `jwks_uri`. jwks-rsa caches the signing keys internally (and
+ * refreshes them on key rotation), but only per client instance: creating a new client for
+ * every request would re-fetch the keys from Keycloak on each verified token, adding a
+ * Keycloak round trip to every page load. With LAPIS authentication enabled, the auth
+ * middleware gates many data routes, so this cache matters for first-request latency.
+ */
+const jwksClients = new Map<string, JwksRsa.JwksClient>();
+
+function getJwksClient(jwksUri: string): JwksRsa.JwksClient {
+    let client = jwksClients.get(jwksUri);
+    if (client === undefined) {
+        client = new JwksRsa.JwksClient({ jwksUri });
+        jwksClients.set(jwksUri, client);
+    }
+    return client;
 }
 
 const logger = getInstanceLogger('LoginMiddleware');
@@ -70,12 +88,10 @@ async function getValidTokenAndUserInfoFromParams(context: APIContext, client: B
 export const authMiddleware = defineMiddleware(async (context, next) => {
     let token: TokenCookie | undefined;
     let userInfo;
+    const configuredOrganisms = getConfiguredOrganisms().map((it) => it.key);
 
     if (getWebsiteConfig().readOnlyMode) {
-        const enforceLogin = shouldMiddlewareEnforceLogin(
-            context.url.pathname,
-            getConfiguredOrganisms().map((it) => it.key),
-        );
+        const enforceLogin = shouldMiddlewareEnforceLogin(context.url.pathname, configuredOrganisms);
         if (enforceLogin) {
             return context.redirect('/503?service=readonly');
         }
@@ -103,10 +119,10 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         logger.warn(`Keycloak client not available, pretending user logged out`);
     }
 
-    const enforceLogin = shouldMiddlewareEnforceLogin(
-        context.url.pathname,
-        getConfiguredOrganisms().map((it) => it.key),
-    );
+    const enforceLogin =
+        shouldMiddlewareEnforceLogin(context.url.pathname, configuredOrganisms) ||
+        (getRuntimeConfig().public.lapisAuthEnabled === true &&
+            isLapisDataRoute(context.url.pathname, configuredOrganisms));
 
     if (enforceLogin && (userInfo === undefined || userInfo.isErr())) {
         if (client === undefined) {
@@ -192,9 +208,7 @@ async function verifyToken(accessToken: string, client: BaseClient) {
         });
     }
 
-    const jwksClient = new JwksRsa.JwksClient({
-        jwksUri: client.issuer.metadata.jwks_uri,
-    });
+    const jwksClient = getJwksClient(client.issuer.metadata.jwks_uri);
 
     try {
         const signingKey = await jwksClient.getSigningKey(kid);

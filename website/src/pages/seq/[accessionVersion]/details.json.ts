@@ -7,21 +7,21 @@ import { getInstanceLogger } from '../../../logger.ts';
 import { SeqSetCitationClient } from '../../../services/seqSetCitationClient.ts';
 import type { DetailsJson } from '../../../types/detailsJson';
 import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion.ts';
+import { getAccessToken } from '../../../utils/getAccessToken.ts';
 
 const logger = getInstanceLogger('details.json');
 
-export const GET: APIRoute = async (req) => {
-    const params = req.params as { accessionVersion: string; accessToken?: string };
-    const { accessionVersion } = params;
+export const GET: APIRoute = async ({ params, locals }) => {
+    const { accessionVersion } = params as { accessionVersion: string };
     const { accession } = parseAccessionVersionFromString(accessionVersion);
 
+    const authorization = getAccessToken(locals.session);
+
     const sequenceCitationsPromise = seqSetsAreEnabled()
-        ? SeqSetCitationClient.create().call('getSequenceCitations', {
-              params: { accession }, // Display citations across all accession versions
-          })
+        ? SeqSetCitationClient.create().getSequenceCitations(authorization, accession)
         : undefined;
 
-    const sequenceDetailsTableData = await findOrganismAndData(accessionVersion);
+    const sequenceDetailsTableData = await findOrganismAndData(accessionVersion, authorization);
 
     if (sequenceDetailsTableData.isErr()) {
         logger.warn(

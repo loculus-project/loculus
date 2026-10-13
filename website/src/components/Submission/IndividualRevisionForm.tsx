@@ -116,7 +116,7 @@ const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
         data: sequenceEntryHistory,
         error: sequenceEntryHistoryError,
         isFetching: isSequenceEntryHistoryFetching,
-    } = useSequenceEntryHistory(getLapisUrl(clientConfig, organism), accessionVersion?.accession);
+    } = useSequenceEntryHistory(getLapisUrl(clientConfig, organism), accessionVersion?.accession, accessToken);
 
     const { sequenceEntry, sequenceEntryError } = useMemo(() => {
         if (sequenceEntryHistory === undefined) return { sequenceEntry: undefined, sequenceEntryError: undefined };

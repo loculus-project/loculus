@@ -34,6 +34,7 @@ type DownloadDialogProps = {
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
     selectedReferenceNames?: SegmentReferenceSelections;
     referenceIdentifierField: string | undefined;
+    accessToken?: string;
 };
 
 export const DownloadDialog: FC<DownloadDialogProps> = ({
@@ -47,6 +48,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     richFastaHeaderFields,
     selectedReferenceNames,
     referenceIdentifierField,
+    accessToken,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -156,6 +158,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         downloadUrlGenerator={downloadUrlGenerator}
                         downloadOption={downloadOption}
                         sequenceFilter={sequenceFilter}
+                        accessToken={accessToken}
                         disabled={!agreedToDataUseTerms}
                         onClick={closeDialog}
                     />

@@ -164,7 +164,7 @@ const InnerSearchFullUI = ({
         schema.richFastaHeaderFields,
     );
 
-    const hooks = lapisClientHooks(lapisUrl);
+    const hooks = lapisClientHooks(lapisUrl, accessToken);
     const aggregatedHook = hooks.useAggregated();
     const detailsHook = hooks.useDetails();
 
@@ -216,13 +216,17 @@ const InnerSearchFullUI = ({
     const linkOutSequenceCount = downloadFilter.sequenceCount() ?? totalSequences;
 
     const fetchAccessions = useCallback(async (): Promise<string[]> => {
-        const response = await fetchDetailsFromLapis(lapisUrl, {
-            ...lapisSearchParameters,
-            fields: [schema.primaryKey],
-            limit: MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES + 1,
-        });
+        const response = await fetchDetailsFromLapis(
+            lapisUrl,
+            {
+                ...lapisSearchParameters,
+                fields: [schema.primaryKey],
+                limit: MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES + 1,
+            },
+            accessToken,
+        );
         return response.data.map((item) => String(item[schema.primaryKey]));
-    }, [lapisUrl, lapisSearchParameters, schema.primaryKey]);
+    }, [lapisUrl, accessToken, lapisSearchParameters, schema.primaryKey]);
 
     const [oldData, setOldData] = useState<TableSequenceData[] | null>(null);
     const [oldCount, setOldCount] = useState<number | null>(null);
@@ -273,6 +277,7 @@ const InnerSearchFullUI = ({
                 <SearchForm
                     organism={organism}
                     clientConfig={clientConfig}
+                    accessToken={accessToken}
                     referenceGenomesInfo={referenceGenomesInfo}
                     fieldValues={fieldValues}
                     setSomeFieldValues={setSomeFieldValues}
@@ -386,6 +391,7 @@ const InnerSearchFullUI = ({
                                 richFastaHeaderFields={schema.richFastaHeaderFields}
                                 selectedReferenceNames={referenceSelection?.selectedReferences}
                                 referenceIdentifierField={schema.referenceIdentifierField}
+                                accessToken={accessToken}
                             />
                             {isReleasedPage && accessToken !== undefined && groupId !== undefined && (
                                 <DownloadSubmittedDataButton
@@ -398,17 +404,19 @@ const InnerSearchFullUI = ({
                                     fetchAccessions={fetchAccessions}
                                 />
                             )}
-                            {linkOuts !== undefined && linkOuts.length > 0 && (
-                                <LinkOutMenu
-                                    downloadUrlGenerator={downloadUrlGenerator}
-                                    sequenceFilter={downloadFilter}
-                                    sequenceCount={linkOutSequenceCount}
-                                    linkOuts={linkOuts}
-                                    dataUseTermsEnabled={dataUseTermsEnabled}
-                                    referenceGenomesInfo={referenceGenomesInfo}
-                                    referenceSelection={referenceSelection}
-                                />
-                            )}
+                            {linkOuts !== undefined &&
+                                linkOuts.length > 0 &&
+                                clientConfig.lapisAuthEnabled !== true && (
+                                    <LinkOutMenu
+                                        downloadUrlGenerator={downloadUrlGenerator}
+                                        sequenceFilter={downloadFilter}
+                                        sequenceCount={linkOutSequenceCount}
+                                        linkOuts={linkOuts}
+                                        dataUseTermsEnabled={dataUseTermsEnabled}
+                                        referenceGenomesInfo={referenceGenomesInfo}
+                                        referenceSelection={referenceSelection}
+                                    />
+                                )}
                         </div>
                     </div>
 

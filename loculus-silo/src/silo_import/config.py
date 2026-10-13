@@ -20,6 +20,9 @@ class ImporterConfig:
     silo_binary: Path
     preprocessing_config: Path
     hierarchical_filters: dict[MetadataField, HierarchicalServiceUrl] | None = None
+    keycloak_token_url: str | None = None
+    keycloak_username: str | None = None
+    keycloak_password: str | None = None
 
     @classmethod
     def from_env(cls) -> ImporterConfig:
@@ -63,6 +66,16 @@ class ImporterConfig:
             env.get("PREPROCESSING_CONFIG", "/app/preprocessing_config.yaml")
         )
 
+        keycloak_token_url = env.get("KEYCLOAK_TOKEN_URL")
+        keycloak_username = env.get("KEYCLOAK_USERNAME")
+        keycloak_password = env.get("KEYCLOAK_PASSWORD")
+        if keycloak_token_url and not (keycloak_username and keycloak_password):
+            msg = (
+                "KEYCLOAK_USERNAME and KEYCLOAK_PASSWORD are required "
+                "when KEYCLOAK_TOKEN_URL is set"
+            )
+            raise RuntimeError(msg)
+
         return cls(
             backend_base_url=backend_base_url.rstrip("/"),
             lineage_definitions=lineage_definitions,
@@ -73,6 +86,9 @@ class ImporterConfig:
             silo_binary=silo_binary,
             preprocessing_config=preprocessing_config,
             hierarchical_filters=hierarchical_filters,
+            keycloak_token_url=keycloak_token_url,
+            keycloak_username=keycloak_username,
+            keycloak_password=keycloak_password,
         )
 
     @property

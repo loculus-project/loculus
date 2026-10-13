@@ -4,10 +4,11 @@ import { VersionsWithDiff } from '../../../components/VersionDiff/VersionsWithDi
 import ErrorBox from '../../../components/common/ErrorBox.tsx';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion';
+import { getAccessToken } from '../../../utils/getAccessToken';
 
 const accessionVersion = Astro.params.accessionVersion!;
 const { accession } = parseAccessionVersionFromString(accessionVersion);
-const { organism, versionListResult } = await getVersionsData(accession);
+const { organism, versionListResult } = await getVersionsData(accession, getAccessToken(Astro.locals.session));
 ---
 
 <BaseLayout title={accession + ' versions'} implicitOrganism={organism}>

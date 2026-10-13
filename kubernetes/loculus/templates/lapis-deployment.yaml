@@ -36,6 +36,9 @@ spec:
             - containerPort: 8080
           args:
             - "--silo.url=http://loculus-silo-service-{{ $key }}:8081"
+            {{- if $.Values.lapis.auth.enabled }}
+            - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
+            {{- end }}
           env:
             - name: JVM_OPTS
               value: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2 -XX:MaxGCPauseMillis=100
@@ -54,7 +57,15 @@ spec:
             failureThreshold: 36 # 3 minutes to start
           readinessProbe:
             httpGet:
+              {{- if $.Values.lapis.auth.enabled }}
+              {{- /* /sample/info is not in LAPIS's PUBLIC_ROUTES (see its OAuthConfig), so with auth
+              enabled it would answer 401 and keep the pod NotReady forever. /actuator/health is
+              public and covers the LAPIS process itself; unlike /sample/info it does not also
+              gate readiness on SILO being reachable. */}}
+              path: /actuator/health
+              {{- else }}
               path: /sample/info
+              {{- end }}
               port: 8080
             periodSeconds: 10
             failureThreshold: 3

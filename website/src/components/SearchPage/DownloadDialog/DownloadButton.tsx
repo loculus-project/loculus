@@ -1,8 +1,10 @@
-import { type FC, type MouseEvent, type MouseEventHandler, useMemo, useState } from 'react';
+import { type FC, useMemo, useState } from 'react';
 
 import { type DownloadOption, type DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import type { SequenceFilter } from './SequenceFilters.tsx';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
+import { createAuthorizationHeader } from '../../../utils/createAuthorizationHeader.ts';
+import { stringifyMaybeAxiosError } from '../../../utils/stringifyMaybeAxiosError.ts';
 import { Button } from '../../common/Button';
 import { HoverTooltip } from '../../common/HoverTooltip';
 import MaterialSymbolsContentCopyOutline from '~icons/material-symbols/content-copy-outline';
@@ -11,6 +13,12 @@ type DownloadButtonProps = {
     downloadUrlGenerator: DownloadUrlGenerator;
     downloadOption: DownloadOption | undefined;
     sequenceFilter: SequenceFilter;
+    /**
+     * The logged-in user's access token. Attached as `Authorization: Bearer ...` header to the
+     * LAPIS download request (required when the deployment enables LAPIS authentication;
+     * browser navigation cannot attach headers, so the download is fetched programmatically).
+     */
+    accessToken?: string;
     disabled?: boolean;
     onClick?: () => void;
 };
@@ -44,83 +52,115 @@ const CopyUrlButton: FC<{ url: string }> = ({ url }) => {
     );
 };
 
+function filenameFromContentDisposition(header: string | null, fallback: string): string {
+    if (header === null) {
+        return fallback;
+    }
+    const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(header);
+    if (match === null) {
+        return fallback;
+    }
+    try {
+        return decodeURIComponent(match[1]);
+    } catch {
+        return match[1];
+    }
+}
+
+/**
+ * LAPIS expects repeated `fields` parameters on form-encoded POST bodies (not one
+ * comma-separated value), mirroring what the previous hidden-form submission produced.
+ */
+function withSplitFieldsParam(params: URLSearchParams): URLSearchParams {
+    const fieldsParam = params.get('fields');
+    if (fieldsParam !== null) {
+        params.delete('fields');
+        fieldsParam.split(',').forEach((field) => params.append('fields', field.trim()));
+    }
+    return params;
+}
+
 export const DownloadButton: FC<DownloadButtonProps> = ({
     downloadUrlGenerator,
     downloadOption,
     sequenceFilter,
+    accessToken,
     disabled = false,
     onClick,
 }) => {
-    const {
-        downloadUrl,
-        handleClick,
-        isGetRequest,
-        message,
-    }: {
-        downloadUrl: string;
-        handleClick: MouseEventHandler<HTMLAnchorElement> | undefined;
-        isGetRequest: boolean;
-        message?: string;
-    } = useMemo(() => {
-        if (downloadOption === undefined || disabled) {
-            return {
-                downloadUrl: '#',
-                handleClick: undefined,
-                isGetRequest: false,
-            };
-        }
+    const [isDownloading, setIsDownloading] = useState(false);
+    const [downloadError, setDownloadError] = useState<string | undefined>(undefined);
 
-        const { url, baseUrl, params } = downloadUrlGenerator.generateDownloadUrl(sequenceFilter, downloadOption);
-        const useGet = url.length <= approxMaxAcceptableUrlLength;
-        if (useGet) {
-            return {
-                downloadUrl: url,
-                handleClick: onClick,
-                isGetRequest: true,
-            };
+    const { downloadUrl, unsupportedLongQueryWithRichFastaHeaders } = useMemo(() => {
+        if (downloadOption === undefined) {
+            return { downloadUrl: undefined, unsupportedLongQueryWithRichFastaHeaders: false };
         }
-
-        if (
-            downloadOption.dataType.type === 'unalignedNucleotideSequences' &&
-            downloadOption.dataType.richFastaHeaders.include
-        ) {
-            return {
-                downloadUrl: '#',
-                handleClick: undefined,
-                isGetRequest: false,
-                message: "Sorry, we don't yet support downloading files with custom FASTA headers for long queries.",
-            };
-        }
-
+        const { url } = downloadUrlGenerator.generateDownloadUrl(sequenceFilter, downloadOption);
         return {
-            downloadUrl: '#',
-            handleClick: (e: MouseEvent<HTMLAnchorElement>) => {
-                e.preventDefault();
-                downloadViaPostForm(baseUrl, params);
-                if (onClick !== undefined) {
-                    onClick();
-                }
-            },
-            isGetRequest: false,
+            downloadUrl: url,
+            unsupportedLongQueryWithRichFastaHeaders:
+                url.length > approxMaxAcceptableUrlLength &&
+                downloadOption.dataType.type === 'unalignedNucleotideSequences' &&
+                downloadOption.dataType.richFastaHeaders.include,
         };
-    }, [downloadUrlGenerator, downloadOption, disabled, sequenceFilter, onClick]);
+    }, [downloadUrlGenerator, downloadOption, sequenceFilter]);
 
-    const isDisabled = disabled || handleClick === undefined;
+    const startDownload = async () => {
+        if (downloadOption === undefined) {
+            return;
+        }
+        setDownloadError(undefined);
+        setIsDownloading(true);
+        try {
+            const { url, baseUrl, params } = downloadUrlGenerator.generateDownloadUrl(sequenceFilter, downloadOption);
+            const useGet = url.length <= approxMaxAcceptableUrlLength;
+            const response = await fetch(useGet ? url : baseUrl, {
+                ...(useGet ? {} : { method: 'POST', body: withSplitFieldsParam(params) }),
+                headers: createAuthorizationHeader(accessToken),
+            });
+            if (!response.ok) {
+                throw new Error(`LAPIS answered with status ${response.status}`);
+            }
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = objectUrl;
+            anchor.download = filenameFromContentDisposition(
+                response.headers.get('Content-Disposition'),
+                params.get('downloadFileBasename') ?? 'download',
+            );
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            URL.revokeObjectURL(objectUrl);
+            if (onClick !== undefined) {
+                onClick();
+            }
+        } catch (error) {
+            setDownloadError(stringifyMaybeAxiosError(error));
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
+    const message = unsupportedLongQueryWithRichFastaHeaders
+        ? "Sorry, we don't yet support downloading files with custom FASTA headers for long queries."
+        : downloadError !== undefined
+          ? `Download failed: ${downloadError}`
+          : undefined;
+
+    const isDisabled = disabled || downloadOption === undefined || isDownloading;
+
     const downloadAnchor = (
         <Button
-            as='a'
+            as='button'
             variant={isDisabled ? 'unstyled' : 'primary'}
-            className={
-                isDisabled
-                    ? 'bg-base-content/10 text-base-content/20 border-transparent pointer-events-none'
-                    : undefined
-            }
-            aria-disabled={isDisabled || undefined}
-            href={downloadUrl}
-            onClick={handleClick}
+            disabled={isDisabled || undefined}
+            onClick={() => void startDownload()}
             data-testid='start-download'
+            data-download-url={downloadUrl}
         >
-            Download
+            {isDownloading ? 'Downloading...' : 'Download'}
         </Button>
     );
 
@@ -133,36 +173,12 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
             ) : (
                 <div>{downloadAnchor}</div>
             )}
-            {isGetRequest && !disabled && <CopyUrlButton url={downloadUrl} />}
+            {downloadUrl !== undefined &&
+                !disabled &&
+                !isDownloading &&
+                downloadError === undefined &&
+                !unsupportedLongQueryWithRichFastaHeaders &&
+                downloadUrl.length <= approxMaxAcceptableUrlLength && <CopyUrlButton url={downloadUrl} />}
         </div>
     );
-};
-const downloadViaPostForm = (baseUrl: string, params: URLSearchParams) => {
-    const fieldsParam = params.get('fields');
-    if (fieldsParam) {
-        params.delete('fields');
-
-        // Split the comma-separated list and add each field individually
-        const fieldsList = fieldsParam.split(',');
-        fieldsList.forEach((field) => {
-            params.append('fields', field.trim());
-        });
-    }
-
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = baseUrl;
-    form.target = '_blank';
-
-    for (const [key, value] of params.entries()) {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = key;
-        input.value = value;
-        form.appendChild(input);
-    }
-
-    document.body.appendChild(form);
-    form.submit();
-    document.body.removeChild(form);
 };

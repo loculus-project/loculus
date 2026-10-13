@@ -1,7 +1,7 @@
 import { makeApi, makeEndpoint } from '@zodios/core';
 import z from 'zod';
 
-import { authorizationHeader, notAuthorizedError } from './commonApiTypes.ts';
+import { authorizationHeader, notAuthorizedError, optionalAuthorizationHeader } from './commonApiTypes.ts';
 import { authorProfile, seqSets, seqSetRecords, seqSetCitations, sequenceCitations } from '../types/seqSetCitation.ts';
 
 const getSeqSetsOfUserEndpoint = makeEndpoint({
@@ -17,6 +17,7 @@ const getSeqSetCitationsEndpoint = makeEndpoint({
     method: 'get',
     path: '/get-seqset-citations?seqSetId=:seqSetId&version=:version',
     alias: 'getSeqSetCitations',
+    parameters: [optionalAuthorizationHeader],
     response: seqSetCitations,
     errors: [notAuthorizedError],
 });
@@ -25,6 +26,7 @@ const getSequenceCitationsEndpoint = makeEndpoint({
     method: 'get',
     path: '/get-sequence-citations?accession=:accession',
     parameters: [
+        optionalAuthorizationHeader,
         {
             name: 'version',
             type: 'Query',
@@ -40,6 +42,7 @@ const getSeqSetEndpoint = makeEndpoint({
     method: 'get',
     path: '/get-seqset?seqSetId=:seqSetId&version=:version',
     alias: 'getSeqSet',
+    parameters: [optionalAuthorizationHeader],
     response: seqSets,
     errors: [notAuthorizedError],
 });
@@ -48,6 +51,7 @@ const getSeqSetVersionsEndpoint = makeEndpoint({
     method: 'get',
     path: '/get-seqset?seqSetId=:seqSetId',
     alias: 'getSeqSetVersions',
+    parameters: [optionalAuthorizationHeader],
     response: seqSets,
     errors: [notAuthorizedError],
 });
@@ -56,6 +60,7 @@ const getSeqSetRecordsEndpoint = makeEndpoint({
     method: 'get',
     path: '/get-seqset-records?seqSetId=:seqSetId&version=:version',
     alias: 'getSeqSetRecords',
+    parameters: [optionalAuthorizationHeader],
     response: seqSetRecords,
     errors: [notAuthorizedError],
 });
@@ -172,6 +177,7 @@ const getAuthorEndpoint = makeEndpoint({
     method: 'get',
     path: '/get-author?username=:username',
     alias: 'getAuthor',
+    parameters: [optionalAuthorizationHeader],
     response: authorProfile,
     errors: [notAuthorizedError],
 });

@@ -265,8 +265,12 @@ open class ReleasedDataModel(
     ): Map<FileCategory, List<FileIdAndNameAndReadUrl>> = filesMap.mapValues { (category, fileIdandName) ->
         fileIdandName.map { (fileId, name) ->
             val encoded = encodePathSegment(name, StandardCharsets.UTF_8)
+            // WEBSITE URLs are relative: the file is served by the website itself, so the
+            // URL must resolve against the origin the client is already browsing (their
+            // cookies apply). An absolute websiteUrl would point cross-origin in
+            // split-hostname or IP-based deployments, breaking authenticated fetches.
             val url = when (backendConfig.fileSharing.outputFileUrlType) {
-                FileUrlType.WEBSITE -> "${backendConfig.websiteUrl}/seq/$accession.$version/$category/$encoded"
+                FileUrlType.WEBSITE -> "/seq/$accession.$version/$category/$encoded"
                 FileUrlType.BACKEND -> "${backendConfig.backendUrl}/files/get/$accession/$version/$category/$encoded"
                 FileUrlType.S3 -> s3Service.getPublicUrl(fileId)
             }

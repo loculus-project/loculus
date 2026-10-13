@@ -7,7 +7,9 @@ test.describe('Basic test of authenticated fixture', () => {
         authenticatedUser,
     }) => {
         void authenticatedUser;
-        await expect(page).toHaveURL('/');
+        // Account creation starts from /user, so after (auto-)login the user lands on
+        // the account page, not the homepage.
+        await expect(page).toHaveURL('/user');
         await expect(page.getByRole('link', { name: 'My account' })).toBeVisible();
     });
 });

@@ -8,7 +8,22 @@ export const serviceUrls = z.object({
 });
 export type ServiceUrls = z.infer<typeof serviceUrls>;
 
-export type ClientConfig = z.infer<typeof serviceUrls>;
+/**
+ * Browser-facing service URLs: the absolute, directly reachable LAPIS URLs.
+ * Browser→LAPIS calls authenticate with the logged-in user's token via the Authorization
+ * header (attached by `createAuthorizedAxiosInstance`), so no proxy is involved.
+ *
+ * `lapisAuthEnabled` mirrors the deployment's `lapis.auth.enabled` Helm value: when true,
+ * the website routes that serve LAPIS data require a logged-in user (the auth middleware
+ * redirects anonymous visitors to Keycloak).
+ */
+export const publicServiceUrls = serviceUrls.merge(
+    z.object({
+        lapisAuthEnabled: z.boolean().optional(),
+    }),
+);
+
+export type ClientConfig = z.infer<typeof publicServiceUrls>;
 
 export const serverConfig = serviceUrls.merge(
     z.object({
@@ -17,7 +32,7 @@ export const serverConfig = serviceUrls.merge(
 );
 
 export const runtimeConfig = z.object({
-    public: serviceUrls,
+    public: publicServiceUrls,
     serverSide: serverConfig,
     backendKeycloakClientSecret: z.string().min(5),
     oidcTransactionCookieSecret: z.string().min(32),

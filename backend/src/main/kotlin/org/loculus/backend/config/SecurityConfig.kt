@@ -5,6 +5,7 @@ import org.loculus.backend.auth.KeycloakAuthenticationConverter
 import org.loculus.backend.auth.LoggingAccessDeniedHandler
 import org.loculus.backend.auth.LoggingAuthenticationEntryPoint
 import org.loculus.backend.auth.Roles.SUPER_USER
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -35,6 +36,7 @@ class SecurityConfig {
     fun securityFilterChain(
         httpSecurity: HttpSecurity,
         keycloakAuthoritiesConverter: KeycloakAuthenticationConverter,
+        @Value("\${loculus.security.require-data-endpoint-auth:false}") requireDataEndpointAuth: Boolean,
     ): SecurityFilterChain = httpSecurity
         .authorizeHttpRequests { auth ->
             auth.requestMatchers(
@@ -47,7 +49,7 @@ class SecurityConfig {
                 "/swagger-ui/**",
             ).permitAll()
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
-            v0AccessRules(auth)
+            v0AccessRules(auth, requireDataEndpointAuth)
             auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
             auth.anyRequest().authenticated()
         }

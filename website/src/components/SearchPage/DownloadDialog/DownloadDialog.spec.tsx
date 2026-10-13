@@ -136,12 +136,11 @@ describe('DownloadDialog', () => {
     test('should activate download button only after agreeing to the terms', async () => {
         await renderDialog();
 
-        const downloadButton = screen.getByRole('link', { name: 'Download' });
-        expect(downloadButton).toHaveAttribute('aria-disabled', 'true');
-        expect(getDownloadHref()).not.toMatch(new RegExp(`^${defaultLapisUrl}`));
+        const downloadButton = screen.getByTestId('start-download');
+        expect(downloadButton).toHaveAttribute('disabled');
 
         await checkAgreement();
-        expect(downloadButton).not.toHaveAttribute('aria-disabled');
+        expect(downloadButton).not.toHaveAttribute('disabled');
         expect(getDownloadHref()).toMatch(new RegExp(`^${defaultLapisUrl}`));
     });
 
@@ -329,8 +328,8 @@ describe('DownloadDialog', () => {
         test('download button activated by default', async () => {
             await renderDialog({ dataUseTermsEnabled: false });
 
-            const downloadButton = screen.getByRole('link', { name: 'Download' });
-            expect(downloadButton).not.toHaveAttribute('aria-disabled');
+            const downloadButton = screen.getByTestId('start-download');
+            expect(downloadButton).not.toHaveAttribute('disabled');
         });
 
         test('checkbox not in the document', async () => {
@@ -578,8 +577,8 @@ async function checkAgreement() {
 }
 
 function getDownloadHref() {
-    const downloadButton = screen.getByRole('link', { name: 'Download' });
-    return downloadButton.getAttribute('href');
+    const downloadButton = screen.getByTestId('start-download');
+    return downloadButton.getAttribute('data-download-url') ?? undefined;
 }
 
 function parseDownloadHref() {

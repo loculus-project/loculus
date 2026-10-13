@@ -1,5 +1,5 @@
 import { expect, Locator } from '@playwright/test';
-import { test } from '../../../fixtures/console-warnings.fixture';
+import { test } from '../../../fixtures/logged-in.fixture';
 import { SearchPage } from '../../../pages/search.page';
 
 const ACCESSION_PATTERN = /LOC_[A-Z0-9]+\.[0-9]+/;

@@ -26,6 +26,7 @@ type SequenceContainerProps = {
     segmentReferences?: SegmentReferenceSelections;
     accessionVersion: string;
     clientConfig: ClientConfig;
+    accessToken?: string;
     referenceGenomesInfo: ReferenceGenomesInfo;
     loadSequencesAutomatically: boolean;
 };
@@ -35,6 +36,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     segmentReferences,
     accessionVersion,
     clientConfig,
+    accessToken,
     referenceGenomesInfo,
     loadSequencesAutomatically,
 }) => {
@@ -56,6 +58,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
             organism={organism}
             accessionVersion={accessionVersion}
             clientConfig={clientConfig}
+            accessToken={accessToken}
             segments={nucleotideSegmentInfos}
             sequenceType={sequenceType}
             setType={setSequenceType}
@@ -71,6 +74,7 @@ type SequenceTabsProps = {
     organism: string;
     accessionVersion: string;
     clientConfig: ClientConfig;
+    accessToken?: string;
     segments: SegmentInfo[];
     sequenceType: SequenceType;
     setType: Dispatch<SetStateAction<SequenceType>>;
@@ -82,6 +86,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
     organism,
     accessionVersion,
     clientConfig,
+    accessToken,
     segments,
     genes,
     sequenceType,
@@ -141,6 +146,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
                         organism={organism}
                         accessionVersion={accessionVersion}
                         clientConfig={clientConfig}
+                        accessToken={accessToken}
                         sequenceType={sequenceType}
                         useLapisMultiSegmentedEndpoint={useLapisMultiSegmentedEndpoint}
                     />

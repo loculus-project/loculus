@@ -15,6 +15,7 @@ type ReferenceSelectorProps = {
     fieldValues: FieldValues;
     setSomeFieldValues: SetSomeFieldValues;
     lapisUrl: string;
+    accessToken?: string;
     lapisSearchParameters: LapisSearchParameters;
     segmentName: string;
 };
@@ -32,6 +33,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
     fieldValues,
     setSomeFieldValues,
     lapisUrl,
+    accessToken,
     lapisSearchParameters,
     segmentName,
 }) => {
@@ -61,6 +63,7 @@ export const ReferenceSelector: FC<ReferenceSelectorProps> = ({
                 optionsProvider={{
                     type: 'generic',
                     lapisUrl,
+                    accessToken,
                     lapisSearchParameters,
                     fieldName,
                 }}
