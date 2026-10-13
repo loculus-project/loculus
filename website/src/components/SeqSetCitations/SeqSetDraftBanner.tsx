@@ -157,7 +157,10 @@ export const SeqSetDraftBanner: FC<SeqSetDraftBannerProps> = ({
                     size='sm'
                     variant='primary'
                     className='flex items-center gap-1'
-                    onClick={() => (location.href = routes.seqSetDraftPage())}
+                    onClick={() => {
+                        const isDraft = true;
+                        location.href = routes.seqSetsPage(isDraft);
+                    }}
                 >
                     Review & create
                 </Button>

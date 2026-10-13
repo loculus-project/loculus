@@ -21,6 +21,16 @@ const SeqSetListActionsInner: FC<SeqSetListActionsProps> = ({ clientConfig, acce
         }
     }, []);
 
+    const setModalVisible = (isVisible: boolean) => {
+        setCreateModalVisible(isVisible);
+        const url = new URL(window.location.href);
+
+        if (isVisible) url.searchParams.set('draft', 'true');
+        else url.searchParams.delete('draft');
+
+        window.history.replaceState(null, '', url);
+    };
+
     return (
         <>
             <div className='pl-2 ml-auto'>
@@ -29,13 +39,13 @@ const SeqSetListActionsInner: FC<SeqSetListActionsProps> = ({ clientConfig, acce
                     size='sm'
                     variant='primary'
                     className='flex items-center gap-1'
-                    onClick={() => setCreateModalVisible(true)}
+                    onClick={() => setModalVisible(true)}
                 >
                     <AddBoxIcon className='w-4 h-4' />
                     Create SeqSet
                 </Button>
             </div>
-            <Modal isModalVisible={createModalVisible} setModalVisible={setCreateModalVisible}>
+            <Modal isModalVisible={createModalVisible} setModalVisible={setModalVisible}>
                 <SeqSetForm clientConfig={clientConfig} accessToken={accessToken} />
             </Modal>
         </>
