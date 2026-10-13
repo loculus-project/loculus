@@ -1,18 +1,19 @@
 import { type FC } from 'react';
 
-import { type SequenceEntryToEdit } from '../../types/backend.ts';
+import { type FilesByCategory } from '../../types/backend.ts';
 import type { FileCategory } from '../../types/config.ts';
 import { Button } from '../common/Button';
 
 type FilesDialogProps = {
     isOpen: boolean;
     onClose: () => void;
-    dataToView: SequenceEntryToEdit | undefined;
+    accessionVersion: string;
+    files: FilesByCategory | null;
     fileCategories: FileCategory[];
 };
 
-export const FilesDialog: FC<FilesDialogProps> = ({ isOpen, onClose, dataToView, fileCategories }) => {
-    if (!isOpen || !dataToView) return null;
+export const FilesDialog: FC<FilesDialogProps> = ({ isOpen, onClose, accessionVersion, files, fileCategories }) => {
+    if (!isOpen) return null;
 
     return (
         <div className='fixed inset-0 flex items-center justify-center z-50 overflow-auto bg-black/30'>
@@ -25,7 +26,7 @@ export const FilesDialog: FC<FilesDialogProps> = ({ isOpen, onClose, dataToView,
                 </div>
 
                 <div>
-                    {Object.entries(dataToView.processedData.files ?? {}).map(([category, files]) => (
+                    {Object.entries(files ?? {}).map(([category, files]) => (
                         <div key={category} className='mb-4'>
                             <h3 className='font-medium'>
                                 {fileCategories.find((c) => c.name === category)?.displayName ?? category}
@@ -34,7 +35,7 @@ export const FilesDialog: FC<FilesDialogProps> = ({ isOpen, onClose, dataToView,
                                 {files.map((file) => (
                                     <li key={file.fileId}>
                                         <a
-                                            href={`/seq/${dataToView.accession}.${dataToView.version}/${category}/${file.name}`}
+                                            href={`/seq/${accessionVersion}/${category}/${file.name}`}
                                             className='text-primary-600 hover:underline'
                                         >
                                             {file.name}
