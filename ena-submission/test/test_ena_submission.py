@@ -27,6 +27,7 @@ from ena_deposition.create_raw_reads import (
 )
 from ena_deposition.create_sample import construct_sample_set_object
 from ena_deposition.ena_submission_helper import (
+    _log_webin_cli_output_files,  # noqa: PLC2701
     create_chromosome_list,
     create_ena_project,
     create_ena_sample,
@@ -821,6 +822,30 @@ class DownloadFastqFilesTests(unittest.TestCase):
     def test_missing_raw_reads_field_raises(self):
         with self.assertRaises(RuntimeError):
             download_fastq_files(self.config, {}, "LOC_0001TLY", self.tmp_dir)
+
+
+class LogWebinCliOutputFilesTests(unittest.TestCase):
+    LOGGER: Final = "ena_deposition.ena_submission_helper"
+
+    def test_reports_are_logged_and_nothing_else_warns(self):
+        tmp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp_dir.cleanup)
+        root = Path(tmp_dir.name)
+        (root / "process").mkdir()
+        (root / "genome" / "validate").mkdir(parents=True)
+        (root / "genome" / "validate" / "webin-cli.report").write_text("ERROR: sequence is invalid")
+        # Java-serialized state, as webin-cli writes to process/: starts 0xac 0xed, has NULs
+        (root / "process" / "sequence.info").write_bytes(b"\xac\xed\x00\x05sr\x00\x08junk")
+        (root / "latin1.report").write_bytes("caf\xe9".encode("latin-1"))
+
+        with self.assertLogs(self.LOGGER, level="DEBUG") as cm:
+            _log_webin_cli_output_files(str(root))
+
+        assert [r for r in cm.records if r.levelno >= logging.WARNING] == []
+        logged = "\n".join(r.getMessage() for r in cm.records)
+        assert "ERROR: sequence is invalid" in logged
+        assert "caf�" in logged
+        assert "sequence.info contents" not in logged
 
 
 if __name__ == "__main__":
