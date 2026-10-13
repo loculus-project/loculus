@@ -1,5 +1,6 @@
 ---
 import { authenticationApiDocsUrl } from './authenticationApiDocsUrl';
+import { lapisAccessDocsUrl } from './lapisAccessDocsUrl';
 import { dataUseTermsAreEnabled, getRuntimeConfig, getWebsiteConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes/routes.ts';
@@ -78,8 +79,19 @@ const BUTTON_CLASS =
 
         <div class='mb-10'>
             <h2 class='text-xl font-semibold text-primary-400 mb-4'>LAPIS query engines</h2>
+            <div class='mb-4'>
+                Depending on the configuration of this instance, requests to the LAPIS APIs require authentication with
+                a Bearer token. See the{' '}
+                <a
+                    href={lapisAccessDocsUrl}
+                    class='underline text-primary-900 hover:text-primary-800 hover:no-underline'
+                >
+                    programmatic access documentation
+                </a>{' '}
+                for how to obtain a token.
+            </div>
             <div class='flex flex-wrap gap-x-2 gap-y-4'>
-                {Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
+                {Object.entries(clientConfig.externalLapisUrls).map(([organism, url]) => (
                     <a class={BUTTON_CLASS} href={url + '/swagger-ui/index.html'}>
                         {organismToDisplayName[organism]} LAPIS API documentation
                     </a>
@@ -88,7 +100,7 @@ const BUTTON_CLASS =
             <div class='mt-8'>
                 <span class='font-medium'>URLs of LAPIS query engines:</span>
                 <ul class='list-disc ml-6'>
-                    {Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
+                    {Object.entries(clientConfig.externalLapisUrls).map(([organism, url]) => (
                         <li>
                             {organismToDisplayName[organism]}: <code>{url}</code>
                         </li>

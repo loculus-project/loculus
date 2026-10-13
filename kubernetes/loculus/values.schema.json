@@ -2099,6 +2099,29 @@
       },
       "additionalProperties": false
     },
+    "lapis": {
+      "groups": ["services"],
+      "type": "object",
+      "description": "Configuration for the LAPIS component",
+      "properties": {
+        "auth": {
+          "groups": ["services"],
+          "type": "object",
+          "description": "Configuration for LAPIS authentication",
+          "properties": {
+            "enabled": {
+              "groups": ["services"],
+              "type": "boolean",
+              "description": "Require Keycloak-issued JWTs on all LAPIS endpoints (opt-in per deployment). When true, LAPIS validates Bearer tokens via the Keycloak JWKS endpoint; requests without a valid token are rejected with 401. Health probes and API docs endpoints remain public.",
+              "default": false
+            }
+          },
+          "additionalProperties": false,
+          "required": ["enabled"]
+        }
+      },
+      "additionalProperties": false
+    },
     "registrationTermsMessage": {
       "type": "string",
       "description": "TODO",

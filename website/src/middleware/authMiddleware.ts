@@ -9,7 +9,7 @@ import { getConfiguredOrganisms, getRuntimeConfig, getWebsiteConfig } from '../c
 import { getInstanceLogger } from '../logger.ts';
 import { KeycloakClientManager } from '../utils/KeycloakClientManager.ts';
 import { getAuthUrl } from '../utils/getAuthUrl.ts';
-import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
+import { isLapisDataRoute, shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
 export const ACCESS_TOKEN_COOKIE = 'access_token';
 export const REFRESH_TOKEN_COOKIE = 'refresh_token';
@@ -64,12 +64,10 @@ async function getValidTokenAndUserInfoFromParams(context: APIContext, client: B
 export const authMiddleware = defineMiddleware(async (context, next) => {
     let token: TokenCookie | undefined;
     let userInfo;
+    const configuredOrganisms = getConfiguredOrganisms().map((it) => it.key);
 
     if (getWebsiteConfig().readOnlyMode) {
-        const enforceLogin = shouldMiddlewareEnforceLogin(
-            context.url.pathname,
-            getConfiguredOrganisms().map((it) => it.key),
-        );
+        const enforceLogin = shouldMiddlewareEnforceLogin(context.url.pathname, configuredOrganisms);
         if (enforceLogin) {
             return context.redirect('/503?service=readonly');
         }
@@ -99,10 +97,10 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         logger.warn(`Keycloak client not available, pretending user logged out`);
     }
 
-    const enforceLogin = shouldMiddlewareEnforceLogin(
-        context.url.pathname,
-        getConfiguredOrganisms().map((it) => it.key),
-    );
+    const enforceLogin =
+        shouldMiddlewareEnforceLogin(context.url.pathname, configuredOrganisms) ||
+        (getRuntimeConfig().public.lapisAuthEnabled === true &&
+            isLapisDataRoute(context.url.pathname, configuredOrganisms));
 
     if (enforceLogin && (userInfo === undefined || userInfo.isErr())) {
         if (client === undefined) {

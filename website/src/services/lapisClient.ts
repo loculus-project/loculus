@@ -1,7 +1,7 @@
 import type { Readable } from 'stream';
 
 import type { Narrow } from '@zodios/core/lib/utils.types';
-import axios, { type AxiosError, type Method } from 'axios';
+import axios, { type AxiosError, type AxiosInstance, type Method } from 'axios';
 import { err, ok, Result } from 'neverthrow';
 import { ZodSchema } from 'zod';
 
@@ -30,12 +30,31 @@ import {
 import { fastaEntryToString, parseFasta } from '../utils/parseFasta.ts';
 import type { BaseType } from '../utils/sequenceTypeHelpers.ts';
 
+/**
+ * Creates the axios instance used for all LAPIS requests of a `LapisClient`.
+ *
+ * When an authorization token is given (the logged-in user's access token; deployments with
+ * `lapis.auth.enabled` require one), it is attached as `Authorization: Bearer ...` header to
+ * every request. Without a token, requests are sent unauthenticated (fine for deployments
+ * where LAPIS authentication is disabled).
+ */
+function createLapisAxiosInstance(authorization: string | undefined): AxiosInstance {
+    const instance = axios.create();
+    if (authorization !== undefined) {
+        instance.defaults.headers.common.Authorization = `Bearer ${authorization}`;
+    }
+    return instance;
+}
+
 export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
+    private readonly axiosInstance: AxiosInstance;
+
     constructor(
         private readonly url: string,
         api: Narrow<typeof lapisApi>,
         logger: InstanceLogger,
         private readonly schema: Schema,
+        axiosInstance: AxiosInstance = axios,
     ) {
         super(
             url,
@@ -44,15 +63,27 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
             (axiosError) => (typeof axiosError.data?.error === 'object' ? axiosError.data?.error : axiosError.data),
             logger,
             'LAPIS',
+            axiosInstance,
+        );
+        this.axiosInstance = axiosInstance;
+    }
+
+    public static createForOrganism(organism: string, authorization?: string) {
+        return this.create(
+            getLapisUrl(getRuntimeConfig().serverSide, organism),
+            getSchema(organism),
+            getInstanceLogger('lapisClient'),
+            authorization,
         );
     }
 
-    public static createForOrganism(organism: string) {
-        return this.create(getLapisUrl(getRuntimeConfig().serverSide, organism), getSchema(organism));
-    }
-
-    public static create(lapisUrl: string, schema: Schema, logger: InstanceLogger = getInstanceLogger('lapisClient')) {
-        return new LapisClient(lapisUrl, lapisApi, logger, schema);
+    public static create(
+        lapisUrl: string,
+        schema: Schema,
+        logger: InstanceLogger = getInstanceLogger('lapisClient'),
+        authorization?: string,
+    ) {
+        return new LapisClient(lapisUrl, lapisApi, logger, schema, createLapisAxiosInstance(authorization));
     }
 
     public getSequenceEntryVersionDetails(accessionVersion: string) {
@@ -222,7 +253,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
     ) {
         const baseUrl = `${this.url}/sample/unalignedNucleotideSequences`;
         const url = segment === undefined ? baseUrl : `${baseUrl}/${segment}`;
-        return axios.post<Readable>(url, request, { responseType: 'stream' });
+        return this.axiosInstance.post<Readable>(url, request, { responseType: 'stream' });
     }
 
     public async getDetails(request: {
@@ -239,7 +270,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         responseSchema: ZodSchema<T>,
     ): Promise<Result<T, ProblemDetail>> {
         try {
-            const response = await axios.request({
+            const response = await this.axiosInstance.request({
                 url: `${this.url}${endpoint}`,
                 method,
                 data: request,

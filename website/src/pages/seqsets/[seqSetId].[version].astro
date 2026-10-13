@@ -57,7 +57,7 @@ const seqSetAuthorResponse = seqSetResponse.isOk()
 const accessions = seqSetRecordsResponse.unwrapOr([]).map((record) => record.accession);
 const seqSetGraphs = websiteConfig.seqSetsGraphs ?? [];
 const seqSetGraphResponses = await Promise.all(
-    seqSetGraphs.map((graph) => getSeqSetStatistics(accessions, graph.fields)),
+    seqSetGraphs.map((graph) => getSeqSetStatistics(accessions, graph.fields, accessToken)),
 );
 
 const seqSetCitations = seqSetCitationsResponse.unwrapOr([]);

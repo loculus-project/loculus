@@ -1,7 +1,7 @@
 import { Zodios, type ZodiosEndpointDefinitions, type ZodiosInstance } from '@zodios/core';
 import type { Narrow } from '@zodios/core/lib/utils.types';
 import type { Aliases, ZodiosAliases } from '@zodios/core/lib/zodios.types';
-import type { AxiosError, AxiosResponse } from 'axios';
+import type { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
 import { type Err, err, ok, type Result } from 'neverthrow';
 
 import { type InstanceLogger } from '../logger.ts';
@@ -25,8 +25,9 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
         private readonly tryToExtractProblemDetail: (error: AxiosResponse) => ProblemDetail | undefined,
         private readonly logger: InstanceLogger,
         private readonly serviceName: string,
+        axiosInstance?: AxiosInstance,
     ) {
-        this.zodios = new Zodios(url, api);
+        this.zodios = axiosInstance !== undefined ? new Zodios(url, api, { axiosInstance }) : new Zodios(url, api);
     }
 
     /**

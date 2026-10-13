@@ -62,7 +62,7 @@ const defaultProps = {
     },
     inputMode: 'bulk' as const,
     accessToken: 'test-token',
-    clientConfig: { backendUrl: 'http://test-backend', lapisUrls: {} },
+    clientConfig: { backendUrl: 'http://test-backend', lapisUrls: {}, externalLapisUrls: {} },
     groupId: 1,
     onError: mockOnError,
     fileSharingConfig: { disableStrictFilenameValidation: false },

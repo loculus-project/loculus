@@ -65,7 +65,7 @@ loculus [GLOBAL OPTIONS] COMMAND [COMMAND OPTIONS]
 
 - `auth`: Authentication commands
 - `config`: Configuration management
-- `get`: Search and retrieve sequences
+- `get`: Search and retrieve sequences (queries LAPIS; on instances with LAPIS authentication enabled, `auth login` first — the logged-in user's token is attached to LAPIS requests)
 - `group`: Manage groups
 - `instance`: Manage Loculus instances
 - `organism`: Manage organisms

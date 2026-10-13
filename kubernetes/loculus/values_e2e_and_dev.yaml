@@ -7,6 +7,12 @@ secrets:
       externalMetadataUpdaterPassword: "external_metadata_updater"
       backendUserPassword: "backend"
 createTestAccounts: true
+# LAPIS requires a Keycloak-issued JWT in this environment (see LAPIS_AUTH_PLAN.md).
+# The website attaches its service-account token server-side and browsers are routed
+# through the same-origin /api/lapis/<organism> proxy, so all existing specs keep working.
+lapis:
+  auth:
+    enabled: true
 backendExtraArgs:
   - "--loculus.debug-mode=true"
 # Raw reads processing is disabled: the deacon-index image is only published for linux/amd64,

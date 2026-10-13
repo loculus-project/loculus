@@ -2895,6 +2895,9 @@ images:
     pullPolicy: IfNotPresent
 silo:
   apiThreadsForHttpConnections: 16
+lapis:
+  auth:
+    enabled: false
 secrets:
   smtp-password:
     type: raw
