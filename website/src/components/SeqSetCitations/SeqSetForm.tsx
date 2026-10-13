@@ -3,16 +3,18 @@ import { capitalCase } from 'change-case';
 import { type FC, type FormEvent, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 
+import { clearSeqSetDraft, readSeqSetDraft, writeSeqSetDraft } from './seqSetDraft';
 import { getClientLogger } from '../../clientLogger';
 import { routes } from '../../routes/routes.ts';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ProblemDetail } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
+import { type SeqSet, type SeqSetRecord, SeqSetRecordType } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { deserializeAccessionInput, serializeSeqSetRecords } from '../../utils/parseAccessionInput';
 import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';
+import SearchIcon from '~icons/tabler/list-search';
 
 const logger = getClientLogger('SeqSetForm');
 
@@ -24,12 +26,18 @@ type SeqSetFormProps = {
 };
 
 export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, editSeqSet, editSeqSetRecords }) => {
-    const [seqSetName, setSeqSetName] = useState(editSeqSet?.name ?? '');
+    const [initialDraft] = useState(() => (editSeqSet === undefined ? readSeqSetDraft() : null));
+    const initialRecords =
+        editSeqSetRecords ?? initialDraft?.accessions.map((record) => ({ ...record, type: SeqSetRecordType.loculus }));
+
+    const [seqSetName, setSeqSetName] = useState(editSeqSet?.name ?? initialDraft?.name ?? '');
     const [seqSetNameValidation, setSeqSetNameValidation] = useState('');
-    const [seqSetDescription, setSeqSetDescription] = useState(editSeqSet?.description ?? '');
-    const [focalAccessionsInput, setFocalAccessionsInput] = useState(serializeSeqSetRecords(editSeqSetRecords, true));
+    const [seqSetDescription, setSeqSetDescription] = useState(
+        editSeqSet?.description ?? initialDraft?.description ?? '',
+    );
+    const [focalAccessionsInput, setFocalAccessionsInput] = useState(serializeSeqSetRecords(initialRecords, true));
     const [backgroundAccessionsInput, setBackgroundAccessionsInput] = useState(
-        serializeSeqSetRecords(editSeqSetRecords, false),
+        serializeSeqSetRecords(initialRecords, false),
     );
     const [seqSetRecordValidation, setSeqSetRecordValidation] = useState('');
 
@@ -72,6 +80,16 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
                 ...deserializeAccessionInput(backgroundAccessionsInput, false),
             ],
         };
+    };
+
+    const handleFindSequences = () => {
+        const { name, description, records } = getSeqSetFromInput();
+        writeSeqSetDraft({
+            name,
+            description,
+            accessions: records.map(({ accession, isFocal }) => ({ accession, isFocal })),
+        });
+        location.href = '/';
     };
 
     const handleSubmit = (event: FormEvent) => {
@@ -184,7 +202,18 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
                         maxLength={255}
                     />
                 </div>
-                <h1 className='text-lg font-semibold py-4'>Accessions</h1>
+                <div className='flex justify-between items-center'>
+                    <h1 className='text-lg font-semibold py-4'>Accessions</h1>
+                    {editSeqSet === undefined && (
+                        <Button
+                            className='flex items-center gap-1 text-sm underline text-primary-700 hover:text-primary-500'
+                            onClick={handleFindSequences}
+                        >
+                            <SearchIcon className='w-4 h-4' />
+                            Find accessions
+                        </Button>
+                    )}
+                </div>
                 {renderAccessionInputField(true)}
                 {renderAccessionInputField(false)}
                 <div className='max-w-md w-full'>
@@ -226,6 +255,7 @@ function useActionHooks(
         {
             onSuccess: async (response) => {
                 await logger.info(`Successfully created seqSet with seqSetId: ${response.seqSetId}`);
+                clearSeqSetDraft();
                 const redirectUrl = `/seqsets/${response.seqSetId}.${response.seqSetVersion}`;
                 location.href = redirectUrl;
             },

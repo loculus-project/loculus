@@ -1,4 +1,4 @@
-import { type FC, useState } from 'react';
+import { type FC, useEffect, useState } from 'react';
 
 import { SeqSetForm } from './SeqSetForm';
 import type { ClientConfig } from '../../types/runtimeConfig';
@@ -14,6 +14,12 @@ type SeqSetListActionsProps = {
 
 const SeqSetListActionsInner: FC<SeqSetListActionsProps> = ({ clientConfig, accessToken }) => {
     const [createModalVisible, setCreateModalVisible] = useState(false);
+
+    useEffect(() => {
+        if (new URLSearchParams(window.location.search).get('draft') === 'true') {
+            setCreateModalVisible(true);
+        }
+    }, []);
 
     return (
         <>

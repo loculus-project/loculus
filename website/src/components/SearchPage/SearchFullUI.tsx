@@ -36,6 +36,7 @@ import {
 } from '../../utils/search.ts';
 import { getSegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
+import { SeqSetDraftBanner } from '../SeqSetCitations/SeqSetDraftBanner.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
 import ErrorContactMessage from '../common/ErrorContactMessage.tsx';
@@ -290,6 +291,12 @@ const InnerSearchFullUI = ({
                 style={{ paddingBottom: Boolean(previewedSeqId) && previewHalfScreen ? '50vh' : '0' }}
             >
                 <RecentSequencesBanner organism={organism} />
+                <SeqSetDraftBanner
+                    lapisUrl={lapisUrl}
+                    sequenceFilter={downloadFilter}
+                    sequenceCount={linkOutSequenceCount}
+                    clearSelection={clearSelectedSeqs}
+                />
 
                 {(detailsHook.isError || aggregatedHook.isError) &&
                     // @ts-expect-error because response is not expected on error, but does exist

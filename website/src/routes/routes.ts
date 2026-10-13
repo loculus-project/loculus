@@ -67,6 +67,7 @@ export const routes = {
         const seqSetPagePath = `/seqsets`;
         return username === undefined ? seqSetPagePath : seqSetPagePath + `?user=${username}`;
     },
+    seqSetDraftPage: () => `/seqsets?draft=true`,
     seqSetPage: (seqSetAccessionVersion: AccessionVersion | string) => {
         return `/seqsets/${getAccessionVersionString(seqSetAccessionVersion)}`;
     },
