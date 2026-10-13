@@ -56,6 +56,21 @@ into a read-only state. When enabled:
 This flag is intended for migrations, archival instances, and maintenance
 windows. It defaults to `false`.
 
+### LAPIS authentication
+
+Setting `lapis.auth.enabled: true` requires a valid Bearer token (issued by
+the instance's Keycloak realm) on all LAPIS API requests. This applies to
+every [organism](#organism-configuration) of the deployment at once. Health
+probes and the LAPIS API documentation endpoints remain public. When the flag
+is enabled, only logged-in users can browse released data on the website: the
+website attaches the logged-in user's token to its LAPIS requests, and the
+data pages (homepage, search, sequence pages, seqsets, group pages) redirect
+anonymous visitors to the login page. External consumers of the LAPIS API
+(scripts, pipelines,
+[lapisR](https://github.com/GenSpectrum/lapisR), ...) must obtain a token; see
+[Programmatic access](./programmatic-access/). This flag defaults to `false`,
+and setting it back to `false` disables the requirement again.
+
 ## SILO Configuration
 
 <SchemaDocs group='silo' fieldColumnClass='w-48' />

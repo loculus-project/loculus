@@ -5,7 +5,7 @@ import { ExtraFilesUpload } from './DataUploadForm';
 
 const defaultProps = {
     accessToken: 'test-token',
-    clientConfig: { backendUrl: 'http://test-backend', lapisUrls: {} },
+    clientConfig: { backendUrl: 'http://test-backend', lapisUrls: {}, externalLapisUrls: {} },
     inputMode: 'form' as const,
     groupId: 1,
     fileUploadStates: new Map(),

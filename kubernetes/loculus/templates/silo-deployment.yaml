@@ -110,6 +110,17 @@ spec:
               value: "/usr/local/bin/silo"
             - name: PREPROCESSING_CONFIG
               value: "/app/preprocessing_config.yaml"
+            {{- if $.Values.lapis.auth.enabled }}
+            - name: KEYCLOAK_TOKEN_URL
+              value: {{ $keycloakTokenUrl | quote }}
+            - name: KEYCLOAK_USERNAME
+              value: "preprocessing_pipeline"
+            - name: KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: preprocessingPipelinePassword
+            {{- end }}
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/reference_genomes.json

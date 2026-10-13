@@ -9,12 +9,30 @@ from rich.console import Console
 from rich.table import Table
 
 from ..api.lapis import LapisClient
-from ..config import get_instance_config
+from ..auth.client import AuthClient
+from ..config import InstanceConfig, get_instance_config
 from ..utils.console import get_stderr_console, handle_cli_error, print_error
 from ..utils.guards import require_instance, require_organism
 from ..utils.metadata_filter import MetadataFilter
 
 console = Console()
+
+
+def _get_lapis_client(instance_config: InstanceConfig, organism: str) -> LapisClient:
+    """Build a LapisClient, attaching the logged-in user's token if available.
+
+    Instances can require a Keycloak-issued JWT on all LAPIS requests
+    (lapis.auth.enabled); the same token the CLI uses for backend requests is
+    accepted. When no user is logged in, requests are sent without an
+    Authorization header, which works on instances with auth disabled.
+    """
+    auth_client = AuthClient(instance_config)
+    current_user = auth_client.get_current_user()
+    return LapisClient(
+        instance_config.get_lapis_url(organism),
+        auth_client=auth_client if current_user else None,
+        username=current_user,
+    )
 
 
 @click.group(name="get")
@@ -99,9 +117,8 @@ def sequences(
     lapis_client = None
 
     try:
-        # Get LAPIS URL for this organism
-        lapis_url = instance_config.get_lapis_url(organism)
-        lapis_client = LapisClient(lapis_url)
+        # Get LAPIS URL for this organism and authenticate if logged in
+        lapis_client = _get_lapis_client(instance_config, organism)
 
         # Parse and validate filters using schema
         filter_params = {}
@@ -273,8 +290,7 @@ def details(
     # Get organism with guard (required for details)
     organism = require_organism(instance, ctx.obj.get("organism"))
 
-    lapis_url = instance_config.get_lapis_url(organism)
-    lapis_client = LapisClient(lapis_url)
+    lapis_client = _get_lapis_client(instance_config, organism)
 
     try:
         # Parse accession
@@ -352,9 +368,8 @@ def stats(
     organism = require_organism(instance, ctx.obj.get("organism"))
 
     try:
-        # Get LAPIS URL for this organism
-        lapis_url = instance_config.get_lapis_url(organism)
-        lapis_client = LapisClient(lapis_url)
+        # Get LAPIS client for this organism and authenticate if logged in
+        lapis_client = _get_lapis_client(instance_config, organism)
 
         # Parse and validate filters using schema
         filter_params = {}

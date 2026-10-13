@@ -80,6 +80,7 @@ class SecurityConfig {
     fun securityFilterChain(
         httpSecurity: HttpSecurity,
         keycloakAuthoritiesConverter: KeycloakAuthenticationConverter,
+        @Value("\${loculus.security.require-data-endpoint-auth:false}") requireDataEndpointAuth: Boolean,
     ): SecurityFilterChain = httpSecurity
         .authorizeHttpRequests { auth ->
             auth.requestMatchers(
@@ -91,8 +92,10 @@ class SecurityConfig {
                 "/api-docs/**",
                 "/swagger-ui/**",
             ).permitAll()
-            auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
-            auth.requestMatchers(HttpMethod.HEAD, *headEndpointsThatArePublic).permitAll()
+            if (!requireDataEndpointAuth) {
+                auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
+                auth.requestMatchers(HttpMethod.HEAD, *headEndpointsThatArePublic).permitAll()
+            }
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
             auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
             auth.requestMatchers(

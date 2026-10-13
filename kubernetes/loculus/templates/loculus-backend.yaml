@@ -132,6 +132,10 @@ spec:
             - name: CROSSREF_WRITE_ENABLED
               value: {{$.Values.seqSets.crossRef.writeEnabled | quote }}
            {{- end }}
+          {{- if $.Values.lapis.auth.enabled }}
+            - name: LOCULUS_SECURITY_REQUIRE_DATA_ENDPOINT_AUTH
+              value: "true"
+          {{- end }}
             - name: BACKEND_KEYCLOAK_PASSWORD
               valueFrom:
                 secretKeyRef:

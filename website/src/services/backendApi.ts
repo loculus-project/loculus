@@ -1,7 +1,12 @@
 import { makeApi, makeEndpoint } from '@zodios/core';
 import z from 'zod';
 
-import { authorizationHeader, notAuthorizedError, withOrganismPathSegment } from './commonApiTypes.ts';
+import {
+    authorizationHeader,
+    notAuthorizedError,
+    optionalAuthorizationHeader,
+    withOrganismPathSegment,
+} from './commonApiTypes.ts';
 import {
     accessionVersion,
     accessionVersionsFilterWithApprovalScope,
@@ -218,6 +223,7 @@ const getDataUseTermsHistoryEndpoint = makeEndpoint({
     method: 'get',
     path: '/data-use-terms/:accession',
     alias: 'getDataUseTermsHistory',
+    parameters: [optionalAuthorizationHeader],
     response: z.array(dataUseTermsHistoryEntry),
     errors: [
         { status: 'default', schema: problemDetail },

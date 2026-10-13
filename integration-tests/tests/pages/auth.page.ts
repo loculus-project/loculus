@@ -5,8 +5,9 @@ export class AuthPage {
     constructor(private page: Page) {}
 
     async navigateToRegister() {
-        await this.page.goto('/');
-        await this.page.getByRole('link', { name: 'Login' }).click();
+        // /user always enforces a login, so this lands on the Keycloak login page both when
+        // LAPIS auth gates the homepage and when it does not.
+        await this.page.goto('/user');
         await this.page.getByRole('link', { name: 'Register' }).click();
     }
 
@@ -42,22 +43,22 @@ export class AuthPage {
     }
 
     async login(username: string, password: string): Promise<boolean> {
-        await this.page.goto('/');
-        await this.page.getByRole('link', { name: 'Login' }).click();
+        // /user always enforces a login, so this lands on the Keycloak login page both when
+        // LAPIS auth gates the homepage and when it does not.
+        await this.page.goto('/user');
         await this.page.getByLabel('Username').fill(username);
         await this.page.getByLabel('Password', { exact: true }).fill(password);
         await this.page.getByRole('button', { name: 'Sign in' }).click();
 
-        const successSelector = this.page.waitForSelector('text=Welcome to Loculus', {
-            state: 'attached',
-        });
-        const failureSelector = this.page.waitForSelector('text=Invalid username or password', {
-            state: 'attached',
-        });
+        // The login starts from /user, so a successful login returns to /user, whose page
+        // (unlike the homepage) does not contain 'Welcome to Loculus'. Wait for the
+        // authenticated navigation instead.
+        const successSelector = this.page.getByRole('link', { name: 'My account' }).first();
+        const failureSelector = this.page.locator('text=Invalid username or password');
 
         const result = await Promise.race([
-            successSelector.then(() => true),
-            failureSelector.then(() => false),
+            successSelector.waitFor({ state: 'attached' }).then(() => true),
+            failureSelector.waitFor({ state: 'attached' }).then(() => false),
         ]);
 
         return result;

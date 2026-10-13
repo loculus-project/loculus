@@ -4,7 +4,7 @@ import type { OrganismStatistics } from './getOrganismStatistics';
 
 interface Props {
     organisms: { key: string; displayName: string; image?: string }[];
-    organismStatisticsMap: Map<string, OrganismStatistics>;
+    organismStatisticsMap: Map<string, OrganismStatistics | undefined>;
     numberDaysAgoStatistics: number;
 }
 

@@ -38,12 +38,12 @@ export class BackendClient {
         );
     }
 
-    public getDataUseTermsHistory(accession: string) {
+    public getDataUseTermsHistory(token: string | undefined, accession: string) {
         return this.request(
             `/data-use-terms/${accession}`,
             'GET',
             z.array(dataUseTermsHistoryEntry),
-            undefined,
+            createAuthorizationHeader(token),
             undefined,
             undefined,
         );

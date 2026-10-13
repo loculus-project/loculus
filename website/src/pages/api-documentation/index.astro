@@ -1,5 +1,6 @@
 ---
 import { authenticationApiDocsUrl } from './authenticationApiDocsUrl';
+import { lapisAccessDocsUrl } from './lapisAccessDocsUrl';
 import { dataUseTermsAreEnabled, getRuntimeConfig, getWebsiteConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes/routes.ts';
@@ -82,10 +83,16 @@ const CODE_CLASS = 'rounded bg-gray-100 px-1.5 py-0.5 text-[0.8125rem] text-gray
             <section class={SECTION_CLASS}>
                 <h2 class={HEADING_CLASS}>LAPIS query engines</h2>
                 <p class='mb-4 text-gray-700'>
-                    Each organism has its own LAPIS instance for querying sequences and metadata.
+                    Each organism has its own LAPIS instance for querying sequences and metadata. Depending on the
+                    configuration of this instance, requests to the LAPIS APIs require authentication with a Bearer
+                    token. See the{' '}
+                    <a href={lapisAccessDocsUrl} class={LINK_CLASS}>
+                        programmatic access documentation
+                    </a>{' '}
+                    for how to obtain a token.
                 </p>
                 <ul class='divide-y divide-gray-200 border-y border-gray-200'>
-                    {Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
+                    {Object.entries(clientConfig.externalLapisUrls).map(([organism, url]) => (
                         <li class='flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:gap-4'>
                             <div class='font-medium text-gray-900 sm:w-64 sm:shrink-0'>
                                 {organismToDisplayName[organism]}

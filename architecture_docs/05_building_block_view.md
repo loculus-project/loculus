@@ -15,6 +15,7 @@ and how they interact with each other and external participants.
 * Users can either
     * use the website to browse the data and download sequences
     * or use LAPIS directly to query the data (e.g. for automated analysis).
+      Deployments can be configured to require authentication (a Bearer token issued by the instance's Keycloak realm) for direct LAPIS access; the website itself authenticates server-side, so browsing it remains possible without login.
 * Submitters can 
   * log in via Keycloak 
   * submit new sequence data via the website
@@ -33,7 +34,8 @@ This diagram shows how Loculus utilizes
 ![LAPIS / SILO](plantuml/05_level_2_lapis.svg)
 
 * LAPIS provides an HTTP API to query the sequence data.
-  * LAPIS is used by the website, but it can also be used by users directly. 
+  * LAPIS is used by the website, but it can also be used by users directly.
+    Deployments can be configured to require a Bearer token on this API (opt-in via the Helm chart flag `lapis.auth.enabled`); the website then attaches a service token server-side, while external consumers must obtain a token from the instance's Keycloak realm. The same flag also requires a Bearer token (any valid realm token, no role checks) on the backend's public data endpoints (`get-released-data`, data-use terms, groups, files, seqset citations); when it is off, these endpoints are anonymous.
 * The SILO API is a query engine that stores the data in memory to provide fast access.
   LAPIS accesses it via HTTP. 
 * The SILO preprocessing fetches data from the Loculus backend in a regular interval,

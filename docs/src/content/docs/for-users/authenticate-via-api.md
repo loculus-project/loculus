@@ -16,3 +16,14 @@ echo "$jwt_keycloak"
 ```
 
 This will print the JSON web token. The access token is in the field `access_token`.
+
+## Using the token for LAPIS
+
+If the instance you are using requires authentication for [LAPIS](../../reference/glossary/#lapis) (the API for querying and downloading released data), the same token can be used for LAPIS requests: attach it to the `Authorization` header, e.g.
+
+```bash
+access_token=$(echo "$jwt_keycloak" | jq -r '.access_token')
+curl -H "Authorization: Bearer $access_token" "$LAPIS_URL/sample/details?limit=1"
+```
+
+See [Programmatic access](../../reference/programmatic-access/) for details, including how to check whether LAPIS authentication is enabled and how to obtain tokens for automated access.

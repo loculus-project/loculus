@@ -3,11 +3,11 @@ import { err, ok } from 'neverthrow';
 import { getSequenceDetailsTableData } from './getSequenceDetailsTableData.ts';
 import { getConfiguredOrganisms } from '../../../config.ts';
 
-export async function findOrganismAndData(accessionVersion: string) {
+export async function findOrganismAndData(accessionVersion: string, authorization?: string) {
     const organisms = getConfiguredOrganisms();
 
     const promises = organisms.map(({ key }) =>
-        getSequenceDetailsTableData(accessionVersion, key).then((result) =>
+        getSequenceDetailsTableData(accessionVersion, key, authorization).then((result) =>
             result.isOk()
                 ? ok({ organism: key, result: result.value })
                 : Promise.reject(new Error(`${key}: '${result.error.detail}'`)),

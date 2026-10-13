@@ -1,4 +1,4 @@
-import { test } from '../../fixtures/console-warnings.fixture';
+import { test } from '../../fixtures/logged-in.fixture';
 import { SearchPage } from '../../pages/search.page';
 import { SequenceDetailPage } from '../../pages/sequence-detail.page';
 

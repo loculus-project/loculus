@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { dataUseTermsHistoryEntry } from './backend.ts';
 import { schema } from './config.ts';
 import { parsedSequenceEntryHistoryEntrySchema } from './lapis.ts';
-import { serviceUrls } from './runtimeConfig.ts';
+import { publicServiceUrls } from './runtimeConfig.ts';
 import { sequenceCitations } from './seqSetCitation.ts';
 import { tableDataEntrySchema } from '../components/SequenceDetailsPage/types.ts';
 
@@ -13,7 +13,7 @@ export const detailsJsonSchema = z.object({
     accessionVersion: z.string(),
     dataUseTermsHistory: z.array(dataUseTermsHistoryEntry),
     schema: schema,
-    clientConfig: serviceUrls,
+    clientConfig: publicServiceUrls,
     // Segment-first mode: map of segment names to reference names
     segmentReferences: z.record(z.string(), z.string().nullable()).optional(),
     isRevocation: z.boolean(),

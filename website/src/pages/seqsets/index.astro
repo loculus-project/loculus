@@ -22,7 +22,7 @@ const clientConfig = getRuntimeConfig().public;
 const seqSetClient = SeqSetCitationClient.create();
 
 const seqSetsResponse = await seqSetClient.getSeqSetsOfUser(accessToken);
-const authorResponse = await seqSetClient.getAuthor(username);
+const authorResponse = await seqSetClient.getAuthor(username, accessToken);
 const editAccountUrl = (await getUrlForKeycloakAccountPage()) + '/#/personal-info';
 ---
 

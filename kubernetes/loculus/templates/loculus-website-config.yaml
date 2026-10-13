@@ -15,7 +15,10 @@ data:
         "insecureCookies": {{ $.Values.insecureCookies }},
         "serverSide": {
             {{- if .Values.usePublicRuntimeConfigAsServerSide }}
-            {{- template "loculus.publicRuntimeConfig" . -}}
+            {{- /* serverSide.lapisUrls must be ABSOLUTE URLs: relative public proxy paths (/api/lapis/<organism>) are browser-only and would throw when fetched from Node. In this branch (deploy.py --from_live, used with --skip-schema-validation) we therefore inline the fields instead of including loculus.publicRuntimeConfig, which emits proxy URLs under "lapisUrls". */ -}}
+            "backendUrl": "{{ include "loculus.backendUrl" . }}",
+            "lapisUrls": {{- include "loculus.generateExternalLapisUrls" (dict "lapisUrlTemplate" (include "loculus.lapisUrlTemplate" .) "config" .Values) | fromYaml | toJson }},
+            "keycloakUrl": "{{ include "loculus.keycloakUrl" . }}"
             {{- else }}
             {{ if $.Values.disableBackend -}}
             "backendUrl": "http://{{ $.Values.localHost }}:8079",
