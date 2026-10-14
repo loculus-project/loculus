@@ -1,4 +1,4 @@
-package org.loculus.backend.v2
+package org.loculus.backend.v2.controller
 
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback

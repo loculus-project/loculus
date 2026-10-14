@@ -1,7 +1,10 @@
-package org.loculus.backend.v2
+package org.loculus.backend.v2.config
 
 import org.loculus.backend.config.KeycloakAuthenticationConverter
 import org.loculus.backend.config.LoggingAuthenticationEntryPoint
+import org.loculus.backend.v2.auth.Access
+import org.loculus.backend.v2.auth.AccessInterceptor
+import org.loculus.backend.v2.auth.access
 import org.springdoc.core.customizers.OperationCustomizer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

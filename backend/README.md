@@ -94,6 +94,8 @@ The backend is one Spring Boot application, built from several Gradle modules:
 | `v2` | The new API, served under `/v2`. It may depend on `core`, never on `v1`. |
 | `app` | The application itself (`BackendApplication` and its configuration). It contains `core`, `v1` and `v2` and builds the `backend.jar`. |
 
+Within each module, code is organised by layer (`controller`, `service`, `config`, `auth`, ...), as in v1. v2's code lives under the `org.loculus.backend.v2` package.
+
 When v2 needs code that is still in v1, move that code to `core`, or write a new version in `v2`. Only move what v2 actually uses; whatever is left in `v1` will be deleted together with it.
 
 v2 endpoints declare who may call them with `@Public` or `@Authenticated`. This is enforced for every request and documented in the OpenAPI spec as `x-access`.

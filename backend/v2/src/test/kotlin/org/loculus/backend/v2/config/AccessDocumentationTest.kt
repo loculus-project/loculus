@@ -1,4 +1,4 @@
-package org.loculus.backend.v2
+package org.loculus.backend.v2.config
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.hamcrest.MatcherAssert.assertThat

@@ -1,4 +1,4 @@
-package org.loculus.backend.v2.groups
+package org.loculus.backend.v2.controller.groupmanagement
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jayway.jsonpath.JsonPath
@@ -23,7 +23,7 @@ import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.withAuth
 import org.loculus.backend.service.KeycloakAdapter
-import org.loculus.backend.v2.V2EndpointTest
+import org.loculus.backend.v2.controller.V2EndpointTest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType.APPLICATION_JSON

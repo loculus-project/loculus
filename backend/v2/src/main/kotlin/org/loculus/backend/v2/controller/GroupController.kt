@@ -1,4 +1,4 @@
-package org.loculus.backend.v2.groups
+package org.loculus.backend.v2.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -9,8 +9,8 @@ import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.auth.User
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
-import org.loculus.backend.v2.Authenticated
-import org.loculus.backend.v2.Public
+import org.loculus.backend.v2.auth.Authenticated
+import org.loculus.backend.v2.auth.Public
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
