@@ -63,9 +63,9 @@ export const routes = {
     editGroupPage: (groupId: number) => `/group/${groupId}/edit`,
     userSequenceReviewPage: (organism: string, groupId: number) =>
         SubmissionRouteUtils.toUrl({ name: 'review', organism, groupId }),
-    seqSetsPage: (username?: string) => {
+    seqSetsPage: (draft?: boolean) => {
         const seqSetPagePath = `/seqsets`;
-        return username === undefined ? seqSetPagePath : seqSetPagePath + `?user=${username}`;
+        return draft === undefined ? seqSetPagePath : seqSetPagePath + `?draft=${draft}`;
     },
     seqSetPage: (seqSetAccessionVersion: AccessionVersion | string) => {
         return `/seqsets/${getAccessionVersionString(seqSetAccessionVersion)}`;
