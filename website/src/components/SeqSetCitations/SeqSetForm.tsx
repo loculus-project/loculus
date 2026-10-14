@@ -3,7 +3,7 @@ import { capitalCase } from 'change-case';
 import { type FC, type FormEvent, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 
-import { clearSeqSetDraft, readSeqSetDraft, writeSeqSetDraft } from './seqSetDraft';
+import { getSeqSetDraft, removeSeqSetDraft, saveSeqSetDraft } from './seqSetDraft';
 import { getClientLogger } from '../../clientLogger';
 import { routes } from '../../routes/routes.ts';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
@@ -26,7 +26,7 @@ type SeqSetFormProps = {
 };
 
 export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, editSeqSet, editSeqSetRecords }) => {
-    const [initialDraft] = useState(() => (editSeqSet === undefined ? readSeqSetDraft() : null));
+    const [initialDraft] = useState(() => (editSeqSet === undefined ? getSeqSetDraft() : null));
     const initialRecords =
         editSeqSetRecords ?? initialDraft?.accessions.map((record) => ({ ...record, type: SeqSetRecordType.loculus }));
 
@@ -84,7 +84,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
 
     const handleFindSequences = () => {
         const { name, description, records } = getSeqSetFromInput();
-        writeSeqSetDraft({
+        saveSeqSetDraft({
             name,
             description,
             accessions: records.map(({ accession, isFocal }) => ({ accession, isFocal })),
@@ -255,7 +255,7 @@ function useActionHooks(
         {
             onSuccess: async (response) => {
                 await logger.info(`Successfully created seqSet with seqSetId: ${response.seqSetId}`);
-                clearSeqSetDraft();
+                removeSeqSetDraft();
                 const redirectUrl = `/seqsets/${response.seqSetId}.${response.seqSetVersion}`;
                 location.href = redirectUrl;
             },

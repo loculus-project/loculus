@@ -2,12 +2,12 @@ import { type FC, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import {
-    addToSeqSetDraft,
-    clearSeqSetDraft,
+    removeSeqSetDraft,
     MAX_SEQ_SET_DRAFT_ENTRIES,
-    readSeqSetDraft,
+    getSeqSetDraft,
     type SeqSetDraft,
-    writeSeqSetDraft,
+    updateSeqSetDraft,
+    saveSeqSetDraft,
 } from './seqSetDraft';
 import { routes } from '../../routes/routes';
 import { fetchDetailsFromLapis } from '../../services/lapisClientSideApi';
@@ -18,55 +18,81 @@ import { type SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilter
 import { Button } from '../common/Button';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 
+const MAX_SEQSET_DRAFT_MESSAGE = `A SeqSet draft is limited to ${formatNumberWithDefaultLocale(MAX_SEQ_SET_DRAFT_ENTRIES)} entries. Please select fewer or remove existing entries.`;
+
 type SeqSetDraftBannerProps = {
     lapisUrl?: string;
     sequenceFilter?: SequenceFilter;
     sequenceCount?: number;
-    clearSelection?: () => void;
 };
 
-export const SeqSetDraftBanner: FC<SeqSetDraftBannerProps> = ({
-    lapisUrl,
+type SeqSetDraftAddButtonProps = {
+    draft: SeqSetDraft;
+    sequenceFilter?: SequenceFilter;
+    sequenceCount?: number;
+    isFocal: boolean;
+    handleAdd: () => Promise<void>;
+};
+
+const SeqSetDraftAddButton: FC<SeqSetDraftAddButtonProps> = ({
+    draft,
     sequenceFilter,
     sequenceCount,
-    clearSelection,
+    isFocal,
+    handleAdd,
 }) => {
+    const isSelection = sequenceFilter?.sequenceCount() !== undefined;
+    const formattedCount = sequenceCount !== undefined ? formatNumberWithDefaultLocale(sequenceCount) : '...';
+    const exceedsLimit =
+        sequenceCount !== undefined && draft.accessions.length + sequenceCount > MAX_SEQ_SET_DRAFT_ENTRIES;
+
+    return (
+        <div className='group relative inline-block'>
+            <Button
+                size='sm'
+                variant='primary'
+                className='flex items-center gap-1'
+                onClick={() => void handleAdd()}
+                disabled={exceedsLimit}
+            >
+                {`Add ${isSelection ? formattedCount + ' selected' : 'all ' + formattedCount} to ${isFocal ? 'focal' : 'background'}`}
+            </Button>
+            {exceedsLimit && (
+                <div className='invisible group-hover:visible absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 text-sm text-white bg-gray-800 rounded-md shadow-lg whitespace-nowrap z-20'>
+                    {MAX_SEQSET_DRAFT_MESSAGE}
+                    <div className='absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-gray-800' />
+                </div>
+            )}
+        </div>
+    );
+};
+
+export const SeqSetDraftBanner: FC<SeqSetDraftBannerProps> = ({ lapisUrl, sequenceFilter, sequenceCount }) => {
     const [draft, setDraft] = useState<SeqSetDraft | null>(null);
-    const [isAdding, setIsAdding] = useState(false);
 
     useEffect(() => {
-        setDraft(readSeqSetDraft());
+        setDraft(getSeqSetDraft());
     }, []);
 
-    if (draft === null) {
-        return null;
-    }
+    if (draft === null) return null;
 
     const focalCount = draft.accessions.filter((record) => record.isFocal).length;
     const backgroundCount = draft.accessions.length - focalCount;
 
-    const isSelection = sequenceFilter?.sequenceCount() !== undefined;
-    const exceedsLimit =
-        sequenceCount !== undefined && draft.accessions.length + sequenceCount > MAX_SEQ_SET_DRAFT_ENTRIES;
-    const formattedCount = sequenceCount !== undefined ? formatNumberWithDefaultLocale(sequenceCount) : '...';
-    const addLabel = isSelection ? `Add ${formattedCount} selected` : `Add all ${formattedCount}`;
-
     const applyAdd = (accessions: string[], isFocal: boolean) => {
-        const updatedDraft = addToSeqSetDraft(draft, accessions, isFocal);
-        writeSeqSetDraft(updatedDraft);
+        const updatedDraft = updateSeqSetDraft(draft, accessions, isFocal);
+        saveSeqSetDraft(updatedDraft);
         setDraft(updatedDraft);
-        clearSelection?.();
         toast.success(
-            `Added ${formatNumberWithDefaultLocale(accessions.length)} sequences to ${isFocal ? 'focal' : 'background'}`,
-            { position: 'bottom-center', autoClose: 2000 },
+            `Added ${formatNumberWithDefaultLocale(accessions.length)} sequences to ${isFocal ? 'focal' : 'background'} set.`,
+            { position: 'top-right', autoClose: 2000 },
         );
     };
 
     const handleAdd = async (isFocal: boolean) => {
-        if (isAdding || lapisUrl === undefined || sequenceFilter === undefined) {
+        if (lapisUrl === undefined || sequenceFilter === undefined) {
             return;
         }
-        setIsAdding(true);
         try {
             const response = await fetchDetailsFromLapis(lapisUrl, {
                 ...sequenceFilter.toApiParams(),
@@ -75,10 +101,7 @@ export const SeqSetDraftBanner: FC<SeqSetDraftBannerProps> = ({
             });
             const accessions = response.data.map((item) => String(item[ACCESSION_VERSION_FIELD]));
             if (draft.accessions.length + accessions.length > MAX_SEQ_SET_DRAFT_ENTRIES) {
-                toast.error(
-                    `A SeqSet can contain at most ${formatNumberWithDefaultLocale(MAX_SEQ_SET_DRAFT_ENTRIES)} sequences`,
-                    { position: 'bottom-center' },
-                );
+                toast.error(MAX_SEQSET_DRAFT_MESSAGE, { position: 'top-right' });
                 return;
             }
 
@@ -98,36 +121,14 @@ export const SeqSetDraftBanner: FC<SeqSetDraftBannerProps> = ({
                 onConfirmation: () => applyAdd(accessions, isFocal),
             });
         } catch {
-            toast.error('Failed to add sequences to the SeqSet draft', { position: 'bottom-center' });
-        } finally {
-            setIsAdding(false);
+            toast.error('Failed to add sequences to SeqSet draft.', { position: 'top-right' });
         }
     };
 
     const handleCancelDraft = () => {
-        clearSeqSetDraft();
+        removeSeqSetDraft();
         setDraft(null);
     };
-
-    const renderAddButton = (isFocal: boolean) => (
-        <div className='group relative inline-block'>
-            <Button
-                size='sm'
-                variant='primary'
-                className='flex items-center gap-1'
-                onClick={() => void handleAdd(isFocal)}
-                disabled={exceedsLimit}
-            >
-                {`${addLabel} to ${isFocal ? 'focal' : 'background'}`}
-            </Button>
-            {exceedsLimit && (
-                <div className='invisible group-hover:visible absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 text-sm text-white bg-gray-800 rounded-md shadow-lg whitespace-nowrap z-20'>
-                    A SeqSet can contain at most {formatNumberWithDefaultLocale(MAX_SEQ_SET_DRAFT_ENTRIES)} sequences
-                    <div className='absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-gray-800' />
-                </div>
-            )}
-        </div>
-    );
 
     return (
         <div className='relative bg-primary-50 border border-primary-200 rounded-sm p-4 mb-4 text-gray-800'>
@@ -144,12 +145,17 @@ export const SeqSetDraftBanner: FC<SeqSetDraftBannerProps> = ({
                 {formatNumberWithDefaultLocale(backgroundCount)}
             </p>
             <div className='flex flex-wrap gap-2 mt-3'>
-                {sequenceFilter !== undefined && (
-                    <>
-                        {renderAddButton(true)}
-                        {renderAddButton(false)}
-                    </>
-                )}
+                {sequenceFilter !== undefined &&
+                    [true, false].map((isFocal) => (
+                        <SeqSetDraftAddButton
+                            key={isFocal ? 'focal' : 'background'}
+                            draft={draft}
+                            sequenceFilter={sequenceFilter}
+                            sequenceCount={sequenceCount}
+                            isFocal={isFocal}
+                            handleAdd={() => handleAdd(isFocal)}
+                        />
+                    ))}
                 <Button size='sm' variant='primary' className='flex items-center gap-1' onClick={handleCancelDraft}>
                     Cancel draft
                 </Button>

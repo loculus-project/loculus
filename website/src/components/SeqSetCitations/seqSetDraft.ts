@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const SEQ_SET_DRAFT_KEY = 'loculus-draft-seqset';
+const SEQSET_DRAFT_KEY = 'loculus-draft-seqset';
 
 export const MAX_SEQ_SET_DRAFT_ENTRIES = 10000;
 
@@ -16,41 +16,40 @@ const seqSetDraft = z.object({
 });
 export type SeqSetDraft = z.infer<typeof seqSetDraft>;
 
-export const readSeqSetDraft = (): SeqSetDraft | null => {
+export const getSeqSetDraft = (): SeqSetDraft | null => {
     try {
-        const stored = sessionStorage.getItem(SEQ_SET_DRAFT_KEY);
-        if (stored === null) {
-            return null;
-        }
+        const stored = sessionStorage.getItem(SEQSET_DRAFT_KEY);
+        if (stored === null) return null;
+
         const result = seqSetDraft.safeParse(JSON.parse(stored));
         if (!result.success) {
-            clearSeqSetDraft();
+            removeSeqSetDraft();
             return null;
         }
         return result.data;
     } catch {
-        clearSeqSetDraft();
+        removeSeqSetDraft();
         return null;
     }
 };
 
-export const writeSeqSetDraft = (draft: SeqSetDraft) => {
+export const saveSeqSetDraft = (draft: SeqSetDraft) => {
     try {
-        sessionStorage.setItem(SEQ_SET_DRAFT_KEY, JSON.stringify(draft));
+        sessionStorage.setItem(SEQSET_DRAFT_KEY, JSON.stringify(draft));
     } catch {
         // sessionStorage can be unavailable, e.g. in some private browsing modes
     }
 };
 
-export const clearSeqSetDraft = () => {
+export const removeSeqSetDraft = () => {
     try {
-        sessionStorage.removeItem(SEQ_SET_DRAFT_KEY);
+        sessionStorage.removeItem(SEQSET_DRAFT_KEY);
     } catch {
         // sessionStorage can be unavailable, e.g. in some private browsing modes
     }
 };
 
-export const addToSeqSetDraft = (draft: SeqSetDraft, accessions: string[], isFocal: boolean): SeqSetDraft => {
+export const updateSeqSetDraft = (draft: SeqSetDraft, accessions: string[], isFocal: boolean): SeqSetDraft => {
     const added = new Set(accessions);
     return {
         ...draft,
