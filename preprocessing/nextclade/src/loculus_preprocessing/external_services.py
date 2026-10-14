@@ -108,11 +108,12 @@ def lookup_failed(message: str, error_if_failed: bool) -> RawProcessingResult:
 
 
 def ambiguous_host_warning(host: str, selected: Taxon, taxa: list[Taxon]) -> str:
-    alternatives = ", ".join([str(t.tax_id) for t in taxa if t.tax_id != selected.tax_id])
+    all = ", ".join([str(t.tax_id) for t in taxa])
     return (
-        f"'{host}' matches multiple taxa, chose '{selected.scientific_name} ({selected.tax_id})'. "
-        f"To select a different taxon, provide one of these taxon IDs as `host`: {alternatives}. "
-        f"(you can search for IDs on {TAXONOMY_BROWSER_URL} to see which taxon they map to) "
+        f"'{host}' maps to {len(taxa)} taxa with IDs: {all}. Selected Taxon ID "
+        f"'{selected.tax_id}'. If this is not your intended taxon, provide the desired taxon ID "
+        f"in the `host` field instead. (you can search for IDs on {TAXONOMY_BROWSER_URL} to see "
+        "which taxon they map to)"
     )
 
 
