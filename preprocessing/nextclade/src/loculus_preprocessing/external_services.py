@@ -126,10 +126,8 @@ class TaxonomyService:
     def _get(self, path: str) -> list[Taxon]:
         """GET `path` from the taxonomy service and return the taxa in the response.
 
-        Returns an empty list if the service responded with a client error status, i.e. the taxon
-        was not found (404) or the input was not valid (422).
-        Raises TaxonomyServiceError on network errors (including 5xx once retries are exhausted)
-        or if the response body is not a taxon or list of taxa.
+        Returns an empty list if the service responds with 404 or 422 (invalid user input).
+        Raises TaxonomyServiceError on any other non-200 status.
         """
         if not self.taxonomy_service_url:
             msg = "taxonomy_service_url was not configured."
@@ -142,11 +140,17 @@ class TaxonomyService:
             msg = f"Network error while fetching '{url}': {e}."
             raise TaxonomyServiceError(msg) from e
 
-        if response.status_code != requests.codes.ok:
+        if response.status_code in (requests.codes.not_found, requests.codes.unprocessable_entity):
             logger.warning(
                 f"Taxonomy service returned {response.status_code} for '{url}': {response.text}"
             )
             return []
+        if response.status_code != requests.codes.ok:
+            msg = (
+                f"Taxonomy service returned unexpected status {response.status_code} "
+                f"for '{url}': {response.text}"
+            )
+            raise TaxonomyServiceError(msg)
 
         try:
             return TaxonomyResponse.model_validate(response.json()).taxa()
