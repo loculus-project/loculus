@@ -1,0 +1,11 @@
+# Deploy into the ArgoCD namespace, e.g. with an ArgoCD Application pointing at this directory.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: argocd
+resources:
+  - rbac.yaml
+  - cronjob.yaml
+configMapGenerator:
+  - name: argocd-stuck-sync-reaper
+    files:
+      - reaper.sh

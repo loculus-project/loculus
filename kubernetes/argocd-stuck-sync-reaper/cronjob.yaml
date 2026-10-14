@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: argocd-stuck-sync-reaper
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 240
+      ttlSecondsAfterFinished: 3600
+      template:
+        spec:
+          serviceAccountName: argocd-stuck-sync-reaper
+          restartPolicy: Never
+          containers:
+            - name: reaper
+              image: ghcr.io/loculus-project/mirror/kubectl:1.36.0
+              command: ["sh", "/scripts/reaper.sh"]
+              env:
+                - name: ARGOCD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: PREVIEW_LABEL_SELECTOR
+                  value: "loculus/deployment-type=preview"
+                - name: MAX_PREVIEW_SYNC_SECONDS
+                  value: "1800"
+                - name: DRY_RUN
+                  value: "false"
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 128Mi
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+          volumes:
+            - name: scripts
+              configMap:
+                name: argocd-stuck-sync-reaper

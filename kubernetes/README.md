@@ -157,6 +157,8 @@ The preview is intended to simulate the full backend and associated containers. 
 
 We do not currently support branch names containing characters that can't go in domain names with the exception of '/' and '\_' (see [kubernetes/appset.yaml](https://github.com/loculus-project/loculus/blob/main/kubernetes/appset.yaml) for details).
 
+Stuck syncs can stop preview deployments from being deleted. [`argocd-stuck-sync-reaper`](argocd-stuck-sync-reaper/README.md) is a CronJob that ends them automatically.
+
 ## Secrets
 
 For preview instances this repo contains [sealed secrets](https://sealed-secrets.netlify.app/) that allow the loculus-bot to access the GitHub container registry and (separately) the GitHub repository. These are encrypted such that they can only be decrypted on our cluster but are cluster-wide so can be used in any namespace.
