@@ -110,10 +110,9 @@ def lookup_failed(message: str, error_if_failed: bool) -> RawProcessingResult:
 def ambiguous_host_warning(host: str, selected: Taxon, taxa: list[Taxon]) -> str:
     ids = ", ".join([str(t.tax_id) for t in taxa])
     return (
-        f"'{host}' maps to {len(taxa)} taxa with IDs: {ids}. Selected taxon with ID "
-        f"'{selected.tax_id}'. If this is not your intended taxon, provide the desired taxon ID "
-        f"in the `host` field instead. (you can search for IDs on {TAXONOMY_BROWSER_URL} to see "
-        "which taxon they map to)"
+        f"'{host}' matches {len(taxa)} taxa ({ids}), using the most general one: "
+        f"{selected.tax_id}. To use a different taxon, enter its taxon ID in the `host` "
+        f"field instead. Look up taxon IDs at {TAXONOMY_BROWSER_URL}"
     )
 
 
