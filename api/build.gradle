@@ -1,0 +1,115 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+plugins {
+    // Keep plugin versions in sync with backend/build.gradle
+    id 'org.springframework.boot' version '4.1.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.jetbrains.kotlin.jvm' version '2.4.20'
+    id 'org.jetbrains.kotlin.plugin.spring' version '2.4.20'
+    id 'org.jlleitschuh.gradle.ktlint' version '14.2.0'
+}
+
+group = 'org.loculus'
+version = '0.0.1'
+
+// Keep the Java version in sync with backend/build.gradle
+java {
+    sourceCompatibility = '25'
+    targetCompatibility = '25'
+}
+
+kotlin {
+    jvmToolchain(25)
+}
+
+dependencyLocking {
+    lockAllConfigurations()
+    lockMode = LockMode.STRICT
+}
+
+repositories {
+    mavenCentral()
+}
+
+configurations.all {
+    // This project uses springmockk for mocking, so Mockito is excluded
+    exclude group: "org.mockito"
+}
+
+dependencies {
+    implementation "org.springframework.boot:spring-boot-starter-webmvc"
+    implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation "org.springframework.boot:spring-boot-starter-jdbc"
+    implementation "org.springframework.boot:spring-boot-starter-security"
+    implementation "org.springframework.boot:spring-boot-starter-security-oauth2-resource-server"
+    implementation "tools.jackson.module:jackson-module-kotlin"
+    implementation "org.jetbrains.kotlin:kotlin-reflect"
+    implementation "io.github.microutils:kotlin-logging-jvm:3.0.5"
+    implementation "org.postgresql:postgresql"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1"
+    implementation platform("org.jetbrains.exposed:exposed-bom:1.5.0")
+    implementation "org.jetbrains.exposed:exposed-spring-boot4-starter"
+    implementation "org.jetbrains.exposed:exposed-jdbc"
+    implementation "org.jetbrains.exposed:exposed-java-time"
+    implementation "org.keycloak:keycloak-admin-client:26.0.12"
+
+    testImplementation "org.springframework.boot:spring-boot-starter-webmvc-test"
+    testImplementation platform("io.jsonwebtoken:jjwt-bom:0.13.0")
+    testImplementation "io.jsonwebtoken:jjwt-api"
+    testImplementation "io.jsonwebtoken:jjwt-impl"
+    testImplementation "io.jsonwebtoken:jjwt-jackson"
+    testImplementation "com.ninja-squad:springmockk:5.0.1"
+    testImplementation "org.testcontainers:testcontainers:2.0.5"
+    testImplementation "org.testcontainers:testcontainers-postgresql:2.0.5"
+    // The backend owns the database schema. Tests apply its migrations to a fresh database.
+    testImplementation "org.flywaydb:flyway-core"
+    testImplementation "org.flywaydb:flyway-database-postgresql"
+    testImplementation "org.junit.platform:junit-platform-launcher"
+    ktlint("com.pinterest.ktlint:ktlint-cli:1.8.0") {
+        attributes {
+            attribute(Bundling.BUNDLING_ATTRIBUTE, getObjects().named(Bundling, Bundling.EXTERNAL))
+        }
+    }
+}
+
+// ktlint 1.8.0 crashes on kotlin-compiler-embeddable 2.4.20 (ktlint/ktlint#3289), same pin as in backend/build.gradle
+configurations.matching { it.name.startsWith("ktlint") }.configureEach {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == "org.jetbrains.kotlin") {
+            details.useVersion("2.2.21")
+        }
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+
+    systemProperty "loculus.backend.migrations",
+        project.file("../backend/src/main/resources/db/migration").absolutePath
+
+    // https://github.com/mockk/mockk/pull/1550
+    doFirst {
+        def agentJar = configurations.testRuntimeClasspath.files.find { it.name.startsWith('byte-buddy-agent-') }
+        if (agentJar != null) {
+            jvmArgs "-javaagent:${agentJar.absolutePath}"
+        }
+    }
+    jvmArgs '--sun-misc-unsafe-memory-access=allow'
+    jvmArgs '-Xshare:off'
+    jvmArgs '--enable-native-access=ALL-UNNAMED'
+
+    testLogging {
+        events TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR
+        exceptionFormat = TestExceptionFormat.FULL
+        showExceptions = true
+    }
+}
+
+tasks.named("jar") {
+    enabled = false
+}
+tasks.named("bootJar") {
+    enabled = true
+    archiveVersion.set("")
+}
