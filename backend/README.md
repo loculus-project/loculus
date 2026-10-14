@@ -67,7 +67,7 @@ You need to set:
 --spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost:8083/realms/loculus/protocol/openid-connect/certs
 ```
 
-We use Flyway, so that the service can provision an empty/existing DB without any manual steps in between. On startup scripts in `src/main/resources/db/migration` are executed in order, i.e. `V1__*.sql` before `V2__*.sql` if they didn't run before, so that the DB is always up-to-date. (For more info on the naming convention, see [this](https://www.red-gate.com/blog/database-devops/flyway-naming-patterns-matter) blog post.)
+We use Flyway, so that the service can provision an empty/existing DB without any manual steps in between. On startup scripts in `core/src/main/resources/db/migration` are executed in order, i.e. `V1__*.sql` before `V2__*.sql` if they didn't run before, so that the DB is always up-to-date. (For more info on the naming convention, see [this](https://www.red-gate.com/blog/database-devops/flyway-naming-patterns-matter) blog post.)
 
 Note: When using a PostgreSQL development platform (e.g. pgAdmin) the hostname is 127.0.0.1 and not localhost - this is defined in the `deploy.py` file.
 
@@ -82,6 +82,23 @@ When running the backend behind a proxy, the proxy needs to set X-Forwarded head
 - X-Forwarded-Prefix
 
 ## Development
+
+### Project structure
+
+The backend is one Spring Boot application, built from several Gradle modules:
+
+| Module | Contents |
+| --- | --- |
+| `core` | Code that both API versions use: authentication, error handling, the database schema (Flyway migrations and table definitions) and shared services such as group management. Its test fixtures (`core/src/testFixtures`) hold test helpers shared by the other modules. |
+| `v1` | The current API and its implementation. |
+| `v2` | The new API, served under `/v2`. It may depend on `core`, never on `v1`. |
+| `app` | The application itself (`BackendApplication` and its configuration). It contains `core`, `v1` and `v2` and builds the `backend.jar`. |
+
+When v2 needs code that is still in v1, move that code to `core`, or write a new version in `v2`. Only move what v2 actually uses; whatever is left in `v1` will be deleted together with it.
+
+v2 endpoints declare who may call them with `@Public` or `@Authenticated`. This is enforced for every request and documented in the OpenAPI spec as `x-access`.
+
+Each module has its own tests: `./gradlew :v2:test` runs only v2's tests, against an application that contains `core` and `v2` but not `v1`.
 
 ### Run tests and lints
 

@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [opened, synchronize, labeled]
     paths:
-      - 'backend/src/main/resources/db/migration/**'
+      - 'backend/core/src/main/resources/db/migration/**'
       - '.github/workflows/schema-dump.yml'
   workflow_dispatch:
 
@@ -46,7 +46,7 @@ jobs:
         FLYWAY_USER: postgres
         FLYWAY_PASSWORD: postgres
       with:
-        args: -locations=filesystem:./backend/src/main/resources/db/migration/ migrate
+        args: -locations=filesystem:./backend/core/src/main/resources/db/migration/ migrate
 
     - name: Generate new schema
       uses: docker://ghcr.io/loculus-project/mirror/postgres:16.15
