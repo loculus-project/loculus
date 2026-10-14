@@ -175,7 +175,7 @@ class TaxonomyService:
                 f"'{unvalidated_host}' is not a recognized host. "
                 "Please provide an NCBI taxon ID or scientific name. "
                 f"Find valid hosts in NCBI Taxonomy ({TAXONOMY_BROWSER_URL}). "
-                "NOTE: only scientific names (not synonyms) are supported."
+                "NOTE: only scientific names (not synonyms) and taxon IDs are supported."
             )
             return lookup_failed(message, error_if_failed)
 
