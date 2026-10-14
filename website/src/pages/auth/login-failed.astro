@@ -1,0 +1,20 @@
+---
+import { buttonClasses } from '../../components/common/buttonStyles.ts';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { routes } from '../../routes/routes.ts';
+
+const retryReturnTo = new URL(routes.userOverviewPage(), Astro.url.origin).toString();
+const retryUrl = routes.authLogin(retryReturnTo);
+Astro.response.status = 400;
+---
+
+<BaseLayout title='Login could not be completed' activeTopNavigationItem='account'>
+    <div class='bc'>
+        <h1 class='title'>Login could not be completed</h1>
+        <p>The login may have expired, been cancelled, or already been used. Please start a new login to continue.</p>
+        <div class='flex gap-3 mt-4'>
+            <a href={retryUrl} class={buttonClasses({ variant: 'primary' })}>Try logging in again</a>
+            <a href='/' class={buttonClasses({ variant: 'outline-neutral' })}>Return home</a>
+        </div>
+    </div>
+</BaseLayout>
