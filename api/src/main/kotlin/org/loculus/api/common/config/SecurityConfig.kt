@@ -1,9 +1,9 @@
-package org.loculus.api.config
+package org.loculus.api.common.config
 
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import mu.KotlinLogging
-import org.loculus.api.auth.getRoles
+import org.loculus.api.common.auth.getRoles
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -33,10 +33,6 @@ private val log = KotlinLogging.logger { }
 @EnableWebSecurity
 class SecurityConfig {
 
-    private val publicGetEndpoints = arrayOf(
-        "/v2/groups/*",
-    )
-
     @Bean
     fun securityFilterChain(
         httpSecurity: HttpSecurity,
@@ -54,7 +50,9 @@ class SecurityConfig {
                 "/swagger-ui/**",
                 "/swagger-ui.html",
             ).permitAll()
-            auth.requestMatchers(HttpMethod.GET, *publicGetEndpoints).permitAll()
+            // Access to API routes is declared per controller method and enforced by AccessInterceptor.
+            // Here we only validate bearer tokens: a present but invalid token is still a 401.
+            auth.requestMatchers("/v2/**").permitAll()
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
             auth.anyRequest().authenticated()
         }

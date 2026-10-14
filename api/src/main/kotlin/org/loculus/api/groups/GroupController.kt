@@ -3,9 +3,10 @@ package org.loculus.api.groups
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
-import org.loculus.api.auth.AuthenticatedUser
-import org.loculus.api.auth.HiddenParam
-import org.loculus.api.auth.User
+import org.loculus.api.common.auth.AuthenticatedUser
+import org.loculus.api.common.auth.HiddenParam
+import org.loculus.api.common.auth.Public
+import org.loculus.api.common.auth.User
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -21,6 +22,9 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
+/**
+ * Endpoints require an authenticated user unless annotated with [Public] (see [org.loculus.api.common.auth.Access]).
+ */
 @RestController
 @RequestMapping("/v2", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "Groups")
@@ -45,7 +49,8 @@ class GroupController(private val groupService: GroupService) {
         return ResponseEntity.created(location).body(created)
     }
 
-    @Operation(description = "Get a group. Public; the contact email is omitted when not authenticated.")
+    @Operation(description = "Get a group. The contact email is omitted when not authenticated.")
+    @Public
     @GetMapping("/groups/{groupId}")
     fun getGroup(@HiddenParam user: User, @PathVariable groupId: Int): Group = groupService.getGroup(groupId, user)
 

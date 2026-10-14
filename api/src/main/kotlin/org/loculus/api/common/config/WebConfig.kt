@@ -1,9 +1,10 @@
-package org.loculus.api.config
+package org.loculus.api.common.config
 
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.loculus.api.auth.UserArgumentResolver
-import org.loculus.api.error.ServiceUnavailableException
+import org.loculus.api.common.auth.AccessInterceptor
+import org.loculus.api.common.auth.UserArgumentResolver
+import org.loculus.api.common.error.ServiceUnavailableException
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
@@ -23,6 +24,7 @@ class WebConfig(@Value("\${loculus.read-only-mode}") private val readOnlyMode: B
     }
 
     override fun addInterceptors(registry: InterceptorRegistry) {
+        registry.addInterceptor(AccessInterceptor()).addPathPatterns("/v2/**")
         registry.addInterceptor(ReadOnlyModeInterceptor(readOnlyMode))
     }
 

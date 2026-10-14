@@ -1,4 +1,4 @@
-package org.loculus.api.audit
+package org.loculus.api.common.audit
 
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.jdbc.insert

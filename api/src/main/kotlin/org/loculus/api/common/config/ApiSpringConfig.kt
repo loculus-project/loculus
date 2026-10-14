@@ -1,4 +1,4 @@
-package org.loculus.api.config
+package org.loculus.api.common.config
 
 import io.swagger.v3.oas.models.Components
 import io.swagger.v3.oas.models.OpenAPI
@@ -8,6 +8,7 @@ import io.swagger.v3.oas.models.security.SecurityScheme
 import org.jetbrains.exposed.v1.core.DatabaseConfig
 import org.jetbrains.exposed.v1.core.Slf4jSqlDebugLogger
 import org.jetbrains.exposed.v1.spring.boot4.autoconfigure.ExposedAutoConfiguration
+import org.loculus.api.common.auth.AccessOperationCustomizer
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration
@@ -35,6 +36,9 @@ class ApiSpringConfig {
 
     @Bean
     fun clock(): Clock = Clock.systemUTC()
+
+    @Bean
+    fun accessOperationCustomizer() = AccessOperationCustomizer()
 
     @Bean
     fun openApi(): OpenAPI = OpenAPI()

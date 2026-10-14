@@ -1,4 +1,4 @@
-package org.loculus.api.error
+package org.loculus.api.common.error
 
 import mu.KotlinLogging
 import org.springframework.http.HttpHeaders
@@ -27,6 +27,12 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
         return problem(e.status, e.message)
     }
 
+    @ExceptionHandler(UnauthorizedException::class)
+    fun handleUnauthorizedException(e: UnauthorizedException): ResponseEntity<ProblemDetail> {
+        log.info { "Caught ${e.javaClass.simpleName}: ${e.message}" }
+        return problem(e.status, e.message, HttpHeaders().apply { set(HttpHeaders.WWW_AUTHENTICATE, "Bearer") })
+    }
+
     @ExceptionHandler(Throwable::class)
     fun handleUnexpectedException(e: Throwable): ResponseEntity<ProblemDetail> {
         log.error(e) { "Caught unexpected exception: ${e.message}" }
@@ -44,8 +50,13 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
         return handleExceptionInternal(ex, body, headers, status, request)
     }
 
-    private fun problem(status: HttpStatus, detail: String?): ResponseEntity<ProblemDetail> = ResponseEntity
+    private fun problem(
+        status: HttpStatus,
+        detail: String?,
+        headers: HttpHeaders = HttpHeaders(),
+    ): ResponseEntity<ProblemDetail> = ResponseEntity
         .status(status)
+        .headers(headers)
         .contentType(MediaType.APPLICATION_PROBLEM_JSON)
         .body(
             ProblemDetail.forStatus(status).also {
@@ -57,6 +68,7 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
 
 sealed class ApiException(val status: HttpStatus, override val message: String) : RuntimeException(message)
 
+class UnauthorizedException(message: String) : ApiException(HttpStatus.UNAUTHORIZED, message)
 class ForbiddenException(message: String) : ApiException(HttpStatus.FORBIDDEN, message)
 class NotFoundException(message: String) : ApiException(HttpStatus.NOT_FOUND, message)
 class ConflictException(message: String) : ApiException(HttpStatus.CONFLICT, message)

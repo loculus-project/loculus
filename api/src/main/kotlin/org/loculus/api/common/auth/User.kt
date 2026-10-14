@@ -1,4 +1,4 @@
-package org.loculus.api.auth
+package org.loculus.api.common.auth
 
 import io.swagger.v3.oas.annotations.media.Schema
 import mu.KotlinLogging

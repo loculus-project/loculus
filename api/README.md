@@ -26,9 +26,38 @@ Other differences from v1:
 - Lists are ordered by id.
 - Error messages say "Group N does not exist." everywhere (v1 sometimes uses "Group(s) N do(es) not exist.").
 - Missing or invalid tokens on write requests return `401` (v1 returns `403`, because CSRF protection is on).
-- Code is grouped by feature (`groups/`) rather than by layer (`controller/`, `service/`, …). Moving a feature is then
-  one folder plus its tests.
 - It uses Jackson 3, the Spring Boot 4 default. The backend still uses the Jackson 2 bridge.
+
+## Layout
+
+```
+src/main/kotlin/org/loculus/api/
+  common/        shared by all features: auth, error handling, config, audit log
+  groups/        GroupController, GroupService, GroupTables, GroupTypes, UserDirectory
+```
+
+- **One folder per feature.** Moving a feature from the backend means adding one folder plus its tests.
+- **One controller per feature**, split only when a feature has distinct audiences with their own URL prefixes and
+  access rules (e.g. submission: submitters, preprocessing pipelines, public downloads).
+- **Controllers are thin:** request mapping, access annotation, one service call. Logic lives in the service.
+
+## Access control
+
+Each endpoint declares who may call it, on the controller method itself (`common/auth/Access.kt`):
+
+| Annotation                 | Who may call it                                   |
+| -------------------------- | ------------------------------------------------- |
+| `@Public`                  | anyone, with or without a token                   |
+| _(none)_                   | any authenticated user                            |
+| `@RequiresRole(role)`      | authenticated users with that Keycloak realm role |
+
+The security filter chain only validates bearer tokens on `/v2/**`, so an invalid token is always a `401`.
+`AccessInterceptor` enforces the annotation for the controller method that handles the request, so there is no
+separate list of paths to keep in sync. Data-dependent checks (e.g. "member of this group") stay in the service.
+
+The access level is also written into the OpenAPI spec as `x-access` (`public`, `authenticated`, `role:<name>`), and
+public endpoints have an empty `security` requirement. `OpenApiTest` fails if an endpoint lacks `x-access`, or if the
+set of public endpoints changes without the test being updated.
 
 ## Database
 

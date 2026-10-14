@@ -1,4 +1,4 @@
-package org.loculus.api.config
+package org.loculus.api.common.config
 
 import org.junit.jupiter.api.Test
 import org.loculus.api.ApiTest
