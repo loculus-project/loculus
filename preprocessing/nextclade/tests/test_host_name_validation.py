@@ -228,5 +228,5 @@ def test_host_processing_ambiguous_sci_name(mock_session: MagicMock) -> None:
     assert result[0].processed_entry.errors == []
     assert len(result[0].processed_entry.warnings) == 1
     warning = result[0].processed_entry.warnings[0].message
-    assert "'Aedes aegypti' maps to 2 taxa" in warning
+    assert "'Aedes aegypti' matches 2 taxa" in warning
     assert "9999" in warning
