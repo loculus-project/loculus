@@ -168,7 +168,7 @@ class TaxonomyService:
             message = (
                 f"'{unvalidated_host}' is not a recognized host. "
                 "Please provide an NCBI taxon ID or scientific name. "
-                "Find valid hosts in NCBI Taxonomy: https://www.ncbi.nlm.nih.gov/taxonomy. "
+                "Find valid hosts in NCBI Taxonomy (https://www.ncbi.nlm.nih.gov/taxonomy). "
                 "NOTE: only scientific names (not synonyms) are supported."
             )
             return lookup_failed(message, error_if_failed)
