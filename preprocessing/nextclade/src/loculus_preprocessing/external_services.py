@@ -79,6 +79,9 @@ class RequestCache:
         self.cache.clear()
 
 
+TAXONOMY_BROWSER_URL = "https://www.ncbi.nlm.nih.gov/taxonomy"
+
+
 class Taxon(BaseModel):
     """Subset of `Taxon` in the taxonomy service"""
 
@@ -107,10 +110,9 @@ def lookup_failed(message: str, error_if_failed: bool) -> RawProcessingResult:
 def ambiguous_host_warning(host: str, selected: Taxon, taxa: list[Taxon]) -> str:
     alternatives = ", ".join([str(t.tax_id) for t in taxa if t.tax_id != selected.tax_id])
     return (
-        f"'{host}' matches multiple taxa, selected the most generic one: "
-        f"{selected.scientific_name} ({selected.tax_id}). "
-        f"To select a different taxon, please provide one of these taxon IDs "
-        f"in the host field instead: {alternatives}"
+        f"'{host}' matches multiple taxa, chose '{selected.scientific_name} ({selected.tax_id})'. "
+        f"To select a different taxon, provide one of these taxon IDs as `host`: {alternatives}. "
+        f"(you can search for IDs on {TAXONOMY_BROWSER_URL} to see which taxon they map to) "
     )
 
 
@@ -168,7 +170,7 @@ class TaxonomyService:
             message = (
                 f"'{unvalidated_host}' is not a recognized host. "
                 "Please provide an NCBI taxon ID or scientific name. "
-                "Find valid hosts in NCBI Taxonomy (https://www.ncbi.nlm.nih.gov/taxonomy). "
+                f"Find valid hosts in NCBI Taxonomy ({TAXONOMY_BROWSER_URL}). "
                 "NOTE: only scientific names (not synonyms) are supported."
             )
             return lookup_failed(message, error_if_failed)
