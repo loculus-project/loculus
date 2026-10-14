@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import type { FileKind, ProcessedFile } from './fileProcessing.ts';
@@ -49,14 +49,17 @@ export const FileUploadComponent = <F extends ProcessedFile>({
                     },
                     (error) => {
                         toast.error(error.message, { autoClose: false });
-                        if (fileInputRef.current) {
-                            fileInputRef.current.value = '';
-                        }
                         return undefined;
                     },
                 );
             }
-            await setFile(processedFile);
+            try {
+                await setFile(processedFile);
+            } catch (error) {
+                toast.error(`${error instanceof Error ? error.message : error}`);
+                return;
+            }
+
             rawSetMyFile(processedFile);
             // update edited state
             if (processedFile === undefined && initialValue !== undefined) {
@@ -74,12 +77,16 @@ export const FileUploadComponent = <F extends ProcessedFile>({
         [setFile, rawSetMyFile],
     );
     const reset = async () => {
-        await setFile(initialValue);
+        try {
+            await setFile(initialValue);
+        } catch (error) {
+            toast.error(`${error instanceof Error ? error.message : error}`);
+            return;
+        }
         rawSetMyFile(initialValue);
         setIsEdited(false);
     };
 
-    const fileInputRef = useRef<HTMLInputElement>(null);
     const handleUpload = () => {
         document.getElementById(name)?.click();
     };
@@ -111,9 +118,6 @@ export const FileUploadComponent = <F extends ProcessedFile>({
                 .arrayBuffer()
                 .catch(() => {
                     void setMyFile(null);
-                    if (fileInputRef.current) {
-                        fileInputRef.current.value = '';
-                    }
                 });
         }, 500);
 
@@ -121,7 +125,7 @@ export const FileUploadComponent = <F extends ProcessedFile>({
     }, [myFile, setMyFile]);
     return (
         <div
-            className={`flex flex-col ${small ? 'h-24' : 'h-40'} w-full rounded-lg border ${myFile ? 'border-hidden' : 'border-dashed border-gray-900/25'} ${isDragOver && !myFile ? 'bg-green-100' : ''} relative`}
+            className={`flex flex-col ${small ? 'h-24' : 'h-40'} w-full rounded-lg border ${myFile ? 'border-hidden' : 'border-dashed border-gray-900/25'} ${isDragOver ? 'bg-green-100' : ''} relative`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -153,9 +157,12 @@ export const FileUploadComponent = <F extends ProcessedFile>({
                                     data-testid={name}
                                     onChange={(event) => {
                                         const file = event.target.files?.[0] ?? null;
+
+                                        // Reset the input so the same file can be selected again
+                                        event.target.value = '';
+
                                         void setMyFile(file);
                                     }}
-                                    ref={fileInputRef}
                                 />
                             )}
                         </label>
