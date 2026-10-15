@@ -3,11 +3,13 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from ena_deposition.api import app
+from ena_deposition.api import app, get_run_accessions
 from ena_deposition.config import Config, get_config
-from ena_deposition.submission_db_helper import db_init
+from ena_deposition.submission_db_helper import RawReadsTableEntry, Status, db_init
 from fastapi.testclient import TestClient
 from requests.status_codes import codes
+from sqlalchemy import delete
+from sqlalchemy.orm import Session
 
 client = TestClient(app)
 
@@ -64,6 +66,32 @@ class ApiTest(unittest.TestCase):
             "biosampleAccessions": list(mock_biosamples.values()),
             "runAccessions": ["ERR001"],
         }
+
+    def test_get_run_accessions_returns_only_submitted_runs(self) -> None:
+        accessions = ["LOC_RUN1", "LOC_RUN2", "LOC_RUN3"]
+        rows = [
+            RawReadsTableEntry(
+                accession="LOC_RUN1",
+                version=1,
+                status=Status.SUBMITTED,
+                result={"run_accession": "ERR001", "erx_accession": "ERX001"},
+            ),
+            RawReadsTableEntry(
+                accession="LOC_RUN2", version=1, status=Status.READY, result={"run_accession": "X"}
+            ),
+            RawReadsTableEntry(accession="LOC_RUN3", version=1, status=Status.SUBMITTED),
+        ]
+        with Session(self.db_engine) as session:
+            session.add_all(rows)
+            session.commit()
+        try:
+            assert get_run_accessions(self.db_engine) == {"LOC_RUN1": "ERR001"}
+        finally:
+            with Session(self.db_engine) as session:
+                session.execute(
+                    delete(RawReadsTableEntry).where(RawReadsTableEntry.accession.in_(accessions))
+                )
+                session.commit()
 
 
 if __name__ == "__main__":

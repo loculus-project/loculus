@@ -223,5 +223,67 @@ def test_muted_hashes_prevents_revision():
     )
 
 
+def test_raw_reads_attached_from_ena_trigger_revision():
+    """
+    Tests that ENA raw reads are attached to an entry via its BioSample,
+    which changes its hash so that the entry is revised.
+    """
+    target_loculus = "LOC_0000CC2"
+    target_submission = "KX014001.1.S"
+    config_overrides = {"ingest_raw_reads": "true"}
+
+    prepare_compare_hashes_inputs(config_overrides)
+
+    # Give the target a BioSample that has a run at ENA
+    metadata_path = OUTPUT_DIR / "metadata_post_group.ndjson"
+    records = list(orjsonl.stream(str(metadata_path)))
+    for record in records:
+        if record["id"] == target_submission:
+            record["metadata"]["biosampleAccession"] = "SAMN00000001"
+    orjsonl.save(str(metadata_path), records)
+    fastq_dir = "ftp.sra.ebi.ac.uk/vol1/fastq/SRR000/001/SRR0000001"
+    pd.DataFrame(
+        [
+            {
+                "run_accession": "SRR0000001",
+                "sample_accession": "SAMN00000001",
+                "instrument_model": "Illumina MiSeq",
+                "base_count": 1000,
+                "fastq_ftp": f"{fastq_dir}/SRR0000001_1.fastq.gz;{fastq_dir}/SRR0000001_2.fastq.gz",
+                "fastq_bytes": "100;101",
+                "fastq_md5": "md5a;md5b",
+            }
+        ]
+    ).to_csv(OUTPUT_DIR / "ena_read_runs.tsv", sep="\t", index=False)
+
+    run_snakemake("fetch_ena_read_runs", touch=True, config_overrides=config_overrides)
+    run_snakemake("attach_raw_reads", config_overrides=config_overrides)
+    run_snakemake("get_previous_submissions", touch=True, config_overrides=config_overrides)
+    run_snakemake("compare_hashes", config_overrides=config_overrides)
+    run_snakemake("prepare_files", config_overrides=config_overrides)
+
+    to_revise = json.loads((OUTPUT_DIR / "to_revise.json").read_text(encoding="utf-8"))
+    unchanged = json.loads((OUTPUT_DIR / "unchanged.json").read_text(encoding="utf-8"))
+    assert to_revise.get(target_submission) == target_loculus
+    assert target_submission not in unchanged
+    # Entries without raw reads keep their hash and are not revised
+    assert unchanged == {"KX014000.1.M": "LOC_0000CC1"}
+
+    revised = pd.read_csv(OUTPUT_DIR / "revise_metadata.tsv", sep="\t", dtype=str).set_index("id")
+    assert json.loads(revised.loc[target_submission, "files.rawReads"]) == [
+        {
+            "name": "SRR0000001_1.fastq.gz",
+            "url": f"https://{fastq_dir}/SRR0000001_1.fastq.gz",
+            "size": 100,
+        },
+        {
+            "name": "SRR0000001_2.fastq.gz",
+            "url": f"https://{fastq_dir}/SRR0000001_2.fastq.gz",
+            "size": 101,
+        },
+    ]
+    assert revised.loc[target_submission, "sequencingInstrument"] == "Illumina MiSeq"
+
+
 if __name__ == "__main__":
     pytest.main(["-v"])
