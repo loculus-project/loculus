@@ -573,7 +573,7 @@ const Acknowledgement = ({
                         databases (ENA, DDBJ, NCBI).
                     </p>
                     <div className='mt-2 py-5'>
-                        <label className='flex items-center'>
+                        <label className='flex items-start'>
                             <Checkbox
                                 size='sm'
                                 name='confirmation-no-pii'
@@ -587,10 +587,9 @@ const Acknowledgement = ({
                                     submitted is not sensitive or human-identifiable.
                                 </p>
                                 <p className='text-xs pl-4 text-gray-500 mt-2'>
-                                    I also confirm that, to the best of my knowledge, the data being submitted is not
-                                    subject to any restrictions that prohibit their open sharing and are submitted in
-                                    compliance with applicable national and international access and benefit-sharing
-                                    obligations.
+                                    To the best of my knowledge, the data being submitted is not subject to any
+                                    restrictions that prohibit their open sharing and are submitted in compliance with
+                                    applicable national and international access and benefit-sharing obligations.
                                 </p>
                             </div>
                         </label>
