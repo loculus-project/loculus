@@ -243,9 +243,17 @@ class FileProcessingService:
         self,
         raw_reads_processing_service_url: str | None,
         timeout_seconds: int = 300,
+        trusted_external_file_url_prefixes: list[str] | None = None,
     ):
         self.raw_reads_processing_service_url = raw_reads_processing_service_url
         self.timeout_seconds = timeout_seconds
+        self.trusted_external_file_url_prefixes = trusted_external_file_url_prefixes or []
+
+    def _is_trusted_external_file(self, file: FileIdAndNameAndReadUrl) -> bool:
+        url = file.url
+        return url is not None and any(
+            url.startswith(prefix) for prefix in self.trusted_external_file_url_prefixes
+        )
 
     def process_files(  # noqa: PLR0911
         self,
@@ -262,7 +270,13 @@ class FileProcessingService:
                 logger.warning(message)
                 return [self._annotation([file.name for file in file_list], message)]
 
-        file_names = [file.name for file_list in files.values() for file in file_list]
+        all_files = [file for file_list in files.values() for file in file_list]
+        file_names = [file.name for file in all_files]
+
+        # Files linked from a trusted archive (e.g. ENA) were already validated there and
+        # can be too large to download during preprocessing
+        if all_files and all(self._is_trusted_external_file(file) for file in all_files):
+            return []
 
         if not self.raw_reads_processing_service_url:
             return [

@@ -346,7 +346,8 @@ CREATE TABLE public.files (
     size bigint,
     multipart_completed boolean DEFAULT false NOT NULL,
     multipart_upload_id text,
-    marked_for_deletion_at timestamp without time zone
+    marked_for_deletion_at timestamp without time zone,
+    external_url text
 );
 
 
@@ -991,6 +992,13 @@ ALTER TABLE ONLY public.user_groups_table
 --
 
 CREATE INDEX data_use_terms_table_accession_idx ON public.data_use_terms_table USING btree (accession);
+
+
+--
+-- Name: files_group_id_external_url_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX files_group_id_external_url_idx ON public.files USING btree (group_id, external_url) WHERE (external_url IS NOT NULL);
 
 
 --
