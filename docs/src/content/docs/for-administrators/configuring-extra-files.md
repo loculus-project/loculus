@@ -163,7 +163,7 @@ The name (`rawReads` in the example above) must not be a name that is also used 
 ### Linking files from external archives
 
 Files that are already hosted in a trusted public archive can be linked instead of uploaded.
-For example, raw reads hosted at ENA can be attached to sequence entries without copying them to S3.
+For example, the [INSDC ingest pipeline](https://github.com/loculus-project/loculus/tree/main/ingest) can attach raw reads hosted at ENA to ingested sequence entries without copying them to S3.
 To allow this, configure the URL prefixes that may be linked:
 
 ```yaml
@@ -181,6 +181,8 @@ The preprocessing pipeline does not send linked files to the raw reads processin
 Only add prefixes of archives you trust: users of the instance can link any file starting with one of these prefixes.
 Each prefix should include the host and end with a `/`.
 :::
+
+To have the INSDC ingest attach raw reads from ENA for an organism, set `ingest_raw_reads: true` in its ingest config, see the [ingest README](https://github.com/loculus-project/loculus/tree/main/ingest#raw-reads-from-ena).
 
 ## S3 Configuration
 

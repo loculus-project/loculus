@@ -69,6 +69,19 @@ Using the config `grouping_override` you can provide a URL to a JSON file contai
 
 During grouping, this file will be used first to group segments together into a sequence entry. Only the remaining segments will be grouped using heuristic grouping (as described above).
 
+### Raw reads from ENA
+
+If `ingest_raw_reads` is enabled, the pipeline attaches links to raw reads hosted at ENA to the ingested entries (`scripts/attach_raw_reads.py`). The FASTQ files are not downloaded: the backend stores them as external files that redirect to ENA (see [linking files from external archives](https://loculus.org/for-administrators/configuring-extra-files/#linking-files-from-external-archives)), so `fileSharing.externalFileUrlPrefixes` must allow `https://ftp.sra.ebi.ac.uk/vol1/fastq/` and the organism must accept files in the `raw_reads_file_category` (default `rawReads`).
+
+- All read runs of the taxon are fetched from the [ENA portal API](https://www.ebi.ac.uk/ena/portal/api/) (`result=read_run`). ENA mirrors SRA and DDBJ, so this includes `SRR`/`DRR` runs.
+- Runs are matched to entries by the run accessions INSDC lists for the assembly (`insdcRawReadsAccession`) or, if there are none, by BioSample (`biosampleAccession`). If several runs match, the one with the most bases is attached.
+- Only runs with an instrument model and ENA-generated FASTQ files for single-end or paired-end reads are attached. For paired runs, the file of reads whose mate was lost (`<run>.fastq.gz`) is dropped.
+- Runs that Loculus deposited at ENA itself are skipped (`runAccessions` of the ENA deposition's `/submitted` endpoint).
+- `sequencingInstrument` (required when raw reads are provided) is filled from the run's instrument model, and `insdcRawReadsAccession` with the run accession, if they are empty.
+- The run accession, instrument and file URLs and MD5 checksums are added to the entry's hash, so attaching (or changing) raw reads revises the entry. The hash of entries without raw reads is unchanged, so enabling the feature only revises entries that gain raw reads.
+
+Until submission, the `files.<category>` column holds a JSON list of the files' names, URLs and sizes. Right before submitting, `loculus_client.py` registers the URLs with the backend (`/files/register-external`) and replaces them with file IDs.
+
 ### Getting status and hashes of previously submitted sequences and triaging
 
 Before uploading new sequences, the pipeline queries the Loculus backend for the status and hash of all previously submitted sequences. This is done to avoid uploading sequences that have already been submitted and have not changed. Furthermore, only accessions whose highest version is in status `APPROVED_FOR_RELEASE` can be updated through revision. Entries in other states cannot currently be updated (TODO: Potentially use `/submit-edited-data` endpoint to allow updating entries in more states).
@@ -100,6 +113,8 @@ The pipeline interacts with the following components:
   - Loculus backend: Submit sequences and get status and hashes of previously submitted sequences
 - NCBI:
   - NCBI server queried by `datasets` CLI : Download sequences and metadata
+- ENA (only if `ingest_raw_reads` is enabled):
+  - ENA portal API: Download metadata and FASTQ links of read runs
 
 Indirect requirements:
 

@@ -22,6 +22,10 @@ mock_biosamples = {
     "DEF456": "BIO002",
 }
 
+mock_runs = {
+    "ABC123": "ERR001",
+}
+
 config_file = "./test/test_config.yaml"
 
 
@@ -32,16 +36,21 @@ class ApiTest(unittest.TestCase):
             self.config.db_password, self.config.db_username, self.config.db_url
         )
 
+    @patch("ena_deposition.api.get_run_accessions")
     @patch("ena_deposition.api.get_insdc_accessions")
     @patch("ena_deposition.api.get_bio_sample_accessions")
     def test_submit(
-        self, mock_get_bio_sample_accessions: Mock, mock_get_insdc_accessions: Mock
+        self,
+        mock_get_bio_sample_accessions: Mock,
+        mock_get_insdc_accessions: Mock,
+        mock_get_run_accessions: Mock,
     ) -> None:
         """
         Test the full ENA submission pipeline with accurate data - this should succeed
         """
         mock_get_bio_sample_accessions.return_value = mock_biosamples
         mock_get_insdc_accessions.return_value = mock_insdc_accessions
+        mock_get_run_accessions.return_value = mock_runs
 
         app.state.config = self.config
         app.state.engine = self.db_engine
@@ -53,6 +62,7 @@ class ApiTest(unittest.TestCase):
             "status": "ok",
             "insdcAccessions": ["INS001", "INS002", "INS003"],
             "biosampleAccessions": list(mock_biosamples.values()),
+            "runAccessions": ["ERR001"],
         }
 
 
