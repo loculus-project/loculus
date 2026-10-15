@@ -587,9 +587,17 @@ const Acknowledgement = ({
                                     submitted is not sensitive or human-identifiable.
                                 </p>
                                 <p className='text-xs pl-4 text-gray-500'>
-                                    To the best of my knowledge, the data being submitted is not subject to any
-                                    restrictions that prohibit its open sharing and is submitted in compliance with
-                                    applicable national and international access and benefit-sharing obligations.
+                                    I further confirm that, to the best of my knowledge, the data being submitted is not
+                                    subject to any restrictions that prohibit its open sharing and is submitted in
+                                    compliance with applicable national and international{' '}
+                                    <a
+                                        href='https://www.ebi.ac.uk/abs-dsi/'
+                                        target='_blank'
+                                        className='text-primary-600 hover:underline'
+                                    >
+                                        access and benefit-sharing obligations
+                                    </a>
+                                    .
                                 </p>
                             </div>
                         </label>
