@@ -586,6 +586,9 @@ const Acknowledgement = ({
                                     I confirm that I have the legal right to submit this data, and that the data
                                     submitted is not sensitive or human-identifiable.
                                 </p>
+                                <p className='text-xs pl-4 text-gray-500 mt-2'>
+                                    I also confirm that, to the best of my knowledge, the data being submitted is not subject to any restrictions that prohibit their open sharing and are submitted in compliance with applicable national and international access and benefit-sharing obligations.
+                                </p>
                             </div>
                         </label>
                     </div>
