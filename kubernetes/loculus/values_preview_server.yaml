@@ -2,6 +2,12 @@ enableServiceMonitor: true
 createTestAccounts: true
 backendExtraJvmOpts: ["-XX:MaxRAMPercentage=25"]
 secrets:
+  # Public, disposable credentials for reproducing the Keycloak Basic Auth conflict.
+  basicauth:
+    type: rawhtpasswd
+    data:
+      username: test
+      password: test
   smtp-password:
     type: sealedsecret
     clusterWide: "true"
