@@ -1,1 +1,6 @@
 rootProject.name = 'backend'
+
+// core: infrastructure that every API version needs (auth, errors, audit log, database setup and migrations)
+// v1: the current API
+// app: the Spring Boot application
+include 'core', 'v1', 'app'

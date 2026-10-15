@@ -1,0 +1,284 @@
+package org.loculus.backend.controller
+
+import io.minio.BucketExistsArgs
+import io.minio.MakeBucketArgs
+import io.minio.MinioClient
+import io.minio.SetBucketPolicyArgs
+import mu.KotlinLogging
+import org.junit.jupiter.api.extension.BeforeAllCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.extension.ExtensionContext
+import org.loculus.backend.api.Address
+import org.loculus.backend.api.NewGroup
+import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
+import org.loculus.backend.controller.files.FilesClient
+import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
+import org.loculus.backend.controller.seqsetcitations.SeqSetCitationsControllerClient
+import org.loculus.backend.controller.submission.SubmissionControllerClient
+import org.loculus.backend.controller.submission.SubmissionConvenienceClient
+import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
+import org.loculus.backend.service.files.FILES_TABLE_NAME
+import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
+import org.loculus.backend.service.groupmanagement.USER_GROUPS_TABLE_NAME
+import org.loculus.backend.service.submission.METADATA_UPLOAD_AUX_TABLE_NAME
+import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME
+import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_TABLE_NAME
+import org.loculus.backend.service.submission.SEQUENCE_UPLOAD_AUX_TABLE_NAME
+import org.loculus.backend.service.submission.dbtables.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
+import org.loculus.backend.testutil.TestEnvironment
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
+import org.springframework.context.annotation.Import
+import org.springframework.core.annotation.AliasFor
+import org.springframework.test.annotation.DirtiesContext
+import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.DynamicPropertyRegistrar
+import org.springframework.test.context.DynamicPropertyRegistry
+
+/**
+ * The main annotation for tests. It also loads the [EndpointTestExtension], which initializes
+ * a PostgreSQL test container.
+ * You can set additional properties to - for example - override the backend config file, like in
+ * [org.loculus.backend.controller.submission.GetReleasedDataDataUseTermsDisabledEndpointTest].
+ */
+@Target(AnnotationTarget.TYPE, AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+@AutoConfigureMockMvc
+@SpringBootTest
+@ActiveProfiles("with-database")
+@ExtendWith(EndpointTestExtension::class)
+@DirtiesContext
+@Import(
+    SubmissionControllerClient::class,
+    SubmissionConvenienceClient::class,
+    GroupManagementControllerClient::class,
+    DataUseTermsControllerClient::class,
+    SeqSetCitationsControllerClient::class,
+    PublicJwtKeyConfig::class,
+    FilesClient::class,
+    EndpointTestDatasourceProperties::class,
+)
+annotation class EndpointTest(@get:AliasFor(annotation = SpringBootTest::class) val properties: Array<String> = [])
+
+const val SINGLE_SEGMENTED_REFERENCE_GENOME = "src/test/resources/backend_config_single_segment.json"
+
+const val DATA_USE_TERMS_DISABLED_CONFIG = "src/test/resources/backend_config_data_use_terms_disabled.json"
+
+const val S3_CONFIG = "src/test/resources/backend_config_s3.json"
+
+const val SPRING_DATASOURCE_URL = "spring.datasource.url"
+const val SPRING_DATASOURCE_USERNAME = "spring.datasource.username"
+const val SPRING_DATASOURCE_PASSWORD = "spring.datasource.password"
+
+const val ACCESSION_SEQUENCE_NAME = "accession_sequence"
+const val DEFAULT_GROUP_NAME = "testGroup"
+const val DEFAULT_GROUP_NAME_CHANGED = "testGroup name updated"
+val DEFAULT_GROUP = NewGroup(
+    groupName = DEFAULT_GROUP_NAME,
+    institution = "testInstitution",
+    address = Address(
+        line1 = "testAddressLine1",
+        line2 = "testAddressLine2",
+        postalCode = "testPostalCode",
+        city = "testCity",
+        state = "testState",
+        country = "testCountry",
+    ),
+    contactEmail = "testEmail",
+)
+val DEFAULT_GROUP_CHANGED = NewGroup(
+    groupName = DEFAULT_GROUP_NAME_CHANGED,
+    institution = "Updated institution",
+    address = Address(
+        line1 = "Updated address line 1",
+        line2 = "Updated address line 2",
+        postalCode = "Updated post code",
+        city = "Updated city",
+        state = "Updated state",
+        country = "Updated country",
+    ),
+    contactEmail = "Updated email",
+)
+
+const val ALTERNATIVE_DEFAULT_GROUP_NAME = "testGroup2"
+
+val ALTERNATIVE_DEFAULT_GROUP = NewGroup(
+    groupName = ALTERNATIVE_DEFAULT_GROUP_NAME,
+    institution = "alternativeTestInstitution",
+    address = Address(
+        line1 = "alternativeTestAddressLine1",
+        line2 = "alternativeTestAddressLine2",
+        postalCode = "alternativeTestPostalCode",
+        city = "alternativeTestCity",
+        state = "alternativeTestState",
+        country = "alternativeTestCountry",
+    ),
+    contactEmail = "alternativeTestEmail",
+)
+
+val MINIO_TEST_REGION = "testregion"
+val MINIO_TEST_BUCKET = "testbucket"
+
+private val log = KotlinLogging.logger { }
+
+private val env = TestEnvironment()
+
+private var startupFailure: Throwable? = null
+
+private val NAMESPACE = ExtensionContext.Namespace.create(EndpointTestExtension::class.java)
+
+class EndpointTestExtension :
+    BeforeAllCallback,
+    BeforeEachCallback {
+
+    override fun beforeAll(context: ExtensionContext) {
+        startupFailure?.let { throw it }
+        try {
+            context.root
+                .getStore(NAMESPACE)
+                .computeIfAbsent(TestInfrastructure::class.java)
+        } catch (e: Throwable) {
+            runCatching { env.stop() }.onFailure(e::addSuppressed)
+            startupFailure = e
+            throw e
+        }
+    }
+
+    override fun beforeEach(context: ExtensionContext) {
+        log.debug("Clearing database")
+        env.postgres.exec(clearDatabaseStatement())
+    }
+}
+
+internal class TestInfrastructure : AutoCloseable {
+    init {
+        env.start()
+
+        if (env.useNonDockerInfra) {
+            log.info { "Started local Postgres: ${env.postgres.jdbcUrl}" }
+            log.info { "Started local MinIO: ${env.minio.s3Url}" }
+        } else {
+            log.info {
+                "Started Postgres container: ${env.postgres.jdbcUrl}, user ${env.postgres.username}, pw ${env.postgres.password}"
+            }
+            log.info {
+                "Started MinIO container: ${env.minio.s3Url}, user ${env.minio.accessKey}, pw ${env.minio.secretKey}"
+            }
+        }
+
+        createBucket(
+            env.minio.s3Url,
+            env.minio.accessKey,
+            env.minio.secretKey,
+            MINIO_TEST_REGION,
+            MINIO_TEST_BUCKET,
+        )
+
+        System.setProperty(BackendSpringProperty.S3_ENABLED, "true")
+        System.setProperty(BackendSpringProperty.S3_BUCKET_ENDPOINT, env.minio.s3Url)
+        System.setProperty(BackendSpringProperty.S3_BUCKET_REGION, MINIO_TEST_REGION)
+        System.setProperty(BackendSpringProperty.S3_BUCKET_BUCKET, MINIO_TEST_BUCKET)
+        System.setProperty(BackendSpringProperty.S3_BUCKET_ACCESS_KEY, env.minio.accessKey)
+        System.setProperty(BackendSpringProperty.S3_BUCKET_SECRET_KEY, env.minio.secretKey)
+    }
+
+    override fun close() {
+        try {
+            env.stop()
+        } finally {
+            System.clearProperty(BackendSpringProperty.S3_ENABLED)
+            System.clearProperty(BackendSpringProperty.S3_BUCKET_ENDPOINT)
+            System.clearProperty(BackendSpringProperty.S3_BUCKET_REGION)
+            System.clearProperty(BackendSpringProperty.S3_BUCKET_BUCKET)
+            System.clearProperty(BackendSpringProperty.S3_BUCKET_ACCESS_KEY)
+            System.clearProperty(BackendSpringProperty.S3_BUCKET_SECRET_KEY)
+        }
+    }
+}
+
+class EndpointTestDatasourceProperties : DynamicPropertyRegistrar {
+    override fun accept(registry: DynamicPropertyRegistry) {
+        // Resolved when the Spring context builds its DataSource, i.e. after beforeAll started the infrastructure.
+        registry.add(SPRING_DATASOURCE_URL) { env.postgres.jdbcUrl }
+        registry.add(SPRING_DATASOURCE_USERNAME) { env.postgres.username }
+        registry.add(SPRING_DATASOURCE_PASSWORD) { env.postgres.password }
+    }
+}
+
+private fun clearDatabaseStatement(): String = """
+        truncate table
+            $GROUPS_TABLE_NAME,
+            $SEQUENCE_ENTRIES_TABLE_NAME,
+            $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME,
+            $USER_GROUPS_TABLE_NAME,
+            $METADATA_UPLOAD_AUX_TABLE_NAME,
+            $SEQUENCE_UPLOAD_AUX_TABLE_NAME,
+            $DATA_USE_TERMS_TABLE_NAME,
+            $CURRENT_PROCESSING_PIPELINE_TABLE_NAME,
+            $FILES_TABLE_NAME,
+            external_metadata,
+            seqsets,
+            seqset_records,
+            seqset_to_records,
+            seqset_citation_source,
+            seqset_to_citation_source,
+            audit_log,
+            table_update_tracker,
+            task_lock
+            cascade;
+        alter sequence $ACCESSION_SEQUENCE_NAME restart with 1;
+        alter sequence groups_table_group_id_seq restart with 1;
+        alter sequence seqset_id_sequence restart with 1;
+        alter sequence seqset_records_seqset_record_id_seq restart with 1;
+        alter sequence seqset_to_records_seqset_record_id_seq restart with 1;
+        alter sequence seqset_citation_source_citation_source_id_seq restart with 1;
+        alter sequence user_groups_table_id_seq restart with 1;
+        alter sequence audit_log_id_seq restart with 1;
+        insert into $CURRENT_PROCESSING_PIPELINE_TABLE_NAME values
+            (1, now(), '$DEFAULT_ORGANISM'),
+            (1, now(), '$OTHER_ORGANISM'),
+            (1, now(), '$ORGANISM_WITHOUT_CONSENSUS_SEQUENCES');
+    """
+
+private fun createBucket(endpoint: String, accessKey: String, secretKey: String, region: String, bucket: String) {
+    val minioClient = MinioClient
+        .builder()
+        .endpoint(endpoint)
+        .credentials(accessKey, secretKey)
+        .build()
+    val exists = minioClient.bucketExists(
+        BucketExistsArgs.builder()
+            .bucket(bucket)
+            .build(),
+    )
+    if (!exists) {
+        minioClient.makeBucket(
+            MakeBucketArgs.builder()
+                .region(region)
+                .bucket(bucket)
+                .build(),
+        )
+    }
+    val policy = """
+    {
+      "Version":"2012-10-17",
+      "Statement":[
+        {
+          "Effect":"Allow",
+          "Principal":"*",
+          "Action":"s3:GetObject",
+          "Resource":["arn:aws:s3:::$bucket/*"],
+          "Condition":{
+            "StringEquals":{
+              "s3:ExistingObjectTag/public":"true"
+            }
+          }
+        }
+      ]
+    }
+    """.trimIndent()
+
+    minioClient.setBucketPolicy(SetBucketPolicyArgs.builder().bucket(bucket).region(region).config(policy).build())
+}

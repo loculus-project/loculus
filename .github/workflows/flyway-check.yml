@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-      - 'backend/src/main/resources/db/migration/**'
+      - 'backend/core/src/main/resources/db/migration/**'
       - '.github/workflows/flyway-check.yml'
 
 jobs:

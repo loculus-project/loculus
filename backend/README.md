@@ -67,7 +67,7 @@ You need to set:
 --spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost:8083/realms/loculus/protocol/openid-connect/certs
 ```
 
-We use Flyway, so that the service can provision an empty/existing DB without any manual steps in between. On startup scripts in `src/main/resources/db/migration` are executed in order, i.e. `V1__*.sql` before `V2__*.sql` if they didn't run before, so that the DB is always up-to-date. (For more info on the naming convention, see [this](https://www.red-gate.com/blog/database-devops/flyway-naming-patterns-matter) blog post.)
+We use Flyway, so that the service can provision an empty/existing DB without any manual steps in between. On startup scripts in `core/src/main/resources/db/migration` are executed in order, i.e. `V1__*.sql` before `V2__*.sql` if they didn't run before, so that the DB is always up-to-date. (For more info on the naming convention, see [this](https://www.red-gate.com/blog/database-devops/flyway-naming-patterns-matter) blog post.)
 
 Note: When using a PostgreSQL development platform (e.g. pgAdmin) the hostname is 127.0.0.1 and not localhost - this is defined in the `deploy.py` file.
 
@@ -82,6 +82,22 @@ When running the backend behind a proxy, the proxy needs to set X-Forwarded head
 - X-Forwarded-Prefix
 
 ## Development
+
+### Project structure
+
+The backend is one Spring Boot application, built from several Gradle modules:
+
+| Module | Contents |
+| --- | --- |
+| `core` | Infrastructure that every API version needs: authentication, error handling, the audit log and the database setup with its Flyway migrations. Its test fixtures (`core/src/testFixtures`) hold test helpers shared by the other modules. |
+| `v1` | The current API and its implementation. |
+| `app` | The application itself (`BackendApplication` and its configuration). It contains `core` and `v1` and builds the `backend.jar`. |
+
+Within each module, code is organised by layer (`controller`, `service`, `config`, `auth`, ...).
+
+This prepares for a new API version that is built next to v1: it will get its own module that may depend on `core`, but never on `v1`. When it needs code that is still in `v1`, that code moves to `core`.
+
+Each module has its own tests: `./gradlew :v1:test` runs only v1's tests, against an application that contains `core` and `v1`.
 
 ### Run tests and lints
 
