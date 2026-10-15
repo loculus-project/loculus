@@ -1,7 +1,6 @@
 package org.loculus.backend.service.groupmanagement
 
 import org.jetbrains.exposed.v1.core.JoinType
-import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.lowerCase
@@ -18,8 +17,8 @@ import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.ConflictException
 import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.log.AuditLogger
+import org.loculus.backend.model.UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE
 import org.loculus.backend.utils.DateProvider
-import org.postgresql.util.PSQLState
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -31,19 +30,24 @@ class GroupManagementDatabaseService(
     private val dateProvider: DateProvider,
 ) {
 
-    fun getDetailsOfGroup(groupId: Int, user: org.loculus.backend.auth.User): GroupDetails = GroupDetails(
-        group = getGroup(groupId, user),
-        users = if (user is AuthenticatedUser) getMembers(groupId) else null,
-    )
+    fun getDetailsOfGroup(groupId: Int, user: org.loculus.backend.auth.User): GroupDetails {
+        val groupEntity = GroupEntity.findById(groupId) ?: throw NotFoundException("Group $groupId does not exist.")
 
-    fun getGroup(groupId: Int, user: org.loculus.backend.auth.User): Group =
-        findGroup(groupId).toGroup(redactEmail = user !is AuthenticatedUser)
+        return when (user is AuthenticatedUser) {
+            true -> {
+                val users = UserGroupEntity.find { UserGroupsTable.groupIdColumn eq groupId }
+                GroupDetails(
+                    group = groupEntity.toGroup(),
+                    users = users.map { User(it.userName) },
+                )
+            }
 
-    fun getMembers(groupId: Int): List<User> {
-        findGroup(groupId)
-        return UserGroupEntity.find { UserGroupsTable.groupIdColumn eq groupId }
-            .orderBy(UserGroupsTable.id to SortOrder.ASC)
-            .map { User(it.userName) }
+            false ->
+                GroupDetails(
+                    group = groupEntity.toGroup(redactEmail = true),
+                    users = null,
+                )
+        }
     }
 
     fun createNewGroup(group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
@@ -70,7 +74,7 @@ class GroupManagementDatabaseService(
 
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
 
-        val groupEntity = findGroup(groupId)
+        val groupEntity = GroupEntity.findById(groupId) ?: throw NotFoundException("Group $groupId does not exist.")
 
         groupEntity.updateWith(group)
 
@@ -94,9 +98,24 @@ class GroupManagementDatabaseService(
                     )
                     .selectAll()
                     .where { UserGroupsTable.userNameColumn eq authenticatedUser.username }
-        }.orderBy(GroupsTable.id to SortOrder.ASC)
+        }
 
-        return GroupEntity.wrapRows(groupsQuery).map { it.toGroup() }
+        return groupsQuery.map {
+            Group(
+                groupId = it[GroupsTable.id].value,
+                groupName = it[GroupsTable.groupNameColumn],
+                institution = it[GroupsTable.institutionColumn],
+                address = Address(
+                    line1 = it[GroupsTable.addressLine1],
+                    line2 = it[GroupsTable.addressLine2],
+                    postalCode = it[GroupsTable.addressPostalCode],
+                    city = it[GroupsTable.addressCity],
+                    state = it[GroupsTable.addressState],
+                    country = it[GroupsTable.addressCountry],
+                ),
+                contactEmail = it[GroupsTable.contactEmailColumn],
+            )
+        }
     }
 
     fun getGroupIdsOfUser(authenticatedUser: AuthenticatedUser) = getGroupsOfUser(authenticatedUser).map { it.groupId }
@@ -113,7 +132,7 @@ class GroupManagementDatabaseService(
             }
             auditLogger.log(authenticatedUser.username, "Added $usernameToAdd to group $groupId")
         } catch (e: ExposedSQLException) {
-            if (e.sqlState == PSQLState.UNIQUE_VIOLATION.state) {
+            if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
                 throw ConflictException(
                     "User $usernameToAdd is already member of the group $groupId.",
                 )
@@ -142,11 +161,8 @@ class GroupManagementDatabaseService(
             }
         }
 
-        return entities.orderBy(GroupsTable.id to SortOrder.ASC).map { it.toGroup() }
+        return entities.map { it.toGroup() }
     }
-
-    private fun findGroup(groupId: Int) =
-        GroupEntity.findById(groupId) ?: throw NotFoundException("Group $groupId does not exist.")
 
     private fun GroupEntity.updateWith(group: NewGroup) {
         groupName = group.groupName
