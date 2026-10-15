@@ -63,7 +63,6 @@ spec:
 
 {{ if $.Values.secrets.basicauth }}
 {{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
-{{ $middlewareListForKeycloak = append $middlewareListForKeycloak (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
 {{ end }}
 
 {{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-redirect-www-middleware@kubernetescrd" $.Release.Namespace) }}
