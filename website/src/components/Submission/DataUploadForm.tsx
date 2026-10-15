@@ -581,21 +581,21 @@ const Acknowledgement = ({
                                 checked={confirmedNoPII}
                                 onChange={() => setConfirmedNoPII(!confirmedNoPII)}
                             />
-                            <div>
+                            <div className='space-y-2 leading-5'>
                                 <p className='text-xs pl-4 text-gray-500'>
                                     I confirm that I have the legal right to submit this data, and that the data
                                     submitted is not sensitive or human-identifiable.
                                 </p>
-                                <p className='text-xs pl-4 text-gray-500 mt-2'>
+                                <p className='text-xs pl-4 text-gray-500'>
                                     To the best of my knowledge, the data being submitted is not subject to any
-                                    restrictions that prohibit their open sharing and are submitted in compliance with
+                                    restrictions that prohibit its open sharing and is submitted in compliance with
                                     applicable national and international access and benefit-sharing obligations.
                                 </p>
                             </div>
                         </label>
                     </div>
                     <div className='mb-4 py-3'>
-                        <label className='flex items-center'>
+                        <label className='flex items-start'>
                             <Checkbox
                                 size='sm'
                                 name='confirmation-INSDC-upload-terms'
@@ -603,7 +603,7 @@ const Acknowledgement = ({
                                 checked={agreedToINSDCUploadTerms}
                                 onChange={() => setAgreedToINSDCUploadTerms(!agreedToINSDCUploadTerms)}
                             />
-                            <div>
+                            <div className='leading-5'>
                                 <p className='text-xs pl-4 text-gray-500'>
                                     I confirm I have not and will not submit this data independently to INSDC, to avoid
                                     data duplication. I agree to {instanceName} handling the submission of this data to
