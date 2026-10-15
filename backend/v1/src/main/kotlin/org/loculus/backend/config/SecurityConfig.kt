@@ -58,7 +58,7 @@ class SecurityConfig {
         "/admin/*",
     )
 
-    // Matches every request, so it must be the last filter chain
+    // Matches every request, so it must be the last filter chain (v2 registers its own chain for /v2/**)
     @Bean
     fun securityFilterChain(
         httpSecurity: HttpSecurity,
