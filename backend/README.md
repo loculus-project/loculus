@@ -98,7 +98,7 @@ Within each module, code is organised by layer (`controller`, `service`, `config
 
 When v2 needs code that is still in v1, move that code to `core`, or write a new version in `v2`. Only move what v2 actually uses; whatever is left in `v1` will be deleted together with it.
 
-v2 endpoints declare who may call them with `@Public` or `@Authenticated`. This is enforced for every request and documented in the OpenAPI spec as `x-access`.
+v2 has its own security filter chain (`V2Config`), set up like v1's: every v2 endpoint requires a token, except the public ones listed there. Public endpoints are also marked with an empty `@SecurityRequirements`, so that the API docs say they need no token. `PublicEndpointsTest` checks that the two agree.
 
 Each module has its own tests: `./gradlew :v2:test` runs only v2's tests, against an application that contains `core` and `v2` but not `v1`.
 

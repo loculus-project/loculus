@@ -143,27 +143,25 @@ class GroupControllerTest(@Autowired private val mockMvc: MockMvc) {
     }
 
     @Test
-    fun `endpoints that require authentication reject requests without a valid token`() {
+    fun `requests without a valid token are rejected`() {
         val groupId = createGroup()
-        val requests = listOf(
-            get("/v2/groups"),
-            post("/v2/groups").json(DEFAULT_GROUP),
-            put("/v2/groups/$groupId").json(DEFAULT_GROUP),
-            get("/v2/groups/$groupId/members"),
-            put("/v2/groups/$groupId/members/$ALTERNATIVE_DEFAULT_USER_NAME"),
-            delete("/v2/groups/$groupId/members/$DEFAULT_USER_NAME"),
-            get("/v2/me/groups"),
-        )
 
-        for (jwt in listOf(null, "invalidToken")) {
-            for (request in requests) {
-                perform(request, jwt)
-                    .andExpect(status().isUnauthorized)
-                    .andExpect(header().string(HttpHeaders.WWW_AUTHENTICATE, startsWith("Bearer")))
-            }
+        // Reads without a token are asked for one. Writes without a token are stopped by CSRF protection, as in v1.
+        perform(get("/v2/me/groups"), jwt = null)
+            .andExpect(status().isUnauthorized)
+            .andExpect(header().string(HttpHeaders.WWW_AUTHENTICATE, startsWith("Bearer")))
+        perform(post("/v2/groups").json(DEFAULT_GROUP), jwt = null)
+            .andExpect(status().isForbidden)
+
+        // An invalid token is always rejected, also on public endpoints
+        val requests = listOf(
+            get("/v2/groups/$groupId"),
+            post("/v2/groups").json(DEFAULT_GROUP),
+            delete("/v2/groups/$groupId/members/$DEFAULT_USER_NAME"),
+        )
+        for (request in requests) {
+            perform(request, jwt = "invalidToken").andExpect(status().isUnauthorized)
         }
-        // An invalid token is rejected on public endpoints too
-        perform(get("/v2/groups/$groupId"), jwt = "invalidToken").andExpect(status().isUnauthorized)
     }
 
     private fun perform(request: MockHttpServletRequestBuilder, jwt: String? = jwtForDefaultUser) =

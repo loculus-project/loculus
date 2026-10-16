@@ -7,17 +7,39 @@ import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.convert.converter.Converter
 import org.springframework.security.access.AccessDeniedException
+import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.core.AuthenticationException
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.core.oidc.StandardClaimNames
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
+import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint
+import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler
 import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.security.web.access.AccessDeniedHandler
+import org.springframework.security.web.access.AccessDeniedHandlerImpl
+import org.springframework.security.web.access.DelegatingAccessDeniedHandler
+import org.springframework.security.web.csrf.CsrfException
 import org.springframework.stereotype.Component
 
 private val log = KotlinLogging.logger { }
+
+/** Authenticates requests with Keycloak bearer tokens. Every API version's security filter chain uses this. */
+fun HttpSecurity.keycloakResourceServer(keycloakAuthenticationConverter: KeycloakAuthenticationConverter) =
+    oauth2ResourceServer { oauth2 ->
+        oauth2.jwt { jwt -> jwt.jwtAuthenticationConverter(keycloakAuthenticationConverter) }
+            .authenticationEntryPoint(LoggingAuthenticationEntryPoint(BearerTokenAuthenticationEntryPoint()))
+            .accessDeniedHandler(
+                // This is the preconfigured default that we want to wrap in a logger
+                LoggingAccessDeniedHandler(
+                    DelegatingAccessDeniedHandler(
+                        linkedMapOf(CsrfException::class.java to AccessDeniedHandlerImpl()),
+                        BearerTokenAccessDeniedHandler(),
+                    ),
+                ),
+            )
+    }
 
 @Component
 class KeycloakAuthenticationConverter(val authoritiesConverter: KeycloakAuthoritiesConverter) :
