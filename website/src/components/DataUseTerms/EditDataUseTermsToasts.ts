@@ -1,6 +1,6 @@
 import { toast } from 'react-toastify';
 
-import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
+import { formatErrorMessage } from '../../utils/formatErrorMessage';
 
 export function successToast() {
     toast.success('Data use terms updated successfully. Changes take some time propagate and become visible here.', {
@@ -9,7 +9,7 @@ export function successToast() {
 }
 
 export function errorToast(error: unknown) {
-    toast.error('Failed to edit terms of use: ' + stringifyMaybeAxiosError(error), {
+    toast.error('Failed to edit terms of use: ' + formatErrorMessage(error), {
         position: 'top-center',
         autoClose: false,
     });
