@@ -500,6 +500,10 @@ dataUseTerms:
 fileSharing:
   {{ .Values.fileSharing | toYaml | nindent 2 }}
 {{- end }}
+{{- if .Values.submissionLimits }}
+submissionLimits:
+  {{ .Values.submissionLimits | toYaml | nindent 2 }}
+{{- end }}
 websiteUrl: {{ include "loculus.websiteUrl" . }}
 backendUrl: {{ include "loculus.backendUrl" . }}
 organisms:
