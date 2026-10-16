@@ -1,0 +1,13 @@
+# Source: loculus/templates/keycloak-database-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-keycloak-database-service
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: keycloak-database
+  ports:
+    - port: 5432
+---

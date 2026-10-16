@@ -1,0 +1,16 @@
+# Source: loculus/templates/website-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-website-service
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: website
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
+      name: http
+---

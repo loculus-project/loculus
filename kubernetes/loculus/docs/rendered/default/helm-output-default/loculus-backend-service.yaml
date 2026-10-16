@@ -1,0 +1,16 @@
+# Source: loculus/templates/loculus-backend-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-backend-service
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: backend
+  ports:
+    - port: 8079
+      targetPort: 8079
+      protocol: TCP
+      name: http
+---
