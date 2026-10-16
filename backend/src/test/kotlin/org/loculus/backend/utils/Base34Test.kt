@@ -4,6 +4,7 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.not
+import org.hamcrest.Matchers.nullValue
 import org.junit.jupiter.api.Test
 
 class Base34Test {
@@ -30,5 +31,13 @@ class Base34Test {
         assertThat(allDigits, `is`(CODE_POINTS))
         assertThat(allDigits, not(containsString("I")))
         assertThat(allDigits, not(containsString("O")))
+    }
+
+    @Test
+    fun `decodes what it encodes and rejects characters outside the alphabet`() {
+        listOf(0L, 1L, 33L, 34L, 31_859L, 34L * 34 * 34 * 34 * 34 * 34 + 7).forEach {
+            assertThat(base34Decode(base34Encode(it, 6)), `is`(it))
+        }
+        assertThat(base34Decode("00I1"), `is`(nullValue()))
     }
 }
