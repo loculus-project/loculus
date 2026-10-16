@@ -573,7 +573,7 @@ const Acknowledgement = ({
                         databases (ENA, DDBJ, NCBI).
                     </p>
                     <div className='mt-2 py-5'>
-                        <label className='flex items-center'>
+                        <label className='flex items-start'>
                             <Checkbox
                                 size='sm'
                                 name='confirmation-no-pii'
@@ -581,16 +581,25 @@ const Acknowledgement = ({
                                 checked={confirmedNoPII}
                                 onChange={() => setConfirmedNoPII(!confirmedNoPII)}
                             />
-                            <div>
+                            <div className='space-y-2 leading-5'>
                                 <p className='text-xs pl-4 text-gray-500'>
-                                    I confirm that I have the legal right to submit this data, and that the data
-                                    submitted is not sensitive or human-identifiable.
+                                    I confirm that I have the legal right to submit this data, that the data submitted
+                                    is not sensitive or human-identifiable, and that the data is submitted in compliance
+                                    with applicable national and international{' '}
+                                    <a
+                                        href='https://www.ebi.ac.uk/abs-dsi/'
+                                        target='_blank'
+                                        className='text-primary-600 hover:underline'
+                                    >
+                                        access and benefit-sharing obligations
+                                    </a>
+                                    .
                                 </p>
                             </div>
                         </label>
                     </div>
                     <div className='mb-4 py-3'>
-                        <label className='flex items-center'>
+                        <label className='flex items-start'>
                             <Checkbox
                                 size='sm'
                                 name='confirmation-INSDC-upload-terms'
@@ -598,7 +607,7 @@ const Acknowledgement = ({
                                 checked={agreedToINSDCUploadTerms}
                                 onChange={() => setAgreedToINSDCUploadTerms(!agreedToINSDCUploadTerms)}
                             />
-                            <div>
+                            <div className='leading-5'>
                                 <p className='text-xs pl-4 text-gray-500'>
                                     I confirm I have not and will not submit this data independently to INSDC, to avoid
                                     data duplication. I agree to {instanceName} handling the submission of this data to
