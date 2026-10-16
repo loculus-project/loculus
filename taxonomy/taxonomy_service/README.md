@@ -14,7 +14,7 @@ The DB version is configured in `values.yaml` (`taxonomyService.dbVersion`).
 | Endpoint | Description |
 |----------|-------------|
 | `GET /` | Health check |
-| `GET /taxa?scientific_name=<string>` | Endpoint used to validate user input. If the input is valid, the details of all associated taxa are returned. Currently only supports validation of scientific names (case-insensitive) through the `scientific_name` query parameter. |
+| `GET /taxa?scientific_name=<string>` | Endpoint used to validate user input. If the input is valid, the details of all associated taxa are returned. Matches the `scientific_name` query parameter against scientific names (case-insensitive, ignoring surrounding whitespace). If none match, it falls back to NCBI synonyms and common names, if the DB has a `names` table; an alternative name shared by several taxa returns 409 listing them. |
 | `GET /taxa/{tax_id}?find_common_name=<boolean>` |  Endpoint to use once a valid taxon ID is found. Looks up a taxon by NCBI taxon ID and returns it. If find_common_name=true, returns the nearest ancestor (including self) that has a common name. |
 | `POST /silo-lineage?prune=<boolean>&allow_large=<boolean>` |  Return a taxonomy based on the taxa provided in the request body (should be provided as {values: [<ids>]}). The taxonomy is returned as a SILO lineage yaml file. |
 

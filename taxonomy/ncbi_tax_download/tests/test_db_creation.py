@@ -4,7 +4,9 @@ from pathlib import Path
 
 import pytest
 from ncbi_tax_download.ncbi import (
+    ALTERNATIVE_NAME_CLASSES,
     create_taxonomy_df,
+    extract_alternative_names_df,
     extract_names_df,
     extract_nodes_df,
 )
@@ -37,17 +39,32 @@ def archive_incorrect():
 def test_names_df_creation(archive_correct: BytesIO):
     df_names = extract_names_df(archive_correct)
 
-    expected_shape = (7, 3)
+    expected_shape = (8, 3)
     expected_columns = ["tax_id", "common_name", "scientific_name"]
 
     assert df_names.shape == expected_shape
     assert list(df_names.columns) == expected_columns
 
 
+def test_alternative_names_df_creation(archive_correct: BytesIO):
+    df = extract_alternative_names_df(archive_correct)
+
+    assert list(df.columns) == ["name_txt", "tax_id", "name_class"]
+    # in-part, authority, blast name, type material and scientific names are dropped
+    assert set(df["name_class"]) == ALTERNATIVE_NAME_CLASSES
+    assert set(zip(df["name_txt"], df["tax_id"])) >= {
+        ("Cellvibrio gilvus", 11),
+        ("Azotirhizobium caulinodans", 7),
+        ("eubacteria", 2),
+    }
+    assert "Monera" not in set(df["name_txt"])
+    assert not {"all", "unknown"} & set(df["name_txt"])  # synonyms of root and unidentified
+
+
 def test_nodes_df_creation(archive_correct: BytesIO):
     df_nodes = extract_nodes_df(archive_correct)
 
-    expected_shape = (8, 2)
+    expected_shape = (9, 2)
     expected_columns = ["tax_id", "parent_id"]
 
     assert df_nodes.shape == expected_shape
@@ -57,8 +74,8 @@ def test_nodes_df_creation(archive_correct: BytesIO):
 def test_taxonomy_df_creation(archive_correct: BytesIO, archive_incorrect: BytesIO):
     r""" Tree should have shape
                 1
-              /   \ 
-            2      9
+              /   \   \
+            2      9   32644
           /       / \
         6        10  11
       /
@@ -69,10 +86,10 @@ def test_taxonomy_df_creation(archive_correct: BytesIO, archive_incorrect: Bytes
 
     df_taxonomy = create_taxonomy_df(archive_correct)
 
-    expected_shape = (7, 5)
+    expected_shape = (8, 5)
     expected_columns = ["tax_id", "common_name", "scientific_name", "parent_id", "depth"]
-    expected_parents = [1, 1, 2, 6, 1, 9, 9]
-    expected_depths = [0, 1, 2, 3, 1, 2, 2]
+    expected_parents = [1, 1, 2, 6, 1, 9, 9, 1]
+    expected_depths = [0, 1, 2, 3, 1, 2, 2, 1]
     expected_common_name = "bacteria; eubacteria"
 
     assert df_taxonomy.shape == expected_shape

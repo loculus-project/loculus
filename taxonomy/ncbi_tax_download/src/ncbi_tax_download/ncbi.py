@@ -12,6 +12,17 @@ logger = logging.getLogger(__name__)
 
 NCBI_TAXONOMY_ARCHIVE = "https://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip"
 
+# excludes 'in-part' (names shared by several taxa) and 'authority' (citations)
+ALTERNATIVE_NAME_CLASSES = {
+    "synonym",
+    "equivalent name",
+    "includes",
+    "common name",
+    "genbank common name",
+}
+# root, unclassified sequences, unidentified: their synonyms 'all', 'unknown', 'none' are not hosts
+PLACEHOLDER_TAX_IDS = {1, 12908, 32644}
+
 
 def download_ncbi_archive(taxonomy_url: str = NCBI_TAXONOMY_ARCHIVE) -> io.BytesIO:
     logger.info(f"downloading NCBI taxonomy archive from: {taxonomy_url}")
@@ -79,6 +90,22 @@ def extract_names_df(archive: io.BytesIO) -> pd.DataFrame:
     return df_wide
 
 
+def extract_alternative_names_df(archive: io.BytesIO) -> pd.DataFrame:
+    """Extract the alternative names (see ALTERNATIVE_NAME_CLASSES) from 'names.dmp',
+    one row per name, with columns name_txt, tax_id and name_class
+    """
+    df = (
+        extract_ncbi_taxonomy_file(archive, "names.dmp")
+        .rename(columns={0: "tax_id", 1: "name_txt", 3: "name_class"})
+        .loc[:, ["name_txt", "tax_id", "name_class"]]
+    )
+    return df[
+        df["name_class"].isin(ALTERNATIVE_NAME_CLASSES)
+        & ~df["tax_id"].isin(PLACEHOLDER_TAX_IDS)
+        & df["name_txt"].notna()
+    ]
+
+
 def extract_nodes_df(archive: io.BytesIO) -> pd.DataFrame:
     """Extract 'nodes.dmp' from the NCBI taxonomy archive into a pd.DataFrame
     Columns in the output df are:
@@ -131,17 +158,19 @@ def create_taxonomy_df(archive: io.BytesIO) -> pd.DataFrame:
     return df_taxonomy
 
 
-def write_to_sqlite(df: pd.DataFrame, output_db: Path) -> None:
+def write_to_sqlite(df: pd.DataFrame, df_names: pd.DataFrame, output_db: Path) -> None:
     logger.info(f"saving NCBI taxonomy to {output_db}")
 
     with sqlite3.connect(output_db) as conn:
         df.to_sql("taxonomy", conn, if_exists="replace", index=False)
+        df_names.to_sql("names", conn, if_exists="replace", index=False)
 
         conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_tax_id ON taxonomy(tax_id);")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_parent_id ON taxonomy(parent_id);")
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_scientific_name ON taxonomy(scientific_name COLLATE NOCASE);"
         )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_name_txt ON names(name_txt COLLATE NOCASE);")
 
         conn.execute("ANALYZE;")
 

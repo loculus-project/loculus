@@ -192,3 +192,60 @@ def test_host_processing_invalid_host_direct(mock_session: MagicMock) -> None:
     assert result[0].processed_entry.warnings == []
     assert len(result[0].processed_entry.errors) == 1
     assert "Host validation for" in result[0].processed_entry.errors[0].message
+
+
+@pytest.mark.parametrize(
+    ("host", "expected_url_suffix"),
+    [(" 7159", "/taxa/7159"), ("aedes aegypti ", "/taxa?scientific_name=aedes+aegypti")],
+)
+@patch.object(external_services.taxonomy_cache, "session")
+def test_host_processing_strips_whitespace(
+    mock_session: MagicMock, host: str, expected_url_suffix: str
+) -> None:
+    mock_session.get.side_effect = taxonomy_service_mock
+    config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
+
+    entry = make_entry(metadata={"host": host}, config=config, insdc_ingest=False)
+
+    result = process_all([entry], "temp", config)
+
+    assert result[0].processed_entry.data.metadata["hostTaxonId"] == "7159"
+    assert result[0].processed_entry.errors == []
+    assert result[0].processed_entry.warnings == []
+    assert mock_session.get.call_args_list[0].args[0].endswith(expected_url_suffix)
+
+
+@patch.object(external_services.taxonomy_cache, "session")
+def test_host_processing_alternative_name(mock_session: MagicMock) -> None:
+    """A host that the taxonomy service matched by a synonym or common name is
+    accepted, stored under its scientific name, and flagged with a warning.
+    """
+    mock_session.get.side_effect = taxonomy_service_mock
+    config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
+
+    entry = make_entry(
+        metadata={"host": "yellow fever mosquito"}, config=config, insdc_ingest=False
+    )
+
+    result = process_all([entry], "temp", config)
+    metadata = result[0].processed_entry.data.metadata
+
+    assert metadata["hostTaxonId"] == "7159"
+    assert metadata["hostNameScientific"] == "Aedes aegypti"
+    assert result[0].processed_entry.errors == []
+    assert [w.message for w in result[0].processed_entry.warnings] == [
+        "Host 'yellow fever mosquito' was interpreted as 'Aedes aegypti' (NCBI taxon 7159)."
+    ]
+
+
+@patch.object(external_services.taxonomy_cache, "session")
+def test_host_processing_whitespace_only_host(mock_session: MagicMock) -> None:
+    config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
+
+    entry = make_entry(metadata={"host": "   "}, config=config, insdc_ingest=False)
+
+    result = process_all([entry], "temp", config)
+
+    assert result[0].processed_entry.data.metadata["hostTaxonId"] is None
+    assert result[0].processed_entry.errors == []
+    assert mock_session.get.call_count == 0

@@ -1257,7 +1257,7 @@ class ProcessingFunctions:
         return the tax_id of the most generic taxon (i.e., the one that's closest to
         the root of the taxonomy)
         """
-        unvalidated_host = input_data.get("host")
+        unvalidated_host = (input_data.get("host") or "").strip()
         if not unvalidated_host:
             return RawProcessingResult()
 

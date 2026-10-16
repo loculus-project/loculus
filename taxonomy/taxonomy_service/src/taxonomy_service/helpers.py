@@ -33,6 +33,31 @@ def fetch_by_sci_name(db_conn: sqlite3.Connection, name: str) -> list[Taxon] | N
     return [Taxon.from_row(row) for row in taxa]
 
 
+def fetch_by_alternative_name(db_conn: sqlite3.Connection, name: str) -> list[Taxon] | None:
+    """Return the taxa that have `name` as a synonym, common name or other alternative name
+    (see the `names` table built by ncbi_tax_download). Return None if there are none, or if
+    the DB predates the `names` table.
+    """
+    has_names_table = db_conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'names'"
+    ).fetchone()
+    if not has_names_table:
+        return None
+
+    taxa = db_conn.execute(
+        """
+        SELECT DISTINCT t.* FROM names n JOIN taxonomy t ON t.tax_id = n.tax_id
+        WHERE n.name_txt = ? COLLATE NOCASE ORDER BY t.tax_id
+        """,
+        (name,),
+    ).fetchall()
+
+    if not taxa:
+        return None
+
+    return [Taxon.from_row(row) for row in taxa]
+
+
 def fetch_by_id(db_conn: sqlite3.Connection, tax_id: int) -> Taxon | None:
     """Return the taxon associated with `tax_id`. Return None if `tax_id` does not exist in the DB
 

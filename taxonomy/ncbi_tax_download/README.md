@@ -1,6 +1,6 @@
 
 # NCBI taxonomy download
-This module retrieves taxonomic information from NCBI's [FTP server](https://ftp.ncbi.nih.gov/pub/taxonomy/) and turns it into a single-table sqlite database to use in preprocessing.
+This module retrieves taxonomic information from NCBI's [FTP server](https://ftp.ncbi.nih.gov/pub/taxonomy/) and turns it into a sqlite database to use in preprocessing.
 
 
 ## Setup
@@ -37,6 +37,12 @@ CREATE TABLE IF NOT EXISTS "taxonomy" (
 CREATE UNIQUE INDEX idx_tax_id ON taxonomy(tax_id);
 CREATE INDEX idx_parent_id ON taxonomy(parent_id);
 CREATE INDEX idx_scientific_name ON taxonomy(scientific_name COLLATE NOCASE);
+CREATE TABLE IF NOT EXISTS "names" (
+  "name_txt" TEXT,                # an alternative name for the taxon: a synonym, equivalent name, "includes" name or common name
+  "tax_id" INTEGER,
+  "name_class" TEXT               # the NCBI name class, e.g. 'synonym' or 'genbank common name'
+);
+CREATE INDEX idx_name_txt ON names(name_txt COLLATE NOCASE);
 CREATE TABLE sqlite_stat1(tbl,idx,stat);
 CREATE TABLE sqlite_stat4(tbl,idx,neq,nlt,ndlt,sample);
 ```
