@@ -583,7 +583,9 @@ const Acknowledgement = ({
                             />
                             <div className='space-y-2 leading-5'>
                                 <p className='text-xs pl-4 text-gray-500'>
-                                    I confirm that I have the legal right to submit this data, that the data submitted is not sensitive or human-identifiable, and that the data is submitted in compliance with applicable national and international{' '}
+                                    I confirm that I have the legal right to submit this data, that the data submitted
+                                    is not sensitive or human-identifiable, and that the data is submitted in compliance
+                                    with applicable national and international{' '}
                                     <a
                                         href='https://www.ebi.ac.uk/abs-dsi/'
                                         target='_blank'
