@@ -89,15 +89,18 @@ The backend is one Spring Boot application, built from several Gradle modules:
 
 | Module | Contents |
 | --- | --- |
-| `core` | Infrastructure that every API version needs: authentication, error handling, the audit log and the database setup with its Flyway migrations. Its test fixtures (`core/src/testFixtures`) hold test helpers shared by the other modules. |
+| `core` | Code that both API versions use: authentication, error handling, the database schema (Flyway migrations and table definitions) and shared services such as group management. Its test fixtures (`core/src/testFixtures`) hold test helpers shared by the other modules. |
 | `v1` | The current API and its implementation. |
-| `app` | The application itself (`BackendApplication` and its configuration). It contains `core` and `v1` and builds the `backend.jar`. |
+| `v2` | The new API, served under `/v2`. It may depend on `core`, never on `v1`. |
+| `app` | The application itself (`BackendApplication` and its configuration). It contains `core`, `v1` and `v2` and builds the `backend.jar`. |
 
-Within each module, code is organised by layer (`controller`, `service`, `config`, `auth`, ...).
+Within each module, code is organised by layer (`controller`, `service`, `config`, `auth`, ...), as in v1. v2's code lives under the `org.loculus.backend.v2` package.
 
-This prepares for a new API version that is built next to v1: it will get its own module that may depend on `core`, but never on `v1`. When it needs code that is still in `v1`, that code moves to `core`.
+When v2 needs code that is still in v1, move that code to `core`, or write a new version in `v2`. Only move what v2 actually uses; whatever is left in `v1` will be deleted together with it.
 
-Each module has its own tests: `./gradlew :v1:test` runs only v1's tests, against an application that contains `core` and `v1`.
+v2 has its own security filter chain (`V2Config`), set up like v1's: every v2 endpoint requires a token, except the public ones listed there. Public endpoints are also marked with an empty `@SecurityRequirements`, so that the API docs say they need no token. `PublicEndpointsTest` checks that the two agree.
+
+Each module has its own tests: `./gradlew :v2:test` runs only v2's tests, against an application that contains `core` and `v2` but not `v1`.
 
 ### Run tests and lints
 

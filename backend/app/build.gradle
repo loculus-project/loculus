@@ -6,6 +6,7 @@ plugins {
 dependencies {
     implementation project(':core')
     implementation project(':v1')
+    implementation project(':v2')
 
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     runtimeOnly    "io.micrometer:micrometer-registry-prometheus"

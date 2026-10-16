@@ -8,22 +8,11 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint
-import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.access.AccessDeniedHandlerImpl
-import org.springframework.security.web.access.DelegatingAccessDeniedHandler
-import org.springframework.security.web.csrf.CsrfException
 
 @Configuration
 @EnableWebSecurity
 class SecurityConfig {
-
-    // This is the preconfigured default that we want to wrap in a logger
-    private val defaultAccessDeniedHandler = DelegatingAccessDeniedHandler(
-        linkedMapOf(CsrfException::class.java to AccessDeniedHandlerImpl()),
-        BearerTokenAccessDeniedHandler(),
-    )
 
     private val endpointsForPreprocessingPipeline = arrayOf(
         "/*/extract-unprocessed-data",
@@ -58,7 +47,7 @@ class SecurityConfig {
         "/admin/*",
     )
 
-    // Matches every request, so it must be the last filter chain
+    // Matches every request, so it must be the last filter chain (v2 registers its own chain for /v2/**)
     @Bean
     fun securityFilterChain(
         httpSecurity: HttpSecurity,
@@ -85,14 +74,6 @@ class SecurityConfig {
             auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
             auth.anyRequest().authenticated()
         }
-        .oauth2ResourceServer { oauth2 ->
-            oauth2.jwt { jwt ->
-                jwt.jwtAuthenticationConverter(keycloakAuthoritiesConverter)
-            }
-                .authenticationEntryPoint(
-                    LoggingAuthenticationEntryPoint(BearerTokenAuthenticationEntryPoint()),
-                )
-                .accessDeniedHandler(LoggingAccessDeniedHandler(defaultAccessDeniedHandler))
-        }
+        .keycloakResourceServer(keycloakAuthoritiesConverter)
         .build()
 }

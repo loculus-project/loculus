@@ -8,9 +8,9 @@ If that doesn't work due to Docker issues because you're running inside a cloud 
 
 USE_NONDOCKER_INFRA=true ./gradlew test --console=plain
 
-The backend tests will take quite a while to run fully - give them some time. To run the tests of one module only, use e.g. `./gradlew :v1:test`.
+The backend tests will take quite a while to run fully - give them some time. To run the tests of one module only, use e.g. `./gradlew :v2:test`.
 
-The backend is split into the Gradle modules `core`, `v1` and `app` (see "Project structure" in README.md).
+The backend is split into the Gradle modules `core`, `v1`, `v2` and `app` (see "Project structure" in README.md). `v2` must never depend on `v1`.
 
 To lint:
 

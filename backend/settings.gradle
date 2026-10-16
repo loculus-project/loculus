@@ -1,6 +1,6 @@
 rootProject.name = 'backend'
 
-// core: infrastructure that every API version needs (auth, errors, audit log, database setup and migrations)
-// v1: the current API
-// app: the Spring Boot application
-include 'core', 'v1', 'app'
+// core: code shared by both API versions (auth, errors, database schema, shared services)
+// v1: the current API, v2: the new API (may depend on core, never on v1)
+// app: the Spring Boot application that serves both
+include 'core', 'v1', 'v2', 'app'
