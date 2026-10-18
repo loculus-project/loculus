@@ -7,8 +7,10 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.Test
-import org.testcontainers.postgresql.PostgreSQLContainer
+import org.loculus.backend.testutil.PostgresProvider
+import org.loculus.backend.testutil.TestEnvironment
 import java.sql.Connection
 import java.sql.DriverManager
 import java.time.Duration
@@ -20,7 +22,10 @@ private const val MIGRATION_TIMEOUT_SECONDS = 30L
 class ActivatePreprocessingWorkQueueMigrationTest {
     @Test
     fun `GIVEN a legacy claim is open WHEN migrating THEN wait before changing the queue`() {
-        val postgres = PostgreSQLContainer("postgres:15.12")
+        val environment = TestEnvironment()
+        // The local postgres is shared with the endpoint tests.
+        assumeFalse(environment.useNonDockerInfra)
+        val postgres = environment.postgres
         postgres.start()
 
         try {
@@ -57,7 +62,7 @@ class ActivatePreprocessingWorkQueueMigrationTest {
         }
     }
 
-    private fun migrateTo(postgres: PostgreSQLContainer, version: String) {
+    private fun migrateTo(postgres: PostgresProvider, version: String) {
         Flyway.configure()
             .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
             .locations("classpath:db/migration")
@@ -66,7 +71,7 @@ class ActivatePreprocessingWorkQueueMigrationTest {
             .migrate()
     }
 
-    private fun PostgreSQLContainer.connection(): Connection = DriverManager.getConnection(jdbcUrl, username, password)
+    private fun PostgresProvider.connection(): Connection = DriverManager.getConnection(jdbcUrl, username, password)
 
     private fun insertSequenceEntry(connection: Connection) {
         connection.createStatement().use { statement ->
