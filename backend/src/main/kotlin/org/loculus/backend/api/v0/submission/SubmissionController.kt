@@ -215,6 +215,11 @@ open class SubmissionController(
             )
         }
 
+        // The first worker of a new pipeline version populates its queue, in two short transactions.
+        if (submissionDatabaseService.registerPreprocessingQueueVersion(organism, pipelineVersion)) {
+            submissionDatabaseService.backfillPreprocessingQueue(organism, pipelineVersion)
+        }
+
         // Scope ETag to requested pipeline version and organism
         val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
             organism = organism,
