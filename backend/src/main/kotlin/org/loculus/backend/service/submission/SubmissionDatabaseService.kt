@@ -180,18 +180,18 @@ class SubmissionDatabaseService(
             .associate { it[table.organismColumn] to it[table.versionColumn] }
     }
 
-    // The first caller of a pipeline version populates its queue.
-    private fun initializePreprocessingQueue(organism: Organism, pipelineVersion: Long) {
+    // Registers the queue of a pipeline version. Returns true until the backfill has completed.
+    fun registerPreprocessingQueueVersion(organism: Organism, pipelineVersion: Long): Boolean {
         val queueVersions = PreprocessingQueueVersionsTable
-        val isRegistered = !queueVersions
-            .selectAll()
+        val registration = queueVersions
+            .select(queueVersions.initializedAtColumn)
             .where {
                 (queueVersions.organismColumn eq organism.name) and
                     (queueVersions.pipelineVersionColumn eq pipelineVersion)
             }
-            .empty()
-        if (isRegistered) {
-            return
+            .firstOrNull()
+        if (registration != null) {
+            return registration[queueVersions.initializedAtColumn] == null
         }
 
         // Blocks concurrent inserts, so every entry is either seen by the backfill or queued by the trigger.
@@ -203,12 +203,28 @@ class SubmissionDatabaseService(
                     "The current pipeline version is $currentPipelineVersion.",
             )
         }
-        val registered = queueVersions.insertIgnore {
+        queueVersions.insertIgnore {
             it[organismColumn] = organism.name
             it[pipelineVersionColumn] = pipelineVersion
-            it[initializedAtColumn] = dateProvider.getCurrentDateTime()
-        }.insertedCount == 1
-        if (!registered) {
+        }
+        return true
+    }
+
+    // Runs in its own transaction, after the registration lock has been released.
+    fun backfillPreprocessingQueue(organism: Organism, pipelineVersion: Long) {
+        val queueVersions = PreprocessingQueueVersionsTable
+        // Serializes concurrent backfills on the registration row. A later caller finds it completed or retired.
+        val pending = queueVersions
+            .select(queueVersions.initializedAtColumn)
+            .where {
+                (queueVersions.organismColumn eq organism.name) and
+                    (queueVersions.pipelineVersionColumn eq pipelineVersion)
+            }
+            .forUpdate()
+            .firstOrNull()
+            ?.let { it[queueVersions.initializedAtColumn] == null }
+            ?: false
+        if (!pending) {
             return
         }
 
@@ -228,6 +244,14 @@ class SubmissionDatabaseService(
             ),
             explicitStatementType = StatementType.INSERT,
         )
+        queueVersions.update(
+            where = {
+                (queueVersions.organismColumn eq organism.name) and
+                    (queueVersions.pipelineVersionColumn eq pipelineVersion)
+            },
+        ) {
+            it[initializedAtColumn] = dateProvider.getCurrentDateTime()
+        }
     }
 
     private fun fetchUnprocessedEntriesAndUpdateToInProcessing(
@@ -235,8 +259,6 @@ class SubmissionDatabaseService(
         numberOfSequenceEntries: Int,
         pipelineVersion: Long,
     ): Sequence<UnprocessedData> {
-        initializePreprocessingQueue(organism, pipelineVersion)
-
         val table = SequenceEntriesTable
         val preprocessing = SequenceEntriesPreprocessedDataTable
         // One attempt id per request. Results must be submitted with it.
