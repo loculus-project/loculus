@@ -537,6 +537,8 @@ def update_assembly_results_with_latest_version(db_engine: Engine, seq_key: Acce
         update_values={
             "status": last_version_rows[0].status,
             "result": last_version_rows[0].result,
+            "errors": last_version_rows[0].errors,
+            "finished_at": datetime.now(tz=pytz.utc),
         },
         model_class=AssemblyTableEntry,
         reraise=False,
