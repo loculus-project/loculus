@@ -26,6 +26,7 @@ import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_TABLE_NAME
 import org.loculus.backend.service.submission.SEQUENCE_UPLOAD_AUX_TABLE_NAME
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.service.submission.UpdateTrackerTable
+import org.loculus.backend.service.submission.dbtables.ACCESSION_EXTERNAL_METADATA_TABLE_NAME
 import org.loculus.backend.service.submission.dbtables.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
 import org.loculus.backend.service.submission.dbtables.EXTERNAL_METADATA_TABLE_NAME
 import org.loculus.backend.types.DataUseTerms
@@ -51,6 +52,7 @@ private val log = KotlinLogging.logger { }
 
 val RELEASED_DATA_RELATED_TABLES: List<String> =
     listOf(
+        ACCESSION_EXTERNAL_METADATA_TABLE_NAME,
         CURRENT_PROCESSING_PIPELINE_TABLE_NAME,
         EXTERNAL_METADATA_TABLE_NAME,
         GROUPS_TABLE_NAME,
