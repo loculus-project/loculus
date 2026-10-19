@@ -2207,7 +2207,7 @@
       "groups": ["auth"],
       "type": "array",
       "default": [],
-      "description": "Extra environment variables for the Keycloak container, as a list of Kubernetes `EnvVar` objects (`name` plus `value` or `valueFrom`). Appended after the chart's own entries.",
+      "description": "Extra environment variables for the Keycloak container, as a list of Kubernetes `EnvVar` objects (`name` plus `value` or `valueFrom` - see docs: https://kubernetes.io/docs/reference/kubernetes-api/core/pod-v1/#EnvVar ). Appended after the chart's own entries.",
       "items": {
         "type": "object",
         "required": ["name"],
