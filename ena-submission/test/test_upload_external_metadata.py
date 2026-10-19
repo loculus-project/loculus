@@ -1,3 +1,5 @@
+# ruff: noqa: S101 (allow asserts in tests)
+
 from unittest.mock import Mock, patch
 
 from ena_deposition.config import get_config
