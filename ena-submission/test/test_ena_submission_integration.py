@@ -736,7 +736,7 @@ def last_external_metadata_accessions(mock: Mock) -> dict[str, Any]:
 
 # ENA accessions that describe the sample/project apply to all versions of an accession,
 # whereas assembly accessions only apply to the deposited accession version.
-ACCESSION_SCOPED_FIELDS = ("bioproject", "biosample")
+ACCESSION_SCOPED_FIELDS = ("bioproject", "biosample", "insdc_accession_prefix")
 
 
 def accessions_of_upload(payloads: list[dict[str, Any]]) -> dict[str, Any]:
