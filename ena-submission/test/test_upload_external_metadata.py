@@ -30,7 +30,11 @@ def test_get_external_metadata_to_upload_splits_accession_and_version_scope() ->
         bioproject.return_value = {fields.bioproject: "PRJEB1"}
         biosample.return_value = {fields.biosample: "SAMEA1"}
         run.return_value = ({fields.run: "ERR1"}, True)
-        assembly.return_value = ({fields.gca: "GCA_1.1"}, True)
+        assembly.return_value = (
+            {fields.insdc_accession_prefix: "OZ000001"},
+            {fields.gca: "GCA_1.1", fields.insdc_accession_full_prefix: "OZ000001.1"},
+            True,
+        )
 
         payloads, all_present = get_external_metadata_to_upload(Mock(), entry, config)
 
@@ -41,12 +45,17 @@ def test_get_external_metadata_to_upload_splits_accession_and_version_scope() ->
             "externalMetadata": {
                 fields.bioproject: "PRJEB1",
                 fields.biosample: "SAMEA1",
+                fields.insdc_accession_prefix: "OZ000001",
             },
         },
         {
             "accession": "LOC_1",
             "version": 2,
-            "externalMetadata": {fields.gca: "GCA_1.1", fields.run: "ERR1"},
+            "externalMetadata": {
+                fields.gca: "GCA_1.1",
+                fields.insdc_accession_full_prefix: "OZ000001.1",
+                fields.run: "ERR1",
+            },
         },
     ]
     assert merged_external_metadata(payloads) == {
@@ -54,4 +63,6 @@ def test_get_external_metadata_to_upload_splits_accession_and_version_scope() ->
         fields.biosample: "SAMEA1",
         fields.run: "ERR1",
         fields.gca: "GCA_1.1",
+        fields.insdc_accession_prefix: "OZ000001",
+        fields.insdc_accession_full_prefix: "OZ000001.1",
     }
