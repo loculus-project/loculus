@@ -23,15 +23,17 @@ val otherExternalMetadata =
     )
 
 object PreparedExternalMetadata {
-    fun successfullySubmitted(accession: Accession, version: Long? = defaultExternalMetadata.version) = defaultExternalMetadata.copy(
-        accession = accession,
-        version = version,
-    )
+    fun successfullySubmitted(accession: Accession, version: Long? = defaultExternalMetadata.version) =
+        defaultExternalMetadata.copy(
+            accession = accession,
+            version = version,
+        )
 }
 
 object PreparedOtherExternalMetadata {
-    fun successfullySubmitted(accession: Accession, version: Long? = otherExternalMetadata.version) = otherExternalMetadata.copy(
-        accession = accession,
-        version = version,
-    )
+    fun successfullySubmitted(accession: Accession, version: Long? = otherExternalMetadata.version) =
+        otherExternalMetadata.copy(
+            accession = accession,
+            version = version,
+        )
 }
