@@ -180,8 +180,8 @@ def get_external_metadata_to_upload(
     run_accession, run_accession_not_missing = get_run_accession_from_db(
         db_engine, config, accession, version, entry.submit_raw_reads
     )
-    assembly_accession, versioned_assembly_accession, all_assemblies_present = get_assembly_accessions_from_db(
-        db_engine, config, accession, version, organism
+    assembly_accession, versioned_assembly_accession, all_assemblies_present = (
+        get_assembly_accessions_from_db(db_engine, config, accession, version, organism)
     )
 
     payloads = [
