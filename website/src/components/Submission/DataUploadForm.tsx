@@ -591,9 +591,9 @@ const Acknowledgement = ({
                                         target='_blank'
                                         className='text-primary-600 hover:underline'
                                     >
-                                        access and benefit-sharing obligations
+                                        access and benefit-sharing
                                     </a>
-                                    .
+                                    obligations.
                                 </p>
                             </div>
                         </label>
