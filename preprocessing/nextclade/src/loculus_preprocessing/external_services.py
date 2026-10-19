@@ -330,7 +330,7 @@ class EnaAccessionType(StrEnum):
 ACCESSION_PATTERNS: dict[EnaAccessionType, re.Pattern[str]] = {
     EnaAccessionType.BIOPROJECT: re.compile(r"PRJ[EDN][A-Z][0-9]+"),
     EnaAccessionType.BIOSAMPLE: re.compile(r"SAM[EDN][A-Z]?[0-9]+"),
-    EnaAccessionType.RAW_READS: re.compile(r"[EDS]RR[0-9]+"),
+    EnaAccessionType.RAW_READS: re.compile(r"[EDS]RR[0-9]{6,}"),
 }
 
 
@@ -354,7 +354,7 @@ class ENAVisibilityChecker:
             accession_type = EnaAccessionType(accession_type_arg)
         except ValueError:
             return raw_internal_error(
-                f"invalid accession_type '{accession_type_arg}', expected one of "
+                f"Invalid accession_type '{accession_type_arg}', expected one of "
                 f"{[t.value for t in EnaAccessionType]}."
             )
         accession = accession.strip().upper()
@@ -376,7 +376,7 @@ class ENAVisibilityChecker:
             return RawProcessingResult(
                 datum=accession,
                 warnings=[
-                    f"unable to check visibility of '{accession}': could not reach ENA. Please "
+                    f"Unable to check visibility of '{accession}': could not reach ENA. Please "
                     f"verify yourself that '{accession}' is public before proceeding or we will "
                     "not be able to propagate your submission to the INSDC."
                 ],
@@ -385,7 +385,7 @@ class ENAVisibilityChecker:
             return RawProcessingResult(
                 datum=accession,
                 warnings=[
-                    f"accession '{accession}' is not visible on ENA. Please make '{accession}' "
+                    f"Accession '{accession}' is not visible on ENA. Please make '{accession}' "
                     "public before proceeding or we will not be able to propagate your "
                     "submission to the INSDC."
                 ],
