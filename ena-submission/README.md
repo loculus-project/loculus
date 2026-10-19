@@ -116,7 +116,9 @@ In a loop:
 
 - Get sequences in `submission_table` state SUBMITTED_ALL.
 - Get the results of all the submissions (from all other tables)
-- Create a POST request to the submit-external-metadata with the results in the expected format.
+- Create a POST request to the submit-external-metadata with the results in the expected format. Each request contains two NDJSON lines:
+  - an accession-scoped line (no `version`) with the bioproject, biosample and run accessions. The backend applies these to all versions of the accession, so they are kept when the sequence is revised in Loculus (revisions are not deposited to ENA).
+  - an accession-version-scoped line with the assembly accessions (GCA and INSDC accessions), which only refer to the deposited version.
   - if (successful): set sequences to state SENT_TO_LOCULUS
   - else: set sequences to state HAS_ERRORS_EXT_METADATA_UPLOAD
 - Get sequences in `submission_table` in state HAS_ERRORS_EXT_METADATA_UPLOAD for over 15min and sequences in status SUBMITTED_ALL for over 15min: send slack notification

@@ -159,9 +159,17 @@ def get_assembly_accessions_from_db(
 
 def get_external_metadata_to_upload(
     db_engine: Engine, entry: SubmissionTableEntry, config: Config
-) -> tuple[dict[str, Any], bool]:
+) -> tuple[list[dict[str, Any]], bool]:
     """Get external metadata to upload to Loculus for a given submission entry, and a boolean
-    indicating whether all accessions have been received from ENA for this entry."""
+    indicating whether all accessions have been received from ENA for this entry.
+
+    Returns two NDJSON payloads for the backend:
+    - accession-scoped (no `version`): bioproject and biosample accessions.
+      These describe the sample/project rather than the specific sequence, so they also
+      apply to later revisions of the accession (which are not deposited to ENA).
+    - accession-version-scoped: assembly accessions (GCA, INSDC accessions), as these
+      refer to the exact sequence that was deposited.
+    """
     accession = entry.accession
     version = entry.version
     organism = config.enaOrganisms[entry.organism]
@@ -175,16 +183,25 @@ def get_external_metadata_to_upload(
         db_engine, config, accession, version, organism
     )
 
-    return {
-        "accession": accession,
-        "version": version,
-        "externalMetadata": {
-            **bioproject_accession,
-            **biosample_accession,
-            **run_accession,
-            **assembly_accession,
+    payloads = [
+        {
+            "accession": accession,
+            "externalMetadata": {
+                **bioproject_accession,
+                **biosample_accession,
+            },
         },
-    }, all(
+        {
+            "accession": accession,
+            "version": version,
+            "externalMetadata": {
+                **assembly_accession,
+                **run_accession,
+            },
+        },
+    ]
+
+    return payloads, all(
         [
             bioproject_accession,
             biosample_accession,
@@ -192,6 +209,14 @@ def get_external_metadata_to_upload(
             all_assemblies_present,
         ]
     )
+
+
+def merged_external_metadata(payloads: list[dict[str, Any]]) -> dict[str, Any]:
+    """All external metadata fields of the given payloads, regardless of scope."""
+    merged: dict[str, Any] = {}
+    for payload in payloads:
+        merged.update(payload.get("externalMetadata", {}))
+    return merged
 
 
 def get_external_metadata_and_send_to_loculus(db_engine: Engine, config: Config) -> None:
@@ -207,11 +232,11 @@ def get_external_metadata_and_send_to_loculus(db_engine: Engine, config: Config)
             SubmissionTableEntry,
             conditions={"status_all": status},
         ):
-            data, all_present = get_external_metadata_to_upload(db_engine, entry, config)
+            payloads, all_present = get_external_metadata_to_upload(db_engine, entry, config)
             seq_key = entry.pkey
 
             previously_uploaded: dict[str, Any] = entry.external_metadata or {}
-            new_external_metadata: dict[str, Any] = data.get("externalMetadata", {})
+            new_external_metadata = merged_external_metadata(payloads)
 
             if new_external_metadata and (
                 not previously_uploaded
@@ -222,7 +247,7 @@ def get_external_metadata_and_send_to_loculus(db_engine: Engine, config: Config)
             ):
                 try:
                     submit_external_metadata(
-                        data,
+                        payloads,
                         config,
                         entry.organism,
                     )
