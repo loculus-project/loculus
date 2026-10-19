@@ -35,6 +35,8 @@ import org.jetbrains.exposed.v1.core.plus
 import org.jetbrains.exposed.v1.core.statements.StatementType
 import org.jetbrains.exposed.v1.core.stringLiteral
 import org.jetbrains.exposed.v1.core.stringParam
+import org.jetbrains.exposed.v1.core.vendors.ForUpdateOption.PostgreSQL.ForUpdate
+import org.jetbrains.exposed.v1.core.vendors.ForUpdateOption.PostgreSQL.MODE
 import org.jetbrains.exposed.v1.datetime.KotlinLocalDateTimeColumnType
 import org.jetbrains.exposed.v1.datetime.dateTimeParam
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
@@ -213,14 +215,14 @@ class SubmissionDatabaseService(
     // Runs in its own transaction, after the registration lock has been released.
     fun backfillPreprocessingQueue(organism: Organism, pipelineVersion: Long) {
         val queueVersions = PreprocessingQueueVersionsTable
-        // Serializes concurrent backfills on the registration row. A later caller finds it completed or retired.
+        // One backfill at a time. A concurrent caller skips it, its claim finds nothing yet and polls again.
         val pending = queueVersions
             .select(queueVersions.initializedAtColumn)
             .where {
                 (queueVersions.organismColumn eq organism.name) and
                     (queueVersions.pipelineVersionColumn eq pipelineVersion)
             }
-            .forUpdate()
+            .forUpdate(ForUpdate(mode = MODE.SKIP_LOCKED))
             .firstOrNull()
             ?.let { it[queueVersions.initializedAtColumn] == null }
             ?: false
@@ -274,10 +276,10 @@ class SubmissionDatabaseService(
             claimedAt.toLocalDateTime(DateProvider.timeZone),
             leaseUntil.toLocalDateTime(DateProvider.timeZone),
         )
-        log.info { "Claimed $claimedCount entries for processing attempt $processingAttemptId" }
         if (claimedCount == 0) {
             return emptySequence()
         }
+        log.info { "Claimed $claimedCount entries for processing attempt $processingAttemptId" }
 
         return preprocessing
             .join(table, JoinType.INNER) {

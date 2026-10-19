@@ -6,6 +6,7 @@ import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.UnprocessedData
+import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.springframework.beans.factory.annotation.Autowired
@@ -55,15 +56,55 @@ class ConcurrentPreprocessingClaimEndpointTest(
         }
     }
 
-    private fun ExecutorService.submitClaim(start: CountDownLatch, numberOfEntries: Int) = submit(
+    @Test
+    fun `GIVEN concurrent first claims of a new pipeline version THEN each entry is returned once`() {
+        val expectedEntries = convenienceClient.submitDefaultFiles().submissionIdMappings
+            .map { AccessionVersion(it.accession, it.version) }
+            .toSet()
+        val newPipelineVersion = DEFAULT_PIPELINE_VERSION + 1
+
+        val start = CountDownLatch(1)
+        val executor = Executors.newFixedThreadPool(2)
+
+        try {
+            // Both requests register the version, only one of them backfills the queue.
+            val claims = List(2) {
+                executor.submitClaim(start, expectedEntries.size, newPipelineVersion)
+            }
+            start.countDown()
+
+            val first = claims[0]
+                .get(CLAIM_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .toAccessionVersions()
+            val second = claims[1]
+                .get(CLAIM_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .toAccessionVersions()
+            val rest = claim(expectedEntries.size, newPipelineVersion).toAccessionVersions()
+
+            assertThat(first.intersect(second), `is`(empty()))
+            assertThat((first + second).intersect(rest), `is`(empty()))
+            assertThat(first + second + rest, `is`(expectedEntries))
+            assertThat(claim(expectedEntries.size, newPipelineVersion), `is`(empty()))
+        } finally {
+            executor.shutdownNow()
+            executor.awaitTermination(CLAIM_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        }
+    }
+
+    private fun ExecutorService.submitClaim(
+        start: CountDownLatch,
+        numberOfEntries: Int,
+        pipelineVersion: Long = DEFAULT_PIPELINE_VERSION,
+    ) = submit(
         Callable {
             check(start.await(CLAIM_TIMEOUT_SECONDS, TimeUnit.SECONDS))
-            claim(numberOfEntries)
+            claim(numberOfEntries, pipelineVersion)
         },
     )
 
-    private fun claim(numberOfEntries: Int): List<UnprocessedData> = client.extractUnprocessedData(numberOfEntries)
-        .expectNdjsonAndGetContent()
+    private fun claim(numberOfEntries: Int, pipelineVersion: Long = DEFAULT_PIPELINE_VERSION): List<UnprocessedData> =
+        client.extractUnprocessedData(numberOfEntries, pipelineVersion = pipelineVersion)
+            .expectNdjsonAndGetContent()
 
     private fun List<UnprocessedData>.toAccessionVersions(): Set<AccessionVersion> =
         map { AccessionVersion(it.accession, it.version) }.toSet()
