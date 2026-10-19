@@ -221,6 +221,7 @@ private fun clearDatabaseStatement(): String = """
             $CURRENT_PROCESSING_PIPELINE_TABLE_NAME,
             $FILES_TABLE_NAME,
             external_metadata,
+            accession_external_metadata,
             seqsets,
             seqset_records,
             seqset_to_records,

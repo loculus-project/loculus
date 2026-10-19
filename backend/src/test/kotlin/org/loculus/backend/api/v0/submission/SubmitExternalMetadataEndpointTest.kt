@@ -7,6 +7,7 @@ import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.hasEntry
 import org.hamcrest.Matchers.notNullValue
 import org.junit.jupiter.api.Test
+import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.testutil.EndpointTest
 import org.loculus.backend.testutil.expectForbiddenResponse
 import org.loculus.backend.testutil.expectUnauthorizedResponse
@@ -158,6 +159,158 @@ class SubmitExternalMetadataEndpointTest(
                     ),
             )
     }
+
+    @Test
+    fun `GIVEN accession-scoped external metadata THEN it applies to all versions including later revisions`() {
+        val accession = convenienceClient
+            .prepareDefaultSequenceEntriesToApprovedForRelease()
+            .map { it.accession }.first()
+
+        submissionControllerClient
+            .submitExternalMetadata(
+                PreparedExternalMetadata.successfullySubmitted(accession = accession, version = null),
+            )
+            .andExpect(status().isNoContent)
+
+        convenienceClient.reviseAndProcessDefaultSequenceEntries(listOf(accession))
+
+        val releasedVersions = getReleasedSequenceEntries(accession)
+        assertThat(releasedVersions.keys, equalTo(setOf(1L, 2L)))
+        releasedVersions.values.forEach {
+            assertThat(it.metadata, hasEntry("insdcAccessionFull", TextNode("GENBANK1000.1")))
+        }
+    }
+
+    @Test
+    fun `GIVEN accession-scoped and version-scoped external metadata THEN version-scoped takes precedence`() {
+        val accession = convenienceClient
+            .prepareDefaultSequenceEntriesToApprovedForRelease()
+            .map { it.accession }.first()
+        convenienceClient.reviseAndProcessDefaultSequenceEntries(listOf(accession))
+
+        submissionControllerClient
+            .submitExternalMetadata(
+                ExternalSubmittedData(
+                    accession = accession,
+                    version = null,
+                    externalMetadata = mapOf("insdcAccessionFull" to TextNode("ACCESSION_SCOPED")),
+                ),
+                ExternalSubmittedData(
+                    accession = accession,
+                    version = 2,
+                    externalMetadata = mapOf("insdcAccessionFull" to TextNode("VERSION_SCOPED")),
+                ),
+            )
+            .andExpect(status().isNoContent)
+
+        val releasedVersions = getReleasedSequenceEntries(accession)
+        assertThat(
+            releasedVersions[1L]!!.metadata,
+            hasEntry("insdcAccessionFull", TextNode("ACCESSION_SCOPED")),
+        )
+        assertThat(
+            releasedVersions[2L]!!.metadata,
+            hasEntry("insdcAccessionFull", TextNode("VERSION_SCOPED")),
+        )
+    }
+
+    @Test
+    fun `GIVEN accession-scoped external metadata is resubmitted THEN it is overwritten`() {
+        val accession = convenienceClient
+            .prepareDefaultSequenceEntriesToApprovedForRelease()
+            .map { it.accession }.first()
+
+        listOf("FIRST", "SECOND").forEach { value ->
+            submissionControllerClient
+                .submitExternalMetadata(
+                    ExternalSubmittedData(
+                        accession = accession,
+                        version = null,
+                        externalMetadata = mapOf("insdcAccessionFull" to TextNode(value)),
+                    ),
+                )
+                .andExpect(status().isNoContent)
+        }
+
+        assertThat(
+            getReleasedSequenceEntry(accession).metadata,
+            hasEntry("insdcAccessionFull", TextNode("SECOND")),
+        )
+    }
+
+    @Test
+    fun `GIVEN only an earlier version is released THEN allow accession-scoped submission`() {
+        val accession = convenienceClient
+            .prepareDefaultSequenceEntriesToApprovedForRelease()
+            .map { it.accession }.first()
+        convenienceClient.reviseDefaultProcessedSequenceEntries(listOf(accession))
+
+        submissionControllerClient
+            .submitExternalMetadata(
+                PreparedExternalMetadata.successfullySubmitted(accession = accession, version = null),
+            )
+            .andExpect(status().isNoContent)
+
+        assertThat(
+            getReleasedSequenceEntry(accession).metadata,
+            hasEntry("insdcAccessionFull", TextNode("GENBANK1000.1")),
+        )
+    }
+
+    @Test
+    fun `GIVEN no version of the accession is released THEN do not allow accession-scoped submission`() {
+        val accession = convenienceClient.prepareDataTo(Status.IN_PROCESSING).first().accession
+
+        submissionControllerClient
+            .submitExternalMetadata(
+                PreparedExternalMetadata.successfullySubmitted(accession = accession, version = null),
+            )
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath("\$.detail")
+                    .value(containsString("Accession $accession has no version in status APPROVED_FOR_RELEASE")),
+            )
+    }
+
+    @Test
+    fun `GIVEN accession does not exist THEN do not allow accession-scoped submission`() {
+        val accession = "fake_accession"
+
+        submissionControllerClient
+            .submitExternalMetadata(
+                PreparedExternalMetadata.successfullySubmitted(accession = accession, version = null),
+            )
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath("\$.detail")
+                    .value(containsString("Accessions $accession do not exist")),
+            )
+    }
+
+    @Test
+    fun `WHEN accession-scoped metadata has a field of another updater THEN returns unprocessable entity`() {
+        val accession = convenienceClient
+            .prepareDefaultSequenceEntriesToApprovedForRelease()
+            .map { it.accession }.first()
+
+        submissionControllerClient
+            .submitExternalMetadata(
+                PreparedExternalMetadata.successfullySubmitted(accession = accession, version = null),
+                externalMetadataUpdater = "other_db",
+            )
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(
+                jsonPath("\$.detail")
+                    .value(containsString("Unknown fields in metadata: insdcAccessionFull")),
+            )
+    }
+
+    private fun getReleasedSequenceEntries(accession: Accession): Map<Long, ProcessedData<GeneticSequence>> =
+        convenienceClient.getReleasedData()
+            .filter { it.metadata["accession"]?.textValue() == accession }
+            .associateBy { it.metadata["version"]!!.asLong() }
 
     private fun getReleasedSequenceEntry(accession: Accession): ProcessedData<GeneticSequence> {
         val releasedSequenceEntry = convenienceClient.getReleasedData()
