@@ -49,7 +49,7 @@ The `files` field contains a JSON object in which the keys are the names of the 
 
 The primary key is `[accession,version]`. The preprocessing pipeline must be able to handle getting the same sequence entry twice with different versions.
 
-Each returned entry is leased to the pipeline: `processingAttemptId` identifies the claim and must be sent back unchanged with the processed data, `leaseUntil` is the Unix timestamp until which the claim is held. If no result has arrived by then, the entry is handed out again and a late result for the old claim is rejected with a `422` error. The lease length is the backend's `preprocessingTimeout`.
+Each returned entry is leased to the pipeline: `processingAttemptId` identifies the claim and must be sent back unchanged with the processed data, `leaseUntil` is the Unix timestamp until which the claim is held. If no result has arrived by then, the entry is returned to the queue and handed out again, and from that point on results for the old claim are rejected with a `422` error. The lease length is the backend's `preprocessingTimeout`.
 
 One JSON object has the following fields:
 

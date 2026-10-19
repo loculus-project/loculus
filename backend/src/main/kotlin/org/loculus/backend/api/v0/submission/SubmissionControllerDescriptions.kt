@@ -69,8 +69,8 @@ will roll back all previously inserted data. It is the responsibility of the pro
 content of the data is correct. If the pipeline is unable to provide valid data, it should submit the data with errors.
 In this case, no validation will be performed and the status of the accession version will be set to 'HAS_ERRORS'.
 The user can then edit the data and submit a corrected version.
-Each line must carry the 'processingAttemptId' it was claimed with. A result for a claim that has expired or
-was handed to another pipeline is rejected.
+Each line must carry the 'processingAttemptId' it was claimed with. Once a claim has expired and the entry has
+been returned to the queue or handed to another pipeline, results for the old claim are rejected.
 """
 
 const val SUBMIT_PROCESSED_DATA_ERROR_RESPONSE_DESCRIPTION = """
