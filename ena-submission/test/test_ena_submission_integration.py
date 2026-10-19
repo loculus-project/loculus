@@ -720,11 +720,9 @@ class ExternalMetadataUploads:
             f"expected exactly one new external-metadata upload (#{self._consumed + 1}), "
             f"but {len(calls) - self._consumed} happened since the last check"
         )
-        payload = calls[self._consumed].args[0]
+        payloads = calls[self._consumed].args[0]
         self._consumed += 1
-        assert payload["accession"] == TEST_ACCESSION
-        assert payload["version"] == TEST_VERSION
-        return payload["externalMetadata"]
+        return accessions_of_upload(payloads)
 
     def assert_no_further_uploads(self) -> None:
         calls = self._mock.call_args_list
@@ -736,7 +734,29 @@ class ExternalMetadataUploads:
 def last_external_metadata_accessions(mock: Mock) -> dict[str, Any]:
     """ENA accessions of the most recent `submit_external_metadata` call."""
     mock.assert_called()
-    return mock.call_args.args[0]["externalMetadata"]
+    return accessions_of_upload(mock.call_args.args[0])
+
+
+# ENA accessions that describe the sample/project apply to all versions of an accession,
+# whereas assembly accessions only apply to the deposited accession version.
+ACCESSION_SCOPED_FIELDS = ("bioproject", "biosample")
+
+
+def accessions_of_upload(payloads: list[dict[str, Any]]) -> dict[str, Any]:
+    """Check the scoping of one upload's payloads and return all of its ENA accessions."""
+    fields = get_config(CONFIG_FILE).loculus_accession_fields
+    accession_scoped_fields = {getattr(fields, name) for name in ACCESSION_SCOPED_FIELDS}
+
+    assert len(payloads) == 2  # noqa: PLR2004
+    accession_scoped, version_scoped = payloads
+    assert accession_scoped["accession"] == TEST_ACCESSION
+    assert "version" not in accession_scoped
+    assert version_scoped["accession"] == TEST_ACCESSION
+    assert version_scoped["version"] == TEST_VERSION
+    assert set(accession_scoped["externalMetadata"]) <= accession_scoped_fields
+    assert not set(version_scoped["externalMetadata"]) & accession_scoped_fields
+
+    return {**accession_scoped["externalMetadata"], **version_scoped["externalMetadata"]}
 
 
 def multi_segment_submission(
