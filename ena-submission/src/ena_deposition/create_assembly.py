@@ -535,7 +535,7 @@ def update_assembly_results_with_latest_version(db_engine: Engine, seq_key: Acce
         db_engine=db_engine,
         conditions=asdict(seq_key),
         update_values={
-            "status": Status.SUBMITTED,
+            "status": last_version_rows[0].status,
             "result": last_version_rows[0].result,
         },
         model_class=AssemblyTableEntry,
