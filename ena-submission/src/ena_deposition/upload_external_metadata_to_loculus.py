@@ -114,7 +114,7 @@ def get_assembly_accessions_from_db(
     accession: str,
     version: int,
     organism: EnaOrganismDetails,
-) -> tuple[dict[str, str], bool]:
+) -> tuple[dict[str, str], dict[str, str], bool]:
     """Return assembly accessions and a boolean indicating whether all assembly submissions
     are complete"""
     result = _get_result_of_single_db_record(
@@ -124,13 +124,14 @@ def get_assembly_accessions_from_db(
     )
 
     if not result:
-        return {}, False
+        return {}, {}, False
 
+    versioned_data = {}
     data = {}
     all_present = True
 
     if gca := result.get(EnaResultField.GCA):
-        data[config.loculus_accession_fields.gca] = gca
+        versioned_data[config.loculus_accession_fields.gca] = gca
     else:
         all_present = False
 
@@ -148,13 +149,13 @@ def get_assembly_accessions_from_db(
 
         full_key = f"{EnaResultField.INSDC_ACCESSION_FULL_PREFIX}{segment_suffix}"
         if full_key in result:
-            data[
+            versioned_data[
                 f"{config.loculus_accession_fields.insdc_accession_full_prefix}{segment_suffix}"
             ] = result[full_key]
         else:
             all_present = False
 
-    return data, all_present
+    return data, versioned_data, all_present
 
 
 def get_external_metadata_to_upload(
@@ -179,7 +180,7 @@ def get_external_metadata_to_upload(
     run_accession, run_accession_not_missing = get_run_accession_from_db(
         db_engine, config, accession, version, entry.submit_raw_reads
     )
-    assembly_accession, all_assemblies_present = get_assembly_accessions_from_db(
+    assembly_accession, versioned_assembly_accession, all_assemblies_present = get_assembly_accessions_from_db(
         db_engine, config, accession, version, organism
     )
 
@@ -189,13 +190,14 @@ def get_external_metadata_to_upload(
             "externalMetadata": {
                 **bioproject_accession,
                 **biosample_accession,
+                **assembly_accession,
             },
         },
         {
             "accession": accession,
             "version": version,
             "externalMetadata": {
-                **assembly_accession,
+                **versioned_assembly_accession,
                 **run_accession,
             },
         },
