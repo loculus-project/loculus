@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 const browser = process.env.BROWSER;
 const readonlySetupName = 'readonly-setup';
+const keycloakWarmupName = 'keycloak-warmup';
 
 /**
  * Read environment variables from file.
@@ -76,8 +77,14 @@ const config = {
 
         // CLI tests - still need browser for user setup
         {
+            name: keycloakWarmupName,
+            use: { ...devices['Desktop Chrome'] },
+            testMatch: /keycloak-warmup\.setup\.ts/,
+        },
+        {
             name: 'cli-tests',
             use: { ...devices['Desktop Chrome'] },
+            dependencies: [keycloakWarmupName],
             testMatch: /.*\/cli\/.*\.spec\.ts$/,
         },
     ],
@@ -87,7 +94,9 @@ const testSuite = process.env.TEST_SUITE || 'all';
 
 if (testSuite === 'cli') {
     // Run only CLI tests
-    config.projects = config.projects.filter((p) => p.name === 'cli-tests');
+    config.projects = config.projects.filter(
+        (p) => p.name === 'cli-tests' || p.name === keycloakWarmupName,
+    );
 } else if (browser) {
     if (testSuite === 'browser') {
         // Run only browser tests (exclude CLI)
@@ -100,6 +109,7 @@ if (testSuite === 'cli') {
             (p) =>
                 p.name.startsWith(browser) ||
                 p.name === readonlySetupName ||
+                p.name === keycloakWarmupName ||
                 p.name === 'cli-tests',
         );
     }
