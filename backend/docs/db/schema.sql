@@ -51,6 +51,29 @@ CREATE FUNCTION public.jsonb_concat(a jsonb, b jsonb) RETURNS jsonb
 ALTER FUNCTION public.jsonb_concat(a jsonb, b jsonb) OWNER TO postgres;
 
 --
+-- Name: update_accession_external_metadata_tracker(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.update_accession_external_metadata_tracker() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
+    SELECT TG_TABLE_NAME, se.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
+    FROM changed_rows cr
+    JOIN sequence_entries se
+      ON se.accession = cr.accession
+    GROUP BY se.organism
+    ON CONFLICT (table_name, organism, pipeline_version)
+    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+    RETURN NULL;
+END;
+$$;
+
+
+ALTER FUNCTION public.update_accession_external_metadata_tracker() OWNER TO postgres;
+
+--
 -- Name: update_current_processing_pipeline_tracker(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -195,6 +218,24 @@ CREATE AGGREGATE public.jsonb_merge_agg(jsonb) (
 
 ALTER AGGREGATE public.jsonb_merge_agg(jsonb) OWNER TO postgres;
 
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: accession_external_metadata; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.accession_external_metadata (
+    accession text NOT NULL,
+    external_metadata_updater text NOT NULL,
+    external_metadata jsonb,
+    updated_metadata_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.accession_external_metadata OWNER TO postgres;
+
 --
 -- Name: accession_sequence; Type: SEQUENCE; Schema: public; Owner: postgres
 --
@@ -208,10 +249,6 @@ CREATE SEQUENCE public.accession_sequence
 
 
 ALTER SEQUENCE public.accession_sequence OWNER TO postgres;
-
-SET default_tablespace = '';
-
-SET default_table_access_method = heap;
 
 --
 -- Name: audit_log; Type: TABLE; Schema: public; Owner: postgres
@@ -651,8 +688,8 @@ CREATE VIEW public.sequence_entries_view AS
     sepd.processed_data,
         CASE
             WHEN se.is_revocation THEN jsonb_build_object('metadata', COALESCE((se.submitted_data -> 'metadata'::text), '{}'::jsonb), 'unalignedNucleotideSequences', '{}'::jsonb, 'alignedNucleotideSequences', '{}'::jsonb, 'nucleotideInsertions', '{}'::jsonb, 'alignedAminoAcidSequences', '{}'::jsonb, 'aminoAcidInsertions', '{}'::jsonb, 'files', 'null'::jsonb)
-            WHEN (aem.external_metadata IS NULL) THEN sepd.processed_data
-            ELSE (sepd.processed_data || jsonb_build_object('metadata', ((sepd.processed_data -> 'metadata'::text) || aem.external_metadata)))
+            WHEN ((aem.external_metadata IS NULL) AND (accession_aem.external_metadata IS NULL)) THEN sepd.processed_data
+            ELSE (sepd.processed_data || jsonb_build_object('metadata', (((sepd.processed_data -> 'metadata'::text) || COALESCE(accession_aem.external_metadata, '{}'::jsonb)) || COALESCE(aem.external_metadata, '{}'::jsonb))))
         END AS joint_metadata,
         CASE
             WHEN se.is_revocation THEN cpp.version
@@ -673,14 +710,18 @@ CREATE VIEW public.sequence_entries_view AS
             WHEN ((sepd.warnings IS NOT NULL) AND (jsonb_array_length(sepd.warnings) > 0)) THEN 'HAS_WARNINGS'::text
             ELSE 'NO_ISSUES'::text
         END AS processing_result
-   FROM (((public.sequence_entries se
+   FROM ((((public.sequence_entries se
      LEFT JOIN public.current_processing_pipeline cpp ON ((se.organism = cpp.organism)))
      LEFT JOIN public.sequence_entries_preprocessed_data sepd ON (((se.accession = sepd.accession) AND (se.version = sepd.version) AND (sepd.pipeline_version = cpp.version))))
      LEFT JOIN ( SELECT em.accession,
             em.version,
             public.jsonb_merge_agg(em.external_metadata) AS external_metadata
            FROM public.external_metadata em
-          GROUP BY em.accession, em.version) aem ON (((aem.accession = se.accession) AND (aem.version = se.version))));
+          GROUP BY em.accession, em.version) aem ON (((aem.accession = se.accession) AND (aem.version = se.version))))
+     LEFT JOIN ( SELECT aemt.accession,
+            public.jsonb_merge_agg(aemt.external_metadata) AS external_metadata
+           FROM public.accession_external_metadata aemt
+          GROUP BY aemt.accession) accession_aem ON ((accession_aem.accession = se.accession)));
 
 
 ALTER VIEW public.sequence_entries_view OWNER TO postgres;
@@ -800,6 +841,14 @@ ALTER TABLE ONLY public.seqset_to_records ALTER COLUMN seqset_record_id SET DEFA
 --
 
 ALTER TABLE ONLY public.user_groups_table ALTER COLUMN id SET DEFAULT nextval('public.user_groups_table_id_seq'::regclass);
+
+
+--
+-- Name: accession_external_metadata accession_external_metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.accession_external_metadata
+    ADD CONSTRAINT accession_external_metadata_pkey PRIMARY KEY (accession, external_metadata_updater);
 
 
 --
@@ -1078,6 +1127,13 @@ CREATE TRIGGER update_tracker_trigger AFTER INSERT OR DELETE OR UPDATE OR TRUNCA
 
 
 --
+-- Name: accession_external_metadata update_tracker_trigger_del; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_del AFTER DELETE ON public.accession_external_metadata REFERENCING OLD TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_accession_external_metadata_tracker();
+
+
+--
 -- Name: current_processing_pipeline update_tracker_trigger_del; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -1113,6 +1169,13 @@ CREATE TRIGGER update_tracker_trigger_del AFTER DELETE ON public.sequence_entrie
 
 
 --
+-- Name: accession_external_metadata update_tracker_trigger_ins; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_ins AFTER INSERT ON public.accession_external_metadata REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_accession_external_metadata_tracker();
+
+
+--
 -- Name: current_processing_pipeline update_tracker_trigger_ins; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -1145,6 +1208,13 @@ CREATE TRIGGER update_tracker_trigger_ins AFTER INSERT ON public.sequence_entrie
 --
 
 CREATE TRIGGER update_tracker_trigger_ins AFTER INSERT ON public.sequence_entries_preprocessed_data REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_preprocessed_data_tracker();
+
+
+--
+-- Name: accession_external_metadata update_tracker_trigger_upd; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.accession_external_metadata REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_accession_external_metadata_tracker();
 
 
 --
