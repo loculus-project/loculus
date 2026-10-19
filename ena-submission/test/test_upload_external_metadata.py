@@ -66,3 +66,36 @@ def test_get_external_metadata_to_upload_splits_accession_and_version_scope() ->
         fields.insdc_accession_prefix: "OZ000001",
         fields.insdc_accession_full_prefix: "OZ000001.1",
     }
+
+
+def test_get_external_metadata_to_upload_omits_empty_payloads() -> None:
+    config = get_config(CONFIG_FILE)
+    fields = config.loculus_accession_fields
+    organism = next(iter(config.enaOrganisms))
+    entry = SubmissionTableEntry(
+        accession="LOC_1", version=2, organism=organism, group_id=1, submit_raw_reads=True
+    )
+
+    with (
+        patch(f"{MODULE}.get_bioproject_accession_from_db") as bioproject,
+        patch(f"{MODULE}.get_biosample_accession_from_db") as biosample,
+        patch(f"{MODULE}.get_run_accession_from_db") as run,
+        patch(f"{MODULE}.get_assembly_accessions_from_db") as assembly,
+    ):
+        bioproject.return_value = {fields.bioproject: "PRJEB1"}
+        biosample.return_value = {fields.biosample: "SAMEA1"}
+        run.return_value = ({}, False)
+        assembly.return_value = ({}, {}, False)
+
+        payloads, all_present = get_external_metadata_to_upload(Mock(), entry, config)
+
+    assert not all_present
+    assert payloads == [
+        {
+            "accession": "LOC_1",
+            "externalMetadata": {
+                fields.bioproject: "PRJEB1",
+                fields.biosample: "SAMEA1",
+            },
+        },
+    ]

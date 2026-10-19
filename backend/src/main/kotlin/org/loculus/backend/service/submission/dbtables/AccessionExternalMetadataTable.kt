@@ -16,7 +16,7 @@ object AccessionExternalMetadataTable : Table(ACCESSION_EXTERNAL_METADATA_TABLE_
     val updaterIdColumn = varchar("external_metadata_updater", 255)
     val externalMetadataColumn =
         jacksonSerializableJsonb<MetadataMap>("external_metadata").nullable()
-    val updatedAtColumn = datetime("updated_metadata_at").nullable()
+    val updatedAtColumn = datetime("updated_metadata_at")
 
     override val primaryKey = PrimaryKey(accessionColumn, updaterIdColumn)
 }

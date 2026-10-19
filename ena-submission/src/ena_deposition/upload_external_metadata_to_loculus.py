@@ -164,7 +164,8 @@ def get_external_metadata_to_upload(
     """Get external metadata to upload to Loculus for a given submission entry, and a boolean
     indicating whether all accessions have been received from ENA for this entry.
 
-    Returns two NDJSON payloads for the backend:
+    Returns up to two NDJSON payloads for the backend (payloads without any external
+    metadata are omitted, to avoid writing empty rows in the backend):
     - accession-scoped (no `version`): bioproject and biosample accessions.
       These describe the sample/project rather than the specific sequence, so they also
       apply to later revisions of the accession (which are not deposited to ENA).
@@ -202,6 +203,7 @@ def get_external_metadata_to_upload(
             },
         },
     ]
+    payloads = [payload for payload in payloads if payload["externalMetadata"]]
 
     return payloads, all(
         [
