@@ -3,6 +3,12 @@ package org.loculus.backend.service.submission
 import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import java.io.BufferedReader
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.util.Locale
+import java.util.UUID
+import kotlin.time.Instant
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.minus
@@ -35,6 +41,8 @@ import org.jetbrains.exposed.v1.core.plus
 import org.jetbrains.exposed.v1.core.statements.StatementType
 import org.jetbrains.exposed.v1.core.stringLiteral
 import org.jetbrains.exposed.v1.core.stringParam
+import org.jetbrains.exposed.v1.core.vendors.ForUpdateOption.PostgreSQL.ForUpdate
+import org.jetbrains.exposed.v1.core.vendors.ForUpdateOption.PostgreSQL.MODE
 import org.jetbrains.exposed.v1.datetime.KotlinLocalDateTimeColumnType
 import org.jetbrains.exposed.v1.datetime.dateTimeParam
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
@@ -47,6 +55,32 @@ import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.json.extract
+import org.loculus.backend.api.fileIds
+import org.loculus.backend.api.getFileId
+import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.errors.BadRequestException
+import org.loculus.backend.errors.ProcessingValidationException
+import org.loculus.backend.errors.UnprocessableEntityException
+import org.loculus.backend.log.AuditLogger
+import org.loculus.backend.metrics.STORE_PREPROCESSED_DATA_PHASE
+import org.loculus.backend.metrics.SUBMIT_PROCESSED_DATA_ENDPOINT
+import org.loculus.backend.metrics.SubmissionMetrics
+import org.loculus.backend.service.datauseterms.DataUseTermsTable
+import org.loculus.backend.service.files.FileId
+import org.loculus.backend.service.files.FilesDatabaseService
+import org.loculus.backend.service.files.S3Service
+import org.loculus.backend.service.groupmanagement.GroupEntity
+import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
+import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
+import org.loculus.backend.service.serialize
+import org.loculus.backend.service.submission.SequenceEntriesTable.accessionColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.groupIdColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.versionColumn
+import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
+import org.loculus.backend.service.submission.dbtables.ExternalMetadataTable
+import org.loculus.backend.service.submission.dbtables.PreprocessingQueueVersionsTable
 import org.loculus.backend.types.AccessionVersion
 import org.loculus.backend.types.AccessionVersionInterface
 import org.loculus.backend.types.AccessionVersionSubmittedMetadata
@@ -81,34 +115,8 @@ import org.loculus.backend.types.SubmittedData
 import org.loculus.backend.types.SubmittedDataDownloadEntry
 import org.loculus.backend.types.SubmittedProcessedData
 import org.loculus.backend.types.UnprocessedData
-import org.loculus.backend.api.fileIds
-import org.loculus.backend.api.getFileId
-import org.loculus.backend.auth.AuthenticatedUser
-import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.config.BackendSpringProperty
-import org.loculus.backend.errors.BadRequestException
-import org.loculus.backend.errors.ProcessingValidationException
-import org.loculus.backend.errors.UnprocessableEntityException
-import org.loculus.backend.log.AuditLogger
-import org.loculus.backend.metrics.STORE_PREPROCESSED_DATA_PHASE
-import org.loculus.backend.metrics.SUBMIT_PROCESSED_DATA_ENDPOINT
-import org.loculus.backend.metrics.SubmissionMetrics
-import org.loculus.backend.service.datauseterms.DataUseTermsTable
-import org.loculus.backend.service.files.FileId
-import org.loculus.backend.service.files.FilesDatabaseService
-import org.loculus.backend.service.files.S3Service
-import org.loculus.backend.service.groupmanagement.GroupEntity
-import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
-import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
-import org.loculus.backend.service.serialize
-import org.loculus.backend.service.submission.SequenceEntriesTable.accessionColumn
-import org.loculus.backend.service.submission.SequenceEntriesTable.groupIdColumn
-import org.loculus.backend.service.submission.SequenceEntriesTable.versionColumn
-import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
-import org.loculus.backend.service.submission.dbtables.ExternalMetadataTable
 import org.loculus.backend.types.fileIds
 import org.loculus.backend.types.getFileId
-import org.loculus.backend.service.submission.dbtables.PreprocessingQueueVersionsTable
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.Version
@@ -116,12 +124,6 @@ import org.loculus.backend.utils.toTimestamp
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.io.BufferedReader
-import java.io.InputStream
-import java.io.InputStreamReader
-import java.util.Locale
-import java.util.UUID
-import kotlin.time.Instant
 
 private val log = KotlinLogging.logger { }
 
@@ -215,14 +217,14 @@ class SubmissionDatabaseService(
     // Runs in its own transaction, after the registration lock has been released.
     fun backfillPreprocessingQueue(organism: Organism, pipelineVersion: Long) {
         val queueVersions = PreprocessingQueueVersionsTable
-        // Serializes concurrent backfills on the registration row. A later caller finds it completed or retired.
+        // One backfill at a time. A concurrent caller skips it, its claim finds nothing yet and polls again.
         val pending = queueVersions
             .select(queueVersions.initializedAtColumn)
             .where {
                 (queueVersions.organismColumn eq organism.name) and
                     (queueVersions.pipelineVersionColumn eq pipelineVersion)
             }
-            .forUpdate()
+            .forUpdate(ForUpdate(mode = MODE.SKIP_LOCKED))
             .firstOrNull()
             ?.let { it[queueVersions.initializedAtColumn] == null }
             ?: false
@@ -276,10 +278,10 @@ class SubmissionDatabaseService(
             claimedAt.toLocalDateTime(DateProvider.timeZone),
             leaseUntil.toLocalDateTime(DateProvider.timeZone),
         )
-        log.info { "Claimed $claimedCount entries for processing attempt $processingAttemptId" }
         if (claimedCount == 0) {
             return emptySequence()
         }
+        log.info { "Claimed $claimedCount entries for processing attempt $processingAttemptId" }
 
         return preprocessing
             .join(table, JoinType.INNER) {
