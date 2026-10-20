@@ -27,7 +27,7 @@ type StoredAuthRequest = z.infer<typeof storedAuthRequestSchema>;
 // The OIDC `state` parameter that identifies one login attempt.
 type OidcState = string;
 
-// A Map has no prototype, so attacker-controlled state keys like "constructor" cannot match inherited properties.
+// Map entries are separate from object properties, so attacker-controlled state keys like "constructor" cannot match inherited members.
 type AuthRequestStore = Map<OidcState, StoredAuthRequest>;
 
 export type AuthRequest = {
