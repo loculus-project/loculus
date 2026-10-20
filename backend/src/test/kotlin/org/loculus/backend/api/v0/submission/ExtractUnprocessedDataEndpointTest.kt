@@ -157,12 +157,11 @@ class ExtractUnprocessedDataEndpointTest(
     }
 
     @Test
-    fun `GIVEN newer pipeline version WHEN its processed entry is deleted from db THEN it is returned again`() {
+    fun `GIVEN newer pipeline version WHEN its failed entry is returned to the queue THEN it is returned again`() {
         val newerPipelineVersion = DEFAULT_PIPELINE_VERSION + 1
         val accessions = convenienceClient.submitDefaultFiles().submissionIdMappings.map { it.accession }
 
-        client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES, pipelineVersion = newerPipelineVersion)
-            .expectNdjsonAndGetContent<UnprocessedData>()
+        convenienceClient.extractUnprocessedData(pipelineVersion = newerPipelineVersion)
         convenienceClient.submitProcessedData(
             accessions.map { PreparedProcessedData.withErrors(accession = it) },
             pipelineVersion = newerPipelineVersion,
