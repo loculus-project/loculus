@@ -1919,7 +1919,7 @@ ena_accession_cases = [
         name="invalid_accession_type_is_internal_error",
         accession="PRJEB12345",
         accession_type="nucleotide",
-        expected_error="invalid accession_type 'nucleotide'",
+        expected_error="Invalid accession_type 'nucleotide'",
     ),
     EnaAccessionCase(
         name="missing_accession_type_is_internal_error",
