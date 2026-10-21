@@ -79,7 +79,7 @@ function getAccountItems(isLoggedIn: boolean, loginUrl: string) {
     return [accountItem];
 }
 
-function topNavigationItems(isLoggedIn: boolean, loginUrl: string) {
+function topNavigationItems(isLoggedIn: boolean, loginUrl: string): TopNavigationItems {
     const seqSetsItems = getSeqSetsItems();
     const accountItems = getAccountItems(isLoggedIn, loginUrl);
 

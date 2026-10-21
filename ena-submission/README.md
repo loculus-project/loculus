@@ -134,7 +134,7 @@ docker run -d \
    -e POSTGRES_USER=postgres \
    -e POSTGRES_PASSWORD=unsecure \
    -p 5432:5432 \
-   postgres:latest
+   postgres:15.19
 ```
 
 ### Install and run flyway

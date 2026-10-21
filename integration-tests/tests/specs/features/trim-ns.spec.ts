@@ -41,7 +41,10 @@ test.describe('Sequence N trimming functionality', () => {
 
         const tabs = await reviewPage.getAvailableSequenceTabs();
 
-        const lUnalignedTab = tabs.find((tab) => tab.toLowerCase().includes('L (unaligned)'));
+        const lUnalignedTab = tabs.find((tab) => tab.toLowerCase().includes('l (unaligned)'));
+        if (!lUnalignedTab) {
+            throw new Error(`Could not find L (unaligned) tab in: ${tabs.join(', ')}`);
+        }
 
         const lSegmentTrimmed =
             'TTCAACAAGCAAAGCCAACTGTGACGGTGTTCTATATGCTAAAAGGTAACTTGATGAACACAGAGCCAACAGTTGCTGAGCTTGTCAGCTATGGTATAAAGGAAGGCAGGTTTTATAGGCTTTCCGACACCGGAATCAATGCAACCACATA';
@@ -49,7 +52,7 @@ test.describe('Sequence N trimming functionality', () => {
         const checkTab = async (tab: string, expectedData: string) => {
             await reviewPage.switchSequenceTab(tab);
             const content = await reviewPage.getSequenceContent();
-            expect(content.replace(/\s+/g, '')).toEqual(expectedData.replace(/\s+/g, ''));
+            expect(content?.replace(/\s+/g, '')).toEqual(expectedData.replace(/\s+/g, ''));
         };
         await checkTab(lUnalignedTab, lSegmentTrimmed);
 

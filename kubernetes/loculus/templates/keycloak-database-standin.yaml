@@ -27,7 +27,8 @@ spec:
       {{- include "loculus.podScheduling" . | nindent 6 }}
       containers:
         - name: loculus-keycloak-database
-          image: postgres:15.12
+          image: "{{ $.Values.images.postgres.repository }}:{{ $.Values.images.postgres.tag }}"
+          imagePullPolicy: "{{ $.Values.images.postgres.pullPolicy }}"
           resources:
             requests:
               memory: "30Mi"
