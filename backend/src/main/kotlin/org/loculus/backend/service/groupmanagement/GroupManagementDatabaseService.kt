@@ -121,20 +121,22 @@ class GroupManagementDatabaseService(
     fun getGroupIdsOfUser(authenticatedUser: AuthenticatedUser) = getGroupsOfUser(authenticatedUser).map { it.groupId }
 
     fun addUserToGroup(authenticatedUser: AuthenticatedUser, groupId: Int, usernameToAdd: String) {
-        groupManagementPreconditionValidator.validateThatUserExists(usernameToAdd)
+        val username = usernameToAdd.lowercase()
+
+        groupManagementPreconditionValidator.validateThatUserExists(username)
 
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
 
         try {
             UserGroupsTable.insert {
-                it[userNameColumn] = usernameToAdd
+                it[userNameColumn] = username
                 it[groupIdColumn] = groupId
             }
-            auditLogger.log(authenticatedUser.username, "Added $usernameToAdd to group $groupId")
+            auditLogger.log(authenticatedUser.username, "Added $username to group $groupId")
         } catch (e: ExposedSQLException) {
             if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
                 throw ConflictException(
-                    "User $usernameToAdd is already member of the group $groupId.",
+                    "User $username is already member of the group $groupId.",
                 )
             }
             throw e
