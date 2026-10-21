@@ -79,7 +79,7 @@ class RequestCache:
         self.cache.clear()
 
 
-TAXONOMY_BROWSER_URL = "https://www.ncbi.nlm.nih.gov/taxonomy"
+TAXONOMY_BROWSER_URL = "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/"
 
 
 class Taxon(BaseModel):
@@ -110,9 +110,9 @@ def lookup_failed(message: str, error_if_failed: bool) -> RawProcessingResult:
 def ambiguous_host_warning(host: str, selected: Taxon, taxa: list[Taxon]) -> str:
     ids = ", ".join([str(t.tax_id) for t in taxa])
     return (
-        f"'{host}' matches {len(taxa)} taxa ({ids}), using the most general one: "
+        f"'{host}' matches {len(taxa)} taxa ({ids}). Taxon will be set to the most general one: "
         f"{selected.tax_id}. To use a different taxon, enter its taxon ID in the `host` "
-        f"field instead. Look up taxon IDs at {TAXONOMY_BROWSER_URL}"
+        f"field instead. You can look up taxon IDs in NCBI taxonomy ({TAXONOMY_BROWSER_URL})."
     )
 
 
