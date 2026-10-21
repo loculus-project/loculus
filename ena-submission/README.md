@@ -1,5 +1,7 @@
 # ENA Submission
 
+This README describes how the Loculus ENA deposition pipeline works. For background on ENA itself (its metadata model of studies, samples, assemblies and raw reads, how to submit and revise each of them, and the corresponding ENA documentation) see [ENA_submission.md](ENA_submission.md).
+
 ## Process Overview
 
 The `loculus-get-ena-submission-list-cronjob` calls the `/get-released-data` backend-endpoint
