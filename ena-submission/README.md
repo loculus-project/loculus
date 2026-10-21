@@ -63,7 +63,6 @@ stateDiagram-v2
 
     READY --> SUBMITTED: accession supplied by submitter<br/>exists and is public
     READY --> HAS_ERRORS: supplied accession not found /<br/>revision rejected
-    READY --> COPY_PREVIOUS: revision with no relevant changes<br/>(raw reads & assembly only)
     READY --> SUBMITTING: request sent to ENA
 
     SUBMITTING --> SUBMITTED: success<br/>(project, sample, raw reads)
@@ -74,12 +73,13 @@ stateDiagram-v2
 
     HAS_ERRORS --> READY: auto-retry if error matches<br/>slack_retry_substrings (every 4h)
 
-    state COPY_PREVIOUS <<choice>>
-    COPY_PREVIOUS --> SUBMITTED: previous version SUBMITTED
-    COPY_PREVIOUS --> WAITING: previous version WAITING<br/>(polls same ERZ)
-    COPY_PREVIOUS --> READY: previous version READY
-
     SUBMITTED --> [*]
+
+    note right of READY
+        Revision with no relevant changes (raw reads & assembly only):
+        copies the previous version's status, results and errors as-is
+        (any status, incl. HAS_ERRORS / SUBMITTING)
+    end note
 
     note left of HAS_ERRORS
         Slack alert for HAS_ERRORS or SUBMITTING > 15 min,
@@ -87,7 +87,7 @@ stateDiagram-v2
     end note
 ```
 
-`COPY_PREVIOUS` is not a status stored in the database: it shows that a revision without relevant changes copies whatever status (and results) the previous version has at that moment, see [Revisions](#revisions).
+For how revisions are handled, see [Revisions](#revisions).
 
 ## Cronjob
 
