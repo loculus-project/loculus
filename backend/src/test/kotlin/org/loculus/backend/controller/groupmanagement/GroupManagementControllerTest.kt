@@ -301,7 +301,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
-    fun `WHEN a user is added with uppercase letters THEN the username is stored in lowercase`() {
+    fun `WHEN a user is added with different case THEN the Keycloak username is stored`() {
         val groupId = client.createNewGroup()
             .andExpect(status().isOk)
             .andGetGroupId()
@@ -313,6 +313,43 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             .andExpect(status().isOk)
             .andExpect(jsonPath("\$.users[*].name", hasItem("otheruser")))
             .andExpect(jsonPath("\$.users[*].name", not(hasItem("OtherUser"))))
+    }
+
+    @Test
+    fun `GIVEN a user is already in a group THEN they can't be added again`() {
+        val groupId = client.createNewGroup()
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        client.addUserToGroup(groupId = groupId, usernameToAdd = "otheruser")
+            .andExpect(status().isNoContent)
+
+        client.addUserToGroup(groupId = groupId, usernameToAdd = "OtherUser")
+            .andExpect(status().isConflict)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    "User otheruser is already member of the group $groupId.",
+                ),
+            )
+    }
+
+    @Test
+    fun `WHEN trying to remove a user with different case THEN the user is removed`() {
+        val groupId = client.createNewGroup()
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        client.addUserToGroup(groupId = groupId, usernameToAdd = "otheruser")
+            .andExpect(status().isNoContent)
+
+        client.removeUserFromGroup(groupId = groupId, userToRemove = "OtherUser")
+            .andExpect(status().isNoContent)
+
+        client.getDetailsOfGroup(groupId)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.users.size()", `is`(1)))
+            .andExpect(jsonPath("\$.users[*].name", hasItem(DEFAULT_USER_NAME)))
     }
 
     @Test
