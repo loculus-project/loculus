@@ -1,6 +1,8 @@
 # ruff: noqa: S101
 """Tests for ProcessingFunctions.assign_custom_lineage and is_variant."""
 
+from factory_methods import DEFAULT_EXTERNAL_SERVICES, DEFAULT_TEST_CONTEXT
+
 from loculus_preprocessing.processing_functions import ProcessingFunctions
 
 ARGS: dict[str, list[str] | str | bool | int | float | None] = {
@@ -37,6 +39,8 @@ def assign_custom_lineage(input_data: dict) -> str | int | float | bool | None:
         output_field="lineage",
         input_fields=list(input_data.keys()),
         args=ARGS,
+        context=DEFAULT_TEST_CONTEXT,
+        external_services=DEFAULT_EXTERNAL_SERVICES,
     ).datum
 
 
@@ -188,6 +192,8 @@ def assign_custom_lineage_is_variant(length, num_mutations, mu="0.01"):
         output_field="variant",
         input_fields=["length", "numMutations"],
         args={"mu": mu},
+        context=DEFAULT_TEST_CONTEXT,
+        external_services=DEFAULT_EXTERNAL_SERVICES,
     )
 
 
@@ -231,10 +237,12 @@ class TestIsVariant:
             output_field="variant",
             input_fields=["length", "numMutations"],
             args={},
+            context=DEFAULT_TEST_CONTEXT,
+            external_services=DEFAULT_EXTERNAL_SERVICES,
         )
         assert result.datum is None
         assert len(result.errors) == 1
-        assert "missing mu argument" in result.errors[0].message
+        assert "missing mu argument" in result.errors[0]
 
     @staticmethod
     def test_non_numeric_inputs_return_error():

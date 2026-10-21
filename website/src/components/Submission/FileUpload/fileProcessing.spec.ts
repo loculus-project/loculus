@@ -1,9 +1,22 @@
 import { fail } from 'assert';
 import { promises as fs } from 'fs';
 
+import ExcelJS from 'exceljs';
 import { describe, expect, test } from 'vitest';
 
-import { METADATA_FILE_KIND, PLAIN_SEGMENT_KIND } from './fileProcessing';
+import { FASTA_FILE_KIND, METADATA_FILE_KIND, PLAIN_SEGMENT_KIND } from './fileProcessing';
+
+async function buildWorkbookFile(extraSheetNames: string[]): Promise<File> {
+    const workbook = new ExcelJS.Workbook();
+    const dataSheet = workbook.addWorksheet('Data');
+    dataSheet.addRow(['submissionId', 'country']);
+    dataSheet.addRow(['sample1', 'Germany']);
+    for (const sheetName of extraSheetNames) {
+        workbook.addWorksheet(sheetName).addRow(['ignored']);
+    }
+    const buffer = await workbook.xlsx.writeBuffer();
+    return new File([buffer], 'template.xlsx');
+}
 
 async function loadTestFile(fileName: string): Promise<File> {
     const path = `${import.meta.dirname}/test_files/${fileName}`;
@@ -53,6 +66,14 @@ describe('fileProcessing', () => {
         10000,
     );
 
+    test('LZMA compressed TSV file cannot be processed', async () => {
+        const file = new File(['dummy'], 'testfile.tsv.xz');
+        const processingResult = await METADATA_FILE_KIND.processRawFile(file);
+
+        expect(processingResult.isErr()).toBeTruthy();
+        expect(processingResult._unsafeUnwrapErr().message).toContain('LZMA compression');
+    });
+
     test('LZMA compressed excel file cannot be processed', async () => {
         const file = await loadTestFile('testfile_different_formats.xlsx.xz');
         const processingResult = await METADATA_FILE_KIND.processRawFile(file);
@@ -81,5 +102,52 @@ describe('fileProcessing', () => {
         const processedText = await processedFile.text();
         expect(processedText).toBe('ACTGACTGACTG');
         expect(processedFile.fastaHeader()).toBe('fooid description');
+    });
+
+    test('template reference sheets (Guidance, _lists) do not trigger a multi-sheet warning', async () => {
+        const file = await buildWorkbookFile(['Guidance', '_lists']);
+        const processingResult = await METADATA_FILE_KIND.processRawFile(file);
+
+        expect(processingResult.isOk()).toBe(true);
+        expect(processingResult._unsafeUnwrap().warnings()).toHaveLength(0);
+    });
+
+    test('an unexpected extra sheet still triggers a multi-sheet warning', async () => {
+        const file = await buildWorkbookFile(['Guidance', 'My other data']);
+        const processingResult = await METADATA_FILE_KIND.processRawFile(file);
+
+        expect(processingResult.isOk()).toBe(true);
+        expect(processingResult._unsafeUnwrap().warnings()).toHaveLength(1);
+    });
+
+    test('parses the Data sheet by name even when it is not the first sheet', async () => {
+        // Reference sheet dragged in front of Data — the Data sheet must still be the one parsed.
+        const workbook = new ExcelJS.Workbook();
+        workbook.addWorksheet('Guidance').addRow(['Field name', 'Display name']);
+        const data = workbook.addWorksheet('Data');
+        data.addRow(['submissionId', 'country']);
+        data.addRow(['sample1', 'Germany']);
+        const buffer = await workbook.xlsx.writeBuffer();
+        const file = new File([buffer], 'template.xlsx');
+
+        const processingResult = await METADATA_FILE_KIND.processRawFile(file);
+        expect(processingResult.isOk()).toBe(true);
+        const processedFile = processingResult._unsafeUnwrap();
+
+        expect(processedFile.warnings()).toHaveLength(0);
+        const text = await processedFile.text();
+        expect(text.split('\n')[0]).toContain('submissionId'); // parsed Data...
+        expect(text).not.toContain('Field name'); // ...not the Guidance reference sheet
+    });
+
+    test.each([
+        ['metadata.tsv', true],
+        ['metadata.xlsx.gz', true],
+        ['sequences.fasta.zst', false],
+        ['sequences.txt', false],
+    ])('sequence file field rejects %s: %s', async (fileName, isRejected) => {
+        const processingResult = await FASTA_FILE_KIND.processRawFile(new File(['content'], fileName));
+
+        expect(processingResult.isErr()).toBe(isRejected);
     });
 });

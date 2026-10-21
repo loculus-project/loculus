@@ -10,13 +10,14 @@ import {
     SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
 } from '../../../types/referenceGenomes.spec';
 
-const originalWindowOpen = window.open;
-beforeEach(() => {
-    window.open = vi.fn();
-});
+const windowOpenMock = vi.fn();
 
+beforeEach(() => {
+    windowOpenMock.mockClear();
+    vi.spyOn(window, 'open').mockImplementation(windowOpenMock);
+});
 afterEach(() => {
-    window.open = originalWindowOpen;
+    vi.restoreAllMocks();
 });
 
 const realDownloadUrlGenerator = new DownloadUrlGenerator('test', 'http://testurl.com/sample', true, ['name', 'date']);
@@ -69,6 +70,26 @@ describe('LinkOutMenu with enabled data use terms', () => {
         expect(screen.getByText('Data use terms')).toBeInTheDocument();
     });
 
+    test('closes modal without opening tool when close button is clicked', () => {
+        render(
+            <LinkOutMenu
+                downloadUrlGenerator={realDownloadUrlGenerator}
+                sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
+                linkOuts={linkOuts}
+                dataUseTermsEnabled={true}
+                referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
+        fireEvent.click(screen.getByText('Basic'));
+        fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+        expect(screen.queryByText('Options for launching Basic')).not.toBeInTheDocument();
+        expect(windowOpenMock).not.toHaveBeenCalled();
+    });
+
     test('generates URLs with open-access only when selected', () => {
         const generateDownloadUrlSpy = vi.spyOn(realDownloadUrlGenerator, 'generateDownloadUrl');
 
@@ -87,7 +108,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
         fireEvent.click(screen.getByText('Basic'));
         fireEvent.click(screen.getByText('Open sequences only'));
 
-        expect(window.open).toHaveBeenCalled();
+        expect(windowOpenMock).toHaveBeenCalled();
         expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
             mockSequenceFilter,
             expect.objectContaining({
@@ -114,7 +135,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
         fireEvent.click(screen.getByText('Basic'));
         fireEvent.click(screen.getByText('Include Restricted-Use'));
 
-        expect(window.open).toHaveBeenCalled();
+        expect(windowOpenMock).toHaveBeenCalled();
         expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
             mockSequenceFilter,
             expect.objectContaining({
@@ -141,8 +162,8 @@ describe('LinkOutMenu with enabled data use terms', () => {
         fireEvent.click(screen.getByText('Basic'));
         fireEvent.click(screen.getByText('Include Restricted-Use'));
 
-        expect(window.open).toHaveBeenCalled();
-        expect(vi.mocked(window.open).mock.calls[0][0]).not.toBeUndefined();
+        expect(windowOpenMock).toHaveBeenCalled();
+        expect(vi.mocked(windowOpenMock).mock.calls[0][0]).not.toBeUndefined();
     });
 
     test('passes metadata fields to URL generator', () => {
@@ -214,7 +235,7 @@ describe('LinkOutMenu with disabled data use terms', () => {
         fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
         fireEvent.click(screen.getByText('Basic'));
 
-        expect(window.open).toHaveBeenCalled();
+        expect(windowOpenMock).toHaveBeenCalled();
     });
 });
 

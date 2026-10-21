@@ -17,7 +17,7 @@ from Bio import SeqIO
 
 from loculus_preprocessing.sequence_checks import error_on_excess_sequences
 
-from .config import AlignmentRequirement, Config, NextcladeSequenceAndDataset, SequenceName
+from .config import Config, NextcladeSequenceAndDataset, SequenceName
 from .datatypes import (
     AccessionVersion,
     Alert,
@@ -355,8 +355,8 @@ def write_nextclade_input_fasta(
     os.makedirs(os.path.dirname(input_file), exist_ok=True)
     with open(input_file, "w", encoding="utf-8") as f:
         for entry in unprocessed:
-            accession_version = entry.accessionVersion
-            for fasta_id, seq in entry.data.unalignedNucleotideSequences.items():
+            accession_version = entry.context.accession_version
+            for fasta_id, seq in entry.unalignedNucleotideSequences.items():
                 id = f"{accession_version}__{fasta_id}"
                 id_map[accession_version, fasta_id] = id
                 f.write(f">{id}\n")
@@ -376,7 +376,7 @@ def is_valid_dataset_match(method, best_dataset_id, dataset):
     return best_dataset_id in accepted__dataset_matches_or_default(dataset)
 
 
-def assign_segment(  # noqa: C901
+def assign_segment(
     entry: UnprocessedEntry,
     id_map: dict[tuple[AccessionVersion, FastaId], str],
     best_hits: pd.DataFrame,
@@ -385,33 +385,24 @@ def assign_segment(  # noqa: C901
     """
     Assign sequences to segments based on best hits from nextclade align, nextclade sort or diamond
     If a segment has multiple references assign to the reference with highest alignment score
-    1. If no best hit for a sequence, add error/warning about unaligned sequence
-    2. If best hit does not match any accepted reference, add error/warning about unaligned sequence
+    1. If no best hit for a sequence, add error about unaligned sequence
+    2. If best hit does not match any accepted reference, add error about unaligned sequence
     3. If multiple sequences match the same segment (also if they match different references of
     that segment), add error about duplicate segments
-    4. If no sequences assigned and no errors about unaligned/duplicate, add error about
-       no sequence data found (e.g. when alignment requirement is ANY and all sequences miss)
     """
     sort_results_map: dict[SegmentName, list[AssignedSequence]] = defaultdict(list)
     sequence_assignment = SequenceAssignment()
 
-    has_unaligned_sequence = False
-    has_duplicate_segments = False
-
-    for fasta_id in entry.data.unalignedNucleotideSequences:
-        seq_id = id_map[entry.accessionVersion, fasta_id]
+    for fasta_id in entry.unalignedNucleotideSequences:
+        seq_id = id_map[entry.context.accession_version, fasta_id]
         if seq_id not in best_hits[SequenceIdentifier].unique():
-            has_unaligned_sequence = True
             method = config.segment_classification_method.display_name
             annotation = sequence_annotation(
                 f"Sequence with fasta id {fasta_id} does not match any reference for "
                 f"organism: {config.organism} per `{method}`. "
                 "Double check you are submitting to the correct organism."
             )
-            if config.alignment_requirement == AlignmentRequirement.ALL:
-                sequence_assignment.alert.errors.append(annotation)
-            else:
-                sequence_assignment.alert.warnings.append(annotation)
+            sequence_assignment.alert.errors.append(annotation)
             continue
 
         best_hit = best_hits[best_hits[SequenceIdentifier] == seq_id]
@@ -429,21 +420,16 @@ def assign_segment(  # noqa: C901
                 break
 
         if not_found:
-            has_unaligned_sequence = True
             annotation = sequence_annotation(
                 f"Sequence {fasta_id} best matches {best_dataset_id}, "
                 "which is currently not an accepted option for organism: "
                 f"{config.organism}. It is therefore not possible to release. "
                 "Contact the administrator if you think this message is an error."
             )
-            if config.alignment_requirement == AlignmentRequirement.ALL:
-                sequence_assignment.alert.errors.append(annotation)
-            else:
-                sequence_assignment.alert.warnings.append(annotation)
+            sequence_assignment.alert.errors.append(annotation)
 
     for segment, ids in sort_results_map.items():
         if len(ids) > 1:
-            has_duplicate_segments = True
             sequence_assignment.alert.errors.append(
                 sequence_annotation(
                     f"Multiple sequences (with fasta ids: {', '.join([id.fasta_id for id in ids])})"
@@ -454,19 +440,7 @@ def assign_segment(  # noqa: C901
 
         sequence_assignment.sequenceNameToFastaId[ids[0].name] = ids[0].fasta_id
         sequence_assignment.unalignedNucleotideSequences[ids[0].name] = (
-            entry.data.unalignedNucleotideSequences[ids[0].fasta_id]
-        )
-
-    if (
-        len(sequence_assignment.unalignedNucleotideSequences) == 0
-        and not has_duplicate_segments
-        and (not has_unaligned_sequence or config.alignment_requirement == AlignmentRequirement.ANY)
-    ):
-        sequence_assignment.alert.errors.append(
-            sequence_annotation(
-                "No sequence data could be classified - "
-                "check you are submitting to the correct organism.",
-            )
+            entry.unalignedNucleotideSequences[ids[0].fasta_id]
         )
 
     return sequence_assignment
@@ -523,7 +497,7 @@ def assign_segment_with_nextclade_align(
             best_hits,
             config,
         )
-        accession_version = entry.accessionVersion
+        accession_version = entry.context.accession_version
         batch.sequenceNameToFastaId[accession_version] = sequence_assignment.sequenceNameToFastaId
         batch.unalignedNucleotideSequences[accession_version] = (
             sequence_assignment.unalignedNucleotideSequences
@@ -566,7 +540,7 @@ def assign_segment_with_nextclade_sort(
             best_hits,
             config,
         )
-        accession_version = entry.accessionVersion
+        accession_version = entry.context.accession_version
         batch.sequenceNameToFastaId[accession_version] = sequence_assignment.sequenceNameToFastaId
         batch.unalignedNucleotideSequences[accession_version] = (
             sequence_assignment.unalignedNucleotideSequences
@@ -608,7 +582,7 @@ def assign_segment_with_diamond(
             best_hits,
             config,
         )
-        accession_version = entry.accessionVersion
+        accession_version = entry.context.accession_version
         batch.sequenceNameToFastaId[accession_version] = sequence_assignment.sequenceNameToFastaId
         batch.unalignedNucleotideSequences[accession_version] = (
             sequence_assignment.unalignedNucleotideSequences
@@ -646,9 +620,9 @@ def assign_all_single_segments(
 ) -> SequenceAssignmentBatch:
     batch = SequenceAssignmentBatch()
     for entry in unprocessed:
-        accession_version = entry.accessionVersion
+        accession_version = entry.context.accession_version
         sequence_assignment = assign_single_segment(
-            entry.data.unalignedNucleotideSequences,
+            entry.unalignedNucleotideSequences,
             config=config,
         )
         batch.sequenceNameToFastaId[accession_version] = sequence_assignment.sequenceNameToFastaId
@@ -770,8 +744,8 @@ def assign_segment_for_alignment(
 ) -> SequenceAssignmentBatch:
     errors = {}
     for entry in unprocessed:
-        errors[entry.accessionVersion] = error_on_excess_sequences(
-            len(entry.data.unalignedNucleotideSequences),
+        errors[entry.context.accession_version] = error_on_excess_sequences(
+            len(entry.unalignedNucleotideSequences),
             config,
         )
     if not config.multi_datasets:
@@ -807,7 +781,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
     For each unprocessed segment of each unprocessed sequence use nextclade run to perform alignment
     and QC. The result is a mapping from each AccessionVersion to an
     `UnprocessedAfterNextclade(
-            inputMetadata: InputMetadata
+            metadata: InputMetadata
             nextcladeMetadata: dict[SegmentName, Any] | None
             unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]
             alignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]
@@ -817,17 +791,6 @@ def enrich_with_nextclade(  # noqa: PLR0914
             sequenceNameToFastaId: dict[SegmentName, str]
     )` object.
     """
-    input_metadata: dict[AccessionVersion, dict[str, Any]] = {
-        entry.accessionVersion: {
-            **entry.data.metadata,
-            "submitter": entry.data.submitter,
-            "submittedAt": entry.data.submittedAt,
-            "submissionId": entry.data.submissionId,
-            "group_id": entry.data.group_id,
-        }
-        for entry in unprocessed
-    }
-
     batch = assign_segment_for_alignment(unprocessed, config=config, dataset_dir=dataset_dir)
     unaligned_nucleotide_sequences = batch.unalignedNucleotideSequences
     segment_assignment_map = batch.sequenceNameToFastaId
@@ -916,9 +879,13 @@ def enrich_with_nextclade(  # noqa: PLR0914
                 sequence_and_dataset,
             )
 
-    return {
-        id: UnprocessedAfterNextclade(
-            inputMetadata=input_metadata[id],
+    enriched: dict[AccessionVersion, UnprocessedAfterNextclade] = {}
+    for entry in unprocessed:
+        id = entry.context.accession_version
+        enriched[id] = UnprocessedAfterNextclade(
+            metadata=dict(entry.metadata),
+            context=entry.context,
+            files=entry.files,
             nextcladeMetadata=nextclade_metadata[id],
             unalignedNucleotideSequences=unaligned_nucleotide_sequences[id],
             alignedNucleotideSequences=aligned_nucleotide_sequences[id],
@@ -929,8 +896,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
             errors=alerts[id].errors,
             warnings=alerts[id].warnings,
         )
-        for id in input_metadata
-    }
+    return enriched
 
 
 def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:

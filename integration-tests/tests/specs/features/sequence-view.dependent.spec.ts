@@ -32,7 +32,7 @@ test.describe('Sequence view in review card', () => {
         await submissionPage.submitSequence();
 
         await expect(
-            page.getByRole('heading', { name: 'Review current submissions' }),
+            page.getByRole('heading', { name: 'Review pending submissions' }),
         ).toBeVisible();
 
         const reviewPage = new ReviewPage(page);
@@ -45,14 +45,14 @@ test.describe('Sequence view in review card', () => {
 
         const sequenceContent = await reviewPage.getSequenceContent();
 
-        expect(sequenceContent.length).toBeGreaterThan(10);
+        expect(sequenceContent?.length).toBeGreaterThan(10);
 
         const availableTabs = await reviewPage.getAvailableSequenceTabs();
         expect(availableTabs.length).toBeGreaterThan(0);
 
         await reviewPage.switchSequenceTab(availableTabs[1]);
         const alignedContent = await reviewPage.getSequenceContent();
-        expect(alignedContent.length).toBeGreaterThan(10);
+        expect(alignedContent?.length).toBeGreaterThan(10);
 
         await reviewPage.switchSequenceTab(availableTabs[0]);
 

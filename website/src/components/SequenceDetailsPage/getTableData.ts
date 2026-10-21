@@ -1,12 +1,12 @@
 import { err, ok, Result } from 'neverthrow';
 
+import { getMetadataTableData } from './getMetadataTableData.ts';
 import type { TableDataEntry } from './types.js';
 import { type LapisClient } from '../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
 import {
     DEFAULT_AA_MUTATION_DETAILS_HEADER,
     DEFAULT_NUC_MUTATION_DETAILS_HEADER,
-    type Metadata,
     type MutationBadgeData,
     type Schema,
     type SegmentedMutationStrings,
@@ -19,7 +19,6 @@ import {
     type MutationProportionCount,
 } from '../../types/lapis.ts';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
-import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 import { getSelectedReferences } from '../../utils/referenceSelection.ts';
 import {
     lapisNameToDisplayName,
@@ -212,18 +211,7 @@ function toTableData(
         aminoAcidInsertions: InsertionCount[];
     },
 ): TableDataEntry[] {
-    const data: TableDataEntry[] = config.metadata
-        .filter((metadata) => metadata.hideOnSequenceDetailsPage !== true)
-        .filter((metadata) => details[metadata.name] !== null && metadata.name in details)
-        .map((metadata) => ({
-            label: metadata.displayName ?? metadata.name,
-            name: metadata.name,
-            customDisplay: metadata.customDisplay,
-            value: mapValueToDisplayedValue(details[metadata.name], metadata),
-            header: metadata.header ?? '',
-            type: { kind: 'metadata', metadataType: metadata.type },
-            orderOnDetailsPage: metadata.orderOnDetailsPage,
-        }));
+    const data = getMetadataTableData(config.metadata, details);
 
     if (config.submissionDataTypes.consensusSequences) {
         const mutations = mutationDetails(
@@ -237,18 +225,6 @@ function toTableData(
     }
 
     return data;
-}
-
-function mapValueToDisplayedValue(value: undefined | null | string | number | boolean, metadata: Metadata) {
-    if (value === null || value === undefined) {
-        return 'N/A';
-    }
-
-    if (metadata.type === 'timestamp' && typeof value === 'number') {
-        return parseUnixTimestamp(value);
-    }
-
-    return value;
 }
 
 export function substitutionsMap(

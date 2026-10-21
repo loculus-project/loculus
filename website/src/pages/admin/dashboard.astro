@@ -1,47 +1,68 @@
 ---
 import type { Result } from 'neverthrow';
 
+import { AdminSeqSetCitationsSection } from '../../components/AdminDashboard/AdminSeqSetCitationsSection';
 import { PipelineStatisticsTable } from '../../components/AdminDashboard/PipelineStatisticsTable';
+import { seqSetsAreEnabled, getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { createBackendClient } from '../../services/backendClientFactory';
 import type { CurrentPipelineVersions, ProblemDetail } from '../../types/backend';
+import type { AdminSeqSetCitation } from '../../types/seqSetCitation';
 import { getAccessToken } from '../../utils/getAccessToken';
 
 const accessToken = getAccessToken(Astro.locals.session);
+const seqSetsEnabled = seqSetsAreEnabled();
+const clientConfig = getRuntimeConfig().public;
 let statisticsResult;
 let currentVersionsResult: Result<CurrentPipelineVersions, ProblemDetail> | undefined;
+let seqSetCitationsResult: Result<AdminSeqSetCitation[], ProblemDetail> | undefined;
 if (accessToken !== undefined) {
     const backendClient = createBackendClient();
-    [statisticsResult, currentVersionsResult] = await Promise.all([
+    [statisticsResult, currentVersionsResult, seqSetCitationsResult] = await Promise.all([
         backendClient.getPipelineStatistics(accessToken),
         backendClient.getCurrentPipelineVersions(accessToken),
+        seqSetsEnabled ? backendClient.getAllSeqSetCitations(accessToken) : Promise.resolve(undefined),
     ]);
 }
 ---
 
 <BaseLayout title='Admin dashboard'>
     <h1 class='title mb-4'>Admin dashboard</h1>
-    {
-        accessToken === undefined ? (
-            <p>You must be logged in.</p>
-        ) : (
-            statisticsResult?.match(
-                (statistics) => (
-                    <>
-                        <p class='mb-4'>
-                            Processed sequence entries per pipeline version. Current pipeline versions are marked in
-                            bold.
-                        </p>
-                        <div class='overflow-x-auto'>
-                            <PipelineStatisticsTable
-                                statistics={statistics}
-                                currentVersions={currentVersionsResult?.unwrapOr({})}
-                            />
-                        </div>
-                    </>
-                ),
-                (_error) => <pre>Error: this may occur if you are not a superuser.</pre>,
-            )
+    {accessToken === undefined ? (
+        <p>You must be logged in.</p>
+    ) : (
+        statisticsResult?.match(
+            (statistics) => (
+                <>
+                    <p class='mb-4'>
+                        Processed sequence entries per pipeline version. Current pipeline versions are marked in bold.
+                    </p>
+                    <div class='overflow-x-auto'>
+                        <PipelineStatisticsTable
+                            statistics={statistics}
+                            currentVersions={currentVersionsResult?.unwrapOr({})}
+                        />
+                    </div>
+                    {seqSetsEnabled && (
+                        <section class='mt-10'>
+                            <h2 class='text-xl font-bold mb-2'>SeqSet citations</h2>
+                            <p class='mb-4'>All publications that cite a SeqSet in this instance.</p>
+                            {seqSetCitationsResult?.match(
+                                (citations) => (
+                                    <AdminSeqSetCitationsSection
+                                        citations={citations}
+                                        clientConfig={clientConfig}
+                                        accessToken={accessToken}
+                                        client:load
+                                    />
+                                ),
+                                (_error) => <pre>Error: could not load SeqSet citations.</pre>,
+                            )}
+                        </section>
+                    )}
+                </>
+            ),
+            (_error) => <pre>Error: this may occur if you are not a superuser.</pre>,
         )
-    }
+    )}
 </BaseLayout>

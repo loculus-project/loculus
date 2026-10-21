@@ -7,12 +7,12 @@ import io.swagger.v3.oas.models.headers.Header
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.parameters.HeaderParameter
 import org.flywaydb.core.Flyway
-import org.jetbrains.exposed.spring.autoconfigure.ExposedAutoConfiguration
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.DatabaseConfig
-import org.jetbrains.exposed.sql.Slf4jSqlDebugLogger
-import org.jetbrains.exposed.sql.transactions.TransactionManager
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.DatabaseConfig
+import org.jetbrains.exposed.v1.core.Slf4jSqlDebugLogger
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.spring.boot4.autoconfigure.ExposedAutoConfiguration
 import org.loculus.backend.controller.LoculusCustomHeaders
 import org.loculus.backend.log.REQUEST_ID_HEADER_DESCRIPTION
 import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
@@ -21,8 +21,8 @@ import org.springdoc.core.customizers.OperationCustomizer
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
-import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
+import org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
@@ -41,8 +41,14 @@ object BackendSpringProperty {
     const val STREAM_BATCH_SIZE = "loculus.stream.batch-size"
     const val DEBUG_MODE = "loculus.debug-mode"
     const val ENABLE_SEQSETS = "loculus.enable-seqsets"
+    const val SEQSET_CITATIONS_RUN_EVERY_MINUTES = "loculus.seqset-citations.run-every-minutes"
+    const val CLEAN_UP_AUX_TABLE_RUN_EVERY_HOURS = "loculus.maintenance.clean-up-aux-table.run-every-hours"
 
     const val S3_ENABLED = "loculus.s3.enabled"
+    const val S3_GC_ENABLED = "loculus.s3.gc-enabled"
+    const val S3_GC_INITIAL_DELAY_MINUTES = "loculus.s3.gc-initial-delay-minutes"
+    const val S3_GC_FREQUENCY_MINUTES = "loculus.s3.gc-frequency-minutes"
+    const val S3_GC_ORPHAN_RETENTION_PERIOD_MINUTES = "loculus.s3.gc-orphan-retention-period-minutes"
     const val S3_BUCKET_ENDPOINT = "loculus.s3.bucket.endpoint"
     const val S3_BUCKET_INTERNAL_ENDPOINT = "loculus.s3.bucket.internal-endpoint"
     const val S3_BUCKET_BUCKET = "loculus.s3.bucket.bucket"

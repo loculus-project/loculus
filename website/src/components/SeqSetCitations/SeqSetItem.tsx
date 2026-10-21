@@ -3,25 +3,24 @@ import { AxiosError } from 'axios';
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { AuthorDetails } from './AuthorDetails.tsx';
-import { CitationPlot } from './CitationPlot';
+import CitationList from './CitationList.tsx';
 import { DatePlot, CategoryPlot } from './SeqSetPlots.tsx';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
 import type { AggregateRow } from './getSeqSetStatistics.ts';
-import { mainTailwindColor } from '../../../colors.json';
 import { getClientLogger } from '../../clientLogger';
-import { useCrossRefWork } from '../../hooks/useCrossRefOperations.ts';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ProblemDetail } from '../../types/backend.ts';
 import type { SeqSetGraph } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { type AuthorProfile, type CitedByResult, type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
+import { type SeqSet, type SeqSetCitation, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
+import { getThemeColor } from '../../utils/getThemeColor';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MdiDotsGrid from '~icons/mdi/dots-grid';
 import MdiViewGrid from '~icons/mdi/view-grid';
+import OouiNewWindowLtr from '~icons/ooui/new-window-ltr';
 
 const logger = getClientLogger('SeqSetItem');
 
@@ -53,9 +52,8 @@ type SeqSetItemProps = {
     accessToken: string;
     seqSetAccessionVersion: string;
     seqSet: SeqSet;
-    seqSetAuthor?: AuthorProfile;
     seqSetRecords: SeqSetRecord[];
-    citedByData: CitedByResult;
+    seqSetCitations: SeqSetCitation[];
     seqSetGraphs: SeqSetGraph[];
     seqSetGraphsData: Record<string, AggregateRow[]>;
     isAdminView?: boolean;
@@ -68,9 +66,8 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     accessToken,
     seqSetAccessionVersion,
     seqSet,
-    seqSetAuthor,
     seqSetRecords,
-    citedByData,
+    seqSetCitations,
     seqSetGraphs,
     seqSetGraphsData,
     isAdminView = false,
@@ -80,12 +77,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     const [page, setPage] = useState(1);
     const [wideGraphs, setWideGraphs] = useState(false);
     const sequencesPerPage = 10;
-
-    const {
-        data: seqSetCrossRefWork,
-        isLoading: isCrossRefWorkLoading,
-        isError: isCrossRefWorkError,
-    } = useCrossRefWork(seqSet.seqSetDOI);
 
     const { mutate: createSeqSetDOI } = useCreateSeqSetDOIAction(
         clientConfig,
@@ -103,17 +94,22 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
         return `https://search.crossref.org/search/works?from_ui=yes&q=${seqSet.seqSetDOI}`;
     };
 
-    const formatDate = (date?: string) => {
-        if (date === undefined) {
-            return 'N/A';
-        }
-        const dateObj = new Date(date);
-        return dateObj.toISOString().split('T')[0];
-    };
-
     const renderDOI = () => {
         if (seqSet.seqSetDOI !== undefined && seqSet.seqSetDOI !== null) {
-            return `https://doi.org/${seqSet.seqSetDOI}`;
+            return (
+                <span className='inline-flex items-center gap-3'>
+                    {`https://doi.org/${seqSet.seqSetDOI}`}
+                    <a
+                        className='text-gray-500'
+                        href={getCrossRefUrl()}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        title='View DOI on CrossRef'
+                    >
+                        <OouiNewWindowLtr className='w-4 h-4' />
+                    </a>
+                </span>
+            );
         }
 
         if (!isAdminView) {
@@ -143,8 +139,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
         return seqSetRecords.slice((page - 1) * sequencesPerPage, page * sequencesPerPage);
     };
 
-    // Colour used for the plots, derived from colors.json
-    const barPlotColor = mainTailwindColor[500];
+    const barPlotColor = getThemeColor('--color-primary-500', '#6b84c6');
 
     return (
         <div className='flex flex-col'>
@@ -154,21 +149,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                     <SeqSetSectionEntry label='Description' value={seqSet.description ?? 'N/A'} />
                     <SeqSetSectionEntry label='Version' value={seqSet.seqSetVersion} />
                     <SeqSetSectionEntry
-                        label='Created by'
-                        value={
-                            seqSetAuthor ? (
-                                <AuthorDetails
-                                    displayFullDetails={false}
-                                    firstName={seqSetAuthor.firstName}
-                                    lastName={seqSetAuthor.lastName}
-                                />
-                            ) : (
-                                'Unknown'
-                            )
-                        }
-                    />
-                    <SeqSetSectionEntry label='Created date' value={formatDate(seqSet.createdAt)} />
-                    <SeqSetSectionEntry
                         label='Size'
                         value={`${seqSetRecords.length} sequence${seqSetRecords.length === 1 ? '' : 's'}`}
                     />
@@ -176,36 +156,17 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                 <SeqSetSection title='Citations'>
                     <SeqSetSectionEntry label='DOI' value={renderDOI()} />
                     <SeqSetSectionEntry
-                        label='Total citations'
+                        label='Cited in'
                         value={
-                            seqSet.seqSetDOI ? (
-                                isCrossRefWorkLoading ? (
-                                    <span className='loading loading-spinner loading-xs'></span>
-                                ) : isCrossRefWorkError ? (
-                                    <span>Failed to load citations.</span>
-                                ) : (
-                                    <a
-                                        className='mr-4 cursor-pointer font-medium text-blue-600 hover:text-blue-800'
-                                        href={getCrossRefUrl()}
-                                        target='_blank'
-                                        rel='noopener noreferrer'
-                                    >
-                                        Cited by {seqSetCrossRefWork.message.isReferencedByCount}
-                                    </a>
-                                )
+                            seqSetCitations.length > 0 ? (
+                                <CitationList
+                                    citations={seqSetCitations}
+                                    maxDisplayedCitations={3}
+                                    modalTitle='SeqSet Citations'
+                                />
                             ) : (
-                                <span>Cited by 0</span>
+                                <span>No citations found.</span>
                             )
-                        }
-                    />
-                    <SeqSetSectionEntry
-                        label='Citations over time'
-                        value={
-                            <CitationPlot
-                                citedByData={citedByData}
-                                description='Number of times this SeqSet has been cited by a publication'
-                                barColor={barPlotColor}
-                            />
                         }
                     />
                 </SeqSetSection>
@@ -215,7 +176,8 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                 title='Statistics'
                 headerContent={
                     <Button
-                        className='mt-1 outlineButton flex items-center gap-2'
+                        variant='outline'
+                        className='mt-1 flex items-center gap-2'
                         onClick={() => setWideGraphs((prev) => !prev)}
                     >
                         {wideGraphs ? <MdiViewGrid /> : <MdiDotsGrid />}

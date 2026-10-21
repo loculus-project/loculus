@@ -1,4 +1,5 @@
-FROM eclipse-temurin:21-jre-alpine
+# Keep the Java version in sync with the other Java versions (backend/build.gradle, CI workflows)
+FROM eclipse-temurin:25-jre-alpine
 
 WORKDIR /app
 

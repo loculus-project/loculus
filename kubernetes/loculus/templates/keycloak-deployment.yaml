@@ -14,11 +14,16 @@ spec:
       component: keycloak
   template:
     metadata:
+      {{- if and .Values.runDevelopmentKeycloakDatabase (not .Values.developmentDatabasePersistence) }}
+      annotations:
+        valuesHash: {{ .Values | toJson | sha256sum | quote }}
+      {{- end }}
       labels:
         app: loculus
         component: keycloak
     spec:
      {{- include "possiblePriorityClassName" . | nindent 6 }}
+      {{- include "loculus.podScheduling" . | nindent 6 }}
       initContainers:
 {{- include "loculus.configProcessor" (dict "name" "keycloak-config" "dockerTag" $dockerTag "imagePullPolicy" .Values.imagePullPolicy) | nindent 8 }}
         - name: keycloak-theme-prep
@@ -36,7 +41,8 @@ spec:
       containers:
         - name: keycloak
           # TODO #1221
-          image: quay.io/keycloak/keycloak:23.0
+          image: "{{ $.Values.images.keycloak.repository }}:{{ $.Values.images.keycloak.tag }}"
+          imagePullPolicy: "{{ $.Values.images.keycloak.pullPolicy }}"
           {{- include "loculus.resources" (list "keycloak" $.Values) | nindent 10 }}
           env:
             - name: REGISTRATION_TERMS_MESSAGE
@@ -102,6 +108,9 @@ spec:
             {{- if .Values.runDevelopmentKeycloakDatabase  }}
             - name: LOCULUS_VERSION
               value: {{ $dockerTag }}
+            {{- end }}
+            {{- with .Values.keycloakExtraEnv }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
           args:
             - "start"

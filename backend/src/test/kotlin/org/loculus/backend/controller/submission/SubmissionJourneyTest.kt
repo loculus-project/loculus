@@ -9,12 +9,12 @@ import org.junit.jupiter.api.Test
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.GeneticSequence
-import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.api.Status.PROCESSED
 import org.loculus.backend.api.Status.RECEIVED
+import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
@@ -204,8 +204,8 @@ class SubmissionJourneyTest(@Autowired val convenienceClient: SubmissionConvenie
         convenienceClient.submitEditedData(
             accessions,
             organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
-            editedData = OriginalData(
-                metadata = defaultOriginalData.metadata,
+            editedData = SubmittedData(
+                metadata = defaultSubmittedData.metadata,
                 unalignedNucleotideSequences = emptyMap(),
             ),
         )

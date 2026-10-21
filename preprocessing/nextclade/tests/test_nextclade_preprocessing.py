@@ -1,20 +1,25 @@
 # ruff: noqa: S101
 
 
+import json
 from pathlib import Path
 from typing import Literal
 
 import pytest
 from Bio import SeqIO
 from Bio.Seq import Seq
+from Bio.SeqFeature import SeqFeature
+from Bio.SeqRecord import SeqRecord
 from factory_methods import (
     Case,
     ProcessedAlignment,
     ProcessedEntryFactory,
     ProcessingAnnotationHelper,
     ProcessingTestCase,
+    UnprocessedEntryFactory,
     build_processing_annotations,
-    ts_from_ymd,
+    on_minus_strand,
+    single_cds_annotation,
     verify_processed_entry,
 )
 
@@ -28,11 +33,15 @@ from loculus_preprocessing.datatypes import (
     AnnotationSourceType,
     SegmentClassificationMethod,
     SubmissionData,
-    UnprocessedData,
-    UnprocessedEntry,
 )
-from loculus_preprocessing.embl import create_flatfile, reformat_authors_from_loculus_to_embl_style
-from loculus_preprocessing.prepro import process_all
+from loculus_preprocessing.embl import (
+    PREMATURE_STOP_NOTE,
+    create_flatfile,
+    get_seq_features,
+    reformat_authors_from_loculus_to_embl_style,
+)
+from loculus_preprocessing.nextclade_annotation import GffAttributes, NextcladeAnnotation
+from loculus_preprocessing.prepro import get_nested_metadata, process_all, unpack_annotations
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
     format_stop_codon,
@@ -55,8 +64,32 @@ MULTI_EBOLA_DATASET = "tests/ebola-multipath-dataset"
 CCHF_DATASET = "tests/cchfv"
 
 SINGLE_SEGMENT_EMBL = "tests/flatfiles/single_segment.embl"
+CCHF_REVERSE_COMPLEMENTED_FASTA = "tests/flatfiles/AY049081.1"
+CCHF_REVERSE_COMPLEMENTED_ANNOTATION = "tests/flatfiles/annotation-cchf-reverse-complemented.json"
 MUTATIONS_FROM_FOUNDER_CLADE = "tests/mutationsFromFounderClade.json"
 LABELED_PRIVATE_MUTATIONS = "tests/labeledPrivateMutations.json"
+
+
+def test_get_nested_metadata_uses_simple_dot_paths():
+    metadata = {
+        "coverage": 0.98,
+        "qc": {"stopCodons": {"totalStopCodons": 0, "stopCodons": []}},
+        "cladeFounderInfo": {
+            "aaMutations": [{"privateSubstitutions": ["NS1:Y35H"]}],
+        },
+    }
+
+    assert get_nested_metadata(metadata, "coverage") == 0.98
+    assert get_nested_metadata(metadata, "qc.stopCodons.totalStopCodons") == 0
+    assert get_nested_metadata(metadata, "qc.stopCodons.stopCodons") == []
+    assert get_nested_metadata(metadata, "cladeFounderInfo.aaMutations") == [
+        {"privateSubstitutions": ["NS1:Y35H"]},
+    ]
+    assert get_nested_metadata(metadata, "qc.missing.total") is None
+    assert get_nested_metadata(metadata, "coverage.value") is None
+
+    metadata_with_zero = {"qc": {"score": 0}}
+    assert get_nested_metadata(metadata_with_zero, "qc.score") == 0
 
 
 def consensus_sequence(
@@ -99,6 +132,11 @@ def sequence_with_mutation(
     elif type == "ebola-zaire":
         pos = 10345 + 3  # start of second AA in VP24 gene, convert G to A (AA A to T)
     return str(seq[: pos - 1]) + "A" + str(seq[pos:])
+
+
+def fragment(type: Literal["single"] | Literal["ebola-sudan"] | Literal["ebola-zaire"]) -> str:
+    seq = consensus_sequence(type)
+    return str(seq[:90])
 
 
 def ebola_sudan_aa(nuc: str, gene: Literal["VP35", "NP"]) -> str:
@@ -741,20 +779,13 @@ multi_segment_case_definitions_any_requirement_sort_classification = [
         expected_errors=build_processing_annotations(
             [
                 ProcessingAnnotationHelper.sequence_annotation_helper(
-                    "No sequence data could be classified - "
-                    "check you are submitting to the correct organism.",
-                )
-            ]
-        ),
-        expected_warnings=build_processing_annotations(
-            [
-                ProcessingAnnotationHelper.sequence_annotation_helper(
                     "Sequence with fasta id fastaHeader1 does not match any reference "
                     "for organism: multi-ebola-test per `nextclade sort`. "
                     "Double check you are submitting to the correct organism.",
                 )
             ]
         ),
+        expected_warnings=[],
         expected_processed_alignment=ProcessedAlignment(
             unalignedNucleotideSequences={},
             alignedNucleotideSequences={},
@@ -765,10 +796,10 @@ multi_segment_case_definitions_any_requirement_sort_classification = [
         ),
     ),
     Case(
-        name="with one failed alignment, one succeeded",
+        name="with one failed alignment (but classified), one succeeded",
         input_metadata={},
         input_sequence={
-            "fastaHeader1": invalid_sequence(),
+            "fastaHeader1": fragment("ebola-sudan"),
             "fastaHeader2": sequence_with_mutation("ebola-zaire"),
         },
         accession_id="1",
@@ -776,7 +807,7 @@ multi_segment_case_definitions_any_requirement_sort_classification = [
             "totalInsertedNucs_ebola-sudan": None,
             "totalSnps_ebola-sudan": None,
             "totalDeletedNucs_ebola-sudan": None,
-            "length_ebola-sudan": 0,
+            "length_ebola-sudan": len(fragment("ebola-sudan")),
             "totalInsertedNucs_ebola-zaire": 0,
             "totalSnps_ebola-zaire": 1,
             "totalDeletedNucs_ebola-zaire": 0,
@@ -785,16 +816,18 @@ multi_segment_case_definitions_any_requirement_sort_classification = [
         expected_errors=[],
         expected_warnings=build_processing_annotations(
             [
-                ProcessingAnnotationHelper.sequence_annotation_helper(
-                    "Sequence with fasta id fastaHeader1 does not match any reference"
-                    " for organism: multi-ebola-test per `nextclade sort`. "
-                    "Double check you are submitting to the correct organism.",
-                )
+                ProcessingAnnotationHelper(
+                    ["ebola-sudan"],
+                    ["ebola-sudan"],
+                    "Nucleotide sequence for ebola-sudan failed to align",
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                ),
             ]
         ),
         expected_processed_alignment=ProcessedAlignment(
             unalignedNucleotideSequences={
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+                "ebola-sudan": fragment("ebola-sudan"),
             },
             alignedNucleotideSequences={
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
@@ -805,7 +838,63 @@ multi_segment_case_definitions_any_requirement_sort_classification = [
                 "LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
             },
             aminoAcidInsertions={},
-            sequenceNameToFastaId={"ebola-zaire": "fastaHeader2"},
+            sequenceNameToFastaId={"ebola-zaire": "fastaHeader2", "ebola-sudan": "fastaHeader1"},
+        ),
+    ),
+    Case(
+        name="with two failed alignment (but classified)",
+        input_metadata={},
+        input_sequence={
+            "fastaHeader1": fragment("ebola-sudan"),
+            "fastaHeader2": fragment("ebola-zaire"),
+        },
+        accession_id="1",
+        expected_metadata={
+            "totalInsertedNucs_ebola-sudan": None,
+            "totalSnps_ebola-sudan": None,
+            "totalDeletedNucs_ebola-sudan": None,
+            "length_ebola-sudan": len(fragment("ebola-sudan")),
+            "totalInsertedNucs_ebola-zaire": None,
+            "totalSnps_ebola-zaire": None,
+            "totalDeletedNucs_ebola-zaire": None,
+            "length_ebola-zaire": len(fragment("ebola-zaire")),
+        },
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["alignment"],
+                    ["alignment"],
+                    "No sequence aligned.",
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                ),
+            ]
+        ),
+        expected_warnings=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["ebola-sudan"],
+                    ["ebola-sudan"],
+                    "Nucleotide sequence for ebola-sudan failed to align",
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                ),
+                ProcessingAnnotationHelper(
+                    ["ebola-zaire"],
+                    ["ebola-zaire"],
+                    "Nucleotide sequence for ebola-zaire failed to align",
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                ),
+            ]
+        ),
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={
+                "ebola-zaire": fragment("ebola-zaire"),
+                "ebola-sudan": fragment("ebola-sudan"),
+            },
+            alignedNucleotideSequences={},
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={},
+            aminoAcidInsertions={},
+            sequenceNameToFastaId={"ebola-zaire": "fastaHeader2", "ebola-sudan": "fastaHeader1"},
         ),
     ),
 ]
@@ -829,20 +918,13 @@ multi_segment_case_definitions_any_requirement_align_classification = [
         expected_errors=build_processing_annotations(
             [
                 ProcessingAnnotationHelper.sequence_annotation_helper(
-                    "No sequence data could be classified - "
-                    "check you are submitting to the correct organism.",
-                )
-            ]
-        ),
-        expected_warnings=build_processing_annotations(
-            [
-                ProcessingAnnotationHelper.sequence_annotation_helper(
                     "Sequence with fasta id fastaHeader1 does not match any reference for "
                     "organism: multi-ebola-test per `nextclade align`. "
                     "Double check you are submitting to the correct organism.",
                 )
             ]
         ),
+        expected_warnings=[],
         expected_processed_alignment=ProcessedAlignment(
             unalignedNucleotideSequences={},
             alignedNucleotideSequences={},
@@ -870,8 +952,8 @@ multi_segment_case_definitions_any_requirement_align_classification = [
             "totalDeletedNucs_ebola-zaire": 0,
             "length_ebola-zaire": len(consensus_sequence("ebola-zaire")),
         },
-        expected_errors=[],
-        expected_warnings=build_processing_annotations(
+        expected_warnings=[],
+        expected_errors=build_processing_annotations(
             [
                 ProcessingAnnotationHelper.sequence_annotation_helper(
                     "Sequence with fasta id fastaHeader1 does not match any reference for "
@@ -1202,33 +1284,19 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
     config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
     config.max_sequences_per_entry = 1
 
-    bad_entry = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
-        ),
+    bad_entry = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={},
+        accession_id="01",
+        sequences={
+            "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+            "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+        },
     )
 
-    good_entry = UnprocessedEntry(
-        accessionVersion="LOC_02.1",
-        data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-            },
-        ),
+    good_entry = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={},
+        accession_id="02",
+        sequences={"ebola-sudan": sequence_with_mutation("ebola-sudan")},
     )
 
     result = process_all([bad_entry, good_entry], MULTI_EBOLA_DATASET, config)
@@ -1249,19 +1317,13 @@ def test_max_sequences_per_entry_batch_isolation() -> None:
 
 def test_preprocessing_without_metadata() -> None:
     config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
-    sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submissionId="test_submission_id",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
-        ),
+    sequence_entry_data = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={},
+        accession_id="01",
+        sequences={
+            "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+            "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+        },
     )
 
     config.processing_spec = {}
@@ -1334,7 +1396,10 @@ def test_process_phenotype_values():
     assert process_phenotype_values('[{"name": "NAI","cds": "NA","value": 0.0}]', {}).datum is None
     invalid = process_phenotype_values("Malformed JSON", {"name": "NAI"})
     assert invalid.datum is None
-    assert "Was unable to process phenotype values" in invalid.errors[0].message
+    assert (
+        "Internal Error. Phenotype value processing failed: invalid syntax"
+        in invalid.errors[0].message
+    )
 
 
 def test_reformat_authors_from_loculus_to_embl_style():
@@ -1347,6 +1412,108 @@ def test_reformat_authors_from_loculus_to_embl_style():
     result_extended = reformat_authors_from_loculus_to_embl_style(extended_latin_authors)
     desired_result_extended = "Perez J., Bailley F., Moller A., Walesa L."
     assert result_extended == desired_result_extended
+
+
+def test_get_seq_features_translates_minus_strand_cds_correctly():
+    # Genomic (plus-strand) slice [3:12) is the reverse complement of the ORF ATG AAA TAA
+    # (Met Lys Stop), so a minus-strand CDS over this range must translate to "MK" (the
+    # /translation qualifier excludes the terminal stop codon).
+    sequence_str = "AAA" + "TTATTTCAT" + "CCCC"
+    annotation_object = single_cds_annotation(3, 12, strand="-")
+
+    features = get_seq_features(annotation_object, sequence_str)
+    cds_features = [feature for feature in features if feature.type == "CDS"]
+    assert len(cds_features) == 1
+    assert cds_features[0].qualifiers["translation"] == "MK"
+
+
+def test_get_seq_features_maps_phase_to_codon_start():
+    # nextclade's 0-indexed `phase` field (set per segment, not on the cds itself) must become
+    # EMBL's 1-indexed `codon_start`, and translation must start at that offset: the leading 2
+    # bases ("TT") are a partial codon left over from outside this feature, so the first complete
+    # codon is GAA (Glu), followed by ATA (Ile) and the stop codon TAA.
+    sequence_str = "TT" + "GAAATATAA"
+    annotation_object = single_cds_annotation(0, 11, phase=2)
+
+    features = get_seq_features(annotation_object, sequence_str)
+    cds_features = [feature for feature in features if feature.type == "CDS"]
+    assert len(cds_features) == 1
+    assert cds_features[0].qualifiers["codon_start"] == 3  # noqa: PLR2004
+    assert cds_features[0].qualifiers["translation"] == "EI"
+
+
+def test_get_seq_features_handles_real_reverse_complemented_cchf_annotation():
+    sequence_str = str(SeqIO.read(CCHF_REVERSE_COMPLEMENTED_FASTA, "fasta").seq)
+    annotation_object = NextcladeAnnotation.model_validate(
+        json.loads(Path(CCHF_REVERSE_COMPLEMENTED_ANNOTATION).read_text(encoding="utf-8"))[
+            "annotation"
+        ]
+    )
+
+    features = get_seq_features(annotation_object, sequence_str)
+    cds_features = [feature for feature in features if feature.type == "CDS"]
+    assert len(cds_features) == 1
+    cds_feature = cds_features[0]
+    assert str(cds_feature.location) == "[<0:>466](-)"
+    assert cds_feature.qualifiers["codon_start"] == 3  # noqa: PLR2004
+    assert cds_feature.qualifiers["translation"] == (
+        "NGYLDKHRDEVDKASADSMITNLLKHIAKAQELYKNSSALRAQGAQIDTPFSSFYWLYKAGVTPETFPTISQ"
+        "FLFELGKQPRGTKKMKKALLSTPMKWGKKLYELFADDSFQQNRIYMHPAVLTAGRISEMGVCFGTIPVANPD"
+        "DAAQGSGHTK"
+    )
+
+
+def test_get_seq_features_trims_trailing_partial_codon():
+    # A CDS truncated at the sequence's 3' end (e.g. an incomplete assembly) can end mid-codon;
+    # the dangling 1-2 bases can't be translated and must be dropped rather than raising or
+    # producing a Biopython warning.
+    sequence_str = "ATGAAATA"  # ATG AAA TA(missing base)
+    annotation_object = single_cds_annotation(0, 8)
+
+    features = get_seq_features(annotation_object, sequence_str)
+    cds_features = [feature for feature in features if feature.type == "CDS"]
+    assert len(cds_features) == 1
+    assert cds_features[0].qualifiers["translation"] == "MK"
+
+
+def test_get_seq_features_drops_raw_codon_start_not_derived_from_phase():
+    # A raw `codon_start` attribute not derived from nextclade's `phase` has unknown indexing
+    # (EMBL's codon_start is 1-indexed, phase is 0-indexed), so it must be dropped and
+    # codon_start recomputed as if phase were 0 (i.e. codon_start == 1).
+    sequence_str = "ATGAAATAA"
+    annotation_object = single_cds_annotation(0, 9, attributes={"codon_start": ["3"]})
+
+    features = get_seq_features(annotation_object, sequence_str)
+    cds_features = [feature for feature in features if feature.type == "CDS"]
+    assert len(cds_features) == 1
+    assert cds_features[0].qualifiers["codon_start"] == 1
+
+
+@pytest.mark.parametrize(
+    ("truncation", "strand", "expected"),
+    [
+        ({"fivePrime": 30}, "+", "[<0:9](+)"),
+        ({"fivePrime": 30}, "-", "[0:>9](-)"),
+        ({"threePrime": 30}, "+", "[0:>9](+)"),
+        ({"threePrime": 30}, "-", "[<0:9](-)"),
+    ],
+)
+def test_get_seq_features_marks_a_gene_partial_when_its_cds_is_truncated(
+    truncation, strand, expected
+):
+    # INSDC marks the gene holding a truncated CDS partial as well, e.g. QB011581.1 has both
+    # `gene <27762..27788` and `CDS <27762..27788`; a bare `gene` beside a `CDS <` is invalid.
+    # The marker names the coordinate, not the protein end, so the same 5' truncation sits on
+    # the lower coordinate on the plus strand and the upper one on the minus strand.
+    sequence_str = "ATGAAATAA"
+    annotation_object = single_cds_annotation(0, 9, strand=strand, truncation=truncation)
+
+    features = get_seq_features(annotation_object, sequence_str)
+    gene_feature = next(feature for feature in features if feature.type == "gene")
+    cds_feature = next(feature for feature in features if feature.type == "CDS")
+
+    assert str(gene_feature.location) == expected
+    assert str(gene_feature.location) == str(cds_feature.location)
 
 
 def test_process_clade_founder_values():
@@ -1362,6 +1529,88 @@ def test_process_labeled_mutations():
     assert process_labeled_mutations(json_string, {}).datum == "NA:H275Y"
 
 
+def test_get_seq_features_marks_the_truncated_end_by_its_coordinate_not_its_strand():
+    # INSDC marks an unknown boundary by the coordinate it lies at, not by which end of the
+    # protein it is, so the same 5' truncation takes `<` on the lower coordinate on the plus
+    # strand and `>` on the upper one on the minus strand.
+    sequence_str = "ATGGCTTAA"
+    plus = single_cds_annotation(0, 9, truncation={"fivePrime": 30})
+    minus = on_minus_strand(plus)
+
+    plus_cds = next(f for f in get_seq_features(plus, sequence_str) if f.type == "CDS")
+    minus_cds = next(f for f in get_seq_features(minus, sequence_str) if f.type == "CDS")
+
+    assert str(plus_cds.location) == "[<0:9](+)"
+    assert str(minus_cds.location) == "[0:>9](-)"
+
+
+def test_get_seq_features_gives_a_gene_the_strand_of_its_cdses():
+    # The annotation reports a strand only on a CDS's segments, so an unstranded gene would
+    # render as a plus-strand range even when its CDSes are on the minus strand.
+    sequence_str = "ATGGCTTAA"
+    annotation_object = on_minus_strand(single_cds_annotation(0, 9))
+
+    features = get_seq_features(annotation_object, sequence_str)
+    gene = next(f for f in features if f.type == "gene")
+    cds_feature = next(f for f in features if f.type == "CDS")
+
+    assert gene.location.strand == -1
+    assert gene.location.strand == cds_feature.location.strand
+
+
+def test_unpack_annotations_reports_a_bad_annotation_instead_of_raising():
+    # process_single runs inside process_all's per-entry handler, but enrich_with_nextclade
+    # does not: raising here would fail the whole batch, which the backend then re-queues.
+    # A malformed annotation must cost one entry its flatfile and nothing more.
+    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
+    config.create_embl_file = True
+    nextclade_metadata = {"main": {"annotation": {"genes": [{"range": {"begin": 5, "end": 1}}]}}}
+
+    annotations, errors = unpack_annotations(config, "LOC_01.1", nextclade_metadata)
+
+    assert annotations == {"main": None}
+    assert len(errors) == 1
+
+
+def test_unpack_annotations_returns_the_parsed_annotation():
+    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
+    config.create_embl_file = True
+    begin, end = 0, 9
+    raw = single_cds_annotation(begin, end).model_dump()
+
+    annotations, errors = unpack_annotations(config, "LOC_01.1", {"main": {"annotation": raw}})
+
+    assert errors == []
+    assert isinstance(annotations["main"], NextcladeAnnotation)
+    segment = annotations["main"].genes[0].cdses[0].segments[0]
+    assert (segment.range.begin, segment.range.end) == (begin, end)
+
+
+def test_unpack_annotations_does_nothing_when_no_flatfile_is_wanted():
+    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
+    config.create_embl_file = False
+
+    assert unpack_annotations(config, "LOC_01.1", {"main": {"annotation": {"genes": []}}}) == (
+        None,
+        [],
+    )
+
+
+@pytest.mark.parametrize("truncation", [{"both": 5}, {"both": [1, 2, 3]}, {"sideways": 1}])
+def test_unpack_annotations_contains_a_malformed_truncation_arm(truncation):
+    # pydantic turns a ValueError raised in a validator into a ValidationError but lets a
+    # TypeError through, so an arm that cannot be unpacked has to be rejected, not unpacked.
+    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
+    config.create_embl_file = True
+    raw = single_cds_annotation(0, 9).model_dump()
+    raw["genes"][0]["cdses"][0]["segments"][0]["truncation"] = truncation
+
+    annotations, errors = unpack_annotations(config, "LOC_01.1", {"main": {"annotation": raw}})
+
+    assert annotations == {"main": None}
+    assert len(errors) == 1
+
+
 def test_create_flatfile():
     config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
     embl_fields = get_config(EMBL_METADATA, ignore_args=True).processing_spec
@@ -1369,22 +1618,16 @@ def test_create_flatfile():
     # need to recompute order after updating the spec
     config.processing_order = get_processing_order(config)
     config.create_embl_file = True
-    sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            submitter="test_submitter",
-            group_id=2,
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            submissionId="test_submission_id",
-            metadata={
-                "sampleCollectionDate": "2024-01-01",
-                "geoLocCountry": "Netherlands",
-                "geoLocAdmin1": "North Holland",
-                "geoLocCity": "Amsterdam",
-                "authors": "Smith, Doe A;",
-            },
-            unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
-        ),
+    sequence_entry_data = UnprocessedEntryFactory.create_unprocessed_entry(
+        metadata_dict={
+            "sampleCollectionDate": "2024-01-01",
+            "geoLocCountry": "Netherlands",
+            "geoLocAdmin1": "North Holland",
+            "geoLocCity": "Amsterdam",
+            "authors": "Smith, Doe A;",
+        },
+        accession_id="01",
+        sequences={"main": sequence_with_mutation("single")},
     )
 
     result = process_all([sequence_entry_data], EBOLA_SUDAN_DATASET, config)
@@ -1392,6 +1635,80 @@ def test_create_flatfile():
     embl_str = create_flatfile(config, result[0])
     expected_embl = Path(SINGLE_SEGMENT_EMBL).read_text(encoding="utf-8")
     assert embl_str == expected_embl
+
+
+# ATG AAA GGG TGA -> MKG, ending in a terminal stop codon
+FUNCTIONAL_SEQUENCE = "ATGAAAGGGTGA"
+# ATG AAA TAA GGG TGA -> MK*G, with a premature stop codon before the terminal one
+PREMATURE_STOP_SEQUENCE = "ATGAAATAAGGGTGA"
+PREMATURE_STOP_POSITION = 3
+
+
+def _single_cds_feature(sequence_str: str, attributes: GffAttributes | None = None) -> SeqFeature:
+    annotation_object = single_cds_annotation(0, len(sequence_str), attributes=attributes)
+    features = get_seq_features(annotation_object, sequence_str)
+    [cds_feature] = [feature for feature in features if feature.type == "CDS"]
+    return cds_feature
+
+
+def test_get_seq_features_translates_a_cds_without_premature_stop():
+    cds_feature = _single_cds_feature(FUNCTIONAL_SEQUENCE)
+
+    assert cds_feature.qualifiers["translation"] == "MKG"
+    assert "pseudo" not in cds_feature.qualifiers
+    assert "note" not in cds_feature.qualifiers
+
+
+def test_get_seq_features_marks_a_cds_with_premature_stop_pseudo_without_translation():
+    # INSDC keeps the CDS feature key for a non-functional CDS, flags it with a valueless
+    # /pseudo and forbids /translation on it.
+    cds_feature = _single_cds_feature(PREMATURE_STOP_SEQUENCE)
+
+    assert cds_feature.type == "CDS"
+    assert "pseudo" in cds_feature.qualifiers
+    assert "translation" not in cds_feature.qualifiers
+    assert cds_feature.qualifiers["note"] == [
+        PREMATURE_STOP_NOTE.format(position=PREMATURE_STOP_POSITION)
+    ]
+
+
+def test_get_seq_features_leaves_an_existing_note_alone_without_premature_stop():
+    cds_feature = _single_cds_feature(FUNCTIONAL_SEQUENCE, {"Note": ["existing note"]})
+
+    assert cds_feature.qualifiers["note"] == ["existing note"]
+
+
+def test_flatfile_writes_pseudo_as_a_bare_qualifier_with_both_notes():
+    annotation_object = single_cds_annotation(
+        0, len(PREMATURE_STOP_SEQUENCE), attributes={"Note": ["existing note"]}
+    )
+    record = SeqRecord(
+        Seq(PREMATURE_STOP_SEQUENCE),
+        id="test",
+        annotations={"molecule_type": "RNA"},
+        features=get_seq_features(annotation_object, PREMATURE_STOP_SEQUENCE),
+    )
+
+    embl_str = record.format("embl")
+    feature_lines = [line.removeprefix("FT").strip() for line in embl_str.splitlines()]
+
+    assert "/pseudo" in feature_lines
+    assert '/note="existing note"' in feature_lines
+    # Long qualifier values are wrapped over several FT lines at word boundaries
+    expected_note = PREMATURE_STOP_NOTE.format(position=PREMATURE_STOP_POSITION)
+    assert f'/note="{expected_note}"' in " ".join(feature_lines)
+    assert not any(line.startswith("/translation") for line in feature_lines)
+
+
+def test_get_seq_features_ignores_pseudo_and_translation_from_annotation():
+    functional = _single_cds_feature(
+        FUNCTIONAL_SEQUENCE, {"pseudo": ["true"], "translation": ["XXX"]}
+    )
+    assert "pseudo" not in functional.qualifiers
+    assert functional.qualifiers["translation"] == "MKG"
+
+    broken = _single_cds_feature(PREMATURE_STOP_SEQUENCE, {"translation": ["XXX"]})
+    assert "translation" not in broken.qualifiers
 
 
 multi_reference_cases = [
@@ -1452,7 +1769,7 @@ multi_reference_cases = [
                 ProcessingAnnotationHelper(
                     ["ASSIGNED_REFERENCE"],
                     ["subtype"],
-                    "Metadata field `subtype` is required. Please provide input metadata field(s): `ASSIGNED_REFERENCE`",
+                    "Metadata field `subtype` is required.",
                 ),
             ]
         ),
@@ -1582,7 +1899,7 @@ multi_segment_multi_reference_cases = [
                 ProcessingAnnotationHelper(
                     ["ASSIGNED_REFERENCE"],
                     ["subtype_S"],
-                    "Metadata field `subtype_S` is required. Please provide input metadata field(s): `ASSIGNED_REFERENCE`",
+                    "Metadata field `subtype_S` is required.",
                 ),
             ]
         ),

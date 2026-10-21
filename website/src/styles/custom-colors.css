@@ -1,0 +1,14 @@
+/*
+ * Instance color overrides.
+ *
+ * Downstream overlays can override CSS theme variables here without replacing
+ * base.css. For example:
+ *
+ * :root,
+ * :host {
+ *     --color-primary-400: #52b4de;
+ *     --color-primary-600: #1c7dad;
+ *     --color-main: var(--color-primary-600);
+ *     --color-logoSecondary: var(--color-primary-600);
+ * }
+ */

@@ -36,7 +36,7 @@ export const FormattedText = ({ text, formatLinks = false }: { text: string; for
     const pairedLength = parts.length % 2 === 0 ? parts.length - 1 : parts.length;
     return parts.map((part, i) =>
         i % 2 === 1 && i < pairedLength ? (
-            <code key={i} className='rounded bg-black/10 px-1 py-0.5 font-mono text-sm'>
+            <code key={i} className='rounded-sm bg-black/10 px-1 py-0.5 font-mono text-sm'>
                 {part}
             </code>
         ) : i >= pairedLength ? (

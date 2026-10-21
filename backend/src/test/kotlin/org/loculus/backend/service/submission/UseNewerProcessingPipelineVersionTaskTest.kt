@@ -2,10 +2,12 @@ package org.loculus.backend.service.submission
 
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
-import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Organism
 import org.loculus.backend.controller.DEFAULT_ORGANISM
@@ -15,6 +17,7 @@ import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.submission.PreparedProcessedData
 import org.loculus.backend.controller.submission.SubmissionControllerClient
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
+import org.loculus.backend.service.scheduler.TASK_LOCK_TABLE_NAME
 import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
@@ -45,18 +48,20 @@ class UseNewerProcessingPipelineVersionTaskTest(
         useNewerProcessingPipelineVersionTask.task()
         assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(1L))
 
+        transaction { exec("TRUNCATE TABLE $TASK_LOCK_TABLE_NAME") }
         convenienceClient.extractUnprocessedData(pipelineVersion = 2)
         convenienceClient.submitProcessedData(processedDataWithError, pipelineVersion = 2)
         useNewerProcessingPipelineVersionTask.task()
         assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(1L))
 
+        transaction { exec("TRUNCATE TABLE $TASK_LOCK_TABLE_NAME") }
         convenienceClient.extractUnprocessedData(pipelineVersion = 3)
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 3)
         useNewerProcessingPipelineVersionTask.task()
         assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(3L))
 
         submissionControllerClient.extractUnprocessedData(numberOfSequenceEntries = 10, pipelineVersion = 2)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
     }
 
     @Suppress("ktlint:standard:max-line-length")
@@ -144,6 +149,7 @@ class UseNewerProcessingPipelineVersionTaskTest(
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 1)
         useNewerProcessingPipelineVersionTask.task()
 
+        transaction { exec("TRUNCATE TABLE $TASK_LOCK_TABLE_NAME") }
         convenienceClient.extractUnprocessedData(pipelineVersion = 2)
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 2)
         useNewerProcessingPipelineVersionTask.task()
@@ -154,6 +160,7 @@ class UseNewerProcessingPipelineVersionTaskTest(
             assertThat(getExistingPipelineVersions(OTHER_ORGANISM), `is`(listOf(1L)))
         }
 
+        transaction { exec("TRUNCATE TABLE $TASK_LOCK_TABLE_NAME") }
         convenienceClient.extractUnprocessedData(pipelineVersion = 3)
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 3)
         useNewerProcessingPipelineVersionTask.task()

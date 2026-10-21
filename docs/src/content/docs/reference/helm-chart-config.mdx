@@ -81,6 +81,15 @@ lineageSystemDefinitions:
 
 Note: Lineages should be determined by the preprocessing pipeline and not the user, set the lineage field to `noInput: true` to reflect this or alternatively only allow users to submit valid lineage values by adding an `options` list.
 
+### Hierarchical filter sources
+
+For metadata fields whose values form a hierarchy that's resolved at SILO import
+time (rather than fetched as a static file per pipeline version), set
+`hierarchicalFilter: <URL>`, where URL is the URL of the service that will create the
+hierarchical file for SILO. The importer collects observed
+values for the field, sends them to that service, and writes the returned YAML
+into SILO's input directory as `<MetadataName>.yaml`.
+
 ### Organism (type)
 
 Each organism object has the following fields:
@@ -139,6 +148,12 @@ into a single row.
         url: 'https://www.ddbj.nig.ac.jp/entry/__value__'
   header: 'INSDC'
 ```
+
+### Extra input field (type)
+
+Definition of an additional, input-only field for the submission form (see `extraInputFields` on the [Organism schema](#organism-schema-type)). Unlike `metadata` fields, these are not searchable or displayed on the sequence details page; a preprocessing function can consume them to derive one or more `metadata` fields and they are shown in the metadata template.
+
+<SchemaDocs group='inputField' fieldColumnClass='w-56' />
 
 ### Preprocessing (type)
 

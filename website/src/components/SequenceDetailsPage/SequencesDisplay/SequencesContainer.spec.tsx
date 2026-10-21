@@ -22,15 +22,15 @@ const queryClient = new QueryClient();
 const accessionVersion = 'accession';
 
 // CSS Classes
-const TAB_ACTIVE_CLASS = 'tab-active';
+const TAB_ACTIVE_CLASS = 'font-semibold';
 
 // Button Labels
 const LOAD_SEQUENCES_BUTTON = 'Load sequences';
-const ALIGNED_NUCLEOTIDE_SEQUENCE_TAB = 'Aligned nucleotide sequence';
+const ALIGNED_NUCLEOTIDE_SEQUENCE_TAB = 'Reference-aligned nucleotide sequence';
 const NUCLEOTIDE_SEQUENCE_TAB = 'Nucleotide sequence';
 
 // Test Selectors
-const BUTTON_ROLE = 'button';
+const TAB_ROLE = 'tab';
 
 function renderSequenceViewer(
     referenceGenomesInfo: ReferenceGenomesInfo,
@@ -104,10 +104,10 @@ describe('SequencesContainer', () => {
             click(LOAD_SEQUENCES_BUTTON);
 
             await waitFor(() => {
-                expect(screen.getByRole(BUTTON_ROLE, { name: 'Nucleotide sequences' })).toBeVisible();
+                expect(screen.getByRole(TAB_ROLE, { name: 'Nucleotide sequences' })).toBeVisible();
             });
-            expect(screen.getByRole(BUTTON_ROLE, { name: 'Aligned nucleotide sequences' })).toBeVisible();
-            expect(screen.getByRole(BUTTON_ROLE, { name: 'Aligned amino acid sequences' })).toBeVisible();
+            expect(screen.getByRole(TAB_ROLE, { name: 'Reference-aligned nucleotide sequences' })).toBeVisible();
+            expect(screen.getByRole(TAB_ROLE, { name: 'Reference-aligned amino acid sequences' })).toBeVisible();
 
             click('Nucleotide sequences');
 
@@ -116,7 +116,7 @@ describe('SequencesContainer', () => {
                 const optionLabels = options.map((o) => o.textContent);
                 expect(optionLabels).toContain('L');
                 expect(optionLabels).toContain('S');
-                expectTabNotActive('Aligned nucleotide sequences');
+                expectTabNotActive('Reference-aligned nucleotide sequences');
             });
         });
     });
@@ -166,12 +166,12 @@ describe('SequencesContainer', () => {
             click(LOAD_SEQUENCES_BUTTON);
 
             await waitFor(() => {
-                expect(screen.getByRole(BUTTON_ROLE, { name: 'Nucleotide sequences' })).toBeVisible();
+                expect(screen.getByRole(TAB_ROLE, { name: 'Nucleotide sequences' })).toBeVisible();
             });
-            expect(screen.getByRole(BUTTON_ROLE, { name: 'Aligned nucleotide sequences' })).toBeVisible();
-            expect(screen.getByRole(BUTTON_ROLE, { name: 'Aligned amino acid sequences' })).toBeVisible();
+            expect(screen.getByRole(TAB_ROLE, { name: 'Reference-aligned nucleotide sequences' })).toBeVisible();
+            expect(screen.getByRole(TAB_ROLE, { name: 'Reference-aligned amino acid sequences' })).toBeVisible();
 
-            click('Aligned nucleotide sequences');
+            click('Reference-aligned nucleotide sequences');
 
             await waitFor(() => {
                 const options = screen.getAllByRole('option');
@@ -183,14 +183,16 @@ describe('SequencesContainer', () => {
     });
 
     function click(name: string) {
-        act(() => screen.getByRole(BUTTON_ROLE, { name }).click());
+        // `name` may be a tab (BoxWithTabsTab, role="tab") or a plain button (e.g. "Load sequences").
+        const element = screen.queryByRole(TAB_ROLE, { name }) ?? screen.getByRole('button', { name });
+        act(() => element.click());
     }
 
     function expectTabActive(name: string) {
-        expect(screen.getByRole(BUTTON_ROLE, { name })).toHaveClass(TAB_ACTIVE_CLASS);
+        expect(screen.getByRole(TAB_ROLE, { name })).toHaveClass(TAB_ACTIVE_CLASS);
     }
 
     function expectTabNotActive(name: string) {
-        expect(screen.getByRole(BUTTON_ROLE, { name })).not.toHaveClass(TAB_ACTIVE_CLASS);
+        expect(screen.getByRole(TAB_ROLE, { name })).not.toHaveClass(TAB_ACTIVE_CLASS);
     }
 });

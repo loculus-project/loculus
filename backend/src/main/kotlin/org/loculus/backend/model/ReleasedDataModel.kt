@@ -8,6 +8,12 @@ import com.fasterxml.jackson.databind.node.LongNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import mu.KotlinLogging
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.isNull
+import org.jetbrains.exposed.v1.core.or
+import org.jetbrains.exposed.v1.jdbc.andWhere
+import org.jetbrains.exposed.v1.jdbc.select
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.FileCategory
 import org.loculus.backend.api.FileCategoryFilesMap
@@ -38,7 +44,7 @@ import org.loculus.backend.utils.toTimestamp
 import org.loculus.backend.utils.toUtcDateString
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.net.URLEncoder
+import org.springframework.web.util.UriUtils.encodePathSegment
 import java.nio.charset.StandardCharsets
 
 private val log = KotlinLogging.logger { }
@@ -48,10 +54,8 @@ val RELEASED_DATA_RELATED_TABLES: List<String> =
         CURRENT_PROCESSING_PIPELINE_TABLE_NAME,
         EXTERNAL_METADATA_TABLE_NAME,
         GROUPS_TABLE_NAME,
-        METADATA_UPLOAD_AUX_TABLE_NAME,
         SEQUENCE_ENTRIES_TABLE_NAME,
         SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME,
-        SEQUENCE_UPLOAD_AUX_TABLE_NAME,
         DATA_USE_TERMS_TABLE_NAME,
     )
 
@@ -90,11 +94,41 @@ open class ReleasedDataModel(
             }
     }
 
-    @Transactional(readOnly = true)
-    open fun getLastDatabaseWriteETag(tableNames: List<String>? = null): String {
-        val query = UpdateTrackerTable.select(UpdateTrackerTable.lastTimeUpdatedDbColumn).apply {
-            tableNames?.let {
-                where { UpdateTrackerTable.tableNameColumn inList it }
+    /**
+     * Returns the latest tracked database-write timestamp matching the filters,
+     * or an empty string if none exists, for use in ETags.
+     *
+     * By default, includes all tables, all organisms and all pipeline versions.
+     * [tableNames] restricts the lookup to the specified tables.
+     * [organism] restricts it to that organism and rows with no organism scope.
+     * When [organism] is supplied, uses its current pipeline version unless
+     * [pipelineVersion] overrides it, also including rows with no pipeline scope.
+     *
+     * All filters apply together: unscoped rows are included only from matching tables.
+     * [pipelineVersion] requires [organism].
+     */
+    private fun getLastDatabaseWrite(
+        tableNames: List<String>? = null,
+        organism: Organism? = null,
+        pipelineVersion: Long? = null,
+    ): String {
+        require(pipelineVersion == null || organism != null) {
+            "pipelineVersion can only be specified together with organism"
+        }
+        // For an organism, use the requested pipeline version or default to its current version.
+        val effectivePipelineVersion = organism?.let {
+            pipelineVersion ?: submissionDatabaseService.getCurrentProcessingPipelineVersion(it)
+        }
+        val query = UpdateTrackerTable.select(UpdateTrackerTable.lastTimeUpdatedDbColumn)
+        tableNames?.let { query.andWhere { UpdateTrackerTable.tableNameColumn inList it } }
+        organism?.let { o ->
+            query.andWhere {
+                UpdateTrackerTable.organismColumn.isNull() or (UpdateTrackerTable.organismColumn eq o.name)
+            }
+        }
+        effectivePipelineVersion?.let { v ->
+            query.andWhere {
+                UpdateTrackerTable.pipelineVersionColumn.isNull() or (UpdateTrackerTable.pipelineVersionColumn eq v)
             }
         }
 
@@ -104,8 +138,27 @@ open class ReleasedDataModel(
             // Replace not strictly necessary but does no harm and a) shows UTC, b) simplifies silo import script logic
             ?.replace(" ", "Z")
             ?: ""
-        return "\"$lastUpdateTime\"" // ETag must be enclosed in double quotes
+        return lastUpdateTime
     }
+
+    /** ETag for the last relevant database write. */
+    @Transactional(readOnly = true)
+    open fun getLastDatabaseWriteETag(
+        tableNames: List<String>? = null,
+        organism: Organism? = null,
+        pipelineVersion: Long? = null,
+    ): String = // ETag must be enclosed in double quotes
+        "\"${getLastDatabaseWrite(tableNames, organism, pipelineVersion)}\""
+
+    /**
+     * Same as [getLastDatabaseWriteETag], but also includes the current date.
+     * Useful because RESTRICTED entries can lapse to OPEN with no database write, so an ETag based on write
+     * timestamps alone would keep serving 304s past the `restrictedUntil` date.
+     */
+    @Transactional(readOnly = true)
+    open fun getLastDatabaseWriteETagWithDate(tableNames: List<String>? = null, organism: Organism? = null): String =
+        // ETag must be enclosed in double quotes
+        "\"${getLastDatabaseWrite(tableNames, organism)}|${dateProvider.getCurrentDate()}\""
 
     private fun conditionalMetadata(condition: Boolean, values: () -> MetadataMap): MetadataMap =
         if (condition) values() else emptyMap()
@@ -166,14 +219,6 @@ open class ReleasedDataModel(
                 },
             ) +
             conditionalMetadata(
-                rawProcessedData.isRevocation,
-                {
-                    mapOf(
-                        "versionComment" to TextNode(rawProcessedData.versionComment),
-                    )
-                },
-            ) +
-            conditionalMetadata(
                 earliestReleaseDate != null,
                 {
                     mapOf(
@@ -219,7 +264,7 @@ open class ReleasedDataModel(
         filesMap: FileCategoryFilesMap,
     ): Map<FileCategory, List<FileIdAndNameAndReadUrl>> = filesMap.mapValues { (category, fileIdandName) ->
         fileIdandName.map { (fileId, name) ->
-            val encoded = URLEncoder.encode(name, StandardCharsets.UTF_8)
+            val encoded = encodePathSegment(name, StandardCharsets.UTF_8)
             val url = when (backendConfig.fileSharing.outputFileUrlType) {
                 FileUrlType.WEBSITE -> "${backendConfig.websiteUrl}/seq/$accession.$version/$category/$encoded"
                 FileUrlType.BACKEND -> "${backendConfig.backendUrl}/files/get/$accession/$version/$category/$encoded"

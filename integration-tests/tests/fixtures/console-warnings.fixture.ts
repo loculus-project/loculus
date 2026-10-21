@@ -1,7 +1,11 @@
-import { test as base, ConsoleMessage, expect } from '@playwright/test';
+import { test as base, ConsoleMessage, expect, type TestInfo } from '@playwright/test';
+
+/** Permits console errors containing `description` for the rest of the test. */
+export const allowConsoleError = (test: { info: () => TestInfo }, description: string) =>
+    test.info().annotations.push({ type: 'allow-console-error', description });
 
 export const test = base.extend({
-    page: async ({ page, browserName }, use) => {
+    page: async ({ page, browserName }, use, testInfo) => {
         const handleConsole = (msg: ConsoleMessage) => {
             if (msg.type() === 'warning' || msg.type() === 'error') {
                 const messageText = msg.text();
@@ -10,11 +14,19 @@ export const test = base.extend({
                 const harmlessMessages = [
                     'Form submission canceled because the form is not connected',
                     'ERR_INCOMPLETE_CHUNKED_ENCODING',
+                    "Response to preflight request doesn't pass access control check", // LAPIS sometimes hangs up preflight requests for unknown reasons
+                    'has been externalized for browser compatibility.',
                 ];
 
-                const isHarmless = harmlessMessages.some((harmless) =>
-                    messageText.includes(harmless),
-                );
+                // A test that must provoke a failed request annotates itself: the browser logs
+                // "Failed to load resource" for any non-2xx response, which no code here emits.
+                const isHarmless =
+                    harmlessMessages.some((harmless) => messageText.includes(harmless)) ||
+                    testInfo.annotations.some(
+                        (annotation) =>
+                            annotation.type === 'allow-console-error' &&
+                            messageText.includes(annotation.description ?? ''),
+                    );
 
                 if (!isHarmless && browserName === 'chromium') {
                     expect(false, `Unexpected console ${msg.type()}: ${messageText}`).toBe(true);

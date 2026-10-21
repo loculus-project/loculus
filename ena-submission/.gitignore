@@ -3,6 +3,7 @@ results/
 assembly/
 project/
 sample/
+run/
 __pycache__
 config/config.yaml
 tests.log

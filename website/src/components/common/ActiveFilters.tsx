@@ -12,7 +12,7 @@ type ActiveFiltersProps = {
 
 export const ACTIVE_FILTER_BADGE_TEST_ID = 'active-filter-badge';
 const BADGE_CLASSES =
-    'border-primary-600 rounded-sm border border-l-primary-600 bg-gray-100 border-l-8 pl-3 py-1 text-sm flex flex-row';
+    'border-primary-600 rounded-xs border border-l-primary-600 bg-gray-100 border-l-8 pl-3 py-1 text-sm flex flex-row';
 
 const SHOW_ALL_THRESHOLD = 6;
 const MAX_SHOWN = 3;

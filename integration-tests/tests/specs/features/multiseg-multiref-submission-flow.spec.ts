@@ -97,9 +97,6 @@ test.describe('Multi-segment multi-reference submission flow', () => {
         ).toBeVisible();
         await releasedPage.revokeSequence('revocation for integration test');
 
-        await reviewPage.waitForAllProcessed();
-        await reviewPage.releaseAndGoToReleasedSequences();
-
         await releasedPage.waitForAccessionVersionInSearch(firstAccessionVersion.accession, 2);
         await releasedPage.openPreviewOfAccessionVersion(`${firstAccessionVersion.accession}.2`);
         await expect(page.getByText(/This is a revocation version/)).toBeVisible();

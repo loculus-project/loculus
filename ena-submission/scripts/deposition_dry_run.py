@@ -13,9 +13,12 @@ from typing import Any
 
 import click
 from ena_deposition.call_loculus import get_group_info
-from ena_deposition.config import Config, get_config
+from ena_deposition.config import Config, EnaResultField, get_config
 from ena_deposition.create_assembly import create_manifest_object
 from ena_deposition.create_project import construct_project_set_object
+from ena_deposition.create_raw_reads import (
+    create_manifest_object as create_raw_reads_manifest_object,
+)
 from ena_deposition.create_sample import construct_sample_set_object
 from ena_deposition.ena_submission_helper import create_manifest, get_project_xml, get_sample_xml
 from ena_deposition.submission_db_helper import (
@@ -26,7 +29,6 @@ from ena_deposition.submission_db_helper import (
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
-    encoding="utf-8",
     level=logging.INFO,
     format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
     datefmt="%H:%M:%S",
@@ -48,7 +50,7 @@ logging.basicConfig(
 @click.option(
     "--mode",
     required=True,
-    type=click.Choice(["project", "sample", "assembly"]),
+    type=click.Choice(["project", "sample", "assembly", "raw-reads"]),
 )
 @click.option("--center-name", required=False, type=str, default="CENTER_NAME")
 @click.option("--bioproject", required=False, type=str, default="BIOPROJECT_ACCESSION")
@@ -102,13 +104,13 @@ def local_ena_submission_generator(
         project_entry = ProjectTableEntry(
             group_id=data["metadata"]["groupId"],
             organism=data["organism"],
-            result={"bioproject_accession": bioproject} if bioproject else None,
+            result={EnaResultField.BIOPROJECT: bioproject} if bioproject else None,
             center_name=center_name,
         )
         sample_entry = SampleTableEntry(
             accession=accession,
             version=int(version),
-            result={"biosample_accession": biosample} if biosample else None,
+            result={EnaResultField.BIOSAMPLE: biosample} if biosample else None,
         )
 
     if mode == "project":
@@ -173,6 +175,26 @@ def local_ena_submission_generator(
             "ena-webin-cli -username $ena_submission_username "
             "-password $ena_submission_password -context genome "
             "-manifest assembly/manifest.tsv -submit "
+            f"-centername {center_name}"
+            "\n Remember to submit with -test if you do not want to submit to production"
+            "\n Remember to add `is_broker=true` to config"
+            "if you are submitting as a broker"
+        )
+
+    if mode == "raw-reads":
+        directory = "raw_reads"
+        os.makedirs(directory, exist_ok=True)
+        logger.info(f"Writing results to {directory}")
+
+        manifest_object = create_raw_reads_manifest_object(
+            config, biosample, bioproject, entry, dir=directory
+        )
+        create_manifest(manifest_object, is_broker=config.is_broker, dir=directory)
+        logger.info(
+            "You can submit the raw reads to ENA using the command: \n"
+            "ena-webin-cli -username $ena_submission_username "
+            "-password $ena_submission_password -context reads "
+            "-manifest raw_reads/manifest.tsv -submit "
             f"-centername {center_name}"
             "\n Remember to submit with -test if you do not want to submit to production"
             "\n Remember to add `is_broker=true` to config"

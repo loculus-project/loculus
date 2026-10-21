@@ -31,8 +31,8 @@ import org.hamcrest.Matchers.`in`
 import org.hamcrest.Matchers.matchesPattern
 import org.hamcrest.Matchers.not
 import org.hamcrest.Matchers.notNullValue
-import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.batchInsert
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.keycloak.representations.idm.UserRepresentation
@@ -54,6 +54,7 @@ import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
 import org.loculus.backend.controller.dateMonthsFromNow
 import org.loculus.backend.controller.expectNdjsonAndGetContent
@@ -212,7 +213,7 @@ class GetReleasedDataEndpointTest(
             ifNoneMatch = initialEtag,
         )
         responseNoNewData.andExpect(status().isNotModified)
-            .andExpect(header().doesNotExist(ETAG))
+            .andExpect(header().string(ETAG, initialEtag!!))
 
         prepareRevokedAndRevocationAndRevisedVersions()
 
@@ -227,6 +228,130 @@ class GetReleasedDataEndpointTest(
         val responseBodyMoreData = responseAfterMoreDataAdded
             .expectNdjsonAndGetContent<ReleasedData>()
         assertThat(responseBodyMoreData.size, greaterThan(NUMBER_OF_SEQUENCES))
+    }
+
+    @Test
+    fun `GIVEN data submitted for default organism THEN etag is unchanged for other organisms`() {
+        // Create the group upfront so all writes to the globally-tracked groups table happen
+        // before the etag is captured. Reusing the same groupId later avoids a second group write.
+        val groupId = groupClient.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToInProcessing(groupId = groupId)
+        val processedData = accessionVersions.map {
+            PreparedProcessedData.successfullyProcessed(accession = it.accession, version = it.version)
+        }
+        convenienceClient.submitProcessedData(processedData)
+        convenienceClient.approveProcessedSequenceEntries(accessionVersions)
+
+        val initialEtagOtherOrganism = submissionControllerClient.getReleasedData(organism = OTHER_ORGANISM)
+            .andReturn().response.getHeader(ETAG)
+        val initialEtagDefaultOrganism = submissionControllerClient.getReleasedData(organism = DEFAULT_ORGANISM)
+            .andReturn().response.getHeader(ETAG)
+
+        // Reuse the existing group — submitDefaultFiles would otherwise create a new group and
+        // write to the groups table (NULL-organism tracker), which would invalidate OTHER_ORGANISM's etag.
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(
+            organism = DEFAULT_ORGANISM,
+            groupId = groupId,
+        )
+        submissionControllerClient.getReleasedData(
+            organism = DEFAULT_ORGANISM,
+            ifNoneMatch = initialEtagDefaultOrganism,
+        )
+            .andExpect(status().isOk)
+            .andExpect(header().string(ETAG, greaterThan(initialEtagDefaultOrganism!!)))
+        submissionControllerClient.getReleasedData(organism = OTHER_ORGANISM, ifNoneMatch = initialEtagOtherOrganism)
+            .andExpect(status().isNotModified)
+    }
+
+    @Test
+    fun `GIVEN data processed for a non-current pipeline version THEN etag is unchanged until it becomes current`() {
+        val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
+        val processedData = accessionVersions.map {
+            PreparedProcessedData.successfullyProcessed(accession = it.accession, version = it.version)
+        }
+        convenienceClient.submitProcessedData(processedData, pipelineVersion = 1)
+        convenienceClient.approveProcessedSequenceEntries(accessionVersions)
+
+        val initialEtag = submissionControllerClient.getReleasedData().andReturn().response.getHeader(ETAG)
+
+        // A newer pipeline version processes the same entries in the background. Released data is
+        // still served from version 1, so this must not invalidate the etag.
+        convenienceClient.extractUnprocessedData(pipelineVersion = 2)
+        convenienceClient.submitProcessedData(processedData, pipelineVersion = 2)
+
+        submissionControllerClient.getReleasedData(ifNoneMatch = initialEtag)
+            .andExpect(status().isNotModified)
+
+        // Once version 2 becomes the current pipeline, the released data (and therefore the etag) changes.
+        submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+
+        submissionControllerClient.getReleasedData(ifNoneMatch = initialEtag)
+            .andExpect(status().isOk)
+            .andExpect(header().string(ETAG, greaterThan(initialEtag!!)))
+    }
+
+    @Test
+    fun `GIVEN reprocessing of another organism THEN this organism's released-data etag is unchanged`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(organism = DEFAULT_ORGANISM)
+        val otherAccessionVersions =
+            convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(organism = OTHER_ORGANISM)
+
+        val initialEtag = submissionControllerClient.getReleasedData(organism = DEFAULT_ORGANISM)
+            .andReturn().response.getHeader(ETAG)
+
+        // A newer pipeline version reprocesses the OTHER organism. This only writes preprocessed data
+        // tagged with the other organism, so it must not invalidate the default organism's etag.
+        convenienceClient.extractUnprocessedData(organism = OTHER_ORGANISM, pipelineVersion = 2)
+        convenienceClient.submitProcessedData(
+            otherAccessionVersions.map {
+                PreparedProcessedData.successfullyProcessedOtherOrganismData(
+                    accession = it.accession,
+                    version = it.version,
+                )
+            },
+            organism = OTHER_ORGANISM,
+            pipelineVersion = 2,
+        )
+
+        submissionControllerClient.getReleasedData(organism = DEFAULT_ORGANISM, ifNoneMatch = initialEtag)
+            .andExpect(status().isNotModified)
+        submissionControllerClient.getReleasedData(organism = OTHER_ORGANISM, ifNoneMatch = initialEtag)
+            .andExpect(status().isOk)
+            .andExpect(header().string(ETAG, greaterThan(initialEtag!!)))
+    }
+
+    @Test
+    fun `GIVEN current pipeline changes for another organism THEN this organism's released-data etag is unchanged`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(organism = DEFAULT_ORGANISM)
+        val otherAccessionVersions =
+            convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(organism = OTHER_ORGANISM)
+
+        val initialEtag = submissionControllerClient.getReleasedData(organism = DEFAULT_ORGANISM)
+            .andReturn()
+            .response
+            .getHeader(ETAG)
+
+        convenienceClient.extractUnprocessedData(organism = OTHER_ORGANISM, pipelineVersion = 2)
+
+        convenienceClient.submitProcessedData(
+            otherAccessionVersions.map {
+                PreparedProcessedData.successfullyProcessedOtherOrganismData(
+                    accession = it.accession,
+                    version = it.version,
+                )
+            },
+            organism = OTHER_ORGANISM,
+            pipelineVersion = 2,
+        )
+
+        submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+
+        // The etag for the default organism should not have changed, since the current pipeline version for that organism has not changed.
+        submissionControllerClient.getReleasedData(organism = DEFAULT_ORGANISM, ifNoneMatch = initialEtag)
+            .andExpect(status().isNotModified)
     }
 
     @Test
@@ -527,7 +652,7 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
     }
 
     @Test
-    fun `GIVEN sequence entry with expired restricted data use terms THEN returns open data use terms`() {
+    fun `GIVEN sequence entry with expired restricted data use terms THEN returns open terms and new etag`() {
         every { dateProvider.getCurrentInstant() } answers { callOriginal() }
 
         val threeMonthsFromNow = dateMonthsFromNow(3)
@@ -539,11 +664,21 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
 
         assertAccessionVersionIsRestrictedUntil(accessionVersion, threeMonthsFromNow)
 
+        val etagWhileRestricted = submissionControllerClient.getReleasedData()
+            .andReturn().response.getHeader(ETAG)!!
+        submissionControllerClient.getReleasedData(ifNoneMatch = etagWhileRestricted)
+            .andExpect(status().isNotModified)
+
         val threeMonthsAndADayFromNow = LocalDateTime(
             date = dateMonthsFromNow(3).plus(1, DateTimeUnit.DAY),
             time = LocalTime.fromSecondOfDay(0),
         ).toInstant(DateProvider.timeZone)
         every { dateProvider.getCurrentInstant() } answers { threeMonthsAndADayFromNow }
+
+        // The restriction lapsing is not a database write, so the etag has to change on the date alone.
+        submissionControllerClient.getReleasedData(ifNoneMatch = etagWhileRestricted)
+            .andExpect(status().isOk)
+            .andExpect(header().string(ETAG, greaterThan(etagWhileRestricted)))
 
         assertAccessionVersionIsOpen(accessionVersion)
     }

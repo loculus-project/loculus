@@ -1,0 +1,829 @@
+# ruff: noqa: S101
+
+import csv
+import gzip
+import json
+import logging
+import tempfile
+import unittest
+from pathlib import Path
+from typing import Final
+from unittest import mock
+
+import xmltodict
+import yaml
+from ena_deposition.call_loculus import download_fastq_files
+from ena_deposition.config import Config, EnaOrganismDetails, ManifestFieldDetails, MetadataMapping
+from ena_deposition.create_assembly import (
+    create_chromosome_list_object,
+    create_manifest_object,
+)
+from ena_deposition.create_project import construct_project_set_object
+from ena_deposition.create_raw_reads import (
+    create_manifest_object as create_raw_reads_manifest_object,
+)
+from ena_deposition.create_raw_reads import (
+    get_platform_and_instrument,
+)
+from ena_deposition.create_sample import construct_sample_set_object
+from ena_deposition.ena_submission_helper import (
+    create_chromosome_list,
+    create_ena_project,
+    create_ena_sample,
+    create_flatfile,
+    create_manifest,
+    dataclass_to_xml,
+    get_chromsome_accessions,
+    get_ena_analysis_process,
+    get_sample_xml,
+    manifest_fields_diff,
+    reformat_authors_from_loculus_to_embl_style,
+)
+from ena_deposition.ena_types import (
+    Instrument,
+    LibrarySelection,
+    LibrarySource,
+    LibraryStrategy,
+    MoleculeType,
+    Platform,
+    Topology,
+    default_project_set,
+    default_sample_set_type,
+)
+from ena_deposition.loculus_models import Group
+from ena_deposition.submission_db_helper import (
+    ProjectTableEntry,
+    SampleTableEntry,
+    SubmissionTableEntry,
+)
+
+logger = logging.getLogger(__name__)
+
+TEST_GROUP: Final = Group._create_example_for_tests()
+
+
+# Default configs
+with open("config/defaults.yaml", encoding="utf-8") as f:
+    defaults = yaml.safe_load(f)
+
+
+def mock_organism() -> EnaOrganismDetails:
+    return EnaOrganismDetails(
+        taxon_id=12345,
+        scientific_name="Test scientific name",
+        molecule_type=MoleculeType.GENOMIC_RNA,
+        organismName="Test organism",
+        segments=["main"],
+    )
+
+
+def mock_multi_segmented_organism() -> EnaOrganismDetails:
+    return EnaOrganismDetails(
+        taxon_id=12345,
+        scientific_name="Test scientific name",
+        molecule_type=MoleculeType.GENOMIC_RNA,
+        organismName="Test organism",
+        topology=Topology.CIRCULAR,
+        segments=["seg2", "seg3"],
+    )
+
+
+def mock_config():
+    config = mock.Mock()
+    config.db_name = "Loculus"
+    config.unique_project_suffix = "Test suffix"
+    config.unique_raw_reads_suffix = "Test suffix"
+    config.enaOrganisms = {"Test organism": mock_organism()}
+    config.metadata_mapping = {
+        key: MetadataMapping(**item) for key, item in defaults["metadata_mapping"].items()
+    }
+    config.assembly_manifest_fields_mapping = {
+        key: ManifestFieldDetails(**item)
+        for key, item in defaults["assembly_manifest_fields_mapping"].items()
+    }
+    config.raw_reads_manifest_fields_mapping = {
+        key: ManifestFieldDetails(**item)
+        for key, item in defaults["raw_reads_manifest_fields_mapping"].items()
+    }
+    config.ena_checklist = "ERC000033"
+    config.set_alias_suffix = None
+    config.is_broker = True
+    config.ena_submission_url = "https://test.url"
+    config.ena_reports_service_url = "https://test.url"
+    config.ena_submission_password = "test_password"  # noqa: S105
+    config.ena_submission_username = "test_user"
+    config.ena_http_timeout_seconds = 10
+    return config
+
+
+MOCK_CONFIG: Final = mock_config()
+
+
+# Example XMLs
+test_project_xml_response = Path("test/data/test_project_response.xml").read_text(encoding="utf-8")
+text_project_xml_request = Path("test/data/text_project_request.xml").read_text(encoding="utf-8")
+test_project_xml_failure_response = (
+    '<RECEIPT receiptDate="2017-05-09T16:58:08.634+01:00" submissionFile="submission.xml"'
+    ' success="false">'
+    "\n</RECEIPT>"
+)
+
+test_sample_xml_request = Path("test/data/test_sample_request.xml").read_text(encoding="utf-8")
+test_sample_xml_request_gisaid = Path("test/data/test_sample_request_gisaid.xml").read_text(
+    encoding="utf-8"
+)
+test_sample_xml_response = Path("test/data/test_sample_response.xml").read_text(encoding="utf-8")
+revision_submission_xml_request = Path("test/data/test_revision_submission_request.xml").read_text(
+    encoding="utf-8"
+)
+process_response_text = Path("test/data/get_ena_analysis_process_response.json").read_text(
+    encoding="utf-8"
+)
+
+EMBL_FLATFILE: Final = "test/data/test_flatfile_with_apostrophe.embl"
+
+
+# Test sample
+with open("test/data/approved_ena_submission_list_test.json", encoding="utf-8") as f:
+    loculus_sample: dict = json.load(f)
+
+
+def sample_data_in_submission_table() -> SubmissionTableEntry:
+    """Returns a SubmissionTableEntry that mimics a row from the submission table."""
+    return SubmissionTableEntry(
+        accession="LOC_0001TLY",
+        version=1,
+        group_id=2,
+        organism="Test organism",
+        seq_metadata=loculus_sample["LOC_0001TLY.1"]["metadata"],
+        unaligned_nucleotide_sequences={
+            "seg1": None,
+            "seg2": "GCGGCACGTCAGTACGTAAGTGTATCTCAAAGAAATACTTAACTTTGAGAGAGTGAATT",
+            "seg3": "CTTAACTTTGAGAGAGTGAATT",
+        },
+        center_name="Fake center name",
+    )
+
+
+project_table_entry = ProjectTableEntry(group_id=2, organism="Test organism")
+sample_table_entry = SampleTableEntry(accession="LOC_0001TLY", version=1)
+
+
+# Mock requests
+def mock_requests_post(status_code: int, text: str) -> mock.Mock:
+    mock_response = mock.Mock()
+    mock_response.status_code = status_code
+    mock_response.text = text
+    http_success_threshold: Final = 400
+    mock_response.ok = mock_response.status_code < http_success_threshold
+    return mock_response
+
+
+class ProjectCreationTests(unittest.TestCase):
+    @mock.patch("requests.post")
+    def test_create_project_success(self, mock_post) -> None:
+        # Testing successful project creation
+        mock_post.return_value = mock_requests_post(200, test_project_xml_response)
+        project_set = default_project_set()
+        response = create_ena_project(MOCK_CONFIG, project_set)
+        desired_response = {
+            "bioproject_accession": "PRJEB20767",
+            "ena_submission_accession": "ERA912529",
+        }
+        assert response.result == desired_response
+
+    @mock.patch("requests.post")
+    def test_create_project_xml_failure(self, mock_post):
+        # Testing project creation failure due to incorrect status
+        mock_post.return_value = mock_requests_post(200, test_project_xml_failure_response)
+        project_set = default_project_set()
+        with self.assertLogs("ena_deposition.ena_submission_helper", level="WARNING") as cm:
+            response = create_ena_project(MOCK_CONFIG, project_set)
+            self.assertIn("Response is in unexpected format", cm.output[0])
+        error_message_part = "Response is in unexpected format"
+        assert error_message_part in response.errors[0]
+
+    @mock.patch("requests.post")
+    def test_create_project_server_failure(self, mock_post):
+        # Testing project creation failure
+        mock_post.return_value = mock_requests_post(500, "Internal Server Error")
+        project_set = default_project_set()
+        with self.assertLogs("ena_deposition.ena_submission_helper", level="WARNING") as cm:
+            response = create_ena_project(MOCK_CONFIG, project_set)
+            self.assertIn("Request failed with status:500", cm.output[0])
+        error_message_part = "Request failed with status:500"
+        assert error_message_part in response.errors[0]
+        error_message_part = "Response: Internal Server Error"
+        assert error_message_part in response.errors[0]
+
+    def test_construct_project_set_object(self):
+        config = mock_config()
+        project_set = construct_project_set_object(TEST_GROUP, config, project_table_entry)
+        assert xmltodict.parse(
+            dataclass_to_xml(project_set, root_name="PROJECT_SET")
+        ) == xmltodict.parse(text_project_xml_request)
+
+
+class TestCreateSample:
+    @mock.patch("requests.post")
+    def test_create_sample_success(self, mock_post):
+        mock_post.return_value = mock_requests_post(200, test_sample_xml_response)
+        sample_set = default_sample_set_type()
+        response = create_ena_sample(MOCK_CONFIG, sample_set)
+        desired_response = {
+            "ena_sample_accession": "ERS1833148",
+            "biosample_accession": "SAMEA104174130",
+            "ena_submission_accession": "ERA979927",
+        }
+        assert response.result == desired_response
+
+    def test_sample_set_construction(self):
+        config = mock_config()
+        sample_set = construct_sample_set_object(
+            config,
+            sample_data_in_submission_table(),
+            sample_table_entry,
+        )
+        assert xmltodict.parse(
+            dataclass_to_xml(sample_set, root_name="SAMPLE_SET")
+        ) == xmltodict.parse(test_sample_xml_request)
+
+    def test_sample_set_with_gisaid(self):
+        config = mock_config()
+        sample_data = sample_data_in_submission_table()
+        sample_data.seq_metadata["gisaidIsolateId"] = "EPI_ISL_12345"
+        sample_set = construct_sample_set_object(
+            config,
+            sample_data,
+            sample_table_entry,
+        )
+        assert xmltodict.parse(
+            dataclass_to_xml(sample_set, root_name="SAMPLE_SET")
+        ) == xmltodict.parse(test_sample_xml_request_gisaid)
+
+    def test_sample_revision(self):
+        config = mock_config()
+        sample_set = construct_sample_set_object(
+            config,
+            sample_data_in_submission_table(),
+            sample_table_entry,
+        )
+        files = get_sample_xml(sample_set, revision=True)
+        revision = files["SUBMISSION"]
+        assert xmltodict.parse(revision) == xmltodict.parse(revision_submission_xml_request)
+
+
+class AssemblyCreationTests(unittest.TestCase):
+    def setUp(self):
+        self.unaligned_sequences_multi = (
+            sample_data_in_submission_table().unaligned_nucleotide_sequences
+        )
+        self.unaligned_sequences: dict[str, str | None] = {
+            "main": "CTTAACTTTGAGAGAGTGAATT",
+        }
+        self.seq_key = "LOC_0001TLY"
+        tmp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp_dir.cleanup)
+        self.tmp_dir = tmp_dir.name
+
+    def test_format_authors(self):
+        authors = "Xi,L.;Smith, Anna Maria; Perez Gonzalez, Anthony J.;Doe,;von Doe, John"
+        result = reformat_authors_from_loculus_to_embl_style(authors)
+        desired_result = "Xi L., Smith A.M., Perez Gonzalez A.J., Doe, von Doe J.;"
+        self.assertEqual(result, desired_result)
+
+        extended_latin_authors = "Pérez, José; Bailley, François; Møller, Anäis; Wałęsa, Lech"
+        result_extended = reformat_authors_from_loculus_to_embl_style(extended_latin_authors)
+        desired_result_extended = "Perez J., Bailley F., Moller A., Walesa L.;"
+        self.assertEqual(result_extended, desired_result_extended)
+
+        # Test with apostrophes in surnames (middle and trailing)
+        authors_with_apostrophe = "O'Brien, Patrick; Malago', Giovanni; Smith, Jane"
+        result_apostrophe = reformat_authors_from_loculus_to_embl_style(authors_with_apostrophe)
+        desired_result_apostrophe = "O'Brien P., Malago' G., Smith J.;"
+        self.assertEqual(result_apostrophe, desired_result_apostrophe)
+
+        # Test with hyphenated first names, also with spaces around hyphens
+        authors_with_hyphenated_names = (
+            "Smith, John-Doe; Roe, Jane - Marie; Parker, Anne- Marie Beth"
+        )
+        result_hyphenated = reformat_authors_from_loculus_to_embl_style(
+            authors_with_hyphenated_names
+        )
+        desired_result_hyphenated = "Smith J.-D., Roe J.-M., Parker A.-M.B.;"
+        self.assertEqual(result_hyphenated, desired_result_hyphenated)
+
+    def test_flatfile_with_apostrophe_in_authors(self):
+        """Test that flatfile generation handles apostrophes correctly"""
+        config = mock_config()
+        metadata = {
+            "accession": "LOC_TEST001",
+            "version": "1",
+            "authors": "Malago', Giovanni; O'Brien, Patrick",
+            "sampleCollectionDate": "2024-01-01",
+            "geoLocCountry": "Italy",
+        }
+        unaligned_sequences: dict[str, str | None] = {
+            "main": "ATCGATCGATCG",
+        }
+
+        flatfile_path = create_flatfile(
+            config, metadata, mock_organism(), unaligned_sequences, dir=self.tmp_dir
+        )
+
+        with gzip.open(flatfile_path, "rt", encoding="utf-8") as f:
+            generated_content = f.read()
+
+        expected_flatfile_path = Path(EMBL_FLATFILE)
+        expected_content = Path(expected_flatfile_path).read_text(encoding="utf-8")
+
+        self.assertEqual(generated_content, expected_content)
+
+        # Additional check: ensure no &apos; entities are present
+        self.assertNotIn("&apos;", generated_content, "Flatfile should not contain &apos; entities")
+
+    def test_create_chromosome_list_multi_segment(self):
+        chromosome_list = create_chromosome_list_object(
+            self.unaligned_sequences_multi, self.seq_key, mock_multi_segmented_organism()
+        )
+        file_name_chromosome_list = create_chromosome_list(chromosome_list)
+
+        with gzip.GzipFile(file_name_chromosome_list, "rb") as gz:
+            content = gz.read()
+
+        self.assertEqual(
+            content,
+            b"LOC_0001TLY_seg2\tseg2\tcircular-segmented\nLOC_0001TLY_seg3\tseg3\tcircular-segmented\n",
+        )
+
+    def test_create_chromosome_list(self):
+        chromosome_list = create_chromosome_list_object(
+            self.unaligned_sequences, self.seq_key, mock_organism()
+        )
+        file_name_chromosome_list = create_chromosome_list(chromosome_list)
+
+        with gzip.GzipFile(file_name_chromosome_list, "rb") as gz:
+            content = gz.read()
+
+        self.assertEqual(
+            content,
+            b"LOC_0001TLY\tgenome\tlinear-monopartite\n",
+        )
+
+    @mock.patch("ena_deposition.call_loculus.get_group_info")
+    def test_create_manifest(self, mock_get_group_info):
+        config = mock_config()
+        study_accession = "Test Study Accession"
+        sample_accession = "Test Sample Accession"
+        mock_get_group_info.return_value = TEST_GROUP
+        manifest = create_manifest_object(
+            config,
+            sample_accession,
+            study_accession,
+            sample_data_in_submission_table(),
+            dir=self.tmp_dir,
+        )
+        manifest_file_name = create_manifest(manifest, is_broker=True)
+        data = {}
+        with open(manifest_file_name, encoding="utf-8") as gz:
+            reader = csv.reader(gz, delimiter="\t")
+            for row in reader:
+                try:
+                    key = row[0]
+                    value = row[1]
+                    data[key] = value
+                except IndexError as e:
+                    msg = (
+                        f"Error reading manifest file: {manifest_file_name}. "
+                        f"Row does not have enough elements: {row}"
+                    )
+                    raise ValueError(msg) from e
+        # Temp file names are different
+        data.pop("CHROMOSOME_LIST")
+        data.pop("FLATFILE")
+        self.assertEqual(data["STUDY"], study_accession)
+        self.assertEqual(data["SAMPLE"], sample_accession)
+        self.assertEqual(data["ADDRESS"], "Fake center name, Basel, BS, Switzerland")
+        self.assertEqual(data["ASSEMBLY_TYPE"], "isolate")
+        self.assertEqual(
+            data["AUTHORS"],
+            ("Umair M., Haider S.-A., Jamal Z., Ammar M., Hakim R., Ali Q., Salman M.;"),
+        )
+        self.assertEqual(data["COVERAGE"], "1")
+        self.assertEqual(data["PROGRAM"], "Ivar")
+        self.assertEqual(data["PLATFORM"], "Illumina")
+        self.assertEqual(
+            data["DESCRIPTION"],
+            "Original sequence submitted to Loculus with accession: LOC_0001TLY, version: 1",
+        )
+        self.assertEqual(data["MOLECULETYPE"], "genomic RNA")
+        self.assertTrue(data["ASSEMBLYNAME"].startswith("LOC_0001TLY.1"))
+        expected_keys = {
+            "STUDY",
+            "SAMPLE",
+            "ASSEMBLYNAME",
+            "ASSEMBLY_TYPE",
+            "COVERAGE",
+            "PROGRAM",
+            "PLATFORM",
+            "DESCRIPTION",
+            "MOLECULETYPE",
+            "AUTHORS",
+            "ADDRESS",
+        }
+        self.assertEqual(set(data.keys()), expected_keys)
+
+    def test_get_chromsome_accessions(self):
+        insdc_accession_range = "OZ189935-OZ189936"
+        segment_order = ["seg2", "seg3"]
+        result_multi = get_chromsome_accessions(insdc_accession_range, segment_order, True)
+        self.assertEqual(
+            result_multi,
+            {
+                "insdc_accession_seg2": "OZ189935",
+                "insdc_accession_seg3": "OZ189936",
+                "insdc_accession_full_seg2": "OZ189935.1",
+                "insdc_accession_full_seg3": "OZ189936.1",
+            },
+        )
+
+        insdc_accession_range = "OZ189935-OZ189935"
+        segment_order = ["main"]
+        result_single = get_chromsome_accessions(insdc_accession_range, segment_order, False)
+        self.assertEqual(
+            result_single,
+            {
+                "insdc_accession": "OZ189935",
+                "insdc_accession_full": "OZ189935.1",
+            },
+        )
+
+        insdc_accession_range = "OZ189935-OZ189935"
+        segment_order = ["seg3"]
+        result_single = get_chromsome_accessions(insdc_accession_range, segment_order, True)
+        self.assertEqual(
+            result_single,
+            {
+                "insdc_accession_seg3": "OZ189935",
+                "insdc_accession_full_seg3": "OZ189935.1",
+            },
+        )
+
+        insdc_accession_range = "OZ189935-OZ189936"
+        segment_order = ["main"]
+        with (
+            self.assertRaises(ValueError),
+            self.assertLogs("ena_deposition.ena_submission_helper", level="ERROR"),
+        ):
+            get_chromsome_accessions(insdc_accession_range, segment_order, False)
+
+        insdc_accession_range = "OZ189935-TK189936"
+        segment_order = ["A", "B"]
+        with (
+            self.assertRaises(ValueError),
+            self.assertLogs("ena_deposition.ena_submission_helper", level="ERROR"),
+        ):
+            get_chromsome_accessions(insdc_accession_range, segment_order, True)
+
+    @mock.patch("requests.get")
+    def test_get_ena_analysis_process(self, mock_post):
+        mock_post.return_value = mock_requests_post(200, process_response_text)
+        response = get_ena_analysis_process(
+            MOCK_CONFIG, erz_accession="ERZ000001", segment_order=["main"], organism=mock_organism()
+        )
+        desired_response = {
+            "erz_accession": "ERZ000001",
+            "insdc_accession": "OZ189999",
+            "insdc_accession_full": "OZ189999.1",
+            "segment_order": ["main"],
+        }
+        self.assertEqual(response.result, desired_response)
+
+
+class ManifestFieldsDiffTests(unittest.TestCase):
+    def test_no_diff_for_identical_entries(self):
+        entry = sample_data_in_submission_table()
+
+        differing_fields = manifest_fields_diff(
+            MOCK_CONFIG.assembly_manifest_fields_mapping, entry, entry
+        )
+
+        self.assertEqual(differing_fields, {})
+
+    def test_diff_detected_when_mapped_field_changes(self):
+        # Neither entry has a usable "depthOfCoverage" value (missing vs. empty string), so
+        # "coverage" falls back to its configured default ("1") on both sides.
+        last_version_entry = sample_data_in_submission_table()
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "sequencingInstrument": "Nanopore",
+            "depthOfCoverage": "",
+        }
+
+        differing_fields = manifest_fields_diff(
+            MOCK_CONFIG.assembly_manifest_fields_mapping, submission_row, last_version_entry
+        )
+
+        self.assertEqual(set(differing_fields), {"platform"})
+        self.assertIn("Illumina", differing_fields["platform"])
+        self.assertIn("Nanopore", differing_fields["platform"])
+        self.assertNotIn("coverage", differing_fields)
+
+    def test_diff_records_error_when_field_resolution_fails(self):
+        last_version_entry = sample_data_in_submission_table()
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "authors": "Doe, John 中文",  # non-Latin characters are rejected
+        }
+
+        differing_fields = manifest_fields_diff(
+            MOCK_CONFIG.assembly_manifest_fields_mapping, submission_row, last_version_entry
+        )
+
+        self.assertIn("authors", differing_fields)
+        self.assertIn("Error resolving field", differing_fields["authors"])
+
+
+class RawReadsCreationTests(unittest.TestCase):
+    def setUp(self):
+        self.seq_key = "LOC_0001TLY"
+        self.fastq_files = ["/tmp/fake_R1.fastq.gz", "/tmp/fake_R2.fastq.gz"]  # noqa: S108
+
+    @mock.patch("ena_deposition.call_loculus.get_group_info")
+    def test_create_manifest(self, mock_get_group_info):
+        mock_get_group_info.return_value = TEST_GROUP
+        config = mock_config()
+        config.unique_raw_reads_suffix = "Test suffix"
+
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "pairedEndInsertSize": "350",
+        }
+
+        manifest = create_raw_reads_manifest_object(
+            config,
+            "Test Sample Accession",
+            "Test Study Accession",
+            submission_row,
+            self.fastq_files,
+        )
+        self.assertEqual(manifest.insert_size, 350)
+        self.assertEqual(manifest.study, "Test Study Accession")
+        self.assertEqual(manifest.sample, "Test Sample Accession")
+        self.assertEqual(manifest.name, f"{self.seq_key}:1:Test organism:Test suffix")
+        self.assertEqual(manifest.fastq, self.fastq_files)
+        self.assertEqual(manifest.platform, Platform.ILLUMINA)
+        self.assertEqual(manifest.instrument, Instrument.unspecified)
+        self.assertEqual(manifest.library_source, LibrarySource.OTHER)
+        self.assertEqual(manifest.library_selection, LibrarySelection.UNSPECIFIED)
+        self.assertEqual(manifest.library_strategy, LibraryStrategy.OTHER)
+        self.assertEqual(
+            manifest.description,
+            "Original sequence submitted to Loculus with accession: LOC_0001TLY, version: 1",
+        )
+
+    @mock.patch("ena_deposition.call_loculus.get_group_info")
+    def test_create_manifest_library_fields_from_metadata(self, mock_get_group_info):
+        """When the mapped Loculus metadata is present, its value wins over the
+        config default in raw_reads_manifest_fields_mapping[...].default."""
+        mock_get_group_info.return_value = TEST_GROUP
+        config = mock_config()
+
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "sequencingLibrarySource": "VIRAL RNA",
+            "sequencingLibrarySelection": "RT-PCR",
+            "sequencingAssayType": "AMPLICON",
+        }
+
+        manifest = create_raw_reads_manifest_object(
+            config,
+            "Test Sample Accession",
+            "Test Study Accession",
+            submission_row,
+            self.fastq_files,
+        )
+        self.assertEqual(manifest.library_source, LibrarySource.VIRAL_RNA)
+        self.assertEqual(manifest.library_selection, LibrarySelection.RT_PCR)
+        self.assertEqual(manifest.library_strategy, LibraryStrategy.AMPLICON)
+
+    def test_create_manifest_insert_size_ignored_for_single_end(self):
+        config = mock_config()
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "pairedEndInsertSize": "350",
+        }
+
+        manifest = create_raw_reads_manifest_object(
+            config,
+            "Test Sample Accession",
+            "Test Study Accession",
+            submission_row,
+            [self.fastq_files[0]],
+        )
+        self.assertIsNone(manifest.insert_size)
+
+    def test_create_manifest_no_fastq_files(self):
+        """If no fastq files are passed in, a RuntimeError is raised directly (not wrapped,
+        since this check happens before the manifest is built)."""
+        config = mock_config()
+        submission_row = sample_data_in_submission_table()
+
+        with self.assertRaises(RuntimeError) as ctx:
+            create_raw_reads_manifest_object(
+                config,
+                "Test Sample Accession",
+                "Test Study Accession",
+                submission_row,
+                [],
+            )
+        self.assertIn("No fastq files found", str(ctx.exception))
+        self.assertIsNone(ctx.exception.__cause__)
+
+    @mock.patch("ena_deposition.create_raw_reads.get_description")
+    def test_create_manifest_error_wrapped(self, mock_get_description):
+        """Errors raised while building the RawReadsManifest itself should be wrapped in
+        a RuntimeError that identifies the offending accession, with the original error
+        preserved as the cause."""
+        mock_get_description.side_effect = ValueError("boom")
+        config = mock_config()
+        submission_row = sample_data_in_submission_table()
+
+        with self.assertRaises(RuntimeError) as ctx:
+            create_raw_reads_manifest_object(
+                config,
+                "Test Sample Accession",
+                "Test Study Accession",
+                submission_row,
+                self.fastq_files,
+            )
+        self.assertIn(submission_row.accession, str(ctx.exception))
+        self.assertIsInstance(ctx.exception.__cause__, ValueError)
+
+    def test_create_manifest_instrument_no_platform(self):
+        config = mock_config()
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "sequencingInstrument": "HiSeq X Five",
+        }
+
+        manifest = create_raw_reads_manifest_object(
+            config,
+            "Test Sample Accession",
+            "Test Study Accession",
+            submission_row,
+            self.fastq_files,
+        )
+        self.assertIsNone(manifest.platform)
+        self.assertEqual(manifest.instrument, Instrument.HiSeq_X_Five)
+
+    def test_create_manifest_unrecognized_instrument_raises(self):
+        config = mock_config()
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "sequencingInstrument": "Not a real instrument",
+        }
+
+        with self.assertRaises(
+            ValueError, msg="matches neither ENA's platform nor instrument list"
+        ):
+            create_raw_reads_manifest_object(
+                config,
+                "Test Sample Accession",
+                "Test Study Accession",
+                submission_row,
+                self.fastq_files,
+            )
+
+    def test_create_manifest_unrecognized_enum_raises(self):
+        config = mock_config()
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "sequencingInstrument": "HiSeq X Five",
+            "sequencingLibrarySelection": "Not a valid enum",
+        }
+
+        with self.assertRaisesRegex(ValueError, "not a valid LibrarySelection"):
+            create_raw_reads_manifest_object(
+                config,
+                "Test Sample Accession",
+                "Test Study Accession",
+                submission_row,
+                self.fastq_files,
+            )
+
+
+class GetPlatformAndInstrumentTests(unittest.TestCase):
+    def test_valid_platform_value(self):
+        """A value from ENA's PLATFORM list yields that platform and an unspecified
+        instrument."""
+        platform, instrument = get_platform_and_instrument("ILLUMINA", "LOC_0001TLY")
+
+        self.assertEqual(platform, Platform.ILLUMINA)
+        self.assertEqual(instrument, Instrument.unspecified)
+
+    def test_valid_platform_value_is_case_insensitive(self):
+        platform, instrument = get_platform_and_instrument("illumina", "LOC_0001TLY")
+
+        self.assertEqual(platform, Platform.ILLUMINA)
+        self.assertEqual(instrument, Instrument.unspecified)
+
+    def test_instrument_unspecified_raises(self):
+        """ "unspecified" is a valid INSTRUMENT value but ENA needs a PLATFORM alongside
+        it, which we cannot supply, so it must be rejected."""
+        with self.assertRaises(ValueError) as ctx:
+            get_platform_and_instrument("unspecified", "LOC_0001TLY")
+
+        self.assertIn("unspecified", str(ctx.exception))
+        self.assertIn("LOC_0001TLY", str(ctx.exception))
+
+    def test_instrument_invalid_raises(self):
+        """ "unspecified" is a valid INSTRUMENT value but ENA needs a PLATFORM alongside
+        it, which we cannot supply, so it must be rejected."""
+        with self.assertRaises(ValueError) as ctx:
+            get_platform_and_instrument("invalid_instrument", "LOC_0001TLY")
+
+        self.assertIn("invalid_instrument", str(ctx.exception))
+        self.assertIn("LOC_0001TLY", str(ctx.exception))
+
+    def test_valid_instrument_value(self):
+        """A value from ENA's INSTRUMENT list yields that instrument and no platform."""
+        platform, instrument = get_platform_and_instrument("Illumina MiSeq", "LOC_0001TLY")
+
+        self.assertIsNone(platform)
+        self.assertEqual(instrument, Instrument.Illumina_MiSeq)
+
+
+class DownloadFastqFilesTests(unittest.TestCase):
+    FILE_ID: Final = "11111111-2222-3333-4444-555555555555"
+    CONTENT: Final = b"@r1\nACGT\n+\nIIII\n"
+
+    def setUp(self):
+        tmp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp_dir.cleanup)
+        self.tmp_dir = tmp_dir.name
+        self.config = mock.Mock(spec=Config)
+        self.config.raw_reads_metadata_field = "rawReads"
+        self.config.s3_request_timeout_seconds = 60
+
+    def _metadata(self, name: str):
+        return {
+            "rawReads": json.dumps(
+                [{"fileId": self.FILE_ID, "name": name, "url": "https://s3.test/object"}]
+            )
+        }
+
+    def _download(self, name: str, content: bytes | None = None):
+        response = mock.MagicMock()
+        response.__enter__.return_value = response
+        response.__exit__.return_value = False
+        response.iter_content.return_value = [content if content is not None else self.CONTENT]
+        with mock.patch("ena_deposition.call_loculus.requests.get", return_value=response):
+            return download_fastq_files(
+                self.config, self._metadata(name), "LOC_0001TLY", self.tmp_dir
+            )
+
+    def test_gzipped_input_is_passed_through_unchanged(self):
+        gzipped = gzip.compress(self.CONTENT)
+        (path,) = self._download("reads.fastq.gz", gzipped)
+        self.assertEqual(Path(path).name, f"{self.FILE_ID}.fastq.gz")
+        self.assertEqual(Path(path).read_bytes(), gzipped)
+
+    def test_uppercase_gz_is_lowercased_and_not_recompressed(self):
+        """Upstream accepts READS.FASTQ.GZ; webin-cli's suffix check is case-sensitive, and
+        re-gzipping an already-gzipped file would only fail later, during submit."""
+        gzipped = gzip.compress(self.CONTENT)
+        (path,) = self._download("READS.FASTQ.GZ", gzipped)
+        self.assertEqual(Path(path).name, f"{self.FILE_ID}.fastq.gz")
+        self.assertEqual(Path(path).read_bytes(), gzipped)
+
+    def test_unaccepted_extension_raises_before_download(self):
+        for name in ("reads.fastq", "reads.fq", "reads.fastq.bz2", "reads.fastq.zst"):
+            with self.subTest(name=name):
+                with (
+                    mock.patch("ena_deposition.call_loculus.requests.get") as get,
+                    self.assertRaises(RuntimeError),
+                ):
+                    download_fastq_files(
+                        self.config, self._metadata(name), "LOC_0001TLY", self.tmp_dir
+                    )
+
+                get.assert_not_called()
+
+    def test_missing_raw_reads_field_raises(self):
+        with self.assertRaises(RuntimeError):
+            download_fastq_files(self.config, {}, "LOC_0001TLY", self.tmp_dir)
+
+
+if __name__ == "__main__":
+    import pytest
+
+    pytest.main([__file__])

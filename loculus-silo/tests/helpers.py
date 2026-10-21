@@ -38,6 +38,17 @@ def mock_records():
     ]
 
 
+def mock_records_with_hierarchical_filters(taxa: list[str], filter_name: str) -> list[dict]:
+    """Like mock_records() but stamps each record's metadata with a hierarchical filter value.
+
+    Useful for exercising the hierarchical-filter value-extraction path.
+    """
+    records = mock_records()
+    for record, taxon in zip(records, taxa, strict=False):
+        record["metadata"][filter_name] = taxon
+    return records
+
+
 def mock_transformed_records():
     return [
         {
@@ -104,7 +115,7 @@ def make_curl_runner(responses: list[MockHttpResponse]) -> Callable[[list[str]],
             raise AssertionError(msg)
 
         header_lines = [
-            f"HTTP/1.1 {response.status} {'OK' if response.status == 200 else 'Not Modified'}"  # noqa: PLR2004
+            f"HTTP/1.1 {response.status} {'OK' if response.status == 200 else 'Not Modified'}"  # ruff:ignore[magic-value-comparison]
         ]
         for key, value in (response.headers or {}).items():
             header_lines.append(f"{key}: {value}")
@@ -122,10 +133,10 @@ def make_mock_download_func(responses: list[MockHttpResponse]):
     responses_copy = list(responses)
 
     def mock_download(
-        url: str,  # noqa: ARG001
+        url: str,  # ruff:ignore[unused-function-argument]
         output_path: Path,
-        etag: str | None = None,  # noqa: ARG001
-        timeout: int = 300,  # noqa: ARG001
+        etag: str | None = None,  # ruff:ignore[unused-function-argument]
+        timeout: int = 300,  # ruff:ignore[unused-function-argument]
     ) -> HttpResponse:
         if not responses_copy:
             msg = "No fake HTTP responses remaining"

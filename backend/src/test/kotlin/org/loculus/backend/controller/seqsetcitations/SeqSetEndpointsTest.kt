@@ -24,13 +24,17 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
     @MockkBean
     lateinit var accessionPreconditionValidator: AccessionPreconditionValidator
 
-    @MockkBean(relaxed = true)
+    @MockkBean
     lateinit var crossRefService: CrossRefService
 
     @BeforeEach
     fun setup() {
         every { accessionPreconditionValidator.validate(any()) } returns Unit
-        every { crossRefService.postCrossRefXML(any()) } returns "SUCCESS"
+        every { crossRefService.doiPrefix } returns MOCK_DOI_PREFIX
+        every { crossRefService.isActive } returns true
+        every { crossRefService.isWriteEnabled } returns true
+        every { crossRefService.generateCrossRefXML(any()) } returns "<doi_batch/>"
+        every { crossRefService.postCrossRefXML(any()) } returns "Crossref API response"
     }
 
     @ParameterizedTest
@@ -122,6 +126,36 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
     }
 
     @Test
+    fun `WHEN calling create seqSet DOI while write is disabled THEN returns forbidden`() {
+        every { crossRefService.isWriteEnabled } returns false
+
+        val seqSetResult = client.createSeqSet()
+            .andExpect(status().isOk)
+            .andReturn()
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
+
+        client.createSeqSetDOI(seqSetId)
+            .andExpect(status().isForbidden)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("\$.detail", containsString("not write-enabled")))
+    }
+
+    @Test
+    fun `WHEN calling create seqSet DOI while crossref is inactive THEN returns forbidden`() {
+        every { crossRefService.isActive } returns false
+
+        val seqSetResult = client.createSeqSet()
+            .andExpect(status().isOk)
+            .andReturn()
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
+
+        client.createSeqSetDOI(seqSetId)
+            .andExpect(status().isForbidden)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("\$.detail", containsString("not active")))
+    }
+
+    @Test
     fun `WHEN calling update seqSet THEN returns updated seqSet`() {
         val seqSetResult = client.createSeqSet()
             .andExpect(status().isOk)
@@ -166,7 +200,7 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
             .andExpect(status().isOk)
 
         client.deleteSeqSet(seqSetId, 1)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(

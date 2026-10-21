@@ -17,7 +17,7 @@ from .constants import (
     DATA_FILENAME,
     TRANSFORMED_DATA_FILENAME,
 )
-from .decompressor import analyze_ndjson
+from .decompressor import NdjsonAnalysis, analyze_ndjson
 from .errors import (
     DecompressionFailedError,
     HashUnchangedError,
@@ -37,7 +37,7 @@ class RecordCountValidationError(Exception):
 
 def _md5_file(path: Path) -> str:
     """Compute MD5 hash of a file."""
-    digest = hashlib.md5()  # noqa: S324
+    digest = hashlib.md5()  # ruff:ignore[hashlib-insecure-hash-function]
     with path.open("rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):  # 1MB chunks
             digest.update(chunk)
@@ -78,7 +78,7 @@ class DownloadResult:
     directory: Path
     transformed_path: Path
     etag: str
-    pipeline_version: int | None
+    analysis: NdjsonAnalysis
 
 
 def _download_file(
@@ -106,7 +106,7 @@ def _download_file(
     if etag and etag != "0":
         headers["If-None-Match"] = etag
 
-    try:
+    try:  # ruff:ignore[too-many-statements-in-try-clause]
         session = requests.Session()
         session.headers.update(headers)
         response = session.get(url, timeout=timeout, stream=True)
@@ -167,7 +167,7 @@ class DownloadManager:
         data_path = download_dir / DATA_FILENAME
         transformed_path = download_dir / TRANSFORMED_DATA_FILENAME
 
-        try:
+        try:  # ruff:ignore[too-many-statements-in-try-clause]
             # Download data from backend
             logger.info("Requesting released data from %s", config.released_data_endpoint)
             response = self.download_func(
@@ -188,7 +188,7 @@ class DownloadManager:
                 raise RuntimeError(msg)
 
             # Check for 304 Not Modified
-            if response.status_code == 304:  # noqa: PLR2004
+            if response.status_code == 304:  # ruff:ignore[magic-value-comparison]
                 logger.info("Backend returned 304 Not Modified; skipping import")
                 safe_remove(download_dir)
                 raise NotModifiedError
@@ -205,7 +205,7 @@ class DownloadManager:
 
             # Decompress and analyze the data
             try:
-                analysis = analyze_ndjson(data_path)
+                analysis = analyze_ndjson(data_path, config.hierarchical_filters)
             except RuntimeError as exc:
                 logger.warning(
                     "Failed to decompress %s (size=%s bytes): %s",
@@ -244,7 +244,7 @@ class DownloadManager:
                 directory=download_dir,
                 transformed_path=transformed_path,
                 etag=etag_value,
-                pipeline_version=analysis.pipeline_version,
+                analysis=analysis,
             )
 
         except (

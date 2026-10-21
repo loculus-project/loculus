@@ -10,12 +10,15 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.S3Configuration
+import software.amazon.awssdk.services.s3.model.AbortMultipartUploadRequest
 import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadRequest
 import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload
 import software.amazon.awssdk.services.s3.model.CompletedPart
 import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest
+import software.amazon.awssdk.services.s3.model.ListPartsRequest
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.PutObjectTaggingRequest
 import software.amazon.awssdk.services.s3.model.S3Exception
@@ -45,6 +48,7 @@ class S3Service(private val s3Config: S3Config) {
         val putObjectRequest = PutObjectRequest.builder()
             .bucket(config.bucket)
             .key(getFileIdPath(fileId))
+            .ifNoneMatch("*") // prevent accidental overwrites of URL contents by blocking more than one write
             .build()
         val presignRequest = PutObjectPresignRequest.builder()
             .putObjectRequest(putObjectRequest)
@@ -112,6 +116,42 @@ class S3Service(private val s3Config: S3Config) {
         Unit
     }
 
+    /**
+     * Returns the total size in bytes of the parts already uploaded for an in-progress (not yet completed)
+     * multipart upload. Unlike [getFileSize], this does not require the upload to be completed first, since
+     * it reads the parts directly rather than the (not yet existing) assembled object.
+     */
+    fun getMultipartUploadSize(fileId: FileId, uploadId: String): Long = s3ErrorMapping {
+        val config = getS3BucketConfig()
+        var partNumberMarker: Int? = null
+        var totalSize = 0L
+        do {
+            val response = s3Client.listParts(
+                ListPartsRequest.builder()
+                    .bucket(config.bucket)
+                    .key(getFileIdPath(fileId))
+                    .uploadId(uploadId)
+                    .partNumberMarker(partNumberMarker)
+                    .build(),
+            )
+            totalSize += response.parts().sumOf { it.size() }
+            partNumberMarker = if (response.isTruncated) response.nextPartNumberMarker() else null
+        } while (partNumberMarker != null)
+        totalSize
+    }
+
+    fun abortMultipartUpload(fileId: FileId, uploadId: String) = s3ErrorMapping {
+        val config = getS3BucketConfig()
+        s3Client.abortMultipartUpload(
+            AbortMultipartUploadRequest.builder()
+                .bucket(config.bucket)
+                .key(getFileIdPath(fileId))
+                .uploadId(uploadId)
+                .build(),
+        )
+        Unit
+    }
+
     fun createUrlToReadPrivateFile(fileId: FileId, downloadFileName: String? = null): String = s3ErrorMapping {
         val config = getS3BucketConfig()
         val getReqBuilder = GetObjectRequest.builder()
@@ -171,6 +211,18 @@ class S3Service(private val s3Config: S3Config) {
                         )
                         .build(),
                 )
+                .build(),
+        )
+        Unit
+    }
+
+    fun deleteFile(fileId: FileId) = s3ErrorMapping {
+        val config = getS3BucketConfig()
+        s3Client.deleteObject(
+            DeleteObjectRequest
+                .builder()
+                .bucket(config.bucket)
+                .key(getFileIdPath(fileId))
                 .build(),
         )
         Unit
@@ -256,6 +308,11 @@ fun <T> s3ErrorMapping(block: () -> T): T {
             "InvalidPartOrder" -> UnprocessableEntityException(
                 "The list of parts was not in ascending order. The parts list must be specified in order " +
                     "by part number.",
+            )
+
+            "NoSuchKey" -> UnprocessableEntityException(
+                "NoSuchKey: The referenced file does not exist in storage. Uploaded files that are not " +
+                    "referenced by a submission for too long are cleaned up automatically.",
             )
 
             else -> RuntimeException("Unexpected S3 error: ${e.awsErrorDetails().errorCode()}")

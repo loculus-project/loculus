@@ -43,8 +43,14 @@ function dictToSearchParams(dict: QueryState) {
 function buildUrlFromParams(params: URLSearchParams) {
     const base = window.location.protocol + '//' + window.location.host + window.location.pathname;
 
-    // Keep the original behavior of always appending '?'
-    let url = base + '?' + params.toString();
+    const paramsString = params.toString();
+
+    // Avoid appending an empty '?' when there are no query parameters
+    if (paramsString === '') {
+        return base;
+    }
+
+    let url = base + '?' + paramsString;
 
     // Avoid '*' at the end because some systems do not recognize it as part of the link
     if (url.endsWith('*')) {

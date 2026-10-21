@@ -24,12 +24,6 @@ export const seqSet = z.object({
 export const seqSets = z.array(seqSet);
 export type SeqSet = z.infer<typeof seqSet>;
 
-export const citedByResult = z.object({
-    years: z.array(z.number()),
-    citations: z.array(z.number()),
-});
-export type CitedByResult = z.infer<typeof citedByResult>;
-
 export const authorProfile = z.object({
     username: z.string(),
     firstName: z.string(),
@@ -39,14 +33,55 @@ export const authorProfile = z.object({
 });
 export type AuthorProfile = z.infer<typeof authorProfile>;
 
-export const crossRefWork = z.object({
-    message: z
-        .object({
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            'is-referenced-by-count': z.number(),
-        })
-        .transform((data) => ({
-            isReferencedByCount: data['is-referenced-by-count'],
-        })),
+export const citationContributor = z.object({
+    givenName: z.string(),
+    surname: z.string(),
 });
-export type CrossRefWork = z.infer<typeof crossRefWork>;
+export type CitationContributor = z.infer<typeof citationContributor>;
+
+export const citationSource = z.object({
+    sourceDOI: z.string(),
+    title: z.string(),
+    year: z.number(),
+    contributors: z.array(citationContributor),
+    journal: z.string().nullish(),
+});
+
+export const citationOrigin = z.enum(['CROSSREF', 'CURATED']);
+export type CitationOrigin = z.infer<typeof citationOrigin>;
+
+const seqSetCitation = z.object({
+    source: citationSource,
+});
+export type SeqSetCitation = z.infer<typeof seqSetCitation>;
+
+export const seqSetCitations = z.array(seqSetCitation);
+
+const sequenceCitation = z.object({
+    source: citationSource,
+    seqSets: z.array(
+        z.object({
+            seqSetAccessionVersion: z.string(),
+            // can be either a bare accession or an accessionVersion
+            sequenceAccession: z.string(),
+        }),
+    ),
+});
+export type SequenceCitation = z.infer<typeof sequenceCitation>;
+
+export const sequenceCitations = z.array(sequenceCitation);
+
+export const adminSeqSetCitation = z.object({
+    source: citationSource,
+    seqSets: z.array(seqSet),
+    origin: citationOrigin,
+});
+export type AdminSeqSetCitation = z.infer<typeof adminSeqSetCitation>;
+
+export const adminSeqSetCitations = z.array(adminSeqSetCitation);
+
+export const addSeqSetCitationRequest = z.object({
+    source: citationSource,
+    seqSetAccessionVersions: z.array(z.string()),
+});
+export type AddSeqSetCitationRequest = z.infer<typeof addSeqSetCitationRequest>;

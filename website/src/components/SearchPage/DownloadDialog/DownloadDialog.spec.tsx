@@ -137,17 +137,17 @@ describe('DownloadDialog', () => {
         await renderDialog();
 
         const downloadButton = screen.getByRole('link', { name: 'Download' });
-        expect(downloadButton).toHaveClass('btn-disabled');
+        expect(downloadButton).toHaveAttribute('aria-disabled', 'true');
         expect(getDownloadHref()).not.toMatch(new RegExp(`^${defaultLapisUrl}`));
 
         await checkAgreement();
-        expect(downloadButton).not.toHaveClass('btn-disabled');
+        expect(downloadButton).not.toHaveAttribute('aria-disabled');
         expect(getDownloadHref()).toMatch(new RegExp(`^${defaultLapisUrl}`));
     });
 
-    const rawNucleotideSequencesLabel = /Raw nucleotide sequences/;
-    const alignedNucleotideSequencesLabel = /Aligned nucleotide sequences/;
-    const alignedAminoAcidSequencesLabel = /Aligned amino acid sequences/;
+    const rawNucleotideSequencesLabel = /^Nucleotide sequences$/;
+    const alignedNucleotideSequencesLabel = /Reference-aligned nucleotide sequences/;
+    const alignedAminoAcidSequencesLabel = /Reference-aligned amino acid sequences/;
     const gzipCompressionLabel = /Gzip/;
     const displayNameFastaHeaderStyleLabel = /Display name/;
 
@@ -330,7 +330,7 @@ describe('DownloadDialog', () => {
             await renderDialog({ dataUseTermsEnabled: false });
 
             const downloadButton = screen.getByRole('link', { name: 'Download' });
-            expect(downloadButton).not.toHaveClass('btn-disabled');
+            expect(downloadButton).not.toHaveAttribute('aria-disabled');
         });
 
         test('checkbox not in the document', async () => {
@@ -382,9 +382,12 @@ describe('DownloadDialog', () => {
             });
 
             expect(
-                screen.getByText('Select a genotype with the search UI to enable download of aligned sequences.', {
-                    exact: false,
-                }),
+                screen.getByText(
+                    'Select a genotype with the search UI to enable download of reference-aligned sequences.',
+                    {
+                        exact: false,
+                    },
+                ),
             ).toBeVisible();
             expect(screen.queryByLabelText(alignedNucleotideSequencesLabel)).not.toBeInTheDocument();
             expect(screen.queryByLabelText(alignedAminoAcidSequencesLabel)).not.toBeInTheDocument();
@@ -400,7 +403,7 @@ describe('DownloadDialog', () => {
 
             expect(
                 screen.getByText(
-                    'No genotype has been selected for the segment: L (segment). Select one in the search UI to enable download of aligned sequences for these segments.',
+                    'No genotype has been selected for the segment: L (segment). Select one in the search UI to enable download of reference-aligned sequences for these segments.',
                     { exact: false },
                 ),
             ).toBeVisible();

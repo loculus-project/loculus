@@ -36,6 +36,25 @@ class Config:
     segmented: bool
 
 
+def resolve_host_information(record: dict[str, str]) -> dict[str, str]:
+    """Create a new host field and populate it from hostTaxonId or
+    hostNameScientific (falling back to the empty string) to be consistent
+    with how direct submissions specify the host organism. Any existing
+    hostTaxonId, hostNameScientific, and hostNameCommon fields on the
+    record will be removed.
+
+    This should be done after computing the hash for a record to not trigger
+    revisions for all INSDC data
+    """
+    host = record.get("hostTaxonId") or record.get("hostNameScientific")
+    record.pop("hostTaxonId", None)
+    record.pop("hostNameScientific", None)
+    record.pop("hostNameCommon", None)
+    record["host"] = host
+
+    return record
+
+
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--input", required=True, type=click.Path(exists=True))
@@ -150,6 +169,11 @@ def main(
         prehash = metadata_dump + sequence_hash
 
         record["hash"] = hashlib.md5(prehash.encode(), usedforsecurity=False).hexdigest()
+
+        # for segmented organisms, this has to happen in `heuristic_group_segments.py`
+        # and `override_group_segments.py`
+        if not config.segmented:
+            record = resolve_host_information(record)
 
         orjsonl.append(output, {"id": record[fasta_id_field], "metadata": record})
 

@@ -23,15 +23,15 @@ export class ReviewPage {
     private sequencesDialogCloseButton = () =>
         this.sequencesDialog().getByRole('button', { name: '✕' });
     public sequenceViewerContent = () => this.page.getByTestId('fixed-length-text-viewer');
-    private sequenceTabs = () => this.page.locator('.tab');
+    private sequenceTabs = () => this.page.getByRole('tab');
 
     public readonly approveAllButton = () =>
-        this.page.getByRole('button', { name: 'Release', exact: false });
+        this.page.getByRole('button', { name: 'Approve', exact: false });
     public readonly discardOpenMenuButton = () =>
         this.page.getByRole('button', { name: 'Discard sequences', exact: false });
     public readonly discardAllButton = () => this.page.getByText('Discard all', { exact: false });
     public readonly confirmReleaseButton = () =>
-        this.page.getByRole('button', { name: 'Release', exact: true });
+        this.page.getByRole('button', { name: 'Approve', exact: true });
     public readonly confirmDiscardButton = () =>
         this.page.getByRole('button', { name: 'Discard', exact: true });
 
@@ -107,10 +107,10 @@ export class ReviewPage {
         await this.confirmDiscardButton().click();
     }
 
-    async waitForZeroProcessing() {
+    async waitForZeroProcessing(timeout = 90000) {
         await expect(this.page.locator('[data-testid="review-page-control-panel"]')).toContainText(
             '0 awaiting processing',
-            { timeout: 90000 },
+            { timeout: timeout },
         );
     }
 
@@ -146,14 +146,20 @@ export class ReviewPage {
     }
 
     async releaseValidSequences() {
-        await this.page.getByRole('button', { name: /Release \d+ valid sequence/ }).click();
-        await this.page.getByRole('button', { name: 'Release', exact: true }).click();
+        await this.page.getByRole('button', { name: /Approve \d+ valid sequence/ }).click();
+        await this.page.getByRole('button', { name: 'Approve', exact: true }).click();
+        await expect(this.page.getByText(/(Sequence|have been) approved/)).toBeVisible();
+    }
+
+    async goToReleasedSequences(): Promise<SearchPage> {
+        await this.page.getByRole('link', { name: 'released sequences' }).click();
+        await expect(this.page).toHaveURL((url) => url.pathname.endsWith('/released'));
+        return new SearchPage(this.page);
     }
 
     async releaseAndGoToReleasedSequences(): Promise<SearchPage> {
         await this.releaseValidSequences();
-        await this.page.getByRole('link', { name: 'released sequences' }).click();
-        return new SearchPage(this.page);
+        return this.goToReleasedSequences();
     }
 
     async checkFilesInReviewDialog(
@@ -167,6 +173,7 @@ export class ReviewPage {
                 await getFromLinkTargetAndAssertContent(
                     this.page.getByRole('link', { name: fileName }),
                     fileContent,
+                    fileName,
                 );
             }
         }
@@ -226,6 +233,21 @@ export class ReviewPage {
         }
 
         return tabNames;
+    }
+
+    async expectFileProcessingError(pattern: RegExp, submissionId: string) {
+        await expect(
+            this.page
+                .getByTestId(`review-card-${submissionId}`)
+                .getByTestId('processing-error')
+                .filter({ hasText: pattern }),
+        ).toBeVisible();
+    }
+
+    async expectNoValidSequencesToApprove() {
+        await expect(
+            this.page.getByRole('button', { name: /Approve \d+ valid sequence/ }),
+        ).toBeHidden();
     }
 
     async editFirstSequence() {

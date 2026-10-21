@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.AccessionVersionUnprocessedMetadata
+import org.loculus.backend.api.AccessionVersionSubmittedMetadata
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.EditedSequenceEntryData
@@ -12,7 +12,6 @@ import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
-import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.SequenceEntryStatus
@@ -20,6 +19,7 @@ import org.loculus.backend.api.SequenceEntryVersionToEdit
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
+import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.config.BackendConfig
@@ -49,11 +49,7 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
-data class SubmissionResult(
-    val submissionIdMappings: List<SubmissionIdMapping>,
-    val groupId: Int,
-    val submissionIdFilesMap: SubmissionIdFilesMap?,
-)
+data class SubmissionResult(val submissionIdMappings: List<SubmissionIdMapping>, val groupId: Int)
 
 class SubmissionConvenienceClient(
     private val groupManagementClient: GroupManagementControllerClient,
@@ -101,12 +97,12 @@ class SubmissionConvenienceClient(
 
             DefaultFiles.submissionIds.forEachIndexed { i, submissionId ->
 
-                val request = HttpRequest.newBuilder()
+                val requestBuilder = HttpRequest.newBuilder()
                     .uri(URI.create(fileIdsAndUrls[i].presignedWriteUrl))
                     .PUT(HttpRequest.BodyPublishers.ofByteArray(fileContent))
-                    .build()
+                fileIdsAndUrls[i].headers.forEach { (k, v) -> requestBuilder.header(k, v) }
 
-                client.send(request, HttpResponse.BodyHandlers.ofString())
+                client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString())
 
                 fileMapping[submissionId] =
                     mapOf("myFileCategory" to listOf(FileIdAndName(fileIdsAndUrls[i].fileId, "hello.txt")))
@@ -116,6 +112,8 @@ class SubmissionConvenienceClient(
         val submit = client.submit(
             if (isMultiSegmented) {
                 DefaultFiles.multiSegmentedMetadataFile
+            } else if (fileMapping != null) {
+                DefaultFiles.metadataFile.withFileMapping(fileMapping)
             } else {
                 DefaultFiles.metadataFile
             },
@@ -130,13 +128,11 @@ class SubmissionConvenienceClient(
             groupId = groupIdToSubmitFor,
             dataUseTerm = dataUseTerms,
             jwt = jwt,
-            fileMapping = fileMapping,
         )
 
         return SubmissionResult(
             submissionIdMappings = deserializeJsonResponse(submit),
             groupId = groupIdToSubmitFor,
-            submissionIdFilesMap = fileMapping,
         )
     }
 
@@ -379,13 +375,13 @@ class SubmissionConvenienceClient(
                 .andExpect(
                     content().contentType(MediaType.APPLICATION_JSON_VALUE),
                 ),
-        ).processingResultCounts[processingResult]!!.toInt()
+        ).processingResultCounts[processingResult]!!
 
     fun submitEditedData(
         accessions: List<Accession>,
         organism: String = DEFAULT_ORGANISM,
         userName: String = DEFAULT_USER_NAME,
-        editedData: OriginalData<GeneticSequence>,
+        editedData: SubmittedData<GeneticSequence>,
     ) {
         accessions.forEach { accession ->
             client.submitEditedSequenceEntryVersion(
@@ -405,7 +401,7 @@ class SubmissionConvenienceClient(
         accessions,
         organism = organism,
         userName = userName,
-        editedData = defaultOriginalData,
+        editedData = defaultSubmittedData,
     )
 
     fun approveProcessedSequenceEntries(
@@ -499,7 +495,7 @@ class SubmissionConvenienceClient(
     fun getReleasedData(organism: String = DEFAULT_ORGANISM) =
         client.getReleasedData(organism).expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
 
-    fun getUnprocessedMetadata(
+    fun getSubmittedMetadata(
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
         groupIdsFilter: List<Int>? = null,
@@ -507,7 +503,7 @@ class SubmissionConvenienceClient(
         fields: List<String>? = null,
         compression: String? = null,
     ) = client
-        .getUnprocessedMetadata(
+        .getSubmittedMetadata(
             organism = organism,
             jwt = jwt,
             groupIdsFilter = groupIdsFilter,
@@ -515,7 +511,7 @@ class SubmissionConvenienceClient(
             fields = fields,
             compression = compression,
         )
-        .expectNdjsonAndGetContent<AccessionVersionUnprocessedMetadata>()
+        .expectNdjsonAndGetContent<AccessionVersionSubmittedMetadata>()
 
     private inline fun <reified T> deserializeJsonResponse(resultActions: ResultActions): T {
         val content =
@@ -531,15 +527,19 @@ class SubmissionConvenienceClient(
     /**
      * Upload a file to a presigned write URL (S3).
      */
-    fun uploadFile(presignedWriteUrl: String, content: String): HttpResponse<String?> {
+    fun uploadFile(
+        presignedWriteUrl: String,
+        content: String,
+        headers: Map<String, String> = emptyMap(),
+    ): HttpResponse<String?> {
         val client = HttpClient.newBuilder().build()
         val fileContent = content.toByteArray()
 
-        val request = HttpRequest.newBuilder()
+        val requestBuilder = HttpRequest.newBuilder()
             .uri(URI.create(presignedWriteUrl))
             .PUT(HttpRequest.BodyPublishers.ofByteArray(fileContent))
-            .build()
+        headers.forEach { (k, v) -> requestBuilder.header(k, v) }
 
-        return client.send(request, HttpResponse.BodyHandlers.ofString())
+        return client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString())
     }
 }

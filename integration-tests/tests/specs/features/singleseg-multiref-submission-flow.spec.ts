@@ -24,6 +24,7 @@ test.describe('Single segment multi-reference submission flow', () => {
         const editPage = await reviewPage.editFirstSequence();
 
         await editPage.discardSequenceFile();
+        await editPage.submitChangesExpectingError(/must contain at least one consensus sequence/);
         await editPage.addSequenceFile(`>key\n${a71Sequence}`);
         await editPage.fillField('Authors', 'Integration, Test');
         await editPage.submitChanges();
@@ -69,9 +70,6 @@ test.describe('Single segment multi-reference submission flow', () => {
         const firstAccessionVersion = accessionVersions[0];
         await releasedPage.openPreviewOfAccessionVersion(firstAccessionVersion.accessionVersion);
         await releasedPage.revokeSequence('revocation for integration test');
-
-        await reviewPage.waitForAllProcessed();
-        await reviewPage.releaseAndGoToReleasedSequences();
 
         await releasedPage.waitForAccessionVersionInSearch(firstAccessionVersion.accession, 2);
         await releasedPage.openPreviewOfAccessionVersion(`${firstAccessionVersion.accession}.2`);

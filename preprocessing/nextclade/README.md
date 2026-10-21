@@ -24,7 +24,7 @@ This preprocessing pipeline has been developed by the Loculus team. It requests 
    mamba env create -n loculus-nextclade -f environment.yml
    ```
 
-   or 
+   or
 
    ```sh
    micromamba create -f environment.yml
@@ -90,10 +90,11 @@ Additionally, the `--keep-tmp-dir` is useful for debugging issues. The results o
 ## Sequence Assignment/Classification for Sequences with Multiple Segments and/or Multiple References
 
 The preprocessing pipeline is configured to take entries with multiple nucleotide sequences and classify which segment/reference each sequence best aligns to - it returns the identity of each sequence with a sequence name to fastaId map `sequenceNameToFastaId`. This can also be used to identify which reference a sequence best aligns to in the case that multiple references exist. The `sequenceName` uses the segment-reference structure expected by the backend (and query engine):
- - For an organisms without multiple references the `sequenceName` in the name of the segment (the segment name `main` is used for the single segment edge case).
- - For single-segmented, multi-reference organisms the `sequenceName` is the name of the reference.
- - For multi-segment, multi-reference organisms the `sequenceName` is the `{segmentName}-{referenceName}`.
- 
+
+- For an organisms without multiple references the `sequenceName` in the name of the segment (the segment name `main` is used for the single segment edge case).
+- For single-segmented, multi-reference organisms the `sequenceName` is the name of the reference.
+- For multi-segment, multi-reference organisms the `sequenceName` is the `{segmentName}-{referenceName}`.
+
 Currently the prepro pipeline is configured to only accept one copy of each segment in a submission entry. The classification of sequences to the sequence they best align to can be done using three different algorithms, which algorithm is used is determined by the `segment_classification_method` config field. (Additionally for non-alignment configurations segment classification can be performed by parsing the fastaId):
 
 - `ALIGN`: uses [nextclade run](https://docs.nextstrain.org/projects/nextclade/en/stable/user/nextclade-cli/reference.html#nextclade-run) to align sequences. The algorithm uses the alignment score to classify the sequence. To use this method a nextclade server and dataset must be configured.
@@ -120,11 +121,24 @@ However, the `preprocessing` field can be customized to take an arbitrary number
 1. `parse_and_assert_past_date`: Take a date string and return a date field in the "%Y-%m-%d" format, ensure date is before release_date or today's date. Incomplete dates `%Y` or `%Y-%m` default the unspecified part to `1`.
 2. `check_date`: Take a date string and return a date field in the "%Y-%m-%d" format. Incomplete dates `%Y` or `%Y-%m` default the unspecified part to `1`.
 3. `parse_timestamp`: Take a timestamp e.g. 2022-11-01T00:00:00Z and return that field in the "%Y-%m-%d" format.
-4. `parse_date_into_range`: Takes an incomplete (or complete) date (Just `%Y`, just `%Y-%m` or a full date) and turns it into two date fields: an upper and a lower date for the date range. Can optionally take another date field (the release date) into account, as an upper bound for the date range. For example, a sample collected in "2025-03" and released "2025-03-23" will mean the lower bound for the collection date is 2025-03-01 and the upper bound is the release date, 2025-03-23. To use this function fully, define three metadata fields: one for the plain string, one for the upper bound, one for the lower bound. See example below.
+4. `parse_date_into_range`: Takes an incomplete (or complete) date (Just `%Y`, just `%Y-%m` or a full date `%Y-%m-%d`) or a date range (accepted formats are Lucene `[date TO date]` and ISO `date/date` where date is defined as before) and turns it into three date fields: an upper and a lower date for the date range. Can optionally take another date field (the release date) into account, as an upper bound for the date range and a dateRangeString string representation of the range (in ISO format or date format). For example, a sample collected in "2025-03" and released "2025-03-23" will mean the lower bound for the collection date is 2025-03-01 and the upper bound is the release date, 2025-03-23. To use this function fully, define three metadata fields: one for the plain string, one for the upper bound, one for the lower bound. See example below.
 5. `concatenate`: Take multiple metadata fields (including the accessionVersion) and concatenate them in the order specified by the `arg.order` parameter, fields will first be processed based on their `arg.type` (the order of the types should correspond to the order of fields specified by the order argument). If the field `ACCESSION_VERSION` is passed in as a type and order argument the function will use the entry's accession version when building the field. Additionally, strings can be passed in to the concatenate function by adding an order and type arg with the prefix `ARG:` followed by a name e.g. `ARG:prefix`, this will then use the string value in the `prefix` arg when building the field.
 6. `process_options`: Only accept input that is in `args.options`, this check is case-insensitive. If input value is not in options raise an error, or return null if the submitter is in the "insdc_ingest" group.
 7. `check_regex`: Validate that the input field matches the pattern in `args.pattern`.
 8. `extract_regex`: Extracts a substring from input field using the provided regex `args.pattern` with a `args.capture_group`. For example the pattern `^(?P<segment>[^-]+)-(?P<subtype>[^-]+)$` with capture group `subtype` would extract `HA` from the field `seg1-HA`. Returns an error if the pattern does not match (and internal error if capture group does not exist in pattern). If `arg.uppercase` is added the extracted string will be capitalized.
+
+Additionally, certain functions require external services to be running. We have various functions related to validating host which require a `taxonomyService` to be running, this can be configured in the `values.yaml` as:
+
+```yaml
+taxonomyService:
+  dbVersion: "ncbi_taxonomy_2026-05-01"
+  taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
+  taxonomy_service_url: http://loculus-taxonomy-service:5000
+```
+
+9. `resolve_host_taxon_id`: Validates that a host taxon ID or scientific name exists in the NCBI taxonomy, returning the taxon ID if validation is successful. Requires an input field called `host` (entries ingested from the INSDC do not error).
+10. `scientific_name_from_id`: Returns a scientific name for a taxon given a taxon ID `hostTaxonId` as input (entries ingested from the INSDC do not error).
+11. `common_name_from_id`: Returns a common name for a taxon given a taxon ID `hostTaxonId` as input (entries ingested from the INSDC do not error).
 
 Using these functions in your `values.yaml` will look like:
 
@@ -206,15 +220,40 @@ Metadata fields that are created from the results of the nextclade analysis requ
   perSegment: true
   displayName: Total SNPs
   preprocessing:
-    inputs: {input: nextclade.totalSubstitutions}
+    inputs: { input: nextclade.totalSubstitutions }
 ```
+
 Note that adding the `perSegment` field will mean that for a multi-segmented organism, preprocessing will create a `totalSnps_<segment>` field for each segment containing the nextclade results of that specific segment. In general, all nextclade metadata fields should be `perSegment`.
+
+## Processing Files
+
+When `create_embl_file` is enabled in the preprocessing config, preprocessing will generate an EMBL flatfile with CDS annotations for the processed sequence and upload the file to a presigned URL requested from the backend. This features requires `files` to be enabled in the `values.yaml`.
+
+Additionally, when input files of category RAW_READS are enabled, preprocessing will receive them in the response from the backend and is configured to forward them to the `raw-reads-processing` service for further validation and processing. Therefore, the raw-reads-processing-service must be enabled in the `values.yaml` in order to use this feature.
+
+```yaml
+disableRawReadsProcessingService: false
+rawReadsProcessingService:
+  raw_reads_processing_service_url: http://loculus-raw-reads-processing:5000
+defaultOrganisms:
+  organism1:
+    schema:
+      submissionDataTypes:
+        files:
+          enabled: true
+          categories:
+            - name: rawReads
+              displayName: Raw reads
+      files:
+        - name: rawReads
+          displayName: Raw reads
+```
 
 ## Deployment
 
 It is possible to run multiple preprocessing pipelines at once, ideally these will be labeled as different versions and point to different `dockerTags` (dockerTags can specify a commit).
 
-If you choose to run multiple preprocessing pipelines with the same version, they will be additionally numbered by their instance, e.g. `loculus-preprocessing-west-nile-v1-0-ff798759b` and `loculus-preprocessing-west-nile-v1-1-ff798759b`. 
+If you choose to run multiple preprocessing pipelines with the same version, they will be additionally numbered by their instance, e.g. `loculus-preprocessing-west-nile-v1-0-ff798759b` and `loculus-preprocessing-west-nile-v1-1-ff798759b`.
 
 To add multiple preprocessing pipelines alter the preprocessing section of the `values.yaml` as follows:
 

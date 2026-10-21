@@ -45,7 +45,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
 
     if (!loadSequences) {
         return (
-            <Button className='btn btn-sm m-4' onClick={() => setLoadSequences(true)}>
+            <Button size='sm' className='m-4' onClick={() => setLoadSequences(true)}>
                 Load sequences
             </Button>
         );
@@ -119,7 +119,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
                 />
                 <BoxWithTabsTab
                     isActive={activeTab === 'gene'}
-                    label='Aligned amino acid sequences'
+                    label='Reference-aligned amino acid sequences'
                     onClick={() => setActiveTab('gene')}
                 />
             </BoxWithTabsTabBar>
@@ -215,7 +215,7 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
                     setType(alignedSequenceSegment(onlySegment));
                     setActiveTab('aligned');
                 }}
-                label='Aligned nucleotide sequence'
+                label='Reference-aligned nucleotide sequence'
             />
         );
     }
@@ -227,7 +227,7 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
                 if (!isActive) setType(alignedSequenceSegment(getCurrentSegment(segments, sequenceType)));
                 setActiveTab('aligned');
             }}
-            label='Aligned nucleotide sequences'
+            label='Reference-aligned nucleotide sequences'
         />
     );
 };
@@ -246,7 +246,8 @@ const SegmentDropdown: FC<SegmentDropdownProps> = ({ segments, sequenceType, set
     return (
         <div className='mb-4'>
             <Select
-                className='select select-bordered w-full max-w-xs'
+                styled
+                className='w-full max-w-xs'
                 value={currentSegmentName}
                 onChange={(e) => {
                     const segment = segments.find((s) => s.name === e.target.value);
@@ -279,7 +280,8 @@ const GeneDropdown: FC<GeneDropdownProps> = ({ genes, sequenceType, setType }) =
         <div className='mb-4'>
             <Select
                 data-testid='gene-dropdown'
-                className='select select-bordered w-full max-w-xs'
+                styled
+                className='w-full max-w-xs'
                 value={selectedGene}
                 onChange={(e) => {
                     const gene = genes.find((gene) => gene.name === e.target.value);

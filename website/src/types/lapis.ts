@@ -56,6 +56,12 @@ export type InsertionsResponse = z.infer<typeof insertionsResponse>;
 const metadatum = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 export type Metadatum = z.infer<typeof metadatum>;
 
+export type FileEntry = {
+    fileId: string;
+    name: string;
+    url: string;
+};
+
 const details = z.record(metadatum);
 export type Details = z.infer<typeof details>;
 
@@ -135,6 +141,26 @@ export function getLatestAccessionVersion(
     }
     const clonedSequenceEntryHistory = [...sequenceEntryHistory];
     return clonedSequenceEntryHistory.sort((a, b) => b.version - a.version)[0];
+}
+
+/**
+ * Whether the newest version of an accession is a revocation, i.e. the accession is currently revoked.
+ * An absent history (not yet loaded, or the entry is not the user's own) counts as not revoked.
+ */
+export function isLatestVersionRevocation(sequenceEntryHistory: SequenceEntryHistory | undefined): boolean {
+    if (sequenceEntryHistory === undefined) {
+        return false;
+    }
+    return getLatestAccessionVersion(sequenceEntryHistory)?.isRevocation === true;
+}
+
+export function getLatestAccessionVersionForRevision(
+    sequenceEntryHistory: SequenceEntryHistory,
+): SequenceEntryHistoryEntry | undefined {
+    if (sequenceEntryHistory.length === 0) {
+        return undefined;
+    }
+    return sequenceEntryHistory.filter((entry) => !entry.isRevocation).sort((a, b) => b.version - a.version)[0];
 }
 
 export enum FileType {

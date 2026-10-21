@@ -1,14 +1,13 @@
 import logging
 import re
 import threading
-import time
 from dataclasses import asdict
 from datetime import datetime
 
 import pytz
 from sqlalchemy import Engine
 
-from .config import Config, MetadataMapping
+from .config import Config, EnaResultField, MetadataMapping
 from .ena_submission_helper import (
     CreationResult,
     accession_exists,
@@ -34,7 +33,7 @@ from .submission_db_helper import (
     Status,
     StatusAll,
     SubmissionTableEntry,
-    add_to_sample_table,
+    add_to_db,
     db_init,
     find_conditions_in_db,
     find_errors_or_stuck_in_db,
@@ -166,14 +165,12 @@ def construct_sample_set_object(
     return SampleSetType(sample=[sample_type])
 
 
-def set_sample_table_entry(
-    db_engine: Engine, row: SubmissionTableEntry, seq_key: dict, config: Config
-):
-    """Set sample_table entry for entry with biosampleAccession"""
+def update_with_existing_biosample(db_engine: Engine, row: SubmissionTableEntry, config: Config):
+    """Update sample_table entry for entry with biosampleAccession"""
     logger.debug(
-        f"Accession: {row.accession} already has biosampleAccession, adding to sample_table"
+        f"Accession: {row.accession} already has biosampleAccession, updating sample_table"
     )
-    biosample = row.seq_metadata["biosampleAccession"]
+    biosample = row.seq_metadata[config.loculus_accession_fields.biosample]
 
     logger.info("Checking if biosample actually exists and is public")
     seq_key = asdict(row.pkey)
@@ -186,24 +183,18 @@ def set_sample_table_entry(
         )
         return
 
-    sample_table_entry = SampleTableEntry(
-        accession=row.accession,
-        version=row.version,
-        result={"ena_sample_accession": biosample, "biosample_accession": biosample},
-        status=Status.SUBMITTED,
+    logger.info("Updating entry with biosampleAccession to state SUBMITTED")
+    update_db_where_conditions(
+        db_engine,
+        model_class=SampleTableEntry,
+        conditions=seq_key,
+        update_values={
+            "accession": row.accession,
+            "version": row.version,
+            "result": {"ena_sample_accession": biosample, EnaResultField.BIOSAMPLE: biosample},
+            "status": Status.SUBMITTED,
+        },
     )
-    succeeded = add_to_sample_table(db_engine, sample_table_entry)
-    if succeeded:
-        logger.debug("Succeeding in adding biosampleAccession to sample_table")
-        update_values = {
-            "status_all": StatusAll.SUBMITTED_SAMPLE,
-        }
-        update_db_where_conditions(
-            db_engine,
-            model_class=SubmissionTableEntry,
-            conditions=seq_key,
-            update_values=update_values,
-        )
 
 
 def sync_state_with_submission_table(db_engine: Engine, config: Config):
@@ -211,7 +202,7 @@ def sync_state_with_submission_table(db_engine: Engine, config: Config):
     1. Find all entries in submission_table in state SUBMITTED_PROJECT
     2. If (exists an entry in the sample_table for (accession, version)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_SAMPLE
-    3. If (exists "biosampleAccession" in "metadata"):
+    3. If (exists config.loculus_accession_fields.biosample in "metadata"):
         create entry in sample_table, update state to SUBMITTED_SAMPLE
     4. Else create corresponding entry in sample_table
     """
@@ -228,20 +219,39 @@ def sync_state_with_submission_table(db_engine: Engine, config: Config):
         corresponding_sample = find_conditions_in_db(
             db_engine, SampleTableEntry, conditions=seq_key
         )
+        if len(corresponding_sample) == 1 and corresponding_sample[0].status == str(
+            Status.SUBMITTED
+        ):
+            update_db_where_conditions(
+                db_engine,
+                model_class=SubmissionTableEntry,
+                conditions=seq_key,
+                update_values={"status_all": StatusAll.SUBMITTED_SAMPLE},
+            )
+            continue
         if len(corresponding_sample) == 1:
-            if corresponding_sample[0].status == Status.SUBMITTED:
-                update_db_where_conditions(
-                    db_engine,
-                    model_class=SubmissionTableEntry,
-                    conditions=seq_key,
-                    update_values={"status_all": StatusAll.SUBMITTED_SAMPLE},
-                )
-        else:
-            if row.seq_metadata.get("biosampleAccession"):
-                set_sample_table_entry(db_engine, row, seq_key, config)
-                continue
-            if not add_to_sample_table(db_engine, SampleTableEntry(**seq_key)):
-                continue
+            logger.debug(
+                f"Entry for {seq_key} already exists in sample_table with status "
+                f"{corresponding_sample[0].status}, not updating submission_table status."
+            )
+            continue
+        if len(corresponding_sample) > 1:
+            logger.error(
+                f"Multiple entries found in sample_table for {seq_key}, not updating "
+                "submission_table status or adding to sample_table."
+            )
+            continue
+        biosample = None
+        # TODO(#6845): remove this and prevent users from submitting `biosampleAccession` once
+        # raw read submission is fully implemented and tested
+        if row and row.seq_metadata.get(config.loculus_accession_fields.biosample):
+            biosample = row.seq_metadata[config.loculus_accession_fields.biosample]
+        add_to_db(
+            db_engine,
+            SampleTableEntry(
+                **seq_key, result={EnaResultField.BIOSAMPLE: biosample} if biosample else None
+            ),
+        )
 
 
 def sample_table_create(db_engine: Engine, config: Config):
@@ -269,12 +279,18 @@ def sample_table_create(db_engine: Engine, config: Config):
             continue
 
         logger.info(f"Processing sample_table entry for {seq_key}")
-        submission_rows = find_conditions_in_db(
+        sample_data_in_submission_table = find_conditions_in_db(
             db_engine, SubmissionTableEntry, conditions=asdict(seq_key)
         )
 
+        # TODO(#6845): remove this and prevent users from submitting `biosampleAccession` once raw
+        # read submission is fully implemented and tested
+        if row.result and row.result.get(EnaResultField.BIOSAMPLE):
+            update_with_existing_biosample(db_engine, sample_data_in_submission_table[0], config)
+            continue
+
         sample_set = construct_sample_set_object(
-            config, submission_rows[0], row, config.random_alias
+            config, sample_data_in_submission_table[0], row, config.random_alias
         )
         update_values = {
             "status": Status.SUBMITTING,
@@ -353,7 +369,7 @@ def sample_table_handle_errors(
             entries_with_errors,
             db_engine,
             model_class=SampleTableEntry,
-            retry_threshold_min=config.retry_threshold_min,
+            config=config,
             last_retry=last_retry_time,
         )
         # TODO: Query ENA to check if sample has in fact been created
@@ -376,13 +392,15 @@ def create_sample(config: Config, stop_event: threading.Event):
             logger.warning("create_sample stopped due to exception in another task")
             return
         logger.debug("Checking for samples to create")
-        sync_state_with_submission_table(db_engine, config=config)
+        sync_state_with_submission_table(db_engine, config)
 
         sample_table_create(db_engine, config)
         sync_state_with_submission_table(
-            db_engine, config=config
+            db_engine, config
         )  # update submission_table state after creation
         last_retry_time = sample_table_handle_errors(
             db_engine, config, slack_config, last_retry_time
         )
-        time.sleep(config.time_between_iterations)
+        if stop_event.wait(timeout=config.time_between_iterations):
+            logger.info("create_sample stopped due to exception in another task")
+            return

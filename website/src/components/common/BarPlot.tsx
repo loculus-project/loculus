@@ -13,6 +13,8 @@ import {
 import { type FC, useState, useEffect } from 'react';
 import { Bar } from 'react-chartjs-2';
 
+import { Spinner } from './Spinner';
+
 type BarPlotProps = {
     data: ChartData<'bar'>;
     options?: ChartOptions<'bar'>;
@@ -33,7 +35,7 @@ export const BarPlot: FC<BarPlotProps> = ({ data, options, description, emptyCou
     if (!isRegistered)
         return (
             <div className='flex items-center justify-center h-48'>
-                <div className='loading loading-spinner' />
+                <Spinner />
             </div>
         );
 

@@ -1,12 +1,16 @@
 environment: server
 imagePullPolicy: Always
+
+# Pod scheduling: nodeSelector, tolerations, affinity, and priority class for pod placement
+podScheduling:
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
 localHost: localhost
 robotsNoindexHeader: false
 seqSets:
   enabled: true
-  crossRef:
-    DOIPrefix: "placeholder"
-    endpoint: "https://test.crossref.org"
   fieldsToDisplay:
     - field: "geoLocCountry"
       displayName: "Country"
@@ -33,7 +37,9 @@ disablePreprocessing: false
 disableIngest: false
 disableEnaSubmission: true
 disableTaxonomyService: false
+disableRawReadsProcessingService: true
 readOnlyMode: false
+backendExtraJvmOpts: []
 website:
   websiteConfig:
     enableLoginNavigationItem: true
@@ -47,6 +53,7 @@ ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600
 accessionPrefix: "LOC_"
+dateFieldForGroupGraph: null
 zstdCompressionLevel: 10
 pipelineVersionUpgradeCheckIntervalSeconds: 10
 dataUseTerms:
@@ -55,9 +62,14 @@ dataUseTerms:
     open: https://#TODO-MVP/open
     restricted: https://#TODO-MVP/restricted
 fileSharing:
-  outputFileUrlType: backend
+  outputFileUrlType: website
+  maxFileSizeBytes: 5368709120 # 5 GiB
 s3:
   enabled: true
+  gcInitialDelayMinutes: 15
+  gcEnabled: false
+  gcFrequencyMinutes: 1440
+  gcOrphanRetentionPeriodMinutes: 10080
   bucket:
     region: us-east-1
     bucket: loculus-preview-private
@@ -74,6 +86,10 @@ lineageSystemDefinitions:
     4: https://raw.githubusercontent.com/loculus-project/loculus/fe3b2974071acc9a25856d650350f8a952040a7c/preprocessing/dummy/lineage-alternative.yaml
   cchfS:
     1: https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-24--07-29-03Z/lineages.yaml
+taxonomyService:
+  dbVersion: "ncbi_taxonomy_2026-09-01"
+  taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
+  taxonomy_service_url: &taxonomy_service_url http://loculus-taxonomy-service:5000
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     submissionDataTypes: &defaultSubmissionDataTypes
@@ -123,7 +139,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: sampleCollectionDate
         displayName: Collection date
         definition: "The date on which the sample was collected."
-        guidance: "Please format the date as `YYYY-MM-DD`. If day is unknown, use `YYYY-MM` (e.g., `2020-03`). If both day and month are unknown, use `YYYY` (e.g., `2020`). Please provide at least a year."
+        guidance: "Please format the date as `YYYY-MM-DD`. If day is unknown, use `YYYY-MM` (e.g., `2020-03`). If both day and month are unknown, use `YYYY` (e.g., `2020`). If only a range is known please supply the range in ISO format `date_lower/date_upper` where `date_lower` and `date_upper` are in the format `YYYY-MM-DD`, `YYYY-MM` or `YYYY`. Please provide at least a year."
         example: "2020-03-15"
         header: Sample details
         ingest: ncbiCollectionDate
@@ -187,10 +203,10 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: concatenate
           inputs:
             geoLocCountry: geoLocCountry
-            sampleCollectionDate: sampleCollectionDate
+            sampleCollectionDate: processed.sampleCollectionDate
           args:
             order: [geoLocCountry, ACCESSION_VERSION, sampleCollectionDate]
-            type: [string, ACCESSION_VERSION, string]
+            type: [string, ACCESSION_VERSION, dateRangeString]
         noInput: true
       - name: ncbiReleaseDate
         displayName: NCBI release date
@@ -1042,15 +1058,124 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Amplicon size
         header: Sequencing
         orderOnDetailsPage: 2060
+      - name: pairedEndInsertSize
+        definition: The nominal insert size for paired-end sequencing libraries.
+        guidance: Provide the nominal insert size in base pairs (as an integer).
+        example: "500"
+        displayName: Paired-end insert size
+        type: int
+        header: Sequencing
+        orderOnDetailsPage: 2065
       - name: sequencingInstrument
         ontology_id: GENEPIO:0001452
-        definition: The model of the sequencing instrument used.
+        definition: The model of the sequencing instrument used. (required when raw read files are provided)
         guidance: Select the sequencing instrument from the pick list.
-        example: Oxford Nanopore MinION [GENEPIO:0100142]
+        example: MinION
         displayName: Sequencing instrument
         header: Sequencing
         desired: true
         orderOnDetailsPage: 2080
+        autocomplete: true
+        initiallyVisible: true
+        requiredWhen:
+          - files.rawReads
+        preprocessing:
+          function: process_options
+          inputs:
+            input: sequencingInstrument
+        options:
+          # ena-webin-cli -context reads -fields
+          # ena-webin-cli=9.0.3
+          # Last checked: 04.09.2026
+          # Fields listed in INSTRUMENT (excluding `unspecified`)
+          - name: "454 GS"
+          - name: "454 GS 20"
+          - name: "454 GS FLX"
+          - name: "454 GS FLX Titanium"
+          - name: "454 GS FLX+"
+          - name: "454 GS Junior"
+          - name: "AB 310 Genetic Analyzer"
+          - name: "AB 3130 Genetic Analyzer"
+          - name: "AB 3130xL Genetic Analyzer"
+          - name: "AB 3500 Genetic Analyzer"
+          - name: "AB 3500xL Genetic Analyzer"
+          - name: "AB 3730 Genetic Analyzer"
+          - name: "AB 3730xL Genetic Analyzer"
+          - name: "AVITI 24"
+          - name: "BGISEQ-50"
+          - name: "BGISEQ-500"
+          - name: "DNBSEQ-G400"
+          - name: "DNBSEQ-G400 FAST"
+          - name: "DNBSEQ-G50"
+          - name: "DNBSEQ-T7"
+          - name: "DNBSEQ-T10x4RS"
+          - name: "Element AVITI"
+          - name: "FASTASeq 300"
+          - name: "GENIUS"
+          - name: "GS111"
+          - name: "Genapsys Sequencer"
+          - name: "GenoCare 1600"
+          - name: "GenoLab M"
+          - name: "GridION"
+          - name: "HiSeq X Five"
+          - name: "HiSeq X Ten"
+          - name: "Illumina Genome Analyzer"
+          - name: "Illumina Genome Analyzer II"
+          - name: "Illumina Genome Analyzer IIx"
+          - name: "Illumina HiScanSQ"
+          - name: "Illumina HiSeq 1000"
+          - name: "Illumina HiSeq 1500"
+          - name: "Illumina HiSeq 2000"
+          - name: "Illumina HiSeq 2500"
+          - name: "Illumina HiSeq 3000"
+          - name: "Illumina HiSeq 4000"
+          - name: "Illumina HiSeq X"
+          - name: "Illumina MiSeq"
+          - name: "Illumina MiniSeq"
+          - name: "Illumina NovaSeq 6000"
+          - name: "Illumina NovaSeq X"
+          - name: "Illumina NovaSeq X Plus"
+          - name: "Illumina iSeq 100"
+          - name: "Ion GeneStudio S5"
+          - name: "Ion GeneStudio S5 Plus"
+          - name: "Ion GeneStudio S5 Prime"
+          - name: "Ion Torrent Genexus"
+          - name: "Ion Torrent PGM"
+          - name: "Ion Torrent Proton"
+          - name: "Ion Torrent S5"
+          - name: "Ion Torrent S5 XL"
+          - name: "MGISEQ-2000RS"
+          - name: "MinION"
+          - name: "NextSeq 1000"
+          - name: "NextSeq 2000"
+          - name: "NextSeq 500"
+          - name: "NextSeq 550"
+          - name: "Onso"
+          - name: "PacBio RS"
+          - name: "PacBio RS II"
+          - name: "PromethION"
+          - name: "Revio"
+          - name: "Sentosa SQ301"
+          - name: "Sequel"
+          - name: "Sequel II"
+          - name: "Sequel IIe"
+          - name: "UG 100"
+          # Fields listed in PLATFORM
+          - name: "ILLUMINA"
+          - name: "PACBIO_SMRT"
+          - name: "OXFORD_NANOPORE"
+          - name: "BGISEQ"
+          - name: "LS454"
+          - name: "ION_TORRENT"
+          - name: "CAPILLARY"
+          - name: "DNBSEQ"
+          - name: "ELEMENT"
+          - name: "ULTIMA"
+          - name: "VELA_DIAGNOSTICS"
+          - name: "GENAPSYS"
+          - name: "GENEMIND"
+          - name: "TAPESTRI"
+          - name: "AVITI"
       - name: sequencingProtocol
         ontology_id: GENEPIO:0001454
         definition: The protocol used to generate the sequence.
@@ -1060,14 +1185,137 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sequencing
         desired: true
         orderOnDetailsPage: 2100
-      - name: sequencingAssayType
-        ontology_id: GENEPIO:0100997
-        definition: The overarching sequencing methodology that was used to determine the sequence of a biomaterial.
-        guidance: 'Example Guidance: Provide the name of the DNA or RNA sequencing technology used in your study. If unsure refer to the protocol documentation, or provide a null value.'
-        example: whole genome sequencing assay [OBI:0002117]
-        displayName: Sequencing assay type
+      - name: sequencingLibrarySelection
+        definition: The method used to select or enrich the source material.
+        guidance: 'Example Guidance: Provide the name of the DNA or RNA sequencing library selection technology used in your study. If unsure refer to the protocol documentation, or provide a null value.'
+        desired: true
+        example: PCR
+        displayName: Sequencing library selection
         header: Sequencing
         orderOnDetailsPage: 2120
+        preprocessing:
+          function: process_options
+          inputs:
+            input: sequencingLibrarySelection
+        options:
+          # ena-webin-cli -context reads -fields
+          # ena-webin-cli=9.0.3
+          # Last checked: 09.06.2026
+          # Fields listed in LIBRARY_SELECTION
+          - name: "RANDOM"
+          - name: "PCR"
+          - name: "RANDOM PCR"
+          - name: "RT-PCR"
+          - name: "HMPR"
+          - name: "MF"
+          - name: "repeat fractionation"
+          - name: "size fractionation"
+          - name: "MSLL"
+          - name: "cDNA"
+          - name: "cDNA_randomPriming"
+          - name: "cDNA_oligo_dT"
+          - name: "PolyA"
+          - name: "Oligo-dT"
+          - name: "Inverse rRNA"
+          - name: "Inverse rRNA selection"
+          - name: "ChIP"
+          - name: "ChIP-Seq"
+          - name: "MNase"
+          - name: "DNase"
+          - name: "Hybrid Selection"
+          - name: "Reduced Representation"
+          - name: "Restriction Digest"
+          - name: "5-methylcytidine antibody"
+          - name: "MBD2 protein methyl-CpG binding domain"
+          - name: "CAGE"
+          - name: "RACE"
+          - name: "MDA"
+          - name: "padlock probes capture method"
+          - name: "other"
+          - name: "unspecified"
+      - name: sequencingAssayType
+        ontology_id: GENEPIO:0100997
+        definition: The overarching sequencing technique that was used to determine the sequence of a biomaterial, also called library strategy in the INSDC. (required when raw read files are provided)
+        guidance: Select the sequencing technology from the pick list.
+        desired: true
+        example: WGS
+        displayName: Sequencing assay type
+        header: Sequencing
+        orderOnDetailsPage: 2130
+        autocomplete: true
+        initiallyVisible: true
+        preprocessing:
+          function: process_options
+          inputs:
+            input: sequencingAssayType
+        options:
+          # ena-webin-cli -context reads -fields
+          # ena-webin-cli=9.0.3
+          # Last checked: 09.06.2026
+          # Fields listed in LIBRARY_STRATEGY
+          - name: "WGS"
+          - name: "WGA"
+          - name: "WXS"
+          - name: "RNA-Seq"
+          - name: "ssRNA-seq"
+          - name: "snRNA-seq"
+          - name: "miRNA-Seq"
+          - name: "ncRNA-Seq"
+          - name: "FL-cDNA"
+          - name: "EST"
+          - name: "Hi-C"
+          - name: "ATAC-seq"
+          - name: "WCS"
+          - name: "RAD-Seq"
+          - name: "CLONE"
+          - name: "POOLCLONE"
+          - name: "AMPLICON"
+          - name: "CLONEEND"
+          - name: "FINISHING"
+          - name: "ChIP-Seq"
+          - name: "MNase-Seq"
+          - name: "DNase-Hypersensitivity"
+          - name: "Bisulfite-Seq"
+          - name: "CTS"
+          - name: "MRE-Seq"
+          - name: "MeDIP-Seq"
+          - name: "MBD-Seq"
+          - name: "Tn-Seq"
+          - name: "VALIDATION"
+          - name: "FAIRE-seq"
+          - name: "SELEX"
+          - name: "RIP-Seq"
+          - name: "ChIA-PET"
+          - name: "Synthetic-Long-Read"
+          - name: "Targeted-Capture"
+          - name: "Tethered Chromatin Conformation Capture"
+          - name: "NOMe-seq"
+          - name: "ChM-Seq"
+          - name: "GBS"
+          - name: "Ribo-seq"
+          - name: "OTHER"
+      - name: sequencingLibrarySource
+        definition: The type of biomaterial that was sequenced, also called library source in the INSDC.
+        guidance: 'Example Guidance: Provide the name of the DNA or RNA sequencing library source used in your study. If unsure refer to the protocol documentation, or provide a null value.'
+        desired: true
+        example: VIRAL RNA
+        displayName: Sequencing library source
+        header: Sequencing
+        orderOnDetailsPage: 2125
+        preprocessing:
+          function: process_options
+          inputs:
+            input: sequencingLibrarySource
+        options:
+          - name: "GENOMIC"
+          - name: "GENOMIC SINGLE CELL"
+          - name: "TRANSCRIPTOMIC"
+          - name: "TRANSCRIPTOMIC SINGLE CELL"
+          - name: "METAGENOMIC"
+          - name: "METATRANSCRIPTOMIC"
+          - name: "SYNTHETIC"
+          - name: "VIRAL RNA"
+          - name: "OTHER"
       - name: sequencedByOrganization
         ontology_id: GENEPIO:0100416
         definition: The name of the agency, organization or institution responsible for sequencing the isolate's genome.
@@ -1236,8 +1484,9 @@ defaultOrganismConfig: &defaultOrganismConfig
           type: lengthCompleteness
           displayGroup: lengthCompleteness
           label: Length
-      - name: hostTaxonId
-        type: int
+      - &hostTaxonIdConfig
+        name: hostTaxonId
+        type: string
         autocomplete: true
         displayName: "Host species"
         definition: "Taxon ID for the host."
@@ -1250,13 +1499,9 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         orderOnDetailsPage: 1540
         preprocessing:
-          function: validate_host
+          function: resolve_host_taxon_id
           inputs:
             host: host
-            hostNameScientific: hostNameScientific
-            hostTaxonId: hostTaxonId
-          args:
-            taxonomy_service_url: "http://loculus-taxonomy-service:5000"
       - name: hostNameScientific
         displayName: Host name - scientific
         definition: "The scientific name of the host from which the sample was collected."
@@ -1274,9 +1519,6 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: scientific_name_from_id
           inputs:
             hostTaxonId: processed.hostTaxonId
-            hostNameScientific: hostNameScientific
-          args:
-            taxonomy_service_url: "http://loculus-taxonomy-service:5000"
       - name: hostNameCommon
         displayName: Host name - common
         definition: "The common name of the host from which the sample was collected."
@@ -1294,8 +1536,6 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: common_name_from_id
           inputs:
             hostTaxonId: processed.hostTaxonId
-          args:
-            taxonomy_service_url: "http://loculus-taxonomy-service:5000"
       - name: isLabHost
         displayName: Is lab host
         definition: "If a laboratory host (e.g. cultured cell line) was used to propagate the sample."
@@ -1493,16 +1733,36 @@ defaultOrganismConfig: &defaultOrganismConfig
         - length
       defaultOrderBy: sampleCollectionDate
       defaultOrder: descending
+      multiFieldSearches:
+        - name: identifier
+          displayName: Sample Identifier
+          orderInSearchDisplay: -10000
+          fields:
+            - accessionVersion
+            - submissionId
+            - insdcAccessionFull
+            - bioprojectAccession
+            - gcaAccession
+            - biosampleAccession
+            - insdcRawReadsAccession
+        - name: contributor
+          displayName: Contributor
+          orderInSearchDisplay: -9999
+          fields:
+            - authors
+            - authorAffiliations
+            - sequencedByOrganization
+            - sequencedByContactName
+            - submitter
+            - groupName
     extraInputFields:
       - &hostConfig
         name: host
-        type: string
+        header: "Host"
         displayName: "Host"
         definition: "NCBI taxon ID or scientific name that uniquely identifies the host from which the sample was collected."
         guidance: "You can provide either the scientific name of the organism (e.g., `Aedes aegypti`) or its NCBI taxon ID (e.g., `7159`) in this field. We will validate your input and use it to populate the `host common name` and `host scientific name` fields. When uploading data from a pooled sample, we recommend using a higher-level taxon that includes all host organisms in the sample pool. For example, you can use `Culicidae` when uploading data for a pooled mosquito sample (in addition to setting the `specimenProcessing` field to `Samples pooled`, see [OBI:0600016])."
         example: "Aedes aegypti"
-        hideInSearchResultsTable: true
-        hideOnSequenceDetailsPage: true
         desired: true
         position: last
   preprocessing:
@@ -1512,8 +1772,6 @@ defaultOrganismConfig: &defaultOrganismConfig
       args:
         - "prepro"
       replicas: 1
-      taxonomyServiceArgs: &preprocessingTaxonomyServiceArgs
-        taxonomy_service_url: "http://loculus-taxonomy-service:5000"
       configFile: &preprocessingConfigFile
         log_level: DEBUG
         batch_size: 100
@@ -1526,6 +1784,9 @@ defaultOrganismConfig: &defaultOrganismConfig
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
+    configFile: &defaultIngestConfigFile
+      muted_hashes_url: "https://pathoplexus.github.io/curation_data/muted_hashes/muted_hashes.tsv"
+      batch_chunk_size: 1000
 defaultOrganisms:
   ebola-sudan:
     <<: *defaultOrganismConfig
@@ -1546,7 +1807,7 @@ defaultOrganisms:
       linkOuts:
         - name: "Nextclade"
           maxNumberOfRecommendedEntries: 5
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/ebola/sudan&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/orthoebolavirus/sudv"
     preprocessing:
       - <<: *preprocessing
         version: [1, 2]
@@ -1556,15 +1817,16 @@ defaultOrganisms:
             - name: main
               references:
                 - name: singleReference
-                  nextclade_dataset_name: nextstrain/ebola/sudan
+                  nextclade_dataset_name: nextstrain/orthoebolavirus/sudv
+                  nextclade_dataset_tag: "2025-09-24--07-29-03Z"
                   genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
           taxon_id: 186540
           scientific_name: "Sudan ebolavirus"
           molecule_type: "genomic RNA"
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 3052460
     enaDeposition:
       singleReference:
@@ -1577,7 +1839,7 @@ defaultOrganisms:
         references:
           - name: singleReference
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/reference.fasta]]"
-            insdcAccessionFull: NC_002549.1
+            insdcAccessionFull: NC_006432.1
             genes:
               - name: NP
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/NP.fasta]]"
@@ -1605,7 +1867,7 @@ defaultOrganisms:
       image: "/images/organisms/wnv_small.jpg"
       linkOuts:
         - name: "Nextclade"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/wnv/all-lineages&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/wnv/all-lineages"
         - name: "Country map"
           url: "https://mapoplexus.genomium.org/?url={{[metadata+accessionVersion,accession,version,geoLocAdmin1,geoLocAdmin2,geoLocCity,geoLocCountry,geoLocSite,hostNameCommon,hostNameScientific,authors,sampleCollectionDate]}}"
       extraInputFields:
@@ -1623,7 +1885,6 @@ defaultOrganisms:
               geoLocCountry: geoLocCountry
               sampleCollectionDateRangeLower: processed.sampleCollectionDateRangeLower
               specimenCollectorSampleId: specimenCollectorSampleId
-              submissionId: submissionId
             args:
               order: [geoLocCountry, IDENTIFIER, sampleCollectionDateRangeLower]
               type: [string, IDENTIFIER, string]
@@ -1633,28 +1894,12 @@ defaultOrganisms:
               # - Last field is a date in format YYYY, YYYY-MM, or YYYY-MM-DD
               # - Identifier is the second to last field (extracted through named capture group)
               regex_pattern: '^(?:[^/]+/)?[^/]+/(?P<identifier>[^/]+)/\d{4}(?:-\d{2}){0,2}$'
-        - name: hostTaxonId
-          type: int
-          autocomplete: true
-          displayName: "Host species"
-          definition: "Taxon ID for the host."
-          customDisplay:
-            type: hostSpecies
-            displayGroup: hostSpecies
-            label: Host
-          header: "Host"
-          ingest: ncbiHostTaxId
-          noInput: true
+              human_readable_pattern: "<any>/<any>/<identifier>/<date>"
+        - <<: *hostTaxonIdConfig
           required: true
-          orderOnDetailsPage: 1540
-          preprocessing:
-            function: validate_host
-            inputs:
-              host: host
-              hostNameScientific: hostNameScientific
-              hostTaxonId: hostTaxonId
-            args:
-              taxonomy_service_url: "http://loculus-taxonomy-service:5000"
+          hierarchicalFilter: *taxonomy_service_url
+          hierarchicalSearchLabel: "include subtaxa"
+          initiallyVisible: true
         - name: lineage
           displayName: Lineage
           definition: "Assigned clade label from the nearest reference tree node."
@@ -1719,15 +1964,15 @@ defaultOrganisms:
               references:
                 - name: singleReference
                   nextclade_dataset_name: nextstrain/wnv/all-lineages
+                  nextclade_dataset_tag: "2026-03-04--12-40-26Z"
                   genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
                   nextclade_additional_args: ["--allowed-mismatches", "8", "--min-seed-cover", "0.01"]
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
-          taxon_id: 11082
           scientific_name: "West Nile virus"
           molecule_type: "genomic RNA"
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 3048448
     enaDeposition:
       singleReference:
@@ -1767,7 +2012,7 @@ defaultOrganisms:
   dummy-organism:
     schema:
       submissionDataTypes: *defaultSubmissionDataTypes
-      image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
+      image: "/images/organisms/mpox_small.jpg"
       organismName: "Test Dummy Organism"
       metadataTemplate:
         - country
@@ -1886,17 +2131,17 @@ defaultOrganisms:
                 sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/S.fasta]]"
   dummy-organism-with-files:
     schema:
-      image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
+      image: "/images/organisms/hmpv.jpg"
       organismName: "Test organism (with files)"
       submissionDataTypes:
         consensusSequences: false
         files:
           enabled: true
           categories:
-            - name: raw_reads
+            - name: rawReads
               displayName: Raw reads
       files:
-        - name: raw_reads
+        - name: rawReads
           displayName: Raw reads
       metadata: *dummyMetadata
       website:
@@ -1917,7 +2162,7 @@ defaultOrganisms:
     enabled: true
     schema:
       submissionDataTypes: *defaultSubmissionDataTypes
-      image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
+      image: "/images/organisms/rsv.jpg"
       organismName: "Test organism (without alignment)"
       metadata:
         - name: date
@@ -2022,18 +2267,6 @@ defaultOrganisms:
         - name: "Nextclade (S)"
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/S"
       metadataAdd:
-        - name: hostNameScientific
-          displayName: Host name - scientific
-          definition: "The scientific name of the host from which the sample was collected."
-          generateIndex: true
-          autocomplete: true
-          customDisplay:
-            type: hostSpecies
-            displayGroup: hostSpecies
-            label: Host
-          header: "Host"
-          ingest: ncbiHostName
-          initiallyVisible: true
         - name: lineage
           isSequenceFilter: true
           relatesToSegment: S
@@ -2068,7 +2301,6 @@ defaultOrganisms:
       - <<: *preprocessing
         configFile:
           <<: *preprocessingConfigFile
-          taxon_id: 3052518
           scientific_name: "Orthonairovirus haemorrhagiae"
           molecule_type: "genomic RNA"
           log_level: DEBUG
@@ -2076,23 +2308,27 @@ defaultOrganisms:
             - name: L
               references:
                 - nextclade_dataset_name: community/pathoplexus/cchfv/L
+                  nextclade_dataset_tag: "2025-09-24--07-29-03Z"
                   name: singleReference
                   genes: [RdRp]
             - name: M
               references:
                 - nextclade_dataset_name: community/pathoplexus/cchfv/M
+                  nextclade_dataset_tag: "2025-09-24--07-29-03Z"
                   name: singleReference
                   genes: [GPC]
             - name: S
               references:
                 - nextclade_dataset_name: community/pathoplexus/cchfv/S
+                  nextclade_dataset_tag: "2025-09-24--07-29-03Z"
                   name: singleReference
                   genes: [NP]
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 3052518
-        calculate_groups_override_json: true
+        grouping_override_url: "https://pathoplexus.github.io/curation_data/grouping_override/cchf/curated_group_02-03-2026.json"
         segment_identification:
           method: "align"
           nextclade_dataset_name: community/pathoplexus/cchfv
@@ -2163,18 +2399,6 @@ defaultOrganisms:
             S: 2to5
           category: "S"
       metadataAdd:
-        - name: hostNameScientific
-          displayName: Host name - scientific
-          definition: "The scientific name of the host from which the sample was collected."
-          generateIndex: true
-          autocomplete: true
-          customDisplay:
-            type: hostSpecies
-            displayGroup: hostSpecies
-            label: Host
-          header: "Host"
-          ingest: ncbiHostName
-          initiallyVisible: true
         - name: variant_L
           isSequenceFilter: true
           header: "Clade & Lineage"
@@ -2277,7 +2501,6 @@ defaultOrganisms:
       - <<: *preprocessing
         configFile:
           <<: *preprocessingConfigFile
-          taxon_id: 3052518
           scientific_name: "Orthonairovirus haemorrhagiae"
           molecule_type: "genomic RNA"
           alignment_requirement: ANY
@@ -2308,6 +2531,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 3052518
         segment_identification:
           method: "align"
@@ -2461,7 +2685,7 @@ defaultOrganisms:
           segment_classification_method: "minimizer"
           # TODO(https://github.com/loculus-project/loculus/issues/5673): switch creation on when multi-path is supported
           create_embl_file: false
-          minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
+          minimizer_url: "https://alejandra-gonzalezsanchez.github.io/loculus-evs/evs_minimizer-index.json"
           segments:
             - name: main
               references:
@@ -2486,6 +2710,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
+        <<: *defaultIngestConfigFile
         taxon_id: 12059
         subsample_fraction: 0.2
     enaDeposition:
@@ -2517,109 +2742,109 @@ defaultOrganisms:
       - name: main
         references:
           - name: CV-A16
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/reference-cva16.fasta]]"
+            sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/reference-cva16.fasta]]"
             insdcAccessionFull: U05876.1
             genes:
               - name: VP4
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP4-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/VP4-cva16.fasta]]"
               - name: VP2
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP2-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/VP2-cva16.fasta]]"
               - name: VP3
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP3-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/VP3-cva16.fasta]]"
               - name: VP1
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/VP1-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/VP1-cva16.fasta]]"
               - name: 2A
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2A-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/2A-cva16.fasta]]"
               - name: 2B
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2B-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/2B-cva16.fasta]]"
               - name: 2C
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/2C-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/2C-cva16.fasta]]"
               - name: 3A
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3A-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/3A-cva16.fasta]]"
               - name: 3B
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3B-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/3B-cva16.fasta]]"
               - name: 3C
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3C-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/3C-cva16.fasta]]"
               - name: 3D
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/3D-cva16.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva16/3D-cva16.fasta]]"
           - name: CV-A10
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/reference-cva10.fasta]]"
+            sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/reference-cva10.fasta]]"
             insdcAccessionFull: AY421767.1
             genes:
               - name: VP4
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP4-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/VP4-cva10.fasta]]"
               - name: VP2
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP2-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/VP2-cva10.fasta]]"
               - name: VP3
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP3-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/VP3-cva10.fasta]]"
               - name: VP1
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/VP1-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/VP1-cva10.fasta]]"
               - name: 2A
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2A-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/2A-cva10.fasta]]"
               - name: 2B
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2B-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/2B-cva10.fasta]]"
               - name: 2C
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/2C-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/2C-cva10.fasta]]"
               - name: 3A
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3A-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/3A-cva10.fasta]]"
               - name: 3B
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3B-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/3B-cva10.fasta]]"
               - name: 3C
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3C-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/3C-cva10.fasta]]"
               - name: 3D
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/3D-cva10.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/cva10/3D-cva10.fasta]]"
           - name: EV-A71
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/reference-eva71.fasta]]"
+            sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/reference-eva71.fasta]]"
             insdcAccessionFull: U22521.1
             genes:
               - name: VP4
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP4-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/VP4-eva71.fasta]]"
               - name: VP2
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP2-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/VP2-eva71.fasta]]"
               - name: VP3
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP3-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/VP3-eva71.fasta]]"
               - name: VP1
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/VP1-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/VP1-eva71.fasta]]"
               - name: 2A
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2A-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/2A-eva71.fasta]]"
               - name: 2B
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2B-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/2B-eva71.fasta]]"
               - name: 2C
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/2C-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/2C-eva71.fasta]]"
               - name: 3A
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3A-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/3A-eva71.fasta]]"
               - name: 3B
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3B-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/3B-eva71.fasta]]"
               - name: 3C
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3C-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/3C-eva71.fasta]]"
               - name: 3D
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/3D-eva71.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/eva71/3D-eva71.fasta]]"
           - name: EV-D68
-            sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/reference-evd68.fasta]]"
+            sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/reference-evd68.fasta]]"
             insdcAccessionFull: AY426531.1
             genes:
               - name: VP4
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP4-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/VP4-evd68.fasta]]"
               - name: VP2
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP2-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/VP2-evd68.fasta]]"
               - name: VP3
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP3-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/VP3-evd68.fasta]]"
               - name: VP1
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/VP1-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/VP1-evd68.fasta]]"
               - name: 2A
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2A-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/2A-evd68.fasta]]"
               - name: 2B
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2B-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/2B-evd68.fasta]]"
               - name: 2C
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/2C-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/2C-evd68.fasta]]"
               - name: 3A
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3A-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/3A-evd68.fasta]]"
               - name: 3B
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3B-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/3B-evd68.fasta]]"
               - name: 3C
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3C-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/3C-evd68.fasta]]"
               - name: 3D
-                sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/3D-evd68.fasta]]"
+                sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/3D-evd68.fasta]]"
 auth:
   verifyEmail: false
   resetPasswordAllowed: true
@@ -2642,6 +2867,34 @@ images:
   backend:
     repository: "ghcr.io/loculus-project/backend"
     pullPolicy: Always
+  deaconIndex:
+    repository: "ghcr.io/loculus-project/deacon-index"
+    tag: "2026-08-28-13-33@sha256:13cbc6bf729136973ed744616522598b658351a27086b0797218090cd2197637"
+    pullPolicy: IfNotPresent
+  postgres:
+    repository: "ghcr.io/loculus-project/mirror/postgres"
+    tag: "15.19"
+    pullPolicy: IfNotPresent
+  keycloak:
+    repository: "ghcr.io/loculus-project/mirror/keycloak"
+    tag: "23.0"
+    pullPolicy: IfNotPresent
+  minio:
+    repository: "ghcr.io/loculus-project/mirror/minio"
+    tag: "RELEASE.2025-09-07T16-13-09Z"
+    pullPolicy: IfNotPresent
+  busybox:
+    repository: "ghcr.io/loculus-project/mirror/busybox"
+    tag: "1.38.0"
+    pullPolicy: IfNotPresent
+  kubectl:
+    repository: "ghcr.io/loculus-project/mirror/kubectl"
+    tag: "1.36.0"
+    pullPolicy: IfNotPresent
+  alpine:
+    repository: "ghcr.io/loculus-project/mirror/alpine"
+    tag: "3.24"
+    pullPolicy: IfNotPresent
 silo:
   apiThreadsForHttpConnections: 16
 secrets:
@@ -2667,11 +2920,6 @@ secrets:
       username: "postgres"
       password: "unsecure"
       port: "5432"
-  crossref:
-    type: raw
-    data:
-      username: "dummy"
-      password: "dummy"
   service-accounts:
     type: autogen
     data:
@@ -2712,7 +2960,7 @@ runDevelopmentMainDatabase: true
 runDevelopmentS3: true
 developmentDatabasePersistence: false
 enforceHTTPS: true
-traefikVersion: 2
+traefikVersion: 3
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 
@@ -2722,10 +2970,13 @@ enaDeposition:
   enaUniqueSuffix: Loculus
   enaIsBroker: False
   enaSuppressedListTestUrl: "https://loculus-project.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt"
-taxonomyService:
-  dbVersion: "ncbi_taxonomy_latest"
-  taxonomyDbPath: "/data/taxonomy.sqlite" # this is where the init container mounts the database
+  rawReadsMetadataField: rawReads
+  configFile: {}
+rawReadsProcessingService:
+  raw_reads_processing_service_url: http://loculus-raw-reads-processing:5000
 subdomainSeparator: "-"
+enableServiceMonitor: false
+
 replicas:
   website: 1
   backend: 1
@@ -2814,13 +3065,19 @@ resources:
       cpu: "10m"
     limits:
       memory: "1Gi"
+  raw-reads-processing:
+    requests:
+      memory: "8Gi"
+      cpu: "50m"
+    limits:
+      memory: "8Gi"
 defaultResources:
   requests:
     memory: "200Mi"
     cpu: "20m"
   limits:
     memory: "1Gi"
-    cpu: "20m"
+    cpu: "500m"
 ingest:
   ncbiGatewayUrl: null
   mirrorBucket: null

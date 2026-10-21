@@ -110,4 +110,4 @@ PLAYWRIGHT_TEST_BASE_URL=https://preview-123.loculus.org npx playwright test --r
 
 ## Checklist before committing code
 
-Run `npm run format` to ensure proper formatting and linting before committing.
+Run `npm run format` to ensure proper formatting and linting, and `npm run check-types` to type-check, before committing.

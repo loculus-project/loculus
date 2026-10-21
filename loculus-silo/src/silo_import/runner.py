@@ -4,7 +4,7 @@ import logging
 import shutil
 import time
 
-from .config import ImporterConfig
+from .config import ImporterConfig, MetadataField
 from .constants import SPECIAL_ETAG_NONE
 from .download_manager import DownloadManager
 from .errors import (
@@ -15,7 +15,7 @@ from .errors import (
 )
 from .filesystem import prune_timestamped_directories, safe_remove
 from .instruct_silo import SiloRunner
-from .lineage import update_lineage_definitions
+from .lineage import update_hierarchical_filters, update_lineage_definitions
 from .paths import ImporterPaths
 
 logger = logging.getLogger(__name__)
@@ -31,6 +31,7 @@ class ImporterRunner:
         self.download_manager = DownloadManager()
         self.current_etag = SPECIAL_ETAG_NONE
         self.last_hard_refresh: float = 0
+        self.hierarchical_filter_values: dict[MetadataField, set[str]] = {}
 
     def _clear_download_directories(self) -> None:
         """Clear all timestamped download directories on startup."""
@@ -79,7 +80,14 @@ class ImporterRunner:
             return
 
         try:
-            update_lineage_definitions(download.pipeline_version, self.config, self.paths)
+            update_lineage_definitions(download.analysis.pipeline_version, self.config, self.paths)
+            update_hierarchical_filters(
+                download.analysis.hierarchical_filter_values,
+                self.hierarchical_filter_values,
+                self.config,
+                self.paths,
+            )
+            self.hierarchical_filter_values = download.analysis.hierarchical_filter_values
         except Exception:
             logger.exception("Failed to download lineage definitions; cleaning up input")
             safe_remove(self.paths.silo_input_data_path)

@@ -24,7 +24,11 @@ export const sequenceEntryProcessingResultNames = z.union([
 ]);
 export type SequenceEntryProcessingResultNames = z.infer<typeof sequenceEntryProcessingResultNames>;
 
-const processingAnnotationSourceType = z.union([z.literal('Metadata'), z.literal('NucleotideSequence')]);
+const processingAnnotationSourceType = z.union([
+    z.literal('Metadata'),
+    z.literal('NucleotideSequence'),
+    z.literal('File'),
+]);
 export type ProcessingAnnotationSourceType = z.infer<typeof processingAnnotationSourceType>;
 
 const processingAnnotation = z.object({
@@ -44,8 +48,8 @@ const processingAnnotation = z.object({
 });
 export type ProcessingAnnotation = z.infer<typeof processingAnnotation>;
 
-const unprocessedMetadataRecord = z.record(z.string());
-export type UnprocessedMetadataRecord = z.infer<typeof unprocessedMetadataRecord>;
+const submittedMetadataRecord = z.record(z.string());
+export type SubmittedMetadataRecord = z.infer<typeof submittedMetadataRecord>;
 
 export const metadataField = z.union([z.string(), z.number(), z.date(), z.null(), z.boolean()]);
 export type MetadataField = z.infer<typeof metadataField>;
@@ -172,11 +176,22 @@ export const submissionIdMapping = accessionVersion.merge(
 );
 export type SubmissionIdMapping = z.infer<typeof submissionIdMapping>;
 
+const filesByCategory = z.record(
+    z.array(
+        z.object({
+            fileId: z.string(),
+            name: z.string(),
+        }),
+    ),
+);
+export type FilesByCategory = z.infer<typeof filesByCategory>;
+
 export const editedSequenceEntryData = accessionVersion.merge(
     z.object({
         data: z.object({
-            metadata: unprocessedMetadataRecord,
+            metadata: submittedMetadataRecord,
             unalignedNucleotideSequences: z.record(z.string()),
+            files: filesByCategory.nullable(),
         }),
     }),
 );
@@ -192,7 +207,7 @@ export type RevocationRequest = z.infer<typeof revocationRequest>;
 export const unprocessedData = accessionVersion.merge(
     z.object({
         data: z.object({
-            metadata: unprocessedMetadataRecord,
+            metadata: submittedMetadataRecord,
             unalignedNucleotideSequences: z.record(z.string()),
         }),
         submissionId: z.string(),
@@ -203,18 +218,6 @@ export const unprocessedData = accessionVersion.merge(
 );
 export type UnprocessedData = z.infer<typeof unprocessedData>;
 
-const filesByCategory = z.record(
-    z.array(
-        z.object({
-            fileId: z.string(),
-            name: z.string(),
-        }),
-    ),
-);
-
-export const filesBySubmissionId = z.record(filesByCategory);
-export type FilesBySubmissionId = z.infer<typeof filesBySubmissionId>;
-
 export const sequenceEntryToEdit = accessionVersion.merge(
     z.object({
         status: sequenceEntryStatusNames,
@@ -222,8 +225,8 @@ export const sequenceEntryToEdit = accessionVersion.merge(
         submissionId: z.string(),
         errors: z.array(processingAnnotation).nullable(),
         warnings: z.array(processingAnnotation).nullable(),
-        originalData: z.object({
-            metadata: unprocessedMetadataRecord,
+        submittedData: z.object({
+            metadata: submittedMetadataRecord,
             unalignedNucleotideSequences: z.record(z.string()),
             files: filesByCategory.nullable(),
         }),
@@ -262,9 +265,7 @@ export const mapErrorsAndWarnings = (
 export const uploadFiles = z.object({
     metadataFile: z.instanceof(File),
     sequenceFile: z.instanceof(File).optional(),
-    fileMapping: filesBySubmissionId.optional(),
 });
-export type UploadFiles = z.infer<typeof uploadFiles>;
 
 export const submitFiles = uploadFiles.merge(
     z.object({
@@ -274,12 +275,15 @@ export const submitFiles = uploadFiles.merge(
     }),
 );
 
+// Technically RFC 9457 also doesn't guarantee title/status/detail
+// to be non-null, but in practice our backend emits those
+// so this allows us to avoid some verbose null handling.
 export const problemDetail = z.object({
-    type: z.string(),
+    type: z.string().nullable().optional(),
     title: z.string(),
     status: z.number(),
     detail: z.string(),
-    instance: z.string().optional(),
+    instance: z.string().nullable().optional(),
 });
 export type ProblemDetail = z.infer<typeof problemDetail>;
 
@@ -341,7 +345,7 @@ export type Info = z.infer<typeof info>;
 
 export const requestMultipartUploadResponse = z.array(
     z.object({
-        fileId: z.string().uuid(),
+        fileId: z.string(),
         urls: z.array(z.string()),
     }),
 );
@@ -350,7 +354,7 @@ export type RequestMultipartUploadResponse = z.infer<typeof requestMultipartUplo
 
 export const completeMultipartUploadRequest = z.array(
     z.object({
-        fileId: z.string().uuid(),
+        fileId: z.string(),
         etags: z.array(z.string()),
     }),
 );

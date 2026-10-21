@@ -4,9 +4,9 @@ import { Fragment, type Dispatch, type FC, type SetStateAction } from 'react';
 
 import { EditableDataRow } from './DataRow.tsx';
 import type { Row } from './InputField';
-import { ACCESSION_FIELD, FASTA_IDS_FIELD, SUBMISSION_ID_INPUT_FIELD } from '../../settings.ts';
+import { ACCESSION_FIELD, FASTA_IDS_FIELD, FILES_HEADER_PREFIX, SUBMISSION_ID_INPUT_FIELD } from '../../settings.ts';
 import { mapErrorsAndWarnings, type SequenceEntryToEdit } from '../../types/backend.ts';
-import type { InputField } from '../../types/config';
+import type { FileCategory, InputField } from '../../types/config';
 
 type SubtitleProps = {
     title: string;
@@ -35,7 +35,7 @@ export class EditableMetadata {
 
     static fromInitialData(initialData: SequenceEntryToEdit): EditableMetadata {
         return new EditableMetadata(
-            Object.entries(initialData.originalData.metadata).map(([key, value]) => ({
+            Object.entries(initialData.submittedData.metadata).map(([key, value]) => ({
                 key,
                 value,
                 initialValue: value,
@@ -72,8 +72,15 @@ export class EditableMetadata {
      *      The submission ID to put into the TSV.
      * @param accession optional. If an accession is already assigned to this sequence, it should be given.
      * @param fastaIds optional. Add a fastaIds field with content if supplied.
+     * @param fileCategories optional. If supplied, add an empty field for each file category.
+     * @returns a File object containing the TSV, or undefined if no values are set.
      */
-    getMetadataTsv(submissionId?: string, accession?: string, fastaIds?: string): File | undefined {
+    getMetadataTsv(
+        submissionId?: string,
+        accession?: string,
+        fastaIds?: string,
+        fileCategories?: FileCategory[],
+    ): File | undefined {
         // if no values are set at all, return undefined
         if (!this.rows.some((row) => row.value !== '')) return undefined;
 
@@ -96,6 +103,12 @@ export class EditableMetadata {
 
         if (fastaIds) {
             tsvFields.set(FASTA_IDS_FIELD, fastaIds);
+        }
+
+        if (fileCategories) {
+            fileCategories.forEach((fileCategory) => {
+                tsvFields.set(`${FILES_HEADER_PREFIX}${fileCategory.name}`, '');
+            });
         }
 
         const tsvContent = Papa.unparse([Array.from(tsvFields.keys()), Array.from(tsvFields.values())], {
@@ -164,8 +177,54 @@ export const MetadataForm: FC<MetadataFormProps> = ({
                 </Fragment>
             );
         })}
+        <UnknownFieldsSection
+            editableMetadata={editableMetadata}
+            setEditableMetadata={setEditableMetadata}
+            groupedInputFields={groupedInputFields}
+        />
     </>
 );
+
+/**
+ * Submitted metadata can contain keys that are not input fields (e.g. fields marked as `noInput`
+ * or fields that are not part of the schema at all). These would otherwise be invisible in the form
+ * but still be sent back to the backend, leaving users unable to fix the resulting errors.
+ */
+const UnknownFieldsSection: FC<Omit<MetadataFormProps, 'isSubmitForm'>> = ({
+    editableMetadata,
+    setEditableMetadata,
+    groupedInputFields,
+}) => {
+    const inputFieldNames = new Set(
+        Array.from(groupedInputFields.values()).flatMap((fields) => fields.map((field) => field.name)),
+    );
+    const unknownRows = editableMetadata.rows.filter(
+        (row) => !inputFieldNames.has(row.key) && (row.initialValue !== '' || row.value !== ''),
+    );
+
+    if (unknownRows.length === 0) return null;
+
+    return (
+        <>
+            <Subtitle title='Unrecognized input fields' small />
+            <tr>
+                <td colSpan={3} className='text-sm text-gray-600'>
+                    These fields were submitted but are not recognized input fields. Clear their values to remove them.
+                </td>
+            </tr>
+            {unknownRows.map((row) => (
+                <EditableDataRow
+                    inputField={{ name: row.key }}
+                    key={'unknown_metadata' + row.key}
+                    row={row}
+                    onChange={(editedRow: Row) =>
+                        setEditableMetadata((prevMetadata) => prevMetadata.updateWith(editedRow))
+                    }
+                />
+            ))}
+        </>
+    );
+};
 
 type SubmissionProps = {
     submissionId: string;

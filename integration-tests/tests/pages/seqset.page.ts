@@ -76,10 +76,19 @@ export class SeqSetPage {
         await expect(this.page.getByText('Description', { exact: true })).toBeVisible();
         await expect(this.page.getByText(description, { exact: true })).toBeVisible();
         await expect(this.page.getByText('Version', { exact: true })).toBeVisible();
-        await expect(this.page.getByText('Created by', { exact: true })).toBeVisible();
-        await expect(this.page.getByText('Created date', { exact: true })).toBeVisible();
         await expect(this.page.getByText('Size', { exact: true })).toBeVisible();
         await expect(this.page.getByText('Accession', { exact: true })).toBeVisible();
+        await this.expectCreatorDetailsInModal();
+    }
+
+    async expectCreatorDetailsInModal() {
+        await expect(this.page.getByText('Created by', { exact: true })).toBeHidden();
+        await this.page.getByRole('button', { name: 'More details' }).click();
+        await expect(this.page.getByRole('heading', { name: 'Creator details' })).toBeVisible();
+        await expect(this.page.getByText('Created by', { exact: true })).toBeVisible();
+        await expect(this.page.getByText('Created date', { exact: true })).toBeVisible();
+        await this.page.keyboard.press('Escape');
+        await expect(this.page.getByRole('heading', { name: 'Creator details' })).toBeHidden();
     }
 
     async exportSeqSet(format: SeqSetExportFormat): Promise<Download> {

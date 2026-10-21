@@ -81,6 +81,8 @@ export const metadata = z.object({
     rangeOverlapSearch: rangeOverlapSearch.optional(),
     substringSearch: z.boolean().optional(),
     lineageSearch: z.boolean().optional(),
+    hierarchicalSearch: z.boolean().optional(),
+    hierarchicalSearchLabel: z.string().optional(),
     columnWidth: z.number().optional(),
     order: z.number().optional(),
     orderOnDetailsPage: z.number().optional(),
@@ -101,11 +103,13 @@ export const inputField = z.object({
     displayName: z.string().optional(),
     noEdit: z.boolean().optional(),
     required: z.boolean().optional(),
+    requiredWhen: z.array(z.string()).optional(),
     definition: z.string().optional(), // Definition, Example and Guidance for submitters
     example: z.union([z.string(), z.number()]).optional(),
     guidance: z.string().optional(),
     desired: z.boolean().optional(),
     options: z.array(inputFieldOption).optional(),
+    header: z.string().optional(),
 });
 
 export type InputFieldOption = z.infer<typeof inputFieldOption>;
@@ -163,6 +167,15 @@ export const linkOut = z.object({
 
 export type LinkOut = z.infer<typeof linkOut>;
 
+export const multiFieldSearch = z.object({
+    name: z.string(),
+    displayName: z.string(),
+    fields: z.array(z.string()),
+    orderInSearchDisplay: z.number().optional(),
+});
+
+export type MultiFieldSearch = z.infer<typeof multiFieldSearch>;
+
 export const fileCategory = z.object({
     name: z.string(),
     displayName: z.string().optional(),
@@ -199,6 +212,7 @@ export const schema = z.object({
     richFastaHeaderFields: z.array(z.string()).optional(),
     linkOuts: z.array(linkOut).optional(),
     referenceIdentifierField: z.string().optional(),
+    multiFieldSearches: z.array(multiFieldSearch).optional(),
 });
 export type Schema = z.infer<typeof schema>;
 
@@ -224,6 +238,12 @@ const sequenceFlaggingConfig = z.object({
     github: githubSequenceFlaggingConfig,
 });
 export type SequenceFlaggingConfig = z.infer<typeof sequenceFlaggingConfig>;
+
+export const fileSharingConfig = z.object({
+    disableStrictFilenameValidation: z.boolean().default(false),
+    maxFileSizeBytes: z.number().optional(),
+});
+export type FileSharingConfig = z.infer<typeof fileSharingConfig>;
 
 const fieldToDisplay = z.object({
     field: z.string(),
@@ -261,9 +281,11 @@ export const websiteConfig = z.object({
     enableSubmissionNavigationItem: z.boolean(),
     enableSubmissionPages: z.boolean(),
     enableDataUseTerms: z.boolean(),
+    fileSharing: fileSharingConfig.optional(),
     readOnlyMode: z.boolean().default(false),
     dataUseTermsAgreementHTML: z.string().optional(),
     sequenceFlagging: sequenceFlaggingConfig.optional(),
+    dateFieldForGroupGraph: z.string().nullable(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
 

@@ -6,7 +6,6 @@ from collections import defaultdict
 from dataclasses import dataclass
 from http import HTTPMethod
 from io import BytesIO
-from pathlib import Path
 from time import sleep
 from typing import Any, Literal
 
@@ -17,32 +16,39 @@ import requests
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class Config:
+@dataclass(kw_only=True)
+class ApproveConfig:
+    """The minimal config the approve path needs: just enough to authenticate
+    against keycloak and hit the backend's approve-processed-data endpoint."""
+
     organism: str
     backend_url: str
     keycloak_token_url: str
     keycloak_client_id: str
     username: str
     password: str
+    backend_request_timeout_seconds: int = 600
+
+
+@dataclass(kw_only=True)
+class Config(ApproveConfig):
     group_name: str
     nucleotide_sequences: list[str]
     segmented: bool
     batch_chunk_size: int
-    time_between_approve_requests_seconds: int = 30
-    backend_request_timeout_seconds: int = 600
+    slack_hook: str = ""
 
 
-def backend_url(config: Config) -> str:
+def backend_url(config: ApproveConfig) -> str:
     """Right strip the URL to remove trailing slashes"""
     return f"{config.backend_url.rstrip('/')}"
 
 
-def organism_url(config: Config) -> str:
+def organism_url(config: ApproveConfig) -> str:
     return f"{backend_url(config)}/{config.organism.strip('/')}"
 
 
-def get_jwt(config: Config) -> str:
+def get_jwt(config: ApproveConfig) -> str:
     """
     Get a JWT token for the given username and password
     """
@@ -61,7 +67,12 @@ def get_jwt(config: Config) -> str:
 
     keycloak_token_url = config.keycloak_token_url
 
-    response = requests.post(keycloak_token_url, data=data, headers=headers, timeout=config.backend_request_timeout_seconds)
+    response = requests.post(
+        keycloak_token_url,
+        data=data,
+        headers=headers,
+        timeout=config.backend_request_timeout_seconds,
+    )
     response.raise_for_status()
 
     jwt_keycloak = response.json()
@@ -71,7 +82,7 @@ def get_jwt(config: Config) -> str:
 def make_request(  # noqa: PLR0913, PLR0917
     method: HTTPMethod,
     url: str,
-    config: Config,
+    config: ApproveConfig,
     params: dict[str, Any] | None = None,
     files: dict[str, Any] | None = None,
     json_body: dict[str, Any] | None = None,
@@ -170,7 +181,7 @@ class BatchIterator:
     current_fasta_submission_id: str | None = None
     fasta_record_header: str | None = None
 
-    record_counter: int = 0
+    record_count: int = 0  # metadata records read so far, not counting the header
 
     metadata_header: str | None = None
     submission_id_index: int | None = None  # index of id in metadata header
@@ -185,7 +196,7 @@ def submit(
     params: dict[str, str],
     batch_it: BatchIterator,
 ):
-    batch_num = -(int(batch_it.record_counter) // -config.batch_chunk_size)  # ceiling division
+    batch_num = -(batch_it.record_count // -config.batch_chunk_size)  # ceiling division
     logger.info(f"Submitting batch {batch_num}")
 
     metadata_in_memory = BytesIO("".join(batch_it.metadata_batch_output).encode("utf-8"))
@@ -242,30 +253,30 @@ def post_fasta_batches(
     metadata_file: str,
     config: Config,
     params: dict[str, str],
-) -> requests.Response:
-    """Chunks metadata files, joins with sequences and submits each chunk via POST."""
+) -> requests.Response | None:
+    """Chunks metadata files, joins with sequences and submits each chunk via POST.
+
+    Returns None if the metadata file held no records, in which case nothing was sent.
+    """
 
     batch_it = BatchIterator()
+    response = None
 
     with (
         open(fasta_file, encoding="utf-8") as fasta_file_stream,
         open(metadata_file, encoding="utf-8") as metadata_file_stream,
     ):
         for record in metadata_file_stream:
-            batch_it.record_counter += 1
-
-            # process metadata header
-            if batch_it.record_counter == 1:
+            # the first line is the metadata header
+            if batch_it.metadata_header is None:
                 batch_it.submission_id_index = record.strip().split("\t").index("id")
                 batch_it.metadata_header = record
-                batch_it.metadata_batch_output.append(batch_it.metadata_header)
                 continue
 
-            # add header to batch metadata output
-            if (
-                batch_it.record_counter > 1
-                and batch_it.record_counter % config.batch_chunk_size == 1
-            ):
+            batch_it.record_count += 1
+
+            # every batch's metadata needs to start with the header
+            if not batch_it.metadata_batch_output:
                 batch_it.metadata_batch_output.append(batch_it.metadata_header)
 
             batch_it.metadata_batch_output.append(record)
@@ -283,7 +294,7 @@ def post_fasta_batches(
             batch_it = add_seq_to_batch(batch_it, fasta_file_stream, metadata_submission_id, config)
 
             # submit the batch if it is full
-            if batch_it.record_counter % config.batch_chunk_size == 0:
+            if batch_it.record_count % config.batch_chunk_size == 0:
                 response = submit(
                     url,
                     config,
@@ -293,16 +304,29 @@ def post_fasta_batches(
                 batch_it.sequences_batch_output = []
                 batch_it.metadata_batch_output = []
 
-    if batch_it.record_counter % config.batch_chunk_size != 0:
-        # submit the last chunk
+    # submit the last, partial chunk
+    if batch_it.record_count % config.batch_chunk_size != 0:
         response = submit(url, config, params, batch_it)
 
     return response
 
 
+def count_lines(path, chunk_size=1024 * 1024):
+    """Memory efficient way to count the number of lines in a file by reading in chunks."""
+    count = 0
+    last_char = b""
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(chunk_size), b""):
+            count += chunk.count(b"\n")
+            last_char = chunk[-1:]  # keep last byte
+    if count != 0 and last_char != b"\n":
+        count += 1
+    return count
+
+
 def submit_or_revise(
     metadata, sequences, config: Config, group_id, mode=Literal["submit", "revise"]
-):
+) -> list[dict[str, Any]]:
     """
     Submit/revise data to Loculus -requires metadata and sequences sorted by id.
     """
@@ -327,8 +351,12 @@ def submit_or_revise(
 
     url = f"{organism_url(config)}/{endpoint}"
 
-    metadata_lines = len(Path(metadata).read_text(encoding="utf-8").splitlines()) - 1
+    metadata_lines = max(count_lines(metadata) - 1, 0)
+
     logger.info(f"{logging_strings['gerund']} {metadata_lines} sequence(s) to Loculus")
+
+    if metadata_lines == 0:
+        return []
 
     params = {
         "groupId": group_id,
@@ -384,7 +412,7 @@ def regroup_and_revoke(metadata, sequences, map, config: Config, group_id):
     return responses
 
 
-def approve(config: Config):
+def approve(config: ApproveConfig):
     """
     Approve all sequences
     """
@@ -423,28 +451,27 @@ def get_sequence_status(config: Config):
     return result
 
 
-def get_submitted(config: Config, output: str):
+def get_submitted(
+    config: Config,
+    output: str | None,
+    fields: list[str] | None = None,
+    accessionVersionsFilter: list[str] | None = None,  # noqa: N803
+):
     """Get previously submitted sequences as ndjson
     This way we can avoid submitting the same sequences again
-    Adds status to the output (as this is not returned by get-unprocessed-metadata)
+    Adds status to the output (as this is not returned by get-submitted-metadata)
     """
 
-    url = f"{organism_url(config)}/get-unprocessed-metadata"
-
-    if config.segmented:
-        insdc_key = [
-            "insdcAccessionBase" + "_" + segment for segment in config.nucleotide_sequences
-        ]
-    else:
-        insdc_key = ["insdcAccessionBase"]
-
-    fields = ["hash", *insdc_key]
+    url = f"{organism_url(config)}/get-submitted-metadata"
 
     params = {
-        "fields": fields,
         "groupIdsFilter": [],
         "statusesFilter": [],
     }
+    if fields:
+        params["fields"] = fields
+    if accessionVersionsFilter:
+        params["accessionVersionsFilter"] = accessionVersionsFilter
 
     while True:
         logger.info("Getting previously submitted sequences")
@@ -460,7 +487,7 @@ def get_submitted(config: Config, output: str):
             max_error_length = 100
             if len(response_summary) > max_error_length:
                 response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
-            logger.error(f"Error decoding JSON from /get-unprocessed-metadata: {response_summary}")
+            logger.error(f"Error decoding JSON from /get-submitted-metadata: {response_summary}")
             raise ValueError from err
 
         if len(entries) == expected_record_count:
@@ -471,6 +498,9 @@ def get_submitted(config: Config, output: str):
             f"records but got {expected_record_count}. Retrying after 60 seconds."
         )
         sleep(60)
+
+    if not output:
+        return entries
 
     statuses: dict[str, dict[int, str]] = get_sequence_status(config)
     logger.info(f"Got info on {len(statuses.keys())} previously submitted sequences/accessions")
@@ -484,3 +514,4 @@ def get_submitted(config: Config, output: str):
     if len(entries) == 0:
         with open(output, "w", encoding="utf-8"):
             pass
+    return None

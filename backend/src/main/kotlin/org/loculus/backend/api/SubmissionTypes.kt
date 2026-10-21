@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
+import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.model.FastaId
 import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.service.files.FileId
@@ -26,7 +27,32 @@ interface AccessionVersionInterface {
 }
 
 data class AccessionVersion(override val accession: Accession, override val version: Version) :
-    AccessionVersionInterface
+    AccessionVersionInterface {
+    companion object {
+        fun fromString(value: String): AccessionVersion {
+            val accession = value.substringBeforeLast('.', missingDelimiterValue = "")
+            val versionString = value.substringAfterLast('.', missingDelimiterValue = "")
+
+            if (accession.isEmpty() || versionString.isEmpty() || '.' in accession) {
+                throw UnprocessableEntityException(
+                    "Invalid accession version format '$value', expected 'accession.version'",
+                )
+            }
+
+            val version = versionString.toLongOrNull()
+                ?: throw UnprocessableEntityException(
+                    "Invalid version in accession version '$value', expected a number",
+                )
+            if (version < 1) {
+                throw UnprocessableEntityException(
+                    "Invalid version in accession version '$value', version must be at least 1",
+                )
+            }
+
+            return AccessionVersion(accession, version)
+        }
+    }
+}
 
 data class SubmissionIdMapping(
     override val accession: Accession,
@@ -120,7 +146,7 @@ data class SequenceEntryVersionToEdit(
     val status: Status,
     val groupId: Int,
     val processedData: ProcessedData<GeneticSequence>,
-    val originalData: OriginalData<GeneticSequence>,
+    val submittedData: SubmittedData<GeneticSequence>,
     @Schema(description = "The preprocessing will be considered failed if this is not empty")
     val errors: List<PreprocessingAnnotation>? = null,
     @Schema(
@@ -169,11 +195,11 @@ data class ProcessedData<SequenceType>(
     val aminoAcidInsertions: Map<GeneName, List<Insertion>>,
     @Schema(
         example = """{"segment1": "fastaHeader1", "segment2": "fastaHeader2"}""",
-        description = "The key is the segment name, the value is the fastaHeader of the original Data",
+        description = "The key is the segment name, the value is the fastaHeader of the originally submitted data",
     )
     val sequenceNameToFastaId: Map<SegmentName, String> = emptyMap(),
     @Schema(
-        example = """{"raw_reads": [{"fileId": "s0m3-uUiDd", "name": "data.fastaq"}], "sequencing_logs": []}""",
+        example = """{"rawReads": [{"fileId": "s0m3-uUiDd", "name": "data.fastaq"}], "sequenceLogs": []}""",
         description = "The key is the file category name, the value is a list of files, with ID and name.",
     )
     val files: FileCategoryFilesMap?,
@@ -258,6 +284,7 @@ data class PreprocessingAnnotationSource(
 enum class PreprocessingAnnotationSourceType {
     Metadata,
     NucleotideSequence,
+    File,
 }
 
 data class GetSequenceResponse(
@@ -281,13 +308,13 @@ data class SequenceEntryStatus(
 data class EditedSequenceEntryData(
     @Schema(example = "LOC_000S01D") override val accession: Accession,
     @Schema(example = "1") override val version: Version,
-    val data: OriginalData<GeneticSequence>,
+    val data: SubmittedData<GeneticSequence>,
 ) : AccessionVersionInterface
 
 data class UnprocessedData(
     @Schema(example = "LOC_000S01D") override val accession: Accession,
     @Schema(example = "1") override val version: Version,
-    val data: OriginalDataWithFileUrls<GeneticSequence>,
+    val data: SubmittedContentWithFileUrls<GeneticSequence>,
     @Schema(description = "The submission id that was used in the upload to link metadata and sequences")
     val submissionId: String,
     @Schema(description = "The username of the submitter")
@@ -298,7 +325,7 @@ data class UnprocessedData(
     val submittedAt: Long,
 ) : AccessionVersionInterface
 
-data class OriginalDataInternal<SequenceType, FilesType>(
+data class SubmittedContentInternal<SequenceType, FilesType>(
     @Schema(
         example = "{\"date\": \"2020-01-01\", \"country\": \"Germany\"}",
         description = "Key value pairs of metadata, as submitted in the metadata file",
@@ -310,22 +337,40 @@ data class OriginalDataInternal<SequenceType, FilesType>(
     )
     val unalignedNucleotideSequences: Map<FastaId, SequenceType?>,
     @Schema(
-        example = """{"raw_reads": [{"fileId": "f1le-uuId-asdf", "name": "myfile.fastaq"]}""",
+        example = """{"rawReads": [{"fileId": "f1le-uuId-asdf", "name": "myfile.fastaq"]}""",
         description = "A map from file categories, to lists of files. The files can also have URLs.",
     )
     val files: Map<String, List<FilesType>>? = null,
 )
 
-typealias OriginalData<SequenceType> = OriginalDataInternal<SequenceType, FileIdAndName>
-typealias OriginalDataWithFileUrls<SequenceType> =
-    OriginalDataInternal<SequenceType, FileIdAndNameAndReadUrl>
+typealias SubmittedData<SequenceType> = SubmittedContentInternal<SequenceType, FileIdAndName>
+typealias SubmittedContentWithFileUrls<SequenceType> =
+    SubmittedContentInternal<SequenceType, FileIdAndNameAndReadUrl>
 
-data class AccessionVersionUnprocessedMetadata(
+data class AccessionVersionSubmittedMetadata(
     override val accession: Accession,
     override val version: Version,
     val submitter: String,
     val isRevocation: Boolean,
-    val unprocessedMetadata: Map<String, String?>?,
+    val submittedMetadata: Map<String, String?>?,
+) : AccessionVersionInterface
+
+data class GetSubmittedDataRequest(
+    @Schema(
+        description = "The group ID to download data for.",
+    )
+    val groupId: Int,
+    @Schema(
+        description = "Filter by specific accessions. If not provided, all accessions for the group are returned.",
+    )
+    val accessionsFilter: List<Accession>? = null,
+)
+
+data class SubmittedDataDownloadEntry(
+    override val accession: Accession,
+    override val version: Version,
+    val submissionId: String,
+    val submittedData: SubmittedData<GeneticSequence>,
 ) : AccessionVersionInterface
 
 enum class Status {
@@ -407,7 +452,7 @@ fun SubmissionIdFilesMap.getAllFileIds(): Set<FileId> = this.values.flatMap {
 }.toSet()
 
 /**
- * A file category like 'raw_reads' or 'logs'.
+ * A file category like 'rawReads' or 'logs'.
  */
 typealias FileCategory = String
 
@@ -433,4 +478,18 @@ fun FileCategoryFilesMap.getDuplicateFileNames(category: FileCategory): Set<Stri
         .eachCount()
 
     return nameCounts.filterValues { it > 1 }.keys
+}
+
+/**
+ * File IDs used more than once within [category].
+ *
+ * Consumers key their local copy by file ID, so duplicate entries collapse onto one downloaded
+ * file - for paired-end reads that still passes validation and would archive one mate twice.
+ */
+fun FileCategoryFilesMap.getDuplicateFileIds(category: FileCategory): Set<FileId> {
+    val idCounts = this[category]!!
+        .groupingBy { it.fileId }
+        .eachCount()
+
+    return idCounts.filterValues { it > 1 }.keys
 }

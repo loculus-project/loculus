@@ -1,6 +1,7 @@
 package org.loculus.backend.controller.seqsetcitations
 
 import org.loculus.backend.controller.jwtForDefaultUser
+import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.withAuth
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
@@ -14,12 +15,19 @@ const val MOCK_SEQSET_ID = "e302e770-e198-4a8f-9145-b536e3590656"
 const val MOCK_SEQSET_VERSION = 1L
 const val MOCK_SEQSET_NAME = "mock-seqset-name"
 const val MOCK_SEQSET_DESCRIPTION = "mock-seqset-description"
-const val MOCK_SEQSET_RECORDS = "[{ \"accession\": \"mock-sequence-accession.1\", \"type\": \"loculus\" }]"
+const val MOCK_SEQ_ACCESSION = "mock-sequence-accession"
+const val MOCK_SEQ_VERSION = 1L
+const val MOCK_ACCESSION_VERSION = "${MOCK_SEQ_ACCESSION}.${MOCK_SEQ_VERSION}"
+const val MOCK_SEQSET_RECORDS = "[{ \"accession\": \"${MOCK_ACCESSION_VERSION}\", \"type\": \"loculus\" }]"
 const val MOCK_USERNAME = "testuser"
 const val MOCK_USER_EMAIL = "testuser@example.com"
 const val MOCK_USER_FIRST_NAME = "Test"
 const val MOCK_USER_LAST_NAME = "User"
 const val MOCK_USER_UNIVERSITY = "Test University"
+const val MOCK_DOI_PREFIX = "10.1234"
+const val MOCK_CITATION_DOI = "10.5678/citing-paper"
+const val MOCK_CITATION_TITLE = "A manually curated paper citing the seqSet"
+const val MOCK_CITATION_YEAR = 2024
 
 class SeqSetCitationsControllerClient(private val mockMvc: MockMvc) {
 
@@ -90,7 +98,7 @@ class SeqSetCitationsControllerClient(private val mockMvc: MockMvc) {
 
     fun deleteSeqSet(
         seqSetId: String = MOCK_SEQSET_ID,
-        seqSetVersion: Long? = MOCK_SEQSET_VERSION,
+        seqSetVersion: Long = MOCK_SEQSET_VERSION,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
         delete("/delete-seqset")
@@ -101,7 +109,7 @@ class SeqSetCitationsControllerClient(private val mockMvc: MockMvc) {
 
     fun createSeqSetDOI(
         seqSetId: String = MOCK_SEQSET_ID,
-        seqSetVersion: Long? = MOCK_SEQSET_VERSION,
+        seqSetVersion: Long = MOCK_SEQSET_VERSION,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
         post("/create-seqset-doi")
@@ -110,19 +118,59 @@ class SeqSetCitationsControllerClient(private val mockMvc: MockMvc) {
             .withAuth(jwt),
     )
 
-    fun getUserCitedBySeqSet(jwt: String? = jwtForDefaultUser): ResultActions = mockMvc.perform(
-        get("/get-user-cited-by-seqset")
-            .withAuth(jwt),
-    )
-
-    fun getSeqSetCitedByPublication(
+    fun getSeqSetCitations(
         seqSetId: String = MOCK_SEQSET_ID,
         seqSetVersion: Long = MOCK_SEQSET_VERSION,
     ): ResultActions = mockMvc.perform(
-        get("/get-seqset-cited-by-publication")
+        get("/get-seqset-citations")
             .param("seqSetId", seqSetId)
             .param("version", seqSetVersion.toString()),
     )
+
+    fun getAllSeqSetCitations(jwt: String? = jwtForSuperUser): ResultActions = mockMvc.perform(
+        get("/admin/get-all-seqset-citations")
+            .withAuth(jwt),
+    )
+
+    fun addSeqSetCitation(
+        sourceDOI: String = MOCK_CITATION_DOI,
+        title: String = MOCK_CITATION_TITLE,
+        year: Int = MOCK_CITATION_YEAR,
+        seqSetAccessionVersions: List<String>,
+        jwt: String? = jwtForSuperUser,
+    ): ResultActions {
+        val accessionVersionsJson = seqSetAccessionVersions.joinToString(",") { "\"$it\"" }
+        return mockMvc.perform(
+            post("/admin/add-seqset-citation")
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(
+                    """{
+                        "source": {
+                            "sourceDOI": "$sourceDOI",
+                            "title": "$title",
+                            "year": $year,
+                            "contributors": [{ "givenName": "Jane", "surname": "Doe" }]
+                        },
+                        "seqSetAccessionVersions": [$accessionVersionsJson]
+                    }""",
+                )
+                .withAuth(jwt),
+        )
+    }
+
+    fun deleteSeqSetCitation(sourceDOI: String = MOCK_CITATION_DOI, jwt: String? = jwtForSuperUser): ResultActions =
+        mockMvc.perform(
+            delete("/admin/delete-seqset-citation")
+                .param("sourceDOI", sourceDOI)
+                .withAuth(jwt),
+        )
+
+    fun getSequenceCitations(accession: String = MOCK_SEQ_ACCESSION, version: Long? = MOCK_SEQ_VERSION): ResultActions =
+        mockMvc.perform(
+            get("/get-sequence-citations")
+                .param("accession", accession)
+                .apply { version?.let { param("version", it.toString()) } },
+        )
 
     fun getAuthor(username: String): ResultActions = mockMvc.perform(
         get("/get-author")

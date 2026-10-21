@@ -239,7 +239,12 @@ enableDataUseTerms: {{ $.Values.dataUseTerms.enabled }}
 {{ if $.Values.dataUseTerms.agreementHTML }}
 dataUseTermsAgreementHTML: {{ quote $.Values.dataUseTerms.agreementHTML }}
 {{- end }}
+{{- if .Values.fileSharing }}
+fileSharing:
+  {{ .Values.fileSharing | toYaml | nindent 2 }}
+{{- end }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
+dateFieldForGroupGraph: {{ if $.Values.dateFieldForGroupGraph }}{{ quote $.Values.dateFieldForGroupGraph }}{{ else }}null{{ end }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 organisms:
   {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
@@ -300,6 +305,7 @@ organisms:
           type: string
           header: "Files"
           noInput: true
+          substringSearch: true
           customDisplay:
             type: fileList
         {{- end }}
@@ -308,7 +314,34 @@ organisms:
       metadataTemplate:
         {{ .metadataTemplate | toYaml | nindent 8}}
       {{ end }}
-      {{ .website | toYaml | nindent 6 }}
+      {{ omit .website "multiFieldSearches" | toYaml | nindent 6 }}
+      {{- if .website.multiFieldSearches }}
+      {{- $perSegmentFields := dict }}
+      {{- range (concat $commonMetadata .metadata) }}
+      {{- if .perSegment }}{{- $_ := set $perSegmentFields .name true }}{{- end }}
+      {{- end }}
+      {{- $segments := (include "loculus.getNucleotideSegmentNames" $instance.referenceGenomes | fromYaml).segments }}
+      {{- $isSegmented := gt (len $segments) 1 }}
+      multiFieldSearches:
+      {{- range .website.multiFieldSearches }}
+        - name: {{ .name }}
+          displayName: {{ .displayName }}
+          {{- if hasKey . "orderInSearchDisplay" }}
+          orderInSearchDisplay: {{ .orderInSearchDisplay }}
+          {{- end }}
+          fields:
+          {{- range .fields }}
+          {{- if and $isSegmented (hasKey $perSegmentFields .) }}
+          {{- $field := . }}
+          {{- range $segments }}
+            - {{ printf "%s_%s" $field . }}
+          {{- end }}
+          {{- else }}
+            - {{ . }}
+          {{- end }}
+          {{- end }}
+      {{- end }}
+      {{- end }}
       {{- end }}
     referenceGenomes:
       {{ $instance.referenceGenomes | toYaml | nindent 6 }}
@@ -343,6 +376,12 @@ organisms:
   {{- end}}
   {{- if .lineageSystem }}
   lineageSearch: true
+  {{- end }}
+  {{- if .hierarchicalFilter }}
+  hierarchicalSearch: true
+  {{- end }}
+  {{- if and .hierarchicalFilter .hierarchicalSearchLabel }}
+  hierarchicalSearchLabel: {{ .hierarchicalSearchLabel }}
   {{- end }}
   {{- if .hideOnSequenceDetailsPage }}
   hideOnSequenceDetailsPage: {{ .hideOnSequenceDetailsPage }}

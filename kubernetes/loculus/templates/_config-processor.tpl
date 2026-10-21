@@ -62,3 +62,7 @@
 - name: {{ .name }}-processed
   emptyDir: {}
 {{- end }}
+
+{{- define "loculus.websiteOrganismConfigMapName" -}}
+{{- printf "loculus-web-org-config-%s" . | trunc 63 | trimSuffix "-" -}}
+{{- end }}

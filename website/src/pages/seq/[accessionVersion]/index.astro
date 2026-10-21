@@ -1,20 +1,34 @@
 ---
 import { findOrganismAndData } from './findOrganismAndData';
 import { SequenceDetailsTableResultType } from './getSequenceDetailsTableData';
-import RevocationEntryDataTable from '../../../components/SequenceDetailsPage/RevocationEntryDataTable.astro';
 import { SequenceDataUI } from '../../../components/SequenceDetailsPage/SequenceDataUI.tsx';
 import SequencesBanner from '../../../components/SequenceDetailsPage/SequencesBanner.tsx';
 import SequencesDataTableTitle from '../../../components/SequenceDetailsPage/SequencesDataTableTitle.astro';
 import ErrorBox from '../../../components/common/ErrorBox.tsx';
-import { getSchema, getRuntimeConfig, getReferenceGenomes } from '../../../config';
-import { getWebsiteConfig } from '../../../config';
+import { getSchema, getRuntimeConfig, getWebsiteConfig, getReferenceGenomes, seqSetsAreEnabled } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { SeqSetCitationClient } from '../../../services/seqSetCitationClient';
 import { type Group } from '../../../types/backend';
+import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion.ts';
 import { getAccessToken } from '../../../utils/getAccessToken';
 import { getMyGroups } from '../../../utils/getMyGroups';
+import { normalizeAccessionCase } from '../../../utils/normalizeAccessionCase.ts';
 import { getSegmentNames } from '../../../utils/sequenceTypeHelpers';
 
-const accessionVersion = Astro.params.accessionVersion!;
+const rawAccessionVersion = Astro.params.accessionVersion!;
+
+const accessionVersion = normalizeAccessionCase(rawAccessionVersion, getWebsiteConfig().accessionPrefix);
+if (accessionVersion !== rawAccessionVersion) {
+    return Astro.redirect(`/seq/${accessionVersion}`);
+}
+
+const { accession } = parseAccessionVersionFromString(accessionVersion);
+
+const sequenceCitationsPromise = seqSetsAreEnabled()
+    ? SeqSetCitationClient.create().call('getSequenceCitations', {
+          params: { accession }, // Display citations across all accession versions
+      })
+    : undefined;
 
 const sequenceDetailsTableData = await findOrganismAndData(accessionVersion);
 
@@ -24,6 +38,8 @@ if (
 ) {
     return Astro.redirect(sequenceDetailsTableData.value.result.redirectUrl);
 }
+
+const sequenceCitations = (await sequenceCitationsPromise)?.unwrapOr(undefined);
 
 const session = Astro.locals.session;
 const accessToken = getAccessToken(session);
@@ -42,64 +58,52 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
     title={sequenceDetailsTableData.isOk() ? accessionVersion : 'Sequence not found'}
     implicitOrganism={sequenceDetailsTableData.isOk() ? sequenceDetailsTableData.value.organism : undefined}
 >
-    {
-        sequenceDetailsTableData.isOk() &&
-            sequenceDetailsTableData.value.result.type === SequenceDetailsTableResultType.TABLE_DATA && (
-                <div slot='banner'>
-                    <SequencesBanner
-                        sequenceEntryHistory={sequenceDetailsTableData.value.result.sequenceEntryHistory}
+    {sequenceDetailsTableData.isOk() &&
+        sequenceDetailsTableData.value.result.type === SequenceDetailsTableResultType.TABLE_DATA && (
+            <div slot='banner'>
+                <SequencesBanner
+                    sequenceEntryHistory={sequenceDetailsTableData.value.result.sequenceEntryHistory}
+                    accessionVersion={accessionVersion}
+                />
+            </div>
+        )}
+    {sequenceDetailsTableData.match(
+        ({ organism, result }) => {
+            const showDownload = result.type === SequenceDetailsTableResultType.TABLE_DATA && !result.isRevocation;
+            return (
+                <>
+                    <SequencesDataTableTitle
                         accessionVersion={accessionVersion}
+                        sequenceEntryHistory={
+                            result.type === SequenceDetailsTableResultType.TABLE_DATA
+                                ? result.sequenceEntryHistory
+                                : undefined
+                        }
+                        showDownload={showDownload}
+                        showFastaDownloadButton={
+                            showDownload && getSegmentNames(getReferenceGenomes(organism)).length > 0
+                        }
                     />
-                </div>
-            )
-    }
-    {
-        sequenceDetailsTableData.match(
-            ({ organism, result }) => {
-                const showDownloadAndReport =
-                    result.type === SequenceDetailsTableResultType.TABLE_DATA && !result.isRevocation;
-                return (
-                    <>
-                        <SequencesDataTableTitle
+                    {result.type === SequenceDetailsTableResultType.TABLE_DATA && (
+                        <SequenceDataUI
+                            sequenceData={result}
+                            organism={organism}
+                            referenceGenomesInfo={getReferenceGenomes(organism)}
                             accessionVersion={accessionVersion}
-                            sequenceEntryHistory={
-                                result.type === SequenceDetailsTableResultType.TABLE_DATA
-                                    ? result.sequenceEntryHistory
-                                    : undefined
-                            }
-                            showDownload={showDownloadAndReport}
-                            showFastaDownloadButton={
-                                showDownloadAndReport && getSegmentNames(getReferenceGenomes(organism)).length > 0
-                            }
+                            schema={getSchema(organism)}
+                            clientConfig={clientConfig}
+                            myGroups={myGroups}
+                            accessToken={accessToken}
+                            sequenceFlaggingConfig={sequenceFlaggingConfig}
+                            sequenceCitations={sequenceCitations}
+                            client:load
                         />
-                        {result.type === SequenceDetailsTableResultType.TABLE_DATA &&
-                            (result.isRevocation ? (
-                                <RevocationEntryDataTable
-                                    tableData={result.tableData}
-                                    dataUseTermsHistory={result.dataUseTermsHistory}
-                                    referenceGenomesInfo={getReferenceGenomes(organism)}
-                                    segmentReferences={result.segmentReferences}
-                                />
-                            ) : (
-                                <SequenceDataUI
-                                    tableData={result.tableData}
-                                    organism={organism}
-                                    segmentReferences={result.segmentReferences}
-                                    referenceGenomesInfo={getReferenceGenomes(organism)}
-                                    accessionVersion={accessionVersion}
-                                    dataUseTermsHistory={result.dataUseTermsHistory}
-                                    schema={getSchema(organism)}
-                                    clientConfig={clientConfig}
-                                    myGroups={myGroups}
-                                    accessToken={accessToken}
-                                    sequenceFlaggingConfig={showDownloadAndReport ? sequenceFlaggingConfig : undefined}
-                                    client:load
-                                />
-                            ))}
-                    </>
-                );
-            },
-            () => <ErrorBox title='Entry not found'>No data found for accession version {accessionVersion}</ErrorBox>,
-        )
-    }
+                    )}
+                </>
+            );
+        },
+        () => (
+            <ErrorBox title='Entry not found'>No data found for accession version {accessionVersion}</ErrorBox>
+        ),
+    )}
 </BaseLayout>

@@ -54,6 +54,12 @@
   {{- if .required}}
   required: true
   {{- end }}
+  {{- if .requiredWhen}}
+  required_when: {{- toYaml .requiredWhen | nindent 4 }}
+  {{- end }}
+  {{- if .noInput}}
+  no_input: true
+  {{- end }}
 {{- end }}
 
 {{/* Expects an object { metadata: [...], referenceGenomes: {...} }

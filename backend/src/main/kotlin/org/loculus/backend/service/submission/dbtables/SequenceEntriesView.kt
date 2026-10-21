@@ -1,31 +1,32 @@
 package org.loculus.backend.service.submission
 
-import org.jetbrains.exposed.sql.Expression
-import org.jetbrains.exposed.sql.Op
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.alias
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.kotlin.datetime.datetime
-import org.jetbrains.exposed.sql.max
-import org.jetbrains.exposed.sql.or
-import org.jetbrains.exposed.sql.wrapAsExpression
+import org.jetbrains.exposed.v1.core.Expression
+import org.jetbrains.exposed.v1.core.Op
+import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.core.alias
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.max
+import org.jetbrains.exposed.v1.core.or
+import org.jetbrains.exposed.v1.core.wrapAsExpression
+import org.jetbrains.exposed.v1.datetime.datetime
+import org.jetbrains.exposed.v1.jdbc.select
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.Organism
-import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.PreprocessingAnnotation
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.Status
+import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.api.toPairs
 import org.loculus.backend.service.jacksonSerializableJsonb
 
 const val SEQUENCE_ENTRIES_VIEW_NAME = "sequence_entries_view"
 
 object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
-    val unprocessedDataColumn = jacksonSerializableJsonb<OriginalData<CompressedSequence>>(
-        "unprocessed_data",
+    val submittedDataColumn = jacksonSerializableJsonb<SubmittedData<CompressedSequence>>(
+        "submitted_data",
     ).nullable()
     val processedDataColumn =
         jacksonSerializableJsonb<ProcessedData<CompressedSequence>>("processed_data").nullable()
@@ -45,7 +46,6 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
     val statusColumn = varchar("status", 255)
     val processingResultColumn = varchar("processing_result", 255).nullable()
     val isRevocationColumn = bool("is_revocation").default(false)
-    val versionCommentColumn = varchar("version_comment", 255).nullable()
     val errorsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("errors").nullable()
     val warningsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("warnings").nullable()
     val pipelineVersionColumn = long("pipeline_version").nullable()

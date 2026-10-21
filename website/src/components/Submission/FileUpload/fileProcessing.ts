@@ -5,6 +5,7 @@ import JSZip from 'jszip';
 import { Result, ok, err } from 'neverthrow';
 import { type SVGProps, type ForwardRefExoticComponent } from 'react';
 
+import { DATA_SHEET_NAME, TEMPLATE_REFERENCE_SHEET_NAMES } from '../../../utils/metadataTemplateSheets';
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import PhDnaLight from '~icons/ph/dna-light';
 
@@ -19,28 +20,40 @@ export type FileKind<F extends ProcessedFile> = {
 
 const COMPRESSION_EXTENSIONS = ['zst', 'gz', 'zip', 'xz'];
 
+/** Splits a file name into its data extension and its trailing compression extension, if any. */
+const splitFileExtensions = (file: File): { dataExtension: string; compressionExtension: string | null } => {
+    const fileNameParts = file.name.toLowerCase().split('.');
+    const extension = fileNameParts[fileNameParts.length - 1];
+    const isCompressed = COMPRESSION_EXTENSIONS.includes(extension);
+    return {
+        dataExtension: isCompressed ? fileNameParts[fileNameParts.length - 2] : extension,
+        compressionExtension: isCompressed ? extension : null,
+    };
+};
+
 export const METADATA_FILE_KIND: FileKind<ProcessedFile> = {
     type: 'metadata',
     icon: MaterialSymbolsLightDataTableOutline,
     supportedExtensions: ['tsv', 'xlsx', 'xls'],
     processRawFile: async (file: File) => {
-        const fileNameParts = file.name.toLowerCase().split('.');
-        const extension = fileNameParts[fileNameParts.length - 1];
-        const isCompressed = COMPRESSION_EXTENSIONS.includes(extension);
-        const dataExtension = isCompressed ? fileNameParts[fileNameParts.length - 2] : extension;
-        const compressionExtension = isCompressed ? extension : null;
-        if (dataExtension === 'tsv' && !isCompressed) return ok(new RawFile(file));
-        if (dataExtension === 'tsv' && isCompressed) return ok(new CompressedFile(file));
+        const { dataExtension, compressionExtension } = splitFileExtensions(file);
+
+        if (METADATA_FILE_KIND.supportedExtensions.includes(dataExtension) && compressionExtension === 'xz') {
+            return err(
+                new Error(
+                    'LZMA compression (.xz files) is not supported for metadata files. ' +
+                        'Please use a different compression format or leave it uncompressed.',
+                ),
+            );
+        }
+
+        if (dataExtension === 'tsv') {
+            if (compressionExtension === null) return ok(new RawFile(file));
+            return ok(new CompressedFile(file));
+        }
+
         if (dataExtension === 'xlsx' || dataExtension === 'xls') {
-            if (isCompressed && compressionExtension === 'xz') {
-                return err(
-                    new Error(
-                        'LZMA compression (.xz files) is not supported with Excel files yet. ' +
-                            'Please use a different compression format for Excel files.',
-                    ),
-                );
-            }
-            const compression = isCompressed ? (compressionExtension as SupportedInBrowserCompressionKind) : null;
+            const compression = compressionExtension as SupportedInBrowserCompressionKind | null;
             const excelFile = new ExcelFile(file, compression);
             try {
                 await excelFile.init();
@@ -49,6 +62,7 @@ export const METADATA_FILE_KIND: FileKind<ProcessedFile> = {
             }
             return ok(excelFile);
         }
+
         return err(
             new Error(
                 `Unsupported file extension for metadata upload. Please use one of: ${METADATA_FILE_KIND.supportedExtensions.join(
@@ -63,7 +77,20 @@ export const FASTA_FILE_KIND: FileKind<ProcessedFile> = {
     type: 'fasta',
     icon: PhDnaLight,
     supportedExtensions: ['fasta'],
-    processRawFile: (file) => Promise.resolve(ok(new RawFile(file))),
+    processRawFile: (file) => {
+        const { dataExtension } = splitFileExtensions(file);
+        if (METADATA_FILE_KIND.supportedExtensions.includes(dataExtension)) {
+            return Promise.resolve(
+                err(
+                    new Error(
+                        `Unsupported file extension for sequence upload: .${dataExtension} files are metadata. ` +
+                            'Please use the metadata field instead.',
+                    ),
+                ),
+            );
+        }
+        return Promise.resolve(ok(new RawFile(file)));
+    },
 };
 
 /**
@@ -135,8 +162,6 @@ export interface ProcessedFile {
 export interface ProcessedPlainSegmentFile extends ProcessedFile {
     fastaHeader(): string | null;
 }
-
-export const dummy = 0;
 
 export class RawFile implements ProcessedFile {
     constructor(private innerFile: File) {}
@@ -241,8 +266,11 @@ export class ExcelFile implements ProcessedFile {
             cellDates: true,
         });
 
-        const firstSheetName = workbook.SheetNames[0];
-        let sheet = workbook.Sheets[firstSheetName];
+        // Parse the `Data` sheet by name when present, so reordering the template's sheets (e.g.
+        // dragging `Guidance` to the front) does not cause the reference sheet to be read as
+        // metadata. Fall back to the first sheet for arbitrary, non-template workbooks.
+        const dataSheetName = workbook.SheetNames.includes(DATA_SHEET_NAME) ? DATA_SHEET_NAME : workbook.SheetNames[0];
+        let sheet = workbook.Sheets[dataSheetName];
 
         // convert to JSON and back due to date formatting not working well otherwise
         const json = XLSX.utils.sheet_to_json(sheet);
@@ -258,16 +286,21 @@ export class ExcelFile implements ProcessedFile {
         });
         const rowCount = tsvContent.split('\n').length - 1;
         if (rowCount <= 0) {
-            throw new Error(`Sheet ${firstSheetName} is empty.`);
+            throw new Error(`Sheet ${dataSheetName} is empty.`);
         }
 
         const tsvBlob = new Blob([tsvContent], { type: 'text/tab-separated-values' });
         // filename needs to end in 'tsv' for the uploaded file
         const tsvFile = new File([tsvBlob], 'converted.tsv', { type: 'text/tab-separated-values' });
         this.tsvFile = tsvFile;
-        if (workbook.SheetNames.length > 1) {
+        // Any sheet other than the parsed one and the template's reference/lookup sheets is
+        // unexpected and should trigger the "you have unprocessed sheets" warning.
+        const unexpectedSheets = workbook.SheetNames.filter(
+            (sheetName) => sheetName !== dataSheetName && !TEMPLATE_REFERENCE_SHEET_NAMES.has(sheetName),
+        );
+        if (unexpectedSheets.length > 0) {
             this.processingWarnings.push(
-                `The file contains ${workbook.SheetNames.length} sheets, only the first sheet (${firstSheetName}; ${rowCount} rows) was processed.`,
+                `The file contains ${workbook.SheetNames.length} sheets, only the '${dataSheetName}' sheet (${rowCount} rows) was processed.`,
             );
         }
     }

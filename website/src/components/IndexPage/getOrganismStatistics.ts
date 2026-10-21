@@ -1,7 +1,13 @@
 import { DateTime, FixedOffsetZone } from 'luxon';
 
+import { getSchema } from '../../config.ts';
 import { LapisClient } from '../../services/lapisClient.ts';
-import { RELEASED_AT_FIELD, VERSION_STATUS_FIELD, IS_REVOCATION_FIELD } from '../../settings.ts';
+import {
+    EARLIEST_RELEASE_DATE_FIELD,
+    RELEASED_AT_FIELD,
+    VERSION_STATUS_FIELD,
+    IS_REVOCATION_FIELD,
+} from '../../settings.ts';
 import { versionStatuses } from '../../types/lapis';
 
 export type OrganismStatistics = {
@@ -66,6 +72,26 @@ const getTotalAndLastUpdatedAt = async (
         });
 };
 
+const hasEarliestReleaseDateField = (organism: string): boolean =>
+    getSchema(organism).metadata.some((field) => field.name === EARLIEST_RELEASE_DATE_FIELD);
+
+/**
+ * Builds the LAPIS filter that selects sequences released within the recency window.
+ *
+ * If the organism configures the `earliestReleaseDate` metadata field, that date field is used
+ * so that sequences imported from external sources (e.g. INSDC) are counted by their original
+ * release date rather than their import date into Loculus. Otherwise the internal
+ * `releasedAtTimestamp` is used.
+ */
+const getRecentFilter = (organism: string, numberDaysAgo: number): Record<string, string | number> => {
+    if (hasEarliestReleaseDateField(organism)) {
+        const recentDate = DateTime.utc().minus({ days: numberDaysAgo }).toISODate();
+        return { [`${EARLIEST_RELEASE_DATE_FIELD}From`]: recentDate };
+    }
+    const recentTimestamp = Math.floor(Date.now() / 1000 - numberDaysAgo * 24 * 60 * 60);
+    return { [`${RELEASED_AT_FIELD}From`]: recentTimestamp };
+};
+
 /**
  * Note: This method undercounts in cases where recently released sequences
  * are later revoked and then unrevoked (revised), all within the "recency window".
@@ -73,11 +99,11 @@ const getTotalAndLastUpdatedAt = async (
  * without needing to fetch individual accession lists.
  */
 const getRecent = async (organism: string, numberDaysAgo: number): Promise<number> => {
-    const recentTimestamp = Math.floor(Date.now() / 1000 - numberDaysAgo * 24 * 60 * 60);
+    const recentFilter = getRecentFilter(organism, numberDaysAgo);
     const client = LapisClient.createForOrganism(organism);
     const recentlyReleasedTotal = (
         await client.call('aggregated', {
-            [`${RELEASED_AT_FIELD}From`]: recentTimestamp,
+            ...recentFilter,
             version: 1,
         })
     )
@@ -85,7 +111,7 @@ const getRecent = async (organism: string, numberDaysAgo: number): Promise<numbe
         .unwrapOr(0);
     const recentlyReleasedThenRevokedTotal = (
         await client.call('aggregated', {
-            [`${RELEASED_AT_FIELD}From`]: recentTimestamp,
+            ...recentFilter,
             version: 1,
             [VERSION_STATUS_FIELD]: versionStatuses.revoked,
         })

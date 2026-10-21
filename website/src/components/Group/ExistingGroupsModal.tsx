@@ -63,7 +63,7 @@ export const ExistingGroupsModal: FC<ExistingGroupsModalProps> = ({
             <div className='mt-4 flex justify-center'>
                 <Button
                     type='button'
-                    className='btn loculusColor text-white'
+                    variant='primary'
                     onClick={() => void submitFromModal(newGroup)}
                     disabled={isSubmitting}
                 >

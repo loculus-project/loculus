@@ -17,14 +17,20 @@ import requests
 
 from .config import Config
 from .datatypes import (
+    FileCategory,
+    FileIdAndNameAndReadUrl,
     FileUploadInfo,
     ProcessedEntry,
-    UnprocessedData,
+    ProcessingContext,
     UnprocessedEntry,
 )
+from .external_services import create_retrying_session
 from .processing_functions import trim_ns
 
 logger = logging.getLogger(__name__)
+
+# Presigned URLs can be reused until they expire, so transient S3 errors can be retried
+upload_session = create_retrying_session(retries=3)
 
 
 class JwtCache:
@@ -74,7 +80,7 @@ def get_jwt(config: Config) -> str:
         raise Exception(error_msg)
 
 
-def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
+def parse_ndjson(ndjson_data: str, config: Config) -> Sequence[UnprocessedEntry]:
     entries: list[UnprocessedEntry] = []
     if len(ndjson_data) == 0:
         return entries
@@ -93,19 +99,31 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
             key: trim_ns(value) if value else None
             for key, value in unaligned_nucleotide_sequences.items()
         }
-        unprocessed_data = UnprocessedData(
-            submitter=json_object["submitter"],
-            group_id=json_object["groupId"],
-            submittedAt=json_object["submittedAt"],
-            submissionId=json_object["submissionId"],
+        submitted_files = json_object["data"].get("files")
+        file_mapping = (
+            {
+                FileCategory(category): [
+                    FileIdAndNameAndReadUrl(fileId=f["fileId"], name=f["name"], url=f.get("url"))
+                    for f in files
+                ]
+                for category, files in submitted_files.items()
+            }
+            if submitted_files
+            else None
+        )
+        entry = UnprocessedEntry(
+            context=ProcessingContext(
+                accession_version=f"{json_object['accession']}.{json_object['version']}",
+                group_id=int(json_object["groupId"]),
+                submitted_at=str(json_object["submittedAt"]),
+                submission_id=json_object["submissionId"],
+                insdc_ingest_group_id=config.insdc_ingest_group_id,
+            ),
             metadata=json_object["data"]["metadata"],
             unalignedNucleotideSequences=trimmed_unaligned_nucleotide_sequences
             if unaligned_nucleotide_sequences
             else {},
-        )
-        entry = UnprocessedEntry(
-            accessionVersion=f"{json_object['accession']}.{json_object['version']}",
-            data=unprocessed_data,
+            files=file_mapping,
         )
         entries.append(entry)
     return entries
@@ -137,7 +155,7 @@ def fetch_unprocessed_sequences(
             return etag, None
         case HTTPStatus.OK:
             try:
-                parsed_ndjson = parse_ndjson(response.text)
+                parsed_ndjson = parse_ndjson(response.text, config)
             except ValueError as e:
                 logger.error(f"[{request_id}] {e}")
                 time.sleep(10 * 1)
@@ -174,7 +192,13 @@ def submit_processed_sequences(
     }
     params = {"pipelineVersion": config.pipeline_version}
     logger.info(f"[{request_id}] Submitting {len(processed)} processed sequences to {url}")
-    response = requests.post(url, data=ndjson_string, headers=headers, params=params, timeout=10)
+    response = requests.post(
+        url,
+        data=ndjson_string,
+        headers=headers,
+        params=params,
+        timeout=config.backend_request_timeout_seconds,
+    )
     if not response.ok:
         Path("failed_submission.json").write_text(ndjson_string, encoding="utf-8")
         msg = (
@@ -204,7 +228,9 @@ def request_upload(group_id: int, number_of_files: int, config: Config) -> Seque
     logger.info(
         f"[{request_id}] Requesting upload for {number_of_files} files, group_id: {group_id}"
     )
-    response = requests.post(url, headers=headers, params=params, timeout=10)
+    response = requests.post(
+        url, headers=headers, params=params, timeout=config.backend_request_timeout_seconds
+    )
     if not response.ok:
         msg = f"[{request_id}] Upload request failed: {response.status_code}, request id: {response.headers.get('x-request-id')}, {response.text}"
         raise RuntimeError(msg)
@@ -214,9 +240,22 @@ def request_upload(group_id: int, number_of_files: int, config: Config) -> Seque
     return [FileUploadInfo(**item) for item in response.json()]
 
 
-def upload_embl_file_to_presigned_url(content: str, url: str) -> None:
-    headers = {"Content-Type": "chemical/x-embl-dl-nucleotide"}
-    r = requests.put(url, data=content.encode("utf-8"), headers=headers, timeout=60)
+def upload_embl_file_to_presigned_url(
+    content: str, url: str, extra_headers: dict | None = None
+) -> None:
+    headers = {"Content-Type": "text/plain; charset=utf-8"}
+    if extra_headers:
+        headers.update(extra_headers)
+    try:
+        r = upload_session.put(
+            url,
+            data=content.encode("utf-8"),
+            headers=headers,
+            timeout=60,
+        )
+    except requests.exceptions.RequestException as e:
+        msg = f"Upload failed: {e}"
+        raise RuntimeError(msg) from e
     if not r.ok:
         msg = f"Upload failed: {r.status_code}, {r.text}"
         raise RuntimeError(msg)

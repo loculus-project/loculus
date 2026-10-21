@@ -46,6 +46,17 @@ To allow for addition and removal of metadata fields without a version bump acro
 
 For segmented viruses we calculate the md5 hash of each segment and then, after grouping segments we concatenate the hashes of each segment before again hashing the hashes.
 
+#### Manual muting of specific hashes
+
+It is possible to manually specify hashes that should not be considered revisions on a per-accession basis. To do this, provide a URL to a TSV file listing the hashes to mute for each accession via the `muted_hashes_url` configuration field. The TSV file should minimally contain the columns `accession` and `hash_digest` (more columns are allowed, but won't be used in any way). Multiple hashes for the same accession should be listed as separate rows, e.g.:
+
+```
+accession	hash_digest
+DB_ACCESSION_1	hash_1
+DB_ACCESSION_1	hash_2
+DB_ACCESSION_2	hash_3
+```
+
 ### Grouping segmented viruses
 
 In NCBI sequences are uploaded for each segment separately. To upload all segments from the same isolate we need to group the sequences. We do this by grouping NCBI segments based on `ncbiIsolateName` and other isolate-specific attributes. Segments will only be uploaded together if all these parameters match. We also add additional checks to prevent multiple sequences of the same segment being grouped together. If a check fails, or the segments do not have isolate information, the segments will be ingested and uploaded to Loculus individually.
@@ -96,10 +107,10 @@ Indirect requirements:
 
 ## Deployment
 
-The pipeline runs twice in different kubernetes resources:
+The pipeline runs in different kubernetes resources:
 
-- An "approve" deployment that continuously polls the Loculus backend for sequences in status `WAITING_FOR_APPROVAL` and approves them, one replica with kubernetes resource type apps/v1/Deployment.
-- An "ingest" cronjob batch/v1/CronJob that runs the ingest pipeline regularly
+- An "approve" deployment (uses the `autoapprove.py` script) that continuously polls the Loculus backend for sequences in status `WAITING_FOR_APPROVAL` and approves them, one replica with kubernetes resource type apps/v1/Deployment.
+- An "ingest" cronjob batch/v1/CronJob that runs the ingest pipeline regularly. Cronjobs are scheduled to start ingest for a different organism every 30min to reduce load. To improve development experience ArgoCD spawns ingest pods using a PostSync-hook trigger (this waits for all other pods to be healthy after an ArgoCD sync - reducing ingest failures due to the backend being unreachable)
 
 In production the ingest pipeline runs in a docker container that takes a config file as input.
 

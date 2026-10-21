@@ -3,8 +3,8 @@ package org.loculus.backend.service.submission
 import com.github.luben.zstd.Zstd
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Organism
-import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.config.BackendConfig
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
@@ -28,7 +28,7 @@ class CompressionService(
     private val backendConfig: BackendConfig,
 ) {
 
-    fun compressOriginalSequence(sequenceData: GeneticSequence, organism: Organism) = compress(
+    fun compressSubmittedSequence(sequenceData: GeneticSequence, organism: Organism) = compress(
         sequenceData,
         compressionDictService.getDictForUnalignedSequence(organism),
     )
@@ -59,29 +59,30 @@ class CompressionService(
         compressedSequence,
     )
 
-    fun decompressSequencesInOriginalData(originalData: OriginalData<CompressedSequence>) = OriginalData(
-        originalData.metadata,
-        originalData
+    fun decompressSequencesInSubmittedData(submittedData: SubmittedData<CompressedSequence>) = SubmittedData(
+        submittedData.metadata,
+        submittedData
             .unalignedNucleotideSequences.mapValues {
                 when (val compressedSequence = it.value) {
                     null -> null
                     else -> decompressNucleotideSequence(compressedSequence)
                 }
             },
-        originalData.files,
+        submittedData.files,
     )
 
-    fun compressSequencesInOriginalData(originalData: OriginalData<GeneticSequence>, organism: Organism) = OriginalData(
-        originalData.metadata,
-        originalData
-            .unalignedNucleotideSequences.mapValues { (_, sequenceData) ->
-                when (sequenceData) {
-                    null -> null
-                    else -> compressOriginalSequence(sequenceData, organism)
-                }
-            },
-        originalData.files,
-    )
+    fun compressSequencesInSubmittedData(submittedData: SubmittedData<GeneticSequence>, organism: Organism) =
+        SubmittedData(
+            submittedData.metadata,
+            submittedData
+                .unalignedNucleotideSequences.mapValues { (_, sequenceData) ->
+                    when (sequenceData) {
+                        null -> null
+                        else -> compressSubmittedSequence(sequenceData, organism)
+                    }
+                },
+            submittedData.files,
+        )
 
     fun decompressSequencesInProcessedData(processedData: ProcessedData<CompressedSequence>) = ProcessedData(
         processedData.metadata,

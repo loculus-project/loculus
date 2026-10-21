@@ -138,7 +138,8 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                             {columnMapping !== null && (
                                 <>
                                     <Button
-                                        className='btn bg-white text-red-800 border-red-800'
+                                        variant='unstyled'
+                                        className='bg-white text-red-800 border-red-800'
                                         onClick={handleDiscard}
                                     >
                                         Discard Mapping
@@ -146,14 +147,10 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                                     <div className='flex-1' />
                                 </>
                             )}
-                            <Button className='btn' onClick={closeDialog}>
+                            <Button variant='neutral' onClick={closeDialog}>
                                 Cancel
                             </Button>
-                            <Button
-                                className='btn loculusColor text-white'
-                                onClick={handleSubmit}
-                                disabled={!submittable}
-                            >
+                            <Button variant='primary' onClick={handleSubmit} disabled={!submittable}>
                                 {saveButtonText}
                             </Button>
                         </div>
@@ -204,7 +201,7 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
         <ListboxOption
             key={`${header}-${field.name}`}
             value={field.name}
-            className={`data-[focus]:bg-primary-200 p-1 pl-3 rounded-sm ${selectedOption === field.name ? 'bg-gray-200' : ''}`}
+            className={`data-focus:bg-primary-200 p-1 pl-3 rounded-xs ${selectedOption === field.name ? 'bg-gray-200' : ''}`}
             data-tooltip-id={`${header}-${field.name}-tooltip`}
         >
             <span className={usedOptions.includes(field.name) ? 'text-gray-400' : ''}>
@@ -244,8 +241,8 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
                             </span>
                         </div>
                     </ListboxButton>
-                    <ListboxOptions anchor='top' className='bg-gray-100 p-1 rounded-sm text-sm'>
-                        <ListboxOption key={''} value={null} className='data-[focus]:bg-primary-200 p-1'>
+                    <ListboxOptions anchor='top' className='bg-gray-100 p-1 rounded-xs text-sm'>
+                        <ListboxOption key={''} value={null} className='data-focus:bg-primary-200 p-1'>
                             <span className='italic'>unmapped</span>
                         </ListboxOption>
                         <div key='border' className='w-10/12 mx-auto my-1 h-0.5 bg-gray-200'></div>

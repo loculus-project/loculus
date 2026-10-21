@@ -6,7 +6,7 @@ All commands mentioned in this section are run from the `backend` directory unle
 
 ### Prerequisites
 
-- [Java 21](https://adoptium.net/de/temurin/releases) – You can do this with [SDKMAN!](https://sdkman.io/).
+- [Java 25](https://adoptium.net/de/temurin/releases) – You can do this with [SDKMAN!](https://sdkman.io/).
 
 ### Starting the backend
 
@@ -21,7 +21,7 @@ All commands mentioned in this section are run from the `backend` directory unle
    -e POSTGRES_USER=postgres \
    -e POSTGRES_PASSWORD=unsecure \
    -p 5432:5432 \
-   postgres:latest
+   postgres:15.19
    ```
 
 2. Start the backend (including test config):

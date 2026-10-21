@@ -16,15 +16,17 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: {{ now | quote }}
+        valuesHash: {{ .Values | toJson | sha256sum | quote }}
       labels:
         app: loculus
         component: loculus-taxonomy-service
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
+      {{- include "loculus.podScheduling" $ | nindent 6 }}
       initContainers:
         - name: download-taxonomy-db
-          image: alpine:3
+          image: "{{ $.Values.images.alpine.repository }}:{{ $.Values.images.alpine.tag }}"
+          imagePullPolicy: "{{ $.Values.images.alpine.pullPolicy }}"
           command: ["sh", "-c"]
           args:
             - |

@@ -8,38 +8,46 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
-import org.jetbrains.exposed.sql.Count
-import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.LongColumnType
-import org.jetbrains.exposed.sql.Op
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
-import org.jetbrains.exposed.sql.Transaction
-import org.jetbrains.exposed.sql.VarCharColumnType
-import org.jetbrains.exposed.sql.alias
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.booleanParam
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.json.extract
-import org.jetbrains.exposed.sql.kotlin.datetime.dateTimeParam
-import org.jetbrains.exposed.sql.max
-import org.jetbrains.exposed.sql.not
-import org.jetbrains.exposed.sql.notExists
-import org.jetbrains.exposed.sql.or
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.statements.StatementType
-import org.jetbrains.exposed.sql.stringLiteral
-import org.jetbrains.exposed.sql.stringParam
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
-import org.jetbrains.exposed.sql.vendors.ForUpdateOption.PostgreSQL.ForUpdate
-import org.jetbrains.exposed.sql.vendors.ForUpdateOption.PostgreSQL.MODE
+import org.jetbrains.exposed.v1.core.ArrayColumnType
+import org.jetbrains.exposed.v1.core.Count
+import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.LongColumnType
+import org.jetbrains.exposed.v1.core.Op
+import org.jetbrains.exposed.v1.core.QueryParameter
+import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.TextColumnType
+import org.jetbrains.exposed.v1.core.VarCharColumnType
+import org.jetbrains.exposed.v1.core.alias
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.booleanParam
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greaterEq
+import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.less
+import org.jetbrains.exposed.v1.core.max
+import org.jetbrains.exposed.v1.core.not
+import org.jetbrains.exposed.v1.core.notExists
+import org.jetbrains.exposed.v1.core.or
+import org.jetbrains.exposed.v1.core.plus
+import org.jetbrains.exposed.v1.core.statements.StatementType
+import org.jetbrains.exposed.v1.core.stringLiteral
+import org.jetbrains.exposed.v1.core.stringParam
+import org.jetbrains.exposed.v1.core.vendors.ForUpdateOption.PostgreSQL.ForUpdate
+import org.jetbrains.exposed.v1.core.vendors.ForUpdateOption.PostgreSQL.MODE
+import org.jetbrains.exposed.v1.datetime.KotlinLocalDateTimeColumnType
+import org.jetbrains.exposed.v1.datetime.dateTimeParam
+import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.json.extract
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.AccessionVersionUnprocessedMetadata
+import org.loculus.backend.api.AccessionVersionSubmittedMetadata
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
@@ -52,7 +60,7 @@ import org.loculus.backend.api.FileIdAndNameAndReadUrl
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
-import org.loculus.backend.api.OriginalDataWithFileUrls
+import org.loculus.backend.api.PreprocessingAnnotation
 import org.loculus.backend.api.PreprocessingStatus.IN_PROCESSING
 import org.loculus.backend.api.PreprocessingStatus.PROCESSED
 import org.loculus.backend.api.ProcessedData
@@ -65,16 +73,23 @@ import org.loculus.backend.api.SequenceEntryVersionToEdit
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmissionIdMapping
+import org.loculus.backend.api.SubmittedContentWithFileUrls
+import org.loculus.backend.api.SubmittedData
+import org.loculus.backend.api.SubmittedDataDownloadEntry
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.api.fileIds
 import org.loculus.backend.api.getFileId
 import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
+import org.loculus.backend.metrics.STORE_PREPROCESSED_DATA_PHASE
+import org.loculus.backend.metrics.SUBMIT_PROCESSED_DATA_ENDPOINT
+import org.loculus.backend.metrics.SubmissionMetrics
 import org.loculus.backend.service.datauseterms.DataUseTermsTable
 import org.loculus.backend.service.files.FileId
 import org.loculus.backend.service.files.FilesDatabaseService
@@ -82,6 +97,7 @@ import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GroupEntity
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
+import org.loculus.backend.service.serialize
 import org.loculus.backend.service.submission.SequenceEntriesTable.accessionColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.groupIdColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.versionColumn
@@ -108,6 +124,7 @@ class SubmissionDatabaseService(
     private val processedSequenceEntryValidatorFactory: ProcessedSequenceEntryValidatorFactory,
     private val externalMetadataValidatorFactory: ExternalMetadataValidatorFactory,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
+    private val backendConfig: BackendConfig,
     private val fileMappingPreconditionValidator: FileMappingPreconditionValidator,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val groupManagementDatabaseService: GroupManagementDatabaseService,
@@ -119,6 +136,8 @@ class SubmissionDatabaseService(
     private val processedDataPostprocessor: ProcessedDataPostprocessor,
     private val auditLogger: AuditLogger,
     private val dateProvider: DateProvider,
+    private val submissionMetrics: SubmissionMetrics,
+    // A whole batch is serialized in memory before it is stored, so raising this multiplies peak heap.
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
 ) {
     private var lastPreprocessedDataUpdate: String? = null
@@ -167,7 +186,7 @@ class SubmissionDatabaseService(
             .select(
                 table.accessionColumn,
                 table.versionColumn,
-                table.unprocessedDataColumn,
+                table.submittedDataColumn,
                 table.submissionIdColumn,
                 table.submitterColumn,
                 table.groupIdColumn,
@@ -192,13 +211,13 @@ class SubmissionDatabaseService(
             .chunked(streamBatchSize)
             .map { chunk ->
                 val chunkOfUnprocessedData = chunk.map {
-                    val originalData = compressionService.decompressSequencesInOriginalData(
-                        it[table.unprocessedDataColumn]!!,
+                    val submittedData = compressionService.decompressSequencesInSubmittedData(
+                        it[table.submittedDataColumn]!!,
                     )
-                    val originalDataWithFileUrls = OriginalDataWithFileUrls(
-                        originalData.metadata,
-                        originalData.unalignedNucleotideSequences,
-                        originalData.files?.let {
+                    val submittedDataWithFileUrls = SubmittedContentWithFileUrls(
+                        submittedData.metadata,
+                        submittedData.unalignedNucleotideSequences,
+                        submittedData.files?.let {
                             it.mapValues {
                                 it.value.map { f ->
                                     val presignedUrl = s3Service.createUrlToReadPrivateFile(f.fileId)
@@ -210,7 +229,7 @@ class SubmissionDatabaseService(
                     UnprocessedData(
                         accession = it[table.accessionColumn],
                         version = it[table.versionColumn],
-                        data = originalDataWithFileUrls,
+                        data = submittedDataWithFileUrls,
                         submissionId = it[table.submissionIdColumn],
                         submitter = it[table.submitterColumn],
                         groupId = it[table.groupIdColumn],
@@ -228,31 +247,44 @@ class SubmissionDatabaseService(
     ): List<UnprocessedData> {
         log.info { "updating status to processing. Number of sequence entries: ${sequenceEntries.size}" }
 
-        val table = SequenceEntriesPreprocessedDataTable
-        val now = dateProvider.getCurrentDateTime()
-
-        table.batchInsert(sequenceEntries, ignore = true, shouldReturnGeneratedValues = false) {
-            this[table.accessionColumn] = it.accession
-            this[table.versionColumn] = it.version
-            this[table.pipelineVersionColumn] = pipelineVersion
-            this[table.processingStatusColumn] = IN_PROCESSING.name
-            this[table.startedProcessingAtColumn] = now
+        if (sequenceEntries.isEmpty()) {
+            return emptyList()
         }
 
-        // Query back to reliably determine which entries were actually claimed by this pipeline.
-        // We match on the exact startedProcessingAt timestamp to distinguish our inserts
-        // from entries claimed by concurrent pipelines.
-        val claimedKeys = table
-            .select(table.accessionColumn, table.versionColumn)
-            .where {
-                (table.pipelineVersionColumn eq pipelineVersion) and
-                    (table.startedProcessingAtColumn eq now) and
-                    (table.accessionColumn to table.versionColumn).inList(
-                        sequenceEntries.map { it.accession to it.version },
-                    )
+        // One statement per batch, so the per statement tracker trigger fires once per batch
+        // rather than once per claimed entry. RETURNING reports exactly the rows this claim
+        // inserted, so entries another pipeline already holds are simply absent.
+        val sql = """
+            INSERT INTO $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME (
+                accession,
+                version,
+                pipeline_version,
+                processing_status,
+                started_processing_at
+            )
+            SELECT claimed.accession, claimed.version, ?::bigint, '${IN_PROCESSING.name}', ?::timestamp
+            FROM unnest(?::text[], ?::bigint[]) AS claimed(accession, version)
+            ON CONFLICT (accession, version, pipeline_version) DO NOTHING
+            RETURNING accession, version
+        """.trimIndent()
+
+        val claimedKeys = TransactionManager.current().exec(
+            sql,
+            args = listOf(
+                LongColumnType() to pipelineVersion,
+                KotlinLocalDateTimeColumnType() to dateProvider.getCurrentDateTime(),
+                ArrayColumnType<String, List<String>>(TextColumnType()) to sequenceEntries.map { it.accession },
+                ArrayColumnType<Long, List<Long>>(LongColumnType()) to sequenceEntries.map { it.version },
+            ),
+            // SELECT so that Exposed runs executeQuery and the RETURNING rows can be read.
+            explicitStatementType = StatementType.SELECT,
+        ) { resultSet ->
+            buildSet {
+                while (resultSet.next()) {
+                    add(AccessionVersion(resultSet.getString("accession"), resultSet.getLong("version")))
+                }
             }
-            .map { Pair(it[table.accessionColumn], it[table.versionColumn]) }
-            .toSet()
+        }.orEmpty()
 
         if (claimedKeys.size < sequenceEntries.size) {
             val skippedCount = sequenceEntries.size - claimedKeys.size
@@ -261,39 +293,49 @@ class SubmissionDatabaseService(
             }
         }
 
-        return sequenceEntries.filter { Pair(it.accession, it.version) in claimedKeys }
+        return sequenceEntries.filter { AccessionVersion(it.accession, it.version) in claimedKeys }
     }
 
     fun updateProcessedData(inputStream: InputStream, organism: Organism, pipelineVersion: Long) {
+        submissionMetrics.timeWritePhase(
+            SUBMIT_PROCESSED_DATA_ENDPOINT,
+            organism.name,
+            STORE_PREPROCESSED_DATA_PHASE,
+        ) {
+            updateProcessedDataAndRecordCount(inputStream, organism, pipelineVersion)
+        }
+    }
+
+    private fun updateProcessedDataAndRecordCount(inputStream: InputStream, organism: Organism, pipelineVersion: Long) {
         log.info { "updating processed data" }
-        val reader = BufferedReader(InputStreamReader(inputStream))
 
         val processedAccessionVersions = mutableListOf<String>()
+        val seenAccessionVersions = mutableSetOf<AccessionVersion>()
         val processedFiles = mutableMapOf<AccessionVersion, Set<FileId>>()
         val processingResultCounts = mutableMapOf<ProcessingResult, Int>()
-        reader.lineSequence().forEach { line ->
-            val submittedProcessedData = try {
-                objectMapper.readValue<SubmittedProcessedData>(line)
-            } catch (e: JacksonException) {
-                throw BadRequestException("Failed to deserialize NDJSON line: ${e.message}", e)
-            }
-            submittedProcessedData.data.files?.let { fileMapping ->
-                fileMappingPreconditionValidator
-                    .validateFilenameCharacters(fileMapping)
-                    .validateFilenamesAreUnique(fileMapping)
-                    .validateCategoriesMatchOutputSchema(fileMapping, organism)
-                    .validateMultipartUploads(fileMapping.fileIds)
-                    .validateFilesExist(fileMapping.fileIds)
-                val accessionVersion =
-                    AccessionVersion(submittedProcessedData.accession, submittedProcessedData.version)
-                processedFiles[accessionVersion] = fileMapping.fileIds
-            }
+        BufferedReader(InputStreamReader(inputStream)).use { reader ->
+            // Process the NDJSON stream in chunks so DB lookups are batched without buffering the whole request.
+            reader.lineSequence().chunked(streamBatchSize).forEach { lines ->
+                val submittedProcessedDataBatch = lines.map { parseSubmittedProcessedDataLine(it) }
 
-            val processingResult = submittedProcessedData.processingResult()
+                val filesToValidate = validateFileMappingsAndCollectFileIds(
+                    submittedProcessedDataBatch,
+                    organism,
+                    processedFiles,
+                )
+                validateFilesBelongToSubmittingGroups(filesToValidate)
 
-            insertProcessedData(submittedProcessedData, organism, pipelineVersion)
-            processedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
-            processingResultCounts.merge(processingResult, 1, Int::plus)
+                val storedResults = submittedProcessedDataBatch.map {
+                    prepareProcessedResultForStorage(it, organism)
+                }
+                rejectDuplicates(storedResults, seenAccessionVersions)
+                storeProcessedResults(storedResults, pipelineVersion)
+
+                submittedProcessedDataBatch.forEach { submittedProcessedData ->
+                    processedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
+                    processingResultCounts.merge(submittedProcessedData.processingResult(), 1, Int::plus)
+                }
+            }
         }
 
         if (processedFiles.isNotEmpty()) {
@@ -322,6 +364,48 @@ class SubmissionDatabaseService(
                 "Processing result counts: " +
                 processingResultCounts.entries.joinToString { "${it.key}=${it.value}" },
         )
+
+        submissionMetrics.recordProcessedSequencesStored(
+            organism = organism.name,
+            count = processedAccessionVersions.size,
+        )
+    }
+
+    private fun parseSubmittedProcessedDataLine(line: String) = try {
+        objectMapper.readValue<SubmittedProcessedData>(line)
+    } catch (e: JacksonException) {
+        throw BadRequestException("Failed to deserialize NDJSON line: ${e.message}", e)
+    }
+
+    private fun validateFileMappingsAndCollectFileIds(
+        submittedProcessedDataBatch: List<SubmittedProcessedData>,
+        organism: Organism,
+        processedFiles: MutableMap<AccessionVersion, Set<FileId>>,
+    ): Map<AccessionVersion, Set<FileId>> {
+        val filesByAccessionVersion = mutableMapOf<AccessionVersion, Set<FileId>>()
+        val allFileIds = mutableSetOf<FileId>()
+
+        submittedProcessedDataBatch.forEach { submittedProcessedData ->
+            submittedProcessedData.data.files?.let { fileMapping ->
+                fileMappingPreconditionValidator
+                    .validateFilenameCharacters(fileMapping)
+                    .validateFilenamesAreUnique(fileMapping)
+                    // no file-ID uniqueness check: would break reprocessing of older entries
+                    .validateCategoriesMatchOutputSchema(fileMapping, organism)
+
+                val accessionVersion =
+                    AccessionVersion(submittedProcessedData.accession, submittedProcessedData.version)
+                processedFiles[accessionVersion] = fileMapping.fileIds
+                filesByAccessionVersion[accessionVersion] = fileMapping.fileIds
+                allFileIds.addAll(fileMapping.fileIds)
+            }
+        }
+
+        fileMappingPreconditionValidator
+            .validateMultipartUploads(allFileIds)
+            .validateFilesExist(allFileIds)
+
+        return filesByAccessionVersion
     }
 
     fun updateExternalMetadata(inputStream: InputStream, organism: Organism, externalMetadataUpdater: String) {
@@ -401,11 +485,17 @@ class SubmissionDatabaseService(
         }
     }
 
-    private fun insertProcessedData(
+    private data class StoredProcessedResult(
+        val submitted: SubmittedProcessedData,
+        val processedData: ProcessedData<CompressedSequence>,
+        val errors: List<PreprocessingAnnotation>,
+        val warnings: List<PreprocessingAnnotation>,
+    )
+
+    private fun prepareProcessedResultForStorage(
         submittedProcessedData: SubmittedProcessedData,
         organism: Organism,
-        pipelineVersion: Long,
-    ) {
+    ): StoredProcessedResult {
         val submittedErrors = submittedProcessedData.errors.orEmpty()
         val submittedWarnings = submittedProcessedData.warnings.orEmpty()
         val processedData = when {
@@ -413,25 +503,86 @@ class SubmissionDatabaseService(
             else -> submittedProcessedData.data // No need to validate if there are errors, can't be released anyway
         }
 
-        val table = SequenceEntriesPreprocessedDataTable
-        val numberInserted =
-            table.update(
-                where = {
-                    table.accessionVersionEquals(submittedProcessedData) and
-                        table.statusIs(IN_PROCESSING) and
-                        (table.pipelineVersionColumn eq pipelineVersion)
-                },
-            ) {
-                it[processingStatusColumn] = PROCESSED.name
-                it[processedDataColumn] =
-                    processedDataPostprocessor.prepareForStorage(processedData, organism)
-                it[errorsColumn] = submittedErrors
-                it[warningsColumn] = submittedWarnings
-                it[finishedProcessingAtColumn] = dateProvider.getCurrentDateTime()
-            }
+        return StoredProcessedResult(
+            submitted = submittedProcessedData,
+            processedData = processedDataPostprocessor.prepareForStorage(processedData, organism),
+            errors = submittedErrors,
+            warnings = submittedWarnings,
+        )
+    }
 
-        if (numberInserted != 1) {
-            throwInsertFailedException(submittedProcessedData, pipelineVersion)
+    /**
+     * One statement per batch updates a repeated accession version only once, and from an
+     * arbitrary one of the duplicates. [seen] spans the whole request, so a duplicate is
+     * rejected the same way wherever it falls relative to a batch boundary.
+     */
+    private fun rejectDuplicates(storedResults: List<StoredProcessedResult>, seen: MutableSet<AccessionVersion>) {
+        for (storedResult in storedResults) {
+            val accessionVersion = AccessionVersion(storedResult.submitted.accession, storedResult.submitted.version)
+            if (!seen.add(accessionVersion)) {
+                throw UnprocessableEntityException(
+                    "Processed results contain duplicate accession version " +
+                        accessionVersion.displayAccessionVersion(),
+                )
+            }
+        }
+    }
+
+    /**
+     * Stores a whole batch of results in one statement. Writing them one by one made every
+     * record fire the per statement tracker trigger, and all workers then queued on the single
+     * row of table_update_tracker. One statement per batch means that trigger now fires once per
+     * batch, and it keeps deriving the organism from sequence_entries itself.
+     */
+    private fun storeProcessedResults(storedResults: List<StoredProcessedResult>, pipelineVersion: Long) {
+        if (storedResults.isEmpty()) {
+            return
+        }
+
+        val sql = """
+            UPDATE $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME AS preprocessed
+            SET processing_status = '${PROCESSED.name}',
+                processed_data = submitted.processed_data::jsonb,
+                errors = submitted.errors::jsonb,
+                warnings = submitted.warnings::jsonb,
+                finished_processing_at = ?::timestamp
+            FROM unnest(?::text[], ?::bigint[], ?::text[], ?::text[], ?::text[])
+                AS submitted(accession, version, processed_data, errors, warnings)
+            WHERE preprocessed.accession = submitted.accession
+              AND preprocessed.version = submitted.version
+              AND preprocessed.pipeline_version = ?::bigint
+              AND preprocessed.processing_status = '${IN_PROCESSING.name}'
+            RETURNING preprocessed.accession, preprocessed.version
+        """.trimIndent()
+
+        val textArrayColumnType = ArrayColumnType<String, List<String>>(TextColumnType())
+        val longArrayColumnType = ArrayColumnType<Long, List<Long>>(LongColumnType())
+        val updated = TransactionManager.current().exec(
+            sql,
+            args = listOf(
+                KotlinLocalDateTimeColumnType() to dateProvider.getCurrentDateTime(),
+                textArrayColumnType to storedResults.map { it.submitted.accession },
+                longArrayColumnType to storedResults.map { it.submitted.version },
+                textArrayColumnType to storedResults.map { serialize(it.processedData) },
+                textArrayColumnType to storedResults.map { serialize(it.errors) },
+                textArrayColumnType to storedResults.map { serialize(it.warnings) },
+                LongColumnType() to pipelineVersion,
+            ),
+            // SELECT so that Exposed runs executeQuery and the RETURNING rows can be read.
+            explicitStatementType = StatementType.SELECT,
+        ) { resultSet ->
+            buildSet {
+                while (resultSet.next()) {
+                    add(AccessionVersion(resultSet.getString("accession"), resultSet.getLong("version")))
+                }
+            }
+        }.orEmpty()
+
+        val failedResult = storedResults.firstOrNull {
+            AccessionVersion(it.submitted.accession, it.submitted.version) !in updated
+        }
+        if (failedResult != null) {
+            throwInsertFailedException(failedResult.submitted, pipelineVersion)
         }
     }
 
@@ -472,7 +623,6 @@ class SubmissionDatabaseService(
         organism: Organism,
     ) = try {
         throwIfIsSubmissionForWrongOrganism(submittedProcessedData, organism)
-        validateFilesBelongToSubmittingGroup(submittedProcessedData)
         val processedData = makeSequencesUpperCase(submittedProcessedData.data)
         processedSequenceEntryValidatorFactory.create(organism).validate(processedData)
     } catch (validationException: ProcessingValidationException) {
@@ -555,27 +705,32 @@ class SubmissionDatabaseService(
         )
     }
 
-    private fun validateFilesBelongToSubmittingGroup(submittedProcessedData: SubmittedProcessedData) {
-        // TODO(#3951): This implementation is very inefficient as it makes two requests to the database for
-        //  each sequence entry.
-        if (submittedProcessedData.data.files == null) {
+    private fun validateFilesBelongToSubmittingGroups(filesByAccessionVersion: Map<AccessionVersion, Set<FileId>>) {
+        if (filesByAccessionVersion.isEmpty()) {
             return
         }
-        val sequenceEntryGroup = SequenceEntriesTable
-            .select(groupIdColumn)
-            .where {
-                (accessionColumn eq submittedProcessedData.accession) and
-                    (versionColumn eq submittedProcessedData.version)
+
+        // Files referenced by processed data may become public after release, so they must belong to the sequence group.
+        // Load ownership for the whole chunk to avoid one sequence query and one file query per entry.
+        val sequenceEntryGroups = SequenceEntriesTable
+            .select(accessionColumn, versionColumn, groupIdColumn)
+            .where { SequenceEntriesTable.accessionVersionIsIn(filesByAccessionVersion.keys.toList()) }
+            .associate {
+                AccessionVersion(it[accessionColumn], it[versionColumn]) to it[groupIdColumn]
             }
-            .single()[groupIdColumn]
-        val fileIds = submittedProcessedData.data.files.flatMap { it.value.map { it.fileId } }.toSet()
-        val fileGroups = filesDatabaseService.getGroupIds(fileIds)
-        fileGroups.forEach { (fileId, fileGroup) ->
-            if (fileGroup != sequenceEntryGroup) {
-                throw UnprocessableEntityException(
-                    "Accession version ${submittedProcessedData.displayAccessionVersion()} belongs to " +
-                        "group $sequenceEntryGroup but the attached file $fileId belongs to the group $fileGroup.",
-                )
+        val fileGroups = filesDatabaseService.getGroupIds(filesByAccessionVersion.values.flatten().toSet())
+
+        filesByAccessionVersion.forEach { (accessionVersion, fileIds) ->
+            // Missing accession/version errors are handled later by insertProcessedData.
+            val sequenceEntryGroup = sequenceEntryGroups[accessionVersion] ?: return@forEach
+            fileIds.forEach { fileId ->
+                val fileGroup = fileGroups[fileId]
+                if (fileGroup != sequenceEntryGroup) {
+                    throw UnprocessableEntityException(
+                        "Accession version ${accessionVersion.displayAccessionVersion()} belongs to " +
+                            "group $sequenceEntryGroup but the attached file $fileId belongs to the group $fileGroup.",
+                    )
+                }
             }
         }
     }
@@ -743,7 +898,6 @@ class SubmissionDatabaseService(
             SequenceEntriesView.accessionColumn,
             SequenceEntriesView.versionColumn,
             SequenceEntriesView.isRevocationColumn,
-            SequenceEntriesView.versionCommentColumn,
             SequenceEntriesView.jointDataColumn,
             SequenceEntriesView.submitterColumn,
             SequenceEntriesView.groupIdColumn,
@@ -786,7 +940,6 @@ class SubmissionDatabaseService(
                     DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn]),
                     it[DataUseTermsTable.restrictedUntilColumn],
                 ),
-                versionComment = it[SequenceEntriesView.versionCommentColumn],
                 dataUseTermsChangeDate = it[DataUseTermsTable.changeDateColumn],
             )
         }
@@ -957,21 +1110,29 @@ class SubmissionDatabaseService(
             thatAccessionsExist(accessions)
                 .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
                 .andThatSequenceEntriesAreInStates(listOf(Status.APPROVED_FOR_RELEASE))
+                .andThatLatestVersionsAreNotRevocations()
                 .andThatOrganismIs(organism)
         }
 
+        val metadata = versionComment?.let { mapOf("versionComment" to it) } ?: emptyMap()
+        val submittedData = compressionService.compressSequencesInSubmittedData(
+            SubmittedData(metadata = metadata, unalignedNucleotideSequences = emptyMap()),
+            organism,
+        )
+        val submittedDataParam = QueryParameter(submittedData, SequenceEntriesTable.submittedDataColumn.columnType)
+
         SequenceEntriesTable.insert(
             SequenceEntriesTable.select(
-                SequenceEntriesTable.accessionColumn, SequenceEntriesTable.versionColumn.plus(1),
-                when (versionComment) {
-                    null -> Op.nullOp()
-                    else -> stringParam(versionComment)
-                },
+                SequenceEntriesTable.accessionColumn,
+                SequenceEntriesTable.versionColumn.plus(1),
                 SequenceEntriesTable.submissionIdColumn,
                 stringParam(authenticatedUser.username),
                 SequenceEntriesTable.groupIdColumn,
                 dateTimeParam(dateProvider.getCurrentDateTime()),
-                booleanParam(true), SequenceEntriesTable.organismColumn,
+                booleanParam(true),
+                SequenceEntriesTable.organismColumn,
+                submittedDataParam,
+                submittedDataParam,
             ).where {
                 (
                     SequenceEntriesTable.accessionColumn inList
@@ -982,13 +1143,14 @@ class SubmissionDatabaseService(
             columns = listOf(
                 SequenceEntriesTable.accessionColumn,
                 SequenceEntriesTable.versionColumn,
-                SequenceEntriesTable.versionCommentColumn,
                 SequenceEntriesTable.submissionIdColumn,
                 SequenceEntriesTable.submitterColumn,
                 SequenceEntriesTable.groupIdColumn,
                 SequenceEntriesTable.submittedAtTimestampColumn,
                 SequenceEntriesTable.isRevocationColumn,
                 SequenceEntriesTable.organismColumn,
+                SequenceEntriesTable.archiveOfSubmittedDataColumn,
+                SequenceEntriesTable.submittedDataColumn,
             ),
         )
 
@@ -1113,22 +1275,49 @@ class SubmissionDatabaseService(
                 .andThatOrganismIs(organism)
         }
 
+        val hasConsensusSequence = editedSequenceEntryData.data.unalignedNucleotideSequences.values
+            .any { !it.isNullOrBlank() }
+        if (backendConfig.consensusSequencesEnabled(organism)) {
+            if (!hasConsensusSequence) {
+                throw UnprocessableEntityException(
+                    "Edited data for accession version " +
+                        "${editedSequenceEntryData.displayAccessionVersion()} of organism ${organism.name} " +
+                        "must contain at least one consensus sequence.",
+                )
+            }
+        } else if (hasConsensusSequence) {
+            throw UnprocessableEntityException(
+                "Sequence uploads are not allowed for organism ${organism.name}.",
+            )
+        }
+
         editedSequenceEntryData.data.files?.let { fileMapping ->
             fileMappingPreconditionValidator
                 .validateFilenameCharacters(fileMapping)
                 .validateFilenamesAreUnique(fileMapping)
+                .validateFileIdsAreUnique(fileMapping)
                 .validateCategoriesMatchSubmissionSchema(fileMapping, organism)
                 .validateMultipartUploads(fileMapping.fileIds)
                 .validateFilesExist(fileMapping.fileIds)
+            validateFilesBelongToSubmittingGroups(
+                mapOf(
+                    AccessionVersion(editedSequenceEntryData.accession, editedSequenceEntryData.version) to
+                        fileMapping.fileIds,
+                ),
+            )
         }
 
+        val compressedEditedSequenceEntryData = compressionService.compressSequencesInSubmittedData(
+            editedSequenceEntryData.data,
+            organism,
+        )
         SequenceEntriesTable.update(
             where = {
                 SequenceEntriesTable.accessionVersionIsIn(listOf(editedSequenceEntryData))
             },
         ) {
-            it[unprocessedDataColumn] = compressionService
-                .compressSequencesInOriginalData(editedSequenceEntryData.data, organism)
+            it[submittedDataColumn] = compressedEditedSequenceEntryData
+            it[archiveOfSubmittedDataColumn] = compressedEditedSequenceEntryData
         }
 
         SequenceEntriesPreprocessedDataTable.deleteWhere {
@@ -1164,7 +1353,7 @@ class SubmissionDatabaseService(
             SequenceEntriesView.groupIdColumn,
             SequenceEntriesView.statusColumn,
             SequenceEntriesView.processedDataColumn,
-            SequenceEntriesView.unprocessedDataColumn,
+            SequenceEntriesView.submittedDataColumn,
             SequenceEntriesView.errorsColumn,
             SequenceEntriesView.warningsColumn,
             SequenceEntriesView.isRevocationColumn,
@@ -1188,8 +1377,8 @@ class SubmissionDatabaseService(
                 selectedSequenceEntry[SequenceEntriesView.processedDataColumn]!!,
                 organism,
             ),
-            originalData = compressionService.decompressSequencesInOriginalData(
-                selectedSequenceEntry[SequenceEntriesView.unprocessedDataColumn]!!,
+            submittedData = compressionService.decompressSequencesInSubmittedData(
+                selectedSequenceEntry[SequenceEntriesView.submittedDataColumn]!!,
             ),
             errors = selectedSequenceEntry[SequenceEntriesView.errorsColumn],
             warnings = selectedSequenceEntry[SequenceEntriesView.warningsColumn],
@@ -1197,29 +1386,12 @@ class SubmissionDatabaseService(
         )
     }
 
-    /**
-     * Returns AccessionVersions submitted by groups that the given user is part of
-     * and that are approved for release.
-     */
-    fun getApprovedUserAccessionVersions(authenticatedUser: AuthenticatedUser): List<AccessionVersion> =
-        SequenceEntriesView.select(
-            SequenceEntriesView.accessionColumn,
-            SequenceEntriesView.versionColumn,
-        )
-            .where(SequenceEntriesView.statusIs(APPROVED_FOR_RELEASE))
-            .groupBy(getGroupCondition(null, authenticatedUser))
-            .map {
-                AccessionVersion(
-                    it[SequenceEntriesView.accessionColumn],
-                    it[SequenceEntriesView.versionColumn],
-                )
-            }
-
-    private fun unprocessedMetadataFilter(
+    private fun submittedMetadataFilter(
         authenticatedUser: AuthenticatedUser,
         organism: Organism,
         groupIdsFilter: List<Int>?,
         statusesFilter: List<Status>?,
+        accessionVersionsFilter: List<AccessionVersion>?,
     ): Op<Boolean> {
         val organismCondition = SequenceEntriesView.organismIs(organism)
         val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
@@ -1228,54 +1400,63 @@ class SubmissionDatabaseService(
         } else {
             Op.TRUE
         }
-        val conditions = organismCondition and groupCondition and statusCondition
+        val accessionVersionCondition = if (accessionVersionsFilter != null) {
+            SequenceEntriesView.accessionVersionIsIn(accessionVersionsFilter)
+        } else {
+            Op.TRUE
+        }
+        val conditions = organismCondition and groupCondition and statusCondition and accessionVersionCondition
 
         return conditions
     }
 
-    fun countUnprocessedMetadata(
+    fun countSubmittedMetadata(
         authenticatedUser: AuthenticatedUser,
         organism: Organism,
         groupIdsFilter: List<Int>?,
         statusesFilter: List<Status>?,
+        accessionVersionsFilter: List<AccessionVersion>?,
     ): Long = SequenceEntriesView
         .selectAll()
         .where(
-            unprocessedMetadataFilter(
+            submittedMetadataFilter(
                 authenticatedUser,
                 organism,
                 groupIdsFilter,
                 statusesFilter,
+                accessionVersionsFilter,
             ),
         )
         .count()
 
-    fun streamUnprocessedMetadata(
+    fun streamSubmittedMetadata(
         authenticatedUser: AuthenticatedUser,
         organism: Organism,
         groupIdsFilter: List<Int>?,
         statusesFilter: List<Status>?,
         fields: List<String>?,
-    ): Sequence<AccessionVersionUnprocessedMetadata> {
-        val unprocessedMetadata = SequenceEntriesView.unprocessedDataColumn
+        accessionVersionsFilter: List<AccessionVersion>?,
+    ): Sequence<AccessionVersionSubmittedMetadata> {
+        val submittedMetadata = SequenceEntriesView.submittedDataColumn
             // It's actually <Map<String, String>?> but exposed does not support nullable types here
             .extract<Map<String, String>>("metadata")
-            .alias("unprocessed_metadata")
+            .alias("submitted_metadata")
 
         return SequenceEntriesView
             .select(
-                unprocessedMetadata,
+                submittedMetadata,
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.submitterColumn,
                 SequenceEntriesView.isRevocationColumn,
             )
             .where(
-                unprocessedMetadataFilter(
+                submittedMetadataFilter(
                     authenticatedUser,
                     organism,
                     groupIdsFilter,
                     statusesFilter,
+                    accessionVersionsFilter,
                 ),
             )
             .fetchSize(streamBatchSize)
@@ -1283,15 +1464,79 @@ class SubmissionDatabaseService(
             .map {
                 // Revoked sequences have no original metadata, hence null can happen
                 @Suppress("USELESS_ELVIS")
-                val metadata = it[unprocessedMetadata] ?: null
+                val metadata = it[submittedMetadata] ?: null
                 val selectedMetadata = fields?.associateWith { field -> metadata?.get(field) }
                     ?: metadata
-                AccessionVersionUnprocessedMetadata(
+                AccessionVersionSubmittedMetadata(
                     it[SequenceEntriesView.accessionColumn],
                     it[SequenceEntriesView.versionColumn],
                     it[SequenceEntriesView.submitterColumn],
                     it[SequenceEntriesView.isRevocationColumn],
                     selectedMetadata,
+                )
+            }
+    }
+
+    private fun submittedDataDownloadConditions(
+        organism: Organism,
+        groupId: Int,
+        accessionsFilter: List<String>?,
+    ): Op<Boolean> {
+        val accessionsCondition = if (!accessionsFilter.isNullOrEmpty()) {
+            SequenceEntriesView.accessionColumn inList accessionsFilter
+        } else {
+            Op.TRUE
+        }
+
+        return SequenceEntriesView.organismIs(organism) and
+            (SequenceEntriesView.groupIdColumn eq groupId) and
+            SequenceEntriesView.statusIs(APPROVED_FOR_RELEASE) and
+            SequenceEntriesView.isMaxVersion and
+            (SequenceEntriesView.isRevocationColumn eq false) and
+            accessionsCondition
+    }
+
+    fun countSubmittedDataDownloadEntries(organism: Organism, groupId: Int, accessionsFilter: List<String>?): Long =
+        SequenceEntriesView
+            .select(SequenceEntriesView.accessionColumn)
+            .where(submittedDataDownloadConditions(organism, groupId, accessionsFilter))
+            .count()
+
+    fun streamSubmittedDataDownload(
+        organism: Organism,
+        groupId: Int,
+        accessionsFilter: List<String>?,
+    ): Sequence<SubmittedDataDownloadEntry> {
+        val submittedDataQuery = SequenceEntriesView.join(
+            SequenceEntriesTable,
+            JoinType.INNER,
+            additionalConstraint = {
+                (SequenceEntriesView.accessionColumn eq SequenceEntriesTable.accessionColumn) and
+                    (SequenceEntriesView.versionColumn eq SequenceEntriesTable.versionColumn)
+            },
+        )
+
+        return submittedDataQuery
+            .select(
+                SequenceEntriesView.accessionColumn,
+                SequenceEntriesView.versionColumn,
+                SequenceEntriesView.submissionIdColumn,
+                SequenceEntriesTable.submittedDataColumn,
+            )
+            .where(submittedDataDownloadConditions(organism, groupId, accessionsFilter))
+            .orderBy(SequenceEntriesView.accessionColumn to SortOrder.ASC)
+            .fetchSize(streamBatchSize)
+            .asSequence()
+            .map {
+                val compressedSubmittedData = it[SequenceEntriesTable.submittedDataColumn]!!
+                val decompressedSubmittedData = compressionService.decompressSequencesInSubmittedData(
+                    compressedSubmittedData,
+                )
+                SubmittedDataDownloadEntry(
+                    it[SequenceEntriesView.accessionColumn],
+                    it[SequenceEntriesView.versionColumn],
+                    it[SequenceEntriesView.submissionIdColumn],
+                    decompressedSubmittedData,
                 )
             }
     }
@@ -1322,12 +1567,14 @@ class SubmissionDatabaseService(
     }
 
     fun useNewerProcessingPipelineIfPossible(): Map<String, Long?> {
+        // The preprocessed-data tracker now holds one row per (organism, pipeline_version),
+        // so take the most recent timestamp across all of them to detect any new processing.
         val latestUpdate = transaction {
             UpdateTrackerTable
                 .select(UpdateTrackerTable.lastTimeUpdatedDbColumn)
                 .where { UpdateTrackerTable.tableNameColumn eq SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME }
                 .map { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] }
-                .firstOrNull()
+                .maxOrNull()
         }
 
         if (latestUpdate == null || latestUpdate == lastPreprocessedDataUpdate) {
@@ -1444,7 +1691,7 @@ class SubmissionDatabaseService(
             .toMap()
 }
 
-private fun Transaction.findNewPreprocessingPipelineVersion(organism: String): Long? {
+private fun JdbcTransaction.findNewPreprocessingPipelineVersion(organism: String): Long? {
     // Maybe we want to refactor this function: https://github.com/loculus-project/loculus/issues/3571
 
     // This query goes into the processed data and finds _any_ processed data that was processed
@@ -1532,7 +1779,6 @@ data class RawProcessedData(
     override val accession: Accession,
     override val version: Version,
     val isRevocation: Boolean,
-    val versionComment: String?,
     val submitter: String,
     val groupId: Int,
     val groupName: String,

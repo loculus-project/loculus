@@ -8,6 +8,7 @@ export const VERSION_STATUS_FIELD = 'versionStatus';
 export const IS_REVOCATION_FIELD = 'isRevocation';
 export const SUBMITTED_AT_FIELD = 'submittedAtTimestamp';
 export const RELEASED_AT_FIELD = 'releasedAtTimestamp';
+export const EARLIEST_RELEASE_DATE_FIELD = 'earliestReleaseDate';
 export const SUBMITTER_FIELD = 'submitter';
 export const GROUP_NAME_FIELD = 'groupName';
 export const GROUP_ID_FIELD = 'groupId';
@@ -15,6 +16,8 @@ export const DATA_USE_TERMS_FIELD = 'dataUseTerms';
 export const DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD = 'dataUseTermsRestrictedUntil';
 export const VERSION_COMMENT_FIELD = 'versionComment';
 export const SUBMISSION_ID_INPUT_FIELD = 'id';
+
+export const FILES_HEADER_PREFIX = 'files.';
 
 export const metadataDefaultDownloadDataFormat = 'tsv';
 export const sequenceDefaultDownloadDataFormat = 'fasta';

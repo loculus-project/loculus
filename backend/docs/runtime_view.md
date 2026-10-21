@@ -79,52 +79,54 @@ The new rows have an incremented version number (see diagram in the "Initial sub
 
 ### Database changes
 
-In following, the changes of the databases are shown given a series of example events.
+In following, the changes of the databases are shown given a series of example events. 
+
+Note that although the column is omitted here for ease of reading there is also an `archive_of_submitted_data` column. This is initially set as a copy of the `submitted_data` column, and is intended to be used as an immutable history of the original submission. Due to subsequent data migrations administrators might be forced to modify `submitted_data` in order for newer pipelines to successfully reprocess older data. For example, if host validation is added at a later time point old `submitted_data` entries with the metadata field `host:human` must be renamed to `host: homo sapiens` for validation to succeed, but `archive_of_submitted_data` would store the originally submitted field `host:human`. When revising sequences we expose only the `submitted_data` to users as `archive_of_submitted_data` might no longer be accepted by the current pipeline.
 
 **Event 1:** The user submits `[{data: d1}, {data: d2}]`.
 
-| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status   | is_revocation | original_data | processed_data | errors | warnings |
+| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status   | is_revocation | submitted_data | processed_data | errors | warnings |
 | --------- | ------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | -------- | ------------- | ------------- | -------------- | ------ | -------- |
 | 1         | 1       | user1     | t1           |                       |                        |             | RECEIVED | false         | d1            |                |        |          |
 | 2         | 1       | user1     | t1           |                       |                        |             | RECEIVED | false         | d2            |                |        |          |
 
 **Event 2:** The preprocessing pipeline processes the two sequence entries and found no errors.
 
-| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status            | is_revocation | original_data | processed_data | errors | warnings |
+| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status            | is_revocation | submitted_data | processed_data | errors | warnings |
 | --------- | ------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | ----------------- | ------------- | ------------- | -------------- | ------ | -------- |
 | 1         | 1       | user1     | t1           | t2                    | t3                     |             | PROCESSED         | false         | d1            | ...            | []     | []       |
 | 2         | 1       | user1     | t1           | t2                    | t3                     |             | PROCESSED         | false         | d2            | ...            | []     | []       |
 
 **Event 3:** The user approves accession 1 and rejects accession 2.
 
-| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | original_data | processed_data | errors | warnings |
+| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | submitted_data | processed_data | errors | warnings |
 | --------- | ------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | -------------------- | ------------- | ------------- | -------------- | ------ | -------- |
 | 1         | 1       | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE | false         | d1            | ...            | []     | []       |
 
 **Event 4:** The user revises: `[{accession: 1, data: d3}]`
 
-| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | original_data | processed_data | errors | warnings |
+| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | submitted_data | processed_data | errors | warnings |
 | --------- | ------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | -------------------- | ------------- | ------------- | -------------- | ------ | -------- |
 | 1         | 1       | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE | false         | d1            | ...            | []     | []       |
 | 1         | 2       | user1     | t5           |                       |                        |             | RECEIVED             | false         | d3            |                |        |          |
 
 **Event 5:** The preprocessing pipeline process the sequence entries and found no errors.
 
-| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | original_data | processed_data | errors | warnings |
+| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | submitted_data | processed_data | errors | warnings |
 | --------- | ------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | -------------------- | ------------- | ------------- | -------------- | ------ | -------- |
 | 1         | 1       | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE | false         | d1            | ...            | []     | []       |
 | 1         | 2       | user1     | t5           | t6                    | t7                     |             | PROCESSED            | false         | d3            | ...            | []     | []       |
 
 **Event 6:** The user approves the revision.
 
-| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | original_data | processed_data | errors | warnings |
+| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | submitted_data | processed_data | errors | warnings |
 | --------- | ------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | -------------------- | ------------- | ------------- | -------------- | ------ | -------- |
 | 1         | 1       | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE | false         | d1            | ...            | []     | []       |
 | 1         | 2       | user1     | t5           | t6                    | t7                     | t8          | APPROVED_FOR_RELEASE | false         | d3            | ...            | []     | []       |
 
 **Event 7:** The user revokes accession 1.
 
-| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | original_data | processed_data | errors | warnings |
+| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | submitted_data | processed_data | errors | warnings |
 | --------- | ------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | -------------------- | ------------- | ------------- | -------------- | ------ | -------- |
 | 1         | 1       | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE | false         | d1            | ...            | []     | []       |
 | 1         | 2       | user1     | t5           | t6                    | t7                     | t8          | APPROVED_FOR_RELEASE | false         | d3            | ...            | []     | []       |
@@ -132,14 +134,14 @@ In following, the changes of the databases are shown given a series of example e
 
 **Event 8:** The user rejects the revocation of accession 1.
 
-| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | original_data | processed_data | errors | warnings |
+| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | submitted_data | processed_data | errors | warnings |
 | --------- | ------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | -------------------- | ------------- | ------------- | -------------- | ------ | -------- |
 | 1         | 1       | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE | false         | d1            | ...            | []     | []       |
 | 1         | 2       | user1     | t5           | t6                    | t7                     | t8          | APPROVED_FOR_RELEASE | false         | d3            | ...            | []     | []       |
 
 **Event 9:** The user revokes accession 1 again.
 
-| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | original_data | processed_data | errors | warnings |
+| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | submitted_data | processed_data | errors | warnings |
 | --------- | ------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | -------------------- | ------------- | ------------- | -------------- | ------ | -------- |
 | 1         | 1       | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE | false         | d1            | ...            | []     | []       |
 | 1         | 2       | user1     | t5           | t6                    | t7                     | t8          | APPROVED_FOR_RELEASE | false         | d3            | ...            | []     | []       |
@@ -147,7 +149,7 @@ In following, the changes of the databases are shown given a series of example e
 
 **Event 10:** The user approves the revocation.
 
-| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | original_data | processed_data | errors | warnings |
+| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | submitted_data | processed_data | errors | warnings |
 | --------- | ------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | -------------------- | ------------- | ------------- | -------------- | ------ | -------- |
 | 1         | 1       | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE | false         | d1            | ...            | []     | []       |
 | 1         | 2       | user1     | t5           | t6                    | t7                     | t8          | APPROVED_FOR_RELEASE | false         | d3            | ...            | []     | []       |

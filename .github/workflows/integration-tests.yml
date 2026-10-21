@@ -15,9 +15,13 @@ on:
   pull_request:
     paths:
       - "backend/**"
+      - "cli/**"
       - "keycloak/**"
       - "kubernetes/**"
+      - "loculus-silo/**"
       - "preprocessing/**"
+      - "raw-reads-processing/**"
+      - "taxonomy/taxonomy_service/**"
       - "website/**"
       - "deploy.py"
       - "integration-tests/**"
@@ -62,9 +66,9 @@ jobs:
       - name: Get runner IP
         run: curl -4 ifconfig.me
       - name: Collect Workflow Telemetry
-        uses: catchpoint/workflow-telemetry-action@v2
+        uses: ycfreeman/workflow-telemetry-action@cad169ff11f718319d5468b0a67a238db000ef3f
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install k3d
         run: |
           for i in {1..5}; do
@@ -85,18 +89,18 @@ jobs:
             --for-e2e \
             --enablePreprocessing \
             --use-localhost-ip
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: ./integration-tests/.nvmrc
       - name: Cache .npm
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('integration-tests/**/package-lock.json') }}
       - name: Install dependencies
         run: cd integration-tests && npm ci
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.13'
       - name: Install uv
@@ -105,6 +109,14 @@ jobs:
         run: cd cli && uv sync && uv build && uv pip install --system dist/*.whl
       - name: Install keyring backend for CLI
         run: uv pip install --system keyrings.alt
+      - name: Resolve Playwright version
+        id: playwright-version
+        run: cd integration-tests && echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ matrix.browser }}-${{ steps.playwright-version.outputs.version }}
       # Firefox's readonly-setup is also done with Chromium
       - name: Install Playwright Browsers and System Dependencies
         run: cd integration-tests && npx playwright install --with-deps --only-shell chromium ${{ matrix.browser == 'firefox' && 'firefox' || '' }}
@@ -118,7 +130,7 @@ jobs:
           TEST_SUITE: ${{ matrix.browser == 'cli' && 'cli' || 'browser' }}
         run: |
           set -o pipefail
-          cd integration-tests && npx playwright test --workers=4 --reporter=list,html 2>&1 | tee output.txt
+          cd integration-tests && npx playwright test --workers=2 --reporter=list,html 2>&1 | tee output.txt
           EXIT_CODE=$?
           echo '```' >> $GITHUB_STEP_SUMMARY
           sed -n '/Running [0-9]\+ tests/,$p' output.txt >> $GITHUB_STEP_SUMMARY

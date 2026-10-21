@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import { ColumnMapping } from './ColumnMapping';
-import { RawFile } from './fileProcessing';
+import { CompressedFile, RawFile } from './fileProcessing';
 
 describe('ColumnMapping', () => {
     it('should create a mapping from columns', () => {
@@ -108,9 +108,34 @@ describe('ColumnMapping', () => {
 
         const tsvFile = new File([tsvContent], 'input.tsv');
 
-        const remappedFile = await updatedMapping.applyTo(new RawFile(tsvFile));
+        const remappedFile = (await updatedMapping.applyTo(new RawFile(tsvFile)))._unsafeUnwrap();
         const remappedContent = await remappedFile.text();
 
         expect(remappedContent).toBe('location\tdate\n' + '"U\nS\nA"\t2023-01-01\n' + 'Canada\t2023-01-02');
+    });
+
+    it('should return an error when the file is empty', async () => {
+        const sourceColumns = ['loc'];
+        const inputFields = [{ name: 'location', displayName: 'Location' }];
+        const mapping = ColumnMapping.fromColumns(sourceColumns, inputFields).updateWith('loc', 'location');
+
+        const emptyFile = new RawFile(new File([''], 'file.tsv'));
+
+        const result = await mapping.applyTo(emptyFile);
+
+        expect(result._unsafeUnwrapErr().message).toContain('please provide a non-empty file.');
+    });
+
+    it('should return an error when the file cannot be read', async () => {
+        const sourceColumns = ['loc'];
+        const inputFields = [{ name: 'location', displayName: 'Location' }];
+        const mapping = ColumnMapping.fromColumns(sourceColumns, inputFields).updateWith('loc', 'location');
+
+        const unreadableFile = new CompressedFile(new File(['not really xz'], 'file.tsv.xz'));
+
+        const result = await mapping.applyTo(unreadableFile);
+
+        expect(result._unsafeUnwrapErr().message).toContain('Could not apply the column mapping');
+        expect(result._unsafeUnwrapErr().message).toContain('xz files cannot be opened for editing');
     });
 });

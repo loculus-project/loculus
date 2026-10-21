@@ -40,6 +40,11 @@ import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
+import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.metadataFileTypes
+import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.sequenceFileTypes
+import org.loculus.backend.model.SubmitModel.ValidExtension
+import org.loculus.backend.service.files.dummyFileId
+import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
@@ -49,7 +54,6 @@ import org.springframework.test.web.servlet.ResultMatcher
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.util.UUID
 
 @EndpointTest(
     properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
@@ -181,7 +185,7 @@ class ReviseEndpointTest(
                 """.trimIndent(),
             ),
             SubmitFiles.sequenceFileWith(),
-        ).andExpect(status().isUnprocessableEntity)
+        ).andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
@@ -206,11 +210,11 @@ class ReviseEndpointTest(
                 """.trimIndent(),
             ),
             SubmitFiles.sequenceFileWith(),
-        ).andExpect(status().isUnprocessableEntity)
+        ).andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Duplicate accession found in metadata file: ${accessions.first()}",
+                    "Metadata file contains at least one duplicate accession: ${accessions.first()}",
                 ),
             )
     }
@@ -226,7 +230,7 @@ class ReviseEndpointTest(
             DefaultFiles.sequencesFileMultiSegmented,
             organism = OTHER_ORGANISM,
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
@@ -263,7 +267,7 @@ class ReviseEndpointTest(
             DefaultFiles.getRevisedMetadataFile(accessions),
             DefaultFiles.sequencesFile,
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
@@ -346,19 +350,20 @@ class ReviseEndpointTest(
             groupId = groupId,
             jwt = jwtForDefaultUser,
         ).andGetFileIdsAndUrls()[0]
-        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT)
+        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT, fileIdAndUrl.headers)
 
         client.reviseSequenceEntries(
-            DefaultFiles.getRevisedMetadataFile(accessions),
-            DefaultFiles.sequencesFile,
-            fileMapping = mapOf(
-                "custom0" to
-                    mapOf(
-                        "myFileCategory" to listOf(
-                            FileIdAndName(fileIdAndUrl.fileId, "foo.txt"),
+            DefaultFiles.getRevisedMetadataFile(accessions).withFileMapping(
+                mapOf(
+                    "custom0" to
+                        mapOf(
+                            "myFileCategory" to listOf(
+                                FileIdAndName(fileIdAndUrl.fileId, "foo.txt"),
+                            ),
                         ),
-                    ),
+                ),
             ),
+            DefaultFiles.sequencesFile,
         )
             .andExpect(status().isOk)
     }
@@ -371,25 +376,29 @@ class ReviseEndpointTest(
             .map { it.accession }
 
         client.reviseSequenceEntries(
-            DefaultFiles.getRevisedMetadataFile(accessions),
-            DefaultFiles.sequencesFile,
-            fileMapping = mapOf(
-                "foo" to
-                    mapOf(
-                        "myFileCategory" to
-                            listOf(
-                                FileIdAndName(UUID.randomUUID(), "foo.txt"),
-                                FileIdAndName(UUID.randomUUID(), "foo.txt"),
-                            ),
-                    ),
+            DefaultFiles.getRevisedMetadataFile(accessions).withFileMapping(
+                mapOf(
+                    "custom0" to
+                        mapOf(
+                            "myFileCategory" to
+                                listOf(
+                                    FileIdAndName(dummyFileId(), "foo.txt"),
+                                    FileIdAndName(dummyFileId(), "foo.txt"),
+                                ),
+                        ),
+                ),
             ),
+            DefaultFiles.sequencesFile,
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                ).value("The files in category myFileCategory contain duplicate file names: foo.txt"),
+                ).value(
+                    "In metadata file: record #1 with id 'custom0': found duplicate file names in column " +
+                        "'files.myFileCategory': foo.txt",
+                ),
             )
     }
 
@@ -401,19 +410,20 @@ class ReviseEndpointTest(
             .map { it.accession }
 
         client.reviseSequenceEntries(
-            DefaultFiles.getRevisedMetadataFile(accessions),
-            DefaultFiles.sequencesFile,
-            fileMapping = mapOf(
-                "foo" to
-                    mapOf(
-                        "unknownCategory" to
-                            listOf(
-                                FileIdAndName(UUID.randomUUID(), "foo.txt"),
-                            ),
-                    ),
+            DefaultFiles.getRevisedMetadataFile(accessions).withFileMapping(
+                mapOf(
+                    "custom0" to
+                        mapOf(
+                            "unknownCategory" to
+                                listOf(
+                                    FileIdAndName(dummyFileId(), "foo.txt"),
+                                ),
+                        ),
+                ),
             ),
+            DefaultFiles.sequencesFile,
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
@@ -437,19 +447,20 @@ class ReviseEndpointTest(
             .map { it.accession }
 
         client.reviseSequenceEntries(
-            DefaultFiles.getRevisedMetadataFile(accessions),
-            DefaultFiles.sequencesFile,
-            fileMapping = mapOf(
-                "foo" to
-                    mapOf(
-                        "myFileCategory" to
-                            listOf(
-                                FileIdAndName(fileId, "foo.txt"),
-                            ),
-                    ),
+            DefaultFiles.getRevisedMetadataFile(accessions).withFileMapping(
+                mapOf(
+                    "custom0" to
+                        mapOf(
+                            "myFileCategory" to
+                                listOf(
+                                    FileIdAndName(fileId, "foo.txt"),
+                                ),
+                        ),
+                ),
             ),
+            DefaultFiles.sequencesFile,
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
@@ -476,7 +487,7 @@ class ReviseEndpointTest(
         client.reviseSequenceEntries(metadataFile, sequencesFile)
             .andExpect(expectedStatus)
             .andExpect(jsonPath("\$.title").value(expectedTitle))
-            .andExpect(jsonPath("\$.detail", containsString(expectedMessage)))
+            .andExpect(jsonPath("\$.detail").value(expectedMessage))
     }
 
     @Test
@@ -499,17 +510,18 @@ class ReviseEndpointTest(
         filesClient.completeMultipartUploads(listOf(FileIdAndEtags(fileIdAndUrls.fileId, listOf(etag1, etag2))))
 
         client.reviseSequenceEntries(
-            DefaultFiles.getRevisedMetadataFile(accessions),
-            DefaultFiles.sequencesFile,
-            fileMapping = mapOf(
-                "custom0" to
-                    mapOf(
-                        "myFileCategory" to
-                            listOf(
-                                FileIdAndName(fileIdAndUrls.fileId, "foo.txt"),
-                            ),
-                    ),
+            DefaultFiles.getRevisedMetadataFile(accessions).withFileMapping(
+                mapOf(
+                    "custom0" to
+                        mapOf(
+                            "myFileCategory" to
+                                listOf(
+                                    FileIdAndName(fileIdAndUrls.fileId, "foo.txt"),
+                                ),
+                        ),
+                ),
             ),
+            DefaultFiles.sequencesFile,
         )
             .andExpect(status().isOk)
     }
@@ -539,7 +551,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isBadRequest,
                 "Bad Request",
-                "Metadata file has wrong extension.",
+                wrongExtensionMessage(metadataFileTypes),
             ),
             Arguments.of(
                 "wrong extension for sequences file",
@@ -547,7 +559,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(originalFilename = "sequences.wrongExtension"),
                 status().isBadRequest,
                 "Bad Request",
-                "Sequence file has wrong extension.",
+                wrongExtensionMessage(sequenceFileTypes),
             ),
             Arguments.of(
                 "metadata file where one row has a blank header",
@@ -559,9 +571,9 @@ class ReviseEndpointTest(
                     """.trimIndent(),
                 ),
                 SubmitFiles.sequenceFileWith(),
-                status().isUnprocessableEntity,
-                "Unprocessable Entity",
-                "contains no value for 'id'",
+                status().isUnprocessableContent,
+                "Unprocessable Content",
+                "Record #1 in the metadata file contains no value for 'id'. Row: ['1', '', 'someValueButNoHeader']",
             ),
             Arguments.of(
                 "metadata file with no header",
@@ -572,8 +584,8 @@ class ReviseEndpointTest(
                     """.trimIndent(),
                 ),
                 SubmitFiles.sequenceFileWith(),
-                status().isUnprocessableEntity,
-                "Unprocessable Entity",
+                status().isUnprocessableContent,
+                "Unprocessable Content",
                 "The metadata file does not contain either header 'id' or 'submissionId'",
             ),
             Arguments.of(
@@ -581,14 +593,14 @@ class ReviseEndpointTest(
                 SubmitFiles.revisedMetadataFileWith(
                     content = """
                             accession	submissionId	firstColumn
-                            1	sameHeader	someValue
-                            2	sameHeader	someValue2
+                            1	same,Header(1)	someValue
+                            2	same,Header(1)	someValue2
                     """.trimIndent(),
                 ),
                 SubmitFiles.sequenceFileWith(),
-                status().isUnprocessableEntity,
-                "Unprocessable Entity",
-                "Duplicate submission_id found in metadata file: sameHeader",
+                status().isUnprocessableContent,
+                "Unprocessable Content",
+                "Metadata file contains at least one duplicate submissionId: same,Header(1)",
             ),
             Arguments.of(
                 "duplicate headers in sequence file",
@@ -601,9 +613,9 @@ class ReviseEndpointTest(
                             AC
                     """.trimIndent(),
                 ),
-                status().isUnprocessableEntity,
-                "Unprocessable Entity",
-                "Sequence file contains at least one duplicate submissionId",
+                status().isUnprocessableContent,
+                "Unprocessable Content",
+                "Sequence file contains at least one duplicate FASTA ID: sameHeader_main",
             ),
             Arguments.of(
                 "metadata file misses headers",
@@ -623,8 +635,8 @@ class ReviseEndpointTest(
                             AC
                     """.trimIndent(),
                 ),
-                status().isUnprocessableEntity,
-                "Unprocessable Entity",
+                status().isUnprocessableContent,
+                "Unprocessable Content",
                 "Sequence file contains 2 FASTA ids that are not present in the metadata file: 'notInMetadata', 'notInMetadata2'",
             ),
             Arguments.of(
@@ -642,9 +654,9 @@ class ReviseEndpointTest(
                             AC
                     """.trimIndent(),
                 ),
-                status().isUnprocessableEntity,
-                "Unprocessable Entity",
-                "Metadata file contains 1 FASTA ids that are not present in the sequence file: 'notInSequences'",
+                status().isUnprocessableContent,
+                "Unprocessable Content",
+                "Metadata file contains 1 FASTA ids that are not present in the sequence file: 'notInSequences'. ",
             ),
             Arguments.of(
                 "metadata file misses accession header",
@@ -656,8 +668,8 @@ class ReviseEndpointTest(
                     """.trimIndent(),
                 ),
                 SubmitFiles.sequenceFileWith(),
-                status().isUnprocessableEntity,
-                "Unprocessable Entity",
+                status().isUnprocessableContent,
+                "Unprocessable Content",
                 "The revised metadata file does not contain the header 'accession'",
             ),
             Arguments.of(
@@ -670,10 +682,20 @@ class ReviseEndpointTest(
                     """.trimIndent(),
                 ),
                 SubmitFiles.sequenceFileWith(),
-                status().isUnprocessableEntity,
-                "Unprocessable Entity",
-                "contains no value for 'accession'",
+                status().isUnprocessableContent,
+                "Unprocessable Content",
+                "Record #1 in the metadata file contains no value for 'accession'. Row: ['', 'someHeader', 'someValue']",
             ),
         )
     }
+}
+
+private fun wrongExtensionMessage(fileType: ValidExtension): String {
+    val compressedExtensions = fileType.getCompressedExtensions()
+        .filterKeys { it != CompressionAlgorithm.NONE }
+        .flatMap { it.value }
+        .joinToString(", .")
+    return "${fileType.displayName} has wrong extension. Must be " +
+        ".${fileType.validExtensions.joinToString(", .")} for uncompressed submissions or " +
+        ".$compressedExtensions for compressed submissions"
 }

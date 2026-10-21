@@ -1,4 +1,4 @@
-import axios, { AxiosError, type Method } from 'axios';
+import axios, { type Method } from 'axios';
 import { err, ok, Result } from 'neverthrow';
 import { z, ZodSchema } from 'zod';
 
@@ -6,6 +6,7 @@ import {
     dataUseTermsHistoryEntry,
     getSequencesResponse,
     info,
+    problemDetail,
     requestMultipartUploadResponse,
     sequenceEntryToEdit,
     pipelineVersionStatistics,
@@ -13,6 +14,7 @@ import {
     type ProblemDetail,
     type CompleteMultipartUploadRequest,
 } from '../types/backend.ts';
+import { adminSeqSetCitation, adminSeqSetCitations, type AddSeqSetCitationRequest } from '../types/seqSetCitation.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 
 type GetSequencesParameters = {
@@ -127,6 +129,39 @@ export class BackendClient {
         );
     }
 
+    public getAllSeqSetCitations(token: string) {
+        return this.request(
+            '/admin/get-all-seqset-citations',
+            'GET',
+            adminSeqSetCitations,
+            createAuthorizationHeader(token),
+            undefined,
+            undefined,
+        );
+    }
+
+    public addSeqSetCitation(token: string, request: AddSeqSetCitationRequest) {
+        return this.request(
+            '/admin/add-seqset-citation',
+            'POST',
+            adminSeqSetCitation,
+            createAuthorizationHeader(token),
+            request,
+            undefined,
+        );
+    }
+
+    public deleteSeqSetCitation(token: string, sourceDOI: string) {
+        return this.request(
+            '/admin/delete-seqset-citation',
+            'DELETE',
+            z.unknown(),
+            createAuthorizationHeader(token),
+            undefined,
+            { sourceDOI },
+        );
+    }
+
     private async request<T>(
         endpoint: string,
         method: Method,
@@ -155,13 +190,18 @@ export class BackendClient {
                 detail: `Failed to parse backend response: ${responseDataResult.error.toString()}`,
             });
         } catch (e) {
-            const axiosError = e as AxiosError;
+            const axiosError = axios.isAxiosError(e) ? e : undefined;
+
+            const problemDetailResult = problemDetail.safeParse(axiosError?.response?.data);
+            if (problemDetailResult.success) {
+                return err(problemDetailResult.data);
+            }
 
             return err({
                 type: 'about:blank',
                 title: 'bad response',
-                status: 0,
-                detail: `Failed to make request: ${axiosError.message}`,
+                status: axiosError?.response?.status ?? 0,
+                detail: `Failed to make request: ${e instanceof Error ? e.message : String(e)}`,
             });
         }
     }

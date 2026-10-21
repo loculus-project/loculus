@@ -80,12 +80,15 @@ export const SubstitutionsContainers = ({
     values: SegmentedMutations[];
     segmentDisplayNameMap?: Record<string, string>;
 }) => {
-    return values.map(({ segment, mutations }) => (
-        <div key={segment}>
-            <h2 className='py-1 my-1 font-semibold border-b'>{segmentDisplayNameMap?.[segment] ?? segment}</h2>
-            <SubstitutionsContainer values={mutations} />
-        </div>
-    ));
+    return values.map(({ segment, mutations }) => {
+        const segmentName = segmentDisplayNameMap?.[segment] ?? segment;
+        return (
+            <div key={segment}>
+                {segmentName !== '' && <h2 className='py-1 my-1 font-semibold border-b'>{segmentName}</h2>}
+                <SubstitutionsContainer values={mutations} />
+            </div>
+        );
+    });
 };
 
 export type Props = {
@@ -148,10 +151,13 @@ export const MutationStringContainers = ({
     values: SegmentedMutationStrings[];
     segmentDisplayNameMap?: Record<string, string>;
 }) => {
-    return values.map(({ segment, mutations }) => (
-        <div key={segment}>
-            <h2 className='py-1 my-1 font-semibold border-b'>{segmentDisplayNameMap?.[segment] ?? segment}</h2>
-            <PlainValueDisplay value={mutations.flat().join(', ')} />
-        </div>
-    ));
+    return values.map(({ segment, mutations }) => {
+        const segmentName = segmentDisplayNameMap?.[segment] ?? segment;
+        return (
+            <div key={segment}>
+                {segmentName !== '' && <h2 className='py-1 my-1 font-semibold border-b'>{segmentName}</h2>}
+                <PlainValueDisplay value={mutations.flat().join(', ')} />
+            </div>
+        );
+    });
 };

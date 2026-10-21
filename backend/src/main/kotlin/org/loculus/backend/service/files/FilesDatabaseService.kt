@@ -1,21 +1,32 @@
 package org.loculus.backend.service.files
 
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.not
-import org.jetbrains.exposed.sql.update
-import org.loculus.backend.utils.DatabaseConstants
+import kotlinx.datetime.LocalDateTime
+import org.jetbrains.exposed.v1.core.IColumnType
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.isNotNull
+import org.jetbrains.exposed.v1.core.neq
+import org.jetbrains.exposed.v1.core.not
+import org.jetbrains.exposed.v1.core.statements.StatementType
+import org.jetbrains.exposed.v1.datetime.KotlinLocalDateTimeColumnType
+import org.jetbrains.exposed.v1.jdbc.batchInsert
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.chunkedForDatabase
+import org.loculus.backend.utils.processInDatabaseSafeChunks
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.util.*
 
 @Service
 @Transactional
 class FilesDatabaseService(private val dateProvider: DateProvider) {
 
-    fun createFileEntry(fileId: UUID, uploader: String, groupId: Int, multipartUploadId: String? = null) {
+    fun createFileEntry(fileId: FileId, uploader: String, groupId: Int, multipartUploadId: String? = null) {
         val now = dateProvider.getCurrentDateTime()
         FilesTable.insert {
             it[idColumn] = fileId
@@ -24,6 +35,24 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
             it[groupIdColumn] = groupId
             it[FilesTable.multipartUploadId] = multipartUploadId
         }
+    }
+
+    fun createFileEntries(fileIds: List<FileId>, uploader: String, groupId: Int) {
+        val now = dateProvider.getCurrentDateTime()
+        fileIds.processInDatabaseSafeChunks { chunk ->
+            FilesTable.batchInsert(chunk) { fileId ->
+                this[FilesTable.idColumn] = fileId
+                this[FilesTable.uploadRequestedAtColumn] = now
+                this[FilesTable.uploaderColumn] = uploader
+                this[FilesTable.groupIdColumn] = groupId
+                // Exposed does not apply DB-side defaults in batch inserts, so this has to be set explicitly.
+                this[FilesTable.multipartCompleted] = false
+            }
+        }
+    }
+
+    fun deleteFileEntry(fileId: FileId) {
+        FilesTable.deleteWhere { FilesTable.idColumn eq fileId }
     }
 
     fun getGroupIds(fileIds: Set<FileId>): Map<FileId, Int> = fileIds.chunkedForDatabase({ chunk ->
@@ -55,6 +84,85 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
             .map { it[FilesTable.idColumn] }
             .toSet()
         chunk.filterNot { it in existingIds }
+    }, 1).toSet()
+
+    data class DeletionCandidateFile(val id: FileId, val markedForDeletionAt: LocalDateTime?)
+
+    fun getDeletionCandidateFiles(threshold: LocalDateTime): List<DeletionCandidateFile> {
+        val sql = """
+            -- check for files not referenced by a submission. For this, check the submitted_data,
+            -- archive_of_submitted_data and processed_data jsonb objects
+            WITH referenced AS (
+                -- fetch ids for files uploaded by users and referenced in submissions
+                SELECT (fil->>'fileId') AS file_id
+                FROM sequence_entries se,
+                    LATERAL (
+                        VALUES
+                        (se.submitted_data),
+                        (se.archive_of_submitted_data)
+                    ) AS src(data),
+                    LATERAL jsonb_each(
+                        COALESCE(NULLIF(src.data->'files', 'null'::jsonb), '{}'::jsonb)
+                    ) AS cat(k, v),
+                    LATERAL jsonb_array_elements(cat.v) AS fil
+                UNION
+                -- also need to check processed_data since preprocessing
+                -- can create files that are never referenced in submissions
+                SELECT (fil->>'fileId') AS file_id
+                FROM sequence_entries_preprocessed_data sepd
+                JOIN sequence_entries se
+                    ON se.accession = sepd.accession
+                    AND se.version   = sepd.version,
+                    LATERAL jsonb_each(COALESCE(NULLIF(sepd.processed_data->'files', 'null'::jsonb),'{}'::jsonb)) AS cat(k,v),
+                    LATERAL jsonb_array_elements(cat.v) AS fil
+            )
+            SELECT f.id, f.marked_for_deletion_at FROM files f
+              LEFT JOIN referenced r ON r.file_id = f.id
+              WHERE r.file_id IS NULL
+                    AND f.upload_requested_at < ?;
+        """.trimIndent()
+        return transaction {
+            exec(
+                sql,
+                listOf<Pair<IColumnType<*>, Any?>>(Pair(KotlinLocalDateTimeColumnType(), threshold)),
+                explicitStatementType = StatementType.SELECT,
+            ) { rs ->
+                buildList<DeletionCandidateFile> {
+                    while (rs.next()) {
+                        val id = rs.getString("id")
+                        val markedAt = rs.getTimestamp("marked_for_deletion_at")?.toLocalDateTime()?.let { ldt ->
+                            LocalDateTime(
+                                ldt.year,
+                                ldt.monthValue,
+                                ldt.dayOfMonth,
+                                ldt.hour,
+                                ldt.minute,
+                                ldt.second,
+                                ldt.nano,
+                            )
+                        }
+                        add(DeletionCandidateFile(id, markedAt))
+                    }
+                }
+            } ?: emptyList()
+        }
+    }
+
+    fun markFilesForDeletion(fileIds: Set<FileId>) {
+        if (fileIds.isEmpty()) return
+        val now = dateProvider.getCurrentDateTime()
+        fileIds.processInDatabaseSafeChunks { chunk ->
+            FilesTable.update({ FilesTable.idColumn inList chunk }) {
+                it[markedForDeletionAtColumn] = now
+            }
+        }
+    }
+
+    fun filterMarkedForDeletionFileIds(fileIds: Set<FileId>): Set<FileId> = fileIds.chunkedForDatabase({ chunk ->
+        FilesTable
+            .select(FilesTable.idColumn)
+            .where { FilesTable.idColumn inList chunk and FilesTable.markedForDeletionAtColumn.isNotNull() }
+            .map { it[FilesTable.idColumn] }
     }, 1).toSet()
 
     /**

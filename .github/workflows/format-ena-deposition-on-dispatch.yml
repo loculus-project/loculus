@@ -16,11 +16,11 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref }}
       - name: Set up micromamba
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@v3
         with:
           environment-file: "ena-submission/environment.yml"
           micromamba-version: "latest"

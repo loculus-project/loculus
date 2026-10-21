@@ -37,10 +37,11 @@ export const FloatingLabelContainer: React.FC<FloatingLabelContainerProps> = ({
     }, []);
 
     // Use provided border classes or default based on focus state
-    const borderClasses = borderClassName ?? (isFocused ? 'border-blue-600' : 'border-gray-300 hover:border-gray-400');
+    const borderClasses =
+        borderClassName ?? (isFocused ? 'border-primary-600' : 'border-gray-300 hover:border-gray-400');
 
     return (
-        <div className='relative my-1'>
+        <div className='relative my-1.5'>
             <div
                 className={`relative flex flex-wrap items-center rounded-md cursor-text transition-colors bg-white min-h-[52px] border ${borderClasses} ${className}`}
                 onClick={onClick}
@@ -50,9 +51,9 @@ export const FloatingLabelContainer: React.FC<FloatingLabelContainerProps> = ({
             {/* Floating label */}
             <label
                 htmlFor={htmlFor}
-                className={`absolute text-sm ${isTransitionEnabled ? 'duration-300' : ''} transform z-10 origin-[0] bg-white px-2 start-1 pointer-events-none ${
+                className={`absolute text-sm ${isTransitionEnabled ? 'duration-300' : ''} transform z-10 origin-left bg-white px-2 inset-s-1 pointer-events-none ${
                     hasContent || isFocused
-                        ? `-translate-y-3 scale-75 top-1 ${isFocused ? 'text-blue-600' : 'text-gray-500'}`
+                        ? `-translate-y-3 scale-75 top-1 ${isFocused ? 'text-primary-600' : 'text-gray-500'}`
                         : 'text-gray-500 scale-100 -translate-y-1/2 top-1/2'
                 }`}
             >

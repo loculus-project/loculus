@@ -18,11 +18,11 @@ export const FieldSelectorButton: FC<FieldSelectorButtonProps> = ({
             type='button'
             onClick={onClick}
             disabled={disabled}
-            className={`inline-flex items-center px-2 py-1 text-xs font-medium border border-gray-300 rounded-md shadow-sm 
+            className={`inline-flex items-center px-2 py-1 text-xs font-medium border border-gray-300 rounded-md shadow-xs 
                 ${
                     disabled
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500'
+                        : 'bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-primary-500'
                 }`}
         >
             <span>Choose fields ({selectedFieldsCount})</span>

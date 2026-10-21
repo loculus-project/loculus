@@ -9,6 +9,7 @@ import type {
     Metadata,
     MetadataFilter,
     MetadataType,
+    MultiFieldSearch,
     Schema,
 } from '../types/config';
 import type { ReferenceGenomesInfo } from '../types/referencesGenomes.ts';
@@ -245,10 +246,12 @@ const consolidateGroupedFields = (
  */
 export class MetadataFilterSchema {
     public readonly filters: (MetadataFilter | GroupedMetadataFilter)[];
+    public readonly multiFieldSearches: MultiFieldSearch[];
 
-    constructor(metadataSchema: Metadata[]) {
+    constructor(metadataSchema: Metadata[], multiFieldSearches?: MultiFieldSearch[]) {
         const expandedFilters = getMetadataSchemaWithExpandedRanges(metadataSchema);
         this.filters = consolidateGroupedFields(metadataSchema, expandedFilters);
+        this.multiFieldSearches = multiFieldSearches ?? [];
     }
 
     public ungroupedMetadataFilters(): MetadataFilter[] {
@@ -264,6 +267,11 @@ export class MetadataFilterSchema {
      * ranges, i.e. "released at - from" (<displayname> - <label>)
      */
     public getLabel(fieldName: string): string {
+        const multiFieldSearch = this.multiFieldSearches.find((mfs) => mfs.name === fieldName);
+        if (multiFieldSearch) {
+            return multiFieldSearch.displayName;
+        }
+
         let displayName = this.filters
             .map((metadata) => {
                 if (metadata.grouped === true) {
@@ -340,6 +348,14 @@ export class MetadataFilterSchema {
             if (mutationParamName in queryState) {
                 const val = validateSingleValue(queryState[mutationParamName], mutationParamName);
                 values[mutationParamName] = val;
+            }
+        }
+        for (const mfs of this.multiFieldSearches) {
+            if (mfs.name in queryState) {
+                const val = validateSingleValue(queryState[mfs.name], mfs.name);
+                if (val !== '') {
+                    values[mfs.name] = val;
+                }
             }
         }
         return values;

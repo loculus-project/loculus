@@ -19,6 +19,7 @@ import org.springframework.security.core.AuthenticationException
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.core.oidc.StandardClaimNames
 import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint
 import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler
@@ -55,7 +56,8 @@ class SecurityConfig {
         "/data-use-terms/*",
         "/get-seqset",
         "/get-seqset-records",
-        "/get-seqset-cited-by-publication",
+        "/get-seqset-citations",
+        "/get-sequence-citations",
         "/get-author",
         "/*/get-released-data",
         "/files/get/**",
@@ -118,7 +120,9 @@ class KeycloakAuthenticationConverter(val authoritiesConverter: KeycloakAuthorit
     override fun convert(jwt: Jwt): JwtAuthenticationToken = JwtAuthenticationToken(
         jwt,
         authoritiesConverter.convert(jwt),
-        jwt.getClaimAsString(StandardClaimNames.PREFERRED_USERNAME),
+        // Must be an AuthenticationException to get a 401; anything else escapes the filter chain as a 500.
+        jwt.getClaimAsString(StandardClaimNames.PREFERRED_USERNAME)
+            ?: throw InvalidBearerTokenException("Token is missing the 'preferred_username' claim"),
     )
 }
 

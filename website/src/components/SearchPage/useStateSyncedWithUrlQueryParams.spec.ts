@@ -163,11 +163,11 @@ describe('useStateSyncedWithUrlQueryParams', () => {
                 result.current[1]({ country: [] });
             });
 
-            // Empty arrays should not appear in the URL
+            // Empty arrays should not appear in the URL, and no trailing '?' should be added
             expect(replaceStateMock).toHaveBeenCalledWith(
-                { path: 'http://localhost:3000/test?' },
+                { path: 'http://localhost:3000/test' },
                 '',
-                'http://localhost:3000/test?',
+                'http://localhost:3000/test',
             );
         });
     });
