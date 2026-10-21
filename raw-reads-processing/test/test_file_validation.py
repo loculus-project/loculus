@@ -473,9 +473,9 @@ def test_bam_extension_is_recognized_when_enabled(file_name):
     )
 
 
-def test_bam_support_is_not_enabled_yet():
-    with pytest.raises(InvalidSubmission):
-        validate_file_extensions(["reads.bam"])
+@pytest.mark.parametrize("file_name", ["reads.bam", "READS.BAM"])
+def test_bam_support_is_enabled(file_name):
+    assert validate_file_extensions([file_name]) == FileFormat.BAM
 
 
 @pytest.mark.parametrize("file_name", ["reads.sam", "reads.sam.gz", "reads.cram"])

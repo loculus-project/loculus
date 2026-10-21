@@ -43,7 +43,7 @@ EXTENSIONS_BY_FORMAT = {
 
 UNCOMPRESSED_FASTQ_EXTENSIONS = (".fastq", ".fq")
 
-ACCEPTED_FORMATS = [FileFormat.FASTQ]
+ACCEPTED_FORMATS = [FileFormat.FASTQ, FileFormat.BAM]
 
 PAIRED_END_SUBMISSION_HINT = (
     "Paired-end FASTQ files must be submitted as separate, de-interleaved files."
