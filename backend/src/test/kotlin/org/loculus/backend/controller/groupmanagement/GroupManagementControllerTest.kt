@@ -6,6 +6,7 @@ import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.CoreMatchers.hasItems
 import org.hamcrest.CoreMatchers.`is`
+import org.hamcrest.CoreMatchers.not
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -280,7 +281,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
 
     @Test
     fun `GIVEN a group is created WHEN another user is added THEN expect user is in group`() {
-        val otherUser = "otherUser"
+        val otherUser = "otheruser"
 
         val groupId = client.createNewGroup()
             .andExpect(status().isOk)
@@ -295,6 +296,21 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             .andExpect(jsonPath("\$.users.size()", `is`(2)))
             .andExpect(jsonPath("\$.users[*].name", hasItem(DEFAULT_USER_NAME)))
             .andExpect(jsonPath("\$.users[*].name", hasItem(otherUser)))
+    }
+
+    @Test
+    fun `WHEN a user is added with uppercase letters THEN the username is stored in lowercase`() {
+        val groupId = client.createNewGroup()
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        client.addUserToGroup(groupId = groupId, usernameToAdd = "OtherUser")
+            .andExpect(status().isNoContent)
+
+        client.getDetailsOfGroup(groupId = groupId)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.users[*].name", hasItem("otheruser")))
+            .andExpect(jsonPath("\$.users[*].name", not(hasItem("OtherUser"))))
     }
 
     @Test
