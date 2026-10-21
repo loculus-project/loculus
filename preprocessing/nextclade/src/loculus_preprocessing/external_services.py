@@ -327,6 +327,7 @@ class EnaAccessionType(StrEnum):
 
 # Also guards against comma-separated lists, which the ENA browser API
 # would otherwise resolve to multiple records.
+# (see https://ena-docs.readthedocs.io/en/latest/submit/general-guide/accessions.html)
 ACCESSION_PATTERNS: dict[EnaAccessionType, re.Pattern[str]] = {
     EnaAccessionType.BIOPROJECT: re.compile(r"PRJ[EDN][A-Z][0-9]+"),
     EnaAccessionType.BIOSAMPLE: re.compile(r"SAM[EDN][A-Z]?[0-9]+"),

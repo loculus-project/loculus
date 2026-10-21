@@ -1833,13 +1833,13 @@ class EnaAccessionCase:
     accession: str
     accession_type: str | None = "bioproject"
     # How ENA responds: an HTTP status code, or an exception raised by the session.
-    # None means ENA must not be contacted at all.
     ena_response: int | Exception | None = None
     ena_xml: bytes = b""
     is_insdc_ingest_group: bool = False
     expected_datum: str | None = None
     expected_error: str | None = None
     expected_warning: str | None = None
+    # None means ENA must not be contacted at all.
     expected_url: str | None = None
 
 
