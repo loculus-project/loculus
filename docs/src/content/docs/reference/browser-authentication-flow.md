@@ -3,7 +3,7 @@ title: Browser authentication flow
 description: How the Loculus website signs users in through OpenID Connect
 ---
 
-Loculus uses [Keycloak](https://www.keycloak.org/) as its OpenID Connect (OIDC) provider. Keycloak authenticates the user, while the Loculus website starts the login transaction, validates the response and establishes the website session.
+Loculus uses [Keycloak](https://www.keycloak.org/) as its OpenID Connect (OIDC) provider. Keycloak authenticates the user, while the Loculus website (Astro server) starts the login transaction, validates the response and establishes the website session.
 
 This page describes browser login. [Authentication via the API](../../for-users/authenticate-via-api/) follows a separate flow.
 
