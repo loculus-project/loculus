@@ -145,7 +145,7 @@ class GroupManagementDatabaseService(
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
 
         UserGroupsTable.deleteWhere {
-            (userNameColumn eq usernameToRemove) and
+            (userNameColumn.lowerCase() eq usernameToRemove.lowercase()) and
                 (groupIdColumn eq groupId)
         }
         auditLogger.log(authenticatedUser.username, "Removed $usernameToRemove from group $groupId")
