@@ -109,7 +109,7 @@ Sequences with `ena-specific-metadata` fields are uploaded in a separate file wi
 
 The ena_deposition package runs the following functions in parallel (via threads). If one thread raises an exception all other threads are stopped.
 
-Errors are handled in the same way for all tables: entries in state HAS_ERRORS or in state SUBMITTING for over `submitting_time_threshold_min` (15min) trigger a slack notification (at most every `slack_retry_threshold_min`). Entries whose errors contain one of the `slack_retry_substrings` are automatically reset to READY every `retry_threshold_min` (4h).
+Errors are handled in the same way for the project, sample, raw reads and assembly tables: entries in state HAS_ERRORS or in state SUBMITTING for over `submitting_time_threshold_min` (15min) trigger a slack notification (at most every `slack_retry_threshold_min`). Entries whose errors contain one of the `slack_retry_substrings` are automatically reset to READY every `retry_threshold_min` (4h).
 
 ### trigger_submission_to_ena
 
@@ -201,7 +201,7 @@ In a loop:
 - Get the results of all the submissions that are available so far (from all other tables)
 - If they differ from the external metadata previously uploaded for this sequence (stored in `submission_table.external_metadata`): create a POST request to the submit-external-metadata endpoint with the results in the expected format.
 - If the sequence is in state SUBMITTED_ALL and all accessions are present: set it to state SENT_TO_LOCULUS (if this update fails set it to HAS_ERRORS_EXT_METADATA_UPLOAD)
-- Get sequences in `submission_table` in state HAS_ERRORS_EXT_METADATA_UPLOAD: send slack notification
+- Get sequences in `submission_table` in state HAS_ERRORS_EXT_METADATA_UPLOAD for over 15 min: send a slack notification. Unlike the other tables, these entries are never retried automatically and need to be fixed manually. The 15 min and the slack notification interval (12h) are hard-coded in `upload_handle_errors` (not read from `submitting_time_threshold_min` / `slack_retry_threshold_min`).
 
 ### check_and_update_visibility
 
