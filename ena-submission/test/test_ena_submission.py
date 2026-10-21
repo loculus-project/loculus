@@ -26,18 +26,20 @@ from ena_deposition.create_raw_reads import (
     get_platform_and_instrument,
 )
 from ena_deposition.create_sample import construct_sample_set_object
-from ena_deposition.ena_submission_helper import (
+from ena_deposition.ena_builders import (
     create_chromosome_list,
-    create_ena_project,
-    create_ena_sample,
     create_flatfile,
     create_manifest,
     dataclass_to_xml,
-    get_chromsome_accessions,
-    get_ena_analysis_process,
     get_sample_xml,
     manifest_fields_diff,
     reformat_authors_from_loculus_to_embl_style,
+)
+from ena_deposition.ena_client import (
+    create_ena_project,
+    create_ena_sample,
+    get_chromsome_accessions,
+    get_ena_analysis_process,
 )
 from ena_deposition.ena_types import (
     Instrument,
@@ -197,7 +199,7 @@ class ProjectCreationTests(unittest.TestCase):
         # Testing project creation failure due to incorrect status
         mock_post.return_value = mock_requests_post(200, test_project_xml_failure_response)
         project_set = default_project_set()
-        with self.assertLogs("ena_deposition.ena_submission_helper", level="WARNING") as cm:
+        with self.assertLogs("ena_deposition.ena_client", level="WARNING") as cm:
             response = create_ena_project(MOCK_CONFIG, project_set)
             self.assertIn("Response is in unexpected format", cm.output[0])
         error_message_part = "Response is in unexpected format"
@@ -208,7 +210,7 @@ class ProjectCreationTests(unittest.TestCase):
         # Testing project creation failure
         mock_post.return_value = mock_requests_post(500, "Internal Server Error")
         project_set = default_project_set()
-        with self.assertLogs("ena_deposition.ena_submission_helper", level="WARNING") as cm:
+        with self.assertLogs("ena_deposition.ena_client", level="WARNING") as cm:
             response = create_ena_project(MOCK_CONFIG, project_set)
             self.assertIn("Request failed with status:500", cm.output[0])
         error_message_part = "Request failed with status:500"
@@ -473,7 +475,7 @@ class AssemblyCreationTests(unittest.TestCase):
         segment_order = ["main"]
         with (
             self.assertRaises(ValueError),
-            self.assertLogs("ena_deposition.ena_submission_helper", level="ERROR"),
+            self.assertLogs("ena_deposition.ena_client", level="ERROR"),
         ):
             get_chromsome_accessions(insdc_accession_range, segment_order, False)
 
@@ -481,7 +483,7 @@ class AssemblyCreationTests(unittest.TestCase):
         segment_order = ["A", "B"]
         with (
             self.assertRaises(ValueError),
-            self.assertLogs("ena_deposition.ena_submission_helper", level="ERROR"),
+            self.assertLogs("ena_deposition.ena_client", level="ERROR"),
         ):
             get_chromsome_accessions(insdc_accession_range, segment_order, True)
 

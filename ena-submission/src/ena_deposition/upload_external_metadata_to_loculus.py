@@ -22,13 +22,13 @@ from .submission_db_helper import (
     ProjectTableEntry,
     RawReadsTableEntry,
     SampleTableEntry,
-    StatusAll,
     SubmissionTableEntry,
     db_init,
     find_conditions_in_db,
     find_stuck_in_submission_db,
     update_with_retry,
 )
+from .submission_types import StatusAll
 
 logger = logging.getLogger(__name__)
 
