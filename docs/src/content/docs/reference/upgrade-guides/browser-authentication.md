@@ -26,7 +26,7 @@ Open the [Keycloak admin console](../../../for-administrators/user-administratio
 4. Under **Advanced**, set **Proof Key for Code Exchange Code Challenge Method** to `S256`.
 5. Save the client.
 
-For the deployed host, add corresponding `http://` URLs only for a development deployment explicitly configured with `insecureCookies=true`. In production, remove any localhost redirect and post-logout entries left over from an earlier configuration. For previews or local development, retain or add the exact localhost destinations below when local website development is enabled.
+For the deployed host, add corresponding `http://` URLs only for a development deployment explicitly configured with `insecureCookies=true` (secure cookies can only be stored and sent over HTTPS). In production, remove any localhost redirect and post-logout entries left over from an earlier configuration. For previews or local development, retain or add the exact localhost destinations below when local website development is enabled.
 
 Until these settings are updated, an existing realm does not gain the narrowed redirect allowlists or Keycloak's requirement to use PKCE. The application-side protections are described in the [browser authentication flow](../../browser-authentication-flow/).
 
