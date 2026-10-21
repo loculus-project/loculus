@@ -39,7 +39,8 @@ export default tseslint.config(
         },
     },
     {
-        files: ['tests/specs/**/*.ts', 'tests/*.setup.ts'],
+        files: ['tests/specs/**/*.ts', 'tests/fixtures/**/*.ts', 'tests/*.setup.ts'],
+        ignores: ['tests/fixtures/browser-crash.fixture.ts'],
         rules: {
             'no-restricted-imports': [
                 'error',

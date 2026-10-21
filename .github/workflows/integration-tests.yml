@@ -120,7 +120,7 @@ jobs:
         env:
           BROWSER: ${{ matrix.browser == 'cli' && 'chromium' || matrix.browser }}
           TEST_SUITE: ${{ matrix.browser == 'cli' && 'cli' || 'browser' }}
-          # Puts each test's browser output, incl. the exit signal if Firefox dies, in the HTML report only
+          # Firefox --quiet keeps all test stdout/stderr in the HTML report, including browser exit signals.
           DEBUG: ${{ matrix.browser == 'firefox' && 'pw:browser' || '' }}
         run: |
           set -o pipefail
