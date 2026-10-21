@@ -92,6 +92,8 @@ from ena_deposition.upload_external_metadata_to_loculus import (
 )
 from sqlalchemy import Engine
 
+pytestmark = pytest.mark.usefixtures("ena_dev_only")
+
 CONFIG_FILE = "./test/test_config.yaml"
 INPUT_FILE = "./test/data/approved_ena_submission_list_test.json"
 # Created using `seqkit split -p 2 SRR38154636.fastq` on the interleaved SRA read file SRR38154636
@@ -107,6 +109,10 @@ RAW_READS_FIXTURE_BY_NAME: dict[str, dict[str, str]] = {
     "rawReads2.fastq.gz": {
         "fileId": "341fac6f-c5ca-4138-ac4b-9aa9872d64d9",
         "path": RAW_READS_FIXTURE_FILE_2,
+    },
+    "rawReads.bam": {
+        "fileId": "341fac6f-c5ca-4138-ac4b-9aa9872d64da",
+        "path": "./test/data/raw_reads.bam",
     },
 }
 TEST_ACCESSION = "LOC_0001TLY"
@@ -622,11 +628,14 @@ def add_raw_reads_to_sequences(
 def get_sequences(
     config: Config,
     with_raw_reads: bool = False,
+    raw_reads_file_names: list[str] | None = None,
 ) -> dict[str, Any]:
     with open(INPUT_FILE, encoding="utf-8") as json_file:
         sequences: dict[str, Any] = json.load(json_file)
         if with_raw_reads:
-            add_raw_reads_to_sequences(sequences[TEST_ACCESSION_VERSION], config)
+            add_raw_reads_to_sequences(
+                sequences[TEST_ACCESSION_VERSION], config, raw_reads_file_names
+            )
         return sequences
 
 
@@ -748,6 +757,7 @@ def multi_segment_submission(
     mock_download_file: Mock | None = None,
     single_segment: bool = False,
     with_raw_reads: bool = False,
+    raw_reads_file_names: list[str] | None = None,
 ) -> Any:
     """Test the full ENA submission pipeline with CCHF data
     If single_segment is True, there's only one segment in the assembly
@@ -758,7 +768,9 @@ def multi_segment_submission(
     fields = config.loculus_accession_fields
     if mock_download_file is not None:
         mock_download_file.side_effect = mock_download_file_side_effect
-    sequences_to_upload = get_sequences(config, with_raw_reads=with_raw_reads)
+    sequences_to_upload = get_sequences(
+        config, with_raw_reads=with_raw_reads, raw_reads_file_names=raw_reads_file_names
+    )
 
     if single_segment:
         # Set segment M to None so we have only one segment in the assembly
@@ -847,6 +859,10 @@ def multi_segment_submission(
 class TestSubmission:
     def setup_method(self) -> None:
         self.config: Config = get_config(CONFIG_FILE)
+        assert not self.config.submit_to_ena_prod, "Production submissions must be disabled."
+        assert (
+            self.config.ena_reports_service_url == "https://wwwdev.ebi.ac.uk/ena/submit/report"
+        ), "ENA reports must use the development endpoint."
         self.config.submitting_time_threshold_min = 0
         self.db_engine = db_init(
             self.config.db_password, self.config.db_username, self.config.db_url
@@ -1601,6 +1617,31 @@ class TestSimpleSubmissionWithRawReads(TestSubmission):
             mock_submit_external_metadata,
             with_raw_reads=True,
             mock_download_file=mock_download_file,
+        )
+
+
+class TestSimpleSubmissionWithBamRawReads(TestSubmission):
+    @patch(
+        "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
+    )
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
+    @patch("ena_deposition.call_loculus.download_file", autospec=True)
+    def test_submit(
+        self,
+        mock_download_file: Mock,
+        mock_get_group_info: Mock,
+        mock_submit_external_metadata: Mock,
+    ) -> None:
+        """Submit a single BAM through the full ENA pipeline."""
+        multi_segment_submission(
+            self.db_engine,
+            self.config,
+            self.slack_config,
+            mock_get_group_info,
+            mock_submit_external_metadata,
+            with_raw_reads=True,
+            mock_download_file=mock_download_file,
+            raw_reads_file_names=["rawReads.bam"],
         )
 
 

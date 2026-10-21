@@ -30,7 +30,7 @@ class FileFormat(StrEnum):
 
 
 # Keep in sync with ACCEPTED_FASTQ_EXTENSIONS in
-# ena-submission/src/ena_deposition/call_loculus.py
+# ena-submission/src/ena_deposition/raw_reads_files.py
 ACCEPTED_FASTQ_EXTENSIONS = (".fastq.gz", ".fq.gz")
 ACCEPTED_BAM_EXTENSIONS = (".bam",)
 ACCEPTED_CRAM_EXTENSIONS = (".cram",)

@@ -12,7 +12,7 @@ from unittest import mock
 
 import xmltodict
 import yaml
-from ena_deposition.call_loculus import download_fastq_files
+from ena_deposition.call_loculus import download_raw_reads_files
 from ena_deposition.config import Config, EnaOrganismDetails, ManifestFieldDetails, MetadataMapping
 from ena_deposition.create_assembly import (
     create_chromosome_list_object,
@@ -48,6 +48,7 @@ from ena_deposition.ena_types import (
     LibraryStrategy,
     MoleculeType,
     Platform,
+    RawReadsManifest,
     Topology,
     default_project_set,
     default_sample_set_type,
@@ -630,9 +631,7 @@ class RawReadsCreationTests(unittest.TestCase):
         )
         self.assertIsNone(manifest.insert_size)
 
-    def test_create_manifest_no_fastq_files(self):
-        """If no fastq files are passed in, a RuntimeError is raised directly (not wrapped,
-        since this check happens before the manifest is built)."""
+    def test_create_manifest_no_raw_read_files(self):
         config = mock_config()
         submission_row = sample_data_in_submission_table()
 
@@ -644,8 +643,28 @@ class RawReadsCreationTests(unittest.TestCase):
                 submission_row,
                 [],
             )
-        self.assertIn("No fastq files found", str(ctx.exception))
+        self.assertIn("No raw read files found", str(ctx.exception))
         self.assertIsNone(ctx.exception.__cause__)
+
+    def test_create_bam_manifest_preserves_insert_size(self):
+        submission_row = sample_data_in_submission_table()
+        submission_row.seq_metadata = {
+            **submission_row.seq_metadata,
+            "pairedEndInsertSize": "350",
+        }
+        bam = str(Path("test/data/raw_reads.bam").resolve())
+        manifest = create_raw_reads_manifest_object(
+            mock_config(), "Test Sample", "Test Study", submission_row, [bam]
+        )
+        self.assertEqual(manifest.bam, bam)
+        self.assertIsNone(manifest.fastq)
+        self.assertEqual(manifest.insert_size, 350)
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            manifest_file = create_manifest(manifest, dir=tmp_dir)
+            content = Path(manifest_file).read_text(encoding="utf-8")
+        self.assertIn(f"BAM\t{bam}\n", content)
+        self.assertIn("INSERT_SIZE\t350\n", content)
+        self.assertNotIn("FASTQ\t", content)
 
     @mock.patch("ena_deposition.create_raw_reads.get_description")
     def test_create_manifest_error_wrapped(self, mock_get_description):
@@ -764,7 +783,17 @@ class GetPlatformAndInstrumentTests(unittest.TestCase):
         self.assertEqual(instrument, Instrument.Illumina_MiSeq)
 
 
-class DownloadFastqFilesTests(unittest.TestCase):
+class RawReadsManifestTests(unittest.TestCase):
+    def test_exactly_one_valid_file_mode_is_required(self):
+        for files in (
+            {},
+            {"bam": "reads.bam", "fastq": ["reads.fastq.gz"]},
+        ):
+            with self.subTest(files=files), self.assertRaises(ValueError):
+                RawReadsManifest(study="study", sample="sample", name="run", **files)
+
+
+class DownloadRawReadsFilesTests(unittest.TestCase):
     FILE_ID: Final = "11111111-2222-3333-4444-555555555555"
     CONTENT: Final = b"@r1\nACGT\n+\nIIII\n"
 
@@ -789,7 +818,7 @@ class DownloadFastqFilesTests(unittest.TestCase):
         response.__exit__.return_value = False
         response.iter_content.return_value = [content if content is not None else self.CONTENT]
         with mock.patch("ena_deposition.call_loculus.requests.get", return_value=response):
-            return download_fastq_files(
+            return download_raw_reads_files(
                 self.config, self._metadata(name), "LOC_0001TLY", self.tmp_dir
             )
 
@@ -807,6 +836,14 @@ class DownloadFastqFilesTests(unittest.TestCase):
         self.assertEqual(Path(path).name, f"{self.FILE_ID}.fastq.gz")
         self.assertEqual(Path(path).read_bytes(), gzipped)
 
+    def test_bam_bytes_are_passed_through_unchanged(self):
+        bam = Path("test/data/raw_reads.bam").read_bytes()
+        for name in ("reads.bam", "READS.BAM"):
+            with self.subTest(name=name):
+                (path,) = self._download(name, bam)
+                self.assertEqual(Path(path).name, f"{self.FILE_ID}.bam")
+                self.assertEqual(Path(path).read_bytes(), bam)
+
     def test_unaccepted_extension_raises_before_download(self):
         for name in ("reads.fastq", "reads.fq", "reads.fastq.bz2", "reads.fastq.zst"):
             with self.subTest(name=name):
@@ -814,7 +851,7 @@ class DownloadFastqFilesTests(unittest.TestCase):
                     mock.patch("ena_deposition.call_loculus.requests.get") as get,
                     self.assertRaises(RuntimeError),
                 ):
-                    download_fastq_files(
+                    download_raw_reads_files(
                         self.config, self._metadata(name), "LOC_0001TLY", self.tmp_dir
                     )
 
@@ -822,7 +859,7 @@ class DownloadFastqFilesTests(unittest.TestCase):
 
     def test_missing_raw_reads_field_raises(self):
         with self.assertRaises(RuntimeError):
-            download_fastq_files(self.config, {}, "LOC_0001TLY", self.tmp_dir)
+            download_raw_reads_files(self.config, {}, "LOC_0001TLY", self.tmp_dir)
 
 
 if __name__ == "__main__":
