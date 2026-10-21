@@ -94,7 +94,7 @@ Claims such as `preferred_username`, `name` and `email` depend on scopes and cla
 
 Astro sends the access and refresh tokens to the browser in separate `Set-Cookie` response headers, not in the redirect URL. Both cookies use `HttpOnly`, `SameSite=Lax`, `Path=/` and, unless `insecureCookies` is enabled, `Secure`.
 
-The browser sends matching cookies back to the website in the `Cookie` request header. Protected backend API calls instead use `Authorization: Bearer <access_token>`. The current website also passes access tokens to some hydrated browser components so they can make those API calls directly; `HttpOnly` protects the cookie from JavaScript access, but does not make these separately supplied access-token values server-only.
+The browser sends matching cookies back to the website in the `Cookie` request header. Protected backend API calls instead use `Authorization: Bearer <access_token>`.
 
 When the access token expires, Astro sends the refresh token to Keycloak's token endpoint in a server-to-server refresh request (`grant_type=refresh_token`). The refresh token is not sent to the Loculus backend as an API credential. Keycloak controls whether the refresh succeeds.
 
