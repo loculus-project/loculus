@@ -205,7 +205,7 @@ In a loop:
 
 ### check_and_update_visibility
 
-Every `min_between_publicness_checks` (12h) query ENA and NCBI for all bioproject, biosample, run, GCA and nucleotide accessions that are not yet known to be public. When an accession becomes publicly visible, the `*_first_publicly_visible` timestamp column of the corresponding table is set.
+Every `min_between_publicness_checks` (12h) query ENA and NCBI for all bioproject, biosample, run, experiment, GCA and nucleotide accessions that are not yet known to be public. When an accession becomes publicly visible, the `*_first_publicly_visible` timestamp column of the corresponding table is set.
 
 ### start_api
 
