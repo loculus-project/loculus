@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import type { FileKind, ProcessedFile } from './fileProcessing.ts';
@@ -49,6 +49,9 @@ export const FileUploadComponent = <F extends ProcessedFile>({
                     },
                     (error) => {
                         toast.error(error.message, { autoClose: false });
+                        if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                        }
                         return undefined;
                     },
                 );
@@ -87,6 +90,7 @@ export const FileUploadComponent = <F extends ProcessedFile>({
         setIsEdited(false);
     };
 
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const handleUpload = () => {
         document.getElementById(name)?.click();
     };
@@ -118,6 +122,9 @@ export const FileUploadComponent = <F extends ProcessedFile>({
                 .arrayBuffer()
                 .catch(() => {
                     void setMyFile(null);
+                    if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                    }
                 });
         }, 500);
 
@@ -157,12 +164,9 @@ export const FileUploadComponent = <F extends ProcessedFile>({
                                     data-testid={name}
                                     onChange={(event) => {
                                         const file = event.target.files?.[0] ?? null;
-
-                                        // Reset the input so the same file can be selected again
-                                        event.target.value = '';
-
                                         void setMyFile(file);
                                     }}
+                                    ref={fileInputRef}
                                 />
                             )}
                         </label>
