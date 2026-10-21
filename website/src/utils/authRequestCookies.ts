@@ -141,13 +141,15 @@ export function addAuthRequest(
         expiresAt: Date.now() + transactionLifetimeSeconds * 1000,
     };
 
-    // Reserve space for this attempt first, including when replica clocks differ.
+    // Insert the new attempt unconditionally before adding older ones. Older entries are ranked by
+    // expiresAt, which came from whichever replica's clock created them, so ranking the new entry
+    // with them could evict it under clock skew.
     const boundedStore: AuthRequestStore = new Map([[state, transaction]]);
     let sealedStore = seal(boundedStore);
     if (!fitsCookieBudget(sealedStore)) {
         // The caller supplies an absolute, same-origin URL. Preserve it unless it cannot
         // fit even on its own; never redirect to Keycloak with an unstorable transaction.
-        transaction.returnTo = new URL(routes.userOverviewPage(), returnTo).toString();
+        transaction.returnTo = new URL(routes.userOverviewPage(), new URL(returnTo).origin).toString();
         sealedStore = seal(boundedStore);
         if (!fitsCookieBudget(sealedStore)) {
             throw new Error('OIDC login transaction exceeds the cookie size limit');
