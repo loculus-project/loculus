@@ -147,6 +147,33 @@ describe('EditPage', () => {
         expectTextInSequenceData.unprocessedMetadata(defaultReviewData.submittedData.metadata);
     });
 
+    test('should show submitted fields that are not input fields so they can be cleared', async () => {
+        const noInputKey = 'noInputField';
+        const noInputValue = 'shouldNotBeHere';
+        renderEditPage({
+            editedData: {
+                ...defaultReviewData,
+                submittedData: {
+                    ...defaultReviewData.submittedData,
+                    metadata: { ...defaultReviewData.submittedData.metadata, [noInputKey]: noInputValue },
+                },
+            },
+        });
+
+        expect(screen.getByText('Unrecognized input fields')).toBeInTheDocument();
+        expect(document.querySelector(`label[for="${noInputKey}"]`)).toBeTruthy();
+
+        await userEvent.clear(screen.getByDisplayValue(noInputValue));
+        expect(screen.queryByDisplayValue(noInputValue)).not.toBeInTheDocument();
+        expect(document.querySelector(`label[for="${noInputKey}"]`)).toBeTruthy();
+    });
+
+    test('should not show the unknown fields section when all fields are input fields', () => {
+        renderEditPage();
+
+        expect(screen.queryByText('Unrecognized input fields')).not.toBeInTheDocument();
+    });
+
     test('should refuse to submit edits when the sequence was discarded', async () => {
         renderEditPage();
 

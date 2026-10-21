@@ -1,6 +1,6 @@
 ---
 import Faq from '../components/IndexPage/FAQ.mdx';
-import OrganismCard from '../components/IndexPage/OrganismCard.astro';
+import OrganismCardGrid from '../components/IndexPage/OrganismCardGrid.astro';
 import WelcomeMessage from '../components/IndexPage/WelcomeMessage.astro';
 import { getOrganismStatisticsMap } from '../components/IndexPage/getOrganismStatistics';
 import { getConfiguredOrganisms, getWebsiteConfig } from '../config';
@@ -20,22 +20,12 @@ const organismStatisticsMap = await getOrganismStatisticsMap(
     <div class='max-w-6xl mx-auto'>
         <WelcomeMessage websiteName={websiteName} welcomeMessageHTML={welcomeMessageHTML} />
 
-        <div class='flex justify-center'>
-            <div
-                class=`flex flex-wrap justify-center gap-x-5  gap-y-4 ${getConfiguredOrganisms().length ===5 ? "max-w-4xl" : ""}`
-            >
-                {
-                    getConfiguredOrganisms().map(({ key, displayName, image }) => (
-                        <OrganismCard
-                            key={key}
-                            image={image}
-                            displayName={displayName}
-                            organismStatistics={organismStatisticsMap.get(key)!}
-                            numberDaysAgoStatistics={numberDaysAgoStatistics}
-                        />
-                    ))
-                }
-            </div>
+        <div class='mt-8 mb-4'>
+            <OrganismCardGrid
+                organisms={getConfiguredOrganisms()}
+                organismStatisticsMap={organismStatisticsMap}
+                numberDaysAgoStatistics={numberDaysAgoStatistics}
+            />
         </div>
         <div class='mdContainer'>
             <Faq />

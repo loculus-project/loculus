@@ -523,7 +523,8 @@ def update_assembly_results_with_latest_version(db_engine: Engine, seq_key: Acce
             "version": version_to_revise,
         },
     )
-    if len(last_version_rows) == 0:
+    last_version_row = last_version_rows[0] if last_version_rows else None
+    if not last_version_row:
         error_msg = f"Last version {version_to_revise} not found in assembly_table"
         raise RuntimeError(error_msg)
     logger.info(
@@ -535,8 +536,10 @@ def update_assembly_results_with_latest_version(db_engine: Engine, seq_key: Acce
         db_engine=db_engine,
         conditions=asdict(seq_key),
         update_values={
-            "status": Status.SUBMITTED,
-            "result": last_version_rows[0].result,
+            "status": last_version_row.status,
+            "result": last_version_row.result,
+            "errors": last_version_row.errors,
+            "finished_at": datetime.now(tz=pytz.utc),
         },
         model_class=AssemblyTableEntry,
         reraise=False,

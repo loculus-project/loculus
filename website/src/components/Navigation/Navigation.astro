@@ -33,20 +33,18 @@ const accessionPrefix = getWebsiteConfig().accessionPrefix;
     <div class='subtitle hidden lg:flex lg:z-6 items-center gap-5'>
         <div class='flex items-end gap-1'>
             <OrganismNavigation currentOrganism={selectedOrganism} knownOrganisms={knownOrganisms} client:load />
-            {
-                topNavigationItems.map(({ text, path, id }) => {
-                    const itemIsActive =
-                        activeTopNavigationItem !== undefined
-                            ? id === activeTopNavigationItem || (id === undefined && activeTopNavigationItem === path)
-                            : false;
+            {topNavigationItems.map(({ text, path, id }) => {
+                const itemIsActive =
+                    activeTopNavigationItem !== undefined
+                        ? id === activeTopNavigationItem || (id === undefined && activeTopNavigationItem === path)
+                        : false;
 
-                    return (
-                        <NavigationTab as='a' href={path} isActive={itemIsActive}>
-                            {text}
-                        </NavigationTab>
-                    );
-                })
-            }
+                return (
+                    <NavigationTab as='a' href={path} isActive={itemIsActive}>
+                        {text}
+                    </NavigationTab>
+                );
+            })}
         </div>
         <AccessionSearchBox client:load accessionPrefix={accessionPrefix} />
     </div>

@@ -3,6 +3,7 @@ from dataclasses import dataclass, field, replace
 from unittest import mock
 
 import pytest
+import requests
 from factory_methods import (
     DEFAULT_EXTERNAL_SERVICES,
     DEFAULT_TEST_CONTEXT,
@@ -16,6 +17,7 @@ from factory_methods import (
     verify_processed_entry,
 )
 
+from loculus_preprocessing import external_services
 from loculus_preprocessing.config import Config, ProcessingSpec, get_config, get_processing_order
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
@@ -84,6 +86,21 @@ test_case_definitions = [
             "name_required": "name",
             "concatenated_string": "LOC_21.1",
             "required_collection_date": None,
+        },
+        group_id=1,
+    ),
+    Case(
+        name="insdc_ingest group can submit authors with non-alphabetic ASCII characters",
+        input_metadata={
+            "name_required": "name",
+            "authors": "O`Brien9, Anna; Müller (Jr) & Co, Anna_Maria?",
+        },
+        accession_id="23",
+        expected_metadata={
+            "name_required": "name",
+            "concatenated_string": "LOC_23.1",
+            "required_collection_date": None,
+            "authors": "O`Brien9, Anna; Müller (Jr) & Co, Anna_Maria?",
         },
         group_id=1,
     ),
@@ -667,14 +684,23 @@ accepted_authors = {
     "Xi, ;Yu,X.": "Xi, ; Yu, X.",
     "Xi,;": "Xi,",
     "Xi,": "Xi,",
-    "Smith, Anna Maria; Perez, Jose X.;": "Smith, Anna Maria; Perez, Jose X.",
+    "O'Brian, Anna Maria; Perez, Jose X.;": "O'Brian, Anna Maria; Perez, Jose X.",
     "Smith,Anna Maria;Perez,Jose X;": "Smith, Anna Maria; Perez, Jose X.",
     "de souza, a.": "de souza, A.",
     "McGregor, Ewan": "McGregor, Ewan",
     "'t Hooft, Gerard": "'t Hooft, Gerard",
     "Tandoc, A. 3rd": "Tandoc, A. 3rd",
 }
-not_accepted_authors = [
+# Only accepted for the INSDC ingest group
+accepted_authors_all_ascii = [
+    "Nebenf##hr, M.",
+    "Lee Cynthia K, [. U. S. ].'; 'Monath Thomas P, [. U. S. ].';",
+    "An?elic Dmitrovic,B.",
+    "Dall&aposAmico, L.",
+    "Smith9, Anna;",
+    "O`Brien, Anna;",
+]
+never_accepted_authors = [
     ";",
     ",;",
     " ,;",
@@ -683,7 +709,7 @@ not_accepted_authors = [
     "Anna Maria Smith; Jose X. Perez",
     "Anna Maria Smith;",
     "Anna Maria Smith",
-    "Smith9, Anna;",
+    "Smith, Anna, Maria",
     "Anna Smith, Cameron Tucker, and Jose Perez",
     "Count4th, EwanMcGregor, Count4th",
 ]
@@ -1124,13 +1150,8 @@ def test_required_field_message_lists_only_user_input_fields() -> None:
             "non_user_input",
             "illegal_user_input",
             False,
-            [
-                (
-                    "Metadata field `non_user_input` may not be provided as input. "
-                    "Please remove it from your metadata."
-                )
-            ],
             [],
+            ["Metadata field `non_user_input` may not be provided as input and will be ignored."],
         ),
         # A field without a processing spec and not declared as an extraInputField
         (
@@ -1208,15 +1229,26 @@ def test_preprocessing_without_consensus_sequences(config: Config) -> None:
     assert processed_entry.data.aminoAcidInsertions == {}
 
 
-def test_valid_authors() -> None:
-    for author in accepted_authors:
-        if valid_authors(author) is not True:
-            msg = f"{author} should be accepted but is not."
-            raise AssertionError(msg)
-    for author in not_accepted_authors:
-        if valid_authors(author) is not False:
-            msg = f"{author} should not be accepted but is."
-            raise AssertionError(msg)
+@pytest.mark.parametrize(
+    ("authors", "allow_all_ascii", "expected"),
+    [
+        (accepted_authors, False, True),
+        (accepted_authors, True, True),
+        (accepted_authors_all_ascii, False, False),
+        (accepted_authors_all_ascii, True, True),
+        (never_accepted_authors, False, False),
+        (never_accepted_authors, True, False),
+    ],
+)
+def test_valid_authors(
+    authors: list[str],
+    allow_all_ascii: bool,
+    expected: bool,
+) -> None:
+    for author in authors:
+        assert valid_authors(author, allow_all_ascii=allow_all_ascii) is expected, (
+            f"{author!r}: expected {expected} with allow_all_ascii={allow_all_ascii}"
+        )
 
 
 def test_format_authors() -> None:
@@ -1773,6 +1805,206 @@ def test_call_function_converts_raw_errors_to_annotations() -> None:
     assert annotation.unprocessedFields == (
         AnnotationSource(name="myField", type=AnnotationSourceType.METADATA),
     )
+
+
+SUBMISSION_PROJECT_XML = b"""<PROJECT_SET>
+  <PROJECT accession="PRJEB12345">
+    <TITLE>A submission project</TITLE>
+    <SUBMISSION_PROJECT><SEQUENCING_PROJECT/></SUBMISSION_PROJECT>
+  </PROJECT>
+</PROJECT_SET>"""
+
+UMBRELLA_PROJECT_XML = b"""<PROJECT_SET>
+  <PROJECT accession="PRJEB106529">
+    <TITLE>An umbrella project</TITLE>
+    <UMBRELLA_PROJECT/>
+    <RELATED_PROJECTS>
+      <RELATED_PROJECT><PARENT_PROJECT accession="PRJEB94357"/></RELATED_PROJECT>
+    </RELATED_PROJECTS>
+  </PROJECT>
+</PROJECT_SET>"""
+
+BIOSAMPLE_XML = b"""<SAMPLE_SET><SAMPLE accession="SAMEA123456"/></SAMPLE_SET>"""
+
+
+@dataclass
+class EnaAccessionCase:
+    name: str
+    accession: str
+    accession_type: str | None = "bioproject"
+    # How ENA responds: an HTTP status code, or an exception raised by the session.
+    ena_response: int | Exception | None = None
+    ena_xml: bytes = b""
+    is_insdc_ingest_group: bool = False
+    expected_datum: str | None = None
+    expected_error: str | None = None
+    expected_warning: str | None = None
+    # None means ENA must not be contacted at all.
+    expected_url: str | None = None
+
+
+ena_accession_cases = [
+    EnaAccessionCase(
+        name="public_bioproject_is_accepted",
+        accession="PRJEB12345",
+        ena_response=200,
+        ena_xml=SUBMISSION_PROJECT_XML,
+        expected_datum="PRJEB12345",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB12345",
+    ),
+    EnaAccessionCase(
+        name="umbrella_bioproject_is_rejected",
+        accession="PRJEB106529",
+        ena_response=200,
+        ena_xml=UMBRELLA_PROJECT_XML,
+        expected_error="is an umbrella project",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB106529",
+    ),
+    EnaAccessionCase(
+        name="public_biosample_is_accepted",
+        accession="SAMEA123456",
+        accession_type="biosample",
+        ena_response=200,
+        ena_xml=BIOSAMPLE_XML,
+        expected_datum="SAMEA123456",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/SAMEA123456",
+    ),
+    EnaAccessionCase(
+        name="public_sra_run_is_accepted",
+        accession="SRR27477368",
+        accession_type="raw_reads",
+        ena_response=200,
+        expected_datum="SRR27477368",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/SRR27477368",
+    ),
+    EnaAccessionCase(
+        name="sra_experiment_in_raw_reads_field_is_rejected",
+        accession="SRX23184375",
+        accession_type="raw_reads",
+        expected_error="not a valid raw reads accession",
+    ),
+    EnaAccessionCase(
+        name="biosample_in_bioproject_field_is_rejected",
+        accession="SAMN12345678",
+        expected_error="not a valid bioproject accession",
+    ),
+    EnaAccessionCase(
+        name="bioproject_in_biosample_field_is_rejected",
+        accession="PRJEB12345",
+        accession_type="biosample",
+        expected_error="not a valid biosample accession",
+    ),
+    EnaAccessionCase(
+        name="comma_separated_bioprojects_are_rejected",
+        accession="PRJNA591860,PRJEB106529",
+        expected_error="not a valid bioproject accession",
+    ),
+    EnaAccessionCase(
+        name="lowercase_accession_is_uppercased",
+        accession="prjeb12345",
+        ena_response=200,
+        ena_xml=SUBMISSION_PROJECT_XML,
+        expected_datum="PRJEB12345",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB12345",
+    ),
+    EnaAccessionCase(
+        name="surrounding_whitespace_is_stripped",
+        accession=" PRJEB12345 ",
+        ena_response=200,
+        ena_xml=SUBMISSION_PROJECT_XML,
+        expected_datum="PRJEB12345",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB12345",
+    ),
+    EnaAccessionCase(
+        name="invalid_accession_type_is_internal_error",
+        accession="PRJEB12345",
+        accession_type="nucleotide",
+        expected_error="Invalid accession_type 'nucleotide'",
+    ),
+    EnaAccessionCase(
+        name="missing_accession_type_is_internal_error",
+        accession="PRJEB12345",
+        accession_type=None,
+        expected_error="requires an accession_type arg",
+    ),
+    EnaAccessionCase(
+        name="not_visible_accession_is_warned_about",
+        accession="PRJEB99999",
+        ena_response=404,
+        expected_datum="PRJEB99999",
+        expected_warning="is not visible on ENA",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB99999",
+    ),
+    EnaAccessionCase(
+        name="server_error_is_warned_about",
+        accession="PRJEB12345",
+        ena_response=501,
+        expected_datum="PRJEB12345",
+        expected_warning="could not reach ENA",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB12345",
+    ),
+    EnaAccessionCase(
+        name="exhausted_retries_are_warned_about",
+        accession="PRJEB12345",
+        ena_response=requests.exceptions.RetryError(),
+        expected_datum="PRJEB12345",
+        expected_warning="could not reach ENA",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB12345",
+    ),
+    EnaAccessionCase(
+        name="missing_accession_is_not_checked",
+        accession="",
+    ),
+    EnaAccessionCase(
+        name="insdc_ingested_accession_is_not_checked",
+        accession="PRJNA123,PRJNA456",
+        is_insdc_ingest_group=True,
+        expected_datum="PRJNA123,PRJNA456",
+    ),
+]
+
+
+@pytest.mark.parametrize("case", ena_accession_cases, ids=lambda c: c.name)
+def test_check_ena_accession(case: EnaAccessionCase) -> None:
+    external_services.ena_cache.clear()
+    with mock.patch.object(external_services.ena_cache, "session") as mock_session:
+        if isinstance(case.ena_response, Exception):
+            mock_session.get.side_effect = case.ena_response
+        else:
+            mock_session.get.return_value = mock.MagicMock(
+                status_code=case.ena_response, content=case.ena_xml
+            )
+
+        ingest_group_id = DEFAULT_TEST_CONTEXT.insdc_ingest_group_id
+        result = ProcessingFunctions.check_ena_accession(
+            input_data={"accession": case.accession},
+            output_field="externalAccession",
+            input_fields=["externalAccession"],
+            args={"accession_type": case.accession_type},
+            context=replace(
+                DEFAULT_TEST_CONTEXT,
+                group_id=ingest_group_id if case.is_insdc_ingest_group else ingest_group_id + 1,
+            ),
+            external_services=DEFAULT_EXTERNAL_SERVICES,
+        )
+
+        assert result.datum == case.expected_datum
+        if case.expected_error is None:
+            assert result.errors == []
+        else:
+            assert len(result.errors) == 1
+            assert case.expected_error in result.errors[0]
+        if case.expected_warning is None:
+            assert result.warnings == []
+        else:
+            assert len(result.warnings) == 1
+            assert case.expected_warning in result.warnings[0]
+
+        if case.expected_url is None:
+            assert mock_session.get.call_count == 0
+        else:
+            mock_session.get.assert_called_once()
+            assert mock_session.get.call_args.args[0] == case.expected_url
 
 
 if __name__ == "__main__":

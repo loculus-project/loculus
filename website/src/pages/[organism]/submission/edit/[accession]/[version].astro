@@ -29,32 +29,30 @@ const dataToEdit = await createBackendClient().getDataToEdit(organism, accessTok
 ---
 
 <BaseLayout title={`Edit ${accession}.${version}`}>
-    {
-        dataToEdit.match(
-            (dataToEdit) => (
-                <div class='flex flex-col items-center'>
-                    <div class='text-left mt-3 max-w-4xl mb-3 w-full'>
-                        <EditPage
-                            organism={organism}
-                            accessToken={accessToken}
-                            dataToEdit={dataToEdit}
-                            clientConfig={clientConfig}
-                            groupedInputFields={groupedInputFields}
-                            submissionDataTypes={schema.submissionDataTypes}
-                            fileSharingConfig={getFileSharingConfig()}
-                            client:load
-                        />
-                    </div>
+    {dataToEdit.match(
+        (dataToEdit) => (
+            <div class='flex flex-col items-center'>
+                <div class='text-left mt-3 max-w-4xl mb-3 w-full'>
+                    <EditPage
+                        organism={organism}
+                        accessToken={accessToken}
+                        dataToEdit={dataToEdit}
+                        clientConfig={clientConfig}
+                        groupedInputFields={groupedInputFields}
+                        submissionDataTypes={schema.submissionDataTypes}
+                        fileSharingConfig={getFileSharingConfig()}
+                        client:load
+                    />
                 </div>
-            ),
-            (error) => (
-                <ErrorBox
-                    title={`Error while fetching edited data for accession version: ${accession}.${version}`}
-                    className='mb-6'
-                >
-                    {error.detail}
-                </ErrorBox>
-            ),
-        )
-    }
+            </div>
+        ),
+        (error) => (
+            <ErrorBox
+                title={`Error while fetching edited data for accession version: ${accession}.${version}`}
+                className='mb-6'
+            >
+                {error.detail}
+            </ErrorBox>
+        ),
+    )}
 </BaseLayout>

@@ -62,27 +62,25 @@ const searchProps = groupsResult.isOk() ? await loadReleasedSequences(groupsResu
 ---
 
 <SubmissionPageWrapper groupsResult={groupsResult} title='Released sequences'>
-    {
-        searchProps !== undefined && (
-            <SearchFullUI
-                client:load
-                clientConfig={clientConfig}
-                organism={cleanedOrganism.key}
-                schema={schema}
-                myGroups={[searchProps.group]}
-                accessToken={accessToken}
-                referenceGenomesInfo={referenceGenomesInfo}
-                hiddenFieldValues={searchProps.hiddenFieldValues}
-                initialData={searchProps.data}
-                initialCount={searchProps.totalCount}
-                initialQueryDict={initialQueryDict}
-                dataUseTermsEnabled={dataUseTermsAreEnabled()}
-                sequenceFlaggingConfig={sequenceFlaggingConfig}
-                contactConfig={contactConfig}
-                showEditDataUseTermsControls
-                groupId={searchProps.group.groupId}
-                isReleasedPage={true}
-            />
-        )
-    }
+    {searchProps !== undefined && (
+        <SearchFullUI
+            client:load
+            clientConfig={clientConfig}
+            organism={cleanedOrganism.key}
+            schema={schema}
+            myGroups={[searchProps.group]}
+            accessToken={accessToken}
+            referenceGenomesInfo={referenceGenomesInfo}
+            hiddenFieldValues={searchProps.hiddenFieldValues}
+            initialData={searchProps.data}
+            initialCount={searchProps.totalCount}
+            initialQueryDict={initialQueryDict}
+            dataUseTermsEnabled={dataUseTermsAreEnabled()}
+            sequenceFlaggingConfig={sequenceFlaggingConfig}
+            contactConfig={contactConfig}
+            showEditDataUseTermsControls
+            groupId={searchProps.group.groupId}
+            isReleasedPage={true}
+        />
+    )}
 </SubmissionPageWrapper>

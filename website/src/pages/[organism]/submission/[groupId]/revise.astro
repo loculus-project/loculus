@@ -37,26 +37,24 @@ const clientConfig = getRuntimeConfig().public;
 ---
 
 <SubmissionPageWrapper title='Revise sequences' disablePageTitle={true} groupsResult={groupsResult}>
-    {
-        groupsResult.match(
-            ({ currentGroup: group }) => (
-                <RevisionForm
-                    accessToken={getAccessToken(Astro.locals.session)!}
-                    instanceName={instanceName}
-                    organism={organism}
-                    metadataTemplateFields={groupedInputFields}
-                    clientConfig={clientConfig}
-                    group={group}
-                    inputMode={inputMode}
-                    submissionDataTypes={schema.submissionDataTypes}
-                    dataUseTermsEnabled={dataUseTermsAreEnabled()}
-                    fileSharingConfig={getFileSharingConfig()}
-                    accession={accession}
-                    version={version}
-                    client:load
-                />
-            ),
-            () => undefined,
-        )
-    }
+    {groupsResult.match(
+        ({ currentGroup: group }) => (
+            <RevisionForm
+                accessToken={getAccessToken(Astro.locals.session)!}
+                instanceName={instanceName}
+                organism={organism}
+                metadataTemplateFields={groupedInputFields}
+                clientConfig={clientConfig}
+                group={group}
+                inputMode={inputMode}
+                submissionDataTypes={schema.submissionDataTypes}
+                dataUseTermsEnabled={dataUseTermsAreEnabled()}
+                fileSharingConfig={getFileSharingConfig()}
+                accession={accession}
+                version={version}
+                client:load
+            />
+        ),
+        () => undefined,
+    )}
 </SubmissionPageWrapper>

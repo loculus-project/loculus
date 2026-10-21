@@ -459,7 +459,7 @@ def update_db_where_conditions[T: TableEntry](
         f"Updating '{model_class.__name__}' with conditions '{conditions}'"
         f" and values '{update_values}'"
     )
-    try:
+    try:  # noqa: PLW0717
         with Session(engine) as session:
             stmt = update(model_class)
             for col_name, value in conditions.items():

@@ -58,54 +58,52 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
     title={sequenceDetailsTableData.isOk() ? accessionVersion : 'Sequence not found'}
     implicitOrganism={sequenceDetailsTableData.isOk() ? sequenceDetailsTableData.value.organism : undefined}
 >
-    {
-        sequenceDetailsTableData.isOk() &&
-            sequenceDetailsTableData.value.result.type === SequenceDetailsTableResultType.TABLE_DATA && (
-                <div slot='banner'>
-                    <SequencesBanner
-                        sequenceEntryHistory={sequenceDetailsTableData.value.result.sequenceEntryHistory}
+    {sequenceDetailsTableData.isOk() &&
+        sequenceDetailsTableData.value.result.type === SequenceDetailsTableResultType.TABLE_DATA && (
+            <div slot='banner'>
+                <SequencesBanner
+                    sequenceEntryHistory={sequenceDetailsTableData.value.result.sequenceEntryHistory}
+                    accessionVersion={accessionVersion}
+                />
+            </div>
+        )}
+    {sequenceDetailsTableData.match(
+        ({ organism, result }) => {
+            const showDownload = result.type === SequenceDetailsTableResultType.TABLE_DATA && !result.isRevocation;
+            return (
+                <>
+                    <SequencesDataTableTitle
                         accessionVersion={accessionVersion}
+                        sequenceEntryHistory={
+                            result.type === SequenceDetailsTableResultType.TABLE_DATA
+                                ? result.sequenceEntryHistory
+                                : undefined
+                        }
+                        showDownload={showDownload}
+                        showFastaDownloadButton={
+                            showDownload && getSegmentNames(getReferenceGenomes(organism)).length > 0
+                        }
                     />
-                </div>
-            )
-    }
-    {
-        sequenceDetailsTableData.match(
-            ({ organism, result }) => {
-                const showDownload = result.type === SequenceDetailsTableResultType.TABLE_DATA && !result.isRevocation;
-                return (
-                    <>
-                        <SequencesDataTableTitle
+                    {result.type === SequenceDetailsTableResultType.TABLE_DATA && (
+                        <SequenceDataUI
+                            sequenceData={result}
+                            organism={organism}
+                            referenceGenomesInfo={getReferenceGenomes(organism)}
                             accessionVersion={accessionVersion}
-                            sequenceEntryHistory={
-                                result.type === SequenceDetailsTableResultType.TABLE_DATA
-                                    ? result.sequenceEntryHistory
-                                    : undefined
-                            }
-                            showDownload={showDownload}
-                            showFastaDownloadButton={
-                                showDownload && getSegmentNames(getReferenceGenomes(organism)).length > 0
-                            }
+                            schema={getSchema(organism)}
+                            clientConfig={clientConfig}
+                            myGroups={myGroups}
+                            accessToken={accessToken}
+                            sequenceFlaggingConfig={sequenceFlaggingConfig}
+                            sequenceCitations={sequenceCitations}
+                            client:load
                         />
-                        {result.type === SequenceDetailsTableResultType.TABLE_DATA && (
-                            <SequenceDataUI
-                                sequenceData={result}
-                                organism={organism}
-                                referenceGenomesInfo={getReferenceGenomes(organism)}
-                                accessionVersion={accessionVersion}
-                                schema={getSchema(organism)}
-                                clientConfig={clientConfig}
-                                myGroups={myGroups}
-                                accessToken={accessToken}
-                                sequenceFlaggingConfig={sequenceFlaggingConfig}
-                                sequenceCitations={sequenceCitations}
-                                client:load
-                            />
-                        )}
-                    </>
-                );
-            },
-            () => <ErrorBox title='Entry not found'>No data found for accession version {accessionVersion}</ErrorBox>,
-        )
-    }
+                    )}
+                </>
+            );
+        },
+        () => (
+            <ErrorBox title='Entry not found'>No data found for accession version {accessionVersion}</ErrorBox>
+        ),
+    )}
 </BaseLayout>

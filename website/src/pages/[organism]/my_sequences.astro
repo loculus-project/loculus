@@ -24,15 +24,13 @@ if (groupsResult.isOk()) {
 <BaseLayout title='My sequences'>
     <div>
         <p>
-            {
-                noGroups && (
-                    <div>
-                        To access sequence-management pages your account needs to be part of a submitting group. Please{' '}
-                        <a href={routes.createGroup()}>create a submitting group</a>, or ask an existing group admin to
-                        add you to their group.
-                    </div>
-                )
-            }
+            {noGroups && (
+                <div>
+                    To access sequence-management pages your account needs to be part of a submitting group. Please{' '}
+                    <a href={routes.createGroup()}>create a submitting group</a>, or ask an existing group admin to add
+                    you to their group.
+                </div>
+            )}
             {errorMessage && <div class='bg-red-500'>{errorMessage}</div>}
         </p>
     </div>

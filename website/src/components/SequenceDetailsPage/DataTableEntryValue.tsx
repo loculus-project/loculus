@@ -8,6 +8,7 @@ import { PlainValueDisplay } from './PlainValueDisplay.tsx';
 import { type TableDataEntry } from './types.ts';
 import { type DataUseTermsHistoryEntry } from '../../types/backend.ts';
 import type { MutationBadgeData } from '../../types/config.ts';
+import type { FileEntry } from '../../types/lapis.ts';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { getReferenceDisplayNameMap } from '../../utils/sequenceTypeHelpers.ts';
 
@@ -118,12 +119,6 @@ const VariantReferenceComponent: React.FC<{ jsonString: string; referenceGenomes
     return <>{referenceDisplayName ?? reference ?? 'N/A'}</>;
 };
 
-type FileEntry = {
-    fileId: string;
-    name: string;
-    url: string;
-};
-
 export const FileListComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
     const fileEntries = JSON.parse(jsonString) as FileEntry[];
 
@@ -195,7 +190,7 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, re
     const { value, customDisplay } = data;
 
     return (
-        <div className='whitespace-normal text-gray-600 break-inside-avoid'>
+        <div className='min-w-0 whitespace-normal wrap-break-word text-gray-600 break-inside-avoid'>
             <div>
                 {!customDisplay && <PlainValueDisplay value={value} />}
                 {customDisplay?.type === 'percentage' && typeof value === 'number' && `${(100 * value).toFixed(2)}%`}

@@ -1,6 +1,7 @@
-import { type FC, useState, useRef, useEffect } from 'react';
+import { type FC, useState, useRef, useEffect, useMemo } from 'react';
 
 import { FilesDialog } from './FilesDialog.tsx';
+import { RevisionDiff } from './RevisionDiff.tsx';
 import { SequencesDialog } from './SequencesDialog.tsx';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
@@ -16,7 +17,7 @@ import {
     errorsProcessingResult,
     warningsProcessingResult,
 } from '../../types/backend.ts';
-import type { FileCategory } from '../../types/config.ts';
+import type { FileCategory, Metadata } from '../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { CustomTooltip } from '../../utils/CustomTooltip.tsx';
@@ -34,12 +35,13 @@ import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 import FormkitSubmit from '~icons/formkit/submit';
 import EmptyCircle from '~icons/grommet-icons/empty-circle';
 import Files from '~icons/lucide/files';
+import GitCompare from '~icons/lucide/git-compare-arrows';
 import RiDna from '~icons/mdi/dna';
 import TickOutline from '~icons/mdi/tick-outline';
 
 type ReviewCardProps = {
     sequenceEntryStatus: SequenceEntryStatus;
-    metadataDisplayNames: Map<string, string>;
+    metadataSchema: Metadata[];
     deleteAccessionVersion: () => void;
     approveAccessionVersion: () => void;
     editAccessionVersion: () => void;
@@ -52,7 +54,7 @@ type ReviewCardProps = {
 
 export const ReviewCard: FC<ReviewCardProps> = ({
     sequenceEntryStatus,
-    metadataDisplayNames,
+    metadataSchema,
     approveAccessionVersion,
     deleteAccessionVersion,
     editAccessionVersion,
@@ -64,6 +66,12 @@ export const ReviewCard: FC<ReviewCardProps> = ({
 }) => {
     const [isSequencesDialogOpen, setSequencesDialogOpen] = useState(false);
     const [isFilesDialogOpen, setFilesDialogOpen] = useState(false);
+    const isRevision = sequenceEntryStatus.version > 1 && !sequenceEntryStatus.isRevocation;
+    const [isDiffOpen, setDiffOpen] = useState(false);
+    const metadataDisplayNames = useMemo(
+        () => new Map(metadataSchema.map(({ name, displayName }) => [name, displayName ?? name])),
+        [metadataSchema],
+    );
     const { isLoading, data } = useGetMetadataAndAnnotations(organism, clientConfig, accessToken, sequenceEntryStatus);
     const filesEnabled = outputFileCategories !== undefined && outputFileCategories.length > 0;
     const hasFiles = Object.entries(data?.processedData.files ?? {}).length > 0;
@@ -108,6 +116,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                     viewFiles={data && !notProcessed ? () => setFilesDialogOpen(true) : undefined}
                     filesEnabled={filesEnabled}
                     hasFiles={hasFiles}
+                    viewMetadataChanges={isRevision ? () => setDiffOpen((open) => !open) : undefined}
                 />
             </div>
 
@@ -120,6 +129,16 @@ export const ReviewCard: FC<ReviewCardProps> = ({
             )}
             {data?.warnings?.length !== undefined && data.warnings.length > 0 && (
                 <Warnings warnings={data.warnings} accession={sequenceEntryStatus.accession} />
+            )}
+            {isDiffOpen && data !== undefined && (
+                <RevisionDiff
+                    current={data}
+                    metadataSchema={metadataSchema}
+                    organism={organism}
+                    clientConfig={clientConfig}
+                    accessToken={accessToken}
+                    referenceGenomesInfo={referenceGenomesInfo}
+                />
             )}
 
             <SequencesDialog
@@ -149,6 +168,7 @@ type ButtonBarProps = {
     viewFiles?: () => void;
     filesEnabled: boolean;
     hasFiles: boolean;
+    viewMetadataChanges?: () => void;
 };
 
 const ButtonBar: FC<ButtonBarProps> = ({
@@ -160,6 +180,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
     viewFiles,
     filesEnabled,
     hasFiles,
+    viewMetadataChanges,
 }) => {
     const buttonBarClass = (disabled: boolean) =>
         `${disabled ? 'text-gray-300' : 'text-gray-500 hover:text-gray-900 hover:cursor-pointer'} inline-block text-xl`;
@@ -171,6 +192,24 @@ const ButtonBar: FC<ButtonBarProps> = ({
     return (
         <div className='flex mb-auto pt-3.5 items-center'>
             <div className='flex gap-x-4'>
+                {viewMetadataChanges && (
+                    <>
+                        <Button
+                            className={buttonBarClass(notProcessed)}
+                            onClick={viewMetadataChanges}
+                            disabled={notProcessed}
+                            aria-label={`View metadata changes for ${getAccessionVersionString(sequenceEntryStatus)}`}
+                            data-tooltip-id={`metadata-diff-tooltip-${sequenceEntryStatus.accession}`}
+                            data-testid={`view-metadata-changes-${sequenceEntryStatus.accession}`}
+                        >
+                            <GitCompare />
+                        </Button>
+                        <CustomTooltip
+                            id={`metadata-diff-tooltip-${sequenceEntryStatus.accession}`}
+                            content={notProcessed ? 'Still awaiting preprocessing' : 'View metadata changes'}
+                        />
+                    </>
+                )}
                 {filesEnabled && viewFiles && (
                     <>
                         <Button
